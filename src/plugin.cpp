@@ -116,17 +116,6 @@ cloaderUnloadPlugin (CompPlugin *p)
     delete p->vTable;
 }
 
-static CompStringList
-cloaderListPlugins (const char *path)
-{
-    CompStringList rv;
-
-    if (!path)
-	rv.push_back (CompString (getCoreVTable ()->name ()));
-
-    return rv;
-}
-
 static bool
 dlloaderLoadPlugin (CompPlugin *p,
 		    const char *path,
@@ -226,50 +215,8 @@ dlloaderUnloadPlugin (CompPlugin *p)
 	cloaderUnloadPlugin (p);
 }
 
-static int
-dlloaderFilter (const struct dirent *name)
-{
-    int length = strlen (name->d_name);
-
-    if (length < 7)
-	return 0;
-
-    if (strncmp (name->d_name, "lib", 3) ||
-	strncmp (name->d_name + length - 3, ".so", 3))
-	return 0;
-
-    return 1;
-}
-
-static CompStringList
-dlloaderListPlugins (const char *path)
-{
-    CompStringList rv (cloaderListPlugins (path));
-
-    if (!path)
-	path = ".";
-
-    struct dirent **nameList;
-    int nFile = scandir (path, &nameList, dlloaderFilter, alphasort);
-    if (nFile < 0)
-	return rv;
-
-    for (int i = 0; i < nFile; i++)
-    {
-	int length = strlen (nameList[i]->d_name);
-
-	rv.push_back (CompString (nameList[i]->d_name + 3, nameList[i]->d_name + length - 3));
-	free (nameList[i]);
-    }
-
-    free (nameList);
-    return rv;
-}
-
 LoadPluginProc   loaderLoadPlugin   = dlloaderLoadPlugin;
 UnloadPluginProc loaderUnloadPlugin = dlloaderUnloadPlugin;
-ListPluginsProc  loaderListPlugins  = dlloaderListPlugins;
-
 
 bool
 CompManager::initPlugin (CompPlugin *p)

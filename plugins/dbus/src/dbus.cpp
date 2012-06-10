@@ -187,9 +187,6 @@ static bool
 dbusHandleRootIntrospectMessage (DBusConnection *connection,
 				 DBusMessage    *message)
 {
-    char **plugins, **pluginName;
-    int nPlugins;
-
     xmlTextWriterPtr writer;
     xmlBufferPtr buf;
 
@@ -210,23 +207,16 @@ dbusHandleRootIntrospectMessage (DBusConnection *connection,
 
     dbusIntrospectEndInterface (writer);
 
-    //plugins = availablePlugins (&nPlugins);
-    // XXX availablePlugins is deprecated because it made no practical sense.
-    // If you want this code to work, it should be ported to query
-    // the actual list of plugins loaded. Perhaps try CompPlugin::getPlugins.
-    plugins = NULL;
-    if (plugins)
+    const CompPlugin::List &plugins = CompPlugins::getPlugins ();
+    CompPlugin::List::const_iterator it = plugins.begin ();
+    if (it != plugins.end ())
     {
-	pluginName = plugins;
-
-	while (nPlugins--)
+	for (; it != plugins.end (); it++)
 	{
-	    dbusIntrospectAddNode (writer, *pluginName);
-	    free (*pluginName);
-	    pluginName++;
+	    CompPlugin::VTable *v = it->vTable;
+	    if (v)
+		dbusIntrospectAddNode (writer, v->name ().c_str());
 	}
-
-	free (plugins);
     }
     else
     {

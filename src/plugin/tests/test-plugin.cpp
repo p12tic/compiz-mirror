@@ -21,9 +21,6 @@ public:
     virtual void
     UnloadPlugin(CompPlugin *p) const = 0;
 
-    virtual CompStringList
-    ListPlugins(const char *path) const = 0;
-
     static PluginFilesystem const* instance;
 
 protected:
@@ -37,8 +34,6 @@ public:
     MOCK_CONST_METHOD3(LoadPlugin, bool (CompPlugin *, const char *, const char *));
 
     MOCK_CONST_METHOD1(UnloadPlugin, void (CompPlugin *p));
-
-    MOCK_CONST_METHOD1(ListPlugins, CompStringList (const char *path));
 };
 
 class MockVTable : public CompPlugin::VTable
@@ -61,17 +56,10 @@ ThunkUnloadPluginProc(CompPlugin *p)
 }
 
 
-CompStringList
-ThunkListPluginsProc(const char *path)
-{
-    return PluginFilesystem::instance->ListPlugins(path);
-}
-
 PluginFilesystem::PluginFilesystem()
 {
 	::loaderLoadPlugin = ::ThunkLoadPluginProc;
 	::loaderUnloadPlugin = ::ThunkUnloadPluginProc;
-	::loaderListPlugins = ::ThunkListPluginsProc;
 
 	instance = this;
 }
@@ -98,7 +86,6 @@ TEST(PluginTest, load_non_existant_plugin_must_fail)
 	WillOnce(Return(false));
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(AtMost(0));
-    EXPECT_CALL(mockfs, ListPlugins(_)).Times(AtMost(0));
 
     ASSERT_EQ(0, CompPlugin::load("dummy"));
 }
@@ -119,7 +106,6 @@ TEST(PluginTest, load_plugin_from_HOME_PLUGINDIR_succeeds)
 	Times(AtMost(0));
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
-    EXPECT_CALL(mockfs, ListPlugins(_)).Times(AtMost(0));
 
     CompPlugin* cp = CompPlugin::load("dummy");
     ASSERT_NE((void*)0, cp);
@@ -143,7 +129,6 @@ TEST(PluginTest, load_plugin_from_PLUGINDIR_succeeds)
 	    Times(AtMost(0));;
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
-    EXPECT_CALL(mockfs, ListPlugins(_)).Times(AtMost(0));
 
     CompPlugin* cp = CompPlugin::load("dummy");
     ASSERT_NE((void*)0, cp);
@@ -167,14 +152,12 @@ TEST(PluginTest, load_plugin_from_void_succeeds)
 	WillOnce(Return(true));
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
-    EXPECT_CALL(mockfs, ListPlugins(_)).Times(AtMost(0));
 
     CompPlugin* cp = CompPlugin::load("dummy");
     ASSERT_NE((void*)0, cp);
 
     CompPlugin::unload(cp);
 }
-
 
 TEST(PluginTest, when_we_push_plugin_init_is_called)
 {
@@ -192,7 +175,6 @@ TEST(PluginTest, when_we_push_plugin_init_is_called)
 	Times(AtMost(0));
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
-    EXPECT_CALL(mockfs, ListPlugins(_)).Times(0);
 
     MockVTable mockVtable;
     EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));

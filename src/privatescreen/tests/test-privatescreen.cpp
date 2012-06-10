@@ -274,9 +274,6 @@ public:
     virtual void
     UnloadPlugin(CompPlugin *p) const = 0;
 
-    virtual CompStringList
-    ListPlugins(const char *path) const = 0;
-
     static PluginFilesystem const* instance;
 
 protected:
@@ -303,8 +300,6 @@ public:
 
     MOCK_CONST_METHOD1(UnloadPlugin, void (CompPlugin *p));
 
-    MOCK_CONST_METHOD1(ListPlugins, CompStringList (const char *path));
-
     bool DummyLoader(CompPlugin *p, const char * path, const char * name)
     {
 	using namespace testing;
@@ -326,17 +321,6 @@ public:
 	}
 	return true;
     }
-
-    CompStringList mockListPlugins (const char *path)
-    {
-	CompStringList list;
-	list.push_back("one");
-	list.push_back("two");
-	list.push_back("three");
-	list.push_back("four");
-
-	return list;
-    }
 };
 
 
@@ -352,18 +336,10 @@ ThunkUnloadPluginProc(CompPlugin *p)
     PluginFilesystem::instance->UnloadPlugin(p);
 }
 
-
-CompStringList
-ThunkListPluginsProc(const char *path)
-{
-    return PluginFilesystem::instance->ListPlugins(path);
-}
-
 PluginFilesystem::PluginFilesystem()
 {
 	::loaderLoadPlugin = ::ThunkLoadPluginProc;
 	::loaderUnloadPlugin = ::ThunkUnloadPluginProc;
-	::loaderListPlugins = ::ThunkListPluginsProc;
 
 	instance = this;
 }
@@ -447,9 +423,6 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
 
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
-
     ps.updatePlugins(&comp_screen, StubActivePluginsOption().optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -508,9 +481,6 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(true));
 
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
-
     ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -521,9 +491,6 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
 
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Invoke(&sapo, &StubActivePluginsOption::setActivePlugins));
-
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
@@ -586,9 +553,6 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Invoke(&sapo, &StubActivePluginsOption::setActivePlugins));
 
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
-
     ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -614,9 +578,6 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
 	CompOption::Value v(plugins);
 	sapo.setActivePlugins("core", "active_plugins", v);
     }
-
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
@@ -711,9 +672,6 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Invoke(&sapo, &StubActivePluginsOption::setActivePlugins));
 
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
-
     ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -741,9 +699,6 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
 	CompOption::Value v(plugins);
 	sapo.setActivePlugins("core", "active_plugins", v);
     }
-
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
