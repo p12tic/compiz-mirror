@@ -238,6 +238,7 @@ class CompOption
 	~CompOption ();
 
 	void setName (CompString name, Type type);
+	void setName (const char *name, Type type);
 
 	void reset ();
 

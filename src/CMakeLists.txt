@@ -9,6 +9,7 @@ add_subdirectory( point )
 add_subdirectory( rect )
 add_subdirectory( region )
 add_subdirectory( window )
+add_subdirectory( servergrab )
 
 IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( privatescreen/tests )
@@ -56,6 +57,9 @@ include_directories (
 
     ${CMAKE_CURRENT_SOURCE_DIR}/rect/include
     ${CMAKE_CURRENT_SOURCE_DIR}/rect/src
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/servergrab/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/servergrab/src
 
     ${CMAKE_CURRENT_SOURCE_DIR}/region/include
     ${CMAKE_CURRENT_SOURCE_DIR}/region/src
@@ -162,6 +166,7 @@ target_link_libraries (
     compiz_window_geometry_saver
     compiz_window_extents
     compiz_window_constrainment
+    compiz_servergrab
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
 )

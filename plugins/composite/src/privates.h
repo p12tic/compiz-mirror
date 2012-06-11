@@ -28,9 +28,13 @@
 #ifndef _COMPOSITE_PRIVATES_H
 #define _COMPOSITE_PRIVATES_H
 
+#include <memory>
+#include <boost/shared_ptr.hpp>
+
 #include <composite/composite.h>
 #include <core/atoms.h>
 
+#include "pixmapbinding.h"
 #include "composite_options.h"
 
 extern CompPlugin::VTable *compositeVTable;
@@ -108,7 +112,11 @@ class PrivateCompositeScreen :
 	Window newCmSnOwner;
 };
 
-class PrivateCompositeWindow : WindowInterface
+class PrivateCompositeWindow :
+    public WindowInterface,
+    public CompositePixmapRebindInterface,
+    public WindowPixmapGetInterface,
+    public WindowAttributesGetInterface
 {
     public:
 	PrivateCompositeWindow (CompWindow *w, CompositeWindow *cw);
@@ -117,6 +125,13 @@ class PrivateCompositeWindow : WindowInterface
 	void windowNotify (CompWindowNotify n);
 	void resizeNotify (int dx, int dy, int dwidth, int dheight);
 	void moveNotify (int dx, int dy, bool now);
+
+	Pixmap pixmap () const;
+	bool   bind ();
+	const CompSize & size () const;
+	void release ();
+	void setNewPixmapReadyCallback (const boost::function <void ()> &);
+	void allowFurtherRebindAttempts ();
 
 	static void handleDamageRect (CompositeWindow *w,
 				      int             x,
@@ -129,17 +144,13 @@ class PrivateCompositeWindow : WindowInterface
 	CompositeWindow *cWindow;
 	CompositeScreen *cScreen;
 
-	Pixmap	      pixmap;
-	CompSize      size;
-	bool	      needsRebind;
-	CompositeWindow::NewPixmapReadyCallback newPixmapReadyCallback;
+	PixmapBinding mPixmapBinding;
 
 	Damage	      damage;
 
 	bool	      damaged;
 	bool	      redirected;
 	bool          overlayWindow;
-	bool          bindFailed;
 
 	unsigned short opacity;
 	unsigned short brightness;
@@ -148,6 +159,10 @@ class PrivateCompositeWindow : WindowInterface
 	XRectangle *damageRects;
 	int        sizeDamage;
 	int        nDamage;
+    private:
+
+	bool getAttributes (XWindowAttributes &);
+	WindowPixmapInterface::Ptr getPixmap ();
 };
 
 #endif

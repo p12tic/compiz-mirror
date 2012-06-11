@@ -831,6 +831,8 @@ CompositeScreen::handlePaintTimeout ()
     return false;
 }
 
+
+
 void
 CompositeScreen::preparePaint (int msSinceLastPaint)
     WRAPABLE_HND_FUNCTN (preparePaint, msSinceLastPaint)

@@ -797,20 +797,20 @@ StaticSwitchScreen::paintRect (const GLMatrix &transform,
                                CompRect       &box,
                                int             offset,
                                unsigned short *color,
-                               int             opacity)
+			       unsigned short opacity)
 {
     GLushort colorData[4] = {
 	color[0],
 	color[1],
 	color[2],
-	color[3] * opacity / 100
+	static_cast <GLushort> (color[3] * opacity / 100)
     };
 
     GLfloat vertexData[12] = {
-	box.x1 () + offset, box.y1 () + offset, 0,
-	box.x2 () - offset, box.y1 () + offset, 0,
-	box.x2 () - offset, box.y2 () - offset, 0,
-	box.x1 () + offset, box.y2 () - offset, 0
+	static_cast <GLfloat> (box.x1 () + offset), static_cast <GLfloat> (box.y1 () + offset), 0,
+	static_cast <GLfloat> (box.x2 () - offset), static_cast <GLfloat> (box.y1 () + offset), 0,
+	static_cast <GLfloat> (box.x2 () - offset), static_cast <GLfloat> (box.y2 () - offset), 0,
+	static_cast <GLfloat> (box.x1 () + offset), static_cast <GLfloat> (box.y2 () - offset), 0
     };
 
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
