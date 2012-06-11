@@ -129,10 +129,6 @@ class DbusScreen :
 			   DBusMessage                    *message,
 			   const std::vector<CompString>& path);
 
-	bool
-	handleGetPluginsMessage (DBusConnection *connection,
-			     	 DBusMessage    *message);
-
 	DBusHandlerResult
 	handleMessage (DBusConnection *connection,
 		       DBusMessage    *message,
