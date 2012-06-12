@@ -466,13 +466,23 @@ GLScreen::glBufferStencil (const GLMatrix       &matrix,
 {
     WRAPABLE_HND_FUNCTN (glBufferStencil, matrix, vertexBuffer, output);
 
-    GLfloat vertices[] =
-    {
-	static_cast <GLfloat> (output->x ()), static_cast <GLfloat> (screen->height () - output->y2 ()), 0,
-	static_cast <GLfloat> (output->x ()), static_cast <GLfloat> (screen->height () - output->y2 ()) + static_cast <GLfloat> (output->height ()), 0,
-	static_cast <GLfloat> (output->x ()) + static_cast <GLfloat> (output->width ()), static_cast <GLfloat> (screen->height () - output->y2 ()), 0,
-	static_cast <GLfloat> (output->x ()) + static_cast <GLfloat> (output->width ()), static_cast <GLfloat> (screen->height () - output->y2 ()) + static_cast <GLfloat> (output->height ()), 0
-    };
+    GLfloat vertices[12];
+
+    vertices[0] = output->x ();
+    vertices[1] = screen->height () - output->y2 ();
+    vertices[2] = 0;
+
+    vertices[3] = output->x ();
+    vertices[4] = screen->height () - output->y2 () + output->height ();
+    vertices[5] = 0;
+
+    vertices[6] = output->x () + output->width ();
+    vertices[7] = screen->height () - output->y2 ();
+    vertices[8] = 0;
+
+    vertices[9] = output->x () + output->width ();
+    vertices[10] = screen->height () - output->y2 () + output->height ();
+    vertices[11] = 0;
 
     GLushort colorData[] = { 0xffff, 0xffff, 0xffff, 0xffff };
 
