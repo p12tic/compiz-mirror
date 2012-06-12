@@ -291,25 +291,17 @@ namespace GL {
                                                GLsizei stride,
                                                const GLvoid *ptr);
 
-    typedef void (*GLStencilFuncProc) (GLenum func,
-				   GLint  ref,
-				   GLuint mask);
-    typedef void (*GLStencilOpProc) (GLenum sfail,
-				 GLenum dpfail,
-				 GLenum dppass);
-    typedef void (*GLClearStencilProc) (GLint s);
-
-    typedef void (*GLGenRenderbuffers) (GLsizei n,
+    typedef void (*GLGenRenderbuffersProc) (GLsizei n,
 					GLuint  *rb);
-    typedef void (*GLDeleteRenderbuffers) (GLsizei n,
+    typedef void (*GLDeleteRenderbuffersProc) (GLsizei n,
 					   const GLuint  *rb);
-    typedef void (*GLBindRenderbuffer) (GLenum target,
+    typedef void (*GLBindRenderbufferProc) (GLenum target,
 					GLuint renderbuffer);
-    typedef void (*GLFramebufferRenderbuffer) (GLenum target,
+    typedef void (*GLFramebufferRenderbufferProc) (GLenum target,
 					       GLenum attachment,
 					       GLenum renderbuffertarget,
 					       GLuint renderbuffer);
-    typedef void (*GLRenderbufferStorage) (GLenum target,
+    typedef void (*GLRenderbufferStorageProc) (GLenum target,
 					   GLenum internalformat,
 					   GLsizei width,
 					   GLsizei height);
@@ -395,15 +387,11 @@ namespace GL {
     extern GLDisableVertexAttribArrayProc disableVertexAttribArray;
     extern GLVertexAttribPointerProc      vertexAttribPointer;
 
-    extern GLClearStencilProc clearStencil;
-    extern GLStencilFuncProc stencilFunc;
-    extern GLStencilOpProc   stencilOp;
-
-    extern GLGenRenderbuffers genRenderbuffers;
-    extern GLDeleteRenderbuffers deleteRenderbuffers;
-    extern GLBindRenderbuffer    bindRenderbuffer;
-    extern GLFramebufferRenderbuffer framebufferRenderbuffer;
-    extern GLRenderbufferStorage renderbufferStorage;
+    extern GLGenRenderbuffersProc genRenderbuffers;
+    extern GLDeleteRenderbuffersProc deleteRenderbuffers;
+    extern GLBindRenderbufferProc    bindRenderbuffer;
+    extern GLFramebufferRenderbufferProc framebufferRenderbuffer;
+    extern GLRenderbufferStorageProc renderbufferStorage;
 
     extern bool  textureFromPixmap;
     extern bool  textureRectangle;

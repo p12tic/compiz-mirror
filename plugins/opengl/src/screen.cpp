@@ -115,15 +115,11 @@ namespace GL {
     GLDisableVertexAttribArrayProc disableVertexAttribArray = NULL;
     GLVertexAttribPointerProc      vertexAttribPointer = NULL;
 
-    GLClearStencilProc clearStencil = NULL;
-    GLStencilFuncProc stencilFunc = NULL;
-    GLStencilOpProc stencilOp = NULL;
-
-    GLGenRenderbuffers genRenderbuffers = NULL;
-    GLDeleteRenderbuffers deleteRenderbuffers = NULL;
-    GLFramebufferRenderbuffer framebufferRenderbuffer = NULL;
-    GLBindRenderbuffer bindRenderbuffer = NULL;
-    GLRenderbufferStorage renderbufferStorage = NULL;
+    GLGenRenderbuffersProc genRenderbuffers = NULL;
+    GLDeleteRenderbuffersProc deleteRenderbuffers = NULL;
+    GLFramebufferRenderbufferProc framebufferRenderbuffer = NULL;
+    GLBindRenderbufferProc bindRenderbuffer = NULL;
+    GLRenderbufferStorageProc renderbufferStorage = NULL;
 
     unsigned int RENDERBUFFER;
     unsigned int DEPTH24_STENCIL8;
@@ -368,10 +364,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::disableVertexAttribArray = glDisableVertexAttribArray;
     GL::vertexAttribPointer = glVertexAttribPointer;
 
-    GL::stencilFunc = glStencilFunc;
-    GL::stencilOp = glStencilOp;
-    GL::clearStencil = glClearStencil;
-
     GL::RENDERBUFFER = GL_RENDERBUFFER;
     GL::FRAMEBUFFER = GL_FRAMEBUFFER;
     GL::DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_OES;
@@ -380,10 +372,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::stencilBuffer)
     {
-	GL::stencilFunc = glStencilFunc;
-	GL::stencilOp = glStencilOp;
-	GL::clearStencil = glClearStencil;
-
 	if (strstr (glExtensions, "GL_OES_packed_depth_stencil"))
 	{
 	    GL::genRenderbuffers = glGenRenderbuffers;
@@ -622,17 +610,13 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::stencilBuffer)
     {
-	GL::stencilFunc = (GL::GLStencilFuncProc) getProcAddress ("glStencilFunc");
-	GL::stencilOp = (GL::GLStencilOpProc) getProcAddress ("glStencilOp");
-	GL::clearStencil = (GL::GLClearStencilProc) getProcAddress ("glClearStencil");
-
 	if (strstr (glExtensions, "GL_EXT_packed_depth_stencil"))
 	{
-	    GL::genRenderbuffers = (GL::GLGenRenderbuffers) getProcAddress ("glGenRenderbuffers");
-	    GL::deleteRenderbuffers = (GL::GLDeleteRenderbuffers) getProcAddress ("glDeleteRenderbuffers");
-	    GL::bindRenderbuffer = (GL::GLBindRenderbuffer) getProcAddress ("glBindRenderbuffer");
-	    GL::framebufferRenderbuffer = (GL::GLFramebufferRenderbuffer) getProcAddress ("glFramebufferRenderbuffer");
-	    GL::renderbufferStorage = (GL::GLRenderbufferStorage) getProcAddress ("glRenderbufferStorage");
+	    GL::genRenderbuffers = (GL::GLGenRenderbuffersProc) getProcAddress ("glGenRenderbuffers");
+	    GL::deleteRenderbuffers = (GL::GLDeleteRenderbuffersProc) getProcAddress ("glDeleteRenderbuffers");
+	    GL::bindRenderbuffer = (GL::GLBindRenderbufferProc) getProcAddress ("glBindRenderbuffer");
+	    GL::framebufferRenderbuffer = (GL::GLFramebufferRenderbufferProc) getProcAddress ("glFramebufferRenderbuffer");
+	    GL::renderbufferStorage = (GL::GLRenderbufferStorageProc) getProcAddress ("glRenderbufferStorage");
 	}
 	else
 	    GL::stencilBuffer = false;

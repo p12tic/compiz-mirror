@@ -522,11 +522,11 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	    glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	    glDepthMask (GL_FALSE);
 
-	    (GL::clearStencil) (0);
+	    glClearStencil (0);
 	    glClear (GL_STENCIL_BUFFER_BIT);
 	    glEnable (GL_STENCIL_TEST);
-	    (GL::stencilFunc) (GL_ALWAYS, 1, 1);
-	    (GL::stencilOp) (GL_KEEP, GL_KEEP, GL_REPLACE);
+	    glStencilFunc (GL_ALWAYS, 1, 1);
+	    glStencilOp (GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	    glDisable (GL_DEPTH_TEST);
 
@@ -544,8 +544,8 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	    if (depthTestEnabled)
 		glEnable (GL_DEPTH_TEST);
 
-	    (GL::stencilFunc) (GL_EQUAL, 1, 1);
-	    (GL::stencilOp) (GL_KEEP, GL_KEEP, GL_KEEP);
+	    glStencilFunc (GL_EQUAL, 1, 1);
+	    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
 	}
 	else
 	    glEnableOutputClipping (sTransform, region, output);
