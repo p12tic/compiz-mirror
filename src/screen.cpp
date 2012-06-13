@@ -4084,7 +4084,7 @@ Window
 cps::WindowManager::getTopWindow() const
 {
     /* return first window that has not been destroyed */
-    if (windows.size ())
+    if (!windows.empty ())
 	return windows.back ()->id ();
 
     return None;
@@ -4093,7 +4093,7 @@ cps::WindowManager::getTopWindow() const
 Window
 cps::WindowManager::getTopServerWindow() const
 {
-    if (serverWindows.size ())
+    if (!serverWindows.empty ())
 	return serverWindows.back ()->id ();
 
     return None;
