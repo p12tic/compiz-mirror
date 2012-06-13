@@ -112,6 +112,8 @@ GLWindow::bind ()
 	    priv->needsRebind = false;
 	    return true;
 	}
+	else
+	    return false;
     }
 
     GLTexture::List textures =

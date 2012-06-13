@@ -209,12 +209,6 @@ class CompPlugin {
 	static List & getPlugins ();
 
 	/**
-	 * Gets a list of the names of all the known plugins, including plugins that may
-	 * have already been loaded.
-	 */
-	static std::list<CompString> availablePlugins ();
-	
-	/**
 	 * Gets the Application Binary Interface (ABI) version of a (un)loaded plugin.
 	 */
 	static int getPluginABI (const char *name);
