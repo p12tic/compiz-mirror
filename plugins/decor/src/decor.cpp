@@ -170,11 +170,30 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 	{
 	    foreach (CompWindow *w, dScreen->cScreen->getWindowPaintList ())
 	    {
-		if ((w->type () & CompWindowTypeDockMask) &&
-		    !(w->destroyed () || w->invisible ()))
+		bool isDock = w->type () & CompWindowTypeDockMask;
+		bool invisible = w->invisible ();
+
+		invisible |= w->destroyed ();
+
+		if (isDock && !invisible)
 		{
 		    DecorWindow *d = DecorWindow::get (w);
-		    d->glDecorate (transform, attrib, region, mask);
+
+		    /* Check if the window would draw by
+		     * seeing if glPaint returns true when
+		     * using PAINT_NO_CORE_INSTANCE_MASK
+		     */
+
+		    unsigned int pmask = d->gWindow->lastMask () & ~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
+
+		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
+					     transform,
+					     region,
+					     pmask | PAINT_WINDOW_NO_CORE_INSTANCE_MASK))
+		    {
+			GLFragment::Attrib fa (d->gWindow->paintAttrib ());
+			d->glDecorate (transform, fa, region, mask);
+		    }
 		}
 	    }
 	}
@@ -185,7 +204,7 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 
 void
 DecorWindow::glDecorate (const GLMatrix     &transform,
-		         GLFragment::Attrib &attrib,
+			 GLFragment::Attrib &attrib,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
