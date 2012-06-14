@@ -187,9 +187,6 @@ static bool
 dbusHandleRootIntrospectMessage (DBusConnection *connection,
 				 DBusMessage    *message)
 {
-    char **plugins, **pluginName;
-    int nPlugins;
-
     xmlTextWriterPtr writer;
     xmlBufferPtr buf;
 
@@ -210,19 +207,16 @@ dbusHandleRootIntrospectMessage (DBusConnection *connection,
 
     dbusIntrospectEndInterface (writer);
 
-    plugins = availablePlugins (&nPlugins);
-    if (plugins)
+    const CompPlugin::List &plugins = CompPlugins::getPlugins ();
+    CompPlugin::List::const_iterator it = plugins.begin ();
+    if (it != plugins.end ())
     {
-	pluginName = plugins;
-
-	while (nPlugins--)
+	for (; it != plugins.end (); it++)
 	{
-	    dbusIntrospectAddNode (writer, *pluginName);
-	    free (*pluginName);
-	    pluginName++;
+	    CompPlugin::VTable *v = it->vTable;
+	    if (v)
+		dbusIntrospectAddNode (writer, v->name ().c_str());
 	}
-
-	free (plugins);
     }
     else
     {
@@ -1395,42 +1389,6 @@ DbusScreen::handleGetMetadataMessage (DBusConnection                 *connection
 #endif
 
 /*
- * 'GetPlugins' can be used to retrieve a list of available plugins. There's
- * no guarantee that a plugin in this list can actually be loaded.
- *
- * Example:
- *
- * dbus-send --print-reply --type=method_call \
- * --dest=org.freedesktop.compiz	      \
- * /org/freedesktop/compiz		      \
- * org.freedesktop.compiz.getPlugins
- */
-bool
-DbusScreen::handleGetPluginsMessage (DBusConnection *connection,
-			     	     DBusMessage    *message)
-{
-    DBusMessage *reply;
-    std::list <CompString> plugins = CompPlugin::availablePlugins ();
-
-    reply = dbus_message_new_method_return (message);
-
-    foreach (CompString& p, plugins)
-    {
-	const char *plugin = p.c_str ();
-	dbus_message_append_args (reply,
-				  DBUS_TYPE_STRING, &plugin,
-				  DBUS_TYPE_INVALID);
-    }
-
-    dbus_connection_send (connection, reply, NULL);
-    dbus_connection_flush (connection);
-
-    dbus_message_unref (reply);
-
-    return true;
-}
-
-/*
  * 'GetPluginMetadata' can be used to retrieve metadata for a plugin.
  *
  * Example:
@@ -1584,12 +1542,6 @@ DbusScreen::handleMessage (DBusConnection *connection,
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 #endif
-	if (dbus_message_is_method_call (message, COMPIZ_DBUS_INTERFACE,
-					  COMPIZ_DBUS_GET_PLUGINS_MEMBER_NAME))
-	{
-	    if (handleGetPluginsMessage (connection, message))
-		return DBUS_HANDLER_RESULT_HANDLED;
-	}
 
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
