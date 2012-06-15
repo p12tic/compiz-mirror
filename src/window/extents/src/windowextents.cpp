@@ -35,8 +35,6 @@ compiz::window::extents::shift (const CompWindowExtents &extents,
 {
     CompPoint rv = CompPoint ();
 
-    printf ("%i gravity hi nive\n", gravity);
-
     switch (gravity) {
 	case NorthGravity:
 	case NorthWestGravity:
