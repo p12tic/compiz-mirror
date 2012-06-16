@@ -1528,10 +1528,20 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     GLFramebufferObject *oldFbo = NULL;
     bool useFbo = false;
 
-    if (!scratchFboBindFailed)
+    /* Clear the color buffer where appropriate */
+    if (!scratchFboBindFailed && GL::fbo)
     {
+	if (clearBuffers)
+	    glClear (GL_COLOR_BUFFER_BIT);
+
 	oldFbo = scratchFbo->bind ();
 	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
+    }
+    else
+    {
+	if (clearBuffers)
+	    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+		glClear (GL_COLOR_BUFFER_BIT);
     }
 
     if (!useFbo && !scratchFboBindFailed)
@@ -1558,12 +1568,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
 #endif
 
-    if (clearBuffers)
-    {
-	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-	    glClear (GL_COLOR_BUFFER_BIT);
-    }
-
     CompRegion tmpRegion (region);
 
     foreach (CompOutput *output, outputs)
@@ -1584,11 +1588,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    lastViewport = r;
 	}
 
-#ifdef USE_GLES
-	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK || !GL::postSubBuffer)
-#else
 	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-#endif
 	{
 	    GLMatrix identity;
 
@@ -1633,34 +1633,30 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	GLFramebufferObject::rebind (oldFbo);
 
 	// FIXME: does not work if screen dimensions exceed max texture size
-	gScreen->glPaintCompositedOutput (tmpRegion, scratchFbo, mask);
+	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
-    glFlush ();
-
-#ifdef USE_GLES
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK || !GL::postSubBuffer)
-#else
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-#endif
-     {
+    if (useFbo)
+    {
 	/*
 	 * controlSwapVideoSync is much faster than waitForVideoSync because
 	 * it won't block the CPU. The waiting is offloaded to the GPU.
 	 * Unfortunately it only works with glXSwapBuffers in most drivers.
 	 */
+	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 	#ifdef USE_GLES
-	Display *xdpy = screen->dpy ();
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
-	eglSwapBuffers (eglGetDisplay (xdpy), surface);
+	eglSwapBuffers (eglGetDisplay (screen->dpy ()), surface);
 	eglWaitGL ();
-	XFlush (xdpy);
+	XFlush (screen->dpy ());
 	#else
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
 	#endif
     }
-    else
+#if USE_GLES
+    else if (GL::postSubBuffer)
+#else
+    else if (GL::copySubBuffer)
+#endif
     {
 	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
@@ -1669,15 +1665,13 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	waitForVideoSync ();
 
 	#ifdef USE_GLES
-	Display *xdpy = screen->dpy ();
-
 	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 
 	while (nBox--)
 	{
 	    y = screen->height () - pBox->y2;
 
-	    (*GL::postSubBuffer) (eglGetDisplay (xdpy), surface,
+	    (*GL::postSubBuffer) (eglGetDisplay (screen->dpy ()), surface,
 				  pBox->x1, y,
 				  pBox->x2 - pBox->x1,
 				  pBox->y2 - pBox->y1);
@@ -1688,51 +1682,16 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	XFlush (xdpy);
 
 	#else
-	if (GL::copySubBuffer)
+	while (nBox--)
 	{
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
+	    y = screen->height () - pBox->y2;
 
-		(*GL::copySubBuffer) (screen->dpy (), cScreen->output (),
-				      pBox->x1, y,
-				      pBox->x2 - pBox->x1,
-				      pBox->y2 - pBox->y1);
+	    (*GL::copySubBuffer) (screen->dpy (), cScreen->output (),
+		      		  pBox->x1, y,
+		      		  pBox->x2 - pBox->x1,
+		      		  pBox->y2 - pBox->y1);
 
-		pBox++;
-	    }
-	}
-	else
-	{
-	    glEnable (GL_SCISSOR_TEST);
-	    glDrawBuffer (GL_FRONT);
-
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
-
-		glBitmap (0, 0, 0, 0,
-			  pBox->x1 - rasterPos.x (),
-			  y - rasterPos.y (),
-			  NULL);
-
-		rasterPos = CompPoint (pBox->x1, y);
-
-		glScissor (pBox->x1, y,
-			   pBox->x2 - pBox->x1,
-			   pBox->y2 - pBox->y1);
-
-		glCopyPixels (pBox->x1, y,
-			      pBox->x2 - pBox->x1,
-			      pBox->y2 - pBox->y1,
-			      GL_COLOR);
-
-		pBox++;
-	    }
-
-	    glDrawBuffer (GL_BACK);
-	    glDisable (GL_SCISSOR_TEST);
-	    glFlush ();
+	    pBox++;
 	}
 	#endif
     }
