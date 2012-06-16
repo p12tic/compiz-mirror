@@ -1679,7 +1679,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	}
 
 	eglWaitGL ();
-	XFlush (xdpy);
+	XFlush (screen->dpy ());
 
 	#else
 	while (nBox--)
