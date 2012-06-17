@@ -111,6 +111,24 @@ namespace GL {
     GLUniformMatrix4fvProc   uniformMatrix4fv = NULL;
     GLGetAttribLocationProc  getAttribLocation = NULL;
 
+#ifndef USE_GLES
+
+    GLCreateShaderObjectARBProc createShaderObjectARB = NULL;
+    GLCreateProgramObjectARBProc createProgramObjectARB = NULL;
+    GLCompileShaderARBProc compileShaderARB = NULL;
+    GLShaderSourceARBProc shaderSourceARB = NULL;
+    GLValidateProgramARBProc validateProgramARB = NULL;
+    GLDeleteObjectARBProc deleteObjectARB = NULL;
+    GLAttachObjectARBProc attachObjectARB = NULL;
+    GLLinkProgramARBProc linkProgramARB = NULL;
+    GLUseProgramObjectARBProc useProgramObjectARB = NULL;
+    GLGetUniformLocationARBProc getUniformLocationARB = NULL;
+    GLGetAttribLocationARBProc getAttribLocationARB = NULL;
+    GLGetObjectParameterivProc getObjectParameteriv = NULL;
+    GLGetInfoLogProc         getInfoLog = NULL;
+
+#endif
+
     GLEnableVertexAttribArrayProc  enableVertexAttribArray = NULL;
     GLDisableVertexAttribArrayProc disableVertexAttribArray = NULL;
     GLVertexAttribPointerProc      vertexAttribPointer = NULL;
@@ -134,6 +152,90 @@ namespace GL {
 
     unsigned int vsyncCount = 0;
     unsigned int unthrottledFrames = 0;
+
+#ifndef USE_GLES
+
+    GLuint createShaderARBWrapper (GLenum type)
+    {
+	return static_cast <GLuint> ((GL::createShaderObjectARB) (type));
+    }
+
+    GLuint createProgramARBWrapper (GLenum type)
+    {
+	return static_cast <GLuint> ((GL::createProgramObjectARB) ());
+    }
+
+    void shaderSourceARBWrapper (GLuint shader, GLsizei count, const GLchar **string, const GLint *length)
+    {
+	(GL::shaderSourceARB) (static_cast <GLhandleARB> (shader), count, string, length);
+    }
+
+    void compileShaderARBWrapper (GLuint shader)
+    {
+	(GL::compileShaderARB) (static_cast <GLhandleARB> (shader));
+    }
+
+    void validateProgramARBWrapper (GLuint program)
+    {
+	(GL::validateProgramARB) (static_cast <GLhandleARB> (program));
+    }
+
+    void deleteShaderARBWrapper (GLuint shader)
+    {
+	(GL::deleteObjectARB) (static_cast <GLhandleARB> (shader));
+    }
+
+    void deleteProgramARBWrapper (GLuint program)
+    {
+	(GL::deleteObjectARB) (static_cast <GLhandleARB> (program));
+    }
+
+    void attachShaderARBWrapper (GLuint program, GLuint shader)
+    {
+	(GL::attachObjectARB) (static_cast <GLhandleARB> (program), static_cast <GLhandleARB> (shader));
+    }
+
+    void linkProgramARBWrapper (GLuint program)
+    {
+	(GL::linkProgramARB) (static_cast <GLhandleARB> (program));
+    }
+
+    void useProgramARBWrapper (GLuint program)
+    {
+	(GL::useProgramObjectARB) (static_cast <GLhandleARB> (program));
+    }
+
+    int getUniformLocationARBWrapper (GLuint program, const GLchar *name)
+    {
+	return (GL::getUniformLocationARB) (static_cast <GLhandleARB> (program), name);
+    }
+
+    int getAttribLocationARBWrapper (GLuint program, const GLchar *name)
+    {
+	return (GL::getAttribLocationARB) (static_cast <GLhandleARB> (program), name);
+    }
+
+    void getProgramInfoLogARBWrapper (GLuint object, int maxLen, int *len, char *log)
+    {
+	(GL::getInfoLog) (static_cast <GLhandleARB> (object), maxLen, len, log);
+    }
+
+    void getShaderInfoLogARBWrapper (GLuint object, int maxLen, int *len, char *log)
+    {
+	(GL::getInfoLog) (static_cast <GLhandleARB> (object), maxLen, len, log);
+    }
+
+    void getShaderivARBWrapper (GLuint object, GLenum type, int *param)
+    {
+	(GL::getObjectParameteriv) (static_cast <GLhandleARB> (object), type, param);
+    }
+
+    void getProgramivARBWrapper (GLuint object, GLenum type, int *param)
+    {
+	(GL::getObjectParameteriv) (static_cast <GLhandleARB> (object), type, param);
+    }
+
+#endif
 }
 
 CompOutput *targetOutput = NULL;
@@ -528,37 +630,52 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     }
 
     if (strstr (glExtensions, "GL_ARB_fragment_shader") &&
-        strstr (glExtensions, "GL_ARB_vertex_shader"))
+	strstr (glExtensions, "GL_ARB_vertex_shader") &&
+	strstr (glExtensions, "GL_ARB_shader_objects") &&
+	strstr (glExtensions, "GL_ARB_shading_language_100"))
     {
-	GL::getShaderiv = (GL::GLGetShaderivProc) getProcAddress ("glGetShaderiv");
-	GL::getShaderInfoLog = (GL::GLGetShaderInfoLogProc) getProcAddress ("glGetShaderInfoLog");
-	GL::getProgramiv = (GL::GLGetProgramivProc) getProcAddress ("glGetProgramiv");
-	GL::getProgramInfoLog = (GL::GLGetProgramInfoLogProc) getProcAddress ("glGetProgramInfoLog");
-	GL::createShader = (GL::GLCreateShaderProc) getProcAddress ("glCreateShader");
-	GL::shaderSource = (GL::GLShaderSourceProc) getProcAddress ("glShaderSource");
-	GL::compileShader = (GL::GLCompileShaderProc) getProcAddress ("glCompileShader");
-	GL::createProgram = (GL::GLCreateProgramProc) getProcAddress ("glCreateProgram");
-	GL::attachShader = (GL::GLAttachShaderProc) getProcAddress ("glAttachShader");
-	GL::linkProgram = (GL::GLLinkProgramProc) getProcAddress ("glLinkProgram");
-	GL::validateProgram = (GL::GLValidateProgramProc) getProcAddress ("glValidateProgram");
-	GL::deleteShader = (GL::GLDeleteShaderProc) getProcAddress ("glDeleteShader");
-	GL::deleteProgram = (GL::GLDeleteProgramProc) getProcAddress ("glDeleteProgram");
-	GL::useProgram = (GL::GLUseProgramProc) getProcAddress ("glUseProgram");
-	GL::getUniformLocation = (GL::GLGetUniformLocationProc) getProcAddress ("glGetUniformLocation");
-	GL::uniform1f = (GL::GLUniform1fProc) getProcAddress ("glUniform1f");
-	GL::uniform1i = (GL::GLUniform1iProc) getProcAddress ("glUniform1i");
-	GL::uniform2f = (GL::GLUniform2fProc) getProcAddress ("glUniform2f");
-	GL::uniform2i = (GL::GLUniform2iProc) getProcAddress ("glUniform2i");
-	GL::uniform3f = (GL::GLUniform3fProc) getProcAddress ("glUniform3f");
-	GL::uniform3i = (GL::GLUniform3iProc) getProcAddress ("glUniform3i");
-	GL::uniform4f = (GL::GLUniform4fProc) getProcAddress ("glUniform4f");
-	GL::uniform4i = (GL::GLUniform4iProc) getProcAddress ("glUniform4i");
-	GL::uniformMatrix4fv = (GL::GLUniformMatrix4fvProc) getProcAddress ("glUniformMatrix4fv");
-	GL::getAttribLocation = (GL::GLGetAttribLocationProc) getProcAddress ("glGetAttribLocation");
+	GL::getShaderiv = (GL::GLGetShaderivProc) GL::getShaderivARBWrapper;
+	GL::getShaderInfoLog = (GL::GLGetShaderInfoLogProc) GL::getShaderInfoLogARBWrapper;
+	GL::getProgramiv = (GL::GLGetProgramivProc) GL::getProgramivARBWrapper;
+	GL::getProgramInfoLog = (GL::GLGetProgramInfoLogProc) GL::getProgramInfoLogARBWrapper;
+	GL::getObjectParameteriv = (GL::GLGetObjectParameterivProc) getProcAddress ("glGetObjectParameterivARB");
+	GL::getInfoLog = (GL::GLGetInfoLogProc) getProcAddress ("glGetInfoLogARB");
+	GL::createShader = (GL::GLCreateShaderProc) GL::createShaderARBWrapper;
+	GL::createShaderObjectARB = (GL::GLCreateShaderObjectARBProc) getProcAddress ("glCreateShaderObjectARB");
+	GL::shaderSource = (GL::GLShaderSourceProc) GL::shaderSourceARBWrapper;
+	GL::shaderSourceARB = (GL::GLShaderSourceARBProc) getProcAddress ("glShaderSourceARB");
+	GL::compileShader = (GL::GLCompileShaderProc) GL::compileShaderARBWrapper;
+	GL::compileShaderARB = (GL::GLCompileShaderARBProc) getProcAddress ("glCompileShaderARB");
+	GL::createProgram = (GL::GLCreateProgramProc) GL::createProgramARBWrapper;
+	GL::createProgramObjectARB = (GL::GLCreateProgramObjectARBProc) getProcAddress ("glCreateProgramObjectARB");
+	GL::attachShader = GL::attachShaderARBWrapper;
+	GL::attachObjectARB = (GL::GLAttachObjectARBProc) getProcAddress ("glAttachObjectARB");
+	GL::linkProgram = GL::linkProgramARBWrapper;
+	GL::linkProgramARB = (GL::GLLinkProgramARBProc) getProcAddress ("glLinkProgramARB");
+	GL::validateProgram = GL::validateProgramARBWrapper;
+	GL::validateProgramARB = (GL::GLValidateProgramARBProc) getProcAddress ("glValidateProgramARB");
+	GL::deleteShader = GL::deleteShaderARBWrapper;
+	GL::deleteProgram = GL::deleteProgramARBWrapper;
+	GL::deleteObjectARB = (GL::GLDeleteObjectARBProc) getProcAddress ("glDeleteObjectARB");
+	GL::useProgram = GL::useProgramARBWrapper;
+	GL::useProgramObjectARB = (GL::GLUseProgramObjectARBProc) getProcAddress ("glUseProgramObjectARB");
+	GL::getUniformLocation = GL::getUniformLocationARBWrapper;
+	GL::getUniformLocationARB = (GL::GLGetUniformLocationARBProc) getProcAddress ("glGetUniformLocationARB");
+	GL::uniform1f = (GL::GLUniform1fProc) getProcAddress ("glUniform1fARB");
+	GL::uniform1i = (GL::GLUniform1iProc) getProcAddress ("glUniform1iARB");
+	GL::uniform2f = (GL::GLUniform2fProc) getProcAddress ("glUniform2fARB");
+	GL::uniform2i = (GL::GLUniform2iProc) getProcAddress ("glUniform2iARB");
+	GL::uniform3f = (GL::GLUniform3fProc) getProcAddress ("glUniform3fARB");
+	GL::uniform3i = (GL::GLUniform3iProc) getProcAddress ("glUniform3iARB");
+	GL::uniform4f = (GL::GLUniform4fProc) getProcAddress ("glUniform4fARB");
+	GL::uniform4i = (GL::GLUniform4iProc) getProcAddress ("glUniform4iARB");
+	GL::uniformMatrix4fv = (GL::GLUniformMatrix4fvProc) getProcAddress ("glUniformMatrix4fvARB");
+	GL::getAttribLocation = (GL::GLGetAttribLocationProc) GL::getAttribLocationARBWrapper;
+	GL::getAttribLocationARB = (GL::GLGetAttribLocationARBProc) getProcAddress ("glGetAttribLocationARB");
 
-	GL::enableVertexAttribArray = (GL::GLEnableVertexAttribArrayProc) getProcAddress ("glEnableVertexAttribArray");
-	GL::disableVertexAttribArray = (GL::GLDisableVertexAttribArrayProc) getProcAddress ("glDisableVertexAttribArray");
-	GL::vertexAttribPointer = (GL::GLVertexAttribPointerProc) getProcAddress ("glVertexAttribPointer");
+	GL::enableVertexAttribArray = (GL::GLEnableVertexAttribArrayProc) getProcAddress ("glEnableVertexAttribArrayARB");
+	GL::disableVertexAttribArray = (GL::GLDisableVertexAttribArrayProc) getProcAddress ("glDisableVertexAttribArrayARB");
+	GL::vertexAttribPointer = (GL::GLVertexAttribPointerProc) getProcAddress ("glVertexAttribPointerARB");
 
 	GL::shaders = true;
     }
