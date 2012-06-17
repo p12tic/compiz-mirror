@@ -689,8 +689,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     glDisable (GL_BLEND);
     glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glColor4usv (defaultColor);
-    glEnableClientState (GL_VERTEX_ARRAY);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
     if (GL::textureEnvCombine && GL::maxTextureUnits >= 2)
     {
