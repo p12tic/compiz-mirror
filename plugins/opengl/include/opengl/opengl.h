@@ -291,6 +291,30 @@ namespace GL {
                                                GLsizei stride,
                                                const GLvoid *ptr);
 
+    /* GL_ARB_shader_objects */
+    #ifndef USE_GLES
+    typedef GLhandleARB (*GLCreateShaderObjectARBProc) (GLenum type);
+    typedef GLhandleARB (*GLCreateProgramObjectARBProc) ();
+    typedef void (*GLShaderSourceARBProc) (GLhandleARB shader,
+                                        GLsizei count,
+                                        const GLchar **string,
+                                        const GLint* length);
+    typedef void (*GLCompileShaderARBProc) (GLhandleARB shader);
+    typedef void (*GLValidateProgramARBProc) (GLhandleARB program);
+    typedef void (*GLDeleteObjectARBProc) (GLhandleARB object);
+    typedef void (*GLAttachObjectARBProc) (GLhandleARB program,
+                                        GLhandleARB shader);
+    typedef void (*GLLinkProgramARBProc) (GLhandleARB program);
+    typedef void (*GLUseProgramObjectARBProc) (GLhandleARB program);
+    typedef int  (*GLGetUniformLocationARBProc) (GLhandleARB program,
+                                              const GLchar* name);
+    typedef int (*GLGetAttribLocationARBProc) (GLhandleARB program,
+                                            const GLchar *name);
+
+    typedef void (*GLGetObjectParameterivProc) (GLhandleARB object, GLenum type, int *param);
+    typedef void (*GLGetInfoLogProc) (GLhandleARB object, int maxLen, int *len, char *log);
+    #endif
+
     #ifdef USE_GLES
     extern EGLCreateImageKHRProc  createImage;
     extern EGLDestroyImageKHRProc destroyImage;
@@ -366,6 +390,23 @@ namespace GL {
     extern GLDisableVertexAttribArrayProc disableVertexAttribArray;
     extern GLVertexAttribPointerProc      vertexAttribPointer;
 
+    #ifndef USE_GLES
+    extern GLCreateShaderObjectARBProc createShaderObjectARB;
+    extern GLCreateProgramObjectARBProc createProgramObjectARB;
+    extern GLShaderSourceARBProc shaderSourceARB;
+    extern GLCompileShaderARBProc compileShaderARB;
+    extern GLValidateProgramARBProc validateProgramARB;
+    extern GLDeleteObjectARBProc deleteObjectARB;
+    extern GLAttachObjectARBProc attachObjectARB;
+    extern GLLinkProgramARBProc linkProgramARB;
+    extern GLUseProgramObjectARBProc useProgramObjectARB;
+    extern GLGetUniformLocationARBProc getUniformLocationARB;
+    extern GLGetAttribLocationARBProc getAttribLocationARB;
+
+    extern GLGetObjectParameterivProc   getObjectParameteriv;
+    extern GLGetInfoLogProc	    getInfoLog;
+    #endif
+
 #ifdef USE_GLES
 
     static const GLenum 		    FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
@@ -388,6 +429,17 @@ namespace GL {
     static const GLenum 		    FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS = 0;
     static const GLenum 		    FRAMEBUFFER_INCOMPLETE_DIMENSIONS = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
 
+    static const GLenum 		    ARRAY_BUFFER = GL_ARRAY_BUFFER;
+    static const GLenum 		    STATIC_DRAW = GL_STATIC_DRAW;
+    static const GLenum 		    STREAM_DRAW = GL_STREAM_DRAW;
+    static const GLenum 		    DYNAMIC_DRAW = GL_DYNAMIC_DRAW;
+
+    static const GLenum 		    INFO_LOG_LENGTH = GL_INFO_LOG_LENGTH;
+    static const GLenum 		    COMPILE_STATUS = GL_COMPILE_STATUS;
+    static const GLenum 		    LINK_STATUS = GL_LINK_STATUS;
+    static const GLenum 		    FRAGMENT_SHADER = GL_FRAGMENT_SHADER;
+    static const GLenum 		    VERTEX_SHADER = GL_VERTEX_SHADER;
+
 #else
 
     static const GLenum 		  FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING_EXT;
@@ -407,6 +459,17 @@ namespace GL {
     static const GLenum 		  FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS_EXT;
     static const GLenum 		  FRAMEBUFFER_INCOMPLETE_DIMENSIONS = 0;
 
+    static const GLenum 		  ARRAY_BUFFER = GL_ARRAY_BUFFER_ARB;
+    static const GLenum 		  STATIC_DRAW = GL_STATIC_DRAW_ARB;
+    static const GLenum 		  STREAM_DRAW = GL_STREAM_DRAW_ARB;
+    static const GLenum 		  DYNAMIC_DRAW = GL_DYNAMIC_DRAW_ARB;
+
+    static const GLenum 		  INFO_LOG_LENGTH = GL_OBJECT_INFO_LOG_LENGTH_ARB;
+    static const GLenum 		  COMPILE_STATUS = GL_OBJECT_COMPILE_STATUS_ARB;
+    static const GLenum 		  LINK_STATUS = GL_OBJECT_LINK_STATUS_ARB;
+    static const GLenum 		  FRAGMENT_SHADER = GL_FRAGMENT_SHADER_ARB;
+    static const GLenum 		  VERTEX_SHADER = GL_VERTEX_SHADER_ARB;
+
 #endif
 
     extern bool  textureFromPixmap;
@@ -425,6 +488,25 @@ namespace GL {
 
     extern bool canDoSaturated;
     extern bool canDoSlightlySaturated;
+
+#ifndef USE_GLES
+    void getProgramInfoLogARBWrapper (GLuint object, int maxLen, int *len, char *log);
+    void getShaderInfoLogARBWrapper (GLuint object, int maxLen, int *len, char *log);
+    void getShaderivARBWrapper (GLuint object, GLenum type, int *param);
+    void getProgramivARBWrapper (GLuint object, GLenum type, int *param);
+    GLuint createShaderARBWrapper (GLenum type);
+    GLuint createProgramARBWrapper (GLenum type);
+    void shaderSourceARBWrapper (GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
+    void compileShaderARBWrapper (GLuint shader);
+    void validateProgramARBWrapper (GLuint program);
+    void deleteShaderARBWrapper (GLuint shader);
+    void deleteProgramARBWrapper (GLuint program);
+    void attachShaderARBWrapper (GLuint program, GLuint shader);
+    void linkProgramARBWrapper (GLuint program);
+    void useProgramARBWrapper (GLuint program);
+    int getUniformLocationARBWrapper (GLuint program, const GLchar *name);
+    int getAttribLocationARBWrapper (GLuint program, const GLchar *name);
+#endif
 };
 
 struct GLScreenPaintAttrib {

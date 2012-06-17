@@ -279,13 +279,13 @@ WaterScreen::waterSetup ()
 	program[PAINT]  = new GLProgram (paint_water_vertices_vertex_shader,
 				         buffer);
 
-	vertexBuffer[SET] = new GLVertexBuffer (GL_DYNAMIC_DRAW);
+	vertexBuffer[SET] = new GLVertexBuffer (GL::DYNAMIC_DRAW);
 	vertexBuffer[SET]->setProgram (program[SET]);
 
-	vertexBuffer[UPDATE] = new GLVertexBuffer (GL_STATIC_DRAW);
+	vertexBuffer[UPDATE] = new GLVertexBuffer (GL::STATIC_DRAW);
 	vertexBuffer[UPDATE]->setProgram (program[UPDATE]);
 
-	vertexBuffer[PAINT] = new GLVertexBuffer (GL_STATIC_DRAW);
+	vertexBuffer[PAINT] = new GLVertexBuffer (GL::STATIC_DRAW);
 	vertexBuffer[PAINT]->setProgram (program[PAINT]);
     }
 
