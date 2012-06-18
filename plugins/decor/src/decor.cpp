@@ -171,21 +171,21 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 	    foreach (CompWindow *w, dScreen->cScreen->getWindowPaintList ())
 	    {
 		bool isDock = w->type () & CompWindowTypeDockMask;
-		bool invisible = w->invisible ();
+		bool drawShadow = !(w->invisible () || w->destroyed ());
 
-		invisible |= w->destroyed ();
-
-		if (isDock && !invisible)
+		if (isDock && drawShadow)
 		{
 		    DecorWindow *d = DecorWindow::get (w);
+
+		    /* If the last mask was an occlusion pass, glPaint
+		     * return value will mean something different, so
+		     * remove it */
+		    unsigned int pmask = d->gWindow->lastMask () & ~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
 
 		    /* Check if the window would draw by
 		     * seeing if glPaint returns true when
 		     * using PAINT_NO_CORE_INSTANCE_MASK
 		     */
-
-		    unsigned int pmask = d->gWindow->lastMask () & ~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
-
 		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
 					     transform,
 					     region,
