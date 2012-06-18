@@ -4080,23 +4080,23 @@ PrivateScreen::disableEdge (int edge)
 	XUnmapWindow (dpy, screenEdge[edge].id);
 }
 
-Window
+CompWindow *
 cps::WindowManager::getTopWindow() const
 {
     /* return first window that has not been destroyed */
     if (!windows.empty ())
-	return windows.back ()->id ();
+	return windows.back ();
 
-    return None;
+    return NULL;
 }
 
-Window
-cps::WindowManager::getTopServerWindow() const
+CompWindow *
+cps::WindowManager::getTopServerWindow () const
 {
     if (!serverWindows.empty ())
-	return serverWindows.back ()->id ();
+	return serverWindows.back ();
 
-    return None;
+    return NULL;
 }
 
 int
@@ -4850,13 +4850,13 @@ CompScreenImpl::updateClientList()
     privateScreen.updateClientList ();
 }
 
-Window
+CompWindow *
 CompScreenImpl::getTopWindow() const
 {
     return windowManager.getTopWindow();
 }
 
-Window
+CompWindow *
 CompScreenImpl::getTopServerWindow () const
 {
     return windowManager.getTopServerWindow();

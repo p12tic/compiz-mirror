@@ -1890,7 +1890,10 @@ PrivateWindow::circulate (XCirculateEvent *ce)
     Window newAboveId;
 
     if (ce->place == PlaceOnTop)
-	newAboveId = screen->getTopWindow ();
+    {
+	CompWindow *newAbove = screen->getTopWindow ();
+	newAboveId = newAbove ? newAbove->id () : None;
+    }
     else
 	newAboveId = 0;
 
