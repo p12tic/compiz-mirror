@@ -180,16 +180,18 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 		    /* If the last mask was an occlusion pass, glPaint
 		     * return value will mean something different, so
 		     * remove it */
-		    unsigned int pmask = d->gWindow->lastMask () & ~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
+		    unsigned int pmask = d->gWindow->lastMask () &
+				~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
 
-		    /* Check if the window would draw by
-		     * seeing if glPaint returns true when
-		     * using PAINT_NO_CORE_INSTANCE_MASK
+		    /* Check if the window would draw by seeing if glPaint
+		     * returns true when using PAINT_NO_CORE_INSTANCE_MASK
 		     */
+		    pmask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
 		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
 					     transform,
 					     region,
-					     pmask | PAINT_WINDOW_NO_CORE_INSTANCE_MASK))
+					     pmask))
 		    {
 			GLFragment::Attrib fa (d->gWindow->paintAttrib ());
 			d->glDecorate (transform, fa, region, mask);
