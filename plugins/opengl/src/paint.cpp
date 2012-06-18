@@ -466,23 +466,18 @@ GLScreen::glBufferStencil (const GLMatrix       &matrix,
 {
     WRAPABLE_HND_FUNCTN (glBufferStencil, matrix, vertexBuffer, output);
 
-    GLfloat vertices[12];
+    GLfloat x = output->x ();
+    GLfloat y = screen->height () - output->y2 ();
+    GLfloat x2 = output->x () + output->width ();
+    GLfloat y2 = screen->height () - output->y2 () + output->height ();
 
-    vertices[0] = output->x ();
-    vertices[1] = screen->height () - output->y2 ();
-    vertices[2] = 0;
-
-    vertices[3] = output->x ();
-    vertices[4] = screen->height () - output->y2 () + output->height ();
-    vertices[5] = 0;
-
-    vertices[6] = output->x () + output->width ();
-    vertices[7] = screen->height () - output->y2 ();
-    vertices[8] = 0;
-
-    vertices[9] = output->x () + output->width ();
-    vertices[10] = screen->height () - output->y2 () + output->height ();
-    vertices[11] = 0;
+    GLfloat vertices[] =
+    {
+	x, y, 0,
+	x, y2, 0,
+	x2, y, 0,
+	x2, y2, 0
+    };
 
     GLushort colorData[] = { 0xffff, 0xffff, 0xffff, 0xffff };
 
@@ -516,7 +511,7 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     glApplyTransform (sAttrib, output, &sTransform);
 
-    if ((mask & CLIP_PLANE_MASK) == CLIP_PLANE_MASK || true)
+    if ((mask & CLIP_PLANE_MASK) == CLIP_PLANE_MASK)
     {
 	sTransform.toScreenSpace (output, -sAttrib.zTranslate);
 
