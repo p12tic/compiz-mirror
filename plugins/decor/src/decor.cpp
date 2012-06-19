@@ -206,7 +206,7 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 
 void
 DecorWindow::glDecorate (const GLMatrix     &transform,
-			 GLFragment::Attrib &attrib,
+		         GLFragment::Attrib &attrib,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
