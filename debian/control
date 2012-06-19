@@ -54,7 +54,7 @@ Build-Depends: cmake (>= 2.6),
                metacity-common,
                gnome-control-center-dev,
 Standards-Version: 3.9.3
-Vcs-Bzr: https://code.launchpad.net/~compiz/compiz/ubuntu
+Vcs-Bzr: https://code.launchpad.net/+branch/ubuntu/compiz
 
 Package: compiz
 Architecture: all

@@ -4,6 +4,7 @@ compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
   * debian/control:
     - clean build-deps, removing some suggests and rewritting some descriptions
       to fit the reality
+    - change Vcs-Bzr to canonical branch
   * add libcompizconfig package:
     - debian/control:
       - add some build-deps
