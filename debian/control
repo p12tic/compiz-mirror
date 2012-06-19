@@ -79,6 +79,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends},
 Recommends: compiz-plugins-default,
 Provides: compiz-core-abiversion-${coreabiversion}
+Replaces: compizconfig-settings-manager (<< 0.9.8)
 Description: OpenGL window and compositing manager
  Compiz brings to life a variety of visual effects that make the Linux desktop
  easier to use, more powerful and intuitive, and more accessible for users
