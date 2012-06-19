@@ -41,8 +41,10 @@ compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
     int dx = 0;
     int dy = 0;
 
-    for (std::vector <CompRect>::const_iterator it = rem.rects ().begin ();
-	 it != rem.rects ().end ();
+    CompRect::vector rects (rem.rects ());
+
+    for (std::vector <CompRect>::const_iterator it = rects.begin ();
+	 it != rects.end ();
 	 it++)
     {
 	const CompRect &r = *it;
@@ -58,7 +60,5 @@ compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
 	    dy += r.height ();
     }
 
-    CompPoint p (dx, dy);
-
-    return p;
+    return CompPoint (dx, dy);
 }
