@@ -1,0 +1,7 @@
+debian/tmp/usr/include/compiz/[!d]*
+debian/tmp/usr/lib/libcompiz_core.so
+debian/tmp/usr/lib/pkgconfig/[!l]*
+debian/tmp/usr/share/compiz/xslt
+debian/tmp/usr/share/cmake*/FindCompiz.cmake
+debian/tmp/usr/share/cmake*/Modules/FindCompiz.cmake
+debian/tmp/usr/share/compiz/cmake

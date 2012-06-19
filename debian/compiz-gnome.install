@@ -1,0 +1,9 @@
+debian/tmp/usr/share/applications/compiz.desktop usr/share/gnome/wm-properties/
+debian/tmp/usr/share/gnome-control-center
+debian/tmp/usr/share/gconf/schemas/*.schemas
+debian/tmp/usr/bin/gtk-window-decorator
+debian/65compiz_profile-on-session /etc/X11/Xsession.d
+debian/unity.ini /etc/compizconfig/
+debian/profile_upgrades/*.upgrade etc/compizconfig/upgrades
+debian/tmp/usr/lib/compizconfig/backends/libgconf.so
+debian/tmp/usr/lib/compizconfig/backends/libgsettings.so
