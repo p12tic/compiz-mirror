@@ -69,6 +69,7 @@ compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
     - enable building compiz in parallel
     - switch to dh9
     - build on unversionned boost -dev
+    - shipped new workspacename plugin
   * debian/patches/99_valid_ccsm_desktop_file.patch:
     - create a valid ccsm desktop file
   * debian/copyright, debian/watch:
