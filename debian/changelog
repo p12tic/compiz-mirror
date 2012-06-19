@@ -1,5 +1,6 @@
-compiz (1:0.9.7.8-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
 
+  * New upstream snapshot.
   * debian/control:
     - clean build-deps, removing some suggests and rewritting some descriptions
       to fit the reality
@@ -73,7 +74,7 @@ compiz (1:0.9.7.8-0ubuntu2) UNRELEASED; urgency=low
   * debian/copyright, debian/watch:
     - redone, as new packaging, new source content, new host (launchpad)
 
- -- Didier Roche <didrocks@ubuntu.com>  Tue, 22 May 2012 13:19:42 +0200
+ -- Didier Roche <didrocks@ubuntu.com>  Tue, 19 Jun 2012 12:25:07 +0100
 
 compiz (1:0.9.7.8-0ubuntu1) precise-proposed; urgency=low
 
