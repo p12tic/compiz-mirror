@@ -7,6 +7,10 @@ set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
 set (COMPIZ_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
 
+set (CTEST_MEMORYCHECK_COMMAND /usr/bin/valgrind CACHE FILEPATH "valgrind command" FORCE)
+
+include (Dart)
+
 # Common compiz CMake macros & functions.
 include (CompizCommon)
 # Packaging-specific CMake macros & functions.
