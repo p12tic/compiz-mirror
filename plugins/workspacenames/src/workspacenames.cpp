@@ -199,8 +199,8 @@ WSNamesScreen::handleEvent (XEvent *event)
 {
     screen->handleEvent (event);
 
-   if (event->type != PropertyNotify)
-    return;
+    if (event->type != PropertyNotify)
+	return;
 
     if (event->xproperty.atom == Atoms::desktopViewport)
     {
@@ -241,7 +241,7 @@ WorkspacenamesPluginVTable::init ()
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
         !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
         !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    	return false;
+	return false;
 
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
 	compLogMessage ("workspacenames", CompLogLevelWarn,
