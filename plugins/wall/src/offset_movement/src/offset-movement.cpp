@@ -28,7 +28,7 @@ CompPoint
 compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
 				      const CompRegion &screenRegion)
 {
-    CompRegion sbrRegion (static_cast <const CompRect &> (serverBorderRect));
+    CompRegion sbrRegion (serverBorderRect);
 
     /* If the window would be partially offscreen
      * after it was moved then we should move it back
@@ -58,5 +58,7 @@ compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
 	    dy += r.height ();
     }
 
-    return CompPoint (dx, dy);
+    CompPoint p (dx, dy);
+
+    return p;
 }
