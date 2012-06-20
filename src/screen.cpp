@@ -5290,7 +5290,9 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, i ? children[i - 1] : 0, attrib, children[i]);
+	Window topWindowInTree = i ? children[i - 1] : 0;
+
+	PrivateWindow::createCompWindow (topWindowInTree, topWindowInTree, attrib, children[i]);
     }
 
     /* enforce restack on all windows
