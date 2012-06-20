@@ -41,7 +41,7 @@ compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
     int dx = 0;
     int dy = 0;
 
-    CompRect::vector rects (rem.rects ());
+    const CompRect::vector &rects (rem.rects ());
 
     for (std::vector <CompRect>::const_iterator it = rects.begin ();
 	 it != rects.end ();
