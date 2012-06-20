@@ -5290,7 +5290,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	Window topWindowInTree = i ? children[i - 1] : 0;
+	Window topWindowInTree = i ? children[i - 1] : None;
 
 	PrivateWindow::createCompWindow (topWindowInTree, topWindowInTree, attrib, children[i]);
     }
