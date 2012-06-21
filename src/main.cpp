@@ -212,10 +212,8 @@ detectCompizBinPath (char **argv)
 {
     const char *bin = argv[0];
 #ifdef __linux__
-    char procexe[32];
-    snprintf (procexe, sizeof(procexe)-1, "/proc/%d/exe", (int)getpid ());
     char exe[PATH_MAX];
-    if (readlink (procexe, exe, sizeof(exe)-1) > 0)
+    if (readlink ("/proc/self/exe", exe, sizeof(exe)-1) > 0)
 	bin = exe;
 #endif
     if (strchr (bin, '/'))   // dirname needs a '/' to work reliably
