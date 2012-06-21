@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <libgen.h>
 
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
@@ -202,7 +203,38 @@ CompManager::fini ()
     delete modHandler;
 }
 
-
+/*
+ * Try to detect the true bin directory compiz was run from and store it
+ * in environment variable COMPIZ_BIN_PATH. If all else fails, don't define it.
+ */
+static void
+detectCompizBinPath (char **argv)
+{
+    const char *bin = argv[0];
+#ifdef __linux__
+    char procexe[32];
+    snprintf (procexe, sizeof(procexe)-1, "/proc/%d/exe", (int)getpid ());
+    char exe[PATH_MAX];
+    if (readlink (procexe, exe, sizeof(exe)-1) > 0)
+	bin = exe;
+#endif
+    if (strchr (bin, '/'))   // dirname needs a '/' to work reliably
+    {
+	// We need a private copy for dirname() to modify
+	char *tmpBin = strdup (bin);
+	if (tmpBin)
+	{
+	    const char *binDir = dirname (tmpBin);
+	    if (binDir)
+	    {
+		char env[PATH_MAX];
+		snprintf (env, sizeof(env)-1, "COMPIZ_BIN_PATH=%s/", binDir);
+		putenv (strdup (env));  // parameter needs to be leaked!
+	    }
+	    free (tmpBin);
+	}
+    }
+}
 
 int
 main (int argc, char **argv)
@@ -212,6 +244,8 @@ main (int argc, char **argv)
     programName = argv[0];
     programArgc = argc;
     programArgv = argv;
+
+    detectCompizBinPath (argv);
 
     signal (SIGCHLD, chldSignalHandler);
 

@@ -3897,21 +3897,6 @@ CompScreenImpl::runCommand (CompString command)
 
 	putenv (strdup (env.c_str ()));  // parameter needs to be leaked!
 
-	// We need a private copy of argv[0] for dirname() to modify
-	char *argv0 = strdup (programArgv[0]);
-	if (argv0 != NULL)
-	{
-	    const char *binpath = dirname (argv0);
-	    if (binpath == NULL)
-		binpath = ".";
-	    char binenv[PATH_MAX];
-	    snprintf (binenv, sizeof(binenv)-1, "COMPIZ_BIN_PATH=%s/", binpath);
-	    putenv (strdup (binenv));  // parameter needs to be leaked!
-	    if (binpath != NULL && command.substr (0, 2) == "./")
-		command.replace (0, 1, binpath);
-	    free (argv0);
-	}
-
 	exit (execl ("/bin/sh", "/bin/sh", "-c", command.c_str (), NULL));
     }
 }
