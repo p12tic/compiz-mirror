@@ -474,7 +474,7 @@ BenchScreen::initiate (CompOption::Vector &options)
     gettimeofday (&mLastRedraw, 0);
     mLastPrint = mLastRedraw;
 
-    return false;
+    return true;
 }
 
 bool
