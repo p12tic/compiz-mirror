@@ -33,6 +33,7 @@
 PixmapBinding::PixmapBinding (const NewPixmapReadyCallback &cb,
 				WindowPixmapGetInterface *pmg,
 				WindowAttributesGetInterface *wag,
+				PixmapFreezerInterface       *pf,
 				ServerGrabInterface *sg) :
     mPixmap (),
     mSize (),
@@ -41,6 +42,7 @@ PixmapBinding::PixmapBinding (const NewPixmapReadyCallback &cb,
     newPixmapReadyCallback (cb),
     windowPixmapRetreiver (pmg),
     windowAttributesRetreiver (wag),
+    pixmapFreezer (pf),
     serverGrab (sg)
 {
 }
@@ -124,7 +126,8 @@ PixmapBinding::bind ()
 void
 PixmapBinding::release ()
 {
-    needsRebind = true;
+    if (!pixmapFreezer->frozen ())
+	needsRebind = true;
 }
 
 void
