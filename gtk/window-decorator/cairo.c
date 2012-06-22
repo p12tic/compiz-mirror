@@ -750,6 +750,9 @@ calc_decoration_size (decor_t *d,
     decor_layout_t layout;
     int		   top_width;
 
+    if (!d->decorated)
+	return FALSE;
+
     /* To avoid wasting texture memory, we only calculate the minimal
      * required decoration size then clip and stretch the texture where
      * appropriate
