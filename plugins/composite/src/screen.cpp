@@ -809,6 +809,7 @@ CompositeScreen::handlePaintTimeout ()
 		XFixesDestroyRegion (dpy, sub);
 	    }
 	}
+	XSync (dpy, False);
 	priv->damages.clear ();
 
 	priv->damage = CompRegion ();
