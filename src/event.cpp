@@ -44,6 +44,14 @@
 
 namespace cps = compiz::private_screen;
 
+namespace
+{
+Window CompWindowToWindow (CompWindow *window)
+{
+    return window ? window->id () : None;
+}
+}
+
 
 bool
 PrivateWindow::handleSyncAlarm ()
@@ -1225,7 +1233,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * that to wait until the map request */
 	    if (wa.root == privateScreen.rootWindow())
 	    {
-		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (CompWindowToWindow (getTopWindow ()), CompWindowToWindow (getTopServerWindow ()), wa, event->xcreatewindow.window);
             }
 	    else
 		XSelectInput (privateScreen.dpy, event->xcreatewindow.window,
@@ -1361,7 +1369,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa))
 		    privateScreen.setDefaultWindowAttributes (&wa);
 
-		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (getTopWindow ()->id (), getTopServerWindow ()->id (), wa, event->xcreatewindow.window);
 		break;
 	    }
 	    else
