@@ -45,6 +45,7 @@ class PrivateScreen;
 class CompManager;
 class CoreWindow;
 class CoreOptions;
+class ServerGrabInterface;
 
 typedef std::list<CompWindow *> CompWindowList;
 typedef std::vector<CompWindow *> CompWindowVector;
@@ -391,6 +392,8 @@ public:
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
 
+    virtual ServerGrabInterface * serverGrabInterface () = 0;
+
     // Replacements for friends accessing priv. They are declared virtual to
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     // They are only intended for use within compiz-core
@@ -398,7 +401,8 @@ public:
     virtual void updatePassiveKeyGrabs () const = 0;
     virtual void applyStartupProperties (CompWindow *window) = 0;
     virtual void updateClientList() = 0;
-    virtual Window getTopWindow() const = 0;
+    virtual CompWindow * getTopWindow() const = 0;
+    virtual CompWindow * getTopServerWindow() const = 0;
     virtual CoreOptions& getCoreOptions() = 0;
     virtual Colormap colormap() const = 0;
     virtual void setCurrentDesktop (unsigned int desktop) = 0;
