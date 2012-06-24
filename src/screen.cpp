@@ -4082,14 +4082,23 @@ PrivateScreen::disableEdge (int edge)
 	XUnmapWindow (dpy, screenEdge[edge].id);
 }
 
-Window
+CompWindow *
 cps::WindowManager::getTopWindow() const
 {
     /* return first window that has not been destroyed */
-    if (windows.size ())
-	return windows.back ()->id ();
+    if (!windows.empty ())
+	return windows.back ();
 
-    return None;
+    return NULL;
+}
+
+CompWindow *
+cps::WindowManager::getTopServerWindow () const
+{
+    if (!serverWindows.empty ())
+	return serverWindows.back ();
+
+    return NULL;
 }
 
 int
@@ -4843,10 +4852,16 @@ CompScreenImpl::updateClientList()
     privateScreen.updateClientList ();
 }
 
-Window
+CompWindow *
 CompScreenImpl::getTopWindow() const
 {
     return windowManager.getTopWindow();
+}
+
+CompWindow *
+CompScreenImpl::getTopServerWindow () const
+{
+    return windowManager.getTopServerWindow();
 }
 
 CoreOptions&
@@ -5277,7 +5292,9 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, attrib, children[i]);
+	Window topWindowInTree = i ? children[i - 1] : None;
+
+	PrivateWindow::createCompWindow (topWindowInTree, topWindowInTree, attrib, children[i]);
     }
 
     /* enforce restack on all windows
