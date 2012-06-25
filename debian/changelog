@@ -1,6 +1,61 @@
 compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
 
   * New upstream snapshot.
+    - Fall back to a refresh rate that is more likely to look correct; 60Hz.
+      (LP: #1009338)
+    - Benchmark plugin should consume its key binding, and not pass the key to
+      the underlying window. (LP: #1009320)
+    - Avoid needless STL operations leading to expensive heap operations.
+      (LP: #1006335)
+    - Fix a typo that was causing (LP: #1002606)
+      (widthIncBorders/heightIncBorders)
+    - Check if the window is decorated before trying to change its event window
+      states (which won't exist if not decorated) (LP: #1007754)
+    - Use the XDamage extension more efficiently (the way it was designed to be
+      used). This dramatically reduces CPU usage, reduces wakeups, and
+      increases frame rates. It also solves at least one observed performance
+      bug (LP: #1007299) and probably several more.
+    - Avoid constructing and destructing lots of strings on every single event,
+      which was wasting lots of CPU (LP: #1005569)
+    - md LINGUAS doesn't exist, it's mnk (Mandinka in ISO 639-3)
+    - Move grid plugin to google test and don't depend on the plugin for the
+      test (LP: #1005009)
+    - Don't read plugin.Initialized and test the value. (LP: #1004848)
+    - libcompizconfig's install () commands were still using the old includedir
+      and libdir variables rather than their libcompizconfig_* variants.
+      (LP: #1005176)
+    - Execute the cmake files separately to ensure that DESTDIR is respected.
+      (LP: #1005177)
+    - Don't set_target_properties on a target that might not exist
+      (LP: #1005008)
+    - Don't allow windows which we weren't even tracking as decoratable to
+      become decorated if they try and change their hints. (LP: #963794)
+    - Change the mouse pointer while dragging windows in expo. Just like the
+      ubuntu branches do. (LP: #987647)
+    - Fix uninitialized memory use (LP: #1004338)
+    - Fix uninitialized variable (LP: #1004335)
+    - Delay unbinding of pixmaps until then next rebind (LP: #729979)
+      (LP: #1002602)
+    - Don't drop plugins from the list to try and load before you've even tried
+      to load them. Doing so makes missing plugins silently ignored instead of
+      an error message (LP: #1002715). It also means valid plugins in more
+      unusual, but real locations in LD_LIBRARY_PATH will never get loaded
+      (LP: #1002721).
+    - If running test cases under a real X server, we don't care if Xvfb is
+      missing (LP: #994841)
+    - Don't assume pkg_check_modules always sets _PREFIX (LP: #993608)
+    - Don't clear selections in ~PrivateScreen because it causes a race between
+      the existing and the new compiz instances, breaking --replace and
+      non-replace behaviour. (LP: #988684) (LP: #989545)
+    - Always paint with infiniteRegion as the clip region if the window is
+      transformed and always use the supplied region if painting with offset or
+      on transformed screen. (LP: #987639)
+    - Add synchronization primitives to the decoration protocol so that there
+      isn't a race where we bind a texture that's being freed. (LP: #454218) 
+      (LP: #929989)
+    - fix a crash in the first attempt at this (LP: #996901)
+    - Reintroduce the fix for LP: #994841 which was accidentally reverted by
+      revision 3133. (LP: #999019)
   * Cherry-pick some post-snapshot crasher fix:
     - rev for Crash in compiz::wall::movementWindowOnScreen (rev 3255)
       (LP: #1015151)
