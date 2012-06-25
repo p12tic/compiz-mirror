@@ -142,6 +142,9 @@ compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
   * debian/source/format:
     - remove v3 (quilt) format: it doesn't work well with merge-upstream
       workflow
+  * Note that right now, armhf/armel are building with opengl as opengles is
+    not yet backed into upstream and opengles drivers are broken in quantal
+    kernel
 
  -- Didier Roche <didrocks@ubuntu.com>  Tue, 19 Jun 2012 12:25:07 +0100
 
