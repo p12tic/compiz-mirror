@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu1~ppa1) quantal; urgency=low
 
   * New upstream snapshot.
     - Fall back to a refresh rate that is more likely to look correct; 60Hz.
@@ -141,6 +141,20 @@ compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
       workflow
 
  -- Didier Roche <didrocks@ubuntu.com>  Tue, 19 Jun 2012 12:25:07 +0100
+
+compiz (1:0.9.7.8-0ubuntu3) quantal; urgency=low
+
+  * drop -Werror temporary on armel/hf builds until the GLES patch does 
+    not produce warnings anymore which cause compiz to FTBFS
+
+ --  Oliver Grawert <ogra@ubuntu.com>  Mon, 04 Jun 2012 17:38:35 +0200
+
+compiz (1:0.9.7.8-0ubuntu2) quantal; urgency=low
+
+  * debian/control:
+    - rebuild with new boost
+
+ -- Didier Roche <didrocks@ubuntu.com>  Thu, 31 May 2012 09:41:01 +0200
 
 compiz (1:0.9.7.8-0ubuntu1) precise-proposed; urgency=low
 

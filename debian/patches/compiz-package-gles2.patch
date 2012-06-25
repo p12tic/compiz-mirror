@@ -1,6 +1,10 @@
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/base.cmake linaro-gles2-debianpatches/cmake/base.cmake
---- compiz-0.9.7.8/cmake/base.cmake	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/cmake/base.cmake	2012-04-20 11:41:59.241600000 +0200
+## Description: add some description
+## Origin/Author: add some origin or author
+## Bug: bug URL
+Index: compiz-0.9.7.8/cmake/base.cmake
+===================================================================
+--- compiz-0.9.7.8.orig/cmake/base.cmake	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/cmake/base.cmake	2012-06-04 14:59:47.000000000 +0000
 @@ -24,6 +24,7 @@
      compiz_print_configure_header ("Compiz")
      compiz_color_message ("\n${_escape}[4mOptional features:${_escape}[0m\n")
@@ -19,9 +23,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/base.cmake lina
      )
  endfunction ()
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CMakeLists.txt linaro-gles2-debianpatches/cmake/CMakeLists.txt
---- compiz-0.9.7.8/cmake/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/cmake/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/cmake/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/cmake/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/cmake/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -15,6 +15,8 @@
        plugin_extensions/CompizGenInstallData.cmake)
  list (APPEND _PluginExtensionFiles
@@ -31,9 +36,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CMakeLists.txt 
  
  if (USE_GCONF)
      list (APPEND _files CompizGconf.cmake)
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CompizCommon.cmake linaro-gles2-debianpatches/cmake/CompizCommon.cmake
---- compiz-0.9.7.8/cmake/CompizCommon.cmake	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/cmake/CompizCommon.cmake	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/cmake/CompizCommon.cmake
+===================================================================
+--- compiz-0.9.7.8.orig/cmake/CompizCommon.cmake	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/cmake/CompizCommon.cmake	2012-06-04 15:00:15.000000000 +0000
 @@ -18,6 +18,7 @@
  
  set (CMAKE_SKIP_RPATH FALSE)
@@ -42,7 +48,24 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CompizCommon.cm
  option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
  option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
  option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
-@@ -75,6 +76,17 @@
+@@ -56,16 +57,6 @@
+     set (COMMON_FLAGS "${COMMON_FLAGS} -Wno-sign-conversion")
+ endif ()
+ 
+-if (${CMAKE_PROJECT_NAME} STREQUAL "compiz")
+-    set (COMPIZ_WERROR_DEFAULT ON)
+-else ()
+-    set (COMPIZ_WERROR_DEFAULT OFF)
+-endif ()
+-option (COMPIZ_WERROR "Treat warnings as errors" ${COMPIZ_WERROR_DEFAULT})
+-if (COMPIZ_WERROR)
+-    set (COMMON_FLAGS "${COMMON_FLAGS} -Werror")
+-endif ()
+-
+ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
+ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
+ 
+@@ -75,6 +66,17 @@
      set(IS_BZR_REPO 0)
  endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
  
@@ -60,9 +83,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CompizCommon.cm
  function (compiz_ensure_linkage)
      find_program (LDCONFIG_EXECUTABLE ldconfig)
      mark_as_advanced (FORCE LDCONFIG_EXECUTABLE)
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CompizPlugin.cmake linaro-gles2-debianpatches/cmake/CompizPlugin.cmake
---- compiz-0.9.7.8/cmake/CompizPlugin.cmake	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/cmake/CompizPlugin.cmake	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/cmake/CompizPlugin.cmake
+===================================================================
+--- compiz-0.9.7.8.orig/cmake/CompizPlugin.cmake	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/cmake/CompizPlugin.cmake	2012-06-04 14:59:47.000000000 +0000
 @@ -257,6 +257,16 @@
  	    NO_DEFAULT_PATH
  	)
@@ -113,9 +137,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/CompizPlugin.cm
  	# find files for build
  	file (GLOB _h_files "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
  	file (GLOB _h_ins_files "${CMAKE_CURRENT_SOURCE_DIR}/include/${plugin}/*.h")
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/FindOpenGLES2.cmake linaro-gles2-debianpatches/cmake/FindOpenGLES2.cmake
---- compiz-0.9.7.8/cmake/FindOpenGLES2.cmake	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/cmake/FindOpenGLES2.cmake	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/cmake/FindOpenGLES2.cmake
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/cmake/FindOpenGLES2.cmake	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,51 @@
 +# - Try to find OpenGLES
 +# Once done this will define
@@ -168,9 +193,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/FindOpenGLES2.c
 +    SET( OPENGLES2_FOUND "YES" )
 +ENDIF(OPENGLES2_LIBRARY AND OPENGLES2_EGL_LIBRARY)
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/plugin_extensions/CompizOpenGLFixups.cmake linaro-gles2-debianpatches/cmake/plugin_extensions/CompizOpenGLFixups.cmake
---- compiz-0.9.7.8/cmake/plugin_extensions/CompizOpenGLFixups.cmake	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/cmake/plugin_extensions/CompizOpenGLFixups.cmake	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/cmake/plugin_extensions/CompizOpenGLFixups.cmake
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/cmake/plugin_extensions/CompizOpenGLFixups.cmake	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,22 @@
 +
 +# modify pkg-config libs for opengl based on if we found GLES or not
@@ -194,9 +220,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/cmake/plugin_extensio
 +    endif (opengl_found STREQUAL "opengl")
 +endif (NOT "${${_PLUGIN}_PLUGINDEPS}" STREQUAL "")
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/CMakeLists.txt linaro-gles2-debianpatches/CMakeLists.txt
---- compiz-0.9.7.8/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -119,6 +119,12 @@
      DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
  )
@@ -223,9 +250,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/CMakeLists.txt linaro
  # Enable coverage reporting for compiz
  enable_coverage_report()
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/NEWS linaro-gles2-debianpatches/NEWS
---- compiz-0.9.7.8/NEWS	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/NEWS	2012-04-26 12:34:44.027302000 +0200
+Index: compiz-0.9.7.8/NEWS
+===================================================================
+--- compiz-0.9.7.8.orig/NEWS	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/NEWS	2012-06-04 14:59:47.000000000 +0000
 @@ -10,7 +10,6 @@
      976467 - [regression] Compiz 0.9.7.6: Menus often have no shadows at all
      978900 - Menu shadow clipping flickers while switching menubar
@@ -242,9 +270,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/NEWS linaro-gles2-deb
      968985 - Memory leak in dlloaderListPlugins
      969102 - priv->invisible is not updated when the window is mapped
      919139 - window management, multi-monitor - In multi-monitor
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/annotate/src/annotate.cpp linaro-gles2-debianpatches/plugins/annotate/src/annotate.cpp
---- compiz-0.9.7.8/plugins/annotate/src/annotate.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/annotate/src/annotate.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/annotate/src/annotate.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/annotate/src/annotate.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/annotate/src/annotate.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -629,11 +629,14 @@
  
      if (status)
@@ -540,9 +569,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/annotate/src/
      }
  
      return status;
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/blur/CMakeLists.txt linaro-gles2-debianpatches/plugins/blur/CMakeLists.txt
---- compiz-0.9.7.8/plugins/blur/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/blur/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/blur/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/blur/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/blur/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -2,15 +2,15 @@
  
  include (CompizPlugin)
@@ -569,9 +599,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/blur/CMakeLis
 +#	)
 +#    endif (COMPIZ_BUILD_WITH_RPATH AND NOT COMPIZ_DISABLE_PLUGIN_BLUR)
 +#endif ()
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/clone/src/clone.cpp linaro-gles2-debianpatches/plugins/clone/src/clone.cpp
---- compiz-0.9.7.8/plugins/clone/src/clone.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/clone/src/clone.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/clone/src/clone.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/clone/src/clone.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/clone/src/clone.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -295,9 +295,6 @@
  			 0.0f);
  	sTransform.scale (zoomX, zoomY, 1.0f);
@@ -591,9 +622,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/clone/src/clo
      }
  
      return status;
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/compiztoolbox/src/compiztoolbox.cpp linaro-gles2-debianpatches/plugins/compiztoolbox/src/compiztoolbox.cpp
---- compiz-0.9.7.8/plugins/compiztoolbox/src/compiztoolbox.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/compiztoolbox/src/compiztoolbox.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/compiztoolbox/src/compiztoolbox.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/compiztoolbox/src/compiztoolbox.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/compiztoolbox/src/compiztoolbox.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -465,9 +465,7 @@
  	sAttrib.yTranslate = wy - g.y () +
  			     window->border ().top  * sAttrib.yScale;
@@ -670,9 +702,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/compiztoolbox
      }
  }
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/copytex/src/copytex.cpp linaro-gles2-debianpatches/plugins/copytex/src/copytex.cpp
---- compiz-0.9.7.8/plugins/copytex/src/copytex.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/copytex/src/copytex.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/copytex/src/copytex.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/copytex/src/copytex.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/copytex/src/copytex.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -112,6 +112,14 @@
      GLenum            target;
      GLTexture::Matrix matrix = _identity_matrix;
@@ -696,19 +729,21 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/copytex/src/c
  
      setData (target, matrix, false);
      setGeometry (dim.x1 (), dim.y1 (), dim.x2 () - dim.x1 (), dim.y2 () - dim.y1 ());
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/cube/CMakeLists.txt linaro-gles2-debianpatches/plugins/cube/CMakeLists.txt
---- compiz-0.9.7.8/plugins/cube/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/cube/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/cube/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/cube/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/cube/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -2,4 +2,4 @@
  
  include (CompizPlugin)
  
 -compiz_plugin(cube PLUGINDEPS composite opengl)
-\ Kein Zeilenumbruch am Dateiende.
+\ No newline at end of file
 +#compiz_plugin(cube PLUGINDEPS composite opengl)
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/cube/src/cube.cpp linaro-gles2-debianpatches/plugins/cube/src/cube.cpp
---- compiz-0.9.7.8/plugins/cube/src/cube.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/cube/src/cube.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/cube/src/cube.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/cube/src/cube.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/cube/src/cube.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -1123,7 +1123,6 @@
      if ((priv->mDesktopOpacity != OPAQUE) || (color[3] != OPAQUE))
      {
@@ -741,9 +776,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/cube/src/cube
      glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
  }
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/decor/src/decor.cpp linaro-gles2-debianpatches/plugins/decor/src/decor.cpp
---- compiz-0.9.7.8/plugins/decor/src/decor.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/decor/src/decor.cpp	2012-04-26 12:34:44.027302000 +0200
+Index: compiz-0.9.7.8/plugins/decor/src/decor.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/decor/src/decor.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/decor/src/decor.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -177,15 +177,13 @@
   */
  
@@ -859,9 +895,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/decor/src/dec
      }
  }
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/decor/src/decor.h linaro-gles2-debianpatches/plugins/decor/src/decor.h
---- compiz-0.9.7.8/plugins/decor/src/decor.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/decor/src/decor.h	2012-04-26 12:34:44.027302000 +0200
+Index: compiz-0.9.7.8/plugins/decor/src/decor.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/decor/src/decor.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/decor/src/decor.h	2012-06-04 14:59:47.000000000 +0000
 @@ -252,10 +252,10 @@
  
  	void computeShadowRegion ();
@@ -876,9 +913,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/decor/src/dec
  
  	void windowNotify (CompWindowNotify n);
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.cpp linaro-gles2-debianpatches/plugins/imgsvg/src/imgsvg.cpp
---- compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/imgsvg/src/imgsvg.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/imgsvg/src/imgsvg.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -220,12 +220,12 @@
  }
  
@@ -930,9 +968,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/imgsvg/src/im
  
  		    gScreen->setFilter (SCREEN_TRANS_FILTER, saveFilter);
  		}
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.h linaro-gles2-debianpatches/plugins/imgsvg/src/imgsvg.h
---- compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/imgsvg/src/imgsvg.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/imgsvg/src/imgsvg.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/imgsvg/src/imgsvg.h	2012-06-04 14:59:47.000000000 +0000
 @@ -76,7 +76,8 @@
  	SvgWindow (CompWindow *window);
  	~SvgWindow ();
@@ -943,9 +982,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/imgsvg/src/im
  		     const CompRegion &region, unsigned int mask);
  	void moveNotify (int dx, int dy, bool immediate);
  	void resizeNotify (int dx, int dy, int dwidth, int dheight);
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/obs/src/obs.cpp linaro-gles2-debianpatches/plugins/obs/src/obs.cpp
---- compiz-0.9.7.8/plugins/obs/src/obs.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/obs/src/obs.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/obs/src/obs.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/obs/src/obs.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/obs/src/obs.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -151,29 +151,30 @@
  	 we wrap into glDrawWindow here */
  
@@ -985,9 +1025,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/obs/src/obs.c
  }
  
  void
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/obs/src/obs.h linaro-gles2-debianpatches/plugins/obs/src/obs.h
---- compiz-0.9.7.8/plugins/obs/src/obs.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/obs/src/obs.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/obs/src/obs.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/obs/src/obs.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/obs/src/obs.h	2012-06-04 14:59:47.000000000 +0000
 @@ -66,7 +66,7 @@
  
  	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
@@ -997,9 +1038,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/obs/src/obs.h
  		     const CompRegion &, unsigned int);
  
  	void changePaintModifier (unsigned int, int);
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/CMakeLists.txt linaro-gles2-debianpatches/plugins/opengl/CMakeLists.txt
---- compiz-0.9.7.8/plugins/opengl/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -2,7 +2,12 @@
  
  include (CompizPlugin)
@@ -1008,7 +1050,7 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/CMakeL
 -if (OPENGL_FOUND)
 -    compiz_plugin(opengl PLUGINDEPS composite LIBRARIES ${OPENGL_gl_LIBRARY} INCDIRS ${OPENGL_INCLUDE_DIR})
 -endif ()
-\ Kein Zeilenumbruch am Dateiende.
+\ No newline at end of file
 +if (USE_GLES)
 +    compiz_plugin(opengl PLUGINDEPS composite CFLAGSADD "-DUSE_GLES -std=c++0x" LIBRARIES ${OPENGLES2_LIBRARIES} INCDIRS ${OPENGLES2_INCLUDE_DIR})
 +else (USE_GLES)
@@ -1018,21 +1060,23 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/CMakeL
 +    endif (OPENGL_FOUND)
 +endif (USE_GLES)
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/compiz-opengl.pc.in linaro-gles2-debianpatches/plugins/opengl/compiz-opengl.pc.in
---- compiz-0.9.7.8/plugins/opengl/compiz-opengl.pc.in	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/compiz-opengl.pc.in	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/compiz-opengl.pc.in
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/compiz-opengl.pc.in	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/compiz-opengl.pc.in	2012-06-04 14:59:47.000000000 +0000
 @@ -8,5 +8,5 @@
  Version: @VERSION@
  
  Requires: compiz compiz-composite
 -Libs: -lGL -L${libdir} -lopengl
 -Cflags: @COMPIZ_CFLAGS@ -I${includedir}/compiz
-\ Kein Zeilenumbruch am Dateiende.
+\ No newline at end of file
 +Libs: @PKGCONFIG_LIBS@ -L${libdir} -lopengl
 +Cflags: @COMPIZ_CFLAGS@ -I${includedir}/compiz
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/fragment.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/fragment.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/fragment.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/fragment.h	1970-01-01 01:00:00.000000000 +0100
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/fragment.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/include/opengl/fragment.h	2012-04-26 06:47:01.000000000 +0000
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,125 +0,0 @@
 -/*
 - * Copyright © 2008 Dennis Kasprzyk
@@ -1159,9 +1203,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
 -
 -
 -#endif
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/framebufferobject.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/framebufferobject.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/framebufferobject.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/framebufferobject.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/framebufferobject.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/framebufferobject.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,107 @@
 +/*
 + * Copyright (c) 2011 Collabora, Ltd.
@@ -1270,9 +1315,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
 +};
 +
 +#endif // _COMPIZ_GLFRAMEBUFFEROBJECT_H
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/matrix.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/matrix.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/matrix.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/matrix.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/matrix.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/include/opengl/matrix.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/matrix.h	2012-06-04 14:59:47.000000000 +0000
 @@ -44,6 +44,8 @@
  	void reset ();
  	void toScreenSpace (const CompOutput *output, float z);
@@ -1282,9 +1328,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
  	void rotate (const float angle, const float x,
  		     const float y, const float z);
  	void rotate (const float angle, const GLVector& vector);
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/opengl.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/opengl.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/opengl.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/opengl.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/opengl.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/include/opengl/opengl.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/opengl.h	2012-06-04 14:59:47.000000000 +0000
 @@ -28,16 +28,45 @@
  #ifndef _COMPIZ_OPENGL_H
  #define _COMPIZ_OPENGL_H
@@ -1823,9 +1870,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
  
  #endif
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/programcache.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/programcache.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/programcache.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/programcache.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/programcache.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/programcache.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,51 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -1878,9 +1926,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
 +
 +#endif // _COMPIZ_GLPROGRAMCACHE_H
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/program.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/program.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/program.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/program.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/program.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/program.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,75 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -1957,9 +2006,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
 +
 +#endif // _COMPIZ_GLPROGRAM_H
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/shadercache.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/shadercache.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/shadercache.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/shadercache.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/shadercache.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/shadercache.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,100 @@
 +/*
 + * Copyright © 2012 Linaro Ltd.
@@ -2061,9 +2111,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
 +};
 +
 +#endif
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/texture.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/texture.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/texture.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/texture.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/texture.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/include/opengl/texture.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/texture.h	2012-06-04 14:59:47.000000000 +0000
 @@ -32,7 +32,12 @@
  #include "core/string.h"
  
@@ -2077,9 +2128,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
  
  #include <boost/function.hpp>
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/vector.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/vector.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/vector.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/vector.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/vector.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/include/opengl/vector.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/vector.h	2012-06-04 14:59:47.000000000 +0000
 @@ -40,7 +40,7 @@
  	} VectorCoordsEnum;
  
@@ -2089,9 +2141,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
  
  	/**
  	 * Returns a reference to the x, y, z or w value by using
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/include/opengl/vertexbuffer.h linaro-gles2-debianpatches/plugins/opengl/include/opengl/vertexbuffer.h
---- compiz-0.9.7.8/plugins/opengl/include/opengl/vertexbuffer.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/include/opengl/vertexbuffer.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/include/opengl/vertexbuffer.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/include/opengl/vertexbuffer.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,109 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -2202,9 +2255,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/includ
 +
 +#endif // _COMPIZ_GLVERTEXBUFFER_H
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/opengl.xml.in linaro-gles2-debianpatches/plugins/opengl/opengl.xml.in
---- compiz-0.9.7.8/plugins/opengl/opengl.xml.in	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/opengl.xml.in	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/opengl.xml.in
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/opengl.xml.in	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/opengl.xml.in	2012-06-04 14:59:47.000000000 +0000
 @@ -36,7 +36,7 @@
  	    <option name="sync_to_vblank" type="bool">
  		<_short>Sync To VBlank</_short>
@@ -2214,9 +2268,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/opengl
  	    </option>
  	    <option name="texture_compression" type="bool">
  		<_short>Texture Compression</_short>
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/fragment.cpp linaro-gles2-debianpatches/plugins/opengl/src/fragment.cpp
---- compiz-0.9.7.8/plugins/opengl/src/fragment.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/fragment.cpp	1970-01-01 01:00:00.000000000 +0100
+Index: compiz-0.9.7.8/plugins/opengl/src/fragment.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/fragment.cpp	2012-04-26 06:47:01.000000000 +0000
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,1146 +0,0 @@
 -/*
 - * Copyright © 2007 Novell, Inc.
@@ -3364,9 +3419,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/fr
 -    }
 -
 -};
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/framebufferobject.cpp linaro-gles2-debianpatches/plugins/opengl/src/framebufferobject.cpp
---- compiz-0.9.7.8/plugins/opengl/src/framebufferobject.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/src/framebufferobject.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/framebufferobject.cpp
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/framebufferobject.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,191 @@
 +/*
 + * Copyright (c) 2011 Collabora, Ltd.
@@ -3559,9 +3615,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/fr
 +{
 +	return priv->glTex;
 +}
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/matrix.cpp linaro-gles2-debianpatches/plugins/opengl/src/matrix.cpp
---- compiz-0.9.7.8/plugins/opengl/src/matrix.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/matrix.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/matrix.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/matrix.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/matrix.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -163,6 +163,60 @@
  #undef B
  #undef P
@@ -3623,9 +3680,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/ma
  /**
   * Generate a 4x4 transformation matrix from glRotate parameters, and
   * post-multiply the input matrix by it.
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/paint.cpp linaro-gles2-debianpatches/plugins/opengl/src/paint.cpp
---- compiz-0.9.7.8/plugins/opengl/src/paint.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/paint.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/paint.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/paint.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/paint.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -1,5 +1,6 @@
  /*
   * Copyright © 2005 Novell, Inc.
@@ -4814,9 +4872,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pa
  
      return status;
  }
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/privatefragment.h linaro-gles2-debianpatches/plugins/opengl/src/privatefragment.h
---- compiz-0.9.7.8/plugins/opengl/src/privatefragment.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/privatefragment.h	1970-01-01 01:00:00.000000000 +0100
+Index: compiz-0.9.7.8/plugins/opengl/src/privatefragment.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/privatefragment.h	2012-04-26 06:47:01.000000000 +0000
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
 @@ -1,54 +0,0 @@
 -/*
 - * Copyright © 2008 Dennis Kasprzyk
@@ -4872,9 +4931,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pr
 -};
 -
 -#endif
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/privates.h linaro-gles2-debianpatches/plugins/opengl/src/privates.h
---- compiz-0.9.7.8/plugins/opengl/src/privates.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/privates.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/privates.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/privates.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/privates.h	2012-06-04 14:59:47.000000000 +0000
 @@ -32,8 +32,12 @@
  #include <opengl/opengl.h>
  #include <core/atoms.h>
@@ -4976,9 +5036,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pr
 -
  #endif
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/privatetexture.h linaro-gles2-debianpatches/plugins/opengl/src/privatetexture.h
---- compiz-0.9.7.8/plugins/opengl/src/privatetexture.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/privatetexture.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/privatetexture.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/privatetexture.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/privatetexture.h	2012-06-04 14:59:47.000000000 +0000
 @@ -1,6 +1,7 @@
  /*
   * Copyright © 2008 Dennis Kasprzyk
@@ -5045,9 +5106,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pr
 +#endif
  
  #endif
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/privatevertexbuffer.h linaro-gles2-debianpatches/plugins/opengl/src/privatevertexbuffer.h
---- compiz-0.9.7.8/plugins/opengl/src/privatevertexbuffer.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/src/privatevertexbuffer.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/privatevertexbuffer.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/privatevertexbuffer.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,138 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -5187,9 +5249,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pr
 +
 +#endif //_VERTEXBUFFER_PRIVATE_H
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/programcache.cpp linaro-gles2-debianpatches/plugins/opengl/src/programcache.cpp
---- compiz-0.9.7.8/plugins/opengl/src/programcache.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/src/programcache.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/programcache.cpp
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/programcache.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,175 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -5366,9 +5429,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pr
 +    access_history.pop_front ();
 +}
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/program.cpp linaro-gles2-debianpatches/plugins/opengl/src/program.cpp
---- compiz-0.9.7.8/plugins/opengl/src/program.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/src/program.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/program.cpp
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/program.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,262 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -5632,9 +5696,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/pr
 +    return (*GL::getAttribLocation) (priv->program, name);
 +}
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/screen.cpp linaro-gles2-debianpatches/plugins/opengl/src/screen.cpp
---- compiz-0.9.7.8/plugins/opengl/src/screen.cpp	2012-04-26 12:39:13.700308461 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/screen.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/screen.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/screen.cpp	2012-06-04 14:39:50.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/screen.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -1,4 +1,5 @@
  /*
 + * Copyright © 2011 Linaro Ltd.
@@ -6615,9 +6680,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/sc
 -{
 -    return priv->projection;
 -}
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/shadercache.cpp linaro-gles2-debianpatches/plugins/opengl/src/shadercache.cpp
---- compiz-0.9.7.8/plugins/opengl/src/shadercache.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/src/shadercache.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/shadercache.cpp
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/shadercache.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,246 @@
 +/*
 + * Copyright © 2012 Linaro Ltd.
@@ -6865,9 +6931,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/sh
 +
 +    return ss.str();
 +}
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/texture.cpp linaro-gles2-debianpatches/plugins/opengl/src/texture.cpp
---- compiz-0.9.7.8/plugins/opengl/src/texture.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/texture.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/texture.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/texture.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/texture.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -35,7 +35,11 @@
  #include <privatetexture.h>
  #include "privates.h"
@@ -7100,9 +7167,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/te
  }
 +#endif
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/vertexbuffer.cpp linaro-gles2-debianpatches/plugins/opengl/src/vertexbuffer.cpp
---- compiz-0.9.7.8/plugins/opengl/src/vertexbuffer.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/opengl/src/vertexbuffer.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/vertexbuffer.cpp
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/vertexbuffer.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,550 @@
 +/*
 + * Copyright © 2011 Linaro Ltd.
@@ -7654,9 +7722,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/ve
 +    return 0;
 +}
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/window.cpp linaro-gles2-debianpatches/plugins/opengl/src/window.cpp
---- compiz-0.9.7.8/plugins/opengl/src/window.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/opengl/src/window.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/opengl/src/window.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/opengl/src/window.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/opengl/src/window.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -46,6 +46,28 @@
      delete priv;
  }
@@ -7869,9 +7938,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/opengl/src/wi
  PrivateGLWindow::updateFrameRegion (CompRegion &region)
  {
      window->updateFrameRegion (region);
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/resize/src/resize.cpp linaro-gles2-debianpatches/plugins/resize/src/resize.cpp
---- compiz-0.9.7.8/plugins/resize/src/resize.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/resize/src/resize.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/resize/src/resize.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/resize/src/resize.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/resize/src/resize.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -1525,60 +1525,114 @@
  				unsigned short            *borderColor,
  				unsigned short            *fillColor)
@@ -8073,19 +8143,21 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/resize/src/re
      }
      else
      {
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/rotate/CMakeLists.txt linaro-gles2-debianpatches/plugins/rotate/CMakeLists.txt
---- compiz-0.9.7.8/plugins/rotate/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/rotate/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/rotate/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/rotate/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/rotate/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -2,4 +2,4 @@
  
  include (CompizPlugin)
  
 -compiz_plugin(rotate PLUGINDEPS composite opengl cube)
-\ Kein Zeilenumbruch am Dateiende.
+\ No newline at end of file
 +#compiz_plugin(rotate PLUGINDEPS composite opengl cube)
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/scale/src/scale.cpp linaro-gles2-debianpatches/plugins/scale/src/scale.cpp
---- compiz-0.9.7.8/plugins/scale/src/scale.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/scale/src/scale.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/scale/src/scale.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/scale/src/scale.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/scale/src/scale.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -226,26 +226,19 @@
  	    GLTexture::MatrixList ml (1);
  
@@ -8151,9 +8223,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/scale/src/sca
  	    sWindow->scalePaintDecoration (sAttrib, transform, region, mask);
  	}
      }
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/screenshot/src/screenshot.cpp linaro-gles2-debianpatches/plugins/screenshot/src/screenshot.cpp
---- compiz-0.9.7.8/plugins/screenshot/src/screenshot.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/screenshot/src/screenshot.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/screenshot/src/screenshot.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/screenshot/src/screenshot.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/screenshot/src/screenshot.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -249,6 +249,10 @@
  			   CompOutput                *output,
  			   unsigned int               mask)
@@ -8244,9 +8317,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/screenshot/sr
  	}
      }
  
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/switcher/src/switcher.cpp linaro-gles2-debianpatches/plugins/switcher/src/switcher.cpp
---- compiz-0.9.7.8/plugins/switcher/src/switcher.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/switcher/src/switcher.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/switcher/src/switcher.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/switcher/src/switcher.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/switcher/src/switcher.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -31,25 +31,33 @@
  
  static float _boxVertices[] =
@@ -8400,19 +8474,21 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/switcher/src/
      }
      else if (window == sScreen->selectedWindow)
      {
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/CMakeLists.txt linaro-gles2-debianpatches/plugins/water/CMakeLists.txt
---- compiz-0.9.7.8/plugins/water/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/water/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/water/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/water/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/water/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -2,4 +2,4 @@
  
  include (CompizPlugin)
  
 -compiz_plugin(water PLUGINDEPS composite opengl)
-\ Kein Zeilenumbruch am Dateiende.
+\ No newline at end of file
 +compiz_plugin(water PLUGINDEPS composite opengl)
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/src/shaders.h linaro-gles2-debianpatches/plugins/water/src/shaders.h
---- compiz-0.9.7.8/plugins/water/src/shaders.h	1970-01-01 01:00:00.000000000 +0100
-+++ linaro-gles2-debianpatches/plugins/water/src/shaders.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/water/src/shaders.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ compiz-0.9.7.8/plugins/water/src/shaders.h	2012-06-04 14:59:47.000000000 +0000
 @@ -0,0 +1,201 @@
 +/*
 + * Copyright © 2011 Collabora Ltd.
@@ -8615,9 +8691,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/src/sha
 +
 +#endif // _COMPIZ_WATERSHADERS_H
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/src/water.cpp linaro-gles2-debianpatches/plugins/water/src/water.cpp
---- compiz-0.9.7.8/plugins/water/src/water.cpp	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/water/src/water.cpp	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/water/src/water.cpp
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/water/src/water.cpp	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/water/src/water.cpp	2012-06-04 14:59:47.000000000 +0000
 @@ -21,6 +21,7 @@
   * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
   *
@@ -9855,9 +9932,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/src/wat
  }
  
  bool
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/src/water.h linaro-gles2-debianpatches/plugins/water/src/water.h
---- compiz-0.9.7.8/plugins/water/src/water.h	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/water/src/water.h	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/water/src/water.h
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/water/src/water.h	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/water/src/water.h	2012-06-04 14:59:47.000000000 +0000
 @@ -21,6 +21,7 @@
   * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
   *
@@ -10026,9 +10104,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/src/wat
  	bool init ();
  };
 +
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/water.xml.in linaro-gles2-debianpatches/plugins/water/water.xml.in
---- compiz-0.9.7.8/plugins/water/water.xml.in	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/water/water.xml.in	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/water/water.xml.in
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/water/water.xml.in	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/water/water.xml.in	2012-06-04 14:59:47.000000000 +0000
 @@ -49,6 +49,30 @@
  		<min>1</min>
  		<max>3600000</max>
@@ -10060,9 +10139,10 @@ diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/water/water.x
  	    <option name="title_wave" type="bell">
  		<_short>Title wave</_short>
  		<_long>Wave effect from window title</_long>
-diff -Nur '--exclude=.*' '--exclude=debian' compiz-0.9.7.8/plugins/wobbly/CMakeLists.txt linaro-gles2-debianpatches/plugins/wobbly/CMakeLists.txt
---- compiz-0.9.7.8/plugins/wobbly/CMakeLists.txt	2012-04-26 08:47:01.000000000 +0200
-+++ linaro-gles2-debianpatches/plugins/wobbly/CMakeLists.txt	2012-04-20 11:41:59.241600000 +0200
+Index: compiz-0.9.7.8/plugins/wobbly/CMakeLists.txt
+===================================================================
+--- compiz-0.9.7.8.orig/plugins/wobbly/CMakeLists.txt	2012-04-26 06:47:01.000000000 +0000
++++ compiz-0.9.7.8/plugins/wobbly/CMakeLists.txt	2012-06-04 14:59:47.000000000 +0000
 @@ -2,4 +2,4 @@
  
  include (CompizPlugin)
