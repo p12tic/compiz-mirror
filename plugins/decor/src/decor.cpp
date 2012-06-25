@@ -186,14 +186,13 @@ DecorWindow::glDraw (const GLMatrix            &transform,
 		     */
 		    pmask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
+		    const GLWindowPaintAttrib &pAttrib (d->gWindow->paintAttrib ());
+
+		    if (d->gWindow->glPaint (pAttrib,
 					     transform,
 					     region,
 					     pmask))
-		    {
-			GLFragment::Attrib fa (d->gWindow->paintAttrib ());
-			d->glDecorate (transform, fa, region, mask);
-		    }
+			d->glDecorate (transform, pAttrib, region, mask);
 		}
 	    }
 	}
