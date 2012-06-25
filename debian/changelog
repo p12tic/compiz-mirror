@@ -1,6 +1,9 @@
 compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
 
   * New upstream snapshot.
+  * Cherry-pick some post-snapshot crasher fix:
+    - rev for Crash in compiz::wall::movementWindowOnScreen (rev 3255)
+      (LP: #1015151)
   * debian/control:
     - clean build-deps, removing some suggests and rewritting some descriptions
       to fit the reality
