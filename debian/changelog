@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3249-0ubuntu1~ppa1) quantal; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu1) UNRELEASED; urgency=low
 
   * New upstream snapshot.
     - Fall back to a refresh rate that is more likely to look correct; 60Hz.
@@ -59,6 +59,9 @@ compiz (1:0.9.8+bzr3249-0ubuntu1~ppa1) quantal; urgency=low
   * Cherry-pick some post-snapshot crasher fix:
     - rev for Crash in compiz::wall::movementWindowOnScreen (rev 3255)
       (LP: #1015151)
+    - Don't set decoration contexts on undecorated windows, since that might be
+      read later and code will assume the window is decorated when it isn't.
+      (LP: #1015593). rev 3261
   * debian/control:
     - clean build-deps, removing some suggests and rewritting some descriptions
       to fit the reality
