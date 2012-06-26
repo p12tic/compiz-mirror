@@ -35,6 +35,9 @@ if (HAVE_PROTOBUF)
 	 ${LIBCOMPIZCONFIG_FILES}
 	 ${CMAKE_CURRENT_BINARY_DIR}/compizconfig.pb.cc
 	)
+    set (LIBCOMPIZCONFIG_LIBRARIES
+	 ${LIBCOMPIZCONFIG_LIBRARIES}
+	 protobuf)
     add_definitions (
 	    -DUSE_PROTOBUF
     )
