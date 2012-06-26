@@ -33,10 +33,10 @@ ccsMockPluginNew ()
 {
     CCSPlugin *plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
 
-    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
-
     if (!plugin)
 	return NULL;
+
+    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
 
     CCSPluginGMock *mock = new CCSPluginGMock ();
     ccsObjectSetPrivate (plugin, (CCSPrivate *) mock);

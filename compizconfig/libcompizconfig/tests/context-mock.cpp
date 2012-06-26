@@ -48,10 +48,10 @@ ccsMockContextNew ()
 {
     CCSContext *context = (CCSContext *) calloc (1, sizeof (CCSContext));
 
-    ccsObjectInit (context, &ccsDefaultObjectAllocator);
-
     if (!context)
 	return NULL;
+
+    ccsObjectInit (context, &ccsDefaultObjectAllocator);
 
     CCSContextGMock *mock = new CCSContextGMock ();
     ccsObjectSetPrivate (context, (CCSPrivate *) mock);

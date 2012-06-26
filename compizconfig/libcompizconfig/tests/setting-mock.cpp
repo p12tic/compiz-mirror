@@ -54,10 +54,10 @@ ccsMockSettingNew ()
 {
     CCSSetting *setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
 
-    ccsObjectInit (setting, &ccsDefaultObjectAllocator);
-
     if (!setting)
 	return NULL;
+
+    ccsObjectInit (setting, &ccsDefaultObjectAllocator);
 
     CCSSettingGMock *mock = new CCSSettingGMock ();
     ccsObjectSetPrivate (setting, (CCSPrivate *) mock);
