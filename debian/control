@@ -96,6 +96,7 @@ Architecture: any
 Depends: compiz-core (= ${binary:Version}),
          libdecoration0-dev (= ${binary:Version}),
          ${misc:Depends},
+         compiz-plugins-default (= ${binary:Version}),
          libgl1-mesa-dev,
          libpng-dev,
          libxcomposite-dev (>= 1:0.3-2),
@@ -118,6 +119,7 @@ Replaces: compiz-plugins-main-dev (<< 1:0.9.8),
           compiz-dev (<< 1:0.9.8),
 Breaks: compiz-plugins-main-dev (<< 1:0.9.8),
         compiz-plugins-extra (<< 1:0.9.8),
+Suggests: compiz-plugins
 Description: OpenGL window and compositing manager - development files
  Compiz brings to life a variety of visual effects that make the Linux desktop
  easier to use, more powerful and intuitive, and more accessible for users
