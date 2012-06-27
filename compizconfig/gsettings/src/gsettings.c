@@ -325,14 +325,14 @@ readListValue (CCSSetting *setting)
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
 	    Bool *arrayCounter = array;
+	    gboolean value;
 
 	    if (!array)
 		break;
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
@@ -342,14 +342,14 @@ readListValue (CCSSetting *setting)
 	{
 	    int *array = malloc (nItems * sizeof (int));
 	    int *arrayCounter = array;
+	    gint value;
 
 	    if (!array)
 		break;
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
@@ -359,14 +359,14 @@ readListValue (CCSSetting *setting)
 	{
 	    double *array = malloc (nItems * sizeof (double));
 	    double *arrayCounter = array;
+	    gdouble value;
 
 	    if (!array)
 		break;
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
 	    free (array);
@@ -375,18 +375,16 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    char **array = calloc (1, (nItems + 1) * sizeof (char *));
-	    char **arrayCounter = array;
+	    gchar **array = malloc ((nItems + 1) * sizeof (gchar *));
+	    gchar **arrayCounter = array;
+	    gchar *value;
 
 	    if (!array)
-	    {
 		break;
-	    }
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, &value))
+		*arrayCounter++ = strdup (value);
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
