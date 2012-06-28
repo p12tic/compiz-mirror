@@ -33,6 +33,37 @@
 
 #include "gsettings.h"
 
+static const gchar *
+compizconfigTypeToVariantType (CCSSettingType type)
+{
+    gint i = 0;
+
+    struct _ccsVariantTypeString
+    {
+	CCSSettingType type;
+	const gchar    *vtype;
+    };
+
+    static const unsigned int nVariantTypes = 6;
+    static const struct _ccsVariantTypeString variantTypes[] =
+    {
+	{ TypeString, "s" },
+	{ TypeMatch, "s" },
+	{ TypeColor, "s" },
+	{ TypeBool, "b" },
+	{ TypeInt, "i" },
+	{ TypeFloat, "d" }
+    };
+
+    for (; i < nVariantTypes; i++)
+    {
+	if (variantTypes[i].type == type)
+	    return variantTypes[i].vtype;
+    }
+
+    return NULL;
+}
+
 static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyname,
@@ -283,7 +314,7 @@ static Bool
 readListValue (CCSSetting *setting)
 {
     GSettings		*settings = getSettingsObjectForCCSSetting (setting);
-    gchar		*variantType;
+    const gchar		*variantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
     GVariant		*value;
@@ -291,26 +322,7 @@ readListValue (CCSSetting *setting)
 
     char *cleanSettingName = translateKeyForGSettings (setting->name);
     
-    switch (setting->info.forList.listType)
-    {
-    case TypeString:
-    case TypeMatch:
-    case TypeColor:
-	variantType = g_strdup ("s");
-	break;
-    case TypeBool:
-	variantType = g_strdup ("b");
-	break;
-    case TypeInt:
-	variantType = g_strdup ("i");
-	break;
-    case TypeFloat:
-	variantType = g_strdup ("d");
-	break;
-    default:
-	variantType = NULL;
-	break;
-    }
+    variantType = compizconfigTypeToVariantType (setting->info.forList.listType);
 
     if (!variantType)
 	return FALSE;
@@ -421,7 +433,6 @@ readListValue (CCSSetting *setting)
     }
 
     free (cleanSettingName);
-    free (variantType);
 
     if (list)
     {
