@@ -403,11 +403,11 @@ readListValue (CCSSetting *setting)
 	    array[nItems] = NULL;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, variantType, &value))
-		*arrayCounter++ = strdup (value);
+	    while (g_variant_iter_next (&iter, variantType, &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_strfreev (array);
+	    g_free (array);
 	}
 	break;
     case TypeColor:
