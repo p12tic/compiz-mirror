@@ -79,10 +79,9 @@ translateKeyForGSettings (char *gsettingName)
 
     clean = g_strjoinv ("-", delimited);
 
-    /* It can't be more than 32 chars, warn if that's the case */
-    gchar *ret = g_strndup (clean, 31);
+    gchar *ret = g_strndup (clean, 1024);
 
-    if (strlen (clean) > 31)
+    if (strlen (clean) > 1024)
 	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", clean, ret);
 
     /* Everything must be lowercase */
