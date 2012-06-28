@@ -182,7 +182,7 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     {
 	newWrittenPlugins = g_realloc (newWrittenPlugins, (newWrittenPluginsSize + 1) * sizeof (gchar *));
 	newWrittenPlugins[writtenPluginsLen + 1]  = g_strdup (plugin);
-	newWrittenPlugins[newWrittenPluginsSize - 1] = NULL;
+	newWrittenPlugins[newWrittenPluginsSize] = NULL;
     }
 
     g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
@@ -381,22 +381,21 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    gchar **array = malloc ((nItems + 1) * sizeof (gchar *));
+	    gchar **array = calloc (1, (nItems + 1) * sizeof (gchar *));
 	    gchar **arrayCounter = array;
 	    gchar *value;
 
 	    if (!array)
 		break;
 
+	    array[nItems] = NULL;
+
 	    /* Reads each item from the variant into arrayCounter */
 	    while (g_variant_iter_loop (&iter, variantType, &value))
 		*arrayCounter++ = strdup (value);
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    for (i = 0; i < nItems; i++)
-		if (array[i])
-		    free (array[i]);
-	    free (array);
+	    g_strfreev (array);
 	}
 	break;
     case TypeColor:
