@@ -1,10 +1,10 @@
-compiz (1:0.9.8+bzr3249-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 
   * debian/control:
     - take latest libjpeg8 instead of 62
     - fix a missing Replaces: on libcompizconfig0 (LP: #1019270)
 
- -- Didier Roche <didrocks@ubuntu.com>  Fri, 29 Jun 2012 18:09:25 +0200
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 29 Jun 2012 18:10:50 +0200
 
 compiz (1:0.9.8+bzr3249-0ubuntu1) quantal-proposed; urgency=low
 
