@@ -189,10 +189,12 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 static GSettings *
 getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
-    KEYNAME(setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    KEYNAME (ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
 
-    return getSettingsObjectForPluginWithPath (setting->parent->name, pathName, setting->parent->context);
+    return getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
+					       pathName,
+					       ccsPluginGetContext (ccsSettingGetParent (setting)));
 }
 
 static Bool
@@ -282,9 +284,9 @@ readListValue (CCSSetting *setting)
     GVariant		*value;
     GVariantIter	*iter;
 
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
     
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeString:
     case TypeMatch:
@@ -318,7 +320,7 @@ readListValue (CCSSetting *setting)
     iter = g_variant_iter_new (value);
     nItems = g_variant_iter_n_children (iter);
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeBool:
 	{
@@ -454,20 +456,20 @@ readOption (CCSSetting * setting)
      * just return FALSE since compizconfig doesn't expect us
      * to read them anyways */
 
-    if (setting->type == TypeAction ||
+    if (ccsSettingGetType (setting) == TypeAction ||
 	ccsSettingIsReadOnly (setting))
     {
 	return FALSE;
     }
 
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    KEYNAME(setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
 
     /* first check if the key is set */
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
     case TypeMatch:
@@ -505,7 +507,7 @@ readOption (CCSSetting * setting)
 	return FALSE;
     }
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
 	{
@@ -623,7 +625,7 @@ readOption (CCSSetting * setting)
 	break;
     default:
 	printf("GSettings backend: attempt to read unsupported setting type %d!\n",
-	       setting->type);
+	       ccsSettingGetType (setting));
 	break;
     }
 
@@ -642,12 +644,12 @@ writeListValue (CCSSetting *setting,
     gchar		*variantType = NULL;
     CCSSettingValueList list;
 
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
     
     if (!ccsGetList (setting, &list))
 	return;
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeBool:
 	{
@@ -731,7 +733,7 @@ writeListValue (CCSSetting *setting,
 	break;
     default:
 	printf("GSettings backend: attempt to write unsupported list type %d!\n",
-	       setting->info.forList.listType);
+	       ccsSettingGetInfo (setting)->forList.listType);
 	variantType = NULL;
 	break;
     }
@@ -762,9 +764,9 @@ resetOptionToDefault (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
   
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    KEYNAME (setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
 
     g_settings_reset (settings, cleanSettingName);
 
@@ -775,11 +777,11 @@ void
 writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    KEYNAME (setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
 	{
@@ -903,7 +905,7 @@ writeOption (CCSSetting * setting)
 	break;
     default:
 	printf("GSettings backend: attempt to write unsupported setting type %d\n",
-	       setting->type);
+	       ccsSettingGetType (setting));
 	break;
     }
 
@@ -1094,7 +1096,7 @@ writeSetting (CCSContext *context,
     {
 	writeIntegratedOption (context, setting, index);
     }
-    else if (setting->isDefault)
+    else if (ccsSettingGetIsDefault (setting))
     {
 	resetOptionToDefault (setting);
     }
@@ -1106,7 +1108,7 @@ writeSetting (CCSContext *context,
 static Bool
 getSettingIsIntegrated (CCSSetting * setting)
 {
-    if (!ccsGetIntegrationEnabled (setting->parent->context))
+    if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
     if (!isIntegratedOption (setting, NULL))
@@ -1167,7 +1169,7 @@ deleteProfile (CCSContext *context,
     {
 	GSettings *settings;
 
-	KEYNAME (context->screenNum);
+	KEYNAME (ccsContextGetScreenNum (context));
 	PATHNAME (plugin, keyName);
 
 	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);

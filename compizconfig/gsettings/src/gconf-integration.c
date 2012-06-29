@@ -339,14 +339,14 @@ isGConfIntegratedOption (CCSSetting *setting,
     {
 	const SpecialOptionGConf *opt = &specialOptions[i];
 
-	if (strcmp (setting->name, opt->settingName) != 0)
+	if (strcmp (ccsSettingGetName (setting), opt->settingName) != 0)
 	    continue;
 
-	if (setting->parent->name)
+	if (ccsPluginGetName (ccsSettingGetParent (setting)))
 	{
 	    if (!opt->pluginName)
 		continue;
-	    if (strcmp (setting->parent->name, opt->pluginName) != 0)
+	    if (strcmp (ccsPluginGetName (ccsSettingGetParent (setting)), opt->pluginName) != 0)
 		continue;
 	}
 	else
@@ -530,10 +530,10 @@ getButtonBindingForSetting (CCSContext   *context,
     if (!s)
 	return 0;
 
-    if (s->type != TypeButton)
+    if (ccsSettingGetType (s) != TypeButton)
 	return 0;
 
-    return s->value->value.asButton.button;
+    return ccsSettingGetValue (s)->value.asButton.button;
 }
 
 Bool
@@ -750,10 +750,10 @@ setButtonBindingForSetting (CCSContext   *context,
     if (!s)
 	return;
 
-    if (s->type != TypeButton)
+    if (ccsSettingGetType (s) != TypeButton)
 	return;
 
-    value = s->value->value.asButton;
+    value = ccsSettingGetValue (s)->value.asButton;
 
     if ((value.button != button) || (value.buttonModMask != buttonModMask))
     {
@@ -822,7 +822,7 @@ writeGConfIntegratedOption (CCSContext *context,
 	    char  *newValue;
 	    gchar *currentValue;
 
-	    newValue = ccsKeyBindingToString (&setting->value->value.asKey);
+	    newValue = ccsKeyBindingToString (&(ccsSettingGetValue (setting)->value.asKey));
 	    if (newValue)
     	    {
 		if (strcmp (newValue, "Disabled") == 0)
@@ -929,7 +929,7 @@ writeGConfIntegratedOption (CCSContext *context,
 					   resizeWithRightButton, NULL);
 		}
 
-		modMask = setting->value->value.asButton.buttonModMask;
+		modMask = ccsSettingGetValue (setting)->value.asButton.buttonModMask;
 		if (setGnomeMouseButtonModifier (modMask))
 		{
 		    setButtonBindingForSetting (context, "move",
