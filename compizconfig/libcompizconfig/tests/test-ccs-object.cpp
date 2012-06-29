@@ -1,10 +1,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <ccs.h>
 #include <cstdio>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+
+#include <ccs.h>
 
 using ::testing::_;
 using ::testing::Return;
