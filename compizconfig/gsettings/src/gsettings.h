@@ -49,14 +49,6 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 
-#define CompAltMask        (1 << 16)
-#define CompMetaMask       (1 << 17)
-#define CompSuperMask      (1 << 18)
-#define CompHyperMask      (1 << 19)
-#define CompModeSwitchMask (1 << 20)
-#define CompNumLockMask    (1 << 21)
-#define CompScrollLockMask (1 << 22)
-
 #define COMPIZ_SCHEMA_ID   "org.freedesktop.compiz"
 #define COMPIZCONFIG_SCHEMA_ID "org.freedesktop.compizconfig"
 #define PROFILE_SCHEMA_ID "org.freedesktop.compizconfig.profile"
