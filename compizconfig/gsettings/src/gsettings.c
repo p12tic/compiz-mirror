@@ -735,13 +735,8 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
-	printf("GSettings backend: attempt to write unsupported list type %d!\n",
-<<<<<<< TREE
-	       setting->info.forList.listType);
-=======
-	       ccsSettingGetInfo (setting)->forList.listType);
-	variantType = NULL;
->>>>>>> MERGE-SOURCE
+	printf ("GSettings backend: attempt to write unsupported list type %d!\n",
+	        ccsSettingGetInfo (setting)->forList.listType);
 	break;
     }
 
