@@ -1,3 +1,10 @@
+compiz (1:0.9.8+bzr3249-0ubuntu2) UNRELEASED; urgency=low
+
+  * debian/control:
+    - take latest libjpeg8 instead of 62
+
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 29 Jun 2012 18:07:54 +0200
+
 compiz (1:0.9.8+bzr3249-0ubuntu1) quantal-proposed; urgency=low
 
   * New upstream snapshot.
