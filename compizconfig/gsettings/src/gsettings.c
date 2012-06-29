@@ -33,35 +33,29 @@
 
 #include "gsettings.h"
 
-static const gchar *
-compizconfigTypeToVariantType (CCSSettingType type)
+static gboolean
+compizconfigTypeHasVariantType (CCSSettingType type)
 {
     gint i = 0;
 
-    struct _ccsVariantTypeString
-    {
-	CCSSettingType type;
-	const gchar    *vtype;
-    };
-
     static const unsigned int nVariantTypes = 6;
-    static const struct _ccsVariantTypeString variantTypes[] =
+    static const CCSSettingType variantTypes[] =
     {
-	{ TypeString, "s" },
-	{ TypeMatch, "s" },
-	{ TypeColor, "s" },
-	{ TypeBool, "b" },
-	{ TypeInt, "i" },
-	{ TypeFloat, "d" }
+	TypeString,
+	TypeMatch,
+	TypeColor,
+	TypeBool,
+	TypeInt,
+	TypeFloat
     };
 
     for (; i < nVariantTypes; i++)
     {
-	if (variantTypes[i].type == type)
-	    return variantTypes[i].vtype;
+	if (variantTypes[i] == type)
+	    return TRUE;
     }
 
-    return NULL;
+    return FALSE;
 }
 
 static void
@@ -314,7 +308,7 @@ static Bool
 readListValue (CCSSetting *setting)
 {
     GSettings		*settings = getSettingsObjectForCCSSetting (setting);
-    const gchar		*variantType;
+    gboolean		hasVariantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
     GVariant		*value;
@@ -322,9 +316,9 @@ readListValue (CCSSetting *setting)
 
     char *cleanSettingName = translateKeyForGSettings (setting->name);
     
-    variantType = compizconfigTypeToVariantType (setting->info.forList.listType);
+    hasVariantType = compizconfigTypeHasVariantType (setting->info.forList.listType);
 
-    if (!variantType)
+    if (!hasVariantType)
 	return FALSE;
 
     value = g_settings_get_value (settings, cleanSettingName);
@@ -349,7 +343,7 @@ readListValue (CCSSetting *setting)
 		break;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, variantType, &value))
+	    while (g_variant_iter_loop (&iter, "b", &value))
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
@@ -366,7 +360,7 @@ readListValue (CCSSetting *setting)
 		break;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, variantType, &value))
+	    while (g_variant_iter_loop (&iter, "i", &value))
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
@@ -383,7 +377,7 @@ readListValue (CCSSetting *setting)
 		break;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, variantType, &value))
+	    while (g_variant_iter_loop (&iter, "f", &value))
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
@@ -403,7 +397,7 @@ readListValue (CCSSetting *setting)
 	    array[nItems] = NULL;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_next (&iter, variantType, &value))
+	    while (g_variant_iter_next (&iter, "s", &value))
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
@@ -418,7 +412,7 @@ readListValue (CCSSetting *setting)
 	    if (!array)
 		break;
 
-	    while (g_variant_iter_loop (&iter, variantType, &colorValue))
+	    while (g_variant_iter_loop (&iter, "s", &colorValue))
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (colorValue,
@@ -653,8 +647,7 @@ writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
     GSettings  		*settings = getSettingsObjectForCCSSetting (setting);
-    GVariant 		*value;
-    gchar		*variantType = NULL;
+    GVariant 		*value = NULL;
     CCSSettingValueList list;
 
     char *cleanSettingName = translateKeyForGSettings (setting->name);
@@ -666,7 +659,6 @@ writeListValue (CCSSetting *setting,
     {
     case TypeBool:
 	{
-	    variantType = "ab";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
 	    while (list)
 	    {
@@ -679,7 +671,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeInt:
 	{
-	    variantType = "ai";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
 	    while (list)
 	    {
@@ -692,7 +683,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeFloat:
 	{
-	    variantType = "ad";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
 	    while (list)
 	    {
@@ -705,7 +695,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeString:
 	{
-	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
@@ -718,7 +707,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeMatch:
 	{
-	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
@@ -731,7 +719,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeColor:
 	{
-	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    char *item;
 	    while (list)
@@ -747,11 +734,10 @@ writeListValue (CCSSetting *setting,
     default:
 	printf("GSettings backend: attempt to write unsupported list type %d!\n",
 	       setting->info.forList.listType);
-	variantType = NULL;
 	break;
     }
 
-    if (variantType != NULL)
+    if (value)
     {
 	g_settings_set_value (settings, cleanSettingName, value);
 	g_variant_unref (value);
