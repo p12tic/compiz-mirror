@@ -33,31 +33,6 @@
 
 #include "gsettings.h"
 
-static gboolean
-compizconfigTypeHasVariantType (CCSSettingType type)
-{
-    gint i = 0;
-
-    static const unsigned int nVariantTypes = 6;
-    static const CCSSettingType variantTypes[] =
-    {
-	TypeString,
-	TypeMatch,
-	TypeColor,
-	TypeBool,
-	TypeInt,
-	TypeFloat
-    };
-
-    for (; i < nVariantTypes; i++)
-    {
-	if (variantTypes[i] == type)
-	    return TRUE;
-    }
-
-    return FALSE;
-}
-
 static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyname,
@@ -146,11 +121,10 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     GList *l = settingsList;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
     GVariant        *writtenPlugins;
-    gsize            writtenPluginsLen;
-    gsize            newWrittenPluginsSize;
-    gchar           **newWrittenPlugins;
     char	    *plug;
-    GVariantIter    iter;
+    GVariant        *newWrittenPlugins;
+    GVariantBuilder *newWrittenPluginsBuilder;
+    GVariantIter    *iter;
     gboolean	    found = FALSE;
 
     while (l)
@@ -168,8 +142,6 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 
 	    return settingsObj;
 	}
-
-	g_free (name);
 
 	l = g_list_next (l);
     }
@@ -190,31 +162,26 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 
     writtenPlugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
 
-    g_variant_iter_init (&iter, writtenPlugins);
-    newWrittenPluginsSize = g_variant_iter_n_children (&iter);
+    newWrittenPluginsBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    while (g_variant_iter_loop (&iter, "s", &plug))
+    iter = g_variant_iter_new (writtenPlugins);
+    while (g_variant_iter_loop (iter, "s", &plug))
     {
+	g_variant_builder_add (newWrittenPluginsBuilder, "s", plug);
+
 	if (!found)
 	    found = (g_strcmp0 (plug, plugin) == 0);
     }
 
     if (!found)
-	newWrittenPluginsSize++;
+	g_variant_builder_add (newWrittenPluginsBuilder, "s", plugin);
 
-    newWrittenPlugins = g_variant_dup_strv (writtenPlugins, &writtenPluginsLen);
+    newWrittenPlugins = g_variant_new ("as", newWrittenPluginsBuilder);
+    g_settings_set_value (currentProfileSettings, "plugins-with-set-keys", newWrittenPlugins);
 
-    if (writtenPluginsLen > newWrittenPluginsSize)
-    {
-	newWrittenPlugins = g_realloc (newWrittenPlugins, (newWrittenPluginsSize + 1) * sizeof (gchar *));
-	newWrittenPlugins[writtenPluginsLen + 1]  = g_strdup (plugin);
-	newWrittenPlugins[newWrittenPluginsSize] = NULL;
-    }
-
-    g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
-
-    g_free (schemaName);
-    g_strfreev (newWrittenPlugins);
+    g_variant_iter_free (iter);
+    g_variant_unref (newWrittenPlugins);
+    g_variant_builder_unref (newWrittenPluginsBuilder);
 
     return settingsObj;
 }
@@ -248,52 +215,36 @@ valueChanged (GSettings   *settings,
 {
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
-    char	 *path, *pathOrig;
+    char	 *path;
     char         *token;
     int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
-    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
+    g_object_get (G_OBJECT (settings), "path", &path, NULL);
 
-    path = pathOrig;
     path += strlen (COMPIZ) + 1;
 
     token = strsep (&path, "/"); /* Profile name */
     if (!token)
-    {
-	g_free (pathOrig);
 	return;
-    }
 
     token = strsep (&path, "/"); /* plugins */
     if (!token)
-    {
-	g_free (pathOrig);
 	return;
-    }
 
     token = strsep (&path, "/"); /* plugin */
     if (!token)
-    {
-	g_free (pathOrig);
 	return;
-    }
 
     plugin = ccsFindPlugin (context, token);
     if (!plugin)
-    {
-	g_free (pathOrig);
 	return;
-    }
 
     token = strsep (&path, "/"); /* screen%i */
     if (!token)
-    {
-	g_free (pathOrig);
 	return;
-    }
 
     sscanf (token, "screen%d", &screenNum);
 
@@ -304,7 +255,6 @@ valueChanged (GSettings   *settings,
     {
 	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
 	free (uncleanKeyName);
-	g_free (pathOrig);
 	return;
     }
 
@@ -322,24 +272,42 @@ valueChanged (GSettings   *settings,
     }
 
     free (uncleanKeyName);
-    g_free (pathOrig);
 }
 
 static Bool
 readListValue (CCSSetting *setting)
 {
     GSettings		*settings = getSettingsObjectForCCSSetting (setting);
-    gboolean		hasVariantType;
+    gchar		*variantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
     GVariant		*value;
-    GVariantIter	iter;
+    GVariantIter	*iter;
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
     
-    hasVariantType = compizconfigTypeHasVariantType (setting->info.forList.listType);
+    switch (ccsSettingGetInfo (setting)->forList.listType)
+    {
+    case TypeString:
+    case TypeMatch:
+    case TypeColor:
+	variantType = g_strdup ("s");
+	break;
+    case TypeBool:
+	variantType = g_strdup ("b");
+	break;
+    case TypeInt:
+	variantType = g_strdup ("i");
+	break;
+    case TypeFloat:
+	variantType = g_strdup ("d");
+	break;
+    default:
+	variantType = NULL;
+	break;
+    }
 
-    if (!hasVariantType)
+    if (!variantType)
 	return FALSE;
 
     value = g_settings_get_value (settings, cleanSettingName);
@@ -349,8 +317,8 @@ readListValue (CCSSetting *setting)
 	return TRUE;
     }
 
-    g_variant_iter_init (&iter, value);
-    nItems = g_variant_iter_n_children (&iter);
+    iter = g_variant_iter_new (value);
+    nItems = g_variant_iter_n_children (iter);
 
     switch (ccsSettingGetInfo (setting)->forList.listType)
     {
@@ -358,14 +326,14 @@ readListValue (CCSSetting *setting)
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
 	    Bool *arrayCounter = array;
-	    gboolean value;
 
 	    if (!array)
 		break;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "b", &value))
-		*arrayCounter++ = value;
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
@@ -375,14 +343,14 @@ readListValue (CCSSetting *setting)
 	{
 	    int *array = malloc (nItems * sizeof (int));
 	    int *arrayCounter = array;
-	    gint value;
 
 	    if (!array)
 		break;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "i", &value))
-		*arrayCounter++ = value;
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
@@ -392,14 +360,14 @@ readListValue (CCSSetting *setting)
 	{
 	    double *array = malloc (nItems * sizeof (double));
 	    double *arrayCounter = array;
-	    gdouble value;
 
 	    if (!array)
 		break;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "d", &value))
-		*arrayCounter++ = value;
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
 	    free (array);
@@ -408,21 +376,24 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
-	    gchar **arrayCounter = array;
-	    gchar *value;
+	    char **array = calloc (1, (nItems + 1) * sizeof (char *));
+	    char **arrayCounter = array;
 
 	    if (!array)
+	    {
 		break;
-
-	    array[nItems] = NULL;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_next (&iter, "s", &value))
-		*arrayCounter++ = value;
+	    }
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_strfreev (array);
+	    for (i = 0; i < nItems; i++)
+		if (array[i])
+		    free (array[i]);
+	    free (array);
 	}
 	break;
     case TypeColor:
@@ -433,7 +404,7 @@ readListValue (CCSSetting *setting)
 	    if (!array)
 		break;
 
-	    while (g_variant_iter_loop (&iter, "s", &colorValue))
+	    while (g_variant_iter_loop (iter, variantType, &colorValue))
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (colorValue,
@@ -448,6 +419,7 @@ readListValue (CCSSetting *setting)
     }
 
     free (cleanSettingName);
+    free (variantType);
 
     if (list)
     {
@@ -668,7 +640,8 @@ writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
     GSettings  		*settings = getSettingsObjectForCCSSetting (setting);
-    GVariant 		*value = NULL;
+    GVariant 		*value;
+    gchar		*variantType = NULL;
     CCSSettingValueList list;
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
@@ -680,6 +653,7 @@ writeListValue (CCSSetting *setting,
     {
     case TypeBool:
 	{
+	    variantType = "ab";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
 	    while (list)
 	    {
@@ -692,6 +666,7 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeInt:
 	{
+	    variantType = "ai";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
 	    while (list)
 	    {
@@ -704,6 +679,7 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeFloat:
 	{
+	    variantType = "ad";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
 	    while (list)
 	    {
@@ -716,6 +692,7 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeString:
 	{
+	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
@@ -728,6 +705,7 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeMatch:
 	{
+	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
@@ -740,6 +718,7 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeColor:
 	{
+	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    char *item;
 	    while (list)
@@ -755,10 +734,11 @@ writeListValue (CCSSetting *setting,
     default:
 	printf("GSettings backend: attempt to write unsupported list type %d!\n",
 	       ccsSettingGetInfo (setting)->forList.listType);
+	variantType = NULL;
 	break;
     }
 
-    if (value)
+    if (variantType != NULL)
     {
 	g_settings_set_value (settings, cleanSettingName, value);
 	g_variant_unref (value);
@@ -933,7 +913,7 @@ writeOption (CCSSetting * setting)
 }
 
 static void
-updateCurrentProfileName (const char *profile)
+updateCurrentProfileName (char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
@@ -941,15 +921,15 @@ updateCurrentProfileName (const char *profile)
     char	    *currentProfilePath;
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
-    GVariantIter    iter;
+    GVariantIter    *iter;
     gboolean        found = FALSE;
 
     profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
 
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    g_variant_iter_init (&iter, profiles);
-    while (g_variant_iter_loop (&iter, "s", &prof))
+    iter = g_variant_iter_new (profiles);
+    while (g_variant_iter_loop (iter, "s", &prof))
     {
 	g_variant_builder_add (newProfilesBuilder, "s", prof);
 
@@ -963,6 +943,7 @@ updateCurrentProfileName (const char *profile)
     newProfiles = g_variant_new ("as", newProfilesBuilder);
     g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
 
+    g_variant_iter_free (iter);
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
@@ -983,14 +964,8 @@ updateProfile (CCSContext *context)
 {
     char *profile = strdup (ccsGetProfile (context));
 
-    if (!profile)
+    if (!profile || !strlen (profile))
 	profile = strdup (DEFAULTPROF);
-
-    if (!strlen (profile))
-    {
-	free (profile);
-	profile = strdup (DEFAULTPROF);
-    }
 
     if (g_strcmp0 (profile, currentProfile))
 	updateCurrentProfileName (profile);
@@ -1182,15 +1157,15 @@ deleteProfile (CCSContext *context,
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     char            *plugin, *prof;
-    GVariantIter    iter;
+    GVariantIter    *iter;
     char            *profileSettingsPath = g_strconcat (PROFILEPATH, profile, "/", NULL);
     GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
 
     plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
     profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
 
-    g_variant_iter_init (&iter, plugins);
-    while (g_variant_iter_loop (&iter, "s", &plugin))
+    iter = g_variant_iter_new (plugins);
+    while (g_variant_iter_loop (iter, "s", &plugin))
     {
 	GSettings *settings;
 
@@ -1216,12 +1191,13 @@ deleteProfile (CCSContext *context,
     }
 
     /* Remove the profile from existing-profiles */
+    g_variant_iter_free (iter);
     g_settings_reset (profileSettings, "plugins-with-set-values");
 
-    g_variant_iter_init (&iter, profiles);
+    iter = g_variant_iter_new (profiles);
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    while (g_variant_iter_loop (&iter, "s", &prof))
+    while (g_variant_iter_loop (iter, "s", &prof))
     {
 	if (g_strcmp0 (prof, profile))
 	    g_variant_builder_add (newProfilesBuilder, "s", prof);
