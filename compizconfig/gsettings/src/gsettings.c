@@ -170,6 +170,8 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 	    return settingsObj;
 	}
 
+	g_free (name);
+
 	l = g_list_next (l);
     }
 
@@ -377,7 +379,7 @@ readListValue (CCSSetting *setting)
 		break;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "f", &value))
+	    while (g_variant_iter_loop (&iter, "d", &value))
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
@@ -401,7 +403,7 @@ readListValue (CCSSetting *setting)
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_free (array);
+	    free (array);
 	}
 	break;
     case TypeColor:
