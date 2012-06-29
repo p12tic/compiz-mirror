@@ -169,6 +169,8 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 	    return settingsObj;
 	}
 
+	g_free (name);
+
 	l = g_list_next (l);
     }
 
@@ -246,36 +248,52 @@ valueChanged (GSettings   *settings,
 {
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
-    char	 *path;
+    char	 *path, *pathOrig;
     char         *token;
     int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
-    g_object_get (G_OBJECT (settings), "path", &path, NULL);
+    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
+    path = pathOrig;
     path += strlen (COMPIZ) + 1;
 
     token = strsep (&path, "/"); /* Profile name */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     token = strsep (&path, "/"); /* plugins */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     token = strsep (&path, "/"); /* plugin */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     plugin = ccsFindPlugin (context, token);
     if (!plugin)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     token = strsep (&path, "/"); /* screen%i */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     sscanf (token, "screen%d", &screenNum);
 
@@ -286,6 +304,7 @@ valueChanged (GSettings   *settings,
     {
 	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
 	free (uncleanKeyName);
+	g_free (pathOrig);
 	return;
     }
 
@@ -303,6 +322,7 @@ valueChanged (GSettings   *settings,
     }
 
     free (uncleanKeyName);
+    g_free (pathOrig);
 }
 
 static Bool
@@ -318,7 +338,6 @@ readListValue (CCSSetting *setting)
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
     hasVariantType = compizconfigTypeHasVariantType (ccsSettingGetInfo (setting)->forList.listType);
-
 
     if (!hasVariantType)
 	return FALSE;
@@ -379,7 +398,7 @@ readListValue (CCSSetting *setting)
 		break;
 
 	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "f", &value))
+	    while (g_variant_iter_loop (&iter, "d", &value))
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
@@ -389,7 +408,7 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    gchar **array = calloc (1, (nItems + 1) * sizeof (gchar *));
+	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
 	    gchar **arrayCounter = array;
 	    gchar *value;
 
@@ -403,7 +422,7 @@ readListValue (CCSSetting *setting)
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_free (array);
+	    g_strfreev (array);
 	}
 	break;
     case TypeColor:
@@ -914,7 +933,7 @@ writeOption (CCSSetting * setting)
 }
 
 static void
-updateCurrentProfileName (char *profile)
+updateCurrentProfileName (const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
@@ -964,8 +983,14 @@ updateProfile (CCSContext *context)
 {
     char *profile = strdup (ccsGetProfile (context));
 
-    if (!profile || !strlen (profile))
+    if (!profile)
 	profile = strdup (DEFAULTPROF);
+
+    if (!strlen (profile))
+    {
+	free (profile);
+	profile = strdup (DEFAULTPROF);
+    }
 
     if (g_strcmp0 (profile, currentProfile))
 	updateCurrentProfileName (profile);
