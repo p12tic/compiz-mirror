@@ -389,7 +389,7 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    gchar **array = calloc (1, (nItems + 1) * sizeof (gchar *));
+	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
 	    gchar **arrayCounter = array;
 	    gchar *value;
 
@@ -403,7 +403,7 @@ readListValue (CCSSetting *setting)
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    free (array);
+	    g_strfreev (array);
 	}
 	break;
     case TypeColor:
