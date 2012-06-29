@@ -246,36 +246,52 @@ valueChanged (GSettings   *settings,
 {
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
-    char	 *path;
+    char	 *path, *pathOrig;
     char         *token;
     int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
-    g_object_get (G_OBJECT (settings), "path", &path, NULL);
+    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
+    path = pathOrig;
     path += strlen (COMPIZ) + 1;
 
     token = strsep (&path, "/"); /* Profile name */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     token = strsep (&path, "/"); /* plugins */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     token = strsep (&path, "/"); /* plugin */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     plugin = ccsFindPlugin (context, token);
     if (!plugin)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     token = strsep (&path, "/"); /* screen%i */
     if (!token)
+    {
+	g_free (pathOrig);
 	return;
+    }
 
     sscanf (token, "screen%d", &screenNum);
 
@@ -286,6 +302,7 @@ valueChanged (GSettings   *settings,
     {
 	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
 	free (uncleanKeyName);
+	g_free (pathOrig);
 	return;
     }
 
@@ -303,6 +320,7 @@ valueChanged (GSettings   *settings,
     }
 
     free (uncleanKeyName);
+    g_free (pathOrig);
 }
 
 static Bool
@@ -913,7 +931,7 @@ writeOption (CCSSetting * setting)
 }
 
 static void
-updateCurrentProfileName (char *profile)
+updateCurrentProfileName (const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
@@ -963,8 +981,14 @@ updateProfile (CCSContext *context)
 {
     char *profile = strdup (ccsGetProfile (context));
 
-    if (!profile || !strlen (profile))
+    if (!profile)
 	profile = strdup (DEFAULTPROF);
+
+    if (!strlen (profile))
+    {
+	free (profile);
+	profile = strdup (DEFAULTPROF);
+    }
 
     if (g_strcmp0 (profile, currentProfile))
 	updateCurrentProfileName (profile);
