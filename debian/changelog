@@ -1,3 +1,10 @@
+compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
+
+  * debian/patches/ubuntu-config.patch:
+    - refresh with latest trunk
+
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 29 Jun 2012 09:23:25 +0200
+
 compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 
   * debian/control:
