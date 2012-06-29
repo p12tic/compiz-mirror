@@ -25,6 +25,11 @@ StringSettingKeyFunc = operator.itemgetter (1)
 
 ctypedef unsigned int Bool
 
+cdef struct CCSInterfaceTable:
+    void *contextInterface
+
+cdef extern CCSInterfaceTable ccsDefaultInterfaceTable
+
 cdef enum CCSSettingType:
     TypeBool
     TypeInt
@@ -194,37 +199,11 @@ cdef struct CCSPluginCategory:
     char *          longDesc
     CCSStringList * plugins
 
-cdef struct CCSContext:
-    CCSPluginList *     plugins
-    CCSPluginCategory * categories
-
-    void * priv
-    void * ccsPrivate
-
-    CCSSettingList * changedSettings
-    unsigned int   screenNum
+cdef struct CCSContext
 
 cdef struct CCSPlugin
 
-cdef struct CCSSetting:
-    char * name
-    char * shortDesc
-    char * longDesc
-
-    CCSSettingType type
-
-    CCSSettingInfo info
-    char *         group
-    char *         subGroup
-    char *         hints
-
-    CCSSettingValue   defaultValue
-    CCSSettingValue * value
-    Bool              isDefault
-
-    CCSPlugin * parent
-    void *      priv
-    unsigned int refCount
+cdef struct CCSSetting
 
 cdef struct CCSStrExtension:
     char *                  basePlugin
@@ -233,22 +212,7 @@ cdef struct CCSStrExtension:
     unsigned int            refCount
 
 cdef struct CCSPlugin:
-    char * name
-    char * shortDesc
-    char * longDesc
-    char * hints
-    char * category
 
-    CCSStringList * loadAfter
-    CCSStringList * loadBefore
-    CCSStringList * requiresPlugin
-    CCSStringList * conflictPlugin
-    CCSStringList * conflictFeature
-    CCSStringList * providesFeature
-    CCSStringList * requiresFeature
-
-    void *       priv
-    CCSContext * context
     void *       ccsPrivate
     unsigned int refCount
 
@@ -264,9 +228,22 @@ cdef struct CCSString:
 
 '''Context functions'''
 cdef extern void ccsSetBasicMetadata (Bool value)
-cdef extern CCSContext * ccsContextNew (unsigned int screenNum)
-cdef extern CCSContext * ccsEmptyContextNew (unsigned int screenNum)
+cdef extern CCSContext * ccsContextNew (unsigned int screenNum, CCSInterfaceTable *)
+cdef extern CCSContext * ccsEmptyContextNew (unsigned int screenNum, CCSInterfaceTable *)
 cdef extern void ccsContextDestroy (CCSContext * context)
+cdef extern CCSPluginList ccsContextGetPlugins (CCSContext *context)
+cdef extern CCSPluginCategory * ccsContextGetCategories (CCSContext *context)
+cdef extern CCSSettingList ccsContextGetChangedSettings (CCSContext *context)
+cdef extern unsigned int ccsContextGetScreenNum (CCSContext *context)
+cdef extern Bool ccsContextAddChangedSetting (CCSContext *context, CCSSetting *setting)
+cdef extern Bool ccsContextClearChangedSettings (CCSContext *context)
+cdef extern CCSSettingList ccsContextStealChangedSettings (CCSContext *context)
+cdef extern void * ccsContextGetPrivatePtr (CCSContext *context)
+cdef extern void ccsContextSetPrivatePtr (CCSContext *context, void *)
+
+cdef extern void * ccsContextGetPluginsBindable (CCSContext *context)
+cdef extern void * ccsContextStealChangedSettingsBindable (CCSContext *context)
+cdef extern void * ccsContextGetChangedSettingsBindable (CCSContext *context)
 
 '''Plugin functions'''
 cdef extern Bool ccsLoadPlugin (CCSContext * context, char * name)
@@ -275,6 +252,26 @@ cdef extern CCSSetting * ccsFindSetting (CCSPlugin * plugin,
                                          char *      name)
 cdef extern CCSSettingList * ccsGetPluginSettings (CCSPlugin * plugin)
 cdef extern CCSGroupList * ccsGetPluginGroups (CCSPlugin * plugin)
+
+cdef extern char * ccsPluginGetName (CCSPlugin *plugin)
+cdef extern char * ccsPluginGetShortDesc (CCSPlugin *plugin)
+cdef extern char * ccsPluginGetLongDesc (CCSPlugin *plugin)
+cdef extern char * ccsPluginGetHints (CCSPlugin *plugin)
+cdef extern char * ccsPluginGetCategory (CCSPlugin *plugin)
+
+cdef extern CCSStringList ccsPluginGetLoadAfter (CCSPlugin *plugin)
+cdef extern CCSStringList ccsPluginGetLoadBefore (CCSPlugin *plugin)
+cdef extern CCSStringList ccsPluginGetRequiresPlugins (CCSPlugin *plugin)
+cdef extern CCSStringList ccsPluginGetConflictPlugins (CCSPlugin *plugin)
+cdef extern CCSStringList ccsPluginGetProvidesFeatures (CCSPlugin *plugin)
+cdef extern CCSStringList ccsPluginGetRequiresFeatures (CCSPlugin *plugin)
+
+cdef extern void * ccsPluginGetProvidesFeaturesBindable (CCSPlugin *plugin)
+
+cdef extern void * ccsPluginGetPrivatePtr (CCSPlugin *plugin)
+cdef extern void ccsPluginSetPrivatePtr (CCSPlugin *plugin, void *ptr)
+
+cdef extern CCSContext * ccsPluginGetContext (CCSPlugin *plugin)
 
 '''Action => String'''
 cdef extern char * ccsModifiersToString (unsigned int modMask)
@@ -349,6 +346,20 @@ cdef extern Bool ccsImportFromFile (CCSContext * context,
 '''Misc. Plugin/Setting utils'''
 cdef extern Bool ccsSettingIsReadOnly (CCSSetting * setting)
 cdef extern Bool ccsSettingIsIntegrated (CCSSetting * setting)
+cdef extern char * ccsSettingGetName (CCSSetting *)
+cdef extern char * ccsSettingGetShortDesc (CCSSetting *)
+cdef extern char * ccsSettingGetLongDesc (CCSSetting *)
+cdef extern CCSSettingType ccsSettingGetType (CCSSetting *)
+cdef extern CCSSettingInfo * ccsSettingGetInfo (CCSSetting *)
+cdef extern char * ccsSettingGetGroup (CCSSetting *)
+cdef extern char * ccsSettingGetSubGroup (CCSSetting *)
+cdef extern char * ccsSettingGetHints (CCSSetting *)
+cdef extern CCSSettingValue * ccsSettingGetDefaultValue (CCSSetting *)
+cdef extern CCSSettingValue *ccsSettingGetValue (CCSSetting *)
+cdef extern Bool ccsSettingGetIsDefault (CCSSetting *)
+cdef extern CCSPlugin * ccsSettingGetParent (CCSSetting *)
+cdef extern void * ccsSettingGetPrivatePtr (CCSSetting *)
+cdef extern void ccsSettingSetPrivatePtr (CCSSetting *, void *)
 
 cdef extern void ccsPluginConflictListFree (CCSPluginConflictList * l,
                                             Bool                    freeObj)
@@ -368,9 +379,9 @@ cdef class Setting
 
 cdef CCSSettingType GetType (CCSSettingValue * value):
     if value.isListChild:
-        return (<CCSSetting *> value.parent).info.forList.listType
+        return ccsSettingGetInfo ((<CCSSetting *> value.parent)).forList.listType
     else:
-        return (<CCSSetting *> value.parent).type
+        return ccsSettingGetType ((<CCSSetting *> value.parent))
 
 cdef CCSStringList * ListToStringList (object list):
     if len (list) <= 0:
@@ -445,8 +456,8 @@ cdef object SettingListToList (Context context, CCSList * settingList):
     while settingList:
         ccsSetting = <CCSSetting *> settingList.data
         setting = None
-        plugin = context.Plugins[ccsSetting.parent.name]
-        setting = plugin.Screen[ccsSetting.name]
+        plugin = context.Plugins[ccsPluginGetName (ccsSettingGetParent (ccsSetting))]
+        setting = plugin.Screen[ccsSettingGetName (ccsSetting)]
         list.append (setting)
         settingList = settingList.next
     
@@ -484,9 +495,9 @@ cdef CCSSettingValue * EncodeValue (object       data,
     bv.isListChild = isListChild
     bv.parent = setting
     if isListChild:
-        t = setting.info.forList.listType
+        t = ccsSettingGetInfo (setting).forList.listType
     else:
-        t = setting.type
+        t = ccsSettingGetType (setting)
     if t == TypeString:
         bv.value.asString = strdup (data)
     elif t == TypeMatch:
@@ -607,11 +618,11 @@ cdef class Setting:
         self.extendedStrRestrictions = None
         self.baseStrRestrictions = None
         info = ()
-        t = self.ccsSetting.type
-        i = &self.ccsSetting.info
+        t = ccsSettingGetType (self.ccsSetting)
+        i = ccsSettingGetInfo (self.ccsSetting)
         if t == TypeList:
-            t = self.ccsSetting.info.forList.listType
-            i = <CCSSettingInfo *> self.ccsSetting.info.forList.listInfo
+            t = ccsSettingGetInfo (self.ccsSetting).forList.listType
+            i = <CCSSettingInfo *> ccsSettingGetInfo (self.ccsSetting).forList.listInfo
         if t == TypeInt:
             desc = IntDescListToDict (i.forInt.desc)
             info = (i.forInt.min, i.forInt.max, desc)
@@ -625,7 +636,7 @@ cdef class Setting:
             self.extendedStrRestrictions = {}
         elif t in (TypeKey, TypeButton, TypeEdge, TypeBell):
             info = (bool (i.forAction.internal),)
-        if self.ccsSetting.type == TypeList:
+        if ccsSettingGetType (self.ccsSetting) == TypeList:
             info = (SettingTypeString[t], info)
         self.info = info
     
@@ -638,27 +649,27 @@ cdef class Setting:
 
     property Name:
         def __get__ (self):
-            return self.ccsSetting.name
+            return ccsSettingGetName (self.ccsSetting)
 
     property ShortDesc:
         def __get__ (self):
-            return self.ccsSetting.shortDesc
+            return ccsSettingGetShortDesc (self.ccsSetting)
 
     property LongDesc:
         def __get__ (self):
-            return self.ccsSetting.longDesc
+            return ccsSettingGetLongDesc (self.ccsSetting)
 
     property Group:
         def __get__ (self):
-            return self.ccsSetting.group
+            return ccsSettingGetGroup (self.ccsSetting)
 
     property SubGroup:
         def __get__ (self):
-            return self.ccsSetting.subGroup
+            return ccsSettingGetSubGroup (self.ccsSetting)
 
     property Type:
         def __get__ (self):
-            return SettingTypeString[self.ccsSetting.type]
+            return SettingTypeString[ccsSettingGetType (self.ccsSetting)]
 
     property Info:
         def __get__ (self):
@@ -666,24 +677,24 @@ cdef class Setting:
 
     property Hints:
         def __get__ (self):
-            if not self.ccsSetting.hints:
+            if not ccsSettingGetHints (self.ccsSetting):
                 return []
             else:
-                return str (self.ccsSetting.hints).split (";")[:-1]
+                return str (ccsSettingGetHints (self.ccsSetting)).split (";")[:-1]
 
     property IsDefault:
         def __get__ (self):
-            if self.ccsSetting.isDefault:
+            if ccsSettingGetIsDefault (self.ccsSetting):
                 return True
             return False
 
     property DefaultValue:
         def __get__ (self):
-            return DecodeValue (&self.ccsSetting.defaultValue)
+            return DecodeValue (ccsSettingGetDefaultValue (self.ccsSetting))
 
     property Value:
         def __get__ (self):
-            return DecodeValue (self.ccsSetting.value)
+            return DecodeValue (ccsSettingGetValue (self.ccsSetting))
         def __set__ (self, value):
             cdef CCSSettingValue * sv
             sv = EncodeValue (value, self.ccsSetting, 0)
@@ -760,22 +771,22 @@ cdef class Plugin:
         while setlist != NULL:
             sett = <CCSSetting *> setlist.data
 
-            subgroup = self.groups[sett.group][1][sett.subGroup][1]
+            subgroup = self.groups[ccsSettingGetGroup (sett)][1][ccsSettingGetSubGroup (sett)][1]
 
-            setting = Setting (self, sett.name)
-            self.screen[sett.name] = setting
-            subgroup.Screen[sett.name] = setting
+            setting = Setting (self, ccsSettingGetName (sett))
+            self.screen[ccsSettingGetName (sett)] = setting
+            subgroup.Screen[ccsSettingGetName (sett)] = setting
 
-            t = sett.type
-            i = &sett.info
+            t = ccsSettingGetType (sett)
+            i = ccsSettingGetInfo (sett)
             if t == TypeList:
                 t = i.forList.listType
                 i = <CCSSettingInfo *> i.forList.listInfo
             if t == TypeString and i.forString.extensible:
                 self.hasExtendedString = True
 
-            if not self.ranking.has_key (sett.name):
-                self.ranking[sett.name] = rank
+            if not self.ranking.has_key (ccsSettingGetName (sett)):
+                self.ranking[ccsSettingGetName (sett)] = rank
                 rank = rank + 1
             
             setlist = setlist.next
@@ -793,8 +804,8 @@ cdef class Plugin:
         cdef CCSSettingType t
         cdef CCSSettingInfo * i
 
-        t = setting.ccsSetting.type
-        i = &setting.ccsSetting.info
+        t = ccsSettingGetType (setting.ccsSetting)
+        i = ccsSettingGetInfo (setting.ccsSetting)
         if t == TypeList:
             t = i.forList.listType
             i = <CCSSettingInfo *> i.forList.listInfo
@@ -834,7 +845,7 @@ cdef class Plugin:
             itemsByValue[value] = (name, index)
 
         # Insert itemsByName and sortedItems into setting.info
-        if setting.ccsSetting.type == TypeList:
+        if ccsSettingGetType (setting.ccsSetting) == TypeList:
             setting.info = (setting.info[0], (itemsByName,
                                               itemsByValue,
                                               sortedItems))
@@ -875,8 +886,8 @@ cdef class Plugin:
 
                 for settingItem in settings:
                     setting = settingItem
-                    t = setting.ccsSetting.type
-                    i = &setting.ccsSetting.info
+                    t = ccsSettingGetType (setting.ccsSetting)
+                    i = ccsSettingGetInfo (setting.ccsSetting)
                     if t == TypeList:
                         t = i.forList.listType
                         i = <CCSSettingInfo *> i.forList.listInfo
@@ -939,23 +950,23 @@ cdef class Plugin:
 
     property Name:
         def __get__ (self):
-            return self.ccsPlugin.name
+            return ccsPluginGetName (self.ccsPlugin)
 
     property ShortDesc:
         def __get__ (self):
-            return self.ccsPlugin.shortDesc
+            return ccsPluginGetShortDesc (self.ccsPlugin)
 
     property LongDesc:
         def __get__ (self):
-            return self.ccsPlugin.longDesc
+            return ccsPluginGetLongDesc (self.ccsPlugin)
 
     property Category:
         def __get__ (self):
-            return self.ccsPlugin.category
+            return ccsPluginGetCategory (self.ccsPlugin)
 
     property Features:
         def __get__ (self):
-            features = StringListToList (self.ccsPlugin.providesFeature)
+            features = StringListToList (<CCSList *> ccsPluginGetProvidesFeaturesBindable (self.ccsPlugin))
             return features
 
     property Initialized:
@@ -965,7 +976,7 @@ cdef class Plugin:
     property Enabled:
         def __get__ (self):
             return bool (ccsPluginIsActive (self.context.ccsContext,
-                                            self.ccsPlugin.name))
+                                            ccsPluginGetName (self.ccsPlugin)))
         def __set__ (self, val):
             if val:
                 if len (self.EnableConflicts):
@@ -996,7 +1007,7 @@ cdef class Plugin:
                 ppl = pc.plugins
                 while ppl != NULL:
                     plg = <CCSPlugin *> ppl.data
-                    rpl.append (self.context.Plugins[plg.name])
+                    rpl.append (self.context.Plugins[ccsPluginGetName (plg)])
                     ppl = ppl.next
                 ret.append ((ConflictTypeString[pc.type], pc.value, rpl))
                 pls = pls.next
@@ -1024,7 +1035,7 @@ cdef class Plugin:
                 ppl = pc.plugins
                 while ppl != NULL:
                     plg = <CCSPlugin *> ppl.data
-                    rpl.append (self.context.Plugins[plg.name])
+                    rpl.append (self.context.Plugins[ccsPluginGetName (plg)])
                     ppl = ppl.next
                 ret.append ((ConflictTypeString[pc.type], pc.value, rpl))
                 pls = pls.next
@@ -1108,26 +1119,26 @@ cdef class Context:
             ccsSetBasicMetadata (True)
         self.plugins = {}
         if not len (plugins):
-            self.ccsContext = ccsContextNew (screenNum)
+            self.ccsContext = ccsContextNew (screenNum, &ccsDefaultInterfaceTable)
         else:
-            self.ccsContext = ccsEmptyContextNew (screenNum)
+            self.ccsContext = ccsEmptyContextNew (screenNum, &ccsDefaultInterfaceTable)
 
         for plugin in plugins:
             self.LoadPlugin (plugin)
 
         ccsReadSettings (self.ccsContext)
-        pll = self.ccsContext.plugins
+        pll = <CCSList *> ccsContextGetPluginsBindable (self.ccsContext)
         self.categories = {}
         while pll != NULL:
             pl = <CCSPlugin *> pll.data
-            self.plugins[pl.name] = Plugin (self, pl.name)
-            if pl.category == NULL:
+            self.plugins[ccsPluginGetName (pl)] = Plugin (self, ccsPluginGetName (pl))
+            if ccsPluginGetCategory (pl) == NULL:
                 cat = ''
             else:
-                cat = pl.category
+                cat = ccsPluginGetCategory (pl)
             if not self.categories.has_key (cat):
                 self.categories[cat] = []
-            self.categories[cat].append (self.plugins[pl.name])
+            self.categories[cat].append (self.plugins[ccsPluginGetName (pl)])
             pll = pll.next
 
         self.integration = ccsGetIntegrationEnabled (self.ccsContext)
@@ -1252,15 +1263,24 @@ cdef class Context:
 
     property ChangedSettings:
         def __get__ (self):
-            return SettingListToList (self, self.ccsContext.changedSettings)
+            return SettingListToList (self, <CCSList *> ccsContextGetChangedSettingsBindable (self.ccsContext))
         def __set__ (self, value):
             cdef CCSSettingList * settingList
-            if self.ccsContext.changedSettings != NULL:
-                self.ccsContext.changedSettings = \
-                    ccsSettingListFree (self.ccsContext.changedSettings, False)
+            cdef CCSSettingList * l
+            cdef CCSSetting     * setting
+
+            ccsContextClearChangedSettings (self.ccsContext)
             if value != None and len (value) != 0:
                 settingList = ListToSettingList (value)
-                self.ccsContext.changedSettings = settingList
+
+                l = settingList
+
+                while l:
+                    setting = <CCSSetting *> l.data
+                    ccsContextAddChangedSetting (self.ccsContext, setting)
+                    l = l.next
+
+                ccsSettingListFree (settingList, False)
                 
     property AutoSort:
         def __get__ (self):
