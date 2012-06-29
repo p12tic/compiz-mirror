@@ -213,8 +213,12 @@ detectCompizBinPath (char **argv)
     const char *bin = argv[0];
 #ifdef __linux__
     char exe[PATH_MAX];
-    if (readlink ("/proc/self/exe", exe, sizeof(exe)-1) > 0)
+    ssize_t len = readlink ("/proc/self/exe", exe, sizeof(exe)-1);
+    if (len > 0)
+    {
+	exe[len] = '\0';
 	bin = exe;
+    }
 #endif
     if (strchr (bin, '/'))   // dirname needs a '/' to work reliably
     {

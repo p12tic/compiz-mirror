@@ -358,7 +358,7 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
 	textures[0]->setMipmap (false);
 
     damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (),
-			     XDamageReportRawRectangles);
+			     XDamageReportBoundingBox);
 }
 
 /*
@@ -1997,7 +1997,7 @@ DecorWindow::updateOutputFrame ()
 	oldHeight = 0;
 
 	frameDamage = XDamageCreate (screen->dpy (), outputFrame,
-			             XDamageReportRawRectangles);
+			             XDamageReportBoundingBox);
 
 	dScreen->frames[outputFrame] = this;
     }

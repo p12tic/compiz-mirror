@@ -73,7 +73,7 @@ AnnoScreen::cairoContext ()
 	}
 
 	damage = XDamageCreate (screen->dpy (), pixmap,
-				XDamageReportRawRectangles);
+				XDamageReportBoundingBox);
 
 	surface =
 	    cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
