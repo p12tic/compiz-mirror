@@ -46,16 +46,7 @@
 
 #include <gio/gio.h>
 
-#define COMPIZ_SCHEMA_ID   "org.freedesktop.compiz"
-#define COMPIZCONFIG_SCHEMA_ID "org.freedesktop.compizconfig"
-#define PROFILE_SCHEMA_ID "org.freedesktop.compizconfig.profile"
-#define METACITY     "/apps/metacity"
-#define COMPIZ       "/apps/compiz-1"
-#define COMPIZ_PROFILEPATH COMPIZ "/profiles"
-#define COMPIZCONFIG "/org/freedesktop/compizconfig"
-#define PROFILEPATH  COMPIZCONFIG "/profiles"
-#define DEFAULTPROF "Default"
-#define CORE_NAME   "core"
+#include "gsettings_shared.h"
 
 #define BUFSIZE 512
 

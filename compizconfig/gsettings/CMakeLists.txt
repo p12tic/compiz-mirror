@@ -16,7 +16,11 @@ if (USE_GCONF)
     add_definitions (-DUSE_GCONF)
 endif (USE_GCONF)
 
-compizconfig_backend (gsettings PKGDEPS ${_deps})
+add_subdirectory (gsettings_backend_shared)
+
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared)
+
+compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES gsettings_backend_shared)
 
 compiz_install_gsettings_schema (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
 				 ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)

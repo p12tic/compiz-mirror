@@ -918,7 +918,7 @@ updateCurrentProfileName (char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
-    char	    *profilePath = COMPIZ_PROFILEPATH;
+    const char	    *profilePath = COMPIZ_PROFILEPATH;
     char	    *currentProfilePath;
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
