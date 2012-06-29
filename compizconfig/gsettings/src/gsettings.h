@@ -75,7 +75,9 @@
 				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
 				 p, k);
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 typedef enum {
     OptionInt,
