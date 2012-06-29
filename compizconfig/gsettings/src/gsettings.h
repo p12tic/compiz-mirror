@@ -46,9 +46,6 @@
 
 #include <gio/gio.h>
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-
 #define COMPIZ_SCHEMA_ID   "org.freedesktop.compiz"
 #define COMPIZCONFIG_SCHEMA_ID "org.freedesktop.compizconfig"
 #define PROFILE_SCHEMA_ID "org.freedesktop.compizconfig.profile"
