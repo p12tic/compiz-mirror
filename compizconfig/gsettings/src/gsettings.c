@@ -153,6 +153,48 @@ isIntegratedOption (CCSSetting *setting,
 #endif
 }
 
+static gboolean
+decomposeGSettingsPath (char *path,
+			char **pluginName,
+			unsigned int *screenNum)
+{
+    char         *token;
+
+    path += strlen (COMPIZ) + 1;
+
+    *pluginName = NULL;
+    *screenNum = 0;
+
+    token = strsep (&path, "/"); /* Profile name */
+    if (!token)
+	return FALSE;
+
+    token = strsep (&path, "/"); /* plugins */
+    if (!token)
+	return FALSE;
+
+    token = strsep (&path, "/"); /* plugin */
+    if (!token)
+	return FALSE;
+
+    *pluginName = g_strdup (token);
+
+    if (!*pluginName)
+	return FALSE;
+
+    token = strsep (&path, "/"); /* screen%i */
+    if (!token)
+    {
+	g_free (pluginName);
+	*pluginName = NULL;
+	return FALSE;
+    }
+
+    sscanf (token, "screen%d", screenNum);
+
+    return TRUE;
+}
+
 static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyName,
@@ -162,7 +204,6 @@ valueChanged (GSettings   *settings,
     char	 *uncleanKeyName;
     char	 *path, *pathOrig;
     char         *pluginName;
-    char         *token;
     int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
@@ -171,48 +212,21 @@ valueChanged (GSettings   *settings,
     g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
     path = pathOrig;
-    path += strlen (COMPIZ) + 1;
 
-    token = strsep (&path, "/"); /* Profile name */
-    if (!token)
+    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
     {
 	g_free (pathOrig);
 	return;
     }
-
-    token = strsep (&path, "/"); /* plugins */
-    if (!token)
-    {
-	g_free (pathOrig);
-	return;
-    }
-
-    token = strsep (&path, "/"); /* plugin */
-    if (!token)
-    {
-	g_free (pathOrig);
-	return;
-    }
-
-    pluginName = g_strdup (token);
 
     plugin = ccsFindPlugin (context, pluginName);
+
     if (!plugin)
     {
 	g_free (pluginName);
 	g_free (pathOrig);
 	return;
     }
-
-    token = strsep (&path, "/"); /* screen%i */
-    if (!token)
-    {
-	g_free (pluginName);
-	g_free (pathOrig);
-	return;
-    }
-
-    sscanf (token, "screen%d", &screenNum);
 
     uncleanKeyName = translateKeyForCCS (keyName);
 
