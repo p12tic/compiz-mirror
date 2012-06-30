@@ -336,7 +336,6 @@ readListValue (CCSSetting *setting)
     GVariantIter	iter;
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-
     hasVariantType = compizconfigTypeHasVariantType (ccsSettingGetInfo (setting)->forList.listType);
 
     if (!hasVariantType)
