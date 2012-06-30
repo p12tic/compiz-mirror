@@ -6,6 +6,15 @@
 gchar *
 getSchemaNameForPlugin (const char *plugin);
 
+char *
+truncateKeyForGSettings (const char *gsettingName);
+
+char *
+translateUnderscoresToDashesForGSettings (const char *truncated);
+
+void
+translateToLowercaseForGSettings (char *name);
+
 gchar *
 translateKeyForGSettings (char *gsettingName);
 

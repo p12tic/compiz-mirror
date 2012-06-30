@@ -23,3 +23,39 @@ TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)
 
     g_free (schemaName);
 }
+
+TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsOver)
+{
+    const unsigned int OVER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE + 1;
+
+    std::string keyname;
+
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+	keyname.push_back ('a');
+
+    ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
+
+    gchar *truncated = truncateKeyForGSettings (keyname.c_str ());
+
+    EXPECT_EQ (std::string (truncated).size (), MAX_GSETTINGS_KEY_SIZE);
+
+    g_free (truncated);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsUnder)
+{
+    const unsigned int UNDER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE - 1;
+
+    std::string keyname;
+
+    for (unsigned int i = 0; i <= UNDER_KEY_SIZE - 1; i++)
+	keyname.push_back ('a');
+
+    ASSERT_EQ (keyname.size (), UNDER_KEY_SIZE);
+
+    gchar *truncated = truncateKeyForGSettings (keyname.c_str ());
+
+    EXPECT_EQ (std::string (truncated).size (), UNDER_KEY_SIZE);
+
+    g_free (truncated);
+}

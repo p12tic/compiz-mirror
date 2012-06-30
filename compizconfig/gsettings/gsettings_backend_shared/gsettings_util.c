@@ -15,30 +15,52 @@ getSchemaNameForPlugin (const char *plugin)
 }
 
 char *
-translateKeyForGSettings (char *gsettingName)
+truncateKeyForGSettings (const char *gsettingName)
+{
+    /* Truncate */
+    gchar *truncated = g_strndup (gsettingName, MAX_GSETTINGS_KEY_SIZE);
+
+    return truncated;
+}
+
+char *
+translateUnderscoresToDashesForGSettings (const char *truncated)
 {
     gchar *clean        = NULL;
     gchar **delimited   = NULL;
-    guint i		= 0;
 
     /* Replace underscores with dashes */
-    delimited = g_strsplit (gsettingName, "_", 0);
+    delimited = g_strsplit (truncated, "_", 0);
 
     clean = g_strjoinv ("-", delimited);
 
-    gchar *ret = g_strndup (clean, 1024);
+    g_strfreev (delimited);
+    return clean;
+}
 
-    if (strlen (clean) > 1024)
-	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", clean, ret);
+void
+translateToLowercaseForGSettings (char *name)
+{
+    unsigned int i;
 
     /* Everything must be lowercase */
-    for (; i < strlen (ret); i++)
-	ret[i] = g_ascii_tolower (ret[i]);
+    for (i = 0; i < strlen (name); i++)
+	name[i] = g_ascii_tolower (name[i]);
+}
 
-    g_free (clean);
-    g_strfreev (delimited);
+char *
+translateKeyForGSettings (char *gsettingName)
+{
+    char *truncated = truncateKeyForGSettings (gsettingName);
+    char *translated = translateUnderscoresToDashesForGSettings (truncated);
+    translateToLowercaseForGSettings (translated);
 
-    return ret;
+    if (strlen (gsettingName) > MAX_GSETTINGS_KEY_SIZE)
+	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", gsettingName, translated);
+
+    g_free (truncated);
+
+    return translated;
 }
 
 gchar *

@@ -9,3 +9,5 @@ const char * COMPIZCONFIG = "/org/freedesktop/compizconfig";
 const char * PROFILEPATH  = "/org/freedesktop/compizconfig/profiles";
 const char * DEFAULTPROF = "Default";
 const char * CORE_NAME   = "core";
+
+const unsigned int MAX_GSETTINGS_KEY_SIZE = 1024;

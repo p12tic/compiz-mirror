@@ -17,6 +17,7 @@ extern const char * COMPIZCONFIG;
 extern const char * PROFILEPATH;
 extern const char * DEFAULTPROF;
 extern const char * CORE_NAME;
+extern const unsigned int MAX_GSETTINGS_KEY_SIZE;
 
 G_END_DECLS
 
