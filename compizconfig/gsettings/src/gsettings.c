@@ -49,14 +49,6 @@ static void writeIntegratedOption (CCSContext *context,
 				   CCSSetting *setting,
 				   int        index);
 
-typedef struct _SpecialOptionGSettings {
-    const char*       settingName;
-    const char*       pluginName;
-    const char*       schemaName;
-    const char*	      keyName;
-    const char*	      type;
-} SpecialOption;
-
 static GSettings *
 getSettingsObjectForPluginWithPath (const char *plugin,
 				  const char *path,
@@ -169,6 +161,7 @@ valueChanged (GSettings   *settings,
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
     char	 *path, *pathOrig;
+    char         *pluginName;
     char         *token;
     int          index;
     unsigned int screenNum;
@@ -201,9 +194,12 @@ valueChanged (GSettings   *settings,
 	return;
     }
 
-    plugin = ccsFindPlugin (context, token);
+    pluginName = g_strdup (token);
+
+    plugin = ccsFindPlugin (context, pluginName);
     if (!plugin)
     {
+	g_free (pluginName);
 	g_free (pathOrig);
 	return;
     }
@@ -211,6 +207,7 @@ valueChanged (GSettings   *settings,
     token = strsep (&path, "/"); /* screen%i */
     if (!token)
     {
+	g_free (pluginName);
 	g_free (pathOrig);
 	return;
     }
@@ -223,6 +220,7 @@ valueChanged (GSettings   *settings,
     if (!setting)
     {
 	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
+	g_free (pluginName);
 	free (uncleanKeyName);
 	g_free (pathOrig);
 	return;
@@ -241,6 +239,7 @@ valueChanged (GSettings   *settings,
 	writeIntegratedOption (context, setting, index);
     }
 
+    g_free (pluginName);
     free (uncleanKeyName);
     g_free (pathOrig);
 }
