@@ -33,31 +33,6 @@
 
 #include "gsettings.h"
 
-static gboolean
-compizconfigTypeHasVariantType (CCSSettingType type)
-{
-    gint i = 0;
-
-    static const unsigned int nVariantTypes = 6;
-    static const CCSSettingType variantTypes[] =
-    {
-	TypeString,
-	TypeMatch,
-	TypeColor,
-	TypeBool,
-	TypeInt,
-	TypeFloat
-    };
-
-    for (; i < nVariantTypes; i++)
-    {
-	if (variantTypes[i] == type)
-	    return TRUE;
-    }
-
-    return FALSE;
-}
-
 static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyname,

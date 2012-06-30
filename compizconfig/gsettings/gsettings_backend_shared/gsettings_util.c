@@ -49,7 +49,7 @@ translateToLowercaseForGSettings (char *name)
 }
 
 char *
-translateKeyForGSettings (char *gsettingName)
+translateKeyForGSettings (const char *gsettingName)
 {
     char *truncated = truncateKeyForGSettings (gsettingName);
     char *translated = translateUnderscoresToDashesForGSettings (truncated);
@@ -64,7 +64,7 @@ translateKeyForGSettings (char *gsettingName)
 }
 
 gchar *
-translateKeyForCCS (char *gsettingName)
+translateKeyForCCS (const char *gsettingName)
 {
     gchar *clean        = NULL;
     gchar **delimited   = NULL;
@@ -79,4 +79,29 @@ translateKeyForCCS (char *gsettingName)
     g_strfreev (delimited);
 
     return clean;
+}
+
+gboolean
+compizconfigTypeHasVariantType (CCSSettingType type)
+{
+    gint i = 0;
+
+    static const unsigned int nVariantTypes = 6;
+    static const CCSSettingType variantTypes[] =
+    {
+	TypeString,
+	TypeMatch,
+	TypeColor,
+	TypeBool,
+	TypeInt,
+	TypeFloat
+    };
+
+    for (; i < nVariantTypes; i++)
+    {
+	if (variantTypes[i] == type)
+	    return TRUE;
+    }
+
+    return FALSE;
 }

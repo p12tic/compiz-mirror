@@ -2,6 +2,7 @@
 #define _COMPIZ_GSETTINGS_UTIL_H
 
 #include <glib.h>
+#include <ccs.h>
 
 gchar *
 getSchemaNameForPlugin (const char *plugin);
@@ -16,9 +17,12 @@ void
 translateToLowercaseForGSettings (char *name);
 
 gchar *
-translateKeyForGSettings (char *gsettingName);
+translateKeyForGSettings (const char *gsettingName);
 
 gchar *
-translateKeyForCCS (char *gsettingName);
+translateKeyForCCS (const char *gsettingName);
+
+gboolean
+compizconfigTypeHasVariantType (CCSSettingType t);
 
 #endif
