@@ -8,6 +8,7 @@ add_executable (compizconfig_test_gsettings
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_tests.h)
 
 target_link_libraries (compizconfig_test_gsettings
+		       gsettings_backend_shared
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 

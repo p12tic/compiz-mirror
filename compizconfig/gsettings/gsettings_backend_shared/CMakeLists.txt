@@ -6,7 +6,8 @@ include_directories (${GSETTINGS_INCLUDE_DIRS}
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
 add_library (gsettings_backend_shared STATIC
-             ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c)
+             ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c
+	     ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c)
 
 target_link_libraries (gsettings_backend_shared
 		       ${GSETTINGS_LIBRARIES})

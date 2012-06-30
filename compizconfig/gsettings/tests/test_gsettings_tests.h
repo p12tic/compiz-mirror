@@ -34,3 +34,8 @@ class CCSGSettingsTest :
 	CCSGSettingsTeardownSetupInterface *mFuncs;
 };
 
+class CCSGSettingsTestIndependent :
+    public ::testing::Test
+{
+};
+
