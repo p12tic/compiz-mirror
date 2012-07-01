@@ -25,4 +25,9 @@ translateKeyForCCS (const char *gsettingName);
 gboolean
 compizconfigTypeHasVariantType (CCSSettingType t);
 
+gboolean
+decomposeGSettingsPath (const char *path,
+			char **pluginName,
+			unsigned int *screenNum);
+
 #endif

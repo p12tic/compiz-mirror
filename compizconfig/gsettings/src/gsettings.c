@@ -153,48 +153,6 @@ isIntegratedOption (CCSSetting *setting,
 #endif
 }
 
-static gboolean
-decomposeGSettingsPath (char *path,
-			char **pluginName,
-			unsigned int *screenNum)
-{
-    char         *token;
-
-    path += strlen (COMPIZ) + 1;
-
-    *pluginName = NULL;
-    *screenNum = 0;
-
-    token = strsep (&path, "/"); /* Profile name */
-    if (!token)
-	return FALSE;
-
-    token = strsep (&path, "/"); /* plugins */
-    if (!token)
-	return FALSE;
-
-    token = strsep (&path, "/"); /* plugin */
-    if (!token)
-	return FALSE;
-
-    *pluginName = g_strdup (token);
-
-    if (!*pluginName)
-	return FALSE;
-
-    token = strsep (&path, "/"); /* screen%i */
-    if (!token)
-    {
-	g_free (pluginName);
-	*pluginName = NULL;
-	return FALSE;
-    }
-
-    sscanf (token, "screen%d", screenNum);
-
-    return TRUE;
-}
-
 static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyName,

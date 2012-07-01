@@ -90,6 +90,8 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForCCS)
     gchar *translated = translateKeyForCCS (keyname.c_str ());
 
     EXPECT_EQ (std::string (translated), "plugin_option");
+
+    free (translated);
 }
 
 struct CCSTypeIsVariantType
@@ -153,3 +155,17 @@ INSTANTIATE_TEST_CASE_P (CCSGSettingsTestVariantTypeInstantiation, CCSGSettingsT
 				 (type[11]),
 				 (type[12])));
 
+TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
+{
+    std::string compiz_gsettings_path (COMPIZ);
+    std::string fake_option_path ("profile/plugins/fake/screen1");
+
+    compiz_gsettings_path += fake_option_path;
+
+    char *pluginName;
+    unsigned int screenNum;
+
+    EXPECT_TRUE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginName, &screenNum));
+    EXPECT_EQ (std::string (pluginName), "fake");
+    EXPECT_EQ (screenNum, 1);
+}
