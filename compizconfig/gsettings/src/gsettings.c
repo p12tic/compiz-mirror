@@ -361,33 +361,13 @@ readIntegratedOption (CCSContext *context,
 #endif
 }
 
-Bool
-readOption (CCSSetting * setting)
+gboolean
+variantIsValidForCCSType (GVariant *gsettingsValue,
+			  CCSSettingType settingType)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-    GVariant   *gsettingsValue = NULL;
-    Bool       ret = FALSE;
-    Bool       valid = TRUE;
+    gboolean valid = FALSE;
 
-    /* It is impossible for certain settings to have a schema,
-     * such as actions and read only settings, so in that case
-     * just return FALSE since compizconfig doesn't expect us
-     * to read them anyways */
-
-    if (ccsSettingGetType (setting) == TypeAction ||
-	ccsSettingIsReadOnly (setting))
-    {
-	return FALSE;
-    }
-
-    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
-
-    /* first check if the key is set */
-    gsettingsValue = g_settings_get_value (settings, cleanSettingName);
-
-    switch (ccsSettingGetType (setting))
+    switch (settingType)
     {
     case TypeString:
     case TypeMatch:
@@ -414,7 +394,41 @@ readOption (CCSSetting * setting)
 	break;
     }
 
-    if (!valid)
+    return valid;
+}
+
+Bool
+readOption (CCSSetting * setting)
+{
+    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    GVariant   *gsettingsValue = NULL;
+    Bool       ret = FALSE;
+
+    /* It is impossible for certain settings to have a schema,
+     * such as actions and read only settings, so in that case
+     * just return FALSE since compizconfig doesn't expect us
+     * to read them anyways */
+
+    if (ccsSettingGetType (setting) == TypeAction ||
+	ccsSettingIsReadOnly (setting))
+    {
+	return FALSE;
+    }
+
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
+
+    /* first check if the key is set */
+    gsettingsValue = g_settings_get_value (settings, cleanSettingName);
+
+    if (!gsettingsValue)
+    {
+	free (cleanSettingName);
+	return FALSE;
+    }
+
+    if (!variantIsValidForCCSType (gsettingsValue, ccsSettingGetType (setting)))
     {
 	printf ("GSettings backend: There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
