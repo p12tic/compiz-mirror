@@ -3,6 +3,7 @@
 #include "gsettings_mocks.h"
 
 using ::testing::Values;
+using ::testing::ValuesIn;
 
 TEST_P(CCSGSettingsTest, TestTestFixtures)
 {
@@ -141,19 +142,7 @@ namespace
 }
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsTestVariantTypeInstantiation, CCSGSettingsTestVariantTypeFixture,
-			 Values ((type[0]),
-				 (type[1]),
-				 (type[2]),
-				 (type[3]),
-				 (type[4]),
-				 (type[5]),
-				 (type[6]),
-				 (type[7]),
-				 (type[8]),
-				 (type[9]),
-				 (type[10]),
-				 (type[11]),
-				 (type[12])));
+			 ValuesIn (type));
 
 TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
 {
@@ -168,4 +157,163 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     EXPECT_TRUE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginName, &screenNum));
     EXPECT_EQ (std::string (pluginName), "fake");
     EXPECT_EQ (screenNum, 1);
+
+    g_free (pluginName);
 }
+
+namespace GVariantSubtypeWrappers
+{
+    typedef gboolean (*IsSubtype) (GVariant *v);
+
+    gboolean boolean (GVariant *v)
+    {
+	return g_variant_type_is_subtype_of (G_VARIANT_TYPE_BOOLEAN, g_variant_get_type (v));
+    }
+
+    gboolean bell (GVariant *v)
+    {
+	return boolean (v);
+    }
+
+    gboolean string (GVariant *v)
+    {
+	return g_variant_type_is_subtype_of (G_VARIANT_TYPE_STRING, g_variant_get_type (v));
+    }
+
+    gboolean match (GVariant *v)
+    {
+	return string (v);
+    }
+
+    gboolean color (GVariant *v)
+    {
+	return string (v);
+    }
+
+    gboolean key (GVariant *v)
+    {
+	return string (v);
+    }
+
+    gboolean button (GVariant *v)
+    {
+	return string (v);
+    }
+
+    gboolean edge (GVariant *v)
+    {
+	return string (v);
+    }
+
+    gboolean integer (GVariant *v)
+    {
+	return g_variant_type_is_subtype_of (G_VARIANT_TYPE_INT32, g_variant_get_type (v));
+    }
+
+    gboolean doubleprecision (GVariant *v)
+    {
+	return g_variant_type_is_subtype_of (G_VARIANT_TYPE_DOUBLE, g_variant_get_type (v));
+    }
+
+    gboolean list (GVariant *v)
+    {
+	return g_variant_type_is_array (g_variant_get_type (v));
+    }
+}
+
+struct ArrayVariantInfo
+{
+    GVariantSubtypeWrappers::IsSubtype func;
+    CCSSettingType		       ccsType;
+    const char			       *vType;
+};
+
+namespace
+{
+    const char *vBoolean = "b";
+    const char *vString = "s";
+    const char *vInt = "i";
+    const char *vDouble = "d";
+    const char *vArray = "as";
+
+    ArrayVariantInfo arrayVariantInfo[] =
+    {
+	{ &GVariantSubtypeWrappers::boolean, TypeBool, vBoolean },
+	{ &GVariantSubtypeWrappers::bell, TypeBell, vBoolean },
+	{ &GVariantSubtypeWrappers::string, TypeString, vString },
+	{ &GVariantSubtypeWrappers::match, TypeMatch, vString },
+	{ &GVariantSubtypeWrappers::color, TypeColor, vString },
+	{ &GVariantSubtypeWrappers::key, TypeKey, vString },
+	{ &GVariantSubtypeWrappers::button, TypeButton, vString },
+	{ &GVariantSubtypeWrappers::edge, TypeEdge, vString },
+	{ &GVariantSubtypeWrappers::integer, TypeInt, vInt },
+	{ &GVariantSubtypeWrappers::doubleprecision, TypeFloat, vDouble },
+	{ &GVariantSubtypeWrappers::list, TypeList, vArray }
+    };
+}
+
+class CCSGSettingsTestArrayVariantSubTypeFixture :
+    public ::testing::TestWithParam <ArrayVariantInfo>
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    mAVInfo = GetParam ();
+	}
+
+	virtual void TearDown ()
+	{
+	    g_variant_unref (v);
+	}
+
+    protected:
+
+	ArrayVariantInfo mAVInfo;
+	GVariant	 *v;
+};
+
+TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTypeBool)
+{
+    v = g_variant_new (vBoolean, TRUE);
+
+    EXPECT_EQ ((*mAVInfo.func) (v), variantIsValidForCCSType (v, mAVInfo.ccsType));
+}
+
+TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTypeString)
+{
+    v = g_variant_new (vString, "foo");
+
+    EXPECT_EQ ((*mAVInfo.func) (v), variantIsValidForCCSType (v, mAVInfo.ccsType));
+}
+
+TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTypeInt)
+{
+    v = g_variant_new (vInt, 1);
+
+    EXPECT_EQ ((*mAVInfo.func) (v), variantIsValidForCCSType (v, mAVInfo.ccsType));
+}
+
+TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTypeDouble)
+{
+    v = g_variant_new (vDouble, 2.0);
+
+    EXPECT_EQ ((*mAVInfo.func) (v), variantIsValidForCCSType (v, mAVInfo.ccsType));
+}
+
+TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTypeArray)
+{
+    GVariantBuilder vb;
+
+    g_variant_builder_init (&vb, G_VARIANT_TYPE (vArray));
+
+    g_variant_builder_add (&vb, "s", "foo");
+    g_variant_builder_add (&vb, "s", "bar");
+
+    v = g_variant_builder_end (&vb);
+
+    EXPECT_EQ ((*mAVInfo.func) (v), variantIsValidForCCSType (v, mAVInfo.ccsType));
+}
+
+INSTANTIATE_TEST_CASE_P (CCSGSettingsTestArrayVariantSubTypeInstantiation, CCSGSettingsTestArrayVariantSubTypeFixture,
+			 ValuesIn (arrayVariantInfo));

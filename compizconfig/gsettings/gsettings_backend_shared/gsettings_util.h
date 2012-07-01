@@ -30,4 +30,8 @@ decomposeGSettingsPath (const char *path,
 			char **pluginName,
 			unsigned int *screenNum);
 
+gboolean
+variantIsValidForCCSType (GVariant *gsettingsValue,
+			  CCSSettingType settingType);
+
 #endif

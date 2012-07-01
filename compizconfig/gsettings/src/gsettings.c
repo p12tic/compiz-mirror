@@ -361,42 +361,6 @@ readIntegratedOption (CCSContext *context,
 #endif
 }
 
-gboolean
-variantIsValidForCCSType (GVariant *gsettingsValue,
-			  CCSSettingType settingType)
-{
-    gboolean valid = FALSE;
-
-    switch (settingType)
-    {
-    case TypeString:
-    case TypeMatch:
-    case TypeColor:
-    case TypeKey:
-    case TypeButton:
-    case TypeEdge:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_STRING, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeInt:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_INT32, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeBool:
-    case TypeBell:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_BOOLEAN, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeFloat:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_DOUBLE, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeList:
-	valid = (g_variant_type_is_array (g_variant_get_type (gsettingsValue)));
-	break;
-    default:
-	break;
-    }
-
-    return valid;
-}
-
 Bool
 readOption (CCSSetting * setting)
 {
