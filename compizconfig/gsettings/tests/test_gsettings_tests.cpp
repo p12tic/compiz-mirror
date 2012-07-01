@@ -59,3 +59,15 @@ TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsUnder)
 
     g_free (truncated);
 }
+
+TEST_F(CCSGSettingsTestIndependent, TestTranslateUnderscoresToDashesForGSettings)
+{
+    std::string keyname ("plugin_option");
+
+    gchar *translated = translateUnderscoresToDashesForGSettings (keyname.c_str ());
+
+    std::string translatedKeyname (translated);
+    EXPECT_EQ (translatedKeyname, std::string ("plugin-option"));
+
+    g_free (translated);
+}
