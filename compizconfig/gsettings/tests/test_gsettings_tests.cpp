@@ -71,3 +71,12 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateUnderscoresToDashesForGSettings
 
     g_free (translated);
 }
+
+TEST_F(CCSGSettingsTestIndependent, TestTranslateUpperToLowerForGSettings)
+{
+    gchar keyname[] = "PLUGIN-OPTION";
+
+    translateToLowercaseForGSettings (keyname);
+
+    EXPECT_EQ (std::string (keyname), "plugin-option");
+}
