@@ -36,4 +36,6 @@ install (
 install (DIRECTORY src/compiz
 	 DESTINATION ${CMAKE_INSTALL_PREFIX}/src)
 
-add_subdirectory (src)
+if (COMPIZ_BUILD_TESTING)
+    add_subdirectory (src)
+endif (COMPIZ_BUILD_TESTING)
