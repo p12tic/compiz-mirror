@@ -32,5 +32,5 @@ target_link_libraries(
   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
-env_gtest_add_tests( compiz_plugin_test "" ${CMAKE_CURRENT_SOURCE_DIR}/test-plugin.cpp )
+compiz_discover_tests ( compiz_plugin_test )
 

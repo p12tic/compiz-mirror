@@ -94,7 +94,7 @@ target_link_libraries (test-setting
 		       plugin-mock
 		       setting-mock)
 
-gtest_add_tests (test-ccs-object "" ${CMAKE_CURRENT_SOURCE_DIR}/test-ccs-object.cpp)
-gtest_add_tests (test-context "" ${CMAKE_CURRENT_SOURCE_DIR}/test-context.cpp)
-gtest_add_tests (test-plugin "" ${CMAKE_CURRENT_SOURCE_DIR}/test-plugin.cpp)
-gtest_add_tests (test-setting "" ${CMAKE_CURRENT_SOURCE_DIR}/test-setting.cpp)
+compiz_discover_tests (test-ccs-object)
+compiz_discover_tests (test-context)
+compiz_discover_tests (test-plugin)
+compiz_discover_tests (test-setting)
