@@ -1,9 +1,10 @@
 import apport.packaging
+from apport.hookutils import *
 
 def add_info(report, ui):
 
     # if it's a stacktrace, report it directly against the right component
-    if report.has_key("Stacktrace"):
+    if "Stacktrace" in report:
         for external_component in ("/usr/lib/libnux", "/usr/lib/compiz/libunityshell", "/usr/lib/libunity"):
             for words in report["Stacktrace"].split():
                 if words.startswith(external_component):
