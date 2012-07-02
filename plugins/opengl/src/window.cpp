@@ -104,37 +104,42 @@ PrivateGLWindow::clearTextures ()
 bool
 GLWindow::bind ()
 {
-    if ((priv->needsRebind && !priv->cWindow->bind ()))
+    if (priv->needsRebind)
     {
-	if (!priv->textures.empty ())
+	if (!priv->cWindow->bind ())
 	{
-	    /* Getting a new pixmap failed, recycle the old texture */
-	    priv->needsRebind = false;
-	    return true;
+	    if (!priv->textures.empty ())
+	    {
+		/* Getting a new pixmap failed, recycle the old texture */
+		priv->needsRebind = false;
+		return true;
+	    }
+	    else
+		return false;
+	}
+
+	GLTexture::List textures =
+	    GLTexture::bindPixmapToTexture (priv->cWindow->pixmap (),
+					    priv->cWindow->size ().width (),
+					    priv->cWindow->size ().height (),
+					    priv->window->depth ());
+	if (textures.empty ())
+	{
+	    compLogMessage ("opengl", CompLogLevelInfo,
+			    "Couldn't bind redirected window 0x%x to "
+			    "texture\n", (int) priv->window->id ());
+	    return false;
 	}
 	else
-	    return false;
-    }
+	{
+	    priv->textures = textures;
+	    priv->needsRebind = false;
+	}
 
-    GLTexture::List textures =
-	GLTexture::bindPixmapToTexture (priv->cWindow->pixmap (),
-					priv->cWindow->size ().width (),
-					priv->cWindow->size ().height (),
-					priv->window->depth ());
-    if (textures.empty ())
-    {
-	compLogMessage ("opengl", CompLogLevelInfo,
-			"Couldn't bind redirected window 0x%x to "
-			"texture\n", (int) priv->window->id ());
-	return false;
-    }
-    else
-    {
-	priv->textures = textures;
-	priv->needsRebind = false;
-    }
+	priv->updateState |= PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
 
-    priv->updateState |= PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
+	return true;
+    }
 
     return true;
 }
@@ -142,7 +147,8 @@ GLWindow::bind ()
 void
 GLWindow::release ()
 {
-    priv->needsRebind = true;
+    if (!priv->cWindow->frozen ())
+	priv->needsRebind = true;
 }
 
 bool
@@ -202,8 +208,7 @@ PrivateGLWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
     updateState |= PrivateGLWindow::UpdateMatrix | PrivateGLWindow::UpdateRegion;
-    if (!window->hasUnmapReference ())
-	gWindow->release ();
+    gWindow->release ();
 }
 
 void
@@ -225,8 +230,7 @@ PrivateGLWindow::windowNotify (CompWindowNotify n)
 	case CompWindowNotifyReparent:
 	case CompWindowNotifyUnreparent:
 	case CompWindowNotifyFrameUpdate:
-	    if (!window->hasUnmapReference ())
-		gWindow->release ();
+	    gWindow->release ();
 	    break;
 	default:
 	    break;
