@@ -89,7 +89,7 @@ int main (int argc, char **argv)
 
 	if (CTestTestfileW.is_open ())
 	{
-	    CTestTestfileW << includeLine;
+	    CTestTestfileW << includeLine << std::endl;
 	    CTestTestfileW.close ();
 	}
     }
