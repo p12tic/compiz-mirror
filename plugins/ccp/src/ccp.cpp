@@ -451,7 +451,7 @@ CcpScreen::timeout ()
 	    o = CompOption::findOption (p->vTable->getOptions (), ccsSettingGetName (s));
 	    if (o)
 		setOptionFromContext (o, ccsPluginGetName (ccsSettingGetParent (s)));
-	    D (D_FULL, "Setting Update \"%s\"\n", ccsSettingGetName (s));
+	    ccsDebug ("Setting Update \"%s\"", ccsSettingGetName (s));
 	}
 
 	ccsSettingListFree (list, FALSE);

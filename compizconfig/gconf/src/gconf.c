@@ -24,6 +24,8 @@
  *
  **/
 
+#define CCS_LOG_DOMAIN "gconf"
+
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -1181,9 +1183,9 @@ readOption (CCSSetting * setting)
     }
     if (!valid)
     {
-	printf ("GConf backend: There is an unsupported value at path %s. "
+	ccsWarning ("There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
-		"that value so that operation can continue properly.\n",
+		"that value so that operation can continue properly.",
 		pathName);
 	return FALSE;
     }
@@ -1305,7 +1307,7 @@ readOption (CCSSetting * setting)
 	ret = readListValue (setting, gconfValue);
 	break;
     default:
-	printf("GConf backend: attempt to read unsupported setting type %d from path %s!\n",
+	ccsWarning ("Attempt to read unsupported setting type %d from path %s!",
 	       ccsSettingGetType (setting), pathName);
 	break;
     }
@@ -1406,7 +1408,7 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported list type %d at path %s!\n",
+	ccsWarning ("Attempt to write unsupported list type %d at path %s!",
 	       ccsSettingGetInfo (setting)->forList.listType, pathName);
 	valueType = GCONF_VALUE_INVALID;
 	break;
@@ -1818,7 +1820,7 @@ writeOption (CCSSetting * setting)
 	writeListValue (setting, pathName);
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported setting type %d\n",
+	ccsWarning ("Attempt to write unsupported setting type %d",
 	       ccsSettingGetType (setting));
 	break;
     }

@@ -3105,7 +3105,7 @@ ccsLoadPlugin (CCSContext *context, char *name)
 void
 ccsLoadPluginsDefault (CCSContext * context)
 {
-    D (D_FULL, "Adding plugins\n");
+    ccsDebug ("Adding plugins");
 
 #ifdef USE_PROTOBUF
     initPBLoading ();
@@ -3212,7 +3212,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
 	return;
 
     pPrivate->loaded = TRUE;
-    D (D_FULL, "Initializing %s options...", pPrivate->name);
+    ccsDebug ("Initializing %s options...", pPrivate->name);
 
 #ifdef USE_PROTOBUF
     if (usingProtobuf && pPrivate->pbFilePath)
@@ -3250,7 +3250,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
 	writePBFile (pPrivate->pbFilePath, (PluginMetadata *) pluginPBToWrite,
 		     NULL, &xmlStat);
 #endif
-    D (D_FULL, "done\n");
+    ccsDebug ("done");
 
     collateGroups (pPrivate);
     ccsReadPluginSettings (plugin);
