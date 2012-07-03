@@ -1,15 +1,17 @@
-compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
     - refresh with latest trunk
   * debian/*docs:
     - remove the TODO copy now removed upstream
+  * debian/compiz-plugins.install:
+    - install stackswitch plugin
 
   [ Matthieu Baerts (matttbe) ]
   * Update apport hook for python3 ; thanks to Edward Donovan (LP: #1013171)
 
- -- Matthieu Baerts (matttbe) <matttbe@gmail.com>  Mon, 02 Jul 2012 17:24:40 +0200
+ -- Didier Roche <didrocks@ubuntu.com>  Tue, 03 Jul 2012 12:05:54 +0200
 
 compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 
