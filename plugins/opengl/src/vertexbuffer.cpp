@@ -44,7 +44,7 @@ GLVertexBuffer *PrivateVertexBuffer::streamingBuffer = NULL;
 GLVertexBuffer::GLVertexBuffer () :
     priv (new PrivateVertexBuffer ())
 {
-    priv->usage = GL_STATIC_DRAW;
+    priv->usage = GL::STATIC_DRAW;
     colorDefault ();
 }
 
@@ -64,7 +64,7 @@ GLVertexBuffer *GLVertexBuffer::streamingBuffer ()
 {
     if (PrivateVertexBuffer::streamingBuffer == NULL)
 	PrivateVertexBuffer::streamingBuffer = new GLVertexBuffer
-	                                                      (GL_STREAM_DRAW);
+							      (GL::STREAM_DRAW);
     return PrivateVertexBuffer::streamingBuffer;
 }
 
@@ -427,8 +427,9 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 
     positionIndex = tmpProgram->attributeLocation ("position");
     (*GL::enableVertexAttribArray) (positionIndex);
-    (*GL::bindBuffer) (GL_ARRAY_BUFFER, vertexBuffer);
+    (*GL::bindBuffer) (GL::ARRAY_BUFFER, vertexBuffer);
     (*GL::vertexAttribPointer) (positionIndex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    (*GL::bindBuffer) (GL::ARRAY_BUFFER, 0);
 
     //use default normal
     if (normalData.size () == 0)
@@ -445,8 +446,9 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
     {
 	normalIndex = tmpProgram->attributeLocation ("normal");
 	(*GL::enableVertexAttribArray) (normalIndex);
-	(*GL::bindBuffer) (GL_ARRAY_BUFFER, normalBuffer);
+	(*GL::bindBuffer) (GL::ARRAY_BUFFER, normalBuffer);
 	(*GL::vertexAttribPointer) (normalIndex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	(*GL::bindBuffer) (GL::ARRAY_BUFFER, 0);
     }
 
     // special case a single color and apply it to the entire operation
@@ -459,8 +461,9 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
     {
 	colorIndex = tmpProgram->attributeLocation ("color");
 	(*GL::enableVertexAttribArray) (colorIndex);
-	(*GL::bindBuffer) (GL_ARRAY_BUFFER, colorBuffer);
+	(*GL::bindBuffer) (GL::ARRAY_BUFFER, colorBuffer);
 	(*GL::vertexAttribPointer) (colorIndex, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	(*GL::bindBuffer) (GL::ARRAY_BUFFER, 0);
     }
 
     for (int i = textureData.size () - 1; i >= 0; i--)
@@ -471,8 +474,9 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 	texCoordIndex[i] = tmpProgram->attributeLocation (name);
 
 	(*GL::enableVertexAttribArray) (texCoordIndex[i]);
-	(*GL::bindBuffer) (GL_ARRAY_BUFFER, textureBuffers[i]);
+	(*GL::bindBuffer) (GL::ARRAY_BUFFER, textureBuffers[i]);
 	(*GL::vertexAttribPointer) (texCoordIndex[i], 2, GL_FLOAT, GL_FALSE, 0, 0);
+	(*GL::bindBuffer) (GL::ARRAY_BUFFER, 0);
 
 	snprintf (name, 9, "texture%d", i);
 	tmpProgram->setUniform (name, i);
@@ -493,11 +497,10 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 	tmpProgram->setUniform3f ("paintAttrib", attribs[0], attribs[1], attribs[2]);
     }
 
-    glDrawArrays (primitiveType, vertexOffset, maxVertices > 0 ?
-					       std::min (static_cast <int> (vertexData.size () / 3),
-							 maxVertices) :
-					       vertexData.size () / 3);
-
+    glDrawArrays (primitiveType, 0, maxVertices > 0 ?
+				    std::min (static_cast <int> (vertexData.size () / 3),
+					      maxVertices) :
+				    vertexData.size () / 3);
     for (int i = 0; i < 4; ++i)
     {
 	if (texCoordIndex[i] != -1)
@@ -512,7 +515,6 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 
     (*GL::disableVertexAttribArray) (positionIndex);
 
-    GL::bindBuffer (GL_ARRAY_BUFFER, 0);
     tmpProgram->unbind ();
 
     return 0;

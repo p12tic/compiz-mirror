@@ -335,10 +335,13 @@ PrivateTexture::loadImageData (const char   *image,
     }
     #endif
 
+    glGetError ();
+
     t->setData (target, matrix, mipmap);
     t->setGeometry (0, 0, width, height);
 
-    glBindTexture (target, t->name ());
+    t->setFilter (GL_NEAREST);
+    t->setWrap (GL_CLAMP_TO_EDGE);
 
     #ifdef USE_GLES
     // For GLES2 no format conversion is allowed, i.e., format must equal internalFormat
@@ -354,12 +357,17 @@ PrivateTexture::loadImageData (const char   *image,
 	internalFormat = GL_COMPRESSED_RGBA_ARB;
     #endif
 
+    glBindTexture (target, t->name ());
+
     glTexImage2D (target, 0, internalFormat, width, height, 0,
 		  format, type, image);
 
-    t->setFilter (GL_NEAREST);
-    t->setWrap (GL_CLAMP_TO_EDGE);
+    glBindTexture (target, 0);
 
+    if (glGetError () != GL_NO_ERROR)
+    {
+	GLTexture::List ();
+    }
     return rv;
 }
 

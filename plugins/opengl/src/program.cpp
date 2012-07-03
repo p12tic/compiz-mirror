@@ -41,7 +41,7 @@ void printShaderInfoLog (GLuint shader)
     GLint   chars  = 0;
     GLchar *infoLog;
 
-    (*GL::getShaderiv) (shader, GL_INFO_LOG_LENGTH, &length);
+    (*GL::getShaderiv) (shader, GL::INFO_LOG_LENGTH, &length);
 
     if (length > 0)
     {
@@ -58,7 +58,7 @@ void printProgramInfoLog(GLuint program)
     GLint   chars  = 0;
     GLchar *infoLog;
 
-    (*GL::getProgramiv) (program, GL_INFO_LOG_LENGTH, &length);
+    (*GL::getProgramiv) (program, GL::INFO_LOG_LENGTH, &length);
 
     if (length > 0)
     {
@@ -80,7 +80,7 @@ static bool compileShader (GLuint *shader, GLenum type, CompString &source)
     (*GL::shaderSource) (*shader, 1, &data, NULL);
     (*GL::compileShader) (*shader);
 
-    (*GL::getShaderiv) (*shader, GL_COMPILE_STATUS, &status);
+    (*GL::getShaderiv) (*shader, GL::COMPILE_STATUS, &status);
     return (status == GL_TRUE);
 }
 
@@ -93,14 +93,14 @@ GLProgram::GLProgram (CompString &vertexShader, CompString &fragmentShader) :
     priv->valid = false;
     priv->program = (*GL::createProgram) ();
 
-    if (!compileShader (&vertex, GL_VERTEX_SHADER, vertexShader))
+    if (!compileShader (&vertex, GL::VERTEX_SHADER, vertexShader))
     {
 	printShaderInfoLog (vertex);
 	std::cout << vertexShader << std::endl << std::endl;
 	return;
     }
 
-    if (!compileShader (&fragment, GL_FRAGMENT_SHADER, fragmentShader))
+    if (!compileShader (&fragment, GL::FRAGMENT_SHADER, fragmentShader))
     {
 	printShaderInfoLog (fragment);
 	std::cout << fragmentShader << std::endl << std::endl;
@@ -113,7 +113,7 @@ GLProgram::GLProgram (CompString &vertexShader, CompString &fragmentShader) :
     (*GL::linkProgram) (priv->program);
     (*GL::validateProgram) (priv->program);
 
-    (*GL::getProgramiv) (priv->program, GL_LINK_STATUS, &status);
+    (*GL::getProgramiv) (priv->program, GL::LINK_STATUS, &status);
     if (status == GL_FALSE)
     {
 	printProgramInfoLog (priv->program);

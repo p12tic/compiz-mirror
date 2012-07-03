@@ -87,7 +87,7 @@ WSNamesScreen::renderNameText ()
 }
 
 void
-WSNamesScreen::drawText ()
+WSNamesScreen::drawText (const GLMatrix &matrix)
 {
     GLfloat  alpha;
     float    x, y, border = 10.0f;
@@ -125,7 +125,7 @@ WSNamesScreen::drawText ()
     else
 	alpha = 1.0f;
 
-    textData.draw (floor (x), floor (y), alpha);
+    textData.draw (matrix, floor (x), floor (y), alpha);
 }
 
 bool
@@ -144,12 +144,8 @@ WSNamesScreen::glPaintOutput (const GLScreenPaintAttrib	&attrib,
 	GLMatrix sTransform (transform);
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
 
-	drawText ();
-
-	glPopMatrix ();
+	drawText (sTransform);
     }
 
     return status;

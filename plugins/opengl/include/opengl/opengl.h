@@ -306,11 +306,30 @@ namespace GL {
 					   GLsizei width,
 					   GLsizei height);
 
-    extern unsigned int RENDERBUFFER;
-    extern unsigned int FRAMEBUFFER;
-    extern unsigned int DEPTH24_STENCIL8;
-    extern unsigned int DEPTH_ATTACHMENT;
-    extern unsigned int STENCIL_ATTACHMENT;
+
+    /* GL_ARB_shader_objects */
+    #ifndef USE_GLES
+    typedef GLhandleARB (*GLCreateShaderObjectARBProc) (GLenum type);
+    typedef GLhandleARB (*GLCreateProgramObjectARBProc) ();
+    typedef void (*GLShaderSourceARBProc) (GLhandleARB shader,
+                                        GLsizei count,
+                                        const GLchar **string,
+                                        const GLint* length);
+    typedef void (*GLCompileShaderARBProc) (GLhandleARB shader);
+    typedef void (*GLValidateProgramARBProc) (GLhandleARB program);
+    typedef void (*GLDeleteObjectARBProc) (GLhandleARB object);
+    typedef void (*GLAttachObjectARBProc) (GLhandleARB program,
+                                        GLhandleARB shader);
+    typedef void (*GLLinkProgramARBProc) (GLhandleARB program);
+    typedef void (*GLUseProgramObjectARBProc) (GLhandleARB program);
+    typedef int  (*GLGetUniformLocationARBProc) (GLhandleARB program,
+                                              const GLchar* name);
+    typedef int (*GLGetAttribLocationARBProc) (GLhandleARB program,
+                                            const GLchar *name);
+
+    typedef void (*GLGetObjectParameterivProc) (GLhandleARB object, GLenum type, int *param);
+    typedef void (*GLGetInfoLogProc) (GLhandleARB object, int maxLen, int *len, char *log);
+    #endif
 
     #ifdef USE_GLES
     extern EGLCreateImageKHRProc  createImage;
@@ -393,6 +412,95 @@ namespace GL {
     extern GLFramebufferRenderbufferProc framebufferRenderbuffer;
     extern GLRenderbufferStorageProc renderbufferStorage;
 
+    #ifndef USE_GLES
+    extern GLCreateShaderObjectARBProc createShaderObjectARB;
+    extern GLCreateProgramObjectARBProc createProgramObjectARB;
+    extern GLShaderSourceARBProc shaderSourceARB;
+    extern GLCompileShaderARBProc compileShaderARB;
+    extern GLValidateProgramARBProc validateProgramARB;
+    extern GLDeleteObjectARBProc deleteObjectARB;
+    extern GLAttachObjectARBProc attachObjectARB;
+    extern GLLinkProgramARBProc linkProgramARB;
+    extern GLUseProgramObjectARBProc useProgramObjectARB;
+    extern GLGetUniformLocationARBProc getUniformLocationARB;
+    extern GLGetAttribLocationARBProc getAttribLocationARB;
+
+    extern GLGetObjectParameterivProc   getObjectParameteriv;
+    extern GLGetInfoLogProc	    getInfoLog;
+    #endif
+
+#ifdef USE_GLES
+
+    static const GLenum 		    FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
+    static const GLenum 		    FRAMEBUFFER = GL_FRAMEBUFFER;
+    static const GLenum			    RENDERBUFFER = GL_RENDERBUFFER;
+    static const GLenum 		    COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0;
+    static const GLenum 		    DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT;
+    static const GLenum			    STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT;
+    static const GLenum			    DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_OES;
+
+    /* OpenGL|ES does not support different draw/read framebuffers */
+    static const GLenum 		    DRAW_FRAMEBUFFER = GL_FRAMEBUFFER;
+    static const GLenum 		    READ_FRAMEBUFFER = GL_FRAMEBUFFER;
+
+    static const GLenum 		    FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE;
+    static const GLenum 		    FRAMEBUFFER_UNDEFINED = 0;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER = 0;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_READ_BUFFER = 0;
+    static const GLenum 		    FRAMEBUFFER_UNSUPPORTED = GL_FRAMEBUFFER_UNSUPPORTED;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_MULTISAMPLE = 0;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS = 0;
+    static const GLenum 		    FRAMEBUFFER_INCOMPLETE_DIMENSIONS = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
+
+    static const GLenum 		    ARRAY_BUFFER = GL_ARRAY_BUFFER;
+    static const GLenum 		    STATIC_DRAW = GL_STATIC_DRAW;
+    static const GLenum 		    STREAM_DRAW = GL_STREAM_DRAW;
+    static const GLenum 		    DYNAMIC_DRAW = GL_DYNAMIC_DRAW;
+
+    static const GLenum 		    INFO_LOG_LENGTH = GL_INFO_LOG_LENGTH;
+    static const GLenum 		    COMPILE_STATUS = GL_COMPILE_STATUS;
+    static const GLenum 		    LINK_STATUS = GL_LINK_STATUS;
+    static const GLenum 		    FRAGMENT_SHADER = GL_FRAGMENT_SHADER;
+    static const GLenum 		    VERTEX_SHADER = GL_VERTEX_SHADER;
+
+#else
+
+    static const GLenum 		  FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING_EXT;
+    static const GLenum 		  FRAMEBUFFER = GL_FRAMEBUFFER_EXT;
+    static const GLenum			  RENDERBUFFER = GL_RENDERBUFFER;
+    static const GLenum 		  COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0_EXT;
+    static const GLenum 		  DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT_EXT;
+    static const GLenum			  STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT_EXT;
+    static const GLenum			  DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_EXT;
+
+    static const GLenum 		  DRAW_FRAMEBUFFER = GL_DRAW_FRAMEBUFFER_EXT;
+    static const GLenum 		  READ_FRAMEBUFFER = GL_READ_FRAMEBUFFER_EXT;
+    static const GLenum 		  FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE_EXT;
+    static const GLenum 		  FRAMEBUFFER_UNDEFINED = GL_FRAMEBUFFER_UNDEFINED;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER = GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_READ_BUFFER = GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT;
+    static const GLenum 		  FRAMEBUFFER_UNSUPPORTED = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_MULTISAMPLE = GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS_EXT;
+    static const GLenum 		  FRAMEBUFFER_INCOMPLETE_DIMENSIONS = 0;
+
+    static const GLenum 		  ARRAY_BUFFER = GL_ARRAY_BUFFER_ARB;
+    static const GLenum 		  STATIC_DRAW = GL_STATIC_DRAW_ARB;
+    static const GLenum 		  STREAM_DRAW = GL_STREAM_DRAW_ARB;
+    static const GLenum 		  DYNAMIC_DRAW = GL_DYNAMIC_DRAW_ARB;
+
+    static const GLenum 		  INFO_LOG_LENGTH = GL_OBJECT_INFO_LOG_LENGTH_ARB;
+    static const GLenum 		  COMPILE_STATUS = GL_OBJECT_COMPILE_STATUS_ARB;
+    static const GLenum 		  LINK_STATUS = GL_OBJECT_LINK_STATUS_ARB;
+    static const GLenum 		  FRAGMENT_SHADER = GL_FRAGMENT_SHADER_ARB;
+    static const GLenum 		  VERTEX_SHADER = GL_VERTEX_SHADER_ARB;
+
+#endif
+
     extern bool  textureFromPixmap;
     extern bool  textureRectangle;
     extern bool  textureNonPowerOfTwo;
@@ -410,6 +518,25 @@ namespace GL {
 
     extern bool canDoSaturated;
     extern bool canDoSlightlySaturated;
+
+#ifndef USE_GLES
+    void getProgramInfoLogARBWrapper (GLuint object, int maxLen, int *len, char *log);
+    void getShaderInfoLogARBWrapper (GLuint object, int maxLen, int *len, char *log);
+    void getShaderivARBWrapper (GLuint object, GLenum type, int *param);
+    void getProgramivARBWrapper (GLuint object, GLenum type, int *param);
+    GLuint createShaderARBWrapper (GLenum type);
+    GLuint createProgramARBWrapper (GLenum type);
+    void shaderSourceARBWrapper (GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
+    void compileShaderARBWrapper (GLuint shader);
+    void validateProgramARBWrapper (GLuint program);
+    void deleteShaderARBWrapper (GLuint shader);
+    void deleteProgramARBWrapper (GLuint program);
+    void attachShaderARBWrapper (GLuint program, GLuint shader);
+    void linkProgramARBWrapper (GLuint program);
+    void useProgramARBWrapper (GLuint program);
+    int getUniformLocationARBWrapper (GLuint program, const GLchar *name);
+    int getAttribLocationARBWrapper (GLuint program, const GLchar *name);
+#endif
 };
 
 struct GLScreenPaintAttrib {
@@ -529,6 +656,7 @@ class GLScreenInterface :
 	virtual void glBufferStencil (const GLMatrix       &matrix,
 				      GLVertexBuffer       &vertexBuffer,
 				      CompOutput           *output);
+
 };
 
 

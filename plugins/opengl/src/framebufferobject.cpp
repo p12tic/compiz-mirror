@@ -31,7 +31,8 @@ struct PrivateGLFramebufferObject
 {
     PrivateGLFramebufferObject () :
 	fboId (0),
-	glTex (NULL)
+	glTex (NULL),
+	status (-1)
     {
     }
 
@@ -43,6 +44,8 @@ struct PrivateGLFramebufferObject
     GLuint rbStencilId;
     GLTexture *glTex;
 
+    GLint status;
+
     static std::map<GLuint, GLFramebufferObject *> idMap;
 };
 
@@ -52,19 +55,19 @@ void
 PrivateGLFramebufferObject::pushFBO ()
 {
     GLint id = 0;
-    glGetIntegerv (GL_FRAMEBUFFER_BINDING, &id);
+    glGetIntegerv (GL::FRAMEBUFFER_BINDING, &id);
     tmpId = id;
     if (tmpId == fboId)
 	return;
 
-    (*GL::bindFramebuffer) (GL_FRAMEBUFFER, fboId);
+    (*GL::bindFramebuffer) (GL::FRAMEBUFFER, fboId);
 }
 
 void
 PrivateGLFramebufferObject::popFBO ()
 {
     if (tmpId != fboId)
-	(*GL::bindFramebuffer) (GL_FRAMEBUFFER, tmpId);
+	(*GL::bindFramebuffer) (GL::FRAMEBUFFER, tmpId);
 }
 
 GLFramebufferObject::GLFramebufferObject () :
@@ -72,6 +75,7 @@ GLFramebufferObject::GLFramebufferObject () :
 {
     (*GL::genFramebuffers) (1, &priv->fboId);
     (*GL::genRenderbuffers) (1, &priv->rbStencilId);
+
     if (priv->fboId != 0)
 	PrivateGLFramebufferObject::idMap[priv->fboId] = this;
 }
@@ -85,6 +89,7 @@ GLFramebufferObject::~GLFramebufferObject ()
     (*GL::deleteFramebuffers) (1, &priv->fboId);
     (*GL::deleteRenderbuffers) (1, &priv->rbStencilId);
 
+
     delete priv;
 }
 
@@ -92,6 +97,8 @@ bool
 GLFramebufferObject::allocate (const CompSize &size, const char *image,
 			       GLenum format, GLenum type)
 {
+    priv->status = -1;
+
     if (!priv->glTex ||
         size.width () != priv->glTex->width () ||
         size.height () != priv->glTex->height ())
@@ -116,9 +123,13 @@ GLFramebufferObject::allocate (const CompSize &size, const char *image,
     }
 
     priv->pushFBO ();
-    (*GL::framebufferTexture2D) (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+
+    (*GL::framebufferTexture2D) (GL::FRAMEBUFFER, GL::COLOR_ATTACHMENT0,
                                  priv->glTex->target (),
                                  priv->glTex->name (), 0);
+
+    priv->status = (*GL::checkFramebufferStatus) (GL::DRAW_FRAMEBUFFER);
+
     priv->popFBO ();
     return true;
 }
@@ -129,7 +140,8 @@ GLFramebufferObject::bind ()
     GLFramebufferObject *old = NULL;
     GLint id = 0;
 
-    glGetIntegerv (GL_FRAMEBUFFER_BINDING, &id);
+    glGetIntegerv (GL::FRAMEBUFFER_BINDING, &id);
+
     if (id != 0)
     {
 	std::map<GLuint, GLFramebufferObject *>::iterator it;
@@ -143,6 +155,7 @@ GLFramebufferObject::bind ()
     }
 
     (*GL::bindFramebuffer) (GL::FRAMEBUFFER, priv->fboId);
+
     (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::DEPTH_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
     (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::STENCIL_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
 
@@ -154,7 +167,8 @@ void
 GLFramebufferObject::rebind (GLFramebufferObject *fbo)
 {
     GLuint id = fbo ? fbo->priv->fboId : 0;
-    (*GL::bindFramebuffer) (GL_FRAMEBUFFER, id);
+
+    (*GL::bindFramebuffer) (GL::FRAMEBUFFER, id);
 }
 
 static const char *
@@ -162,18 +176,16 @@ getFboErrorString (GLint status)
 {
     switch (status)
     {
-	case        GL_FRAMEBUFFER_COMPLETE:
-	    return "GL_FRAMEBUFFER_COMPLETE";
-	case        GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-	    return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
-	case        GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-	    return "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
-#ifdef USE_GLES
-	case        GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-	    return "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS";
-#endif
-	case        GL_FRAMEBUFFER_UNSUPPORTED:
-	    return "GL_FRAMEBUFFER_UNSUPPORTED";
+	case        GL::FRAMEBUFFER_COMPLETE:
+	    return "GL::FRAMEBUFFER_COMPLETE";
+	case        GL::FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+	    return "GL::FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+	case        GL::FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+	    return "GL::FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+	case        GL::FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+	    return "GL::FRAMEBUFFER_INCOMPLETE_DIMENSIONS";
+	case        GL::FRAMEBUFFER_UNSUPPORTED:
+	    return "GL::FRAMEBUFFER_UNSUPPORTED";
 	default:
 	    return "unexpected status";
     }
@@ -183,20 +195,20 @@ bool
 GLFramebufferObject::checkStatus ()
 {
     priv->pushFBO ();
-    GLint status = (*GL::checkFramebufferStatus) (GL_FRAMEBUFFER);
+    priv-> status = (*GL::checkFramebufferStatus) (GL_FRAMEBUFFER);
     priv->popFBO ();
 
-    if (status == GL_FRAMEBUFFER_COMPLETE)
+    if (priv->status == static_cast <GLint> (GL::FRAMEBUFFER_COMPLETE))
 	return true;
 
     compLogMessage ("opengl", CompLogLevelError,
                     "FBO is incomplete: %s (0x%04x)",
-                    getFboErrorString (status), status);
+                    getFboErrorString (priv->status), priv->status);
     return false;
 }
 
 GLTexture *
 GLFramebufferObject::tex ()
 {
-	return priv->glTex;
+    return priv->glTex;
 }
