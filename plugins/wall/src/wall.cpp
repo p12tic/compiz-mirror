@@ -734,28 +734,10 @@ WallScreen::initiate (CompAction         *action,
 	    if ((vpX == (unsigned int) size.width () - 1) &&
 	    	(vpY == (unsigned int) size.height () - 1))
 	    {
-		amountX = -(size.width () - 1);
-		amountY = -(size.height () - 1);
-	    }
-	    else if (vpX == (unsigned int) size.width () - 1)
-	    {
-		amountX = -(size.width () - 1);
-		amountY = 1;
-	    }
-	    else
-	    {
-		amountX = 1;
-		amountY = 0;
-	    }
-
-	    break;
-	case Prev:
-	    if (vpX == 0 && vpY == 0)
-	    {
 		amountX = size.width () - 1;
 		amountY = size.height () - 1;
 	    }
-	    else if (vpX == 0)
+	    else if (vpX == (unsigned int) size.width () - 1)
 	    {
 		amountX = size.width () - 1;
 		amountY = -1;
@@ -763,6 +745,24 @@ WallScreen::initiate (CompAction         *action,
 	    else
 	    {
 		amountX = -1;
+		amountY = 0;
+	    }
+
+	    break;
+	case Prev:
+	    if (vpX == 0 && vpY == 0)
+	    {
+		amountX = -(size.width () - 1);
+		amountY = -(size.height () - 1);
+	    }
+	    else if (vpX == 0)
+	    {
+		amountX = -(size.width () - 1);
+		amountY = 1;
+	    }
+	    else
+	    {
+		amountX = 1;
 		amountY = 0;
 	    }
 	    break;

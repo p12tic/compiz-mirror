@@ -131,52 +131,53 @@ PrivateGLWindow::clearTextures ()
 bool
 GLWindow::bind ()
 {
-    if ((priv->needsRebind && !priv->cWindow->bind ()))
+    if (priv->needsRebind)
     {
-	if (!priv->textures.empty ())
+	if (!priv->cWindow->bind ())
 	{
-	    /* Getting a new pixmap failed, recycle the old texture */
-	    priv->needsRebind = false;
-	    return true;
+	    if (!priv->textures.empty ())
+	    {
+		/* Getting a new pixmap failed, recycle the old texture */
+		priv->needsRebind = false;
+		return true;
+	    }
+	    else
+		return false;
+	}
+
+	GLTexture::List textures =
+	    GLTexture::bindPixmapToTexture (priv->cWindow->pixmap (),
+					    priv->cWindow->size ().width (),
+					    priv->cWindow->size ().height (),
+					    priv->window->depth ());
+	if (textures.empty ())
+	{
+	    compLogMessage ("opengl", CompLogLevelInfo,
+			    "Couldn't bind redirected window 0x%x to "
+			    "texture\n", (int) priv->window->id ());
+
+	    if (priv->cWindow->size ().width () > GL::maxTextureSize ||
+	        priv->cWindow->size ().height ()  > GL::maxTextureSize)
+	    {
+		compLogMessage ("opengl", CompLogLevelWarn,
+			    "Bug in window 0x%x (identifying as %s)", (int) priv->window->id (), priv->window->resName ().size () ? priv->window->resName ().c_str () : "(none available)");
+		compLogMessage ("opengl", CompLogLevelWarn,
+			    "This window tried to create an absurdly large window %i x %i\n", priv->cWindow->size ().width (), priv->cWindow->size ().height ());
+		compLogMessage ("opengl", CompLogLevelWarn,
+			    "Unforunately, that's not supported on your hardware, because you have a maximum texture size of %i", GL::maxTextureSize);
+		compLogMessage ("opengl", CompLogLevelWarn, "you should probably file a bug against that application");
+		compLogMessage ("opengl", CompLogLevelWarn, "for now, we're going to hide tht window so that it doesn't break your desktop\n");
+
+		XReparentWindow (screen->dpy (), priv->window->id (), GLScreen::get (screen)->priv->saveWindow, 0, 0);
+	    }
+	    return false;
 	}
 	else
-	    return false;
-    }
-
-    GLTexture::List textures =
-	GLTexture::bindPixmapToTexture (priv->cWindow->pixmap (),
-					priv->cWindow->size ().width (),
-					priv->cWindow->size ().height (),
-					priv->window->depth ());
-    if (textures.empty ())
-    {
-	compLogMessage ("opengl", CompLogLevelInfo,
-			"Couldn't bind redirected window 0x%x to "
-			"texture\n", (int) priv->window->id ());
-
-	if (priv->cWindow->size ().width () > GL::maxTextureSize ||
-	    priv->cWindow->size ().height ()  > GL::maxTextureSize)
 	{
-	    compLogMessage ("opengl", CompLogLevelWarn,
-			    "Bug in window 0x%x (identifying as %s)", (int) priv->window->id (), priv->window->resName ().size () ? priv->window->resName ().c_str () : "(none available)");
-	    compLogMessage ("opengl", CompLogLevelWarn,
-			    "This window tried to create an absurdly large window %i x %i\n", priv->cWindow->size ().width (), priv->cWindow->size ().height ());
-	    compLogMessage ("opengl", CompLogLevelWarn,
-			    "Unforunately, that's not supported on your hardware, because you have a maximum texture size of %i", GL::maxTextureSize);
-	    compLogMessage ("opengl", CompLogLevelWarn, "you should probably file a bug against that application");
-	    compLogMessage ("opengl", CompLogLevelWarn, "for now, we're going to hide tht window so that it doesn't break your desktop\n");
-
-	    XReparentWindow (screen->dpy (), priv->window->id (), GLScreen::get (screen)->priv->saveWindow, 0, 0);
+	    priv->textures = textures;
+	    priv->needsRebind = false;
 	}
-	return false;
     }
-    else
-    {
-	priv->textures = textures;
-	priv->needsRebind = false;
-    }
-
-    priv->updateState |= PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
 
     return true;
 }
@@ -184,7 +185,8 @@ GLWindow::bind ()
 void
 GLWindow::release ()
 {
-    priv->needsRebind = true;
+    if (!priv->cWindow->frozen ())
+	priv->needsRebind = true;
 }
 
 bool
@@ -241,8 +243,7 @@ PrivateGLWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
     updateState |= PrivateGLWindow::UpdateMatrix | PrivateGLWindow::UpdateRegion;
-    if (!window->hasUnmapReference ())
-	gWindow->release ();
+    gWindow->release ();
 }
 
 void
@@ -264,8 +265,7 @@ PrivateGLWindow::windowNotify (CompWindowNotify n)
 	case CompWindowNotifyReparent:
 	case CompWindowNotifyUnreparent:
 	case CompWindowNotifyFrameUpdate:
-	    if (!window->hasUnmapReference ())
-		gWindow->release ();
+	    gWindow->release ();
 	    break;
 	default:
 	    break;
