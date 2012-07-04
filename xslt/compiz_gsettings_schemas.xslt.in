@@ -419,10 +419,10 @@
 
   <!-- prints the key name -->
   <xsl:template name="printKeyName">
-    <!-- not allowed to have underscores, key names > 32 chars and upper case characters -->
+    <!-- not allowed to have underscores, key names > 1024 chars and upper case characters -->
     <xsl:param name="ASCIIUpper" >ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:param>
     <xsl:param name="ASCIILower" >abcdefghijklmnopqrstuvwxyz</xsl:param>
-    <xsl:value-of select="translate(substring(translate(@name, '_', '-'), 0, 32), $ASCIIUpper, $ASCIILower)"/>
+    <xsl:value-of select="translate(substring(translate(@name, '_', '-'), 0, 1024), $ASCIIUpper, $ASCIILower)"/>
   </xsl:template>
 
   <!-- converts a decimal number to a hex number -->

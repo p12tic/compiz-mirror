@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
-#include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
 
@@ -114,17 +113,6 @@ static void
 cloaderUnloadPlugin (CompPlugin *p)
 {
     delete p->vTable;
-}
-
-static CompStringList
-cloaderListPlugins (const char *path)
-{
-    CompStringList rv;
-
-    if (!path)
-	rv.push_back (CompString (getCoreVTable ()->name ()));
-
-    return rv;
 }
 
 static bool
@@ -226,50 +214,8 @@ dlloaderUnloadPlugin (CompPlugin *p)
 	cloaderUnloadPlugin (p);
 }
 
-static int
-dlloaderFilter (const struct dirent *name)
-{
-    int length = strlen (name->d_name);
-
-    if (length < 7)
-	return 0;
-
-    if (strncmp (name->d_name, "lib", 3) ||
-	strncmp (name->d_name + length - 3, ".so", 3))
-	return 0;
-
-    return 1;
-}
-
-static CompStringList
-dlloaderListPlugins (const char *path)
-{
-    CompStringList rv (cloaderListPlugins (path));
-
-    if (!path)
-	path = ".";
-
-    struct dirent **nameList;
-    int nFile = scandir (path, &nameList, dlloaderFilter, alphasort);
-    if (nFile < 0)
-	return rv;
-
-    for (int i = 0; i < nFile; i++)
-    {
-	int length = strlen (nameList[i]->d_name);
-
-	rv.push_back (CompString (nameList[i]->d_name + 3, nameList[i]->d_name + length - 3));
-	free (nameList[i]);
-    }
-
-    free (nameList);
-    return rv;
-}
-
 LoadPluginProc   loaderLoadPlugin   = dlloaderLoadPlugin;
 UnloadPluginProc loaderUnloadPlugin = dlloaderUnloadPlugin;
-ListPluginsProc  loaderListPlugins  = dlloaderListPlugins;
-
 
 bool
 CompManager::initPlugin (CompPlugin *p)
@@ -545,31 +491,6 @@ CompPlugin::List &
 CompPlugin::getPlugins (void)
 {
     return plugins;
-}
-
-CompStringList
-CompPlugin::availablePlugins ()
-{
-    CompStringList homeList;
-
-    if (char* home = getenv ("HOME"))
-    {
-        boost::scoped_array<char> plugindir(new char [strlen (home) + strlen (HOME_PLUGINDIR) + 3]);
-        sprintf (plugindir.get(), "%s/%s", home, HOME_PLUGINDIR);
-
-	homeList = loaderListPlugins (plugindir.get());
-    }
-
-    std::set<CompString> set;
-
-    CompStringList pluginList  = loaderListPlugins (PLUGINDIR);
-    CompStringList currentList = loaderListPlugins (0);
-
-    std::copy(homeList.begin(), homeList.end(), std::inserter(set, set.end()));
-    std::copy(pluginList.begin(), pluginList.end(), std::inserter(set, set.end()));
-    std::copy(currentList.begin(), currentList.end(), std::inserter(set, set.end()));
-
-    return CompStringList(set.begin(), set.end());
 }
 
 int

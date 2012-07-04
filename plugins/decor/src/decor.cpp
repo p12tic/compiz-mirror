@@ -168,11 +168,31 @@ DecorWindow::glDraw (const GLMatrix            &transform,
 	{
 	    foreach (CompWindow *w, dScreen->cScreen->getWindowPaintList ())
 	    {
-		if ((w->type () & CompWindowTypeDockMask) &&
-		    !(w->destroyed () || w->invisible ()))
+		bool isDock = w->type () & CompWindowTypeDockMask;
+		bool drawShadow = !(w->invisible () || w->destroyed ());
+
+		if (isDock && drawShadow)
 		{
 		    DecorWindow *d = DecorWindow::get (w);
-		    d->glDecorate (transform, attrib, region, mask);
+
+		    /* If the last mask was an occlusion pass, glPaint
+		     * return value will mean something different, so
+		     * remove it */
+		    unsigned int pmask = d->gWindow->lastMask () &
+				~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
+
+		    /* Check if the window would draw by seeing if glPaint
+		     * returns true when using PAINT_NO_CORE_INSTANCE_MASK
+		     */
+		    pmask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
+		    const GLWindowPaintAttrib &pAttrib (d->gWindow->paintAttrib ());
+
+		    if (d->gWindow->glPaint (pAttrib,
+					     transform,
+					     region,
+					     pmask))
+			d->glDecorate (transform, pAttrib, region, mask);
 		}
 	    }
 	}
@@ -338,7 +358,7 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
 	textures[0]->setMipmap (false);
 
     damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (),
-			     XDamageReportRawRectangles);
+			     XDamageReportBoundingBox);
 }
 
 /*
@@ -1977,7 +1997,7 @@ DecorWindow::updateOutputFrame ()
 	oldHeight = 0;
 
 	frameDamage = XDamageCreate (screen->dpy (), outputFrame,
-			             XDamageReportRawRectangles);
+			             XDamageReportBoundingBox);
 
 	dScreen->frames[outputFrame] = this;
     }

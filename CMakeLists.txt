@@ -7,6 +7,10 @@ set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
 set (COMPIZ_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
 
+set (CTEST_MEMORYCHECK_COMMAND /usr/bin/valgrind CACHE FILEPATH "valgrind command" FORCE)
+
+include (Dart)
+
 # Common compiz CMake macros & functions.
 include (CompizCommon)
 # Packaging-specific CMake macros & functions.
@@ -119,41 +123,49 @@ install (
     DESTINATION ${libdir}/pkgconfig
 )
 
-# Build Google Test and make its headers known
-find_package (GTest)
+if (COMPIZ_BUILD_TESTING)
 
-if (NOT GTEST_FOUND)
+    # Build Google Test and make its headers known
+    find_package (GTest)
 
-    # Check for google test and build it locally
-    set (GTEST_ROOT_DIR
-	"/usr/src/gtest" # Default value, adjustable by user with e.g., ccmake
-	CACHE
-	PATH
-	"Path to Google test srcs"
-    )
+    if (NOT GTEST_FOUND)
 
-    find_path (GTEST_INCLUDE_DIR gtest/gtest.h)
+	# Check for google test and build it locally
+	set (GTEST_ROOT_DIR
+	     "/usr/src/gtest" # Default value, adjustable by user with e.g., ccmake
+	     CACHE
+	     PATH
+	     "Path to Google Test srcs"
+	     FORCE
+	)
 
-    if (GTEST_INCLUDE_DIR)
-	#FIXME - hardcoded is bad!
-	add_subdirectory (${GTEST_ROOT_DIR}
-		      gtest)
-    endif(GTEST_INCLUDE_DIR)
+	find_path (GTEST_INCLUDE_DIR gtest/gtest.h)
 
-    set (GTEST_BOTH_LIBRARIES gtest gtest_main)
-    set (GTEST_FOUND TRUE)
+	if (GTEST_INCLUDE_DIR)
+	    add_subdirectory (${GTEST_ROOT_DIR}
+			     gtest)
+	endif (GTEST_INCLUDE_DIR)
 
-endif (NOT GTEST_FOUND)
+	set (GTEST_BOTH_LIBRARIES gtest gtest_main)
+	set (GTEST_FOUND TRUE)
 
-find_library (GMOCK_LIBRARY gmock)
-find_library (GMOCK_MAIN_LIBRARY gmock_main)
+    endif (NOT GTEST_FOUND)
 
-if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
-  message ("Google Mock and Google Test not found - cannot build tests!")
-  set (COMPIZ_BUILD_TESTING OFF)
-endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+    find_library (GMOCK_LIBRARY gmock)
+    find_library (GMOCK_MAIN_LIBRARY gmock_main)
 
-include_directories (${GTEST_INCLUDE_DIRS})
+    if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+
+	message ("Google Mock and Google Test not found - cannot build tests!")
+	set (COMPIZ_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
+    else (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+
+	include_directories (${GTEST_INCLUDE_DIRS})
+
+    endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+
+endif (COMPIZ_BUILD_TESTING)
 
 find_package (Threads REQUIRED)
 

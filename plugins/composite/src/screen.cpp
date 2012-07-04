@@ -45,6 +45,8 @@
 
 #include <core/timer.h>
 
+static const int FALLBACK_REFRESH_RATE = 60;   /* if all else fails */
+
 CompWindow *lastDamagedWindow = 0;
 
 void
@@ -97,6 +99,11 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		        CompositeWindow::get (w)->addDamage ();
 		    }
 		}
+	    }
+	    else if (event->type == damageEvent + XDamageNotify)
+	    {
+		XDamageNotifyEvent *de = (XDamageNotifyEvent*)event;
+		damages[de->damage] = de->area;
 	    }
 	    break;
     }
@@ -274,8 +281,8 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     exposeRects (),
     windowPaintOffset (0, 0),
     overlayWindowCount (0),
-    redrawTime (1000 / 50),
-    optimalRedrawTime (1000 / 50),
+    redrawTime (1000 / FALLBACK_REFRESH_RATE),
+    optimalRedrawTime (1000 / FALLBACK_REFRESH_RATE),
     scheduled (false),
     painting (false),
     reschedule (false),
@@ -651,7 +658,7 @@ PrivateCompositeScreen::detectRefreshRate ()
 	}
 
 	if (value.i () == 0)
-	    value.set ((int) 50);
+	    value.set ((int) FALLBACK_REFRESH_RATE);
 
 	mOptions[CompositeOptions::DetectRefreshRate].value ().set (false);
 	screen->setOptionForPlugin ("composite", "refresh_rate", value);
@@ -790,6 +797,20 @@ CompositeScreen::handlePaintTimeout ()
 	    if (priv->tmpRegion == screen->region ())
 		damageScreen ();
 	}
+
+	Display *dpy = screen->dpy ();
+	std::map<Damage, XRectangle>::iterator d = priv->damages.begin ();
+	for (; d != priv->damages.end (); d++)
+	{
+	    XserverRegion sub = XFixesCreateRegion (dpy, &d->second, 1);
+	    if (sub != None)
+	    {
+		XDamageSubtract (dpy, d->first, sub, None);
+		XFixesDestroyRegion (dpy, sub);
+	    }
+	}
+	XSync (dpy, False);
+	priv->damages.clear ();
 
 	priv->damage = CompRegion ();
 

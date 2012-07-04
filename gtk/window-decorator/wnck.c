@@ -580,6 +580,13 @@ connect_window (WnckWindow *win)
 }
 
 static void
+set_context_if_decorated (decor_t *d, decor_context_t *context)
+{
+    if (d->decorated)
+	d->context = context;
+}
+
+static void
 active_window_changed (WnckScreen *screen)
 {
     WnckWindow *win;
@@ -601,12 +608,12 @@ active_window_changed (WnckScreen *screen)
 		{
 		   if (d->active)
 		   {
-		       d->context = &frame->max_window_context_active;
+		       set_context_if_decorated (d, &frame->max_window_context_active);
 		       d->shadow  = frame->max_border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &frame->max_window_context_inactive;
+		       set_context_if_decorated (d, &frame->max_window_context_inactive);
 		       d->shadow  = frame->max_border_shadow_inactive;
 		   }
                 }
@@ -621,12 +628,12 @@ active_window_changed (WnckScreen *screen)
 	       {
 		   if (d->active)
 		   {
-		       d->context = &frame->window_context_active;
+		       set_context_if_decorated (d, &frame->window_context_active);
 		       d->shadow  = frame->border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &frame->window_context_inactive;
+		       set_context_if_decorated (d, &frame->window_context_inactive);
 		       d->shadow  = frame->border_shadow_inactive;
 		   }
 	       }
@@ -670,12 +677,12 @@ active_window_changed (WnckScreen *screen)
 		{
 		   if (d->active)
 		   {
-		       d->context = &frame->max_window_context_active;
+		       set_context_if_decorated (d, &frame->max_window_context_active);
 		       d->shadow  = frame->max_border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &frame->max_window_context_inactive;
+		       set_context_if_decorated (d, &frame->max_window_context_inactive);
 		       d->shadow  = frame->max_border_shadow_inactive;
 		   }
 		}
@@ -690,12 +697,12 @@ active_window_changed (WnckScreen *screen)
 		{
 		   if (d->active)
 		   {
-		       d->context = &frame->window_context_active;
+		       set_context_if_decorated (d, &frame->window_context_active);
 		       d->shadow  = frame->border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &frame->window_context_inactive;
+		       set_context_if_decorated (d, &frame->window_context_inactive);
 		       d->shadow  = frame->border_shadow_inactive;
 		   }
 		}
