@@ -341,8 +341,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
-    // Currently we rely unconditionally on preserving the buffer contents.
-    eglSurfaceAttrib (dpy, priv->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED);
+    // Do not preserve buffer contents on swap
+    eglSurfaceAttrib (dpy, priv->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTROYED);
 
     priv->ctx = eglCreateContext (dpy, config, EGL_NO_CONTEXT, context_attribs);
     if (priv->ctx == EGL_NO_CONTEXT)
