@@ -1,4 +1,5 @@
 INCLUDE_DIRECTORIES (  
+  ${compiz_SOURCE_DIR}/src/logmessage/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../../include
   ${CMAKE_CURRENT_SOURCE_DIR}/src
     
@@ -26,4 +27,5 @@ TARGET_LINK_LIBRARIES(
   compiz_opengl_buffer_blit
 
   compiz_region
+  compiz_logmessage
 )

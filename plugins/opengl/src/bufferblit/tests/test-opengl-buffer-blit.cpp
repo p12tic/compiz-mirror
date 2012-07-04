@@ -28,6 +28,11 @@ class CompizOpenGLBufferBlitTest :
 
 };
 
+class CompizOpenGLBufferBlitDeathTest :
+    public CompizOpenGLBufferBlitTest
+{
+};
+
 TEST_F(CompizOpenGLBufferBlitTest, TestPaintedWithFBOAlwaysSwaps)
 {
     EXPECT_CALL (mglbb, swapBuffers ());
@@ -52,11 +57,7 @@ TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuf
 
 TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
 {
-    StrictMock <MockGLBufferBlit> mglbbStrict;
 
-    EXPECT_CALL (mglbbStrict, subBufferBlitAvailable ()).WillOnce (Return (false));
-
-    blitBuffers (0, blitRegion, mglbbStrict);
 }
 
 TEST_F(CompizOpenGLBufferBlitTest, TestBlitExactlyWithRegionSpecified)
@@ -75,4 +76,16 @@ TEST_F(CompizOpenGLBufferBlitTest, TestBlitExactlyWithRegionSpecified)
 
     EXPECT_CALL (mglbb, subBufferBlit (r3));
     blitBuffers (0, r3, mglbb);
+}
+
+TEST_F(CompizOpenGLBufferBlitDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupportedAndDies)
+{
+    StrictMock <MockGLBufferBlit> mglbbStrict;
+
+    ON_CALL (mglbbStrict, subBufferBlitAvailable ()).WillByDefault (Return (false));
+
+    ASSERT_DEATH ({
+		    blitBuffers (0, blitRegion, mglbbStrict);
+		  },
+		  ".fatal.");
 }
