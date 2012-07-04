@@ -41,6 +41,7 @@ struct PrivateGLFramebufferObject
 
     GLuint fboId;
     GLuint tmpId;
+    GLuint rbStencilId;
     GLTexture *glTex;
 
     GLint status;
@@ -73,6 +74,8 @@ GLFramebufferObject::GLFramebufferObject () :
     priv (new PrivateGLFramebufferObject)
 {
     (*GL::genFramebuffers) (1, &priv->fboId);
+    (*GL::genRenderbuffers) (1, &priv->rbStencilId);
+
     if (priv->fboId != 0)
 	PrivateGLFramebufferObject::idMap[priv->fboId] = this;
 }
@@ -84,6 +87,8 @@ GLFramebufferObject::~GLFramebufferObject ()
 
     PrivateGLFramebufferObject::idMap.erase (priv->fboId);
     (*GL::deleteFramebuffers) (1, &priv->fboId);
+    (*GL::deleteRenderbuffers) (1, &priv->rbStencilId);
+
 
     delete priv;
 }
@@ -109,6 +114,12 @@ GLFramebufferObject::allocate (const CompSize &size, const char *image,
 
 	priv->glTex = list[0];
 	GLTexture::incRef (priv->glTex);
+
+	if (GL::stencilBuffer)
+	{
+	    (*GL::bindRenderbuffer) (GL::RENDERBUFFER, priv->rbStencilId);
+	    (*GL::renderbufferStorage) (GL::RENDERBUFFER, GL::DEPTH24_STENCIL8, size.width (), size.height ());
+	}
     }
 
     priv->pushFBO ();
@@ -130,6 +141,7 @@ GLFramebufferObject::bind ()
     GLint id = 0;
 
     glGetIntegerv (GL::FRAMEBUFFER_BINDING, &id);
+
     if (id != 0)
     {
 	std::map<GLuint, GLFramebufferObject *>::iterator it;
@@ -144,6 +156,9 @@ GLFramebufferObject::bind ()
 
     (*GL::bindFramebuffer) (GL::FRAMEBUFFER, priv->fboId);
 
+    (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::DEPTH_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
+    (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::STENCIL_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
+
     return old;
 }
 
@@ -152,6 +167,7 @@ void
 GLFramebufferObject::rebind (GLFramebufferObject *fbo)
 {
     GLuint id = fbo ? fbo->priv->fboId : 0;
+
     (*GL::bindFramebuffer) (GL::FRAMEBUFFER, id);
 }
 
@@ -178,6 +194,10 @@ getFboErrorString (GLint status)
 bool
 GLFramebufferObject::checkStatus ()
 {
+    priv->pushFBO ();
+    priv-> status = (*GL::checkFramebufferStatus) (GL_FRAMEBUFFER);
+    priv->popFBO ();
+
     if (priv->status == static_cast <GLint> (GL::FRAMEBUFFER_COMPLETE))
 	return true;
 
@@ -190,5 +210,5 @@ GLFramebufferObject::checkStatus ()
 GLTexture *
 GLFramebufferObject::tex ()
 {
-	return priv->glTex;
+    return priv->glTex;
 }

@@ -291,6 +291,22 @@ namespace GL {
                                                GLsizei stride,
                                                const GLvoid *ptr);
 
+    typedef void (*GLGenRenderbuffersProc) (GLsizei n,
+					GLuint  *rb);
+    typedef void (*GLDeleteRenderbuffersProc) (GLsizei n,
+					   const GLuint  *rb);
+    typedef void (*GLBindRenderbufferProc) (GLenum target,
+					GLuint renderbuffer);
+    typedef void (*GLFramebufferRenderbufferProc) (GLenum target,
+					       GLenum attachment,
+					       GLenum renderbuffertarget,
+					       GLuint renderbuffer);
+    typedef void (*GLRenderbufferStorageProc) (GLenum target,
+					   GLenum internalformat,
+					   GLsizei width,
+					   GLsizei height);
+
+
     /* GL_ARB_shader_objects */
     #ifndef USE_GLES
     typedef GLhandleARB (*GLCreateShaderObjectARBProc) (GLenum type);
@@ -390,6 +406,12 @@ namespace GL {
     extern GLDisableVertexAttribArrayProc disableVertexAttribArray;
     extern GLVertexAttribPointerProc      vertexAttribPointer;
 
+    extern GLGenRenderbuffersProc genRenderbuffers;
+    extern GLDeleteRenderbuffersProc deleteRenderbuffers;
+    extern GLBindRenderbufferProc    bindRenderbuffer;
+    extern GLFramebufferRenderbufferProc framebufferRenderbuffer;
+    extern GLRenderbufferStorageProc renderbufferStorage;
+
     #ifndef USE_GLES
     extern GLCreateShaderObjectARBProc createShaderObjectARB;
     extern GLCreateProgramObjectARBProc createProgramObjectARB;
@@ -411,8 +433,11 @@ namespace GL {
 
     static const GLenum 		    FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING;
     static const GLenum 		    FRAMEBUFFER = GL_FRAMEBUFFER;
+    static const GLenum			    RENDERBUFFER = GL_RENDERBUFFER;
     static const GLenum 		    COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0;
     static const GLenum 		    DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT;
+    static const GLenum			    STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT;
+    static const GLenum			    DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_OES;
 
     /* OpenGL|ES does not support different draw/read framebuffers */
     static const GLenum 		    DRAW_FRAMEBUFFER = GL_FRAMEBUFFER;
@@ -444,8 +469,12 @@ namespace GL {
 
     static const GLenum 		  FRAMEBUFFER_BINDING = GL_FRAMEBUFFER_BINDING_EXT;
     static const GLenum 		  FRAMEBUFFER = GL_FRAMEBUFFER_EXT;
+    static const GLenum			  RENDERBUFFER = GL_RENDERBUFFER;
     static const GLenum 		  COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0_EXT;
     static const GLenum 		  DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT_EXT;
+    static const GLenum			  STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT_EXT;
+    static const GLenum			  DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_EXT;
+
     static const GLenum 		  DRAW_FRAMEBUFFER = GL_DRAW_FRAMEBUFFER_EXT;
     static const GLenum 		  READ_FRAMEBUFFER = GL_READ_FRAMEBUFFER_EXT;
     static const GLenum 		  FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE_EXT;
@@ -484,6 +513,7 @@ namespace GL {
     extern bool  fbo;
     extern bool  vbo;
     extern bool  shaders;
+    extern bool  stencilBuffer;
     extern GLint maxTextureUnits;
 
     extern bool canDoSaturated;
@@ -619,11 +649,19 @@ class GLScreenInterface :
 	virtual void glPaintCompositedOutput (const CompRegion    &region,
 					      GLFramebufferObject *fbo,
 					      unsigned int         mask);
+
+	/**
+	 * Hookable function used by plugins to determine stenciling mask
+	 */
+	virtual void glBufferStencil (const GLMatrix       &matrix,
+				      GLVertexBuffer       &vertexBuffer,
+				      CompOutput           *output);
+
 };
 
 
 class GLScreen :
-    public WrapableHandler<GLScreenInterface, 7>,
+    public WrapableHandler<GLScreenInterface, 8>,
     public PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI>,
     public CompOption::Class
 {
@@ -736,6 +774,10 @@ class GLScreen :
 	WRAPABLE_HND (5, GLScreenInterface, GLMatrix *, projectionMatrix);
 	WRAPABLE_HND (6, GLScreenInterface, void, glPaintCompositedOutput,
 		      const CompRegion &, GLFramebufferObject *, unsigned int);
+
+	WRAPABLE_HND (7, GLScreenInterface, void, glBufferStencil, const GLMatrix &,
+		      GLVertexBuffer &,
+		      CompOutput *);
 
 	friend class GLTexture;
 	friend class GLWindow;
