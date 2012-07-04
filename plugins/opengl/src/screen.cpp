@@ -1026,6 +1026,14 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     lighting (false),
     #ifndef USE_GLES
     getProcAddress (0),
+    bufferBlit (screen->dpy (), *screen,
+		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
+		cScreen->output (),
+		boost::bind (&PrivateGLScreen::waitForVideoSync, this)),
+    #else
+    bufferBlit (screen->dpy (), *screen,
+		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
+		surface),
     #endif
     scratchFbo (NULL),
     scratchFboBindFailed (false),
@@ -1629,6 +1637,109 @@ PrivateGLScreen::waitForVideoSync ()
         GL::waitForVideoSync ();
 }
 
+BaseBufferBlit::BaseBufferBlit (Display *d, const CompSize &s,
+				const boost::function <bool ()> &getSyncVblankFunc) :
+    mDpy (d),
+    mSize (s),
+    getSyncVblank (getSyncVblankFunc)
+{
+}
+
+GLXBufferBlit::GLXBufferBlit (Display *d,
+			      const CompSize &s,
+			      const boost::function <bool ()> &getSyncVblankFunc,
+			      Window output,
+			      const boost::function <void ()> &waitVSyncFunc) :
+    BaseBufferBlit (d, s, getSyncVblankFunc),
+    mOutput (output),
+    waitVSync (waitVSyncFunc)
+{
+}
+
+void
+GLXBufferBlit::swapBuffers () const
+{
+    GL::controlSwapVideoSync (getSyncVblank ());
+    glXSwapBuffers (mDpy, mOutput);
+}
+
+bool
+GLXBufferBlit::subBufferBlitAvailable () const
+{
+    return GL::copySubBuffer ? true : false;
+}
+
+void
+GLXBufferBlit::subBufferBlit (const CompRegion &region) const
+{
+    CompRect::vector blitRects (region.rects ());
+    int		     y = 0;
+
+    waitVSync ();
+
+    foreach (const CompRect &r, blitRects)
+    {
+	y = mSize.height () - r.y2 ();
+
+	(*GL::copySubBuffer) (screen->dpy (), mOutput,
+			      r.x1 (), y,
+			      r.width (),
+			      r.height ());
+    }
+}
+
+#ifdef USE_GLES
+
+EGLBufferBlit::EGLBufferBlit (Display *d,
+			      const CompSize &s,
+			      const boost::function <bool ()> &getSyncVblankFunc,
+			      EGLSurface surface) :
+    BaseBufferBlit (d, s, getSyncVblankFunc),
+    mSurface (surface)
+{
+}
+
+void
+EGLBufferBlit::swapBuffers () const
+{
+    GL::controlSwapVideoSync (getSyncVblank ());
+
+    eglSwapBuffers (eglGetDisplay (mDpy), mSurface);
+    eglWaitGL ();
+    XFlush (mDpy);
+}
+
+bool
+EGLBufferBlit::subBufferBlitAvailable () const
+{
+    return GL::postSubBuffer ? true : false;
+}
+
+void
+EGLBufferBlit::subBufferBlit (const CompRegion &region) const
+{
+    CompRect::vector blitRects (region.rects ());
+    int		     y = 0;
+
+    GL::controlSwapVideoSync (getSyncVblank ());
+
+    foreach (const CompRect &r : blitRects)
+    {
+	y = mSize.height () - r.y2 ();
+
+	(*GL::postSubBuffer) (eglGetDisplay (screen->dpy ()),
+			      mSurface,
+			      r.x1 (), y,
+			      r.width (),
+			      r.height ());
+    }
+
+    eglWaitGL ();
+    XFlush (screen->dpy ());
+}
+
+#endif
+
 void
 PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 			       unsigned int        mask,
@@ -1751,72 +1862,15 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
+    unsigned int blitMask = 0;
+
     if (useFbo)
-    {
-	/*
-	 * controlSwapVideoSync is much faster than waitForVideoSync because
-	 * it won't block the CPU. The waiting is offloaded to the GPU.
-	 * Unfortunately it only works with glXSwapBuffers in most drivers.
-	 */
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
-	#ifdef USE_GLES
-	eglSwapBuffers (eglGetDisplay (screen->dpy ()), surface);
-	eglWaitGL ();
-	XFlush (screen->dpy ());
-	#else
-	glXSwapBuffers (screen->dpy (), cScreen->output ());
-	#endif
-    }
-    else
-    {
-	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
-	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
-	int    y;
+	blitMask |= compiz::opengl::PaintedWithFramebufferObject;
 
-	#if USE_GLES
-	if (GL::postSubBuffer)
-	#else
-	if (GL::copySubBuffer)
-	#endif
-	{
-	    #ifdef USE_GLES
-	    GL::controlSwapVideoSync (optionGetSyncToVblank ());
+    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+	blitMask |= compiz::opengl::PaintedFullscreen;
 
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
-
-		(*GL::postSubBuffer) (eglGetDisplay (screen->dpy ()), surface,
-				      pBox->x1, y,
-				      pBox->x2 - pBox->x1,
-				      pBox->y2 - pBox->y1);
-		pBox++;
-	    }
-
-	    eglWaitGL ();
-	    XFlush (screen->dpy ());
-
-	    #else
-
-	    waitForVideoSync ();
-
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
-
-		(*GL::copySubBuffer) (screen->dpy (), cScreen->output (),
-				      pBox->x1, y,
-				      pBox->x2 - pBox->x1,
-				      pBox->y2 - pBox->y1);
-
-		pBox++;
-	    }
-	    #endif
-	}
-
-	compLogMessage ("opengl", CompLogLevelFatal, "no back to front flip methods supported");
-	abort ();
-    }
+    compiz::opengl::blitBuffers (blitMask, tmpRegion, bufferBlit);
 
     lastMask = mask;
 }

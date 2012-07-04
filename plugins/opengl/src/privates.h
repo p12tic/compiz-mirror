@@ -36,11 +36,74 @@
 #include <opengl/framebufferobject.h>
 #endif
 
+#include <opengl/bufferblit.h>
+
 #include "privatetexture.h"
 #include "privatevertexbuffer.h"
 #include "opengl_options.h"
 
 extern CompOutput *targetOutput;
+
+class BaseBufferBlit
+{
+    public:
+
+	BaseBufferBlit (Display *,
+			const CompSize &,
+			const boost::function <bool ()> &);
+
+    protected:
+
+	Display *mDpy;
+	const CompSize &mSize;
+	boost::function <bool ()> getSyncVblank;
+};
+
+class GLXBufferBlit :
+    public compiz::opengl::GLBufferBlitInterface,
+    public BaseBufferBlit
+{
+    public:
+
+	GLXBufferBlit (Display *,
+		       const CompSize &,
+		       const boost::function <bool ()> &,
+		       Window,
+		       const boost::function <void ()> &);
+
+	void swapBuffers () const;
+	bool subBufferBlitAvailable () const;
+	void subBufferBlit (const CompRegion &region) const;
+
+    protected:
+
+	Window mOutput;
+	boost::function <void ()> waitVSync;
+};
+
+#ifdef USE_GLES
+
+class EGLBufferBlit :
+    public compiz::opengl::GLBufferBlitInterface,
+    public BaseBufferBlit
+{
+    public:
+
+	EGLBufferBlit (Display *,
+		       const CompSize &,
+		       const boost::function <bool ()> &,
+		       EGLSurface);
+
+	void swapBuffers () const;
+	bool subBufferBlitAvailable () const;
+	void subBufferBlit (const CompRegion &region) const;
+
+    private:
+
+	EGLSurface mSurface;
+};
+
+#endif
 
 class GLIcon
 {
@@ -118,10 +181,12 @@ class PrivateGLScreen :
 	#ifdef USE_GLES
 	EGLContext ctx;
 	EGLSurface surface;
+	EGLBufferBlit bufferBlit;
 	#else
 	GLXContext ctx;
 
 	GL::GLXGetProcAddressProc getProcAddress;
+	GLXBufferBlit bufferBlit;
 	#endif
 
 	GLFramebufferObject *scratchFbo;
