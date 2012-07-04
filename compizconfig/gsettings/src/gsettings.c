@@ -31,6 +31,8 @@
  *
  **/
 
+#define CCS_LOG_DOMAIN "gsettings"
+
 #include "gsettings.h"
 
 static gboolean
@@ -107,7 +109,7 @@ translateKeyForGSettings (char *gsettingName)
     gchar *ret = g_strndup (clean, 1024);
 
     if (strlen (clean) > 1024)
-	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", clean, ret);
+	ccsWarning ("Key name %s is not valid in GSettings, it was changed to %s, this may cause problems!", clean, ret);
 
     /* Everything must be lowercase */
     for (; i < strlen (ret); i++)
@@ -302,7 +304,7 @@ valueChanged (GSettings   *settings,
     setting = ccsFindSetting (plugin, uncleanKeyName);
     if (!setting)
     {
-	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
+	ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
 	free (uncleanKeyName);
 	g_free (pathOrig);
 	return;
@@ -526,9 +528,9 @@ readOption (CCSSetting * setting)
 
     if (!valid)
     {
-	printf ("GSettings backend: There is an unsupported value at path %s. "
+	ccsWarning ("There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
-		"that value so that operation can continue properly.\n",
+		"that value so that operation can continue properly.",
 		pathName);
 	free (cleanSettingName);
 	g_variant_unref (gsettingsValue);
@@ -652,7 +654,7 @@ readOption (CCSSetting * setting)
 	ret = readListValue (setting);
 	break;
     default:
-	printf("GSettings backend: attempt to read unsupported setting type %d!\n",
+	ccsWarning ("Attempt to read unsupported setting type %d!",
 	       ccsSettingGetType (setting));
 	break;
     }
@@ -753,7 +755,7 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
-	printf("GSettings backend: attempt to write unsupported list type %d!\n",
+	ccsWarning ("Attempt to write unsupported list type %d!",
 	       ccsSettingGetInfo (setting)->forList.listType);
 	break;
     }
@@ -924,7 +926,7 @@ writeOption (CCSSetting * setting)
 	writeListValue (setting, pathName);
 	break;
     default:
-	printf("GSettings backend: attempt to write unsupported setting type %d\n",
+	ccsWarning ("Attempt to write unsupported setting type %d",
 	       ccsSettingGetType (setting));
 	break;
     }
