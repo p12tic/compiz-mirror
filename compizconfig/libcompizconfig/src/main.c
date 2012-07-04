@@ -319,9 +319,9 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
 
     if (cPrivate->backend)
-	D (D_NORMAL, "Backend     : %s\n", cPrivate->backend->vTable->name);
-	D (D_NORMAL, "Integration : %s\n", cPrivate->deIntegration ? "true" : "false");
-	D (D_NORMAL, "Profile     : %s\n",
+	ccsInfo ("Backend     : %s", cPrivate->backend->vTable->name);
+	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
+	ccsInfo ("Profile     : %s",
 	    (cPrivate->profile && strlen (cPrivate->profile)) ?
 	    cPrivate->profile : "default");
 
@@ -1032,7 +1032,7 @@ openBackend (char *backend)
 
     if (err)
     {
-	fprintf (stderr, "libcompizconfig: dlopen: %s\n", err);
+	ccsError ("dlopen: %s", err);
     }
 
     return dlhand;
@@ -1400,7 +1400,7 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 
     if (ccsSettingGetType (rhs->parent) != ccsSettingGetType (lhs->parent))
     {
-	D (D_FULL, "[WARNING] Attempted to check equality between mismatched types!\n");
+	ccsWarning ("Attempted to check equality between mismatched types!");
 	return FALSE;
     }
 
@@ -1432,7 +1432,7 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 	case TypeBell:
 	    return lhs->value.asBell == rhs->value.asBell;
 	case TypeAction:
-	    D (D_FULL, "[WARNING] Actions are not comparable!\n");
+	    ccsWarning ("Actions are not comparable!");
 	    return FALSE;
 	case TypeList:
 	{
@@ -1444,7 +1444,7 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 	    break;
     }
     
-    D (D_FULL, "[WARNING] Failed to process type %i\n", ccsSettingGetType (lhs->parent));
+    ccsWarning ("Failed to process type %i", ccsSettingGetType (lhs->parent));
     return FALSE;
 }
 
@@ -2491,8 +2491,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 
     if (error)
     {
-	fprintf (stderr,
-		 "libcompizconfig: unable to generate sorted plugin list\n");
+	ccsError ("Unable to generate sorted plugin list");
 
 	for (i = 0; i < len; i++)
 	{
@@ -3965,12 +3964,12 @@ ccsProcessUpgrade (CCSContext *context,
 	    {
 		if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
 		{
-		    D (D_FULL, "Resetting %s to default\n", ccsSettingGetName ((CCSSetting *) sl->data));
+		    ccsDebug ("Resetting %s to default", ccsSettingGetName ((CCSSetting *) sl->data));
 		    ccsResetToDefault (setting, TRUE);
 		}
 		else
 		{
-		    D (D_FULL, "Skipping processing of %s\n", ccsSettingGetName ((CCSSetting *) sl->data));
+		    ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
 		}
 	    }
 	    else
@@ -4004,7 +4003,7 @@ ccsProcessUpgrade (CCSContext *context,
 		    l = l->next;
 		}
 
-		D (D_FULL, "Removed %i items from %s\n", count, ccsSettingGetName (setting));
+		ccsDebug ("Removed %i items from %s", count, ccsSettingGetName (setting));
 		ccsSetList (setting, nl, TRUE);
 
 	    }
@@ -4024,7 +4023,7 @@ ccsProcessUpgrade (CCSContext *context,
 	
 	if (setting)
 	{
-	    D (D_FULL, "Overriding value %s\n", ccsSettingGetName ((CCSSetting *) sl->data));
+	    ccsDebug ("Overriding value %s", ccsSettingGetName ((CCSSetting *) sl->data));
 	    if (ccsSettingGetType (setting) != TypeList)
 		ccsSetValue (setting, ccsSettingGetValue (tempSetting), TRUE);
 	    else
@@ -4058,13 +4057,13 @@ ccsProcessUpgrade (CCSContext *context,
 		    l = l->next;
 		}
 
-		D (D_FULL, "Appending %i items to %s\n", count, ccsSettingGetName (setting));
+		ccsDebug ("Appending %i items to %s", count, ccsSettingGetName (setting));
 		ccsSetList (setting, nl, TRUE);
 	    }
 	}
 	else
 	{
-	    D (D_FULL, "Value %s not found!\n", ccsSettingGetName ((CCSSetting *) sl->data));
+	    ccsDebug ("Value %s not found!", ccsSettingGetName ((CCSSetting *) sl->data));
 	}
 
 	sl = sl->next;
@@ -4091,7 +4090,7 @@ ccsProcessUpgrade (CCSContext *context,
 		    
 		    if (strcmp (ccsSettingGetName (rsetting), ccsSettingGetName (setting)) == 0)
 		    {
-			D (D_FULL, "Matched and replaced %s\n", ccsSettingGetName (setting));
+			ccsDebug ("Matched and replaced %s", ccsSettingGetName (setting));
 			ccsSetValue (setting, ccsSettingGetValue (rsetting), TRUE);
 			break;
 		    }
@@ -4101,7 +4100,7 @@ ccsProcessUpgrade (CCSContext *context,
 	    }
 	    else
 	    {
-		D (D_FULL, "Skipping processing of %s\n", ccsSettingGetName ((CCSSetting *) sl->data));
+		ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
 	    }
 	}
 
@@ -4262,7 +4261,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     if (!completedUpgrades)
     {
-	fprintf (stderr, "[WARNING] Error opening done_upgrades\n");
+	ccsWarning ("Error opening done_upgrades");
 	return FALSE;
     }
 
@@ -4274,7 +4273,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     cuReadSize = fread (cuBuffer, 1, cuSize, completedUpgrades);
 
     if (cuReadSize != cuSize)
-	D (D_FULL, "[WARNING] Couldn't read completed upgrades file!\n");
+	ccsWarning ("Couldn't read completed upgrades file!");
 
     cuBuffer[cuSize] = '\0';
 
@@ -4285,18 +4284,18 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 	
 	if (matched)
 	{
-	    D (D_FULL, "Skipping upgrade %s\n", nameList[i]->d_name);
+	    ccsDebug ("Skipping upgrade %s", nameList[i]->d_name);
 	    continue;
 	}
 
 	upgrade = ccsSettingsUpgradeNew (path, nameList[i]->d_name);
 	
-	D (D_FULL, "Processing upgrade %s\nprofile: %s\nnumber: %i\ndomain: %s\n", nameList[i]->d_name, upgrade->profile, upgrade->num, upgrade->domain);
+	ccsDebug ("Processing upgrade %s\nprofile: %s\nnumber: %i\ndomain: %s", nameList[i]->d_name, upgrade->profile, upgrade->num, upgrade->domain);
 
 	ccsProcessUpgrade (context, upgrade);
 	ccsWriteChangedSettings (context);
 	ccsWriteAutoSortedPluginList (context);
-	D (D_FULL, "Completed upgrade %s\n", nameList[i]->d_name);
+	ccsDebug ("Completed upgrade %s", nameList[i]->d_name);
 	fprintf (completedUpgrades, "%s\n", nameList[i]->d_name);
 	free (upgrade->profile);
 	free (upgrade->domain);

@@ -149,4 +149,7 @@ add_subdirectory (backend)
 add_subdirectory (src)
 add_subdirectory (include)
 add_subdirectory (cmake)
-add_subdirectory (tests)
+
+if (COMPIZ_BUILD_TESTING)
+    add_subdirectory (tests)
+endif (COMPIZ_BUILD_TESTING)

@@ -15,6 +15,7 @@ set (LIBCOMPIZCONFIG_FILES
     iniparser.h
     lists.c
     main.c
+    log.c
 )
 
 add_definitions (

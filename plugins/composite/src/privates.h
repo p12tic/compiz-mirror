@@ -120,7 +120,8 @@ class PrivateCompositeWindow :
     public WindowInterface,
     public CompositePixmapRebindInterface,
     public WindowPixmapGetInterface,
-    public WindowAttributesGetInterface
+    public WindowAttributesGetInterface,
+    public PixmapFreezerInterface
 {
     public:
 	PrivateCompositeWindow (CompWindow *w, CompositeWindow *cw);
@@ -136,6 +137,7 @@ class PrivateCompositeWindow :
 	void release ();
 	void setNewPixmapReadyCallback (const boost::function <void ()> &);
 	void allowFurtherRebindAttempts ();
+	bool frozen ();
 
 	static void handleDamageRect (CompositeWindow *w,
 				      int             x,
@@ -163,6 +165,7 @@ class PrivateCompositeWindow :
 	XRectangle *damageRects;
 	int        sizeDamage;
 	int        nDamage;
+
     private:
 
 	bool getAttributes (XWindowAttributes &);

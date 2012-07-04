@@ -1403,10 +1403,10 @@ CompWindow::incrementUnmapReference ()
 void
 CompWindow::unmap ()
 {
-    windowNotify (CompWindowNotifyBeforeUnmap);
-
     if (priv->mapNum)
 	priv->mapNum = 0;
+
+    windowNotify (CompWindowNotifyBeforeUnmap);
 
     /* Even though we're still keeping the backing
      * pixmap of the window around, it's safe to
@@ -1461,9 +1461,7 @@ CompWindow::unmap ()
     priv->invisible = true;
 
     if (priv->shaded)
-    {
 	priv->updateFrameWindow ();
-    }
 
     screen->updateClientList ();
 

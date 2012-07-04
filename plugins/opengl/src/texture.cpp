@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <core/servergrab.h>
 #include <opengl/texture.h>
 #include <privatetexture.h>
 #include "privates.h"
@@ -559,7 +560,7 @@ TfpTexture::~TfpTexture ()
 
 	glBindTexture (target (), name ());
 
-	(*GL::releaseTexImage) (screen->dpy (), pixmap, GLX_FRONT_LEFT_EXT);
+	releaseTexImage ();
 
 	glBindTexture (target (), 0);
 	glDisable (target ());
@@ -569,6 +570,21 @@ TfpTexture::~TfpTexture ()
 	boundPixmapTex.erase (damage);
 	XDamageDestroy (screen->dpy (), damage);
     }
+}
+
+bool
+TfpTexture::bindTexImage (const GLXPixmap &glxPixmap)
+{
+    ServerLock sg (screen->serverGrabInterface ());
+    glXWaitX ();
+    (*GL::bindTexImage) (screen->dpy (), glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
+    return true;
+}
+
+void
+TfpTexture::releaseTexImage ()
+{
+    (*GL::releaseTexImage) (screen->dpy (), pixmap, GLX_FRONT_LEFT_EXT);
 }
 
 GLTexture::List
@@ -702,9 +718,7 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
 
     glBindTexture (texTarget, tex->name ());
 
-
-    (*GL::bindTexImage) (screen->dpy (), glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
-
+    tex->bindTexImage (glxPixmap);
     tex->setFilter (GL_NEAREST);
     tex->setWrap (GL_CLAMP_TO_EDGE);
 
@@ -725,8 +739,8 @@ TfpTexture::enable (GLTexture::Filter filter)
 
     if (damaged && pixmap)
     {
-	(*GL::releaseTexImage) (screen->dpy (), pixmap, GLX_FRONT_LEFT_EXT);
-	(*GL::bindTexImage) (screen->dpy (), pixmap, GLX_FRONT_LEFT_EXT, NULL);
+	releaseTexImage ();
+	bindTexImage (pixmap);
     }
 
     GLTexture::enable (filter);
