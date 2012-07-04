@@ -108,6 +108,7 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
     mPixmapBinding (boost::function <void ()> (),
 		     this,
 		     this,
+		     this,
 		     screen->serverGrabInterface ()),
     damage (None),
     damaged (false),
@@ -184,6 +185,21 @@ PrivateCompositeWindow::getAttributes (XWindowAttributes &attr)
     return false;
 }
 
+bool
+PrivateCompositeWindow::frozen ()
+{
+    /* keep old pixmap for windows that are unmapped on the client side,
+     * but not yet on our side as it's pretty likely that plugins are
+     * currently using it for animations
+     */
+
+    bool pendingUnmap = !window->mapNum () && window->isViewable ();
+    bool hidden = window->state () & CompWindowStateHiddenMask;
+    bool animated = window->hasUnmapReference ();
+
+    return (pendingUnmap || hidden) && animated;
+}
+
 Pixmap
 CompositeWindow::pixmap ()
 {
@@ -258,6 +274,12 @@ bool
 CompositeWindow::overlayWindow ()
 {
     return priv->overlayWindow;
+}
+
+bool
+CompositeWindow::frozen ()
+{
+    return priv->frozen ();
 }
 
 void
@@ -605,19 +627,7 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	cScreen->damageRegion (CompRegion (CompRect (x1, y1, x2 - x1, y2 - y1)));
     }
 
-    if (((!window->mapNum () && window->isViewable ()) ||
-	   window->state () & CompWindowStateHiddenMask) && window->hasUnmapReference ())
-    {
-       /* keep old pixmap for windows that are unmapped on the client side,
-	* but not yet on our side as it's pretty likely that plugins are
-	* currently using it for animations
-	*/
-    }
-    else
-    {
-	cWindow->release ();
-    }
-
+    cWindow->release ();
     cWindow->addDamage ();
 }
 

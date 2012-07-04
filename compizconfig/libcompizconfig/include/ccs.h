@@ -22,19 +22,12 @@
 #ifndef _CSS_H
 #define _CSS_H
 
+#include <stddef.h>  /* for NULL */
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-#define D_NONE   0
-#define D_NORMAL 1
-#define D_FULL   2
-
-#ifndef DEBUGLEVEL
-# define DEBUGLEVEL D_FULL
-#endif
-#define D(x, fmt, args...)  { if (x <= DEBUGLEVEL) fprintf(stderr, fmt, ##args); }
 
 #ifndef Bool
 #define Bool int
@@ -47,6 +40,43 @@ extern "C"
 #ifndef FALSE
 #define FALSE 0
 #endif
+
+#ifndef CCS_LOG_DOMAIN
+#define CCS_LOG_DOMAIN NULL
+#endif
+
+#ifdef __GNUC__
+#define ccsDebug(fmt, args...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogDebug, fmt, ##args)
+#define ccsInfo(fmt, args...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogInfo, fmt, ##args)
+#define ccsWarning(fmt, args...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogWarning, fmt, ##args)
+#define ccsError(fmt, args...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogError, fmt, ##args)
+#elif __STDC_VERSION__ >= 199901L
+#define ccsDebug(fmt, ...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogDebug, fmt, __VA_ARGS__)
+#define ccsInfo(fmt, ...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogInfo, fmt, __VA_ARGS__)
+#define ccsWarning(fmt, ...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogWarning, fmt, __VA_ARGS__)
+#define ccsError(fmt, ...) \
+        ccsLog (CCS_LOG_DOMAIN, ccsLogError, fmt, __VA_ARGS__)
+#endif
+
+typedef enum
+{
+    ccsLogDebug,
+    ccsLogInfo,
+    ccsLogWarning,
+    ccsLogError,
+    _ccsLogLevels
+} CCSLogLevel;
+
+#define CCSLOGLEVEL_NAMES {"Debug", "Info", "Warning", "Error"}
+
+void ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...);
 
 /**
  * list functions:

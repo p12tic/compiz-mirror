@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ccs.h>
 #include "gsettings_util.h"
 #include "gsettings_shared.h"
 
@@ -56,7 +57,7 @@ translateKeyForGSettings (const char *gsettingName)
     translateToLowercaseForGSettings (translated);
 
     if (strlen (gsettingName) > MAX_GSETTINGS_KEY_SIZE)
-	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", gsettingName, translated);
+	ccsWarning ("Key name %s is not valid in GSettings, it was changed to %s, this may cause problems!", gsettingName, translated);
 
     g_free (truncated);
 

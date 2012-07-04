@@ -41,6 +41,14 @@ class CompositePixmapBinderTest :
 {
 };
 
+class MockPixmapFreezer :
+    public PixmapFreezerInterface
+{
+    public:
+
+	MOCK_METHOD0 (frozen, bool ());
+};
+
 class MockWindowPixmapGet :
     public WindowPixmapGetInterface
 {
@@ -136,6 +144,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindSuccess)
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 100;
@@ -152,6 +161,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindSuccess)
     PixmapBinding pr (readyCb,
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());
@@ -181,6 +191,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindSuccessNoRebind)
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 100;
@@ -197,6 +208,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindSuccessNoRebind)
     PixmapBinding pr (readyCb,
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());
@@ -227,6 +239,7 @@ TEST(CompositePixmapBinderTest, TestRebindAfterRelease)
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 100;
@@ -243,6 +256,7 @@ TEST(CompositePixmapBinderTest, TestRebindAfterRelease)
     PixmapBinding pr (readyCb,
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());
@@ -257,6 +271,7 @@ TEST(CompositePixmapBinderTest, TestRebindAfterRelease)
 
     EXPECT_TRUE (pr.bind ());
 
+    EXPECT_CALL (mpf, frozen ()).WillOnce (Return (false));
     EXPECT_CALL (*wp, pixmap ()).WillOnce (Return (1));
 
     EXPECT_EQ (pr.pixmap (), 1);
@@ -286,11 +301,69 @@ TEST(CompositePixmapBinderTest, TestRebindAfterRelease)
     EXPECT_CALL (*wp, releasePixmap ());
 }
 
+TEST(CompositePixmapBinderTest, TestNoRebindAfterReleaseWhenFrozen)
+{
+    MockPixmap::Ptr wp (boost::make_shared <MockPixmap> ());
+
+    MockWindowPixmapGet mwpg;
+    MockWindowAttributesGet mwag;
+    MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
+    XWindowAttributes xwa;
+
+    xwa.width = 100;
+    xwa.height = 200;
+    xwa.map_state = IsViewable;
+    xwa.border_width = 1;
+
+    FakeWindowAttributesGet fwag (xwa);
+
+    MockPixmapReady ready;
+
+    boost::function <void ()> readyCb (boost::bind (&PixmapReadyInterface::ready, &ready));
+
+    PixmapBinding pr (readyCb,
+			&mwpg,
+			&mwag,
+			&mpf,
+			&msg);
+
+    EXPECT_CALL (msg, grabServer ());
+    EXPECT_CALL (msg, syncServer ()).Times (2);
+    EXPECT_CALL (mwag, getAttributes (_)).WillOnce (Invoke (&fwag, &FakeWindowAttributesGet::getAttributes));
+    EXPECT_CALL (mwpg, getPixmap ()).WillOnce (Return (boost::shared_static_cast <WindowPixmapInterface> (wp)));
+
+    EXPECT_CALL (*wp, pixmap ()).WillOnce (Return (1));
+
+    EXPECT_CALL (ready, ready ());
+    EXPECT_CALL (msg, ungrabServer ());
+
+    EXPECT_TRUE (pr.bind ());
+
+    EXPECT_CALL (mpf, frozen ()).WillOnce (Return (true));
+    EXPECT_CALL (*wp, pixmap ()).WillOnce (Return (1));
+
+    EXPECT_EQ (pr.pixmap (), 1);
+    EXPECT_EQ (pr.size (), CompSize (102, 202));
+
+    pr.release ();
+
+    EXPECT_TRUE (pr.bind ());
+
+    EXPECT_CALL (*wp, pixmap ()).WillOnce (Return (1));
+
+    EXPECT_EQ (pr.pixmap (), 1);
+    EXPECT_EQ (pr.size (), CompSize (102, 202));
+
+    EXPECT_CALL (*wp, releasePixmap ());
+}
+
 TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowUnmapped)
 {
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 100;
@@ -303,6 +376,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowUnmapped)
     PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());
@@ -322,6 +396,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowZeroSize)
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 0;
@@ -334,6 +409,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowZeroSize)
     PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());
@@ -355,6 +431,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureNilPixmapReturned)
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 100;
@@ -367,6 +444,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureNilPixmapReturned)
     PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());
@@ -391,6 +469,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowUnmappedSuccessOnRem
     MockWindowPixmapGet mwpg;
     MockWindowAttributesGet mwag;
     MockServerGrab          msg;
+    MockPixmapFreezer       mpf;
     XWindowAttributes xwa;
 
     xwa.width = 100;
@@ -403,6 +482,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowUnmappedSuccessOnRem
     PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
+			&mpf,
 			&msg);
 
     EXPECT_CALL (msg, grabServer ());

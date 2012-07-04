@@ -558,7 +558,7 @@ addOptionForPluginPB (CCSPlugin * plugin,
 
     if (ccsFindSetting (plugin, name))
     {
-	fprintf (stderr, "[ERROR]: Option \"%s\" already defined\n", name);
+	ccsError ("Option \"%s\" already defined", name);
 	return;
     }
 
@@ -1982,7 +1982,7 @@ createProtoBufCacheDir ()
 	// Create cache dir
 	Bool success = ccsCreateDirFor (metadataCacheFileDummy.c_str ());
 	if (!success)
-	    fprintf (stderr, "[ERROR]: Error creating directory \"%s\"\n",
+	    ccsError ("Error creating directory \"%s\"",
 		     metadataCacheDir.c_str ());
 	free (cacheBaseDir);
 
@@ -2014,7 +2014,7 @@ addOptionForPlugin (CCSPlugin * plugin,
 
     if (ccsFindSetting (plugin, name))
     {
-	fprintf (stderr, "[ERROR]: Option \"%s\" already defined\n", name);
+	ccsError ("Option \"%s\" already defined", name);
 	return;
     }
 
@@ -2826,7 +2826,7 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 
     if (!xmlFilePath)
     {
-	fprintf (stderr, "[ERROR]: Can't allocate memory\n");
+	ccsError ("Can't allocate memory");
 	return;
     }
 
@@ -2851,7 +2851,7 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 	name = strndup (xmlName, strlen (xmlName) - 4);
 	if (!name)
 	{
-	    fprintf (stderr, "[ERROR]: Can't allocate memory\n");
+	    ccsError ("Can't allocate memory");
 	    free (xmlFilePath);
 	    return;
 	}
@@ -2864,7 +2864,7 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 
 	    if (!pbFilePath)
 	    {
-		fprintf (stderr, "[ERROR]: Can't allocate memory\n");
+		ccsError ("Can't allocate memory");
 		free (xmlFilePath);
 		free (name);
 		return;
@@ -3105,7 +3105,7 @@ ccsLoadPlugin (CCSContext *context, char *name)
 void
 ccsLoadPluginsDefault (CCSContext * context)
 {
-    D (D_FULL, "Adding plugins\n");
+    ccsDebug ("Adding plugins");
 
 #ifdef USE_PROTOBUF
     initPBLoading ();
@@ -3212,7 +3212,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
 	return;
 
     pPrivate->loaded = TRUE;
-    D (D_FULL, "Initializing %s options...", pPrivate->name);
+    ccsDebug ("Initializing %s options...", pPrivate->name);
 
 #ifdef USE_PROTOBUF
     if (usingProtobuf && pPrivate->pbFilePath)
@@ -3250,7 +3250,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
 	writePBFile (pPrivate->pbFilePath, (PluginMetadata *) pluginPBToWrite,
 		     NULL, &xmlStat);
 #endif
-    D (D_FULL, "done\n");
+    ccsDebug ("done");
 
     collateGroups (pPrivate);
     ccsReadPluginSettings (plugin);

@@ -31,7 +31,34 @@
  *
  **/
 
+#define CCS_LOG_DOMAIN "gsettings"
+
 #include "gsettings.h"
+
+static gboolean
+compizconfigTypeHasVariantType (CCSSettingType type)
+{
+    gint i = 0;
+
+    static const unsigned int nVariantTypes = 6;
+    static const CCSSettingType variantTypes[] =
+    {
+	TypeString,
+	TypeMatch,
+	TypeColor,
+	TypeBool,
+	TypeInt,
+	TypeFloat
+    };
+
+    for (; i < nVariantTypes; i++)
+    {
+	if (variantTypes[i] == type)
+	    return TRUE;
+    }
+
+    return FALSE;
+}
 
 static void
 valueChanged (GSettings   *settings,
@@ -161,7 +188,11 @@ valueChanged (GSettings   *settings,
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
     char	 *path, *pathOrig;
+<<<<<<< TREE
     char         *pluginName;
+=======
+    char         *token;
+>>>>>>> MERGE-SOURCE
     int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
@@ -170,6 +201,7 @@ valueChanged (GSettings   *settings,
     g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
     path = pathOrig;
+<<<<<<< TREE
 
     if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
     {
@@ -179,20 +211,65 @@ valueChanged (GSettings   *settings,
 
     plugin = ccsFindPlugin (context, pluginName);
 
+=======
+    path += strlen (COMPIZ) + 1;
+
+    token = strsep (&path, "/"); /* Profile name */
+    if (!token)
+    {
+	g_free (pathOrig);
+	return;
+    }
+
+    token = strsep (&path, "/"); /* plugins */
+    if (!token)
+    {
+	g_free (pathOrig);
+	return;
+    }
+
+    token = strsep (&path, "/"); /* plugin */
+    if (!token)
+    {
+	g_free (pathOrig);
+	return;
+    }
+
+    plugin = ccsFindPlugin (context, token);
+>>>>>>> MERGE-SOURCE
     if (!plugin)
     {
+<<<<<<< TREE
 	g_free (pluginName);
 	g_free (pathOrig);
 	return;
     }
+=======
+	g_free (pathOrig);
+	return;
+    }
+
+    token = strsep (&path, "/"); /* screen%i */
+    if (!token)
+    {
+	g_free (pathOrig);
+	return;
+    }
+
+    sscanf (token, "screen%d", &screenNum);
+>>>>>>> MERGE-SOURCE
 
     uncleanKeyName = translateKeyForCCS (keyName);
 
     setting = ccsFindSetting (plugin, uncleanKeyName);
     if (!setting)
     {
+<<<<<<< TREE
 	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
 	g_free (pluginName);
+=======
+	ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
+>>>>>>> MERGE-SOURCE
 	free (uncleanKeyName);
 	g_free (pathOrig);
 	return;
@@ -227,6 +304,10 @@ readListValue (CCSSetting *setting)
     GVariantIter	iter;
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+<<<<<<< TREE
+=======
+    
+>>>>>>> MERGE-SOURCE
     hasVariantType = compizconfigTypeHasVariantType (ccsSettingGetInfo (setting)->forList.listType);
 
     if (!hasVariantType)
@@ -394,9 +475,9 @@ readOption (CCSSetting * setting)
 
     if (!variantIsValidForCCSType (gsettingsValue, ccsSettingGetType (setting)))
     {
-	printf ("GSettings backend: There is an unsupported value at path %s. "
+	ccsWarning ("There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
-		"that value so that operation can continue properly.\n",
+		"that value so that operation can continue properly.",
 		pathName);
 	free (cleanSettingName);
 	g_variant_unref (gsettingsValue);
@@ -520,7 +601,7 @@ readOption (CCSSetting * setting)
 	ret = readListValue (setting);
 	break;
     default:
-	printf("GSettings backend: attempt to read unsupported setting type %d!\n",
+	ccsWarning ("Attempt to read unsupported setting type %d!",
 	       ccsSettingGetType (setting));
 	break;
     }
@@ -621,8 +702,13 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
+<<<<<<< TREE
 	printf ("GSettings backend: attempt to write unsupported list type %d!\n",
 	        ccsSettingGetInfo (setting)->forList.listType);
+=======
+	ccsWarning ("Attempt to write unsupported list type %d!",
+	       ccsSettingGetInfo (setting)->forList.listType);
+>>>>>>> MERGE-SOURCE
 	break;
     }
 
@@ -792,7 +878,7 @@ writeOption (CCSSetting * setting)
 	writeListValue (setting, pathName);
 	break;
     default:
-	printf("GSettings backend: attempt to write unsupported setting type %d\n",
+	ccsWarning ("Attempt to write unsupported setting type %d",
 	       ccsSettingGetType (setting));
 	break;
     }
