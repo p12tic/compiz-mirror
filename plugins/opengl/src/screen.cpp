@@ -637,7 +637,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::checkFramebufferStatus &&
 	    GL::framebufferTexture2D   &&
 	    GL::generateMipmap)
-	    GL::fbo = false;
+	    GL::fbo = true;
     }
 
 
@@ -1712,6 +1712,8 @@ BaseBufferBlit::BaseBufferBlit (Display *d, const CompSize &s,
 {
 }
 
+#ifndef USE_GLES
+
 GLXBufferBlit::GLXBufferBlit (Display *d,
 			      const CompSize &s,
 			      const boost::function <bool ()> &getSyncVblankFunc,
@@ -1755,7 +1757,7 @@ GLXBufferBlit::subBufferBlit (const CompRegion &region) const
     }
 }
 
-#ifdef USE_GLES
+#else
 
 EGLBufferBlit::EGLBufferBlit (Display *d,
 			      const CompSize &s,
@@ -1790,7 +1792,7 @@ EGLBufferBlit::subBufferBlit (const CompRegion &region) const
 
     GL::controlSwapVideoSync (getSyncVblank ());
 
-    foreach (const CompRect &r : blitRects)
+    foreach (const CompRect &r, blitRects)
     {
 	y = mSize.height () - r.y2 ();
 

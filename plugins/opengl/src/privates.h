@@ -59,6 +59,8 @@ class BaseBufferBlit
 	boost::function <bool ()> getSyncVblank;
 };
 
+#ifndef USE_GLES
+
 class GLXBufferBlit :
     public compiz::opengl::GLBufferBlitInterface,
     public BaseBufferBlit
@@ -81,7 +83,7 @@ class GLXBufferBlit :
 	boost::function <void ()> waitVSync;
 };
 
-#ifdef USE_GLES
+#else
 
 class EGLBufferBlit :
     public compiz::opengl::GLBufferBlitInterface,
