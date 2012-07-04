@@ -406,6 +406,15 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	GL::postSubBuffer = (GL::EGLPostSubBufferNVProc)
 	    eglGetProcAddress ("eglPostSubBufferNV");
 
+    if (!GL::fbo &&
+	!GL::postSubBuffer)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"GL_EXT_framebuffer_object or EGL_NV_post_sub_buffer are required");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
     GL::activeTexture = glActiveTexture;
     GL::genFramebuffers = glGenFramebuffers;
     GL::deleteFramebuffers = glDeleteFramebuffers;
@@ -605,7 +614,17 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::checkFramebufferStatus &&
 	    GL::framebufferTexture2D   &&
 	    GL::generateMipmap)
-	    GL::fbo = true;
+	    GL::fbo = false;
+    }
+
+
+    if (!GL::fbo &&
+	!GL::copySubBuffer)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"GL_EXT_framebuffer_object or GLX_MESA_copy_sub_buffer are required");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
     }
 
     if (strstr (glExtensions, "GL_ARB_vertex_buffer_object"))
