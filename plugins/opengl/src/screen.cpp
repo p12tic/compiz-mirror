@@ -1773,14 +1773,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
 	int    y;
 
-    #if USE_GLES
+	#if USE_GLES
 	if (GL::postSubBuffer)
-    #else
+	#else
 	if (GL::copySubBuffer)
-    #endif
+	#endif
 	{
-	    waitForVideoSync ();
-
 	    #ifdef USE_GLES
 	    GL::controlSwapVideoSync (optionGetSyncToVblank ());
 
@@ -1799,6 +1797,9 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    XFlush (screen->dpy ());
 
 	    #else
+
+	    waitForVideoSync ();
+
 	    while (nBox--)
 	    {
 		y = screen->height () - pBox->y2;
@@ -1812,40 +1813,9 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    }
 	    #endif
 	}
-	#ifndef USE_GLES
-	else
-	{
-	    glEnable (GL_SCISSOR_TEST);
-	    glDrawBuffer (GL_FRONT);
 
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
-
-		glBitmap (0, 0, 0, 0,
-			  pBox->x1 - rasterPos.x (),
-			  y - rasterPos.y (),
-			  NULL);
-
-		rasterPos = CompPoint (pBox->x1, y);
-
-		glScissor (pBox->x1, y,
-			   pBox->x2 - pBox->x1,
-			   pBox->y2 - pBox->y1);
-
-		glCopyPixels (pBox->x1, y,
-			      pBox->x2 - pBox->x1,
-			      pBox->y2 - pBox->y1,
-			      GL_COLOR);
-
-		pBox++;
-	    }
-
-	    glDrawBuffer (GL_BACK);
-	    glDisable (GL_SCISSOR_TEST);
-	    glFlush ();
-	}
-    #endif
+	compLogMessage ("opengl", CompLogLevelFatal, "no back to front flip methods supported");
+	abort ();
     }
 
     lastMask = mask;
