@@ -1767,48 +1767,85 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
 	#endif
     }
-#if USE_GLES
-    else if (GL::postSubBuffer)
-#else
-    else if (GL::copySubBuffer)
-#endif
+    else
     {
 	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
 	int    y;
 
-	waitForVideoSync ();
-
-	#ifdef USE_GLES
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
-
-	while (nBox--)
+    #if USE_GLES
+	if (GL::postSubBuffer)
+    #else
+	if (GL::copySubBuffer)
+    #endif
 	{
-	    y = screen->height () - pBox->y2;
+	    waitForVideoSync ();
 
-	    (*GL::postSubBuffer) (eglGetDisplay (screen->dpy ()), surface,
-				  pBox->x1, y,
-				  pBox->x2 - pBox->x1,
-				  pBox->y2 - pBox->y1);
-	    pBox++;
+	    #ifdef USE_GLES
+	    GL::controlSwapVideoSync (optionGetSyncToVblank ());
+
+	    while (nBox--)
+	    {
+		y = screen->height () - pBox->y2;
+
+		(*GL::postSubBuffer) (eglGetDisplay (screen->dpy ()), surface,
+				      pBox->x1, y,
+				      pBox->x2 - pBox->x1,
+				      pBox->y2 - pBox->y1);
+		pBox++;
+	    }
+
+	    eglWaitGL ();
+	    XFlush (screen->dpy ());
+
+	    #else
+	    while (nBox--)
+	    {
+		y = screen->height () - pBox->y2;
+
+		(*GL::copySubBuffer) (screen->dpy (), cScreen->output (),
+				      pBox->x1, y,
+				      pBox->x2 - pBox->x1,
+				      pBox->y2 - pBox->y1);
+
+		pBox++;
+	    }
+	    #endif
 	}
-
-	eglWaitGL ();
-	XFlush (screen->dpy ());
-
-	#else
-	while (nBox--)
+	#ifndef USE_GLES
+	else
 	{
-	    y = screen->height () - pBox->y2;
+	    glEnable (GL_SCISSOR_TEST);
+	    glDrawBuffer (GL_FRONT);
 
-	    (*GL::copySubBuffer) (screen->dpy (), cScreen->output (),
-		      		  pBox->x1, y,
-		      		  pBox->x2 - pBox->x1,
-		      		  pBox->y2 - pBox->y1);
+	    while (nBox--)
+	    {
+		y = screen->height () - pBox->y2;
 
-	    pBox++;
+		glBitmap (0, 0, 0, 0,
+			  pBox->x1 - rasterPos.x (),
+			  y - rasterPos.y (),
+			  NULL);
+
+		rasterPos = CompPoint (pBox->x1, y);
+
+		glScissor (pBox->x1, y,
+			   pBox->x2 - pBox->x1,
+			   pBox->y2 - pBox->y1);
+
+		glCopyPixels (pBox->x1, y,
+			      pBox->x2 - pBox->x1,
+			      pBox->y2 - pBox->y1,
+			      GL_COLOR);
+
+		pBox++;
+	    }
+
+	    glDrawBuffer (GL_BACK);
+	    glDisable (GL_SCISSOR_TEST);
+	    glFlush ();
 	}
-	#endif
+    #endif
     }
 
     lastMask = mask;
