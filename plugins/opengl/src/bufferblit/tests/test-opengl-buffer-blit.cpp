@@ -5,11 +5,8 @@
 
 using namespace compiz::opengl;
 using testing::_;
-
-class CompizOpenGLBufferBlitTest :
-    public ::testing::Test
-{
-};
+using testing::StrictMock;
+using testing::Return;
 
 class MockGLBufferBlit :
     public GLBufferBlitInterface
@@ -21,12 +18,61 @@ class MockGLBufferBlit :
 	MOCK_CONST_METHOD1 (subBufferBlit, void (const CompRegion &));
 };
 
-TEST(CompizOpenGLBufferBlitTest, TestPaintedWithFBOAlwaysSwaps)
+class CompizOpenGLBufferBlitTest :
+    public ::testing::Test
 {
-    MockGLBufferBlit mglbb;
-    CompRegion	     blitRegion (infiniteRegion);
+    public:
 
+	MockGLBufferBlit mglbb;
+	CompRegion	 blitRegion;
+
+};
+
+TEST_F(CompizOpenGLBufferBlitTest, TestPaintedWithFBOAlwaysSwaps)
+{
     EXPECT_CALL (mglbb, swapBuffers ());
 
     blitBuffers (PaintedWithFramebufferObject, blitRegion, mglbb);
+}
+
+TEST_F(CompizOpenGLBufferBlitTest, TestPaintedFullscreenAlwaysSwaps)
+{
+    EXPECT_CALL (mglbb, swapBuffers ());
+
+    blitBuffers (PaintedFullscreen, blitRegion, mglbb);
+}
+
+TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
+{
+    EXPECT_CALL (mglbb, subBufferBlitAvailable ()).WillOnce (Return (true));
+    EXPECT_CALL (mglbb, subBufferBlit (_));
+
+    blitBuffers (0, blitRegion, mglbb);
+}
+
+TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
+{
+    StrictMock <MockGLBufferBlit> mglbbStrict;
+
+    EXPECT_CALL (mglbbStrict, subBufferBlitAvailable ()).WillOnce (Return (false));
+
+    blitBuffers (0, blitRegion, mglbbStrict);
+}
+
+TEST_F(CompizOpenGLBufferBlitTest, TestBlitExactlyWithRegionSpecified)
+{
+    CompRegion r1 (0, 0, 100, 100);
+    CompRegion r2 (100, 100, 100, 100);
+    CompRegion r3 (200, 200, 100, 100);
+
+    EXPECT_CALL (mglbb, subBufferBlitAvailable ()).WillRepeatedly (Return (true));
+
+    EXPECT_CALL (mglbb, subBufferBlit (r1));
+    blitBuffers (0, r1, mglbb);
+
+    EXPECT_CALL (mglbb, subBufferBlit (r2));
+    blitBuffers (0, r2, mglbb);
+
+    EXPECT_CALL (mglbb, subBufferBlit (r3));
+    blitBuffers (0, r3, mglbb);
 }
