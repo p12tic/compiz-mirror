@@ -94,7 +94,7 @@ class EGLBufferBlit :
 	EGLBufferBlit (Display *,
 		       const CompSize &,
 		       const boost::function <bool ()> &,
-		       EGLSurface);
+		       EGLSurface const &);
 
 	void swapBuffers () const;
 	bool subBufferBlitAvailable () const;
@@ -102,7 +102,7 @@ class EGLBufferBlit :
 
     private:
 
-	EGLSurface mSurface;
+	EGLSurface const & mSurface;
 };
 
 #endif

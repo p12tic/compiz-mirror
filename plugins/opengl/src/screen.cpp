@@ -1762,7 +1762,7 @@ GLXBufferBlit::subBufferBlit (const CompRegion &region) const
 EGLBufferBlit::EGLBufferBlit (Display *d,
 			      const CompSize &s,
 			      const boost::function <bool ()> &getSyncVblankFunc,
-			      EGLSurface surface) :
+			      EGLSurface const & surface) :
     BaseBufferBlit (d, s, getSyncVblankFunc),
     mSurface (surface)
 {
