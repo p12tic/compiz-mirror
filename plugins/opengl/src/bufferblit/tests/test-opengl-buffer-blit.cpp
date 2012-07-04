@@ -16,11 +16,17 @@ class MockGLBufferBlit :
 {
     public:
 
-	MOCK_METHOD0 (swapBuffers, void ());
-	MOCK_METHOD0 (subBufferBlitAvailable, bool ());
-	MOCK_METHOD1 (subBufferBlit, void (const CompRegion &));
+	MOCK_CONST_METHOD0 (swapBuffers, void ());
+	MOCK_CONST_METHOD0 (subBufferBlitAvailable, bool ());
+	MOCK_CONST_METHOD1 (subBufferBlit, void (const CompRegion &));
 };
 
-TEST(CompizOpenGLBufferBlitTest, TestTest)
+TEST(CompizOpenGLBufferBlitTest, TestPaintedWithFBOAlwaysSwaps)
 {
+    MockGLBufferBlit mglbb;
+    CompRegion	     blitRegion (infiniteRegion);
+
+    EXPECT_CALL (mglbb, swapBuffers ());
+
+    blitBuffers (PaintedWithFramebufferObject, blitRegion, mglbb);
 }
