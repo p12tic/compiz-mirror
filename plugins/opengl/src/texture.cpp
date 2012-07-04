@@ -520,7 +520,7 @@ EglTexture::bindPixmapToTexture (Pixmap pixmap,
     glBindTexture (GL_TEXTURE_2D, 0);
 
     tex->damage = XDamageCreate (screen->dpy (), pixmap,
-			         XDamageReportRawRectangles);
+			         XDamageReportBoundingBox);
     boundPixmapTex[tex->damage] = tex;
 
     return rv;
