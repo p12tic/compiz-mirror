@@ -459,6 +459,36 @@ GLScreen::glDisableOutputClipping ()
     #endif
 }
 
+void
+GLScreen::glBufferStencil (const GLMatrix       &matrix,
+			   GLVertexBuffer       &vertexBuffer,
+			   CompOutput           *output)
+{
+    WRAPABLE_HND_FUNCTN (glBufferStencil, matrix, vertexBuffer, output);
+
+    GLfloat x = output->x ();
+    GLfloat y = screen->height () - output->y2 ();
+    GLfloat x2 = output->x () + output->width ();
+    GLfloat y2 = screen->height () - output->y2 () + output->height ();
+
+    GLfloat vertices[] =
+    {
+	x, y, 0,
+	x, y2, 0,
+	x2, y, 0,
+	x2, y2, 0
+    };
+
+    GLushort colorData[] = { 0xffff, 0xffff, 0xffff, 0xffff };
+
+    vertexBuffer.begin (GL_TRIANGLE_STRIP);
+
+    vertexBuffer.addVertices (4, vertices);
+    vertexBuffer.addColors (1, colorData);
+
+    vertexBuffer.end ();
+}
+
 #define CLIP_PLANE_MASK (PAINT_SCREEN_TRANSFORMED_MASK | \
 			 PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK)
 
@@ -483,12 +513,54 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     if ((mask & CLIP_PLANE_MASK) == CLIP_PLANE_MASK)
     {
-	glEnableOutputClipping (sTransform, region, output);
-
 	sTransform.toScreenSpace (output, -sAttrib.zTranslate);
+
+	if (GL::stencilBuffer)
+	{
+	    GLboolean saveColorMask[4];
+	    GLboolean saveDepthMask;
+	    GLboolean depthTestEnabled = glIsEnabled (GL_DEPTH_TEST);
+
+	    glGetBooleanv (GL_COLOR_WRITEMASK, saveColorMask);
+	    glGetBooleanv (GL_DEPTH_WRITEMASK, &saveDepthMask);
+
+	    glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	    glDepthMask (GL_FALSE);
+
+	    glClearStencil (0);
+	    glClear (GL_STENCIL_BUFFER_BIT);
+	    glEnable (GL_STENCIL_TEST);
+	    glStencilFunc (GL_ALWAYS, 1, 1);
+	    glStencilOp (GL_KEEP, GL_KEEP, GL_REPLACE);
+
+	    glDisable (GL_DEPTH_TEST);
+
+	    GLVertexBuffer vb;
+
+	    vb.setAutoProgram (priv->autoProgram);
+
+	    glBufferStencil (sTransform, vb, output);
+
+	    vb.render (sTransform);
+
+	    glColorMask (saveColorMask[0], saveColorMask[1], saveColorMask[2], saveColorMask[3]);
+	    glDepthMask (saveDepthMask);
+
+	    if (depthTestEnabled)
+		glEnable (GL_DEPTH_TEST);
+
+	    glStencilFunc (GL_EQUAL, 1, 1);
+	    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
+	}
+	else
+	    glEnableOutputClipping (sTransform, region, output);
+
 	priv->paintOutputRegion (sTransform, region, output, mask);
 
-	glDisableOutputClipping ();
+	if (GL::stencilBuffer)
+	    glDisable (GL_STENCIL_TEST);
+	else
+	    glDisableOutputClipping ();
     }
     else
     {

@@ -133,6 +133,12 @@ namespace GL {
     GLDisableVertexAttribArrayProc disableVertexAttribArray = NULL;
     GLVertexAttribPointerProc      vertexAttribPointer = NULL;
 
+    GLGenRenderbuffersProc genRenderbuffers = NULL;
+    GLDeleteRenderbuffersProc deleteRenderbuffers = NULL;
+    GLFramebufferRenderbufferProc framebufferRenderbuffer = NULL;
+    GLBindRenderbufferProc bindRenderbuffer = NULL;
+    GLRenderbufferStorageProc renderbufferStorage = NULL;
+
     bool  textureFromPixmap = true;
     bool  textureRectangle = false;
     bool  textureNonPowerOfTwo = false;
@@ -153,6 +159,7 @@ namespace GL {
     unsigned int vsyncCount = 0;
     unsigned int unthrottledFrames = 0;
 
+    bool stencilBuffer = false;
 #ifndef USE_GLES
 
     GLuint createShaderARBWrapper (GLenum type)
@@ -282,7 +289,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	EGL_ALPHA_SIZE,           0,
 	EGL_RENDERABLE_TYPE,      EGL_OPENGL_ES2_BIT,
 	EGL_CONFIG_CAVEAT,        EGL_NONE,
-	EGL_NONE,
+	EGL_STENCIL_SIZE,	  1,
+	EGL_NONE
     };
 
     const EGLint context_attribs[] = {
@@ -368,6 +376,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::fbo = true;
     GL::vbo = true;
     GL::shaders = true;
+    GL::stencilBuffer = true;
     GL::maxTextureUnits = 4;
     glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
 
@@ -458,6 +467,20 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::enableVertexAttribArray = glEnableVertexAttribArray;
     GL::disableVertexAttribArray = glDisableVertexAttribArray;
     GL::vertexAttribPointer = glVertexAttribPointer;
+
+    if (GL::stencilBuffer)
+    {
+	if (strstr (glExtensions, "GL_OES_packed_depth_stencil"))
+	{
+	    GL::genRenderbuffers = glGenRenderbuffers;
+	    GL::deleteRenderbuffers = glDeleteRenderbuffers;
+	    GL::bindRenderbuffer = glBindRenderbuffer;
+	    GL::framebufferRenderbuffer = glFramebufferRenderbuffer;
+	    GL::renderbufferStorage = glRenderbufferStorage;
+	}
+	else
+	    GL::stencilBuffer = false;
+    }
 
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -649,7 +672,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     }
 
     if (strstr (glExtensions, "GL_ARB_fragment_shader") &&
-	strstr (glExtensions, "GL_ARB_vertex_shader") &&
+        strstr (glExtensions, "GL_ARB_vertex_shader") &&
 	strstr (glExtensions, "GL_ARB_shader_objects") &&
 	strstr (glExtensions, "GL_ARB_shading_language_100"))
     {
@@ -701,6 +724,20 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (strstr (glExtensions, "GL_ARB_texture_compression"))
 	GL::textureCompression = true;
+
+    if (GL::stencilBuffer)
+    {
+	if (strstr (glExtensions, "GL_EXT_packed_depth_stencil"))
+	{
+	    GL::genRenderbuffers = (GL::GLGenRenderbuffersProc) getProcAddress ("glGenRenderbuffersEXT");
+	    GL::deleteRenderbuffers = (GL::GLDeleteRenderbuffersProc) getProcAddress ("glDeleteRenderbuffersEXT");
+	    GL::bindRenderbuffer = (GL::GLBindRenderbufferProc) getProcAddress ("glBindRenderbufferEXT");
+	    GL::framebufferRenderbuffer = (GL::GLFramebufferRenderbufferProc) getProcAddress ("glFramebufferRenderbufferEXT");
+	    GL::renderbufferStorage = (GL::GLRenderbufferStorageProc) getProcAddress ("glRenderbufferStorageEXT");
+	}
+	else
+	    GL::stencilBuffer = false;
+    }
 
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -878,6 +915,8 @@ GLScreen::GLScreen (CompScreen *s) :
 
     fbConfigs = (*GL::getFBConfigs) (dpy, s->screenNum (), &nElements);
 
+    GL::stencilBuffer = false;
+
     for (i = 0; i <= MAX_DEPTH; i++)
     {
 	int j, db, stencil, depth, alpha, mipmap, rgba;
@@ -991,6 +1030,10 @@ GLScreen::GLScreen (CompScreen *s) :
 	    priv->glxPixmapFBConfigs[i].fbConfig = fbConfigs[j];
 	    priv->glxPixmapFBConfigs[i].mipmap   = mipmap;
 	}
+
+	if (i == defaultDepth)
+	    if (stencil != MAXSHORT)
+		GL::stencilBuffer = true;
     }
 
     if (nElements)
@@ -1488,6 +1531,11 @@ GLScreenInterface::glPaintCompositedOutput (const CompRegion    &region,
 					    unsigned int         mask)
     WRAPABLE_DEF (glPaintCompositedOutput, region, fbo, mask)
 
+void
+GLScreenInterface::glBufferStencil(const GLMatrix &matrix,
+				   GLVertexBuffer &vertexBuffer,
+				   CompOutput *output)
+    WRAPABLE_DEF (glBufferStencil, matrix, vertexBuffer, output)
 
 GLMatrix *
 GLScreen::projectionMatrix ()
