@@ -1,6 +1,6 @@
 include (FindPkgConfig)
 
-pkg_check_modules (GSETTINGS_UTIL glib-2.0>=2.20.0
+pkg_check_modules (GSETTINGS_UTIL glib-2.0>=2.28
                                   gio-2.0>=2.25.0
 				  libcompizconfig)
 
