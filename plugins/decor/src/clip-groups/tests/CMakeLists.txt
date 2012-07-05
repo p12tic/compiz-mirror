@@ -11,4 +11,4 @@ target_link_libraries (compiz_test_decor_clip_groups
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-gtest_add_tests (compiz_test_decor_clip_groups "" ${CMAKE_CURRENT_SOURCE_DIR}/clip-groups/src/test-decor-clip-groups.cpp)
+compiz_discover_tests (compiz_test_decor_clip_groups)

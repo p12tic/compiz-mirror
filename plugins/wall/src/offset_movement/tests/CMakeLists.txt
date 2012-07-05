@@ -21,4 +21,4 @@ target_link_libraries (compiz_test_wall_offset_movement
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
                        )
 
-gtest_add_tests (compiz_test_wall_offset_movement "" ${CMAKE_CURRENT_SOURCE_DIR}/test-wall-offset-movement.cpp)
+compiz_discover_tests (compiz_test_wall_offset_movement)

@@ -33,4 +33,4 @@ target_link_libraries(
   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
-gtest_add_tests( compiz_region_test "" ${CMAKE_CURRENT_SOURCE_DIR}/test-region.cpp )
+compiz_discover_tests (compiz_region_test)
