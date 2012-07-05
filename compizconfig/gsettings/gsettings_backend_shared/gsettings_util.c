@@ -1,7 +1,7 @@
+#include <ccs.h>
 #include <glib.h>
 #include <string.h>
 #include <stdio.h>
-#include <ccs.h>
 #include "gsettings_util.h"
 #include "gsettings_shared.h"
 
