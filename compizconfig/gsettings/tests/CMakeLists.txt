@@ -15,5 +15,4 @@ target_link_libraries (compizconfig_test_gsettings
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 
-gtest_add_tests (${CMAKE_CURRENT_BINARY_DIR}/compizconfig_test_gsettings ""
-		 ${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_tests.cpp)
+compiz_discover_tests (compizconfig_test_gsettings)
