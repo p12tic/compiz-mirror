@@ -34,3 +34,12 @@ install (
     FILES ${_PluginExtensionFiles}
     DESTINATION ${CMAKE_INSTALL_PREFIX}/share/compiz/cmake/plugin_extensions
 )
+
+# Do not install src/compiz for a while until we've polished it up
+
+#install (DIRECTORY src/compiz
+#	 DESTINATION ${CMAKE_INSTALL_PREFIX}/src)
+
+if (COMPIZ_BUILD_TESTING)
+    add_subdirectory (src)
+endif (COMPIZ_BUILD_TESTING)
