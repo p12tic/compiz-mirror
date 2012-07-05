@@ -3,9 +3,9 @@ find_package (Compiz REQUIRED)
 include (CompizPlugin)
 
 set (INTERNAL_LIBRARIES
-     compiz_opengl_buffer_blit)
+     compiz_opengl_double_buffer)
 
-add_subdirectory (src/bufferblit)
+add_subdirectory (src/doublebuffer)
 
 if (USE_GLES)
     compiz_plugin(opengl PLUGINDEPS composite CFLAGSADD "-DUSE_GLES -std=c++0x" LIBRARIES ${OPENGLES2_LIBRARIES} ${INTERNAL_LIBRARIES} INCDIRS ${OPENGLES2_INCLUDE_DIR})

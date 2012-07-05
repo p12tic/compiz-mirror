@@ -10,15 +10,15 @@ include_directories (${GTEST_INCLUDE_DIRS})
 
 link_directories (${COMPIZ_LIBRARY_DIRS})
 
-add_executable (compiz_test_opengl_buffer_blit
-                ${CMAKE_CURRENT_SOURCE_DIR}/test-opengl-buffer-blit.cpp)
+add_executable (compiz_test_opengl_double_buffer
+                ${CMAKE_CURRENT_SOURCE_DIR}/test-opengl-double-buffer.cpp)
 
-target_link_libraries (compiz_test_opengl_buffer_blit
-                       compiz_opengl_buffer_blit
+target_link_libraries (compiz_test_opengl_double_buffer
+                       compiz_opengl_double_buffer
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
                        )
 
-compiz_discover_tests (compiz_test_opengl_buffer_blit)
+compiz_discover_tests (compiz_test_opengl_double_buffer)

@@ -1,19 +1,19 @@
 #include <iostream>
 
 #include <core/logmessage.h>
-#include <opengl/bufferblit.h>
+#include <opengl/doublebuffer.h>
 
 #include <cstdlib>
 
 using namespace compiz::opengl;
 
-char programName[] = "compiz_test_opengl_buffer_blit";
+char programName[] = "compiz_test_opengl_double_buffer";
 bool debugOutput = false;
 
 void
 compiz::opengl::blitBuffers (unsigned int flags,
 			     const CompRegion &tmpRegion,
-			     GLBufferBlitInterface &blit)
+			     GLDoubleBufferInterface &blit)
 {
     if (flags & (PaintedFullscreen |
 		 PaintedWithFramebufferObject))

@@ -1704,7 +1704,7 @@ PrivateGLScreen::waitForVideoSync ()
         GL::waitForVideoSync ();
 }
 
-BaseBufferBlit::BaseBufferBlit (Display *d, const CompSize &s,
+BaseDoubleBuffer::BaseDoubleBuffer (Display *d, const CompSize &s,
 				const boost::function <bool ()> &getSyncVblankFunc) :
     mDpy (d),
     mSize (s),
@@ -1714,32 +1714,32 @@ BaseBufferBlit::BaseBufferBlit (Display *d, const CompSize &s,
 
 #ifndef USE_GLES
 
-GLXBufferBlit::GLXBufferBlit (Display *d,
+GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 			      const CompSize &s,
 			      const boost::function <bool ()> &getSyncVblankFunc,
 			      Window output,
 			      const boost::function <void ()> &waitVSyncFunc) :
-    BaseBufferBlit (d, s, getSyncVblankFunc),
+    BaseDoubleBuffer (d, s, getSyncVblankFunc),
     mOutput (output),
     waitVSync (waitVSyncFunc)
 {
 }
 
 void
-GLXBufferBlit::swapBuffers () const
+GLXDoubleBuffer::swapBuffers () const
 {
     GL::controlSwapVideoSync (getSyncVblank ());
     glXSwapBuffers (mDpy, mOutput);
 }
 
 bool
-GLXBufferBlit::subBufferBlitAvailable () const
+GLXDoubleBuffer::subBufferBlitAvailable () const
 {
     return GL::copySubBuffer ? true : false;
 }
 
 void
-GLXBufferBlit::subBufferBlit (const CompRegion &region) const
+GLXDoubleBuffer::subBufferBlit (const CompRegion &region) const
 {
     CompRect::vector blitRects (region.rects ());
     int		     y = 0;
@@ -1759,17 +1759,17 @@ GLXBufferBlit::subBufferBlit (const CompRegion &region) const
 
 #else
 
-EGLBufferBlit::EGLBufferBlit (Display *d,
+EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
 			      const CompSize &s,
 			      const boost::function <bool ()> &getSyncVblankFunc,
 			      EGLSurface const & surface) :
-    BaseBufferBlit (d, s, getSyncVblankFunc),
+    BaseDoubleBuffer (d, s, getSyncVblankFunc),
     mSurface (surface)
 {
 }
 
 void
-EGLBufferBlit::swapBuffers () const
+EGLDoubleBuffer::swapBuffers () const
 {
     GL::controlSwapVideoSync (getSyncVblank ());
 
@@ -1779,13 +1779,13 @@ EGLBufferBlit::swapBuffers () const
 }
 
 bool
-EGLBufferBlit::subBufferBlitAvailable () const
+EGLDoubleBuffer::subBufferBlitAvailable () const
 {
     return GL::postSubBuffer ? true : false;
 }
 
 void
-EGLBufferBlit::subBufferBlit (const CompRegion &region) const
+EGLDoubleBuffer::subBufferBlit (const CompRegion &region) const
 {
     CompRect::vector blitRects (region.rects ());
     int		     y = 0;

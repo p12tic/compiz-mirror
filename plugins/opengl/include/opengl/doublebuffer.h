@@ -11,11 +11,11 @@ namespace opengl
 const unsigned int  PaintedWithFramebufferObject = (1 << 0);
 const unsigned int  PaintedFullscreen = (1 << 1);
 
-class GLBufferBlitInterface
+class GLDoubleBufferInterface
 {
     public:
 
-	virtual ~GLBufferBlitInterface () {}
+	virtual ~GLDoubleBufferInterface () {}
 
 	virtual void swapBuffers () const = 0;
 	virtual bool subBufferBlitAvailable () const = 0;
@@ -24,7 +24,7 @@ class GLBufferBlitInterface
 
 void blitBuffers (unsigned int flags,
 		  const CompRegion &blitRegion,
-		  GLBufferBlitInterface &);
+		  GLDoubleBufferInterface &);
 
 }
 }

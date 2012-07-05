@@ -36,7 +36,7 @@
 #include <opengl/framebufferobject.h>
 #endif
 
-#include <opengl/bufferblit.h>
+#include <opengl/doublebuffer.h>
 
 #include "privatetexture.h"
 #include "privatevertexbuffer.h"
@@ -44,11 +44,11 @@
 
 extern CompOutput *targetOutput;
 
-class BaseBufferBlit
+class BaseDoubleBuffer
 {
     public:
 
-	BaseBufferBlit (Display *,
+	BaseDoubleBuffer (Display *,
 			const CompSize &,
 			const boost::function <bool ()> &);
 
@@ -61,13 +61,13 @@ class BaseBufferBlit
 
 #ifndef USE_GLES
 
-class GLXBufferBlit :
-    public compiz::opengl::GLBufferBlitInterface,
-    public BaseBufferBlit
+class GLXDoubleBuffer :
+    public compiz::opengl::GLDoubleBufferInterface,
+    public BaseDoubleBuffer
 {
     public:
 
-	GLXBufferBlit (Display *,
+	GLXDoubleBuffer (Display *,
 		       const CompSize &,
 		       const boost::function <bool ()> &,
 		       Window,
@@ -85,13 +85,13 @@ class GLXBufferBlit :
 
 #else
 
-class EGLBufferBlit :
-    public compiz::opengl::GLBufferBlitInterface,
-    public BaseBufferBlit
+class EGLDoubleBuffer :
+    public compiz::opengl::GLDoubleBufferInterface,
+    public BaseDoubleBuffer
 {
     public:
 
-	EGLBufferBlit (Display *,
+	EGLDoubleBuffer (Display *,
 		       const CompSize &,
 		       const boost::function <bool ()> &,
 		       EGLSurface const &);
@@ -183,12 +183,12 @@ class PrivateGLScreen :
 	#ifdef USE_GLES
 	EGLContext ctx;
 	EGLSurface surface;
-	EGLBufferBlit bufferBlit;
+	EGLDoubleBuffer bufferBlit;
 	#else
 	GLXContext ctx;
 
 	GL::GLXGetProcAddressProc getProcAddress;
-	GLXBufferBlit bufferBlit;
+	GLXDoubleBuffer bufferBlit;
 	#endif
 
 	GLFramebufferObject *scratchFbo;

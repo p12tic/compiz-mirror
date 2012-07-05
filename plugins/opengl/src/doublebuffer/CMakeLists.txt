@@ -10,11 +10,11 @@ LINK_DIRECTORIES (${COMPIZ_LIBRARY_DIRS})
 
 SET( 
   SRCS 
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/buffer-blit.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/double-buffer.cpp
 )
 
 ADD_LIBRARY( 
-  compiz_opengl_buffer_blit STATIC
+  compiz_opengl_double_buffer STATIC
   
   ${SRCS}
 )
@@ -24,7 +24,7 @@ ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 endif (COMPIZ_BUILD_TESTING)
 
 TARGET_LINK_LIBRARIES(
-  compiz_opengl_buffer_blit
+  compiz_opengl_double_buffer
 
   compiz_region
   compiz_logmessage

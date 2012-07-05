@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <opengl/bufferblit.h>
+#include <opengl/doublebuffer.h>
 
 using namespace compiz::opengl;
 using testing::_;
 using testing::StrictMock;
 using testing::Return;
 
-class MockGLBufferBlit :
-    public GLBufferBlitInterface
+class MockGLDoubleBuffer :
+    public GLDoubleBufferInterface
 {
     public:
 
@@ -18,36 +18,36 @@ class MockGLBufferBlit :
 	MOCK_CONST_METHOD1 (subBufferBlit, void (const CompRegion &));
 };
 
-class CompizOpenGLBufferBlitTest :
+class CompizOpenGLDoubleBufferTest :
     public ::testing::Test
 {
     public:
 
-	MockGLBufferBlit mglbb;
+	MockGLDoubleBuffer mglbb;
 	CompRegion	 blitRegion;
 
 };
 
-class CompizOpenGLBufferBlitDeathTest :
-    public CompizOpenGLBufferBlitTest
+class CompizOpenGLDoubleBufferDeathTest :
+    public CompizOpenGLDoubleBufferTest
 {
 };
 
-TEST_F(CompizOpenGLBufferBlitTest, TestPaintedWithFBOAlwaysSwaps)
+TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedWithFBOAlwaysSwaps)
 {
     EXPECT_CALL (mglbb, swapBuffers ());
 
     blitBuffers (PaintedWithFramebufferObject, blitRegion, mglbb);
 }
 
-TEST_F(CompizOpenGLBufferBlitTest, TestPaintedFullscreenAlwaysSwaps)
+TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedFullscreenAlwaysSwaps)
 {
     EXPECT_CALL (mglbb, swapBuffers ());
 
     blitBuffers (PaintedFullscreen, blitRegion, mglbb);
 }
 
-TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
+TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
 {
     EXPECT_CALL (mglbb, subBufferBlitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbb, subBufferBlit (_));
@@ -55,12 +55,12 @@ TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuf
     blitBuffers (0, blitRegion, mglbb);
 }
 
-TEST_F(CompizOpenGLBufferBlitTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
+TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
 {
 
 }
 
-TEST_F(CompizOpenGLBufferBlitTest, TestBlitExactlyWithRegionSpecified)
+TEST_F(CompizOpenGLDoubleBufferTest, TestBlitExactlyWithRegionSpecified)
 {
     CompRegion r1 (0, 0, 100, 100);
     CompRegion r2 (100, 100, 100, 100);
@@ -78,9 +78,9 @@ TEST_F(CompizOpenGLBufferBlitTest, TestBlitExactlyWithRegionSpecified)
     blitBuffers (0, r3, mglbb);
 }
 
-TEST_F(CompizOpenGLBufferBlitDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupportedAndDies)
+TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupportedAndDies)
 {
-    StrictMock <MockGLBufferBlit> mglbbStrict;
+    StrictMock <MockGLDoubleBuffer> mglbbStrict;
 
     ON_CALL (mglbbStrict, subBufferBlitAvailable ()).WillByDefault (Return (false));
 
