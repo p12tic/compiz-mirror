@@ -52,11 +52,10 @@ int main (int argc, char **argv)
 		{
 		    string addTest ("ADD_TEST (");
 		    string testExec (" \"" + string (argv[1]) + "\"");
-		    string gTestFilter ("\"--gtest_filter=\"");
-		    string filterBegin ("\"");
-		    string filterEnd ("\")");
+		    string gTestFilter ("\"--gtest_filter=");
+		    string endParen ("\")");
 
-		    testfilecmake << addTest << *jt << testExec << gTestFilter << filterBegin << *jt << filterEnd << endl;
+		    testfilecmake << addTest << *jt << testExec << gTestFilter << *jt << endParen << endl;
 		}
 	    }
 	}
