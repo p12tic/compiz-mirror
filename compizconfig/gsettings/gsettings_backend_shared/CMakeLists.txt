@@ -9,7 +9,7 @@ set (GSETTINGS_UTIL_LIB_INCLUDES
      ${GSETTINGS_UTIL_INCLUDE_DIRS}
      ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
-message (${GSETTINGS_UTIL_LIB_INCLUDES})
+message ("gsetting util lib includes: " ${GSETTINGS_UTIL_LIB_INCLUDES})
 
 include_directories (${GSETTINGS_UTIL_LIB_INCLUDES})
 
