@@ -73,21 +73,8 @@ endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
 # Create target to discover tests
 function (compiz_discover_tests EXECUTABLE)
 
-    add_custom_command (OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/test_${EXECUTABLE}_wrapper.cpp
-			COMMAND echo "int main (void) { return 0; }" >> ${CMAKE_CURRENT_BINARY_DIR}/test_${EXECUTABLE}_wrapper.cpp
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			VERBATIM)
-    add_executable (test_${EXECUTABLE}_wrapper
-		    ${CMAKE_CURRENT_BINARY_DIR}/test_${EXECUTABLE}_wrapper.cpp)
-    add_test (Test.${EXECUTABLE}.Wrapper test_${EXECUTABLE}_wrapper)
-
-    add_custom_target (${EXECUTABLE}_wrapper)
-    add_dependencies (${EXECUTABLE}_wrapper
-		      test_${EXECUTABLE}_wrapper
-		      compiz_discover_gtest_tests)
-
     add_dependencies (${EXECUTABLE}
-		      ${EXECUTABLE}_wrapper)
+		      compiz_discover_gtest_tests)
 
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD
