@@ -318,20 +318,43 @@ TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTy
 INSTANTIATE_TEST_CASE_P (CCSGSettingsTestArrayVariantSubTypeInstantiation, CCSGSettingsTestArrayVariantSubTypeFixture,
 			 ValuesIn (arrayVariantInfo));
 
-TEST_F(CCSGSettingsTestIndependent, TestAppendToPluginsWithSetKeysListNewItem)
+class CCSGSettingsTestPluginsWithSetKeysGVariantSetup :
+    public CCSGSettingsTestIndependent
 {
-    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    public:
 
-    g_variant_builder_add (builder, "s", "foo");
-    g_variant_builder_add (builder, "s", "bar");
+	virtual void SetUp ()
+	{
+	    builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    GVariant *writtenPlugins = g_variant_new ("as", builder);
+	    g_variant_builder_add (builder, "s", "foo");
+	    g_variant_builder_add (builder, "s", "bar");
 
-    g_variant_builder_unref (builder);
+	    writtenPlugins = g_variant_new ("as", builder);
 
-    char     **newWrittenPlugins = NULL;
-    gsize    newWrittenPluginsSize = 0;
+	    g_variant_builder_unref (builder);
 
+	    newWrittenPlugins = NULL;
+	    newWrittenPluginsSize = 0;
+	}
+
+	virtual void TearDown ()
+	{
+	    g_variant_unref (writtenPlugins);
+	    g_strfreev (newWrittenPlugins);
+	}
+
+    protected:
+
+	GVariantBuilder *builder;
+	GVariant	*writtenPlugins;
+	char     **newWrittenPlugins;
+	gsize    newWrittenPluginsSize;
+
+};
+
+TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithSetKeysListNewItem)
+{
     EXPECT_EQ (appendToPluginsWithSetKeysList ("plugin",
 					       writtenPlugins,
 					       &newWrittenPlugins,
