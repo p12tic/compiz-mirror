@@ -365,3 +365,16 @@ TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithS
     EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
     EXPECT_EQ (std::string (newWrittenPlugins[2]), std::string ("plugin"));
 }
+
+TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithSetKeysListExistingItem)
+{
+    EXPECT_EQ (appendToPluginsWithSetKeysList ("foo",
+					       writtenPlugins,
+					       &newWrittenPlugins,
+					       &newWrittenPluginsSize), TRUE);
+
+    EXPECT_EQ (newWrittenPluginsSize, 2);
+    EXPECT_EQ (std::string (newWrittenPlugins[0]), std::string ("foo"));
+    EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
+    EXPECT_EQ (std::string (newWrittenPlugins[2]), std::string ("plugin"));
+}
