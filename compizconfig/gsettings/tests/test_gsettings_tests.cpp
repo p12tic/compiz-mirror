@@ -355,10 +355,10 @@ class CCSGSettingsTestPluginsWithSetKeysGVariantSetup :
 
 TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithSetKeysListNewItem)
 {
-    EXPECT_EQ (appendToPluginsWithSetKeysList ("plugin",
-					       writtenPlugins,
-					       &newWrittenPlugins,
-					       &newWrittenPluginsSize), TRUE);
+    EXPECT_TRUE (appendToPluginsWithSetKeysList ("plugin",
+						 writtenPlugins,
+						 &newWrittenPlugins,
+						 &newWrittenPluginsSize));
 
     EXPECT_EQ (newWrittenPluginsSize, 3);
     EXPECT_EQ (std::string (newWrittenPlugins[0]), std::string ("foo"));
@@ -368,13 +368,12 @@ TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithS
 
 TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithSetKeysListExistingItem)
 {
-    EXPECT_EQ (appendToPluginsWithSetKeysList ("foo",
-					       writtenPlugins,
-					       &newWrittenPlugins,
-					       &newWrittenPluginsSize), TRUE);
+    EXPECT_FALSE (appendToPluginsWithSetKeysList ("foo",
+						  writtenPlugins,
+						  &newWrittenPlugins,
+						  &newWrittenPluginsSize));
 
     EXPECT_EQ (newWrittenPluginsSize, 2);
     EXPECT_EQ (std::string (newWrittenPlugins[0]), std::string ("foo"));
     EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
-    EXPECT_EQ (std::string (newWrittenPlugins[2]), std::string ("plugin"));
 }

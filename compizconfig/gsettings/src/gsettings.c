@@ -60,12 +60,8 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     GList *l = settingsList;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
     GVariant        *writtenPlugins;
-    gsize            writtenPluginsLen;
     gsize            newWrittenPluginsSize;
     gchar           **newWrittenPlugins;
-    char	    *plug;
-    GVariantIter    iter;
-    gboolean	    found = FALSE;
 
     while (l)
     {
@@ -104,26 +100,7 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 
     writtenPlugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
 
-    g_variant_iter_init (&iter, writtenPlugins);
-    newWrittenPluginsSize = g_variant_iter_n_children (&iter);
-
-    while (g_variant_iter_loop (&iter, "s", &plug))
-    {
-	if (!found)
-	    found = (g_strcmp0 (plug, plugin) == 0);
-    }
-
-    if (!found)
-	newWrittenPluginsSize++;
-
-    newWrittenPlugins = g_variant_dup_strv (writtenPlugins, &writtenPluginsLen);
-
-    if (writtenPluginsLen > newWrittenPluginsSize)
-    {
-	newWrittenPlugins = g_realloc (newWrittenPlugins, (newWrittenPluginsSize + 1) * sizeof (gchar *));
-	newWrittenPlugins[writtenPluginsLen + 1]  = g_strdup (plugin);
-	newWrittenPlugins[newWrittenPluginsSize] = NULL;
-    }
+    appendToPluginsWithSetKeysList (plugin, writtenPlugins, &newWrittenPlugins, &newWrittenPluginsSize);
 
     g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
 
@@ -935,6 +912,12 @@ finiBackend (CCSContext * context)
     {
 	g_object_unref (G_OBJECT (l->data));
 	l = g_list_next (l);
+    }
+
+    if (currentProfileSettings)
+    {
+	g_object_unref (currentProfileSettings);
+	currentProfileSettings = NULL;
     }
 
     g_object_unref (G_OBJECT (compizconfigSettings));

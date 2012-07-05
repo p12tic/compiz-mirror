@@ -1,8 +1,5 @@
 #include <string.h>
 #include <stdio.h>
-#include <glib.h>
-#include <ccs.h>
-#include "gsettings_util.h"
 #include "gsettings_shared.h"
 
 gchar *
@@ -186,13 +183,42 @@ variantIsValidForCCSType (GVariant *gsettingsValue,
     return valid;
 }
 
-gboolean
+Bool
 appendToPluginsWithSetKeysList (const gchar *plugin,
-				const GVariant *writtenPlugins,
+				GVariant    *writtenPlugins,
 				char	       ***newWrittenPlugins,
 				gsize	       *newWrittenPluginsSize)
 {
-    //gsize writtenPluginsLen = 0;
-    return TRUE;
+    gsize writtenPluginsLen = 0;
+    Bool            found = FALSE;
+    char	    *plug;
+    GVariantIter    iter;
+
+    g_variant_iter_init (&iter, writtenPlugins);
+    *newWrittenPluginsSize = g_variant_iter_n_children (&iter);
+
+    while (g_variant_iter_loop (&iter, "s", &plug))
+    {
+	if (!found)
+	    found = (g_strcmp0 (plug, plugin) == 0);
+    }
+
+    if (!found)
+	(*newWrittenPluginsSize)++;
+
+    *newWrittenPlugins = g_variant_dup_strv (writtenPlugins, &writtenPluginsLen);
+
+    if (*newWrittenPluginsSize > writtenPluginsLen)
+    {
+	*newWrittenPlugins = g_realloc (*newWrittenPlugins, (*newWrittenPluginsSize + 1) * sizeof (gchar *));
+
+	/* Next item becomes plugin */
+	(*newWrittenPlugins)[writtenPluginsLen]  = g_strdup (plugin);
+
+	/* Last item becomes NULL */
+	(*newWrittenPlugins)[*newWrittenPluginsSize] = NULL;
+    }
+
+    return !found;
 }
 

@@ -34,9 +34,9 @@ gboolean
 variantIsValidForCCSType (GVariant *gsettingsValue,
 			  CCSSettingType settingType);
 
-gboolean
+Bool
 appendToPluginsWithSetKeysList (const gchar    *plugin,
-				const GVariant *writtenPlugins,
+				GVariant       *writtenPlugins,
 				char	       ***newWrittenPlugins,
 				gsize	       *newWrittenPluginsSize);
 
