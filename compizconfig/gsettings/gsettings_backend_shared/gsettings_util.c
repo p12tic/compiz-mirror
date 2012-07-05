@@ -185,3 +185,14 @@ variantIsValidForCCSType (GVariant *gsettingsValue,
 
     return valid;
 }
+
+gboolean
+appendToPluginsWithSetKeysList (const gchar *plugin,
+				const GVariant *writtenPlugins,
+				char	       ***newWrittenPlugins,
+				gsize	       *newWrittenPluginsSize)
+{
+    //gsize writtenPluginsLen = 0;
+    return TRUE;
+}
+

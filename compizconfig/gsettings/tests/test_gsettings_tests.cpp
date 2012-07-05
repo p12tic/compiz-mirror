@@ -317,3 +317,28 @@ TEST_P(CCSGSettingsTestArrayVariantSubTypeFixture, TestArrayVariantValidForCCSTy
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsTestArrayVariantSubTypeInstantiation, CCSGSettingsTestArrayVariantSubTypeFixture,
 			 ValuesIn (arrayVariantInfo));
+
+TEST_F(CCSGSettingsTestIndependent, TestAppendToPluginsWithSetKeysListNewItem)
+{
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+    g_variant_builder_add (builder, "s", "foo");
+    g_variant_builder_add (builder, "s", "bar");
+
+    GVariant *writtenPlugins = g_variant_new ("as", builder);
+
+    g_variant_builder_unref (builder);
+
+    char     **newWrittenPlugins = NULL;
+    gsize    newWrittenPluginsSize = 0;
+
+    EXPECT_EQ (appendToPluginsWithSetKeysList ("plugin",
+					       writtenPlugins,
+					       &newWrittenPlugins,
+					       &newWrittenPluginsSize), TRUE);
+
+    EXPECT_EQ (newWrittenPluginsSize, 3);
+    EXPECT_EQ (std::string (newWrittenPlugins[0]), std::string ("foo"));
+    EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
+    EXPECT_EQ (std::string (newWrittenPlugins[2]), std::string ("plugin"));
+}
