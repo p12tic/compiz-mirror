@@ -4,9 +4,12 @@ pkg_check_modules (GSETTINGS_UTIL glib-2.0>=2.28
                                   gio-2.0>=2.25.0
 				  libcompizconfig)
 
-include_directories (${compiz_SOURCE_DIR}/compizconfig/libcompizconfig/include
-		     ${GSETTINGS_UTIL_INCLUDE_DIRS}
-		     ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+set (GSETTINGS_UTIL_LIB_INCLUDES
+     ${compiz_SOURCE_DIR}/compizconfig/libcompizconfig/include
+     ${GSETTINGS_UTIL_INCLUDE_DIRS}
+     ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+include_directories (${GSETTINGS_UTIL_LIB_INCLUDES})
 
 link_directories (${GSETTINGS_UTIL_LIBRARY_DIRS})
 
