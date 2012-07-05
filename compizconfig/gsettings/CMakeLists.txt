@@ -6,7 +6,7 @@ include (LibCompizConfigCommon)
 include (CompizGSettings)
 
 set (_deps glib-2.0>=2.20.0
-	  gio-2.0>=2.25.0)
+	   gio-2.0>=2.25.0)
 
 option (USE_GCONF "Enable legacy GNOME 2.x option integration with GConf" ON)
 
@@ -25,4 +25,6 @@ compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES gsettings_backend_sha
 compiz_install_gsettings_schema (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
 				 ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
 
-add_subdirectory (tests)
+if (COMPIZ_BUILD_TESTING)
+    add_subdirectory (tests)
+endif (COMPIZ_BUILD_TESTING)
