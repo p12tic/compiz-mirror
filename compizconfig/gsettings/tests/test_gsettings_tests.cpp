@@ -475,7 +475,12 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
     char *name2 = strdup ("foo_bar-baz");
 
     CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
+    CCSSettingGMock *gs1 = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (s1));
     CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeBool);
+    CCSSettingGMock *gs2 = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (s2));
+
+    EXPECT_CALL (*gs1, getType ());
+    EXPECT_CALL (*gs2, getType ());
 
     CCSSettingList filteredList = filterAllSettingsMatchingType (TypeInt, settingList);
 

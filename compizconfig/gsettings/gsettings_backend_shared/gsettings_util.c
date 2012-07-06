@@ -252,26 +252,25 @@ CCSSettingList
 filterAllSettingsMatchingType (CCSSettingType type,
 			       CCSSettingList settingList)
 {
-    return NULL;
+    CCSSettingList filteredList = NULL;
+    CCSSettingList iter = settingList;
+
+    while (iter)
+    {
+	CCSSetting *s = (CCSSetting *) iter->data;
+
+	if (ccsSettingGetType (s) == type)
+	    filteredList = ccsSettingListAppend (filteredList, s);
+
+	iter = iter->next;
+    }
+
+    return filteredList;
 }
 
 CCSSettingList
 filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gchar *keyName,
 								       CCSSettingList sList)
-{
-    return NULL;
-}
-
-CCSSettingList
-filterAllSettingsMatchingStringWithEitherDashesOrUnderscores (const gchar *keyName,
-							      CCSSettingList sList)
-{
-    return NULL;
-}
-
-CCSSettingList
-filterAllSettingsMatchingStringCaseInsensitive (const gchar *keyName,
-						CCSSettingList sList)
 {
     return NULL;
 }
