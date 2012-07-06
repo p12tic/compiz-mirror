@@ -765,12 +765,9 @@ ccsFreePlugin (CCSPlugin * p)
     free (p);
 }
 
-void
-ccsFreeSetting (CCSSetting * s)
+static void
+ccsFreeSettingDefault (CCSSetting *s)
 {
-    if (!s)
-	return;
-
     SETTING_PRIV (s);
 
     free (sPrivate->name);
@@ -808,6 +805,15 @@ ccsFreeSetting (CCSSetting * s)
 
     ccsObjectFinalize (s);
     free (s);
+}
+
+void
+ccsFreeSetting (CCSSetting * s)
+{
+    if (!s)
+	return;
+
+    (*(GET_INTERFACE (CCSSettingInterface, s))->settingDestructor) (s);
 }
 
 void
@@ -5018,7 +5024,8 @@ static const CCSSettingInterface ccsDefaultSettingInterface =
     ccsSettingGetListDefault,
     ccsSettingResetToDefaultDefault,
     ccsSettingGetIsIntegratedDefault,
-    ccsSettingGetIsReadOnlyDefault
+    ccsSettingGetIsReadOnlyDefault,
+    ccsFreeSettingDefault
 };
 
 const CCSInterfaceTable ccsDefaultInterfaceTable =

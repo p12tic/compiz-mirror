@@ -435,8 +435,24 @@ TEST_F(CCSGSettingsTestGObjectListWithProperty, TestNoFindNonexistingObjectWithS
 class CCSGSettingsTestFindSettingLossy :
     public CCSGSettingsTestIndependent
 {
+    public:
+
+	virtual void SetUp ()
+	{
+	    settingList = NULL;
+	}
+
+	virtual void TearDown ()
+	{
+	    ccsSettingListFree (settingList, TRUE);
+	    settingList = NULL;
+	}
+
+    protected:
+
+	CCSSettingList settingList;
 };
 
-TEST_F(CCSGSettingsTestFindSettingLossy, TestTest)
+TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByInitialMatch)
 {
 }

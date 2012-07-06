@@ -1,5 +1,6 @@
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
-                     ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+                     ${CMAKE_CURRENT_SOURCE_DIR}/../src
+                     ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/tests)
 
 pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig)
 
