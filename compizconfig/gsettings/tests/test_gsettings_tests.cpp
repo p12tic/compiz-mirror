@@ -377,3 +377,43 @@ TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithS
     EXPECT_EQ (std::string (newWrittenPlugins[0]), std::string ("foo"));
     EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
 }
+
+class CCSGSettingsTestGObjectListWithProperty :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    objectSchemaList = NULL;
+	}
+
+	virtual void TearDown ()
+	{
+	    GList *iter = objectSchemaList;
+
+	    while (iter)
+	    {
+		g_object_unref ((GObject *) iter->data);
+		iter = g_list_next (iter);
+	    }
+
+	    g_list_free (objectSchemaList);
+	    objectSchemaList = NULL;
+	}
+
+	void AddObjectWithSchemaName (const std::string &schemaName)
+	{
+	    CCSGSettingsWrapGSettings *wrapGSettingsObject =
+		    compizconfig_gsettings_wrap_gsettings_new (COMPIZCONFIG_GSETTINGS_TYPE_MOCK_WRAP_GSETTINGS, schemaName.c_str ());
+	    g_list_append (objectSchemaList, wrapGSettingsObject);
+	}
+
+    protected:
+
+	GList *objectSchemaList;
+};
+
+TEST(CCSGSettingsTestGObjectListWithProperty, TestTest)
+{
+}

@@ -51,37 +51,49 @@ static void writeIntegratedOption (CCSContext *context,
 				   CCSSetting *setting,
 				   int        index);
 
+static GObject *
+findObjectInListWithPropertySchemaName (const gchar *schemaName,
+					GList	    *iter)
+{
+    while (iter)
+    {
+	GObject   *obj = (GObject *) iter->data;
+	gchar	  *name = NULL;
+
+	g_object_get (obj,
+		      "schema",
+		      &name, NULL);
+	if (g_strcmp0 (name, schemaName) != 0)
+	    obj = NULL;
+
+	g_free (name);
+
+	if (obj)
+	    return obj;
+	else
+	    iter = g_list_next (iter);
+    }
+
+    return NULL;
+}
+
 static GSettings *
 getSettingsObjectForPluginWithPath (const char *plugin,
 				  const char *path,
 				  CCSContext *context)
 {
     GSettings *settingsObj = NULL;
-    GList *l = settingsList;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
     GVariant        *writtenPlugins;
     gsize            newWrittenPluginsSize;
     gchar           **newWrittenPlugins;
 
-    while (l)
+    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, settingsList);
+
+    if (settingsObj)
     {
-	settingsObj = (GSettings *) l->data;
-	gchar	  *name = NULL;
-
-	g_object_get (G_OBJECT (settingsObj),
-		      "schema",
-		      &name, NULL);
-	if (g_strcmp0 (name, schemaName) == 0)
-	{
-	    g_free (name);
-	    g_free (schemaName);
-
-	    return settingsObj;
-	}
-
-	g_free (name);
-
-	l = g_list_next (l);
+	g_free (schemaName);
+	return settingsObj;
     }
 
     /* No existing settings object found for this schema, create one */
