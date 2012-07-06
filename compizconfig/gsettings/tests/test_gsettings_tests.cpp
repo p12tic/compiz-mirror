@@ -506,6 +506,8 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
 
     free (name2);
     free (name1);
+
+    ccsSettingListFree (filteredList, FALSE);
 }
 
 TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase)
@@ -537,6 +539,8 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPart
     free (name1);
     free (name2);
     free (name3);
+
+    ccsSettingListFree (filteredList, FALSE);
 }
 
 TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNameSuccess)
