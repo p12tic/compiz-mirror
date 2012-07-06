@@ -51,32 +51,6 @@ static void writeIntegratedOption (CCSContext *context,
 				   CCSSetting *setting,
 				   int        index);
 
-static GObject *
-findObjectInListWithPropertySchemaNameT (const gchar *schemaName,
-					GList	    *iter)
-{
-    while (iter)
-    {
-	GObject   *obj = (GObject *) iter->data;
-	gchar	  *name = NULL;
-
-	g_object_get (obj,
-		      "schema",
-		      &name, NULL);
-	if (g_strcmp0 (name, schemaName) != 0)
-	    obj = NULL;
-
-	g_free (name);
-
-	if (obj)
-	    return obj;
-	else
-	    iter = g_list_next (iter);
-    }
-
-    return NULL;
-}
-
 static GSettings *
 getSettingsObjectForPluginWithPath (const char *plugin,
 				  const char *path,
@@ -88,7 +62,7 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     gsize            newWrittenPluginsSize;
     gchar           **newWrittenPlugins;
 
-    settingsObj = (GSettings *) findObjectInListWithPropertySchemaNameT (schemaName, settingsList);
+    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, settingsList);
 
     if (settingsObj)
     {

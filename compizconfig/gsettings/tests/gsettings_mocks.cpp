@@ -7,8 +7,8 @@ G_DEFINE_INTERFACE (CCSGSettingsWrapGSettings, compizconfig_gsettings_wrap_gsett
 static void compizconfig_gsettings_wrap_gsettings_default_init (CCSGSettingsWrapGSettingsInterface *klass)
 {
     g_object_interface_install_property (klass,
-					 g_param_spec_string ("name",
-							      "Name",
+					 g_param_spec_string ("schema",
+							      "schema",
 							      "Schema Name",
 							      "invalid.invalid",
 							      static_cast <GParamFlags> (G_PARAM_CONSTRUCT_ONLY |
@@ -27,7 +27,7 @@ compizconfig_gsettings_wrap_gsettings_new (GType type, const gchar *name)
 
     GParameter param[1] =
     {
-	{ "name", name_v }
+	{ "schema", name_v }
     };
 
     CCSGSettingsWrapGSettings *wrap_gsettings = COMPIZCONFIG_GSETTINGS_WRAP_GSETTINGS (g_object_newv (type, 1, param));
@@ -164,7 +164,7 @@ compizconfig_gsettings_mock_wrap_gsettings_constructor (GType		      type,
 
     for (guint i = 0; i < n_construct_properties; i++)
     {
-	if (g_strcmp0 (construction_properties[i].pspec->name, "name") == 0)
+	if (g_strcmp0 (construction_properties[i].pspec->name, "schema") == 0)
 	{
 	    if (!priv->name)
 		priv->name = g_value_dup_string (construction_properties[i].value);
@@ -193,7 +193,7 @@ compizconfig_gsettings_mock_wrap_gsettings_class_init (CCSGSettingsMockWrapGSett
 
     g_object_class_override_property (G_OBJECT_CLASS (klass),
 				      COMPIZCONFIG_GSETTINGS_WRAP_GSETTINGS_PROPERTY_SCHEMA_NAME,
-				      "name");
+				      "schema");
 }
 
 static void

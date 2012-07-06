@@ -6,6 +6,25 @@ GObject *
 findObjectInListWithPropertySchemaName (const gchar *schemaName,
 					GList	    *iter)
 {
+    while (iter)
+    {
+	GObject   *obj = (GObject *) iter->data;
+	gchar	  *name = NULL;
+
+	g_object_get (obj,
+		      "schema",
+		      &name, NULL);
+	if (g_strcmp0 (name, schemaName) != 0)
+	    obj = NULL;
+
+	g_free (name);
+
+	if (obj)
+	    return obj;
+	else
+	    iter = g_list_next (iter);
+    }
+
     return NULL;
 }
 
