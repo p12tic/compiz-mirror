@@ -402,11 +402,13 @@ class CCSGSettingsTestGObjectListWithProperty :
 	    objectSchemaList = NULL;
 	}
 
-	void AddObjectWithSchemaName (const std::string &schemaName)
+	CCSGSettingsWrapGSettings * AddObjectWithSchemaName (const std::string &schemaName)
 	{
 	    CCSGSettingsWrapGSettings *wrapGSettingsObject =
 		    compizconfig_gsettings_wrap_gsettings_new (COMPIZCONFIG_GSETTINGS_TYPE_MOCK_WRAP_GSETTINGS, schemaName.c_str ());
 	    g_list_append (objectSchemaList, wrapGSettingsObject);
+
+	    return wrapGSettingsObject;
 	}
 
     protected:
@@ -414,6 +416,8 @@ class CCSGSettingsTestGObjectListWithProperty :
 	GList *objectSchemaList;
 };
 
-TEST(CCSGSettingsTestGObjectListWithProperty, TestTest)
+TEST(CCSGSettingsTestGObjectListWithProperty, TestFindExistingObjectWithSchema)
 {
+
+
 }
