@@ -431,3 +431,12 @@ TEST_F(CCSGSettingsTestGObjectListWithProperty, TestNoFindNonexistingObjectWithS
 
     EXPECT_EQ (NULL, findObjectInListWithPropertySchemaName ("foo", objectSchemaList));
 }
+
+class CCSGSettingsTestFindSettingLossy :
+    public CCSGSettingsTestIndependent
+{
+};
+
+TEST_F(CCSGSettingsTestFindSettingLossy, TestTest)
+{
+}
