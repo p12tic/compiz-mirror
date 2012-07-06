@@ -7,16 +7,16 @@ G_BEGIN_DECLS
 
 #include "gsettings_util.h"
 
-extern const char * COMPIZ_SCHEMA_ID;
-extern const char * COMPIZCONFIG_SCHEMA_ID;
-extern const char * PROFILE_SCHEMA_ID;
+extern const char * const COMPIZ_SCHEMA_ID;
+extern const char * const COMPIZCONFIG_SCHEMA_ID;
+extern const char * const PROFILE_SCHEMA_ID;
 #define METACITY "/apps/metacity"
-extern const char * COMPIZ;
-extern const char * COMPIZ_PROFILEPATH;
-extern const char * COMPIZCONFIG;
-extern const char * PROFILEPATH;
-extern const char * DEFAULTPROF;
-extern const char * CORE_NAME;
+extern const char * const COMPIZ;
+extern const char * const COMPIZ_PROFILEPATH;
+extern const char * const COMPIZCONFIG;
+extern const char * const PROFILEPATH;
+extern const char * const DEFAULTPROF;
+extern const char * const CORE_NAME;
 extern const unsigned int MAX_GSETTINGS_KEY_SIZE;
 
 G_END_DECLS
