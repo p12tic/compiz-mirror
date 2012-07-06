@@ -294,7 +294,17 @@ filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gch
 }
 
 CCSSetting *
-attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName)
+attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName, CCSSettingType type)
 {
-    return NULL;
+    CCSSettingList ofThatType = filterAllSettingsMatchingType (type, settingList);
+    CCSSettingList lossyMatchingName = filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (lossyName, ofThatType);
+    CCSSetting	   *found = NULL;
+
+    if (ccsSettingListLength (lossyMatchingName) == 1)
+	found = lossyMatchingName->data;
+
+    ccsSettingListFree (ofThatType, FALSE);
+    ccsSettingListFree (lossyMatchingName, FALSE);
+
+    return found;
 }
