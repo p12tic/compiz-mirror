@@ -28,7 +28,7 @@
 <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform' >
   <xsl:output method="xml" indent="yes"/>
 
-  <xsl:param name="appName">/apps/compiz-1</xsl:param>
+  <xsl:param name="appName">/org/freedesktop/compiz</xsl:param>
 
   <xsl:template  match="/compiz">
     <xsl:element name="schemalist">
