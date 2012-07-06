@@ -2,6 +2,7 @@
 #define _COMPIZ_GSETTINGS_UTIL_H
 
 #include <glib.h>
+#include <glib-object.h>
 #include <ccs.h>
 
 gchar *
@@ -39,5 +40,9 @@ appendToPluginsWithSetKeysList (const gchar    *plugin,
 				GVariant       *writtenPlugins,
 				char	       ***newWrittenPlugins,
 				gsize	       *newWrittenPluginsSize);
+
+GObject *
+findObjectInListWithPropertySchemaName (const gchar *schemaName,
+					GList	    *iter);
 
 #endif

@@ -385,6 +385,8 @@ class CCSGSettingsTestGObjectListWithProperty :
 
 	virtual void SetUp ()
 	{
+	    g_type_init ();
+
 	    objectSchemaList = NULL;
 	}
 
@@ -406,7 +408,7 @@ class CCSGSettingsTestGObjectListWithProperty :
 	{
 	    CCSGSettingsWrapGSettings *wrapGSettingsObject =
 		    compizconfig_gsettings_wrap_gsettings_new (COMPIZCONFIG_GSETTINGS_TYPE_MOCK_WRAP_GSETTINGS, schemaName.c_str ());
-	    g_list_append (objectSchemaList, wrapGSettingsObject);
+	    objectSchemaList = g_list_append (objectSchemaList, wrapGSettingsObject);
 
 	    return wrapGSettingsObject;
 	}
@@ -416,8 +418,10 @@ class CCSGSettingsTestGObjectListWithProperty :
 	GList *objectSchemaList;
 };
 
-TEST(CCSGSettingsTestGObjectListWithProperty, TestFindExistingObjectWithSchema)
+TEST_F(CCSGSettingsTestGObjectListWithProperty, TestFindExistingObjectWithSchema)
 {
+    GObject *obj = reinterpret_cast <GObject *> (AddObjectWithSchemaName ("foo"));
 
+    EXPECT_EQ (findObjectInListWithPropertySchemaName ("foo", objectSchemaList), obj);
 
 }

@@ -2,6 +2,13 @@
 #include <stdio.h>
 #include "gsettings_shared.h"
 
+GObject *
+findObjectInListWithPropertySchemaName (const gchar *schemaName,
+					GList	    *iter)
+{
+    return NULL;
+}
+
 gchar *
 getSchemaNameForPlugin (const char *plugin)
 {

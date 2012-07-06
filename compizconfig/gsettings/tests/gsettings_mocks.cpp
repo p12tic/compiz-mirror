@@ -86,6 +86,8 @@ compizconfig_gsettings_mock_wrap_gsettings_dispose (GObject *object)
     CCSGSettingsMockWrapGSettingsPrivate *priv = GET_PRIVATE (object);
     G_OBJECT_CLASS (compizconfig_gsettings_mock_wrap_gsettings_parent_class)->dispose (object);
 
+    g_print ("disposed %s\n", priv->name);
+
     if (priv->name)
 	g_free (priv->name);
 
@@ -117,7 +119,7 @@ compizconfig_gsettings_mock_wrap_gsettings_set_property (GObject *object,
 	    if (priv->name)
 		g_free (priv->name);
 
-	    priv->name = g_strdup (g_value_get_string (value));
+	    priv->name = g_value_dup_string (value);
 	    break;
 	default:
 	    g_assert_not_reached ();
@@ -160,13 +162,12 @@ compizconfig_gsettings_mock_wrap_gsettings_constructor (GType		      type,
 
     priv = GET_PRIVATE (object);
 
-    priv->name = NULL;
-
     for (guint i = 0; i < n_construct_properties; i++)
     {
 	if (g_strcmp0 (construction_properties[i].pspec->name, "name") == 0)
 	{
-	    priv->name = g_strdup (g_value_get_string (construction_properties[i].value));
+	    if (!priv->name)
+		priv->name = g_value_dup_string (construction_properties[i].value);
 	}
 	else
 	{

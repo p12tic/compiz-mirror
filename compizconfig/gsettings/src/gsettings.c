@@ -52,7 +52,7 @@ static void writeIntegratedOption (CCSContext *context,
 				   int        index);
 
 static GObject *
-findObjectInListWithPropertySchemaName (const gchar *schemaName,
+findObjectInListWithPropertySchemaNameT (const gchar *schemaName,
 					GList	    *iter)
 {
     while (iter)
@@ -88,7 +88,7 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     gsize            newWrittenPluginsSize;
     gchar           **newWrittenPlugins;
 
-    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, settingsList);
+    settingsObj = (GSettings *) findObjectInListWithPropertySchemaNameT (schemaName, settingsList);
 
     if (settingsObj)
     {
