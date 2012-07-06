@@ -464,6 +464,18 @@ class CCSGSettingsTestFindSettingLossy :
 	    return mockSetting;
 	}
 
+	void ExpectNameCallOnSetting (CCSSetting *setting)
+	{
+	    CCSSettingGMock *gs = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting));
+	    EXPECT_CALL (*gs, getName ());
+	}
+
+	void ExpectTypeCallOnSetting (CCSSetting *setting)
+	{
+	    CCSSettingGMock *gs = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting));
+	    EXPECT_CALL (*gs, getType ());
+	}
+
     protected:
 
 	CCSSettingList settingList;
@@ -475,12 +487,10 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
     char *name2 = strdup ("foo_bar-baz");
 
     CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
-    CCSSettingGMock *gs1 = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (s1));
     CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeBool);
-    CCSSettingGMock *gs2 = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (s2));
 
-    EXPECT_CALL (*gs1, getType ());
-    EXPECT_CALL (*gs2, getType ());
+    ExpectTypeCallOnSetting (s1);
+    ExpectTypeCallOnSetting (s2);
 
     CCSSettingList filteredList = filterAllSettingsMatchingType (TypeInt, settingList);
 
@@ -504,6 +514,10 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPart
     CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
     CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeInt);
     CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
+
+    ExpectNameCallOnSetting (s1);
+    ExpectNameCallOnSetting (s2);
+    ExpectNameCallOnSetting (s3);
 
     CCSSettingList filteredList = filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase ("foo-bar-baz",
 													 settingList);
@@ -534,6 +548,15 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNam
     CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
     CCSSetting *s4 = AddMockSettingWithNameAndType (name4, TypeString);
 
+    ExpectNameCallOnSetting (s1);
+    ExpectNameCallOnSetting (s2);
+    ExpectNameCallOnSetting (s3);
+
+    ExpectTypeCallOnSetting (s1);
+    ExpectTypeCallOnSetting (s2);
+    ExpectTypeCallOnSetting (s3);
+    ExpectTypeCallOnSetting (s4);
+
     CCSSetting *found = attemptToFindCCSSettingFromLossyName (settingList, "foo-bar-baz-bob-fred", TypeInt);
 
     EXPECT_EQ (found, s2);
@@ -560,6 +583,17 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNam
     CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
     CCSSetting *s4 = AddMockSettingWithNameAndType (name4, TypeInt);
     CCSSetting *s5 = AddMockSettingWithNameAndType (name5, TypeString);
+
+    ExpectNameCallOnSetting (s1);
+    ExpectNameCallOnSetting (s2);
+    ExpectNameCallOnSetting (s3);
+    ExpectNameCallOnSetting (s4);
+
+    ExpectTypeCallOnSetting (s1);
+    ExpectTypeCallOnSetting (s2);
+    ExpectTypeCallOnSetting (s3);
+    ExpectTypeCallOnSetting (s4);
+    ExpectTypeCallOnSetting (s5);
 
     CCSSetting *found = attemptToFindCCSSettingFromLossyName (settingList, "foo-bar-baz-bob-fred", TypeInt);
 
@@ -588,6 +622,15 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNam
     CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeInt);
     CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
     CCSSetting *s4 = AddMockSettingWithNameAndType (name4, TypeString);
+
+    ExpectNameCallOnSetting (s1);
+    ExpectNameCallOnSetting (s2);
+    ExpectNameCallOnSetting (s3);
+
+    ExpectTypeCallOnSetting (s1);
+    ExpectTypeCallOnSetting (s2);
+    ExpectTypeCallOnSetting (s3);
+    ExpectTypeCallOnSetting (s4);
 
     CCSSetting *found = attemptToFindCCSSettingFromLossyName (settingList, "foo-bar-baz-bob-fred", TypeInt);
 
