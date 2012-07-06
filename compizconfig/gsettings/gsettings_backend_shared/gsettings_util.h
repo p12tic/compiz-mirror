@@ -56,4 +56,7 @@ filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gch
 CCSSetting *
 attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName, CCSSettingType type);
 
+GList *
+variantTypeToPossibleSettingType (const gchar *vt);
+
 #endif

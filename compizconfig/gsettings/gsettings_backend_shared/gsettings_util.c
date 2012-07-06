@@ -2,6 +2,41 @@
 #include <stdio.h>
 #include "gsettings_shared.h"
 
+GList *
+variantTypeToPossibleSettingType (const gchar *vt)
+{
+    struct _variantTypeCCSType
+    {
+	char variantType;
+	CCSSettingType ccsType;
+    };
+
+    static const struct _variantTypeCCSType vCCSType[] =
+    {
+	{ 'b', TypeBool },
+	{ 'i', TypeInt },
+	{ 'd', TypeFloat },
+	{ 's', TypeString },
+	{ 's', TypeColor },
+	{ 's', TypeKey },
+	{ 's', TypeButton },
+	{ 's', TypeEdge },
+	{ 'b', TypeBell },
+	{ 's', TypeMatch },
+	{ 'a', TypeList }
+    };
+
+    GList *possibleTypesList = NULL;
+    unsigned int i = 0;
+    for (; i < (sizeof (vCCSType) / sizeof (vCCSType[0])); ++i)
+    {
+	if (vt[0] == vCCSType[i].variantType)
+	    possibleTypesList = g_list_append (possibleTypesList, GINT_TO_POINTER ((gint) vCCSType[i].ccsType));
+    }
+
+    return possibleTypesList;
+}
+
 GObject *
 findObjectInListWithPropertySchemaName (const gchar *schemaName,
 					GList	    *iter)
@@ -97,8 +132,6 @@ translateKeyForCCS (const char *gsettingName)
     delimited = g_strsplit (gsettingName, "-", 0);
 
     clean = g_strjoinv ("_", delimited);
-
-    /* FIXME: Truncated and lowercased settings aren't going to work */
 
     g_strfreev (delimited);
 

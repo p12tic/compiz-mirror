@@ -149,11 +149,44 @@ valueChanged (GSettings   *settings,
     setting = ccsFindSetting (plugin, uncleanKeyName);
     if (!setting)
     {
-	ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
-	g_free (pluginName);
-	free (uncleanKeyName);
-	g_free (pathOrig);
-	return;
+	/* Couldn't find setting straight off the bat,
+	 * try and find the best match */
+	GVariant *value = g_settings_get_value (settings, keyName);
+
+	if (value)
+	{
+	    GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
+	    GList *iter = possibleSettingTypes;
+
+	    while (iter)
+	    {
+		setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (plugin),
+								keyName,
+								(CCSSettingType) GPOINTER_TO_INT (iter->data));
+
+		if (setting)
+		    break;
+
+		iter = iter->next;
+	    }
+
+	    g_list_free (possibleSettingTypes);
+	    g_variant_unref (value);
+	}
+
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	if (!setting)
+	{
+	    ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
+	    g_free (pluginName);
+	    free (uncleanKeyName);
+	    g_free (pathOrig);
+	    return;
+	}
     }
 
     readInit (context);

@@ -1,3 +1,6 @@
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
 #include "gsettings_mocks.h"
@@ -645,3 +648,184 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNam
     free (name3);
     free (name4);
 }
+
+namespace
+{
+    class GListContainerEqualityInterface
+    {
+	public:
+
+	    virtual ~GListContainerEqualityInterface () {}
+
+	    virtual bool operator== (GList *) const = 0;
+	    bool operator!= (GList *l) const
+	    {
+		return !(*this == l);
+	    }
+
+	    friend bool operator== (GList *lhs, const GListContainerEqualityInterface &rhs);
+	    friend bool operator!= (GList *lhs, const GListContainerEqualityInterface &rhs);
+    };
+
+    bool
+    operator== (GList *lhs, const GListContainerEqualityInterface &rhs)
+    {
+	return rhs == lhs;
+    }
+
+    bool
+    operator!= (GList *lhs, const GListContainerEqualityInterface &rhs)
+    {
+	return !(rhs == lhs);
+    }
+
+    class GListContainerEqualityBase :
+	public GListContainerEqualityInterface
+    {
+	public:
+
+	    typedef boost::function <GList * (void)> PopulateFunc;
+
+	    GListContainerEqualityBase (const PopulateFunc &populateGList) :
+		mList (populateGList ())
+	    {
+	    }
+
+	    GListContainerEqualityBase (const GListContainerEqualityBase &other) :
+		mList (g_list_copy (other.mList))
+	    {
+	    }
+
+	    GListContainerEqualityBase &
+	    operator= (GListContainerEqualityBase &other)
+	    {
+		if (this == &other)
+		    return *this;
+
+		GListContainerEqualityBase tmp (other);
+
+		tmp.swap (*this);
+		return *this;
+	    }
+
+	    void swap (GListContainerEqualityBase &other)
+	    {
+		std::swap (this->mList, other.mList);
+	    }
+
+	    bool operator== (GList *other) const
+	    {
+		unsigned int numInternal = g_list_length (mList);
+		unsigned int numOther = g_list_length (other);
+
+		if (numInternal != numOther)
+		    return false;
+
+		GList *iterOther = other;
+		GList *iterInternal = mList;
+
+		for (unsigned int i = 0; i < numInternal; i++)
+		{
+		    if (static_cast <CCSSettingType> (GPOINTER_TO_INT (iterOther->data)) !=
+			static_cast <CCSSettingType> (GPOINTER_TO_INT (iterInternal->data)))
+			return false;
+
+		    iterOther = g_list_next (iterOther);
+		    iterInternal = g_list_next (iterInternal);
+		}
+
+		return true;
+	    }
+
+	    ~GListContainerEqualityBase ()
+	    {
+		g_list_free (mList);
+	    }
+
+	private:
+
+	    GList *mList;
+    };
+
+    GList * populateBoolCCSTypes ()
+    {
+	GList *ret = NULL;
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeBool)));
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeBell)));
+	return ret;
+    }
+
+    GList * populateStringCCSTypes ()
+    {
+	GList *ret = NULL;
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeString)));
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeColor)));
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeKey)));
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeButton)));
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeEdge)));
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeMatch)));
+	return ret;
+    }
+
+    GList * populateIntCCSTypes ()
+    {
+	GList *ret = NULL;
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeInt)));
+	return ret;
+    }
+
+    GList * populateDoubleCCSTypes ()
+    {
+	GList *ret = NULL;
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeFloat)));
+	return ret;
+    }
+
+    GList * populateArrayCCSTypes ()
+    {
+	GList *ret = NULL;
+	ret = g_list_append (ret, GINT_TO_POINTER (static_cast <int> (TypeList)));
+	return ret;
+    }
+
+    struct GListContainerVariantTypeWrapper
+    {
+	const gchar *variantType;
+	GListContainerEqualityBase listOfCCSTypes;
+    };
+
+    GListContainerVariantTypeWrapper variantTypeToListOfCCSTypes[] =
+    {
+	{ "b", GListContainerEqualityBase (boost::bind (populateBoolCCSTypes)) },
+	{ "s", GListContainerEqualityBase (boost::bind (populateStringCCSTypes)) },
+	{ "i", GListContainerEqualityBase (boost::bind (populateIntCCSTypes)) },
+	{ "d", GListContainerEqualityBase (boost::bind (populateDoubleCCSTypes)) },
+	{ "a", GListContainerEqualityBase (boost::bind (populateArrayCCSTypes)) }
+    };
+}
+
+class CCSGSettingsTestVariantTypeToCCSTypeListFixture :
+    public ::testing::TestWithParam <GListContainerVariantTypeWrapper>
+{
+    public:
+
+	CCSGSettingsTestVariantTypeToCCSTypeListFixture () :
+	    mListContainer (GetParam ())
+	{
+	}
+
+    protected:
+
+	GListContainerVariantTypeWrapper mListContainer;
+};
+
+TEST_P(CCSGSettingsTestVariantTypeToCCSTypeListFixture, TestVariantTypesInListTemplate)
+{
+    GList *potentialTypeList = variantTypeToPossibleSettingType (mListContainer.variantType);
+    EXPECT_EQ (mListContainer.listOfCCSTypes, potentialTypeList);
+
+    g_list_free (potentialTypeList);
+}
+
+INSTANTIATE_TEST_CASE_P(CCSGSettingsTestVariantTypeToCCSTypeListInstantiation, CCSGSettingsTestVariantTypeToCCSTypeListFixture,
+			ValuesIn (variantTypeToListOfCCSTypes));
