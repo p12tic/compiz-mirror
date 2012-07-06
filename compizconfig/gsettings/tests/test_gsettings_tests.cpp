@@ -423,5 +423,11 @@ TEST_F(CCSGSettingsTestGObjectListWithProperty, TestFindExistingObjectWithSchema
     GObject *obj = reinterpret_cast <GObject *> (AddObjectWithSchemaName ("foo"));
 
     EXPECT_EQ (findObjectInListWithPropertySchemaName ("foo", objectSchemaList), obj);
+}
 
+TEST_F(CCSGSettingsTestGObjectListWithProperty, TestNoFindNonexistingObjectWithSchema)
+{
+    AddObjectWithSchemaName ("bar");
+
+    EXPECT_EQ (NULL, findObjectInListWithPropertySchemaName ("foo", objectSchemaList));
 }
