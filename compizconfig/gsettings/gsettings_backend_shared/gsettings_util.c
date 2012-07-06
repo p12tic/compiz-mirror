@@ -270,8 +270,26 @@ filterAllSettingsMatchingType (CCSSettingType type,
 
 CCSSettingList
 filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gchar *keyName,
-								       CCSSettingList sList)
+								       CCSSettingList settingList)
 {
-    return NULL;
+    CCSSettingList filteredList = NULL;
+    CCSSettingList iter = settingList;
+
+    while (iter)
+    {
+	CCSSetting *s = (CCSSetting *) iter->data;
+
+	char *name = ccsSettingGetName (s);
+	char *underscores_as_dashes = translateUnderscoresToDashesForGSettings (name);
+
+	if (g_ascii_strncasecmp (underscores_as_dashes, keyName, strlen (keyName)) == 0)
+	    filteredList = ccsSettingListAppend (filteredList, s);
+
+	g_free (underscores_as_dashes);
+
+	iter = iter->next;
+    }
+
+    return filteredList;
 }
 
