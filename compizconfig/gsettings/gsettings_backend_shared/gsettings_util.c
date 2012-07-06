@@ -293,3 +293,8 @@ filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gch
     return filteredList;
 }
 
+CCSSetting *
+attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName)
+{
+    return NULL;
+}

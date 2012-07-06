@@ -53,4 +53,7 @@ CCSSettingList
 filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gchar *keyName,
 								       CCSSettingList sList);
 
+CCSSetting *
+attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName);
+
 #endif

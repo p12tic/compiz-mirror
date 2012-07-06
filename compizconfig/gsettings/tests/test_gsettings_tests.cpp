@@ -521,3 +521,24 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPart
     free (name2);
     free (name3);
 }
+
+TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNameSuccess)
+{
+    char *name1 = strdup ("foo_bar_baz_bob");
+    char *name2 = strdup ("FOO_bar_baz_bob-fred");
+    char *name3 = strdup ("foo-bar");
+
+    CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
+    CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeInt);
+    CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
+
+    CCSSetting *found = attemptToFindCCSSettingFromLossyName (settingList, "foo-bar-baz-bob-fred");
+
+    EXPECT_EQ (found, s1);
+    EXPECT_NE (found, s2);
+    EXPECT_NE (found, s3);
+
+    free (name1);
+    free (name2);
+    free (name3);
+}
