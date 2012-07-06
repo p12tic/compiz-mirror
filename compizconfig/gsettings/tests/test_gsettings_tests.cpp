@@ -489,3 +489,30 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
     free (name2);
     free (name1);
 }
+
+TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase)
+{
+    char *name1 = strdup ("foo_bar_baz_bob");
+    char *name2 = strdup ("FOO_bar_baz_fred");
+    char *name3 = strdup ("foo-bar");
+
+    CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
+    CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeInt);
+    CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
+
+    CCSSettingList filteredList = filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase ("foo-bar-baz",
+													 settingList);
+
+    ASSERT_TRUE (filteredList);
+    ASSERT_EQ (ccsSettingListLength (filteredList), 2);
+    EXPECT_EQ (filteredList->data, s1);
+    EXPECT_NE (filteredList->data, s3);
+    ASSERT_TRUE (filteredList->next);
+    EXPECT_EQ (filteredList->next->data, s2);
+    EXPECT_NE (filteredList->data, s3);
+    EXPECT_EQ (NULL, filteredList->next->next);
+
+    free (name1);
+    free (name2);
+    free (name3);
+}
