@@ -248,3 +248,31 @@ appendToPluginsWithSetKeysList (const gchar *plugin,
     return !found;
 }
 
+CCSSettingList
+filterAllSettingsMatchingType (CCSSettingType type,
+			       CCSSettingList settingList)
+{
+    return NULL;
+}
+
+CCSSettingList
+filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gchar *keyName,
+								       CCSSettingList sList)
+{
+    return NULL;
+}
+
+CCSSettingList
+filterAllSettingsMatchingStringWithEitherDashesOrUnderscores (const gchar *keyName,
+							      CCSSettingList sList)
+{
+    return NULL;
+}
+
+CCSSettingList
+filterAllSettingsMatchingStringCaseInsensitive (const gchar *keyName,
+						CCSSettingList sList)
+{
+    return NULL;
+}
+

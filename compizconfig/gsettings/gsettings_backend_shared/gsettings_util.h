@@ -45,4 +45,20 @@ GObject *
 findObjectInListWithPropertySchemaName (const gchar *schemaName,
 					GList	    *iter);
 
+CCSSettingList
+filterAllSettingsMatchingType (CCSSettingType type,
+			       CCSSettingList settingList);
+
+CCSSettingList
+filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gchar *keyName,
+								       CCSSettingList sList);
+
+CCSSettingList
+filterAllSettingsMatchingStringWithEitherDashesOrUnderscores (const gchar *keyName,
+							      CCSSettingList sList);
+
+CCSSettingList
+filterAllSettingsMatchingStringCaseInsensitive (const gchar *keyName,
+						CCSSettingList sList);
+
 #endif

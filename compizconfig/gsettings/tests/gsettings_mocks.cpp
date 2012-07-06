@@ -86,8 +86,6 @@ compizconfig_gsettings_mock_wrap_gsettings_dispose (GObject *object)
     CCSGSettingsMockWrapGSettingsPrivate *priv = GET_PRIVATE (object);
     G_OBJECT_CLASS (compizconfig_gsettings_mock_wrap_gsettings_parent_class)->dispose (object);
 
-    g_print ("disposed %s\n", priv->name);
-
     if (priv->name)
 	g_free (priv->name);
 

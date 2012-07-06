@@ -4,6 +4,7 @@
 
 using ::testing::Values;
 using ::testing::ValuesIn;
+using ::testing::Return;
 
 TEST_P(CCSGSettingsTest, TestTestFixtures)
 {
@@ -448,11 +449,43 @@ class CCSGSettingsTestFindSettingLossy :
 	    settingList = NULL;
 	}
 
+	CCSSetting * AddMockSettingWithNameAndType (char	      *name,
+						    CCSSettingType    type)
+	{
+	    CCSSetting *mockSetting = ccsMockSettingNew ();
+
+	    settingList = ccsSettingListAppend (settingList, mockSetting);
+
+	    CCSSettingGMock *gmock = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (mockSetting));
+
+	    ON_CALL (*gmock, getName ()).WillByDefault (Return (name));
+	    ON_CALL (*gmock, getType ()).WillByDefault (Return (type));
+
+	    return mockSetting;
+	}
+
     protected:
 
 	CCSSettingList settingList;
 };
 
-TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByInitialMatch)
+TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
 {
+    char *name1 = strdup ("foo_bar_baz");
+    char *name2 = strdup ("foo_bar-baz");
+
+    CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
+    CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeBool);
+
+    CCSSettingList filteredList = filterAllSettingsMatchingType (TypeInt, settingList);
+
+    /* Needs to be expressed in terms of a boolean expression */
+    ASSERT_TRUE (filteredList);
+    EXPECT_EQ (ccsSettingListLength (filteredList), 1);
+    EXPECT_EQ (filteredList->data, s1);
+    EXPECT_NE (filteredList->data, s2);
+    EXPECT_EQ (NULL, filteredList->next);
+
+    free (name2);
+    free (name1);
 }
