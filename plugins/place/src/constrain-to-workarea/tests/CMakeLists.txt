@@ -15,4 +15,4 @@ target_link_libraries (compiz_test_place_constrain_to_workarea
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-gtest_add_tests (compiz_test_place_constrain_to_workarea "" ${CMAKE_CURRENT_SOURCE_DIR}/constrain-to-workarea/src/test-place-constrain-to-workarea.cpp)
+compiz_discover_tests (compiz_test_place_constrain_to_workarea)
