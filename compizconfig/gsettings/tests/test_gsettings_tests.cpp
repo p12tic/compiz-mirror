@@ -546,3 +546,33 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNam
     free (name3);
     free (name4);
 }
+
+TEST_F(CCSGSettingsTestFindSettingLossy, TestAttemptToFindCCSSettingFromLossyNameFailTooMany)
+{
+    char *name1 = strdup ("foo_bar_baz_bob");
+    char *name2 = strdup ("FOO_bar_baz_bob-fred");
+    char *name3 = strdup ("FOO_BAR_baz_bob-fred");
+    char *name4 = strdup ("foo-bar");
+    char *name5 = strdup ("FOO_bar_baz_bob-fred");
+
+    CCSSetting *s1 = AddMockSettingWithNameAndType (name1, TypeInt);
+    CCSSetting *s2 = AddMockSettingWithNameAndType (name2, TypeInt);
+    CCSSetting *s3 = AddMockSettingWithNameAndType (name3, TypeInt);
+    CCSSetting *s4 = AddMockSettingWithNameAndType (name4, TypeInt);
+    CCSSetting *s5 = AddMockSettingWithNameAndType (name5, TypeString);
+
+    CCSSetting *found = attemptToFindCCSSettingFromLossyName (settingList, "foo-bar-baz-bob-fred", TypeInt);
+
+    ASSERT_FALSE (found);
+    EXPECT_NE (found, s1);
+    EXPECT_NE (found, s2);
+    EXPECT_NE (found, s3);
+    EXPECT_NE (found, s4);
+    EXPECT_NE (found, s5);
+
+    free (name1);
+    free (name2);
+    free (name3);
+    free (name4);
+    free (name5);
+}
