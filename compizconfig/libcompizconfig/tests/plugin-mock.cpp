@@ -42,6 +42,8 @@ ccsMockPluginNew ()
     ccsObjectSetPrivate (plugin, (CCSPrivate *) mock);
     ccsObjectAddInterface (plugin, (CCSInterface *) &CCSPluginGMockInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
+    ccsPluginRef (plugin);
+
     return plugin;
 }
 

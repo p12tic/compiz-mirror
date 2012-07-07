@@ -6,6 +6,9 @@
 using ::testing::_;
 using ::testing::Return;
 
+CCSSetting * ccsMockSettingNew ();
+void ccsFreeMockSetting (CCSSetting *);
+
 class CCSSettingGMockInterface
 {
     public:
@@ -345,9 +348,11 @@ class CCSSettingGMock :
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setPrivatePtr (ptr);
 	}
+
+	static void ccsSettingFree (CCSSetting *setting)
+	{
+	    ccsFreeMockSetting (setting);
+	}
 };
 
 extern CCSSettingInterface CCSSettingGMockInterface;
-
-CCSSetting * ccsMockSettingNew ();
-void ccsFreeMockSetting (CCSSetting *);

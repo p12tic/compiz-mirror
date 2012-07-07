@@ -800,6 +800,7 @@ typedef Bool (*CCSSettingGetList) (CCSSetting *setting, CCSSettingValueList *dat
 typedef void (*CCSSettingResetToDefault) (CCSSetting *setting, Bool processChanged);
 typedef Bool (*CCSSettingIsIntegrated) (CCSSetting *setting);
 typedef Bool (*CCSSettingIsReadOnly) (CCSSetting *setting);
+typedef void (*CCSSettingDestructor) (CCSSetting *setting);
 
 unsigned int ccsCCSSettingInterfaceGetType ();
 
@@ -845,6 +846,7 @@ struct _CCSSettingInterface
     CCSSettingResetToDefault settingResetToDefault;
     CCSSettingIsIntegrated settingIsIntegrated;
     CCSSettingIsReadOnly settingIsReadOnly;
+    CCSSettingDestructor settingDestructor;
 };
 
 struct _CCSSetting
