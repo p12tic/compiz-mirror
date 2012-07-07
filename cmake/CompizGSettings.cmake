@@ -15,6 +15,13 @@ set (
     "Installation path of the gsettings schema file"
 )
 
+function (compiz_add_install_recompile_gsettings_schemas _schemadir_user _schemadir_root)
+	# Recompile GSettings Schemas
+	install (CODE "
+		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_schemadir_user} -DSCHEMADIR_ROOT=${_schemadir_root} -P ${compiz_SOURCE_DIR}/cmake/recompile_gsettings_schemas_in_dir_user_env.cmake)
+		 ")
+endfunction (compiz_add_install_recompile_gsettings_schemas)
+
 function (compiz_install_gsettings_schema _src _dst)
     find_program (PKG_CONFIG_TOOL pkg-config)
     find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
@@ -34,10 +41,7 @@ function (compiz_install_gsettings_schema _src _dst)
 		 execute_process (COMMAND cmake -DFILE=${_src} -DINSTALLDIR_USER=${_dst} -DINSTALLDIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/copy_file_install_user_env.cmake)
 		 ")
 
-	# Recompile GSettings Schemas
-	install (CODE "
-		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_dst} -DSCHEMADIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/recompile_gsettings_schemas_in_dir_user_env.cmake)
-		 ")
+	compiz_add_install_recompile_gsettings_schemas (${_dst} ${GSETTINGS_GLOBAL_INSTALL_DIR})
     endif (PKG_CONFIG_TOOL AND
 	   GLIB_COMPILE_SCHEMAS AND NOT
 	   COMPIZ_DISABLE_SCHEMAS_INSTALL AND
