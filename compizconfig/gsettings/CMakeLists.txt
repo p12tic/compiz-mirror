@@ -35,6 +35,8 @@ if (GLIB_COMPILE_SCHEMAS)
 		${CMAKE_BINARY_DIR}/glib-2.0/schemas/
     )
 
+    add_gsettings_schema_to_recompilation_list (compizconfig)
+
     compiz_install_gsettings_schema (${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compizconfig.gschema.xml
 				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
 

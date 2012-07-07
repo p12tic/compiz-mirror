@@ -53,6 +53,7 @@ if (USE_GCONF)
 endif ()
 if (USE_GSETTINGS)
     compiz_gsettings_schema (
+	compiz
 	${_core_xml_file}
 	${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compiz.gschema.xml
 	${datadir}/glib-2.0/schemas
