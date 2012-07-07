@@ -28,31 +28,20 @@ function (compiz_install_gsettings_schema _src _dst)
 	GLIB_COMPILE_SCHEMAS AND NOT
 	COMPIZ_DISABLE_SCHEMAS_INSTALL AND
 	USE_GSETTINGS)
-	install (CODE "
-		if (\"$ENV{USER}\"\ STREQUAL \"root\")
-		    message (\"-- Installing GSettings schemas ${GSETTINGS_GLOBAL_INSTALL_DIR}\"\)
-		    file (INSTALL DESTINATION \"${GSETTINGS_GLOBAL_INSTALL_DIR}\"
-			  TYPE FILE
-			  FILES \"${_src}\")
-		    message (\"-- Recompiling GSettings schemas in ${GSETTINGS_GLOBAL_INSTALL_DIR}\"\)
-		    execute_process (COMMAND ${GLIB_COMPILE_SCHEMAS} ${GSETTINGS_GLOBAL_INSTALL_DIR})
 
-		else (\"$ENV{USER}\"\ STREQUAL \"root\"\)
-		    # It seems like this is only available in CMake > 2.8.5
-		    # but hardly anybody has that, so comment out this warning for now
-		    # string (FIND $ENV{XDG_DATA_DIRS} \"${_dst}\" XDG_INSTALL_PATH)
-		    # if (NOT XDG_INSTALL_PATH)
-		    #	message (\"[WARNING]: Installing GSettings schemas to directory that is not in XDG_DATA_DIRS, you need to add ${_dst} to your XDG_DATA_DIRS in order for GSettings schemas to be found!\"\)
-		    # endif (NOT XDG_INSTALL_PATH)
-		    message (\"-- Installing GSettings schemas to ${_dst}\"\)
-		    file (INSTALL DESTINATION \"${_dst}\"
-			  TYPE FILE
-			  FILES \"${_src}\")
-		    message (\"-- Recompiling GSettings schemas in ${_dst}\"\)
-		    execute_process (COMMAND ${GLIB_COMPILE_SCHEMAS} ${_dst})
-		endif (\"$ENV{USER}\" STREQUAL \"root\"\)
-		")
-    endif ()
+	# Install schema file
+	install (CODE "
+		 execute_process (COMMAND cmake -DFILE=${_src} -DINSTALLDIR_USER=${_dst} -DINSTALLDIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/copy_file_install_user_env.cmake)
+		 ")
+
+	# Recompile GSettings Schemas
+	install (CODE "
+		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_dst} -DSCHEMADIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/recompile_gsettings_schemas_in_dir_user_env.cmake)
+		 ")
+    endif (PKG_CONFIG_TOOL AND
+	   GLIB_COMPILE_SCHEMAS AND NOT
+	   COMPIZ_DISABLE_SCHEMAS_INSTALL AND
+	   USE_GSETTINGS)
 endfunction ()
 
 function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
