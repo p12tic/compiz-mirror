@@ -15,11 +15,48 @@ set (
     "Installation path of the gsettings schema file"
 )
 
-function (compiz_add_install_recompile_gsettings_schemas _schemadir_user _schemadir_root)
+# Detect global schemas install dir
+find_program (PKG_CONFIG_TOOL pkg-config)
+
+get_property (GSETTINGS_GLOBAL_INSTALL_DIR_SET
+	      GLOBAL
+	      PROPERTY GSETTINGS_GLOBAL_INSTALL_DIR
+	      SET)
+
+if (PKG_CONFIG_TOOL AND NOT GSETTINGS_GLOBAL_INSTALL_DIR_SET)
+
+    mark_as_advanced (FORCE PKG_CONFIG_TOOL)
+
+    # find out where schemas need to go if we are installing them systemwide
+    execute_process (COMMAND ${PKG_CONFIG_TOOL} glib-2.0 --variable prefix  OUTPUT_VARIABLE GSETTINGS_GLIB_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set (GSETTINGS_GLOBAL_INSTALL_DIR "${GSETTINGS_GLIB_PREFIX}/share/glib-2.0/schemas/")
+
+    set_property (GLOBAL
+		  PROPERTY GSETTINGS_GLOBAL_INSTALL_DIR
+		  ${GSETTINGS_GLOBAL_INSTALL_DIR})
+
+endif (PKG_CONFIG_TOOL AND NOT GSETTINGS_GLOBAL_INSTALL_DIR_SET)
+
+function (compiz_add_install_recompile_gsettings_schemas _schemadir_user)
+
+    get_property (GSETTINGS_GLOBAL_INSTALL_DIR_SET
+		  GLOBAL
+		  PROPERTY GSETTINGS_GLOBAL_INSTALL_DIR
+		  SET)
+
+    if (GSETTINGS_GLOBAL_INSTALL_DIR_SET)
+
+	get_property (GSETTINGS_GLOBAL_INSTALL_DIR
+		      GLOBAL
+		      PROPERTY GSETTINGS_GLOBAL_INSTALL_DIR)
+
 	# Recompile GSettings Schemas
 	install (CODE "
-		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_schemadir_user} -DSCHEMADIR_ROOT=${_schemadir_root} -P ${compiz_SOURCE_DIR}/cmake/recompile_gsettings_schemas_in_dir_user_env.cmake)
+		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_schemadir_user} -DSCHEMADIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/recompile_gsettings_schemas_in_dir_user_env.cmake)
 		 ")
+
+    endif (GSETTINGS_GLOBAL_INSTALL_DIR_SET)
+
 endfunction (compiz_add_install_recompile_gsettings_schemas)
 
 function (compiz_install_gsettings_schema _src _dst)
@@ -41,7 +78,27 @@ function (compiz_install_gsettings_schema _src _dst)
 		 execute_process (COMMAND cmake -DFILE=${_src} -DINSTALLDIR_USER=${_dst} -DINSTALLDIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/copy_file_install_user_env.cmake)
 		 ")
 
-	compiz_add_install_recompile_gsettings_schemas (${_dst} ${GSETTINGS_GLOBAL_INSTALL_DIR})
+	get_property (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE_SET
+		      GLOBAL
+		      PROPERTY COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE
+		      SET)
+
+	if (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE_SET)
+
+	    get_property (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE
+			  GLOBAL
+			  PROPERTY COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE)
+
+	else (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE_SET)
+
+	    set (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE FALSE)
+
+	endif (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE_SET)
+
+	if (NOT COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE)
+	    compiz_add_install_recompile_gsettings_schemas (${_dst} ${GSETTINGS_GLOBAL_INSTALL_DIR})
+	endif (NOT COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE)
+
     endif (PKG_CONFIG_TOOL AND
 	   GLIB_COMPILE_SCHEMAS AND NOT
 	   COMPIZ_DISABLE_SCHEMAS_INSTALL AND
