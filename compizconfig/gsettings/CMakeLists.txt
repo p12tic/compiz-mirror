@@ -22,8 +22,23 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared)
 
 compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES gsettings_backend_shared)
 
-compiz_install_gsettings_schema (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
-				 ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
+
+if (GLIB_COMPILE_SCHEMAS)
+
+    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
+		    ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compizconfig.gschema.xml)
+
+    add_custom_command (
+	OUTPUT ${CMAKE_BINARY_DIR}/glib-2.0/schemas/gschemas.compiled
+	COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/glib-2.0/schemas/
+		${CMAKE_BINARY_DIR}/glib-2.0/schemas/
+    )
+
+    compiz_install_gsettings_schema (${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compizconfig.gschema.xml
+				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+
+endif (GLIB_COMPILE_SCHEMAS)
 
 if (COMPIZ_BUILD_TESTING)
     add_subdirectory (tests)

@@ -29,7 +29,6 @@ function (compiz_install_gsettings_schema _src _dst)
 	COMPIZ_DISABLE_SCHEMAS_INSTALL AND
 	USE_GSETTINGS)
 	install (CODE "
-		message (\"$ENV{USER} is the username in use right now\")
 		if (\"$ENV{USER}\"\ STREQUAL \"root\")
 		    message (\"-- Installing GSettings schemas ${GSETTINGS_GLOBAL_INSTALL_DIR}\"\)
 		    file (INSTALL DESTINATION \"${GSETTINGS_GLOBAL_INSTALL_DIR}\"
@@ -59,9 +58,10 @@ endfunction ()
 # generate gconf schema
 function (compiz_gsettings_schema _src _dst _inst)
     find_program (XSLTPROC_EXECUTABLE xsltproc)
+    find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
     mark_as_advanced (FORCE XSLTPROC_EXECUTABLE)
 
-    if (XSLTPROC_EXECUTABLE AND USE_GSETTINGS)
+    if (XSLTPROC_EXECUTABLE AND GLIB_COMPILE_SCHEMAS AND USE_GSETTINGS)
 	add_custom_command (
 	    OUTPUT ${_dst}
 	    COMMAND ${XSLTPROC_EXECUTABLE}
@@ -70,6 +70,26 @@ function (compiz_gsettings_schema _src _dst _inst)
 		    ${_src}
 	    DEPENDS ${_src}
 	)
+
+	add_custom_command (
+	    OUTPUT ${CMAKE_BINARY_DIR}/gsettings_compile_wrapper.c
+	    COMMAND echo "int main (void) { return 0; }" > ${CMAKE_BINARY_DIR}/gsettings_compile_wrapper.c
+	    VERBATIM
+	)
+
+	add_custom_command (
+	    OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
+	    COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
+		    ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
+	    COMMENT "Recompiling GSettings schemas locally"
+	    DEPENDS ${_dst}
+	)
+
+	add_executable (compiz_gsettings_compile_wrapper
+			${CMAKE_BINARY_DIR}/gsettings_compile_wrapper.c
+			${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
+	)
+
 	compiz_install_gsettings_schema (${_dst} ${_inst})
     endif ()
 endfunction ()
