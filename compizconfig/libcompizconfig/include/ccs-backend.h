@@ -27,7 +27,7 @@
 
 typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
-typedef struct _CCSBackendVTable  CCSBackendInterface;
+typedef struct _CCSBackendInterface  CCSBackendInterface;
 
 typedef struct _CCSContext CCSContext;
 typedef struct _CCSSetting CCSSetting;
@@ -66,7 +66,7 @@ typedef char * (*CCSBackendGetLongDescFunc) (CCSBackend *);
 typedef Bool (*CCSBackendHasIntegrationSupportFunc) (CCSBackend *);
 typedef Bool (*CCSBackendHasProfileSupportFunc) (CCSBackend *);
 
-struct _CCSBackendVTable
+struct _CCSBackendInterface
 {
     CCSBackendGetNameFunc getName;
     CCSBackendGetShortDescFunc getShortDesc;
@@ -98,7 +98,8 @@ struct _CCSBackendVTable
     CCSBackendDeleteProfileFunc       deleteProfile;
 };
 
-CCSBackendInterface * ccsBackendGetVTable (CCSBackend *);
+unsigned int ccsCCSBackendInterfaceGetType ();
+
 void * ccsBackendGetDlHand (CCSBackend *);
 
 void ccsFreeBackend (CCSBackend *);
