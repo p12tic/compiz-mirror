@@ -1063,7 +1063,7 @@ openBackend (char *backend)
     return dlhand;
 }
 
-CCSBackendVTable *
+CCSBackendInterface *
 ccsBackendGetVTable (CCSBackend *backend)
 {
     BACKEND_PRIV (backend);
@@ -1129,7 +1129,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	return FALSE;
     }
 
-    CCSBackendVTable *vt = getInfo ();
+    CCSBackendInterface *vt = getInfo ();
     if (!vt)
     {
 	dlclose (dlhand);
@@ -3461,7 +3461,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    CCSBackendVTable *vt = getInfo ();
+    CCSBackendInterface *vt = getInfo ();
     if (!vt)
     {
 	dlclose (dlhand);

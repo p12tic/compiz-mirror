@@ -27,7 +27,7 @@
 
 typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
-typedef struct _CCSBackendVTable  CCSBackendVTable;
+typedef struct _CCSBackendVTable  CCSBackendInterface;
 
 typedef struct _CCSContext CCSContext;
 typedef struct _CCSSetting CCSSetting;
@@ -37,7 +37,7 @@ struct _CCSBackend
     CCSObject        object;
 };
 
-typedef CCSBackendVTable * (*BackendGetInfoProc) (void);
+typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
 typedef void (*CCSExecuteEventsFunc) (unsigned int flags);
 
@@ -104,11 +104,11 @@ struct _CCSBackendVTable
     CCSDeleteProfileFunc       deleteProfile;
 };
 
-CCSBackendVTable * ccsBackendGetVTable (CCSBackend *);
+CCSBackendInterface * ccsBackendGetVTable (CCSBackend *);
 void * ccsBackendGetDlHand (CCSBackend *);
 
 void ccsFreeBackend (CCSBackend *);
 
-CCSBackendVTable* getBackendInfo (void);
+CCSBackendInterface* getBackendInfo (void);
 
 #endif

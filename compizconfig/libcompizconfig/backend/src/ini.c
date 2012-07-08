@@ -740,7 +740,7 @@ hasProfileSupport (CCSBackend *backend)
     return TRUE;
 }
 
-static CCSBackendVTable iniVTable = {
+static CCSBackendInterface iniVTable = {
     getName,
     getShortDesc,
     getLongDesc,
@@ -761,7 +761,7 @@ static CCSBackendVTable iniVTable = {
     deleteProfile
 };
 
-CCSBackendVTable *
+CCSBackendInterface *
 getBackendInfo (void)
 {
     return &iniVTable;

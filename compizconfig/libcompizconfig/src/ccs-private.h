@@ -126,7 +126,7 @@ struct _CCSBackendPrivate
 {
     void             *dlhand;
     CCSContext	     *context;
-    CCSBackendVTable *vTable;
+    CCSBackendInterface *vTable;
 };
 
 typedef struct _CCSSettingsUpgrade

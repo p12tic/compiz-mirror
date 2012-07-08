@@ -2148,7 +2148,7 @@ hasProfileSupport (CCSBackend *backend)
     return TRUE;
 }
 
-static CCSBackendVTable gconfVTable = {
+static CCSBackendInterface gconfVTable = {
     getName,
     getShortDesc,
     getLongDesc,
@@ -2169,7 +2169,7 @@ static CCSBackendVTable gconfVTable = {
     deleteProfile
 };
 
-CCSBackendVTable *
+CCSBackendInterface *
 getBackendInfo (void)
 {
     return &gconfVTable;
