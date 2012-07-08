@@ -3,7 +3,7 @@
 
 #include <ccs.h>
 
-#include "mock-setting.h"
+#include "compizconfig_ccs_setting_mock.h"
 
 using ::testing::_;
 using ::testing::Return;

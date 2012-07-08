@@ -1,27 +1,22 @@
 include_directories (${GTEST_INCLUDE_DIRS})
 include_directories (${CMAKE_SOURCE_DIR}/include)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/mocks)
 link_directories (${CMAKE_INSTALL_PREFIX}/lib)
+link_directories (${CMAKE_CURRENT_BINARY_DIR}/mocks)
 
-add_library (context-mock
-	     ${CMAKE_CURRENT_SOURCE_DIR}/context-mock.cpp)
+add_subdirectory (mocks)
 
-add_library (plugin-mock
-	     ${CMAKE_CURRENT_SOURCE_DIR}/plugin-mock.cpp)
+add_executable (compizconfig_test_ccs_object
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_object.cpp)
 
-add_library (setting-mock
-	     ${CMAKE_CURRENT_SOURCE_DIR}/setting-mock.cpp)
+add_executable (compizconfig_test_ccs_context
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_context.cpp)
 
-add_executable (test-ccs-object
-		${CMAKE_CURRENT_SOURCE_DIR}/test-ccs-object.cpp)
+add_executable (compizconfig_test_ccs_plugin
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_plugin.cpp)
 
-add_executable (test-context
-		${CMAKE_CURRENT_SOURCE_DIR}/test-context.cpp)
-
-add_executable (test-plugin
-		${CMAKE_CURRENT_SOURCE_DIR}/test-plugin.cpp)
-
-add_executable (test-setting
-		${CMAKE_CURRENT_SOURCE_DIR}/test-setting.cpp)
+add_executable (compizconfig_test_ccs_setting
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_setting.cpp)
 
 if (HAVE_PROTOBUF)
     set (LIBCOMPIZCONFIG_LIBRARIES
@@ -29,7 +24,7 @@ if (HAVE_PROTOBUF)
 	 protobuf)
 endif (HAVE_PROTOBUF)
 
-target_link_libraries (context-mock
+target_link_libraries (compizconfig_test_ccs_object
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
@@ -37,64 +32,40 @@ target_link_libraries (context-mock
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig)
 
-target_link_libraries (plugin-mock
-		       ${GTEST_BOTH_LIBRARIES}
-		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
-		       ${LIBCOMPIZCONFIG_LIBRARIES}
-		       compizconfig)
-
-target_link_libraries (setting-mock
-		       ${GTEST_BOTH_LIBRARIES}
-		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
-		       ${LIBCOMPIZCONFIG_LIBRARIES}
-		       compizconfig)
-
-target_link_libraries (test-ccs-object
-		       ${GTEST_BOTH_LIBRARIES}
-		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
-		       ${LIBCOMPIZCONFIG_LIBRARIES}
-		       compizconfig)
-
-target_link_libraries (test-context
+target_link_libraries (compizconfig_test_ccs_context
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
-		       context-mock
-		       plugin-mock
-		       setting-mock)
+		       compizconfig_ccs_context_mock
+		       compizconfig_ccs_plugin_mock
+		       compizconfig_ccs_setting_mock)
 
-target_link_libraries (test-plugin
+target_link_libraries (compizconfig_test_ccs_plugin
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
-		       context-mock
-		       plugin-mock
-		       setting-mock)
+		       compizconfig_ccs_context_mock
+		       compizconfig_ccs_plugin_mock
+		       compizconfig_ccs_setting_mock)
 
-target_link_libraries (test-setting
+target_link_libraries (compizconfig_test_ccs_setting
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
-		       context-mock
-		       plugin-mock
-		       setting-mock)
+		       compizconfig_ccs_context_mock
+		       compizconfig_ccs_plugin_mock
+		       compizconfig_ccs_setting_mock)
 
-compiz_discover_tests (test-ccs-object)
-compiz_discover_tests (test-context)
-compiz_discover_tests (test-plugin)
-compiz_discover_tests (test-setting)
+compiz_discover_tests (compizconfig_test_ccs_object)
+compiz_discover_tests (compizconfig_test_ccs_context)
+compiz_discover_tests (compizconfig_test_ccs_plugin)
+compiz_discover_tests (compizconfig_test_ccs_setting)

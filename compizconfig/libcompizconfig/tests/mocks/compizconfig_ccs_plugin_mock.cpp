@@ -3,7 +3,7 @@
 
 #include <ccs.h>
 
-#include "mock-plugin.h"
+#include "compizconfig_ccs_plugin_mock.h"
 
 CCSPluginInterface CCSPluginGMockInterface =
 {

@@ -3,7 +3,7 @@
 
 #include <ccs.h>
 
-#include "mock-context.h"
+#include "compizconfig_ccs_context_mock.h"
 
 CCSContextInterface CCSContextGMockInterface =
 {
