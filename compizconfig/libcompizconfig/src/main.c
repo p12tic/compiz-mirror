@@ -1163,7 +1163,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 
     cPrivate->backend = backend;
 
-    CCSInitBackendFunc backendInit = ccsBackendGetVTable (cPrivate->backend)->backendInit;
+    CCSBackendInitFunc backendInit = ccsBackendGetVTable (cPrivate->backend)->backendInit;
 
     if (backendInit)
 	(*backendInit) (context);
@@ -2775,7 +2775,7 @@ ccsProcessEventsDefault (CCSContext * context, unsigned int flags)
 
     ccsCheckFileWatches ();
 
-    CCSExecuteEventsFunc executeEvents = ccsBackendGetVTable (cPrivate->backend)->executeEvents;
+    CCSBackendExecuteEventsFunc executeEvents = ccsBackendGetVTable (cPrivate->backend)->executeEvents;
 
     if (cPrivate->backend && executeEvents)
 	(*executeEvents) (flags);
@@ -2801,12 +2801,12 @@ ccsReadSettingsDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return;
 
-    CCSContextReadSettingFunc readSetting = ccsBackendGetVTable (cPrivate->backend)->readSetting;
+    CCSBackendReadSettingFunc readSetting = ccsBackendGetVTable (cPrivate->backend)->readSetting;
 
     if (!readSetting)
 	return;
 
-    CCSContextReadInitFunc readInit = ccsBackendGetVTable (cPrivate->backend)->readInit;
+    CCSBackendReadInitFunc readInit = ccsBackendGetVTable (cPrivate->backend)->readInit;
 
     if (readInit)
 	if (!(*readInit) (context))
@@ -2827,7 +2827,7 @@ ccsReadSettingsDefault (CCSContext * context)
 	pl = pl->next;
     }
 
-    CCSContextReadDoneFunc readDone = ccsBackendGetVTable (cPrivate->backend)->readDone;
+    CCSBackendReadDoneFunc readDone = ccsBackendGetVTable (cPrivate->backend)->readDone;
 
     if (readDone)
 	(*readDone) (context);
@@ -2853,12 +2853,12 @@ ccsReadPluginSettingsDefault (CCSPlugin * plugin)
     if (!cPrivate->backend)
 	return;
 
-    CCSContextReadSettingFunc readSetting = ccsBackendGetVTable (cPrivate->backend)->readSetting;
+    CCSBackendReadSettingFunc readSetting = ccsBackendGetVTable (cPrivate->backend)->readSetting;
 
     if (!readSetting)
 	return;
 
-    CCSContextReadInitFunc readInit = ccsBackendGetVTable (cPrivate->backend)->readInit;
+    CCSBackendReadInitFunc readInit = ccsBackendGetVTable (cPrivate->backend)->readInit;
 
     if (readInit)
 	if (!(*readInit) (ccsPluginGetContext (plugin)))
@@ -2873,7 +2873,7 @@ ccsReadPluginSettingsDefault (CCSPlugin * plugin)
 	sl = sl->next;
     }
 
-    CCSContextReadDoneFunc readDone = ccsBackendGetVTable (cPrivate->backend)->readDone;
+    CCSBackendReadDoneFunc readDone = ccsBackendGetVTable (cPrivate->backend)->readDone;
 
     if (readDone)
 	(*readDone) (ccsPluginGetContext (plugin));
@@ -2896,12 +2896,12 @@ ccsWriteSettingsDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return;
 
-    CCSContextWriteSettingFunc writeSetting = ccsBackendGetVTable (cPrivate->backend)->writeSetting;
+    CCSBackendWriteSettingFunc writeSetting = ccsBackendGetVTable (cPrivate->backend)->writeSetting;
 
     if (!writeSetting)
 	return;
 
-    CCSContextWriteInitFunc writeInit = ccsBackendGetVTable (cPrivate->backend)->writeInit;
+    CCSBackendWriteInitFunc writeInit = ccsBackendGetVTable (cPrivate->backend)->writeInit;
 
     if (writeInit)
 	if (!(*writeInit) (context))
@@ -2922,7 +2922,7 @@ ccsWriteSettingsDefault (CCSContext * context)
 	pl = pl->next;
     }
 
-    CCSContextWriteDoneFunc writeDone = ccsBackendGetVTable (cPrivate->backend)->writeDone;
+    CCSBackendWriteDoneFunc writeDone = ccsBackendGetVTable (cPrivate->backend)->writeDone;
 
     if (writeDone)
 	(*writeDone) (context);
@@ -2951,12 +2951,12 @@ ccsWriteChangedSettingsDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return;
 
-    CCSContextWriteSettingFunc writeSetting = ccsBackendGetVTable (cPrivate->backend)->writeSetting;
+    CCSBackendWriteSettingFunc writeSetting = ccsBackendGetVTable (cPrivate->backend)->writeSetting;
 
     if (!writeSetting)
 	return;
 
-    CCSContextWriteInitFunc writeInit = ccsBackendGetVTable (cPrivate->backend)->writeInit;
+    CCSBackendWriteInitFunc writeInit = ccsBackendGetVTable (cPrivate->backend)->writeInit;
 
     if (writeInit)
 	if (!(*writeInit) (context))
@@ -2973,7 +2973,7 @@ ccsWriteChangedSettingsDefault (CCSContext * context)
 	}
     }
 
-    CCSContextWriteDoneFunc writeDone = ccsBackendGetVTable (cPrivate->backend)->writeDone;
+    CCSBackendWriteDoneFunc writeDone = ccsBackendGetVTable (cPrivate->backend)->writeDone;
 
     if (writeDone)
 	(*writeDone) (context);
@@ -3387,7 +3387,7 @@ ccsGetExistingProfilesDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
-    CCSGetExistingProfilesFunc getExistingProfiles = ccsBackendGetVTable (cPrivate->backend)->getExistingProfiles;
+    CCSBackendGetExistingProfilesFunc getExistingProfiles = ccsBackendGetVTable (cPrivate->backend)->getExistingProfiles;
 
     if (getExistingProfiles)
 	return (*getExistingProfiles) (context);
@@ -3424,7 +3424,7 @@ ccsDeleteProfileDefault (CCSContext * context, char *name)
     if (strcmp (cPrivate->profile, name) == 0)
 	ccsSetProfile (context, "");
 
-    CCSDeleteProfileFunc deleteProfile = ccsBackendGetVTable (cPrivate->backend)->deleteProfile;
+    CCSBackendDeleteProfileFunc deleteProfile = ccsBackendGetVTable (cPrivate->backend)->deleteProfile;
 
     if (deleteProfile)
 	(*deleteProfile) (context, name);
@@ -4877,7 +4877,7 @@ Bool ccsSettingGetIsIntegratedDefault (CCSSetting *setting)
     if (!cPrivate->backend)
 	return FALSE;
 
-    CCSGetIsIntegratedFunc getSettingIsIntegrated = ccsBackendGetVTable (cPrivate->backend)->getSettingIsIntegrated;
+    CCSBackendGetSettingIsIntegratedFunc getSettingIsIntegrated = ccsBackendGetVTable (cPrivate->backend)->getSettingIsIntegrated;
 
     if (getSettingIsIntegrated)
 	return (*getSettingIsIntegrated) (setting);
@@ -4895,7 +4895,7 @@ Bool ccsSettingGetIsReadOnlyDefault (CCSSetting *setting)
     if (!cPrivate->backend)
 	return FALSE;
 
-    CCSGetIsReadOnlyFunc getSettingIsReadOnly = ccsBackendGetVTable (cPrivate->backend)->getSettingIsReadOnly;
+    CCSBackendGetSettingIsReadOnlyFunc getSettingIsReadOnly = ccsBackendGetVTable (cPrivate->backend)->getSettingIsReadOnly;
 
     if (getSettingIsReadOnly)
 	return (*getSettingIsReadOnly) (setting);

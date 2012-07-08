@@ -39,26 +39,26 @@ struct _CCSBackend
 
 typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
-typedef void (*CCSExecuteEventsFunc) (unsigned int flags);
+typedef void (*CCSBackendExecuteEventsFunc) (unsigned int flags);
 
-typedef Bool (*CCSInitBackendFunc) (CCSContext * context);
-typedef Bool (*CCSFiniBackendFunc) (CCSContext * context);
+typedef Bool (*CCSBackendInitFunc) (CCSContext * context);
+typedef Bool (*CCSBackendFiniFunc) (CCSContext * context);
 
-typedef Bool (*CCSContextReadInitFunc) (CCSContext * context);
-typedef void (*CCSContextReadSettingFunc)
+typedef Bool (*CCSBackendReadInitFunc) (CCSContext * context);
+typedef void (*CCSBackendReadSettingFunc)
 (CCSContext * context, CCSSetting * setting);
-typedef void (*CCSContextReadDoneFunc) (CCSContext * context);
+typedef void (*CCSBackendReadDoneFunc) (CCSContext * context);
 
-typedef Bool (*CCSContextWriteInitFunc) (CCSContext * context);
-typedef void (*CCSContextWriteSettingFunc)
+typedef Bool (*CCSBackendWriteInitFunc) (CCSContext * context);
+typedef void (*CCSBackendWriteSettingFunc)
 (CCSContext * context, CCSSetting * setting);
-typedef void (*CCSContextWriteDoneFunc) (CCSContext * context);
+typedef void (*CCSBackendWriteDoneFunc) (CCSContext * context);
 
-typedef Bool (*CCSGetIsIntegratedFunc) (CCSSetting * setting);
-typedef Bool (*CCSGetIsReadOnlyFunc) (CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSSetting * setting);
 
-typedef CCSStringList (*CCSGetExistingProfilesFunc) (CCSContext * context);
-typedef Bool (*CCSDeleteProfileFunc) (CCSContext * context, char * name);
+typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSContext * context);
+typedef Bool (*CCSBackendDeleteProfileFunc) (CCSContext * context, char * name);
 
 typedef char * (*CCSBackendGetNameFunc) (CCSBackend *);
 typedef char * (*CCSBackendGetShortDescFunc) (CCSBackend *);
@@ -67,13 +67,7 @@ typedef Bool (*CCSBackendHasIntegrationSupportFunc) (CCSBackend *);
 typedef Bool (*CCSBackendHasProfileSupportFunc) (CCSBackend *);
 
 struct _CCSBackendVTable
-{/*
-    char *name;
-    char *shortDesc;
-    char *longDesc;
-    Bool integrationSupport;
-    Bool profileSupport;
-    */
+{
     CCSBackendGetNameFunc getName;
     CCSBackendGetShortDescFunc getShortDesc;
     CCSBackendGetLongDescFunc getLongDesc;
@@ -83,25 +77,25 @@ struct _CCSBackendVTable
     /* something like a event loop call for the backend,
        so it can check for file changes (gconf changes in the gconf backend)
        no need for reload settings signals anymore */
-    CCSExecuteEventsFunc executeEvents;
+    CCSBackendExecuteEventsFunc executeEvents;
 
-    CCSInitBackendFunc	       backendInit;
-    CCSFiniBackendFunc	       backendFini;
+    CCSBackendInitFunc	       backendInit;
+    CCSBackendFiniFunc	       backendFini;
 
-    CCSContextReadInitFunc     readInit;
-    CCSContextReadSettingFunc  readSetting;
-    CCSContextReadDoneFunc     readDone;
+    CCSBackendReadInitFunc     readInit;
+    CCSBackendReadSettingFunc  readSetting;
+    CCSBackendReadDoneFunc     readDone;
 
-    CCSContextWriteInitFunc    writeInit;
-    CCSContextWriteSettingFunc writeSetting;
-    CCSContextWriteDoneFunc    writeDone;
+    CCSBackendWriteInitFunc    writeInit;
+    CCSBackendWriteSettingFunc writeSetting;
+    CCSBackendWriteDoneFunc    writeDone;
 
 
-    CCSGetIsIntegratedFunc     getSettingIsIntegrated;
-    CCSGetIsReadOnlyFunc       getSettingIsReadOnly;
+    CCSBackendGetSettingIsIntegratedFunc     getSettingIsIntegrated;
+    CCSBackendGetSettingIsReadOnlyFunc       getSettingIsReadOnly;
 
-    CCSGetExistingProfilesFunc getExistingProfiles;
-    CCSDeleteProfileFunc       deleteProfile;
+    CCSBackendGetExistingProfilesFunc getExistingProfiles;
+    CCSBackendDeleteProfileFunc       deleteProfile;
 };
 
 CCSBackendInterface * ccsBackendGetVTable (CCSBackend *);
