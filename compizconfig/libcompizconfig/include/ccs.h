@@ -334,6 +334,7 @@ typedef CCSStringList (*CCSContextGetExistingProfiles) (CCSContext *context);
 typedef void (*CCSContextDeleteProfile) (CCSContext *context, char *name);
 typedef Bool (*CCSContextCheckForSettingsUpgrade) (CCSContext *context);
 typedef void (*CCSContextLoadPlugins) (CCSContext *context);
+typedef void (*CCSContextDestructor) (CCSContext *context);
 
 struct _CCSContextInterface
 {
@@ -371,6 +372,7 @@ struct _CCSContextInterface
     CCSContextDeleteProfile contextDeleteProfile;
     CCSContextCheckForSettingsUpgrade contextCheckForSettingsUpgrade;
     CCSContextLoadPlugins contextLoadPlugins;
+    CCSContextDestructor contextDestructor;
 };
 
 unsigned int ccsCCSContextInterfaceGetType ();

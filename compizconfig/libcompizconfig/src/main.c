@@ -702,7 +702,16 @@ collateGroups (CCSPluginPrivate * p)
 }
 
 void
-ccsFreeContext (CCSContext * c)
+ccsFreeContext (CCSContext *c)
+{
+    if (!c)
+	return;
+
+    (*(GET_INTERFACE (CCSContextInterface, c))->contextDestructor) (c);
+}
+
+static void
+ccsFreeContextDefault (CCSContext * c)
 {
     if (!c)
 	return;
@@ -4990,7 +4999,8 @@ static const CCSContextInterface ccsDefaultContextInterface =
     ccsGetExistingProfilesDefault,
     ccsDeleteProfileDefault,
     ccsCheckForSettingsUpgradeDefault,
-    ccsLoadPluginsDefault
+    ccsLoadPluginsDefault,
+    ccsFreeContextDefault
 };
 
 static const CCSSettingInterface ccsDefaultSettingInterface =

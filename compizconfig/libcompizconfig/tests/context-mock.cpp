@@ -40,7 +40,8 @@ CCSContextInterface CCSContextGMockInterface =
     CCSContextGMock::ccsGetExistingProfiles,
     CCSContextGMock::ccsDeleteProfile,
     CCSContextGMock::ccsCheckForSettingsUpgrade,
-    CCSContextGMock::ccsLoadPlugins
+    CCSContextGMock::ccsLoadPlugins,
+    CCSContextGMock::ccsFreeContext
 };
 
 CCSContext *

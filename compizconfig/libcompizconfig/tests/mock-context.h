@@ -3,6 +3,9 @@
 
 #include <ccs.h>
 
+CCSContext * ccsMockContextNew ();
+void ccsFreeMockContext (CCSContext *);
+
 class CCSContextGMockInterface
 {
     public:
@@ -330,9 +333,15 @@ class CCSContextGMock :
 
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->loadPlugins ();
 	}
+
+	static void
+	ccsFreeContext (CCSContext *context)
+	{
+	    if (!context)
+		return;
+
+	    ccsFreeMockContext (context);
+	}
 };
 
 extern CCSContextInterface CCSContextGMockInterface;
-
-CCSContext * ccsMockContextNew ();
-void ccsFreeMockContext (CCSContext *);
