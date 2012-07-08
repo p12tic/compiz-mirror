@@ -704,13 +704,48 @@ deleteProfile (CCSContext * context, char * profile)
     return TRUE;
 }
 
+static char *
+getName (CCSBackend *backend)
+{
+    static char name[] = "ini";
+
+    return name;
+}
+
+static char *
+getShortDesc (CCSBackend *backend)
+{
+    static char shortDesc[] = "Flat-file Configuration Backend";
+
+    return shortDesc;
+}
+
+static char *
+getLongDesc (CCSBackend *backend)
+{
+    static char longDesc[] = "Flat file Configuration Backend for libccs";
+
+    return longDesc;
+}
+
+static Bool
+hasIntegrationSupport (CCSBackend *backend)
+{
+    return FALSE;
+}
+
+static Bool
+hasProfileSupport (CCSBackend *backend)
+{
+    return TRUE;
+}
 
 static CCSBackendVTable iniVTable = {
-    "ini",
-    "Flat-file Configuration Backend",
-    "Flat file Configuration Backend for libccs",
-    FALSE,
-    TRUE,
+    getName,
+    getShortDesc,
+    getLongDesc,
+    hasIntegrationSupport,
+    hasProfileSupport,
     NULL,
     initBackend,
     finiBackend,

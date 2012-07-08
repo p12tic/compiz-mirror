@@ -56,13 +56,25 @@ typedef Bool (*CCSGetIsReadOnlyFunc) (CCSSetting * setting);
 typedef CCSStringList (*CCSGetExistingProfilesFunc) (CCSContext * context);
 typedef Bool (*CCSDeleteProfileFunc) (CCSContext * context, char * name);
 
+typedef char * (*CCSBackendGetNameFunc) (CCSBackend *);
+typedef char * (*CCSBackendGetShortDescFunc) (CCSBackend *);
+typedef char * (*CCSBackendGetLongDescFunc) (CCSBackend *);
+typedef Bool (*CCSBackendHasIntegrationSupportFunc) (CCSBackend *);
+typedef Bool (*CCSBackendHasProfileSupportFunc) (CCSBackend *);
+
 struct _CCSBackendVTable
-{
+{/*
     char *name;
     char *shortDesc;
     char *longDesc;
     Bool integrationSupport;
     Bool profileSupport;
+    */
+    CCSBackendGetNameFunc getName;
+    CCSBackendGetShortDescFunc getShortDesc;
+    CCSBackendGetLongDescFunc getLongDesc;
+    CCSBackendHasIntegrationSupportFunc hasIntegrationSupport;
+    CCSBackendHasProfileSupportFunc hasProfileSupport;
 
     /* something like a event loop call for the backend,
        so it can check for file changes (gconf changes in the gconf backend)

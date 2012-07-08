@@ -319,7 +319,7 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
 
     if (cPrivate->backend)
-	ccsInfo ("Backend     : %s", cPrivate->backend->vTable->name);
+	ccsInfo ("Backend     : %s", (*cPrivate->backend->vTable->getName) (cPrivate->backend));
 	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
 	ccsInfo ("Profile     : %s",
 	    (cPrivate->profile && strlen (cPrivate->profile)) ?
@@ -1072,7 +1072,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     {
 	/* no action needed if the backend is the same */
 
-	if (strcmp (cPrivate->backend->vTable->name, name) == 0)
+	if (strcmp ((*cPrivate->backend->vTable->getName) (cPrivate->backend), name) == 0)
 	    return TRUE;
 
 	if (cPrivate->backend->vTable->backendFini)
@@ -2549,7 +2549,7 @@ ccsGetBackendDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
-    return cPrivate->backend->vTable->name;
+    return (*cPrivate->backend->vTable->getName) (cPrivate->backend);
 }
 
 char *
@@ -3397,7 +3397,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
     CCSBackendInfoList l = *bl;
     while (l)
     {
-	if (!strcmp (l->data->name, vt->name))
+	if (!strcmp (l->data->name, (*vt->getName) (NULL)))
 	{
 	    found = TRUE;
 	    break;
@@ -3420,11 +3420,11 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
     }
 
     info->refCount = 1;
-    info->name = strdup (vt->name);
-    info->shortDesc = (vt->shortDesc) ? strdup (vt->shortDesc) : strdup ("");
-    info->longDesc = (vt->longDesc) ? strdup (vt->longDesc) : strdup ("");
-    info->integrationSupport = vt->integrationSupport;
-    info->profileSupport = vt->profileSupport;
+    info->name = strdup ((*vt->getName) (NULL));
+    info->shortDesc = (vt->getShortDesc) ? strdup ((*vt->getShortDesc) (NULL)) : strdup ("");
+    info->longDesc = (vt->getLongDesc) ? strdup ((*vt->getLongDesc) (NULL)) : strdup ("");
+    info->integrationSupport = (*vt->hasIntegrationSupport) (NULL);
+    info->profileSupport = (*vt->hasProfileSupport) (NULL);
 
     *bl = ccsBackendInfoListAppend (*bl, info);
     dlclose (dlhand);
