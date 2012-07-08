@@ -122,6 +122,13 @@ typedef struct _CCSSettingPrivate
     void      *privatePtr;        /* private pointer for usage by the caller */
 } CCSSettingPrivate;
 
+struct _CCSBackendPrivate
+{
+    void             *dlhand;
+    CCSContext	     *context;
+    CCSBackendVTable *vTable;
+};
+
 typedef struct _CCSSettingsUpgrade
 {
     char	   *profile;

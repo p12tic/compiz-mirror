@@ -32,13 +32,6 @@ typedef struct _CCSBackendVTable  CCSBackendVTable;
 typedef struct _CCSContext CCSContext;
 typedef struct _CCSSetting CCSSetting;
 
-struct _CCSBackendPrivate
-{
-    void             *dlhand;
-    CCSContext	     *context;
-    CCSBackendVTable *vTable;
-};
-
 struct _CCSBackend
 {
     CCSObject        object;
