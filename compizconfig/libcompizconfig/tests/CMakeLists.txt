@@ -1,10 +1,8 @@
 include_directories (${GTEST_INCLUDE_DIRS})
 include_directories (${CMAKE_SOURCE_DIR}/include)
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/mocks)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig)
 link_directories (${CMAKE_INSTALL_PREFIX}/lib)
-link_directories (${CMAKE_CURRENT_BINARY_DIR}/mocks)
-
-add_subdirectory (mocks)
+link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../mocks/libcompizconfig)
 
 add_executable (compizconfig_test_ccs_object
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_object.cpp)

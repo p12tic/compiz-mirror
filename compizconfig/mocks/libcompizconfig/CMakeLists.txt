@@ -1,5 +1,5 @@
 include_directories (${GTEST_INCLUDE_DIRS})
-include_directories (${CMAKE_SOURCE_DIR}/include)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/include)
 link_directories (${CMAKE_INSTALL_PREFIX}/lib)
 
 if (HAVE_PROTOBUF)

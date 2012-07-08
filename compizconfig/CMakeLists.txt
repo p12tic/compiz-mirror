@@ -10,6 +10,10 @@ add_subdirectory (ccsm)
 add_subdirectory (gconf)
 add_subdirectory (gsettings)
 
+if (COMPIZ_BUILD_TESTING)
+    add_subdirectory (mocks)
+endif (COMPIZ_BUILD_TESTING)
+
 add_custom_target (pyclean)
 
 add_dependencies (pyclean pyclean_ccsm pyclean_compizconfig)
