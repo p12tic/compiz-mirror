@@ -725,7 +725,16 @@ ccsFreeContext (CCSContext * c)
 }
 
 void
-ccsFreePlugin (CCSPlugin * p)
+ccsFreePlugin (CCSPlugin *p)
+{
+    if (!p)
+	return;
+
+    (*(GET_INTERFACE (CCSPluginInterface, p))->pluginDestructor) (p);
+}
+
+static void
+ccsFreePluginDefault (CCSPlugin * p)
 {
     if (!p)
 	return;
@@ -4942,7 +4951,8 @@ static  const CCSPluginInterface ccsDefaultPluginInterface =
     ccsGetPluginSettingsDefault,
     ccsGetPluginGroupsDefault,
     ccsReadPluginSettingsDefault,
-    ccsGetPluginStrExtensionsDefault
+    ccsGetPluginStrExtensionsDefault,
+    ccsFreePluginDefault
 };
 
 static const CCSContextInterface ccsDefaultContextInterface =

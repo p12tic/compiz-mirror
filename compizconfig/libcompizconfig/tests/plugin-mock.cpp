@@ -25,7 +25,8 @@ CCSPluginInterface CCSPluginGMockInterface =
     CCSPluginGMock::ccsGetPluginSettings,
     CCSPluginGMock::ccsGetPluginGroups,
     CCSPluginGMock::ccsReadPluginSettings,
-    CCSPluginGMock::ccsGetPluginStrExtensions
+    CCSPluginGMock::ccsGetPluginStrExtensions,
+    CCSPluginGMock::ccsFreePlugin
 };
 
 CCSPlugin *

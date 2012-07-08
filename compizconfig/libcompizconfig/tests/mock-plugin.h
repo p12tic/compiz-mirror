@@ -3,6 +3,9 @@
 
 #include <ccs.h>
 
+CCSPlugin * ccsMockPluginNew ();
+void ccsFreeMockPlugin (CCSPlugin *);
+
 class CCSPluginGMockInterface
 {
     public:
@@ -158,9 +161,12 @@ class CCSPluginGMock :
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getPluginStrExtensions ();
 	}
+
+	static void ccsFreePlugin (CCSPlugin *plugin)
+
+	{
+	    ccsFreeMockPlugin (plugin);
+	}
 };
 
 extern CCSPluginInterface CCSPluginGMockInterface;
-
-CCSPlugin * ccsMockPluginNew ();
-void ccsFreeMockPlugin (CCSPlugin *);

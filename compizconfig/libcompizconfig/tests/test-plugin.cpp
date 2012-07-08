@@ -56,5 +56,5 @@ TEST(CCSPluginTest, TestMock)
     ccsReadPluginSettings (plugin);
     ccsGetPluginStrExtensions (plugin);
 
-    ccsFreeMockPlugin (plugin);
+    ccsPluginUnref (plugin);
 }

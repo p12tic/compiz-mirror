@@ -431,6 +431,8 @@ typedef CCSGroupList (*CCSPluginGetPluginGroups) (CCSPlugin *plugin);
 typedef void (*CCSPluginReadPluginSettings) (CCSPlugin *plugin);
 typedef CCSStrExtensionList (*CCSPluginGetPluginStrExtensions) (CCSPlugin *plugin);
 
+typedef void (*CCSPluginDestructor) (CCSPlugin *plugin);
+
 unsigned int ccsCCSPluginInterfaceGetType ();
 
 struct _CCSPluginInterface
@@ -454,6 +456,7 @@ struct _CCSPluginInterface
     CCSPluginGetPluginGroups pluginGetPluginGroups;
     CCSPluginReadPluginSettings pluginReadPluginSettings;
     CCSPluginGetPluginStrExtensions pluginGetPluginStrExtensions;
+    CCSPluginDestructor pluginDestructor;
 };
 
 /* CCSPlugin accessor functions */
