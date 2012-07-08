@@ -22,15 +22,26 @@
 #ifndef CCS_BACKEND_H
 #define CCS_BACKEND_H
 
-#include <ccs.h>
+#include <ccs-object.h>
+#include <ccs-list.h>
 
 typedef struct _CCSBackend	  CCSBackend;
+typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendVTable  CCSBackendVTable;
+
+typedef struct _CCSContext CCSContext;
+typedef struct _CCSSetting CCSSetting;
+
+struct _CCSBackendPrivate
+{
+    void             *dlhand;
+    CCSContext	     *context;
+    CCSBackendVTable *vTable;
+};
 
 struct _CCSBackend
 {
-    void             *dlhand;
-    CCSBackendVTable *vTable;
+    CCSObject        object;
 };
 
 typedef CCSBackendVTable * (*BackendGetInfoProc) (void);
@@ -99,6 +110,11 @@ struct _CCSBackendVTable
     CCSGetExistingProfilesFunc getExistingProfiles;
     CCSDeleteProfileFunc       deleteProfile;
 };
+
+CCSBackendVTable * ccsBackendGetVTable (CCSBackend *);
+void * ccsBackendGetDlHand (CCSBackend *);
+
+void ccsFreeBackend (CCSBackend *);
 
 CCSBackendVTable* getBackendInfo (void);
 

@@ -31,6 +31,8 @@
     CCSPluginPrivate *pPrivate = (CCSPluginPrivate *) ccsObjectGetPrivate (p);
 #define SETTING_PRIV(s) \
     CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (s);
+#define BACKEND_PRIV(b) \
+    CCSBackendPrivate *bPrivate = (CCSBackendPrivate *) ccsObjectGetPrivate (b);
 
 extern Bool basicMetadata;
 

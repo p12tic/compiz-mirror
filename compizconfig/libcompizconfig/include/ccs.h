@@ -23,23 +23,13 @@
 #define _CSS_H
 
 #include <stddef.h>  /* for NULL */
+#include <ccs-defs.h>
+#include <ccs-object.h>
+#include <ccs-list.h>
+#include <ccs-string.h>
+#include <ccs-backend.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-#ifndef Bool
-#define Bool int
-#endif
-
-#ifndef TRUE
-#define TRUE ~0
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
+COMPIZCONFIG_BEGIN_DECLS
 
 #ifndef CCS_LOG_DOMAIN
 #define CCS_LOG_DOMAIN NULL
@@ -78,60 +68,6 @@ typedef enum
 
 void ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...);
 
-/**
- * list functions:
- * for each list there is a set of functions, explained using String as example
- *
- * ccsStringListAppend (list, item)
- * Adds an item at the end of the list. Returns the new list.
- *
- * ccsStringListPrepend (list, item)
- * Adds an item at the beginning of the list. Returns the new list.
- *
- * ccsStringListInsert (list, item, position)
- * Adds an item at a given position. Position is 0-based. If position is
- * larger than the amount of items in the list, the item is inserted at the
- * end of the list. Returns the new list.
- *
- * ccsStringListInsertBefore (list, sibling, item)
- * Inserts item before sibling into the list. If sibling is no list member,
- * item is inserted at the end. Returns the new list.
- *
- * ccsStringListLength (list)
- * Returns the amount of items in list.
- *
- * ccsStringListFind (list, item)
- * Finds and returns an item matching <item>. If nothing is found, returns NULL.
- *
- * ccsStringListGetItem (list, index)
- * Returns the list item at position <index>. If index is larger than the
- * amount of items in the list, returns NULL.
- *
- * ccsStringListRemove (list, item, freeObj)
- * Removes item from the list. If freeObj is TRUE, also frees the data item.
- * Returns the new list.
- *
- * ccsStringListFree (list, freeObj)
- * Frees the complete list. If freeObj is TRUE, also frees the data items.
- * Returns the new list (NULL).
- */
-#define CCSLIST_HDR(type,dtype)		\
-    typedef struct _CCS##type##List *	CCS##type##List;\
-    struct _CCS##type##List	\
-    {								\
-	dtype   * data;			\
-	CCS##type##List next;		\
-    }; \
-    CCS##type##List ccs##type##ListAppend (CCS##type##List list, dtype *data); \
-    CCS##type##List ccs##type##ListPrepend (CCS##type##List list, dtype *data); \
-    CCS##type##List ccs##type##ListInsert (CCS##type##List list, dtype *data, int position); \
-    CCS##type##List ccs##type##ListInsertBefore (CCS##type##List list, CCS##type##List sibling, dtype *data); \
-    unsigned int ccs##type##ListLength (CCS##type##List list); \
-    CCS##type##List ccs##type##ListFind (CCS##type##List list, dtype *data); \
-    CCS##type##List ccs##type##ListGetItem (CCS##type##List list, unsigned int index); \
-    CCS##type##List ccs##type##ListRemove (CCS##type##List list, dtype *data, Bool freeObj); \
-    CCS##type##List ccs##type##ListFree (CCS##type##List list, Bool freeObj);
-
 typedef struct _CCSContext	  CCSContext;
 typedef struct _CCSPlugin	  CCSPlugin;
 typedef struct _CCSSetting	  CCSSetting;
@@ -144,11 +80,9 @@ typedef struct _CCSBackendInfo	  CCSBackendInfo;
 typedef struct _CCSIntDesc	  CCSIntDesc;
 typedef struct _CCSStrRestriction CCSStrRestriction;
 typedef struct _CCSStrExtension   CCSStrExtension;
-typedef struct _CCSString	  CCSString;
 
 CCSLIST_HDR (Plugin, CCSPlugin)
 CCSLIST_HDR (Setting, CCSSetting)
-CCSLIST_HDR (String, CCSString)
 CCSLIST_HDR (Group, CCSGroup)
 CCSLIST_HDR (SubGroup, CCSSubGroup)
 CCSLIST_HDR (SettingValue, CCSSettingValue)
@@ -158,102 +92,6 @@ CCSLIST_HDR (IntDesc, CCSIntDesc)
 CCSLIST_HDR (StrRestriction, CCSStrRestriction)
 CCSLIST_HDR (StrExtension, CCSStrExtension)
 
-typedef struct _CCSInterface CCSInterface; /* Dummy typedef */
-typedef struct _CCSPrivate CCSPrivate; /* Dummy typedef */
-typedef struct _CCSObject CCSObject;
-
-typedef void * (*reallocObjectProc) (void *, void *, size_t);
-typedef void * (*mallocObjectProc) (void *, size_t);
-typedef void * (*callocObjectProc) (void *, size_t, size_t);
-typedef void (*freeObjectProc) (void *, void *);
-
-typedef struct _CCSObjectAllocationInterface
-{
-    reallocObjectProc realloc_;
-    mallocObjectProc  malloc_;
-    callocObjectProc  calloc_;
-    freeObjectProc    free_;
-    void              *allocator;
-} CCSObjectAllocationInterface;
-
-extern CCSObjectAllocationInterface ccsDefaultObjectAllocator;
-
-struct _CCSObject
-{
-    CCSPrivate *priv; /* Private pointer for object storage */
-
-    const CCSInterface **interfaces; /* An array of interfaces that this object implements */
-    int          *interface_types; /* An array of interface types */
-    unsigned int n_interfaces;
-    unsigned int n_allocated_interfaces;
-
-    CCSObjectAllocationInterface *object_allocation;
-
-    unsigned int refcnt; /* Reference count of this object */
-};
-
-Bool
-ccsObjectInit_ (CCSObject *object, CCSObjectAllocationInterface *interface);
-
-#define ccsObjectInit(o, interface) (ccsObjectInit_) (&(o)->object, interface)
-
-Bool
-ccsObjectAddInterface_ (CCSObject *object, const CCSInterface *interface, int interface_type);
-
-#define ccsObjectAddInterface(o, interface, type) (ccsObjectAddInterface_) (&(o)->object, interface, type);
-
-Bool
-ccsObjectRemoveInterface_ (CCSObject *object, int interface_type);
-
-#define ccsObjectRemoveInterface(o, interface_type) (ccsObjectRemoveInterface_) (&(o)->object, interface_type);
-
-const CCSInterface * ccsObjectGetInterface_ (CCSObject *object, int interface_type);
-
-#define ccsObjectGetInterface(o, interface_type) (ccsObjectGetInterface_) (&(o)->object, interface_type)
-
-#define ccsObjectRef(o) \
-    do { ((o)->object).refcnt++; } while (FALSE)
-
-#define ccsObjectUnref(o, freeFunc) \
-    do \
-    { \
-	((o)->object).refcnt--; \
-	if (!((o)->object).refcnt) \
-	    freeFunc (o); \
-    } while (FALSE)
-
-CCSPrivate *
-ccsObjectGetPrivate_ (CCSObject *object);
-
-#define ccsObjectGetPrivate(o) (ccsObjectGetPrivate_) (&(o)->object)
-
-void
-ccsObjectSetPrivate_ (CCSObject *object, CCSPrivate *priv);
-
-#define ccsObjectSetPrivate(o, priv) (ccsObjectSetPrivate_) (&(o)->object, priv)
-
-void
-ccsObjectFinalize_ (CCSObject *object);
-
-#define ccsObjectFinalize(o) (ccsObjectFinalize_) (&(o)->object)
-
-unsigned int
-ccsAllocateType ();
-
-#define GET_INTERFACE_TYPE(Interface) \
-    ccs##Interface##GetType ()
-
-#define INTERFACE_TYPE(Interface) \
-    unsigned int ccs##Interface##GetType () \
-    { \
-	static unsigned int   type_id = 0; \
-	if (!type_id) \
-	    type_id = ccsAllocateType (); \
-	 \
-	return type_id; \
-    }
-
-#define GET_INTERFACE(CType, o) (CType *) ccsObjectGetInterface (o, GET_INTERFACE_TYPE(CType))
 
 /**
  * reference counting
@@ -276,6 +114,7 @@ ccsAllocateType ();
 CCSREF_HDR (Plugin, CCSPlugin)
 CCSREF_HDR (Setting, CCSSetting)
 CCSREF_HDR (String, CCSString)
+CCSREF_HDR (Backend, CCSBackend)
 CCSREF_HDR (Group, CCSGroup)
 CCSREF_HDR (SubGroup, CCSSubGroup)
 CCSREF_HDR (SettingValue, CCSSettingValue)
@@ -542,12 +381,6 @@ struct _CCSPluginConflict
 };
 
 union _CCSSettingInfo;
-
-struct _CCSString
-{
-    char 	 *value;
-    unsigned int refCount;
-};
 
 struct _CCSIntDesc
 {
@@ -916,7 +749,6 @@ void ccsFreeBackendInfo (CCSBackendInfo *value);
 void ccsFreeIntDesc (CCSIntDesc *value);
 void ccsFreeStrRestriction (CCSStrRestriction *restriction);
 void ccsFreeStrExtension (CCSStrExtension *extension);
-void ccsFreeString (CCSString *str);
 
 
 
@@ -1271,8 +1103,6 @@ CCSBackendInfoList ccsGetExistingBackends (void);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
 
-#ifdef __cplusplus
-}
-#endif
+COMPIZCONFIG_END_DECLS
 
 #endif
