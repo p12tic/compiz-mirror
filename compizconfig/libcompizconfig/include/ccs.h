@@ -128,12 +128,14 @@ typedef struct _CCSInterfaceTable CCSInterfaceTable;
 typedef struct _CCSContextInterface CCSContextInterface;
 typedef struct _CCSPluginInterface CCSPluginInterface;
 typedef struct _CCSSettingInterface CCSSettingInterface;
+typedef struct _CCSBackendCapabilitiesInterface CCSBackendCapabilitiesInterface;
 
 struct _CCSInterfaceTable
 {
     const CCSContextInterface *contextInterface;
     const CCSPluginInterface *pluginInterface;
     const CCSSettingInterface *settingInterface;
+    const CCSBackendCapabilitiesInterface *backendCapabilitiesInterface;
 };
 
 extern const CCSInterfaceTable ccsDefaultInterfaceTable;

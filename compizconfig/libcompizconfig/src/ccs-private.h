@@ -33,6 +33,8 @@
     CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (s);
 #define BACKEND_PRIV(b) \
     CCSBackendPrivate *bPrivate = (CCSBackendPrivate *) ccsObjectGetPrivate (b);
+#define CAPABILITIES_PRIV(bc) \
+    CCSBackendCapabilitiesPrivate *bcPrivate = (CCSBackendCapabilitiesPrivate *) ccsObjectGetPrivate (bc);
 
 extern Bool basicMetadata;
 
@@ -128,6 +130,11 @@ struct _CCSBackendPrivate
     CCSContext	     *context;
     CCSBackendInterface *vTable;
 };
+
+typedef struct _CCSBackendCapabilitiesPrivate
+{
+    CCSBackend	    *backend;
+} CCSBackendCapabilitiesPrivate;
 
 typedef struct _CCSSettingsUpgrade
 {

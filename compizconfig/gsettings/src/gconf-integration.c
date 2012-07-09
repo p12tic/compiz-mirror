@@ -405,24 +405,24 @@ gnomeGConfValueChanged (GConfClient *client,
 
 	    if (needInit)
 	    {
-		readInit (context);
+		readInit (NULL, context);
 		needInit = FALSE;
 	    }
 
 	    s = findDisplaySettingForPlugin (context, "core",
 					     "window_menu_button");
 	    if (s)
-		readSetting (context, s);
+		readSetting (NULL, context, s);
 
 	    s = findDisplaySettingForPlugin (context, "move",
 					     "initiate_button");
 	    if (s)
-		readSetting (context, s);
+		readSetting (NULL, context, s);
 
 	    s = findDisplaySettingForPlugin (context, "resize",
 					     "initiate_button");
 	    if (s)
-		readSetting (context, s);
+		readSetting (NULL, context, s);
 	}
 	else
 	{
@@ -441,10 +441,10 @@ gnomeGConfValueChanged (GConfClient *client,
 		    {
 			if (needInit)
 			{
-			    readInit (context);
+			    readInit (NULL, context);
 			    needInit = FALSE;
 			}
-			readSetting (context, setting);
+			readSetting (NULL, context, setting);
 		    }
 
 		    /* do not read display settings multiple

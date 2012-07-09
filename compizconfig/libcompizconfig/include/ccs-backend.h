@@ -39,26 +39,26 @@ struct _CCSBackend
 
 typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
-typedef void (*CCSBackendExecuteEventsFunc) (unsigned int flags);
+typedef void (*CCSBackendExecuteEventsFunc) (CCSBackend *backend, unsigned int flags);
 
-typedef Bool (*CCSBackendInitFunc) (CCSContext * context);
-typedef Bool (*CCSBackendFiniFunc) (CCSContext * context);
+typedef Bool (*CCSBackendInitFunc) (CCSBackend *, CCSContext * context);
+typedef Bool (*CCSBackendFiniFunc) (CCSBackend *, CCSContext * context);
 
-typedef Bool (*CCSBackendReadInitFunc) (CCSContext * context);
+typedef Bool (*CCSBackendReadInitFunc) (CCSBackend *, CCSContext * context);
 typedef void (*CCSBackendReadSettingFunc)
-(CCSContext * context, CCSSetting * setting);
-typedef void (*CCSBackendReadDoneFunc) (CCSContext * context);
+(CCSBackend *, CCSContext * context, CCSSetting * setting);
+typedef void (*CCSBackendReadDoneFunc) (CCSBackend *backend, CCSContext * context);
 
-typedef Bool (*CCSBackendWriteInitFunc) (CCSContext * context);
+typedef Bool (*CCSBackendWriteInitFunc) (CCSBackend *backend, CCSContext * context);
 typedef void (*CCSBackendWriteSettingFunc)
-(CCSContext * context, CCSSetting * setting);
-typedef void (*CCSBackendWriteDoneFunc) (CCSContext * context);
+(CCSBackend *, CCSContext * context, CCSSetting * setting);
+typedef void (*CCSBackendWriteDoneFunc) (CCSBackend *, CCSContext * context);
 
-typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSSetting * setting);
-typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSBackend *, CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSBackend *, CCSSetting * setting);
 
-typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSContext * context);
-typedef Bool (*CCSBackendDeleteProfileFunc) (CCSContext * context, char * name);
+typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSBackend *, CCSContext * context);
+typedef Bool (*CCSBackendDeleteProfileFunc) (CCSBackend *, CCSContext * context, char * name);
 
 typedef char * (*CCSBackendGetNameFunc) (CCSBackend *);
 typedef char * (*CCSBackendGetShortDescFunc) (CCSBackend *);
@@ -131,6 +131,35 @@ CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *co
 Bool ccsBackendHasDeleteProfile (CCSBackend *backend);
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name);
 void ccsFreeBackend (CCSBackend *backend);
+
+typedef struct _CCSBackendWithCapabilities	  CCSBackendWithCapabilities;
+typedef struct _CCSBackendWithCapabilitiesPrivate CCSBackendWithCapabilitiesPrivate;
+typedef struct _CCSBackendCapabilitiesInterface  CCSBackendCapabilitiesInterface;
+
+struct _CCSBackendWithCapabilities
+{
+    CCSObject object;
+};
+
+typedef Bool (*CCSBackendCapabilitiesSupportsRead) (CCSBackendWithCapabilities *);
+typedef Bool (*CCSBackendCapabilitiesSupportsWrite) (CCSBackendWithCapabilities *);
+typedef Bool (*CCSBackendCapabilitiesSupportsProfiles) (CCSBackendWithCapabilities *);
+typedef Bool (*CCSBackendCapabilitiesSupportsIntegration) (CCSBackendWithCapabilities *);
+
+struct _CCSBackendCapabilitiesInterface
+{
+    CCSBackendCapabilitiesSupportsRead supportsRead;
+    CCSBackendCapabilitiesSupportsWrite supportsWrite;
+    CCSBackendCapabilitiesSupportsProfiles supportsProfiles;
+    CCSBackendCapabilitiesSupportsIntegration supportsIntegration;
+};
+
+Bool ccsBackendCapabilitiesSupportsRead (CCSBackendWithCapabilities *);
+Bool ccsBackendCapabilitiesSupportsWrite (CCSBackendWithCapabilities *);
+Bool ccsBackendCapabilitiesSupportsProfiles (CCSBackendWithCapabilities *);
+Bool ccsBackendCapabilitiesSupportsIntegration (CCSBackendWithCapabilities *);
+
+unsigned int ccsCCSBackendCapabilitiesInterfaceGetType ();
 
 CCSBackendInterface* getBackendInfo (void);
 

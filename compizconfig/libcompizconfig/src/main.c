@@ -232,6 +232,7 @@ INTERFACE_TYPE (CCSContextInterface)
 INTERFACE_TYPE (CCSPluginInterface)
 INTERFACE_TYPE (CCSSettingInterface)
 INTERFACE_TYPE (CCSBackendInterface);
+INTERFACE_TYPE (CCSBackendCapabilitiesInterface);
 
 Bool basicMetadata = FALSE;
 
@@ -1158,7 +1159,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, cPrivate->backend))->backendInit;
 
     if (backendInit)
-	(*backendInit) (context);
+	(*backendInit) (cPrivate->backend, context);
 
     ccsDisableFileWatch (cPrivate->configWatchId);
     if (!fallbackMode)
@@ -1199,6 +1200,34 @@ Bool ccsBackendHasProfileSupport (CCSBackend *backend)
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->hasProfileSupport) (backend);
 }
 
+static Bool
+ccsBackendCapabilitiesSupportsIntegrationDefault (CCSBackendWithCapabilities *capabilities)
+{
+    CAPABILITIES_PRIV (capabilities);
+
+    return ccsBackendHasIntegrationSupport (bcPrivate->backend);
+}
+
+Bool ccsBackendCapabilitiesSupportsRead (CCSBackendWithCapabilities *capabilities)
+{
+    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsRead) (capabilities);
+}
+
+Bool ccsBackendCapabilitiesSupportsWrite (CCSBackendWithCapabilities *capabilities)
+{
+    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsWrite) (capabilities);
+}
+
+Bool ccsBackendCapabilitiesSupportsProfiles (CCSBackendWithCapabilities *capabilities)
+{
+    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsProfiles) (capabilities);
+}
+
+Bool ccsBackendCapabilitiesSupportsIntegration (CCSBackendWithCapabilities *capabilities)
+{
+    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsIntegration) (capabilities);
+}
+
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend)
 {
     return (GET_INTERFACE (CCSBackendInterface, backend))->executeEvents != NULL;
@@ -1206,17 +1235,17 @@ Bool ccsBackendHasExecuteEvents (CCSBackend *backend)
 
 void ccsBackendExecuteEvents (CCSBackend *backend, unsigned int flags)
 {
-    (*(GET_INTERFACE (CCSBackendInterface, backend))->executeEvents) (flags);
+    (*(GET_INTERFACE (CCSBackendInterface, backend))->executeEvents) (backend, flags);
 }
 
 Bool ccsBackendInit (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendInit) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendInit) (backend, context);
 }
 
 Bool ccsBackendFini (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendFini) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendFini) (backend, context);
 }
 
 Bool ccsBackendHasReadInit (CCSBackend *backend)
@@ -1226,7 +1255,7 @@ Bool ccsBackendHasReadInit (CCSBackend *backend)
 
 Bool ccsBackendReadInit (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->readInit) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->readInit) (backend, context);
 }
 
 Bool ccsBackendHasReadSetting (CCSBackend *backend)
@@ -1236,7 +1265,7 @@ Bool ccsBackendHasReadSetting (CCSBackend *backend)
 
 void ccsBackendReadSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting)
 {
-    (*(GET_INTERFACE (CCSBackendInterface, backend))->readSetting) (context, setting);
+    (*(GET_INTERFACE (CCSBackendInterface, backend))->readSetting) (backend, context, setting);
 }
 
 Bool ccsBackendHasReadDone (CCSBackend *backend)
@@ -1246,7 +1275,7 @@ Bool ccsBackendHasReadDone (CCSBackend *backend)
 
 void ccsBackendReadDone (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->readDone) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->readDone) (backend, context);
 }
 
 Bool ccsBackendHasWriteInit (CCSBackend *backend)
@@ -1256,7 +1285,7 @@ Bool ccsBackendHasWriteInit (CCSBackend *backend)
 
 Bool ccsBackendWriteInit (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeInit) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeInit) (backend, context);
 }
 
 Bool ccsBackendHasWriteSetting (CCSBackend *backend)
@@ -1266,7 +1295,7 @@ Bool ccsBackendHasWriteSetting (CCSBackend *backend)
 
 void ccsBackendWriteSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting)
 {
-    (*(GET_INTERFACE (CCSBackendInterface, backend))->writeSetting) (context, setting);
+    (*(GET_INTERFACE (CCSBackendInterface, backend))->writeSetting) (backend, context, setting);
 }
 
 Bool ccsBackendHasWriteDone (CCSBackend *backend)
@@ -1276,7 +1305,7 @@ Bool ccsBackendHasWriteDone (CCSBackend *backend)
 
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (backend, context);
 }
 
 Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend)
@@ -1286,7 +1315,7 @@ Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend)
 
 Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getSettingIsIntegrated) (setting);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getSettingIsIntegrated) (backend, setting);
 }
 
 Bool ccsBackendHasGetSettingIsReadOnly (CCSBackend *backend)
@@ -1296,7 +1325,7 @@ Bool ccsBackendHasGetSettingIsReadOnly (CCSBackend *backend)
 
 Bool ccsBackendGetSettingIsReadOnly (CCSBackend *backend, CCSSetting *setting)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getSettingIsReadOnly) (setting);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getSettingIsReadOnly) (backend, setting);
 }
 
 Bool ccsBackendHasGetExistingProfiles (CCSBackend *backend)
@@ -1306,7 +1335,7 @@ Bool ccsBackendHasGetExistingProfiles (CCSBackend *backend)
 
 CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getExistingProfiles) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getExistingProfiles) (backend, context);
 }
 
 Bool ccsBackendHasDeleteProfile (CCSBackend *backend)
@@ -1316,7 +1345,114 @@ Bool ccsBackendHasDeleteProfile (CCSBackend *backend)
 
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->deleteProfile) (context, name);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->deleteProfile) (backend, context, name);
+}
+
+static Bool
+ccsBackendCapabilitiesSupportsReadDefault (CCSBackendWithCapabilities *capabilities)
+{
+    CAPABILITIES_PRIV (capabilities);
+
+    return ccsBackendHasReadSetting (bcPrivate->backend);
+}
+
+static Bool
+ccsBackendCapabilitiesSupportsWriteDefault (CCSBackendWithCapabilities *capabilities)
+{
+    CAPABILITIES_PRIV (capabilities);
+
+    return ccsBackendHasWriteSetting (bcPrivate->backend);
+}
+
+static Bool
+ccsBackendCapabilitiesSupportsProfilesDefault (CCSBackendWithCapabilities *capabilities)
+{
+    CAPABILITIES_PRIV (capabilities);
+
+    return ccsBackendHasProfileSupport (bcPrivate->backend);
+}
+
+static void ccsBackendCapabilitiesExecuteEventsWrapper (CCSBackend *backend, unsigned int flags)
+{
+    if (ccsBackendHasExecuteEvents (backend))
+	ccsBackendExecuteEvents (backend, flags);
+}
+
+static Bool ccsBackendCapabilitiesReadInitWrapper (CCSBackend *backend, CCSContext *context)
+{
+    if (ccsBackendHasReadInit (backend))
+	return ccsBackendReadInit (backend, context);
+
+    return TRUE;
+}
+
+static void ccsBackendCapabilitiesReadSettingWrapper (CCSBackend *backend, CCSContext *context, CCSSetting *setting)
+{
+    if (ccsBackendHasReadSetting (backend))
+	ccsBackendReadSetting (backend, context, setting);
+}
+
+static void ccsBackendCapabilitiesReadDoneWrapper (CCSBackend *backend, CCSContext *context)
+{
+    if (ccsBackendHasReadDone (backend))
+	ccsBackendReadDone (backend, context);
+}
+
+static Bool ccsBackendCapabilitiesWriteInitWrapper (CCSBackend *backend, CCSContext *context)
+{
+    if (ccsBackendHasWriteInit (backend))
+	return ccsBackendWriteInit (backend, context);
+
+    return TRUE;
+}
+
+static void ccsBackendCapabilitiesWriteSettingWrapper (CCSBackend *backend, CCSContext *context, CCSSetting *setting)
+{
+    if (ccsBackendHasWriteSetting (backend))
+	ccsBackendWriteSetting (backend, context, setting);
+}
+
+static void ccsBackendCapabilitiesWriteDoneWrapper (CCSBackend *backend, CCSContext *context)
+{
+    if (ccsBackendHasWriteDone (backend))
+	ccsBackendWriteDone (backend, context);
+}
+
+static Bool ccsBackendCapabilitiesGetSettingIsIntegratedWrapper (CCSBackend *backend, CCSSetting *setting)
+{
+    if (ccsBackendHasGetSettingIsIntegrated (backend) &&
+	ccsBackendHasIntegrationSupport (backend))
+	return ccsBackendGetSettingIsIntegrated (backend, setting);
+
+    return FALSE;
+}
+
+static Bool ccsBackendCapabilitiesGetSettingIsReadOnlyWrapper (CCSBackend *backend, CCSSetting *setting)
+{
+    if (ccsBackendHasGetSettingIsReadOnly (backend))
+	return ccsBackendGetSettingIsReadOnly (backend, setting);
+
+    return FALSE;
+}
+
+static CCSStringList ccsBackendCapabilitiesGetExistingProfilesWrapper (CCSBackend *backend, CCSContext *context)
+{
+    if (ccsBackendHasGetExistingProfiles (backend) &&
+	ccsBackendHasProfileSupport (backend))
+	return ccsBackendGetExistingProfiles (backend, context);
+
+    static CCSStringList sl = NULL;
+
+    return sl;
+}
+
+static Bool ccsBackendCapabilitiesDeleteProfileWrapper (CCSBackend *backend, CCSContext *context, char *profile)
+{
+    if (ccsBackendHasDeleteProfile (backend) &&
+	ccsBackendHasProfileSupport (backend))
+	return ccsBackendDeleteProfile (backend, context, profile);
+
+    return FALSE;
 }
 
 static Bool
@@ -5229,9 +5365,40 @@ static const CCSSettingInterface ccsDefaultSettingInterface =
     ccsFreeSettingDefault
 };
 
+const CCSBackendInterface ccsBackendCapabilitiesInterfaceWrapper =
+{
+    ccsBackendGetName,
+    ccsBackendGetShortDesc,
+    ccsBackendGetLongDesc,
+    ccsBackendHasIntegrationSupport,
+    ccsBackendHasProfileSupport,
+    ccsBackendCapabilitiesExecuteEventsWrapper,
+    ccsBackendInit,
+    ccsBackendFini,
+    ccsBackendCapabilitiesReadInitWrapper,
+    ccsBackendCapabilitiesReadSettingWrapper,
+    ccsBackendCapabilitiesReadDoneWrapper,
+    ccsBackendCapabilitiesWriteInitWrapper,
+    ccsBackendCapabilitiesWriteSettingWrapper,
+    ccsBackendCapabilitiesWriteDoneWrapper,
+    ccsBackendCapabilitiesGetSettingIsIntegratedWrapper,
+    ccsBackendCapabilitiesGetSettingIsReadOnlyWrapper,
+    ccsBackendCapabilitiesGetExistingProfilesWrapper,
+    ccsBackendCapabilitiesDeleteProfileWrapper
+};
+
+const CCSBackendCapabilitiesInterface ccsDefaultBackendCapabilitiesInterface =
+{
+    ccsBackendCapabilitiesSupportsReadDefault,
+    ccsBackendCapabilitiesSupportsWriteDefault,
+    ccsBackendCapabilitiesSupportsIntegrationDefault,
+    ccsBackendCapabilitiesSupportsProfilesDefault
+};
+
 const CCSInterfaceTable ccsDefaultInterfaceTable =
 {
     &ccsDefaultContextInterface,
     &ccsDefaultPluginInterface,
-    &ccsDefaultSettingInterface
+    &ccsDefaultSettingInterface,
+    &ccsDefaultBackendCapabilitiesInterface
 };
