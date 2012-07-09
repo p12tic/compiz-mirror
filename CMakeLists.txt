@@ -198,7 +198,7 @@ add_subdirectory (tests)
 # schema recompilation to happen after all other install
 # targets (there is no way to set install target dependencies)
 # in CMake
-add_subdirectory (postinst)
+#add_subdirectory (postinst)
 
 compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")
