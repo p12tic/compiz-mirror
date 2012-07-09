@@ -1,3 +1,4 @@
+#define CCS_LOG_DOMAIN "gsettings"
 #include <string.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
