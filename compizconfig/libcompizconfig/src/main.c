@@ -1303,34 +1303,6 @@ Bool ccsBackendCapabilitiesSupportsIntegration (CCSBackendWithCapabilities *capa
     return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsIntegration) (capabilities);
 }
 
-static Bool
-ccsBackendCapabilitiesSupportsIntegrationDefault (CCSBackendWithCapabilities *capabilities)
-{
-    CAPABILITIES_PRIV (capabilities);
-
-    return ccsBackendHasIntegrationSupport (bcPrivate->backend);
-}
-
-Bool ccsBackendCapabilitiesSupportsRead (CCSBackendWithCapabilities *capabilities)
-{
-    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsRead) (capabilities);
-}
-
-Bool ccsBackendCapabilitiesSupportsWrite (CCSBackendWithCapabilities *capabilities)
-{
-    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsWrite) (capabilities);
-}
-
-Bool ccsBackendCapabilitiesSupportsProfiles (CCSBackendWithCapabilities *capabilities)
-{
-    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsProfiles) (capabilities);
-}
-
-Bool ccsBackendCapabilitiesSupportsIntegration (CCSBackendWithCapabilities *capabilities)
-{
-    return (*(GET_INTERFACE (CCSBackendCapabilitiesInterface, capabilities))->supportsIntegration) (capabilities);
-}
-
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend)
 {
     return (GET_INTERFACE (CCSBackendInterface, backend))->executeEvents != NULL;
