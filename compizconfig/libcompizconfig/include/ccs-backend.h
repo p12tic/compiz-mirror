@@ -161,6 +161,8 @@ Bool ccsBackendCapabilitiesSupportsIntegration (CCSBackendWithCapabilities *);
 
 unsigned int ccsCCSBackendCapabilitiesInterfaceGetType ();
 
+void ccsFreeBackendWithCapabilities (CCSBackendWithCapabilities *);
+
 CCSBackendInterface* getBackendInfo (void);
 
 #endif

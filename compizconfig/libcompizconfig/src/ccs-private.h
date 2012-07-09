@@ -34,13 +34,13 @@
 #define BACKEND_PRIV(b) \
     CCSBackendPrivate *bPrivate = (CCSBackendPrivate *) ccsObjectGetPrivate (b);
 #define CAPABILITIES_PRIV(bc) \
-    CCSBackendCapabilitiesPrivate *bcPrivate = (CCSBackendCapabilitiesPrivate *) ccsObjectGetPrivate (bc);
+    CCSBackendWithCapabilitiesPrivate *bcPrivate = (CCSBackendWithCapabilitiesPrivate *) ccsObjectGetPrivate (bc);
 
 extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate
 {
-    CCSBackend        *backend;
+    CCSBackendWithCapabilities  *backend;
     CCSPluginList     plugins;         /* list of plugins settings
                                           were loaded for */
     CCSPluginCategory *categories;     /* list of plugin categories */
@@ -131,10 +131,10 @@ struct _CCSBackendPrivate
     CCSBackendInterface *vTable;
 };
 
-typedef struct _CCSBackendCapabilitiesPrivate
+typedef struct _CCSBackendWithCapabilitiesPrivate
 {
     CCSBackend	    *backend;
-} CCSBackendCapabilitiesPrivate;
+} CCSBackendWithCapabilitiesPrivate;
 
 typedef struct _CCSSettingsUpgrade
 {

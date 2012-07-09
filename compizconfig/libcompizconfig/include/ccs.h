@@ -135,6 +135,7 @@ struct _CCSInterfaceTable
     const CCSContextInterface *contextInterface;
     const CCSPluginInterface *pluginInterface;
     const CCSSettingInterface *settingInterface;
+    const CCSBackendInterface *backendCapabilitiesWrapperInterface;
     const CCSBackendCapabilitiesInterface *backendCapabilitiesInterface;
 };
 
