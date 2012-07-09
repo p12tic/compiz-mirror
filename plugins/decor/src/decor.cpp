@@ -230,11 +230,8 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 	{
 	    tmpRegion = mOutputRegion;
 	    tmpRegion &= region;
-
-	    if (tmpRegion.isEmpty ())
-		preg = &region;
-	    else
-		preg = &shadowRegion;
+	    tmpRegion &= shadowRegion;
+	    preg = &tmpRegion;
 	}
 	else
 	    preg = &region;
