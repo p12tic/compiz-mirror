@@ -1086,11 +1086,39 @@ ccsFreeBackend (CCSBackend *backend)
     free (backend);
 }
 
+static CCSBackend *
+ccsBackendNewWithInterface (CCSContext *context, CCSBackendInterface *interface, void *dlhand)
+{
+    CCSBackend *backend = calloc (1, sizeof (CCSBackend));
+    CCSBackendPrivate *bPrivate = NULL;
+
+    if (!backend)
+	return NULL;
+
+    ccsObjectInit (backend, &ccsDefaultObjectAllocator);
+    ccsBackendRef (backend);
+
+    bPrivate = calloc (1, sizeof (CCSBackendPrivate));
+
+    if (!bPrivate)
+    {
+	ccsBackendUnref (backend);
+	return NULL;
+    }
+
+    bPrivate->dlhand = dlhand;
+    bPrivate->context = context;
+
+    ccsObjectSetPrivate (backend, (CCSPrivate *) bPrivate);
+    ccsObjectAddInterface (backend, (CCSInterface *) interface, GET_INTERFACE_TYPE (CCSBackendInterface));
+
+    return backend;
+}
+
 Bool
 ccsSetBackendDefault (CCSContext * context, char *name)
 {
     Bool fallbackMode = FALSE;
-    CCSBackendPrivate *bPrivate = NULL;
     CONTEXT_PRIV (context);
 
     if (cPrivate->backend)
@@ -1129,30 +1157,13 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	return FALSE;
     }
 
-    CCSBackend *backend = calloc (1, sizeof (CCSBackend));
+    CCSBackend *backend = ccsBackendNewWithInterface (context, vt, dlhand);
 
     if (!backend)
     {
 	dlclose (dlhand);
 	return FALSE;
     }
-
-    ccsObjectInit (backend, &ccsDefaultObjectAllocator);
-    ccsBackendRef (backend);
-
-    bPrivate = calloc (1, sizeof (CCSBackendPrivate));
-
-    if (!bPrivate)
-    {
-	ccsBackendUnref (backend);
-	dlclose (dlhand);
-    }
-
-    bPrivate->dlhand = dlhand;
-    bPrivate->context = context;
-
-    ccsObjectSetPrivate (backend, (CCSPrivate *) bPrivate);
-    ccsObjectAddInterface (backend, (CCSInterface *) vt, GET_INTERFACE_TYPE (CCSBackendInterface));
 
     cPrivate->backend = backend;
 
