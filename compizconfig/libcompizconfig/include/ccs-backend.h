@@ -117,7 +117,6 @@ void ccsBackendReadDone (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendWriteInit (CCSBackend *backend, CCSContext *context);
 void ccsBackendWriteSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting);
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context);
-Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend);
 Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting);
 Bool ccsBackendGetSettingIsReadOnly (CCSBackend *backend, CCSSetting *setting);
 CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *context);
