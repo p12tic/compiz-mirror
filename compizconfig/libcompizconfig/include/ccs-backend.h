@@ -23,6 +23,7 @@
 #define CCS_BACKEND_H
 
 #include <ccs-object.h>
+#include <ccs-string.h>
 #include <ccs-list.h>
 
 COMPIZCONFIG_BEGIN_DECLS

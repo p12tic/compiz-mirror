@@ -4,6 +4,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../tests)
 link_directories (${CMAKE_INSTALL_PREFIX}/lib)
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../mocks/libcompizconfig)
+link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../tests/)
 
 add_executable (compizconfig_test_ccs_object
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_object.cpp)
@@ -21,7 +22,8 @@ add_executable (compizconfig_test_ccs_backend
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_backend.cpp)
 
 add_executable (compizconfig_test_ccs_mock_backend_conformance
-		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_backend.cpp)
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_mock_backend_conformance.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/../../tests/compizconfig_backend_concept_test.cpp)
 
 if (HAVE_PROTOBUF)
     set (LIBCOMPIZCONFIG_LIBRARIES
@@ -82,6 +84,7 @@ target_link_libraries (compizconfig_test_ccs_mock_backend_conformance
 		       compizconfig_ccs_plugin_mock
 		       compizconfig_ccs_setting_mock
 		       compizconfig_ccs_backend_mock)
+		       #compizconfig_ccs_backend_conformance_test)
 
 target_link_libraries (compizconfig_test_ccs_setting
 		       ${GTEST_BOTH_LIBRARIES}
@@ -98,3 +101,5 @@ compiz_discover_tests (compizconfig_test_ccs_object)
 compiz_discover_tests (compizconfig_test_ccs_context)
 compiz_discover_tests (compizconfig_test_ccs_plugin)
 compiz_discover_tests (compizconfig_test_ccs_setting)
+compiz_discover_tests (compizconfig_test_ccs_backend)
+compiz_discover_tests (compizconfig_test_ccs_mock_backend_conformance)

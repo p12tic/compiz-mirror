@@ -27,8 +27,15 @@ MockCCSBackendConceptTestEnvironment::SetUp ()
     return backend;
 }
 
-static MockCCSBackendConceptTestEnvironment mockBackendEnv;
+void
+MockCCSBackendConceptTestEnvironment::TearDown (CCSBackend *backend)
+{
+    ccsFreeMockBackend (backend);
+}
 
-INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest, ::testing::Values (&mockBackendEnv));
+static MockCCSBackendConceptTestEnvironment mockBackendEnv;
+static CCSBackendConceptTestEnvironmentInterface *backendEnv = &mockBackendEnv;
+
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest, ::testing::Values (backendEnv));
 
 

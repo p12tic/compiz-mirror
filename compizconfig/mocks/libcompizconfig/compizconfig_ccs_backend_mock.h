@@ -1,3 +1,6 @@
+#ifndef _COMPIZCONFIG_CCS_BACKEND_MOCK_H
+#define _COMPIZCONFIG_CCS_BACKEND_MOCK_H
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -153,3 +156,5 @@ class CCSBackendGMock :
 };
 
 extern CCSBackendInterface CCSBackendGMockInterface;
+
+#endif
