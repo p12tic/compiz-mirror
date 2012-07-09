@@ -180,8 +180,11 @@ decomposeGSettingsPath (const char *pathInput,
     *pluginName = NULL;
     *screenNum = 0;
 
+    /* Can't overflow, limit is 1023 chars */
     int fields = sscanf (path, "%*[^/]/%*[^/]/%1023[^/]/screen%u",
                          pluginBuf, screenNum);
+
+    pluginBuf[1023] = '\0'
     if (fields == 2)
     {
         *pluginName = g_strdup (pluginBuf);
