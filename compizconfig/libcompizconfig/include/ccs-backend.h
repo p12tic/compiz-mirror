@@ -163,6 +163,10 @@ unsigned int ccsCCSBackendCapabilitiesInterfaceGetType ();
 
 void ccsFreeBackendWithCapabilities (CCSBackendWithCapabilities *);
 
+/* Backend opener method */
+void *
+ccsBackendOpen (char *name, CCSBackendInterface **interface, Bool *fellback);
+
 /* Constructor method */
 CCSBackend *
 ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);

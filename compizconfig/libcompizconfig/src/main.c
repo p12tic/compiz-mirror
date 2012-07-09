@@ -1157,6 +1157,38 @@ ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSB
     return backendCapabilities;
 }
 
+void *
+ccsOpenBackend (char *name, CCSBackendInterface **vt, Bool *fellback)
+{
+    void *dlhand = openBackend (name);
+    if (!dlhand)
+    {
+	*fellback = TRUE;
+	name = "ini";
+	dlhand = openBackend (name);
+    }
+
+    if (!dlhand)
+	return NULL;
+
+    BackendGetInfoProc getInfo = dlsym (dlhand, "getBackendInfo");
+    if (!getInfo)
+    {
+	dlclose (dlhand);
+	return NULL;
+    }
+
+    *vt = getInfo ();
+    if (!*vt)
+    {
+	dlclose (dlhand);
+	*vt = NULL;
+	return NULL;
+    }
+
+    return dlhand;
+}
+
 Bool
 ccsSetBackendDefault (CCSContext * context, char *name)
 {
@@ -1174,30 +1206,12 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	cPrivate->backend = NULL;
     }
 
-    void *dlhand = openBackend (name);
-    if (!dlhand)
-    {
-	fallbackMode = TRUE;
-	name = "ini";
-	dlhand = openBackend (name);
-    }
+    CCSBackendInterface *vt = NULL;
+
+    void *dlhand = ccsOpenBackend (name, &vt, &fallbackMode);
 
     if (!dlhand)
 	return FALSE;
-
-    BackendGetInfoProc getInfo = dlsym (dlhand, "getBackendInfo");
-    if (!getInfo)
-    {
-	dlclose (dlhand);
-	return FALSE;
-    }
-
-    CCSBackendInterface *vt = getInfo ();
-    if (!vt)
-    {
-	dlclose (dlhand);
-	return FALSE;
-    }
 
     CCSBackend *backend = ccsBackendNewWithInterface (context, vt, dlhand);
 
