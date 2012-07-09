@@ -25,6 +25,8 @@
 #include <ccs-object.h>
 #include <ccs-list.h>
 
+COMPIZCONFIG_BEGIN_DECLS
+
 typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
@@ -172,5 +174,7 @@ CCSBackend *
 ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
 
 CCSBackendInterface* getBackendInfo (void);
+
+COMPIZCONFIG_END_DECLS
 
 #endif
