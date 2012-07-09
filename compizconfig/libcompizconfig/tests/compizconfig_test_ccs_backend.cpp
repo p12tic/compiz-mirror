@@ -52,9 +52,11 @@ TEST(CCSBackendTest, TestMock)
     ccsBackendReadDone (backend, NULL);
     ccsBackendWriteInit (backend, NULL);
     ccsBackendWriteSetting (backend, NULL, NULL);
+    ccsBackendWriteDone (backend, NULL);
     ccsBackendGetSettingIsIntegrated (backend, NULL);
+    ccsBackendGetSettingIsReadOnly (backend, NULL);
     ccsBackendGetExistingProfiles (backend, NULL);
     ccsBackendDeleteProfile (backend, NULL, NULL);
 
-    ccsBackendUnref (backend);
+    ccsFreeMockBackend (backend);
 }
