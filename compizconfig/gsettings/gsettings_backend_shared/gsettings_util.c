@@ -169,42 +169,26 @@ decomposeGSettingsPath (const char *pathInput,
 			char **pluginName,
 			unsigned int *screenNum)
 {
-    char         *path = (char *) pathInput;
-    char         *token;
+    const char *path = pathInput;
+    const int prefixLen = strlen (COMPIZ);
+    char pluginBuf[1024];
 
-    path += strlen (COMPIZ) + 1;
+    if (strncmp (path, COMPIZ, prefixLen))
+        return FALSE;
+    path += prefixLen + 1;
 
     *pluginName = NULL;
     *screenNum = 0;
 
-    token = strsep (&path, "/"); /* Profile name */
-    if (!token)
-	return FALSE;
-
-    token = strsep (&path, "/"); /* plugins */
-    if (!token)
-	return FALSE;
-
-    token = strsep (&path, "/"); /* plugin */
-    if (!token)
-	return FALSE;
-
-    *pluginName = g_strdup (token);
-
-    if (!*pluginName)
-	return FALSE;
-
-    token = strsep (&path, "/"); /* screen%i */
-    if (!token)
+    int fields = sscanf (path, "%*[^/]/%*[^/]/%1023[^/]/screen%u",
+                         pluginBuf, screenNum);
+    if (fields == 2)
     {
-	g_free (pluginName);
-	*pluginName = NULL;
-	return FALSE;
+        *pluginName = g_strdup (pluginBuf);
+        return TRUE;
     }
 
-    sscanf (token, "screen%d", screenNum);
-
-    return TRUE;
+    return FALSE;
 }
 
 gboolean

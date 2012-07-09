@@ -158,7 +158,7 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     char *pluginName;
     unsigned int screenNum;
 
-    EXPECT_TRUE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginName, &screenNum));
+    ASSERT_TRUE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginName, &screenNum));
     EXPECT_EQ (std::string (pluginName), "fake");
     EXPECT_EQ (screenNum, 1);
 
