@@ -22,8 +22,7 @@ add_executable (compizconfig_test_ccs_backend
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_backend.cpp)
 
 add_executable (compizconfig_test_ccs_mock_backend_conformance
-		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_mock_backend_conformance.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/../../tests/compizconfig_backend_concept_test.cpp)
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_mock_backend_conformance.cpp)
 
 if (HAVE_PROTOBUF)
     set (LIBCOMPIZCONFIG_LIBRARIES
@@ -84,7 +83,6 @@ target_link_libraries (compizconfig_test_ccs_mock_backend_conformance
 		       compizconfig_ccs_plugin_mock
 		       compizconfig_ccs_setting_mock
 		       compizconfig_ccs_backend_mock)
-		       #compizconfig_ccs_backend_conformance_test)
 
 target_link_libraries (compizconfig_test_ccs_setting
 		       ${GTEST_BOTH_LIBRARIES}

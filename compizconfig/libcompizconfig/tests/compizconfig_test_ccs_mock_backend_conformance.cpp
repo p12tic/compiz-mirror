@@ -10,28 +10,133 @@
 
 using ::testing::_;
 using ::testing::Return;
+using ::testing::Invoke;
+using ::testing::WithArgs;
+
+template <typename T>
+class ValueForKeyRetreival
+{
+    public:
+
+	T GetValueForKey (const std::string &key,
+			  const std::map <std::string, T> &map)
+	{
+	    typename std::map <std::string, T>::const_iterator it = map.find (key);
+
+	    if (it != map.end ())
+		return it->second;
+	    else
+		throw std::exception ();
+	}
+};
+
+template <>
+class ValueForKeyRetreival <char *>
+{
+    public:
+
+	const char * GetValueForKey (const std::string &key,
+				     const std::map <std::string, std::string> &map)
+	{
+	    std::map <std::string, std::string>::const_iterator it = map.find (key);
+
+	    if (it != map.end ())
+		return it->second.c_str ();
+	    else
+		throw std::exception ();
+	}
+};
 
 class MockCCSBackendConceptTestEnvironment :
     public CCSBackendConceptTestEnvironmentInterface
 {
     public:
 
-	CCSBackend * SetUp ();
-	void TearDown (CCSBackend *backend);
+	CCSBackend * SetUp ()
+	{
+	    mBackend = ccsMockBackendNew ();
+	    mBackendGMock = (CCSBackendGMock *) ccsObjectGetPrivate (mBackend);
+
+	    ON_CALL (*mBackendGMock, readSetting (_,_))
+		    .WillByDefault (
+			WithArgs<1> (
+			    Invoke (
+				this,
+				&MockCCSBackendConceptTestEnvironment::WriteValueToSetting)));
+
+	    return mBackend;
+	}
+
+	void TearDown (CCSBackend *backend)
+	{
+	    ccsFreeMockBackend (backend);
+
+
+	}
+
+	void WriteIntegerAtKey (const std::string &plugin,
+				const std::string &key,
+				int value)
+
+	{
+	    mIntMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void WriteFloatAtKey (const std::string &plugin,
+			      const std::string &key,
+			      float value)
+	{
+	    mFloatMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void WriteStringAtKey (const std::string &plugin,
+			       const std::string &key,
+			       const std::string &value)
+	{
+	    mStringMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+    protected:
+
+	void WriteValueToSetting (CCSSetting *setting)
+	{
+	    std::string key (std::string (ccsPluginGetName (ccsSettingGetParent (setting))) +
+			     "/" + std::string (ccsSettingGetName (setting)));
+
+	    switch (ccsSettingGetType (setting))
+	    {
+		case TypeInt:
+
+		    ccsSetInt (setting, ValueForKeyRetreival <int> ().GetValueForKey (key, mIntMap), FALSE);
+		    break;
+
+		case TypeFloat:
+
+		    ccsSetFloat (setting, ValueForKeyRetreival <float> ().GetValueForKey (key, mFloatMap), FALSE);
+		    break;
+
+		case TypeString:
+
+		    ccsSetString (setting, ValueForKeyRetreival <char *> ().GetValueForKey (key, mStringMap), FALSE);
+		    break;
+
+		default:
+
+		    throw std::exception ();
+	    }
+	}
+
+    private:
+
+	CCSBackend *mBackend;
+	CCSBackendGMock *mBackendGMock;
+	std::map <std::string, int> mIntMap;
+	std::map <std::string, float> mFloatMap;
+	std::map <std::string, std::string> mStringMap;
 };
-
-CCSBackend *
-MockCCSBackendConceptTestEnvironment::SetUp ()
-{
-    CCSBackend *backend = ccsMockBackendNew ();
-    return backend;
-}
-
-void
-MockCCSBackendConceptTestEnvironment::TearDown (CCSBackend *backend)
-{
-    ccsFreeMockBackend (backend);
-}
 
 static MockCCSBackendConceptTestEnvironment mockBackendEnv;
 static CCSBackendConceptTestEnvironmentInterface *backendEnv = &mockBackendEnv;
