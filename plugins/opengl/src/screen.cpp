@@ -341,8 +341,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
-    // Currently we rely unconditionally on preserving the buffer contents.
-    eglSurfaceAttrib (dpy, priv->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED);
+    // Do not preserve buffer contents on swap
+    eglSurfaceAttrib (dpy, priv->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTROYED);
 
     priv->ctx = eglCreateContext (dpy, config, EGL_NO_CONTEXT, context_attribs);
     if (priv->ctx == EGL_NO_CONTEXT)
@@ -414,6 +414,15 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     if (strstr (eglExtensions, "EGL_NV_post_sub_buffer"))
 	GL::postSubBuffer = (GL::EGLPostSubBufferNVProc)
 	    eglGetProcAddress ("eglPostSubBufferNV");
+
+    if (!GL::fbo &&
+	!GL::postSubBuffer)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"GL_EXT_framebuffer_object or EGL_NV_post_sub_buffer are required");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
 
     GL::activeTexture = glActiveTexture;
     GL::genFramebuffers = glGenFramebuffers;
@@ -629,6 +638,16 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::framebufferTexture2D   &&
 	    GL::generateMipmap)
 	    GL::fbo = true;
+    }
+
+
+    if (!GL::fbo &&
+	!GL::copySubBuffer)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"GL_EXT_framebuffer_object or GLX_MESA_copy_sub_buffer are required");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
     }
 
     if (strstr (glExtensions, "GL_ARB_vertex_buffer_object"))
@@ -1069,6 +1088,14 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     lighting (false),
     #ifndef USE_GLES
     getProcAddress (0),
+    bufferBlit (screen->dpy (), *screen,
+		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
+		cScreen->output (),
+		boost::bind (&PrivateGLScreen::waitForVideoSync, this)),
+    #else
+    bufferBlit (screen->dpy (), *screen,
+		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
+		surface),
     #endif
     scratchFbo (NULL),
     scratchFboBindFailed (false),
@@ -1677,6 +1704,111 @@ PrivateGLScreen::waitForVideoSync ()
         GL::waitForVideoSync ();
 }
 
+BaseDoubleBuffer::BaseDoubleBuffer (Display *d, const CompSize &s,
+				const boost::function <bool ()> &getSyncVblankFunc) :
+    mDpy (d),
+    mSize (s),
+    getSyncVblank (getSyncVblankFunc)
+{
+}
+
+#ifndef USE_GLES
+
+GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
+			      const CompSize &s,
+			      const boost::function <bool ()> &getSyncVblankFunc,
+			      Window output,
+			      const boost::function <void ()> &waitVSyncFunc) :
+    BaseDoubleBuffer (d, s, getSyncVblankFunc),
+    mOutput (output),
+    waitVSync (waitVSyncFunc)
+{
+}
+
+void
+GLXDoubleBuffer::swapBuffers () const
+{
+    GL::controlSwapVideoSync (getSyncVblank ());
+    glXSwapBuffers (mDpy, mOutput);
+}
+
+bool
+GLXDoubleBuffer::subBufferBlitAvailable () const
+{
+    return GL::copySubBuffer ? true : false;
+}
+
+void
+GLXDoubleBuffer::subBufferBlit (const CompRegion &region) const
+{
+    CompRect::vector blitRects (region.rects ());
+    int		     y = 0;
+
+    waitVSync ();
+
+    foreach (const CompRect &r, blitRects)
+    {
+	y = mSize.height () - r.y2 ();
+
+	(*GL::copySubBuffer) (screen->dpy (), mOutput,
+			      r.x1 (), y,
+			      r.width (),
+			      r.height ());
+    }
+}
+
+#else
+
+EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
+			      const CompSize &s,
+			      const boost::function <bool ()> &getSyncVblankFunc,
+			      EGLSurface const & surface) :
+    BaseDoubleBuffer (d, s, getSyncVblankFunc),
+    mSurface (surface)
+{
+}
+
+void
+EGLDoubleBuffer::swapBuffers () const
+{
+    GL::controlSwapVideoSync (getSyncVblank ());
+
+    eglSwapBuffers (eglGetDisplay (mDpy), mSurface);
+    eglWaitGL ();
+    XFlush (mDpy);
+}
+
+bool
+EGLDoubleBuffer::subBufferBlitAvailable () const
+{
+    return GL::postSubBuffer ? true : false;
+}
+
+void
+EGLDoubleBuffer::subBufferBlit (const CompRegion &region) const
+{
+    CompRect::vector blitRects (region.rects ());
+    int		     y = 0;
+
+    GL::controlSwapVideoSync (getSyncVblank ());
+
+    foreach (const CompRect &r, blitRects)
+    {
+	y = mSize.height () - r.y2 ();
+
+	(*GL::postSubBuffer) (eglGetDisplay (screen->dpy ()),
+			      mSurface,
+			      r.x1 (), y,
+			      r.width (),
+			      r.height ());
+    }
+
+    eglWaitGL ();
+    XFlush (screen->dpy ());
+}
+
+#endif
+
 void
 PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 			       unsigned int        mask,
@@ -1691,10 +1823,20 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     GLFramebufferObject *oldFbo = NULL;
     bool useFbo = false;
 
-    if (!scratchFboBindFailed)
+    /* Clear the color buffer where appropriate */
+    if (!scratchFboBindFailed && GL::fbo)
     {
+	if (clearBuffers)
+	    glClear (GL_COLOR_BUFFER_BIT);
+
 	oldFbo = scratchFbo->bind ();
 	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
+    }
+    else
+    {
+	if (clearBuffers)
+	    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+		glClear (GL_COLOR_BUFFER_BIT);
     }
 
     if (!useFbo && !scratchFboBindFailed)
@@ -1721,12 +1863,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
 #endif
 
-    if (clearBuffers)
-    {
-	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-	    glClear (GL_COLOR_BUFFER_BIT);
-    }
-
     CompRegion tmpRegion (region);
 
     foreach (CompOutput *output, outputs)
@@ -1747,11 +1883,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    lastViewport = r;
 	}
 
-#ifdef USE_GLES
-	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK || !GL::postSubBuffer)
-#else
 	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-#endif
 	{
 	    GLMatrix identity;
 
@@ -1796,109 +1928,18 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	GLFramebufferObject::rebind (oldFbo);
 
 	// FIXME: does not work if screen dimensions exceed max texture size
-	gScreen->glPaintCompositedOutput (tmpRegion, scratchFbo, mask);
+	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
-    glFlush ();
+    unsigned int blitMask = 0;
 
-#ifdef USE_GLES
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK || !GL::postSubBuffer)
-#else
+    if (useFbo)
+	blitMask |= compiz::opengl::PaintedWithFramebufferObject;
+
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-#endif
-     {
-	/*
-	 * controlSwapVideoSync is much faster than waitForVideoSync because
-	 * it won't block the CPU. The waiting is offloaded to the GPU.
-	 * Unfortunately it only works with glXSwapBuffers in most drivers.
-	 */
-	#ifdef USE_GLES
-	Display *xdpy = screen->dpy ();
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
-	eglSwapBuffers (eglGetDisplay (xdpy), surface);
-	eglWaitGL ();
-	XFlush (xdpy);
-	#else
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
-	glXSwapBuffers (screen->dpy (), cScreen->output ());
-	#endif
-    }
-    else
-    {
-	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
-	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
-	int    y;
+	blitMask |= compiz::opengl::PaintedFullscreen;
 
-	waitForVideoSync ();
-
-	#ifdef USE_GLES
-	Display *xdpy = screen->dpy ();
-
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
-
-	while (nBox--)
-	{
-	    y = screen->height () - pBox->y2;
-
-	    (*GL::postSubBuffer) (eglGetDisplay (xdpy), surface,
-				  pBox->x1, y,
-				  pBox->x2 - pBox->x1,
-				  pBox->y2 - pBox->y1);
-	    pBox++;
-	}
-
-	eglWaitGL ();
-	XFlush (xdpy);
-
-	#else
-	if (GL::copySubBuffer)
-	{
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
-
-		(*GL::copySubBuffer) (screen->dpy (), cScreen->output (),
-				      pBox->x1, y,
-				      pBox->x2 - pBox->x1,
-				      pBox->y2 - pBox->y1);
-
-		pBox++;
-	    }
-	}
-	else
-	{
-	    glEnable (GL_SCISSOR_TEST);
-	    glDrawBuffer (GL_FRONT);
-
-	    while (nBox--)
-	    {
-		y = screen->height () - pBox->y2;
-
-		glBitmap (0, 0, 0, 0,
-			  pBox->x1 - rasterPos.x (),
-			  y - rasterPos.y (),
-			  NULL);
-
-		rasterPos = CompPoint (pBox->x1, y);
-
-		glScissor (pBox->x1, y,
-			   pBox->x2 - pBox->x1,
-			   pBox->y2 - pBox->y1);
-
-		glCopyPixels (pBox->x1, y,
-			      pBox->x2 - pBox->x1,
-			      pBox->y2 - pBox->y1,
-			      GL_COLOR);
-
-		pBox++;
-	    }
-
-	    glDrawBuffer (GL_BACK);
-	    glDisable (GL_SCISSOR_TEST);
-	    glFlush ();
-	}
-	#endif
-    }
+    compiz::opengl::blitBuffers (blitMask, tmpRegion, bufferBlit);
 
     lastMask = mask;
 }
