@@ -150,7 +150,7 @@ INSTANTIATE_TEST_CASE_P (CCSGSettingsTestVariantTypeInstantiation, CCSGSettingsT
 
 TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
 {
-    std::string compiz_gsettings_path (COMPIZ_PROFILEPATH);
+    std::string compiz_gsettings_path (PROFILE_PATH_PREFIX);
     std::string fake_option_path ("PROFILENAME/plugins/PLUGINNAME");
 
     compiz_gsettings_path += fake_option_path;
@@ -169,22 +169,22 @@ TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
 {
     gchar *a = makeCompizProfilePath ("alpha");
     ASSERT_TRUE (a != NULL);
-    EXPECT_EQ (std::string (a), "/org/freedesktop/compiz/alpha/");
+    EXPECT_EQ (std::string (a), "/org/freedesktop/compiz/profiles/alpha/");
     g_free (a);
 
     gchar *b = makeCompizProfilePath ("beta/");
     ASSERT_TRUE (b != NULL);
-    EXPECT_EQ (std::string (b), "/org/freedesktop/compiz/beta/");
+    EXPECT_EQ (std::string (b), "/org/freedesktop/compiz/profiles/beta/");
     g_free (b);
 
     gchar *c = makeCompizProfilePath ("/gamma");
     ASSERT_TRUE (c != NULL);
-    EXPECT_EQ (std::string (c), "/org/freedesktop/compiz/gamma/");
+    EXPECT_EQ (std::string (c), "/org/freedesktop/compiz/profiles/gamma/");
     g_free (c);
 
     gchar *d = makeCompizProfilePath ("/delta");
     ASSERT_TRUE (d != NULL);
-    EXPECT_EQ (std::string (d), "/org/freedesktop/compiz/delta/");
+    EXPECT_EQ (std::string (d), "/org/freedesktop/compiz/profiles/delta/");
     g_free (d);
 }
 

@@ -5,7 +5,7 @@ const char * const COMPIZCONFIG_PATH = "/org/freedesktop/compiz/";
 
 const char * const PLUGIN_SCHEMA_ID_PREFIX =  "org.freedesktop.compiz.";
 const char * const PROFILE_SCHEMA_ID = "org.freedesktop.compiz.profile";
-const char * const COMPIZ_PROFILEPATH = "/org/freedesktop/compiz/";
+const char * const PROFILE_PATH_PREFIX = "/org/freedesktop/compiz/profiles/";
 
 const char * const DEFAULTPROF = "Default";
 

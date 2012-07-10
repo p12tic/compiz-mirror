@@ -170,10 +170,10 @@ decomposeGSettingsPath (const char *pathInput,
 			unsigned int *screenNum)
 {
     const char *path = pathInput;
-    const int prefixLen = strlen (COMPIZ_PROFILEPATH);
+    const int prefixLen = strlen (PROFILE_PATH_PREFIX);
     char pluginBuf[1024];
 
-    if (strncmp (path, COMPIZ_PROFILEPATH, prefixLen))
+    if (strncmp (path, PROFILE_PATH_PREFIX, prefixLen))
         return FALSE;
     path += prefixLen;
 
@@ -330,5 +330,5 @@ attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *l
 gchar *
 makeCompizProfilePath (const gchar *profilename)
 {
-    return g_build_path ("/", COMPIZ_PROFILEPATH, profilename, "/", NULL);
+    return g_build_path ("/", PROFILE_PATH_PREFIX, profilename, "/", NULL);
 }
