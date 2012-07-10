@@ -29,6 +29,9 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual void WriteStringAtKey (const std::string &plugin,
 				       const std::string &key,
 				       const std::string &value) = 0;
+	virtual void WriteColorAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const CCSSettingColorValue &value) = 0;
 };
 
 class CCSBackendConformanceTest :
@@ -178,6 +181,44 @@ TEST_P (CCSBackendConformanceTest, TestReadString)
     GetParam ()->WriteStringAtKey (pluginName, settingName, VALUE);
 
     EXPECT_CALL (*gmockSetting, setString (VALUE.c_str (), _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+namespace
+{
+    bool
+    operator== (const CCSSettingColorValue &lhs,
+		const CCSSettingColorValue &rhs)
+    {
+	return (lhs.color.red == rhs.color.red &&
+		lhs.color.green == rhs.color.green &&
+		lhs.color.blue == rhs.color.blue &&
+		lhs.color.alpha == lhs.color.alpha);
+    }
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadColor)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingColorValue VALUE;
+
+    VALUE.color.red = 100;
+    VALUE.color.blue = 100;
+    VALUE.color.green = 100;
+    VALUE.color.alpha = 100;
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeColor, plugin);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteColorAtKey (pluginName, settingName, VALUE);
+
+    /* FIXME: We can't verify right now that the color returned is correct */
+    EXPECT_CALL (*gmockSetting, setColor (_, _));
 
     ccsBackendReadSetting (GetBackend (), context, setting);
 }

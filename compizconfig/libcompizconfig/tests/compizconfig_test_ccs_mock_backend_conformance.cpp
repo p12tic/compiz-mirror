@@ -99,6 +99,14 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
+	void WriteColorAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const CCSSettingColorValue &value)
+	{
+	    mColorMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
     protected:
 
 	void WriteValueToSetting (CCSSetting *setting)
@@ -123,6 +131,11 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsSetString (setting, ValueForKeyRetreival <char *> ().GetValueForKey (key, mStringMap), FALSE);
 		    break;
 
+		case TypeColor:
+
+		    ccsSetColor (setting, ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (key, mColorMap), FALSE);
+		    break;
+
 		default:
 
 		    throw std::exception ();
@@ -136,6 +149,7 @@ class MockCCSBackendConceptTestEnvironment :
 	std::map <std::string, int> mIntMap;
 	std::map <std::string, float> mFloatMap;
 	std::map <std::string, std::string> mStringMap;
+	std::map <std::string, CCSSettingColorValue> mColorMap;
 };
 
 static MockCCSBackendConceptTestEnvironment mockBackendEnv;
