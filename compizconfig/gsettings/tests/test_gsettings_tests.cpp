@@ -150,7 +150,7 @@ INSTANTIATE_TEST_CASE_P (CCSGSettingsTestVariantTypeInstantiation, CCSGSettingsT
 
 TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
 {
-    std::string compiz_gsettings_path (COMPIZ);
+    std::string compiz_gsettings_path (COMPIZ_PROFILEPATH);
     std::string fake_option_path ("profile/plugins/fake/screen1");
 
     compiz_gsettings_path += fake_option_path;

@@ -170,12 +170,12 @@ decomposeGSettingsPath (const char *pathInput,
 			unsigned int *screenNum)
 {
     const char *path = pathInput;
-    const int prefixLen = strlen (COMPIZ);
+    const int prefixLen = strlen (COMPIZ_PROFILEPATH);
     char pluginBuf[1024];
 
-    if (strncmp (path, COMPIZ, prefixLen))
+    if (strncmp (path, COMPIZ_PROFILEPATH, prefixLen))
         return FALSE;
-    path += prefixLen + 1;
+    path += prefixLen;
 
     *pluginName = NULL;
     *screenNum = 0;

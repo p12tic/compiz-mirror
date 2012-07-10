@@ -59,11 +59,11 @@
                     if (!p || \
 			strcmp (p, "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
-				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
+				 "%s%s/plugins/%s/%s/options/", COMPIZ_PROFILEPATH, currentProfile, \
 				 p, k); \
                     else \
 			snprintf(pathName, BUFSIZE, \
-				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
+				 "%s%s/plugins/%s/%s/options/", COMPIZ_PROFILEPATH, currentProfile, \
 				 p, k);
 
 #ifndef _GNU_SOURCE
