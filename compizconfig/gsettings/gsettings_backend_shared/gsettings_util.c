@@ -184,9 +184,9 @@ decomposeGSettingsPath (const char *pathInput,
     int fields = sscanf (path, "%*[^/]/%*[^/]/%1023[^/]/screen%u",
                          pluginBuf, screenNum);
 
-    pluginBuf[1023] = '\0'
     if (fields == 2)
     {
+        pluginBuf[1023] = '\0';
         *pluginName = g_strdup (pluginBuf);
         return TRUE;
     }
