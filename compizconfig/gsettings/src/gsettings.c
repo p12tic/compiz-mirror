@@ -793,7 +793,7 @@ updateCurrentProfileName (const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
-    const char	    *profilePath = COMPIZCONFIG_PATH;
+    gchar           *profilePath = makeCompizProfilePath (profile);
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     GVariantIter    iter;
@@ -828,6 +828,8 @@ updateCurrentProfileName (const char *profile)
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
 
     g_settings_set (compizconfigSettings, "current-profile", "s", profile, NULL);
+
+    g_free (profilePath);
 }
 
 static gboolean
