@@ -44,6 +44,10 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual void WriteBellAtKey (const std::string &plugin,
 				       const std::string &key,
 				       const Bool &value) = 0;
+
+	virtual void WriteListAtKey (const std::string &plugin,
+				     const std::string &key,
+				     const CCSSettingValueList &list) = 0;
 };
 
 class CCSBackendConformanceTest :
@@ -320,6 +324,31 @@ TEST_P (CCSBackendConformanceTest, TestReadBell)
     EXPECT_CALL (*gmockSetting, setBell (VALUE, _));
 
     ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadListBool)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingValueList VALUE;
+    Bool		VBool[3] = { FALSE, TRUE, FALSE };
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
+
+    VALUE = ccsGetValueListFromBoolArray (VBool, 3, setting);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
+
+    /* No matcher for lists yet */
+    EXPECT_CALL (*gmockSetting, setList (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+
+    ccsSettingValueListFree (VALUE, FALSE);
 }
 
 

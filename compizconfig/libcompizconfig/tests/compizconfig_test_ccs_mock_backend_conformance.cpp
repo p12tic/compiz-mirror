@@ -155,6 +155,14 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
+	void WriteListAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const CCSSettingValueList &value)
+	{
+	    mListMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
     protected:
 
 	void WriteValueToSetting (CCSSetting *setting)
@@ -214,6 +222,11 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsSetBell (setting, ValueForKeyRetreival <Bool> ().GetValueForKey (key, mBellMap), FALSE);
 		    break;
 
+		case TypeList:
+
+		    ccsSetList (setting, ValueForKeyRetreival <CCSSettingValueList> ().GetValueForKey (key, mListMap), FALSE);
+		    break;
+
 		default:
 
 		    throw std::exception ();
@@ -234,6 +247,7 @@ class MockCCSBackendConceptTestEnvironment :
 	std::map <std::string, unsigned int> mEdgeMap;
 	std::map <std::string, Bool> mBoolMap;
 	std::map <std::string, Bool> mBellMap;
+	std::map <std::string, CCSSettingValueList> mListMap;
 };
 
 static MockCCSBackendConceptTestEnvironment mockBackendEnv;
