@@ -7,7 +7,7 @@ G_BEGIN_DECLS
 
 #include "gsettings_util.h"
 
-extern const char * const COMPIZ_SCHEMA_ID;
+extern const char * const PLUGIN_SCHEMA_ID_PREFIX;
 extern const char * const COMPIZCONFIG_SCHEMA_ID;
 extern const char * const PROFILE_SCHEMA_ID;
 #define METACITY "/apps/metacity"

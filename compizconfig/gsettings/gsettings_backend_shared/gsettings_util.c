@@ -69,7 +69,7 @@ getSchemaNameForPlugin (const char *plugin)
 {
     gchar       *schemaName =  NULL;
 
-    schemaName = g_strconcat (COMPIZ_SCHEMA_ID, ".", plugin, NULL);
+    schemaName = g_strconcat (PLUGIN_SCHEMA_ID_PREFIX, plugin, NULL);
 
     return schemaName;
 }

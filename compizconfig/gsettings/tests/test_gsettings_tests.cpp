@@ -24,7 +24,7 @@ TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)
 
     std::string schemaNameStr (schemaName);
 
-    size_t pos = schemaNameStr.find (std::string (COMPIZ_SCHEMA_ID) + std::string ("."), 0);
+    size_t pos = schemaNameStr.find (PLUGIN_SCHEMA_ID_PREFIX, 0);
 
     EXPECT_EQ (pos, 0);
 
