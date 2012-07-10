@@ -3,7 +3,11 @@
 
 #include <list>
 
-#include <boost/scoped_array.hpp>
+#include <boost/variant.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -15,6 +19,17 @@
 #include <compizconfig_ccs_setting_mock.h>
 #include <compizconfig_ccs_context_mock.h>
 
+using ::testing::Eq;
+
+typedef boost::variant <bool,
+			int,
+			float,
+			const char *,
+			CCSSettingColorValue,
+			CCSSettingKeyValue,
+			CCSSettingButtonValue,
+			CCSSettingValueList> VariantTypes;
+
 class CCSBackendConceptTestEnvironmentInterface
 {
     public:
@@ -22,38 +37,125 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual ~CCSBackendConceptTestEnvironmentInterface () {};
 	virtual CCSBackend * SetUp () = 0;
 	virtual void TearDown (CCSBackend *) = 0;
+	virtual void WriteBoolAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
 	virtual void WriteIntegerAtKey (const std::string &plugin,
 					const std::string &key,
-					int		   value) = 0;
+					const VariantTypes &value) = 0;
 	virtual void WriteFloatAtKey (const std::string &plugin,
 				      const std::string &key,
-				      float		   value) = 0;
+				      const VariantTypes &value) = 0;
 	virtual void WriteStringAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const std::string &value) = 0;
+				       const VariantTypes &value) = 0;
 	virtual void WriteColorAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const CCSSettingColorValue &value) = 0;
+				       const VariantTypes &value) = 0;
 	virtual void WriteKeyAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const CCSSettingKeyValue &value) = 0;
+				       const VariantTypes &value) = 0;
 	virtual void WriteButtonAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const CCSSettingButtonValue &value) = 0;
+				       const VariantTypes &value) = 0;
 	virtual void WriteEdgeAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const unsigned int &value) = 0;
+				       const VariantTypes &value) = 0;
+	virtual void WriteMatchAtKey (const std::string &plugin,
+				      const std::string &key,
+				      const VariantTypes &value) = 0;
 	virtual void WriteBellAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const Bool &value) = 0;
+				       const VariantTypes &value) = 0;
 
 	virtual void WriteListAtKey (const std::string &plugin,
 				     const std::string &key,
-				     const CCSSettingValueList &list) = 0;
+				     const VariantTypes &value) = 0;
+};
+
+namespace
+{
+Bool boolToBool (bool v) { return v ? TRUE : FALSE; }
+
+void SetIntExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setInt (boost::get <int> (value), _));
+}
+
+void SetBoolExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setBool (boolToBool (boost::get <bool> (value)), _));
+}
+
+void SetBellExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setBell (boolToBool (boost::get <bool> (value)), _));
+}
+
+void SetFloatExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setFloat (boost::get <float> (value), _));
+}
+
+void SetStringExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setString (Eq (std::string (boost::get <const char *> (value))), _));
+}
+
+void SetMatchExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setMatch (Eq (std::string (boost::get <const char *> (value))), _));
+}
+}
+
+class CCSBackendConceptTestParam
+{
+    public:
+
+	typedef boost::shared_ptr <CCSBackendConceptTestParam> Ptr;
+
+	typedef boost::function <void (const std::string &,
+				       const std::string &,
+				       const VariantTypes &)> NativeWrite;
+	typedef boost::function <void (CCSSettingGMock *,
+				       const VariantTypes &)> SetExpectation;
+
+	CCSBackendConceptTestParam (const VariantTypes &value,
+				    const NativeWrite &write,
+				    const CCSSettingType &type,
+				    const std::string &keyname,
+				    const SetExpectation &setExpectation,
+				    const std::string &what) :
+	    mValue (value),
+	    mNativeWrite (write),
+	    mType (type),
+	    mKeyname (keyname),
+	    mSetExpectation (setExpectation),
+	    mWhat (what)
+	{
+	}
+
+	VariantTypes & value () { return mValue; }
+	NativeWrite & nativeWrite () { return mNativeWrite; }
+	CCSSettingType & type () { return mType; }
+	std::string & keyname () { return mKeyname; }
+	SetExpectation & setExpectation () { return mSetExpectation; }
+	std::string & what () { return mWhat; }
+
+    private:
+
+	VariantTypes mValue;
+	NativeWrite mNativeWrite;
+	CCSSettingType mType;
+	std::string mKeyname;
+	SetExpectation mSetExpectation;
+	std::string mWhat;
+
 };
 
 class CCSBackendConformanceTest :
-    public ::testing::TestWithParam <CCSBackendConceptTestEnvironmentInterface *>
+    public ::testing::TestWithParam <std::tr1::tuple <CCSBackendConceptTestEnvironmentInterface *,
+						      CCSBackendConceptTestParam::Ptr> >
 {
     public:
 
@@ -64,12 +166,12 @@ class CCSBackendConformanceTest :
 
 	void SetUp ()
 	{
-	    mBackend = GetParam ()->SetUp ();
+	    mBackend = std::tr1::get<0> (GetParam ())->SetUp ();
 	}
 
 	void TearDown ()
 	{
-	    GetParam ()->TearDown (mBackend);
+	    std::tr1::get<0> (GetParam ())->TearDown (mBackend);
 
 	    for (std::list <CCSContext *>::iterator it = mSpawnedContexts.begin ();
 		 it != mSpawnedContexts.end ();
@@ -145,6 +247,28 @@ class CCSBackendConformanceTest :
 TEST_P (CCSBackendConformanceTest, TestSetup)
 {
 }
+
+TEST_P (CCSBackendConformanceTest, TestReadValue)
+{
+    SCOPED_TRACE (std::tr1::get <1> (GetParam ())->what ());
+
+    std::string pluginName ("plugin");
+    const std::string &settingName (std::tr1::get <1> (GetParam ())->keyname ());
+    const VariantTypes &VALUE (std::tr1::get <1> (GetParam ())->value ());
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, std::tr1::get <1> (GetParam ())->type (), plugin);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    std::tr1::get <1> (GetParam ())->nativeWrite () (pluginName, settingName, VALUE);
+    std::tr1::get <1> (GetParam ())->setExpectation () (gmockSetting, VALUE);
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+#if 0
 
 TEST_P (CCSBackendConformanceTest, TestReadInteger)
 {
@@ -485,7 +609,7 @@ TEST_P (CCSBackendConformanceTest, TestReadListColor)
     ccsSettingValueListFree (VALUE, FALSE);
 }
 
-
+#endif
 
 
 #endif

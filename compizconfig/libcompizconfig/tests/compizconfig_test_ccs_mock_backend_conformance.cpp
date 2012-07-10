@@ -12,6 +12,9 @@ using ::testing::_;
 using ::testing::Return;
 using ::testing::Invoke;
 using ::testing::WithArgs;
+using ::testing::Combine;
+using ::testing::ValuesIn;
+using ::testing::Values;
 
 template <typename T>
 class ValueForKeyRetreival
@@ -76,90 +79,90 @@ class MockCCSBackendConceptTestEnvironment :
 
 	void WriteBoolAtKey (const std::string &plugin,
 			     const std::string &key,
-			     const Bool &value)
+			     const VariantTypes &value)
 	{
-	    mBoolMap[plugin + "/" + key] = value;
+	    mBoolMap[plugin + "/" + key] = boolToBool (boost::get <bool> (value));
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteIntegerAtKey (const std::string &plugin,
 				const std::string &key,
-				int value)
+				const VariantTypes &value)
 
 	{
-	    mIntMap[plugin + "/" + key] = value;
+	    mIntMap[plugin + "/" + key] = boost::get <int> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteFloatAtKey (const std::string &plugin,
 			      const std::string &key,
-			      float value)
+			      const VariantTypes &value)
 	{
-	    mFloatMap[plugin + "/" + key] = value;
+	    mFloatMap[plugin + "/" + key] = boost::get <float> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteMatchAtKey (const std::string &plugin,
 			      const std::string &key,
-			      const std::string &value)
+			      const VariantTypes &value)
 	{
-	    mMatchMap[plugin + "/" + key] = value;
+	    mMatchMap[plugin + "/" + key] = boost::get <const char *> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteStringAtKey (const std::string &plugin,
 			       const std::string &key,
-			       const std::string &value)
+			       const VariantTypes &value)
 	{
-	    mStringMap[plugin + "/" + key] = value;
+	    mStringMap[plugin + "/" + key] = boost::get <const char *> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteColorAtKey (const std::string &plugin,
 			      const std::string &key,
-			      const CCSSettingColorValue &value)
+			      const VariantTypes &value)
 	{
-	    mColorMap[plugin + "/" + key] = value;
+	    mColorMap[plugin + "/" + key] = boost::get <CCSSettingColorValue> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteKeyAtKey (const std::string &plugin,
 			    const std::string &key,
-			    const CCSSettingKeyValue &keyValue)
+			    const VariantTypes &value)
 	{
-	    mKeyMap[plugin + "/" + key] = keyValue;
+	    mKeyMap[plugin + "/" + key] = boost::get <CCSSettingKeyValue> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteButtonAtKey (const std::string &plugin,
 			       const std::string &key,
-			       const CCSSettingButtonValue &buttonValue)
+			       const VariantTypes &value)
 	{
-	    mButtonMap[plugin + "/" + key] = buttonValue;
+	    mButtonMap[plugin + "/" + key] = boost::get <CCSSettingButtonValue> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteEdgeAtKey (const std::string &plugin,
 			     const std::string &key,
-			     const unsigned int &value)
+			     const VariantTypes &value)
 	{
-	    mEdgeMap[plugin + "/" + key] = value;
+	    mEdgeMap[plugin + "/" + key] = boost::get <unsigned int> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteBellAtKey (const std::string &plugin,
 			     const std::string &key,
-			     const Bool &value)
+			     const VariantTypes &value)
 	{
-	    mBellMap[plugin + "/" + key] = value;
+	    mBellMap[plugin + "/" + key] = boolToBool (boost::get <bool> (value));
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteListAtKey (const std::string &plugin,
 			     const std::string &key,
-			     const CCSSettingValueList &value)
+			     const VariantTypes &value)
 	{
-	    mListMap[plugin + "/" + key] = value;
+	    mListMap[plugin + "/" + key] = boost::get <CCSSettingValueList> (value);
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -253,6 +256,46 @@ class MockCCSBackendConceptTestEnvironment :
 static MockCCSBackendConceptTestEnvironment mockBackendEnv;
 static CCSBackendConceptTestEnvironmentInterface *backendEnv = &mockBackendEnv;
 
-INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest, ::testing::Values (backendEnv));
+static CCSBackendConceptTestParam::Ptr testParam[] =
+{
+    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (1),
+						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteIntegerAtKey, backendEnv, _1, _2, _3),
+						     TypeInt,
+						     "integer_setting",
+						     boost::bind (SetIntExpectation, _1, _2),
+						     "TestRetreiveInt"),
+    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (true),
+						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBoolAtKey, backendEnv, _1, _2, _3),
+						     TypeBool,
+						     "boolean_setting",
+						     boost::bind (SetBoolExpectation, _1, _2),
+						     "TestRetreiveBool"),
+    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (static_cast <float> (3.0)),
+						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteFloatAtKey, backendEnv, _1, _2, _3),
+						     TypeFloat,
+						     "float_setting",
+						     boost::bind (SetFloatExpectation, _1, _2),
+						     "TestRetreiveFloat"),
+    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (static_cast <const char *> ("foo")),
+						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteStringAtKey, backendEnv, _1, _2, _3),
+						     TypeString,
+						     "string_setting",
+						     boost::bind (SetStringExpectation, _1, _2),
+						     "TestRetreiveString"),
+    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (static_cast <const char *> ("foo=bar")),
+						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteMatchAtKey, backendEnv, _1, _2, _3),
+						     TypeMatch,
+						     "match_setting",
+						     boost::bind (SetMatchExpectation, _1, _2),
+						     "TestRetreiveMatch"),
+    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (true),
+						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBellAtKey, backendEnv, _1, _2, _3),
+						     TypeBell,
+						     "bell_setting",
+						     boost::bind (SetBellExpectation, _1, _2),
+						     "TestRetreiveBell")
+};
+
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest, Combine (Values (backendEnv), ValuesIn (testParam)));
 
 
