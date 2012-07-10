@@ -169,22 +169,22 @@ TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
 {
     gchar *a = makeCompizProfilePath ("alpha");
     ASSERT_TRUE (a != NULL);
-    EXPECT_EQ (std::string (a), "/org/freedesktop/compiz/profiles/alpha/");
+    EXPECT_EQ (std::string (a), "/org/compiz/profiles/alpha/");
     g_free (a);
 
     gchar *b = makeCompizProfilePath ("beta/");
     ASSERT_TRUE (b != NULL);
-    EXPECT_EQ (std::string (b), "/org/freedesktop/compiz/profiles/beta/");
+    EXPECT_EQ (std::string (b), "/org/compiz/profiles/beta/");
     g_free (b);
 
     gchar *c = makeCompizProfilePath ("/gamma");
     ASSERT_TRUE (c != NULL);
-    EXPECT_EQ (std::string (c), "/org/freedesktop/compiz/profiles/gamma/");
+    EXPECT_EQ (std::string (c), "/org/compiz/profiles/gamma/");
     g_free (c);
 
     gchar *d = makeCompizProfilePath ("/delta");
     ASSERT_TRUE (d != NULL);
-    EXPECT_EQ (std::string (d), "/org/freedesktop/compiz/profiles/delta/");
+    EXPECT_EQ (std::string (d), "/org/compiz/profiles/delta/");
     g_free (d);
 }
 
@@ -192,12 +192,12 @@ TEST_F(CCSGSettingsTestIndependent, TestMakeCompizPluginPath)
 {
     gchar *x = makeCompizPluginPath ("one", "two");
     ASSERT_TRUE (x != NULL);
-    EXPECT_EQ (std::string (x), "/org/freedesktop/compiz/profiles/one/plugins/two/");
+    EXPECT_EQ (std::string (x), "/org/compiz/profiles/one/plugins/two/");
     g_free (x);
 
     gchar *y = makeCompizPluginPath ("/three", "four/");
     ASSERT_TRUE (y != NULL);
-    EXPECT_EQ (std::string (y), "/org/freedesktop/compiz/profiles/three/plugins/four/");
+    EXPECT_EQ (std::string (y), "/org/compiz/profiles/three/plugins/four/");
     g_free (y);
 }
 

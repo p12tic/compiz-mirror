@@ -1,11 +1,11 @@
 #include "gsettings_shared.h"
 
-const char * const COMPIZCONFIG_SCHEMA_ID = "org.freedesktop.compiz";
-const char * const COMPIZCONFIG_PATH = "/org/freedesktop/compiz/";
+const char * const COMPIZCONFIG_SCHEMA_ID = "org.compiz";
+const char * const COMPIZCONFIG_PATH = "/org/compiz/";
 
-const char * const PLUGIN_SCHEMA_ID_PREFIX =  "org.freedesktop.compiz.";
-const char * const PROFILE_SCHEMA_ID = "org.freedesktop.compiz.profile";
-const char * const PROFILE_PATH_PREFIX = "/org/freedesktop/compiz/profiles/";
+const char * const PLUGIN_SCHEMA_ID_PREFIX =  "org.compiz.";
+const char * const PROFILE_SCHEMA_ID = "org.compiz.profile";
+const char * const PROFILE_PATH_PREFIX = "/org/compiz/profiles/";
 
 const char * const DEFAULTPROF = "Default";
 

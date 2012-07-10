@@ -34,7 +34,7 @@ if (USE_GSETTINGS)
     compiz_gsettings_prepare_install_dirs ()
 
     set (PLUGIN_GSETTINGS_SCHEMA_DST
-	 ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compiz.${COMPIZ_CURRENT_PLUGIN}.gschema.xml)
+	 ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.${COMPIZ_CURRENT_PLUGIN}.gschema.xml)
 
     compiz_gsettings_schema (${COMPIZ_CURRENT_PLUGIN}
 			     ${COMPIZ_CURRENT_XML_FILE}

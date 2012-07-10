@@ -26,7 +26,7 @@ find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
 
 if (GLIB_COMPILE_SCHEMAS)
 
-    set (_top_gschema      org.freedesktop.compiz)
+    set (_top_gschema      org.compiz)
     set (_top_gschema_file ${_top_gschema}.gschema.xml)
     set (_top_gschema_src  ${CMAKE_CURRENT_SOURCE_DIR}/${_top_gschema_file})
     set (_top_gschema_dest ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_top_gschema_file})
