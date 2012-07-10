@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <schemalist>
-  <schema id="org.freedesktop.compizconfig" path="/org/freedesktop/compizconfig/" gettext-domain="compiz">
+  <schema id="org.freedesktop.compizconfig" path="/org/freedesktop/compiz/" gettext-domain="compiz">
     <key type="s" name="current-profile">
       <default>'Default'</default>
       <summary>Current Profile</summary>
