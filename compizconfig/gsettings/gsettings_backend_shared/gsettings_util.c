@@ -329,3 +329,9 @@ attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *l
 
     return found;
 }
+
+gchar *
+makeCompizProfilePath (const gchar *profilename)
+{
+    return g_build_path ("/", COMPIZ_PROFILEPATH, profilename, "/", NULL);
+}

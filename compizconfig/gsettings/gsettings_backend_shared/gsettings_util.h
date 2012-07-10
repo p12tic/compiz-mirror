@@ -59,4 +59,7 @@ attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *l
 GList *
 variantTypeToPossibleSettingType (const gchar *vt);
 
+gchar *
+makeCompizProfilePath (const gchar *profilename);
+
 #endif

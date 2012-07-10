@@ -798,7 +798,6 @@ updateCurrentProfileName (const char *profile)
     GVariant        *profiles;
     char	    *prof;
     const char	    *profilePath = COMPIZ_PROFILEPATH;
-    char	    *currentProfilePath;
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     GVariantIter    iter;
@@ -830,10 +829,7 @@ updateCurrentProfileName (const char *profile)
     free (currentProfile);
 
     currentProfile = strdup (profile);
-    currentProfilePath = g_strconcat (profilePath, profile, "/", NULL);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
-
-    g_free (currentProfilePath);
 
     g_settings_set (compizconfigSettings, "current-profile", "s", profile, NULL);
 }
@@ -889,7 +885,6 @@ processEvents (unsigned int flags)
 static Bool
 initBackend (CCSContext * context)
 {
-    const char *profilePath = PROFILEPATH;
     char       *currentProfilePath;
 
     g_type_init ();
@@ -901,7 +896,7 @@ initBackend (CCSContext * context)
 #endif
 
     currentProfile = getCurrentProfileName ();
-    currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
+    currentProfilePath = makeCompizProfilePath (currentProfile);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
 
     g_free (currentProfilePath);
@@ -1049,7 +1044,7 @@ deleteProfile (CCSContext *context,
     GVariantBuilder *newProfilesBuilder;
     char            *plugin, *prof;
     GVariantIter    iter;
-    char            *profileSettingsPath = g_strconcat (PROFILEPATH, profile, "/", NULL);
+    char            *profileSettingsPath = makeCompizProfilePath (profile);
     GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
 
     plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
@@ -1099,7 +1094,7 @@ deleteProfile (CCSContext *context,
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
-    free (profileSettingsPath);
+    g_free (profileSettingsPath);
 
     updateProfile (context);
 

@@ -165,6 +165,29 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     g_free (pluginName);
 }
 
+TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
+{
+    gchar *a = makeCompizProfilePath ("alpha");
+    ASSERT_TRUE (a != NULL);
+    EXPECT_EQ (std::string (a), "/org/freedesktop/compiz/alpha/");
+    g_free (a);
+
+    gchar *b = makeCompizProfilePath ("beta/");
+    ASSERT_TRUE (b != NULL);
+    EXPECT_EQ (std::string (b), "/org/freedesktop/compiz/beta/");
+    g_free (b);
+
+    gchar *c = makeCompizProfilePath ("/gamma");
+    ASSERT_TRUE (c != NULL);
+    EXPECT_EQ (std::string (c), "/org/freedesktop/compiz/gamma/");
+    g_free (c);
+
+    gchar *d = makeCompizProfilePath ("/delta");
+    ASSERT_TRUE (d != NULL);
+    EXPECT_EQ (std::string (d), "/org/freedesktop/compiz/delta/");
+    g_free (d);
+}
+
 namespace GVariantSubtypeWrappers
 {
     typedef gboolean (*IsSubtype) (GVariant *v);
