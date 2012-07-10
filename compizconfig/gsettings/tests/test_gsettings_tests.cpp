@@ -188,6 +188,19 @@ TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
     g_free (d);
 }
 
+TEST_F(CCSGSettingsTestIndependent, TestMakeCompizPluginPath)
+{
+    gchar *x = makeCompizPluginPath ("one", "two");
+    ASSERT_TRUE (x != NULL);
+    EXPECT_EQ (std::string (x), "/org/freedesktop/compiz/profiles/one/plugins/two/");
+    g_free (x);
+
+    gchar *y = makeCompizPluginPath ("/three", "four/");
+    ASSERT_TRUE (y != NULL);
+    EXPECT_EQ (std::string (y), "/org/freedesktop/compiz/profiles/three/plugins/four/");
+    g_free (y);
+}
+
 namespace GVariantSubtypeWrappers
 {
     typedef gboolean (*IsSubtype) (GVariant *v);

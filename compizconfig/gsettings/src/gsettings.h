@@ -52,17 +52,6 @@
 
 #define NUM_WATCHED_DIRS 3
 
-#define PATHNAME(p)    char pathName[BUFSIZE]; \
-                    if (!p || \
-			strcmp (p, "core") == 0) \
-                        snprintf (pathName, BUFSIZE, \
-				 "%s%s/plugins/%s/", PROFILE_PATH_PREFIX, currentProfile, \
-				 p); \
-                    else \
-			snprintf(pathName, BUFSIZE, \
-				 "%s%s/plugins/%s/", PROFILE_PATH_PREFIX, currentProfile, \
-				 p);
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif

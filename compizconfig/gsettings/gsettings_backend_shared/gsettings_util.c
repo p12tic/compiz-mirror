@@ -332,3 +332,11 @@ makeCompizProfilePath (const gchar *profilename)
 {
     return g_build_path ("/", PROFILE_PATH_PREFIX, profilename, "/", NULL);
 }
+
+gchar *
+makeCompizPluginPath (const gchar *profileName, const gchar *pluginName)
+{
+    return g_build_path ("/", PROFILE_PATH_PREFIX, profileName,
+                         "plugins", pluginName, "/", NULL);
+}
+

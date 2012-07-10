@@ -96,14 +96,25 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     return settingsObj;
 }
 
+static gchar *
+makeSettingPath (CCSSetting *setting)
+{
+    return makeCompizPluginPath (currentProfile,
+                             ccsPluginGetName (ccsSettingGetParent (setting)));
+}
+
 static GSettings *
 getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
+    GSettings *ret = NULL;
+    gchar *pathName = makeSettingPath (setting);
 
-    return getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
+    ret = getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
 					       pathName,
 					       ccsPluginGetContext (ccsSettingGetParent (setting)));
+
+    g_free (pathName);
+    return ret;
 }
 
 static Bool
@@ -371,7 +382,6 @@ readOption (CCSSetting * setting)
     }
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     /* first check if the key is set */
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
@@ -384,10 +394,12 @@ readOption (CCSSetting * setting)
 
     if (!variantIsValidForCCSType (gsettingsValue, ccsSettingGetType (setting)))
     {
+	gchar *pathName = makeSettingPath (setting);
 	ccsWarning ("There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
 		"that value so that operation can continue properly.",
 		pathName);
+	g_free (pathName);
 	free (cleanSettingName);
 	g_variant_unref (gsettingsValue);
 	return FALSE;
@@ -643,7 +655,6 @@ resetOptionToDefault (CCSSetting * setting)
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
   
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     g_settings_reset (settings, cleanSettingName);
 
@@ -655,7 +666,6 @@ writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     switch (ccsSettingGetType (setting))
     {
@@ -777,7 +787,11 @@ writeOption (CCSSetting * setting)
 	}
 	break;
     case TypeList:
-	writeListValue (setting, pathName);
+	{
+	    gchar *pathName = makeSettingPath (setting);
+	    writeListValue (setting, pathName);
+	    g_free (pathName);
+	}
 	break;
     default:
 	ccsWarning ("Attempt to write unsupported setting type %d",
@@ -1052,10 +1066,10 @@ deleteProfile (CCSContext *context,
     while (g_variant_iter_loop (&iter, "s", &plugin))
     {
 	GSettings *settings;
-
-	PATHNAME (plugin);
+	gchar *pathName = makeCompizPluginPath (currentProfile, plugin);
 
 	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
+	g_free (pathName);
 
 	/* The GSettings documentation says not to use this API
 	 * because we should know our own schema ... though really

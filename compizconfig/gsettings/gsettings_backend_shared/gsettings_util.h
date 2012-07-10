@@ -62,4 +62,7 @@ variantTypeToPossibleSettingType (const gchar *vt);
 gchar *
 makeCompizProfilePath (const gchar *profilename);
 
+gchar *
+makeCompizPluginPath (const gchar *profileName, const gchar *pluginName);
+
 #endif
