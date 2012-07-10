@@ -32,6 +32,18 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual void WriteColorAtKey (const std::string &plugin,
 				       const std::string &key,
 				       const CCSSettingColorValue &value) = 0;
+	virtual void WriteKeyAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const CCSSettingKeyValue &value) = 0;
+	virtual void WriteButtonAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const CCSSettingButtonValue &value) = 0;
+	virtual void WriteEdgeAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const unsigned int &value) = 0;
+	virtual void WriteBellAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const Bool &value) = 0;
 };
 
 class CCSBackendConformanceTest :
@@ -219,6 +231,93 @@ TEST_P (CCSBackendConformanceTest, TestReadColor)
 
     /* FIXME: We can't verify right now that the color returned is correct */
     EXPECT_CALL (*gmockSetting, setColor (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadKey)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingKeyValue VALUE;
+
+    VALUE.keyModMask = (1 << 0) | (1 << 1);
+    VALUE.keysym = 1;
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeKey, plugin);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteKeyAtKey (pluginName, settingName, VALUE);
+
+    /* FIXME: We can't verify right now that the key returned is correct */
+    EXPECT_CALL (*gmockSetting, setKey (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadButton)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingButtonValue VALUE;
+
+    VALUE.buttonModMask = (1 << 0) | (1 << 1);
+    VALUE.button = 1;
+    VALUE.edgeMask = (1 << 0);
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeButton, plugin);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteButtonAtKey (pluginName, settingName, VALUE);
+
+    /* FIXME: We can't verify right now that the button returned is correct */
+    EXPECT_CALL (*gmockSetting, setButton (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadEdge)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    unsigned int VALUE;
+
+    VALUE = 1;
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeEdge, plugin);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteEdgeAtKey (pluginName, settingName, VALUE);
+
+    EXPECT_CALL (*gmockSetting, setEdge (VALUE, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadBell)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    Bool VALUE = TRUE;
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeBell, plugin);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteBellAtKey (pluginName, settingName, VALUE);
+
+    EXPECT_CALL (*gmockSetting, setBell (VALUE, _));
 
     ccsBackendReadSetting (GetBackend (), context, setting);
 }

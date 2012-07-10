@@ -74,6 +74,14 @@ class MockCCSBackendConceptTestEnvironment :
 
 	}
 
+	void WriteBoolAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const Bool &value)
+	{
+	    mBoolMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
 	void WriteIntegerAtKey (const std::string &plugin,
 				const std::string &key,
 				int value)
@@ -88,6 +96,14 @@ class MockCCSBackendConceptTestEnvironment :
 			      float value)
 	{
 	    mFloatMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void WriteMatchAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const std::string &value)
+	{
+	    mMatchMap[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -107,6 +123,38 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
+	void WriteKeyAtKey (const std::string &plugin,
+			    const std::string &key,
+			    const CCSSettingKeyValue &keyValue)
+	{
+	    mKeyMap[plugin + "/" + key] = keyValue;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void WriteButtonAtKey (const std::string &plugin,
+			       const std::string &key,
+			       const CCSSettingButtonValue &buttonValue)
+	{
+	    mButtonMap[plugin + "/" + key] = buttonValue;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void WriteEdgeAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const unsigned int &value)
+	{
+	    mEdgeMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void WriteBellAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const Bool &value)
+	{
+	    mBellMap[plugin + "/" + key] = value;
+	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
     protected:
 
 	void WriteValueToSetting (CCSSetting *setting)
@@ -116,6 +164,11 @@ class MockCCSBackendConceptTestEnvironment :
 
 	    switch (ccsSettingGetType (setting))
 	    {
+		case TypeBool:
+
+		    ccsSetBool (setting, ValueForKeyRetreival <Bool> ().GetValueForKey (key, mBoolMap), FALSE);
+		    break;
+
 		case TypeInt:
 
 		    ccsSetInt (setting, ValueForKeyRetreival <int> ().GetValueForKey (key, mIntMap), FALSE);
@@ -131,9 +184,34 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsSetString (setting, ValueForKeyRetreival <char *> ().GetValueForKey (key, mStringMap), FALSE);
 		    break;
 
+		case TypeMatch:
+
+		    ccsSetMatch (setting, ValueForKeyRetreival <char *> ().GetValueForKey (key, mMatchMap), FALSE);
+		    break;
+
 		case TypeColor:
 
 		    ccsSetColor (setting, ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (key, mColorMap), FALSE);
+		    break;
+
+		case TypeKey:
+
+		    ccsSetKey (setting, ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (key, mKeyMap), FALSE);
+		    break;
+
+		case TypeButton:
+
+		    ccsSetButton (setting, ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (key, mButtonMap), FALSE);
+		    break;
+
+		case TypeEdge:
+
+		    ccsSetEdge (setting, ValueForKeyRetreival <unsigned int> ().GetValueForKey (key, mEdgeMap), FALSE);
+		    break;
+
+		case TypeBell:
+
+		    ccsSetBell (setting, ValueForKeyRetreival <Bool> ().GetValueForKey (key, mBellMap), FALSE);
 		    break;
 
 		default:
@@ -149,7 +227,13 @@ class MockCCSBackendConceptTestEnvironment :
 	std::map <std::string, int> mIntMap;
 	std::map <std::string, float> mFloatMap;
 	std::map <std::string, std::string> mStringMap;
+	std::map <std::string, std::string> mMatchMap;
 	std::map <std::string, CCSSettingColorValue> mColorMap;
+	std::map <std::string, CCSSettingKeyValue> mKeyMap;
+	std::map <std::string, CCSSettingButtonValue> mButtonMap;
+	std::map <std::string, unsigned int> mEdgeMap;
+	std::map <std::string, Bool> mBoolMap;
+	std::map <std::string, Bool> mBellMap;
 };
 
 static MockCCSBackendConceptTestEnvironment mockBackendEnv;
