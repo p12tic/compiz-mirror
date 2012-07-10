@@ -151,7 +151,7 @@ INSTANTIATE_TEST_CASE_P (CCSGSettingsTestVariantTypeInstantiation, CCSGSettingsT
 TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
 {
     std::string compiz_gsettings_path (COMPIZ_PROFILEPATH);
-    std::string fake_option_path ("profile/plugins/fake/screen1");
+    std::string fake_option_path ("PROFILENAME/plugins/PLUGINNAME");
 
     compiz_gsettings_path += fake_option_path;
 
@@ -159,8 +159,8 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     unsigned int screenNum;
 
     ASSERT_TRUE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginName, &screenNum));
-    EXPECT_EQ (std::string (pluginName), "fake");
-    EXPECT_EQ (screenNum, 1);
+    EXPECT_EQ (std::string (pluginName), "PLUGINNAME");
+    EXPECT_EQ (screenNum, 0);
 
     g_free (pluginName);
 }

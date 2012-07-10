@@ -52,19 +52,16 @@
 
 #define NUM_WATCHED_DIRS 3
 
-#define KEYNAME(sn)     char keyName[BUFSIZE]; \
-                    snprintf (keyName, BUFSIZE, "screen%i", sn);
-
-#define PATHNAME(p,k)    char pathName[BUFSIZE]; \
+#define PATHNAME(p)    char pathName[BUFSIZE]; \
                     if (!p || \
 			strcmp (p, "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
-				 "%s%s/plugins/%s/%s/options/", COMPIZ_PROFILEPATH, currentProfile, \
-				 p, k); \
+				 "%s%s/plugins/%s/", COMPIZ_PROFILEPATH, currentProfile, \
+				 p); \
                     else \
 			snprintf(pathName, BUFSIZE, \
-				 "%s%s/plugins/%s/%s/options/", COMPIZ_PROFILEPATH, currentProfile, \
-				 p, k);
+				 "%s%s/plugins/%s/", COMPIZ_PROFILEPATH, currentProfile, \
+				 p);
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE

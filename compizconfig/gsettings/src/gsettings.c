@@ -99,8 +99,7 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 static GSettings *
 getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
-    KEYNAME (ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     return getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
 					       pathName,
@@ -372,8 +371,7 @@ readOption (CCSSetting * setting)
     }
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     /* first check if the key is set */
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
@@ -645,8 +643,7 @@ resetOptionToDefault (CCSSetting * setting)
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
   
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     g_settings_reset (settings, cleanSettingName);
 
@@ -658,8 +655,7 @@ writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    KEYNAME(ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
-    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)), keyName);
+    PATHNAME (ccsPluginGetName (ccsSettingGetParent (setting)));
 
     switch (ccsSettingGetType (setting))
     {
@@ -1055,8 +1051,7 @@ deleteProfile (CCSContext *context,
     {
 	GSettings *settings;
 
-	KEYNAME (ccsContextGetScreenNum (context));
-	PATHNAME (plugin, keyName);
+	PATHNAME (plugin);
 
 	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
 
