@@ -13,9 +13,7 @@ extern const char * const PROFILE_SCHEMA_ID;
 #define METACITY "/apps/metacity"
 extern const char * const COMPIZ;
 extern const char * const COMPIZ_PROFILEPATH;
-extern const char * const PROFILEPATH;
 extern const char * const DEFAULTPROF;
-extern const char * const CORE_NAME;
 extern const unsigned int MAX_GSETTINGS_KEY_SIZE;
 
 G_END_DECLS
