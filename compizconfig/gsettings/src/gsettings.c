@@ -793,7 +793,7 @@ updateCurrentProfileName (const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
-    const char	    *profilePath = COMPIZ_PROFILEPATH;
+    const char	    *profilePath = COMPIZCONFIG_PATH;
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     GVariantIter    iter;

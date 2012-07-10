@@ -52,14 +52,15 @@ if (USE_GCONF)
     )
 endif ()
 if (USE_GSETTINGS)
+    set (_core_gschema_path ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compiz.core.gschema.xml)
     compiz_gsettings_schema (
 	compiz
 	${_core_xml_file}
-	${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compiz.gschema.xml
+	${_core_gschema_path}
 	${datadir}/glib-2.0/schemas
     )
     add_custom_target (core-settings-schema ALL
-	DEPENDS ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compiz.gschema.xml
+	DEPENDS ${_core_gschema_path}
 	        core-xml-file
     )
 endif ()

@@ -26,8 +26,12 @@ find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
 
 if (GLIB_COMPILE_SCHEMAS)
 
-    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
-		    ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compizconfig.gschema.xml)
+    set (_top_gschema      org.freedesktop.compiz)
+    set (_top_gschema_file ${_top_gschema}.gschema.xml)
+    set (_top_gschema_src  ${CMAKE_CURRENT_SOURCE_DIR}/${_top_gschema_file})
+    set (_top_gschema_dest ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_top_gschema_file})
+
+    configure_file (${_top_gschema_src} ${_top_gschema_dest})
 
     add_custom_command (
 	OUTPUT ${CMAKE_BINARY_DIR}/glib-2.0/schemas/gschemas.compiled
@@ -37,7 +41,7 @@ if (GLIB_COMPILE_SCHEMAS)
 
     add_gsettings_schema_to_recompilation_list (compizconfig)
 
-    compiz_install_gsettings_schema (${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.freedesktop.compizconfig.gschema.xml
+    compiz_install_gsettings_schema (${_top_gschema_dest}
 				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
 
 endif (GLIB_COMPILE_SCHEMAS)
