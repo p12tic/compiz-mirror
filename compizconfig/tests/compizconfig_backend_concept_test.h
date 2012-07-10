@@ -3,6 +3,8 @@
 
 #include <list>
 
+#include <boost/scoped_array.hpp>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -350,6 +352,139 @@ TEST_P (CCSBackendConformanceTest, TestReadListBool)
 
     ccsSettingValueListFree (VALUE, FALSE);
 }
+
+TEST_P (CCSBackendConformanceTest, TestReadListInt)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingValueList VALUE;
+    int		VInt[3] = { 1, 2, 3 };
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
+
+    VALUE = ccsGetValueListFromIntArray (VInt, 3, setting);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
+
+    /* No matcher for lists yet */
+    EXPECT_CALL (*gmockSetting, setList (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+
+    ccsSettingValueListFree (VALUE, FALSE);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadListFloat)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingValueList VALUE;
+    float		VFloat[3] = { 1.0, 2.0, 3.0 };
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
+
+    VALUE = ccsGetValueListFromFloatArray (VFloat, 3, setting);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
+
+    /* No matcher for lists yet */
+    EXPECT_CALL (*gmockSetting, setList (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+
+    ccsSettingValueListFree (VALUE, FALSE);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadListString)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingValueList VALUE;
+    const char *	VString[3] = { "foo",
+				       "bar",
+				       "baz" };
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
+
+    VALUE = ccsGetValueListFromStringArray (VString, 3, setting);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
+
+    /* No matcher for lists yet */
+    EXPECT_CALL (*gmockSetting, setList (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+
+    ccsSettingValueListFree (VALUE, FALSE);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadListMatch)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingValueList VALUE;
+    const char *	VMatch[3] = { "foo",
+				      "bar",
+				      "baz" };
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
+
+    VALUE = ccsGetValueListFromMatchArray (VMatch, 3, setting);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
+
+    /* No matcher for lists yet */
+    EXPECT_CALL (*gmockSetting, setList (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+
+    ccsSettingValueListFree (VALUE, FALSE);
+}
+
+TEST_P (CCSBackendConformanceTest, TestReadListColor)
+{
+    std::string pluginName ("plugin");
+    std::string settingName ("string_setting");
+    CCSSettingValueList VALUE;
+    CCSSettingColorValue VColor[3] = { { .color = { 100, 200, 300, 100 } },
+					{ .color = { 50, 100, 200, 300 } },
+					{ .color = { 10, 20, 30, 40 } }
+				     };
+
+    CCSContext *context = SpawnContext ();
+    CCSPlugin *plugin = SpawnPlugin (pluginName);
+    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
+
+    VALUE = ccsGetValueListFromColorArray (VColor, 3, setting);
+
+    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+
+    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
+
+    /* No matcher for lists yet */
+    EXPECT_CALL (*gmockSetting, setList (_, _));
+
+    ccsBackendReadSetting (GetBackend (), context, setting);
+
+    ccsSettingValueListFree (VALUE, FALSE);
+}
+
 
 
 

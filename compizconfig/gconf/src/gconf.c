@@ -868,7 +868,7 @@ readListValue (CCSSetting *setting,
     case TypeString:
     case TypeMatch:
 	{
-	    char **array = malloc (nItems * sizeof (char*));
+	    const char **array = malloc (nItems * sizeof (char*));
 	    if (!array)
 		break;
 
@@ -877,7 +877,7 @@ readListValue (CCSSetting *setting,
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
 		if (array[i])
-		    free (array[i]);
+		    free ((char *) array[i]);
 	    free (array);
 	}
 	break;
