@@ -217,34 +217,23 @@ valueChanged (GSettings   *settings,
     g_free (pathOrig);
 }
 
-static Bool
-readListValue (CCSSetting *setting)
+static CCSSettingValueList
+readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 {
-    GSettings		*settings = getSettingsObjectForCCSSetting (setting);
     gboolean		hasVariantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
-    GVariant		*value;
     GVariantIter	iter;
 
-    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-
-    hasVariantType = compizconfigTypeHasVariantType (ccsSettingGetInfo (setting)->forList.listType);
+    hasVariantType = compizconfigTypeHasVariantType (listType);
 
     if (!hasVariantType)
-	return FALSE;
+	return NULL;
 
-    value = g_settings_get_value (settings, cleanSettingName);
-    if (!value)
-    {
-	ccsSetList (setting, NULL, TRUE);
-	return TRUE;
-    }
-
-    g_variant_iter_init (&iter, value);
+    g_variant_iter_init (&iter, gsettingsValue);
     nItems = g_variant_iter_n_children (&iter);
 
-    switch (ccsSettingGetInfo (setting)->forList.listType)
+    switch (listType)
     {
     case TypeBool:
 	{
@@ -259,7 +248,7 @@ readListValue (CCSSetting *setting)
 	    while (g_variant_iter_loop (&iter, "b", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
+	    list = ccsGetValueListFromBoolArray (array, nItems, NULL);
 	    free (array);
 	}
 	break;
@@ -276,7 +265,7 @@ readListValue (CCSSetting *setting)
 	    while (g_variant_iter_loop (&iter, "i", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromIntArray (array, nItems, setting);
+	    list = ccsGetValueListFromIntArray (array, nItems, NULL);
 	    free (array);
 	}
 	break;
@@ -293,7 +282,7 @@ readListValue (CCSSetting *setting)
 	    while (g_variant_iter_loop (&iter, "d", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
+	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, NULL);
 	    free (array);
 	}
 	break;
@@ -313,7 +302,7 @@ readListValue (CCSSetting *setting)
 	    while (g_variant_iter_next (&iter, "s", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromStringArray (array, nItems, setting);
+	    list = ccsGetValueListFromStringArray (array, nItems, NULL);
 	    g_strfreev ((char **) array);
 	}
 	break;
@@ -331,7 +320,7 @@ readListValue (CCSSetting *setting)
 		ccsStringToColor (colorValue,
 				  &array[i]);
 	    }
-	    list = ccsGetValueListFromColorArray (array, nItems, setting);
+	    list = ccsGetValueListFromColorArray (array, nItems, NULL);
 	    free (array);
 	}
 	break;
@@ -339,16 +328,7 @@ readListValue (CCSSetting *setting)
 	break;
     }
 
-    free (cleanSettingName);
-
-    if (list)
-    {
-	ccsSetList (setting, list, TRUE);
-	ccsSettingValueListFree (list, TRUE);
-	return TRUE;
-    }
-
-    return FALSE;
+    return list;
 }
 
 static Bool
@@ -573,7 +553,24 @@ readOption (CCSSetting * setting)
 	}
 	break;
     case TypeList:
-	ret = readListValue (setting);
+	{
+	    CCSSettingValueList list = readListValue (gsettingsValue, ccsSettingGetInfo (setting)->forList.listType);
+
+	    if (list)
+	    {
+		CCSSettingValueList iter = list;
+
+		while (iter)
+		{
+		    ((CCSSettingValue *) iter->data)->parent = setting;
+		    iter = iter->next;
+		}
+
+		ccsSetList (setting, list, TRUE);
+		ccsSettingValueListFree (list, TRUE);
+		ret = TRUE;
+	    }
+	}
 	break;
     default:
 	ccsWarning ("Attempt to read unsupported setting type %d!",
