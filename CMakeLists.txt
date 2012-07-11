@@ -15,6 +15,10 @@ include (Dart)
 include (CompizCommon)
 # Packaging-specific CMake macros & functions.
 include (CompizPackage)
+
+# GSettings schema recompilation
+include (CompizGSettings)
+
 include (cmake/base.cmake)
 # Check if specific function is present in library.
 include (CheckFunctionExists)
@@ -69,6 +73,11 @@ set (compiz_plugindir ${libdir}/compiz)
 set (compiz_sharedir ${datadir}/compiz/)
 set (compiz_metadatadir ${datadir}/compiz)
 set (COMPIZ_I18N_DIR ${CMAKE_SOURCE_DIR}/po)
+
+# Don't allow subdirectories to add schema recompile rule
+set_property (GLOBAL
+	      PROPERTY COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE
+	      TRUE)
 
 # Translation
 set (ALL_LINGUAS af ar bg bn bn_IN bs ca cs cy da de el en_GB en_US es eu et fi fr gl gu he hi hr hu id it ja ka km ko lo lt mk mr nb nl or pa pl pt pt_BR ro ru sk sl sr sv ta tr uk vi xh zh_CN zh_TW zu)
@@ -183,6 +192,13 @@ add_subdirectory (compizconfig)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
 add_subdirectory (tests)
+
+# Leave last - the cmake_install.cmake script is guarunteed
+# to run in a single job, and we need to force GSettings
+# schema recompilation to happen after all other install
+# targets (there is no way to set install target dependencies)
+# in CMake
+add_subdirectory (postinst)
 
 compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")
