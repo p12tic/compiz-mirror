@@ -76,12 +76,20 @@ class MockCCSBackendConceptTestEnvironment :
 
 	}
 
+	void PreWrite ()
+	{
+	    EXPECT_CALL (*mBackendGMock, writeSetting (_, _));
+	}
+
+	void PostWrite ()
+	{
+	}
+
 	void WriteBoolAtKey (const std::string &plugin,
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteIntegerAtKey (const std::string &plugin,
@@ -90,7 +98,6 @@ class MockCCSBackendConceptTestEnvironment :
 
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteFloatAtKey (const std::string &plugin,
@@ -98,7 +105,6 @@ class MockCCSBackendConceptTestEnvironment :
 			      const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteMatchAtKey (const std::string &plugin,
@@ -106,7 +112,6 @@ class MockCCSBackendConceptTestEnvironment :
 			      const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteStringAtKey (const std::string &plugin,
@@ -114,7 +119,6 @@ class MockCCSBackendConceptTestEnvironment :
 			       const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteColorAtKey (const std::string &plugin,
@@ -122,7 +126,6 @@ class MockCCSBackendConceptTestEnvironment :
 			      const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteKeyAtKey (const std::string &plugin,
@@ -130,7 +133,6 @@ class MockCCSBackendConceptTestEnvironment :
 			    const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteButtonAtKey (const std::string &plugin,
@@ -138,7 +140,6 @@ class MockCCSBackendConceptTestEnvironment :
 			       const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteEdgeAtKey (const std::string &plugin,
@@ -146,7 +147,6 @@ class MockCCSBackendConceptTestEnvironment :
 			     const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteBellAtKey (const std::string &plugin,
@@ -154,7 +154,6 @@ class MockCCSBackendConceptTestEnvironment :
 			     const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
 	void WriteListAtKey (const std::string &plugin,
@@ -162,7 +161,15 @@ class MockCCSBackendConceptTestEnvironment :
 			     const VariantTypes &value)
 	{
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void PreRead ()
+	{
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	void PostRead ()
+	{
 	}
 
 	virtual Bool ReadBoolAtKey (const std::string &plugin,
