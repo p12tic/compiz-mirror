@@ -955,15 +955,10 @@ AnimWindow::resetStepRegionWithBB ()
 void
 PrivateAnimWindow::damageThisAndLastStepRegion ()
 {
-#ifdef COMPIZ_OPENGL_SWAPBUFFERS_ALWAYS   // when LP: #901097 is fixed
     // Find union of the regions for this step and last step
     CompRegion totalRegionToDamage (mStepRegion + mLastStepRegion);
 
     mPAScreen->cScreen->damageRegion (totalRegionToDamage);
-#else
-    // Ugly fix for LP: #930192 while LP: #901097 is not resolved
-    mPAScreen->cScreen->damageScreen ();
-#endif
 }
 
 CompOutput &
