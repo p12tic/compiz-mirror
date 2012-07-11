@@ -387,7 +387,7 @@ class MockCCSBackendConceptTestEnvironment :
 		case TypeList:
 
 		    ccsGetList (setting, &vList);
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (vList, false)));
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (vList, false, ccsSettingGetInfo (setting)->forList.listType)));
 		    break;
 
 		default:
