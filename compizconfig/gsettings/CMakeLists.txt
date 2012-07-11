@@ -6,7 +6,7 @@ include (LibCompizConfigCommon)
 include (CompizGSettings)
 
 set (_deps glib-2.0>=2.20.0
-	  gio-2.0>=2.25.0)
+	   gio-2.0>=2.25.0)
 
 option (USE_GCONF "Enable legacy GNOME 2.x option integration with GConf" ON)
 
@@ -16,7 +16,36 @@ if (USE_GCONF)
     add_definitions (-DUSE_GCONF)
 endif (USE_GCONF)
 
-compizconfig_backend (gsettings PKGDEPS ${_deps})
+add_subdirectory (gsettings_backend_shared)
 
-compiz_install_gsettings_schema (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
-				 ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared)
+
+compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES gsettings_backend_shared)
+
+find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
+
+if (GLIB_COMPILE_SCHEMAS)
+
+    set (_top_gschema      org.compiz)
+    set (_top_gschema_file ${_top_gschema}.gschema.xml)
+    set (_top_gschema_src  ${CMAKE_CURRENT_SOURCE_DIR}/${_top_gschema_file})
+    set (_top_gschema_dest ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_top_gschema_file})
+
+    configure_file (${_top_gschema_src} ${_top_gschema_dest})
+
+    add_custom_command (
+	OUTPUT ${CMAKE_BINARY_DIR}/glib-2.0/schemas/gschemas.compiled
+	COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/glib-2.0/schemas/
+		${CMAKE_BINARY_DIR}/glib-2.0/schemas/
+    )
+
+    add_gsettings_schema_to_recompilation_list (compizconfig)
+
+    compiz_install_gsettings_schema (${_top_gschema_dest}
+				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+
+endif (GLIB_COMPILE_SCHEMAS)
+
+if (COMPIZ_BUILD_TESTING)
+    add_subdirectory (tests)
+endif (COMPIZ_BUILD_TESTING)

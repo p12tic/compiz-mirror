@@ -46,7 +46,8 @@ CCSSettingInterface CCSSettingGMockInterface =
     CCSSettingGMock::ccsGetList,
     CCSSettingGMock::ccsResetToDefault,
     CCSSettingGMock::ccsSettingIsIntegrated,
-    CCSSettingGMock::ccsSettingIsReadOnly
+    CCSSettingGMock::ccsSettingIsReadOnly,
+    CCSSettingGMock::ccsSettingFree
 };
 
 CCSSetting *
@@ -62,6 +63,8 @@ ccsMockSettingNew ()
     CCSSettingGMock *mock = new CCSSettingGMock ();
     ccsObjectSetPrivate (setting, (CCSPrivate *) mock);
     ccsObjectAddInterface (setting, (CCSInterface *) &CCSSettingGMockInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
+
+    ccsSettingRef (setting);
 
     return setting;
 }
