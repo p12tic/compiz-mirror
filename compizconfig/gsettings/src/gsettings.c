@@ -396,7 +396,7 @@ readOption (CCSSetting * setting)
     return ret;
 }
 
-static void
+Bool
 writeListValue (CCSSettingValueList list,
 		CCSSettingType	    listType,
 		GVariant	    **gsettingsValue)
@@ -482,10 +482,12 @@ writeListValue (CCSSettingValueList list,
     default:
 	ccsWarning ("Attempt to write unsupported list type %d!",
 	       listType);
+	return FALSE;
 	break;
     }
 
     *gsettingsValue = value;
+    return TRUE;
 }
 
 static void
@@ -512,11 +514,91 @@ resetOptionToDefault (CCSSetting * setting)
     free (cleanSettingName);
 }
 
+Bool writeStringToVariant (char *value, GVariant **variant)
+{
+    *variant = g_variant_new_string (value);
+    return TRUE;
+}
+
+Bool writeFloatToVariant (float value, GVariant **variant)
+{
+    *variant = g_variant_new_double ((double) value);
+    return TRUE;
+}
+
+Bool writeIntToVariant (int value, GVariant **variant)
+{
+    *variant = g_variant_new_int32 (value);
+    return TRUE;
+}
+
+Bool writeBoolToVariant (Bool value, GVariant **variant)
+{
+    *variant = g_variant_new_boolean (value);
+    return TRUE;
+}
+
+Bool writeColorToVariant (CCSSettingColorValue value, GVariant **variant)
+{
+    char                 *colString;
+
+    colString = ccsColorToString (&value);
+    if (!colString)
+	return FALSE;
+
+    *variant = g_variant_new_string (colString);
+    free (colString);
+
+    return TRUE;
+}
+
+Bool writeKeyToVariant (CCSSettingKeyValue key, GVariant **variant)
+{
+    char               *keyString;
+
+    keyString = ccsKeyBindingToString (&key);
+    if (!keyString)
+	return FALSE;
+
+    *variant = g_variant_new_string (keyString);
+    free (keyString);
+
+    return TRUE;
+}
+
+Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant)
+{
+    char                  *buttonString;
+
+    buttonString = ccsButtonBindingToString (&button);
+    if (!buttonString)
+	return FALSE;
+
+    *variant = g_variant_new_string (buttonString);
+    free (buttonString);
+    return TRUE;
+}
+
+Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
+{
+    char         *edgeString;
+
+    edgeString = ccsEdgesToString (edges);
+    if (!edgeString)
+	return FALSE;
+
+    *variant = g_variant_new_string (edgeString);
+    free (edgeString);
+    return TRUE;
+}
+
 void
 writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    GVariant *gsettingsValue = NULL;
+    Bool success = FALSE;
 
     switch (ccsSettingGetType (setting))
     {
@@ -525,7 +607,7 @@ writeOption (CCSSetting * setting)
 	    char *value;
 	    if (ccsGetString (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		success = writeStringToVariant (value, &gsettingsValue);
 	    }
 	}
 	break;
@@ -534,7 +616,7 @@ writeOption (CCSSetting * setting)
 	    char *value;
 	    if (ccsGetMatch (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		success = writeStringToVariant (value, &gsettingsValue);
 	    }
 	}
     case TypeFloat:
@@ -542,7 +624,7 @@ writeOption (CCSSetting * setting)
 	    float value;
 	    if (ccsGetFloat (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "d", (double) value, NULL);
+		success = writeFloatToVariant (value, &gsettingsValue);
 	    }
 	}
 	break;
@@ -551,7 +633,7 @@ writeOption (CCSSetting * setting)
 	    int value;
 	    if (ccsGetInt (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "i", value, NULL);
+		success = writeIntToVariant (value, &gsettingsValue);
 	    }
 	}
 	break;
@@ -560,72 +642,48 @@ writeOption (CCSSetting * setting)
 	    Bool value;
 	    if (ccsGetBool (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "b", value, NULL);
+		success = writeBoolToVariant (value, &gsettingsValue);
 	    }
 	}
 	break;
     case TypeColor:
 	{
 	    CCSSettingColorValue value;
-	    char                 *colString;
 
 	    if (!ccsGetColor (setting, &value))
 		break;
 
-	    colString = ccsColorToString (&value);
-	    if (!colString)
-		break;
-
-	    g_settings_set (settings, cleanSettingName, "s", colString, NULL);
-	    free (colString);
+	    success = writeColorToVariant (value, &gsettingsValue);
 	}
 	break;
     case TypeKey:
 	{
 	    CCSSettingKeyValue key;
-	    char               *keyString;
 
 	    if (!ccsGetKey (setting, &key))
 		break;
 
-	    keyString = ccsKeyBindingToString (&key);
-	    if (!keyString)
-		break;
-
-	    g_settings_set (settings, cleanSettingName, "s", keyString, NULL);
-	    free (keyString);
+	    success = writeKeyToVariant (key, &gsettingsValue);
 	}
 	break;
     case TypeButton:
 	{
 	    CCSSettingButtonValue button;
-	    char                  *buttonString;
 
 	    if (!ccsGetButton (setting, &button))
 		break;
 
-	    buttonString = ccsButtonBindingToString (&button);
-	    if (!buttonString)
-		break;
-
-	    g_settings_set (settings, cleanSettingName, "s", buttonString, NULL);
-	    free (buttonString);
+	    success = writeButtonToVariant (button, &gsettingsValue);
 	}
 	break;
     case TypeEdge:
 	{
 	    unsigned int edges;
-	    char         *edgeString;
 
 	    if (!ccsGetEdge (setting, &edges))
 		break;
 
-	    edgeString = ccsEdgesToString (edges);
-	    if (!edgeString)
-		break;
-
-	    g_settings_set (settings, cleanSettingName, "s", edgeString, NULL);
-	    free (edgeString);
+	    success = writeEdgeToVariant (edges, &gsettingsValue);
 	}
 	break;
     case TypeBell:
@@ -633,7 +691,7 @@ writeOption (CCSSetting * setting)
 	    Bool value;
 	    if (ccsGetBell (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		success = writeBoolToVariant (value, &gsettingsValue);
 	    }
 	}
 	break;
@@ -645,22 +703,22 @@ writeOption (CCSSetting * setting)
 	    if (!ccsGetList (setting, &list))
 		return;
 
-	    writeListValue (list,
-			    ccsSettingGetInfo (setting)->forList.listType,
-			    &value);
-
-	    if (value)
-	    {
-		/* g_settings_set_value will consume the reference
-		 * so there is no need to unref value here */
-		g_settings_set_value (settings, cleanSettingName, value);
-	    }
+	    success = writeListValue (list,
+				      ccsSettingGetInfo (setting)->forList.listType,
+				      &value);
 	}
 	break;
     default:
 	ccsWarning ("Attempt to write unsupported setting type %d",
 	       ccsSettingGetType (setting));
 	break;
+    }
+
+    if (success && gsettingsValue)
+    {
+	/* g_settings_set_value will consume the reference
+	 * so there is no need to unref value here */
+	g_settings_set_value (settings, cleanSettingName, gsettingsValue);
     }
 
     free (cleanSettingName);
