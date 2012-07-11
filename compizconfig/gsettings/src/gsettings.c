@@ -389,9 +389,17 @@ checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, gchar *p
 }
 
 GVariant *
-getVariantAtKey (GSettings *settings, char *key)
+getVariantAtKey (GSettings *settings, char *key, char *pathName, CCSSettingType type)
 {
-    return g_settings_get_value (settings, key);
+    GVariant *gsettingsValue = g_settings_get_value (settings, key);
+
+    if (!checkReadVariantIsValid (gsettingsValue, type, pathName))
+    {
+	g_variant_unref (gsettingsValue);
+	return NULL;
+    }
+
+    return gsettingsValue;
 }
 
 GVariant *
@@ -399,9 +407,11 @@ getVariantForCCSSetting (CCSSetting *setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = getNameForCCSSetting (setting);
-    GVariant *gsettingsValue = getVariantAtKey (settings, cleanSettingName);
+    gchar *pathName = makeSettingPath (setting);
+    GVariant *gsettingsValue = getVariantAtKey (settings, cleanSettingName, pathName, ccsSettingGetType (setting));
 
     free (cleanSettingName);
+    free (pathName);
     return gsettingsValue;
 }
 
@@ -423,15 +433,6 @@ readOption (CCSSetting * setting)
     }
 
     gsettingsValue = getVariantForCCSSetting (setting);
-
-    gchar *pathName = makeSettingPath (setting);
-
-    if (!checkReadVariantIsValid (gsettingsValue, ccsSettingGetType (setting), pathName))
-    {
-	g_free (pathName);
-	g_variant_unref (gsettingsValue);
-	return FALSE;
-    }
 
     switch (ccsSettingGetType (setting))
     {
@@ -555,7 +556,6 @@ readOption (CCSSetting * setting)
 	break;
     }
 
-    g_free (pathName);
     g_variant_unref (gsettingsValue);
 
     return ret;
