@@ -6,6 +6,7 @@ arch = subprocess.Popen (["uname", "-p"], stdout=subprocess.PIPE).communicate ()
 
 os.environ["COMPIZ_METADATA_PATH"] = "generated/"
 os.environ["LIBCOMPIZCONFIG_BACKEND_PATH"] = "compizconfig/libcompizconfig/backend/"
+os.environ["XDG_DATA_DIRS"] = "generated/"
 
 sys.path.append ("compizconfig/compizconfig-python/build/lib.linux-" + arch + "-" + str (sys.version_info[0]) + "." + str (sys.version_info[1]) + "/")
 
