@@ -397,19 +397,13 @@ readOption (CCSSetting * setting)
 }
 
 static void
-writeListValue (CCSSetting *setting,
-		char       *pathName)
+writeListValue (CCSSettingValueList list,
+		CCSSettingType	    listType,
+		GVariant	    **gsettingsValue)
 {
-    GSettings  		*settings = getSettingsObjectForCCSSetting (setting);
-    GVariant 		*value = NULL;
-    CCSSettingValueList list;
+    GVariant *value = NULL;
 
-    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-    
-    if (!ccsGetList (setting, &list))
-	return;
-
-    switch (ccsSettingGetInfo (setting)->forList.listType)
+    switch (listType)
     {
     case TypeBool:
 	{
@@ -487,17 +481,11 @@ writeListValue (CCSSetting *setting,
 	break;
     default:
 	ccsWarning ("Attempt to write unsupported list type %d!",
-	       ccsSettingGetInfo (setting)->forList.listType);
+	       listType);
 	break;
     }
 
-    if (value)
-    {
-	g_settings_set_value (settings, cleanSettingName, value);
-	g_variant_unref (value);
-    }
-    
-    free (cleanSettingName);
+    *gsettingsValue = value;
 }
 
 static void
@@ -651,9 +639,22 @@ writeOption (CCSSetting * setting)
 	break;
     case TypeList:
 	{
-	    gchar *pathName = makeSettingPath (setting);
-	    writeListValue (setting, pathName);
-	    g_free (pathName);
+	    GVariant *value = NULL;
+	    CCSSettingValueList  list = NULL;
+
+	    if (!ccsGetList (setting, &list))
+		return;
+
+	    writeListValue (list,
+			    ccsSettingGetInfo (setting)->forList.listType,
+			    &value);
+
+	    if (value)
+	    {
+		/* g_settings_set_value will consume the reference
+		 * so there is no need to unref value here */
+		g_settings_set_value (settings, cleanSettingName, value);
+	    }
 	}
 	break;
     default:
