@@ -376,6 +376,79 @@ getVariantForCCSSetting (CCSSetting *setting)
     return gsettingsValue;
 }
 
+const char * readStringFromVariant (GVariant *gsettingsValue)
+{
+    return g_variant_get_string (gsettingsValue, NULL);
+}
+
+int readIntFromVariant (GVariant *gsettingsValue)
+{
+    return g_variant_get_int32 (gsettingsValue);
+}
+
+Bool readBoolFromVariant (GVariant *gsettingsValue)
+{
+    return g_variant_get_boolean (gsettingsValue) ? TRUE : FALSE;
+}
+
+float readFloatFromVariant (GVariant *gsettingsValue)
+{
+    return (float) g_variant_get_double (gsettingsValue);
+}
+
+CCSSettingColorValue readColorFromVariant (GVariant *gsettingsValue, Bool *success)
+{
+    const char           *value;
+    CCSSettingColorValue color;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+    if (value)
+	*success = ccsStringToColor (value, &color);
+    else
+	*success = FALSE;
+
+    return color;
+}
+
+CCSSettingKeyValue readKeyFromVariant (GVariant *gsettingsValue, Bool *success)
+{
+    const char         *value;
+    CCSSettingKeyValue key;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+     if (value)
+	 *success = ccsStringToKeyBinding (value, &key);
+     else
+	 *success = FALSE;
+
+     return key;
+}
+
+CCSSettingButtonValue readButtonFromVariant (GVariant *gsettingsValue, Bool *success)
+{
+    const char            *value;
+    CCSSettingButtonValue button;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+    if (value)
+	*success = ccsStringToButtonBinding (value, &button);
+    else
+	*success = FALSE;
+
+    return button;
+}
+
+unsigned int readEdgeFromVariant (GVariant *gsettingsValue)
+{
+    const char   *value;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+    if (value)
+	return ccsStringToEdges (value);
+
+    return 0;
+}
+
 Bool
 readOption (CCSSetting * setting)
 {
@@ -400,7 +473,7 @@ readOption (CCSSetting * setting)
     case TypeString:
 	{
 	    const char *value;
-	    value = g_variant_get_string (gsettingsValue, NULL);
+	    value = readStringFromVariant (gsettingsValue);
 	    if (value)
 	    {
 		ccsSetString (setting, value, TRUE);
@@ -411,7 +484,7 @@ readOption (CCSSetting * setting)
     case TypeMatch:
 	{
 	    const char * value;
-	    value = g_variant_get_string (gsettingsValue, NULL);
+	    value = readStringFromVariant (gsettingsValue);
 	    if (value)
 	    {
 		ccsSetMatch (setting, value, TRUE);
@@ -422,7 +495,7 @@ readOption (CCSSetting * setting)
     case TypeInt:
 	{
 	    int value;
-	    value = g_variant_get_int32 (gsettingsValue);
+	    value = readIntFromVariant (gsettingsValue);
 
 	    ccsSetInt (setting, value, TRUE);
 	    ret = TRUE;
@@ -430,29 +503,28 @@ readOption (CCSSetting * setting)
 	break;
     case TypeBool:
 	{
-	    gboolean value;
-	    value = g_variant_get_boolean (gsettingsValue);
+	    Bool value;
+	    value = readBoolFromVariant (gsettingsValue);
 
-	    ccsSetBool (setting, value ? TRUE : FALSE, TRUE);
+	    ccsSetBool (setting, value, TRUE);
 	    ret = TRUE;
 	}
 	break;
     case TypeFloat:
 	{
-	    double value;
-	    value = g_variant_get_double (gsettingsValue);
+	    float value;
+	    value = readFloatFromVariant (gsettingsValue);
 
-	    ccsSetFloat (setting, (float)value, TRUE);
+	    ccsSetFloat (setting, value, TRUE);
     	    ret = TRUE;
 	}
 	break;
     case TypeColor:
 	{
-	    const char           *value;
-	    CCSSettingColorValue color;
-	    value = g_variant_get_string (gsettingsValue, NULL);
+	    Bool success = FALSE;
+	    CCSSettingColorValue color = readColorFromVariant (gsettingsValue, &success);
 
-	    if (value && ccsStringToColor (value, &color))
+	    if (success)
 	    {
 		ccsSetColor (setting, color, TRUE);
 		ret = TRUE;
@@ -461,11 +533,10 @@ readOption (CCSSetting * setting)
 	break;
     case TypeKey:
 	{
-	    const char         *value;
-	    CCSSettingKeyValue key;
-	    value = g_variant_get_string (gsettingsValue, NULL);
+	    Bool success = FALSE;
+	    CCSSettingKeyValue key = readKeyFromVariant (gsettingsValue, &success);
 
-	    if (value && ccsStringToKeyBinding (value, &key))
+	    if (success)
 	    {
 		ccsSetKey (setting, key, TRUE);
 		ret = TRUE;
@@ -474,11 +545,10 @@ readOption (CCSSetting * setting)
 	break;
     case TypeButton:
 	{
-	    const char            *value;
-	    CCSSettingButtonValue button;
-	    value = g_variant_get_string (gsettingsValue, NULL);
+	    Bool success = FALSE;
+	    CCSSettingButtonValue button = readButtonFromVariant (gsettingsValue, &success);
 
-	    if (value && ccsStringToButtonBinding (value, &button))
+	    if (success)
 	    {
 		ccsSetButton (setting, button, TRUE);
 		ret = TRUE;
@@ -487,24 +557,18 @@ readOption (CCSSetting * setting)
 	break;
     case TypeEdge:
 	{
-	    const char   *value;
-	    value = g_variant_get_string (gsettingsValue, NULL);
+	    unsigned int edges = readEdgeFromVariant (gsettingsValue);
 
-	    if (value)
-	    {
-		unsigned int edges;
-		edges = ccsStringToEdges (value);
-		ccsSetEdge (setting, edges, TRUE);
-		ret = TRUE;
-	    }
+	    ccsSetEdge (setting, edges, TRUE);
+	    ret = TRUE;
 	}
 	break;
     case TypeBell:
 	{
-	    gboolean value;
-	    value = g_variant_get_boolean (gsettingsValue);
+	    Bool value;
+	    value = readBoolFromVariant (gsettingsValue);
 
-	    ccsSetBell (setting, value ? TRUE : FALSE, TRUE);
+	    ccsSetBell (setting, value, TRUE);
 	    ret = TRUE;
 	}
 	break;
