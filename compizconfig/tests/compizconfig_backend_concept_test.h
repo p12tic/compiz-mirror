@@ -328,6 +328,8 @@ namespace impl
 
 Bool boolValues[] = { TRUE, FALSE, TRUE };
 int intValues[] = { 1, 2, 3 };
+float floatValues[] = { 1.0, 2.0, 3.0 };
+const char * stringValues[] = { "foo", "grill", "bar" };
 
 CCSSettingColorValue colorValues[3] = { { .color = { 100, 200, 300, 100 } },
 					{ .color = { 50, 100, 200, 300 } },
@@ -424,7 +426,43 @@ GenerateTestingParametersForBackendInterface ()
 					   TypeList,
 					   "int_list_setting",
 					   boost::bind (SetListExpectation, _1, _2),
-					   "TestRetreiveListInt")
+					   "TestRetreiveListInt"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromFloatArray (impl::floatValues,
+															     sizeof (impl::floatValues) / sizeof (impl::floatValues[0]),
+															     NULL), false)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   TypeList,
+					   "float_list_setting",
+					   boost::bind (SetListExpectation, _1, _2),
+					   "TestRetreiveListInt"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromBoolArray (impl::boolValues,
+															   sizeof (impl::boolValues) / sizeof (impl::boolValues[0]),
+															   NULL), false)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   TypeList,
+					   "bool_list_setting",
+					   boost::bind (SetListExpectation, _1, _2),
+					   "TestRetreiveListBool"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromStringArray (impl::stringValues,
+															      sizeof (impl::stringValues) / sizeof (impl::stringValues[0]),
+															      NULL), false)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   TypeList,
+					   "string_list_setting",
+					   boost::bind (SetListExpectation, _1, _2),
+					   "TestRetreiveListString"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromColorArray (impl::colorValues,
+															     sizeof (impl::colorValues) / sizeof (impl::colorValues[0]),
+															     NULL), false)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   TypeList,
+					   "color_list_setting",
+					   boost::bind (SetListExpectation, _1, _2),
+					   "TestRetreiveListColor")
     };
 
     return ::testing::ValuesIn (testParam);
