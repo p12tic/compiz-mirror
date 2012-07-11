@@ -572,3 +572,175 @@ unsigned int readEdgeFromVariant (GVariant *gsettingsValue)
 
     return 0;
 }
+
+Bool
+writeListValue (CCSSettingValueList list,
+		CCSSettingType	    listType,
+		GVariant	    **gsettingsValue)
+{
+    GVariant *value = NULL;
+
+    switch (listType)
+    {
+    case TypeBool:
+	{
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
+	    while (list)
+	    {
+		g_variant_builder_add (builder, "b", list->data->value.asBool);
+		list = list->next;
+	    }
+	    value = g_variant_new ("ab", builder);
+	    g_variant_builder_unref (builder);
+	}
+	break;
+    case TypeInt:
+	{
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
+	    while (list)
+	    {
+		g_variant_builder_add (builder, "i", list->data->value.asInt);
+		list = list->next;
+	    }
+	    value = g_variant_new ("ai", builder);
+	    g_variant_builder_unref (builder);
+	}
+	break;
+    case TypeFloat:
+	{
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
+	    while (list)
+	    {
+		g_variant_builder_add (builder, "d", (gdouble) list->data->value.asFloat);
+		list = list->next;
+	    }
+	    value = g_variant_new ("ad", builder);
+	    g_variant_builder_unref (builder);
+	}
+	break;
+    case TypeString:
+	{
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+	    while (list)
+	    {
+		g_variant_builder_add (builder, "s", list->data->value.asString);
+		list = list->next;
+	    }
+	    value = g_variant_new ("as", builder);
+	    g_variant_builder_unref (builder);
+	}
+	break;
+    case TypeMatch:
+	{
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+	    while (list)
+	    {
+		g_variant_builder_add (builder, "s", list->data->value.asMatch);
+		list = list->next;
+	    }
+	    value = g_variant_new ("as", builder);
+	    g_variant_builder_unref (builder);
+	}
+	break;
+    case TypeColor:
+	{
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+	    char *item;
+	    while (list)
+	    {
+		item = ccsColorToString (&list->data->value.asColor);
+		g_variant_builder_add (builder, "s", item);
+		list = list->next;
+	    }
+	    value = g_variant_new ("as", builder);
+	    g_variant_builder_unref (builder);
+	}
+	break;
+    default:
+	ccsWarning ("Attempt to write unsupported list type %d!",
+	       listType);
+	return FALSE;
+	break;
+    }
+
+    *gsettingsValue = value;
+    return TRUE;
+}
+
+Bool writeStringToVariant (char *value, GVariant **variant)
+{
+    *variant = g_variant_new_string (value);
+    return TRUE;
+}
+
+Bool writeFloatToVariant (float value, GVariant **variant)
+{
+    *variant = g_variant_new_double ((double) value);
+    return TRUE;
+}
+
+Bool writeIntToVariant (int value, GVariant **variant)
+{
+    *variant = g_variant_new_int32 (value);
+    return TRUE;
+}
+
+Bool writeBoolToVariant (Bool value, GVariant **variant)
+{
+    *variant = g_variant_new_boolean (value);
+    return TRUE;
+}
+
+Bool writeColorToVariant (CCSSettingColorValue value, GVariant **variant)
+{
+    char                 *colString;
+
+    colString = ccsColorToString (&value);
+    if (!colString)
+	return FALSE;
+
+    *variant = g_variant_new_string (colString);
+    free (colString);
+
+    return TRUE;
+}
+
+Bool writeKeyToVariant (CCSSettingKeyValue key, GVariant **variant)
+{
+    char               *keyString;
+
+    keyString = ccsKeyBindingToString (&key);
+    if (!keyString)
+	return FALSE;
+
+    *variant = g_variant_new_string (keyString);
+    free (keyString);
+
+    return TRUE;
+}
+
+Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant)
+{
+    char                  *buttonString;
+
+    buttonString = ccsButtonBindingToString (&button);
+    if (!buttonString)
+	return FALSE;
+
+    *variant = g_variant_new_string (buttonString);
+    free (buttonString);
+    return TRUE;
+}
+
+Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
+{
+    char         *edgeString;
+
+    edgeString = ccsEdgesToString (edges);
+    if (!edgeString)
+	return FALSE;
+
+    *variant = g_variant_new_string (edgeString);
+    free (edgeString);
+    return TRUE;
+}

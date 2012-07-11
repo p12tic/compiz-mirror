@@ -94,4 +94,25 @@ unsigned int readEdgeFromVariant (GVariant *gsettingsValue);
 CCSSettingValueList
 readListValue (GVariant *gsettingsValue, CCSSettingType listType);
 
+Bool
+writeListValue (CCSSettingValueList list,
+		CCSSettingType	    listType,
+		GVariant	    **gsettingsValue);
+
+Bool writeStringToVariant (char *value, GVariant **variant);
+
+Bool writeFloatToVariant (float value, GVariant **variant);
+
+Bool writeIntToVariant (int value, GVariant **variant);
+
+Bool writeBoolToVariant (Bool value, GVariant **variant);
+
+Bool writeColorToVariant (CCSSettingColorValue value, GVariant **variant);
+
+Bool writeKeyToVariant (CCSSettingKeyValue key, GVariant **variant);
+
+Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant);
+
+Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
+
 #endif
