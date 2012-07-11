@@ -217,7 +217,32 @@ valueChanged (GSettings   *settings,
     g_free (pathOrig);
 }
 
-static CCSSettingValueList
+static Bool
+readIntegratedOption (CCSContext *context,
+		      CCSSetting *setting,
+		      int        index)
+{
+#ifdef USE_GCONF
+    return readGConfIntegratedOption (context, setting, index);
+#else
+    return FALSE;
+#endif
+}
+
+static GVariant *
+getVariantForCCSSetting (CCSSetting *setting)
+{
+    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    char *cleanSettingName = getNameForCCSSetting (setting);
+    gchar *pathName = makeSettingPath (setting);
+    GVariant *gsettingsValue = getVariantAtKey (settings, cleanSettingName, pathName, ccsSettingGetType (setting));
+
+    free (cleanSettingName);
+    free (pathName);
+    return gsettingsValue;
+}
+
+CCSSettingValueList
 readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 {
     gboolean		hasVariantType;
@@ -315,7 +340,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 		break;
 
 	    while (g_variant_iter_loop (&iter, "s", &colorValue))
-    	    {
+	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (colorValue,
 				  &array[i]);
@@ -329,31 +354,6 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
     }
 
     return list;
-}
-
-static Bool
-readIntegratedOption (CCSContext *context,
-		      CCSSetting *setting,
-		      int        index)
-{
-#ifdef USE_GCONF
-    return readGConfIntegratedOption (context, setting, index);
-#else
-    return FALSE;
-#endif
-}
-
-static GVariant *
-getVariantForCCSSetting (CCSSetting *setting)
-{
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-    char *cleanSettingName = getNameForCCSSetting (setting);
-    gchar *pathName = makeSettingPath (setting);
-    GVariant *gsettingsValue = getVariantAtKey (settings, cleanSettingName, pathName, ccsSettingGetType (setting));
-
-    free (cleanSettingName);
-    free (pathName);
-    return gsettingsValue;
 }
 
 const char * readStringFromVariant (GVariant *gsettingsValue)
