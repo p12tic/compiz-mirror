@@ -363,12 +363,11 @@ readIntegratedOption (CCSContext *context,
 #endif
 }
 
-Bool
-readOption (CCSSetting * setting)
+GVariant *
+getVariantAtKeyForSetting (CCSSetting *setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     GVariant   *gsettingsValue = NULL;
-    Bool       ret = FALSE;
 
     /* It is impossible for certain settings to have a schema,
      * such as actions and read only settings, so in that case
@@ -378,7 +377,7 @@ readOption (CCSSetting * setting)
     if (ccsSettingGetType (setting) == TypeAction ||
 	ccsSettingIsReadOnly (setting))
     {
-	return FALSE;
+	return NULL;
     }
 
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
@@ -389,7 +388,7 @@ readOption (CCSSetting * setting)
     if (!gsettingsValue)
     {
 	free (cleanSettingName);
-	return FALSE;
+	return NULL;
     }
 
     if (!variantIsValidForCCSType (gsettingsValue, ccsSettingGetType (setting)))
@@ -404,6 +403,19 @@ readOption (CCSSetting * setting)
 	g_variant_unref (gsettingsValue);
 	return FALSE;
     }
+
+    free (cleanSettingName);
+    return gsettingsValue;
+}
+
+Bool
+readOption (CCSSetting * setting)
+{
+    Bool       ret = FALSE;
+    GVariant   *gsettingsValue = getVariantAtKeyForSetting (setting);
+
+    if (!gsettingsValue)
+	return FALSE;
 
     switch (ccsSettingGetType (setting))
     {
@@ -527,7 +539,6 @@ readOption (CCSSetting * setting)
 	break;
     }
 
-    free (cleanSettingName);
     g_variant_unref (gsettingsValue);
 
     return ret;
