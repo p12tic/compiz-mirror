@@ -764,6 +764,10 @@ Bool ccsIsEqualKey (CCSSettingKeyValue c1,
 Bool ccsIsEqualButton (CCSSettingButtonValue c1,
 		       CCSSettingButtonValue c2);
 
+/* Compares lists */
+Bool ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
+		      CCSSettingListInfo info);
+
 /* Retrieves a list of settings in a plugin */
 CCSSettingList ccsGetPluginSettings (CCSPlugin *plugin);
 

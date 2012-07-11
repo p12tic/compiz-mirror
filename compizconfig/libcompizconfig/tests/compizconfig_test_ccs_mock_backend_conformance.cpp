@@ -73,7 +73,6 @@ class MockCCSBackendConceptTestEnvironment :
 	{
 	    ccsFreeMockBackend (backend);
 
-
 	}
 
 	void PreWrite ()

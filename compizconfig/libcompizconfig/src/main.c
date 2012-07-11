@@ -1601,7 +1601,7 @@ static Bool ccsBackendCapabilitiesDeleteProfileWrapper (CCSBackend *backend, CCS
     return FALSE;
 }
 
-static Bool
+Bool
 ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 		 CCSSettingListInfo info)
 {

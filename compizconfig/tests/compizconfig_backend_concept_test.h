@@ -25,6 +25,33 @@ using ::testing::SetArgPointee;
 using ::testing::DoAll;
 using ::testing::Return;
 
+bool
+operator== (const CCSSettingColorValue &lhs,
+	    const CCSSettingColorValue &rhs)
+{
+    if (ccsIsEqualColor (lhs, rhs))
+	return true;
+    return false;
+}
+
+bool
+operator== (const CCSSettingKeyValue &lhs,
+	    const CCSSettingKeyValue &rhs)
+{
+    if (ccsIsEqualKey (lhs, rhs))
+	return true;
+    return false;
+}
+
+bool
+operator== (const CCSSettingButtonValue &lhs,
+	    const CCSSettingButtonValue &rhs)
+{
+    if (ccsIsEqualButton (lhs, rhs))
+	return true;
+    return false;
+}
+
 class CCSListWrapper :
     boost::noncopyable
 {
@@ -219,7 +246,7 @@ void SetColorWriteExpectation (const std::string &plugin,
 							     boost::get <CCSSettingColorValue> (value)),
 							 Return (TRUE)));
     write ();
-    //EXPECT_EQ (env->ReadColorAtKey (plugin, setting), boost::get <CCSSettingColorValue> (value));
+    EXPECT_EQ (env->ReadColorAtKey (plugin, setting), boost::get <CCSSettingColorValue> (value));
 }
 
 void SetKeyWriteExpectation (const std::string &plugin,
@@ -234,7 +261,7 @@ void SetKeyWriteExpectation (const std::string &plugin,
 							     boost::get <CCSSettingKeyValue> (value)),
 							 Return (TRUE)));
     write ();
-    //EXPECT_EQ (env->ReadKeyAtKey (plugin, setting), boost::get <CCSSettingKeyValue> (value));
+    EXPECT_EQ (env->ReadKeyAtKey (plugin, setting), boost::get <CCSSettingKeyValue> (value));
 }
 
 void SetButtonWriteExpectation (const std::string &plugin,
@@ -249,7 +276,7 @@ void SetButtonWriteExpectation (const std::string &plugin,
 							     boost::get <CCSSettingButtonValue> (value)),
 							 Return (TRUE)));
     write ();
-    //EXPECT_EQ (env->ReadButtonAtKey (plugin, setting), boost::get <CCSSettingButtonValue> (value));
+    EXPECT_EQ (env->ReadButtonAtKey (plugin, setting), boost::get <CCSSettingButtonValue> (value));
 }
 
 void SetEdgeWriteExpectation (const std::string &plugin,
@@ -346,17 +373,17 @@ void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 
 void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setColor (_, _)); // can't match
+    EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _)); // can't match
 }
 
 void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setKey (_, _)); // can't match
+    EXPECT_CALL (*gmock, setKey (boost::get <CCSSettingKeyValue> (value), _)); // can't match
 }
 
 void SetButtonReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setButton (_, _)); // can't match
+    EXPECT_CALL (*gmock, setButton (boost::get <CCSSettingButtonValue> (value), _)); // can't match
 }
 
 void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
