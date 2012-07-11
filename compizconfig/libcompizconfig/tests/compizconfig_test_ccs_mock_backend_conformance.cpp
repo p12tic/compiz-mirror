@@ -253,49 +253,7 @@ class MockCCSBackendConceptTestEnvironment :
 	std::map <std::string, CCSSettingValueList> mListMap;
 };
 
-static MockCCSBackendConceptTestEnvironment mockBackendEnv;
-static CCSBackendConceptTestEnvironmentInterface *backendEnv = &mockBackendEnv;
-
-static CCSBackendConceptTestParam::Ptr testParam[] =
-{
-    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (1),
-						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteIntegerAtKey, backendEnv, _1, _2, _3),
-						     TypeInt,
-						     "integer_setting",
-						     boost::bind (SetIntExpectation, _1, _2),
-						     "TestRetreiveInt"),
-    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (true),
-						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBoolAtKey, backendEnv, _1, _2, _3),
-						     TypeBool,
-						     "boolean_setting",
-						     boost::bind (SetBoolExpectation, _1, _2),
-						     "TestRetreiveBool"),
-    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (static_cast <float> (3.0)),
-						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteFloatAtKey, backendEnv, _1, _2, _3),
-						     TypeFloat,
-						     "float_setting",
-						     boost::bind (SetFloatExpectation, _1, _2),
-						     "TestRetreiveFloat"),
-    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (static_cast <const char *> ("foo")),
-						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteStringAtKey, backendEnv, _1, _2, _3),
-						     TypeString,
-						     "string_setting",
-						     boost::bind (SetStringExpectation, _1, _2),
-						     "TestRetreiveString"),
-    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (static_cast <const char *> ("foo=bar")),
-						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteMatchAtKey, backendEnv, _1, _2, _3),
-						     TypeMatch,
-						     "match_setting",
-						     boost::bind (SetMatchExpectation, _1, _2),
-						     "TestRetreiveMatch"),
-    boost::make_shared <CCSBackendConceptTestParam> (VariantTypes (true),
-						     boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBellAtKey, backendEnv, _1, _2, _3),
-						     TypeBell,
-						     "bell_setting",
-						     boost::bind (SetBellExpectation, _1, _2),
-						     "TestRetreiveBell")
-};
-
-INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest, Combine (Values (backendEnv), ValuesIn (testParam)));
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest,
+			 compizconfig::test::GenerateTestingParametersForBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
 

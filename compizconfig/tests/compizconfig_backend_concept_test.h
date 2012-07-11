@@ -106,26 +106,61 @@ void SetMatchExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setMatch (Eq (std::string (boost::get <const char *> (value))), _));
 }
+
+void SetColorExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setColor (_, _)); // can't match
 }
 
-class CCSBackendConceptTestParam
+void SetKeyExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setKey (_, _)); // can't match
+}
+
+void SetButtonExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setButton (_, _)); // can't match
+}
+
+}
+
+class CCSBackendConceptTestParamInterface
 {
     public:
 
-	typedef boost::shared_ptr <CCSBackendConceptTestParam> Ptr;
+	typedef boost::shared_ptr <CCSBackendConceptTestParamInterface> Ptr;
 
-	typedef boost::function <void (const std::string &,
-				       const std::string &,
-				       const VariantTypes &)> NativeWrite;
+	typedef boost::function <void (const std::string &plugin,
+				       const std::string &keyname,
+				       const VariantTypes &value)> NativeWriteMethod;
 	typedef boost::function <void (CCSSettingGMock *,
 				       const VariantTypes &)> SetExpectation;
 
-	CCSBackendConceptTestParam (const VariantTypes &value,
-				    const NativeWrite &write,
+	virtual CCSBackendConceptTestEnvironmentInterface * testEnv () = 0;
+	virtual VariantTypes & value () = 0;
+	virtual NativeWriteMethod & nativeWrite () = 0;
+	virtual CCSSettingType & type () = 0;
+	virtual std::string & keyname () = 0;
+	virtual SetExpectation & setExpectation () = 0;
+	virtual std::string & what () = 0;
+};
+
+template <typename I>
+class CCSBackendConceptTestParam :
+    public CCSBackendConceptTestParamInterface
+{
+    public:
+
+	typedef boost::shared_ptr <CCSBackendConceptTestParam <I> > Ptr;
+
+	CCSBackendConceptTestParam (CCSBackendConceptTestEnvironmentInterface *testEnv,
+				    const VariantTypes &value,
+				    const NativeWriteMethod &write,
 				    const CCSSettingType &type,
 				    const std::string &keyname,
 				    const SetExpectation &setExpectation,
 				    const std::string &what) :
+	    mTestEnv (testEnv),
 	    mValue (value),
 	    mNativeWrite (write),
 	    mType (type),
@@ -135,17 +170,19 @@ class CCSBackendConceptTestParam
 	{
 	}
 
+	CCSBackendConceptTestEnvironmentInterface * testEnv () { return mTestEnv; }
 	VariantTypes & value () { return mValue; }
-	NativeWrite & nativeWrite () { return mNativeWrite; }
+	CCSBackendConceptTestParamInterface::NativeWriteMethod & nativeWrite () { return mNativeWrite; }
 	CCSSettingType & type () { return mType; }
 	std::string & keyname () { return mKeyname; }
-	SetExpectation & setExpectation () { return mSetExpectation; }
+	CCSBackendConceptTestParamInterface::SetExpectation & setExpectation () { return mSetExpectation; }
 	std::string & what () { return mWhat; }
 
     private:
 
+	CCSBackendConceptTestEnvironmentInterface *mTestEnv;
 	VariantTypes mValue;
-	NativeWrite mNativeWrite;
+	NativeWriteMethod mNativeWrite;
 	CCSSettingType mType;
 	std::string mKeyname;
 	SetExpectation mSetExpectation;
@@ -154,8 +191,7 @@ class CCSBackendConceptTestParam
 };
 
 class CCSBackendConformanceTest :
-    public ::testing::TestWithParam <std::tr1::tuple <CCSBackendConceptTestEnvironmentInterface *,
-						      CCSBackendConceptTestParam::Ptr> >
+    public ::testing::TestWithParam <CCSBackendConceptTestParamInterface::Ptr>
 {
     public:
 
@@ -166,12 +202,12 @@ class CCSBackendConformanceTest :
 
 	void SetUp ()
 	{
-	    mBackend = std::tr1::get<0> (GetParam ())->SetUp ();
+	    mBackend = GetParam ()->testEnv ()->SetUp ();
 	}
 
 	void TearDown ()
 	{
-	    std::tr1::get<0> (GetParam ())->TearDown (mBackend);
+	    CCSBackendConformanceTest::GetParam ()->testEnv ()->TearDown (mBackend);
 
 	    for (std::list <CCSContext *>::iterator it = mSpawnedContexts.begin ();
 		 it != mSpawnedContexts.end ();
@@ -244,373 +280,126 @@ class CCSBackendConformanceTest :
 	CCSBackend *mBackend;
 };
 
-TEST_P (CCSBackendConformanceTest, TestSetup)
+namespace compizconfig
 {
+namespace test
+{
+namespace impl
+{
+
+CCSSettingColorValue colorValues[3] = { { .color = { 100, 200, 300, 100 } },
+					{ .color = { 50, 100, 200, 300 } },
+					{ .color = { 10, 20, 30, 40 } }
+				      };
+
+CCSSettingKeyValue keyValue = { (1 << 0) | (1 << 1),
+				1 };
+
+CCSSettingButtonValue buttonValue = { (1 << 0) | (1 << 1),
+				      1,
+				      (1 << 1) };
+}
+
+template <typename I>
+::testing::internal::ParamGenerator<typename CCSBackendConceptTestParamInterface::Ptr>
+GenerateTestingParametersForBackendInterface ()
+{
+    static I interface;
+    static CCSBackendConceptTestEnvironmentInterface *backendEnv = &interface;
+
+    typedef CCSBackendConceptTestParam<I> ConceptParam;
+
+    static typename CCSBackendConceptTestParamInterface::Ptr testParam[] =
+    {
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (1),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteIntegerAtKey, backendEnv, _1, _2, _3),
+					   TypeInt,
+					   "integer_setting",
+					   boost::bind (SetIntExpectation, _1, _2),
+					   "TestRetreiveInt"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (true),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBoolAtKey, backendEnv, _1, _2, _3),
+					   TypeBool,
+					   "boolean_setting",
+					   boost::bind (SetBoolExpectation, _1, _2),
+					   "TestRetreiveBool"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (static_cast <float> (3.0)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteFloatAtKey, backendEnv, _1, _2, _3),
+					   TypeFloat,
+					   "float_setting",
+					   boost::bind (SetFloatExpectation, _1, _2),
+					   "TestRetreiveFloat"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (static_cast <const char *> ("foo")),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteStringAtKey, backendEnv, _1, _2, _3),
+					   TypeString,
+					   "string_setting",
+					   boost::bind (SetStringExpectation, _1, _2),
+					   "TestRetreiveString"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (static_cast <const char *> ("foo=bar")),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteMatchAtKey, backendEnv, _1, _2, _3),
+					   TypeMatch,
+					   "match_setting",
+					   boost::bind (SetMatchExpectation, _1, _2),
+					   "TestRetreiveMatch"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (true),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBellAtKey, backendEnv, _1, _2, _3),
+					   TypeBell,
+					   "bell_setting",
+					   boost::bind (SetBellExpectation, _1, _2),
+					   "TestRetreiveBell"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (impl::colorValues[0]),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteColorAtKey, backendEnv, _1, _2, _3),
+					   TypeColor,
+					   "color_setting",
+					   boost::bind (SetColorExpectation, _1, _2),
+					   "TestRetreiveColor"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (impl::keyValue),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteKeyAtKey, backendEnv, _1, _2, _3),
+					   TypeKey,
+					   "key_setting",
+					   boost::bind (SetKeyExpectation, _1, _2),
+					   "TestRetreiveKey"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (impl::buttonValue),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteButtonAtKey, backendEnv, _1, _2, _3),
+					   TypeButton,
+					   "button_setting",
+					   boost::bind (SetButtonExpectation, _1, _2),
+					   "TestRetreiveButton")
+    };
+
+    return ::testing::ValuesIn (testParam);
+}
+}
 }
 
 TEST_P (CCSBackendConformanceTest, TestReadValue)
 {
-    SCOPED_TRACE (std::tr1::get <1> (GetParam ())->what ());
+    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what ());
 
     std::string pluginName ("plugin");
-    const std::string &settingName (std::tr1::get <1> (GetParam ())->keyname ());
-    const VariantTypes &VALUE (std::tr1::get <1> (GetParam ())->value ());
+    const std::string &settingName (GetParam ()->keyname ());
+    const VariantTypes &VALUE (GetParam ()->value ());
 
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, std::tr1::get <1> (GetParam ())->type (), plugin);
+    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
+    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
+    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
 
     CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
 
-    std::tr1::get <1> (GetParam ())->nativeWrite () (pluginName, settingName, VALUE);
-    std::tr1::get <1> (GetParam ())->setExpectation () (gmockSetting, VALUE);
+    CCSBackendConformanceTest::GetParam ()->nativeWrite () (pluginName, settingName, VALUE);
+    CCSBackendConformanceTest::GetParam ()->setExpectation () (gmockSetting, VALUE);
 
-    ccsBackendReadSetting (GetBackend (), context, setting);
+    ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context, setting);
 }
-
-#if 0
-
-TEST_P (CCSBackendConformanceTest, TestReadInteger)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("integer_setting");
-    const int VALUE = 1;
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeInt, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteIntegerAtKey (pluginName, settingName, VALUE);
-
-    EXPECT_CALL (*gmockSetting, setInt (VALUE, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadFloat)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("float_setting");
-    const float VALUE = 1.0;
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeFloat, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteFloatAtKey (pluginName, settingName, VALUE);
-
-    EXPECT_CALL (*gmockSetting, setFloat (VALUE, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadString)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    const std::string VALUE ("foo");
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeString, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteStringAtKey (pluginName, settingName, VALUE);
-
-    EXPECT_CALL (*gmockSetting, setString (VALUE.c_str (), _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-namespace
-{
-    bool
-    operator== (const CCSSettingColorValue &lhs,
-		const CCSSettingColorValue &rhs)
-    {
-	return (lhs.color.red == rhs.color.red &&
-		lhs.color.green == rhs.color.green &&
-		lhs.color.blue == rhs.color.blue &&
-		lhs.color.alpha == lhs.color.alpha);
-    }
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadColor)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingColorValue VALUE;
-
-    VALUE.color.red = 100;
-    VALUE.color.blue = 100;
-    VALUE.color.green = 100;
-    VALUE.color.alpha = 100;
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeColor, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteColorAtKey (pluginName, settingName, VALUE);
-
-    /* FIXME: We can't verify right now that the color returned is correct */
-    EXPECT_CALL (*gmockSetting, setColor (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadKey)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingKeyValue VALUE;
-
-    VALUE.keyModMask = (1 << 0) | (1 << 1);
-    VALUE.keysym = 1;
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeKey, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteKeyAtKey (pluginName, settingName, VALUE);
-
-    /* FIXME: We can't verify right now that the key returned is correct */
-    EXPECT_CALL (*gmockSetting, setKey (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadButton)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingButtonValue VALUE;
-
-    VALUE.buttonModMask = (1 << 0) | (1 << 1);
-    VALUE.button = 1;
-    VALUE.edgeMask = (1 << 0);
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeButton, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteButtonAtKey (pluginName, settingName, VALUE);
-
-    /* FIXME: We can't verify right now that the button returned is correct */
-    EXPECT_CALL (*gmockSetting, setButton (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadEdge)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    unsigned int VALUE;
-
-    VALUE = 1;
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeEdge, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteEdgeAtKey (pluginName, settingName, VALUE);
-
-    EXPECT_CALL (*gmockSetting, setEdge (VALUE, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadBell)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    Bool VALUE = TRUE;
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeBell, plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteBellAtKey (pluginName, settingName, VALUE);
-
-    EXPECT_CALL (*gmockSetting, setBell (VALUE, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadListBool)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingValueList VALUE;
-    Bool		VBool[3] = { FALSE, TRUE, FALSE };
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
-
-    VALUE = ccsGetValueListFromBoolArray (VBool, 3, setting);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
-
-    /* No matcher for lists yet */
-    EXPECT_CALL (*gmockSetting, setList (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-
-    ccsSettingValueListFree (VALUE, FALSE);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadListInt)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingValueList VALUE;
-    int		VInt[3] = { 1, 2, 3 };
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
-
-    VALUE = ccsGetValueListFromIntArray (VInt, 3, setting);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
-
-    /* No matcher for lists yet */
-    EXPECT_CALL (*gmockSetting, setList (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-
-    ccsSettingValueListFree (VALUE, FALSE);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadListFloat)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingValueList VALUE;
-    float		VFloat[3] = { 1.0, 2.0, 3.0 };
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
-
-    VALUE = ccsGetValueListFromFloatArray (VFloat, 3, setting);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
-
-    /* No matcher for lists yet */
-    EXPECT_CALL (*gmockSetting, setList (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-
-    ccsSettingValueListFree (VALUE, FALSE);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadListString)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingValueList VALUE;
-    const char *	VString[3] = { "foo",
-				       "bar",
-				       "baz" };
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
-
-    VALUE = ccsGetValueListFromStringArray (VString, 3, setting);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
-
-    /* No matcher for lists yet */
-    EXPECT_CALL (*gmockSetting, setList (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-
-    ccsSettingValueListFree (VALUE, FALSE);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadListMatch)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingValueList VALUE;
-    const char *	VMatch[3] = { "foo",
-				      "bar",
-				      "baz" };
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
-
-    VALUE = ccsGetValueListFromMatchArray (VMatch, 3, setting);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
-
-    /* No matcher for lists yet */
-    EXPECT_CALL (*gmockSetting, setList (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-
-    ccsSettingValueListFree (VALUE, FALSE);
-}
-
-TEST_P (CCSBackendConformanceTest, TestReadListColor)
-{
-    std::string pluginName ("plugin");
-    std::string settingName ("string_setting");
-    CCSSettingValueList VALUE;
-    CCSSettingColorValue VColor[3] = { { .color = { 100, 200, 300, 100 } },
-					{ .color = { 50, 100, 200, 300 } },
-					{ .color = { 10, 20, 30, 40 } }
-				     };
-
-    CCSContext *context = SpawnContext ();
-    CCSPlugin *plugin = SpawnPlugin (pluginName);
-    CCSSetting *setting = SpawnSetting (settingName, TypeList, plugin);
-
-    VALUE = ccsGetValueListFromColorArray (VColor, 3, setting);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    GetParam ()->WriteListAtKey (pluginName, settingName, VALUE);
-
-    /* No matcher for lists yet */
-    EXPECT_CALL (*gmockSetting, setList (_, _));
-
-    ccsBackendReadSetting (GetBackend (), context, setting);
-
-    ccsSettingValueListFree (VALUE, FALSE);
-}
-
-#endif
-
 
 #endif
 
