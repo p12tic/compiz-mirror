@@ -396,6 +396,30 @@ readOption (CCSSetting * setting)
     return ret;
 }
 
+static void
+writeIntegratedOption (CCSContext *context,
+		       CCSSetting *setting,
+		       int        index)
+{
+#ifdef USE_GCONF
+    writeGConfIntegratedOption (context, setting, index);
+#endif
+
+    return;
+}
+
+static void
+resetOptionToDefault (CCSSetting * setting)
+{
+    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+  
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+
+    g_settings_reset (settings, cleanSettingName);
+
+    free (cleanSettingName);
+}
+
 Bool
 writeListValue (CCSSettingValueList list,
 		CCSSettingType	    listType,
@@ -424,8 +448,8 @@ writeListValue (CCSSettingValueList list,
 	    {
 		g_variant_builder_add (builder, "i", list->data->value.asInt);
 		list = list->next;
-    	    }
-    	    value = g_variant_new ("ai", builder);
+	    }
+	    value = g_variant_new ("ai", builder);
 	    g_variant_builder_unref (builder);
 	}
 	break;
@@ -488,30 +512,6 @@ writeListValue (CCSSettingValueList list,
 
     *gsettingsValue = value;
     return TRUE;
-}
-
-static void
-writeIntegratedOption (CCSContext *context,
-		       CCSSetting *setting,
-		       int        index)
-{
-#ifdef USE_GCONF
-    writeGConfIntegratedOption (context, setting, index);
-#endif
-
-    return;
-}
-
-static void
-resetOptionToDefault (CCSSetting * setting)
-{
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-  
-    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-
-    g_settings_reset (settings, cleanSettingName);
-
-    free (cleanSettingName);
 }
 
 Bool writeStringToVariant (char *value, GVariant **variant)
