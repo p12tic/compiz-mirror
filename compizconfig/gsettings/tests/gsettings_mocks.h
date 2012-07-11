@@ -2,7 +2,7 @@
 #define _COMPIZ_COMPIZCONFIG_GSETTINGS_MOCKS
 
 #include <glib-object.h>
-#include <mock-setting.h>
+#include <compizconfig_ccs_setting_mock.h>
 
 G_BEGIN_DECLS
 

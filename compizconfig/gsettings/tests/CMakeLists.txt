@@ -1,6 +1,7 @@
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_CURRENT_SOURCE_DIR}/../src
-                     ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/tests)
+                     ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/tests
+		     ${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig)
 
 pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig)
 
@@ -15,7 +16,7 @@ link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../libcompizconfig/tests)
 
 target_link_libraries (compizconfig_test_gsettings
 		       gsettings_backend_shared
-		       setting-mock
+		       compizconfig_ccs_setting_mock
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
