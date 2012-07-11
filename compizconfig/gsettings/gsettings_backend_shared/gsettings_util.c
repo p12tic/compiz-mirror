@@ -340,3 +340,8 @@ makeCompizPluginPath (const gchar *profileName, const gchar *pluginName)
                          "plugins", pluginName, "/", NULL);
 }
 
+gchar *
+getNameForCCSSetting (CCSSetting *setting)
+{
+    return translateKeyForGSettings (ccsSettingGetName (setting));
+}

@@ -363,10 +363,52 @@ readIntegratedOption (CCSContext *context,
 #endif
 }
 
+Bool
+checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, gchar *pathName)
+{
+    /* first check if the key is set */
+    if (!gsettingsValue)
+    {
+	ccsWarning ("There is no key at the path %s. "
+		"Settings from this path won't be read. Try to remove "
+		"that value so that operation can continue properly.",
+		pathName);
+	return FALSE;
+    }
+
+    if (!variantIsValidForCCSType (gsettingsValue, type))
+    {
+	ccsWarning ("There is an unsupported value at path %s. "
+		"Settings from this path won't be read. Try to remove "
+		"that value so that operation can continue properly.",
+		pathName);
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
 GVariant *
-getVariantAtKeyForSetting (CCSSetting *setting)
+getVariantAtKey (GSettings *settings, char *key)
+{
+    return g_settings_get_value (settings, key);
+}
+
+GVariant *
+getVariantForCCSSetting (CCSSetting *setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    char *cleanSettingName = getNameForCCSSetting (setting);
+    GVariant *gsettingsValue = getVariantAtKey (settings, cleanSettingName);
+
+    free (cleanSettingName);
+    return gsettingsValue;
+}
+
+Bool
+readOption (CCSSetting * setting)
+{
+    Bool       ret = FALSE;
     GVariant   *gsettingsValue = NULL;
 
     /* It is impossible for certain settings to have a schema,
@@ -377,45 +419,19 @@ getVariantAtKeyForSetting (CCSSetting *setting)
     if (ccsSettingGetType (setting) == TypeAction ||
 	ccsSettingIsReadOnly (setting))
     {
-	return NULL;
+	return FALSE;
     }
 
-    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    gsettingsValue = getVariantForCCSSetting (setting);
 
-    /* first check if the key is set */
-    gsettingsValue = g_settings_get_value (settings, cleanSettingName);
+    gchar *pathName = makeSettingPath (setting);
 
-    if (!gsettingsValue)
+    if (!checkReadVariantIsValid (gsettingsValue, ccsSettingGetType (setting), pathName))
     {
-	free (cleanSettingName);
-	return NULL;
-    }
-
-    if (!variantIsValidForCCSType (gsettingsValue, ccsSettingGetType (setting)))
-    {
-	gchar *pathName = makeSettingPath (setting);
-	ccsWarning ("There is an unsupported value at path %s. "
-		"Settings from this path won't be read. Try to remove "
-		"that value so that operation can continue properly.",
-		pathName);
 	g_free (pathName);
-	free (cleanSettingName);
 	g_variant_unref (gsettingsValue);
 	return FALSE;
     }
-
-    free (cleanSettingName);
-    return gsettingsValue;
-}
-
-Bool
-readOption (CCSSetting * setting)
-{
-    Bool       ret = FALSE;
-    GVariant   *gsettingsValue = getVariantAtKeyForSetting (setting);
-
-    if (!gsettingsValue)
-	return FALSE;
 
     switch (ccsSettingGetType (setting))
     {
@@ -539,6 +555,7 @@ readOption (CCSSetting * setting)
 	break;
     }
 
+    g_free (pathName);
     g_variant_unref (gsettingsValue);
 
     return ret;

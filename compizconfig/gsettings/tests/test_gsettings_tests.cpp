@@ -869,3 +869,24 @@ TEST_P(CCSGSettingsTestVariantTypeToCCSTypeListFixture, TestVariantTypesInListTe
 
 INSTANTIATE_TEST_CASE_P(CCSGSettingsTestVariantTypeToCCSTypeListInstantiation, CCSGSettingsTestVariantTypeToCCSTypeListFixture,
 			ValuesIn (variantTypeToListOfCCSTypes));
+
+TEST_F(CCSGSettingsTestIndependent, TestGetNameForCCSSetting)
+{
+    CCSSetting *setting = ccsMockSettingNew ();
+    CCSSettingGMock *gmock = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+    char *rawSettingName = strdup ("FoO_BaR");
+    char *properSettingName = translateKeyForGSettings (rawSettingName);
+
+    EXPECT_CALL (*gmock, getName ()).WillOnce (Return (rawSettingName));
+
+    char *translatedSettingName = getNameForCCSSetting (setting);
+
+    EXPECT_EQ (std::string (translatedSettingName), std::string (properSettingName));
+    EXPECT_NE (std::string (translatedSettingName), std::string (rawSettingName));
+
+    free (translatedSettingName);
+    free (properSettingName);
+    free (rawSettingName);
+
+    ccsSettingUnref (setting);
+}
