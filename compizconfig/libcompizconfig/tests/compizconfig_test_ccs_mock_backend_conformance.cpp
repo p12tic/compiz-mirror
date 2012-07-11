@@ -162,7 +162,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mListMap[plugin + "/" + key] = boost::get <CCSSettingValueList> (value);
+	    mListMap[plugin + "/" + key] = *(boost::get <boost::shared_ptr <CCSListWrapper> > (value));
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 

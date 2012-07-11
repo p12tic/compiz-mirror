@@ -8,6 +8,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -21,6 +22,39 @@
 
 using ::testing::Eq;
 
+class CCSListWrapper :
+    boost::noncopyable
+{
+    public:
+
+	typedef boost::shared_ptr <CCSListWrapper> Ptr;
+
+	CCSListWrapper (CCSSettingValueList list, bool freeItems) :
+	    mList (list),
+	    mFreeItems (freeItems)
+	{
+	}
+
+	operator CCSSettingValueList ()
+	{
+	    return mList;
+	}
+
+	operator CCSSettingValueList () const
+	{
+	    return mList;
+	}
+
+	~CCSListWrapper ()
+	{
+	    ccsSettingValueListFree (mList, mFreeItems ? TRUE : FALSE);
+	}
+    private:
+
+	CCSSettingValueList mList;
+	bool		    mFreeItems;
+};
+
 typedef boost::variant <bool,
 			int,
 			float,
@@ -28,7 +62,7 @@ typedef boost::variant <bool,
 			CCSSettingColorValue,
 			CCSSettingKeyValue,
 			CCSSettingButtonValue,
-			CCSSettingValueList> VariantTypes;
+			CCSListWrapper::Ptr> VariantTypes;
 
 class CCSBackendConceptTestEnvironmentInterface
 {
@@ -120,6 +154,11 @@ void SetKeyExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 void SetButtonExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setButton (_, _)); // can't match
+}
+
+void SetListExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setList (_, _)); // can't match
 }
 
 }
@@ -287,6 +326,9 @@ namespace test
 namespace impl
 {
 
+Bool boolValues[] = { TRUE, FALSE, TRUE };
+int intValues[] = { 1, 2, 3 };
+
 CCSSettingColorValue colorValues[3] = { { .color = { 100, 200, 300, 100 } },
 					{ .color = { 50, 100, 200, 300 } },
 					{ .color = { 10, 20, 30, 40 } }
@@ -373,7 +415,16 @@ GenerateTestingParametersForBackendInterface ()
 					   TypeButton,
 					   "button_setting",
 					   boost::bind (SetButtonExpectation, _1, _2),
-					   "TestRetreiveButton")
+					   "TestRetreiveButton"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromIntArray (impl::intValues,
+															   sizeof (impl::intValues) / sizeof (impl::intValues[0]),
+															   NULL), false)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   TypeList,
+					   "int_list_setting",
+					   boost::bind (SetListExpectation, _1, _2),
+					   "TestRetreiveListInt")
     };
 
     return ::testing::ValuesIn (testParam);
