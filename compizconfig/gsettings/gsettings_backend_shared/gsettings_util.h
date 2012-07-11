@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <gio/gio.h>
 #include <ccs.h>
 
 gchar *
@@ -67,5 +68,11 @@ makeCompizPluginPath (const gchar *profileName, const gchar *pluginName);
 
 gchar *
 getNameForCCSSetting (CCSSetting *setting);
+
+Bool
+checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gchar *pathName);
+
+GVariant *
+getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type);
 
 #endif

@@ -345,3 +345,42 @@ getNameForCCSSetting (CCSSetting *setting)
 {
     return translateKeyForGSettings (ccsSettingGetName (setting));
 }
+
+Bool
+checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gchar *pathName)
+{
+    /* first check if the key is set */
+    if (!gsettingsValue)
+    {
+	ccsWarning ("There is no key at the path %s. "
+		"Settings from this path won't be read. Try to remove "
+		"that value so that operation can continue properly.",
+		pathName);
+	return FALSE;
+    }
+
+    if (!variantIsValidForCCSType (gsettingsValue, type))
+    {
+	ccsWarning ("There is an unsupported value at path %s. "
+		"Settings from this path won't be read. Try to remove "
+		"that value so that operation can continue properly.",
+		pathName);
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+GVariant *
+getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type)
+{
+    GVariant *gsettingsValue = g_settings_get_value (settings, key);
+
+    if (!checkReadVariantIsValid (gsettingsValue, type, pathName))
+    {
+	g_variant_unref (gsettingsValue);
+	return NULL;
+    }
+
+    return gsettingsValue;
+}

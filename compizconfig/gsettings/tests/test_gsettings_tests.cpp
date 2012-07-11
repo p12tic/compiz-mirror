@@ -890,3 +890,26 @@ TEST_F(CCSGSettingsTestIndependent, TestGetNameForCCSSetting)
 
     ccsSettingUnref (setting);
 }
+
+TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidNULL)
+{
+    EXPECT_FALSE (checkReadVariantIsValid (NULL, TypeNum, "foo/bar"));
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidTypeBad)
+{
+    GVariant *v = g_variant_new ("i", 1);
+
+    EXPECT_FALSE (checkReadVariantIsValid (v, TypeString, "foo/bar"));
+
+    g_variant_unref (v);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidTypeGood)
+{
+    GVariant *v = g_variant_new ("i", 1);
+
+    EXPECT_FALSE (checkReadVariantIsValid (v, TypeInt, "foo/bar"));
+
+    g_variant_unref (v);
+}
