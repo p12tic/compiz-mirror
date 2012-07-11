@@ -46,47 +46,15 @@
 
 #include <gio/gio.h>
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-
-#define CompAltMask        (1 << 16)
-#define CompMetaMask       (1 << 17)
-#define CompSuperMask      (1 << 18)
-#define CompHyperMask      (1 << 19)
-#define CompModeSwitchMask (1 << 20)
-#define CompNumLockMask    (1 << 21)
-#define CompScrollLockMask (1 << 22)
-
-#define COMPIZ_SCHEMA_ID   "org.freedesktop.compiz"
-#define COMPIZCONFIG_SCHEMA_ID "org.freedesktop.compizconfig"
-#define PROFILE_SCHEMA_ID "org.freedesktop.compizconfig.profile"
-#define METACITY     "/apps/metacity"
-#define COMPIZ       "/apps/compiz-1"
-#define COMPIZ_PROFILEPATH COMPIZ "/profiles"
-#define COMPIZCONFIG "/org/freedesktop/compizconfig"
-#define PROFILEPATH  COMPIZCONFIG "/profiles"
-#define DEFAULTPROF "Default"
-#define CORE_NAME   "core"
+#include "gsettings_shared.h"
 
 #define BUFSIZE 512
 
 #define NUM_WATCHED_DIRS 3
 
-#define KEYNAME(sn)     char keyName[BUFSIZE]; \
-                    snprintf (keyName, BUFSIZE, "screen%i", sn);
-
-#define PATHNAME(p,k)    char pathName[BUFSIZE]; \
-                    if (!p || \
-			strcmp (p, "core") == 0) \
-                        snprintf (pathName, BUFSIZE, \
-				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
-				 p, k); \
-                    else \
-			snprintf(pathName, BUFSIZE, \
-				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
-				 p, k);
-
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 typedef enum {
     OptionInt,
