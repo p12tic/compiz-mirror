@@ -16,6 +16,15 @@ using ::testing::Combine;
 using ::testing::ValuesIn;
 using ::testing::Values;
 
+namespace
+{
+std::string keynameFromPluginKey (const std::string &plugin,
+				  const std::string &key)
+{
+    return plugin + "/" + key;
+}
+}
+
 template <typename T>
 class ValueForKeyRetreival
 {
@@ -64,7 +73,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -73,7 +82,7 @@ class MockCCSBackendConceptTestEnvironment :
 				const VariantTypes &value)
 
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -81,7 +90,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -89,7 +98,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -97,7 +106,7 @@ class MockCCSBackendConceptTestEnvironment :
 			       const std::string &key,
 			       const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -105,7 +114,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -113,7 +122,7 @@ class MockCCSBackendConceptTestEnvironment :
 			    const std::string &key,
 			    const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -121,7 +130,7 @@ class MockCCSBackendConceptTestEnvironment :
 			       const std::string &key,
 			       const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -129,7 +138,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -137,7 +146,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -145,72 +154,138 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mValues[plugin + "/" + key] = value;
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	}
+
+	virtual Bool ReadBoolAtKey (const std::string &plugin,
+				    const std::string &key)
+	{
+	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	}
+
+	virtual int ReadIntegerAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return ValueForKeyRetreival <int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual float ReadFloatAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return ValueForKeyRetreival <float> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual const char * ReadStringAtKey (const std::string &plugin,
+					      const std::string &key)
+	{
+	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
+						     const std::string &key)
+	{
+	    return ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
+						 const std::string &key)
+	{
+	    return ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
+						       const std::string &key)
+	{
+	    return ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return ValueForKeyRetreival <unsigned int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual const char * ReadMatchAtKey (const std::string &plugin,
+					     const std::string &key)
+	{
+	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual Bool ReadBellAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	}
+
+	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
+						   const std::string &key)
+	{
+	    return *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
 	}
 
     protected:
 
 	void WriteValueToSetting (CCSSetting *setting)
 	{
-	    std::string key (std::string (ccsPluginGetName (ccsSettingGetParent (setting))) +
-			     "/" + std::string (ccsSettingGetName (setting)));
+	    std::string plugin (ccsPluginGetName (ccsSettingGetParent (setting)));
+	    std::string key (ccsSettingGetName (setting));
 
 	    switch (ccsSettingGetType (setting))
 	    {
 		case TypeBool:
 
-		    ccsSetBool (setting, boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (key, mValues)), FALSE);
+		    ccsSetBool (setting, ReadBoolAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeInt:
 
-		    ccsSetInt (setting, ValueForKeyRetreival <int> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetInt (setting, ReadIntegerAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeFloat:
 
-		    ccsSetFloat (setting, ValueForKeyRetreival <float> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetFloat (setting, ReadFloatAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeString:
 
-		    ccsSetString (setting, ValueForKeyRetreival <const char *> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetString (setting, ReadStringAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeMatch:
 
-		    ccsSetMatch (setting, ValueForKeyRetreival <const char *> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetMatch (setting, ReadMatchAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeColor:
 
-		    ccsSetColor (setting, ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetColor (setting, ReadColorAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeKey:
 
-		    ccsSetKey (setting, ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetKey (setting, ReadKeyAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeButton:
 
-		    ccsSetButton (setting, ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetButton (setting, ReadButtonAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeEdge:
 
-		    ccsSetEdge (setting, ValueForKeyRetreival <unsigned int> ().GetValueForKey (key, mValues), FALSE);
+		    ccsSetEdge (setting, ReadEdgeAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeBell:
 
-		    ccsSetBell (setting, boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (key, mValues)), FALSE);
+		    ccsSetBell (setting, ReadBellAtKey (plugin, key), FALSE);
 		    break;
 
 		case TypeList:
 
-		    ccsSetList (setting, *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (key, mValues)), FALSE);
+		    ccsSetList (setting, ReadListAtKey (plugin, key), FALSE);
 		    break;
 
 		default:

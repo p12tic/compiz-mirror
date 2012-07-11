@@ -102,10 +102,32 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual void WriteBellAtKey (const std::string &plugin,
 				       const std::string &key,
 				       const VariantTypes &value) = 0;
-
 	virtual void WriteListAtKey (const std::string &plugin,
 				     const std::string &key,
 				     const VariantTypes &value) = 0;
+
+	virtual Bool ReadBoolAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual int ReadIntegerAtKey (const std::string &plugin,
+					const std::string &key) = 0;
+	virtual float ReadFloatAtKey (const std::string &plugin,
+				      const std::string &key) = 0;
+	virtual const char * ReadStringAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual const char * ReadMatchAtKey (const std::string &plugin,
+				      const std::string &key) = 0;
+	virtual Bool ReadBellAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
+				     const std::string &key) = 0;
 };
 
 namespace
