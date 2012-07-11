@@ -437,17 +437,17 @@ void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 
 void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _)); // can't match
+    EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _));
 }
 
 void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setKey (boost::get <CCSSettingKeyValue> (value), _)); // can't match
+    EXPECT_CALL (*gmock, setKey (boost::get <CCSSettingKeyValue> (value), _));
 }
 
 void SetButtonReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setButton (boost::get <CCSSettingButtonValue> (value), _)); // can't match
+    EXPECT_CALL (*gmock, setButton (boost::get <CCSSettingButtonValue> (value), _));
 }
 
 void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
@@ -462,7 +462,7 @@ void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
     info.forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
     info.forList.listInfo = NULL;
 
-    EXPECT_CALL (*gmock, setList (ListEqual (info.forList, *(boost::get <boost::shared_ptr <CCSListWrapper> > (value))), _)); // can't match
+    EXPECT_CALL (*gmock, setList (ListEqual (info.forList, *(boost::get <boost::shared_ptr <CCSListWrapper> > (value))), _));
 }
 
 }
