@@ -62,6 +62,7 @@ typedef boost::variant <bool,
 			CCSSettingColorValue,
 			CCSSettingKeyValue,
 			CCSSettingButtonValue,
+			unsigned int,
 			CCSListWrapper::Ptr> VariantTypes;
 
 class CCSBackendConceptTestEnvironmentInterface
@@ -154,6 +155,11 @@ void SetKeyExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 void SetButtonExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setButton (_, _)); // can't match
+}
+
+void SetEdgeExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setEdge (boost::get <unsigned int> (value), _));
 }
 
 void SetListExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
@@ -418,6 +424,13 @@ GenerateTestingParametersForBackendInterface ()
 					   "button_setting",
 					   boost::bind (SetButtonExpectation, _1, _2),
 					   "TestRetreiveButton"),
+	boost::make_shared <ConceptParam> (backendEnv,
+					   VariantTypes (static_cast <unsigned int> (1)),
+					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteEdgeAtKey, backendEnv, _1, _2, _3),
+					   TypeEdge,
+					   "edge_setting",
+					   boost::bind (SetEdgeExpectation, _1, _2),
+					   "TestRetreiveEdge"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromIntArray (impl::intValues,
 															   sizeof (impl::intValues) / sizeof (impl::intValues[0]),

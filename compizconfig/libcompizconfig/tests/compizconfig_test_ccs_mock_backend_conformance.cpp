@@ -22,29 +22,12 @@ class ValueForKeyRetreival
     public:
 
 	T GetValueForKey (const std::string &key,
-			  const std::map <std::string, T> &map)
+			  const std::map <std::string, VariantTypes> &map)
 	{
-	    typename std::map <std::string, T>::const_iterator it = map.find (key);
+	    std::map <std::string, VariantTypes>::const_iterator it = map.find (key);
 
 	    if (it != map.end ())
-		return it->second;
-	    else
-		throw std::exception ();
-	}
-};
-
-template <>
-class ValueForKeyRetreival <char *>
-{
-    public:
-
-	const char * GetValueForKey (const std::string &key,
-				     const std::map <std::string, std::string> &map)
-	{
-	    std::map <std::string, std::string>::const_iterator it = map.find (key);
-
-	    if (it != map.end ())
-		return it->second.c_str ();
+		return boost::get <T> (it->second);
 	    else
 		throw std::exception ();
 	}
@@ -81,7 +64,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mBoolMap[plugin + "/" + key] = boolToBool (boost::get <bool> (value));
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -90,7 +73,7 @@ class MockCCSBackendConceptTestEnvironment :
 				const VariantTypes &value)
 
 	{
-	    mIntMap[plugin + "/" + key] = boost::get <int> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -98,7 +81,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    mFloatMap[plugin + "/" + key] = boost::get <float> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -106,7 +89,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    mMatchMap[plugin + "/" + key] = boost::get <const char *> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -114,7 +97,7 @@ class MockCCSBackendConceptTestEnvironment :
 			       const std::string &key,
 			       const VariantTypes &value)
 	{
-	    mStringMap[plugin + "/" + key] = boost::get <const char *> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -122,7 +105,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    mColorMap[plugin + "/" + key] = boost::get <CCSSettingColorValue> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -130,7 +113,7 @@ class MockCCSBackendConceptTestEnvironment :
 			    const std::string &key,
 			    const VariantTypes &value)
 	{
-	    mKeyMap[plugin + "/" + key] = boost::get <CCSSettingKeyValue> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -138,7 +121,7 @@ class MockCCSBackendConceptTestEnvironment :
 			       const std::string &key,
 			       const VariantTypes &value)
 	{
-	    mButtonMap[plugin + "/" + key] = boost::get <CCSSettingButtonValue> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -146,7 +129,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mEdgeMap[plugin + "/" + key] = boost::get <unsigned int> (value);
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -154,7 +137,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mBellMap[plugin + "/" + key] = boolToBool (boost::get <bool> (value));
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -162,7 +145,7 @@ class MockCCSBackendConceptTestEnvironment :
 			     const std::string &key,
 			     const VariantTypes &value)
 	{
-	    mListMap[plugin + "/" + key] = *(boost::get <boost::shared_ptr <CCSListWrapper> > (value));
+	    mValues[plugin + "/" + key] = value;
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
@@ -177,57 +160,57 @@ class MockCCSBackendConceptTestEnvironment :
 	    {
 		case TypeBool:
 
-		    ccsSetBool (setting, ValueForKeyRetreival <Bool> ().GetValueForKey (key, mBoolMap), FALSE);
+		    ccsSetBool (setting, boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (key, mValues)), FALSE);
 		    break;
 
 		case TypeInt:
 
-		    ccsSetInt (setting, ValueForKeyRetreival <int> ().GetValueForKey (key, mIntMap), FALSE);
+		    ccsSetInt (setting, ValueForKeyRetreival <int> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeFloat:
 
-		    ccsSetFloat (setting, ValueForKeyRetreival <float> ().GetValueForKey (key, mFloatMap), FALSE);
+		    ccsSetFloat (setting, ValueForKeyRetreival <float> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeString:
 
-		    ccsSetString (setting, ValueForKeyRetreival <char *> ().GetValueForKey (key, mStringMap), FALSE);
+		    ccsSetString (setting, ValueForKeyRetreival <const char *> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeMatch:
 
-		    ccsSetMatch (setting, ValueForKeyRetreival <char *> ().GetValueForKey (key, mMatchMap), FALSE);
+		    ccsSetMatch (setting, ValueForKeyRetreival <const char *> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeColor:
 
-		    ccsSetColor (setting, ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (key, mColorMap), FALSE);
+		    ccsSetColor (setting, ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeKey:
 
-		    ccsSetKey (setting, ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (key, mKeyMap), FALSE);
+		    ccsSetKey (setting, ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeButton:
 
-		    ccsSetButton (setting, ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (key, mButtonMap), FALSE);
+		    ccsSetButton (setting, ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeEdge:
 
-		    ccsSetEdge (setting, ValueForKeyRetreival <unsigned int> ().GetValueForKey (key, mEdgeMap), FALSE);
+		    ccsSetEdge (setting, ValueForKeyRetreival <unsigned int> ().GetValueForKey (key, mValues), FALSE);
 		    break;
 
 		case TypeBell:
 
-		    ccsSetBell (setting, ValueForKeyRetreival <Bool> ().GetValueForKey (key, mBellMap), FALSE);
+		    ccsSetBell (setting, boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (key, mValues)), FALSE);
 		    break;
 
 		case TypeList:
 
-		    ccsSetList (setting, ValueForKeyRetreival <CCSSettingValueList> ().GetValueForKey (key, mListMap), FALSE);
+		    ccsSetList (setting, *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (key, mValues)), FALSE);
 		    break;
 
 		default:
@@ -240,17 +223,7 @@ class MockCCSBackendConceptTestEnvironment :
 
 	CCSBackend *mBackend;
 	CCSBackendGMock *mBackendGMock;
-	std::map <std::string, int> mIntMap;
-	std::map <std::string, float> mFloatMap;
-	std::map <std::string, std::string> mStringMap;
-	std::map <std::string, std::string> mMatchMap;
-	std::map <std::string, CCSSettingColorValue> mColorMap;
-	std::map <std::string, CCSSettingKeyValue> mKeyMap;
-	std::map <std::string, CCSSettingButtonValue> mButtonMap;
-	std::map <std::string, unsigned int> mEdgeMap;
-	std::map <std::string, Bool> mBoolMap;
-	std::map <std::string, Bool> mBellMap;
-	std::map <std::string, CCSSettingValueList> mListMap;
+	std::map <std::string, VariantTypes> mValues;
 };
 
 INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest,
