@@ -134,57 +134,57 @@ namespace
 {
 Bool boolToBool (bool v) { return v ? TRUE : FALSE; }
 
-void SetIntExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetIntReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setInt (boost::get <int> (value), _));
 }
 
-void SetBoolExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetBoolReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setBool (boolToBool (boost::get <bool> (value)), _));
 }
 
-void SetBellExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetBellReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setBell (boolToBool (boost::get <bool> (value)), _));
 }
 
-void SetFloatExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetFloatReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setFloat (boost::get <float> (value), _));
 }
 
-void SetStringExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetStringReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setString (Eq (std::string (boost::get <const char *> (value))), _));
 }
 
-void SetMatchExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setMatch (Eq (std::string (boost::get <const char *> (value))), _));
 }
 
-void SetColorExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setColor (_, _)); // can't match
 }
 
-void SetKeyExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setKey (_, _)); // can't match
 }
 
-void SetButtonExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetButtonReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setButton (_, _)); // can't match
 }
 
-void SetEdgeExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setEdge (boost::get <unsigned int> (value), _));
 }
 
-void SetListExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setList (_, _)); // can't match
 }
@@ -388,70 +388,70 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteIntegerAtKey, backendEnv, _1, _2, _3),
 					   TypeInt,
 					   "integer_setting",
-					   boost::bind (SetIntExpectation, _1, _2),
+					   boost::bind (SetIntReadExpectation, _1, _2),
 					   "TestRetreiveInt"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (true),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBoolAtKey, backendEnv, _1, _2, _3),
 					   TypeBool,
 					   "boolean_setting",
-					   boost::bind (SetBoolExpectation, _1, _2),
+					   boost::bind (SetBoolReadExpectation, _1, _2),
 					   "TestRetreiveBool"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (static_cast <float> (3.0)),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteFloatAtKey, backendEnv, _1, _2, _3),
 					   TypeFloat,
 					   "float_setting",
-					   boost::bind (SetFloatExpectation, _1, _2),
+					   boost::bind (SetFloatReadExpectation, _1, _2),
 					   "TestRetreiveFloat"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (static_cast <const char *> ("foo")),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteStringAtKey, backendEnv, _1, _2, _3),
 					   TypeString,
 					   "string_setting",
-					   boost::bind (SetStringExpectation, _1, _2),
+					   boost::bind (SetStringReadExpectation, _1, _2),
 					   "TestRetreiveString"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (static_cast <const char *> ("foo=bar")),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteMatchAtKey, backendEnv, _1, _2, _3),
 					   TypeMatch,
 					   "match_setting",
-					   boost::bind (SetMatchExpectation, _1, _2),
+					   boost::bind (SetMatchReadExpectation, _1, _2),
 					   "TestRetreiveMatch"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (true),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBellAtKey, backendEnv, _1, _2, _3),
 					   TypeBell,
 					   "bell_setting",
-					   boost::bind (SetBellExpectation, _1, _2),
+					   boost::bind (SetBellReadExpectation, _1, _2),
 					   "TestRetreiveBell"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (impl::colorValues[0]),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteColorAtKey, backendEnv, _1, _2, _3),
 					   TypeColor,
 					   "color_setting",
-					   boost::bind (SetColorExpectation, _1, _2),
+					   boost::bind (SetColorReadExpectation, _1, _2),
 					   "TestRetreiveColor"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (impl::keyValue),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteKeyAtKey, backendEnv, _1, _2, _3),
 					   TypeKey,
 					   "key_setting",
-					   boost::bind (SetKeyExpectation, _1, _2),
+					   boost::bind (SetKeyReadExpectation, _1, _2),
 					   "TestRetreiveKey"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (impl::buttonValue),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteButtonAtKey, backendEnv, _1, _2, _3),
 					   TypeButton,
 					   "button_setting",
-					   boost::bind (SetButtonExpectation, _1, _2),
+					   boost::bind (SetButtonReadExpectation, _1, _2),
 					   "TestRetreiveButton"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (static_cast <unsigned int> (1)),
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteEdgeAtKey, backendEnv, _1, _2, _3),
 					   TypeEdge,
 					   "edge_setting",
-					   boost::bind (SetEdgeExpectation, _1, _2),
+					   boost::bind (SetEdgeReadExpectation, _1, _2),
 					   "TestRetreiveEdge"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromIntArray (impl::intValues,
@@ -460,7 +460,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
 					   TypeList,
 					   "int_list_setting",
-					   boost::bind (SetListExpectation, _1, _2),
+					   boost::bind (SetListReadExpectation, _1, _2),
 					   "TestRetreiveListInt"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromFloatArray (impl::floatValues,
@@ -469,7 +469,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
 					   TypeList,
 					   "float_list_setting",
-					   boost::bind (SetListExpectation, _1, _2),
+					   boost::bind (SetListReadExpectation, _1, _2),
 					   "TestRetreiveListInt"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromBoolArray (impl::boolValues,
@@ -478,7 +478,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
 					   TypeList,
 					   "bool_list_setting",
-					   boost::bind (SetListExpectation, _1, _2),
+					   boost::bind (SetListReadExpectation, _1, _2),
 					   "TestRetreiveListBool"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromStringArray (impl::stringValues,
@@ -487,7 +487,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
 					   TypeList,
 					   "string_list_setting",
-					   boost::bind (SetListExpectation, _1, _2),
+					   boost::bind (SetListReadExpectation, _1, _2),
 					   "TestRetreiveListString"),
 	boost::make_shared <ConceptParam> (backendEnv,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromColorArray (impl::colorValues,
@@ -496,7 +496,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
 					   TypeList,
 					   "color_list_setting",
-					   boost::bind (SetListExpectation, _1, _2),
+					   boost::bind (SetListReadExpectation, _1, _2),
 					   "TestRetreiveListColor")
     };
 

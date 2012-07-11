@@ -52,12 +52,19 @@ class MockCCSBackendConceptTestEnvironment :
 	    mBackend = ccsMockBackendNew ();
 	    mBackendGMock = (CCSBackendGMock *) ccsObjectGetPrivate (mBackend);
 
-	    ON_CALL (*mBackendGMock, readSetting (_,_))
+	    ON_CALL (*mBackendGMock, readSetting (_, _))
 		    .WillByDefault (
 			WithArgs<1> (
 			    Invoke (
 				this,
-				&MockCCSBackendConceptTestEnvironment::WriteValueToSetting)));
+				&MockCCSBackendConceptTestEnvironment::ReadValueIntoSetting)));
+
+	    ON_CALL (*mBackendGMock, writeSetting (_, _))
+		    .WillByDefault (
+			WithArgs<1> (
+			    Invoke (
+				this,
+				&MockCCSBackendConceptTestEnvironment::WriteValueToMap)));
 
 	    return mBackend;
 	}
@@ -226,7 +233,7 @@ class MockCCSBackendConceptTestEnvironment :
 
     protected:
 
-	void WriteValueToSetting (CCSSetting *setting)
+	void ReadValueIntoSetting (CCSSetting *setting)
 	{
 	    std::string plugin (ccsPluginGetName (ccsSettingGetParent (setting)));
 	    std::string key (ccsSettingGetName (setting));
@@ -286,6 +293,95 @@ class MockCCSBackendConceptTestEnvironment :
 		case TypeList:
 
 		    ccsSetList (setting, ReadListAtKey (plugin, key), FALSE);
+		    break;
+
+		default:
+
+		    throw std::exception ();
+	    }
+	}
+
+	void WriteValueToMap (CCSSetting *setting)
+	{
+	    std::string plugin (ccsPluginGetName (ccsSettingGetParent (setting)));
+	    std::string key (ccsSettingGetName (setting));
+
+	    Bool vBool;
+	    int  vInt;
+	    float vFloat;
+	    char *vString;
+	    CCSSettingColorValue vColor;
+	    CCSSettingKeyValue vKey;
+	    CCSSettingButtonValue vButton;
+	    unsigned int vEdge;
+	    CCSSettingValueList vList;
+
+	    switch (ccsSettingGetType (setting))
+	    {
+		case TypeBool:
+
+		    ccsGetBool (setting, &vBool);
+		    WriteBoolAtKey (plugin, key, VariantTypes (vBool ? true : false));
+		    break;
+
+		case TypeInt:
+
+		    ccsGetInt (setting, &vInt);
+		    WriteIntegerAtKey (plugin, key, VariantTypes (vInt));
+		    break;
+
+		case TypeFloat:
+
+		    ccsGetFloat (setting, &vFloat);
+		    WriteFloatAtKey (plugin, key, VariantTypes (vFloat));
+		    break;
+
+		case TypeString:
+
+		    ccsGetString (setting, &vString);
+		    WriteStringAtKey (plugin, key, VariantTypes (static_cast <const char *> (vString)));
+		    break;
+
+		case TypeMatch:
+
+		    ccsGetMatch (setting, &vString);
+		    WriteStringAtKey (plugin, key, VariantTypes (static_cast <const char *> (vString)));
+		    break;
+
+		case TypeColor:
+
+		    ccsGetColor (setting, &vColor);
+		    WriteColorAtKey (plugin, key, VariantTypes (vColor));
+		    break;
+
+		case TypeKey:
+
+		    ccsGetKey (setting, &vKey);
+		    WriteKeyAtKey (plugin, key, VariantTypes (vKey));
+		    break;
+
+		case TypeButton:
+
+		    ccsGetButton (setting, &vButton);
+		    WriteButtonAtKey (plugin, key, VariantTypes (vButton));
+		    break;
+
+		case TypeEdge:
+
+		    ccsGetEdge (setting, &vEdge);
+		    WriteEdgeAtKey (plugin, key, VariantTypes (vEdge));
+		    break;
+
+		case TypeBell:
+
+		    ccsGetBell (setting, &vBool);
+		    WriteBellAtKey (plugin, key, VariantTypes (vBool ? true : false));
+		    break;
+
+		case TypeList:
+
+		    ccsGetList (setting, &vList);
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (vList, false)));
 		    break;
 
 		default:
