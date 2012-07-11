@@ -6,7 +6,7 @@ compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
   * debian/*docs:
     - remove the TODO copy now removed upstream
   * debian/compiz-plugins.install:
-    - install stackswitch plugin
+    - install stackswitch, trip plugins
 
   [ Matthieu Baerts (matttbe) ]
   * Update apport hook for python3 ; thanks to Edward Donovan (LP: #1013171)
