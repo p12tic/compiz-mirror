@@ -1,5 +1,6 @@
 #define CCS_LOG_DOMAIN "gsettings"
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
 
@@ -383,4 +384,191 @@ getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettin
     }
 
     return gsettingsValue;
+}
+
+CCSSettingValueList
+readListValue (GVariant *gsettingsValue, CCSSettingType listType)
+{
+    gboolean		hasVariantType;
+    unsigned int        nItems, i = 0;
+    CCSSettingValueList list = NULL;
+    GVariantIter	iter;
+
+    hasVariantType = compizconfigTypeHasVariantType (listType);
+
+    if (!hasVariantType)
+	return NULL;
+
+    g_variant_iter_init (&iter, gsettingsValue);
+    nItems = g_variant_iter_n_children (&iter);
+
+    switch (listType)
+    {
+    case TypeBool:
+	{
+	    Bool *array = malloc (nItems * sizeof (Bool));
+	    Bool *arrayCounter = array;
+	    gboolean value;
+
+	    if (!array)
+		break;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (&iter, "b", &value))
+		*arrayCounter++ = value;
+
+	    list = ccsGetValueListFromBoolArray (array, nItems, NULL);
+	    free (array);
+	}
+	break;
+    case TypeInt:
+	{
+	    int *array = malloc (nItems * sizeof (int));
+	    int *arrayCounter = array;
+	    gint value;
+
+	    if (!array)
+		break;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (&iter, "i", &value))
+		*arrayCounter++ = value;
+
+	    list = ccsGetValueListFromIntArray (array, nItems, NULL);
+	    free (array);
+	}
+	break;
+    case TypeFloat:
+	{
+	    double *array = malloc (nItems * sizeof (double));
+	    double *arrayCounter = array;
+	    gdouble value;
+
+	    if (!array)
+		break;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (&iter, "d", &value))
+		*arrayCounter++ = value;
+
+	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, NULL);
+	    free (array);
+	}
+	break;
+    case TypeString:
+    case TypeMatch:
+	{
+	    const gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
+	    const gchar **arrayCounter = array;
+	    gchar *value;
+
+	    if (!array)
+		break;
+
+	    array[nItems] = NULL;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_next (&iter, "s", &value))
+		*arrayCounter++ = value;
+
+	    list = ccsGetValueListFromStringArray (array, nItems, NULL);
+	    g_strfreev ((char **) array);
+	}
+	break;
+    case TypeColor:
+	{
+	    CCSSettingColorValue *array;
+	    char		 *colorValue;
+	    array = malloc (nItems * sizeof (CCSSettingColorValue));
+	    if (!array)
+		break;
+
+	    while (g_variant_iter_loop (&iter, "s", &colorValue))
+	    {
+		memset (&array[i], 0, sizeof (CCSSettingColorValue));
+		ccsStringToColor (colorValue,
+				  &array[i]);
+	    }
+	    list = ccsGetValueListFromColorArray (array, nItems, NULL);
+	    free (array);
+	}
+	break;
+    default:
+	break;
+    }
+
+    return list;
+}
+
+const char * readStringFromVariant (GVariant *gsettingsValue)
+{
+    return g_variant_get_string (gsettingsValue, NULL);
+}
+
+int readIntFromVariant (GVariant *gsettingsValue)
+{
+    return g_variant_get_int32 (gsettingsValue);
+}
+
+Bool readBoolFromVariant (GVariant *gsettingsValue)
+{
+    return g_variant_get_boolean (gsettingsValue) ? TRUE : FALSE;
+}
+
+float readFloatFromVariant (GVariant *gsettingsValue)
+{
+    return (float) g_variant_get_double (gsettingsValue);
+}
+
+CCSSettingColorValue readColorFromVariant (GVariant *gsettingsValue, Bool *success)
+{
+    const char           *value;
+    CCSSettingColorValue color;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+    if (value)
+	*success = ccsStringToColor (value, &color);
+    else
+	*success = FALSE;
+
+    return color;
+}
+
+CCSSettingKeyValue readKeyFromVariant (GVariant *gsettingsValue, Bool *success)
+{
+    const char         *value;
+    CCSSettingKeyValue key;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+     if (value)
+	 *success = ccsStringToKeyBinding (value, &key);
+     else
+	 *success = FALSE;
+
+     return key;
+}
+
+CCSSettingButtonValue readButtonFromVariant (GVariant *gsettingsValue, Bool *success)
+{
+    const char            *value;
+    CCSSettingButtonValue button;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+    if (value)
+	*success = ccsStringToButtonBinding (value, &button);
+    else
+	*success = FALSE;
+
+    return button;
+}
+
+unsigned int readEdgeFromVariant (GVariant *gsettingsValue)
+{
+    const char   *value;
+    value = g_variant_get_string (gsettingsValue, NULL);
+
+    if (value)
+	return ccsStringToEdges (value);
+
+    return 0;
 }

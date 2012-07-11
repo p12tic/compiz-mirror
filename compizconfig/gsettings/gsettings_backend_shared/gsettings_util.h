@@ -75,4 +75,23 @@ checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gc
 GVariant *
 getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type);
 
+const char * readStringFromVariant (GVariant *gsettingsValue);
+
+int readIntFromVariant (GVariant *gsettingsValue);
+
+Bool readBoolFromVariant (GVariant *gsettingsValue);
+
+float readFloatFromVariant (GVariant *gsettingsValue);
+
+CCSSettingColorValue readColorFromVariant (GVariant *gsettingsValue, Bool *success);
+
+CCSSettingKeyValue readKeyFromVariant (GVariant *gsettingsValue, Bool *success);
+
+CCSSettingButtonValue readButtonFromVariant (GVariant *gsettingsValue, Bool *success);
+
+unsigned int readEdgeFromVariant (GVariant *gsettingsValue);
+
+CCSSettingValueList
+readListValue (GVariant *gsettingsValue, CCSSettingType listType);
+
 #endif
