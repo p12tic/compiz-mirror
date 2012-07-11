@@ -2841,9 +2841,6 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     updateReg = true;
 
     window->resizeNotify (dx, dy, dwidth, dheight);
-
-    /* FIXME: remove */
-    CompositeScreen::get (screen)->damageScreen ();
 }
 
 

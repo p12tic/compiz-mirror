@@ -2073,7 +2073,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 	default:
 	  /* FIXME If l2 != NULL, we leak l2 */
 	    free (value);
-	    return FALSE;
+	    return NULL;
 	    break;
 	}
 
