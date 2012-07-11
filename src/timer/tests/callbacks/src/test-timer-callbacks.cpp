@@ -217,8 +217,8 @@ protected:
 
 TEST_F(CompTimerTestCallback, TimerOrder)
 {
-    AddTimer (100, 110, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback1, mDispatchTable, 0), 10);
-    AddTimer (50, 90, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback2, mDispatchTable, 1), 10);
+    AddTimer (1000, 1100, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback1, mDispatchTable, 0), 3);
+    AddTimer (500, 900, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback2, mDispatchTable, 1), 6);
     AddTimer (0, 0, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback3, mDispatchTable, 2), 10);
 
     /* TimeoutHandler::timers should be empty since no timers have started */
@@ -235,18 +235,7 @@ TEST_F(CompTimerTestCallback, TimerOrder)
     EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
     EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
     EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
     EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
-    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
 
     Run ();
 }
