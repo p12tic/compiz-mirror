@@ -95,6 +95,36 @@ operator== (const CCSSettingButtonValue &lhs,
     return false;
 }
 
+class CharacterWrapper :
+    boost::noncopyable
+{
+    public:
+
+	explicit CharacterWrapper (char *c) :
+	    mChar (c)
+	{
+	}
+
+	~CharacterWrapper ()
+	{
+	    free (mChar);
+	}
+
+	operator char * ()
+	{
+	    return mChar;
+	}
+
+	operator const char * () const
+	{
+	    return mChar;
+	}
+
+    private:
+
+	char *mChar;
+};
+
 class CCSListWrapper :
     boost::noncopyable
 {
@@ -455,14 +485,15 @@ void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
     EXPECT_CALL (*gmock, setEdge (boost::get <unsigned int> (value), _));
 }
 
+CCSSettingInfo globalListInfo;
+
 void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    CCSSettingInfo info;
+    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
+    globalListInfo.forList.listInfo = NULL;
 
-    info.forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
-    info.forList.listInfo = NULL;
-
-    EXPECT_CALL (*gmock, setList (ListEqual (info.forList, *(boost::get <boost::shared_ptr <CCSListWrapper> > (value))), _));
+    ON_CALL (*gmock, getInfo ()).WillByDefault (Return (&globalListInfo));
+    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <CCSListWrapper> > (value))), _));
 }
 
 }
@@ -590,7 +621,7 @@ class CCSBackendConformanceTest :
 	}
 
 	CCSPlugin *
-	SpawnPlugin (const std::string &name = "")
+	SpawnPlugin (const std::string &name = "", CCSContext *parent = NULL)
 	{
 	    CCSPlugin *plugin = ccsMockPluginNew ();
 	    mSpawnedPlugins.push_back (plugin);
@@ -599,6 +630,9 @@ class CCSBackendConformanceTest :
 
 	    if (!name.empty ())
 		EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return ((char *) name.c_str ()));
+
+	    if (parent)
+		ON_CALL (*gmockPlugin, getContext ()).WillByDefault (Return (parent));
 
 	    return plugin;
 	}
@@ -811,12 +845,12 @@ TEST_P (CCSBackendConformanceTest, TestReadValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
 
-    std::string pluginName ("plugin");
+    std::string pluginName ("mock");
     const std::string &settingName (GetParam ()->keyname ());
     const VariantTypes &VALUE (GetParam ()->value ());
 
     CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
+    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName, context);
     CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
 
     CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
@@ -833,12 +867,12 @@ TEST_P (CCSBackendConformanceTest, TestWriteValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
 
-    std::string pluginName ("plugin");
+    std::string pluginName ("mock");
     const std::string &settingName (GetParam ()->keyname ());
     const VariantTypes &VALUE (GetParam ()->value ());
 
     CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
+    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName, context);
     CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
 
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite ();

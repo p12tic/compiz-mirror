@@ -33,15 +33,14 @@ class CCSGSettingsBackendEnv :
 	    CCSBackendInterface *interface = NULL;
 	    Bool		fallback   = FALSE;
 
-	    std::cout << MOCK_PATH << std::endl;
-
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
 	    g_setenv ("GSETTINGS_BACKEND", "memory", true);
+	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
 
 	    mSettings = g_settings_new_with_path (MOCK_SCHEMA.c_str (), makeCompizPluginPath ("mock", "mock"));
 	    mContext = ccsMockContextNew ();
 
-	    std::string path (BACKEND_BINARY_PATH "/libgsettings.so");
+	    std::string path ("gsettings");
 
 	    void *dlhand = ccsOpenBackend (path.c_str (), &interface, &fallback);
 
@@ -51,12 +50,17 @@ class CCSGSettingsBackendEnv :
 	    CCSBackend *backend = ccsBackendNewWithInterface (mContext, interface, dlhand);
 	    mBackend = ccsBackendWithCapabilitiesWrapBackend (&ccsDefaultInterfaceTable, backend);
 
+	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
+
+	    if (backendInit)
+		(*backendInit) ((CCSBackend *) mBackend, mContext);
+
 	    return (CCSBackend *) mBackend;
 	}
 
 	void TearDown (CCSBackend *)
 	{
-	    g_unsetenv ("XDG_DATA_DIRS");
+	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
 	    g_unsetenv ("GSETTINGS_BACKEND");
 
 	    ccsFreeBackendWithCapabilities (mBackend);
@@ -69,8 +73,16 @@ class CCSGSettingsBackendEnv :
 	void PostWrite () {}
 
 	void WriteBoolAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) {}
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteIntegerAtKey (const std::string &plugin,
 					const std::string &key,
 					const VariantTypes &value) {}
@@ -106,7 +118,14 @@ class CCSGSettingsBackendEnv :
 	void PostRead () {}
 
 	Bool ReadBoolAtKey (const std::string &plugin,
-				       const std::string &key) { return FALSE; }
+			    const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("default", plugin.c_str ())),
+						 TypeBool);
+	    return readBoolFromVariant (variant);
+	}
 	int ReadIntegerAtKey (const std::string &plugin,
 					const std::string &key) { return 0; }
 	float ReadFloatAtKey (const std::string &plugin,

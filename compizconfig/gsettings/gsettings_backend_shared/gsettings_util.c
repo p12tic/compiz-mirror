@@ -373,7 +373,7 @@ checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gc
 }
 
 GVariant *
-getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type)
+getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCSSettingType type)
 {
     GVariant *gsettingsValue = g_settings_get_value (settings, key);
 
@@ -743,4 +743,12 @@ Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
     *variant = g_variant_new_string (edgeString);
     free (edgeString);
     return TRUE;
+}
+
+void
+writeVariantToKey (GSettings  *settings,
+		   const char *key,
+		   GVariant   *value)
+{
+    g_settings_set_value (settings, key, value);
 }

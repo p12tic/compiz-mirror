@@ -76,7 +76,7 @@ Bool
 checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gchar *pathName);
 
 GVariant *
-getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type);
+getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCSSettingType type);
 
 const char * readStringFromVariant (GVariant *gsettingsValue);
 
@@ -117,6 +117,10 @@ Bool writeKeyToVariant (CCSSettingKeyValue key, GVariant **variant);
 Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant);
 
 Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
+
+void writeVariantToKey (GSettings  *settings,
+			const char *key,
+			GVariant   *value);
 
 COMPIZCONFIG_END_DECLS
 

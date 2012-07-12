@@ -424,14 +424,6 @@ resetOptionToDefault (CCSSetting * setting)
 }
 
 void
-writeVariantToKey (GSettings  *settings,
-		   const char *key,
-		   GVariant   *value)
-{
-    g_settings_set_value (settings, key, value);
-}
-
-void
 writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
@@ -701,6 +693,8 @@ finiBackend (CCSBackend *backend, CCSContext * context)
 	l = g_list_next (l);
     }
 
+    settingsList = NULL;
+
     if (currentProfileSettings)
     {
 	g_object_unref (currentProfileSettings);
@@ -708,6 +702,8 @@ finiBackend (CCSBackend *backend, CCSContext * context)
     }
 
     g_object_unref (G_OBJECT (compizconfigSettings));
+
+    compizconfigSettings = NULL;
 
     processEvents (backend, 0);
     return TRUE;
