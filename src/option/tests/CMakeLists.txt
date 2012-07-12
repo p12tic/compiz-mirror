@@ -28,4 +28,4 @@ target_link_libraries(
   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
-gtest_add_tests( compiz_option_test "" ${CMAKE_CURRENT_SOURCE_DIR}/option.cpp )
+compiz_discover_tests ( compiz_option_test )

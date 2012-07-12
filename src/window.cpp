@@ -1205,7 +1205,7 @@ CompWindow::destroy ()
 
 	    /* Put the frame window "above" the client window
 	     * in the stack */
-	    PrivateWindow::createCompWindow (priv->id, attrib, priv->serverFrame);
+	    PrivateWindow::createCompWindow (priv->id, priv->id, attrib, priv->serverFrame);
 	}
 
 	/* Immediately unhook the window once destroyed
@@ -1403,10 +1403,10 @@ CompWindow::incrementUnmapReference ()
 void
 CompWindow::unmap ()
 {
-    windowNotify (CompWindowNotifyBeforeUnmap);
-
     if (priv->mapNum)
 	priv->mapNum = 0;
+
+    windowNotify (CompWindowNotifyBeforeUnmap);
 
     /* Even though we're still keeping the backing
      * pixmap of the window around, it's safe to
@@ -1461,9 +1461,7 @@ CompWindow::unmap ()
     priv->invisible = true;
 
     if (priv->shaded)
-    {
 	priv->updateFrameWindow ();
-    }
 
     screen->updateClientList ();
 
@@ -1890,7 +1888,10 @@ PrivateWindow::circulate (XCirculateEvent *ce)
     Window newAboveId;
 
     if (ce->place == PlaceOnTop)
-	newAboveId = screen->getTopWindow ();
+    {
+	CompWindow *newAbove = screen->getTopWindow ();
+	newAboveId = newAbove ? newAbove->id () : None;
+    }
     else
 	newAboveId = 0;
 
@@ -5969,19 +5970,20 @@ CompWindow::syncAlarm ()
 }
 
 CompWindow *
-PrivateWindow::createCompWindow (Window aboveId, XWindowAttributes &wa, Window id)
+PrivateWindow::createCompWindow (Window aboveId, Window aboveServerId, XWindowAttributes &wa, Window id)
 {
     PrivateWindow* priv(new PrivateWindow ());
     priv->id = id;
     priv->serverId = id;
 
-    CompWindow *fw = new CompWindow (aboveId, wa, priv);
+    CompWindow *fw = new CompWindow (aboveId, aboveServerId, wa, priv);
 
     return fw;
 }
 
 
 CompWindow::CompWindow (Window aboveId,
+			Window aboveServerId,
 			XWindowAttributes &wa,
 			PrivateWindow *priv) :
     PluginClassStorage (windowPluginClassIndices),
@@ -5994,7 +5996,7 @@ CompWindow::CompWindow (Window aboveId,
     priv->window = this;
 
     screen->insertWindow (this, aboveId);
-    screen->insertServerWindow (this, aboveId);
+    screen->insertServerWindow (this, aboveServerId);
 
     /* We must immediately insert the window into the debugging
      * stack */
@@ -6896,7 +6898,7 @@ PrivateWindow::unreparent ()
 
 	/* Put the frame window "above" the client window
 	 * in the stack */
-	PrivateWindow::createCompWindow (id, attrib, serverFrame);
+	PrivateWindow::createCompWindow (id, id, attrib, serverFrame);
     }
 
     /* Issue a DestroyNotify */

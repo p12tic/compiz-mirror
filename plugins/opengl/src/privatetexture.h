@@ -68,6 +68,8 @@ class TfpTexture : public GLTexture {
 	~TfpTexture ();
 
 	void enable (Filter filter);
+	bool bindTexImage (const GLXPixmap &);
+	void releaseTexImage ();
 
 	static List bindPixmapToTexture (Pixmap pixmap,
 					 int width,

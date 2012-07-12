@@ -684,6 +684,47 @@ ScaleScreen::getWindows () const
 bool
 PrivateScaleScreen::layoutThumbs ()
 {
+    switch (type) {
+	case ScaleTypeAll:
+	    return layoutThumbsAll ();
+	case ScaleTypeNormal:
+	default:
+	    return layoutThumbsSingle ();
+    }
+}
+
+bool
+PrivateScaleScreen::layoutThumbsAll ()
+{
+    windows.clear ();
+
+    /* add windows scale list, top most window first */
+    foreach (CompWindow *w, screen->windows ())
+    {
+	SCALE_WINDOW (w);
+
+	if (sw->priv->slot)
+	    sw->priv->adjust = true;
+
+	sw->priv->slot = NULL;
+
+	if (!sw->priv->isScaleWin ())
+            continue;
+
+	windows.push_back (sw);
+    }
+
+    if (windows.empty ())
+	return false;
+
+    slots.resize (windows.size ());
+
+    return ScaleScreen::get (screen)->layoutSlotsAndAssignWindows ();
+}
+
+bool
+PrivateScaleScreen::layoutThumbsSingle ()
+{
     bool ret = false;
     std::map <ScaleWindow *, ScaleSlot> slotWindows;
     CompWindowList          allWindows;

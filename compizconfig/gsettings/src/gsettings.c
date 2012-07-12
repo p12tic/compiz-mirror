@@ -31,6 +31,8 @@
  *
  **/
 
+#define CCS_LOG_DOMAIN "gsettings"
+
 #include "gsettings.h"
 
 static void
@@ -49,102 +51,23 @@ static void writeIntegratedOption (CCSContext *context,
 				   CCSSetting *setting,
 				   int        index);
 
-typedef struct _SpecialOptionGSettings {
-    const char*       settingName;
-    const char*       pluginName;
-    const char*       schemaName;
-    const char*	      keyName;
-    const char*	      type;
-} SpecialOption;
-
-static gchar *
-getSchemaNameForPlugin (const char *plugin)
-{
-    gchar       *schemaName =  NULL;
-
-    schemaName = g_strconcat (COMPIZ_SCHEMA_ID, ".", plugin, NULL);
-
-    return schemaName;
-}
-
-static inline gchar *
-translateKeyForGSettings (char *gsettingName)
-{
-    gchar *clean        = NULL;
-    gchar **delimited   = NULL;
-    guint i		= 0;
-
-    /* Replace underscores with dashes */
-    delimited = g_strsplit (gsettingName, "_", 0);
-
-    clean = g_strjoinv ("-", delimited);
-
-    /* It can't be more than 32 chars, warn if that's the case */
-    gchar *ret = g_strndup (clean, 31);
-
-    if (strlen (clean) > 31)
-	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", clean, ret);
-
-    /* Everything must be lowercase */
-    for (; i < strlen (ret); i++)
-	ret[i] = g_ascii_tolower (ret[i]);
-
-    g_free (clean);
-    g_strfreev (delimited);
-
-    return ret;
-}
-
-static inline gchar *
-translateKeyForCCS (char *gsettingName)
-{
-    gchar *clean        = NULL;
-    gchar **delimited   = NULL;
-
-    /* Replace dashes with underscores */
-    delimited = g_strsplit (gsettingName, "-", 0);
-
-    clean = g_strjoinv ("_", delimited);
-
-    /* FIXME: Truncated and lowercased settings aren't going to work */
-
-    g_strfreev (delimited);
-
-    return clean;
-}
-
 static GSettings *
 getSettingsObjectForPluginWithPath (const char *plugin,
 				  const char *path,
 				  CCSContext *context)
 {
     GSettings *settingsObj = NULL;
-    GList *l = settingsList;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
     GVariant        *writtenPlugins;
-    char	    *plug;
-    GVariant        *newWrittenPlugins;
-    GVariantBuilder *newWrittenPluginsBuilder;
-    GVariantIter    *iter;
-    gboolean	    found = FALSE;
+    gsize            newWrittenPluginsSize;
+    gchar           **newWrittenPlugins;
 
-    while (l)
+    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, settingsList);
+
+    if (settingsObj)
     {
-	settingsObj = (GSettings *) l->data;
-	gchar	  *name = NULL;
-
-	g_object_get (G_OBJECT (settingsObj),
-		      "schema",
-		      &name, NULL);
-	if (g_strcmp0 (name, schemaName) == 0)
-	{
-	    g_free (name);
-	    g_free (schemaName);
-
-	    return settingsObj;
-	}
-
-	l = g_list_next (l);
+	g_free (schemaName);
+	return settingsObj;
     }
 
     /* No existing settings object found for this schema, create one */
@@ -163,37 +86,35 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 
     writtenPlugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
 
-    newWrittenPluginsBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    appendToPluginsWithSetKeysList (plugin, writtenPlugins, &newWrittenPlugins, &newWrittenPluginsSize);
 
-    iter = g_variant_iter_new (writtenPlugins);
-    while (g_variant_iter_loop (iter, "s", &plug))
-    {
-	g_variant_builder_add (newWrittenPluginsBuilder, "s", plug);
+    g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
 
-	if (!found)
-	    found = (g_strcmp0 (plug, plugin) == 0);
-    }
-
-    if (!found)
-	g_variant_builder_add (newWrittenPluginsBuilder, "s", plugin);
-
-    newWrittenPlugins = g_variant_new ("as", newWrittenPluginsBuilder);
-    g_settings_set_value (currentProfileSettings, "plugins-with-set-keys", newWrittenPlugins);
-
-    g_variant_iter_free (iter);
-    g_variant_unref (newWrittenPlugins);
-    g_variant_builder_unref (newWrittenPluginsBuilder);
+    g_free (schemaName);
+    g_strfreev (newWrittenPlugins);
 
     return settingsObj;
+}
+
+static gchar *
+makeSettingPath (CCSSetting *setting)
+{
+    return makeCompizPluginPath (currentProfile,
+                             ccsPluginGetName (ccsSettingGetParent (setting)));
 }
 
 static GSettings *
 getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
-    KEYNAME(setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    GSettings *ret = NULL;
+    gchar *pathName = makeSettingPath (setting);
 
-    return getSettingsObjectForPluginWithPath (setting->parent->name, pathName, setting->parent->context);
+    ret = getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
+					       pathName,
+					       ccsPluginGetContext (ccsSettingGetParent (setting)));
+
+    g_free (pathName);
+    return ret;
 }
 
 static Bool
@@ -214,47 +135,68 @@ valueChanged (GSettings   *settings,
 {
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
-    char	 *path;
-    char         *token;
+    char	 *path, *pathOrig;
+    char         *pluginName;
     int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
-    g_object_get (G_OBJECT (settings), "path", &path, NULL);
+    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
-    path += strlen (COMPIZ) + 1;
+    path = pathOrig;
 
-    token = strsep (&path, "/"); /* Profile name */
-    if (!token)
+    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
+    {
+	g_free (pathOrig);
 	return;
+    }
 
-    token = strsep (&path, "/"); /* plugins */
-    if (!token)
-	return;
-
-    token = strsep (&path, "/"); /* plugin */
-    if (!token)
-	return;
-
-    plugin = ccsFindPlugin (context, token);
-    if (!plugin)
-	return;
-
-    token = strsep (&path, "/"); /* screen%i */
-    if (!token)
-	return;
-
-    sscanf (token, "screen%d", &screenNum);
+    plugin = ccsFindPlugin (context, pluginName);
 
     uncleanKeyName = translateKeyForCCS (keyName);
 
     setting = ccsFindSetting (plugin, uncleanKeyName);
     if (!setting)
     {
-	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
-	free (uncleanKeyName);
-	return;
+	/* Couldn't find setting straight off the bat,
+	 * try and find the best match */
+	GVariant *value = g_settings_get_value (settings, keyName);
+
+	if (value)
+	{
+	    GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
+	    GList *iter = possibleSettingTypes;
+
+	    while (iter)
+	    {
+		setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (plugin),
+								keyName,
+								(CCSSettingType) GPOINTER_TO_INT (iter->data));
+
+		if (setting)
+		    break;
+
+		iter = iter->next;
+	    }
+
+	    g_list_free (possibleSettingTypes);
+	    g_variant_unref (value);
+	}
+
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	if (!setting)
+	{
+	    ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
+	    g_free (pluginName);
+	    free (uncleanKeyName);
+	    g_free (pathOrig);
+	    return;
+	}
     }
 
     readInit (context);
@@ -270,43 +212,26 @@ valueChanged (GSettings   *settings,
 	writeIntegratedOption (context, setting, index);
     }
 
+    g_free (pluginName);
     free (uncleanKeyName);
+    g_free (pathOrig);
 }
 
 static Bool
 readListValue (CCSSetting *setting)
 {
     GSettings		*settings = getSettingsObjectForCCSSetting (setting);
-    gchar		*variantType;
+    gboolean		hasVariantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
     GVariant		*value;
-    GVariantIter	*iter;
+    GVariantIter	iter;
 
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    
-    switch (setting->info.forList.listType)
-    {
-    case TypeString:
-    case TypeMatch:
-    case TypeColor:
-	variantType = g_strdup ("s");
-	break;
-    case TypeBool:
-	variantType = g_strdup ("b");
-	break;
-    case TypeInt:
-	variantType = g_strdup ("i");
-	break;
-    case TypeFloat:
-	variantType = g_strdup ("d");
-	break;
-    default:
-	variantType = NULL;
-	break;
-    }
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
-    if (!variantType)
+    hasVariantType = compizconfigTypeHasVariantType (ccsSettingGetInfo (setting)->forList.listType);
+
+    if (!hasVariantType)
 	return FALSE;
 
     value = g_settings_get_value (settings, cleanSettingName);
@@ -316,23 +241,23 @@ readListValue (CCSSetting *setting)
 	return TRUE;
     }
 
-    iter = g_variant_iter_new (value);
-    nItems = g_variant_iter_n_children (iter);
+    g_variant_iter_init (&iter, value);
+    nItems = g_variant_iter_n_children (&iter);
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeBool:
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
 	    Bool *arrayCounter = array;
+	    gboolean value;
 
 	    if (!array)
 		break;
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (&iter, "b", &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
@@ -342,14 +267,14 @@ readListValue (CCSSetting *setting)
 	{
 	    int *array = malloc (nItems * sizeof (int));
 	    int *arrayCounter = array;
+	    gint value;
 
 	    if (!array)
 		break;
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (&iter, "i", &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
@@ -359,14 +284,14 @@ readListValue (CCSSetting *setting)
 	{
 	    double *array = malloc (nItems * sizeof (double));
 	    double *arrayCounter = array;
+	    gdouble value;
 
 	    if (!array)
 		break;
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_loop (&iter, "d", &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
 	    free (array);
@@ -375,24 +300,21 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    char **array = calloc (1, (nItems + 1) * sizeof (char *));
-	    char **arrayCounter = array;
+	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
+	    gchar **arrayCounter = array;
+	    gchar *value;
 
 	    if (!array)
-	    {
 		break;
-	    }
-	    
-	    /* Reads each item from the variant into the position pointed
-	     * at by arrayCounter */
-	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
-		arrayCounter++;
+
+	    array[nItems] = NULL;
+
+	    /* Reads each item from the variant into arrayCounter */
+	    while (g_variant_iter_next (&iter, "s", &value))
+		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    for (i = 0; i < nItems; i++)
-		if (array[i])
-		    free (array[i]);
-	    free (array);
+	    g_strfreev (array);
 	}
 	break;
     case TypeColor:
@@ -403,7 +325,7 @@ readListValue (CCSSetting *setting)
 	    if (!array)
 		break;
 
-	    while (g_variant_iter_loop (iter, variantType, &colorValue))
+	    while (g_variant_iter_loop (&iter, "s", &colorValue))
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (colorValue,
@@ -418,7 +340,6 @@ readListValue (CCSSetting *setting)
     }
 
     free (cleanSettingName);
-    free (variantType);
 
     if (list)
     {
@@ -448,65 +369,43 @@ readOption (CCSSetting * setting)
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     GVariant   *gsettingsValue = NULL;
     Bool       ret = FALSE;
-    Bool       valid = TRUE;
 
     /* It is impossible for certain settings to have a schema,
      * such as actions and read only settings, so in that case
      * just return FALSE since compizconfig doesn't expect us
      * to read them anyways */
 
-    if (setting->type == TypeAction ||
+    if (ccsSettingGetType (setting) == TypeAction ||
 	ccsSettingIsReadOnly (setting))
     {
 	return FALSE;
     }
 
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    KEYNAME(setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
     /* first check if the key is set */
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
 
-    switch (setting->type)
+    if (!gsettingsValue)
     {
-    case TypeString:
-    case TypeMatch:
-    case TypeColor:
-    case TypeKey:
-    case TypeButton:
-    case TypeEdge:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_STRING, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeInt:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_INT32, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeBool:
-    case TypeBell:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_BOOLEAN, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeFloat:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_DOUBLE, g_variant_get_type (gsettingsValue)));
-	break;
-    case TypeList:
-	valid = (g_variant_type_is_array (g_variant_get_type (gsettingsValue)));
-	break;
-    default:
-	break;
+	free (cleanSettingName);
+	return FALSE;
     }
 
-    if (!valid)
+    if (!variantIsValidForCCSType (gsettingsValue, ccsSettingGetType (setting)))
     {
-	printf ("GSettings backend: There is an unsupported value at path %s. "
+	gchar *pathName = makeSettingPath (setting);
+	ccsWarning ("There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
-		"that value so that operation can continue properly.\n",
+		"that value so that operation can continue properly.",
 		pathName);
+	g_free (pathName);
 	free (cleanSettingName);
 	g_variant_unref (gsettingsValue);
 	return FALSE;
     }
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
 	{
@@ -623,8 +522,8 @@ readOption (CCSSetting * setting)
 	ret = readListValue (setting);
 	break;
     default:
-	printf("GSettings backend: attempt to read unsupported setting type %d!\n",
-	       setting->type);
+	ccsWarning ("Attempt to read unsupported setting type %d!",
+	       ccsSettingGetType (setting));
 	break;
     }
 
@@ -639,20 +538,18 @@ writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
     GSettings  		*settings = getSettingsObjectForCCSSetting (setting);
-    GVariant 		*value;
-    gchar		*variantType = NULL;
+    GVariant 		*value = NULL;
     CCSSettingValueList list;
 
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
     
     if (!ccsGetList (setting, &list))
 	return;
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeBool:
 	{
-	    variantType = "ab";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
 	    while (list)
 	    {
@@ -665,7 +562,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeInt:
 	{
-	    variantType = "ai";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
 	    while (list)
 	    {
@@ -678,7 +574,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeFloat:
 	{
-	    variantType = "ad";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
 	    while (list)
 	    {
@@ -691,7 +586,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeString:
 	{
-	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
@@ -704,7 +598,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeMatch:
 	{
-	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
@@ -717,7 +610,6 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeColor:
 	{
-	    variantType = "as";
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    char *item;
 	    while (list)
@@ -731,13 +623,12 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
-	printf("GSettings backend: attempt to write unsupported list type %d!\n",
-	       setting->info.forList.listType);
-	variantType = NULL;
+	ccsWarning ("Attempt to write unsupported list type %d!",
+	       ccsSettingGetInfo (setting)->forList.listType);
 	break;
     }
 
-    if (variantType != NULL)
+    if (value)
     {
 	g_settings_set_value (settings, cleanSettingName, value);
 	g_variant_unref (value);
@@ -763,9 +654,7 @@ resetOptionToDefault (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
   
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    KEYNAME (setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
     g_settings_reset (settings, cleanSettingName);
 
@@ -776,11 +665,9 @@ void
 writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-    char *cleanSettingName = translateKeyForGSettings (setting->name);
-    KEYNAME (setting->parent->context->screenNum);
-    PATHNAME (setting->parent->name, keyName);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
 	{
@@ -900,11 +787,15 @@ writeOption (CCSSetting * setting)
 	}
 	break;
     case TypeList:
-	writeListValue (setting, pathName);
+	{
+	    gchar *pathName = makeSettingPath (setting);
+	    writeListValue (setting, pathName);
+	    g_free (pathName);
+	}
 	break;
     default:
-	printf("GSettings backend: attempt to write unsupported setting type %d\n",
-	       setting->type);
+	ccsWarning ("Attempt to write unsupported setting type %d",
+	       ccsSettingGetType (setting));
 	break;
     }
 
@@ -912,23 +803,22 @@ writeOption (CCSSetting * setting)
 }
 
 static void
-updateCurrentProfileName (char *profile)
+updateCurrentProfileName (const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
-    char	    *profilePath = COMPIZ_PROFILEPATH;
-    char	    *currentProfilePath;
+    gchar           *profilePath = makeCompizProfilePath (profile);
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
-    GVariantIter    *iter;
+    GVariantIter    iter;
     gboolean        found = FALSE;
 
     profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
 
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    iter = g_variant_iter_new (profiles);
-    while (g_variant_iter_loop (iter, "s", &prof))
+    g_variant_iter_init (&iter, profiles);
+    while (g_variant_iter_loop (&iter, "s", &prof))
     {
 	g_variant_builder_add (newProfilesBuilder, "s", prof);
 
@@ -942,7 +832,6 @@ updateCurrentProfileName (char *profile)
     newProfiles = g_variant_new ("as", newProfilesBuilder);
     g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
 
-    g_variant_iter_free (iter);
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
@@ -950,12 +839,11 @@ updateCurrentProfileName (char *profile)
     free (currentProfile);
 
     currentProfile = strdup (profile);
-    currentProfilePath = g_strconcat (profilePath, profile, "/", NULL);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
 
-    g_free (currentProfilePath);
-
     g_settings_set (compizconfigSettings, "current-profile", "s", profile, NULL);
+
+    g_free (profilePath);
 }
 
 static gboolean
@@ -963,8 +851,14 @@ updateProfile (CCSContext *context)
 {
     char *profile = strdup (ccsGetProfile (context));
 
-    if (!profile || !strlen (profile))
+    if (!profile)
 	profile = strdup (DEFAULTPROF);
+
+    if (!strlen (profile))
+    {
+	free (profile);
+	profile = strdup (DEFAULTPROF);
+    }
 
     if (g_strcmp0 (profile, currentProfile))
 	updateCurrentProfileName (profile);
@@ -1003,7 +897,6 @@ processEvents (unsigned int flags)
 static Bool
 initBackend (CCSContext * context)
 {
-    const char *profilePath = PROFILEPATH;
     char       *currentProfilePath;
 
     g_type_init ();
@@ -1015,7 +908,7 @@ initBackend (CCSContext * context)
 #endif
 
     currentProfile = getCurrentProfileName ();
-    currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
+    currentProfilePath = makeCompizProfilePath (currentProfile);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
 
     g_free (currentProfilePath);
@@ -1045,6 +938,12 @@ finiBackend (CCSContext * context)
     {
 	g_object_unref (G_OBJECT (l->data));
 	l = g_list_next (l);
+    }
+
+    if (currentProfileSettings)
+    {
+	g_object_unref (currentProfileSettings);
+	currentProfileSettings = NULL;
     }
 
     g_object_unref (G_OBJECT (compizconfigSettings));
@@ -1095,7 +994,7 @@ writeSetting (CCSContext *context,
     {
 	writeIntegratedOption (context, setting, index);
     }
-    else if (setting->isDefault)
+    else if (ccsSettingGetIsDefault (setting))
     {
 	resetOptionToDefault (setting);
     }
@@ -1107,7 +1006,7 @@ writeSetting (CCSContext *context,
 static Bool
 getSettingIsIntegrated (CCSSetting * setting)
 {
-    if (!ccsGetIntegrationEnabled (setting->parent->context))
+    if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
     if (!isIntegratedOption (setting, NULL))
@@ -1156,22 +1055,21 @@ deleteProfile (CCSContext *context,
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     char            *plugin, *prof;
-    GVariantIter    *iter;
-    char            *profileSettingsPath = g_strconcat (PROFILEPATH, profile, "/", NULL);
+    GVariantIter    iter;
+    char            *profileSettingsPath = makeCompizProfilePath (profile);
     GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
 
     plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
     profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
 
-    iter = g_variant_iter_new (plugins);
-    while (g_variant_iter_loop (iter, "s", &plugin))
+    g_variant_iter_init (&iter, plugins);
+    while (g_variant_iter_loop (&iter, "s", &plugin))
     {
 	GSettings *settings;
-
-	KEYNAME (context->screenNum);
-	PATHNAME (plugin, keyName);
+	gchar *pathName = makeCompizPluginPath (currentProfile, plugin);
 
 	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
+	g_free (pathName);
 
 	/* The GSettings documentation says not to use this API
 	 * because we should know our own schema ... though really
@@ -1190,13 +1088,12 @@ deleteProfile (CCSContext *context,
     }
 
     /* Remove the profile from existing-profiles */
-    g_variant_iter_free (iter);
     g_settings_reset (profileSettings, "plugins-with-set-values");
 
-    iter = g_variant_iter_new (profiles);
+    g_variant_iter_init (&iter, profiles);
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    while (g_variant_iter_loop (iter, "s", &prof))
+    while (g_variant_iter_loop (&iter, "s", &prof))
     {
 	if (g_strcmp0 (prof, profile))
 	    g_variant_builder_add (newProfilesBuilder, "s", prof);
@@ -1208,7 +1105,7 @@ deleteProfile (CCSContext *context,
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
-    free (profileSettingsPath);
+    g_free (profileSettingsPath);
 
     updateProfile (context);
 
