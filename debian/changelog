@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3285-0ubuntu1) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
@@ -11,7 +11,58 @@ compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
   [ Matthieu Baerts (matttbe) ]
   * Update apport hook for python3 ; thanks to Edward Donovan (LP: #1013171)
 
- -- Didier Roche <didrocks@ubuntu.com>  Tue, 03 Jul 2012 12:05:54 +0200
+  [ Timo Jyrinki ]
+  * New upstream snapshot.
+  - Fix Compiz crash in movementWindowOnScreen (LP: #1015151)
+  - Start window decorator when decor plugin starts (LP: #1014461)
+  - Fixed: Crash in compiz::wall::movementWindowOnScreen (LP: #1015151)
+  - Don't waste memory leaving /bin/sh running (LP: #1015422)
+  - Add reliable detection of the compiz bin directory (LP: #1015898)
+  - Check if the window would actually paint before painting the shadow, 
+    since it is possible that another plugin could be inhibiting paint of 
+    the dock   window. (LP: #1012956)
+  - Don't insert the window into the server list above the window it was
+    created above. (LP: #1008020) (LP: #886605)
+  - makes compiz enhanced zoom and show mouse plugins considerably
+    smoother to use (LP: #930783)
+  - Don't set decoration contexts on undecorated windows, since that 
+    might be read later and code will assume the window is decorated when 
+    it isn't. (LP: #1015593)
+  - Fix potentially unterminated string leading to an uninitialized memory
+    read (LP: #1018302)
+  - Lift the 31/32 character restriction on key names that was causing so many
+    warnings. It's now 1024 characters according to glib. (LP: #1018730)
+  - Don't print the result of BUILD_DEB. It prevents ccsm et al from installing.
+    (LP: #1018916)
+  - Use the XDamage extension more efficiently (the way it was designed to be
+    used). This dramatically reduces CPU usage, reduces wakeups, and increases
+    frame rates. It also solves at least one observed performance bug
+    (LP: #1007299) and probably several more.
+  - Do the initial work to get libcompizconfig under test. (LP: #990690)
+  - Add support for initiating window picker in other than nomal mode. For now
+    added only the additional 'All windows' picker (LP: #933776) (LP: #955035)
+  - Fixes (LP: #1018602) : An invalid read when using g_variant_iter_loop.
+  - Don't allow unbinds of textures kept around for animations in any case, 
+    not just resizing. (LP: #1016366)
+  - Wait for the server to finish processing requests before doing a bind
+    (LP: #1016367)
+  - Using the next/previous bindings the wall plugin didn't calculate 
+    correctly the next workspace when it reaches the begin or the end of a 
+    row of workspaces, so it didn't jump to the next line. (LP: #904205).
+  - Added the plug-in "Stack Window Switcher" converted from git to bzr 
+    (including full history) to Compiz. (LP: #1012205)
+  - Added the unsupported, but fully working plug-in "workspacenames"
+  - Added the plug-in "Trip" (LP: #1012213)
+  - Add extra checks to avoid passing an invalid xid to XGetWindowProperty 
+    which would result in fatal error: BadWindow (invalid Window parameter).
+    (LP: #1019337)
+  * Update compiz-core.lintian-overrides
+  * Enable GSettings backend and install the schema files
+  * Switch the default profile to use gsettings 
+  * Add dependency on gsettings-desktop-schemas(-dev)
+  * Add compiz-gnome.gsettings-override
+
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Thu, 12 Jul 2012 13:49:28 +0300
 
 compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 

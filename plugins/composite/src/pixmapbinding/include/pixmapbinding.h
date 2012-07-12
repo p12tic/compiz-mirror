@@ -61,6 +61,15 @@ class CompositePixmapRebindInterface
 	virtual void allowFurtherRebindAttempts () = 0;
 };
 
+class PixmapFreezerInterface
+{
+    public:
+
+	virtual ~PixmapFreezerInterface () {}
+
+	virtual bool frozen () = 0;
+};
+
 class WindowAttributesGetInterface
 {
     public:
@@ -163,6 +172,7 @@ class PixmapBinding :
 	PixmapBinding (const NewPixmapReadyCallback &,
 			WindowPixmapGetInterface *,
 			WindowAttributesGetInterface *,
+			PixmapFreezerInterface *,
 			ServerGrabInterface *);
 
 	~PixmapBinding ();
@@ -184,6 +194,7 @@ class PixmapBinding :
 
 	WindowPixmapGetInterface *windowPixmapRetreiver;
 	WindowAttributesGetInterface *windowAttributesRetreiver;
+	PixmapFreezerInterface        *pixmapFreezer;
 	ServerGrabInterface *serverGrab;
 
 };

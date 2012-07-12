@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <poll.h>
+#include <libgen.h>
 #include <algorithm>
 
 #include <boost/bind.hpp>
@@ -52,6 +53,7 @@
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
 
+#include <core/global.h>
 #include <core/screen.h>
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -3893,7 +3895,7 @@ CompScreenImpl::runCommand (CompString command)
 
 	env.append (compPrintf (".%d", privateScreen.screenNum));
 
-	putenv (const_cast<char *> (env.c_str ()));
+	putenv (strdup (env.c_str ()));  // parameter needs to be leaked!
 
 	exit (execl ("/bin/sh", "/bin/sh", "-c", command.c_str (), NULL));
     }
@@ -4080,14 +4082,23 @@ PrivateScreen::disableEdge (int edge)
 	XUnmapWindow (dpy, screenEdge[edge].id);
 }
 
-Window
+CompWindow *
 cps::WindowManager::getTopWindow() const
 {
     /* return first window that has not been destroyed */
-    if (windows.size ())
-	return windows.back ()->id ();
+    if (!windows.empty ())
+	return windows.back ();
 
-    return None;
+    return NULL;
+}
+
+CompWindow *
+cps::WindowManager::getTopServerWindow () const
+{
+    if (!serverWindows.empty ())
+	return serverWindows.back ();
+
+    return NULL;
 }
 
 int
@@ -4841,10 +4852,16 @@ CompScreenImpl::updateClientList()
     privateScreen.updateClientList ();
 }
 
-Window
+CompWindow *
 CompScreenImpl::getTopWindow() const
 {
     return windowManager.getTopWindow();
+}
+
+CompWindow *
+CompScreenImpl::getTopServerWindow () const
+{
+    return windowManager.getTopServerWindow();
 }
 
 CoreOptions&
@@ -5275,7 +5292,9 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, attrib, children[i]);
+	Window topWindowInTree = i ? children[i - 1] : None;
+
+	PrivateWindow::createCompWindow (topWindowInTree, topWindowInTree, attrib, children[i]);
     }
 
     /* enforce restack on all windows

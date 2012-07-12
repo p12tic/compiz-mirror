@@ -52,6 +52,7 @@ Build-Depends: cmake (>= 2.6),
                python-pyrex,
                metacity-common,
                gnome-control-center-dev,
+               gsettings-desktop-schemas-dev,
 Standards-Version: 3.9.3
 Vcs-Bzr: https://code.launchpad.net/+branch/ubuntu/compiz
 
@@ -133,6 +134,7 @@ Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          compiz-plugins-default (= ${binary:Version}),
+         gsettings-desktop-schemas,
 Replaces: compiz-plugins-main (<= 1:0.9.8),
           compiz-plugins-main-default (<= 1:0.9.8),
           compizconfig-backend-gconf (<= 1:0.9.8),
