@@ -15,4 +15,4 @@ target_link_libraries (compiz_test_point
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-gtest_add_tests (compiz_test_point "" ${CMAKE_CURRENT_SOURCE_DIR}/point/src/test-point.cpp)
+compiz_discover_tests (compiz_test_point)

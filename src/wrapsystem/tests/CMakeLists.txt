@@ -15,4 +15,4 @@ target_link_libraries(
   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
-gtest_add_tests (${CMAKE_CURRENT_BINARY_DIR}/compiz_wrapsystem_test "" "test-wrapsystem.cpp")
+compiz_discover_tests (compiz_wrapsystem_test)

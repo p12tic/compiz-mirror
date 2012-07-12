@@ -188,8 +188,8 @@ static void
 ccpSettingToValue (CCSSetting        *s,
 		   CompOption::Value *v)
 {
-    if (s->type != TypeList)
-	ccpSetValueToValue (s->value, v, s->type);
+    if (ccsSettingGetType (s) != TypeList)
+	ccpSetValueToValue (ccsSettingGetValue (s), v, ccsSettingGetType (s));
     else
     {
 	CCSSettingValueList list;
@@ -198,11 +198,11 @@ ccpSettingToValue (CCSSetting        *s,
 
 	ccsGetList (s, &list);
 
-	if (!ccpCCSTypeToCompizType (s->info.forList.listType, &type))
+	if (!ccpCCSTypeToCompizType (ccsSettingGetInfo (s)->forList.listType, &type))
 	    type = CompOption::TypeBool;
 
-	if ((strcmp (s->name, "active_plugins") == 0) &&
-	    (strcmp (s->parent->name, CORE_VTABLE_NAME) == 0))
+	if ((strcmp (ccsSettingGetName (s), "active_plugins") == 0) &&
+	    (strcmp (ccsPluginGetName (ccsSettingGetParent (s)), CORE_VTABLE_NAME) == 0))
 	{
 	    ccpConvertPluginList (s, list, v);
 	}
@@ -214,7 +214,7 @@ ccpSettingToValue (CCSSetting        *s,
     	    {
     		ccpSetValueToValue (list->data,
     				    &val[i],
-				    s->info.forList.listType);
+				    ccsSettingGetInfo (s)->forList.listType);
 		list = list->next;
 		i++;
 	    }
@@ -314,7 +314,7 @@ ccpValueToSetting (CCSSetting        *s,
     value->refCount = 1;
     value->parent = s;
 
-    if (s->type == TypeList)
+    if (ccsSettingGetType (s) == TypeList)
     {
 	foreach (CompOption::Value &lv, v->list ())
 	{
@@ -327,14 +327,14 @@ ccpValueToSetting (CCSSetting        *s,
 		val->parent = s;
 		val->isListChild = TRUE;
 		ccpInitValue (val, &lv,
-			      s->info.forList.listType);
+			      ccsSettingGetInfo (s)->forList.listType);
 		value->value.asList =
 		    ccsSettingValueListAppend (value->value.asList, val);
 	    }
 	}
     }
     else
-	ccpInitValue (value, v, s->type);
+	ccpInitValue (value, v, ccsSettingGetType (s));
 
     ccsSetValue (s, value, TRUE);
     ccsFreeSettingValue (value);
@@ -345,15 +345,15 @@ ccpTypeCheck (CCSSetting *s, CompOption *o)
 {
     CompOption::Type ot;
 
-    switch (s->type)
+    switch (ccsSettingGetType (s))
     {
 	case TypeList:
-	    return ccpCCSTypeToCompizType (s->type, &ot) && (ot == o->type ()) &&
-		   ccpCCSTypeToCompizType (s->info.forList.listType, &ot) &&
+	    return ccpCCSTypeToCompizType (ccsSettingGetType (s), &ot) && (ot == o->type ()) &&
+		   ccpCCSTypeToCompizType (ccsSettingGetInfo (s)->forList.listType, &ot) &&
 		   (ot == o->value ().listType ());
 	    break;
 	default:
-	    return ccpCCSTypeToCompizType (s->type, &ot) && (ot == o->type ());
+	    return ccpCCSTypeToCompizType (ccsSettingGetType (s), &ot) && (ot == o->type ());
 	    break;
     }
 
@@ -429,35 +429,33 @@ CcpScreen::timeout ()
 
     ccsProcessEvents (mContext, flags);
 
-    if (ccsSettingListLength (mContext->changedSettings))
+    CCSSettingList list = ccsContextStealChangedSettings (mContext);
+
+    if (ccsSettingListLength (list))
     {
-	CCSSettingList list = mContext->changedSettings;
 	CCSSettingList l = list;	
 	CCSSetting     *s;
     	CompPlugin     *p;
     	CompOption     *o;
-
-	mContext->changedSettings = NULL;
 	
 	while (l)
 	{
 	    s = l->data;
 	    l = l->next;
 
-	    p = CompPlugin::find (s->parent->name);
+	    p = CompPlugin::find (ccsPluginGetName (ccsSettingGetParent (s)));
 
 	    if (!p)
 		continue;
 
-	    o = CompOption::findOption (p->vTable->getOptions (), s->name);
+	    o = CompOption::findOption (p->vTable->getOptions (), ccsSettingGetName (s));
 	    if (o)
-		setOptionFromContext (o, s->parent->name);
-	    D (D_FULL, "Setting Update \"%s\"\n", s->name);
+		setOptionFromContext (o, ccsPluginGetName (ccsSettingGetParent (s)));
+	    ccsDebug ("Setting Update \"%s\"", ccsSettingGetName (s));
 	}
 
 	ccsSettingListFree (list, FALSE);
-	mContext->changedSettings =
-	    ccsSettingListFree (mContext->changedSettings, FALSE);
+	ccsContextClearChangedSettings (mContext);
     }
 
     return true;
@@ -513,11 +511,10 @@ CcpScreen::CcpScreen (CompScreen *screen) :
 {
     ccsSetBasicMetadata (TRUE);
 
-    mContext = ccsContextNew (screen->screenNum ());
+    mContext = ccsContextNew (screen->screenNum (), &ccsDefaultInterfaceTable);
     ccsReadSettings (mContext);
 
-    mContext->changedSettings =
-	ccsSettingListFree (mContext->changedSettings, FALSE);
+    ccsContextClearChangedSettings (mContext);
 
     mReloadTimer.start (boost::bind (&CcpScreen::reload, this), 0);
     mTimeoutTimer.start (boost::bind (&CcpScreen::timeout, this),

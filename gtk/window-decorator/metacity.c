@@ -1142,6 +1142,9 @@ meta_calc_decoration_size (decor_t *d,
     decor_context_t *context;
     decor_shadow_t  *shadow;
 
+    if (!d->decorated)
+	return FALSE;
+
     if ((d->state & META_MAXIMIZED) == META_MAXIMIZED)
     {
 	if (!d->frame_window)
