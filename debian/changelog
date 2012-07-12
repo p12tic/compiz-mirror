@@ -61,6 +61,8 @@ compiz (1:0.9.8+bzr3285-0ubuntu1) UNRELEASED; urgency=low
   * Switch the default profile to use gsettings 
   * Add dependency on gsettings-desktop-schemas(-dev)
   * Add compiz-gnome.gsettings-override
+  * Merge lp:~vanvugt/compiz/fix-1019337.2: Fix crash LP: #1019337
+    properly this time.
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Thu, 12 Jul 2012 13:49:28 +0300
 

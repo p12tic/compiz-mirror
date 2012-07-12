@@ -45,17 +45,21 @@ get_frame_type (WnckWindow *win)
 	    int		  result, format;
 	    unsigned long n, left;
 	    unsigned char *data;
+	    gint          error;
 	    Window        xid = wnck_window_get_xid (win);
 
 	    if (xid == None)
 		return "bare";
 
+	    gdk_error_trap_push ();
 	    result = XGetWindowProperty (gdk_x11_get_default_xdisplay (), xid,
 					 net_wm_state_atom,
 					 0L, 1024L, FALSE, XA_ATOM, &actual, &format,
 					 &n, &left, &data);
+	    gdk_flush ();
+	    error = gdk_error_trap_pop ();
 
-	    if (result == Success && data)
+	    if (result == Success && error == Success && data)
 	    {
 		Atom *a = (Atom *) data;
 
