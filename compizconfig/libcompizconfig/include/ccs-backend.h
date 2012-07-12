@@ -157,11 +157,17 @@ void ccsFreeBackendWithCapabilities (CCSBackendWithCapabilities *);
 
 /* Backend opener method */
 void *
-ccsBackendOpen (char *name, CCSBackendInterface **interface, Bool *fellback);
+ccsOpenBackend (const char *name, CCSBackendInterface **interface, Bool *fellback);
 
 /* Constructor method */
 CCSBackend *
 ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
+
+typedef struct _CCSInterfaceTable CCSInterfaceTable;
+
+/* Constructor method */
+CCSBackendWithCapabilities *
+ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend);
 
 CCSBackendInterface* getBackendInfo (void);
 

@@ -1,0 +1,2 @@
+#define BACKEND_BINARY_PATH "@CMAKE_BINARY_DIR@/compizconfig/gsettings"
+#define MOCK_SCHEMA_PATH "@CMAKE_BINARY_DIR@/generated/glib-2.0/schemas"

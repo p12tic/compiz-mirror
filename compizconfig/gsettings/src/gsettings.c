@@ -235,7 +235,10 @@ getVariantForCCSSetting (CCSSetting *setting)
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = getNameForCCSSetting (setting);
     gchar *pathName = makeSettingPath (setting);
-    GVariant *gsettingsValue = getVariantAtKey (settings, cleanSettingName, pathName, ccsSettingGetType (setting));
+    GVariant *gsettingsValue = getVariantAtKey (settings,
+						cleanSettingName,
+						pathName,
+						ccsSettingGetType (setting));
 
     free (cleanSettingName);
     free (pathName);
@@ -421,6 +424,14 @@ resetOptionToDefault (CCSSetting * setting)
 }
 
 void
+writeVariantToKey (GSettings  *settings,
+		   const char *key,
+		   GVariant   *value)
+{
+    g_settings_set_value (settings, key, value);
+}
+
+void
 writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
@@ -546,7 +557,7 @@ writeOption (CCSSetting * setting)
     {
 	/* g_settings_set_value will consume the reference
 	 * so there is no need to unref value here */
-	g_settings_set_value (settings, cleanSettingName, gsettingsValue);
+	writeVariantToKey (settings, cleanSettingName, gsettingsValue);
     }
 
     free (cleanSettingName);

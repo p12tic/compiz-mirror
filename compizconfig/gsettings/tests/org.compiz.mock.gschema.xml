@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<schemalist>
+  <schema id="org.compiz.mock" gettext-domain="compiz">
+    <key type="i" name="int-setting">
+      <default>1</default>
+    </key>
+  </schema>
+</schemalist>

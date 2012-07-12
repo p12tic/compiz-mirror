@@ -1,10 +1,13 @@
 #ifndef _COMPIZ_GSETTINGS_UTIL_H
 #define _COMPIZ_GSETTINGS_UTIL_H
 
+#include <ccs.h>
+
+COMPIZCONFIG_BEGIN_DECLS
+
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <ccs.h>
 
 gchar *
 getSchemaNameForPlugin (const char *plugin);
@@ -114,5 +117,7 @@ Bool writeKeyToVariant (CCSSettingKeyValue key, GVariant **variant);
 Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant);
 
 Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
+
+COMPIZCONFIG_END_DECLS
 
 #endif
