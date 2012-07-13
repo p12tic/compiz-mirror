@@ -630,13 +630,29 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    getProcAddress ("glFramebufferTexture2DEXT");
 	GL::generateMipmap = (GL::GLGenerateMipmapProc)
 	    getProcAddress ("glGenerateMipmapEXT");
+	GL::genRenderbuffers = (GL::GLGenRenderbuffersProc)
+	    getProcAddress ("glGenRenderbuffersEXT");
+	GL::deleteRenderbuffers = (GL::GLDeleteRenderbuffersProc)
+	    getProcAddress ("glDeleteRenderbuffersEXT");
+	GL::bindRenderbuffer = (GL::GLBindRenderbufferProc)
+	    getProcAddress ("glBindRenderbufferEXT");
+	GL::framebufferRenderbuffer = (GL::GLFramebufferRenderbufferProc)
+	    getProcAddress ("glFramebufferRenderbufferEXT");
+	GL::renderbufferStorage = (GL::GLRenderbufferStorageProc)
+	    getProcAddress ("glRenderbufferStorageEXT");
 
-	if (GL::genFramebuffers        &&
-	    GL::deleteFramebuffers     &&
-	    GL::bindFramebuffer        &&
-	    GL::checkFramebufferStatus &&
-	    GL::framebufferTexture2D   &&
-	    GL::generateMipmap)
+	if (GL::genFramebuffers         &&
+	    GL::deleteFramebuffers      &&
+	    GL::bindFramebuffer         &&
+	    GL::checkFramebufferStatus  &&
+	    GL::framebufferTexture2D    &&
+	    GL::generateMipmap          &&
+	    GL::genRenderbuffers        &&
+	    GL::deleteRenderbuffers     &&
+	    GL::bindRenderbuffer        &&
+	    GL::framebufferRenderbuffer &&
+	    GL::renderbufferStorage
+	    )
 	    GL::fbo = true;
     }
 
@@ -727,15 +743,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::stencilBuffer)
     {
-	if (strstr (glExtensions, "GL_EXT_packed_depth_stencil"))
-	{
-	    GL::genRenderbuffers = (GL::GLGenRenderbuffersProc) getProcAddress ("glGenRenderbuffersEXT");
-	    GL::deleteRenderbuffers = (GL::GLDeleteRenderbuffersProc) getProcAddress ("glDeleteRenderbuffersEXT");
-	    GL::bindRenderbuffer = (GL::GLBindRenderbufferProc) getProcAddress ("glBindRenderbufferEXT");
-	    GL::framebufferRenderbuffer = (GL::GLFramebufferRenderbufferProc) getProcAddress ("glFramebufferRenderbufferEXT");
-	    GL::renderbufferStorage = (GL::GLRenderbufferStorageProc) getProcAddress ("glRenderbufferStorageEXT");
-	}
-	else
+	if (!strstr (glExtensions, "GL_EXT_packed_depth_stencil"))
 	    GL::stencilBuffer = false;
     }
 
