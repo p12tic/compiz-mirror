@@ -656,16 +656,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::fbo = true;
     }
 
-
-    if (!GL::fbo &&
-	!GL::copySubBuffer)
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"GL_EXT_framebuffer_object or GLX_MESA_copy_sub_buffer are required");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	return false;
-    }
-
     if (strstr (glExtensions, "GL_ARB_vertex_buffer_object"))
     {
 	GL::bindBuffer = (GL::GLBindBufferProc)
@@ -785,8 +775,11 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
 #endif
 
-    priv->scratchFbo = new GLFramebufferObject;
-    priv->scratchFbo->allocate (*screen, NULL, GL_BGRA);
+    if (GL::fbo)
+    {
+	priv->scratchFbo = new GLFramebufferObject;
+	priv->scratchFbo->allocate (*screen, NULL, GL_BGRA);
+    }
 
     GLVertexBuffer::streamingBuffer ()->setAutoProgram (priv->autoProgram);
 
@@ -1879,7 +1872,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 		glClear (GL_COLOR_BUFFER_BIT);
     }
 
-    if (!useFbo && !scratchFboBindFailed)
+    if (GL::fbo && !useFbo && !scratchFboBindFailed)
     {
 	scratchFboBindFailed = true;
 	compLogMessage ("opengl", CompLogLevelError, "framebuffer object bind failed. Postprocessing disabled");
