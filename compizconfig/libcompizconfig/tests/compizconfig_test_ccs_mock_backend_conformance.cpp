@@ -75,12 +75,22 @@ class MockCCSBackendConceptTestEnvironment :
 
 	}
 
-	void PreWrite ()
+	void PreWrite (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
 	{
 	    EXPECT_CALL (*mBackendGMock, writeSetting (_, _));
+	    EXPECT_CALL (*gmockPlugin, getName ());
+	    EXPECT_CALL (*gmockSetting, getName ());
+	    EXPECT_CALL (*gmockSetting, getType ());
+	    EXPECT_CALL (*gmockSetting, getParent ());
 	}
 
-	void PostWrite ()
+	void PostWrite (CCSContextGMock *gmockContext,
+			CCSPluginGMock  *gmockPlugin,
+			CCSSettingGMock *gmockSetting,
+			CCSSettingType  type)
 	{
 	}
 
@@ -162,12 +172,22 @@ class MockCCSBackendConceptTestEnvironment :
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	}
 
-	void PreRead ()
+	void PreRead (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type)
 	{
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	    EXPECT_CALL (*gmockPlugin, getName ());
+	    EXPECT_CALL (*gmockSetting, getName ());
+	    EXPECT_CALL (*gmockSetting, getType ());
+	    EXPECT_CALL (*gmockSetting, getParent ());
 	}
 
-	void PostRead ()
+	void PostRead (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
 	{
 	}
 
@@ -403,7 +423,7 @@ class MockCCSBackendConceptTestEnvironment :
 	std::map <std::string, VariantTypes> mValues;
 };
 
-INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest,
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestReadWrite,
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
 

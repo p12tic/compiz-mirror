@@ -150,8 +150,14 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual CCSBackend * SetUp () = 0;
 	virtual void TearDown (CCSBackend *) = 0;
 
-	virtual void PreWrite () = 0;
-	virtual void PostWrite () = 0;
+	virtual void PreWrite (CCSContextGMock *,
+			       CCSPluginGMock  *,
+			       CCSSettingGMock *,
+			       CCSSettingType) = 0;
+	virtual void PostWrite (CCSContextGMock *,
+				CCSPluginGMock  *,
+				CCSSettingGMock *,
+				CCSSettingType) = 0;
 
 	virtual void WriteBoolAtKey (const std::string &plugin,
 				       const std::string &key,
@@ -187,8 +193,14 @@ class CCSBackendConceptTestEnvironmentInterface
 				     const std::string &key,
 				     const VariantTypes &value) = 0;
 
-	virtual void PreRead () = 0;
-	virtual void PostRead () = 0;
+	virtual void PreRead (CCSContextGMock *,
+			      CCSPluginGMock  *,
+			      CCSSettingGMock *,
+			      CCSSettingType) = 0;
+	virtual void PostRead (CCSContextGMock *,
+			       CCSPluginGMock  *,
+			       CCSSettingGMock *,
+			       CCSSettingType) = 0;
 
 	virtual Bool ReadBoolAtKey (const std::string &plugin,
 				       const std::string &key) = 0;
@@ -549,17 +561,19 @@ class CCSBackendConformanceTest :
 {
     public:
 
+	virtual ~CCSBackendConformanceTest () {}
+
 	CCSBackend * GetBackend ()
 	{
 	    return mBackend;
 	}
 
-	void SetUp ()
+	virtual void SetUp ()
 	{
 	    mBackend = GetParam ()->testEnv ()->SetUp ();
 	}
 
-	void TearDown ()
+	virtual void TearDown ()
 	{
 	    CCSBackendConformanceTest::GetParam ()->testEnv ()->TearDown (mBackend);
 
@@ -581,48 +595,50 @@ class CCSBackendConformanceTest :
 
     protected:
 
-	CCSContext *
-	SpawnContext ()
+	/* Having the returned context, setting and plugin
+	 * as out params is awkward, but GTest doesn't let
+	 * you use ASSERT_* unless the function returns void
+	 */
+	void
+	SpawnContext (CCSContext **context)
 	{
-	    CCSContext *context = ccsMockContextNew ();
-	    mSpawnedContexts.push_back (context);
-	    return context;
+	    *context = ccsMockContextNew ();
+	    mSpawnedContexts.push_back (*context);
 	}
 
-	CCSPlugin *
-	SpawnPlugin (const std::string &name = "")
+	void
+	SpawnPlugin (const std::string &name, CCSContext *context, CCSPlugin **plugin)
 	{
-	    CCSPlugin *plugin = ccsMockPluginNew ();
-	    mSpawnedPlugins.push_back (plugin);
+	    *plugin = ccsMockPluginNew ();
+	    mSpawnedPlugins.push_back (*plugin);
 
-	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
+	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (*plugin);
 
-	    if (!name.empty ())
-		EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return ((char *) name.c_str ()));
+	    ASSERT_FALSE (name.empty ());
+	    ASSERT_TRUE (context);
 
-	    return plugin;
+	    ON_CALL (*gmockPlugin, getName ()).WillByDefault (Return ((char *) name.c_str ()));
+	    ON_CALL (*gmockPlugin, getContext ()).WillByDefault (Return (context));
 	}
 
-	CCSSetting *
-	SpawnSetting (const std::string &name = "",
-		      CCSSettingType	type = TypeNum,
-		      CCSPlugin		*plugin = NULL)
+	void
+	SpawnSetting (const std::string &name,
+		      CCSSettingType	type,
+		      CCSPlugin		*plugin,
+		      CCSSetting	**setting)
 	{
-	    CCSSetting *setting = ccsMockSettingNew ();
-	    mSpawnedSettings.push_back (setting);
+	    *setting = ccsMockSettingNew ();
+	    mSpawnedSettings.push_back (*setting);
 
-	    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+	    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (*setting);
 
-	    if (!name.empty ())
-		EXPECT_CALL (*gmockSetting, getName ()).WillRepeatedly (Return ((char *) name.c_str ()));
+	    ASSERT_FALSE (name.empty ());
+	    ASSERT_NE (type, TypeNum);
+	    ASSERT_TRUE (plugin);
 
-	    if (type != TypeNum)
-		EXPECT_CALL (*gmockSetting, getType ()).WillRepeatedly (Return (type));
-
-	    if (plugin)
-		EXPECT_CALL (*gmockSetting, getParent ()).WillRepeatedly (Return (plugin));
-
-	    return setting;
+	    ON_CALL (*gmockSetting, getName ()).WillByDefault (Return ((char *) name.c_str ()));
+	    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (type));
+	    ON_CALL (*gmockSetting, getParent ()).WillByDefault (Return (plugin));
 	}
 
     private:
@@ -807,41 +823,67 @@ GenerateTestingParametersForBackendInterface ()
 }
 }
 
-TEST_P (CCSBackendConformanceTest, TestReadValue)
+class CCSBackendConformanceTestReadWrite :
+    public CCSBackendConformanceTest
+{
+    public:
+
+	virtual ~CCSBackendConformanceTestReadWrite () {}
+
+	virtual void SetUp ()
+	{
+	    CCSBackendConformanceTest::SetUp ();
+
+	    pluginName = "plugin";
+	    settingName = GetParam ()->keyname ();
+	    VALUE = GetParam ()->value ();
+
+
+	    CCSBackendConformanceTest::SpawnContext (&context);
+	    CCSBackendConformanceTest::SpawnPlugin (pluginName, context, &plugin);
+	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
+
+	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
+	    gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
+	    gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+	}
+
+	virtual void TearDown ()
+	{
+	    CCSBackendConformanceTest::TearDown ();
+	}
+
+    protected:
+
+	std::string pluginName;
+	std::string settingName;
+	VariantTypes VALUE;
+	CCSContext *context;
+	CCSPlugin *plugin;
+	CCSSetting *setting;
+	CCSContextGMock *gmockContext;
+	CCSPluginGMock  *gmockPlugin;
+	CCSSettingGMock *gmockSetting;
+
+};
+
+TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
 
-    std::string pluginName ("plugin");
-    const std::string &settingName (GetParam ()->keyname ());
-    const VariantTypes &VALUE (GetParam ()->value ());
-
-    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
-    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead ();
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->nativeWrite () (pluginName, settingName, VALUE);
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead ();
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
     ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context, setting);
 }
 
-TEST_P (CCSBackendConformanceTest, TestWriteValue)
+TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
 
-    std::string pluginName ("plugin");
-    const std::string &settingName (GetParam ()->keyname ());
-    const VariantTypes &VALUE (GetParam ()->value ());
-
-    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
-    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
-
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite ();
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setWriteExpectationAndWrite () (pluginName,
 									    settingName,
 									    VALUE,
@@ -851,7 +893,7 @@ TEST_P (CCSBackendConformanceTest, TestWriteValue)
 											 context,
 											 setting),
 									    GetParam ()->testEnv ());
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostWrite ();
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
 
 }
 
