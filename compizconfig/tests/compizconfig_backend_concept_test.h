@@ -147,7 +147,8 @@ class CCSBackendConceptTestEnvironmentInterface
     public:
 
 	virtual ~CCSBackendConceptTestEnvironmentInterface () {};
-	virtual CCSBackend * SetUp () = 0;
+	virtual CCSBackend * SetUp (CCSContext *context,
+				    CCSContextGMock *gmockContext) = 0;
 	virtual void TearDown (CCSBackend *) = 0;
 
 	virtual void PreWrite (CCSContextGMock *,
@@ -573,7 +574,7 @@ class CCSBackendConformanceTest :
 	    CCSBackendConformanceTest::SpawnContext (&context);
 	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
 
-	    mBackend = GetParam ()->testEnv ()->SetUp ();
+	    mBackend = GetParam ()->testEnv ()->SetUp (context, gmockContext);
 	}
 
 	virtual void TearDown ()
