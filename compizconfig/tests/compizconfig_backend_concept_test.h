@@ -593,48 +593,48 @@ class CCSBackendConformanceTest :
 
     protected:
 
-	CCSContext *
-	SpawnContext ()
+	/* Having the returned context, setting and plugin
+	 * as out params is awkward, but GTest doesn't let
+	 * you use ASSERT_* unless the function returns void
+	 */
+	void
+	SpawnContext (CCSContext **context)
 	{
-	    CCSContext *context = ccsMockContextNew ();
-	    mSpawnedContexts.push_back (context);
-	    return context;
+	    *context = ccsMockContextNew ();
+	    mSpawnedContexts.push_back (*context);
 	}
 
-	CCSPlugin *
-	SpawnPlugin (const std::string &name = "")
+	void
+	SpawnPlugin (const std::string &name, CCSPlugin **plugin)
 	{
-	    CCSPlugin *plugin = ccsMockPluginNew ();
-	    mSpawnedPlugins.push_back (plugin);
+	    *plugin = ccsMockPluginNew ();
+	    mSpawnedPlugins.push_back (*plugin);
 
-	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
+	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (*plugin);
 
-	    if (!name.empty ())
-		EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return ((char *) name.c_str ()));
+	    ASSERT_FALSE (name.empty ());
 
-	    return plugin;
+	    ON_CALL (*gmockPlugin, getName ()).WillByDefault (Return ((char *) name.c_str ()));
 	}
 
-	CCSSetting *
-	SpawnSetting (const std::string &name = "",
-		      CCSSettingType	type = TypeNum,
-		      CCSPlugin		*plugin = NULL)
+	void
+	SpawnSetting (const std::string &name,
+		      CCSSettingType	type,
+		      CCSPlugin		*plugin,
+		      CCSSetting	**setting)
 	{
-	    CCSSetting *setting = ccsMockSettingNew ();
-	    mSpawnedSettings.push_back (setting);
+	    *setting = ccsMockSettingNew ();
+	    mSpawnedSettings.push_back (*setting);
 
-	    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+	    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (*setting);
 
-	    if (!name.empty ())
-		EXPECT_CALL (*gmockSetting, getName ()).WillRepeatedly (Return ((char *) name.c_str ()));
+	    ASSERT_FALSE (name.empty ());
+	    ASSERT_NE (type, TypeNum);
+	    ASSERT_TRUE (plugin);
 
-	    if (type != TypeNum)
-		EXPECT_CALL (*gmockSetting, getType ()).WillRepeatedly (Return (type));
-
-	    if (plugin)
-		EXPECT_CALL (*gmockSetting, getParent ()).WillRepeatedly (Return (plugin));
-
-	    return setting;
+	    ON_CALL (*gmockSetting, getName ()).WillByDefault (Return ((char *) name.c_str ()));
+	    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (type));
+	    ON_CALL (*gmockSetting, getParent ()).WillByDefault (Return (plugin));
 	}
 
     private:
@@ -827,9 +827,12 @@ TEST_P (CCSBackendConformanceTest, TestReadValue)
     const std::string &settingName (GetParam ()->keyname ());
     const VariantTypes &VALUE (GetParam ()->value ());
 
-    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
-    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
+    CCSContext *context;
+    CCSBackendConformanceTest::SpawnContext (&context);
+    CCSPlugin *plugin;
+    CCSBackendConformanceTest::SpawnPlugin (pluginName, &plugin);
+    CCSSetting *setting;
+    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
 
     CCSContextGMock *gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
     CCSPluginGMock  *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
@@ -851,9 +854,12 @@ TEST_P (CCSBackendConformanceTest, TestWriteValue)
     const std::string &settingName (GetParam ()->keyname ());
     const VariantTypes &VALUE (GetParam ()->value ());
 
-    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName);
-    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
+    CCSContext *context;
+    CCSBackendConformanceTest::SpawnContext (&context);
+    CCSPlugin *plugin;
+    CCSBackendConformanceTest::SpawnPlugin (pluginName, &plugin);
+    CCSSetting *setting;
+    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
 
     CCSContextGMock *gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
     CCSPluginGMock  *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);

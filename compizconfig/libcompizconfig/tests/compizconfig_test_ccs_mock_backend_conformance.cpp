@@ -81,6 +81,10 @@ class MockCCSBackendConceptTestEnvironment :
 		       CCSSettingType  type)
 	{
 	    EXPECT_CALL (*mBackendGMock, writeSetting (_, _));
+	    EXPECT_CALL (*gmockPlugin, getName ());
+	    EXPECT_CALL (*gmockSetting, getName ());
+	    EXPECT_CALL (*gmockSetting, getType ());
+	    EXPECT_CALL (*gmockSetting, getParent ());
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
@@ -174,6 +178,10 @@ class MockCCSBackendConceptTestEnvironment :
 		      CCSSettingType  type)
 	{
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
+	    EXPECT_CALL (*gmockPlugin, getName ());
+	    EXPECT_CALL (*gmockSetting, getName ());
+	    EXPECT_CALL (*gmockSetting, getType ());
+	    EXPECT_CALL (*gmockSetting, getParent ());
 	}
 
 	void PostRead (CCSContextGMock *gmockContext,
