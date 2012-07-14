@@ -69,8 +69,14 @@ class CCSGSettingsBackendEnv :
 	    ccsFreeMockContext (mContext);
 	}
 
-	void PreWrite () {}
-	void PostWrite () {}
+	void PreWrite (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type) {}
+	void PostWrite (CCSContextGMock *gmockContext,
+			CCSPluginGMock  *gmockPlugin,
+			CCSSettingGMock *gmockSetting,
+			CCSSettingType  type) {}
 
 	void WriteBoolAtKey (const std::string &plugin,
 			     const std::string &key,
@@ -114,8 +120,14 @@ class CCSGSettingsBackendEnv :
 				     const std::string &key,
 				     const VariantTypes &value) {}
 
-	void PreRead () {}
-	void PostRead () {}
+	void PreRead (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type) {}
+	void PostRead (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type) {}
 
 	Bool ReadBoolAtKey (const std::string &plugin,
 			    const std::string &key)

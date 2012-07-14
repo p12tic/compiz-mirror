@@ -670,7 +670,6 @@ class CCSBackendConformanceTest :
 	    ON_CALL (*gmockSetting, getName ()).WillByDefault (Return ((char *) name.c_str ()));
 	    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (type));
 	    ON_CALL (*gmockSetting, getParent ()).WillByDefault (Return (plugin));
->>>>>>> MERGE-SOURCE
 	}
 
     private:
@@ -903,21 +902,7 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
 
-<<<<<<< TREE
-    std::string pluginName ("mock");
-    const std::string &settingName (GetParam ()->keyname ());
-    const VariantTypes &VALUE (GetParam ()->value ());
-
-    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName, context);
-    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
-
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
-
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead ();
-=======
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
->>>>>>> MERGE-SOURCE
     CCSBackendConformanceTest::GetParam ()->nativeWrite () (pluginName, settingName, VALUE);
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
@@ -929,19 +914,7 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
 
-<<<<<<< TREE
-    std::string pluginName ("mock");
-    const std::string &settingName (GetParam ()->keyname ());
-    const VariantTypes &VALUE (GetParam ()->value ());
-
-    CCSContext *context = CCSBackendConformanceTest::SpawnContext ();
-    CCSPlugin *plugin = CCSBackendConformanceTest::SpawnPlugin (pluginName, context);
-    CCSSetting *setting = CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin);
-
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite ();
-=======
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
->>>>>>> MERGE-SOURCE
     CCSBackendConformanceTest::GetParam ()->setWriteExpectationAndWrite () (pluginName,
 									    settingName,
 									    VALUE,
