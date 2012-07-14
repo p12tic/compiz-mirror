@@ -874,7 +874,7 @@ class CCSBackendConformanceTestReadWrite :
 	{
 	    CCSBackendConformanceTest::SetUp ();
 
-	    pluginName = "plugin";
+	    pluginName = "mock";
 	    settingName = GetParam ()->keyname ();
 	    VALUE = GetParam ()->value ();
 
