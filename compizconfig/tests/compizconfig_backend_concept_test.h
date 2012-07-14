@@ -607,7 +607,7 @@ class CCSBackendConformanceTest :
 	}
 
 	void
-	SpawnPlugin (const std::string &name, CCSPlugin **plugin)
+	SpawnPlugin (const std::string &name, CCSContext *context, CCSPlugin **plugin)
 	{
 	    *plugin = ccsMockPluginNew ();
 	    mSpawnedPlugins.push_back (*plugin);
@@ -615,8 +615,10 @@ class CCSBackendConformanceTest :
 	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (*plugin);
 
 	    ASSERT_FALSE (name.empty ());
+	    ASSERT_TRUE (context);
 
 	    ON_CALL (*gmockPlugin, getName ()).WillByDefault (Return ((char *) name.c_str ()));
+	    ON_CALL (*gmockPlugin, getContext ()).WillByDefault (Return (context));
 	}
 
 	void
@@ -838,7 +840,7 @@ class CCSBackendConformanceTestReadWrite :
 
 
 	    CCSBackendConformanceTest::SpawnContext (&context);
-	    CCSBackendConformanceTest::SpawnPlugin (pluginName, &plugin);
+	    CCSBackendConformanceTest::SpawnPlugin (pluginName, context, &plugin);
 	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
 
 	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
