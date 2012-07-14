@@ -1885,15 +1885,16 @@ getCurrentProfileName (void)
 static Bool
 checkProfile (CCSContext *context)
 {
-    char *profile, *lastProfile;
+    const char *profileCCS;
+    char *lastProfile;
 
     lastProfile = currentProfile;
 
-    profile = ccsGetProfile (context);
-    if (!profile || !strlen (profile))
+    profileCCS = ccsGetProfile (context);
+    if (!profileCCS || !strlen (profileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (profile);
+	currentProfile = strdup (profileCCS);
 
     if (!lastProfile || strcmp (lastProfile, currentProfile) != 0)
     {
