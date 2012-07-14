@@ -28,7 +28,7 @@ class CCSGSettingsBackendEnv :
 	    g_type_init ();
 	}
 
-	CCSBackend * SetUp ()
+	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSBackendInterface *interface = NULL;
 	    Bool		fallback   = FALSE;
@@ -38,7 +38,7 @@ class CCSGSettingsBackendEnv :
 	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
 
 	    mSettings = g_settings_new_with_path (MOCK_SCHEMA.c_str (), makeCompizPluginPath ("mock", "mock"));
-	    mContext = ccsMockContextNew ();
+	    mContext = context;
 
 	    std::string path ("gsettings");
 
@@ -66,7 +66,6 @@ class CCSGSettingsBackendEnv :
 	    ccsFreeBackendWithCapabilities (mBackend);
 
 	    g_object_unref (mSettings);
-	    ccsFreeMockContext (mContext);
 	}
 
 	void PreWrite (CCSContextGMock *gmockContext,
@@ -165,6 +164,6 @@ class CCSGSettingsBackendEnv :
 	CCSBackendWithCapabilities *mBackend;
 };
 
-INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTest,
+INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestReadWrite,
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <CCSGSettingsBackendEnv> ());
 
