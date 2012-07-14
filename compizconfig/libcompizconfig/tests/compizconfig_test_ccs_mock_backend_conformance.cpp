@@ -47,7 +47,7 @@ class MockCCSBackendConceptTestEnvironment :
 {
     public:
 
-	CCSBackend * SetUp ()
+	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    mBackend = ccsMockBackendNew ();
 	    mBackendGMock = (CCSBackendGMock *) ccsObjectGetPrivate (mBackend);

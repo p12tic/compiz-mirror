@@ -147,7 +147,8 @@ class CCSBackendConceptTestEnvironmentInterface
     public:
 
 	virtual ~CCSBackendConceptTestEnvironmentInterface () {};
-	virtual CCSBackend * SetUp () = 0;
+	virtual CCSBackend * SetUp (CCSContext *context,
+				    CCSContextGMock *gmockContext) = 0;
 	virtual void TearDown (CCSBackend *) = 0;
 
 	virtual void PreWrite (CCSContextGMock *,
@@ -570,7 +571,10 @@ class CCSBackendConformanceTest :
 
 	virtual void SetUp ()
 	{
-	    mBackend = GetParam ()->testEnv ()->SetUp ();
+	    CCSBackendConformanceTest::SpawnContext (&context);
+	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
+
+	    mBackend = GetParam ()->testEnv ()->SetUp (context, gmockContext);
 	}
 
 	virtual void TearDown ()
@@ -640,6 +644,11 @@ class CCSBackendConformanceTest :
 	    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (type));
 	    ON_CALL (*gmockSetting, getParent ()).WillByDefault (Return (plugin));
 	}
+
+    protected:
+
+	CCSContext *context;
+	CCSContextGMock *gmockContext;
 
     private:
 
@@ -838,12 +847,9 @@ class CCSBackendConformanceTestReadWrite :
 	    settingName = GetParam ()->keyname ();
 	    VALUE = GetParam ()->value ();
 
-
-	    CCSBackendConformanceTest::SpawnContext (&context);
 	    CCSBackendConformanceTest::SpawnPlugin (pluginName, context, &plugin);
 	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
 
-	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
 	    gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
 	    gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
 	}
@@ -858,10 +864,8 @@ class CCSBackendConformanceTestReadWrite :
 	std::string pluginName;
 	std::string settingName;
 	VariantTypes VALUE;
-	CCSContext *context;
 	CCSPlugin *plugin;
 	CCSSetting *setting;
-	CCSContextGMock *gmockContext;
 	CCSPluginGMock  *gmockPlugin;
 	CCSSettingGMock *gmockSetting;
 
