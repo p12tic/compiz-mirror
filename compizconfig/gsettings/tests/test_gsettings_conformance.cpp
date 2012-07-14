@@ -13,6 +13,7 @@
 #include <iostream>
 
 using ::testing::AtLeast;
+using ::testing::Pointee;
 
 namespace
 {
@@ -25,7 +26,8 @@ class CCSGSettingsBackendEnv :
 {
     public:
 
-	CCSGSettingsBackendEnv ()
+	CCSGSettingsBackendEnv () :
+	    pluginToMatch ("mock")
 	{
 	    g_type_init ();
 	}
@@ -76,7 +78,8 @@ class CCSGSettingsBackendEnv :
 		       CCSSettingType  type)
 	{
 	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillOnce (Return (FALSE));
-	    EXPECT_CALL (*gmockContext, findPlugin (Pointee ("mock"))).WillOnce (Return (FALSE));
+	    EXPECT_CALL (*gmockContext, findPlugin (_)).WillOnce (Return (gmockPlugin->plugin ()));
+	    EXPECT_CALL (*gmockPlugin, findSetting (_)).WillOnce (Return (gmockSetting->setting ()));
 	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
@@ -185,6 +188,7 @@ class CCSGSettingsBackendEnv :
 	GSettings  *mSettings;
 	CCSContext *mContext;
 	CCSBackendWithCapabilities *mBackend;
+	std::string pluginToMatch;
 };
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestReadWrite,
