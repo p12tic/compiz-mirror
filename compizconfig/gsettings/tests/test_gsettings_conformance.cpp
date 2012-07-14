@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+using ::testing::AtLeast;
+
 namespace
 {
 const std::string MOCK_SCHEMA ("org.compiz.mock");
@@ -71,7 +73,18 @@ class CCSGSettingsBackendEnv :
 	void PreWrite (CCSContextGMock *gmockContext,
 		       CCSPluginGMock  *gmockPlugin,
 		       CCSSettingGMock *gmockSetting,
-		       CCSSettingType  type) {}
+		       CCSSettingType  type)
+	{
+	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillOnce (Return (FALSE));
+	    EXPECT_CALL (*gmockContext, findPlugin (Pointee ("mock"))).WillOnce (Return (FALSE));
+	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getIsDefault ()).WillRepeatedly (Return (FALSE));
+	}
+
 	void PostWrite (CCSContextGMock *gmockContext,
 			CCSPluginGMock  *gmockPlugin,
 			CCSSettingGMock *gmockSetting,
@@ -122,7 +135,17 @@ class CCSGSettingsBackendEnv :
 	void PreRead (CCSContextGMock *gmockContext,
 		      CCSPluginGMock  *gmockPlugin,
 		      CCSSettingGMock *gmockSetting,
-		      CCSSettingType  type) {}
+		      CCSSettingType  type)
+	{
+	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillOnce (Return (FALSE));
+	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, isReadOnly ()).WillRepeatedly (Return (FALSE));
+	}
+
 	void PostRead (CCSContextGMock *gmockContext,
 		       CCSPluginGMock  *gmockPlugin,
 		       CCSSettingGMock *gmockSetting,
