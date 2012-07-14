@@ -161,7 +161,7 @@ typedef char * (*CCSContextGetBackend) (CCSContext *context);
 typedef void (*CCSContextSetIntegrationEnabled) (CCSContext *context, Bool value);
 typedef void (*CCSContextSetProfile) (CCSContext *context, char *name);
 typedef void (*CCSContextSetPluginListAutoSort) (CCSContext *context, Bool value);
-typedef char * (*CCSContextGetProfile) (CCSContext *context);
+typedef const char * (*CCSContextGetProfile) (CCSContext *context);
 typedef Bool (*CCSContextGetIntegrationEnabled) (CCSContext *context);
 typedef Bool (*CCSContextGetPluginListAutoSort) (CCSContext *context);
 typedef void (*CCSContextProcessEvents) (CCSContext *context, unsigned int flags);
@@ -856,7 +856,7 @@ void ccsSetPluginListAutoSort (CCSContext *context,
 			       Bool       value);
 
 /* Retrieve current profile of the context. */
-char * ccsGetProfile (CCSContext *context);
+const char *ccsGetProfile (CCSContext *context);
 
 /* Retrieves current DE integration status for a context */
 Bool ccsGetIntegrationEnabled (CCSContext *context);

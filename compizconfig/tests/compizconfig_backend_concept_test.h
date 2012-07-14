@@ -564,6 +564,11 @@ class CCSBackendConformanceTest :
 
 	virtual ~CCSBackendConformanceTest () {}
 
+	CCSBackendConformanceTest () :
+	    profileName ("mock")
+	{
+	}
+
 	CCSBackend * GetBackend ()
 	{
 	    return mBackend;
@@ -573,6 +578,8 @@ class CCSBackendConformanceTest :
 	{
 	    CCSBackendConformanceTest::SpawnContext (&context);
 	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
+
+	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
 
 	    mBackend = GetParam ()->testEnv ()->SetUp (context, gmockContext);
 	}
@@ -657,6 +664,8 @@ class CCSBackendConformanceTest :
 	std::list <CCSSetting *> mSpawnedSettings;
 
 	CCSBackend *mBackend;
+
+	std::string profileName;
 };
 
 namespace compizconfig
