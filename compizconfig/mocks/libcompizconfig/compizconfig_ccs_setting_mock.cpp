@@ -60,7 +60,7 @@ ccsMockSettingNew ()
 
     ccsObjectInit (setting, &ccsDefaultObjectAllocator);
 
-    CCSSettingGMock *mock = new CCSSettingGMock ();
+    CCSSettingGMock *mock = new CCSSettingGMock (setting);
     ccsObjectSetPrivate (setting, (CCSPrivate *) mock);
     ccsObjectAddInterface (setting, (CCSInterface *) &CCSSettingGMockInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
 

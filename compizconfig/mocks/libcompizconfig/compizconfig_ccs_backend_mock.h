@@ -40,6 +40,13 @@ class CCSBackendGMock :
 {
     public:
 
+	CCSBackendGMock (CCSBackend *b) :
+	    mBackend (b)
+	{
+	}
+
+	CCSBackend * backend () { return mBackend; }
+
 	/* Mock implementations */
 	MOCK_METHOD0 (getName, char * ());
 	MOCK_METHOD0 (getShortDesc, char * ());
@@ -59,6 +66,10 @@ class CCSBackendGMock :
 	MOCK_METHOD1 (getSettingIsReadOnly, Bool (CCSSetting *));
 	MOCK_METHOD1 (getExistingProfiles, CCSStringList (CCSContext *));
 	MOCK_METHOD2 (deleteProfile, Bool (CCSContext *, char *name));
+
+    private:
+
+	CCSBackend *mBackend;
 
     public:
 
