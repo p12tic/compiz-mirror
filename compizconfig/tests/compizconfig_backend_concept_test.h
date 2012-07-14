@@ -561,17 +561,19 @@ class CCSBackendConformanceTest :
 {
     public:
 
+	virtual ~CCSBackendConformanceTest () {}
+
 	CCSBackend * GetBackend ()
 	{
 	    return mBackend;
 	}
 
-	void SetUp ()
+	virtual void SetUp ()
 	{
 	    mBackend = GetParam ()->testEnv ()->SetUp ();
 	}
 
-	void TearDown ()
+	virtual void TearDown ()
 	{
 	    CCSBackendConformanceTest::GetParam ()->testEnv ()->TearDown (mBackend);
 
@@ -819,7 +821,25 @@ GenerateTestingParametersForBackendInterface ()
 }
 }
 
-TEST_P (CCSBackendConformanceTest, TestReadValue)
+class CCSBackendConformanceTestReadWrite :
+    public CCSBackendConformanceTest
+{
+    public:
+
+	virtual ~CCSBackendConformanceTestReadWrite () {}
+
+	virtual void SetUp ()
+	{
+	    CCSBackendConformanceTest::SetUp ();
+	}
+
+	virtual void TearDown ()
+	{
+	    CCSBackendConformanceTest::TearDown ();
+	}
+};
+
+TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
 
@@ -846,7 +866,7 @@ TEST_P (CCSBackendConformanceTest, TestReadValue)
     ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context, setting);
 }
 
-TEST_P (CCSBackendConformanceTest, TestWriteValue)
+TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
 

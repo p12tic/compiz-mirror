@@ -423,7 +423,7 @@ class MockCCSBackendConceptTestEnvironment :
 	std::map <std::string, VariantTypes> mValues;
 };
 
-INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTest,
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestReadWrite,
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
 
