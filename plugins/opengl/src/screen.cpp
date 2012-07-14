@@ -1790,6 +1790,17 @@ GLXDoubleBuffer::subBufferBlit (const CompRegion &region) const
     }
 }
 
+bool
+GLXDoubleBuffer::subBufferCopyAvailable () const
+{
+    return true;
+}
+
+void
+GLXDoubleBuffer::subBufferCopy (const CompRegion &region) const
+{
+}
+
 #else
 
 EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
@@ -1838,6 +1849,17 @@ EGLDoubleBuffer::subBufferBlit (const CompRegion &region) const
 
     eglWaitGL ();
     XFlush (screen->dpy ());
+}
+
+void
+EGLDoubleBuffer::subBufferCopyAvailable () const
+{
+    return false;
+}
+
+void
+EGLDoubleBuffer::subBufferCopy (const CompRegion &region) const
+{
 }
 
 #endif

@@ -16,6 +16,8 @@ class MockGLDoubleBuffer :
 	MOCK_CONST_METHOD0 (swapBuffers, void ());
 	MOCK_CONST_METHOD0 (subBufferBlitAvailable, bool ());
 	MOCK_CONST_METHOD1 (subBufferBlit, void (const CompRegion &));
+	MOCK_CONST_METHOD0 (subBufferCopyAvailable, bool ());
+	MOCK_CONST_METHOD1 (subBufferCopy, void (const CompRegion &));
 };
 
 class CompizOpenGLDoubleBufferTest :
