@@ -831,32 +831,43 @@ class CCSBackendConformanceTestReadWrite :
 	virtual void SetUp ()
 	{
 	    CCSBackendConformanceTest::SetUp ();
+
+	    pluginName = "plugin";
+	    settingName = GetParam ()->keyname ();
+	    VALUE = GetParam ()->value ();
+
+
+	    CCSBackendConformanceTest::SpawnContext (&context);
+	    CCSBackendConformanceTest::SpawnPlugin (pluginName, &plugin);
+	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
+
+	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
+	    gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
+	    gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
 	}
 
 	virtual void TearDown ()
 	{
 	    CCSBackendConformanceTest::TearDown ();
 	}
+
+    protected:
+
+	std::string pluginName;
+	std::string settingName;
+	VariantTypes VALUE;
+	CCSContext *context;
+	CCSPlugin *plugin;
+	CCSSetting *setting;
+	CCSContextGMock *gmockContext;
+	CCSPluginGMock  *gmockPlugin;
+	CCSSettingGMock *gmockSetting;
+
 };
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
-
-    std::string pluginName ("plugin");
-    const std::string &settingName (GetParam ()->keyname ());
-    const VariantTypes &VALUE (GetParam ()->value ());
-
-    CCSContext *context;
-    CCSBackendConformanceTest::SpawnContext (&context);
-    CCSPlugin *plugin;
-    CCSBackendConformanceTest::SpawnPlugin (pluginName, &plugin);
-    CCSSetting *setting;
-    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
-
-    CCSContextGMock *gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
-    CCSPluginGMock  *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
 
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->nativeWrite () (pluginName, settingName, VALUE);
@@ -869,21 +880,6 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
 TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
-
-    std::string pluginName ("plugin");
-    const std::string &settingName (GetParam ()->keyname ());
-    const VariantTypes &VALUE (GetParam ()->value ());
-
-    CCSContext *context;
-    CCSBackendConformanceTest::SpawnContext (&context);
-    CCSPlugin *plugin;
-    CCSBackendConformanceTest::SpawnPlugin (pluginName, &plugin);
-    CCSSetting *setting;
-    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
-
-    CCSContextGMock *gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
-    CCSPluginGMock  *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
-    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
 
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setWriteExpectationAndWrite () (pluginName,
