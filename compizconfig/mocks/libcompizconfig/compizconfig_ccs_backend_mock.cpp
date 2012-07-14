@@ -37,7 +37,7 @@ ccsMockBackendNew ()
 
     ccsObjectInit (backend, &ccsDefaultObjectAllocator);
 
-    CCSBackendGMock *mock = new CCSBackendGMock ();
+    CCSBackendGMock *mock = new CCSBackendGMock (backend);
     ccsObjectSetPrivate (backend, (CCSPrivate *) mock);
     ccsObjectAddInterface (backend, (CCSInterface *) &CCSBackendGMockInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
 
