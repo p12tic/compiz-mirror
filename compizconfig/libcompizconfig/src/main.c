@@ -3041,7 +3041,7 @@ ccsGetIntegrationEnabled (CCSContext *context)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetIntegrationEnabled) (context);
 }
 
-char *
+const char *
 ccsGetProfileDefault (CCSContext * context)
 {
     if (!context)
@@ -3052,7 +3052,7 @@ ccsGetProfileDefault (CCSContext * context)
     return cPrivate->profile;
 }
 
-char *
+const char *
 ccsGetProfile (CCSContext *context)
 {
     if (!context)
