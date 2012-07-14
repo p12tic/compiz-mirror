@@ -75,12 +75,18 @@ class MockCCSBackendConceptTestEnvironment :
 
 	}
 
-	void PreWrite ()
+	void PreWrite (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
 	{
 	    EXPECT_CALL (*mBackendGMock, writeSetting (_, _));
 	}
 
-	void PostWrite ()
+	void PostWrite (CCSContextGMock *gmockContext,
+			CCSPluginGMock  *gmockPlugin,
+			CCSSettingGMock *gmockSetting,
+			CCSSettingType  type)
 	{
 	}
 
@@ -162,12 +168,18 @@ class MockCCSBackendConceptTestEnvironment :
 	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	}
 
-	void PreRead ()
+	void PreRead (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type)
 	{
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	}
 
-	void PostRead ()
+	void PostRead (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
 	{
 	}
 
