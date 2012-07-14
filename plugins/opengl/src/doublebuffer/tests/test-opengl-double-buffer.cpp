@@ -98,7 +98,7 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
     StrictMock <MockGLDoubleBuffer> mglbbStrict;
 
     EXPECT_CALL (mglbbStrict, subBufferBlitAvailable ()).WillOnce (Return (false));
-    EXPECT_CALL (mglbbStrict, subBufferCopyAvailable ()).WillOnce (Return (false));
+    EXPECT_CALL (mglbbStrict, subBufferCopyAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbbStrict, subBufferCopy (blitRegion));
 
     blitBuffers (0, blitRegion, mglbbStrict);
