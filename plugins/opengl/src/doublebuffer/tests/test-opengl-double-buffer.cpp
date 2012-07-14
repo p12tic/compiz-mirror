@@ -80,14 +80,26 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestBlitExactlyWithRegionSpecified)
     blitBuffers (0, r3, mglbb);
 }
 
-TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupportedAndDies)
+TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitOrCopyIfNotSupportedAndDies)
 {
     StrictMock <MockGLDoubleBuffer> mglbbStrict;
 
     ON_CALL (mglbbStrict, subBufferBlitAvailable ()).WillByDefault (Return (false));
+    ON_CALL (mglbbStrict, subBufferCopyAvailable ()).WillByDefault (Return (false));
 
     ASSERT_DEATH ({
 		    blitBuffers (0, blitRegion, mglbbStrict);
 		  },
 		  ".fatal.");
+}
+
+TEST_F(CompizOpenGLDoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
+{
+    StrictMock <MockGLDoubleBuffer> mglbbStrict;
+
+    EXPECT_CALL (mglbbStrict, subBufferBlitAvailable ()).WillOnce (Return (false));
+    EXPECT_CALL (mglbbStrict, subBufferCopyAvailable ()).WillOnce (Return (false));
+    EXPECT_CALL (mglbbStrict, subBufferCopy (blitRegion));
+
+    blitBuffers (0, blitRegion, mglbbStrict);
 }
