@@ -1,7 +1,11 @@
 set (SCHEMADIR_USER "" CACHE FORCE "Installation dir if user")
 set (SCHEMADIR_ROOT "" CACHE FORCE "Installation dir if root")
 
-set (USERNAME $ENV{USER})
+if (ENV{USER})
+    set (USERNAME $ENV{USER})
+else (ENV${USER})
+    set (USERNAME "user")
+endif (ENV{USER})
 
 if (${USERNAME} STREQUAL "root")
     set (SCHEMADIR ${SCHEMADIR_ROOT})
