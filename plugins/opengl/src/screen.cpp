@@ -1850,7 +1850,7 @@ EGLDoubleBuffer::subBufferBlit (const CompRegion &region) const
     XFlush (screen->dpy ());
 }
 
-void
+bool
 EGLDoubleBuffer::subBufferCopyAvailable () const
 {
     return false;
