@@ -1736,7 +1736,7 @@ GLXDoubleBuffer::swapBuffers () const
 bool
 GLXDoubleBuffer::subBufferBlitAvailable () const
 {
-    return true;
+    return GL::copySubBuffer ? true : false;
 }
 
 void
@@ -1746,47 +1746,11 @@ GLXDoubleBuffer::subBufferBlit (const CompRegion &region) const
 
     waitVSync ();
 
-    if (GL::copySubBuffer)
+    foreach (const CompRect &r, blitRects)
     {
-	foreach (const CompRect &r, blitRects)
-	{
-	    int y = mSize.height () - r.y2 ();
-	    (*GL::copySubBuffer) (screen->dpy (), mOutput,
-	                          r.x1 (), y, r.width (), r.height ());
-	}
-    }
-    else
-    {
-	GLint viewport[4];
-	GLfloat rasterPos[4];
-
-	glGetIntegerv (GL_VIEWPORT, viewport);
-	glGetFloatv (GL_CURRENT_RASTER_POSITION, rasterPos);
-	glMatrixMode (GL_PROJECTION);
-	glPushMatrix ();
-	glLoadIdentity ();
-	glOrtho (0, viewport[2], 0, viewport[3], -1.0, 1.0);
-	glMatrixMode (GL_MODELVIEW);
-	glPushMatrix ();
-	glLoadIdentity ();
-
-	glDrawBuffer (GL_FRONT);
-	foreach (const CompRect &r, blitRects)
-	{
-	    int x = r.x1 ();
-	    int y = screen->height () - r.y2();
-	    glRasterPos2i (x, y);
-	    glCopyPixels (x, y, r.width (), r.height (), GL_COLOR);
-	}
-	glDrawBuffer (GL_BACK);
-
-	glPopMatrix ();
-	glMatrixMode (GL_PROJECTION);
-	glPopMatrix ();
-	glMatrixMode (GL_MODELVIEW);
-	glRasterPos4fv (rasterPos);
-
-	glFlush ();
+	int y = mSize.height () - r.y2 ();
+	(*GL::copySubBuffer) (screen->dpy (), mOutput,
+			      r.x1 (), y, r.width (), r.height ());
     }
 }
 
@@ -1799,6 +1763,41 @@ GLXDoubleBuffer::subBufferCopyAvailable () const
 void
 GLXDoubleBuffer::subBufferCopy (const CompRegion &region) const
 {
+    const CompRect::vector &blitRects (region.rects ());
+
+    waitVSync ();
+
+    GLint viewport[4];
+    GLfloat rasterPos[4];
+
+    glGetIntegerv (GL_VIEWPORT, viewport);
+    glGetFloatv (GL_CURRENT_RASTER_POSITION, rasterPos);
+    glMatrixMode (GL_PROJECTION);
+    glPushMatrix ();
+    glLoadIdentity ();
+    glOrtho (0, viewport[2], 0, viewport[3], -1.0, 1.0);
+    glMatrixMode (GL_MODELVIEW);
+    glPushMatrix ();
+    glLoadIdentity ();
+
+    glDrawBuffer (GL_FRONT);
+    foreach (const CompRect &r, blitRects)
+    {
+	int x = r.x1 ();
+	int y = screen->height () - r.y2();
+	glRasterPos2i (x, y);
+	glCopyPixels (x, y, r.width (), r.height (), GL_COLOR);
+    }
+    glDrawBuffer (GL_BACK);
+
+    glPopMatrix ();
+    glMatrixMode (GL_PROJECTION);
+    glPopMatrix ();
+    glMatrixMode (GL_MODELVIEW);
+    glRasterPos4fv (rasterPos);
+
+    glFlush ();
+
 }
 
 #else
