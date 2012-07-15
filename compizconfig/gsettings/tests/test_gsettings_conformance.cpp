@@ -110,8 +110,16 @@ class CCSGSettingsBackendEnv :
 	}
 
 	void WriteIntegerAtKey (const std::string &plugin,
-					const std::string &key,
-					const VariantTypes &value) {}
+				const std::string &key,
+				const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeIntToVariant (boost::get <int> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteFloatAtKey (const std::string &plugin,
 				      const std::string &key,
 				      const VariantTypes &value) {}
@@ -164,12 +172,21 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("default", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
 						 TypeBool);
 	    return readBoolFromVariant (variant);
 	}
+
 	int ReadIntegerAtKey (const std::string &plugin,
-					const std::string &key) { return 0; }
+					const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeInt);
+	    return readIntFromVariant (variant);
+	}
+
 	float ReadFloatAtKey (const std::string &plugin,
 				      const std::string &key) { return 0.0; }
 	const char * ReadStringAtKey (const std::string &plugin,
