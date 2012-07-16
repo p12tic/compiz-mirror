@@ -89,19 +89,12 @@ class CCSGSettingsBackendEnv :
 		       CCSSettingType  type)
 	{
 	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillRepeatedly (Return (FALSE));
-	    EXPECT_CALL (*gmockContext, findPlugin (_)).WillOnce (Return (gmockPlugin->plugin ()));
-	    EXPECT_CALL (*gmockContext, getProfile ());
-	    EXPECT_CALL (*gmockPlugin, findSetting (_)).WillOnce (Return (gmockSetting->setting ()));
 	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getIsDefault ()).WillRepeatedly (Return (FALSE));
-
-	    /* This is just a temporary workaround so that we don't go read in the setting */
-	    EXPECT_CALL (*gmockSetting, isReadOnly ()).WillOnce (Return (TRUE));
-	    EXPECT_CALL (*gmockSetting, resetToDefault (TRUE));
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
