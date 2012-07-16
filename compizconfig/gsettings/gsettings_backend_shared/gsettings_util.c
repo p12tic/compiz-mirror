@@ -669,7 +669,7 @@ writeListValue (CCSSettingValueList list,
     return TRUE;
 }
 
-Bool writeStringToVariant (char *value, GVariant **variant)
+Bool writeStringToVariant (const char *value, GVariant **variant)
 {
     *variant = g_variant_new_string (value);
     return TRUE;

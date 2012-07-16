@@ -140,28 +140,94 @@ class CCSGSettingsBackendEnv :
 
 	void WriteStringAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const VariantTypes &value) {}
+				       const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeStringToVariant (boost::get <const char *> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteColorAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const VariantTypes &value) {}
+				       const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeColorToVariant (boost::get <CCSSettingColorValue> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteKeyAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const VariantTypes &value) {}
+				       const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeKeyToVariant (boost::get <CCSSettingKeyValue> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteButtonAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const VariantTypes &value) {}
+				       const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeButtonToVariant (boost::get <CCSSettingButtonValue> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteEdgeAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const VariantTypes &value) {}
+				       const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeEdgeToVariant (boost::get <unsigned int> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteMatchAtKey (const std::string &plugin,
 				      const std::string &key,
-				      const VariantTypes &value) {}
+				      const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeStringToVariant (boost::get <const char *> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteBellAtKey (const std::string &plugin,
 				       const std::string &key,
-				       const VariantTypes &value) {}
+				       const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteListAtKey (const std::string &plugin,
 				     const std::string &key,
-				     const VariantTypes &value) {}
+				     const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+
+	    const CCSListWrapper::Ptr &lw (boost::get <CCSListWrapper::Ptr> (value));
+
+	    if (writeListValue (*lw, lw->type (), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
 
 	void PreRead (CCSContextGMock *gmockContext,
 		      CCSPluginGMock  *gmockPlugin,
@@ -208,26 +274,98 @@ class CCSGSettingsBackendEnv :
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
 						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
-						 TypeInt);
+						 TypeFloat);
 	    return readFloatFromVariant (variant);
 	}
 
 	const char * ReadStringAtKey (const std::string &plugin,
-				      const std::string &key) { return ""; }
+				      const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeString);
+	    return readStringFromVariant (variant);
+	}
+
 	CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
-				       const std::string &key) { CCSSettingColorValue v; return v;}
+				       const std::string &key)
+	{
+	    Bool success = FALSE;
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeColor);
+	    CCSSettingColorValue value = readColorFromVariant (variant, &success);
+	    EXPECT_TRUE (success);
+	    return value;
+	}
+
 	CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
-				       const std::string &key) { CCSSettingKeyValue v; return v; }
+				       const std::string &key)
+	{
+	    Bool success = FALSE;
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeKey);
+	    CCSSettingKeyValue value = readKeyFromVariant (variant, &success);
+	    EXPECT_TRUE (success);
+	    return value;
+	}
+
 	CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
-				       const std::string &key) { CCSSettingButtonValue v; return v; }
+				       const std::string &key)
+	{
+	    Bool success = FALSE;
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeButton);
+	    CCSSettingButtonValue value = readButtonFromVariant (variant, &success);
+	    EXPECT_TRUE (success);
+	    return value;
+	}
+
 	unsigned int ReadEdgeAtKey (const std::string &plugin,
-				       const std::string &key) { return 0; }
+				       const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeEdge);
+	    return readEdgeFromVariant (variant);
+	}
+
 	const char * ReadMatchAtKey (const std::string &plugin,
-				     const std::string &key) { return ""; }
+				     const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeMatch);
+	    return readStringFromVariant (variant);
+	}
+
 	Bool ReadBellAtKey (const std::string &plugin,
-				       const std::string &key) { return FALSE; }
+				       const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeInt);
+	    return readBoolFromVariant (variant);
+	}
+
 	CCSSettingValueList ReadListAtKey (const std::string &plugin,
-				     const std::string &key) { return NULL; }
+				     const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeList);
+	    return readListValue (variant, TypeNum);
+	}
     private:
 
 	GSettings  *mSettings;

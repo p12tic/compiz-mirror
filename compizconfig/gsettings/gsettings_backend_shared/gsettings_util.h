@@ -121,7 +121,7 @@ writeListValue (CCSSettingValueList list,
 		CCSSettingType	    listType,
 		GVariant	    **gsettingsValue);
 
-Bool writeStringToVariant (char *value, GVariant **variant);
+Bool writeStringToVariant (const char *value, GVariant **variant);
 
 Bool writeFloatToVariant (float value, GVariant **variant);
 
