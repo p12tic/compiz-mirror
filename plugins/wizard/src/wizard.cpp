@@ -548,7 +548,7 @@ static void
 genNewParticles (ParticleSystem *ps, Emitter *e)
 {
 
-    float q, p, t, h, l;
+    float q, p, t = 0, h, l;
     int count = e->count;
 
     Particle *part = ps->particles;
