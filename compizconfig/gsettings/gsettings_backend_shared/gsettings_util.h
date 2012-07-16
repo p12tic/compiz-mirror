@@ -9,6 +9,23 @@ COMPIZCONFIG_BEGIN_DECLS
 #include <glib-object.h>
 #include <gio/gio.h>
 
+typedef struct _CCSGSettingsBackendPrivate CCSGettingsBackendPrivate;
+typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
+
+typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
+
+struct _CCSGSettingsBackendInterface
+{
+    CCSGSettingsBackendGetContext gsettingsBackendGetContext;
+};
+
+struct _CCSGSettingsBackendPrivate
+{
+    CCSContext *context;
+};
+
+unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
+
 gchar *
 getSchemaNameForPlugin (const char *plugin);
 
@@ -121,6 +138,9 @@ Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
 void writeVariantToKey (GSettings  *settings,
 			const char *key,
 			GVariant   *value);
+
+CCSContext *
+ccsGSettingsBackendGetContext (CCSBackend *backend);
 
 COMPIZCONFIG_END_DECLS
 

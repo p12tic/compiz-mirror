@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "gsettings_shared.h"
 
+INTERFACE_TYPE (CCSGSettingsBackendInterface);
+
 GList *
 variantTypeToPossibleSettingType (const gchar *vt)
 {
@@ -751,4 +753,10 @@ writeVariantToKey (GSettings  *settings,
 		   GVariant   *value)
 {
     g_settings_set_value (settings, key, value);
+}
+
+CCSContext *
+ccsGSettingsBackendGetContext (CCSBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetContext) (backend);
 }

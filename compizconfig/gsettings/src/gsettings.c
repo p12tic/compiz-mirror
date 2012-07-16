@@ -46,15 +46,20 @@ static GSettings   *currentProfileSettings = NULL;
 
 char *currentProfile = NULL;
 
+/* This will need to be rempved */
+CCSContext *storedContext = NULL;
+
 /* some forward declarations */
-static void writeIntegratedOption (CCSContext *context,
+static void writeIntegratedOption (CCSBackend *backend,
+				   CCSContext *context,
 				   CCSSetting *setting,
 				   int        index);
 
 static GSettings *
-getSettingsObjectForPluginWithPath (const char *plugin,
-				  const char *path,
-				  CCSContext *context)
+getSettingsObjectForPluginWithPath (CCSBackend *backend,
+				    const char *plugin,
+				    const char *path,
+				    CCSContext *context)
 {
     GSettings *settingsObj = NULL;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
@@ -74,7 +79,7 @@ getSettingsObjectForPluginWithPath (const char *plugin,
     
     settingsObj = g_settings_new_with_path (schemaName, path);
 
-    g_signal_connect (G_OBJECT (settingsObj), "changed", (GCallback) valueChanged, (gpointer) context);
+    g_signal_connect (G_OBJECT (settingsObj), "changed", (GCallback) valueChanged, (gpointer) backend);
 
     settingsList = g_list_append (settingsList, (void *) settingsObj);
 
@@ -104,14 +109,15 @@ makeSettingPath (CCSSetting *setting)
 }
 
 static GSettings *
-getSettingsObjectForCCSSetting (CCSSetting *setting)
+getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 {
     GSettings *ret = NULL;
     gchar *pathName = makeSettingPath (setting);
 
-    ret = getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
-					       pathName,
-					       ccsPluginGetContext (ccsSettingGetParent (setting)));
+    ret = getSettingsObjectForPluginWithPath (backend,
+					      ccsPluginGetName (ccsSettingGetParent (setting)),
+					      pathName,
+					      ccsPluginGetContext (ccsSettingGetParent (setting)));
 
     g_free (pathName);
     return ret;
@@ -133,7 +139,8 @@ valueChanged (GSettings   *settings,
 	      gchar	  *keyName,
 	      gpointer    user_data)
 {
-    CCSContext   *context = (CCSContext *)user_data;
+    CCSBackend   *backend = (CCSBackend *)user_data;
+    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
     char	 *uncleanKeyName;
     char	 *path, *pathOrig;
     char         *pluginName;
@@ -200,7 +207,7 @@ valueChanged (GSettings   *settings,
     }
 
     readInit (NULL, context);
-    if (!readOption (setting))
+    if (!readOption (backend,  setting))
     {
 	ccsResetToDefault (setting, TRUE);
     }
@@ -209,7 +216,7 @@ valueChanged (GSettings   *settings,
 	isIntegratedOption (setting, &index))
     {
 	writeInit (NULL, context);
-	writeIntegratedOption (context, setting, index);
+	writeIntegratedOption (backend, context, setting, index);
     }
 
     g_free (pluginName);
@@ -218,21 +225,22 @@ valueChanged (GSettings   *settings,
 }
 
 static Bool
-readIntegratedOption (CCSContext *context,
+readIntegratedOption (CCSBackend *backend,
+		      CCSContext *context,
 		      CCSSetting *setting,
 		      int        index)
 {
 #ifdef USE_GCONF
-    return readGConfIntegratedOption (context, setting, index);
+    return readGConfIntegratedOption (backend, context, setting, index);
 #else
     return FALSE;
 #endif
 }
 
 static GVariant *
-getVariantForCCSSetting (CCSSetting *setting)
+getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    GSettings  *settings = getSettingsObjectForCCSSetting (backend, setting);
     char *cleanSettingName = getNameForCCSSetting (setting);
     gchar *pathName = makeSettingPath (setting);
     GVariant *gsettingsValue = getVariantAtKey (settings,
@@ -246,7 +254,7 @@ getVariantForCCSSetting (CCSSetting *setting)
 }
 
 Bool
-readOption (CCSSetting * setting)
+readOption (CCSBackend *backend, CCSSetting * setting)
 {
     Bool       ret = FALSE;
     GVariant   *gsettingsValue = NULL;
@@ -262,7 +270,7 @@ readOption (CCSSetting * setting)
 	return FALSE;
     }
 
-    gsettingsValue = getVariantForCCSSetting (setting);
+    gsettingsValue = getVariantForCCSSetting (backend, setting);
 
     switch (ccsSettingGetType (setting))
     {
@@ -400,21 +408,22 @@ readOption (CCSSetting * setting)
 }
 
 static void
-writeIntegratedOption (CCSContext *context,
+writeIntegratedOption (CCSBackend *backend,
+		       CCSContext *context,
 		       CCSSetting *setting,
 		       int        index)
 {
 #ifdef USE_GCONF
-    writeGConfIntegratedOption (context, setting, index);
+    writeGConfIntegratedOption (backend, context, setting, index);
 #endif
 
     return;
 }
 
 static void
-resetOptionToDefault (CCSSetting * setting)
+resetOptionToDefault (CCSBackend *backend, CCSSetting * setting)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    GSettings  *settings = getSettingsObjectForCCSSetting (backend, setting);
   
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
@@ -424,9 +433,9 @@ resetOptionToDefault (CCSSetting * setting)
 }
 
 void
-writeOption (CCSSetting * setting)
+writeOption (CCSBackend *backend, CCSSetting * setting)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    GSettings  *settings = getSettingsObjectForCCSSetting (backend, setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
     GVariant *gsettingsValue = NULL;
     Bool success = FALSE;
@@ -647,6 +656,16 @@ processEvents (CCSBackend *backend, unsigned int flags)
     }
 }
 
+static CCSContext *
+ccsGSettingsBackendGetContextDefault (CCSBackend *backend)
+{
+    return storedContext;
+}
+
+static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
+    ccsGSettingsBackendGetContextDefault
+};
+
 static Bool
 initBackend (CCSBackend *backend, CCSContext * context)
 {
@@ -665,6 +684,10 @@ initBackend (CCSBackend *backend, CCSContext * context)
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
 
     g_free (currentProfilePath);
+
+    storedContext = context;
+
+    ccsObjectAddInterface (backend, (CCSInterface *) &gsettingsAdditionalDefaultInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
     return TRUE;
 }
@@ -726,10 +749,10 @@ readSetting (CCSBackend *backend,
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	status = readIntegratedOption (context, setting, index);
+	status = readIntegratedOption (backend, context, setting, index);
     }
     else
-	status = readOption (setting);
+	status = readOption (backend, setting);
 
     if (!status)
 	ccsResetToDefault (setting, TRUE);
@@ -751,14 +774,14 @@ writeSetting (CCSBackend *backend,
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	writeIntegratedOption (context, setting, index);
+	writeIntegratedOption (backend, context, setting, index);
     }
     else if (ccsSettingGetIsDefault (setting))
     {
-	resetOptionToDefault (setting);
+	resetOptionToDefault (backend, setting);
     }
     else
-	writeOption (setting);
+	writeOption (backend, setting);
 
 }
 
@@ -828,7 +851,7 @@ deleteProfile (CCSBackend *backend,
 	GSettings *settings;
 	gchar *pathName = makeCompizPluginPath (currentProfile, plugin);
 
-	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
+	settings = getSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
 	g_free (pathName);
 
 	/* The GSettings documentation says not to use this API
@@ -928,6 +951,8 @@ static CCSBackendInterface gsettingsVTable = {
     getExistingProfiles,
     deleteProfile
 };
+
+
 
 CCSBackendInterface *
 getBackendInfo (void)
