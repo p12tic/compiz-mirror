@@ -336,7 +336,7 @@ void SetStringWriteExpectation (const std::string &plugin,
 							     const_cast <char *> (boost::get <const char *> (value))),
 							 Return (TRUE)));
     write ();
-    EXPECT_EQ (env->ReadStringAtKey (plugin, key), boost::get <const char *> (value));
+    EXPECT_EQ (std::string (env->ReadStringAtKey (plugin, key)), std::string (boost::get <const char *> (value)));
 }
 
 void SetColorWriteExpectation (const std::string &plugin,
@@ -437,7 +437,7 @@ void SetMatchWriteExpectation (const std::string &plugin,
 							     const_cast <char *> (boost::get <const char *> (value))),
 							 Return (TRUE)));
     write ();
-    EXPECT_EQ (env->ReadMatchAtKey (plugin, key), boost::get <const char *> (value));
+    EXPECT_EQ (std::string (env->ReadMatchAtKey (plugin, key)), std::string (boost::get <const char *> (value)));
 }
 
 void SetListWriteExpectation (const std::string &plugin,
