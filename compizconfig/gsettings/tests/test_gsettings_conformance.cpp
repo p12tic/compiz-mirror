@@ -43,7 +43,10 @@ class CCSGSettingsBackendEnv :
 	    Bool		fallback   = FALSE;
 
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-	    g_setenv ("GSETTINGS_BACKEND", "memory", true);
+
+	    /* For some reason a number of tests fail when using
+	     * this GSettings backend */
+	    //g_setenv ("GSETTINGS_BACKEND", "memory", true);
 	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
 
 	    mSettings = g_settings_new_with_path (MOCK_SCHEMA.c_str (), makeCompizPluginPath ("mock", "mock"));
@@ -76,7 +79,7 @@ class CCSGSettingsBackendEnv :
 	void TearDown (CCSBackend *)
 	{
 	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
-	    g_unsetenv ("GSETTINGS_BACKEND");
+	    //g_unsetenv ("GSETTINGS_BACKEND");
 
 	    ccsFreeBackendWithCapabilities (mBackend);
 
@@ -126,7 +129,15 @@ class CCSGSettingsBackendEnv :
 
 	void WriteFloatAtKey (const std::string &plugin,
 				      const std::string &key,
-				      const VariantTypes &value) {}
+				      const VariantTypes &value)
+	{
+	    GVariant *variant = NULL;
+	    if (writeFloatToVariant (boost::get <float> (value), &variant))
+		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+	    else
+		throw std::exception ();
+	}
+
 	void WriteStringAtKey (const std::string &plugin,
 				       const std::string &key,
 				       const VariantTypes &value) {}
@@ -192,7 +203,15 @@ class CCSGSettingsBackendEnv :
 	}
 
 	float ReadFloatAtKey (const std::string &plugin,
-				      const std::string &key) { return 0.0; }
+				      const std::string &key)
+	{
+	    GVariant *variant = getVariantAtKey (mSettings,
+						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 TypeInt);
+	    return readFloatFromVariant (variant);
+	}
+
 	const char * ReadStringAtKey (const std::string &plugin,
 				      const std::string &key) { return ""; }
 	CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
