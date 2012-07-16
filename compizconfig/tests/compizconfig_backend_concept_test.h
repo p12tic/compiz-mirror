@@ -29,6 +29,9 @@ using ::testing::Matcher;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 
+MATCHER(IsTrue, "Is True") { if (arg) return true; else return false; }
+MATCHER(IsFalse, "Is False") { if (!arg) return true; else return false; }
+
 class ListEqualityMatcher :
     public MatcherInterface <CCSSettingValueList>
 {
@@ -295,7 +298,13 @@ void SetBoolWriteExpectation (const std::string &plugin,
 							     boolToBool (boost::get <bool> (value))),
 							 Return (TRUE)));
     write ();
-    EXPECT_EQ (env->ReadBoolAtKey (plugin, key), boolToBool (boost::get <bool> (value)));
+
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_THAT (env->ReadBoolAtKey (plugin, key), IsTrue ());
+    else
+	EXPECT_THAT (env->ReadBoolAtKey (plugin, key), IsFalse ());
 }
 
 void SetFloatWriteExpectation (const std::string &plugin,
@@ -407,7 +416,12 @@ void SetBellWriteExpectation (const std::string &plugin,
 							     boolToBool (boost::get <bool> (value))),
 							 Return (TRUE)));
     write ();
-    EXPECT_EQ (env->ReadBellAtKey (plugin, key), boolToBool (boost::get <bool> (value)));
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_THAT (env->ReadBellAtKey (plugin, key), IsTrue ());
+    else
+	EXPECT_THAT (env->ReadBellAtKey (plugin, key), IsFalse ());
 }
 
 void SetMatchWriteExpectation (const std::string &plugin,
@@ -455,12 +469,22 @@ void SetIntReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 
 void SetBoolReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setBool (boolToBool (boost::get <bool> (value)), _));
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_CALL (*gmock, setBool (IsTrue (), _));
+    else
+	EXPECT_CALL (*gmock, setBool (IsFalse (), _));
 }
 
 void SetBellReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setBell (boolToBool (boost::get <bool> (value)), _));
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_CALL (*gmock, setBell (IsTrue (), _));
+    else
+	EXPECT_CALL (*gmock, setBell (IsFalse (), _));
 }
 
 void SetFloatReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
