@@ -334,9 +334,10 @@ function (compiz_translate_xml _src _dst)
     	add_custom_command (
 	    OUTPUT ${_dst}
 	    COMMAND cat ${_src} |
-		    sed -e 's:<_:<:g' -e 's:</_:</:g' > 
+		    sed -e 's;<_;<;g' -e 's;</_;</;g' > 
 		    ${_dst}
 	    DEPENDS ${_src}
+	    VERBATIM
 	)
     endif ()
 endfunction ()
@@ -361,9 +362,10 @@ function (compiz_translate_desktop_file _src _dst)
     	add_custom_command (
 	    OUTPUT ${_dst}
 	    COMMAND cat ${_src} |
-		    sed -e 's:^_::g' >
+		    sed -e 's;^_;;g' >
 		    ${_dst}
 	    DEPENDS ${_src}
+	    VERBATIM
 	)
     endif ()
 endfunction ()
