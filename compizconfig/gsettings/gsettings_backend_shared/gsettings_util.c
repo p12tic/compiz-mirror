@@ -760,3 +760,11 @@ ccsGSettingsBackendGetContext (CCSBackend *backend)
 {
     return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetContext) (backend);
 }
+
+
+void
+ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend,
+					   GObject *object)
+{
+     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendConnectToChangedSignal) (backend, object);
+}

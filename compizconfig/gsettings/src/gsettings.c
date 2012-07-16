@@ -79,7 +79,7 @@ getSettingsObjectForPluginWithPath (CCSBackend *backend,
     
     settingsObj = g_settings_new_with_path (schemaName, path);
 
-    g_signal_connect (G_OBJECT (settingsObj), "changed", (GCallback) valueChanged, (gpointer) backend);
+    ccsGSettingsBackendConnectToChangedSignal (backend, G_OBJECT (settingsObj));
 
     settingsList = g_list_append (settingsList, (void *) settingsObj);
 
@@ -662,8 +662,15 @@ ccsGSettingsBackendGetContextDefault (CCSBackend *backend)
     return storedContext;
 }
 
+static void
+ccsGSettingsBackendConnectToValueChangedSignalDefault (CCSBackend *backend, GObject *object)
+{
+    g_signal_connect (object, "changed", (GCallback) valueChanged, (gpointer) backend);
+}
+
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
-    ccsGSettingsBackendGetContextDefault
+    ccsGSettingsBackendGetContextDefault,
+    ccsGSettingsBackendConnectToValueChangedSignalDefault
 };
 
 static Bool

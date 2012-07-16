@@ -13,10 +13,12 @@ typedef struct _CCSGSettingsBackendPrivate CCSGettingsBackendPrivate;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
+typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, GObject *);
 
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
+    CCSGSettingsBackendConnectToChangedSignal gsettingsBackendConnectToChangedSignal;
 };
 
 struct _CCSGSettingsBackendPrivate
@@ -141,6 +143,9 @@ void writeVariantToKey (GSettings  *settings,
 
 CCSContext *
 ccsGSettingsBackendGetContext (CCSBackend *backend);
+
+void
+ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend, GObject *object);
 
 COMPIZCONFIG_END_DECLS
 
