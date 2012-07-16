@@ -32,6 +32,11 @@ class CCSGSettingsBackendEnv :
 	    g_type_init ();
 	}
 
+	/* A wrapper to prevent signals from being added */
+	static void connectToSignalWrapper (CCSBackend *backend, GObject *object)
+	{
+	};
+
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSBackendInterface *interface = NULL;
@@ -58,6 +63,12 @@ class CCSGSettingsBackendEnv :
 
 	    if (backendInit)
 		(*backendInit) ((CCSBackend *) mBackend, mContext);
+
+	    overloadedInterface = *(GET_INTERFACE (CCSGSettingsBackendInterface, backend));
+	    overloadedInterface.gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
+
+	    ccsObjectRemoveInterface (backend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
+	    ccsObjectAddInterface (backend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
 	    return (CCSBackend *) mBackend;
 	}
@@ -211,6 +222,7 @@ class CCSGSettingsBackendEnv :
 	CCSContext *mContext;
 	CCSBackendWithCapabilities *mBackend;
 	std::string pluginToMatch;
+	CCSGSettingsBackendInterface overloadedInterface;
 };
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestReadWrite,
