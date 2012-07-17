@@ -56,10 +56,10 @@ static void writeIntegratedOption (CCSBackend *backend,
 				   int        index);
 
 static GSettings *
-getSettingsObjectForPluginWithPath (CCSBackend *backend,
-				    const char *plugin,
-				    const char *path,
-				    CCSContext *context)
+ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backend,
+							      const char *plugin,
+							      const char *path,
+							      CCSContext *context)
 {
     GSettings *settingsObj = NULL;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
@@ -114,10 +114,10 @@ getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
     GSettings *ret = NULL;
     gchar *pathName = makeSettingPath (setting);
 
-    ret = getSettingsObjectForPluginWithPath (backend,
-					      ccsPluginGetName (ccsSettingGetParent (setting)),
-					      pathName,
-					      ccsPluginGetContext (ccsSettingGetParent (setting)));
+    ret = ccsGSettingsGetSettingsObjectForPluginWithPath (backend,
+							  ccsPluginGetName (ccsSettingGetParent (setting)),
+							  pathName,
+							  ccsPluginGetContext (ccsSettingGetParent (setting)));
 
     g_free (pathName);
     return ret;
@@ -670,7 +670,8 @@ ccsGSettingsBackendConnectToValueChangedSignalDefault (CCSBackend *backend, GObj
 
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
-    ccsGSettingsBackendConnectToValueChangedSignalDefault
+    ccsGSettingsBackendConnectToValueChangedSignalDefault,
+    ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault
 };
 
 static Bool
@@ -858,7 +859,7 @@ deleteProfile (CCSBackend *backend,
 	GSettings *settings;
 	gchar *pathName = makeCompizPluginPath (currentProfile, plugin);
 
-	settings = getSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
+	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
 	g_free (pathName);
 
 	/* The GSettings documentation says not to use this API

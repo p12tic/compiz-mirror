@@ -768,3 +768,12 @@ ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend,
 {
      (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendConnectToChangedSignal) (backend, object);
 }
+
+GSettings *
+ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
+						const char *plugin,
+						const char *path,
+						CCSContext *context)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetSettingsObjectForPluginWithPath) (backend, plugin, path, context);
+}

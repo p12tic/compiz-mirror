@@ -49,7 +49,6 @@ class CCSGSettingsBackendEnv :
 	    //g_setenv ("GSETTINGS_BACKEND", "memory", true);
 	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
 
-	    mSettings = g_settings_new_with_path (MOCK_SCHEMA.c_str (), makeCompizPluginPath ("mock", "mock"));
 	    mContext = context;
 
 	    std::string path ("gsettings");
@@ -73,6 +72,8 @@ class CCSGSettingsBackendEnv :
 	    ccsObjectRemoveInterface (backend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 	    ccsObjectAddInterface (backend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
+	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, "mock", makeCompizPluginPath ("mock", "mock"), mContext);
+
 	    return (CCSBackend *) mBackend;
 	}
 
@@ -82,8 +83,6 @@ class CCSGSettingsBackendEnv :
 	    //g_unsetenv ("GSETTINGS_BACKEND");
 
 	    ccsFreeBackendWithCapabilities (mBackend);
-
-	    g_object_unref (mSettings);
 	}
 
 	void PreWrite (CCSContextGMock *gmockContext,

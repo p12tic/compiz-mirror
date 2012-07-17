@@ -14,11 +14,16 @@ typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
 typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, GObject *);
+typedef GSettings * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CCSBackend *backend,
+									      const char *plugin,
+									      const char *path,
+									      CCSContext *context);
 
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
     CCSGSettingsBackendConnectToChangedSignal gsettingsBackendConnectToChangedSignal;
+    CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
 };
 
 struct _CCSGSettingsBackendPrivate
@@ -146,6 +151,12 @@ ccsGSettingsBackendGetContext (CCSBackend *backend);
 
 void
 ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend, GObject *object);
+
+GSettings *
+ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
+						const char *plugin,
+						const char *path,
+						CCSContext *context);
 
 COMPIZCONFIG_END_DECLS
 

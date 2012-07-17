@@ -80,6 +80,13 @@ operator== (const CCSSettingColorValue &lhs,
     return false;
 }
 
+::std::ostream &
+operator<< (::std::ostream &os, const CCSSettingColorValue &v)
+{
+    return os << "Red: " << std::hex << v.color.red << "Blue: " << std::hex << v.color.blue << "Green: " << v.color.green << "Alpha: " << v.color.alpha
+       << std::dec << std::endl;
+}
+
 bool
 operator== (const CCSSettingKeyValue &lhs,
 	    const CCSSettingKeyValue &rhs)
@@ -352,7 +359,16 @@ void SetColorWriteExpectation (const std::string &plugin,
 							     boost::get <CCSSettingColorValue> (value)),
 							 Return (TRUE)));
     write ();
-    EXPECT_EQ (env->ReadColorAtKey (plugin, key), boost::get <CCSSettingColorValue> (value));
+
+    /* Storage on most backends is lossy, so simulate this */
+    CCSSettingColorValue v = boost::get <CCSSettingColorValue> (value);
+    char *str = ccsColorToString (&v);
+
+    ccsStringToColor (str, &v);
+
+    free (str);
+
+    EXPECT_EQ (env->ReadColorAtKey (plugin, key), v);
 }
 
 void SetKeyWriteExpectation (const std::string &plugin,
@@ -504,7 +520,14 @@ void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 
 void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _));
+    CCSSettingColorValue v = boost::get <CCSSettingColorValue> (value);
+    char *str = ccsColorToString (&v);
+
+    ccsStringToColor (str, &v);
+
+    free (str);
+
+    EXPECT_CALL (*gmock, setColor (v, _));
 }
 
 void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
@@ -735,9 +758,14 @@ int intValues[] = { 1, 2, 3 };
 float floatValues[] = { 1.0, 2.0, 3.0 };
 const char * stringValues[] = { "foo", "grill", "bar" };
 
-CCSSettingColorValue colorValues[3] = { { .color = { 100, 200, 300, 100 } },
-					{ .color = { 50, 100, 200, 300 } },
-					{ .color = { 10, 20, 30, 40 } }
+unsigned short max = std::numeric_limits <unsigned short>::max ();
+unsigned short maxD2 = max / 2;
+unsigned short maxD4 = max / 4;
+unsigned short maxD8 = max / 8;
+
+CCSSettingColorValue colorValues[3] = { { .color = { maxD2 , maxD4, maxD8, max } },
+					{ .color = { maxD8, maxD4, maxD2, max } },
+					{ .color = { max, maxD4, maxD2,  maxD8 } }
 				      };
 
 CCSSettingKeyValue keyValue = { (1 << 0) | (1 << 1),
