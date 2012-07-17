@@ -131,16 +131,18 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
+    priv->commonFrontbuffer = true;
     glRenderer = (const char *) glGetString (GL_RENDERER);
-    if (glRenderer != NULL &&
-	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
-	 strcmp (glRenderer, "Mesa X11") == 0))
+    if (glRenderer != NULL && strstr (glRenderer, "on llvmpipe"))
     {
-	compLogMessage ("opengl",
-			CompLogLevelFatal,
-			"Software rendering detected");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	return false;
+	/*
+	 * Most drivers use the same frontbuffer infrastructure for
+	 * swapbuffers as well as subbuffer copying. However there are some
+	 * odd exceptions like LLVMpipe (and SGX-something?) that use separate
+	 * buffers, so we can't dynamically switch between buffer swapping and
+	 * copying in those cases.
+	 */
+	priv->commonFrontbuffer = false;
     }
 
     if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
@@ -579,6 +581,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     outputRegion (),
     bindPixmap (),
     hasCompositing (false),
+    commonFrontbuffer (true),
     rootPixmapCopy (None),
     rootPixmapSize ()
 {
@@ -1272,6 +1275,14 @@ PrivateGLScreen::compositingActive ()
 void
 PrivateGLScreen::prepareDrawing ()
 {
+    /*
+     * This is sub-optimal but a more efficient solution is coming with the
+     * GLES work soon.
+     * That said, this seems to be much faster than the alternative of forcing
+     * regional redraws on every frame.
+     */
+    if (!commonFrontbuffer)
+	CompositeScreen::get (screen)->damageScreen ();
 }
 
 GLTexture::BindPixmapHandle
