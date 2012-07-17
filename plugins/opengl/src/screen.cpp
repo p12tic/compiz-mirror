@@ -131,8 +131,19 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
-    priv->commonFrontbuffer = true;
     glRenderer = (const char *) glGetString (GL_RENDERER);
+    if (glRenderer != NULL &&
+	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
+	 strcmp (glRenderer, "Mesa X11") == 0))
+    {
+	compLogMessage ("opengl",
+			CompLogLevelFatal,
+			"Software rendering detected");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    priv->commonFrontbuffer = true;
     if (glRenderer != NULL && strstr (glRenderer, "on llvmpipe"))
     {
 	/*
@@ -1192,7 +1203,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     targetOutput = &screen->outputDevs ()[0];
 
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+    if ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) && commonFrontbuffer)
     {
 	/*
 	 * controlSwapVideoSync is much faster than waitForVideoSync because
@@ -1204,6 +1215,9 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
     else
     {
+	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+	    tmpRegion = screen->region ();
+
 	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
 	int    y;
@@ -1275,14 +1289,6 @@ PrivateGLScreen::compositingActive ()
 void
 PrivateGLScreen::prepareDrawing ()
 {
-    /*
-     * This is sub-optimal but a more efficient solution is coming with the
-     * GLES work soon.
-     * That said, this seems to be much faster than the alternative of forcing
-     * regional redraws on every frame.
-     */
-    if (!commonFrontbuffer)
-	CompositeScreen::get (screen)->damageScreen ();
 }
 
 GLTexture::BindPixmapHandle
