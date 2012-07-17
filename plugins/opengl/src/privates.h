@@ -76,6 +76,8 @@ class GLXDoubleBuffer :
 	void swapBuffers () const;
 	bool subBufferBlitAvailable () const;
 	void subBufferBlit (const CompRegion &region) const;
+	bool subBufferCopyAvailable () const;
+	void subBufferCopy (const CompRegion &region) const;
 
     protected:
 
@@ -99,6 +101,8 @@ class EGLDoubleBuffer :
 	void swapBuffers () const;
 	bool subBufferBlitAvailable () const;
 	void subBufferBlit (const CompRegion &region) const;
+	bool subBufferCopyAvailable () const;
+	void subBufferCopy (const CompRegion &region) const;
 
     private:
 

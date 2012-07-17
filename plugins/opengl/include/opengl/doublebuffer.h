@@ -20,6 +20,8 @@ class GLDoubleBufferInterface
 	virtual void swapBuffers () const = 0;
 	virtual bool subBufferBlitAvailable () const = 0;
 	virtual void subBufferBlit (const CompRegion &region) const = 0;
+	virtual bool subBufferCopyAvailable () const = 0;
+	virtual void subBufferCopy (const CompRegion &region) const = 0;
 };
 
 void blitBuffers (unsigned int flags,

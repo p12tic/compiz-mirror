@@ -24,6 +24,10 @@ compiz::opengl::blitBuffers (unsigned int flags,
     {
 	blit.subBufferBlit (tmpRegion);
     }
+    else if (blit.subBufferCopyAvailable ())
+    {
+	blit.subBufferCopy (tmpRegion);
+    }
     else
     {
 	/* FIXME: We need to use compLogMessage here, but for some
