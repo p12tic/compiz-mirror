@@ -18,15 +18,15 @@ compiz::opengl::blitBuffers (unsigned int flags,
     if (flags & (PaintedFullscreen |
 		 PaintedWithFramebufferObject))
     {
-	blit.swapBuffers ();
+	blit.swap ();
     }
-    else if (blit.subBufferBlitAvailable ())
+    else if (blit.blitAvailable ())
     {
-	blit.subBufferBlit (tmpRegion);
+	blit.blit (tmpRegion);
     }
-    else if (blit.subBufferCopyAvailable ())
+    else if (blit.fallbackBlitAvailable ())
     {
-	blit.subBufferCopy (tmpRegion);
+	blit.fallbackBlit (tmpRegion);
     }
     else
     {

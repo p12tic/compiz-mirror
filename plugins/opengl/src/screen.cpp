@@ -1727,20 +1727,20 @@ GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 }
 
 void
-GLXDoubleBuffer::swapBuffers () const
+GLXDoubleBuffer::swap () const
 {
     GL::controlSwapVideoSync (getSyncVblank ());
     glXSwapBuffers (mDpy, mOutput);
 }
 
 bool
-GLXDoubleBuffer::subBufferBlitAvailable () const
+GLXDoubleBuffer::blitAvailable () const
 {
     return GL::copySubBuffer ? true : false;
 }
 
 void
-GLXDoubleBuffer::subBufferBlit (const CompRegion &region) const
+GLXDoubleBuffer::blit (const CompRegion &region) const
 {
     const CompRect::vector &blitRects (region.rects ());
 
@@ -1755,13 +1755,13 @@ GLXDoubleBuffer::subBufferBlit (const CompRegion &region) const
 }
 
 bool
-GLXDoubleBuffer::subBufferCopyAvailable () const
+GLXDoubleBuffer::fallbackBlitAvailable () const
 {
     return true;
 }
 
 void
-GLXDoubleBuffer::subBufferCopy (const CompRegion &region) const
+GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 {
     const CompRect::vector &blitRects (region.rects ());
 
@@ -1812,7 +1812,7 @@ EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
 }
 
 void
-EGLDoubleBuffer::swapBuffers () const
+EGLDoubleBuffer::swap () const
 {
     GL::controlSwapVideoSync (getSyncVblank ());
 
@@ -1822,13 +1822,13 @@ EGLDoubleBuffer::swapBuffers () const
 }
 
 bool
-EGLDoubleBuffer::subBufferBlitAvailable () const
+EGLDoubleBuffer::blitAvailable () const
 {
     return GL::postSubBuffer ? true : false;
 }
 
 void
-EGLDoubleBuffer::subBufferBlit (const CompRegion &region) const
+EGLDoubleBuffer::blit (const CompRegion &region) const
 {
     CompRect::vector blitRects (region.rects ());
     int		     y = 0;
@@ -1851,13 +1851,13 @@ EGLDoubleBuffer::subBufferBlit (const CompRegion &region) const
 }
 
 bool
-EGLDoubleBuffer::subBufferCopyAvailable () const
+EGLDoubleBuffer::fallbackBlitAvailable () const
 {
     return false;
 }
 
 void
-EGLDoubleBuffer::subBufferCopy (const CompRegion &region) const
+EGLDoubleBuffer::fallbackBlit (const CompRegion &region) const
 {
 }
 

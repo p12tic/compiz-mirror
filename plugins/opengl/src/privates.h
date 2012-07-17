@@ -73,11 +73,11 @@ class GLXDoubleBuffer :
 		       Window,
 		       const boost::function <void ()> &);
 
-	void swapBuffers () const;
-	bool subBufferBlitAvailable () const;
-	void subBufferBlit (const CompRegion &region) const;
-	bool subBufferCopyAvailable () const;
-	void subBufferCopy (const CompRegion &region) const;
+	void swap () const;
+	bool blitAvailable () const;
+	void blit (const CompRegion &region) const;
+	bool fallbackBlitAvailable () const;
+	void fallbackBlit (const CompRegion &region) const;
 
     protected:
 
@@ -98,11 +98,11 @@ class EGLDoubleBuffer :
 		       const boost::function <bool ()> &,
 		       EGLSurface const &);
 
-	void swapBuffers () const;
-	bool subBufferBlitAvailable () const;
-	void subBufferBlit (const CompRegion &region) const;
-	bool subBufferCopyAvailable () const;
-	void subBufferCopy (const CompRegion &region) const;
+	void swap () const;
+	bool blitAvailable () const;
+	void blit (const CompRegion &region) const;
+	bool fallbackBlitAvailable () const;
+	void fallbackBlit (const CompRegion &region) const;
 
     private:
 
