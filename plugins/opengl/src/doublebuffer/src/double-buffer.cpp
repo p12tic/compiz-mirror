@@ -11,22 +11,22 @@ char programName[] = "compiz_test_opengl_double_buffer";
 bool debugOutput = false;
 
 void
-compiz::opengl::blitBuffers (unsigned int flags,
-			     const CompRegion &tmpRegion,
-			     GLDoubleBufferInterface &blit)
+compiz::opengl::render (unsigned int flags,
+                        const CompRegion &region,
+                        GLDoubleBufferInterface &impl)
 {
     if (flags & (PaintedFullscreen |
 		 PaintedWithFramebufferObject))
     {
-	blit.swap ();
+	impl.swap ();
     }
-    else if (blit.blitAvailable ())
+    else if (impl.blitAvailable ())
     {
-	blit.blit (tmpRegion);
+	impl.blit (region);
     }
-    else if (blit.fallbackBlitAvailable ())
+    else if (impl.fallbackBlitAvailable ())
     {
-	blit.fallbackBlit (tmpRegion);
+	impl.fallbackBlit (region);
     }
     else
     {

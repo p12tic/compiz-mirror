@@ -187,12 +187,12 @@ class PrivateGLScreen :
 	#ifdef USE_GLES
 	EGLContext ctx;
 	EGLSurface surface;
-	EGLDoubleBuffer bufferBlit;
+	EGLDoubleBuffer doubleBuffer;
 	#else
 	GLXContext ctx;
 
 	GL::GLXGetProcAddressProc getProcAddress;
-	GLXDoubleBuffer bufferBlit;
+	GLXDoubleBuffer doubleBuffer;
 	#endif
 
 	GLFramebufferObject *scratchFbo;

@@ -24,9 +24,9 @@ class GLDoubleBufferInterface
 	virtual void fallbackBlit (const CompRegion &region) const = 0;
 };
 
-void blitBuffers (unsigned int flags,
-		  const CompRegion &blitRegion,
-		  GLDoubleBufferInterface &);
+void render (unsigned int flags,
+             const CompRegion &region,
+             GLDoubleBufferInterface &impl);
 
 }
 }

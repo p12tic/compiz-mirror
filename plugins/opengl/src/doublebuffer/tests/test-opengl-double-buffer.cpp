@@ -39,14 +39,14 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedWithFBOAlwaysSwaps)
 {
     EXPECT_CALL (mglbb, swap ());
 
-    blitBuffers (PaintedWithFramebufferObject, blitRegion, mglbb);
+    render (PaintedWithFramebufferObject, blitRegion, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedFullscreenAlwaysSwaps)
 {
     EXPECT_CALL (mglbb, swap ());
 
-    blitBuffers (PaintedFullscreen, blitRegion, mglbb);
+    render (PaintedFullscreen, blitRegion, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
@@ -54,7 +54,7 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubB
     EXPECT_CALL (mglbb, blitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbb, blit (_));
 
-    blitBuffers (0, blitRegion, mglbb);
+    render (0, blitRegion, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
@@ -71,13 +71,13 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestBlitExactlyWithRegionSpecified)
     EXPECT_CALL (mglbb, blitAvailable ()).WillRepeatedly (Return (true));
 
     EXPECT_CALL (mglbb, blit (r1));
-    blitBuffers (0, r1, mglbb);
+    render (0, r1, mglbb);
 
     EXPECT_CALL (mglbb, blit (r2));
-    blitBuffers (0, r2, mglbb);
+    render (0, r2, mglbb);
 
     EXPECT_CALL (mglbb, blit (r3));
-    blitBuffers (0, r3, mglbb);
+    render (0, r3, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitOrCopyIfNotSupportedAndDies)
@@ -88,7 +88,7 @@ TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBli
     ON_CALL (mglbbStrict, fallbackBlitAvailable ()).WillByDefault (Return (false));
 
     ASSERT_DEATH ({
-		    blitBuffers (0, blitRegion, mglbbStrict);
+		    render (0, blitRegion, mglbbStrict);
 		  },
 		  ".fatal.");
 }
@@ -101,5 +101,5 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
     EXPECT_CALL (mglbbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbbStrict, fallbackBlit (blitRegion));
 
-    blitBuffers (0, blitRegion, mglbbStrict);
+    render (0, blitRegion, mglbbStrict);
 }

@@ -1089,12 +1089,12 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     lighting (false),
     #ifndef USE_GLES
     getProcAddress (0),
-    bufferBlit (screen->dpy (), *screen,
+    doubleBuffer (screen->dpy (), *screen,
 		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
 		cScreen->output (),
 		boost::bind (&PrivateGLScreen::waitForVideoSync, this)),
     #else
-    bufferBlit (screen->dpy (), *screen,
+    doubleBuffer (screen->dpy (), *screen,
 		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
 		surface),
     #endif
@@ -1985,15 +1985,15 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
-    unsigned int blitMask = 0;
+    unsigned int renderMask = 0;
 
     if (useFbo)
-	blitMask |= compiz::opengl::PaintedWithFramebufferObject;
+	renderMask |= compiz::opengl::PaintedWithFramebufferObject;
 
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-	blitMask |= compiz::opengl::PaintedFullscreen;
+	renderMask |= compiz::opengl::PaintedFullscreen;
 
-    compiz::opengl::blitBuffers (blitMask, tmpRegion, bufferBlit);
+    compiz::opengl::render (renderMask, tmpRegion, doubleBuffer);
 
     lastMask = mask;
 }
