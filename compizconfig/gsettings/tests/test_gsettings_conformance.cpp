@@ -352,7 +352,7 @@ class CCSGSettingsBackendEnv :
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
 						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
-						 TypeInt);
+						 TypeBell);
 	    return readBoolFromVariant (variant);
 	}
 
