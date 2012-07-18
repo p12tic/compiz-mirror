@@ -13,6 +13,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <X11/keysym.h>
+
 #include <ccs-backend.h>
 #include <ccs.h>
 
@@ -96,6 +98,12 @@ operator== (const CCSSettingKeyValue &lhs,
     return false;
 }
 
+::std::ostream &
+operator<< (::std::ostream &os, const CCSSettingKeyValue &v)
+{
+    return os << "Keysym: " << v.keysym << " KeyModMask " << std::hex << v.keyModMask << std::dec << std::endl;
+}
+
 bool
 operator== (const CCSSettingButtonValue &lhs,
 	    const CCSSettingButtonValue &rhs)
@@ -103,6 +111,12 @@ operator== (const CCSSettingButtonValue &lhs,
     if (ccsIsEqualButton (lhs, rhs))
 	return true;
     return false;
+}
+
+::std::ostream &
+operator<< (::std::ostream &os, const CCSSettingButtonValue &v)
+{
+    return os << "Button " << v.button << "Button Key Mask: " << std::hex << v.buttonModMask << "Edge Mask: " << v.edgeMask << std::dec << std::endl;
 }
 
 class CharacterWrapper :
@@ -768,11 +782,11 @@ CCSSettingColorValue colorValues[3] = { { .color = { maxD2 , maxD4, maxD8, max }
 					{ .color = { max, maxD4, maxD2,  maxD8 } }
 				      };
 
-CCSSettingKeyValue keyValue = { (1 << 0) | (1 << 1),
-				1 };
+CCSSettingKeyValue keyValue = { XK_A,
+				(1 << 0)};
 
-CCSSettingButtonValue buttonValue = { (1 << 0) | (1 << 1),
-				      1,
+CCSSettingButtonValue buttonValue = { 1,
+				      (1 << 0),
 				      (1 << 1) };
 }
 
