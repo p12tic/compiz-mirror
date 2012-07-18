@@ -459,6 +459,7 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
 		success = writeStringToVariant (value, &gsettingsValue);
 	    }
 	}
+	break;
     case TypeFloat:
 	{
 	    float value;
