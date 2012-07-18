@@ -1147,7 +1147,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
-    CompRegion tmpRegion (region);
+    CompRegion tmpRegion = (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) ?
+                           screen->region () : region;
 
     foreach (CompOutput *output, outputs)
     {
@@ -1215,9 +1216,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
     else
     {
-	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-	    tmpRegion = screen->region ();
-
 	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
 	int    y;
