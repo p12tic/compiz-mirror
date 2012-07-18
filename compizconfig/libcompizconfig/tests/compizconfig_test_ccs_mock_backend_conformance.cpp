@@ -72,7 +72,6 @@ class MockCCSBackendConceptTestEnvironment :
 	void TearDown (CCSBackend *backend)
 	{
 	    ccsFreeMockBackend (backend);
-
 	}
 
 	void PreWrite (CCSContextGMock *gmockContext,
