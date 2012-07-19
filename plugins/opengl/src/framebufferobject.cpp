@@ -171,8 +171,11 @@ GLFramebufferObject::rebind (GLFramebufferObject *fbo)
 {
     GLuint id = fbo ? fbo->priv->fboId : 0;
 
-    (*GL::bindFramebuffer) (GL::FRAMEBUFFER, id);
-    fbo->priv->boundId = id;
+    if (id != fbo->priv->boundId)
+    {
+	(*GL::bindFramebuffer) (GL::FRAMEBUFFER, id);
+	fbo->priv->boundId = id;
+    }
 }
 
 static const char *
