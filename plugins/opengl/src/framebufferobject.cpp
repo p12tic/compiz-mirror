@@ -31,6 +31,7 @@ struct PrivateGLFramebufferObject
 {
     PrivateGLFramebufferObject () :
 	fboId (0),
+	pushedId (0),
 	glTex (NULL),
 	status (-1)
     {
@@ -40,34 +41,38 @@ struct PrivateGLFramebufferObject
     void popFBO ();
 
     GLuint fboId;
-    GLuint tmpId;
+    GLuint pushedId;
     GLuint rbStencilId;
     GLTexture *glTex;
 
     GLint status;
 
+    static GLuint boundId;
     static std::map<GLuint, GLFramebufferObject *> idMap;
 };
 
+GLuint PrivateGLFramebufferObject::boundId = 0;
 std::map<GLuint, GLFramebufferObject *> PrivateGLFramebufferObject::idMap;
 
 void
 PrivateGLFramebufferObject::pushFBO ()
 {
-    GLint id = 0;
-    glGetIntegerv (GL::FRAMEBUFFER_BINDING, &id);
-    tmpId = id;
-    if (tmpId == fboId)
-	return;
-
-    (*GL::bindFramebuffer) (GL::FRAMEBUFFER, fboId);
+    pushedId = boundId;
+    if (boundId != fboId)
+    {
+	(*GL::bindFramebuffer) (GL::FRAMEBUFFER, fboId);
+	boundId = fboId;
+    }
 }
 
 void
 PrivateGLFramebufferObject::popFBO ()
 {
-    if (tmpId != fboId)
-	(*GL::bindFramebuffer) (GL::FRAMEBUFFER, tmpId);
+    if (boundId != pushedId)
+    {
+	(*GL::bindFramebuffer) (GL::FRAMEBUFFER, pushedId);
+	boundId = pushedId;
+    }
 }
 
 GLFramebufferObject::GLFramebufferObject () :
@@ -138,14 +143,11 @@ GLFramebufferObject *
 GLFramebufferObject::bind ()
 {
     GLFramebufferObject *old = NULL;
-    GLint id = 0;
 
-    glGetIntegerv (GL::FRAMEBUFFER_BINDING, &id);
-
-    if (id != 0)
+    if (priv->boundId != 0)
     {
 	std::map<GLuint, GLFramebufferObject *>::iterator it;
-	it = PrivateGLFramebufferObject::idMap.find (id);
+	it = PrivateGLFramebufferObject::idMap.find (priv->boundId);
 
 	if (it != PrivateGLFramebufferObject::idMap.end ())
 	    old = it->second;
@@ -155,6 +157,7 @@ GLFramebufferObject::bind ()
     }
 
     (*GL::bindFramebuffer) (GL::FRAMEBUFFER, priv->fboId);
+    priv->boundId = priv->fboId;
 
     (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::DEPTH_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
     (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::STENCIL_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
@@ -169,6 +172,7 @@ GLFramebufferObject::rebind (GLFramebufferObject *fbo)
     GLuint id = fbo ? fbo->priv->fboId : 0;
 
     (*GL::bindFramebuffer) (GL::FRAMEBUFFER, id);
+    fbo->priv->boundId = id;
 }
 
 static const char *
