@@ -1633,7 +1633,6 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			     unsigned int              mask)
 {
     bool status;
-    GLboolean isBlendingEnabled;
 
     if (w)
     {
@@ -1650,9 +1649,6 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	border = optionGetBorderColor ();
 	fill   = optionGetFillColor ();
 
-	glGetBooleanv (GL_BLEND, &isBlendingEnabled);
-	glEnable (GL_BLEND);
-
 	switch (mode) {
 	    case ResizeOptions::ModeOutline:
 		glPaintRectangle (sAttrib, transform, output, border, NULL);
@@ -1662,9 +1658,6 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	    default:
 		break;
 	}
-
-	if (!isBlendingEnabled)
-	    glDisable (GL_BLEND);
     }
 
     return status;

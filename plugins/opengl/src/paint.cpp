@@ -517,12 +517,17 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 	if (GL::stencilBuffer)
 	{
+	    GLboolean depthTestEnabled = glIsEnabled (GL_DEPTH_TEST);
+#ifdef USE_GLES
 	    GLboolean saveColorMask[4];
 	    GLboolean saveDepthMask;
-	    GLboolean depthTestEnabled = glIsEnabled (GL_DEPTH_TEST);
-
+	    // WARNING: glGetBooleanv involves a roundtrip and is extremely
+	    //          slow. Use only on ES where we have no glPushAttrib.
 	    glGetBooleanv (GL_COLOR_WRITEMASK, saveColorMask);
 	    glGetBooleanv (GL_DEPTH_WRITEMASK, &saveDepthMask);
+#else
+	    glPushAttrib (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
 
 	    glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	    glDepthMask (GL_FALSE);
@@ -543,8 +548,12 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 	    vb.render (sTransform);
 
+#ifdef USE_GLES
 	    glColorMask (saveColorMask[0], saveColorMask[1], saveColorMask[2], saveColorMask[3]);
 	    glDepthMask (saveDepthMask);
+#else
+	    glPopAttrib ();
+#endif
 
 	    if (depthTestEnabled)
 		glEnable (GL_DEPTH_TEST);
@@ -1212,14 +1221,23 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
     WRAPABLE_HND_FUNCTN (glDrawTexture, texture, transform, attrib, mask)
 
     GLTexture::Filter filter;
+#ifdef USE_GLES
     GLboolean isBlendingEnabled = GL_FALSE;
 
     // Enable blending if needed
     if (mask & PAINT_WINDOW_BLEND_MASK) {
-	glGetBooleanv (GL_BLEND, &isBlendingEnabled);
-	if (!isBlendingEnabled)
-	    glEnable(GL_BLEND);
+       glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+       if (!isBlendingEnabled)
+           glEnable(GL_BLEND);
     }
+#else
+    // Always avoid glGetBooleanv if you can. It requires very slow round trips
+    if (mask & PAINT_WINDOW_BLEND_MASK)
+    {
+	glPushAttrib (GL_ENABLE_BIT);
+	glEnable(GL_BLEND);
+    }
+#endif
 
     if (mask & (PAINT_WINDOW_TRANSFORMED_MASK |
 		PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK))
@@ -1244,9 +1262,14 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
     priv->shaders.clear ();
     texture->disable ();
 
+#ifdef USE_GLES
     // Reset blending to old value
     if ((mask & PAINT_WINDOW_BLEND_MASK) && !isBlendingEnabled)
-	glDisable(GL_BLEND);
+       glDisable(GL_BLEND);
+#else
+    if (mask & PAINT_WINDOW_BLEND_MASK)
+	glPopAttrib ();
+#endif
 }
 
 bool

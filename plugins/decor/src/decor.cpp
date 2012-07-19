@@ -209,7 +209,9 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 			 const CompRegion          &region,
 			 unsigned int              mask)
 {
-    GLboolean isBlendingEnabled;
+#ifdef USE_GLES
+    GLboolean isBlendingEnabled = GL_TRUE;
+#endif
 
     if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
@@ -262,12 +264,16 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 
 	gWindow->vertexBuffer ()->end ();
 
+#ifdef USE_GLES
+	// XXX glGet* is MUCH too expensive (round trips). Always use
+	//     glPushAttrib/PopAttrib if available!
 	glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+#else
+	glPushAttrib (GL_ENABLE_BIT);
+#endif
 	glEnable (GL_BLEND);
 	gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
 	                        attrib, mask);
-	if (!isBlendingEnabled)
-	    glDisable (GL_BLEND);
     }
     else if (wd && wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
     {
@@ -280,7 +286,13 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 
 	if (updateMatrix)
 	    updateDecorationScale ();
+#ifdef USE_GLES
+	// XXX glGet* is MUCH too expensive (round trips). Always use
+	//     glPushAttrib/PopAttrib if available!
 	glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+#else
+	glPushAttrib (GL_ENABLE_BIT);
+#endif
 	glEnable (GL_BLEND);
 
 	if (gWindow->textures ().size () == 1)
@@ -309,9 +321,14 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 	    }
 	}
 
-	if (!isBlendingEnabled)
-	    glDisable (GL_BLEND);
     }
+
+#ifdef USE_GLES
+    if (!isBlendingEnabled)
+	glDisable (GL_BLEND);
+#else
+    glPopAttrib ();
+#endif
 }
 
 static bool bindFailed;
