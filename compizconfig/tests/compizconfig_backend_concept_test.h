@@ -200,6 +200,8 @@ class CCSBackendConceptTestEnvironmentInterface
 {
     public:
 
+	typedef boost::shared_ptr <CCSBackendConceptTestEnvironmentInterface> Ptr;
+
 	virtual ~CCSBackendConceptTestEnvironmentInterface () {};
 	virtual CCSBackend * SetUp (CCSContext *context,
 				    CCSContextGMock *gmockContext) = 0;
@@ -281,6 +283,28 @@ class CCSBackendConceptTestEnvironmentInterface
 				     const std::string &key) = 0;
 };
 
+class CCSBackendConceptTestEnvironmentFactoryInterface
+{
+    public:
+
+	virtual ~CCSBackendConceptTestEnvironmentFactoryInterface () {}
+
+	virtual CCSBackendConceptTestEnvironmentInterface::Ptr ConstructTestEnv () = 0;
+};
+
+template <typename I>
+class CCSBackendConceptTestEnvironmentFactory :
+    public CCSBackendConceptTestEnvironmentFactoryInterface
+{
+    public:
+
+	CCSBackendConceptTestEnvironmentInterface::Ptr
+	ConstructTestEnv ()
+	{
+	    return boost::shared_static_cast <I> (boost::make_shared <I> ());
+	}
+};
+
 namespace
 {
 
@@ -295,7 +319,7 @@ void SetIntWriteExpectation (const std::string &plugin,
 			     const VariantTypes &value,
 			     CCSSetting       *setting,
 			     const WriteFunc &write,
-			     CCSBackendConceptTestEnvironmentInterface *env)
+			     const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getInt (_)).WillRepeatedly (DoAll (
@@ -311,7 +335,7 @@ void SetBoolWriteExpectation (const std::string &plugin,
 			      const VariantTypes &value,
 			      CCSSetting       *setting,
 			      const WriteFunc &write,
-			      CCSBackendConceptTestEnvironmentInterface *env)
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getBool (_)).WillRepeatedly (DoAll (
@@ -333,7 +357,7 @@ void SetFloatWriteExpectation (const std::string &plugin,
 			       const VariantTypes &value,
 			       CCSSetting       *setting,
 			       const WriteFunc &write,
-			       CCSBackendConceptTestEnvironmentInterface *env)
+			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getFloat (_)).WillRepeatedly (DoAll (
@@ -349,7 +373,7 @@ void SetStringWriteExpectation (const std::string &plugin,
 				const VariantTypes &value,
 				CCSSetting       *setting,
 				const WriteFunc &write,
-				CCSBackendConceptTestEnvironmentInterface *env)
+				const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getString (_)).WillRepeatedly (DoAll (
@@ -365,7 +389,7 @@ void SetColorWriteExpectation (const std::string &plugin,
 			       const VariantTypes &value,
 			       CCSSetting       *setting,
 			       const WriteFunc &write,
-			       CCSBackendConceptTestEnvironmentInterface *env)
+			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getColor (_)).WillRepeatedly (DoAll (
@@ -390,7 +414,7 @@ void SetKeyWriteExpectation (const std::string &plugin,
 			     const VariantTypes &value,
 			     CCSSetting       *setting,
 			     const WriteFunc &write,
-			     CCSBackendConceptTestEnvironmentInterface *env)
+			     const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getKey (_)).WillRepeatedly (DoAll (
@@ -406,7 +430,7 @@ void SetButtonWriteExpectation (const std::string &plugin,
 				const VariantTypes &value,
 				CCSSetting       *setting,
 				const WriteFunc &write,
-				CCSBackendConceptTestEnvironmentInterface *env)
+				const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getButton (_)).WillRepeatedly (DoAll (
@@ -422,7 +446,7 @@ void SetEdgeWriteExpectation (const std::string &plugin,
 			      const VariantTypes &value,
 			      CCSSetting       *setting,
 			      const WriteFunc &write,
-			      CCSBackendConceptTestEnvironmentInterface *env)
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getEdge (_)).WillRepeatedly (DoAll (
@@ -438,7 +462,7 @@ void SetBellWriteExpectation (const std::string &plugin,
 			      const VariantTypes &value,
 			      CCSSetting       *setting,
 			      const WriteFunc &write,
-			      CCSBackendConceptTestEnvironmentInterface *env)
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getBell (_)).WillRepeatedly (DoAll (
@@ -459,7 +483,7 @@ void SetMatchWriteExpectation (const std::string &plugin,
 			       const VariantTypes &value,
 			       CCSSetting       *setting,
 			       const WriteFunc &write,
-			       CCSBackendConceptTestEnvironmentInterface *env)
+			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     EXPECT_CALL (*gmock, getMatch (_)).WillRepeatedly (DoAll (
@@ -475,7 +499,7 @@ void SetListWriteExpectation (const std::string &plugin,
 			      const VariantTypes &value,
 			      CCSSetting       *setting,
 			      const WriteFunc &write,
-			      CCSBackendConceptTestEnvironmentInterface *env)
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
     CCSSettingValueList list = *(boost::get <boost::shared_ptr <CCSListWrapper> > (value));
@@ -578,9 +602,10 @@ class CCSBackendConceptTestParamInterface
 
 	typedef boost::shared_ptr <CCSBackendConceptTestParamInterface> Ptr;
 
-	typedef boost::function <void (const std::string &plugin,
-				       const std::string &keyname,
-				       const VariantTypes &value)> NativeWriteMethod;
+	typedef void (CCSBackendConceptTestEnvironmentInterface::*NativeWriteMethod) (const std::string &plugin,
+										      const std::string &keyname,
+										      const VariantTypes &value);
+
 	typedef boost::function <void (CCSSettingGMock *,
 				       const VariantTypes &)> SetReadExpectation;
 	typedef boost::function <void (const std::string &,
@@ -588,11 +613,16 @@ class CCSBackendConceptTestParamInterface
 				       const VariantTypes &,
 				       CCSSetting        *,
 				       const WriteFunc &,
-				       CCSBackendConceptTestEnvironmentInterface *)> SetWriteExpectation;
+				       const CCSBackendConceptTestEnvironmentInterface::Ptr & )> SetWriteExpectation;
 
-	virtual CCSBackendConceptTestEnvironmentInterface * testEnv () = 0;
+	virtual void TearDown (CCSBackend *) = 0;
+
+	virtual CCSBackendConceptTestEnvironmentInterface::Ptr testEnv () = 0;
 	virtual VariantTypes & value () = 0;
-	virtual NativeWriteMethod & nativeWrite () = 0;
+	virtual void nativeWrite (const CCSBackendConceptTestEnvironmentInterface::Ptr &  iface,
+				  const std::string &plugin,
+				  const std::string &keyname,
+				  const VariantTypes &value) = 0;
 	virtual CCSSettingType & type () = 0;
 	virtual std::string & keyname () = 0;
 	virtual SetWriteExpectation & setWriteExpectationAndWrite () = 0;
@@ -608,7 +638,7 @@ class CCSBackendConceptTestParam :
 
 	typedef boost::shared_ptr <CCSBackendConceptTestParam <I> > Ptr;
 
-	CCSBackendConceptTestParam (CCSBackendConceptTestEnvironmentInterface *testEnv,
+	CCSBackendConceptTestParam (CCSBackendConceptTestEnvironmentFactoryInterface *testEnvFactory,
 				    const VariantTypes &value,
 				    const NativeWriteMethod &write,
 				    const CCSSettingType &type,
@@ -616,7 +646,8 @@ class CCSBackendConceptTestParam :
 				    const SetReadExpectation &setReadExpectation,
 				    const SetWriteExpectation &setWriteExpectation,
 				    const std::string &what) :
-	    mTestEnv (testEnv),
+	    mTestEnvFactory (testEnvFactory),
+	    mTestEnv (),
 	    mValue (value),
 	    mNativeWrite (write),
 	    mType (type),
@@ -627,9 +658,30 @@ class CCSBackendConceptTestParam :
 	{
 	}
 
-	CCSBackendConceptTestEnvironmentInterface * testEnv () { return mTestEnv; }
+	void TearDown (CCSBackend *b)
+	{
+	    if (mTestEnv)
+		mTestEnv->TearDown (b);
+
+	    mTestEnv.reset ();
+	}
+
+	CCSBackendConceptTestEnvironmentInterface::Ptr testEnv ()
+	{
+	    if (!mTestEnv)
+		mTestEnv = mTestEnvFactory->ConstructTestEnv ();
+
+	    return mTestEnv;
+	}
+
 	VariantTypes & value () { return mValue; }
-	CCSBackendConceptTestParamInterface::NativeWriteMethod & nativeWrite () { return mNativeWrite; }
+	void nativeWrite (const CCSBackendConceptTestEnvironmentInterface::Ptr &  iface,
+			  const std::string &plugin,
+			  const std::string &keyname,
+			  const VariantTypes &value)
+	{
+	    return ((iface.get ())->*mNativeWrite) (plugin, keyname, value);
+	}
 	CCSSettingType & type () { return mType; }
 	std::string & keyname () { return mKeyname; }
 	CCSBackendConceptTestParamInterface::SetReadExpectation & setReadExpectation () { return mSetReadExpectation; }
@@ -638,7 +690,8 @@ class CCSBackendConceptTestParam :
 
     private:
 
-	CCSBackendConceptTestEnvironmentInterface *mTestEnv;
+	CCSBackendConceptTestEnvironmentFactoryInterface *mTestEnvFactory;
+	CCSBackendConceptTestEnvironmentInterface::Ptr mTestEnv;
 	VariantTypes mValue;
 	NativeWriteMethod mNativeWrite;
 	CCSSettingType mType;
@@ -678,7 +731,7 @@ class CCSBackendConformanceTest :
 
 	virtual void TearDown ()
 	{
-	    CCSBackendConformanceTest::GetParam ()->testEnv ()->TearDown (mBackend);
+	    CCSBackendConformanceTest::GetParam ()->TearDown (mBackend);
 
 	    for (std::list <CCSContext *>::iterator it = mSpawnedContexts.begin ();
 		 it != mSpawnedContexts.end ();
@@ -794,138 +847,140 @@ template <typename I>
 ::testing::internal::ParamGenerator<typename CCSBackendConceptTestParamInterface::Ptr>
 GenerateTestingParametersForBackendInterface ()
 {
-    static I interface;
-    static CCSBackendConceptTestEnvironmentInterface *backendEnv = &interface;
+    static CCSBackendConceptTestEnvironmentFactory <I> interfaceFactory;
+    static CCSBackendConceptTestEnvironmentFactoryInterface *backendEnvFactory = &interfaceFactory;
 
     typedef CCSBackendConceptTestParam<I> ConceptParam;
 
+    /* Make these all method pointers and do the bind in the tests themselves */
+
     static typename CCSBackendConceptTestParamInterface::Ptr testParam[] =
     {
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (1),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteIntegerAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteIntegerAtKey,
 					   TypeInt,
 					   "integer_setting",
 					   boost::bind (SetIntReadExpectation, _1, _2),
 					   boost::bind (SetIntWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestInt"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (true),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBoolAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteBoolAtKey,
 					   TypeBool,
 					   "boolean_setting",
 					   boost::bind (SetBoolReadExpectation, _1, _2),
 					   boost::bind (SetBoolWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestBool"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (static_cast <float> (3.0)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteFloatAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteFloatAtKey,
 					   TypeFloat,
 					   "float_setting",
 					   boost::bind (SetFloatReadExpectation, _1, _2),
 					   boost::bind (SetFloatWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestFloat"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (static_cast <const char *> ("foo")),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteStringAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteStringAtKey,
 					   TypeString,
 					   "string_setting",
 					   boost::bind (SetStringReadExpectation, _1, _2),
 					   boost::bind (SetStringWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestString"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (static_cast <const char *> ("foo=bar")),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteMatchAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteMatchAtKey,
 					   TypeMatch,
 					   "match_setting",
 					   boost::bind (SetMatchReadExpectation, _1, _2),
 					   boost::bind (SetMatchWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestMatch"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (true),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteBellAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteBellAtKey,
 					   TypeBell,
 					   "bell_setting",
 					   boost::bind (SetBellReadExpectation, _1, _2),
 					   boost::bind (SetBellWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestBell"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (impl::colorValues[0]),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteColorAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteColorAtKey,
 					   TypeColor,
 					   "color_setting",
 					   boost::bind (SetColorReadExpectation, _1, _2),
 					   boost::bind (SetColorWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestColor"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (impl::keyValue),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteKeyAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteKeyAtKey,
 					   TypeKey,
 					   "key_setting",
 					   boost::bind (SetKeyReadExpectation, _1, _2),
 					   boost::bind (SetKeyWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestKey"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (impl::buttonValue),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteButtonAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteButtonAtKey,
 					   TypeButton,
 					   "button_setting",
 					   boost::bind (SetButtonReadExpectation, _1, _2),
 					   boost::bind (SetButtonWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestButton"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (static_cast <unsigned int> (1)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteEdgeAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteEdgeAtKey,
 					   TypeEdge,
 					   "edge_setting",
 					   boost::bind (SetEdgeReadExpectation, _1, _2),
 					   boost::bind (SetEdgeWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestEdge"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromIntArray (impl::intValues,
 															   sizeof (impl::intValues) / sizeof (impl::intValues[0]),
 															   NULL), false, TypeInt)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "int_list_setting",
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListInt"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromFloatArray (impl::floatValues,
 															     sizeof (impl::floatValues) / sizeof (impl::floatValues[0]),
 															     NULL), false, TypeFloat)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "float_list_setting",
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListInt"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromBoolArray (impl::boolValues,
 															   sizeof (impl::boolValues) / sizeof (impl::boolValues[0]),
 															   NULL), false, TypeBool)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "bool_list_setting",
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListBool"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromStringArray (impl::stringValues,
 															      sizeof (impl::stringValues) / sizeof (impl::stringValues[0]),
 															      NULL), false, TypeString)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "string_list_setting",
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListString"),
-	boost::make_shared <ConceptParam> (backendEnv,
+	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromColorArray (impl::colorValues,
 															     sizeof (impl::colorValues) / sizeof (impl::colorValues[0]),
 															     NULL), false, TypeColor)),
-					   boost::bind (&CCSBackendConceptTestEnvironmentInterface::WriteListAtKey, backendEnv, _1, _2, _3),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "color_list_setting",
 					   boost::bind (SetListReadExpectation, _1, _2),
@@ -982,7 +1037,8 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
 
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->nativeWrite () (pluginName, settingName, VALUE);
+    CCSBackendConformanceTest::GetParam ()->nativeWrite (CCSBackendConformanceTest::GetParam ()->testEnv (),
+							 pluginName, settingName, VALUE);
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
@@ -995,14 +1051,14 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setWriteExpectationAndWrite () (pluginName,
-									    settingName,
-									    VALUE,
-									    setting,
-									    boost::bind (ccsBackendWriteSetting,
-											 CCSBackendConformanceTest::GetBackend (),
-											 context,
-											 setting),
-									    GetParam ()->testEnv ());
+									   settingName,
+									   VALUE,
+									   setting,
+									   boost::bind (ccsBackendWriteSetting,
+											CCSBackendConformanceTest::GetBackend (),
+											context,
+										       setting),
+									   GetParam ()->testEnv ());
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
 
 }

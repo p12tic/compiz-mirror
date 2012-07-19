@@ -15,6 +15,7 @@ using ::testing::WithArgs;
 using ::testing::Combine;
 using ::testing::ValuesIn;
 using ::testing::Values;
+using ::testing::AtLeast;
 
 namespace
 {
@@ -82,8 +83,17 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, writeSetting (_, _));
 	    EXPECT_CALL (*gmockPlugin, getName ());
 	    EXPECT_CALL (*gmockSetting, getName ());
-	    EXPECT_CALL (*gmockSetting, getType ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).Times (AtLeast (1));
+	    }
+	    else
+	    {
+		EXPECT_CALL (*gmockSetting, getType ());
+	    }
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
@@ -410,11 +420,15 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
+		{
+		    CCSSettingValueList listCopy = NULL;
 
 		    ccsGetList (setting, &vList);
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (vList, false, ccsSettingGetInfo (setting)->forList.listType)));
-		    break;
+		    listCopy = ccsCopyList (vList, setting);
 
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true, ccsSettingGetInfo (setting)->forList.listType)));
+		    break;
+		}
 		default:
 
 		    throw std::exception ();
