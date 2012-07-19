@@ -859,8 +859,6 @@ GenerateTestingParametersForBackendInterface ()
 
     typedef CCSBackendConceptTestParam<I> ConceptParam;
 
-    /* Make these all method pointers and do the bind in the tests themselves */
-
     static typename CCSBackendConceptTestParamInterface::Ptr testParam[] =
     {
 	boost::make_shared <ConceptParam> (backendEnvFactory,
