@@ -408,15 +408,7 @@ void SetColorWriteExpectation (const std::string &plugin,
 							 Return (TRUE)));
     write ();
 
-    /* Storage on most backends is lossy, so simulate this */
-    CCSSettingColorValue v = boost::get <CCSSettingColorValue> (value);
-    char *str = ccsColorToString (&v);
-
-    ccsStringToColor (str, &v);
-
-    free (str);
-
-    EXPECT_EQ (env->ReadColorAtKey (plugin, key), v);
+    EXPECT_EQ (env->ReadColorAtKey (plugin, key), boost::get <CCSSettingColorValue> (value));
 }
 
 void SetKeyWriteExpectation (const std::string &plugin,
@@ -571,14 +563,7 @@ void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 
 void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    CCSSettingColorValue v = boost::get <CCSSettingColorValue> (value);
-    char *str = ccsColorToString (&v);
-
-    ccsStringToColor (str, &v);
-
-    free (str);
-
-    EXPECT_CALL (*gmock, setColor (v, _));
+    EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _));
 }
 
 void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)

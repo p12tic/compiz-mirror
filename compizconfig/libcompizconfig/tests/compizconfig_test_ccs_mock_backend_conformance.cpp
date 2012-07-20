@@ -143,13 +143,7 @@ class MockCCSBackendConceptTestEnvironment :
 			      const std::string &key,
 			      const VariantTypes &value)
 	{
-	    CCSSettingColorValue v = boost::get <CCSSettingColorValue> (value);
-
-	    /* Convert it to simulate key storage lossyness */
-	    CharacterWrapper str (ccsColorToString (&v));
-	    ccsStringToColor (str, &v);
-
-	    mValues[keynameFromPluginKey (plugin, key)] = VariantTypes (v);
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
 	}
 
 	void WriteKeyAtKey (const std::string &plugin,
