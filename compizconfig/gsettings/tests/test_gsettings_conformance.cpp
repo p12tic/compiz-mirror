@@ -14,6 +14,7 @@
 
 using ::testing::AtLeast;
 using ::testing::Pointee;
+using ::testing::ReturnNull;
 
 namespace
 {
@@ -240,6 +241,12 @@ class CCSGSettingsBackendEnv :
 	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, isReadOnly ()).WillRepeatedly (Return (FALSE));
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
+	    }
 	}
 
 	void PostRead (CCSContextGMock *gmockContext,
