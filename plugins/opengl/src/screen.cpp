@@ -777,6 +777,12 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     GLVertexBuffer::streamingBuffer ()->setAutoProgram (priv->autoProgram);
 
+    compLogMessage ("opengl", CompLogLevelInfo,
+                    "Initialized using FBO:%s VBO:%s shaders:%s",
+                    GL::fbo ? "on" : "off",
+                    GL::vbo ? "on" : "off",
+                    GL::shaders ? "on" : "off");
+
     return true;
 }
 
