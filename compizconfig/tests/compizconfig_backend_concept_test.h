@@ -841,15 +841,36 @@ int intValues[] = { 1, 2, 3 };
 float floatValues[] = { 1.0, 2.0, 3.0 };
 const char * stringValues[] = { "foo", "grill", "bar" };
 
-unsigned short max = std::numeric_limits <unsigned short>::max ();
-unsigned short maxD2 = max / 2;
-unsigned short maxD4 = max / 4;
-unsigned short maxD8 = max / 8;
+const unsigned int NUM_COLOR_VALUES = 3;
 
-CCSSettingColorValue colorValues[3] = { { .color = { maxD2 , maxD4, maxD8, max } },
-					{ .color = { maxD8, maxD4, maxD2, max } },
-					{ .color = { max, maxD4, maxD2,  maxD8 } }
-				      };
+CCSSettingColorValue *
+getColorValueList ()
+{
+    static const unsigned short max = std::numeric_limits <unsigned short>::max ();
+    static const unsigned short maxD2 = max / 2;
+    static const unsigned short maxD4 = max / 4;
+    static const unsigned short maxD8 = max / 8;
+
+    static CCSSettingColorValue colorValues[NUM_COLOR_VALUES] = { { .color = { maxD2, maxD4, maxD8, max } },
+								  { .color = { maxD8, maxD4, maxD2, max } },
+								  { .color = { max, maxD4, maxD2, maxD8 } }
+								};
+    static bool colorValueListInitialized = false;
+
+    if (!colorValueListInitialized)
+    {
+	for (unsigned int i = 0; i < NUM_COLOR_VALUES; i++)
+	{
+	    CharacterWrapper s (ccsColorToString (&colorValues[i]));
+
+	    ccsStringToColor (s, &colorValues[i]);
+	}
+
+	colorValueListInitialized = true;
+    }
+
+    return colorValues;
+}
 
 CCSSettingKeyValue keyValue = { XK_A,
 				(1 << 0)};
@@ -942,7 +963,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetBellWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestBell"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (impl::colorValues[0]),
+					   VariantTypes (impl::getColorValueList ()[0]),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteColorAtKey,
 					   TypeColor,
 					   "color_setting",
@@ -1020,8 +1041,8 @@ GenerateTestingParametersForBackendInterface ()
 	/* Needs lossy comparison */
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromColorArray,
-													     impl::colorValues,
-													     sizeof (impl::colorValues) / sizeof (impl::colorValues[0]), _1),
+													     impl::getColorValueList (),
+													     impl::NUM_COLOR_VALUES, _1),
 											       TypeColor, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
