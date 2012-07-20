@@ -392,7 +392,7 @@ CCSSettingValueList
 readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 {
     gboolean		hasVariantType;
-    unsigned int        nItems, i = 0;
+    unsigned int        nItems;
     CCSSettingValueList list = NULL;
     GVariantIter	iter;
 
@@ -479,18 +479,20 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	break;
     case TypeColor:
 	{
-	    CCSSettingColorValue *array;
 	    char		 *colorValue;
-	    array = malloc (nItems * sizeof (CCSSettingColorValue));
+	    CCSSettingColorValue *array = calloc (1, nItems * sizeof (CCSSettingColorValue));
+	    unsigned int i = 0;
+
 	    if (!array)
 		break;
 
 	    while (g_variant_iter_loop (&iter, "s", &colorValue))
 	    {
-		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (colorValue,
 				  &array[i]);
+		i++;
 	    }
+
 	    list = ccsGetValueListFromColorArray (array, nItems, NULL);
 	    free (array);
 	}
