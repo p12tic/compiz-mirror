@@ -417,7 +417,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 
 	    /* Reads each item from the variant into arrayCounter */
 	    while (g_variant_iter_loop (&iter, "b", &value))
-		*arrayCounter++ = value;
+		*arrayCounter++ = value ? TRUE : FALSE;
 
 	    list = ccsGetValueListFromBoolArray (array, nItems, NULL);
 	    free (array);

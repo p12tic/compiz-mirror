@@ -1614,8 +1614,14 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 		return FALSE;
 	    break;
 	case TypeBool:
-	    if (l1->data->value.asBool != l2->data->value.asBool)
-		return FALSE;
+	    {
+		Bool bothTrue = (l1->data->value.asBool && l2->data->value.asBool);
+		Bool bothFalse = (!l1->data->value.asBool && !l2->data->value.asBool);
+
+		/* Use the boolean operators as TRUE/FALSE can be redefined */
+		if (!bothTrue && !bothFalse)
+		    return FALSE;
+	    }
 	    break;
 	case TypeFloat:
 	    if (l1->data->value.asFloat != l2->data->value.asFloat)
