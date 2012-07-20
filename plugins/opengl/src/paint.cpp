@@ -1018,6 +1018,9 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
                           GLTexture::Filter         filter,
                           unsigned int              mask)
 {
+    // XXX: This codepath only works with !GL::vbo so that's the only case
+    //      where you'll find it's called. At least for now.
+
     if (GL::canDoSaturated && attrib.saturation != COLOR)
     {
 	GLfloat constant[4];
