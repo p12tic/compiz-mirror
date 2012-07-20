@@ -731,12 +731,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     if (strstr (glExtensions, "GL_ARB_texture_compression"))
 	GL::textureCompression = true;
 
-    if (GL::stencilBuffer)
-    {
-	if (!strstr (glExtensions, "GL_EXT_packed_depth_stencil"))
-	    GL::stencilBuffer = false;
-    }
-
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glEnable (GL_CULL_FACE);
