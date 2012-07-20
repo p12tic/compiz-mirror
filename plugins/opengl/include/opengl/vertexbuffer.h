@@ -58,6 +58,8 @@ class GLVertexBuffer
 {
     public:
 
+	static bool supported ();
+
 	GLVertexBuffer ();
 
 	/* FIXME: We need to be a bit more

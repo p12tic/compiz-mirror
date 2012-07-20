@@ -41,6 +41,13 @@
 
 GLVertexBuffer *PrivateVertexBuffer::streamingBuffer = NULL;
 
+bool GLVertexBuffer::supported ()
+{
+    // FIXME: GL::shaders shouldn't be a requirement here. But for now,
+    //        fglrx doesn't have GL::shaders and that causes blending problems.
+    return GL::vbo && GL::shaders;
+}
+
 GLVertexBuffer::GLVertexBuffer () :
     priv (new PrivateVertexBuffer ())
 {
@@ -88,7 +95,7 @@ void GLVertexBuffer::begin ()
 
 int GLVertexBuffer::end ()
 {
-    if (!GL::vbo)
+    if (!supported ())
 	return 0;
 
     if (!priv->vertexData.size ())
@@ -316,7 +323,7 @@ void GLVertexBuffer::setAutoProgram (AutoProgram *autoProgram)
 
 int GLVertexBuffer::render ()
 {
-    if (GL::vbo && GL::shaders)
+    if (supported ())
 	return priv->render (NULL, NULL, NULL);
     else
 	return -1;
@@ -345,7 +352,7 @@ int GLVertexBuffer::render (const GLMatrix            &projection,
     if (!priv->vertexData.size ())
 	return -1;
 
-    if (GL::vbo && GL::shaders)
+    if (supported ())
 	return priv->render (&projection, &modelview, &attrib);
     else
 	return priv->legacyRender (projection, modelview, attrib);
@@ -356,7 +363,7 @@ PrivateVertexBuffer::PrivateVertexBuffer () :
     maxVertices (-1),
     program (NULL)
 {
-    if (!GL::vbo)
+    if (!GLVertexBuffer::supported ())
 	return;
 
     GL::genBuffers (1, &vertexBuffer);
@@ -367,7 +374,7 @@ PrivateVertexBuffer::PrivateVertexBuffer () :
 
 PrivateVertexBuffer::~PrivateVertexBuffer ()
 {
-    if (!GL::vbo)
+    if (!GLVertexBuffer::supported ())
 	return;
 
     GL::deleteBuffers (1, &vertexBuffer);
