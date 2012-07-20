@@ -994,7 +994,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "float_list_setting",
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
-					   "TestListInt"),
+					   "TestListFloat"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromBoolArray,
 													     impl::boolValues,
