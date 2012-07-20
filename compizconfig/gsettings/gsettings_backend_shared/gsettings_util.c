@@ -442,8 +442,8 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	break;
     case TypeFloat:
 	{
-	    double *array = malloc (nItems * sizeof (double));
-	    double *arrayCounter = array;
+	    float *array = malloc (nItems * sizeof (float));
+	    float *arrayCounter = array;
 	    gdouble value;
 
 	    if (!array)
@@ -453,7 +453,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_loop (&iter, "d", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, NULL);
+	    list = ccsGetValueListFromFloatArray (array, nItems, NULL);
 	    free (array);
 	}
 	break;
