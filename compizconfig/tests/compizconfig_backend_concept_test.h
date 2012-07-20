@@ -26,6 +26,7 @@ using ::testing::Eq;
 using ::testing::SetArgPointee;
 using ::testing::DoAll;
 using ::testing::Return;
+using ::testing::ReturnNull;
 using ::testing::MakeMatcher;
 using ::testing::Matcher;
 using ::testing::MatcherInterface;
@@ -157,10 +158,16 @@ class CCSListWrapper :
 
 	typedef boost::shared_ptr <CCSListWrapper> Ptr;
 
-	CCSListWrapper (CCSSettingValueList list, bool freeItems, CCSSettingType type) :
+	CCSListWrapper (CCSSettingValueList list,
+			bool freeItems,
+			CCSSettingType type,
+			const boost::shared_ptr <CCSSettingInfo> &listInfo,
+			const boost::shared_ptr <CCSSetting> &settingReference) :
 	    mList (list),
 	    mFreeItems (freeItems),
-	    mType (type)
+	    mType (type),
+	    mListInfo (listInfo),
+	    mSettingReference (settingReference)
 	{
 	}
 
@@ -185,6 +192,8 @@ class CCSListWrapper :
 	CCSSettingValueList mList;
 	bool		    mFreeItems;
 	CCSSettingType      mType;
+	boost::shared_ptr <CCSSettingInfo> mListInfo;
+	boost::shared_ptr <CCSSetting> mSettingReference;
 };
 
 typedef boost::variant <bool,
@@ -848,6 +857,29 @@ CCSSettingKeyValue keyValue = { XK_A,
 CCSSettingButtonValue buttonValue = { 1,
 				      (1 << 0),
 				      (1 << 1) };
+
+}
+
+typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
+
+CCSListWrapper::Ptr
+CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
+				       CCSSettingType        type,
+				       bool                  freeItems)
+{
+    boost::function <void (CCSSetting *)> f (boost::bind (ccsFreeMockSetting, _1));
+    boost::shared_ptr <CCSSetting> mockSetting (ccsMockSettingNew (), f);
+    CCSSettingGMock                *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    EXPECT_CALL (*gmockSetting, getType ()).WillRepeatedly (Return (TypeList));
+
+    boost::shared_ptr <CCSSettingInfo> listInfo (new CCSSettingInfo);
+
+    listInfo->forList.listType = type;
+
+    EXPECT_CALL (*gmockSetting, getInfo ()).WillRepeatedly (Return (listInfo.get ()));
+    EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
+    return boost::make_shared <CCSListWrapper> (c (mockSetting.get ()), freeItems, type, listInfo, mockSetting);
 }
 
 template <typename I>
@@ -942,9 +974,10 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetEdgeWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestEdge"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromIntArray (impl::intValues,
-															   sizeof (impl::intValues) / sizeof (impl::intValues[0]),
-															   NULL), true, TypeInt)),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromIntArray,
+													     impl::intValues,
+													     sizeof (impl::intValues) / sizeof (impl::intValues[0]), _1),
+												TypeInt, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "int_list_setting",
@@ -952,9 +985,10 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListInt"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromFloatArray (impl::floatValues,
-															     sizeof (impl::floatValues) / sizeof (impl::floatValues[0]),
-															     NULL), true, TypeFloat)),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromFloatArray,
+													     impl::floatValues,
+													     sizeof (impl::floatValues) / sizeof (impl::floatValues[0]), _1),
+												TypeFloat, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "float_list_setting",
@@ -962,9 +996,10 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListInt"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromBoolArray (impl::boolValues,
-															   sizeof (impl::boolValues) / sizeof (impl::boolValues[0]),
-															   NULL), true, TypeBool)),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromBoolArray,
+													     impl::boolValues,
+													     sizeof (impl::boolValues) / sizeof (impl::boolValues[0]), _1),
+												TypeBool, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "bool_list_setting",
@@ -972,9 +1007,10 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListBool"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromStringArray (impl::stringValues,
-															      sizeof (impl::stringValues) / sizeof (impl::stringValues[0]),
-															      NULL), true, TypeString)),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromStringArray,
+													     impl::stringValues,
+													     sizeof (impl::stringValues) / sizeof (impl::stringValues[0]), _1),
+												TypeString, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "string_list_setting",
@@ -982,9 +1018,10 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListString"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (boost::make_shared <CCSListWrapper> (ccsGetValueListFromColorArray (impl::colorValues,
-															     sizeof (impl::colorValues) / sizeof (impl::colorValues[0]),
-															     NULL), true, TypeColor)),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromColorArray,
+													     impl::colorValues,
+													     sizeof (impl::colorValues) / sizeof (impl::colorValues[0]), _1),
+											       TypeColor, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "color_list_setting",
@@ -1067,6 +1104,7 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
 
 }
+
 
 
 #endif

@@ -426,7 +426,10 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsGetList (setting, &vList);
 		    listCopy = ccsCopyList (vList, setting);
 
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true, ccsSettingGetInfo (setting)->forList.listType)));
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true,
+												    ccsSettingGetInfo (setting)->forList.listType,
+												    boost::shared_ptr <CCSSettingInfo> (),
+												    boost::shared_ptr <CCSSetting> ())));
 		    break;
 		}
 		default:
