@@ -677,6 +677,15 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::vbo = true;
     }
 
+    /*
+     * !!! WARNING for users of the ATI/AMD fglrx driver !!!
+     *
+     * fglrx contains a hack which hides GL_ARB_shading_language_100 if
+     * your argv[0]=="compiz" for stupid historical reasons, so you won't
+     * get shader support by default when using fglrx.
+     *
+     * Workaround: Rename or link your "compiz" binary to "Compiz".
+     */
     if (strstr (glExtensions, "GL_ARB_fragment_shader") &&
         strstr (glExtensions, "GL_ARB_vertex_shader") &&
 	strstr (glExtensions, "GL_ARB_shader_objects") &&
