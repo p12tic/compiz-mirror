@@ -161,6 +161,7 @@ class MagPluginVTable :
 	bool init ();
 };
 
+#if 0
 static const char *fisheyeFpString =
     "!!ARBfp1.0"
 
@@ -190,3 +191,4 @@ static const char *fisheyeFpString =
     "TEX result.color, t1, texture[0], %s;"
 
     "END";
+#endif
