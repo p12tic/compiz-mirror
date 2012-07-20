@@ -370,7 +370,7 @@ class CCSGSettingsBackendEnv :
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
 						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
 						 TypeList);
-	    return readListValue (variant, TypeNum);
+	    return readListValue (variant, TypeNum); /* XXX: We need a way to inject the list type into here */
 	}
     private:
 

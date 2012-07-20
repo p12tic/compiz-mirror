@@ -1017,6 +1017,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListString"),
+	/* Needs lossy comparison */
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromColorArray,
 													     impl::colorValues,
