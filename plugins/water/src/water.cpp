@@ -251,7 +251,7 @@ WaterScreen::waterSetup ()
     d1 = (d0 + (size));
     t0 = (unsigned char *) (d1 + (size));
 
-    if (GL::fbo)
+    if (GL::vbo && GL::shaders)
     {
 	program[SET]    = new GLProgram (set_water_vertices_vertex_shader,
 				         set_water_vertices_fragment_shader);
@@ -823,6 +823,20 @@ WaterPluginVTable::init ()
         !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) |
         !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	 return false;
+
+    const char *missing = NULL;
+    if (!GL::fbo)
+	missing = "framebuffer objects";
+    if (!GL::vbo)
+	missing = "vertexbuffer objects";
+    if (!GL::shaders)
+	missing = "GLSL";
+    if (missing)
+    {
+	compLogMessage ("water", CompLogLevelError,
+	    "Missing hardware support for %s", missing);
+	return false;
+    }
 
     return true;
 }
