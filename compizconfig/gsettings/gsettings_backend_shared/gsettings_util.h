@@ -2,6 +2,7 @@
 #define _COMPIZ_GSETTINGS_UTIL_H
 
 #include <ccs.h>
+#include <ccs-backend.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
@@ -92,6 +93,12 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
 				      CCSPlugin **plugin,
 				      CCSSetting **setting,
 				      char **uncleanKeyName);
+
+void
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   GSettings *settings,
+				   gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting);
 
 GList *
 variantTypeToPossibleSettingType (const gchar *vt);

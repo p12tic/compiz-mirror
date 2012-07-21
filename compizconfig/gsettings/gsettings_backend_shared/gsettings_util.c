@@ -389,6 +389,38 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
     return TRUE;
 }
 
+void
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   GSettings *settings,
+				   gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting)
+{
+    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
+    char	 *uncleanKeyName = NULL;
+    char	 *pathOrig;
+    CCSPlugin    *plugin;
+    CCSSetting   *setting;
+
+    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
+
+    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
+	(*updateSetting) (backend, context, plugin, setting);
+    else
+    {
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
+    }
+
+    g_free (pathOrig);
+
+    if (uncleanKeyName)
+	free (uncleanKeyName);
+}
+
 gchar *
 makeCompizProfilePath (const gchar *profilename)
 {
