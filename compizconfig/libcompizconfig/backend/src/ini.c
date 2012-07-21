@@ -608,6 +608,11 @@ writeDone (CCSBackend *backend, CCSContext * context)
 static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
+    if (readInit (backend, context))
+    {
+	readSetting (backend, context, setting);
+	readDone (backend, context);
+    }
 }
 
 static Bool
