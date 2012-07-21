@@ -44,9 +44,6 @@ class CCSGSettingsBackendEnv :
 	    Bool		fallback   = FALSE;
 
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-
-	    /* For some reason a number of tests fail when using
-	     * this GSettings backend */
 	    g_setenv ("GSETTINGS_BACKEND", "memory", true);
 	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
 
@@ -84,6 +81,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
 	    g_unsetenv ("GSETTINGS_BACKEND");
+	    g_unsetenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
 
 	    ccsFreeBackendWithCapabilities (mBackend);
 	}
