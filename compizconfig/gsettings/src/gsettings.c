@@ -153,6 +153,65 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
     }
 }
 
+Bool
+findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+				      const char *path,
+				      const gchar *keyName,
+				      CCSContext *context,
+				      CCSPlugin **plugin,
+				      CCSSetting **setting,
+				      char **uncleanKeyName)
+{
+    char         *pluginName;
+    unsigned int screenNum;
+
+    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
+	return FALSE;
+
+    *plugin = ccsFindPlugin (context, pluginName);
+
+    if (*plugin)
+    {
+	*uncleanKeyName = translateKeyForCCS (keyName);
+
+	*setting = ccsFindSetting (*plugin, *uncleanKeyName);
+	if (!setting)
+	{
+	    /* Couldn't find setting straight off the bat,
+	     * try and find the best match */
+	    GVariant *value = g_settings_get_value (settings, keyName);
+
+	    if (value)
+	    {
+		GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
+		GList *iter = possibleSettingTypes;
+
+		while (iter)
+		{
+		    *setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (*plugin),
+								     keyName,
+								     (CCSSettingType) GPOINTER_TO_INT (iter->data));
+
+		    if (*setting)
+			break;
+
+		    iter = iter->next;
+		}
+
+		g_list_free (possibleSettingTypes);
+		g_variant_unref (value);
+	    }
+	}
+    }
+
+    g_free (pluginName);
+
+    if (!*plugin || !*setting)
+	return FALSE;
+
+    return TRUE;
+}
+
 static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyName,
@@ -160,76 +219,29 @@ valueChanged (GSettings   *settings,
 {
     CCSBackend   *backend = (CCSBackend *)user_data;
     CCSContext   *context = ccsGSettingsBackendGetContext (backend);
-    char	 *uncleanKeyName;
+    char	 *uncleanKeyName = NULL;
     char	 *pathOrig;
-    const char   *path;
-    char         *pluginName;
-    unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
     g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
-    path = pathOrig;
-
-    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
+    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
+	updateSetting (backend, context, plugin, setting);
+    else
     {
-	g_free (pathOrig);
-	return;
-    }
-
-    plugin = ccsFindPlugin (context, pluginName);
-
-    uncleanKeyName = translateKeyForCCS (keyName);
-
-    setting = ccsFindSetting (plugin, uncleanKeyName);
-    if (!setting)
-    {
-	/* Couldn't find setting straight off the bat,
-	 * try and find the best match */
-	GVariant *value = g_settings_get_value (settings, keyName);
-
-	if (value)
-	{
-	    GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
-	    GList *iter = possibleSettingTypes;
-
-	    while (iter)
-	    {
-		setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (plugin),
-								keyName,
-								(CCSSettingType) GPOINTER_TO_INT (iter->data));
-
-		if (setting)
-		    break;
-
-		iter = iter->next;
-	    }
-
-	    g_list_free (possibleSettingTypes);
-	    g_variant_unref (value);
-	}
-
 	/* We hit a situation where either the key stored in GSettings couldn't be
 	 * matched at all to a key in the xml file, or where there were multiple matches.
 	 * Unfortunately, there isn't much we can do about this, other than try
 	 * and warn the user and bail out. It just means that if the key was updated
 	 * externally we won't know about the change until the next reload of settings */
-	if (!setting)
-	{
-	    ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
-	    g_free (pluginName);
-	    free (uncleanKeyName);
-	    g_free (pathOrig);
-	    return;
-	}
+	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
     }
 
-    updateSetting (backend, context, plugin, setting);
-
-    g_free (pluginName);
-    free (uncleanKeyName);
     g_free (pathOrig);
+
+    if (uncleanKeyName)
+	free (uncleanKeyName);
 }
 
 static Bool
