@@ -954,6 +954,7 @@ static CCSBackendInterface gsettingsVTable = {
     writeInit,
     writeSetting,
     0,
+    0,
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     getExistingProfiles,

@@ -1378,9 +1378,19 @@ static Bool ccsBackendHasWriteDone (CCSBackend *backend)
     return (GET_INTERFACE (CCSBackendInterface, backend))->writeDone != NULL;
 }
 
+static Bool ccsBackendHasUpdateSetting (CCSBackend *backend)
+{
+    return (GET_INTERFACE (CCSBackendInterface, backend))->updateSetting != NULL;
+}
+
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (backend, context);
+}
+
+void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->updateSetting) (backend, context, plugin, setting);
 }
 
 static Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend)
@@ -1554,6 +1564,14 @@ static void ccsBackendCapabilitiesWriteDoneWrapper (CCSBackend *backend, CCSCont
 
     if (ccsBackendHasWriteDone (bcPrivate->backend))
 	ccsBackendWriteDone (bcPrivate->backend, context);
+}
+
+static void ccsBackendCapabilitiesUpdateSettingWrapper (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    CAPABILITIES_PRIV (backend);
+
+    if (ccsBackendHasUpdateSetting (bcPrivate->backend))
+	ccsBackendUpdateSetting (bcPrivate->backend, context, plugin, setting);
 }
 
 static Bool ccsBackendCapabilitiesGetSettingIsIntegratedWrapper (CCSBackend *backend, CCSSetting *setting)
@@ -5524,6 +5542,7 @@ const CCSBackendInterface ccsBackendCapabilitiesInterfaceWrapper =
     ccsBackendCapabilitiesWriteInitWrapper,
     ccsBackendCapabilitiesWriteSettingWrapper,
     ccsBackendCapabilitiesWriteDoneWrapper,
+    ccsBackendCapabilitiesUpdateSettingWrapper,
     ccsBackendCapabilitiesGetSettingIsIntegratedWrapper,
     ccsBackendCapabilitiesGetSettingIsReadOnlyWrapper,
     ccsBackendCapabilitiesGetExistingProfilesWrapper,

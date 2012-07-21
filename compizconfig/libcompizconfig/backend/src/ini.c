@@ -763,6 +763,7 @@ static CCSBackendInterface iniVTable = {
     writeSetting,
     writeDone,
     NULL,
+    NULL,
     getSettingIsReadOnly,
     getExistingProfiles,
     deleteProfile
