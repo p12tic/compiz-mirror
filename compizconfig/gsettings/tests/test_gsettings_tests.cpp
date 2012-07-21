@@ -909,7 +909,7 @@ TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidTypeGood)
 {
     GVariant *v = g_variant_new ("i", 1);
 
-    EXPECT_FALSE (checkReadVariantIsValid (v, TypeInt, "foo/bar"));
+    EXPECT_TRUE (checkReadVariantIsValid (v, TypeInt, "foo/bar"));
 
     g_variant_unref (v);
 }
