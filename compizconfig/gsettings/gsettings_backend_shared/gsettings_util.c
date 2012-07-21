@@ -330,6 +330,65 @@ attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *l
     return found;
 }
 
+Bool
+findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+				      const char *path,
+				      const gchar *keyName,
+				      CCSContext *context,
+				      CCSPlugin **plugin,
+				      CCSSetting **setting,
+				      char **uncleanKeyName)
+{
+    char         *pluginName;
+    unsigned int screenNum;
+
+    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
+	return FALSE;
+
+    *plugin = ccsFindPlugin (context, pluginName);
+
+    if (*plugin)
+    {
+	*uncleanKeyName = translateKeyForCCS (keyName);
+
+	*setting = ccsFindSetting (*plugin, *uncleanKeyName);
+	if (!setting)
+	{
+	    /* Couldn't find setting straight off the bat,
+	     * try and find the best match */
+	    GVariant *value = g_settings_get_value (settings, keyName);
+
+	    if (value)
+	    {
+		GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
+		GList *iter = possibleSettingTypes;
+
+		while (iter)
+		{
+		    *setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (*plugin),
+								     keyName,
+								     (CCSSettingType) GPOINTER_TO_INT (iter->data));
+
+		    if (*setting)
+			break;
+
+		    iter = iter->next;
+		}
+
+		g_list_free (possibleSettingTypes);
+		g_variant_unref (value);
+	    }
+	}
+    }
+
+    g_free (pluginName);
+
+    if (!*plugin || !*setting)
+	return FALSE;
+
+    return TRUE;
+}
+
 gchar *
 makeCompizProfilePath (const gchar *profilename)
 {

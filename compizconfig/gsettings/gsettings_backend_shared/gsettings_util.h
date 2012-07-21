@@ -84,6 +84,15 @@ filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gch
 CCSSetting *
 attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName, CCSSettingType type);
 
+Bool
+findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+				      const char *path,
+				      const gchar *keyName,
+				      CCSContext *context,
+				      CCSPlugin **plugin,
+				      CCSSetting **setting,
+				      char **uncleanKeyName);
+
 GList *
 variantTypeToPossibleSettingType (const gchar *vt);
 
