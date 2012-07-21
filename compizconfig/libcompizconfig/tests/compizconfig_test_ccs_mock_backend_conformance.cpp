@@ -50,6 +50,7 @@ class MockCCSBackendConceptTestEnvironment :
 
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
+	    mContext = context;
 	    mBackend = ccsMockBackendNew ();
 	    mBackendGMock = (CCSBackendGMock *) ccsObjectGetPrivate (mBackend);
 
@@ -196,8 +197,17 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	    EXPECT_CALL (*gmockPlugin, getName ());
 	    EXPECT_CALL (*gmockSetting, getName ());
-	    EXPECT_CALL (*gmockSetting, getType ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+	    }
+	    else
+	    {
+		EXPECT_CALL (*gmockSetting, getType ());
+	    }
 	}
 
 	void PostRead (CCSContextGMock *gmockContext,
@@ -282,8 +292,17 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, updateSetting (_, _, _));
 	    EXPECT_CALL (*gmockPlugin, getName ());
 	    EXPECT_CALL (*gmockSetting, getName ());
-	    EXPECT_CALL (*gmockSetting, getType ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+	    }
+	    else
+	    {
+		EXPECT_CALL (*gmockSetting, getType ());
+	    }
 	}
 
 	void PostUpdate (CCSContextGMock *gmockContext,
@@ -296,7 +315,18 @@ class MockCCSBackendConceptTestEnvironment :
 	bool UpdateSettingAtKey (const std::string &plugin,
 				 const std::string &setting)
 	{
-	    return false;
+	    CCSPlugin *cplugin = ccsFindPlugin (mContext, plugin.c_str ());
+
+	    if (!cplugin)
+		return false;
+
+	    CCSSetting *csetting = ccsFindSetting (cplugin, setting.c_str ());
+
+	    if (!csetting)
+		return false;
+
+	    ccsBackendUpdateSetting (mBackend, mContext, cplugin, csetting);
+	    return true;
 	}
 
     protected:
@@ -472,6 +502,7 @@ class MockCCSBackendConceptTestEnvironment :
 
 	CCSBackend *mBackend;
 	CCSBackendGMock *mBackendGMock;
+	CCSContext *mContext;
 	std::map <std::string, VariantTypes> mValues;
 };
 

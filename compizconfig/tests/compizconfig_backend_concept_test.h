@@ -1129,6 +1129,9 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateKeyedValue)
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
+    EXPECT_CALL (*gmockContext, findPlugin (_)).WillOnce (Return (plugin));
+    EXPECT_CALL (*gmockPlugin, findSetting (_)).WillOnce (Return (setting));
+
     EXPECT_TRUE (CCSBackendConformanceTest::GetParam ()->testEnv ()->UpdateSettingAtKey (pluginName, settingName));
 }
 
