@@ -161,7 +161,8 @@ valueChanged (GSettings   *settings,
     CCSBackend   *backend = (CCSBackend *)user_data;
     CCSContext   *context = ccsGSettingsBackendGetContext (backend);
     char	 *uncleanKeyName;
-    char	 *path, *pathOrig;
+    char	 *pathOrig;
+    const char   *path;
     char         *pluginName;
     unsigned int screenNum;
     CCSPlugin    *plugin;
