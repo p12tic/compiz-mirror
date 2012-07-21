@@ -373,6 +373,32 @@ class CCSGSettingsBackendEnv :
 						 TypeList);
 	    return readListValue (variant, info->forList.listType);
 	}
+
+	void PreUpdate (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type)
+	{
+	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillOnce (Return (FALSE));
+	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, isReadOnly ()).WillRepeatedly (Return (FALSE));
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
+	    }
+	}
+
+	void PostUpdate (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type) {}
+
     private:
 
 	GSettings  *mSettings;

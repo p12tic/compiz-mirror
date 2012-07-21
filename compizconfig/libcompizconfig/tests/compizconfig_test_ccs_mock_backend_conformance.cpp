@@ -60,6 +60,13 @@ class MockCCSBackendConceptTestEnvironment :
 				this,
 				&MockCCSBackendConceptTestEnvironment::ReadValueIntoSetting)));
 
+	    ON_CALL (*mBackendGMock, updateSetting (_, _, _))
+		    .WillByDefault (
+			WithArgs<2> (
+			    Invoke (
+				this,
+				&MockCCSBackendConceptTestEnvironment::ReadValueIntoSetting)));
+
 	    ON_CALL (*mBackendGMock, writeSetting (_, _))
 		    .WillByDefault (
 			WithArgs<1> (
@@ -265,6 +272,25 @@ class MockCCSBackendConceptTestEnvironment :
 						   CCSSettingInfo    *info)
 	{
 	    return *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	}
+
+	void PreUpdate (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type)
+	{
+	    EXPECT_CALL (*mBackendGMock, updateSetting (_, _, _));
+	    EXPECT_CALL (*gmockPlugin, getName ());
+	    EXPECT_CALL (*gmockSetting, getName ());
+	    EXPECT_CALL (*gmockSetting, getType ());
+	    EXPECT_CALL (*gmockSetting, getParent ());
+	}
+
+	void PostUpdate (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
+	{
 	}
 
     protected:
