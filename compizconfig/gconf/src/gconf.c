@@ -436,6 +436,22 @@ isIntegratedOption (CCSSetting *setting,
 }
 
 static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    int          index;
+    readInit (backend, context);
+    if (!readOption (setting))
+	ccsResetToDefault (setting, TRUE);
+
+    if (ccsGetIntegrationEnabled (context) &&
+	isIntegratedOption (setting, &index))
+    {
+	writeInit (backend, context);
+	writeIntegratedOption (context, setting, index);
+    }
+}
+
+static void
 valueChanged (GConfClient *client,
 	      guint       cnxn_id,
 	      GConfEntry  *entry,
@@ -445,7 +461,6 @@ valueChanged (GConfClient *client,
     char         *keyName = (char*) gconf_entry_get_key (entry);
     char         *pluginName;
     char         *token;
-    int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
@@ -490,16 +505,9 @@ valueChanged (GConfClient *client,
     if (!setting)
 	return;
 
-    readInit (NULL, context);
-    if (!readOption (setting))
-	ccsResetToDefault (setting, TRUE);
-
-    if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index))
-    {
-	writeInit (NULL, context);
-	writeIntegratedOption (context, setting, index);
-    }
+    /* Passing null here is not optimal, but we are not
+     * maintaining gconf actively here */
+    updateSetting (NULL, context, plugin, setting);
 }
 
 static void
@@ -2033,11 +2041,6 @@ writeSetting (CCSBackend *backend,
     else
 	writeOption (setting);
 
-}
-
-static void
-updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
-{
 }
 
 static Bool
