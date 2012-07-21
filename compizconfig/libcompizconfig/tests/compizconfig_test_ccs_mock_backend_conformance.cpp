@@ -261,7 +261,8 @@ class MockCCSBackendConceptTestEnvironment :
 	}
 
 	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
-						   const std::string &key)
+						   const std::string &key,
+						   CCSSettingInfo    *info)
 	{
 	    return *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
 	}
@@ -326,9 +327,12 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
+		{
+		    CCSSettingInfo *info = ccsSettingGetInfo (setting);
 
-		    ccsSetList (setting, ReadListAtKey (plugin, key), FALSE);
-		    break;
+		    ccsSetList (setting, ReadListAtKey (plugin, key, info), FALSE);
+		}
+		break;
 
 		default:
 

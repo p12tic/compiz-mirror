@@ -290,7 +290,8 @@ class CCSBackendConceptTestEnvironmentInterface
 	virtual Bool ReadBellAtKey (const std::string &plugin,
 				       const std::string &key) = 0;
 	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
-				     const std::string &key) = 0;
+				     const std::string &key,
+						    CCSSettingInfo *info) = 0;
 };
 
 class CCSBackendConceptTestEnvironmentFactoryInterface
@@ -518,7 +519,7 @@ void SetListWriteExpectation (const std::string &plugin,
 							     list),
 							 Return (TRUE)));
     write ();
-    EXPECT_THAT (env->ReadListAtKey (plugin, key), ListEqual (ccsSettingGetInfo (setting)->forList, list));
+    EXPECT_THAT (env->ReadListAtKey (plugin, key, info), ListEqual (ccsSettingGetInfo (setting)->forList, list));
 }
 
 void SetIntReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)

@@ -364,13 +364,14 @@ class CCSGSettingsBackendEnv :
 	}
 
 	CCSSettingValueList ReadListAtKey (const std::string &plugin,
-				     const std::string &key)
+				     const std::string &key,
+					   CCSSettingInfo    *info)
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
 						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
 						 TypeList);
-	    return readListValue (variant, TypeNum); /* XXX: We need a way to inject the list type into here */
+	    return readListValue (variant, info->forList.listType);
 	}
     private:
 
