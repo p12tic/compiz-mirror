@@ -2035,6 +2035,11 @@ writeSetting (CCSBackend *backend,
 
 }
 
+static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+}
+
 static Bool
 getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
 {
@@ -2167,7 +2172,7 @@ static CCSBackendInterface gconfVTable = {
     writeInit,
     writeSetting,
     0,
-    0,
+    updateSetting,
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     getExistingProfiles,
