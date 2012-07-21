@@ -47,7 +47,7 @@ class CCSGSettingsBackendEnv :
 
 	    /* For some reason a number of tests fail when using
 	     * this GSettings backend */
-	    //g_setenv ("GSETTINGS_BACKEND", "memory", true);
+	    g_setenv ("GSETTINGS_BACKEND", "memory", true);
 	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
 
 	    mContext = context;
@@ -81,7 +81,7 @@ class CCSGSettingsBackendEnv :
 	void TearDown (CCSBackend *)
 	{
 	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
-	    //g_unsetenv ("GSETTINGS_BACKEND");
+	    g_unsetenv ("GSETTINGS_BACKEND");
 
 	    ccsFreeBackendWithCapabilities (mBackend);
 	}

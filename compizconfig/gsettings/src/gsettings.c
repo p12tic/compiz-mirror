@@ -538,7 +538,6 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
 	break;
     case TypeList:
 	{
-	    GVariant *value = NULL;
 	    CCSSettingValueList  list = NULL;
 
 	    if (!ccsGetList (setting, &list))
@@ -546,7 +545,7 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
 
 	    success = writeListValue (list,
 				      ccsSettingGetInfo (setting)->forList.listType,
-				      &value);
+				      &gsettingsValue);
 	}
 	break;
     default:
