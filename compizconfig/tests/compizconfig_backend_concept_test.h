@@ -1094,6 +1094,19 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
     ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context, setting);
 }
 
+TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateMockedValue)
+{
+    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "UpdateMocked");
+
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTest::GetParam ()->nativeWrite (CCSBackendConformanceTest::GetParam ()->testEnv (),
+							 pluginName, settingName, VALUE);
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
+
+    ccsBackendUpdateSetting (CCSBackendConformanceTest::GetBackend (), context, plugin, setting);
+}
+
 TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 {
     SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
