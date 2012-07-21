@@ -399,6 +399,12 @@ class CCSGSettingsBackendEnv :
 		       CCSSettingGMock *gmockSetting,
 		       CCSSettingType  type) {}
 
+	bool UpdateSettingAtKey (const std::string &plugin,
+				 const std::string &setting)
+	{
+	    return false;
+	}
+
     private:
 
 	GSettings  *mSettings;

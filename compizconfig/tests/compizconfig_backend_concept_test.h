@@ -301,6 +301,9 @@ class CCSBackendConceptTestEnvironmentInterface
 			       CCSPluginGMock  *,
 			       CCSSettingGMock *,
 			       CCSSettingType) = 0;
+
+	virtual bool UpdateSettingAtKey (const std::string &plugin,
+					 const std::string &setting) = 0;
 };
 
 class CCSBackendConceptTestEnvironmentFactoryInterface
@@ -1114,6 +1117,19 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateMockedValue)
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
     ccsBackendUpdateSetting (CCSBackendConformanceTest::GetBackend (), context, plugin, setting);
+}
+
+TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateKeyedValue)
+{
+    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "UpdateMocked");
+
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTest::GetParam ()->nativeWrite (CCSBackendConformanceTest::GetParam ()->testEnv (),
+							 pluginName, settingName, VALUE);
+    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
+
+    EXPECT_TRUE (CCSBackendConformanceTest::GetParam ()->testEnv ()->UpdateSettingAtKey (pluginName, settingName));
 }
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)

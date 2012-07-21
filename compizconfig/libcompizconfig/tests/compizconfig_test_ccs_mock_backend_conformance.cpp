@@ -293,6 +293,12 @@ class MockCCSBackendConceptTestEnvironment :
 	{
 	}
 
+	bool UpdateSettingAtKey (const std::string &plugin,
+				 const std::string &setting)
+	{
+	    return false;
+	}
+
     protected:
 
 	void ReadValueIntoSetting (CCSSetting *setting)
