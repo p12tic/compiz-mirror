@@ -153,12 +153,11 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
     }
 }
 
-static void
-valueChanged (GSettings   *settings,
-	      gchar	  *keyName,
-	      gpointer    user_data)
+void
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   GSettings *settings,
+				   gchar     *keyName)
 {
-    CCSBackend   *backend = (CCSBackend *)user_data;
     CCSContext   *context = ccsGSettingsBackendGetContext (backend);
     char	 *uncleanKeyName = NULL;
     char	 *pathOrig;
@@ -183,6 +182,16 @@ valueChanged (GSettings   *settings,
 
     if (uncleanKeyName)
 	free (uncleanKeyName);
+}
+
+static void
+valueChanged (GSettings   *settings,
+	      gchar	  *keyName,
+	      gpointer    user_data)
+{
+    CCSBackend   *backend = (CCSBackend *)user_data;
+
+    updateSettingWithGSettingsKeyName (backend, settings, keyName);
 }
 
 static Bool
