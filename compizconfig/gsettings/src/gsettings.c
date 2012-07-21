@@ -135,6 +135,25 @@ isIntegratedOption (CCSSetting *setting,
 }
 
 static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    int          index;
+
+    readInit (backend, context);
+    if (!readOption (backend,  setting))
+    {
+	ccsResetToDefault (setting, TRUE);
+    }
+
+    if (ccsGetIntegrationEnabled (context) &&
+	isIntegratedOption (setting, &index))
+    {
+	writeInit (backend, context);
+	writeIntegratedOption (backend, context, setting, index);
+    }
+}
+
+static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyName,
 	      gpointer    user_data)
@@ -144,7 +163,6 @@ valueChanged (GSettings   *settings,
     char	 *uncleanKeyName;
     char	 *path, *pathOrig;
     char         *pluginName;
-    int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
@@ -206,18 +224,7 @@ valueChanged (GSettings   *settings,
 	}
     }
 
-    readInit (NULL, context);
-    if (!readOption (backend,  setting))
-    {
-	ccsResetToDefault (setting, TRUE);
-    }
-
-    if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index))
-    {
-	writeInit (NULL, context);
-	writeIntegratedOption (backend, context, setting, index);
-    }
+    updateSetting (backend, context, plugin, setting);
 
     g_free (pluginName);
     free (uncleanKeyName);
@@ -791,11 +798,6 @@ writeSetting (CCSBackend *backend,
     else
 	writeOption (backend, setting);
 
-}
-
-static void
-updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
-{
 }
 
 static Bool
