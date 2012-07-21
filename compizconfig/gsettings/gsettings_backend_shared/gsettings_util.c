@@ -389,7 +389,7 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
     return TRUE;
 }
 
-void
+Bool
 updateSettingWithGSettingsKeyName (CCSBackend *backend,
 				   GSettings *settings,
 				   gchar     *keyName,
@@ -400,6 +400,7 @@ updateSettingWithGSettingsKeyName (CCSBackend *backend,
     char	 *pathOrig;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
+    Bool         ret = TRUE;
 
     g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
 
@@ -413,12 +414,15 @@ updateSettingWithGSettingsKeyName (CCSBackend *backend,
 	 * and warn the user and bail out. It just means that if the key was updated
 	 * externally we won't know about the change until the next reload of settings */
 	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
+	 ret = FALSE;
     }
 
     g_free (pathOrig);
 
     if (uncleanKeyName)
 	free (uncleanKeyName);
+
+    return ret;
 }
 
 gchar *

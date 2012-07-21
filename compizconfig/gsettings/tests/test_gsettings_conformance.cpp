@@ -59,21 +59,23 @@ class CCSGSettingsBackendEnv :
 	    EXPECT_FALSE (fallback);
 	    EXPECT_TRUE (dlhand);
 
-	    CCSBackend *backend = ccsBackendNewWithInterface (mContext, interface, dlhand);
-	    mBackend = ccsBackendWithCapabilitiesWrapBackend (&ccsDefaultInterfaceTable, backend);
+	    mGSettingsBackend = ccsBackendNewWithInterface (mContext, interface, dlhand);
+	    mBackend = ccsBackendWithCapabilitiesWrapBackend (&ccsDefaultInterfaceTable, mGSettingsBackend);
 
 	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
 
 	    if (backendInit)
 		(*backendInit) ((CCSBackend *) mBackend, mContext);
 
-	    overloadedInterface = *(GET_INTERFACE (CCSGSettingsBackendInterface, backend));
+	    overloadedInterface = *(GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend));
 	    overloadedInterface.gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
 
-	    ccsObjectRemoveInterface (backend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
-	    ccsObjectAddInterface (backend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
+	    ccsObjectRemoveInterface (mGSettingsBackend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
+	    ccsObjectAddInterface (mGSettingsBackend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
-	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, "mock", makeCompizPluginPath ("mock", "mock"), mContext);
+	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock", makeCompizPluginPath (profileName.c_str (), "mock"), mContext);
+
+	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
 
 	    return (CCSBackend *) mBackend;
 	}
@@ -259,7 +261,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeBool);
 	    return readBoolFromVariant (variant);
 	}
@@ -269,7 +271,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeInt);
 	    return readIntFromVariant (variant);
 	}
@@ -279,7 +281,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeFloat);
 	    return readFloatFromVariant (variant);
 	}
@@ -289,7 +291,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeString);
 	    return readStringFromVariant (variant);
 	}
@@ -300,7 +302,7 @@ class CCSGSettingsBackendEnv :
 	    Bool success = FALSE;
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeColor);
 	    CCSSettingColorValue value = readColorFromVariant (variant, &success);
 	    EXPECT_TRUE (success);
@@ -313,7 +315,7 @@ class CCSGSettingsBackendEnv :
 	    Bool success = FALSE;
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeKey);
 	    CCSSettingKeyValue value = readKeyFromVariant (variant, &success);
 	    EXPECT_TRUE (success);
@@ -326,7 +328,7 @@ class CCSGSettingsBackendEnv :
 	    Bool success = FALSE;
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeButton);
 	    CCSSettingButtonValue value = readButtonFromVariant (variant, &success);
 	    EXPECT_TRUE (success);
@@ -338,7 +340,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeEdge);
 	    return readEdgeFromVariant (variant);
 	}
@@ -348,7 +350,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeMatch);
 	    return readStringFromVariant (variant);
 	}
@@ -358,7 +360,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeBell);
 	    return readBoolFromVariant (variant);
 	}
@@ -369,7 +371,7 @@ class CCSGSettingsBackendEnv :
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath ("mock", plugin.c_str ())),
+						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeList);
 	    return readListValue (variant, info->forList.listType);
 	}
@@ -392,6 +394,8 @@ class CCSGSettingsBackendEnv :
 		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
 		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
 	    }
+
+	    EXPECT_CALL (*gmockContext, getProfile ());
 	}
 
 	void PostUpdate (CCSContextGMock *gmockContext,
@@ -402,6 +406,11 @@ class CCSGSettingsBackendEnv :
 	bool UpdateSettingAtKey (const std::string &plugin,
 				 const std::string &setting)
 	{
+	    CharacterWrapper keyName (translateKeyForGSettings (setting.c_str ()));
+
+	    if (updateSettingWithGSettingsKeyName (reinterpret_cast <CCSBackend *> (mGSettingsBackend), mSettings, keyName, ccsBackendUpdateSetting))
+		return true;
+
 	    return false;
 	}
 
@@ -410,9 +419,14 @@ class CCSGSettingsBackendEnv :
 	GSettings  *mSettings;
 	CCSContext *mContext;
 	CCSBackendWithCapabilities *mBackend;
+	CCSBackend		   *mGSettingsBackend;
 	std::string pluginToMatch;
 	CCSGSettingsBackendInterface overloadedInterface;
+
+	static const std::string profileName;
 };
+
+const std::string CCSGSettingsBackendEnv::profileName = "mock";
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestReadWrite,
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <CCSGSettingsBackendEnv> ());

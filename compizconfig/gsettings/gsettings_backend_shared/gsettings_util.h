@@ -94,11 +94,10 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
 				      CCSSetting **setting,
 				      char **uncleanKeyName);
 
-void
-updateSettingWithGSettingsKeyName (CCSBackend *backend,
-				   GSettings *settings,
-				   gchar     *keyName,
-				   CCSBackendUpdateFunc updateSetting);
+Bool updateSettingWithGSettingsKeyName (CCSBackend *backend,
+					GSettings *settings,
+					gchar     *keyName,
+					CCSBackendUpdateFunc updateSetting);
 
 GList *
 variantTypeToPossibleSettingType (const gchar *vt);
