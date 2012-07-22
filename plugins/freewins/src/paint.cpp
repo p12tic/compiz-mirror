@@ -205,10 +205,10 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
              calculateOutputRect ();
 
          }
-
+        /*
         float scaleX = autoScaleX - (1 - mTransform.scaleX);
         float scaleY = autoScaleY - (1 - mTransform.scaleY);
-
+        */
         /* Actually Transform the window */
 
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
