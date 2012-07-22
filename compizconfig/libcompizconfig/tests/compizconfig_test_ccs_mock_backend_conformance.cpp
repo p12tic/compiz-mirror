@@ -43,6 +43,11 @@ class ValueForKeyRetreival
 	}
 };
 
+namespace
+{
+    void doNothingWithCCSSetting (CCSSetting *) {};
+}
+
 class MockCCSBackendConceptTestEnvironment :
     public CCSBackendConceptTestEnvironmentInterface
 {
@@ -281,7 +286,9 @@ class MockCCSBackendConceptTestEnvironment :
 						   const std::string &key,
 						   CCSSettingInfo    *info)
 	{
-	    return *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	    CCSListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+
+	    return ccsCopyList (*lw, lw->setting ().get ());
 	}
 
 	void PreUpdate (CCSContextGMock *gmockContext,
@@ -392,7 +399,11 @@ class MockCCSBackendConceptTestEnvironment :
 		{
 		    CCSSettingInfo *info = ccsSettingGetInfo (setting);
 
-		    ccsSetList (setting, ReadListAtKey (plugin, key, info), FALSE);
+		    ccsSetList (setting, CCSListWrapper (ReadListAtKey (plugin, key, info),
+							 true,
+							 info->forList.listType,
+							 boost::shared_ptr <CCSSettingInfo> (),
+							 boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1))), FALSE);
 		}
 		break;
 
@@ -489,7 +500,7 @@ class MockCCSBackendConceptTestEnvironment :
 		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true,
 												    ccsSettingGetInfo (setting)->forList.listType,
 												    boost::shared_ptr <CCSSettingInfo> (),
-												    boost::shared_ptr <CCSSetting> ())));
+												    boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1)))));
 		    break;
 		}
 		default:

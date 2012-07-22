@@ -749,6 +749,7 @@ writeListValue (CCSSettingValueList list,
 	    {
 		item = ccsColorToString (&list->data->value.asColor);
 		g_variant_builder_add (builder, "s", item);
+		g_free (item);
 		list = list->next;
 	    }
 	    value = g_variant_new ("as", builder);

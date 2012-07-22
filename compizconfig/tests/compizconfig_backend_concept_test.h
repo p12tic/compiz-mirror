@@ -187,6 +187,13 @@ class CCSListWrapper :
 	{
 	    ccsSettingValueListFree (mList, mFreeItems ? TRUE : FALSE);
 	}
+
+	const boost::shared_ptr <CCSSetting> &
+	setting ()
+	{
+	    return mSettingReference;
+	}
+
     private:
 
 	CCSSettingValueList mList;
@@ -335,12 +342,12 @@ typedef boost::function <void ()> WriteFunc;
 
 Bool boolToBool (bool v) { return v ? TRUE : FALSE; }
 
-CCSSettingGMock * getSettingGMockFromSetting (CCSSetting *setting) { return (CCSSettingGMock *) ccsObjectGetPrivate (setting); }
+CCSSettingGMock * getSettingGMockFromSetting (const boost::shared_ptr <CCSSetting> &setting) { return (CCSSettingGMock *) ccsObjectGetPrivate (setting.get ()); }
 
 void SetIntWriteExpectation (const std::string &plugin,
 			     const std::string &key,
 			     const VariantTypes &value,
-			     CCSSetting       *setting,
+			     const boost::shared_ptr <CCSSetting> &setting,
 			     const WriteFunc &write,
 			     const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -356,7 +363,7 @@ void SetIntWriteExpectation (const std::string &plugin,
 void SetBoolWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
-			      CCSSetting       *setting,
+			      const boost::shared_ptr <CCSSetting> &setting,
 			      const WriteFunc &write,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -378,7 +385,7 @@ void SetBoolWriteExpectation (const std::string &plugin,
 void SetFloatWriteExpectation (const std::string &plugin,
 			       const std::string &key,
 			       const VariantTypes &value,
-			       CCSSetting       *setting,
+			       const boost::shared_ptr <CCSSetting> &setting,
 			       const WriteFunc &write,
 			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -394,7 +401,7 @@ void SetFloatWriteExpectation (const std::string &plugin,
 void SetStringWriteExpectation (const std::string &plugin,
 				const std::string &key,
 				const VariantTypes &value,
-				CCSSetting       *setting,
+				const boost::shared_ptr <CCSSetting> &setting,
 				const WriteFunc &write,
 				const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -410,7 +417,7 @@ void SetStringWriteExpectation (const std::string &plugin,
 void SetColorWriteExpectation (const std::string &plugin,
 			       const std::string &key,
 			       const VariantTypes &value,
-			       CCSSetting       *setting,
+			       const boost::shared_ptr <CCSSetting> &setting,
 			       const WriteFunc &write,
 			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -427,7 +434,7 @@ void SetColorWriteExpectation (const std::string &plugin,
 void SetKeyWriteExpectation (const std::string &plugin,
 			     const std::string &key,
 			     const VariantTypes &value,
-			     CCSSetting       *setting,
+			     const boost::shared_ptr <CCSSetting> &setting,
 			     const WriteFunc &write,
 			     const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -443,7 +450,7 @@ void SetKeyWriteExpectation (const std::string &plugin,
 void SetButtonWriteExpectation (const std::string &plugin,
 				const std::string &key,
 				const VariantTypes &value,
-				CCSSetting       *setting,
+				const boost::shared_ptr <CCSSetting> &setting,
 				const WriteFunc &write,
 				const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -459,7 +466,7 @@ void SetButtonWriteExpectation (const std::string &plugin,
 void SetEdgeWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
-			      CCSSetting       *setting,
+			      const boost::shared_ptr <CCSSetting> &setting,
 			      const WriteFunc &write,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -475,7 +482,7 @@ void SetEdgeWriteExpectation (const std::string &plugin,
 void SetBellWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
-			      CCSSetting       *setting,
+			      const boost::shared_ptr <CCSSetting> &setting,
 			      const WriteFunc &write,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -496,7 +503,7 @@ void SetBellWriteExpectation (const std::string &plugin,
 void SetMatchWriteExpectation (const std::string &plugin,
 			       const std::string &key,
 			       const VariantTypes &value,
-			       CCSSetting       *setting,
+			       const boost::shared_ptr <CCSSetting> &setting,
 			       const WriteFunc &write,
 			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -512,7 +519,7 @@ void SetMatchWriteExpectation (const std::string &plugin,
 void SetListWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
-			      CCSSetting       *setting,
+			      const boost::shared_ptr <CCSSetting> &setting,
 			      const WriteFunc &write,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
@@ -521,7 +528,7 @@ void SetListWriteExpectation (const std::string &plugin,
 
     EXPECT_CALL (*gmock, getInfo ());
 
-    CCSSettingInfo      *info = ccsSettingGetInfo (setting);
+    CCSSettingInfo      *info = ccsSettingGetInfo (setting.get ());
 
     info->forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
 
@@ -531,7 +538,13 @@ void SetListWriteExpectation (const std::string &plugin,
 							     list),
 							 Return (TRUE)));
     write ();
-    EXPECT_THAT (env->ReadListAtKey (plugin, key, info), ListEqual (ccsSettingGetInfo (setting)->forList, list));
+
+    EXPECT_THAT (CCSListWrapper (env->ReadListAtKey (plugin, key, info),
+				 true,
+				 info->forList.listType,
+				 boost::shared_ptr <CCSSettingInfo> (),
+				 setting),
+		 ListEqual (info->forList, list));
 }
 
 void SetIntReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
@@ -622,7 +635,7 @@ class CCSBackendConceptTestParamInterface
 	typedef boost::function <void (const std::string &,
 				       const std::string &,
 				       const VariantTypes &,
-				       CCSSetting        *,
+				       const boost::shared_ptr <CCSSetting> &,
 				       const WriteFunc &,
 				       const CCSBackendConceptTestEnvironmentInterface::Ptr & )> SetWriteExpectation;
 
@@ -732,32 +745,17 @@ class CCSBackendConformanceTest :
 
 	virtual void SetUp ()
 	{
-	    CCSBackendConformanceTest::SpawnContext (&context);
+	    CCSBackendConformanceTest::SpawnContext (context);
 	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
 
 	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
 
-	    mBackend = GetParam ()->testEnv ()->SetUp (context, gmockContext);
+	    mBackend = GetParam ()->testEnv ()->SetUp (context.get (), gmockContext);
 	}
 
 	virtual void TearDown ()
 	{
 	    CCSBackendConformanceTest::GetParam ()->TearDown (mBackend);
-
-	    for (std::list <CCSContext *>::iterator it = mSpawnedContexts.begin ();
-		 it != mSpawnedContexts.end ();
-		 it++)
-		ccsFreeMockContext (*it);
-
-	    for (std::list <CCSPlugin *>::iterator it = mSpawnedPlugins.begin ();
-		 it != mSpawnedPlugins.end ();
-		 it++)
-		ccsFreeMockPlugin (*it);
-
-	    for (std::list <CCSSetting *>::iterator it = mSpawnedSettings.begin ();
-		 it != mSpawnedSettings.end ();
-		 it++)
-		ccsFreeMockSetting (*it);
 	}
 
     protected:
@@ -767,38 +765,35 @@ class CCSBackendConformanceTest :
 	 * you use ASSERT_* unless the function returns void
 	 */
 	void
-	SpawnContext (CCSContext **context)
+	SpawnContext (boost::shared_ptr <CCSContext> &context)
 	{
-	    *context = ccsMockContextNew ();
-	    mSpawnedContexts.push_back (*context);
+	    context.reset (ccsMockContextNew (), boost::bind (ccsFreeMockContext, _1));
 	}
 
 	void
-	SpawnPlugin (const std::string &name, CCSContext *context, CCSPlugin **plugin)
+	SpawnPlugin (const std::string &name, const boost::shared_ptr <CCSContext> &context, boost::shared_ptr <CCSPlugin> &plugin)
 	{
-	    *plugin = ccsMockPluginNew ();
-	    mSpawnedPlugins.push_back (*plugin);
+	    plugin.reset (ccsMockPluginNew (), boost::bind (ccsFreeMockPlugin, _1));
 
-	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (*plugin);
+	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin.get ());
 
 	    ASSERT_FALSE (name.empty ());
-	    ASSERT_TRUE (context);
+	    ASSERT_TRUE (context.get ());
 
 	    ON_CALL (*gmockPlugin, getName ()).WillByDefault (Return ((char *) name.c_str ()));
-	    ON_CALL (*gmockPlugin, getContext ()).WillByDefault (Return (context));
+	    ON_CALL (*gmockPlugin, getContext ()).WillByDefault (Return (context.get ()));
 	}
 
 	void
 	SpawnSetting (const std::string &name,
 		      CCSSettingType	type,
-		      CCSPlugin		*plugin,
-		      CCSSetting	**setting)
+		      const boost::shared_ptr <CCSPlugin> &plugin,
+		      boost::shared_ptr <CCSSetting>      &setting)
 	{
-	    *setting = ccsMockSettingNew ();
-	    mSpawnedSettings.push_back (*setting);
+	    setting.reset (ccsMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
 	    mSpawnedSettingInfo.push_back (CCSSettingInfo ());
 
-	    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (*setting);
+	    CCSSettingGMock *gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting.get ());
 
 	    ASSERT_FALSE (name.empty ());
 	    ASSERT_NE (type, TypeNum);
@@ -806,24 +801,19 @@ class CCSBackendConformanceTest :
 
 	    ON_CALL (*gmockSetting, getName ()).WillByDefault (Return ((char *) name.c_str ()));
 	    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (type));
-	    ON_CALL (*gmockSetting, getParent ()).WillByDefault (Return (plugin));
+	    ON_CALL (*gmockSetting, getParent ()).WillByDefault (Return (plugin.get ()));
 	    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&(mSpawnedSettingInfo.back ())));
 	}
 
     protected:
 
-	CCSContext *context;
+	boost::shared_ptr <CCSContext> context;
 	CCSContextGMock *gmockContext;
 
     private:
 
-	std::list <CCSContext *> mSpawnedContexts;
-	std::list <CCSPlugin  *> mSpawnedPlugins;
-	std::list <CCSSetting *> mSpawnedSettings;
 	std::vector <CCSSettingInfo> mSpawnedSettingInfo;
-
 	CCSBackend *mBackend;
-
 	std::string profileName;
 };
 
@@ -1069,11 +1059,11 @@ class CCSBackendConformanceTestReadWrite :
 	    settingName = GetParam ()->keyname ();
 	    VALUE = GetParam ()->value ();
 
-	    CCSBackendConformanceTest::SpawnPlugin (pluginName, context, &plugin);
-	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, &setting);
+	    CCSBackendConformanceTest::SpawnPlugin (pluginName, context, plugin);
+	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, setting);
 
-	    gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin);
-	    gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+	    gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin.get ());
+	    gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting.get ());
 	}
 
 	virtual void TearDown ()
@@ -1086,8 +1076,8 @@ class CCSBackendConformanceTestReadWrite :
 	std::string pluginName;
 	std::string settingName;
 	VariantTypes VALUE;
-	CCSPlugin *plugin;
-	CCSSetting *setting;
+	boost::shared_ptr <CCSPlugin> plugin;
+	boost::shared_ptr <CCSSetting> setting;
 	CCSPluginGMock  *gmockPlugin;
 	CCSSettingGMock *gmockSetting;
 
@@ -1103,7 +1093,7 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
-    ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context, setting);
+    ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context.get (), setting.get ());
 }
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateMockedValue)
@@ -1116,7 +1106,7 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateMockedValue)
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
-    ccsBackendUpdateSetting (CCSBackendConformanceTest::GetBackend (), context, plugin, setting);
+    ccsBackendUpdateSetting (CCSBackendConformanceTest::GetBackend (), context.get (), plugin.get (), setting.get ());
 }
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateKeyedValue)
@@ -1129,8 +1119,8 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateKeyedValue)
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
-    EXPECT_CALL (*gmockContext, findPlugin (_)).WillOnce (Return (plugin));
-    EXPECT_CALL (*gmockPlugin, findSetting (_)).WillOnce (Return (setting));
+    EXPECT_CALL (*gmockContext, findPlugin (_)).WillOnce (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, findSetting (_)).WillOnce (Return (setting.get ()));
 
     EXPECT_TRUE (CCSBackendConformanceTest::GetParam ()->testEnv ()->UpdateSettingAtKey (pluginName, settingName));
 }
@@ -1146,8 +1136,8 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 									   setting,
 									   boost::bind (ccsBackendWriteSetting,
 											CCSBackendConformanceTest::GetBackend (),
-											context,
-										       setting),
+											context.get (),
+											setting.get ()),
 									   GetParam ()->testEnv ());
     CCSBackendConformanceTest::GetParam ()->testEnv ()->PostWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
 

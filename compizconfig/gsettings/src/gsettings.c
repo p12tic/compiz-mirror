@@ -642,8 +642,6 @@ initBackend (CCSBackend *backend, CCSContext * context)
 static Bool
 finiBackend (CCSBackend *backend, CCSContext * context)
 {
-    GList *l = settingsList;
-
     processEvents (backend, 0);
 
 #ifdef USE_GCONF
@@ -657,11 +655,7 @@ finiBackend (CCSBackend *backend, CCSContext * context)
 	currentProfile = NULL;
     }
 
-    while (l)
-    {
-	g_object_unref (G_OBJECT (l->data));
-	l = g_list_next (l);
-    }
+    g_list_free_full (settingsList, g_object_unref);
 
     settingsList = NULL;
 
