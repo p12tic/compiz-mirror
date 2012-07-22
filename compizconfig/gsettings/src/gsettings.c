@@ -95,6 +95,7 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 
     g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
 
+    g_variant_unref (writtenPlugins);
     g_free (schemaName);
     g_strfreev (newWrittenPlugins);
 
@@ -536,6 +537,8 @@ updateCurrentProfileName (const char *profile)
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
+    g_variant_unref (profiles);
+
     /* Change the current profile and current profile settings */
     free (currentProfile);
 
@@ -581,6 +584,8 @@ getCurrentProfileName (void)
 	ret = strdup (g_variant_get_string (value, NULL));
     else
 	ret = strdup (DEFAULTPROF);
+
+    g_variant_unref (value);
 
     return ret;
 }
