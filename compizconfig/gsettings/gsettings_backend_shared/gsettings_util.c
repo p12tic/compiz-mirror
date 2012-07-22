@@ -876,3 +876,15 @@ ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 {
     return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetSettingsObjectForPluginWithPath) (backend, plugin, path, context);
 }
+
+void
+ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendRegisterGConfClient) (backend);
+}
+
+void
+ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnregisterGConfClient) (backend);
+}

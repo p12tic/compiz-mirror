@@ -612,10 +612,31 @@ ccsGSettingsBackendConnectToValueChangedSignalDefault (CCSBackend *backend, GObj
     g_signal_connect (object, "changed", (GCallback) valueChanged, (gpointer) backend);
 }
 
+static void
+ccsGSettingsBackendRegisterGConfClientDefault (CCSBackend *backend)
+{
+#ifdef USE_GCONF
+    CCSContext *context = ccsGSettingsBackendGetContext (backend);
+
+    initGConfClient (context);
+#endif
+}
+
+static void
+ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
+{
+#ifdef USE_GCONF
+    gconf_client_clear_cache (client);
+    finiGConfClient ();
+#endif
+}
+
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
-    ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault
+    ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault,
+    ccsGSettingsBackendRegisterGConfClientDefault,
+    ccsGSettingsBackendUnregisterGConfClientDefault
 };
 
 static Bool
@@ -625,21 +646,19 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     g_type_init ();
 
+    storedContext = context;
+
+    ccsObjectAddInterface (backend, (CCSInterface *) &gsettingsAdditionalDefaultInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
+
     compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
 
-#ifdef USE_GCONF
-    initGConfClient (context);
-#endif
+    ccsGSettingsBackendRegisterGConfClient (backend);
 
     currentProfile = getCurrentProfileName ();
     currentProfilePath = makeCompizProfilePath (currentProfile);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
 
     g_free (currentProfilePath);
-
-    storedContext = context;
-
-    ccsObjectAddInterface (backend, (CCSInterface *) &gsettingsAdditionalDefaultInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
     return TRUE;
 }
@@ -649,10 +668,7 @@ finiBackend (CCSBackend *backend, CCSContext * context)
 {
     processEvents (backend, 0);
 
-#ifdef USE_GCONF
-    gconf_client_clear_cache (client);
-    finiGConfClient ();
-#endif
+    ccsGSettingsBackendUnregisterGConfClient (backend);
 
     if (currentProfile)
     {

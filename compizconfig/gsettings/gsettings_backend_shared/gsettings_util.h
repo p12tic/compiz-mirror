@@ -19,12 +19,16 @@ typedef GSettings * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CC
 									      const char *plugin,
 									      const char *path,
 									      CCSContext *context);
+typedef void (*CCSGSettingsBackendRegisterGConfClient) (CCSBackend *backend);
+typedef void (*CCSGSettingsBackendUnregisterGConfClient) (CCSBackend *backend);
 
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
     CCSGSettingsBackendConnectToChangedSignal gsettingsBackendConnectToChangedSignal;
     CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
+    CCSGSettingsBackendRegisterGConfClient gsettingsBackendRegisterGConfClient;
+    CCSGSettingsBackendUnregisterGConfClient gsettingsBackendUnregisterGConfClient;
 };
 
 struct _CCSGSettingsBackendPrivate
@@ -172,6 +176,12 @@ ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 						const char *plugin,
 						const char *path,
 						CCSContext *context);
+
+void
+ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
+
+void
+ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend);
 
 COMPIZCONFIG_END_DECLS
 
