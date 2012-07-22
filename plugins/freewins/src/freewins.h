@@ -199,8 +199,8 @@ class FWTransformedWindowInfo
 	float angY;
 	float angZ;
 
-	float scaleY;
-	float scaleX;
+    float scaleX;
+    float scaleY;
 
 	// Window transformation
 
