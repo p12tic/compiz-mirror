@@ -837,6 +837,8 @@ FWScreen::handleEvent (XEvent *ev)
         w = screen->findWindow (ev->xconfigure.window);
         if (w)
         {
+        oldPrev = w->prev;
+        oldNext = w->next;
 		if (w->prev != oldPrev || w->next != oldNext)
 		{
 		    /* restacking occured, ensure ipw stacking */
