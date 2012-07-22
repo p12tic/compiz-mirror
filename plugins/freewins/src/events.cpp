@@ -648,7 +648,7 @@ FWScreen::handleEvent (XEvent *ev)
 		    if (fww->mGrab == grabMove || fww->mGrab == grabResize)
 	    	    {
 			FWWindowInputInfo *info;
-			CompWindow *w = mGrabWindow;
+            CompWindow *w = mGrabWindow;
 			foreach (info, mTransformedWindows)
 			{
 			    if (mGrabWindow->id () == info->ipw)
@@ -834,8 +834,9 @@ FWScreen::handleEvent (XEvent *ev)
     switch (ev->type)
     {
 	case ConfigureNotify:
-	    if (w) /* already assigned above */
-	    {
+        w = screen->findWindow (ev->xconfigure.window);
+        if (w)
+        {
 		if (w->prev != oldPrev || w->next != oldNext)
 		{
 		    /* restacking occured, ensure ipw stacking */
