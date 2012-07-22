@@ -70,7 +70,9 @@ class CCSGSettingsBackendEnv :
 	    ccsObjectRemoveInterface (mGSettingsBackend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 	    ccsObjectAddInterface (mGSettingsBackend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
-	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock", makeCompizPluginPath (profileName.c_str (), "mock"), mContext);
+	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock",
+									CharacterWrapper (makeCompizPluginPath (profileName.c_str (), "mock")),
+									mContext);
 
 	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
 
