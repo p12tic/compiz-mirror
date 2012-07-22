@@ -317,7 +317,7 @@ readOption (CCSBackend *backend, CCSSetting * setting)
 	break;
     case TypeList:
 	{
-	    CCSSettingValueList list = readListValue (gsettingsValue, ccsSettingGetInfo (setting)->forList.listType);
+	    CCSSettingValueList list = readListValue (gsettingsValue, setting);
 
 	    if (list)
 	    {

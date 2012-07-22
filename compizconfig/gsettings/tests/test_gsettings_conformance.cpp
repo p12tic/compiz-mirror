@@ -366,14 +366,14 @@ class CCSGSettingsBackendEnv :
 	}
 
 	CCSSettingValueList ReadListAtKey (const std::string &plugin,
-				     const std::string &key,
-					   CCSSettingInfo    *info)
+					   const std::string &key,
+					   CCSSetting        *setting)
 	{
 	    GVariant *variant = getVariantAtKey (mSettings,
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
 						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeList);
-	    return readListValue (variant, info->forList.listType);
+	    return readListValue (variant, setting);
 	}
 
 	void PreUpdate (CCSContextGMock *gmockContext,

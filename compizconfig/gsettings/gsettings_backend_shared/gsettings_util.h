@@ -134,7 +134,7 @@ CCSSettingButtonValue readButtonFromVariant (GVariant *gsettingsValue, Bool *suc
 unsigned int readEdgeFromVariant (GVariant *gsettingsValue);
 
 CCSSettingValueList
-readListValue (GVariant *gsettingsValue, CCSSettingType listType);
+readListValue (GVariant *gsettingsValue, CCSSetting *setting);
 
 Bool
 writeListValue (CCSSettingValueList list,

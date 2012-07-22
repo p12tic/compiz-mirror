@@ -484,8 +484,9 @@ getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCS
 }
 
 CCSSettingValueList
-readListValue (GVariant *gsettingsValue, CCSSettingType listType)
+readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 {
+    CCSSettingType      listType = ccsSettingGetInfo (setting)->forList.listType;
     gboolean		hasVariantType;
     unsigned int        nItems;
     CCSSettingValueList list = NULL;
@@ -514,7 +515,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_loop (&iter, "b", &value))
 		*arrayCounter++ = value ? TRUE : FALSE;
 
-	    list = ccsGetValueListFromBoolArray (array, nItems, NULL);
+	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
@@ -531,7 +532,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_loop (&iter, "i", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromIntArray (array, nItems, NULL);
+	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
@@ -548,7 +549,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_loop (&iter, "d", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromFloatArray (array, nItems, NULL);
+	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
@@ -568,7 +569,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_next (&iter, "s", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromStringArray (array, nItems, NULL);
+	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    g_strfreev ((char **) array);
 	}
 	break;
@@ -588,7 +589,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 		i++;
 	    }
 
-	    list = ccsGetValueListFromColorArray (array, nItems, NULL);
+	    list = ccsGetValueListFromColorArray (array, nItems, setting);
 	    free (array);
 	}
 	break;

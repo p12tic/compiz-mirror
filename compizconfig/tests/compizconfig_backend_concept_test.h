@@ -298,7 +298,7 @@ class CCSBackendConceptTestEnvironmentInterface
 				       const std::string &key) = 0;
 	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
 				     const std::string &key,
-						    CCSSettingInfo *info) = 0;
+						    CCSSetting *setting) = 0;
 
 	virtual void PreUpdate (CCSContextGMock *,
 			      CCSPluginGMock  *,
@@ -532,6 +532,7 @@ void SetListWriteExpectation (const std::string &plugin,
 
     info->forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
 
+    EXPECT_CALL (*gmock, getDefaultValue ()).WillRepeatedly (ReturnNull ());
     EXPECT_CALL (*gmock, getInfo ()).Times (AtLeast (1));
     EXPECT_CALL (*gmock, getList (_)).WillRepeatedly (DoAll (
 							 SetArgPointee <0> (
@@ -539,7 +540,7 @@ void SetListWriteExpectation (const std::string &plugin,
 							 Return (TRUE)));
     write ();
 
-    EXPECT_THAT (CCSListWrapper (env->ReadListAtKey (plugin, key, info),
+    EXPECT_THAT (CCSListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
 				 true,
 				 info->forList.listType,
 				 boost::shared_ptr <CCSSettingInfo> (),
