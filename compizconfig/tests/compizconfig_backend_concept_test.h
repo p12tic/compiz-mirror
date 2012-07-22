@@ -32,6 +32,7 @@ using ::testing::Matcher;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AtLeast;
+using ::testing::NiceMock;
 
 MATCHER(IsTrue, "Is True") { if (arg) return true; else return false; }
 MATCHER(IsFalse, "Is False") { if (!arg) return true; else return false; }
@@ -532,7 +533,6 @@ void SetListWriteExpectation (const std::string &plugin,
 
     info->forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
 
-    EXPECT_CALL (*gmock, getDefaultValue ()).WillRepeatedly (ReturnNull ());
     EXPECT_CALL (*gmock, getInfo ()).Times (AtLeast (1));
     EXPECT_CALL (*gmock, getList (_)).WillRepeatedly (DoAll (
 							 SetArgPointee <0> (
@@ -878,17 +878,17 @@ CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 				       bool                  freeItems)
 {
     boost::function <void (CCSSetting *)> f (boost::bind (ccsFreeMockSetting, _1));
-    boost::shared_ptr <CCSSetting> mockSetting (ccsMockSettingNew (), f);
-    CCSSettingGMock                *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (mockSetting.get ()));
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), f);
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
 
-    EXPECT_CALL (*gmockSetting, getType ()).WillRepeatedly (Return (TypeList));
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
 
     boost::shared_ptr <CCSSettingInfo> listInfo (new CCSSettingInfo);
 
     listInfo->forList.listType = type;
 
-    EXPECT_CALL (*gmockSetting, getInfo ()).WillRepeatedly (Return (listInfo.get ()));
-    EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (listInfo.get ()));
+    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
     return boost::make_shared <CCSListWrapper> (c (mockSetting.get ()), freeItems, type, listInfo, mockSetting);
 }
 

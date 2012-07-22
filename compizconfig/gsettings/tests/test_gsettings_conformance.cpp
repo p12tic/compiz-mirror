@@ -100,6 +100,9 @@ class CCSGSettingsBackendEnv :
 	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getIsDefault ()).WillRepeatedly (Return (FALSE));
+
+	    if (type == TypeList)
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
