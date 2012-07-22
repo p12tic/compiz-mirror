@@ -68,7 +68,7 @@
 
 #include "freewins_options.h"
 
-#define ABS(x) ((x)>0?(x):-(x))
+/* #define ABS(x) ((x)>0?(x):-(x)) */
 #define D2R(x) ((x) * (M_PI / 180.0))
 #define R2D(x) ((x) * (180 / M_PI))
 
