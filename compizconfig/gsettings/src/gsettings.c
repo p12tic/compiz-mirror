@@ -652,8 +652,6 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
 
-    ccsGSettingsBackendRegisterGConfClient (backend);
-
     currentProfile = getCurrentProfileName ();
     currentProfilePath = makeCompizProfilePath (currentProfile);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);

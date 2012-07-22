@@ -546,6 +546,9 @@ readGConfIntegratedOption (CCSBackend *backend,
     GError     *err = NULL;
     Bool       ret = FALSE;
     
+    if (!client)
+	ccsGSettingsBackendRegisterGConfClient (backend);
+
     ret = readOption (backend, setting);
 
     gconfValue = gconf_client_get (client,
@@ -774,6 +777,9 @@ writeGConfIntegratedOption (CCSBackend *backend,
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
     
+    if (!client)
+	ccsGSettingsBackendRegisterGConfClient (backend);
+
     switch (specialOptions[index].type)
     {
     case OptionInt:
