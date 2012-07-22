@@ -14,6 +14,8 @@ else (${USERNAME} STREQUAL "root")
     set (INSTALLDIR ${INSTALLDIR_USER})
 endif (${USERNAME} STREQUAL "root")
 
+message ("destdir: " ${DESTDIR} " install dir: " ${INSTALLDIR})
+
 file (INSTALL DESTINATION $ENV{DESTDIR}${INSTALLDIR}
       TYPE FILE
       FILES ${FILE})
