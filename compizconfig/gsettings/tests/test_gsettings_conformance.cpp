@@ -38,6 +38,14 @@ class CCSGSettingsBackendEnv :
 	{
 	};
 
+	static void registerGConfClientWrapper (CCSBackend *backend)
+	{
+	}
+
+	static void unregisterGConfClientWrapper (CCSBackend *backend)
+	{
+	}
+
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSBackendInterface *interface = NULL;
@@ -66,6 +74,8 @@ class CCSGSettingsBackendEnv :
 
 	    overloadedInterface = *(GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend));
 	    overloadedInterface.gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
+	    overloadedInterface.gsettingsBackendRegisterGConfClient = CCSGSettingsBackendEnv::registerGConfClientWrapper;
+	    overloadedInterface.gsettingsBackendUnregisterGConfClient = CCSGSettingsBackendEnv::unregisterGConfClientWrapper;
 
 	    ccsObjectRemoveInterface (mGSettingsBackend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 	    ccsObjectAddInterface (mGSettingsBackend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
