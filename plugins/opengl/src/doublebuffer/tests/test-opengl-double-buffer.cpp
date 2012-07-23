@@ -35,18 +35,11 @@ class CompizOpenGLDoubleBufferDeathTest :
 {
 };
 
-TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedWithFBOAlwaysSwaps)
+TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
     EXPECT_CALL (mglbb, swap ());
 
-    render (PaintedWithFramebufferObject, blitRegion, mglbb);
-}
-
-TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedFullscreenAlwaysSwaps)
-{
-    EXPECT_CALL (mglbb, swap ());
-
-    render (PaintedFullscreen, blitRegion, mglbb);
+    render (true, blitRegion, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
@@ -54,7 +47,7 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubB
     EXPECT_CALL (mglbb, blitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbb, blit (_));
 
-    render (0, blitRegion, mglbb);
+    render (false, blitRegion, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
@@ -71,13 +64,13 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestBlitExactlyWithRegionSpecified)
     EXPECT_CALL (mglbb, blitAvailable ()).WillRepeatedly (Return (true));
 
     EXPECT_CALL (mglbb, blit (r1));
-    render (0, r1, mglbb);
+    render (false, r1, mglbb);
 
     EXPECT_CALL (mglbb, blit (r2));
-    render (0, r2, mglbb);
+    render (false, r2, mglbb);
 
     EXPECT_CALL (mglbb, blit (r3));
-    render (0, r3, mglbb);
+    render (false, r3, mglbb);
 }
 
 TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitOrCopyIfNotSupportedAndDies)
@@ -88,7 +81,7 @@ TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBli
     ON_CALL (mglbbStrict, fallbackBlitAvailable ()).WillByDefault (Return (false));
 
     ASSERT_DEATH ({
-		    render (0, blitRegion, mglbbStrict);
+		    render (false, blitRegion, mglbbStrict);
 		  },
 		  ".fatal.");
 }
@@ -101,5 +94,5 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
     EXPECT_CALL (mglbbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbbStrict, fallbackBlit (blitRegion));
 
-    render (0, blitRegion, mglbbStrict);
+    render (false, blitRegion, mglbbStrict);
 }

@@ -8,9 +8,6 @@ namespace compiz
 namespace opengl
 {
 
-const unsigned int  PaintedWithFramebufferObject = (1 << 0);
-const unsigned int  PaintedFullscreen = (1 << 1);
-
 class GLDoubleBufferInterface
 {
     public:
@@ -24,7 +21,7 @@ class GLDoubleBufferInterface
 	virtual void fallbackBlit (const CompRegion &region) const = 0;
 };
 
-void render (unsigned int flags,
+void render (bool fullscreen,
              const CompRegion &region,
              GLDoubleBufferInterface &impl);
 

@@ -1724,6 +1724,31 @@ BaseDoubleBuffer::BaseDoubleBuffer (Display *d, const CompSize &s,
 
 #ifndef USE_GLES
 
+static void
+copyFrontToBack()
+{
+    int w = screen->width ();
+    int h = screen->height ();
+
+    glMatrixMode (GL_PROJECTION);
+    glPushMatrix ();
+    glLoadIdentity ();
+    glOrtho (0, w, 0, h, -1.0, 1.0);
+    glMatrixMode (GL_MODELVIEW);
+    glPushMatrix ();
+    glLoadIdentity ();
+
+    glReadBuffer (GL_FRONT);
+    glRasterPos2i (0, 0);
+    glCopyPixels (0, 0, w, h, GL_COLOR);
+    glReadBuffer (GL_BACK);
+
+    glPopMatrix ();
+    glMatrixMode (GL_PROJECTION);
+    glPopMatrix ();
+    glMatrixMode (GL_MODELVIEW);
+}
+
 GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 			      const CompSize &s,
 			      const boost::function <bool ()> &getSyncVblankFunc,
@@ -1994,15 +2019,18 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
-    unsigned int renderMask = 0;
+    bool fullscreen = useFbo ||
+#ifndef USE_GLES
+                      optionGetAlwaysSwapBuffers () ||
+#endif
+                      (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK);
 
-    if (useFbo)
-	renderMask |= compiz::opengl::PaintedWithFramebufferObject;
+    compiz::opengl::render (fullscreen, tmpRegion, doubleBuffer);
 
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-	renderMask |= compiz::opengl::PaintedFullscreen;
-
-    compiz::opengl::render (renderMask, tmpRegion, doubleBuffer);
+#ifndef USE_GLES
+    if (fullscreen && !useFbo)
+	copyFrontToBack ();
+#endif
 
     lastMask = mask;
 }

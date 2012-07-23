@@ -11,12 +11,11 @@ char programName[] = "compiz_test_opengl_double_buffer";
 bool debugOutput = false;
 
 void
-compiz::opengl::render (unsigned int flags,
+compiz::opengl::render (bool fullscreen,
                         const CompRegion &region,
                         GLDoubleBufferInterface &impl)
 {
-    if (flags & (PaintedFullscreen |
-		 PaintedWithFramebufferObject))
+    if (fullscreen)
     {
 	impl.swap ();
     }
