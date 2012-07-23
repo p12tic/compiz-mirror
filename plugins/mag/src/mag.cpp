@@ -38,7 +38,9 @@ MagScreen::cleanup ()
 
     if (program)
     {
+#if 0
 	GL::deletePrograms (1, &program);
+#endif
 	program = 0;
     }
 }
@@ -46,6 +48,7 @@ MagScreen::cleanup ()
 bool
 MagScreen::loadFragmentProgram ()
 {
+#if 0
     char  buffer[1024];
     GLsizei bufSize;
     GLint errorPos;
@@ -85,11 +88,14 @@ MagScreen::loadFragmentProgram ()
     GL::bindProgram (GL_FRAGMENT_PROGRAM_ARB, 0);
 
     return true;
+#endif
+    return false;
 }
 
 bool
 MagScreen::loadImages ()
 {
+#if 0
     CompString overlay_s = optionGetOverlay ();
     CompString mask_s = optionGetMask ();
     CompString pname ("mag");
@@ -130,6 +136,8 @@ MagScreen::loadImages ()
     }
 
     return true;
+#endif
+    return false;
 }
 
 void
@@ -317,8 +325,6 @@ MagScreen::donePaint ()
 
     if (!adjust && zoom == 1.0 && (width || height))
     {
-	glEnable (target);
-
 	glBindTexture (target, texture);
 
 	glTexImage2D (target, 0, GL_RGB, 0, 0, 0,
@@ -328,8 +334,6 @@ MagScreen::donePaint ()
 	height = 0;
 	
 	glBindTexture (target, 0);
-
-	glDisable (target);
     }
 
     if (zoom == 1.0 && !adjust)
@@ -357,6 +361,10 @@ MagScreen::paintSimple ()
     bool           kScreen;
     unsigned short *color;
     float          tmp;
+    GLMatrix       projection;
+    GLMatrix       modelview;
+    GLVertexBuffer *vb = GLVertexBuffer::streamingBuffer ();
+    const GLWindowPaintAttrib attrib = { OPAQUE, BRIGHT, COLOR, 0, 0, 0, 0 };
 
     w = optionGetBoxWidth ();
     h = optionGetBoxHeight ();
@@ -393,8 +401,6 @@ MagScreen::paintSimple ()
 	ch = h;
     }
 
-    glEnable (target);
-
     glBindTexture (target, texture);
 
     if (width != w || height != h)
@@ -419,13 +425,6 @@ MagScreen::paintSimple ()
 	ph = 1.0;
     }
 
-    glMatrixMode (GL_PROJECTION);
-    glPushMatrix ();
-    glLoadIdentity ();
-    glMatrixMode (GL_MODELVIEW);
-    glPushMatrix ();
-    glLoadIdentity ();
-
     vc[0] = ((x1 * 2.0) / screen->width ()) - 1.0;
     vc[1] = ((x2 * 2.0) / screen->width ()) - 1.0;
     vc[2] = ((y1 * -2.0) / screen->height ()) + 1.0;
@@ -436,41 +435,63 @@ MagScreen::paintSimple ()
     tc[2] = h * ph;
     tc[3] = 0.0;
 
-    glColor4usv (defaultColor);
-
-    glPushMatrix ();
-
-    glTranslatef ((float)(posX - (screen->width () / 2)) * 2 / screen->width (),
-		  (float)(posY - (screen->height () / 2)) * 2 / -screen->height (), 0.0);
-
-    glScalef (zoom, zoom, 1.0);
-
-    glTranslatef ((float)((screen->width () / 2) - posX) * 2 / screen->width (),
-		  (float)((screen->height () / 2) - posY) * 2 / -screen->height (), 0.0);
-
+    /* Draw zoom box contents */
     glScissor (x1, screen->height () - y2, w, h);
 
     glEnable (GL_SCISSOR_TEST);
 
-    glBegin (GL_QUADS);
-    glTexCoord2f (tc[0], tc[2]);
-    glVertex2f (vc[0], vc[2]);
-    glTexCoord2f (tc[0], tc[3]);
-    glVertex2f (vc[0], vc[3]);
-    glTexCoord2f (tc[1], tc[3]);
-    glVertex2f (vc[1], vc[3]);
-    glTexCoord2f (tc[1], tc[2]);
-    glVertex2f (vc[1], vc[2]);
-    glEnd ();
+    modelview.translate ((float)(posX - (screen->width () / 2)) * 2 / screen->width (),
+			 (float)(posY - (screen->height () / 2)) * 2 / -screen->height (), 0.0);
+
+    modelview.scale (zoom, zoom, 1.0);
+
+    modelview.translate ((float)((screen->width () / 2) - posX) * 2 / screen->width (),
+			 (float)((screen->height () / 2) - posY) * 2 / -screen->height (), 0.0);
+
+    GLfloat vertices[] = {
+	vc[0], vc[2], 0,
+	vc[0], vc[3], 0,
+	vc[1], vc[2], 0,
+	vc[1], vc[3], 0,
+    };
+
+    GLfloat texcoords[] = {
+	tc[0], tc[2],
+	tc[0], tc[3],
+	tc[1], tc[2],
+	tc[1], tc[3],
+    };
+
+    vb->begin (GL_TRIANGLE_STRIP);
+    vb->colorDefault ();
+    vb->addVertices (4, vertices);
+    vb->addTexCoords (0, 4, texcoords);
+    vb->end ();
+
+    vb->render (projection, modelview, attrib);
 
     glDisable (GL_SCISSOR_TEST);
-
-    glPopMatrix ();
-
+    modelview.reset ();
     glBindTexture (target, 0);
 
-    glDisable (target);
+    /* Save blending state */
+#if USE_GLES
+    GLboolean isBlendingEnabled = GL_TRUE;
+    GLint blendSrcRGB = GL_ONE;
+    GLint blendSrcAlpha = GL_ONE;
+    GLint blendDstRGB = GL_ZERO;
+    GLint blendDstAlpha = GL_ZERO;
 
+    glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+    glGetIntegerv (GL_BLEND_SRC_RGB, &blendSrcRGB);
+    glGetIntegerv (GL_BLEND_DST_RGB, &blendDstRGB);
+    glGetIntegerv (GL_BLEND_SRC_ALPHA, &blendSrcAlpha);
+    glGetIntegerv (GL_BLEND_DST_ALPHA, &blendDstAlpha);
+#else
+    glPushAttrib (GL_COLOR_BUFFER_BIT);
+#endif
+
+    /* Draw zoom box border */
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -488,40 +509,43 @@ MagScreen::paintSimple ()
 
     color = optionGetBoxColor ();
 
-    glColor4us (color[0], color[1], color[2], color[3] * tmp);
+    GLfloat verticesBorder[] = {
+	vc[0] - bw, vc[2] + bh, 0,
+	vc[0], vc[2], 0,
+	vc[1] + bw, vc[2] + bh, 0,
+	vc[1], vc[2], 0,
+	vc[1] + bw, vc[3] - bh, 0,
+	vc[1], vc[3], 0,
+	vc[0] - bw, vc[3] - bh, 0,
+	vc[0], vc[3], 0,
+	vc[0] - bw, vc[2] + bh, 0,
+	vc[0], vc[2], 0,
+    };
 
-    glBegin (GL_QUADS);
-    glVertex2f (vc[0] - bw, vc[2] + bh);
-    glVertex2f (vc[0] - bw, vc[2]);
-    glVertex2f (vc[1] + bw, vc[2]);
-    glVertex2f (vc[1] + bw, vc[2] + bh);
-    glVertex2f (vc[0] - bw, vc[3]);
-    glVertex2f (vc[0] - bw, vc[3] - bh);
-    glVertex2f (vc[1] + bw, vc[3] - bh);
-    glVertex2f (vc[1] + bw, vc[3]);
-    glVertex2f (vc[0] - bw, vc[2]);
-    glVertex2f (vc[0] - bw, vc[3]);
-    glVertex2f (vc[0], vc[3]);
-    glVertex2f (vc[0], vc[2]);
-    glVertex2f (vc[1], vc[2]);
-    glVertex2f (vc[1], vc[3]);
-    glVertex2f (vc[1] + bw, vc[3]);
-    glVertex2f (vc[1] + bw, vc[2]);
-    glEnd();
+    vb->begin (GL_TRIANGLE_STRIP);
+    vb->color4f (color[0] / 65535.0, color[1] / 65535.0,
+	         color[2] / 65535.0, color[3] * tmp / 65535.0);
+    vb->addVertices (10, verticesBorder);
+    vb->end ();
 
-    glColor4usv (defaultColor);
-    glDisable (GL_BLEND);
-    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    vb->render (projection, modelview, attrib);
 
-    glPopMatrix();
-    glMatrixMode (GL_PROJECTION);
-    glPopMatrix ();
-    glMatrixMode (GL_MODELVIEW);
+    vb->colorDefault ();
+
+    /* Restore blending state */
+#if USE_GLES
+    if (!isBlendingEnabled)
+	glDisable (GL_BLEND);
+    glBlendFuncSeparate (blendSrcRGB, blendDstRGB, blendSrcAlpha, blendDstAlpha);
+#else
+    glPopAttrib ();
+#endif
 }
 
 void
 MagScreen::paintImage ()
 {
+#if 0
     float          pw, ph;
     int            x1, x2, y1, y2;
     float          vc[4];
@@ -680,12 +704,14 @@ MagScreen::paintImage ()
     glMatrixMode (GL_MODELVIEW);
 
     glPopAttrib ();
+#endif
 
 }
 
 void
 MagScreen::paintFisheye ()
 {
+#if 0
     float      pw, ph;
     float      radius, fZoom, base; // fZoom is the local zoom variable
     int        x1, x2, y1, y2;
@@ -786,6 +812,7 @@ MagScreen::paintFisheye ()
     glBindTexture (target, 0);
 
     glDisable (target);
+#endif
 }
 
 
@@ -939,12 +966,14 @@ MagScreen::MagScreen (CompScreen *screen) :
 
     glGenTextures (1, &texture);
 
+#ifdef USE_GLES
+    target = GL_TEXTURE_2D;
+#else
     if (GL::textureNonPowerOfTwo)
 	target = GL_TEXTURE_2D;
     else
 	target = GL_TEXTURE_RECTANGLE_ARB;
-
-    glEnable (target);
+#endif
 
     /* Bind the texture */
     glBindTexture (target, texture);
@@ -952,8 +981,8 @@ MagScreen::MagScreen (CompScreen *screen) :
     /* Load the parameters */
     glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri (target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri (target, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri (target, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri (target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri (target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glTexImage2D (target, 0, GL_RGB, 0, 0, 0,
 		  GL_RGB, GL_UNSIGNED_BYTE, NULL);
@@ -962,8 +991,6 @@ MagScreen::MagScreen (CompScreen *screen) :
     height = 0;
 
     glBindTexture (target, 0);
-
-    glDisable (target);
 
 #define optionNotify(name)						       \
     optionSet##name##Notify (boost::bind (&MagScreen::optionChanged,	       \
@@ -1004,10 +1031,12 @@ MagScreen::MagScreen (CompScreen *screen) :
 	mode = MagOptions::ModeSimple;
     }
 
+#if 0
     if (!GL::fragmentProgram)
 	compLogMessage ("mag", CompLogLevelWarn,
 			"GL_ARB_fragment_program not supported. "
 			"Fisheye mode will not work.");
+#endif
 }
 
 MagScreen::~MagScreen ()
