@@ -68,6 +68,14 @@ target_link_libraries (
     compizconfig ${LIBCOMPIZCONFIG_LIBRARIES} m
 )
 
+#
+# Tell CMake that targets using compizconfig should NOT re-import the
+# libraries that compizconfig depends on (contains).
+#
+set_target_properties (compizconfig PROPERTIES
+    LINK_INTERFACE_LIBRARIES ""
+)
+
 set (COMPIZCONFIG_LIBS "")
 foreach (_val ${LIBCOMPIZCONFIG_LDFLAGS})
     set (COMPIZCONFIG_LIBS "${COMPIZCONFIG_LIBS}${_val} ")

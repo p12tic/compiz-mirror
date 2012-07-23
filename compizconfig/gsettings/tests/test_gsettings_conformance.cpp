@@ -49,6 +49,7 @@ class CCSGSettingsBackendEnv :
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSBackendInterface *interface = NULL;
+	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
 	    Bool		fallback   = FALSE;
 
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
@@ -72,13 +73,10 @@ class CCSGSettingsBackendEnv :
 	    if (backendInit)
 		(*backendInit) ((CCSBackend *) mBackend, mContext);
 
-	    overloadedInterface = *(GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend));
-	    overloadedInterface.gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
-	    overloadedInterface.gsettingsBackendRegisterGConfClient = CCSGSettingsBackendEnv::registerGConfClientWrapper;
-	    overloadedInterface.gsettingsBackendUnregisterGConfClient = CCSGSettingsBackendEnv::unregisterGConfClientWrapper;
-
-	    ccsObjectRemoveInterface (mGSettingsBackend, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
-	    ccsObjectAddInterface (mGSettingsBackend, (CCSInterface *) &overloadedInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
+	    overloadedInterface = GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend);
+	    overloadedInterface->gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
+	    overloadedInterface->gsettingsBackendRegisterGConfClient = CCSGSettingsBackendEnv::registerGConfClientWrapper;
+	    overloadedInterface->gsettingsBackendUnregisterGConfClient = CCSGSettingsBackendEnv::unregisterGConfClientWrapper;
 
 	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock",
 									CharacterWrapper (makeCompizPluginPath (profileName.c_str (), "mock")),
@@ -434,7 +432,6 @@ class CCSGSettingsBackendEnv :
 	CCSBackendWithCapabilities *mBackend;
 	CCSBackend		   *mGSettingsBackend;
 	std::string pluginToMatch;
-	CCSGSettingsBackendInterface overloadedInterface;
 
 	static const std::string profileName;
 };

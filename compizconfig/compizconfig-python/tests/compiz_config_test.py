@@ -5,6 +5,7 @@ import subprocess
 arch = subprocess.Popen (["uname", "-p"], stdout=subprocess.PIPE).communicate ()[0][:-1]
 
 os.environ["COMPIZ_METADATA_PATH"] = "generated/"
+os.environ["XDG_CONFIG_HOME"] = "compizconfig/libcompizconfig/config"
 os.environ["LIBCOMPIZCONFIG_BACKEND_PATH"] = "compizconfig/libcompizconfig/backend/"
 os.environ["XDG_DATA_DIRS"] = "generated/"
 
