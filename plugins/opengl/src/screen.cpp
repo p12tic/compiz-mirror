@@ -1798,18 +1798,15 @@ void
 GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 {
     const CompRect::vector &blitRects (region.rects ());
+    int w = screen->width ();
+    int h = screen->height ();
 
     waitVSync ();
 
-    GLint viewport[4];
-    GLfloat rasterPos[4];
-
-    glGetIntegerv (GL_VIEWPORT, viewport);
-    glGetFloatv (GL_CURRENT_RASTER_POSITION, rasterPos);
     glMatrixMode (GL_PROJECTION);
     glPushMatrix ();
     glLoadIdentity ();
-    glOrtho (0, viewport[2], 0, viewport[3], -1.0, 1.0);
+    glOrtho (0, w, 0, h, -1.0, 1.0);
     glMatrixMode (GL_MODELVIEW);
     glPushMatrix ();
     glLoadIdentity ();
@@ -1818,9 +1815,9 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
     foreach (const CompRect &r, blitRects)
     {
 	int x = r.x1 ();
-	int y = screen->height () - r.y2();
+	int y = h - r.y2();
 	glRasterPos2i (x, y);
-	glCopyPixels (x, y, r.width (), r.height (), GL_COLOR);
+	glCopyPixels (x, y, w, h, GL_COLOR);
     }
     glDrawBuffer (GL_BACK);
 
@@ -1828,7 +1825,6 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
     glMatrixMode (GL_PROJECTION);
     glPopMatrix ();
     glMatrixMode (GL_MODELVIEW);
-    glRasterPos4fv (rasterPos);
 
     glFlush ();
 
