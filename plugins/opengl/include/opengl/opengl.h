@@ -510,8 +510,10 @@ namespace GL {
     extern bool  textureBorderClamp;
     extern bool  textureCompression;
     extern GLint maxTextureSize;
-    extern bool  fbo;
-    extern bool  vbo;
+    extern bool  fboSupported;
+    extern bool  fboEnabled;
+    extern bool  vboSupported;
+    extern bool  vboEnabled;
     extern bool  shaders;
     extern bool  stencilBuffer;
     extern GLint maxTextureUnits;

@@ -41,11 +41,11 @@
 
 GLVertexBuffer *PrivateVertexBuffer::streamingBuffer = NULL;
 
-bool GLVertexBuffer::supported ()
+bool GLVertexBuffer::enabled ()
 {
     // FIXME: GL::shaders shouldn't be a requirement here. But for now,
     //        fglrx doesn't have GL::shaders and that causes blending problems.
-    return GL::vbo && GL::shaders;
+    return GL::vboEnabled && GL::shaders;
 }
 
 GLVertexBuffer::GLVertexBuffer () :
@@ -95,7 +95,7 @@ void GLVertexBuffer::begin ()
 
 int GLVertexBuffer::end ()
 {
-    if (!supported ())
+    if (!enabled ())
 	return 0;
 
     if (!priv->vertexData.size ())
@@ -323,7 +323,7 @@ void GLVertexBuffer::setAutoProgram (AutoProgram *autoProgram)
 
 int GLVertexBuffer::render ()
 {
-    if (supported ())
+    if (enabled ())
 	return priv->render (NULL, NULL, NULL);
     else
 	return -1;
@@ -352,7 +352,7 @@ int GLVertexBuffer::render (const GLMatrix            &projection,
     if (!priv->vertexData.size ())
 	return -1;
 
-    if (supported ())
+    if (enabled ())
 	return priv->render (&projection, &modelview, &attrib);
     else
 	return priv->legacyRender (projection, modelview, attrib);
@@ -363,7 +363,7 @@ PrivateVertexBuffer::PrivateVertexBuffer () :
     maxVertices (-1),
     program (NULL)
 {
-    if (!GLVertexBuffer::supported ())
+    if (!GL::genBuffers)
 	return;
 
     GL::genBuffers (1, &vertexBuffer);
@@ -374,13 +374,17 @@ PrivateVertexBuffer::PrivateVertexBuffer () :
 
 PrivateVertexBuffer::~PrivateVertexBuffer ()
 {
-    if (!GLVertexBuffer::supported ())
+    if (!GL::deleteBuffers)
 	return;
 
-    GL::deleteBuffers (1, &vertexBuffer);
-    GL::deleteBuffers (1, &normalBuffer);
-    GL::deleteBuffers (1, &colorBuffer);
-    GL::deleteBuffers (4, &textureBuffers[0]);
+    if (vertexBuffer)
+	GL::deleteBuffers (1, &vertexBuffer);
+    if (normalBuffer)
+	GL::deleteBuffers (1, &normalBuffer);
+    if (colorBuffer)
+	GL::deleteBuffers (1, &colorBuffer);
+    if (textureBuffers[0])
+	GL::deleteBuffers (4, &textureBuffers[0]);
 }
 
 int PrivateVertexBuffer::render (const GLMatrix            *projection,

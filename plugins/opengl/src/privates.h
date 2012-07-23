@@ -141,6 +141,8 @@ class PrivateGLScreen :
 
 	bool hasVSync ();
 
+	void updateRenderMode ();
+
 	void prepareDrawing ();
 
 	bool compositingActive ();

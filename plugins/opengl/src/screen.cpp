@@ -148,8 +148,10 @@ namespace GL {
     bool  textureBorderClamp = false;
     bool  textureCompression = false;
     GLint maxTextureSize = 0;
-    bool  fbo = false;
-    bool  vbo = false;
+    bool  fboSupported = false;
+    bool  fboEnabled = false;
+    bool  vboSupported = false;
+    bool  vboEnabled = false;
     bool  shaders = false;
     GLint maxTextureUnits = 1;
 
@@ -373,8 +375,10 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     GL::textureFromPixmap = true;
     GL::textureNonPowerOfTwo = true;
-    GL::fbo = true;
-    GL::vbo = true;
+    GL::fboSupported = true;
+    GL::fboEnabled = true;
+    GL::vboSupported = true;
+    GL::vboEnabled = true;
     GL::shaders = true;
     GL::stencilBuffer = true;
     GL::maxTextureUnits = 4;
@@ -415,7 +419,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	GL::postSubBuffer = (GL::EGLPostSubBufferNVProc)
 	    eglGetProcAddress ("eglPostSubBufferNV");
 
-    if (!GL::fbo &&
+    if (!GL::fboSupported &&
 	!GL::postSubBuffer)
     {
 	compLogMessage ("opengl", CompLogLevelFatal,
@@ -653,7 +657,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::framebufferRenderbuffer &&
 	    GL::renderbufferStorage
 	    )
-	    GL::fbo = true;
+	    GL::fboSupported = true;
     }
 
     if (strstr (glExtensions, "GL_ARB_vertex_buffer_object"))
@@ -674,8 +678,10 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::genBuffers    &&
 	    GL::bufferData    &&
 	    GL::bufferSubData)
-	    GL::vbo = true;
+	    GL::vboSupported = true;
     }
+
+    priv->updateRenderMode ();
 
     /*
      * !!! WARNING for users of the ATI/AMD fglrx driver !!!
@@ -778,19 +784,13 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
 #endif
 
-    if (GL::fbo)
+    if (GL::fboSupported)
     {
 	priv->scratchFbo = new GLFramebufferObject;
 	priv->scratchFbo->allocate (*screen, NULL, GL_BGRA);
     }
 
     GLVertexBuffer::streamingBuffer ()->setAutoProgram (priv->autoProgram);
-
-    compLogMessage ("opengl", CompLogLevelInfo,
-                    "Initialized using FBO:%s VBO:%s shaders:%s",
-                    GL::fbo ? "on" : "off",
-                    GL::vbo ? "on" : "off",
-                    GL::shaders ? "on" : "off");
 
     return true;
 }
@@ -1016,7 +1016,7 @@ GLScreen::GLScreen (CompScreen *s) :
 
 	    depth = value;
 
-	    if (GL::fbo)
+	    if (GL::fboSupported)
 	    {
 		(*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
 					  GLX_BIND_TO_MIPMAP_TEXTURE_EXT,
@@ -1887,7 +1887,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     bool useFbo = false;
 
     /* Clear the color buffer where appropriate */
-    if (!scratchFboBindFailed && GL::fbo)
+    if (!scratchFboBindFailed && GL::fboEnabled)
     {
 	if (clearBuffers)
 	    glClear (GL_COLOR_BUFFER_BIT);
@@ -1902,7 +1902,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 		glClear (GL_COLOR_BUFFER_BIT);
     }
 
-    if (GL::fbo && !useFbo && !scratchFboBindFailed)
+    if (GL::fboEnabled && !useFbo && !scratchFboBindFailed)
     {
 	scratchFboBindFailed = true;
 	compLogMessage ("opengl", CompLogLevelError, "framebuffer object bind failed. Postprocessing disabled");
@@ -2025,8 +2025,21 @@ PrivateGLScreen::compositingActive ()
 }
 
 void
+PrivateGLScreen::updateRenderMode ()
+{
+#ifndef USE_GLES
+    GL::fboEnabled = GL::fboSupported && optionGetFramebufferObject ();
+    GL::vboEnabled = GL::vboSupported && optionGetVertexBufferObject ();
+#endif
+}
+
+void
 PrivateGLScreen::prepareDrawing ()
 {
+    bool wasFboEnabled = GL::fboEnabled;
+    updateRenderMode ();
+    if (wasFboEnabled != GL::fboEnabled)
+	CompositeScreen::get (screen)->damageScreen ();
 }
 
 GLTexture::BindPixmapHandle

@@ -1255,7 +1255,7 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
     priv->vertexBuffer->render (transform, attrib);
     #else
 
-    if (!GLVertexBuffer::supported ())
+    if (!GLVertexBuffer::enabled ())
 	enableLegacyOBSAndRender (priv->gScreen, this, texture, transform,
                                   attrib, filter, mask);
     else

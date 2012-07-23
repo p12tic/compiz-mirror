@@ -323,7 +323,7 @@ PrivateTexture::loadImageData (const char   *image,
 	matrix.xx = 1.0f / width;
 	matrix.yy = 1.0f / height;
 	matrix.y0 = 0.0f;
-	mipmap = GL::fbo && (GL::textureNonPowerOfTwoMipmap || pot);
+	mipmap = GL::fboEnabled && (GL::textureNonPowerOfTwoMipmap || pot);
     }
     else
     {

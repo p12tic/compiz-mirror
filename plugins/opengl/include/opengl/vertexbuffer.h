@@ -58,7 +58,7 @@ class GLVertexBuffer
 {
     public:
 
-	static bool supported ();
+	static bool enabled ();
 
 	GLVertexBuffer ();
 

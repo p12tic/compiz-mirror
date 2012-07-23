@@ -43,6 +43,16 @@
 		<_long>If available use compression for textures converted from images</_long>
 		<default>false</default>
 	    </option>
+	    <option name="framebuffer_object" type="bool">
+		<_short>Framebuffer object</_short>
+		<_long>Render all frames indirectly using framebuffer objects (GL_EXT_framebuffer_object), if supported by the driver. Pros: This provides an efficient way of making buffer swapping possible on every frame, which allows compiz to render more smoothly and without tearing. Cons: This will come at the cost of (1) reduced graphics benchmark performance; (2) increased GPU resource consumption; and (3) higher visible lag, such as when moving windows.</_long>
+		<default>true</default>
+	    </option>
+	    <option name="vertex_buffer_object" type="bool">
+		<_short>Vertex buffer object</_short>
+		<_long>Render all graphics primitives using vertex buffer objects (GL_ARB_vertex_buffer_object), if supported by the driver. Pros: This provides higher graphics performance for some drivers. Cons: This is a new feature and may cause graphical problems. Note: This feature is always on OpenGL|ES builds such as ARM platforms.</_long>
+		<default>true</default>
+	    </option>
 	</options>
     </plugin>
 </compiz>

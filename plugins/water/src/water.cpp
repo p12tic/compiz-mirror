@@ -143,7 +143,7 @@ WaterScreen::waterVertices (GLenum type,
     glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
     glLineWidth (1.0f);
 
-    if (GL::vbo && GL::shaders)
+    if (GL::vboEnabled && GL::shaders)
     {
 	vertexBuffer[SET]->begin (type);
 	float data[3];
@@ -251,7 +251,7 @@ WaterScreen::waterSetup ()
     d1 = (d0 + (size));
     t0 = (unsigned char *) (d1 + (size));
 
-    if (GL::vbo && GL::shaders)
+    if (GL::vboEnabled && GL::shaders)
     {
 	program[SET]    = new GLProgram (set_water_vertices_vertex_shader,
 				         set_water_vertices_fragment_shader);
@@ -289,7 +289,7 @@ WaterScreen::waterSetup ()
 	vertexBuffer[PAINT]->setProgram (program[PAINT]);
     }
 
-    if (GL::fbo)
+    if (GL::fboEnabled)
     {
 	CompSize size(texWidth, texHeight);
 	for (int i = 0; i < TEXTURE_NUM; i++)
@@ -317,7 +317,7 @@ WaterScreen::glPaintCompositedOutput (const CompRegion    &region,
 {
     if (count)
     {
-	if (GL::vbo && GL::shaders)
+	if (GL::vboEnabled && GL::shaders)
 	{
 	    GLFramebufferObject::rebind (oldFbo);
 	    glViewport (oldViewport[0], oldViewport[1],
@@ -825,9 +825,9 @@ WaterPluginVTable::init ()
 	 return false;
 
     const char *missing = NULL;
-    if (!GL::fbo)
+    if (!GL::fboSupported)
 	missing = "framebuffer objects";
-    if (!GL::vbo)
+    if (!GL::vboSupported)
 	missing = "vertexbuffer objects";
     if (!GL::shaders)
 	missing = "GLSL";
