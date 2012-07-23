@@ -1727,12 +1727,16 @@ PrivateScaleWindow::damageRect (bool            initial,
     }
     else if (spScreen->state == ScaleScreen::Wait)
     {
+#ifndef LP1026986_FIXED_PROPERLY
+	spScreen->cScreen->damageScreen ();
+#else
 	if (slot)
 	{
 	    cWindow->damageTransformedRect (scale, scale, tx, ty, rect);
 
 	    status = true;
 	}
+#endif
     }
 
     status |= cWindow->damageRect (initial, rect);
