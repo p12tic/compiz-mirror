@@ -22,24 +22,15 @@
 import gconf
 import glib
 import subprocess
+import os.path
 
+# this should point to the directory where all the .convert files are stored
+CONVERT_PATH = "/usr/lib/compiz/migration/"
 
 def migrate_file(convert_file):
-    subprocess.Popen(["gsettings-data-convert", "--file=/usr/lib/compiz/migration/{}".format(convert_file)]).communicate()
+    subprocess.Popen(["gsettings-data-convert", "--file={}{}".format(CONVERT_PATH, convert_file)]).communicate()
 
-def migrate_gconf_to_gsettings ():
-
-    # first, check if we have the unity profile .convert files installed - 
-    # if we do not, it makes no sense to check the gconf active profile
-    # as we only have the Default one
-    try:
-        with open('/usr/lib/compiz/migration/compiz-profile-unity.convert') as f: pass
-    except IOError as e:
-        print "No unity profiles installed, only migrating Default"
-        migrate_file('compiz-profile-active-Default.convert')
-        return
-    f.close()
-
+def migrate_gconf_to_gsettings():
     client = gconf.client_get_default()
 
     if not client:
@@ -68,10 +59,11 @@ def migrate_gconf_to_gsettings ():
         print "Will migrate 'unity' as the active profile"
         migrate_file('compiz-profile-active-unity.convert')
         migrate_file('compiz-profile-Default.convert')
-    elif current_profile_str == 'Default':
+    else:
         print "Will migrate 'Default' as the active profile"
         migrate_file('compiz-profile-active-Default.convert')
-        migrate_file('compiz-profile-unity.convert')
+        if os.path.exists(CONVERT_PATH + 'compiz-profile-unity.convert'):
+            migrate_file('compiz-profile-unity.convert')
 
 if __name__ == '__main__':
     migrate_gconf_to_gsettings ()
