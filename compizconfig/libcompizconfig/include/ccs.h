@@ -969,6 +969,10 @@ Bool * ccsGetBoolArrayFromValueList (CCSSettingValueList list,
 CCSSettingColorValue* ccsGetColorArrayFromValueList (CCSSettingValueList list,
 	       					     int                 *num);
 
+/* Deep copies value lists */
+CCSSettingValueList
+ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
+
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
 CCSSettingValueList ccsGetValueListFromStringArray (char       **array,
