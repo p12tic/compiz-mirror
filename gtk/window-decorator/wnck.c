@@ -45,7 +45,6 @@ get_frame_type (WnckWindow *win)
 	    int		  result, format;
 	    unsigned long n, left;
 	    unsigned char *data;
-	    gint          error;
 	    Window        xid = wnck_window_get_xid (win);
 
 	    if (xid == None)
@@ -57,9 +56,9 @@ get_frame_type (WnckWindow *win)
 					 0L, 1024L, FALSE, XA_ATOM, &actual, &format,
 					 &n, &left, &data);
 	    gdk_flush ();
-	    error = gdk_error_trap_pop ();
+	    gdk_error_trap_pop ();
 
-	    if (result == Success && error == Success && data)
+	    if (result == Success && data)
 	    {
 		Atom *a = (Atom *) data;
 
