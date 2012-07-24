@@ -1566,6 +1566,14 @@ static void ccsBackendCapabilitiesWriteDoneWrapper (CCSBackend *backend, CCSCont
 	ccsBackendWriteDone (bcPrivate->backend, context);
 }
 
+static void ccsBackendCapabilitiesUpdateSettingWrapper (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    CAPABILITIES_PRIV (backend);
+
+    if (ccsBackendHasUpdateSetting (bcPrivate->backend))
+	ccsBackendUpdateSetting (bcPrivate->backend, context, plugin, setting);
+}
+
 static Bool ccsBackendCapabilitiesGetSettingIsIntegratedWrapper (CCSBackend *backend, CCSSetting *setting)
 {
     CAPABILITIES_PRIV (backend);
@@ -5530,6 +5538,7 @@ const CCSBackendInterface ccsBackendCapabilitiesInterfaceWrapper =
     ccsBackendCapabilitiesWriteInitWrapper,
     ccsBackendCapabilitiesWriteSettingWrapper,
     ccsBackendCapabilitiesWriteDoneWrapper,
+    ccsBackendCapabilitiesUpdateSettingWrapper,
     ccsBackendCapabilitiesGetSettingIsIntegratedWrapper,
     ccsBackendCapabilitiesGetSettingIsReadOnlyWrapper,
     ccsBackendCapabilitiesGetExistingProfilesWrapper,
