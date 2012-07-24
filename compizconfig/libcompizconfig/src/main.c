@@ -1380,12 +1380,12 @@ static Bool ccsBackendHasWriteDone (CCSBackend *backend)
 
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (backend, context);
 }
- 
-void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+
+static Bool ccsBackendHasUpdateSetting (CCSBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->updateSetting) (backend, context, plugin, setting);
+    return (GET_INTERFACE (CCSBackendInterface, backend))->updateSetting != NULL;
 }
 
 void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
