@@ -605,6 +605,16 @@ writeDone (CCSBackend *backend, CCSContext * context)
     free (fileName);
 }
 
+static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    if (readInit (backend, context))
+    {
+	readSetting (backend, context, setting);
+	readDone (backend, context);
+    }
+}
+
 static Bool
 getSettingIsReadOnly (CCSBackend *backend, CCSSetting * setting)
 {
@@ -762,6 +772,7 @@ static CCSBackendInterface iniVTable = {
     writeInit,
     writeSetting,
     writeDone,
+    updateSetting,
     NULL,
     getSettingIsReadOnly,
     getExistingProfiles,
