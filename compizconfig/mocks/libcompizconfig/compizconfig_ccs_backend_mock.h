@@ -26,6 +26,7 @@ class CCSBackendGMockInterface
 	virtual Bool writeInit (CCSContext *conxtext) = 0;
 	virtual void writeSetting (CCSContext *context, CCSSetting *setting) = 0;
 	virtual void writeDone (CCSContext *context) = 0;
+	virtual void updateSetting (CCSContext *context, CCSPlugin *plugin, CCSSetting *setting) = 0;
 	virtual Bool getSettingIsIntegrated (CCSSetting *setting) = 0;
 	virtual Bool getSettingIsReadOnly (CCSSetting *setting) = 0;
 	virtual CCSStringList getExistingProfiles (CCSContext *context) = 0;
@@ -52,6 +53,7 @@ class CCSBackendGMock :
 	MOCK_METHOD1 (writeInit, Bool (CCSContext *));
 	MOCK_METHOD2 (writeSetting, void (CCSContext *, CCSSetting *));
 	MOCK_METHOD1 (writeDone, void (CCSContext *));
+	MOCK_METHOD3 (updateSetting, void (CCSContext *, CCSPlugin *, CCSSetting *));
 	MOCK_METHOD1 (getSettingIsIntegrated, Bool (CCSSetting *));
 	MOCK_METHOD1 (getSettingIsReadOnly, Bool (CCSSetting *));
 	MOCK_METHOD1 (getExistingProfiles, CCSStringList (CCSContext *));
@@ -128,6 +130,11 @@ class CCSBackendGMock :
 	static void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context)
 	{
 	    ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->writeDone (context);
+	}
+
+	static void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+	{
+	    ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->updateSetting (context, plugin, setting);
 	}
 
 	static Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting)
