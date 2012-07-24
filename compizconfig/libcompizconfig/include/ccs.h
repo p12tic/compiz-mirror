@@ -808,7 +808,7 @@ Bool * ccsGetBoolArrayFromValueList (CCSSettingValueList list,
 CCSSettingColorValue* ccsGetColorArrayFromValueList (CCSSettingValueList list,
 	       					     int                 *num);
 
-/* Copies lists */
+/* Deep copies value lists */
 CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
 
