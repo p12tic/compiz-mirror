@@ -10,13 +10,33 @@ using namespace compiz::opengl;
 char programName[] = "compiz_test_opengl_double_buffer";
 bool debugOutput = false;
 
+namespace compiz
+{
+namespace opengl
+{
+
+DoubleBuffer::DoubleBuffer ()
+{
+    setting[VSYNC] = true;
+    setting[PERSISTENT_BACK_BUFFER] = false;
+}
+
+DoubleBuffer::~DoubleBuffer ()
+{
+}
+
 void
-compiz::opengl::DoubleBuffer::render (const CompRegion &region,
-                                      bool fullscreen,
-                                      bool persistentBackBuffer)
+DoubleBuffer::set (Setting name, bool value)
+{
+    setting[name] = value;
+}
+
+void
+DoubleBuffer::render (const CompRegion &region,
+                      bool fullscreen)
 {
     if (fullscreen)
-	swap (persistentBackBuffer);
+	swap ();
     else if (blitAvailable ())
 	blit (region);
     else if (fallbackBlitAvailable ())
@@ -29,3 +49,6 @@ compiz::opengl::DoubleBuffer::render (const CompRegion &region,
 	abort ();
     }
 }
+
+} // namespace opengl
+} // namespace compiz

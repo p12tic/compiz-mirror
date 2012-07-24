@@ -11,18 +11,27 @@ namespace opengl
 class DoubleBuffer
 {
     public:
+	DoubleBuffer ();
+	virtual ~DoubleBuffer ();
 
-	virtual ~DoubleBuffer () {}
-
-	virtual void swap (bool persistentBackBuffer=false) const = 0;
+	virtual void swap () const = 0;
 	virtual bool blitAvailable () const = 0;
 	virtual void blit (const CompRegion &region) const = 0;
 	virtual bool fallbackBlitAvailable () const = 0;
 	virtual void fallbackBlit (const CompRegion &region) const = 0;
 
-	void render (const CompRegion &region, bool fullscreen,
-	             bool persistentBackBuffer=false);
+	typedef enum
+	{
+	    VSYNC,
+	    PERSISTENT_BACK_BUFFER,
+	    _NSETTINGS
+	} Setting;
 
+	void set (Setting name, bool value);
+	void render (const CompRegion &region, bool fullscreen);
+
+    protected:
+	bool setting[_NSETTINGS];
 };
 
 }

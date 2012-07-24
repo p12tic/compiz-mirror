@@ -50,14 +50,12 @@ class GLDoubleBuffer :
     public:
 
 	GLDoubleBuffer (Display *,
-			const CompSize &,
-			const boost::function <bool ()> &);
+			const CompSize &);
 
     protected:
 
 	Display *mDpy;
 	const CompSize &mSize;
-	boost::function <bool ()> getSyncVblank;
 };
 
 #ifndef USE_GLES
@@ -69,11 +67,9 @@ class GLXDoubleBuffer :
 
 	GLXDoubleBuffer (Display *,
 		       const CompSize &,
-		       const boost::function <bool ()> &,
-		       Window,
-		       const boost::function <void ()> &);
+		       Window);
 
-	void swap (bool persistentBackBuffer=false) const;
+	void swap () const;
 	bool blitAvailable () const;
 	void blit (const CompRegion &region) const;
 	bool fallbackBlitAvailable () const;
@@ -82,7 +78,6 @@ class GLXDoubleBuffer :
     protected:
 
 	Window mOutput;
-	boost::function <void ()> waitVSync;
 };
 
 #else
@@ -94,10 +89,9 @@ class EGLDoubleBuffer :
 
 	EGLDoubleBuffer (Display *,
 		       const CompSize &,
-		       const boost::function <bool ()> &,
 		       EGLSurface const &);
 
-	void swap (bool persistentBackBuffer=false) const;
+	void swap () const;
 	bool blitAvailable () const;
 	void blit (const CompRegion &region) const;
 	bool fallbackBlitAvailable () const;
@@ -145,9 +139,6 @@ class PrivateGLScreen :
 	void prepareDrawing ();
 
 	bool compositingActive ();
-
-	void controlSwapVideoSync ();
-	void waitForVideoSync ();
 
 	void paintBackground (const GLMatrix   &transform,
 	                      const CompRegion &region,

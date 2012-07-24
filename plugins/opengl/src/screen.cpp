@@ -37,6 +37,8 @@
 #include <dlfcn.h>
 #include <math.h>
 
+using namespace compiz::opengl;
+
 namespace GL {
     #ifdef USE_GLES
     EGLCreateImageKHRProc  createImage;
@@ -1098,14 +1100,9 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     lighting (false),
     #ifndef USE_GLES
     getProcAddress (0),
-    doubleBuffer (screen->dpy (), *screen,
-		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
-		cScreen->output (),
-		boost::bind (&PrivateGLScreen::waitForVideoSync, this)),
+    doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
     #else
-    doubleBuffer (screen->dpy (), *screen,
-		boost::bind (&PrivateGLScreen::optionGetSyncToVblank, this),
-		surface),
+    doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
     scratchFboBindFailed (false),
@@ -1707,18 +1704,9 @@ controlSwapVideoSync (bool sync)
 
 } // namespace GL
 
-void
-PrivateGLScreen::waitForVideoSync ()
-{
-    if (optionGetSyncToVblank ())
-        GL::waitForVideoSync ();
-}
-
-GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s,
-				const boost::function <bool ()> &getSyncVblankFunc) :
+GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s) :
     mDpy (d),
-    mSize (s),
-    getSyncVblank (getSyncVblankFunc)
+    mSize (s)
 {
 }
 
@@ -1751,21 +1739,20 @@ copyFrontToBack()
 
 GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 			      const CompSize &s,
-			      const boost::function <bool ()> &getSyncVblankFunc,
-			      Window output,
-			      const boost::function <void ()> &waitVSyncFunc) :
-    GLDoubleBuffer (d, s, getSyncVblankFunc),
-    mOutput (output),
-    waitVSync (waitVSyncFunc)
+			      Window output) :
+    GLDoubleBuffer (d, s),
+    mOutput (output)
 {
 }
 
 void
-GLXDoubleBuffer::swap (bool persistentBackBuffer) const
+GLXDoubleBuffer::swap () const
 {
-    GL::controlSwapVideoSync (getSyncVblank ());
+    GL::controlSwapVideoSync (setting[VSYNC]);
+
     glXSwapBuffers (mDpy, mOutput);
-    if (!persistentBackBuffer)
+
+    if (!setting[PERSISTENT_BACK_BUFFER])
 	copyFrontToBack ();
 }
 
@@ -1780,7 +1767,8 @@ GLXDoubleBuffer::blit (const CompRegion &region) const
 {
     const CompRect::vector &blitRects (region.rects ());
 
-    waitVSync ();
+    if (setting[VSYNC])
+	GL::waitForVideoSync ();
 
     foreach (const CompRect &r, blitRects)
     {
@@ -1803,7 +1791,8 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
     int w = screen->width ();
     int h = screen->height ();
 
-    waitVSync ();
+    if (setting[VSYNC])
+	GL::waitForVideoSync ();
 
     glMatrixMode (GL_PROJECTION);
     glPushMatrix ();
@@ -1836,17 +1825,16 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 
 EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
 			      const CompSize &s,
-			      const boost::function <bool ()> &getSyncVblankFunc,
 			      EGLSurface const & surface) :
-    GLDoubleBuffer (d, s, getSyncVblankFunc),
+    GLDoubleBuffer (d, s),
     mSurface (surface)
 {
 }
 
 void
-EGLDoubleBuffer::swap (bool persistentBackBuffer) const
+EGLDoubleBuffer::swap () const
 {
-    GL::controlSwapVideoSync (getSyncVblank ());
+    GL::controlSwapVideoSync (setting[VSYNC]);
 
     eglSwapBuffers (eglGetDisplay (mDpy), mSurface);
     eglWaitGL ();
@@ -1865,7 +1853,7 @@ EGLDoubleBuffer::blit (const CompRegion &region) const
     CompRect::vector blitRects (region.rects ());
     int		     y = 0;
 
-    GL::controlSwapVideoSync (getSyncVblank ());
+    GL::controlSwapVideoSync (setting[VSYNC]);
 
     foreach (const CompRect &r, blitRects)
     {
@@ -2021,7 +2009,9 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
                       optionGetAlwaysSwapBuffers () ||
                       (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK);
 
-    doubleBuffer.render (tmpRegion, fullscreen, useFbo);
+    doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
+    doubleBuffer.set (DoubleBuffer::PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.render (tmpRegion, fullscreen);
 
     lastMask = mask;
 }

@@ -13,7 +13,7 @@ class MockDoubleBuffer :
 {
     public:
 
-	MOCK_CONST_METHOD1 (swap, void (bool));
+	MOCK_CONST_METHOD0 (swap, void ());
 	MOCK_CONST_METHOD0 (blitAvailable, bool ());
 	MOCK_CONST_METHOD1 (blit, void (const CompRegion &));
 	MOCK_CONST_METHOD0 (fallbackBlitAvailable, bool ());
@@ -37,7 +37,7 @@ class CompizOpenGLDoubleBufferDeathTest :
 
 TEST_F(DoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
-    EXPECT_CALL (db, swap (false));
+    EXPECT_CALL (db, swap ());
 
     db.render (blitRegion, true);
 }
