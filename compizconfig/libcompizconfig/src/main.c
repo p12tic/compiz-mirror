@@ -1103,6 +1103,7 @@ CCSBackend *
 ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand)
 {
     CCSBackend *backend = calloc (1, sizeof (CCSBackend));
+
     CCSBackendPrivate *bPrivate = NULL;
 
     if (!backend)
