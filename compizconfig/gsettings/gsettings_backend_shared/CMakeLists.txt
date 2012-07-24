@@ -15,12 +15,24 @@ if (GSETTINGS_UTIL_FOUND)
     link_directories (${GSETTINGS_UTIL_LIBRARY_DIRS}
 		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig)
 
-    add_library (gsettings_backend_shared STATIC
+    add_library (gsettings_backend_shared SHARED
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c)
+
 
     target_link_libraries (gsettings_backend_shared
 			   ${GSETTINGS_UTIL_LIBRARIES}
 			   compizconfig)
+
+    install (TARGETS gsettings_backend_shared
+	     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+
+    #
+    # Tell CMake that targets using gsettings_backend_shared should NOT re-import the
+    # libraries that gsettings_backend_shared depends on (contains).
+    #
+    set_target_properties (gsettings_backend_shared PROPERTIES
+	LINK_INTERFACE_LIBRARIES ""
+    )
 
 endif (GSETTINGS_UTIL_FOUND)

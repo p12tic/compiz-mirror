@@ -537,7 +537,8 @@ getButtonBindingForSetting (CCSContext   *context,
 }
 
 Bool
-readGConfIntegratedOption (CCSContext *context,
+readGConfIntegratedOption (CCSBackend *backend,
+			   CCSContext *context,
 			   CCSSetting *setting,
 			   int	      index)
 {
@@ -545,7 +546,10 @@ readGConfIntegratedOption (CCSContext *context,
     GError     *err = NULL;
     Bool       ret = FALSE;
     
-    ret = readOption (setting);
+    if (!client)
+	ccsGSettingsBackendRegisterGConfClient (backend);
+
+    ret = readOption (backend, setting);
 
     gconfValue = gconf_client_get (client,
 				   specialOptions[index].gnomeName,
@@ -765,13 +769,17 @@ setButtonBindingForSetting (CCSContext   *context,
 }
 
 void
-writeGConfIntegratedOption (CCSContext *context,
+writeGConfIntegratedOption (CCSBackend *backend,
+			    CCSContext *context,
 			    CCSSetting *setting,
 			    int	       index)
 {
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
     
+    if (!client)
+	ccsGSettingsBackendRegisterGConfClient (backend);
+
     switch (specialOptions[index].type)
     {
     case OptionInt:

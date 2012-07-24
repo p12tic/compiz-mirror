@@ -68,9 +68,9 @@ char *currentProfile;
 
 Bool readInit (CCSBackend *, CCSContext * context);
 void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
-Bool readOption (CCSSetting * setting);
+Bool readOption (CCSBackend *backend, CCSSetting * setting);
 Bool writeInit (CCSBackend *, CCSContext * context);
-void writeOption (CCSSetting *setting);
+void writeOption (CCSBackend *backend, CCSSetting *setting);
 
 #ifdef USE_GCONF
 
@@ -106,12 +106,14 @@ void
 finiGConfClient (void);
 
 Bool
-readGConfIntegratedOption (CCSContext *context,
+readGConfIntegratedOption (CCSBackend *backend,
+			   CCSContext *context,
 			   CCSSetting *setting,
 			   int	      index);
 
 void
-writeGConfIntegratedOption (CCSContext *context,
+writeGConfIntegratedOption (CCSBackend *backend,
+			    CCSContext *context,
 			    CCSSetting *setting,
 			    int	       index);
 

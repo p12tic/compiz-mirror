@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "gsettings_shared.h"
 
+INTERFACE_TYPE (CCSGSettingsBackendInterface);
+
 GList *
 variantTypeToPossibleSettingType (const gchar *vt)
 {
@@ -328,6 +330,101 @@ attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *l
     return found;
 }
 
+Bool
+findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+				      const char *path,
+				      const gchar *keyName,
+				      CCSContext *context,
+				      CCSPlugin **plugin,
+				      CCSSetting **setting,
+				      char **uncleanKeyName)
+{
+    char         *pluginName;
+    unsigned int screenNum;
+
+    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
+	return FALSE;
+
+    *plugin = ccsFindPlugin (context, pluginName);
+
+    if (*plugin)
+    {
+	*uncleanKeyName = translateKeyForCCS (keyName);
+
+	*setting = ccsFindSetting (*plugin, *uncleanKeyName);
+	if (!setting)
+	{
+	    /* Couldn't find setting straight off the bat,
+	     * try and find the best match */
+	    GVariant *value = g_settings_get_value (settings, keyName);
+
+	    if (value)
+	    {
+		GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
+		GList *iter = possibleSettingTypes;
+
+		while (iter)
+		{
+		    *setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (*plugin),
+								     keyName,
+								     (CCSSettingType) GPOINTER_TO_INT (iter->data));
+
+		    if (*setting)
+			break;
+
+		    iter = iter->next;
+		}
+
+		g_list_free (possibleSettingTypes);
+		g_variant_unref (value);
+	    }
+	}
+    }
+
+    g_free (pluginName);
+
+    if (!*plugin || !*setting)
+	return FALSE;
+
+    return TRUE;
+}
+
+Bool
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   GSettings *settings,
+				   gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting)
+{
+    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
+    char	 *uncleanKeyName = NULL;
+    char	 *pathOrig;
+    CCSPlugin    *plugin;
+    CCSSetting   *setting;
+    Bool         ret = TRUE;
+
+    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
+
+    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
+	(*updateSetting) (backend, context, plugin, setting);
+    else
+    {
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
+	 ret = FALSE;
+    }
+
+    g_free (pathOrig);
+
+    if (uncleanKeyName)
+	free (uncleanKeyName);
+
+    return ret;
+}
+
 gchar *
 makeCompizProfilePath (const gchar *profilename)
 {
@@ -373,7 +470,7 @@ checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gc
 }
 
 GVariant *
-getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type)
+getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCSSettingType type)
 {
     GVariant *gsettingsValue = g_settings_get_value (settings, key);
 
@@ -387,10 +484,11 @@ getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettin
 }
 
 CCSSettingValueList
-readListValue (GVariant *gsettingsValue, CCSSettingType listType)
+readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 {
+    CCSSettingType      listType = ccsSettingGetInfo (setting)->forList.listType;
     gboolean		hasVariantType;
-    unsigned int        nItems, i = 0;
+    unsigned int        nItems;
     CCSSettingValueList list = NULL;
     GVariantIter	iter;
 
@@ -415,9 +513,9 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 
 	    /* Reads each item from the variant into arrayCounter */
 	    while (g_variant_iter_loop (&iter, "b", &value))
-		*arrayCounter++ = value;
+		*arrayCounter++ = value ? TRUE : FALSE;
 
-	    list = ccsGetValueListFromBoolArray (array, nItems, NULL);
+	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
@@ -434,14 +532,14 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_loop (&iter, "i", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromIntArray (array, nItems, NULL);
+	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
     case TypeFloat:
 	{
-	    double *array = malloc (nItems * sizeof (double));
-	    double *arrayCounter = array;
+	    float *array = malloc (nItems * sizeof (float));
+	    float *arrayCounter = array;
 	    gdouble value;
 
 	    if (!array)
@@ -451,7 +549,7 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_loop (&iter, "d", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, NULL);
+	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
@@ -471,25 +569,27 @@ readListValue (GVariant *gsettingsValue, CCSSettingType listType)
 	    while (g_variant_iter_next (&iter, "s", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromStringArray (array, nItems, NULL);
+	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    g_strfreev ((char **) array);
 	}
 	break;
     case TypeColor:
 	{
-	    CCSSettingColorValue *array;
 	    char		 *colorValue;
-	    array = malloc (nItems * sizeof (CCSSettingColorValue));
+	    CCSSettingColorValue *array = calloc (1, nItems * sizeof (CCSSettingColorValue));
+	    unsigned int i = 0;
+
 	    if (!array)
 		break;
 
 	    while (g_variant_iter_loop (&iter, "s", &colorValue))
 	    {
-		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (colorValue,
 				  &array[i]);
+		i++;
 	    }
-	    list = ccsGetValueListFromColorArray (array, nItems, NULL);
+
+	    list = ccsGetValueListFromColorArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
@@ -650,6 +750,7 @@ writeListValue (CCSSettingValueList list,
 	    {
 		item = ccsColorToString (&list->data->value.asColor);
 		g_variant_builder_add (builder, "s", item);
+		g_free (item);
 		list = list->next;
 	    }
 	    value = g_variant_new ("as", builder);
@@ -667,7 +768,7 @@ writeListValue (CCSSettingValueList list,
     return TRUE;
 }
 
-Bool writeStringToVariant (char *value, GVariant **variant)
+Bool writeStringToVariant (const char *value, GVariant **variant)
 {
     *variant = g_variant_new_string (value);
     return TRUE;
@@ -743,4 +844,47 @@ Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
     *variant = g_variant_new_string (edgeString);
     free (edgeString);
     return TRUE;
+}
+
+void
+writeVariantToKey (GSettings  *settings,
+		   const char *key,
+		   GVariant   *value)
+{
+    g_settings_set_value (settings, key, value);
+}
+
+CCSContext *
+ccsGSettingsBackendGetContext (CCSBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetContext) (backend);
+}
+
+
+void
+ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend,
+					   GObject *object)
+{
+     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendConnectToChangedSignal) (backend, object);
+}
+
+GSettings *
+ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
+						const char *plugin,
+						const char *path,
+						CCSContext *context)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetSettingsObjectForPluginWithPath) (backend, plugin, path, context);
+}
+
+void
+ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendRegisterGConfClient) (backend);
+}
+
+void
+ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnregisterGConfClient) (backend);
 }

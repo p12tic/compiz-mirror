@@ -1,10 +1,42 @@
 #ifndef _COMPIZ_GSETTINGS_UTIL_H
 #define _COMPIZ_GSETTINGS_UTIL_H
 
+#include <ccs.h>
+#include <ccs-backend.h>
+
+COMPIZCONFIG_BEGIN_DECLS
+
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <ccs.h>
+
+typedef struct _CCSGSettingsBackendPrivate CCSGettingsBackendPrivate;
+typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
+
+typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
+typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, GObject *);
+typedef GSettings * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CCSBackend *backend,
+									      const char *plugin,
+									      const char *path,
+									      CCSContext *context);
+typedef void (*CCSGSettingsBackendRegisterGConfClient) (CCSBackend *backend);
+typedef void (*CCSGSettingsBackendUnregisterGConfClient) (CCSBackend *backend);
+
+struct _CCSGSettingsBackendInterface
+{
+    CCSGSettingsBackendGetContext gsettingsBackendGetContext;
+    CCSGSettingsBackendConnectToChangedSignal gsettingsBackendConnectToChangedSignal;
+    CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
+    CCSGSettingsBackendRegisterGConfClient gsettingsBackendRegisterGConfClient;
+    CCSGSettingsBackendUnregisterGConfClient gsettingsBackendUnregisterGConfClient;
+};
+
+struct _CCSGSettingsBackendPrivate
+{
+    CCSContext *context;
+};
+
+unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
 
 gchar *
 getSchemaNameForPlugin (const char *plugin);
@@ -57,6 +89,20 @@ filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gch
 CCSSetting *
 attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName, CCSSettingType type);
 
+Bool
+findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+				      const char *path,
+				      const gchar *keyName,
+				      CCSContext *context,
+				      CCSPlugin **plugin,
+				      CCSSetting **setting,
+				      char **uncleanKeyName);
+
+Bool updateSettingWithGSettingsKeyName (CCSBackend *backend,
+					GSettings *settings,
+					gchar     *keyName,
+					CCSBackendUpdateFunc updateSetting);
+
 GList *
 variantTypeToPossibleSettingType (const gchar *vt);
 
@@ -73,7 +119,7 @@ Bool
 checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gchar *pathName);
 
 GVariant *
-getVariantAtKey (GSettings *settings, char *key, const char *pathName, CCSSettingType type);
+getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCSSettingType type);
 
 const char * readStringFromVariant (GVariant *gsettingsValue);
 
@@ -92,14 +138,14 @@ CCSSettingButtonValue readButtonFromVariant (GVariant *gsettingsValue, Bool *suc
 unsigned int readEdgeFromVariant (GVariant *gsettingsValue);
 
 CCSSettingValueList
-readListValue (GVariant *gsettingsValue, CCSSettingType listType);
+readListValue (GVariant *gsettingsValue, CCSSetting *setting);
 
 Bool
 writeListValue (CCSSettingValueList list,
 		CCSSettingType	    listType,
 		GVariant	    **gsettingsValue);
 
-Bool writeStringToVariant (char *value, GVariant **variant);
+Bool writeStringToVariant (const char *value, GVariant **variant);
 
 Bool writeFloatToVariant (float value, GVariant **variant);
 
@@ -114,5 +160,29 @@ Bool writeKeyToVariant (CCSSettingKeyValue key, GVariant **variant);
 Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant);
 
 Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
+
+void writeVariantToKey (GSettings  *settings,
+			const char *key,
+			GVariant   *value);
+
+CCSContext *
+ccsGSettingsBackendGetContext (CCSBackend *backend);
+
+void
+ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend, GObject *object);
+
+GSettings *
+ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
+						const char *plugin,
+						const char *path,
+						CCSContext *context);
+
+void
+ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
+
+void
+ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend);
+
+COMPIZCONFIG_END_DECLS
 
 #endif
