@@ -1383,7 +1383,7 @@ void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context)
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (backend, context);
 }
 
-Bool ccsBackendHasUpdateSetting (CCSBackend *backend)
+static Bool ccsBackendHasUpdateSetting (CCSBackend *backend)
 {
     return (GET_INTERFACE (CCSBackendInterface, backend))->updateSetting != NULL;
 }
@@ -1393,7 +1393,7 @@ void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugi
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->updateSetting) (backend, context, plugin, setting);
 }
 
-Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend)
+static Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend)
 {
     return (GET_INTERFACE (CCSBackendInterface, backend))->getSettingIsIntegrated != NULL;
 }
