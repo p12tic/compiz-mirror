@@ -217,7 +217,7 @@ valueChanged (GSettings   *settings,
 	}
     }
 
-    updateSetting (backend, context, plugin, setting);
+    updateSetting (NULL, context, plugin, setting);
 
     g_free (pluginName);
     free (uncleanKeyName);
