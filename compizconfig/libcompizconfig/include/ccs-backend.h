@@ -159,7 +159,7 @@ void ccsFreeBackendWithCapabilities (CCSBackendWithCapabilities *);
 
 /* Backend opener method */
 void *
-ccsBackendOpen (char *name, CCSBackendInterface **interface, Bool *fellback);
+ccsOpenBackend (const char *name, CCSBackendInterface **interface, Bool *fellback);
 
 /* Constructor method */
 CCSBackend *
