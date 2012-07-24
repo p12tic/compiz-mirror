@@ -122,7 +122,15 @@ void ccsBackendReadDone (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendWriteInit (CCSBackend *backend, CCSContext *context);
 void ccsBackendWriteSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting);
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context);
+<<<<<<< TREE
 void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting);
+=======
+<<<<<<< TREE
+=======
+void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting);
+Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend);
+>>>>>>> MERGE-SOURCE
+>>>>>>> MERGE-SOURCE
 Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting);
 Bool ccsBackendGetSettingIsReadOnly (CCSBackend *backend, CCSSetting *setting);
 CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *context);
