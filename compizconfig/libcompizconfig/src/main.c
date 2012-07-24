@@ -1014,7 +1014,7 @@ CCSREF_OBJ (Backend, CCSBackend)
 CCSREF_OBJ (BackendWithCapabilities, CCSBackendWithCapabilities)
 
 static void *
-openBackend (char *backend)
+openBackend (const char *backend)
 {
     char *home = getenv ("HOME");
     char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
@@ -1103,6 +1103,7 @@ CCSBackend *
 ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand)
 {
     CCSBackend *backend = calloc (1, sizeof (CCSBackend));
+
     CCSBackendPrivate *bPrivate = NULL;
 
     if (!backend)
@@ -1158,7 +1159,7 @@ ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSB
 }
 
 void *
-ccsOpenBackend (char *name, CCSBackendInterface **vt, Bool *fellback)
+ccsOpenBackend (const char *name, CCSBackendInterface **vt, Bool *fellback)
 {
     void *dlhand = openBackend (name);
     if (!dlhand)
