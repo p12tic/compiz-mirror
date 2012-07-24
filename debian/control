@@ -6,6 +6,7 @@ XSBC-Original-Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: David Nusinow <dnusinow@debian.org>, Sean Finney <seanius@debian.org>, Cyril Brulebois <kibi@debian.org>
 Build-Depends: cmake (>= 2.6),
                debhelper (>= 9~),
+               dh-migrations,
                intltool,
                libtool,
                pkg-config,

@@ -1,0 +1,1 @@
+postinst/migration-scripts/02_migrate_to_gsettings.py

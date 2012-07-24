@@ -70,6 +70,11 @@ compiz (1:0.9.8+bzr3287-0ubuntu1) UNRELEASED; urgency=low
     - Added .convert files (for gsettings-data-convert) and a migration python
       script (best for usage with session-migrations) for migrating some compiz
       settings from gconf to gsettings
+  * debian/control, debian/rules:
+    - add dependency and use dh-migrations
+  * debian/compiz-gnome.migrations:
+    - use a migrations file for installing the script for migrating gconf
+      configuration to gsettings
 
  -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Tue, 24 Jul 2012 16:38:35 +0200
 

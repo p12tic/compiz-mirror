@@ -8,3 +8,4 @@ debian/unity.ini /etc/compizconfig/
 debian/profile_upgrades/*.upgrade etc/compizconfig/upgrades
 debian/tmp/usr/lib/compizconfig/backends/libgconf.so
 debian/tmp/usr/lib/compizconfig/backends/libgsettings.so
+postinst/convert/*.convert usr/lib/compiz/migration/
