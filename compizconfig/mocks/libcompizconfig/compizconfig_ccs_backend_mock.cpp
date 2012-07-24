@@ -21,6 +21,7 @@ CCSBackendInterface CCSBackendGMockInterface =
     CCSBackendGMock::ccsBackendWriteInit,
     CCSBackendGMock::ccsBackendWriteSetting,
     CCSBackendGMock::ccsBackendWriteDone,
+    CCSBackendGMock::ccsBackendUpdateSetting,
     CCSBackendGMock::ccsBackendGetSettingIsIntegrated,
     CCSBackendGMock::ccsBackendGetSettingIsReadOnly,
     CCSBackendGMock::ccsBackendGetExistingProfiles,
