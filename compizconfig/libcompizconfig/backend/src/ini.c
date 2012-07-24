@@ -601,10 +601,10 @@ writeDone (CCSContext * context)
 static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
-    if (readInit (backend, context))
+    if (readInit (context))
     {
-	readSetting (backend, context, setting);
-	readDone (backend, context);
+	readSetting (context, setting);
+	readDone (context);
     }
 }
 

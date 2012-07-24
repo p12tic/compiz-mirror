@@ -439,14 +439,14 @@ static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
     int          index;
-    readInit (backend, context);
+    readInit (context);
     if (!readOption (setting))
 	ccsResetToDefault (setting, TRUE);
 
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	writeInit (backend, context);
+	writeInit (context);
 	writeIntegratedOption (context, setting, index);
     }
 }
