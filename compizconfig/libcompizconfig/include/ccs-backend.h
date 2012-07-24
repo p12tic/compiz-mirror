@@ -137,6 +137,15 @@ Bool ccsBackendHasDeleteProfile (CCSBackend *backend);
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name);
 void ccsFreeBackend (CCSBackend *backend);
 
+/* Backend opener method */
+void *
+ccsOpenBackend (const char *name, CCSBackendInterface **interface, Bool *fellback);
+
+/* Constructor method */
+CCSBackend *
+ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
+
+
 CCSBackendInterface* getBackendInfo (void);
 
 #endif
