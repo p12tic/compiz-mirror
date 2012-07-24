@@ -44,7 +44,8 @@
 
 extern CompOutput *targetOutput;
 
-class GLDoubleBuffer
+class GLDoubleBuffer :
+    public compiz::opengl::DoubleBuffer
 {
     public:
 
@@ -62,7 +63,6 @@ class GLDoubleBuffer
 #ifndef USE_GLES
 
 class GLXDoubleBuffer :
-    public compiz::opengl::DoubleBuffer,
     public GLDoubleBuffer
 {
     public:
@@ -88,7 +88,6 @@ class GLXDoubleBuffer :
 #else
 
 class EGLDoubleBuffer :
-    public compiz::opengl::DoubleBuffer,
     public GLDoubleBuffer
 {
     public:
