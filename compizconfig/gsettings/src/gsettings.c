@@ -129,6 +129,25 @@ isIntegratedOption (CCSSetting *setting,
 }
 
 static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    int          index;
+
+    readInit (backend, context);
+    if (!readOption (backend,  setting))
+    {
+	ccsResetToDefault (setting, TRUE);
+    }
+
+    if (ccsGetIntegrationEnabled (context) &&
+	isIntegratedOption (setting, &index))
+    {
+	writeInit (backend, context);
+	writeIntegratedOption (backend, context, setting, index);
+    }
+}
+
+static void
 valueChanged (GSettings   *settings,
 	      gchar	  *keyName,
 	      gpointer    user_data)
@@ -137,7 +156,6 @@ valueChanged (GSettings   *settings,
     char	 *uncleanKeyName;
     char	 *path, *pathOrig;
     char         *pluginName;
-    int          index;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
@@ -199,18 +217,7 @@ valueChanged (GSettings   *settings,
 	}
     }
 
-    readInit (context);
-    if (!readOption (setting))
-    {
-	ccsResetToDefault (setting, TRUE);
-    }
-
-    if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index))
-    {
-	writeInit (context);
-	writeIntegratedOption (context, setting, index);
-    }
+    updateSetting (backend, context, plugin, setting);
 
     g_free (pluginName);
     free (uncleanKeyName);
@@ -1163,6 +1170,7 @@ static CCSBackendInterface gsettingsVTable = {
     writeInit,
     writeSetting,
     0,
+    updateSetting,
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     getExistingProfiles,

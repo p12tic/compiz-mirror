@@ -30,6 +30,7 @@ typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
 
 typedef struct _CCSContext CCSContext;
+typedef struct _CCSPlugin  CCSPlugin;
 typedef struct _CCSSetting CCSSetting;
 
 struct _CCSBackend
@@ -53,6 +54,8 @@ typedef Bool (*CCSBackendWriteInitFunc) (CCSContext * context);
 typedef void (*CCSBackendWriteSettingFunc)
 (CCSContext * context, CCSSetting * setting);
 typedef void (*CCSBackendWriteDoneFunc) (CCSContext * context);
+
+typedef void (*CCSBackendUpdateFunc) (CCSBackend *, CCSContext *, CCSPlugin *, CCSSetting *);
 
 typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSSetting * setting);
 typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSSetting * setting);
@@ -90,6 +93,7 @@ struct _CCSBackendInterface
     CCSBackendWriteSettingFunc writeSetting;
     CCSBackendWriteDoneFunc    writeDone;
 
+    CCSBackendUpdateFunc       updateSetting;
 
     CCSBackendGetSettingIsIntegratedFunc     getSettingIsIntegrated;
     CCSBackendGetSettingIsReadOnlyFunc       getSettingIsReadOnly;
@@ -122,6 +126,7 @@ Bool ccsBackendHasWriteSetting (CCSBackend *backend);
 void ccsBackendWriteSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting);
 Bool ccsBackendHasWriteDone (CCSBackend *backend);
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context);
+void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting);
 Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend);
 Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting);
 Bool ccsBackendHasGetSettingIsReadOnly (CCSBackend *backend);
