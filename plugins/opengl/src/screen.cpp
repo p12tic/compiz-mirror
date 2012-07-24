@@ -1886,8 +1886,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 			       unsigned int        mask,
 			       const CompRegion    &region)
 {
-    XRectangle r;
-
     // Blending is disabled by default. Each operation/plugin
     // should enable it (and reset it) as needed.
     glDisable(GL_BLEND);
@@ -1908,9 +1906,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
     else
     {
-	if (clearBuffers)
-	    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-		glClear (GL_COLOR_BUFFER_BIT);
+	if (clearBuffers && (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK))
+	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
     refreshSubBuffer = ((lastMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
@@ -1934,6 +1931,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     foreach (CompOutput *output, outputs)
     {
+	XRectangle r;
 	targetOutput = output;
 
 	r.x	 = output->x1 ();
