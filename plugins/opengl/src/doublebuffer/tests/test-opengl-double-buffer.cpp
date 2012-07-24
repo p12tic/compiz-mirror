@@ -13,7 +13,7 @@ class MockGLDoubleBuffer :
 {
     public:
 
-	MOCK_CONST_METHOD0 (swap, void ());
+	MOCK_CONST_METHOD1 (swap, void (bool));
 	MOCK_CONST_METHOD0 (blitAvailable, bool ());
 	MOCK_CONST_METHOD1 (blit, void (const CompRegion &));
 	MOCK_CONST_METHOD0 (fallbackBlitAvailable, bool ());
@@ -37,9 +37,9 @@ class CompizOpenGLDoubleBufferDeathTest :
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
-    EXPECT_CALL (mglbb, swap ());
+    EXPECT_CALL (mglbb, swap (false));
 
-    render (true, blitRegion, mglbb);
+    mglbb.render (blitRegion, true);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
@@ -47,7 +47,7 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubB
     EXPECT_CALL (mglbb, blitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbb, blit (_));
 
-    render (false, blitRegion, mglbb);
+    mglbb.render (blitRegion, false);
 }
 
 TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
@@ -64,13 +64,13 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestBlitExactlyWithRegionSpecified)
     EXPECT_CALL (mglbb, blitAvailable ()).WillRepeatedly (Return (true));
 
     EXPECT_CALL (mglbb, blit (r1));
-    render (false, r1, mglbb);
+    mglbb.render (r1, false);
 
     EXPECT_CALL (mglbb, blit (r2));
-    render (false, r2, mglbb);
+    mglbb.render (r2, false);
 
     EXPECT_CALL (mglbb, blit (r3));
-    render (false, r3, mglbb);
+    mglbb.render (r3, false);
 }
 
 TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitOrCopyIfNotSupportedAndDies)
@@ -81,7 +81,7 @@ TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBli
     ON_CALL (mglbbStrict, fallbackBlitAvailable ()).WillByDefault (Return (false));
 
     ASSERT_DEATH ({
-		    render (false, blitRegion, mglbbStrict);
+		    mglbbStrict.render (blitRegion, false);
 		  },
 		  ".fatal.");
 }
@@ -94,5 +94,5 @@ TEST_F(CompizOpenGLDoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
     EXPECT_CALL (mglbbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (mglbbStrict, fallbackBlit (blitRegion));
 
-    render (false, blitRegion, mglbbStrict);
+    mglbbStrict.render (blitRegion, false);
 }

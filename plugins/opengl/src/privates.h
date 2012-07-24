@@ -73,7 +73,7 @@ class GLXDoubleBuffer :
 		       Window,
 		       const boost::function <void ()> &);
 
-	void swap () const;
+	void swap (bool persistentBackBuffer=false) const;
 	bool blitAvailable () const;
 	void blit (const CompRegion &region) const;
 	bool fallbackBlitAvailable () const;
@@ -98,7 +98,7 @@ class EGLDoubleBuffer :
 		       const boost::function <bool ()> &,
 		       EGLSurface const &);
 
-	void swap () const;
+	void swap (bool persistentBackBuffer=false) const;
 	bool blitAvailable () const;
 	void blit (const CompRegion &region) const;
 	bool fallbackBlitAvailable () const;

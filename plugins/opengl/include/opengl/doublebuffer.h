@@ -14,16 +14,16 @@ class GLDoubleBufferInterface
 
 	virtual ~GLDoubleBufferInterface () {}
 
-	virtual void swap () const = 0;
+	virtual void swap (bool persistentBackBuffer=false) const = 0;
 	virtual bool blitAvailable () const = 0;
 	virtual void blit (const CompRegion &region) const = 0;
 	virtual bool fallbackBlitAvailable () const = 0;
 	virtual void fallbackBlit (const CompRegion &region) const = 0;
-};
 
-void render (bool fullscreen,
-             const CompRegion &region,
-             GLDoubleBufferInterface &impl);
+	void render (const CompRegion &region, bool fullscreen,
+	             bool persistentBackBuffer=false);
+
+};
 
 }
 }

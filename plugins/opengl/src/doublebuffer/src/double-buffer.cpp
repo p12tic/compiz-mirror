@@ -11,22 +11,16 @@ char programName[] = "compiz_test_opengl_double_buffer";
 bool debugOutput = false;
 
 void
-compiz::opengl::render (bool fullscreen,
-                        const CompRegion &region,
-                        GLDoubleBufferInterface &impl)
+compiz::opengl::GLDoubleBufferInterface::render (const CompRegion &region,
+                                                 bool fullscreen,
+                                                 bool persistentBackBuffer)
 {
     if (fullscreen)
-    {
-	impl.swap ();
-    }
-    else if (impl.blitAvailable ())
-    {
-	impl.blit (region);
-    }
-    else if (impl.fallbackBlitAvailable ())
-    {
-	impl.fallbackBlit (region);
-    }
+	swap (persistentBackBuffer);
+    else if (blitAvailable ())
+	blit (region);
+    else if (fallbackBlitAvailable ())
+	fallbackBlit (region);
     else
     {
 	/* FIXME: We need to use compLogMessage here, but for some

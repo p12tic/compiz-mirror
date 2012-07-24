@@ -1761,10 +1761,12 @@ GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 }
 
 void
-GLXDoubleBuffer::swap () const
+GLXDoubleBuffer::swap (bool persistentBackBuffer) const
 {
     GL::controlSwapVideoSync (getSyncVblank ());
     glXSwapBuffers (mDpy, mOutput);
+    if (!persistentBackBuffer)
+	copyFrontToBack ();
 }
 
 bool
@@ -1842,7 +1844,7 @@ EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
 }
 
 void
-EGLDoubleBuffer::swap () const
+EGLDoubleBuffer::swap (bool persistentBackBuffer) const
 {
     GL::controlSwapVideoSync (getSyncVblank ());
 
@@ -2016,17 +2018,10 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
 
     bool fullscreen = useFbo ||
-#ifndef USE_GLES
                       optionGetAlwaysSwapBuffers () ||
-#endif
                       (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK);
 
-    compiz::opengl::render (fullscreen, tmpRegion, doubleBuffer);
-
-#ifndef USE_GLES
-    if (fullscreen && !useFbo)
-	copyFrontToBack ();
-#endif
+    doubleBuffer.render (tmpRegion, fullscreen, useFbo);
 
     lastMask = mask;
 }
