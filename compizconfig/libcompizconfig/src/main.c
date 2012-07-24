@@ -2319,7 +2319,7 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
     return TRUE;
 }
 
-static CCSSettingValueList
+CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
     CCSSettingValueList l2 = NULL;
