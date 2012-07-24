@@ -1085,56 +1085,14 @@ ccsFreeBackend (CCSBackend *backend)
     free (backend);
 }
 
-Bool
-ccsSetBackendDefault (CCSContext * context, char *name)
+CCSBackend *
+ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand)
 {
-    Bool fallbackMode = FALSE;
-    CCSBackendPrivate *bPrivate = NULL;
-    CONTEXT_PRIV (context);
-
-    if (cPrivate->backend)
-    {
-	/* no action needed if the backend is the same */
-
-	if (strcmp (ccsBackendGetName (cPrivate->backend), name) == 0)
-	    return TRUE;
-
-	ccsBackendUnref (cPrivate->backend);
-	cPrivate->backend = NULL;
-    }
-
-    void *dlhand = openBackend (name);
-    if (!dlhand)
-    {
-	fallbackMode = TRUE;
-	name = "ini";
-	dlhand = openBackend (name);
-    }
-
-    if (!dlhand)
-	return FALSE;
-
-    BackendGetInfoProc getInfo = dlsym (dlhand, "getBackendInfo");
-    if (!getInfo)
-    {
-	dlclose (dlhand);
-	return FALSE;
-    }
-
-    CCSBackendInterface *vt = getInfo ();
-    if (!vt)
-    {
-	dlclose (dlhand);
-	return FALSE;
-    }
-
     CCSBackend *backend = calloc (1, sizeof (CCSBackend));
+    CCSBackendPrivate *bPrivate = NULL;
 
     if (!backend)
-    {
-	dlclose (dlhand);
-	return FALSE;
-    }
+	return NULL;
 
     ccsObjectInit (backend, &ccsDefaultObjectAllocator);
     ccsBackendRef (backend);
@@ -1144,14 +1102,75 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     if (!bPrivate)
     {
 	ccsBackendUnref (backend);
-	dlclose (dlhand);
+	return NULL;
     }
 
     bPrivate->dlhand = dlhand;
     bPrivate->context = context;
 
     ccsObjectSetPrivate (backend, (CCSPrivate *) bPrivate);
-    ccsObjectAddInterface (backend, (CCSInterface *) vt, GET_INTERFACE_TYPE (CCSBackendInterface));
+    ccsObjectAddInterface (backend, (CCSInterface *) interface, GET_INTERFACE_TYPE (CCSBackendInterface));
+
+    return backend;
+}
+
+void *
+ccsOpenBackend (char *name, CCSBackendInterface **vt, Bool *fellback)
+{
+    void *dlhand = openBackend (name);
+    if (!dlhand)
+    {
+	*fellback = TRUE;
+	name = "ini";
+	dlhand = openBackend (name);
+    }
+
+    if (!dlhand)
+	return NULL;
+
+    BackendGetInfoProc getInfo = dlsym (dlhand, "getBackendInfo");
+    if (!getInfo)
+    {
+	dlclose (dlhand);
+	return NULL;
+    }
+
+    *vt = getInfo ();
+    if (!*vt)
+    {
+	dlclose (dlhand);
+	*vt = NULL;
+	return NULL;
+    }
+
+    return dlhand;
+}
+
+Bool
+ccsSetBackendDefault (CCSContext * context, char *name)
+{
+    Bool fallbackMode = FALSE;
+    CONTEXT_PRIV (context);
+
+    if (cPrivate->backend)
+    {
+	/* no action needed if the backend is the same */
+
+	if (strcmp (ccsBackendGetName ((CCSBackend *) cPrivate->backend), name) == 0)
+	    return TRUE;
+
+	ccsBackendUnref (cPrivate->backend);
+	cPrivate->backend = NULL;
+    }
+
+    CCSBackendInterface *vt = NULL;
+
+    void *dlhand = ccsOpenBackend (name, &vt, &fallbackMode);
+
+    if (!dlhand)
+	return FALSE;
+
+    CCSBackend *backend = ccsBackendNewWithInterface (context, vt, dlhand);
 
     cPrivate->backend = backend;
 
