@@ -1378,9 +1378,19 @@ static Bool ccsBackendHasWriteDone (CCSBackend *backend)
     return (GET_INTERFACE (CCSBackendInterface, backend))->writeDone != NULL;
 }
 
+static Bool ccsBackendHasUpdateSetting (CCSBackend *backend)
+{
+    return (GET_INTERFACE (CCSBackendInterface, backend))->updateSetting != NULL;
+}
+
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->writeDone) (backend, context);
+}
+ 
+void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->updateSetting) (backend, context, plugin, setting);
 }
 
 static Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend)
