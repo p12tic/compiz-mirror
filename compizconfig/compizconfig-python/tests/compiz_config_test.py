@@ -11,7 +11,7 @@ os.environ["LIBCOMPIZCONFIG_BACKEND_PATH"] = "compizconfig/libcompizconfig/backe
 os.environ["XDG_DATA_DIRS"] = "generated/"
 
 # TODO: does this really work ?
-sys.path.append ("compizconfig/compizconfig-python/build/lib.linux-" + arch + "-" + str (sys.version_info[0]) + "." + str (sys.version_info[1]) + "/")
+sys.path[0] = "compizconfig/compizconfig-python/build/lib.linux-" + arch + "-" + str (sys.version_info[0]) + "." + str (sys.version_info[1]) + "/"
 
 import unittest
 import compizconfig
