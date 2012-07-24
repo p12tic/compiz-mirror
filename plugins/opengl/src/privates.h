@@ -188,7 +188,6 @@ class PrivateGLScreen :
 	#endif
 
 	GLFramebufferObject *scratchFbo;
-	bool		    scratchFboBindFailed;
 	CompRegion outputRegion;
 
 	XRectangle lastViewport;

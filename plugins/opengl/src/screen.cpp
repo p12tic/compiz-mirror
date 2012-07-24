@@ -1105,7 +1105,6 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
-    scratchFboBindFailed (false),
     outputRegion (),
     lastMask (0),
     bindPixmap (),
@@ -1306,7 +1305,6 @@ PrivateGLScreen::outputChangeNotify ()
 {
     screen->outputChangeNotify ();
 
-    scratchFboBindFailed = false;
     scratchFbo->allocate (*screen, NULL, GL_BGRA);
     updateView ();
 }
@@ -1898,26 +1896,21 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     bool useFbo = false;
 
     /* Clear the color buffer where appropriate */
-    if (!scratchFboBindFailed && GL::fboEnabled)
+    if (GL::fboEnabled)
     {
 	if (clearBuffers)
 	    glClear (GL_COLOR_BUFFER_BIT);
 
 	oldFbo = scratchFbo->bind ();
 	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
+	if (!useFbo)
+	    GLFramebufferObject::rebind (oldFbo);
     }
     else
     {
 	if (clearBuffers)
 	    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
 		glClear (GL_COLOR_BUFFER_BIT);
-    }
-
-    if (GL::fboEnabled && !useFbo && !scratchFboBindFailed)
-    {
-	scratchFboBindFailed = true;
-	compLogMessage ("opengl", CompLogLevelError, "framebuffer object bind failed. Postprocessing disabled");
-	GLFramebufferObject::rebind (oldFbo);
     }
 
     refreshSubBuffer = ((lastMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
