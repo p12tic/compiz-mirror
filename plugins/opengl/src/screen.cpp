@@ -1714,7 +1714,7 @@ PrivateGLScreen::waitForVideoSync ()
         GL::waitForVideoSync ();
 }
 
-BaseDoubleBuffer::BaseDoubleBuffer (Display *d, const CompSize &s,
+GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s,
 				const boost::function <bool ()> &getSyncVblankFunc) :
     mDpy (d),
     mSize (s),
@@ -1754,7 +1754,7 @@ GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 			      const boost::function <bool ()> &getSyncVblankFunc,
 			      Window output,
 			      const boost::function <void ()> &waitVSyncFunc) :
-    BaseDoubleBuffer (d, s, getSyncVblankFunc),
+    GLDoubleBuffer (d, s, getSyncVblankFunc),
     mOutput (output),
     waitVSync (waitVSyncFunc)
 {
@@ -1838,7 +1838,7 @@ EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
 			      const CompSize &s,
 			      const boost::function <bool ()> &getSyncVblankFunc,
 			      EGLSurface const & surface) :
-    BaseDoubleBuffer (d, s, getSyncVblankFunc),
+    GLDoubleBuffer (d, s, getSyncVblankFunc),
     mSurface (surface)
 {
 }

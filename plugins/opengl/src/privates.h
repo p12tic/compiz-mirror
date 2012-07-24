@@ -44,11 +44,11 @@
 
 extern CompOutput *targetOutput;
 
-class BaseDoubleBuffer
+class GLDoubleBuffer
 {
     public:
 
-	BaseDoubleBuffer (Display *,
+	GLDoubleBuffer (Display *,
 			const CompSize &,
 			const boost::function <bool ()> &);
 
@@ -62,8 +62,8 @@ class BaseDoubleBuffer
 #ifndef USE_GLES
 
 class GLXDoubleBuffer :
-    public compiz::opengl::GLDoubleBufferInterface,
-    public BaseDoubleBuffer
+    public compiz::opengl::DoubleBuffer,
+    public GLDoubleBuffer
 {
     public:
 
@@ -88,8 +88,8 @@ class GLXDoubleBuffer :
 #else
 
 class EGLDoubleBuffer :
-    public compiz::opengl::GLDoubleBufferInterface,
-    public BaseDoubleBuffer
+    public compiz::opengl::DoubleBuffer,
+    public GLDoubleBuffer
 {
     public:
 

@@ -11,9 +11,9 @@ char programName[] = "compiz_test_opengl_double_buffer";
 bool debugOutput = false;
 
 void
-compiz::opengl::GLDoubleBufferInterface::render (const CompRegion &region,
-                                                 bool fullscreen,
-                                                 bool persistentBackBuffer)
+compiz::opengl::DoubleBuffer::render (const CompRegion &region,
+                                      bool fullscreen,
+                                      bool persistentBackBuffer)
 {
     if (fullscreen)
 	swap (persistentBackBuffer);

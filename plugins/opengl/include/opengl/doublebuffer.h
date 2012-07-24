@@ -8,11 +8,11 @@ namespace compiz
 namespace opengl
 {
 
-class GLDoubleBufferInterface
+class DoubleBuffer
 {
     public:
 
-	virtual ~GLDoubleBufferInterface () {}
+	virtual ~DoubleBuffer () {}
 
 	virtual void swap (bool persistentBackBuffer=false) const = 0;
 	virtual bool blitAvailable () const = 0;

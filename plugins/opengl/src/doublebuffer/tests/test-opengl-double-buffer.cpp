@@ -8,8 +8,8 @@ using testing::_;
 using testing::StrictMock;
 using testing::Return;
 
-class MockGLDoubleBuffer :
-    public GLDoubleBufferInterface
+class MockDoubleBuffer :
+    public DoubleBuffer
 {
     public:
 
@@ -20,79 +20,79 @@ class MockGLDoubleBuffer :
 	MOCK_CONST_METHOD1 (fallbackBlit, void (const CompRegion &));
 };
 
-class CompizOpenGLDoubleBufferTest :
+class DoubleBufferTest :
     public ::testing::Test
 {
     public:
 
-	MockGLDoubleBuffer mglbb;
+	MockDoubleBuffer db;
 	CompRegion	 blitRegion;
 
 };
 
 class CompizOpenGLDoubleBufferDeathTest :
-    public CompizOpenGLDoubleBufferTest
+    public DoubleBufferTest
 {
 };
 
-TEST_F(CompizOpenGLDoubleBufferTest, TestPaintedFullAlwaysSwaps)
+TEST_F(DoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
-    EXPECT_CALL (mglbb, swap (false));
+    EXPECT_CALL (db, swap (false));
 
-    mglbb.render (blitRegion, true);
+    db.render (blitRegion, true);
 }
 
-TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
+TEST_F(DoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
 {
-    EXPECT_CALL (mglbb, blitAvailable ()).WillOnce (Return (true));
-    EXPECT_CALL (mglbb, blit (_));
+    EXPECT_CALL (db, blitAvailable ()).WillOnce (Return (true));
+    EXPECT_CALL (db, blit (_));
 
-    mglbb.render (blitRegion, false);
+    db.render (blitRegion, false);
 }
 
-TEST_F(CompizOpenGLDoubleBufferTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
+TEST_F(DoubleBufferTest, TestNoPaintedFullscreenOrFBODoesNotBlitIfNotSupported)
 {
 
 }
 
-TEST_F(CompizOpenGLDoubleBufferTest, TestBlitExactlyWithRegionSpecified)
+TEST_F(DoubleBufferTest, TestBlitExactlyWithRegionSpecified)
 {
     CompRegion r1 (0, 0, 100, 100);
     CompRegion r2 (100, 100, 100, 100);
     CompRegion r3 (200, 200, 100, 100);
 
-    EXPECT_CALL (mglbb, blitAvailable ()).WillRepeatedly (Return (true));
+    EXPECT_CALL (db, blitAvailable ()).WillRepeatedly (Return (true));
 
-    EXPECT_CALL (mglbb, blit (r1));
-    mglbb.render (r1, false);
+    EXPECT_CALL (db, blit (r1));
+    db.render (r1, false);
 
-    EXPECT_CALL (mglbb, blit (r2));
-    mglbb.render (r2, false);
+    EXPECT_CALL (db, blit (r2));
+    db.render (r2, false);
 
-    EXPECT_CALL (mglbb, blit (r3));
-    mglbb.render (r3, false);
+    EXPECT_CALL (db, blit (r3));
+    db.render (r3, false);
 }
 
 TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitOrCopyIfNotSupportedAndDies)
 {
-    StrictMock <MockGLDoubleBuffer> mglbbStrict;
+    StrictMock <MockDoubleBuffer> dbStrict;
 
-    ON_CALL (mglbbStrict, blitAvailable ()).WillByDefault (Return (false));
-    ON_CALL (mglbbStrict, fallbackBlitAvailable ()).WillByDefault (Return (false));
+    ON_CALL (dbStrict, blitAvailable ()).WillByDefault (Return (false));
+    ON_CALL (dbStrict, fallbackBlitAvailable ()).WillByDefault (Return (false));
 
     ASSERT_DEATH ({
-		    mglbbStrict.render (blitRegion, false);
+		    dbStrict.render (blitRegion, false);
 		  },
 		  ".fatal.");
 }
 
-TEST_F(CompizOpenGLDoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
+TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
 {
-    StrictMock <MockGLDoubleBuffer> mglbbStrict;
+    StrictMock <MockDoubleBuffer> dbStrict;
 
-    EXPECT_CALL (mglbbStrict, blitAvailable ()).WillOnce (Return (false));
-    EXPECT_CALL (mglbbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
-    EXPECT_CALL (mglbbStrict, fallbackBlit (blitRegion));
+    EXPECT_CALL (dbStrict, blitAvailable ()).WillOnce (Return (false));
+    EXPECT_CALL (dbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
+    EXPECT_CALL (dbStrict, fallbackBlit (blitRegion));
 
-    mglbbStrict.render (blitRegion, false);
+    dbStrict.render (blitRegion, false);
 }
