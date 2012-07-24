@@ -133,7 +133,7 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
 {
     int          index;
 
-    readInit (context);
+    readInit (backend, context);
     if (!readOption (setting))
     {
 	ccsResetToDefault (setting, TRUE);
@@ -142,7 +142,7 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	writeInit (context);
+	writeInit (backend, context);
 	writeIntegratedOption (context, setting, index);
     }
 }

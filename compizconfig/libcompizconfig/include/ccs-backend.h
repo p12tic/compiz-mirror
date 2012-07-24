@@ -52,16 +52,16 @@ typedef void (*CCSBackendReadDoneFunc) (CCSBackend *backend, CCSContext * contex
 
 typedef Bool (*CCSBackendWriteInitFunc) (CCSBackend *backend, CCSContext * context);
 typedef void (*CCSBackendWriteSettingFunc)
-(CCSContext * context, CCSSetting * setting);
-typedef void (*CCSBackendWriteDoneFunc) (CCSContext * context);
+(CCSBackend *backend, CCSContext * context, CCSSetting * setting);
+typedef void (*CCSBackendWriteDoneFunc) (CCSBackend *backend, CCSContext * context);
 
 typedef void (*CCSBackendUpdateFunc) (CCSBackend *, CCSContext *, CCSPlugin *, CCSSetting *);
 
-typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSSetting * setting);
-typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSBackend *, CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSBackend *, CCSSetting * setting);
 
-typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSContext * context);
-typedef Bool (*CCSBackendDeleteProfileFunc) (CCSContext * context, char * name);
+typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSBackend *, CCSContext * context);
+typedef Bool (*CCSBackendDeleteProfileFunc) (CCSBackend *, CCSContext * context, char * name);
 
 typedef char * (*CCSBackendGetNameFunc) (CCSBackend *);
 typedef char * (*CCSBackendGetShortDescFunc) (CCSBackend *);
@@ -119,11 +119,9 @@ void ccsBackendReadDone (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendWriteInit (CCSBackend *backend, CCSContext *context);
 void ccsBackendWriteSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting);
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context);
-<<<<<<< TREE
-=======
+Bool ccsBackendHasUpdateSetting (CCSBackend *backend);
 void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting);
 Bool ccsBackendHasGetSettingIsIntegrated (CCSBackend *backend);
->>>>>>> MERGE-SOURCE
 Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting);
 Bool ccsBackendGetSettingIsReadOnly (CCSBackend *backend, CCSSetting *setting);
 CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *context);
