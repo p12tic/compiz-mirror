@@ -337,6 +337,7 @@ function (compiz_translate_xml _src _dst)
 		    sed -e 's;<_;<;g' -e 's;</_;</;g' > 
 		    ${_dst}
 	    DEPENDS ${_src}
+	    VERBATIM
 	)
     endif ()
 endfunction ()
@@ -364,6 +365,7 @@ function (compiz_translate_desktop_file _src _dst)
 		    sed -e 's;^_;;g' >
 		    ${_dst}
 	    DEPENDS ${_src}
+	    VERBATIM
 	)
     endif ()
 endfunction ()
