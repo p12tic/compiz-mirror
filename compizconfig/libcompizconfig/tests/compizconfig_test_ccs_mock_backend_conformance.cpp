@@ -15,6 +15,7 @@ using ::testing::WithArgs;
 using ::testing::Combine;
 using ::testing::ValuesIn;
 using ::testing::Values;
+using ::testing::AtLeast;
 
 namespace
 {
@@ -42,6 +43,11 @@ class ValueForKeyRetreival
 	}
 };
 
+namespace
+{
+    void doNothingWithCCSSetting (CCSSetting *) {};
+}
+
 class MockCCSBackendConceptTestEnvironment :
     public CCSBackendConceptTestEnvironmentInterface
 {
@@ -49,12 +55,20 @@ class MockCCSBackendConceptTestEnvironment :
 
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
+	    mContext = context;
 	    mBackend = ccsMockBackendNew ();
 	    mBackendGMock = (CCSBackendGMock *) ccsObjectGetPrivate (mBackend);
 
 	    ON_CALL (*mBackendGMock, readSetting (_, _))
 		    .WillByDefault (
 			WithArgs<1> (
+			    Invoke (
+				this,
+				&MockCCSBackendConceptTestEnvironment::ReadValueIntoSetting)));
+
+	    ON_CALL (*mBackendGMock, updateSetting (_, _, _))
+		    .WillByDefault (
+			WithArgs<2> (
 			    Invoke (
 				this,
 				&MockCCSBackendConceptTestEnvironment::ReadValueIntoSetting)));
@@ -72,7 +86,6 @@ class MockCCSBackendConceptTestEnvironment :
 	void TearDown (CCSBackend *backend)
 	{
 	    ccsFreeMockBackend (backend);
-
 	}
 
 	void PreWrite (CCSContextGMock *gmockContext,
@@ -83,8 +96,17 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, writeSetting (_, _));
 	    EXPECT_CALL (*gmockPlugin, getName ());
 	    EXPECT_CALL (*gmockSetting, getName ());
-	    EXPECT_CALL (*gmockSetting, getType ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).Times (AtLeast (1));
+	    }
+	    else
+	    {
+		EXPECT_CALL (*gmockSetting, getType ());
+	    }
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
@@ -180,8 +202,17 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*mBackendGMock, readSetting (_, _));
 	    EXPECT_CALL (*gmockPlugin, getName ());
 	    EXPECT_CALL (*gmockSetting, getName ());
-	    EXPECT_CALL (*gmockSetting, getType ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+	    }
+	    else
+	    {
+		EXPECT_CALL (*gmockSetting, getType ());
+	    }
 	}
 
 	void PostRead (CCSContextGMock *gmockContext,
@@ -252,9 +283,57 @@ class MockCCSBackendConceptTestEnvironment :
 	}
 
 	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
-						   const std::string &key)
+						   const std::string &key,
+						   CCSSetting	     *setting)
 	{
-	    return *(ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	    CCSListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+
+	    return ccsCopyList (*lw, lw->setting ().get ());
+	}
+
+	void PreUpdate (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type)
+	{
+	    EXPECT_CALL (*mBackendGMock, updateSetting (_, _, _));
+	    EXPECT_CALL (*gmockPlugin, getName ());
+	    EXPECT_CALL (*gmockSetting, getName ());
+	    EXPECT_CALL (*gmockSetting, getParent ());
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+	    }
+	    else
+	    {
+		EXPECT_CALL (*gmockSetting, getType ());
+	    }
+	}
+
+	void PostUpdate (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
+	{
+	}
+
+	bool UpdateSettingAtKey (const std::string &plugin,
+				 const std::string &setting)
+	{
+	    CCSPlugin *cplugin = ccsFindPlugin (mContext, plugin.c_str ());
+
+	    if (!cplugin)
+		return false;
+
+	    CCSSetting *csetting = ccsFindSetting (cplugin, setting.c_str ());
+
+	    if (!csetting)
+		return false;
+
+	    ccsBackendUpdateSetting (mBackend, mContext, cplugin, csetting);
+	    return true;
 	}
 
     protected:
@@ -317,9 +396,12 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
-
-		    ccsSetList (setting, ReadListAtKey (plugin, key), FALSE);
-		    break;
+		    ccsSetList (setting, CCSListWrapper (ReadListAtKey (plugin, key, setting),
+							 true,
+							 ccsSettingGetInfo (setting)->forList.listType,
+							 boost::shared_ptr <CCSSettingInfo> (),
+							 boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1))), FALSE);
+		break;
 
 		default:
 
@@ -405,11 +487,18 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
+		{
+		    CCSSettingValueList listCopy = NULL;
 
 		    ccsGetList (setting, &vList);
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (vList, false, ccsSettingGetInfo (setting)->forList.listType)));
-		    break;
+		    listCopy = ccsCopyList (vList, setting);
 
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true,
+												    ccsSettingGetInfo (setting)->forList.listType,
+												    boost::shared_ptr <CCSSettingInfo> (),
+												    boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1)))));
+		    break;
+		}
 		default:
 
 		    throw std::exception ();
@@ -420,6 +509,7 @@ class MockCCSBackendConceptTestEnvironment :
 
 	CCSBackend *mBackend;
 	CCSBackendGMock *mBackendGMock;
+	CCSContext *mContext;
 	std::map <std::string, VariantTypes> mValues;
 };
 

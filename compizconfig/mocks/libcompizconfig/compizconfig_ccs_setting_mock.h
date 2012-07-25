@@ -7,6 +7,7 @@ using ::testing::_;
 using ::testing::Return;
 
 CCSSetting * ccsMockSettingNew ();
+CCSSetting * ccsNiceMockSettingNew ();
 void ccsFreeMockSetting (CCSSetting *);
 
 class CCSSettingGMockInterface
