@@ -134,15 +134,12 @@ int GLVertexBuffer::end ()
 	                &priv->colorData[0], priv->usage);
     }
 
-    if (priv->nTextures)
+    for (GLuint i = 0; i < priv->nTextures; i++)
     {
-	for (GLuint i = 0; i < priv->nTextures; i++)
-	{
-	    GL::bindBuffer (GL_ARRAY_BUFFER, priv->textureBuffers[i]);
-	    GL::bufferData (GL_ARRAY_BUFFER,
-	                    sizeof(GLfloat) * priv->textureData[i].size (),
-	                    &priv->textureData[i][0], priv->usage);
-	}
+	GL::bindBuffer (GL_ARRAY_BUFFER, priv->textureBuffers[i]);
+	GL::bufferData (GL_ARRAY_BUFFER,
+	                sizeof(GLfloat) * priv->textureData[i].size (),
+	                &priv->textureData[i][0], priv->usage);
     }
 
     GL::bindBuffer (GL_ARRAY_BUFFER, 0);
