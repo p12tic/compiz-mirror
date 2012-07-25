@@ -70,20 +70,85 @@ elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
 
+function (compiz_add_test_to_testfile CURRENT_BINARY_DIR TEST)
+
+    message (STATUS "Will discover tests in ${TEST}")
+
+    set (INCLUDE_STR "INCLUDE (${CURRENT_BINARY_DIR}/${TEST}_test.cmake) \n")
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY COMPIZ_TEST_INCLUDE_FILES
+		  ${INCLUDE_STR})
+
+endfunction (compiz_add_test_to_testfile)
+
+function (compiz_generate_testfile_target)
+
+    # Adding a rule for the toplevel CTestTestfile.cmake
+    # will cause enable_testing not to generate the file
+    # for this directory, so we need to do some of the work
+    # that command did for us
+
+    file (WRITE ${CMAKE_BINARY_DIR}/CompizCTestTestfile.cmake "")
+
+    file (GLOB ALL_DIRS "*")
+
+    foreach (DIR ${ALL_DIRS})
+	if (IS_DIRECTORY ${DIR} AND NOT ${DIR} STREQUAL ${CMAKE_BINARY_DIR})
+	    file (RELATIVE_PATH RDIR ${CMAKE_CURRENT_SOURCE_DIR} ${DIR})
+	    file (APPEND ${compiz_BINARY_DIR}/CompizCTestTestfile.cmake
+	          "SUBDIRS (${RDIR})\n")
+	endif (IS_DIRECTORY ${DIR} AND NOT ${DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    endforeach ()
+
+    get_property (COMPIZ_TEST_INCLUDE_FILES_SET
+		  GLOBAL PROPERTY COMPIZ_TEST_INCLUDE_FILES
+		  SET)
+
+    if (NOT COMPIZ_TEST_INCLUDE_FILES_SET)
+	message (WARNING "No tests were added for discovery, not generating CTestTestfile.cmake rule")
+    endif (NOT COMPIZ_TEST_INCLUDE_FILES_SET)
+
+    get_property (COMPIZ_TEST_INCLUDE_FILES
+		  GLOBAL PROPERTY COMPIZ_TEST_INCLUDE_FILES)
+
+    foreach (INCLUDEFILE ${COMPIZ_TEST_INCLUDE_FILES})
+	file (APPEND ${compiz_BINARY_DIR}/CompizCTestTestfile.cmake ${INCLUDEFILE})
+    endforeach ()
+
+    # Overwrite any existing CTestTestfile.cmake - we cannot use
+    # configure_file as enable_testing () will clobber the result
+
+    add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/CTestTestfileValid
+		        COMMAND cat ${CMAKE_BINARY_DIR}/CompizCTestTestfile.cmake > ${CMAKE_BINARY_DIR}/CTestTestfile.cmake && touch ${CMAKE_BINARY_DIR}/CTestTestfileValid
+		        COMMENT "Generating CTestTestfile.cmake"
+		        VERBATIM)
+
+    add_custom_target (compiz_generate_ctest_testfile ALL
+		       DEPENDS ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+
+    # Invalidate the CTestTestfile.cmake
+    if (EXISTS ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+	execute_process (COMMAND rm ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+    endif (EXISTS ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+endfunction (compiz_generate_testfile_target)
+
 # Create target to discover tests
 function (compiz_discover_tests EXECUTABLE)
-
-    add_dependencies (${EXECUTABLE}
-		      compiz_discover_gtest_tests)
 
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD
 			COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE} --gtest_list_tests | ${CMAKE_BINARY_DIR}/compiz_gtest/compiz_discover_gtest_tests ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMENT "Discovering Tests in ${EXECUTABLE}"
-			DEPENDS 
 			VERBATIM)
-endfunction ()
+
+    add_dependencies (${EXECUTABLE}
+		      compiz_discover_gtest_tests)
+
+    compiz_add_test_to_testfile (${CMAKE_CURRENT_BINARY_DIR} ${EXECUTABLE})
+
+endfunction (compiz_discover_tests)
 
 function (compiz_ensure_linkage)
     find_program (LDCONFIG_EXECUTABLE ldconfig)
@@ -337,6 +402,7 @@ function (compiz_translate_xml _src _dst)
 		    sed -e 's;<_;<;g' -e 's;</_;</;g' > 
 		    ${_dst}
 	    DEPENDS ${_src}
+	    VERBATIM
 	)
     endif ()
 endfunction ()
@@ -364,6 +430,7 @@ function (compiz_translate_desktop_file _src _dst)
 		    sed -e 's;^_;;g' >
 		    ${_dst}
 	    DEPENDS ${_src}
+	    VERBATIM
 	)
     endif ()
 endfunction ()

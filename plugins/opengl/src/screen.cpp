@@ -143,6 +143,19 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
+    priv->commonFrontbuffer = true;
+    if (glRenderer != NULL && strstr (glRenderer, "on llvmpipe"))
+    {
+	/*
+	 * Most drivers use the same frontbuffer infrastructure for
+	 * swapbuffers as well as subbuffer copying. However there are some
+	 * odd exceptions like LLVMpipe (and SGX-something?) that use separate
+	 * buffers, so we can't dynamically switch between buffer swapping and
+	 * copying in those cases.
+	 */
+	priv->commonFrontbuffer = false;
+    }
+
     if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
 	GL::textureNonPowerOfTwo = true;
 
@@ -579,6 +592,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     outputRegion (),
     bindPixmap (),
     hasCompositing (false),
+    commonFrontbuffer (true),
     rootPixmapCopy (None),
     rootPixmapSize ()
 {
@@ -1133,7 +1147,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
-    CompRegion tmpRegion (region);
+    CompRegion tmpRegion = (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) ?
+                           screen->region () : region;
 
     foreach (CompOutput *output, outputs)
     {
@@ -1189,7 +1204,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     targetOutput = &screen->outputDevs ()[0];
 
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+    if ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) && commonFrontbuffer)
     {
 	/*
 	 * controlSwapVideoSync is much faster than waitForVideoSync because
