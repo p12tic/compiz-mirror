@@ -1224,23 +1224,9 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
     WRAPABLE_HND_FUNCTN (glDrawTexture, texture, transform, attrib, mask)
 
     GLTexture::Filter filter;
-#ifdef USE_GLES
-    GLboolean isBlendingEnabled = GL_FALSE;
 
-    // Enable blending if needed
-    if (mask & PAINT_WINDOW_BLEND_MASK) {
-       glGetBooleanv (GL_BLEND, &isBlendingEnabled);
-       if (!isBlendingEnabled)
-           glEnable(GL_BLEND);
-    }
-#else
-    // Always avoid glGetBooleanv if you can. It requires very slow round trips
     if (mask & PAINT_WINDOW_BLEND_MASK)
-    {
-	glPushAttrib (GL_ENABLE_BIT);
-	glEnable(GL_BLEND);
-    }
-#endif
+	glEnable (GL_BLEND);
 
     if (mask & (PAINT_WINDOW_TRANSFORMED_MASK |
 		PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK))
@@ -1265,14 +1251,8 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
     priv->shaders.clear ();
     texture->disable ();
 
-#ifdef USE_GLES
-    // Reset blending to old value
-    if ((mask & PAINT_WINDOW_BLEND_MASK) && !isBlendingEnabled)
-       glDisable(GL_BLEND);
-#else
     if (mask & PAINT_WINDOW_BLEND_MASK)
-	glPopAttrib ();
-#endif
+	glDisable (GL_BLEND);
 }
 
 bool
