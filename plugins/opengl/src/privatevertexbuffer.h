@@ -119,7 +119,13 @@ class PrivateVertexBuffer
 	std::vector<GLfloat> vertexData;
 	std::vector<GLfloat> normalData;
 	std::vector<GLfloat> colorData;
-	std::vector<std::vector<GLfloat> > textureData;
+
+	enum
+	{
+	    MAX_TEXTURES = 4
+	};
+	std::vector<GLfloat> textureData[MAX_TEXTURES];
+	GLuint nTextures;
 
 	GLfloat color[4];
 

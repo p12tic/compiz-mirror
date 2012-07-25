@@ -84,8 +84,11 @@ void GLVertexBuffer::begin (GLenum primitiveType)
     priv->maxVertices = -1;
     priv->normalData.clear ();
     priv->colorData.clear ();
-    priv->textureData.clear ();
     priv->uniforms.clear ();
+
+    priv->nTextures = 0;
+    for (int i = 0; i < PrivateVertexBuffer::MAX_TEXTURES; i++)
+	priv->textureData[i].clear ();
 }
 
 void GLVertexBuffer::begin ()
@@ -131,9 +134,9 @@ int GLVertexBuffer::end ()
 	                &priv->colorData[0], priv->usage);
     }
 
-    if (priv->textureData.size ())
+    if (priv->nTextures)
     {
-	for (unsigned int i = 0; i < priv->textureData.size (); i++)
+	for (GLuint i = 0; i < priv->nTextures; i++)
 	{
 	    GL::bindBuffer (GL_ARRAY_BUFFER, priv->textureBuffers[i]);
 	    GL::bufferData (GL_ARRAY_BUFFER,
@@ -207,23 +210,17 @@ void GLVertexBuffer::addTexCoords (GLuint texture,
                                    GLuint nTexcoords,
                                    GLfloat *texcoords)
 {
-    //four textures max (zero indexed)
-    if (texture > 3)
+    if (texture >= PrivateVertexBuffer::MAX_TEXTURES)
 	return;
 
-    while (texture >= priv->textureData.size ())
-    {
-	std::vector<GLfloat> temp;
-	priv->textureData.push_back (temp);
-    }
+    if (texture >= priv->nTextures)
+	priv->nTextures = texture + 1;
 
-    priv->textureData[texture].reserve (priv->textureData[texture].size () +
-                                        (nTexcoords * 2));
+    std::vector<GLfloat> &data = priv->textureData[texture];
+    data.reserve (data.size () + (nTexcoords * 2));
 
     for (GLuint i = 0; i < nTexcoords * 2; i++)
-    {
-	priv->textureData[texture].push_back (texcoords[i]);
-    }
+	data.push_back (texcoords[i]);
 }
 
 void GLVertexBuffer::addUniform (const char *name, GLfloat value)
@@ -359,6 +356,7 @@ int GLVertexBuffer::render (const GLMatrix            &projection,
 }
 
 PrivateVertexBuffer::PrivateVertexBuffer () :
+    nTextures (0),
     vertexOffset (0),
     maxVertices (-1),
     program (NULL)
@@ -412,7 +410,7 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 	                                        GLShaderVariableNone;
 	params.normal = normalData.size () <= 4 ? GLShaderVariableUniform :
 	                                          GLShaderVariableVarying;
-	params.numTextures = textureData.size ();
+	params.numTextures = nTextures;
 
 	// Get a program matching the parameters
 	tmpProgram = autoProgram->getProgram(params);
@@ -477,7 +475,7 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 	(*GL::bindBuffer) (GL::ARRAY_BUFFER, 0);
     }
 
-    for (int i = textureData.size () - 1; i >= 0; i--)
+    for (int i = nTextures - 1; i >= 0; i--)
     {
 	char name[10];
 
@@ -574,7 +572,7 @@ int PrivateVertexBuffer::legacyRender (const GLMatrix            &projection,
 	glColorPointer (4, GL_FLOAT, 0, &colorData[0]);
     }
 
-    for (int i = textureData.size () - 1; i >= 0; i--)
+    for (int i = nTextures - 1; i >= 0; i--)
     {
 	GL::clientActiveTexture (GL_TEXTURE0_ARB + i);
 	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
@@ -587,7 +585,7 @@ int PrivateVertexBuffer::legacyRender (const GLMatrix            &projection,
     glDisableClientState (GL_NORMAL_ARRAY);
     glDisableClientState (GL_COLOR_ARRAY);
 
-    for (int i = textureData.size (); i > 0; i--)
+    for (int i = nTextures; i > 0; i--)
     {
 	GL::clientActiveTexture (GL_TEXTURE0_ARB + i);
 	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
