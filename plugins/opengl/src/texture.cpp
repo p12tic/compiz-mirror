@@ -335,8 +335,6 @@ PrivateTexture::loadImageData (const char   *image,
     }
     #endif
 
-    glGetError ();
-
     t->setData (target, matrix, mipmap);
     t->setGeometry (0, 0, width, height);
     t->setFilter (GL_NEAREST);
@@ -363,10 +361,6 @@ PrivateTexture::loadImageData (const char   *image,
 
     glBindTexture (target, 0);
 
-    if (glGetError () != GL_NO_ERROR)
-    {
-	GLTexture::List ();
-    }
     return rv;
 }
 
