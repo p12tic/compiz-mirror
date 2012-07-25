@@ -40,28 +40,28 @@ struct _CCSBackend
 
 typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
-typedef void (*CCSBackendExecuteEventsFunc) (unsigned int flags);
+typedef void (*CCSBackendExecuteEventsFunc) (CCSBackend *backend, unsigned int flags);
 
-typedef Bool (*CCSBackendInitFunc) (CCSContext * context);
-typedef Bool (*CCSBackendFiniFunc) (CCSContext * context);
+typedef Bool (*CCSBackendInitFunc) (CCSBackend *, CCSContext * context);
+typedef Bool (*CCSBackendFiniFunc) (CCSBackend *, CCSContext * context);
 
-typedef Bool (*CCSBackendReadInitFunc) (CCSContext * context);
+typedef Bool (*CCSBackendReadInitFunc) (CCSBackend *, CCSContext * context);
 typedef void (*CCSBackendReadSettingFunc)
-(CCSContext * context, CCSSetting * setting);
-typedef void (*CCSBackendReadDoneFunc) (CCSContext * context);
+(CCSBackend *, CCSContext * context, CCSSetting * setting);
+typedef void (*CCSBackendReadDoneFunc) (CCSBackend *backend, CCSContext * context);
 
-typedef Bool (*CCSBackendWriteInitFunc) (CCSContext * context);
+typedef Bool (*CCSBackendWriteInitFunc) (CCSBackend *backend, CCSContext * context);
 typedef void (*CCSBackendWriteSettingFunc)
-(CCSContext * context, CCSSetting * setting);
-typedef void (*CCSBackendWriteDoneFunc) (CCSContext * context);
+(CCSBackend *backend, CCSContext * context, CCSSetting * setting);
+typedef void (*CCSBackendWriteDoneFunc) (CCSBackend *backend, CCSContext * context);
 
 typedef void (*CCSBackendUpdateFunc) (CCSBackend *, CCSContext *, CCSPlugin *, CCSSetting *);
 
-typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSSetting * setting);
-typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsIntegratedFunc) (CCSBackend *, CCSSetting * setting);
+typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSBackend *, CCSSetting * setting);
 
-typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSContext * context);
-typedef Bool (*CCSBackendDeleteProfileFunc) (CCSContext * context, char * name);
+typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSBackend *, CCSContext * context);
+typedef Bool (*CCSBackendDeleteProfileFunc) (CCSBackend *, CCSContext * context, char * name);
 
 typedef char * (*CCSBackendGetNameFunc) (CCSBackend *);
 typedef char * (*CCSBackendGetShortDescFunc) (CCSBackend *);

@@ -89,10 +89,10 @@ static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
 
 /* some forward declarations */
-static Bool readInit (CCSContext * context);
-static void readSetting (CCSContext * context, CCSSetting * setting);
+static Bool readInit (CCSBackend *backend, CCSContext * context);
+static void readSetting (CCSBackend *backend, CCSContext * context, CCSSetting * setting);
 static Bool readOption (CCSSetting * setting);
-static Bool writeInit (CCSContext * context);
+static Bool writeInit (CCSBackend *backend, CCSContext * context);
 static void writeIntegratedOption (CCSContext *context, CCSSetting *setting,
 				   int        index);
 
@@ -439,14 +439,14 @@ static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
     int          index;
-    readInit (context);
+    readInit (backend, context);
     if (!readOption (setting))
 	ccsResetToDefault (setting, TRUE);
 
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	writeInit (context);
+	writeInit (backend, context);
 	writeIntegratedOption (context, setting, index);
     }
 }
@@ -551,24 +551,24 @@ gnomeValueChanged (GConfClient *client,
 
 	    if (needInit)
 	    {
-		readInit (context);
+		readInit (NULL, context);
 		needInit = FALSE;
 	    }
 
 	    s = findDisplaySettingForPlugin (context, "core",
 					     "window_menu_button");
 	    if (s)
-		readSetting (context, s);
+		readSetting (NULL, context, s);
 
 	    s = findDisplaySettingForPlugin (context, "move",
 					     "initiate_button");
 	    if (s)
-		readSetting (context, s);
+		readSetting (NULL, context, s);
 
 	    s = findDisplaySettingForPlugin (context, "resize",
 					     "initiate_button");
 	    if (s)
-		readSetting (context, s);
+		readSetting (NULL, context, s);
 	}
 	else
 	{
@@ -587,10 +587,10 @@ gnomeValueChanged (GConfClient *client,
 		    {
 			if (needInit)
 			{
-			    readInit (context);
+			    readInit (NULL, context);
 			    needInit = FALSE;
 			}
-			readSetting (context, setting);
+			readSetting (NULL, context, setting);
 		    }
 
 		    /* do not read display settings multiple
@@ -1949,7 +1949,7 @@ checkProfile (CCSContext *context)
 }
 
 static void
-processEvents (unsigned int flags)
+processEvents (CCSBackend *backend, unsigned int flags)
 {
     if (!(flags & ProcessEventsNoGlibMainLoopMask))
     {
@@ -1959,7 +1959,7 @@ processEvents (unsigned int flags)
 }
 
 static Bool
-initBackend (CCSContext * context)
+initBackend (CCSBackend *backend, CCSContext * context)
 {
     g_type_init ();
 
@@ -1972,7 +1972,7 @@ initBackend (CCSContext * context)
 }
 
 static Bool
-finiBackend (CCSContext * context)
+finiBackend (CCSBackend *backend, CCSContext * context)
 {
     gconf_client_clear_cache (client);
     finiClient ();
@@ -1990,13 +1990,14 @@ finiBackend (CCSContext * context)
 }
 
 static Bool
-readInit (CCSContext * context)
+readInit (CCSBackend *backend, CCSContext * context)
 {
     return checkProfile (context);
 }
 
 static void
-readSetting (CCSContext *context,
+readSetting (CCSBackend *backend,
+	     CCSContext *context,
 	     CCSSetting *setting)
 {
     Bool status;
@@ -2015,13 +2016,14 @@ readSetting (CCSContext *context,
 }
 
 static Bool
-writeInit (CCSContext * context)
+writeInit (CCSBackend *backend, CCSContext * context)
 {
     return checkProfile (context);
 }
 
 static void
-writeSetting (CCSContext *context,
+writeSetting (CCSBackend *backend,
+	      CCSContext *context,
 	      CCSSetting *setting)
 {
     int index;
@@ -2041,7 +2043,7 @@ writeSetting (CCSContext *context,
 }
 
 static Bool
-getSettingIsIntegrated (CCSSetting * setting)
+getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
 {
     if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
@@ -2053,14 +2055,14 @@ getSettingIsIntegrated (CCSSetting * setting)
 }
 
 static Bool
-getSettingIsReadOnly (CCSSetting * setting)
+getSettingIsReadOnly (CCSBackend *backend, CCSSetting * setting)
 {
     /* FIXME */
     return FALSE;
 }
 
 static CCSStringList
-getExistingProfiles (CCSContext *context)
+getExistingProfiles (CCSBackend *backend, CCSContext *context)
 {
     GSList        *data, *tmp;
     CCSStringList ret = NULL;
@@ -2098,7 +2100,8 @@ getExistingProfiles (CCSContext *context)
 }
 
 static Bool
-deleteProfile (CCSContext *context,
+deleteProfile (CCSBackend *backend,
+	       CCSContext *context,
 	       char       *profile)
 {
     char     path[BUFSIZE];

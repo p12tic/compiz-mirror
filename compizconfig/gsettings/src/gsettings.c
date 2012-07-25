@@ -133,7 +133,7 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
 {
     int          index;
 
-    readInit (context);
+    readInit (backend, context);
     if (!readOption (setting))
     {
 	ccsResetToDefault (setting, TRUE);
@@ -142,7 +142,7 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	writeInit (context);
+	writeInit (backend, context);
 	writeIntegratedOption (context, setting, index);
     }
 }
@@ -892,7 +892,7 @@ getCurrentProfileName (void)
 }
 
 static void
-processEvents (unsigned int flags)
+processEvents (CCSBackend *backend, unsigned int flags)
 {
     if (!(flags & ProcessEventsNoGlibMainLoopMask))
     {
@@ -902,7 +902,7 @@ processEvents (unsigned int flags)
 }
 
 static Bool
-initBackend (CCSContext * context)
+initBackend (CCSBackend *backend, CCSContext * context)
 {
     char       *currentProfilePath;
 
@@ -924,11 +924,11 @@ initBackend (CCSContext * context)
 }
 
 static Bool
-finiBackend (CCSContext * context)
+finiBackend (CCSBackend *backend, CCSContext * context)
 {
     GList *l = settingsList;
 
-    processEvents (0);
+    processEvents (backend, 0);
 
 #ifdef USE_GCONF
     gconf_client_clear_cache (client);
@@ -955,18 +955,19 @@ finiBackend (CCSContext * context)
 
     g_object_unref (G_OBJECT (compizconfigSettings));
 
-    processEvents (0);
+    processEvents (backend, 0);
     return TRUE;
 }
 
 Bool
-readInit (CCSContext * context)
+readInit (CCSBackend *backend, CCSContext * context)
 {
     return updateProfile (context);
 }
 
 void
-readSetting (CCSContext *context,
+readSetting (CCSBackend *backend,
+	     CCSContext *context,
 	     CCSSetting *setting)
 {
     Bool status;
@@ -985,13 +986,14 @@ readSetting (CCSContext *context,
 }
 
 Bool
-writeInit (CCSContext * context)
+writeInit (CCSBackend *backend, CCSContext * context)
 {
     return updateProfile (context);
 }
 
 void
-writeSetting (CCSContext *context,
+writeSetting (CCSBackend *backend,
+	      CCSContext *context,
 	      CCSSetting *setting)
 {
     int index;
@@ -1011,7 +1013,7 @@ writeSetting (CCSContext *context,
 }
 
 static Bool
-getSettingIsIntegrated (CCSSetting * setting)
+getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
 {
     if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
@@ -1023,14 +1025,14 @@ getSettingIsIntegrated (CCSSetting * setting)
 }
 
 static Bool
-getSettingIsReadOnly (CCSSetting * setting)
+getSettingIsReadOnly (CCSBackend *backend, CCSSetting * setting)
 {
     /* FIXME */
     return FALSE;
 }
 
 static CCSStringList
-getExistingProfiles (CCSContext *context)
+getExistingProfiles (CCSBackend *backend, CCSContext *context)
 {
     GVariant      *value;
     char	  *profile;
@@ -1054,7 +1056,8 @@ getExistingProfiles (CCSContext *context)
 }
 
 static Bool
-deleteProfile (CCSContext *context,
+deleteProfile (CCSBackend *backend,
+	       CCSContext *context,
 	       char       *profile)
 {
     GVariant        *plugins;

@@ -66,10 +66,10 @@ typedef enum {
 
 char *currentProfile;
 
-Bool readInit (CCSContext * context);
-void readSetting (CCSContext * context, CCSSetting * setting);
+Bool readInit (CCSBackend *, CCSContext * context);
+void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
 Bool readOption (CCSSetting * setting);
-Bool writeInit (CCSContext * context);
+Bool writeInit (CCSBackend *, CCSContext * context);
 void writeOption (CCSSetting *setting);
 
 #ifdef USE_GCONF
