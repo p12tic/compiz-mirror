@@ -25,7 +25,6 @@
 
 #include "test-timer.h"
 #include <ctime>
-#include <pthread.h>
 #include <boost/noncopyable.hpp>
 
 using ::testing::InSequence;
@@ -56,8 +55,6 @@ class MockCompTimerTestCallbackDispatchTable :
     boost::noncopyable
 {
 public:
-
-    static const unsigned int MaxAllowedCalls = 10;
 
     MOCK_METHOD1 (callback1, bool (unsigned int));
     MOCK_METHOD1 (callback2, bool (unsigned int));
@@ -127,18 +124,6 @@ protected:
     unsigned int    mLastAdded;
     MockCompTimerTestCallbackDispatchTable *mDispatchTable;
 
-    static void * runThread (void * cb)
-    {
-	if (cb == NULL)
-	{
-	    return NULL;
-	}
-	static_cast <CompTimerTestCallback *> (cb)->ml->run ();
-	return NULL;
-    }
-
-    pthread_t mMainLoopThread;
-
     void AddTimer (unsigned int min,
 		   unsigned int max,
 		   const boost::function <bool ()> &callback,
@@ -195,11 +180,7 @@ protected:
 	    FAIL () << "timer with the most time is not at the back";
 	}
 
-	ASSERT_EQ (0,
-		   pthread_create (&mMainLoopThread, NULL,
-				   CompTimerTestCallback::runThread, this));
-
-	pthread_join (mMainLoopThread, NULL);
+	ml->run ();
     }
 
     void SetUp ()
