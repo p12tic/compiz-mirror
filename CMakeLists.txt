@@ -208,6 +208,10 @@ compiz_add_distcheck ()
 compiz_add_release ()
 compiz_add_release_signoff ()
 
+if (COMPIZ_BUILD_TESTING)
+    compiz_generate_testfile_target ()
+endif (COMPIZ_BUILD_TESTING)
+
 _print_configure_results ()
 
 _check_compiz_cmake_macro (${CMAKE_MODULE_PATH_ORIG})
