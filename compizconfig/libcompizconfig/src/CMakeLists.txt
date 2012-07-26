@@ -73,7 +73,7 @@ target_link_libraries (
 # libraries that compizconfig depends on (contains).
 #
 set_target_properties (compizconfig PROPERTIES
-    LINK_INTERFACE_LIBRARIES ""
+		       LINK_INTERFACE_LIBRARIES ""
 )
 
 set (COMPIZCONFIG_LIBS "")
