@@ -22,7 +22,7 @@ class CCSBackendGMockInterface
 	virtual Bool hasIntegrationSupport () = 0;
 	virtual void executeEvents (unsigned int) = 0;
 	virtual Bool init (CCSContext *context) = 0;
-	virtual Bool fini (CCSContext *context) = 0;
+	virtual Bool fini () = 0;
 	virtual Bool readInit (CCSContext *context) = 0;
 	virtual void readSetting (CCSContext *context, CCSSetting *setting) = 0;
 	virtual void readDone (CCSContext *context) = 0;
@@ -56,7 +56,7 @@ class CCSBackendGMock :
 	MOCK_METHOD0 (hasIntegrationSupport, Bool ());
 	MOCK_METHOD1 (executeEvents, void (unsigned int));
 	MOCK_METHOD1 (init, Bool (CCSContext *));
-	MOCK_METHOD1 (fini, Bool (CCSContext *));
+	MOCK_METHOD0 (fini, Bool ());
 	MOCK_METHOD1 (readInit, Bool (CCSContext *));
 	MOCK_METHOD2 (readSetting, void (CCSContext *, CCSSetting *));
 	MOCK_METHOD1 (readDone, void (CCSContext *));
@@ -111,9 +111,9 @@ class CCSBackendGMock :
 	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->init (context);
 	}
 
-	static Bool ccsBackendFini (CCSBackend *backend, CCSContext *context)
+	static Bool ccsBackendFini (CCSBackend *backend)
 	{
-	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->fini (context);
+	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->fini ();
 	}
 
 	static Bool ccsBackendReadInit (CCSBackend *backend, CCSContext *context)

@@ -414,7 +414,7 @@ CCSSettingValueList ccsGetValueListFromStringArray (const char ** array, int num
     return l;
 }
 
-CCSSettingValueList ccsGetValueListFromMatchArray (const char **array, int num,
+CCSSettingValueList ccsGetValueListFromMatchArray (const char ** array, int num,
 						   CCSSetting *parent)
 {
     CCSSettingValueList l = NULL;
