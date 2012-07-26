@@ -126,13 +126,13 @@ typedef struct _CCSSettingPrivate
 
 struct _CCSBackendPrivate
 {
-    void             *dlhand;
     CCSContext	     *context;
     CCSBackendInterface *vTable;
 };
 
 typedef struct _CCSBackendWithCapabilitiesPrivate
 {
+    void            *dlhand;
     CCSBackend	    *backend;
 } CCSBackendWithCapabilitiesPrivate;
 
