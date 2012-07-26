@@ -124,12 +124,6 @@ typedef struct _CCSSettingPrivate
     void      *privatePtr;        /* private pointer for usage by the caller */
 } CCSSettingPrivate;
 
-struct _CCSBackendPrivate
-{
-    CCSContext	     *context;
-    CCSBackendInterface *vTable;
-};
-
 typedef struct _CCSDynamicBackendPrivate
 {
     void            *dlhand;

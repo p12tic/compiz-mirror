@@ -28,7 +28,6 @@
 COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSBackend	  CCSBackend;
-typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
 
 typedef struct _CCSContext CCSContext;
@@ -45,7 +44,7 @@ typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 typedef void (*CCSBackendExecuteEventsFunc) (CCSBackend *backend, unsigned int flags);
 
 typedef Bool (*CCSBackendInitFunc) (CCSBackend *, CCSContext * context);
-typedef Bool (*CCSBackendFiniFunc) (CCSBackend *, CCSContext * context);
+typedef Bool (*CCSBackendFiniFunc) (CCSBackend *);
 
 typedef Bool (*CCSBackendReadInitFunc) (CCSBackend *, CCSContext * context);
 typedef void (*CCSBackendReadSettingFunc)
@@ -114,7 +113,7 @@ Bool ccsBackendHasProfileSupport (CCSBackend *backend);
 
 void ccsBackendExecuteEvents (CCSBackend *backend, unsigned int flags);
 Bool ccsBackendInit (CCSBackend *backend, CCSContext *context);
-Bool ccsBackendFini (CCSBackend *backend, CCSContext *context);
+Bool ccsBackendFini (CCSBackend *backend);
 Bool ccsBackendReadInit (CCSBackend *backend, CCSContext *context);
 void ccsBackendReadSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting);
 void ccsBackendReadDone (CCSBackend *backend, CCSContext *context);
