@@ -653,6 +653,11 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     CCSGSettingsBackendPrivate *priv = calloc (1, sizeof (CCSGSettingsBackendPrivate));
 
+    if (!priv)
+	return FALSE;
+
+    ccsObjectSetPrivate (backend, (CCSPrivate *) priv);
+
     priv->compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
 
     priv->currentProfile = getCurrentProfileName (backend);
@@ -661,8 +666,6 @@ initBackend (CCSBackend *backend, CCSContext * context)
     priv->context = context;
 
     g_free (currentProfilePath);
-
-    ccsObjectSetPrivate (backend, (CCSPrivate *) priv);
 
     return TRUE;
 }
