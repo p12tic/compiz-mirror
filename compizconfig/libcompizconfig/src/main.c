@@ -1348,7 +1348,7 @@ Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *na
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->deleteProfile) (backend, context, name);
 }
 
-static Bool
+Bool
 ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 		 CCSSettingListInfo info)
 {
@@ -2792,7 +2792,7 @@ ccsGetIntegrationEnabled (CCSContext *context)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetIntegrationEnabled) (context);
 }
 
-char *
+const char *
 ccsGetProfileDefault (CCSContext * context)
 {
     if (!context)
@@ -2803,7 +2803,7 @@ ccsGetProfileDefault (CCSContext * context)
     return cPrivate->profile;
 }
 
-char *
+const char *
 ccsGetProfile (CCSContext *context)
 {
     if (!context)
