@@ -807,10 +807,10 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
 
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
-CCSSettingValueList ccsGetValueListFromStringArray (char       **array,
+CCSSettingValueList ccsGetValueListFromStringArray (const char **array,
 						    int        num,
 						    CCSSetting *parent);
-CCSSettingValueList ccsGetValueListFromMatchArray (char       **array,
+CCSSettingValueList ccsGetValueListFromMatchArray (const char  **array,
 						   int        num,
 						   CCSSetting *parent);
 CCSSettingValueList ccsGetValueListFromIntArray (int        *array,

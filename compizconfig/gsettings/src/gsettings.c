@@ -307,8 +307,8 @@ readListValue (CCSSetting *setting)
     case TypeString:
     case TypeMatch:
 	{
-	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
-	    gchar **arrayCounter = array;
+	    const gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
+	    const gchar **arrayCounter = array;
 	    gchar *value;
 
 	    if (!array)
@@ -321,7 +321,7 @@ readListValue (CCSSetting *setting)
 		*arrayCounter++ = value;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_strfreev (array);
+	    g_strfreev ((char **) array);
 	}
 	break;
     case TypeColor:

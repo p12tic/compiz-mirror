@@ -392,7 +392,7 @@ CCSSettingColorValue * ccsGetColorArrayFromValueList (CCSSettingValueList list,
     return rv;
 }
 
-CCSSettingValueList ccsGetValueListFromStringArray (char ** array, int num,
+CCSSettingValueList ccsGetValueListFromStringArray (const char ** array, int num,
 						    CCSSetting *parent)
 {
     CCSSettingValueList l = NULL;
@@ -414,7 +414,7 @@ CCSSettingValueList ccsGetValueListFromStringArray (char ** array, int num,
     return l;
 }
 
-CCSSettingValueList ccsGetValueListFromMatchArray (char ** array, int num,
+CCSSettingValueList ccsGetValueListFromMatchArray (const char ** array, int num,
 						   CCSSetting *parent)
 {
     CCSSettingValueList l = NULL;
