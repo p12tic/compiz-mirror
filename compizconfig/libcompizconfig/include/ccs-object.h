@@ -23,6 +23,8 @@
 #ifndef _CCS_OBJECT_H
 #define _CCS_OBJECT_H
 
+#include <ccs-defs.h>
+
 COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSInterface CCSInterface; /* Dummy typedef */
