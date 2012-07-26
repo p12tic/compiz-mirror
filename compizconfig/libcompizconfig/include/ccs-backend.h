@@ -170,12 +170,6 @@ CCSBackend * ccsOpenBackend (const CCSInterfaceTable *, CCSContext *context, con
 CCSBackend *
 ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface);
 
-typedef struct _CCSInterfaceTable CCSInterfaceTable;
-
-/* Constructor method */
-CCSDynamicBackend *
-ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend, void *dlhand);
-
 CCSBackendInterface* getBackendInfo (void);
 
 COMPIZCONFIG_END_DECLS
