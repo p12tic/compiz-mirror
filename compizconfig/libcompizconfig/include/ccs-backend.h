@@ -141,6 +141,7 @@ typedef Bool (*CCSDynamicBackendSupportsRead) (CCSDynamicBackend *);
 typedef Bool (*CCSDynamicBackendSupportsWrite) (CCSDynamicBackend *);
 typedef Bool (*CCSDynamicBackendSupportsProfiles) (CCSDynamicBackend *);
 typedef Bool (*CCSDynamicBackendSupportsIntegration) (CCSDynamicBackend *);
+typedef CCSBackend * (*CCSDynamicBackendGetRawBackend) (CCSDynamicBackend *);
 
 struct _CCSDynamicBackendInterface
 {
@@ -148,12 +149,14 @@ struct _CCSDynamicBackendInterface
     CCSDynamicBackendSupportsWrite supportsWrite;
     CCSDynamicBackendSupportsProfiles supportsProfiles;
     CCSDynamicBackendSupportsIntegration supportsIntegration;
+    CCSDynamicBackendGetRawBackend getRawBackend;
 };
 
 Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *);
 Bool ccsDynamicBackendSupportsWrite (CCSDynamicBackend *);
 Bool ccsDynamicBackendSupportsProfiles (CCSDynamicBackend *);
 Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *);
+CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *);
 
 unsigned int ccsCCSDynamicBackendInterfaceGetType ();
 
