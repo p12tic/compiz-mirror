@@ -128,19 +128,19 @@ CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *co
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name);
 void ccsFreeBackend (CCSBackend *backend);
 
-typedef struct _CCSBackendWithCapabilities	  CCSBackendWithCapabilities;
-typedef struct _CCSBackendWithCapabilitiesPrivate CCSBackendWithCapabilitiesPrivate;
+typedef struct _CCSDynamicBackend	  CCSDynamicBackend;
+typedef struct _CCSDynamicBackendPrivate CCSDynamicBackendPrivate;
 typedef struct _CCSBackendCapabilitiesInterface  CCSBackendCapabilitiesInterface;
 
-struct _CCSBackendWithCapabilities
+struct _CCSDynamicBackend
 {
     CCSObject object;
 };
 
-typedef Bool (*CCSBackendCapabilitiesSupportsRead) (CCSBackendWithCapabilities *);
-typedef Bool (*CCSBackendCapabilitiesSupportsWrite) (CCSBackendWithCapabilities *);
-typedef Bool (*CCSBackendCapabilitiesSupportsProfiles) (CCSBackendWithCapabilities *);
-typedef Bool (*CCSBackendCapabilitiesSupportsIntegration) (CCSBackendWithCapabilities *);
+typedef Bool (*CCSBackendCapabilitiesSupportsRead) (CCSDynamicBackend *);
+typedef Bool (*CCSBackendCapabilitiesSupportsWrite) (CCSDynamicBackend *);
+typedef Bool (*CCSBackendCapabilitiesSupportsProfiles) (CCSDynamicBackend *);
+typedef Bool (*CCSBackendCapabilitiesSupportsIntegration) (CCSDynamicBackend *);
 
 struct _CCSBackendCapabilitiesInterface
 {
@@ -150,14 +150,14 @@ struct _CCSBackendCapabilitiesInterface
     CCSBackendCapabilitiesSupportsIntegration supportsIntegration;
 };
 
-Bool ccsBackendCapabilitiesSupportsRead (CCSBackendWithCapabilities *);
-Bool ccsBackendCapabilitiesSupportsWrite (CCSBackendWithCapabilities *);
-Bool ccsBackendCapabilitiesSupportsProfiles (CCSBackendWithCapabilities *);
-Bool ccsBackendCapabilitiesSupportsIntegration (CCSBackendWithCapabilities *);
+Bool ccsBackendCapabilitiesSupportsRead (CCSDynamicBackend *);
+Bool ccsBackendCapabilitiesSupportsWrite (CCSDynamicBackend *);
+Bool ccsBackendCapabilitiesSupportsProfiles (CCSDynamicBackend *);
+Bool ccsBackendCapabilitiesSupportsIntegration (CCSDynamicBackend *);
 
 unsigned int ccsCCSBackendCapabilitiesInterfaceGetType ();
 
-void ccsFreeBackendWithCapabilities (CCSBackendWithCapabilities *);
+void ccsFreeDynamicBackend (CCSDynamicBackend *);
 
 /* Backend opener method */
 void *
