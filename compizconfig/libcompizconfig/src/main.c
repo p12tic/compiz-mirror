@@ -1291,6 +1291,11 @@ Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *capabilities)
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsIntegration) (capabilities);
 }
 
+CCSBackend * ccsDynamicBackendGetRawBacend (CCSDynamicBackend *capabilities)
+{
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->getRawBackend) (capabilities);
+}
+
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend)
 {
     return (GET_INTERFACE (CCSBackendInterface, backend))->executeEvents != NULL;
@@ -1443,6 +1448,13 @@ ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *capabilities)
     CAPABILITIES_PRIV (capabilities);
 
     return ccsBackendHasProfileSupport (bcPrivate->backend);
+}
+
+static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *capabilities)
+{
+    CAPABILITIES_PRIV (capabilities);
+
+    return bcPrivate->backend;
 }
 
 static Bool ccsDynamicBackendInitWrapper (CCSBackend *backend, CCSContext *context)
@@ -5542,7 +5554,8 @@ const CCSDynamicBackendInterface ccsDefaultDynamicBackendInterface =
     ccsDynamicBackendSupportsReadDefault,
     ccsDynamicBackendSupportsWriteDefault,
     ccsDynamicBackendSupportsIntegrationDefault,
-    ccsDynamicBackendSupportsProfilesDefault
+    ccsDynamicBackendSupportsProfilesDefault,
+    ccsDynamicBackendGetRawBackendDefault
 };
 
 const CCSInterfaceTable ccsDefaultInterfaceTable =
