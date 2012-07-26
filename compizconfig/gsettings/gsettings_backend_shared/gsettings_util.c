@@ -484,6 +484,27 @@ getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCS
 }
 
 CCSSettingValueList
+readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+{
+    CCSSettingValueList list = NULL;
+    Bool *array = malloc (nItems * sizeof (Bool));
+    Bool *arrayCounter = array;
+    gboolean value;
+
+    if (!array)
+	return NULL;
+
+    /* Reads each item from the variant into arrayCounter */
+    while (g_variant_iter_loop (iter, "b", &value))
+	*arrayCounter++ = value ? TRUE : FALSE;
+
+    list = ccsGetValueListFromBoolArray (array, nItems, setting);
+    free (array);
+
+    return list;
+}
+
+CCSSettingValueList
 readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 {
     CCSSettingType      listType = ccsSettingGetInfo (setting)->forList.listType;
@@ -503,21 +524,7 @@ readListValue (GVariant *gsettingsValue, CCSSetting *setting)
     switch (listType)
     {
     case TypeBool:
-	{
-	    Bool *array = malloc (nItems * sizeof (Bool));
-	    Bool *arrayCounter = array;
-	    gboolean value;
-
-	    if (!array)
-		break;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "b", &value))
-		*arrayCounter++ = value ? TRUE : FALSE;
-
-	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
-	    free (array);
-	}
+	list = readBoolListValue (&iter, nItems, setting);
 	break;
     case TypeInt:
 	{
