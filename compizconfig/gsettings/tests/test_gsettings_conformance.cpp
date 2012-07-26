@@ -58,12 +58,11 @@ class CCSGSettingsBackendEnv :
 
 	    std::string path ("gsettings");
 
-	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsOpenBackend (mContext, path.c_str ()));
+	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsOpenBackend (&ccsDefaultInterfaceTable, mContext, path.c_str ()));
 
 	    EXPECT_TRUE (mBackend);
 
-	    //mGSettingsBackend = ccsBackendNewWithInterface (mContext, interface, dlhand);
-	    mGSettingsBackend = NULL;
+	    mGSettingsBackend = ccsDynamicBackendGetRawBackend (mBackend);
 
 	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
 
