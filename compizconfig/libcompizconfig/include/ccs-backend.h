@@ -166,7 +166,7 @@ ccsOpenBackend (const char *name, CCSBackendInterface **interface);
 
 /* Constructor method */
 CCSBackend *
-ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
+ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
 
 typedef struct _CCSInterfaceTable CCSInterfaceTable;
 
