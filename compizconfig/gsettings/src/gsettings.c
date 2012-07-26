@@ -40,15 +40,6 @@ valueChanged (GSettings   *settings,
 	      gchar	  *keyname,
 	      gpointer    user_data);
 
-static GList	   *settingsList = NULL;
-static GSettings   *compizconfigSettings = NULL;
-static GSettings   *currentProfileSettings = NULL;
-
-char *currentProfile = NULL;
-
-/* This will need to be rempved */
-CCSContext *storedContext = NULL;
-
 /* some forward declarations */
 static void writeIntegratedOption (CCSBackend *backend,
 				   CCSContext *context,
@@ -67,7 +58,9 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
     gsize            newWrittenPluginsSize;
     gchar           **newWrittenPlugins;
 
-    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, settingsList);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, priv->settingsList);
 
     if (settingsObj)
     {
@@ -81,7 +74,7 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 
     ccsGSettingsBackendConnectToChangedSignal (backend, G_OBJECT (settingsObj));
 
-    settingsList = g_list_append (settingsList, (void *) settingsObj);
+    priv->settingsList = g_list_append (priv->settingsList, (void *) settingsObj);
 
     /* Also write the plugin name to the list of modified plugins so
      * that when we delete the profile the keys for that profile are also
@@ -89,11 +82,11 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
      * store keys that have changed from their defaults ... though
      * gsettings doesn't seem to give you a way to get all of the schemas */
 
-    writtenPlugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
+    writtenPlugins = g_settings_get_value (priv->currentProfileSettings, "plugins-with-set-keys");
 
     appendToPluginsWithSetKeysList (plugin, writtenPlugins, &newWrittenPlugins, &newWrittenPluginsSize);
 
-    g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
+    g_settings_set_strv (priv->currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
 
     g_variant_unref (writtenPlugins);
     g_free (schemaName);
@@ -103,7 +96,7 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 }
 
 static gchar *
-makeSettingPath (CCSSetting *setting)
+makeSettingPath (const char *currentProfile, CCSSetting *setting)
 {
     return makeCompizPluginPath (currentProfile,
                              ccsPluginGetName (ccsSettingGetParent (setting)));
@@ -113,7 +106,8 @@ static GSettings *
 getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 {
     GSettings *ret = NULL;
-    gchar *pathName = makeSettingPath (setting);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    gchar *pathName = makeSettingPath (priv->currentProfile, setting);
 
     ret = ccsGSettingsGetSettingsObjectForPluginWithPath (backend,
 							  ccsPluginGetName (ccsSettingGetParent (setting)),
@@ -180,9 +174,10 @@ readIntegratedOption (CCSBackend *backend,
 static GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 {
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
     GSettings  *settings = getSettingsObjectForCCSSetting (backend, setting);
     char *cleanSettingName = getNameForCCSSetting (setting);
-    gchar *pathName = makeSettingPath (setting);
+    gchar *pathName = makeSettingPath (priv->currentProfile, setting);
     GVariant *gsettingsValue = getVariantAtKey (settings,
 						cleanSettingName,
 						pathName,
@@ -505,7 +500,7 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
 }
 
 static void
-updateCurrentProfileName (const char *profile)
+updateCurrentProfileName (CCSBackend *backend, const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
@@ -515,7 +510,9 @@ updateCurrentProfileName (const char *profile)
     GVariantIter    iter;
     gboolean        found = FALSE;
 
-    profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    profiles = g_settings_get_value (priv->compizconfigSettings, "existing-profiles");
 
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
@@ -532,7 +529,7 @@ updateCurrentProfileName (const char *profile)
 	g_variant_builder_add (newProfilesBuilder, "s", profile);
 
     newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
+    g_settings_set_value (priv->compizconfigSettings, "existing-profiles", newProfiles);
 
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
@@ -540,19 +537,21 @@ updateCurrentProfileName (const char *profile)
     g_variant_unref (profiles);
 
     /* Change the current profile and current profile settings */
-    free (currentProfile);
+    free (priv->currentProfile);
 
-    currentProfile = strdup (profile);
-    currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
+    priv->currentProfile = strdup (profile);
+    priv->currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
 
-    g_settings_set (compizconfigSettings, "current-profile", "s", profile, NULL);
+    g_settings_set (priv->compizconfigSettings, "current-profile", "s", profile, NULL);
 
     g_free (profilePath);
 }
 
 static gboolean
-updateProfile (CCSContext *context)
+updateProfile (CCSBackend *backend, CCSContext *context)
 {
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
     char *profile = strdup (ccsGetProfile (context));
 
     if (!profile)
@@ -564,8 +563,8 @@ updateProfile (CCSContext *context)
 	profile = strdup (DEFAULTPROF);
     }
 
-    if (g_strcmp0 (profile, currentProfile))
-	updateCurrentProfileName (profile);
+    if (g_strcmp0 (profile, priv->currentProfile))
+	updateCurrentProfileName (backend, profile);
 
     free (profile);
 
@@ -573,12 +572,14 @@ updateProfile (CCSContext *context)
 }
 
 static char*
-getCurrentProfileName (void)
+getCurrentProfileName (CCSBackend *backend)
 {
     GVariant *value;
     char     *ret = NULL;
 
-    value = g_settings_get_value (compizconfigSettings, "current-profile");
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    value = g_settings_get_value (priv->compizconfigSettings, "current-profile");
 
     if (value)
 	ret = strdup (g_variant_get_string (value, NULL));
@@ -603,7 +604,9 @@ processEvents (CCSBackend *backend, unsigned int flags)
 static CCSContext *
 ccsGSettingsBackendGetContextDefault (CCSBackend *backend)
 {
-    return storedContext;
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return priv->context;
 }
 
 static void
@@ -616,9 +619,7 @@ static void
 ccsGSettingsBackendRegisterGConfClientDefault (CCSBackend *backend)
 {
 #ifdef USE_GCONF
-    CCSContext *context = ccsGSettingsBackendGetContext (backend);
-
-    initGConfClient (context);
+    initGConfClient (backend);
 #endif
 }
 
@@ -626,8 +627,10 @@ static void
 ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
 {
 #ifdef USE_GCONF
-    gconf_client_clear_cache (client);
-    finiGConfClient ();
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    gconf_client_clear_cache (priv->client);
+    finiGConfClient (backend);
 #endif
 }
 
@@ -646,17 +649,20 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     g_type_init ();
 
-    storedContext = context;
-
     ccsObjectAddInterface (backend, (CCSInterface *) &gsettingsAdditionalDefaultInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
 
-    compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
+    CCSGSettingsBackendPrivate *priv = calloc (1, sizeof (CCSGSettingsBackendPrivate));
 
-    currentProfile = getCurrentProfileName ();
-    currentProfilePath = makeCompizProfilePath (currentProfile);
-    currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
+    priv->compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
+
+    priv->currentProfile = getCurrentProfileName (backend);
+    currentProfilePath = makeCompizProfilePath (priv->currentProfile);
+    priv->currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
+    priv->context = context;
 
     g_free (currentProfilePath);
+
+    ccsObjectSetPrivate (backend, (CCSPrivate *) priv);
 
     return TRUE;
 }
@@ -664,38 +670,44 @@ initBackend (CCSBackend *backend, CCSContext * context)
 static Bool
 finiBackend (CCSBackend *backend)
 {
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
     processEvents (backend, 0);
 
     ccsGSettingsBackendUnregisterGConfClient (backend);
 
-    if (currentProfile)
+    if (priv->currentProfile)
     {
-	free (currentProfile);
-	currentProfile = NULL;
+	free (priv->currentProfile);
+	priv->currentProfile = NULL;
     }
 
-    g_list_free_full (settingsList, g_object_unref);
+    g_list_free_full (priv->settingsList, g_object_unref);
 
-    settingsList = NULL;
+    priv->settingsList = NULL;
 
-    if (currentProfileSettings)
+    if (priv->currentProfileSettings)
     {
-	g_object_unref (currentProfileSettings);
-	currentProfileSettings = NULL;
+	g_object_unref (priv->currentProfileSettings);
+	priv->currentProfileSettings = NULL;
     }
 
-    g_object_unref (G_OBJECT (compizconfigSettings));
+    g_object_unref (G_OBJECT (priv->compizconfigSettings));
 
-    compizconfigSettings = NULL;
+    priv->compizconfigSettings = NULL;
 
     processEvents (backend, 0);
+
+    free (priv);
+    ccsObjectSetPrivate (backend, NULL);
+
     return TRUE;
 }
 
 Bool
 readInit (CCSBackend *backend, CCSContext * context)
 {
-    return updateProfile (context);
+    return updateProfile (backend, context);
 }
 
 void
@@ -721,7 +733,7 @@ readSetting (CCSBackend *backend,
 Bool
 writeInit (CCSBackend *backend, CCSContext * context)
 {
-    return updateProfile (context);
+    return updateProfile (backend, context);
 }
 
 void
@@ -772,7 +784,9 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     GVariantIter  iter;
     CCSStringList ret = NULL;
 
-    value = g_settings_get_value (compizconfigSettings,  "existing-profiles");
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    value = g_settings_get_value (priv->compizconfigSettings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
     while (g_variant_iter_loop (&iter, "s", &profile))
     {
@@ -801,15 +815,16 @@ deleteProfile (CCSBackend *backend,
     GVariantIter    iter;
     char            *profileSettingsPath = makeCompizProfilePath (profile);
     GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
-    profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
+    plugins = g_settings_get_value (priv->currentProfileSettings, "plugins-with-set-keys");
+    profiles = g_settings_get_value (priv->compizconfigSettings, "existing-profiles");
 
     g_variant_iter_init (&iter, plugins);
     while (g_variant_iter_loop (&iter, "s", &plugin))
     {
 	GSettings *settings;
-	gchar *pathName = makeCompizPluginPath (currentProfile, plugin);
+	gchar *pathName = makeCompizPluginPath (priv->currentProfile, plugin);
 
 	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
 	g_free (pathName);
@@ -843,14 +858,14 @@ deleteProfile (CCSBackend *backend,
     }
 
     newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
+    g_settings_set_value (priv->compizconfigSettings, "existing-profiles", newProfiles);
 
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
     g_free (profileSettingsPath);
 
-    updateProfile (context);
+    updateProfile (backend, context);
 
     return TRUE;
 }

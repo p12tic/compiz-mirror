@@ -10,7 +10,7 @@ COMPIZCONFIG_BEGIN_DECLS
 #include <glib-object.h>
 #include <gio/gio.h>
 
-typedef struct _CCSGSettingsBackendPrivate CCSGettingsBackendPrivate;
+typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
@@ -29,11 +29,6 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
     CCSGSettingsBackendRegisterGConfClient gsettingsBackendRegisterGConfClient;
     CCSGSettingsBackendUnregisterGConfClient gsettingsBackendUnregisterGConfClient;
-};
-
-struct _CCSGSettingsBackendPrivate
-{
-    CCSContext *context;
 };
 
 unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
