@@ -54,8 +54,8 @@ typedef void (*CCSBackendReadDoneFunc) (CCSBackend *backend, CCSContext * contex
 
 typedef Bool (*CCSBackendWriteInitFunc) (CCSBackend *backend, CCSContext * context);
 typedef void (*CCSBackendWriteSettingFunc)
-(CCSBackend *backend, CCSContext * context, CCSSetting * setting);
-typedef void (*CCSBackendWriteDoneFunc) (CCSBackend *backend, CCSContext * context);
+(CCSBackend *, CCSContext * context, CCSSetting * setting);
+typedef void (*CCSBackendWriteDoneFunc) (CCSBackend *, CCSContext * context);
 
 typedef void (*CCSBackendUpdateFunc) (CCSBackend *, CCSContext *, CCSPlugin *, CCSSetting *);
 
