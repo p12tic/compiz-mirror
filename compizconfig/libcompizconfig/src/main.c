@@ -1066,14 +1066,6 @@ openBackend (const char *backend)
     return dlhand;
 }
 
-void *
-ccsDynamicBackendGetDlHand (CCSBackend *backend)
-{
-    DYNAMIC_BACKEND_PRIV (backend);
-
-    return bcPrivate->dlhand;
-}
-
 void
 ccsFreeBackend (CCSBackend *backend)
 {
