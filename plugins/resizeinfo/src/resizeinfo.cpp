@@ -386,10 +386,10 @@ InfoLayer::draw (const GLMatrix &transform,
 
 	streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-	colorData[0] = opacity * 65536;
-	colorData[1] = opacity * 65536;
-	colorData[2] = opacity * 65536;
-	colorData[3] = opacity * 65536;
+	colorData[0] = opacity * 65535;
+	colorData[1] = opacity * 65535;
+	colorData[2] = opacity * 65535;
+	colorData[3] = opacity * 65535;
 
 	textureData[0] = COMP_TEX_COORD_X (matrix, box.x1);
 	textureData[1] = COMP_TEX_COORD_Y (matrix, box.y2);
