@@ -50,28 +50,8 @@ typedef struct _IniPrivData
 
 IniPrivData;
 
-static IniPrivData *privData = NULL;
-
-static int privDataSize = 0;
-
 /* forward declaration */
 static void setProfile (IniPrivData *data, char *profile);
-
-static IniPrivData*
-findPrivFromContext (CCSContext *context)
-{
-    int i;
-    IniPrivData *data;
-
-    for (i = 0, data = privData; i < privDataSize; i++, data++)
-	if (data->context == context)
-	    break;
-
-    if (i == privDataSize)
-	return NULL;
-
-    return data;
-}
 
 static char*
 getIniFileName (char *profile)
@@ -184,25 +164,22 @@ initBackend (CCSBackend *backend, CCSContext * context)
 {
     IniPrivData *newData;
 
-    privData = realloc (privData, (privDataSize + 1) * sizeof (IniPrivData));
-    newData = privData + privDataSize;
+    newData = calloc (1, sizeof (IniPrivData));
 
     /* initialize the newly allocated part */
-    memset (newData, 0, sizeof (IniPrivData));
     newData->context = context;
 
-    privDataSize++;
+    ccsObjectSetPrivate (backend, (CCSPrivate *) newData);
 
     return TRUE;
 }
 
 static Bool
-finiBackend (CCSBackend * backend,
-	     CCSContext * context)
+finiBackend (CCSBackend * backend)
 {
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
 
     if (!data)
 	return FALSE;
@@ -216,15 +193,8 @@ finiBackend (CCSBackend * backend,
     if (data->lastProfile)
 	free (data->lastProfile);
 
-    privDataSize--;
-
-    if (privDataSize)
-	privData = realloc (privData, privDataSize * sizeof (IniPrivData));
-    else
-    {
-	free (privData);
-	privData = NULL;
-    }
+    free (data);
+    ccsObjectSetPrivate (backend, NULL);
 
     return TRUE;
 }
@@ -237,7 +207,7 @@ readInit (CCSBackend *backend,
     char       *currentProfile;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
 
     if (!data)
 	return FALSE;
@@ -269,7 +239,7 @@ readSetting (CCSBackend *backend,
     char        *keyName;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 
@@ -429,7 +399,7 @@ writeInit (CCSBackend *backend, CCSContext * context)
     char *currentProfile;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
 
     if (!data)
 	return FALSE;
@@ -462,7 +432,7 @@ writeSetting (CCSBackend *backend,
     char        *keyName;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 
@@ -583,7 +553,7 @@ writeDone (CCSBackend *backend, CCSContext * context)
     char	*currentProfile;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 

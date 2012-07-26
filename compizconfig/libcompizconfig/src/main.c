@@ -1077,9 +1077,7 @@ ccsDynamicBackendGetDlHand (CCSBackend *backend)
 void
 ccsFreeBackend (CCSBackend *backend)
 {
-    BACKEND_PRIV (backend);
-
-    ccsBackendFini (backend, bPrivate->context);
+    ccsBackendFini (backend);
 
     ccsObjectFinalize (backend);
     free (backend);
@@ -1104,25 +1102,9 @@ ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterfac
 {
     CCSBackend *backend = calloc (1, sizeof (CCSBackend));
 
-    CCSBackendPrivate *bPrivate = NULL;
-
-    if (!backend)
-	return NULL;
-
     ccsObjectInit (backend, &ccsDefaultObjectAllocator);
     ccsBackendRef (backend);
 
-    bPrivate = calloc (1, sizeof (CCSBackendPrivate));
-
-    if (!bPrivate)
-    {
-	ccsBackendUnref (backend);
-	return NULL;
-    }
-
-    bPrivate->context = context;
-
-    ccsObjectSetPrivate (backend, (CCSPrivate *) bPrivate);
     ccsObjectAddInterface (backend, (CCSInterface *) interface, GET_INTERFACE_TYPE (CCSBackendInterface));
 
     return backend;
@@ -1324,9 +1306,9 @@ Bool ccsBackendInit (CCSBackend *backend, CCSContext *context)
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendInit) (backend, context);
 }
 
-Bool ccsBackendFini (CCSBackend *backend, CCSContext *context)
+Bool ccsBackendFini (CCSBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendFini) (backend, context);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendFini) (backend);
 }
 
 static Bool ccsBackendHasReadInit (CCSBackend *backend)
@@ -1505,11 +1487,11 @@ static Bool ccsBackendCapabilitiesHasProfileSupportWrapper (CCSBackend *backend)
     return ccsBackendHasProfileSupport (bcPrivate->backend);
 }
 
-static Bool ccsBackendCapabilitiesFiniWrapper (CCSBackend *backend, CCSContext *context)
+static Bool ccsBackendCapabilitiesFiniWrapper (CCSBackend *backend)
 {
     CAPABILITIES_PRIV (backend);
 
-    return ccsBackendFini (bcPrivate->backend, context);
+    return ccsBackendFini (bcPrivate->backend);
 }
 
 static void ccsBackendCapabilitiesExecuteEventsWrapper (CCSBackend *backend, unsigned int flags)
