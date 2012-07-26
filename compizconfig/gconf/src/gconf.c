@@ -1973,7 +1973,7 @@ initBackend (CCSBackend *backend, CCSContext * context)
 }
 
 static Bool
-finiBackend (CCSBackend *backend, CCSContext * context)
+finiBackend (CCSBackend *backend)
 {
     gconf_client_clear_cache (client);
     finiClient ();
