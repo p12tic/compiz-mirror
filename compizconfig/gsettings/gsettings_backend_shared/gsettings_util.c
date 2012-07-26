@@ -620,6 +620,7 @@ readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 	break;
     case TypeFloat:
 	list = readFloatListValue (&iter, nItems, setting);
+	break;
     case TypeString:
     case TypeMatch:
 	list = readStringListValue (&iter, nItems, setting);
