@@ -1086,7 +1086,7 @@ ccsFreeBackend (CCSBackend *backend)
 }
 
 CCSBackend *
-ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand)
+ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand)
 {
     CCSBackend *backend = calloc (1, sizeof (CCSBackend));
     CCSBackendPrivate *bPrivate = NULL;
@@ -1175,7 +1175,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	fallbackMode = TRUE;
     }
 
-    CCSBackend *backend = ccsBackendNewWithInterface (context, vt, dlhand);
+    CCSBackend *backend = ccsBackendNewWithDynamicInterface (context, vt, dlhand);
 
     cPrivate->backend = backend;
 
