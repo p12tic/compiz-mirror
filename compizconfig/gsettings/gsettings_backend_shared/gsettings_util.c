@@ -505,6 +505,27 @@ readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
+readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+{
+    CCSSettingValueList list = NULL;
+    int *array = malloc (nItems * sizeof (int));
+    int *arrayCounter = array;
+    gint value;
+
+    if (!array)
+	return NULL;
+
+    /* Reads each item from the variant into arrayCounter */
+    while (g_variant_iter_loop (iter, "i", &value))
+	*arrayCounter++ = value;
+
+    list = ccsGetValueListFromIntArray (array, nItems, setting);
+    free (array);
+
+    return list;
+}
+
+CCSSettingValueList
 readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 {
     CCSSettingType      listType = ccsSettingGetInfo (setting)->forList.listType;
@@ -527,21 +548,7 @@ readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 	list = readBoolListValue (&iter, nItems, setting);
 	break;
     case TypeInt:
-	{
-	    int *array = malloc (nItems * sizeof (int));
-	    int *arrayCounter = array;
-	    gint value;
-
-	    if (!array)
-		break;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "i", &value))
-		*arrayCounter++ = value;
-
-	    list = ccsGetValueListFromIntArray (array, nItems, setting);
-	    free (array);
-	}
+	list = readIntListValue (&iter, nItems, setting);
 	break;
     case TypeFloat:
 	{
