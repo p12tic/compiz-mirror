@@ -1134,15 +1134,16 @@ ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBack
     bcPrivate->backend = backend;
 
     ccsObjectSetPrivate (dynamicBackend, (CCSPrivate *) bcPrivate);
-    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
-    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendWrapperInterface, GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
+    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendWrapperInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
+    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendInterface, GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
 
     return dynamicBackend;
 }
 
-void *
-ccsOpenBackend (const char *name, CCSBackendInterface **vt)
+CCSBackend *
+ccsOpenBackend (const CCSInterfaceTable *interfaces, CCSContext *context, const char *name)
 {
+    CCSBackendInterface *vt;
     void *dlhand = openBackend (name);
 
     if (!dlhand)
@@ -1155,15 +1156,32 @@ ccsOpenBackend (const char *name, CCSBackendInterface **vt)
 	return NULL;
     }
 
-    *vt = getInfo ();
-    if (!*vt)
+    vt = getInfo ();
+    if (!vt)
     {
 	dlclose (dlhand);
-	*vt = NULL;
+	vt = NULL;
 	return NULL;
     }
 
-    return dlhand;
+    CCSBackend *backend = ccsBackendNewWithDynamicInterface (context, vt);
+
+    if (!backend)
+    {
+	dlclose (dlhand);
+	return NULL;
+    }
+
+    CCSDynamicBackend *backendWrapper = ccsDynamicBackendWrapLoadedBackend (interfaces, backend, dlhand);
+
+    if (!backendWrapper)
+    {
+	dlclose (dlhand);
+	ccsBackendUnref (backend);
+	return NULL;
+    }
+
+    return (CCSBackend *) backendWrapper;
 }
 
 Bool
@@ -1183,16 +1201,14 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	cPrivate->backend = NULL;
     }
 
-    CCSBackendInterface *vt = NULL;
+    CCSBackend *backend = ccsOpenBackend (cPrivate->object_interfaces, context, name);
 
-    void *dlhand = ccsOpenBackend (name, &vt);
-
-    if (!dlhand)
+    if (!backend)
     {
 	ccsWarning ("unable to open backend %s, falling back to ini", name);
 
-	dlhand = ccsOpenBackend ("ini", &vt);
-	if (!dlhand)
+	backend = ccsOpenBackend (cPrivate->object_interfaces, context, "ini");
+	if (!backend)
 	{
 	    ccsError ("failed to open any backends, aborting");
 	    abort ();
@@ -1201,23 +1217,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	fallbackMode = TRUE;
     }
 
-    CCSBackend *backend = ccsBackendNewWithDynamicInterface (context, vt);
-
-    if (!backend)
-    {
-	dlclose (dlhand);
-	return FALSE;
-    }
-
-    CCSDynamicBackend *backendWrapper = ccsDynamicBackendWrapLoadedBackend (cPrivate->object_interfaces, backend, dlhand);
-
-    if (!backendWrapper)
-    {
-	ccsBackendUnref (backend);
-	return FALSE;
-    }
-
-    cPrivate->backend = backendWrapper;
+    cPrivate->backend = (CCSDynamicBackend *) backend;
 
     CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, cPrivate->backend))->backendInit;
 
@@ -1291,7 +1291,7 @@ Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *capabilities)
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsIntegration) (capabilities);
 }
 
-CCSBackend * ccsDynamicBackendGetRawBacend (CCSDynamicBackend *capabilities)
+CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *capabilities)
 {
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->getRawBackend) (capabilities);
 }

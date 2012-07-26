@@ -128,6 +128,7 @@ void ccsFreeBackend (CCSBackend *backend);
 typedef struct _CCSDynamicBackend	  CCSDynamicBackend;
 typedef struct _CCSDynamicBackendPrivate CCSDynamicBackendPrivate;
 typedef struct _CCSDynamicBackendInterface  CCSDynamicBackendInterface;
+typedef struct _CCSInterfaceTable         CCSInterfaceTable;
 
 struct _CCSDynamicBackend
 {
@@ -160,8 +161,7 @@ unsigned int ccsCCSDynamicBackendInterfaceGetType ();
 void ccsFreeDynamicBackend (CCSDynamicBackend *);
 
 /* Backend opener method */
-void *
-ccsOpenBackend (const char *name, CCSBackendInterface **interface);
+CCSBackend * ccsOpenBackend (const CCSInterfaceTable *, CCSContext *context, const char *name);
 
 /* Constructor method */
 CCSBackend *
