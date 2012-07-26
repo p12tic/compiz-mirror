@@ -165,7 +165,7 @@ ccsOpenBackend (const char *name, CCSBackendInterface **interface);
 
 /* Constructor method */
 CCSBackend *
-ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
+ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface);
 
 CCSBackendInterface* getBackendInfo (void);
 
