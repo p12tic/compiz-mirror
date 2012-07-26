@@ -31,7 +31,7 @@ class CCSContextGMockInterface
 	virtual void setIntegrationEnabled (Bool value) = 0;
 	virtual void setProfile (char *name) = 0;
 	virtual void setPluginListAutoSort (Bool value) = 0;
-	virtual char * getProfile () = 0;
+	virtual const char * getProfile () = 0;
 	virtual Bool getIntegrationEnabled () = 0;
 	virtual Bool getPluginListAutoSort () = 0;
 	virtual void processEvents (unsigned int flags) = 0;
@@ -72,7 +72,7 @@ class CCSContextGMock :
 	MOCK_METHOD1 (setIntegrationEnabled, void (Bool));
 	MOCK_METHOD1 (setProfile, void (char *));
 	MOCK_METHOD1 (setPluginListAutoSort, void (Bool));
-	MOCK_METHOD0 (getProfile, char * ());
+	MOCK_METHOD0 (getProfile, const char * ());
 	MOCK_METHOD0 (getIntegrationEnabled, Bool ());
 	MOCK_METHOD0 (getPluginListAutoSort, Bool ());
 	MOCK_METHOD1 (processEvents, void (unsigned int));
@@ -190,7 +190,7 @@ class CCSContextGMock :
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->getIntegrationEnabled ();
 	}
 
-	static char *
+	static const char *
 	ccsGetProfile (CCSContext *context)
 	{
 	    if (!context)
