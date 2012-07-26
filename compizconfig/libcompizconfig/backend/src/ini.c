@@ -203,7 +203,8 @@ static Bool
 readInit (CCSBackend *backend,
 	  CCSContext * context)
 {
-    char *currentProfile;
+    const char *currentProfileCCS;
+    char       *currentProfile;
     IniPrivData *data;
 
     data = (IniPrivData *) ccsObjectGetPrivate (backend);
@@ -211,12 +212,12 @@ readInit (CCSBackend *backend,
     if (!data)
 	return FALSE;
 
-    currentProfile = ccsGetProfile (context);
+    currentProfileCCS = ccsGetProfile (context);
 
-    if (!currentProfile || !strlen (currentProfile))
+    if (!currentProfileCCS || !strlen (currentProfileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (currentProfile);
+	currentProfile = strdup (currentProfileCCS);
 
     if (!data->lastProfile || (strcmp (data->lastProfile, currentProfile) != 0))
 	setProfile (data, currentProfile);
@@ -394,6 +395,7 @@ readDone (CCSBackend *backend, CCSContext * context)
 static Bool
 writeInit (CCSBackend *backend, CCSContext * context)
 {
+    const char *currentProfileCCS;
     char *currentProfile;
     IniPrivData *data;
 
@@ -402,12 +404,12 @@ writeInit (CCSBackend *backend, CCSContext * context)
     if (!data)
 	return FALSE;
 
-    currentProfile = ccsGetProfile (context);
+    currentProfileCCS = ccsGetProfile (context);
 
-    if (!currentProfile || !strlen (currentProfile))
+    if (!currentProfileCCS || !strlen (currentProfileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (currentProfile);
+	currentProfile = strdup (currentProfileCCS);
 
     if (!data->lastProfile || (strcmp (data->lastProfile, currentProfile) != 0))
 	setProfile (data, currentProfile);
@@ -547,19 +549,20 @@ writeDone (CCSBackend *backend, CCSContext * context)
 {
     /* export the data to ensure the changes are on disk */
     char        *fileName;
-    char        *currentProfile;
+    const char        *currentProfileCCS;
+    char	*currentProfile;
     IniPrivData *data;
 
     data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 
-    currentProfile = ccsGetProfile (context);
+    currentProfileCCS = ccsGetProfile (context);
 
-    if (!currentProfile || !strlen (currentProfile))
+    if (!currentProfileCCS || !strlen (currentProfileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (currentProfile);
+	currentProfile = strdup (currentProfileCCS);
 
     fileName = getIniFileName (currentProfile);
 
