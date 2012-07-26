@@ -160,8 +160,7 @@ unsigned int ccsCCSDynamicBackendInterfaceGetType ();
 void ccsFreeDynamicBackend (CCSDynamicBackend *);
 
 /* Backend opener method */
-void *
-ccsOpenBackend (const char *name, CCSBackendInterface **interface);
+CCSBackend * ccsOpenBackend (CCSContext *context, const char *name);
 
 /* Constructor method */
 CCSBackend *
