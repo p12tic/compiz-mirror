@@ -1900,6 +1900,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 			       unsigned int        mask,
 			       const CompRegion    &region)
 {
+    if (clearBuffers)
+    {
+       if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+           glClear (GL_COLOR_BUFFER_BIT);
+    }
+
     // Blending is disabled by default. Each operation/plugin
     // should enable it (and reset it) as needed.
     glDisable(GL_BLEND);
@@ -1910,18 +1916,10 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     /* Clear the color buffer where appropriate */
     if (GL::fboEnabled)
     {
-	if (clearBuffers)
-	    glClear (GL_COLOR_BUFFER_BIT);
-
 	oldFbo = scratchFbo->bind ();
 	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
 	if (!useFbo)
 	    GLFramebufferObject::rebind (oldFbo);
-    }
-    else
-    {
-	if (clearBuffers && (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK))
-	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
     refreshSubBuffer = ((lastMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
