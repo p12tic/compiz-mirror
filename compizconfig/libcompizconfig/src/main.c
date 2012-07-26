@@ -1115,15 +1115,9 @@ ccsBackendNewWithInterface (CCSContext *context, const CCSBackendInterface *inte
 }
 
 void *
-ccsOpenBackend (const char *name, CCSBackendInterface **vt, Bool *fellback)
+ccsOpenBackend (const char *name, CCSBackendInterface **vt)
 {
     void *dlhand = openBackend (name);
-    if (!dlhand)
-    {
-	*fellback = TRUE;
-	name = "ini";
-	dlhand = openBackend (name);
-    }
 
     if (!dlhand)
 	return NULL;
@@ -1165,10 +1159,21 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 
     CCSBackendInterface *vt = NULL;
 
-    void *dlhand = ccsOpenBackend (name, &vt, &fallbackMode);
+    void *dlhand = ccsOpenBackend (name, &vt);
 
     if (!dlhand)
-	return FALSE;
+    {
+	ccsWarning ("unable to open backend %s, falling back to ini", name);
+
+	dlhand = ccsOpenBackend ("ini", &vt);
+	if (!dlhand)
+	{
+	    ccsError ("failed to open any backends, aborting");
+	    abort ();
+	}
+
+	fallbackMode = TRUE;
+    }
 
     CCSBackend *backend = ccsBackendNewWithInterface (context, vt, dlhand);
 
