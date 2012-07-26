@@ -1069,7 +1069,7 @@ openBackend (const char *backend)
 void *
 ccsDynamicBackendGetDlHand (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return bcPrivate->dlhand;
 }
@@ -1086,7 +1086,7 @@ ccsFreeBackend (CCSBackend *backend)
 void
 ccsFreeDynamicBackend (CCSDynamicBackend *DynamicBackend)
 {
-    CAPABILITIES_PRIV (DynamicBackend);
+    DYNAMIC_BACKEND_PRIV (DynamicBackend);
 
     ccsBackendUnref (bcPrivate->backend);
 
@@ -1264,36 +1264,36 @@ Bool ccsBackendHasProfileSupport (CCSBackend *backend)
 }
 
 static Bool
-ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *capabilities)
+ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    CAPABILITIES_PRIV (capabilities);
+    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
     return ccsBackendHasIntegrationSupport (bcPrivate->backend);
 }
 
-Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *capabilities)
+Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsRead) (capabilities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsRead) (DYNAMIC_BACKEND_PRIVities);
 }
 
-Bool ccsDynamicBackendSupportsWrite (CCSDynamicBackend *capabilities)
+Bool ccsDynamicBackendSupportsWrite (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsWrite) (capabilities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsWrite) (DYNAMIC_BACKEND_PRIVities);
 }
 
-Bool ccsDynamicBackendSupportsProfiles (CCSDynamicBackend *capabilities)
+Bool ccsDynamicBackendSupportsProfiles (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsProfiles) (capabilities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsProfiles) (DYNAMIC_BACKEND_PRIVities);
 }
 
-Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *capabilities)
+Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsIntegration) (capabilities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsIntegration) (DYNAMIC_BACKEND_PRIVities);
 }
 
-CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *capabilities)
+CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->getRawBackend) (capabilities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->getRawBackend) (DYNAMIC_BACKEND_PRIVities);
 }
 
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend)
@@ -1427,88 +1427,88 @@ Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *na
 }
 
 static Bool
-ccsDynamicBackendSupportsReadDefault (CCSDynamicBackend *capabilities)
+ccsDynamicBackendSupportsReadDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    CAPABILITIES_PRIV (capabilities);
+    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
     return ccsBackendHasReadSetting (bcPrivate->backend);
 }
 
 static Bool
-ccsDynamicBackendSupportsWriteDefault (CCSDynamicBackend *capabilities)
+ccsDynamicBackendSupportsWriteDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    CAPABILITIES_PRIV (capabilities);
+    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
     return ccsBackendHasWriteSetting (bcPrivate->backend);
 }
 
 static Bool
-ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *capabilities)
+ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    CAPABILITIES_PRIV (capabilities);
+    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
     return ccsBackendHasProfileSupport (bcPrivate->backend);
 }
 
-static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *capabilities)
+static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
-    CAPABILITIES_PRIV (capabilities);
+    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
     return bcPrivate->backend;
 }
 
 static Bool ccsDynamicBackendInitWrapper (CCSBackend *backend, CCSContext *context)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendInit (bcPrivate->backend, context);
 }
 
 static char * ccsDynamicBackendGetNameWrapper (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendGetName (bcPrivate->backend);
 }
 
 static char * ccsDynamicBackendGetShortDescWrapper (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendGetShortDesc (bcPrivate->backend);
 }
 
 static char * ccsDynamicBackendGetLongDescWrapper (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendGetName (bcPrivate->backend);
 }
 
 static Bool ccsDynamicBackendHasIntegrationSupportWrapper (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendHasIntegrationSupport (bcPrivate->backend);
 }
 
 static Bool ccsDynamicBackendHasProfileSupportWrapper (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendHasProfileSupport (bcPrivate->backend);
 }
 
 static Bool ccsDynamicBackendFiniWrapper (CCSBackend *backend)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendFini (bcPrivate->backend);
 }
 
 static void ccsDynamicBackendExecuteEventsWrapper (CCSBackend *backend, unsigned int flags)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasExecuteEvents (bcPrivate->backend))
 	ccsBackendExecuteEvents (bcPrivate->backend, flags);
@@ -1516,7 +1516,7 @@ static void ccsDynamicBackendExecuteEventsWrapper (CCSBackend *backend, unsigned
 
 static Bool ccsDynamicBackendReadInitWrapper (CCSBackend *backend, CCSContext *context)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasReadInit (bcPrivate->backend))
 	return ccsBackendReadInit (bcPrivate->backend, context);
@@ -1526,7 +1526,7 @@ static Bool ccsDynamicBackendReadInitWrapper (CCSBackend *backend, CCSContext *c
 
 static void ccsDynamicBackendReadSettingWrapper (CCSBackend *backend, CCSContext *context, CCSSetting *setting)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasReadSetting (bcPrivate->backend))
 	ccsBackendReadSetting (bcPrivate->backend, context, setting);
@@ -1534,7 +1534,7 @@ static void ccsDynamicBackendReadSettingWrapper (CCSBackend *backend, CCSContext
 
 static void ccsDynamicBackendReadDoneWrapper (CCSBackend *backend, CCSContext *context)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasReadDone (bcPrivate->backend))
 	ccsBackendReadDone (bcPrivate->backend, context);
@@ -1542,7 +1542,7 @@ static void ccsDynamicBackendReadDoneWrapper (CCSBackend *backend, CCSContext *c
 
 static Bool ccsDynamicBackendWriteInitWrapper (CCSBackend *backend, CCSContext *context)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasWriteInit (bcPrivate->backend))
 	return ccsBackendWriteInit (bcPrivate->backend, context);
@@ -1552,7 +1552,7 @@ static Bool ccsDynamicBackendWriteInitWrapper (CCSBackend *backend, CCSContext *
 
 static void ccsDynamicBackendWriteSettingWrapper (CCSBackend *backend, CCSContext *context, CCSSetting *setting)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasWriteSetting (bcPrivate->backend))
 	ccsBackendWriteSetting (bcPrivate->backend, context, setting);
@@ -1560,7 +1560,7 @@ static void ccsDynamicBackendWriteSettingWrapper (CCSBackend *backend, CCSContex
 
 static void ccsDynamicBackendWriteDoneWrapper (CCSBackend *backend, CCSContext *context)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasWriteDone (bcPrivate->backend))
 	ccsBackendWriteDone (bcPrivate->backend, context);
@@ -1568,7 +1568,7 @@ static void ccsDynamicBackendWriteDoneWrapper (CCSBackend *backend, CCSContext *
 
 static void ccsDynamicBackendUpdateSettingWrapper (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasUpdateSetting (bcPrivate->backend))
 	ccsBackendUpdateSetting (bcPrivate->backend, context, plugin, setting);
@@ -1576,7 +1576,7 @@ static void ccsDynamicBackendUpdateSettingWrapper (CCSBackend *backend, CCSConte
 
 static Bool ccsDynamicBackendGetSettingIsIntegratedWrapper (CCSBackend *backend, CCSSetting *setting)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasGetSettingIsIntegrated (bcPrivate->backend) &&
 	ccsBackendHasIntegrationSupport (bcPrivate->backend))
@@ -1587,7 +1587,7 @@ static Bool ccsDynamicBackendGetSettingIsIntegratedWrapper (CCSBackend *backend,
 
 static Bool ccsDynamicBackendGetSettingIsReadOnlyWrapper (CCSBackend *backend, CCSSetting *setting)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasGetSettingIsReadOnly (bcPrivate->backend))
 	return ccsBackendGetSettingIsReadOnly (bcPrivate->backend, setting);
@@ -1597,7 +1597,7 @@ static Bool ccsDynamicBackendGetSettingIsReadOnlyWrapper (CCSBackend *backend, C
 
 static CCSStringList ccsDynamicBackendGetExistingProfilesWrapper (CCSBackend *backend, CCSContext *context)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasGetExistingProfiles (bcPrivate->backend) &&
 	ccsBackendHasProfileSupport (bcPrivate->backend))
@@ -1610,7 +1610,7 @@ static CCSStringList ccsDynamicBackendGetExistingProfilesWrapper (CCSBackend *ba
 
 static Bool ccsDynamicBackendDeleteProfileWrapper (CCSBackend *backend, CCSContext *context, char *profile)
 {
-    CAPABILITIES_PRIV (backend);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasDeleteProfile (bcPrivate->backend) &&
 	ccsBackendHasProfileSupport (bcPrivate->backend))
