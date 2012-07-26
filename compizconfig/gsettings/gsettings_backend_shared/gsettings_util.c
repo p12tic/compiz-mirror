@@ -526,6 +526,74 @@ readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
+readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+{
+    CCSSettingValueList list = NULL;
+    float *array = malloc (nItems * sizeof (float));
+    float *arrayCounter = array;
+    gdouble value;
+
+    if (!array)
+	return NULL;
+
+    /* Reads each item from the variant into arrayCounter */
+    while (g_variant_iter_loop (iter, "d", &value))
+	*arrayCounter++ = value;
+
+    list = ccsGetValueListFromFloatArray (array, nItems, setting);
+    free (array);
+
+    return list;
+}
+
+CCSSettingValueList
+readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+{
+    CCSSettingValueList list = NULL;
+    const gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
+    const gchar **arrayCounter = array;
+    gchar *value;
+
+    if (!array)
+	return NULL;
+
+    array[nItems] = NULL;
+
+    /* Reads each item from the variant into arrayCounter */
+    while (g_variant_iter_next (iter, "s", &value))
+	*arrayCounter++ = value;
+
+    list = ccsGetValueListFromStringArray (array, nItems, setting);
+    g_strfreev ((char **) array);
+
+    return list;
+}
+
+CCSSettingValueList
+readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+{
+    CCSSettingValueList list = NULL;
+    char		 *colorValue;
+    CCSSettingColorValue *array = calloc (1, nItems * sizeof (CCSSettingColorValue));
+    unsigned int i = 0;
+
+    if (!array)
+	return NULL;
+
+    while (g_variant_iter_loop (iter, "s", &colorValue))
+    {
+	ccsStringToColor (colorValue,
+			  &array[i]);
+	i++;
+    }
+
+    list = ccsGetValueListFromColorArray (array, nItems, setting);
+    free (array);
+
+    return list;
+}
+
+CCSSettingValueList
 readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 {
     CCSSettingType      listType = ccsSettingGetInfo (setting)->forList.listType;
@@ -551,61 +619,13 @@ readListValue (GVariant *gsettingsValue, CCSSetting *setting)
 	list = readIntListValue (&iter, nItems, setting);
 	break;
     case TypeFloat:
-	{
-	    float *array = malloc (nItems * sizeof (float));
-	    float *arrayCounter = array;
-	    gdouble value;
-
-	    if (!array)
-		break;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_loop (&iter, "d", &value))
-		*arrayCounter++ = value;
-
-	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
-	    free (array);
-	}
-	break;
+	list = readFloatListValue (&iter, nItems, setting);
     case TypeString:
     case TypeMatch:
-	{
-	    const gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
-	    const gchar **arrayCounter = array;
-	    gchar *value;
-
-	    if (!array)
-		break;
-
-	    array[nItems] = NULL;
-
-	    /* Reads each item from the variant into arrayCounter */
-	    while (g_variant_iter_next (&iter, "s", &value))
-		*arrayCounter++ = value;
-
-	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_strfreev ((char **) array);
-	}
+	list = readStringListValue (&iter, nItems, setting);
 	break;
     case TypeColor:
-	{
-	    char		 *colorValue;
-	    CCSSettingColorValue *array = calloc (1, nItems * sizeof (CCSSettingColorValue));
-	    unsigned int i = 0;
-
-	    if (!array)
-		break;
-
-	    while (g_variant_iter_loop (&iter, "s", &colorValue))
-	    {
-		ccsStringToColor (colorValue,
-				  &array[i]);
-		i++;
-	    }
-
-	    list = ccsGetValueListFromColorArray (array, nItems, setting);
-	    free (array);
-	}
+	list = readColorListValue (&iter, nItems, setting);
 	break;
     default:
 	break;
