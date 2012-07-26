@@ -1134,7 +1134,7 @@ ccsSetBackend (CCSContext *context, char *name)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextSetBackend) (context, name);
 }
 
-static Bool
+Bool
 ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 		 CCSSettingListInfo info)
 {
