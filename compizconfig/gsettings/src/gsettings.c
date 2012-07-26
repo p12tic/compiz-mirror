@@ -924,7 +924,7 @@ initBackend (CCSBackend *backend, CCSContext * context)
 }
 
 static Bool
-finiBackend (CCSBackend *backend, CCSContext * context)
+finiBackend (CCSBackend *backend)
 {
     GList *l = settingsList;
 
