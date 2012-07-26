@@ -1067,11 +1067,11 @@ openBackend (const char *backend)
 }
 
 void *
-ccsBackendGetDlHand (CCSBackend *backend)
+ccsBackendWithCapabilitiesGetDlHand (CCSBackend *backend)
 {
-    BACKEND_PRIV (backend);
+    CAPABILITIES_PRIV (backend);
 
-    return bPrivate->dlhand;
+    return bcPrivate->dlhand;
 }
 
 void
@@ -1080,9 +1080,6 @@ ccsFreeBackend (CCSBackend *backend)
     BACKEND_PRIV (backend);
 
     ccsBackendFini (backend, bPrivate->context);
-
-    if (bPrivate->dlhand)
-	dlclose (bPrivate->dlhand);
 
     ccsObjectFinalize (backend);
     free (backend);
@@ -1095,12 +1092,15 @@ ccsFreeBackendWithCapabilities (CCSBackendWithCapabilities *backendCapabilities)
 
     ccsBackendUnref (bcPrivate->backend);
 
+    if (bcPrivate->dlhand)
+	dlclose (bcPrivate->dlhand);
+
     ccsObjectFinalize (backendCapabilities);
     free (backendCapabilities);
 }
 
 CCSBackend *
-ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand)
+ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface)
 {
     CCSBackend *backend = calloc (1, sizeof (CCSBackend));
 
@@ -1120,7 +1120,6 @@ ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterfac
 	return NULL;
     }
 
-    bPrivate->dlhand = dlhand;
     bPrivate->context = context;
 
     ccsObjectSetPrivate (backend, (CCSPrivate *) bPrivate);
@@ -1130,7 +1129,7 @@ ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterfac
 }
 
 CCSBackendWithCapabilities *
-ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend)
+ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend, void *dlhand)
 {
     CCSBackendWithCapabilities *backendCapabilities = calloc (1, sizeof (CCSBackendWithCapabilities));
     CCSBackendWithCapabilitiesPrivate *bcPrivate = NULL;
@@ -1149,6 +1148,7 @@ ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSB
 	return NULL;
     }
 
+    bcPrivate->dlhand = dlhand;
     bcPrivate->backend = backend;
 
     ccsObjectSetPrivate (backendCapabilities, (CCSPrivate *) bcPrivate);
@@ -1219,7 +1219,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	fallbackMode = TRUE;
     }
 
-    CCSBackend *backend = ccsBackendNewWithDynamicInterface (context, vt, dlhand);
+    CCSBackend *backend = ccsBackendNewWithDynamicInterface (context, vt);
 
     if (!backend)
     {
@@ -1227,7 +1227,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	return FALSE;
     }
 
-    CCSBackendWithCapabilities *backendWrapper = ccsBackendWithCapabilitiesWrapBackend (cPrivate->object_interfaces, backend);
+    CCSBackendWithCapabilities *backendWrapper = ccsBackendWithCapabilitiesWrapBackend (cPrivate->object_interfaces, backend, dlhand);
 
     if (!backendWrapper)
     {
