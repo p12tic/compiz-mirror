@@ -697,6 +697,10 @@ finiBackend (CCSBackend *backend)
     priv->compizconfigSettings = NULL;
 
     processEvents (backend, 0);
+
+    free (priv);
+    ccsObjectSetPrivate (backend, NULL);
+
     return TRUE;
 }
 
