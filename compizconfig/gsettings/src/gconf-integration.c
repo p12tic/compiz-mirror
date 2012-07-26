@@ -33,8 +33,6 @@
 
 #include "gsettings.h"
 #ifdef USE_GCONF
-GConfClient *client = NULL;
-guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
 
 const SpecialOptionGConf specialOptions[] = {
     {"run_key", "gnomecompat", FALSE,
@@ -456,45 +454,48 @@ gnomeGConfValueChanged (GConfClient *client,
 }
 
 void
-initGConfClient (CCSContext *context)
+initGConfClient (CCSBackend *backend)
 {
     int i;
 
-    client = gconf_client_get_default ();
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    priv->client = gconf_client_get_default ();
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
-	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
-						     watchedGConfGnomeDirectories[i],
-						     gnomeGConfValueChanged, context,
-						     NULL, NULL);
-	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
+	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (priv->client,
+								watchedGConfGnomeDirectories[i],
+								gnomeGConfValueChanged, priv->context,
+								NULL, NULL);
+	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
     }
 }
 
 void
-finiGConfClient (void)
+finiGConfClient (CCSBackend *backend)
 {
     int i;
 
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
-	if (gnomeGConfNotifyIds[i])
+	if (priv->gnomeGConfNotifyIds[i])
 	{
-	    gconf_client_notify_remove (client, gnomeGConfNotifyIds[0]);
-	    gnomeGConfNotifyIds[i] = 0;
+	    gconf_client_notify_remove (priv->client, priv->gnomeGConfNotifyIds[0]);
+	    priv->gnomeGConfNotifyIds[i] = 0;
 	}
-	gconf_client_remove_dir (client, watchedGConfGnomeDirectories[i], NULL);
+	gconf_client_remove_dir (priv->client, watchedGConfGnomeDirectories[i], NULL);
     }
-    gconf_client_suggest_sync (client, NULL);
+    gconf_client_suggest_sync (priv->client, NULL);
 
-    g_object_unref (client);
-    client = NULL;
+    g_object_unref (priv->client);
+    priv->client = NULL;
 }
 
 static unsigned int
-getGnomeMouseButtonModifier(void)
+getGnomeMouseButtonModifier(GConfClient *client)
 {
     unsigned int modMask = 0;
     GError       *err = NULL;
@@ -545,13 +546,15 @@ readGConfIntegratedOption (CCSBackend *backend,
     GConfValue *gconfValue;
     GError     *err = NULL;
     Bool       ret = FALSE;
+
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
     
-    if (!client)
+    if (!priv->client)
 	ccsGSettingsBackendRegisterGConfClient (backend);
 
     ret = readOption (backend, setting);
 
-    gconfValue = gconf_client_get (client,
+    gconfValue = gconf_client_get (priv->client,
 				   specialOptions[index].gnomeName,
 				   &err);
 
@@ -679,10 +682,10 @@ readGConfIntegratedOption (CCSBackend *backend,
 		memset (&button, 0, sizeof (CCSSettingButtonValue));
 		ccsGetButton (setting, &button);
 
-		button.buttonModMask = getGnomeMouseButtonModifier ();
+		button.buttonModMask = getGnomeMouseButtonModifier (priv->client);
 		
 		resizeWithRightButton =
-		    gconf_client_get_bool (client, METACITY
+		    gconf_client_get_bool (priv->client, METACITY
 					   "/general/resize_with_right_button",
 					   &err);
 
@@ -708,7 +711,7 @@ readGConfIntegratedOption (CCSBackend *backend,
 }
 
 static Bool
-setGnomeMouseButtonModifier (unsigned int modMask)
+setGnomeMouseButtonModifier (GConfClient *client, unsigned int modMask)
 {
     char   *modifiers, *currentValue;
     GError *err = NULL;
@@ -777,7 +780,9 @@ writeGConfIntegratedOption (CCSBackend *backend,
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
     
-    if (!client)
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    if (!priv->client)
 	ccsGSettingsBackendRegisterGConfClient (backend);
 
     switch (specialOptions[index].type)
@@ -787,10 +792,10 @@ writeGConfIntegratedOption (CCSBackend *backend,
 	    int newValue, currentValue;
 	    if (!ccsGetInt (setting, &newValue))
 		break;
-	    currentValue = gconf_client_get_int (client, optionName, &err);
+	    currentValue = gconf_client_get_int (priv->client, optionName, &err);
 
 	    if (!err && (currentValue != newValue))
-		gconf_client_set_int(client, specialOptions[index].gnomeName,
+		gconf_client_set_int(priv->client, specialOptions[index].gnomeName,
 				     newValue, NULL);
 	}
 	break;
@@ -800,11 +805,11 @@ writeGConfIntegratedOption (CCSBackend *backend,
 	    gboolean currentValue;
 	    if (!ccsGetBool (setting, &newValue))
 		break;
-    	    currentValue = gconf_client_get_bool (client, optionName, &err);
+	    currentValue = gconf_client_get_bool (priv->client, optionName, &err);
 
 	    if (!err && ((currentValue && !newValue) ||
 			 (!currentValue && newValue)))
-		gconf_client_set_bool (client, specialOptions[index].gnomeName,
+		gconf_client_set_bool (priv->client, specialOptions[index].gnomeName,
 				       newValue, NULL);
 	}
 	break;
@@ -814,12 +819,12 @@ writeGConfIntegratedOption (CCSBackend *backend,
 	    gchar *currentValue;
 	    if (!ccsGetString (setting, &newValue))
 		break;
-	    currentValue = gconf_client_get_string (client, optionName, &err);
+	    currentValue = gconf_client_get_string (priv->client, optionName, &err);
 
     	    if (!err && currentValue)
 	    {
 		if (strcmp (currentValue, newValue) != 0)
-		    gconf_client_set_string (client, optionName,
+		    gconf_client_set_string (priv->client, optionName,
 		     			     newValue, NULL);
 		g_free (currentValue);
 	    }
@@ -839,13 +844,13 @@ writeGConfIntegratedOption (CCSBackend *backend,
 		    newValue[0] = 'd';
 		}
 
-		currentValue = gconf_client_get_string (client,
+		currentValue = gconf_client_get_string (priv->client,
 							optionName, &err);
 
 		if (!err && currentValue)
 		{
 		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (client, optionName,
+			gconf_client_set_string (priv->client, optionName,
 				 		 newValue, NULL);
     		    g_free (currentValue);
 		}
@@ -865,7 +870,7 @@ writeGConfIntegratedOption (CCSBackend *backend,
 		if (!ccsGetBool (setting, &currentViewport))
 		    break;
 
-		gconf_client_set_bool (client, optionName,
+		gconf_client_set_bool (priv->client, optionName,
 				       !currentViewport, NULL);
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
@@ -876,12 +881,12 @@ writeGConfIntegratedOption (CCSBackend *backend,
 		    break;
 
 		newValue = fullscreen ? "fullscreen" : "frame_flash";
-		currentValue = gconf_client_get_string (client,
+		currentValue = gconf_client_get_string (priv->client,
 							optionName, &err);
 		if (!err && currentValue)
 		{
 		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (client, optionName,
+			gconf_client_set_string (priv->client, optionName,
 						 newValue, NULL);
 		    g_free (currentValue);
 		}
@@ -894,13 +899,13 @@ writeGConfIntegratedOption (CCSBackend *backend,
 		    break;
 
 		newValue = clickToFocus ? "click" : "sloppy";
-		currentValue = gconf_client_get_string (client,
+		currentValue = gconf_client_get_string (priv->client,
 							optionName, &err);
 
 		if (!err && currentValue)
 		{
 		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (client, optionName,
+			gconf_client_set_string (priv->client, optionName,
 						 newValue, NULL);
 		    g_free (currentValue);
 		}
@@ -924,21 +929,21 @@ writeGConfIntegratedOption (CCSBackend *backend,
 		}
 
 		currentValue =
-		    gconf_client_get_bool (client, METACITY
+		    gconf_client_get_bool (priv->client, METACITY
 					   "/general/resize_with_right_button",
 					   &err);
 
 		if (!err && ((currentValue && !resizeWithRightButton) ||
 			     (!currentValue && resizeWithRightButton)))
 		{
-		    gconf_client_set_bool (client,
+		    gconf_client_set_bool (priv->client,
 					   METACITY
 					   "/general/resize_with_right_button",
 					   resizeWithRightButton, NULL);
 		}
 
 		modMask = ccsSettingGetValue (setting)->value.asButton.buttonModMask;
-		if (setGnomeMouseButtonModifier (modMask))
+		if (setGnomeMouseButtonModifier (priv->client, modMask))
 		{
 		    setButtonBindingForSetting (context, "move",
 						"initiate_button", 1, modMask);

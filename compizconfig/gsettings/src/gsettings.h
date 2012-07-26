@@ -56,6 +56,13 @@
 #define _GNU_SOURCE
 #endif
 
+#ifdef USE_GCONF
+#include <gconf/gconf.h>
+#include <gconf/gconf-client.h>
+#include <gconf/gconf-value.h>
+#endif
+
+
 typedef enum {
     OptionInt,
     OptionBool,
@@ -64,7 +71,21 @@ typedef enum {
     OptionSpecial,
 } SpecialOptionType;
 
-char *currentProfile;
+struct _CCSGSettingsBackendPrivate
+{
+    GList	   *settingsList;
+    GSettings   *compizconfigSettings;
+    GSettings   *currentProfileSettings;
+
+    char	    *currentProfile;
+    CCSContext  *context;
+
+#ifdef USE_GCONF
+    GConfClient *client;
+    guint       *gnomeGConfNotifyIds;
+#endif
+
+};
 
 Bool readInit (CCSBackend *, CCSContext * context);
 void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
@@ -74,12 +95,7 @@ void writeOption (CCSBackend *backend, CCSSetting *setting);
 
 #ifdef USE_GCONF
 
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
 
-GConfClient *client;
-guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
 
 typedef struct _SpecialOptionGConf {
     const char*       settingName;
@@ -100,10 +116,10 @@ gnomeGConfValueChanged (GConfClient *client,
 			gpointer    user_data);
 
 void
-initGConfClient (CCSContext *context);
+initGConfClient (CCSBackend *backend);
 
 void
-finiGConfClient (void);
+finiGConfClient (CCSBackend *backend);
 
 Bool
 readGConfIntegratedOption (CCSBackend *backend,
