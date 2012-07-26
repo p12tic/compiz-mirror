@@ -868,7 +868,7 @@ readListValue (CCSSetting *setting,
     case TypeString:
     case TypeMatch:
 	{
-	    char **array = malloc (nItems * sizeof (char*));
+	    const char **array = malloc (nItems * sizeof (char*));
 	    if (!array)
 		break;
 
@@ -877,7 +877,7 @@ readListValue (CCSSetting *setting,
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
 		if (array[i])
-		    free (array[i]);
+		    free ((char *) array[i]);
 	    free (array);
 	}
 	break;
@@ -1885,15 +1885,16 @@ getCurrentProfileName (void)
 static Bool
 checkProfile (CCSContext *context)
 {
-    char *profile, *lastProfile;
+    const char *profileCCS;
+    char *lastProfile;
 
     lastProfile = currentProfile;
 
-    profile = ccsGetProfile (context);
-    if (!profile || !strlen (profile))
+    profileCCS = ccsGetProfile (context);
+    if (!profileCCS || !strlen (profileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (profile);
+	currentProfile = strdup (profileCCS);
 
     if (!lastProfile || strcmp (lastProfile, currentProfile) != 0)
     {
