@@ -63,37 +63,5 @@ int main (int argc, char **argv)
 	testfilecmake.close ();
     }
 
-    ifstream CTestTestfile ("CTestTestfile.cmake", ifstream::in);
-    bool needsInclude = true;
-    line.clear ();
-
-    string includeLine = string ("INCLUDE (") +
-			      gtestName  +
-			      string ("_test.cmake)");
-
-    if (CTestTestfile.is_open ())
-    {
-	while (CTestTestfile.good ())
-	{
-	    getline (CTestTestfile, line);
-
-	    if (line == includeLine)
-		needsInclude = false;
-	}
-
-	CTestTestfile.close ();
-    }
-
-    if (needsInclude)
-    {
-	ofstream CTestTestfileW ("CTestTestfile.cmake", ofstream::app | ofstream::out);
-
-	if (CTestTestfileW.is_open ())
-	{
-	    CTestTestfileW << includeLine << endl;
-	    CTestTestfileW.close ();
-	}
-    }
-
     return 0;
 }
