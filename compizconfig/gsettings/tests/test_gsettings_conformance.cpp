@@ -48,9 +48,7 @@ class CCSGSettingsBackendEnv :
 
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
-	    CCSBackendInterface *interface = NULL;
 	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
-	    Bool		fallback   = FALSE;
 
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
 	    g_setenv ("GSETTINGS_BACKEND", "memory", true);
@@ -60,13 +58,12 @@ class CCSGSettingsBackendEnv :
 
 	    std::string path ("gsettings");
 
-	    void *dlhand = ccsOpenBackend (path.c_str (), &interface, &fallback);
+	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsOpenBackend (mContext, path.c_str ()));
 
-	    EXPECT_FALSE (fallback);
-	    EXPECT_TRUE (dlhand);
+	    EXPECT_TRUE (mBackend);
 
-	    mGSettingsBackend = ccsBackendNewWithInterface (mContext, interface, dlhand);
-	    mBackend = ccsBackendWithCapabilitiesWrapBackend (&ccsDefaultInterfaceTable, mGSettingsBackend);
+	    //mGSettingsBackend = ccsBackendNewWithInterface (mContext, interface, dlhand);
+	    mGSettingsBackend = NULL;
 
 	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
 
@@ -93,7 +90,7 @@ class CCSGSettingsBackendEnv :
 	    g_unsetenv ("GSETTINGS_BACKEND");
 	    g_unsetenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
 
-	    ccsFreeBackendWithCapabilities (mBackend);
+	    ccsFreeDynamicBackend (mBackend);
 	}
 
 	void PreWrite (CCSContextGMock *gmockContext,
@@ -429,7 +426,7 @@ class CCSGSettingsBackendEnv :
 
 	GSettings  *mSettings;
 	CCSContext *mContext;
-	CCSBackendWithCapabilities *mBackend;
+	CCSDynamicBackend *mBackend;
 	CCSBackend		   *mGSettingsBackend;
 	std::string pluginToMatch;
 

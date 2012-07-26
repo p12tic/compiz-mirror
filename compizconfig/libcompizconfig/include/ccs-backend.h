@@ -169,8 +169,8 @@ ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterfac
 typedef struct _CCSInterfaceTable CCSInterfaceTable;
 
 /* Constructor method */
-CCSBackendWithCapabilities *
-ccsBackendWithCapabilitiesWrapBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend);
+CCSDynamicBackend *
+ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend, void *dlhand);
 
 CCSBackendInterface* getBackendInfo (void);
 
