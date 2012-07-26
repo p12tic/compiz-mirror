@@ -514,10 +514,10 @@ CompText::draw (const GLMatrix &transform,
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    colorData[0] = alpha * 65536;
-    colorData[1] = alpha * 65536;
-    colorData[2] = alpha * 65536;
-    colorData[3] = alpha * 65536;
+    colorData[0] = alpha * 65535;
+    colorData[1] = alpha * 65535;
+    colorData[2] = alpha * 65535;
+    colorData[3] = alpha * 65535;
 
     for (unsigned int i = 0; i < texture.size (); i++)
     {

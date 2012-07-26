@@ -1065,19 +1065,19 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	    colorData[0]  = 0;
 	    colorData[1]  = 0;
 	    colorData[2]  = 0;
-	    colorData[3]  = (1.0 * expoCam) * 65536;
+	    colorData[3]  = (1.0 * expoCam) * 65535;
 	    colorData[4]  = 0;
 	    colorData[5]  = 0;
 	    colorData[6]  = 0;
-	    colorData[7]  = (1.0 * expoCam) * 65536;
+	    colorData[7]  = (1.0 * expoCam) * 65535;
 	    colorData[8]  = 0;
 	    colorData[9]  = 0;
 	    colorData[10] = 0;
-	    colorData[11] = (0.5 * expoCam) * 65536;
+	    colorData[11] = (0.5 * expoCam) * 65535;
 	    colorData[12] = 0;
 	    colorData[13] = 0;
 	    colorData[14] = 0;
-	    colorData[15] = (0.5 * expoCam) * 65536;
+	    colorData[15] = (0.5 * expoCam) * 65535;
 
 	    vertexData[0]  = -0.5;
 	    vertexData[1]  = -0.5;
@@ -1103,11 +1103,11 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	    colorData[0]  = 0;
 	    colorData[1]  = 0;
 	    colorData[2]  = 0;
-	    colorData[3]  = (0.5 * expoCam) * 65536;
+	    colorData[3]  = (0.5 * expoCam) * 65535;
 	    colorData[4]  = 0;
 	    colorData[5]  = 0;
 	    colorData[6]  = 0;
-	    colorData[7]  = (0.5 * expoCam) * 65536;
+	    colorData[7]  = (0.5 * expoCam) * 65535;
 	    colorData[8]  = 0;
 	    colorData[9]  = 0;
 	    colorData[10] = 0;

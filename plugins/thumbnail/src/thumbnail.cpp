@@ -865,7 +865,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	    color[0] = 1;
 	    color[1] = 1;
 	    color[2] = 1;
-	    color[3] = t->opacity * 65536;
+	    color[3] = t->opacity * 65535;
 
 	    foreach (GLTexture *tex, windowTexture)
 	    {
