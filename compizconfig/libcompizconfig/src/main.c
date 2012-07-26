@@ -1134,19 +1134,17 @@ ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBack
     bcPrivate->backend = backend;
 
     ccsObjectSetPrivate (dynamicBackend, (CCSPrivate *) bcPrivate);
-    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
-    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendWrapperInterface, GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
+    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendWrapperInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
+    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendInterface, GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
 
     return dynamicBackend;
 }
 
 CCSBackend *
-ccsOpenBackend (CCSContext *context, const char *name)
+ccsOpenBackend (const CCSInterfaceTable *interfaces, CCSContext *context, const char *name)
 {
     CCSBackendInterface *vt;
     void *dlhand = openBackend (name);
-
-    CONTEXT_PRIV (context);
 
     if (!dlhand)
 	return NULL;
@@ -1174,7 +1172,7 @@ ccsOpenBackend (CCSContext *context, const char *name)
 	return NULL;
     }
 
-    CCSDynamicBackend *backendWrapper = ccsDynamicBackendWrapLoadedBackend (cPrivate->object_interfaces, backend, dlhand);
+    CCSDynamicBackend *backendWrapper = ccsDynamicBackendWrapLoadedBackend (interfaces, backend, dlhand);
 
     if (!backendWrapper)
     {
@@ -1183,7 +1181,7 @@ ccsOpenBackend (CCSContext *context, const char *name)
 	return NULL;
     }
 
-    return dlhand;
+    return (CCSBackend *) backendWrapper;
 }
 
 Bool
@@ -1203,13 +1201,13 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	cPrivate->backend = NULL;
     }
 
-    CCSBackend *backend = ccsOpenBackend (context, name);
+    CCSBackend *backend = ccsOpenBackend (cPrivate->object_interfaces, context, name);
 
     if (!backend)
     {
 	ccsWarning ("unable to open backend %s, falling back to ini", name);
 
-	backend = ccsOpenBackend (context, "ini");
+	backend = ccsOpenBackend (cPrivate->object_interfaces, context, "ini");
 	if (!backend)
 	{
 	    ccsError ("failed to open any backends, aborting");
@@ -1293,7 +1291,7 @@ Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *capabilities)
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->supportsIntegration) (capabilities);
 }
 
-CCSBackend * ccsDynamicBackendGetRawBacend (CCSDynamicBackend *capabilities)
+CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *capabilities)
 {
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, capabilities))->getRawBackend) (capabilities);
 }
