@@ -562,6 +562,98 @@
    fun:gtk_widget_get_style_context
 }
 
+{
+    g_main_context_default calls malloc
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_main_context_new
+    fun:g_main_context_default
+}
+
+{
+    g_main_context_default calls g_mutex_lock
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_mutex_lock
+    ...
+    fun:g_main_context_default
+}
+
+{
+    g_main_context_default calls g_cond_broadcast
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_cond_broadcast
+    ...
+    fun:g_main_context_default
+}
+
+{
+    g_main_context_default calls g_slist_prepend
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_slist_prepend
+    ...
+    fun:g_main_context_default
+}
+
+{
+    g_get_worker_context calls malloc
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_main_context_new
+    fun:g_get_worker_context
+}
+
+{
+    g_get_worker_context calls g_thread_new
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_thread_new
+    fun:g_get_worker_context
+}
+
+{
+    g_get_worker_context calls g_mutex_lock
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_mutex_lock
+    ...
+    fun:g_get_worker_context
+}
+
+{
+    g_main_context_iterate calls malloc
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_main_context_iterate*
+}
+
+{
+    g_thread_proxy calls malloc
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_thread_proxy
+}
+
+{
+    g_unix_signal_add_full calls g_mutex_lock which calls malloc
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_mutex_lock
+    ...
+    fun:g_unix_signal_add_full
+}
 
 {
    <insert_a_suppression_name_here>
