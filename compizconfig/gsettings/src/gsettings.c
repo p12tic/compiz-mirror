@@ -504,15 +504,12 @@ updateCurrentProfileName (CCSBackend *backend, const char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
-    gchar           *profilePath = makeCompizProfilePath (profile);
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     GVariantIter    iter;
     gboolean        found = FALSE;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    profiles = g_settings_get_value (priv->compizconfigSettings, "existing-profiles");
+    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
 
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
@@ -529,22 +526,14 @@ updateCurrentProfileName (CCSBackend *backend, const char *profile)
 	g_variant_builder_add (newProfilesBuilder, "s", profile);
 
     newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (priv->compizconfigSettings, "existing-profiles", newProfiles);
+    ccsGSettingsBackendSetExistingProfiles (backend, newProfiles);
 
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
 
     g_variant_unref (profiles);
 
-    /* Change the current profile and current profile settings */
-    free (priv->currentProfile);
-
-    priv->currentProfile = strdup (profile);
-    priv->currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
-
-    g_settings_set (priv->compizconfigSettings, "current-profile", "s", profile, NULL);
-
-    g_free (profilePath);
+    ccsGSettingsBackendSetCurrentProfile (backend, profile);
 }
 
 static gboolean
@@ -655,7 +644,17 @@ ccsGSettingsBackendSetCurrentProfileDefault (CCSBackend *backend, const gchar *v
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
+    /* Change the current profile and current profile settings */
+    free (priv->currentProfile);
+
+    gchar           *profilePath = makeCompizProfilePath (value);
+
+    priv->currentProfile = strdup (value);
+    priv->currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
+
     g_settings_set (priv->compizconfigSettings, "current-profile", "s", value, NULL);
+
+    g_free (profilePath);
 }
 
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
