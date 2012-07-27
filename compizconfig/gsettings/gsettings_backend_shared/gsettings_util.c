@@ -708,6 +708,105 @@ unsigned int readEdgeFromVariant (GVariant *gsettingsValue)
     return 0;
 }
 
+GVariant *
+writeBoolListValue (CCSSettingValueList list)
+{
+    GVariant *value = NULL;
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
+    while (list)
+    {
+	g_variant_builder_add (builder, "b", list->data->value.asBool);
+	list = list->next;
+    }
+    value = g_variant_new ("ab", builder);
+    g_variant_builder_unref (builder);
+
+    return value;
+}
+
+GVariant *
+writeIntListValue (CCSSettingValueList list)
+{
+    GVariant *value = NULL;
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
+    while (list)
+    {
+	g_variant_builder_add (builder, "i", list->data->value.asInt);
+	list = list->next;
+    }
+    value = g_variant_new ("ai", builder);
+    g_variant_builder_unref (builder);
+
+    return value;
+}
+
+GVariant *
+writeFloatListValue (CCSSettingValueList list)
+{
+    GVariant *value = NULL;
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
+    while (list)
+    {
+	g_variant_builder_add (builder, "d", (gdouble) list->data->value.asFloat);
+	list = list->next;
+    }
+    value = g_variant_new ("ad", builder);
+    g_variant_builder_unref (builder);
+
+    return value;
+}
+
+GVariant *
+writeStringListValue (CCSSettingValueList list)
+{
+    GVariant *value = NULL;
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    while (list)
+    {
+	g_variant_builder_add (builder, "s", list->data->value.asString);
+	list = list->next;
+    }
+    value = g_variant_new ("as", builder);
+    g_variant_builder_unref (builder);
+
+    return value;
+}
+
+GVariant *
+writeMatchListValue (CCSSettingValueList list)
+{
+    GVariant *value = NULL;
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    while (list)
+    {
+	g_variant_builder_add (builder, "s", list->data->value.asMatch);
+	list = list->next;
+    }
+    value = g_variant_new ("as", builder);
+    g_variant_builder_unref (builder);
+
+    return value;
+}
+
+GVariant *
+writeColorListValue (CCSSettingValueList list)
+{
+    GVariant *value = NULL;
+    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    char *item;
+    while (list)
+    {
+	item = ccsColorToString (&list->data->value.asColor);
+	g_variant_builder_add (builder, "s", item);
+	g_free (item);
+	list = list->next;
+    }
+    value = g_variant_new ("as", builder);
+    g_variant_builder_unref (builder);
+
+    return value;
+}
+
 Bool
 writeListValue (CCSSettingValueList list,
 		CCSSettingType	    listType,
@@ -718,79 +817,22 @@ writeListValue (CCSSettingValueList list,
     switch (listType)
     {
     case TypeBool:
-	{
-	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
-	    while (list)
-	    {
-		g_variant_builder_add (builder, "b", list->data->value.asBool);
-		list = list->next;
-	    }
-	    value = g_variant_new ("ab", builder);
-	    g_variant_builder_unref (builder);
-	}
+	value = writeBoolListValue (list);
 	break;
     case TypeInt:
-	{
-	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
-	    while (list)
-	    {
-		g_variant_builder_add (builder, "i", list->data->value.asInt);
-		list = list->next;
-	    }
-	    value = g_variant_new ("ai", builder);
-	    g_variant_builder_unref (builder);
-	}
+	value = writeIntListValue (list);
 	break;
     case TypeFloat:
-	{
-	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
-	    while (list)
-	    {
-		g_variant_builder_add (builder, "d", (gdouble) list->data->value.asFloat);
-		list = list->next;
-	    }
-	    value = g_variant_new ("ad", builder);
-	    g_variant_builder_unref (builder);
-	}
+	 value = writeFloatListValue (list);
 	break;
     case TypeString:
-	{
-	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
-	    while (list)
-	    {
-		g_variant_builder_add (builder, "s", list->data->value.asString);
-		list = list->next;
-	    }
-	    value = g_variant_new ("as", builder);
-	    g_variant_builder_unref (builder);
-	}
+	value = writeStringListValue (list);
 	break;
     case TypeMatch:
-	{
-	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
-	    while (list)
-	    {
-		g_variant_builder_add (builder, "s", list->data->value.asMatch);
-		list = list->next;
-	    }
-	    value = g_variant_new ("as", builder);
-	    g_variant_builder_unref (builder);
-	}
+	value = writeMatchListValue (list);
 	break;
     case TypeColor:
-	{
-	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
-	    char *item;
-	    while (list)
-	    {
-		item = ccsColorToString (&list->data->value.asColor);
-		g_variant_builder_add (builder, "s", item);
-		g_free (item);
-		list = list->next;
-	    }
-	    value = g_variant_new ("as", builder);
-	    g_variant_builder_unref (builder);
-	}
+	value = writeColorListValue (list);
 	break;
     default:
 	ccsWarning ("Attempt to write unsupported list type %d!",
