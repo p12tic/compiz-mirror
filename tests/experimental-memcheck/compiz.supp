@@ -137,6 +137,14 @@
 }
 
 {
+    everything from PySys*
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:PySys*
+}
+
+{
     everything from PyList
     Memcheck:Leak
     fun:*alloc*
