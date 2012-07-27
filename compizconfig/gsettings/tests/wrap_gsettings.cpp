@@ -1,4 +1,4 @@
-#include <gsettings_mocks.h>
+#include <wrap_gsettings.h>
 
 static void compizconfig_gsettings_wrap_gsettings_default_init (CCSGSettingsWrapGSettingsInterface *interface);
 
