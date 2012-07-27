@@ -377,14 +377,14 @@ class CCSGSettingsTestPluginsWithSetKeysGVariantSetup :
 	virtual void SetUp ()
 	{
 	    CCSGSettingsTestIndependent::SetUp ();
-	    builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+	    GVariantBuilder builder;
 
-	    g_variant_builder_add (builder, "s", "foo");
-	    g_variant_builder_add (builder, "s", "bar");
+	    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
 
-	    writtenPlugins = g_variant_new ("as", builder);
+	    g_variant_builder_add (&builder, "s", "foo");
+	    g_variant_builder_add (&builder, "s", "bar");
 
-	    g_variant_builder_unref (builder);
+	    writtenPlugins = g_variant_builder_end (&builder);
 
 	    newWrittenPlugins = NULL;
 	    newWrittenPluginsSize = 0;

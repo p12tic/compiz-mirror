@@ -4259,14 +4259,21 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     completedUpgrades = fopen (dupath, "a+");
 
     if (!path)
+    {
+	fclose (completedUpgrades);
 	return FALSE;
+    }
 
     nFile = scandir (path, &nameList, upgradeNameFilter, alphasort);
     if (nFile <= 0)
+    {
+	fclose (completedUpgrades);
 	return FALSE;
+    }
 
     if (!completedUpgrades)
     {
+	fclose (completedUpgrades);
 	ccsWarning ("Error opening done_upgrades");
 	return FALSE;
     }
