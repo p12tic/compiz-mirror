@@ -180,6 +180,9 @@ ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 						CCSContext *context);
 
 void
+updateCurrentProfileName (CCSBackend *backend, const char *profile);
+
+void
 ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
 
 void
