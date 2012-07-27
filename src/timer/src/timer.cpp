@@ -56,6 +56,10 @@ CompTimeoutSource::CompTimeoutSource (Glib::RefPtr <Glib::MainContext> &ctx) :
     set_priority (G_PRIORITY_DEFAULT);
     attach (ctx);
 
+    /* We have to unreference the source so that it is destroyed
+     * when the main context destroys it */
+    unreference ();
+
     connect (sigc::mem_fun <bool, CompTimeoutSource> (this, &CompTimeoutSource::callback));
 }
 

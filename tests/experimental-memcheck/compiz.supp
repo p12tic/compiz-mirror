@@ -638,6 +638,14 @@
 }
 
 {
+    g_main_loop_run calls malloc
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:g_main_loop_run*
+}
+
+{
     g_thread_proxy calls malloc
     Memcheck:Leak
     fun:*alloc*
