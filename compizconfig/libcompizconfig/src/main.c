@@ -1013,6 +1013,9 @@ openBackend (char *backend)
 
     if (!dlhand && home && strlen (home))
     {
+	if (dlname)
+	    free (dlname);
+
 	if (asprintf (&dlname, "%s/.compizconfig/backends/lib%s.so",
 		      home, backend) == -1)
 	    dlname = NULL;
@@ -1024,9 +1027,9 @@ openBackend (char *backend)
 
     if (!dlhand)
     {
-        if (dlname) {
-	        free (dlname);
-        }
+	if (dlname)
+	    free (dlname);
+
 	if (asprintf (&dlname, "%s/compizconfig/backends/lib%s.so",
 		      LIBDIR, backend) == -1)
 	    dlname = NULL;
