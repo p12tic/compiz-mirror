@@ -11,7 +11,7 @@ import subprocess
 
 arch = subprocess.Popen (["uname", "-p"], stdout=subprocess.PIPE).communicate ()[0][:-1]
 
-sys.path[0] = ("compizconfig/compizconfig-python/build/lib.linux-" + arch + "-" + str (sys.version_info[0]) + "." + str (sys.version_info[1]) + "/")
+sys.path.insert (0, "compizconfig/compizconfig-python/build/lib.linux-%s-%s.%s/" % (arch, sys.version_info[0], sys.version_info[1]))
 
 import unittest
 import compizconfig
