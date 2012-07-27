@@ -690,6 +690,7 @@ iniparser_dump_ini (dictionary * d, const char * file_name)
 	}
 
 	fflush (f);
+	fclose (f);
 	ini_file_unlock (lock);
 	return;
     }
@@ -718,6 +719,7 @@ iniparser_dump_ini (dictionary * d, const char * file_name)
     }
 
     fflush (f);
+    fclose (f);
     ini_file_unlock (lock );
 }
 
