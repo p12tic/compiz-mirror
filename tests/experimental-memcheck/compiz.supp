@@ -70,6 +70,99 @@
 # Agreement.
 
 {
+    xmlReadFile leaks a string
+    Memcheck:Leak
+    fun:malloc
+    fun:xmlStrndup
+    ...
+    fun:xmlReadFile
+}
+
+{
+    xmlReadFile leaks an xmlNewCharEncodingHandler
+    Memcheck:Leak
+    fun:malloc
+    fun:xmlNewCharEncodingHandler
+    ...
+    fun:xmlReadFile
+}
+
+{
+    xmInitCharEncodingHandlers leaks
+    Memcheck:Leak
+    fun:*alloc*
+    fun:xmlInitCharEncodingHandlers
+}
+
+{
+    xmlReadFile leaks an xmlNewRMutex
+    Memcheck:Leak
+    fun:malloc
+    fun:xmlNewRMutex
+    ...
+    fun:xmlReadFile
+}
+
+{
+    xmlParseDocument leaks an xmlNewMutex
+    Memcheck:Leak
+    fun:malloc
+    fun:xmlNewMutex
+    ...
+    fun:xmlParseDocument
+}
+
+{
+    dlopen leaks some tokens
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:dlopen*
+}
+
+{
+    import_submodule
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:import_*module*
+}
+
+{
+    everything from PyInitialize_Ex
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:Py_InitializeEx*
+}
+
+{
+    everything from PyList
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:PyList_*
+}
+
+{
+    everything from PyThread
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:PyThread*
+}
+
+{
+    everything from PyStructSequence
+    Memcheck:Leak
+    fun:*alloc*
+    ...
+    fun:PyStructSequence*
+}
+
+
+
+{
    don't care about protobuf
    Memcheck:Leak
    ...
@@ -77,10 +170,69 @@
 }
 
 {
+    google::protobuf::protobufAddDesc
+    Memcheck:Leak
+    ...
+    fun:*protobuf*AddDesc*
+}
+
+{
+   don't care about protobuf
+   Memcheck:Leak
+   ...
+   fun:_ZN6google8protobuf8internal10OnShutdownEPFvvE
+}
+
+{
    g_types are never free'd
    Memcheck:Leak
    ...
    fun:g_type*
+}
+
+{
+    g_list_append calls g_slice_alloc can call g_private_get which seems to leave reachable blocks
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:g_private_get
+    fun:g_slice_alloc
+    fun:g_list_append
+}
+
+{
+    g_list_append calls g_mutex_lock which calls malloc
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:g_mutex*
+    ...
+    fun:g_slice_alloc
+    fun:g_list_append
+}
+
+# not entirely certain about this
+
+{
+    g_list_append calls thread_memory_from_self, but we can't detect it
+    Memcheck:Leak
+    fun:calloc
+    ...
+    fun:g_slice_alloc
+    fun:g_list_append
+}
+
+{
+    g_variant_builder_end calls g_rec_mutex_lock
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:g_slice_alloc
+    ...
+    fun:g_rec_mutex_lock
+    fun:g_variant_type_info_get
+    ...
+    fun:g_variant_builder_end
 }
 
 {
