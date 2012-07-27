@@ -22,6 +22,10 @@ typedef GSettings * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CC
 typedef void (*CCSGSettingsBackendRegisterGConfClient) (CCSBackend *backend);
 typedef void (*CCSGSettingsBackendUnregisterGConfClient) (CCSBackend *backend);
 
+typedef GVariant * (*CCSGSettingsBackendGetExistingProfiles) (CCSBackend *backend);
+typedef void (*CCSGSettingsBackendSetExistingProfiles) (CCSBackend *backend, GVariant *value);
+typedef void (*CCSGSettingsBackendSetCurrentProfile) (CCSBackend *backend, const gchar *value);
+
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
@@ -29,6 +33,9 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
     CCSGSettingsBackendRegisterGConfClient gsettingsBackendRegisterGConfClient;
     CCSGSettingsBackendUnregisterGConfClient gsettingsBackendUnregisterGConfClient;
+    CCSGSettingsBackendGetExistingProfiles gsettingsBackendGetExistingProfiles;
+    CCSGSettingsBackendSetExistingProfiles gsettingsBackendSetExistingProfiles;
+    CCSGSettingsBackendSetCurrentProfile gsettingsBackendSetCurrentProfile;
 };
 
 unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
@@ -177,6 +184,15 @@ ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
 
 void
 ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend);
+
+GVariant *
+ccsGSettingsBackendGetExistingProfiles (CCSBackend *backend);
+
+void
+ccsGSettingsBackendSetExistingProfiles (CCSBackend *backend, GVariant *value);
+
+void
+ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value);
 
 COMPIZCONFIG_END_DECLS
 
