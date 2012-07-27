@@ -3,7 +3,7 @@
 
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
-#include "gsettings_mocks.h"
+#include "wrap_gsettings.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
