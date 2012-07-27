@@ -106,14 +106,22 @@ struct CCSTypeIsVariantType
 };
 
 class CCSGSettingsTestVariantTypeFixture :
-    public ::testing::TestWithParam <CCSTypeIsVariantType>
+    public ::testing::TestWithParam <CCSTypeIsVariantType>,
+    public CCSGSettingsTestGeneral
 {
     public:
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestGeneral::SetUpEnv ();
 	    mType = GetParam ();
 	}
+
+	virtual void TearDown ()
+	{
+	    CCSGSettingsTestGeneral::TearDownEnv ();
+	}
+
 
     protected:
 
@@ -293,17 +301,20 @@ namespace
 }
 
 class CCSGSettingsTestArrayVariantSubTypeFixture :
-    public ::testing::TestWithParam <ArrayVariantInfo>
+    public ::testing::TestWithParam <ArrayVariantInfo>,
+    public CCSGSettingsTestGeneral
 {
     public:
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestGeneral::SetUpEnv ();
 	    mAVInfo = GetParam ();
 	}
 
 	virtual void TearDown ()
 	{
+	    CCSGSettingsTestGeneral::TearDownEnv ();
 	    g_variant_unref (v);
 	}
 
@@ -365,6 +376,7 @@ class CCSGSettingsTestPluginsWithSetKeysGVariantSetup :
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestIndependent::SetUp ();
 	    builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
 	    g_variant_builder_add (builder, "s", "foo");
@@ -382,6 +394,7 @@ class CCSGSettingsTestPluginsWithSetKeysGVariantSetup :
 	{
 	    g_variant_unref (writtenPlugins);
 	    g_strfreev (newWrittenPlugins);
+	    CCSGSettingsTestIndependent::TearDown ();
 	}
 
     protected:
@@ -425,6 +438,7 @@ class CCSGSettingsTestGObjectListWithProperty :
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestIndependent::SetUp ();
 	    g_type_init ();
 
 	    objectSchemaList = NULL;
@@ -442,6 +456,7 @@ class CCSGSettingsTestGObjectListWithProperty :
 
 	    g_list_free (objectSchemaList);
 	    objectSchemaList = NULL;
+	    CCSGSettingsTestIndependent::TearDown ();
 	}
 
 	CCSGSettingsWrapGSettings * AddObjectWithSchemaName (const std::string &schemaName)
@@ -479,6 +494,7 @@ class CCSGSettingsTestFindSettingLossy :
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestIndependent::SetUp ();
 	    settingList = NULL;
 	}
 
@@ -486,6 +502,7 @@ class CCSGSettingsTestFindSettingLossy :
 	{
 	    ccsSettingListFree (settingList, TRUE);
 	    settingList = NULL;
+	    CCSGSettingsTestIndependent::TearDown ();
 	}
 
 	CCSSetting * AddMockSettingWithNameAndType (char	      *name,
@@ -726,9 +743,11 @@ namespace
 
 	    typedef boost::function <GList * (void)> PopulateFunc;
 
-	    GListContainerEqualityBase (const PopulateFunc &populateGList) :
-		mList (populateGList ())
+	    GListContainerEqualityBase (const PopulateFunc &populateGList)
 	    {
+		setenv ("G_SLICE", "always-malloc", 1);
+		mList = populateGList ();
+		unsetenv ("G_SLICE");
 	    }
 
 	    GListContainerEqualityBase (const GListContainerEqualityBase &other) :
@@ -845,13 +864,24 @@ namespace
 }
 
 class CCSGSettingsTestVariantTypeToCCSTypeListFixture :
-    public ::testing::TestWithParam <GListContainerVariantTypeWrapper>
+    public ::testing::TestWithParam <GListContainerVariantTypeWrapper>,
+    public CCSGSettingsTestGeneral
 {
     public:
 
 	CCSGSettingsTestVariantTypeToCCSTypeListFixture () :
 	    mListContainer (GetParam ())
 	{
+	}
+
+	virtual void SetUp ()
+	{
+	    CCSGSettingsTestGeneral::SetUpEnv ();
+	}
+
+	virtual void TearDown ()
+	{
+	    CCSGSettingsTestGeneral::TearDownEnv ();
 	}
 
     protected:
