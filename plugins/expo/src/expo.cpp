@@ -1289,8 +1289,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
 	screen->desktopWindowCount () &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve)
     {
-/* XXX: Curve mode not ported right now */
-/*	int         i, oldVCount = gWindow->geometry ().vCount;
+	int         i, oldVCount = gWindow->vertexBuffer ()->countVertices ();
 	GLfloat     *v;
 	CompPoint   offset;
 	float       lastX, lastZ = 0.0;
@@ -1301,9 +1300,10 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
 				MIN(maxGridWidth , EXPO_GRID_SIZE),
 				maxGridHeight);
 
-	v  = gWindow->geometry ().vertices;
-	v += gWindow->geometry ().vertexStride - 3;
-	v += gWindow->geometry ().vertexStride * oldVCount;
+	int stride = gWindow->vertexBuffer ()->getVertexStride ();
+	v  = gWindow->vertexBuffer ()->getVertices ();
+	v += stride - 3;
+	v += stride * oldVCount;
 
 	if (!window->onAllViewports ())
 	{
@@ -1313,7 +1313,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
 
 	lastX = -1000000000.0;
 
-	for (i = oldVCount; i < gWindow->geometry ().vCount; i++)
+	for (i = oldVCount; i < gWindow->vertexBuffer ()->countVertices (); i++)
 	{
 	    if (v[0] == lastX)
 	    {
@@ -1334,8 +1334,8 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
 	    lastX = v[0];
 	    lastZ = v[2];
 
-	    v += gWindow->geometry ().vertexStride;
-	} */
+	    v += stride;
+	}
     }
     else
     {

@@ -715,16 +715,6 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 }
 
 #define ADD_RECT(vertexBuffer, m, n, x1, y1, x2, y2) \
-    GLfloat vertexData[18] = {                       \
-	(float)x1, (float)y1, 0.0,                   \
-	(float)x1, (float)y2, 0.0,                   \
-	(float)x2, (float)y1, 0.0,                   \
-	(float)x2, (float)y1, 0.0,                   \
-	(float)x1, (float)y2, 0.0,                   \
-	(float)x2, (float)y2, 0.0                    \
-    };                                               \
-    vertexBuffer->addVertices (6, vertexData);       \
-                                                     \
     for (it = 0; it < n; it++)                       \
     {                                                \
 	GLfloat data[2];                             \
@@ -775,16 +765,6 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
     }
 
 #define ADD_QUAD(vertexBuffer, m, n, x1, y1, x2, y2) \
-    GLfloat vertexData[18] = {                       \
-	(float)x1, (float)y1, 0.0,                   \
-	(float)x1, (float)y2, 0.0,                   \
-	(float)x2, (float)y1, 0.0,                   \
-	(float)x2, (float)y1, 0.0,                   \
-	(float)x1, (float)y2, 0.0,                   \
-	(float)x2, (float)y2, 0.0                    \
-    };                                               \
-    vertexBuffer->addVertices (6, vertexData);       \
-                                                     \
     for (it = 0; it < n; it++)                       \
     {                                                \
 	GLfloat data[2];                             \
@@ -846,6 +826,16 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
                int          &n,
                bool         rect)
 {
+    GLfloat vertexData[18] = {
+	(float)x1, (float)y1, 0.0,
+	(float)x1, (float)y2, 0.0,
+	(float)x2, (float)y1, 0.0,
+	(float)x2, (float)y1, 0.0,
+	(float)x1, (float)y2, 0.0,
+	(float)x2, (float)y2, 0.0
+    };
+    vertexBuffer->addVertices (6, vertexData);
+
     unsigned int it;
 
     if (rect)
@@ -945,6 +935,8 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	pBox = const_cast <Region> (region.handle ())->rects;
 	nBox = const_cast <Region> (region.handle ())->numRects;
+
+	n = priv->vertexBuffer->countVertices () / 6;
 
 	while (nBox--)
 	{
