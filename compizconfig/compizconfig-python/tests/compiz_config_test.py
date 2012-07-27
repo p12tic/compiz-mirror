@@ -1,6 +1,7 @@
 import os
 
 os.environ["G_SLICE"] = "always-malloc"
+os.environ["COMPIZ_CONFIG_PROFILE"] = ""
 os.environ["COMPIZ_METADATA_PATH"] = "generated/"
 os.environ["LIBCOMPIZCONFIG_BACKEND_PATH"] = "compizconfig/libcompizconfig/backend/"
 os.environ["XDG_DATA_DIRS"] = "generated/"
