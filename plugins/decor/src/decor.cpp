@@ -264,10 +264,13 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 
 	gWindow->vertexBuffer ()->end ();
 
-	glEnable (GL_BLEND);
-	gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
-	                        attrib, mask);
-	glDisable (GL_BLEND);
+	if (gWindow->vertexBuffer ()->countVertices ())
+	{
+	    glEnable (GL_BLEND);
+	    gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
+	                            attrib, mask);
+	    glDisable (GL_BLEND);
+	}
     }
     else if (wd && wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
     {
@@ -290,8 +293,9 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 	    gWindow->glAddGeometry (ml, window->frameRegion (), region);
 	    gWindow->vertexBuffer ()->end ();
 
-	    gWindow->glDrawTexture (gWindow->textures ()[0], transform,
-	                            attrib, mask);
+	    if (gWindow->vertexBuffer ()->countVertices ())
+		gWindow->glDrawTexture (gWindow->textures ()[0], transform,
+		                        attrib, mask);
 	}
 	else
 	{
@@ -304,8 +308,9 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 		gWindow->glAddGeometry (ml, regions[i], region);
 		gWindow->vertexBuffer ()->end ();
 
-		gWindow->glDrawTexture (gWindow->textures ()[i], transform,
-		                        attrib, mask);
+		if (gWindow->vertexBuffer ()->countVertices ())
+		    gWindow->glDrawTexture (gWindow->textures ()[i], transform,
+		                            attrib, mask);
 	    }
 	}
 

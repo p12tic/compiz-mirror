@@ -536,15 +536,18 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 
 	gWindow->vertexBuffer ()->end ();
 
-	GLMatrix           wTransform (transform);
+	if (gWindow->vertexBuffer ()->countVertices ())
+	{
+	    GLMatrix           wTransform (transform);
 
-	wTransform.translate (g.x (), g.y (), 0.0f);
-	wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
-	wTransform.translate (sAttrib.xTranslate / sAttrib.xScale - g.x (),
-	                      sAttrib.yTranslate / sAttrib.yScale - g.y (),
-	                      0.0f);
+	    wTransform.translate (g.x (), g.y (), 0.0f);
+	    wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
+	    wTransform.translate (sAttrib.xTranslate / sAttrib.xScale - g.x (),
+	                          sAttrib.yTranslate / sAttrib.yScale - g.y (),
+	                          0.0f);
 
-	gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
+	    gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
+	}
     }
 }
 

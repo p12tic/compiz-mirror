@@ -157,6 +157,16 @@ void GLVertexBuffer::addVertices (GLuint nVertices, GLfloat *vertices)
     }
 }
 
+const GLfloat *GLVertexBuffer::getVertices() const
+{
+    return priv->vertexData.data();
+}
+
+int GLVertexBuffer::countVertices() const
+{
+    return priv->vertexData.size();
+}
+
 void GLVertexBuffer::setVertexOffset (GLuint vOffset)
 {
     priv->vertexOffset = vOffset;

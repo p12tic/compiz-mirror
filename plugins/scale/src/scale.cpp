@@ -233,12 +233,15 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 
 	    priv->gWindow->vertexBuffer ()->end ();
 
-	    GLMatrix           wTransform (transform);
+	    if (priv->gWindow->vertexBuffer ()->countVertices ())
+	    {
+		GLMatrix           wTransform (transform);
 
-	    wTransform.scale (scale, scale, 1.0f);
-	    wTransform.translate (x / scale, y / scale, 0.0f);
+		wTransform.scale (scale, scale, 1.0f);
+		wTransform.translate (x / scale, y / scale, 0.0f);
 
-	    priv->gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
+		priv->gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
+	    }
 	}
     }
 }

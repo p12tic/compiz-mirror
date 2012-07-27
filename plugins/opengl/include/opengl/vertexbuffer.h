@@ -83,6 +83,9 @@ class GLVertexBuffer
 
 	// vertices and normals are 3 parts, count is number of xyz groups
 	void addVertices (GLuint nVertices, GLfloat *vertices);
+	const GLfloat *getVertices() const;
+	int countVertices() const;  // AKA GLWindow::Geometry::vCount
+
 	void addNormals (GLuint nNormals, GLfloat *normals);
 
 	// color is always RGBA (4 parts), count is number of rgba groups

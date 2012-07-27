@@ -375,23 +375,26 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		gWindow->glAddGeometry (matricies, iconReg, iconReg);
 		gWindow->vertexBuffer ()->end ();
 
-		GLWindowPaintAttrib wAttrib (sAttrib);
-		GLMatrix            wTransform = transform;
+		if (gWindow->vertexBuffer ()->countVertices ())
+		{
+		    GLWindowPaintAttrib wAttrib (sAttrib);
+		    GLMatrix            wTransform = transform;
 
-		if (!pixmap)
-		    sAttrib.opacity = gWindow->paintAttrib ().opacity;
+		    if (!pixmap)
+		        sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
-		if (mSlot)
-		    wAttrib.brightness = (float)wAttrib.brightness *
-		                                         mSlot->depthBrightness;
+		    if (mSlot)
+		        wAttrib.brightness = (float)wAttrib.brightness *
+		                             mSlot->depthBrightness;
 
-		wTransform.translate (window->x (), window->y (), 0.0f);
-		wTransform.scale (scale, scale, 1.0f);
-		wTransform.translate ((x - window->x ()) / scale - window->x (),
-		                      (y - window->y ()) / scale - window->y (),
-		                      0.0f);
+		    wTransform.translate (window->x (), window->y (), 0.0f);
+		    wTransform.scale (scale, scale, 1.0f);
+		    wTransform.translate ((x - window->x ()) / scale - window->x (),
+		                          (y - window->y ()) / scale - window->y (),
+		                          0.0f);
 
-		gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
+		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
+		}
 	    }
 	}
     }

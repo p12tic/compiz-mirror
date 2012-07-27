@@ -421,42 +421,45 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 		gWindow->vertexBuffer ()->end ();
 
-		GLWindowPaintAttrib wAttrib (sAttrib);
-		GLMatrix            wTransform (transform);
+		if (gWindow->vertexBuffer ()->countVertices ())
+		{
+		    GLWindowPaintAttrib wAttrib (sAttrib);
+		    GLMatrix            wTransform (transform);
 
-		if (gWindow->textures ().empty ())
-		    sAttrib.opacity = gWindow->paintAttrib ().opacity;
+		    if (gWindow->textures ().empty ())
+		        sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
-		wAttrib = GLWindowPaintAttrib (sAttrib);
+		    wAttrib = GLWindowPaintAttrib (sAttrib);
 
-		wAttrib.opacity = (float)wAttrib.opacity * sopacity;
-		wAttrib.brightness = (float)wAttrib.brightness *
-		                                        ss->mReflectBrightness;
+		    wAttrib.opacity = (float)wAttrib.opacity * sopacity;
+		    wAttrib.brightness = (float)wAttrib.brightness *
+		                         ss->mReflectBrightness;
 
-		wTransform.translate (sx, sy, sz);
+		    wTransform.translate (sx, sy, sz);
 
-		wTransform.translate (window->x () +
-		                              (window->width ()  * sscale / 2),
-		                      window->y () +
-		                           (window->height ()  * sscale / 2.0),
-		                      0.0f);
+		    wTransform.translate (window->x () +
+		                            (window->width ()  * sscale / 2),
+		                          window->y () +
+		                            (window->height ()  * sscale / 2.0),
+		                          0.0f);
 
-		wTransform.scale (ss->mOutput->width (),
-		                  -ss->mOutput->height (),
-		                  1.0f);
+		    wTransform.scale (ss->mOutput->width (),
+		                      -ss->mOutput->height (),
+		                      1.0f);
 
-		wTransform.rotate (srot, 0.0, 1.0, 0.0);
+		    wTransform.rotate (srot, 0.0, 1.0, 0.0);
 
-		wTransform.scale (1.0f  / ss->mOutput->width (),
-		                  -1.0f / ss->mOutput->height (),
-		                  1.0f);
+		    wTransform.scale (1.0f  / ss->mOutput->width (),
+		                      -1.0f / ss->mOutput->height (),
+		                      1.0f);
 
-		wTransform.translate (x - (window->width () * sscale / 2),
-		                      y - (window->height () * sscale / 2.0),
-		                      0.0f);
-		wTransform.scale (scale, scale, 1.0f);
+		    wTransform.translate (x - (window->width () * sscale / 2),
+		                          y - (window->height () * sscale / 2.0),
+		                          0.0f);
+		    wTransform.scale (scale, scale, 1.0f);
 
-		gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
+		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
+		}
 	    }
 	}
     }
