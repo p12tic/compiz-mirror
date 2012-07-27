@@ -75,6 +75,9 @@ compiz (1:0.9.8+bzr3287-0ubuntu1) UNRELEASED; urgency=low
   * debian/compiz-gnome.migrations:
     - use a migrations file for installing the script for migrating gconf
       configuration to gsettings
+  * debian/patches/ubuntu-config.patch:
+    - changed keybinding for initiate window picker, according to the design
+      specification
 
  -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Tue, 24 Jul 2012 16:38:35 +0200
 

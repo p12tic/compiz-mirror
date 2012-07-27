@@ -1,8 +1,6 @@
 === modified file 'metadata/core.xml.in'
-Index: ubuntu/metadata/core.xml.in
-===================================================================
---- ubuntu.orig/metadata/core.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/metadata/core.xml.in	2012-06-29 09:19:49.825484611 +0200
+--- old/metadata/core.xml.in	2012-03-09 16:13:05 +0000
++++ new/metadata/core.xml.in	2012-07-27 12:41:52 +0000
 @@ -138,7 +138,7 @@
  			<option name="focus_prevention_match" type="match">
  			<_short>Focus Prevention Windows</_short>
@@ -70,232 +68,10 @@ Index: ubuntu/metadata/core.xml.in
  			<min>1</min>
  			<max>32</max>
  			</option>
-Index: ubuntu/plugins/fade/fade.xml.in
-===================================================================
---- ubuntu.orig/plugins/fade/fade.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/fade/fade.xml.in	2012-06-29 09:19:49.825484611 +0200
-@@ -9,6 +9,7 @@
- 	    </requirement>
- 	    <relation type="after">
- 		<plugin>decor</plugin>
-+		<plugin>staticswitcher</plugin>
- 	    </relation>
- 	    <relation type="before">
- 		<plugin>cube</plugin>
-@@ -49,7 +50,7 @@
- 	    <option name="window_match" type="match">
- 		<_short>Fade windows</_short>
- 		<_long>Windows that should be fading</_long>
--		<default>any</default>
-+                <default>any &amp; !(title=notify-osd)</default>
- 	    </option>
- 	    <option name="visual_bell" type="bell">
- 		<_short>Visual Bell</_short>
-Index: ubuntu/plugins/place/place.xml.in
-===================================================================
---- ubuntu.orig/plugins/place/place.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/place/place.xml.in	2012-06-29 09:19:49.825484611 +0200
-@@ -19,8 +19,8 @@
- 	    <option name="mode" type="int">
- 		<_short>Placement Mode</_short>
- 		<_long>Algorithm to use for window placement</_long>
--		<default>0</default>
--		<min>2</min>
-+		<default>2</default>
-+		<min>0</min>
- 		<max>5</max>
- 		<desc>
- 		    <value>0</value>
-Index: ubuntu/plugins/resize/resize.xml.in
-===================================================================
---- ubuntu.orig/plugins/resize/resize.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/resize/resize.xml.in	2012-06-29 09:19:49.829484611 +0200
-@@ -28,7 +28,7 @@
- 	    <option name="mode" type="int">
- 		<_short>Default Resize Mode</_short>
- 		<_long>Default mode used for window resizing</_long>
--		<default>0</default>
-+		<default>2</default>
- 		<min>0</min>
- 		<max>3</max>
- 		<desc>
-@@ -57,9 +57,9 @@
- 		<_short>Border Color</_short>
- 		<_long>Border color used for outline and rectangle resize modes</_long>
- 		<default>
--		    <red>0x2f2f</red>
--		    <green>0x2f2f</green>
--		    <blue>0x4f4f</blue>
-+		    <red>0xfbfb</red>
-+		    <green>0x8b8b</green>
-+		    <blue>0x0</blue>
- 		    <alpha>0x9f9f</alpha>
- 		</default>
- 	    </option>
-@@ -67,10 +67,10 @@
- 		<_short>Fill Color</_short>
- 		<_long>Fill color used for rectangle resize mode</_long>
- 		<default>
--		    <red>0x2f2f</red>
--		    <green>0x2f2f</green>
--		    <blue>0x4f4f</blue>
--		    <alpha>0x4f4f</alpha>
-+		    <red>0xfbfb</red>
-+		    <green>0x8b8b</green>
-+		    <blue>0x0</blue>
-+		    <alpha>0x1919</alpha>
- 		</default>
- 	    </option>
- 	    <subgroup>
-Index: ubuntu/plugins/scale/scale.xml.in
-===================================================================
---- ubuntu.orig/plugins/scale/scale.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/scale/scale.xml.in	2012-06-29 09:19:49.829484611 +0200
-@@ -18,14 +18,14 @@
- 			<option name="spacing" type="int">
- 				<_short>Spacing</_short>
- 				<_long>Space between windows</_long>
--				<default>10</default>
-+				<default>68</default>
- 				<min>0</min>
- 				<max>250</max>
- 			</option>
- 			<option name="speed" type="float">
- 				<_short>Speed</_short>
- 				<_long>Scale speed</_long>
--				<default>1.5</default>
-+				<default>2.4</default>
- 				<min>0.1</min>
- 				<max>50</max>
- 				<precision>0.1</precision>
-@@ -33,7 +33,7 @@
- 			<option name="timestep" type="float">
- 				<_short>Timestep</_short>
- 				<_long>Scale timestep</_long>
--				<default>1.2</default>
-+				<default>0.1</default>
- 				<min>0.1</min>
- 				<max>50</max>
- 				<precision>0.1</precision>
-@@ -46,7 +46,7 @@
- 			<option name="opacity" type="int">
- 				<_short>Opacity</_short>
- 				<_long>Amount of opacity in percent</_long>
--				<default>75</default>
-+				<default>100</default>
- 				<min>0</min>
- 				<max>100</max>
- 			</option>
-@@ -55,7 +55,7 @@
- 				<_long>Overlay an icon on windows once they are scaled</_long>
- 				<min>0</min>
- 				<max>2</max>
--				<default>1</default>
-+				<default>0</default>
- 				<desc>
- 					<value>0</value>
- 					<_name>None</_name>
-@@ -96,7 +96,7 @@
- 				<_long>Selects where windows are scaled if multiple output devices are used.</_long>
- 				<min>0</min>
- 				<max>1</max>
--				<default>0</default>
-+				<default>1</default>
- 				<desc>
- 					<value>0</value>
- 					<_name>On current output device</_name>
-@@ -112,7 +112,7 @@
- 			<option name="key_bindings_toggle" type="bool">
- 			    <_short>Key Bindings Toggle Scale Mode</_short>
- 			    <_long>Key bindings toggle scale mode instead of enabling it when pressed and disabling it when released.</_long>
--			    <default>false</default>
-+			    <default>true</default>
- 			</option>
- 			<option name="button_bindings_toggle" type="bool">
- 			    <_short>Button Bindings Toggle Scale Mode</_short>
-@@ -122,9 +122,6 @@
- 			<option name="initiate_edge" type="edge">
- 				<_short>Initiate Window Picker</_short>
- 				<_long>Layout and start transforming windows</_long>
--				<default>
--				<edge name="TopRight"/>
--				</default>
- 				<allowed edgednd="true"/>
- 			</option>
- 			<option name="initiate_key" type="key">
-@@ -148,6 +145,7 @@
- 			<option name="initiate_all_key" type="key">
- 				<_short>Initiate Window Picker For All Windows</_short>
- 				<_long>Layout and start transforming all windows</_long>
-+				<default>&lt;Super&gt;w</default>
- 			</option>
- 			<option name="initiate_group_edge" type="edge">
- 				<_short>Initiate Window Picker For Window Group</_short>
-@@ -178,7 +176,7 @@
- 			<option name="show_desktop" type="bool">
- 				<_short>Click Desktop to Show Desktop</_short>
- 				<_long>Enter Show Desktop mode when Desktop is clicked during Scale</_long>
--				<default>true</default>
-+				<default>false</default>
- 			</option>
- 	    </group>
- 	</options>
-Index: ubuntu/plugins/decor/decor.xml.in
-===================================================================
---- ubuntu.orig/plugins/decor/decor.xml.in	2012-06-29 09:19:41.000000000 +0200
-+++ ubuntu/plugins/decor/decor.xml.in	2012-06-29 09:21:44.089480572 +0200
-@@ -30,7 +30,7 @@
- 		<option name="active_shadow_opacity" type="float">
- 		    <_short>Shadow Opacity</_short>
- 		    <_long>Drop shadow opacity</_long>
--		    <default>0.5</default>
-+		    <default>0.8</default>
- 		    <min>0.01</min>
- 		    <max>6.0</max>
- 		    <precision>0.01</precision>
-@@ -65,7 +65,7 @@
- 		<option name="inactive_shadow_radius" type="float">
- 		    <_short>Shadow Radius</_short>
- 		    <_long>Drop shadow radius</_long>
--		    <default>8.0</default>
-+		    <default>5.0</default>
- 		    <min>0.1</min>
- 		    <max>13.0</max>
- 		    <precision>0.1</precision>
-@@ -73,7 +73,7 @@
- 		<option name="inactive_shadow_opacity" type="float">
- 		    <_short>Shadow Opacity</_short>
- 		    <_long>Drop shadow opacity</_long>
--		    <default>0.5</default>
-+		    <default>0.4</default>
- 		    <min>0.01</min>
- 		    <max>6.0</max>
- 		    <precision>0.01</precision>
-@@ -100,7 +100,7 @@
- 	    <option name="command" type="string">
- 		<_short>Command</_short>
- 		<_long>Decorator command line that is executed if no decorator is already running.</_long>
--		<default>exec \"${COMPIZ_BIN_PATH}compiz-decorator\"</default>
-+		<default>/usr/bin/gtk-window-decorator</default>
- 	    </option>
- 	    <option name="mipmap" type="bool">
- 		<_short>Mipmap</_short>
-Index: ubuntu/plugins/gnomecompat/gnomecompat.xml.in
-===================================================================
---- ubuntu.orig/plugins/gnomecompat/gnomecompat.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/gnomecompat/gnomecompat.xml.in	2012-06-29 09:19:49.833484612 +0200
-@@ -52,6 +52,7 @@
- 		<option name="run_command_terminal_key" type="key">
- 		    <_short>Open a terminal</_short>
- 		    <_long>Open a terminal</_long>
-+		    <default>&lt;Control&gt;&lt;Alt&gt;T</default>
- 		</option>
- 	    </group>
- 	</options>
-Index: ubuntu/plugins/animation/animation.xml.in
-===================================================================
---- ubuntu.orig/plugins/animation/animation.xml.in	2012-06-25 13:35:07.812268000 +0200
-+++ ubuntu/plugins/animation/animation.xml.in	2012-06-29 09:19:49.833484612 +0200
+
+=== modified file 'plugins/animation/animation.xml.in'
+--- old/plugins/animation/animation.xml.in	2012-05-16 17:40:41 +0000
++++ new/plugins/animation/animation.xml.in	2012-07-27 12:41:52 +0000
 @@ -35,7 +35,7 @@
  	    <extensible/>
  	    <sort start="2"/>
@@ -434,10 +210,62 @@ Index: ubuntu/plugins/animation/animation.xml.in
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
-Index: ubuntu/plugins/ezoom/ezoom.xml.in
-===================================================================
---- ubuntu.orig/plugins/ezoom/ezoom.xml.in	2012-06-25 13:35:07.812268000 +0200
-+++ ubuntu/plugins/ezoom/ezoom.xml.in	2012-06-29 09:19:49.837484612 +0200
+
+=== modified file 'plugins/decor/decor.xml.in'
+--- old/plugins/decor/decor.xml.in	2012-06-24 09:00:27 +0000
++++ new/plugins/decor/decor.xml.in	2012-07-27 12:41:52 +0000
+@@ -30,7 +30,7 @@
+ 		<option name="active_shadow_opacity" type="float">
+ 		    <_short>Shadow Opacity</_short>
+ 		    <_long>Drop shadow opacity</_long>
+-		    <default>0.5</default>
++		    <default>0.8</default>
+ 		    <min>0.01</min>
+ 		    <max>6.0</max>
+ 		    <precision>0.01</precision>
+@@ -65,7 +65,7 @@
+ 		<option name="inactive_shadow_radius" type="float">
+ 		    <_short>Shadow Radius</_short>
+ 		    <_long>Drop shadow radius</_long>
+-		    <default>8.0</default>
++		    <default>5.0</default>
+ 		    <min>0.1</min>
+ 		    <max>13.0</max>
+ 		    <precision>0.1</precision>
+@@ -73,7 +73,7 @@
+ 		<option name="inactive_shadow_opacity" type="float">
+ 		    <_short>Shadow Opacity</_short>
+ 		    <_long>Drop shadow opacity</_long>
+-		    <default>0.5</default>
++		    <default>0.4</default>
+ 		    <min>0.01</min>
+ 		    <max>6.0</max>
+ 		    <precision>0.01</precision>
+@@ -100,7 +100,7 @@
+ 	    <option name="command" type="string">
+ 		<_short>Command</_short>
+ 		<_long>Decorator command line that is executed if no decorator is already running.</_long>
+-		<default>exec \"${COMPIZ_BIN_PATH}compiz-decorator\"</default>
++		<default>/usr/bin/gtk-window-decorator</default>
+ 	    </option>
+ 	    <option name="mipmap" type="bool">
+ 		<_short>Mipmap</_short>
+
+=== modified file 'plugins/expo/expo.xml.in'
+--- old/plugins/expo/expo.xml.in	2012-05-16 17:40:58 +0000
++++ new/plugins/expo/expo.xml.in	2012-07-27 12:41:52 +0000
+@@ -36,7 +36,6 @@
+ 		    <_short>Expo edge</_short>
+ 		    <_long>Engage wall expo mode edge binding</_long>
+ 		    <default>
+-			<edge name="TopLeft"/>
+ 		    </default>
+ 		</option>
+ 		<option name="double_click_time" type="int">
+
+=== modified file 'plugins/ezoom/ezoom.xml.in'
+--- old/plugins/ezoom/ezoom.xml.in	2012-05-16 17:40:27 +0000
++++ new/plugins/ezoom/ezoom.xml.in	2012-07-27 12:41:52 +0000
 @@ -29,7 +29,6 @@
  		<option type="button" name="zoom_in_button">
  		    <_short>Zoom In</_short>
@@ -471,10 +299,43 @@ Index: ubuntu/plugins/ezoom/ezoom.xml.in
  		    </option>
  		</subgroup>
  	    </group>
-Index: ubuntu/plugins/grid/grid.xml.in
-===================================================================
---- ubuntu.orig/plugins/grid/grid.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/grid/grid.xml.in	2012-06-29 09:19:49.837484612 +0200
+
+=== modified file 'plugins/fade/fade.xml.in'
+--- old/plugins/fade/fade.xml.in	2011-06-27 13:32:58 +0000
++++ new/plugins/fade/fade.xml.in	2012-07-27 12:41:52 +0000
+@@ -9,6 +9,7 @@
+ 	    </requirement>
+ 	    <relation type="after">
+ 		<plugin>decor</plugin>
++		<plugin>staticswitcher</plugin>
+ 	    </relation>
+ 	    <relation type="before">
+ 		<plugin>cube</plugin>
+@@ -49,7 +50,7 @@
+ 	    <option name="window_match" type="match">
+ 		<_short>Fade windows</_short>
+ 		<_long>Windows that should be fading</_long>
+-		<default>any</default>
++                <default>any &amp; !(title=notify-osd)</default>
+ 	    </option>
+ 	    <option name="visual_bell" type="bell">
+ 		<_short>Visual Bell</_short>
+
+=== modified file 'plugins/gnomecompat/gnomecompat.xml.in'
+--- old/plugins/gnomecompat/gnomecompat.xml.in	2010-12-07 05:03:07 +0000
++++ new/plugins/gnomecompat/gnomecompat.xml.in	2012-07-27 12:41:52 +0000
+@@ -52,6 +52,7 @@
+ 		<option name="run_command_terminal_key" type="key">
+ 		    <_short>Open a terminal</_short>
+ 		    <_long>Open a terminal</_long>
++		    <default>&lt;Control&gt;&lt;Alt&gt;T</default>
+ 		</option>
+ 	    </group>
+ 	</options>
+
+=== modified file 'plugins/grid/grid.xml.in'
+--- old/plugins/grid/grid.xml.in	2012-05-16 17:43:21 +0000
++++ new/plugins/grid/grid.xml.in	2012-07-27 12:41:52 +0000
 @@ -23,17 +23,16 @@
  		<option name="put_center_key" type="key">
  		    <_short>Put Center</_short>
@@ -503,10 +364,158 @@ Index: ubuntu/plugins/grid/grid.xml.in
  		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
-Index: ubuntu/plugins/staticswitcher/staticswitcher.xml.in
-===================================================================
---- ubuntu.orig/plugins/staticswitcher/staticswitcher.xml.in	2012-06-25 13:35:07.812268000 +0200
-+++ ubuntu/plugins/staticswitcher/staticswitcher.xml.in	2012-06-29 09:19:49.837484612 +0200
+
+=== modified file 'plugins/place/place.xml.in'
+--- old/plugins/place/place.xml.in	2011-10-13 14:36:35 +0000
++++ new/plugins/place/place.xml.in	2012-07-27 12:41:52 +0000
+@@ -19,8 +19,8 @@
+ 	    <option name="mode" type="int">
+ 		<_short>Placement Mode</_short>
+ 		<_long>Algorithm to use for window placement</_long>
+-		<default>0</default>
+-		<min>2</min>
++		<default>2</default>
++		<min>0</min>
+ 		<max>5</max>
+ 		<desc>
+ 		    <value>0</value>
+
+=== modified file 'plugins/resize/resize.xml.in'
+--- old/plugins/resize/resize.xml.in	2011-05-01 20:59:20 +0000
++++ new/plugins/resize/resize.xml.in	2012-07-27 12:41:52 +0000
+@@ -28,7 +28,7 @@
+ 	    <option name="mode" type="int">
+ 		<_short>Default Resize Mode</_short>
+ 		<_long>Default mode used for window resizing</_long>
+-		<default>0</default>
++		<default>2</default>
+ 		<min>0</min>
+ 		<max>3</max>
+ 		<desc>
+@@ -57,9 +57,9 @@
+ 		<_short>Border Color</_short>
+ 		<_long>Border color used for outline and rectangle resize modes</_long>
+ 		<default>
+-		    <red>0x2f2f</red>
+-		    <green>0x2f2f</green>
+-		    <blue>0x4f4f</blue>
++		    <red>0xfbfb</red>
++		    <green>0x8b8b</green>
++		    <blue>0x0</blue>
+ 		    <alpha>0x9f9f</alpha>
+ 		</default>
+ 	    </option>
+@@ -67,10 +67,10 @@
+ 		<_short>Fill Color</_short>
+ 		<_long>Fill color used for rectangle resize mode</_long>
+ 		<default>
+-		    <red>0x2f2f</red>
+-		    <green>0x2f2f</green>
+-		    <blue>0x4f4f</blue>
+-		    <alpha>0x4f4f</alpha>
++		    <red>0xfbfb</red>
++		    <green>0x8b8b</green>
++		    <blue>0x0</blue>
++		    <alpha>0x1919</alpha>
+ 		</default>
+ 	    </option>
+ 	    <subgroup>
+
+=== modified file 'plugins/scale/scale.xml.in'
+--- old/plugins/scale/scale.xml.in	2011-09-19 13:00:51 +0000
++++ new/plugins/scale/scale.xml.in	2012-07-27 12:42:13 +0000
+@@ -18,14 +18,14 @@
+ 			<option name="spacing" type="int">
+ 				<_short>Spacing</_short>
+ 				<_long>Space between windows</_long>
+-				<default>10</default>
++				<default>68</default>
+ 				<min>0</min>
+ 				<max>250</max>
+ 			</option>
+ 			<option name="speed" type="float">
+ 				<_short>Speed</_short>
+ 				<_long>Scale speed</_long>
+-				<default>1.5</default>
++				<default>2.4</default>
+ 				<min>0.1</min>
+ 				<max>50</max>
+ 				<precision>0.1</precision>
+@@ -33,7 +33,7 @@
+ 			<option name="timestep" type="float">
+ 				<_short>Timestep</_short>
+ 				<_long>Scale timestep</_long>
+-				<default>1.2</default>
++				<default>0.1</default>
+ 				<min>0.1</min>
+ 				<max>50</max>
+ 				<precision>0.1</precision>
+@@ -46,7 +46,7 @@
+ 			<option name="opacity" type="int">
+ 				<_short>Opacity</_short>
+ 				<_long>Amount of opacity in percent</_long>
+-				<default>75</default>
++				<default>100</default>
+ 				<min>0</min>
+ 				<max>100</max>
+ 			</option>
+@@ -55,7 +55,7 @@
+ 				<_long>Overlay an icon on windows once they are scaled</_long>
+ 				<min>0</min>
+ 				<max>2</max>
+-				<default>1</default>
++				<default>0</default>
+ 				<desc>
+ 					<value>0</value>
+ 					<_name>None</_name>
+@@ -96,7 +96,7 @@
+ 				<_long>Selects where windows are scaled if multiple output devices are used.</_long>
+ 				<min>0</min>
+ 				<max>1</max>
+-				<default>0</default>
++				<default>1</default>
+ 				<desc>
+ 					<value>0</value>
+ 					<_name>On current output device</_name>
+@@ -112,7 +112,7 @@
+ 			<option name="key_bindings_toggle" type="bool">
+ 			    <_short>Key Bindings Toggle Scale Mode</_short>
+ 			    <_long>Key bindings toggle scale mode instead of enabling it when pressed and disabling it when released.</_long>
+-			    <default>false</default>
++			    <default>true</default>
+ 			</option>
+ 			<option name="button_bindings_toggle" type="bool">
+ 			    <_short>Button Bindings Toggle Scale Mode</_short>
+@@ -122,15 +122,12 @@
+ 			<option name="initiate_edge" type="edge">
+ 				<_short>Initiate Window Picker</_short>
+ 				<_long>Layout and start transforming windows</_long>
+-				<default>
+-				<edge name="TopRight"/>
+-				</default>
+ 				<allowed edgednd="true"/>
+ 			</option>
+ 			<option name="initiate_key" type="key">
+ 				<_short>Initiate Window Picker</_short>
+ 				<_long>Layout and start transforming windows</_long>
+-				<default>&lt;Shift&gt;&lt;Alt&gt;Up</default>
++				<default>&lt;Super&gt;w</default>
+ 			</option>
+ 			<option name="initiate_button" type="button">
+ 				<_short>Initiate Window Picker</_short>
+@@ -178,7 +175,7 @@
+ 			<option name="show_desktop" type="bool">
+ 				<_short>Click Desktop to Show Desktop</_short>
+ 				<_long>Enter Show Desktop mode when Desktop is clicked during Scale</_long>
+-				<default>true</default>
++				<default>false</default>
+ 			</option>
+ 	    </group>
+ 	</options>
+
+=== modified file 'plugins/staticswitcher/staticswitcher.xml.in'
+--- old/plugins/staticswitcher/staticswitcher.xml.in	2012-05-16 17:40:16 +0000
++++ new/plugins/staticswitcher/staticswitcher.xml.in	2012-07-27 12:41:52 +0000
 @@ -10,7 +10,6 @@
  	    <relation type="after">
  		<plugin>composite</plugin>
@@ -583,10 +592,10 @@ Index: ubuntu/plugins/staticswitcher/staticswitcher.xml.in
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
-Index: ubuntu/plugins/vpswitch/vpswitch.xml.in
-===================================================================
---- ubuntu.orig/plugins/vpswitch/vpswitch.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/vpswitch/vpswitch.xml.in	2012-06-29 09:19:49.837484612 +0200
+
+=== modified file 'plugins/vpswitch/vpswitch.xml.in'
+--- old/plugins/vpswitch/vpswitch.xml.in	2012-05-16 17:40:51 +0000
++++ new/plugins/vpswitch/vpswitch.xml.in	2012-07-27 12:41:52 +0000
 @@ -95,13 +95,11 @@
  				<option name="next_button" type="button">
  					<_short>Move Next</_short>
@@ -601,10 +610,10 @@ Index: ubuntu/plugins/vpswitch/vpswitch.xml.in
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
-Index: ubuntu/plugins/wall/wall.xml.in
-===================================================================
---- ubuntu.orig/plugins/wall/wall.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/wall/wall.xml.in	2012-06-29 09:19:49.841484612 +0200
+
+=== modified file 'plugins/wall/wall.xml.in'
+--- old/plugins/wall/wall.xml.in	2012-05-16 17:41:07 +0000
++++ new/plugins/wall/wall.xml.in	2012-07-27 12:41:52 +0000
 @@ -31,12 +31,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
@@ -752,15 +761,4 @@ Index: ubuntu/plugins/wall/wall.xml.in
  				</option>
  				<option name="edgeflip_dnd" type="bool">
  					<_short>Edge Flip DnD</_short>
-Index: ubuntu/plugins/expo/expo.xml.in
-===================================================================
---- ubuntu.orig/plugins/expo/expo.xml.in	2012-06-25 13:35:07.000000000 +0200
-+++ ubuntu/plugins/expo/expo.xml.in	2012-06-29 09:19:49.841484612 +0200
-@@ -36,7 +36,6 @@
- 		    <_short>Expo edge</_short>
- 		    <_long>Engage wall expo mode edge binding</_long>
- 		    <default>
--			<edge name="TopLeft"/>
- 		    </default>
- 		</option>
- 		<option name="double_click_time" type="int">
+
