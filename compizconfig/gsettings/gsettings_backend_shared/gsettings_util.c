@@ -965,3 +965,21 @@ ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
 {
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnregisterGConfClient) (backend);
 }
+
+GVariant *
+ccsGSettingsBackendGetExistingProfiles (CCSBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetExistingProfiles) (backend);
+}
+
+void
+ccsGSettingsBackendSetExistingProfiles (CCSBackend *backend, GVariant *value)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendSetExistingProfiles) (backend, value);
+}
+
+void
+ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendSetCurrentProfile) (backend, value);
+}

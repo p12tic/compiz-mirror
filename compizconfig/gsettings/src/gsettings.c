@@ -634,12 +634,39 @@ ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
 #endif
 }
 
+static GVariant *
+ccsGSettingsBackendGetExistingProfilesDefault (CCSBackend *backend)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return g_settings_get_value (priv->compizconfigSettings, "existing-profiles");
+}
+
+static void
+ccsGSettingsBackendSetExistingProfilesDefault (CCSBackend *backend, GVariant *value)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    g_settings_set_value (priv->compizconfigSettings, "existing-profiles", value);
+}
+
+static void
+ccsGSettingsBackendSetCurrentProfileDefault (CCSBackend *backend, const gchar *value)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    g_settings_set (priv->compizconfigSettings, "current-profile", "s", value, NULL);
+}
+
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
     ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault,
     ccsGSettingsBackendRegisterGConfClientDefault,
-    ccsGSettingsBackendUnregisterGConfClientDefault
+    ccsGSettingsBackendUnregisterGConfClientDefault,
+    ccsGSettingsBackendGetExistingProfilesDefault,
+    ccsGSettingsBackendSetExistingProfilesDefault,
+    ccsGSettingsBackendSetCurrentProfileDefault
 };
 
 static Bool
