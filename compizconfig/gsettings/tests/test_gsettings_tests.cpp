@@ -11,6 +11,7 @@
 using ::testing::Values;
 using ::testing::ValuesIn;
 using ::testing::Return;
+using ::testing::Invoke;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
@@ -40,6 +41,56 @@ class GVariantSubtypeMatcher :
 	std::string mType;
 };
 
+template <typename T>
+class GVariantHasValueInArrayMatcher :
+    public ::testing::MatcherInterface<GVariant *>
+{
+    public:
+	GVariantHasValueInArrayMatcher (const std::string &type,
+					const T &t,
+					const boost::function <bool (T const&, T const&)> &eq) :
+	    mType (type),
+	    mT (t),
+	    mEq (eq)
+	{
+	}
+
+	virtual ~GVariantHasValueInArrayMatcher () {}
+	virtual bool MatchAndExplain (GVariant *x, MatchResultListener *listener) const
+	{
+	    GVariantIter iter;
+	    T            match;
+	    bool         found = false;
+
+	    g_variant_iter_init (&iter, x);
+	    while (g_variant_iter_loop (&iter, mType.c_str (), &match))
+	    {
+		if (mEq (match, mT))
+		    found = true;
+	    }
+
+	    return found;
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "contains " << mT;
+	}
+    private:
+
+	std::string mType;
+	T           mT;
+	boost::function <bool (T const&, T const&)> mEq;
+};
+
+template <typename T>
+inline Matcher<GVariant *> GVariantHasValueInArray (const std::string &type,
+						    const T &t,
+						    const boost::function <bool (T const &, T const &)> &eq)
+{
+    return MakeMatcher (new GVariantHasValueInArrayMatcher<T> (type, t, eq));
+}
+
 inline Matcher<GVariant *> IsVariantSubtypeOf (const std::string &type)
 {
     return MakeMatcher (new GVariantSubtypeMatcher (type));
@@ -51,6 +102,15 @@ TEST_P(CCSGSettingsTest, TestTestFixtures)
 
 TEST_F(CCSGSettingsTestIndependent, TestTest)
 {
+}
+
+namespace
+{
+bool streq (const char * const &s1, const char * const &s2)
+{
+    return g_str_equal (s1, s2);
+}
+
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
@@ -71,12 +131,13 @@ TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
     GVariant *existingProfiles = g_variant_builder_end (&builder);
 
     EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
-    EXPECT_CALL (*gmock, setExistingProfiles (IsVariantSubtypeOf ("as")));
+    EXPECT_CALL (*gmock, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
+						     GVariantHasValueInArray<const gchar *> ("s",
+											     "narr",
+											     boost::bind (streq, _1, _2)))));
     EXPECT_CALL (*gmock, setCurrentProfile (_));
 
     updateCurrentProfileName (backend.get (), "narr");
-
-    g_variant_unref (existingProfiles);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)
