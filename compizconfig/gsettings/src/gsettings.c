@@ -810,7 +810,7 @@ deleteProfile (CCSBackend *backend,
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     plugins = g_settings_get_value (priv->currentProfileSettings, "plugins-with-set-keys");
-    profiles = g_settings_get_value (priv->compizconfigSettings, "existing-profiles");
+    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
 
     g_variant_iter_init (&iter, plugins);
     while (g_variant_iter_loop (&iter, "s", &plugin))

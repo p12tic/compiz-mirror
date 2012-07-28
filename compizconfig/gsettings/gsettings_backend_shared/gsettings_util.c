@@ -931,21 +931,17 @@ writeVariantToKey (GSettings  *settings,
     g_settings_set_value (settings, key, value);
 }
 
-void
-updateCurrentProfileName (CCSBackend *backend, const char *profile)
+gboolean
+insertStringIntoVariantIfNew (GVariant **profiles, const char *profile)
 {
-    GVariant        *profiles;
     char	    *prof;
-    GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
     GVariantIter    iter;
     gboolean        found = FALSE;
 
-    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
-
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    g_variant_iter_init (&iter, profiles);
+    g_variant_iter_init (&iter, *profiles);
     while (g_variant_iter_loop (&iter, "s", &prof))
     {
 	g_variant_builder_add (newProfilesBuilder, "s", prof);
@@ -958,13 +954,24 @@ updateCurrentProfileName (CCSBackend *backend, const char *profile)
     {
 	g_variant_builder_add (newProfilesBuilder, "s", profile);
 
-	newProfiles = g_variant_new ("as", newProfilesBuilder);
-	ccsGSettingsBackendSetExistingProfiles (backend, newProfiles);
-
-	g_variant_unref (newProfiles);
+	g_variant_unref (*profiles);
+	*profiles = g_variant_new ("as", newProfilesBuilder);
     }
 
     g_variant_builder_unref (newProfilesBuilder);
+
+    return !found;
+}
+
+void
+updateCurrentProfileName (CCSBackend *backend, const char *profile)
+{
+    GVariant        *profiles;
+
+    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
+    if (insertStringIntoVariantIfNew (&profiles, profile))
+	ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+
     g_variant_unref (profiles);
 
     ccsGSettingsBackendSetCurrentProfile (backend, profile);
