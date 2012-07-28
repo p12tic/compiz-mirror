@@ -125,8 +125,6 @@ TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
 
     g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
     g_variant_builder_add (&builder, "s", "foo");
-    g_variant_builder_add (&builder, "s", "bar");
-    g_variant_builder_add (&builder, "s", "baz");
 
     GVariant *existingProfiles = g_variant_builder_end (&builder);
 
@@ -138,6 +136,27 @@ TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
     EXPECT_CALL (*gmock, setCurrentProfile (_));
 
     updateCurrentProfileName (backend.get (), "narr");
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameExisting)
+{
+    g_type_init ();
+
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    GVariantBuilder builder;
+
+    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&builder, "s", "foo");
+
+    GVariant *existingProfiles = g_variant_builder_end (&builder);
+
+    EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
+    EXPECT_CALL (*gmock, setCurrentProfile (_));
+
+    updateCurrentProfileName (backend.get (), "foo");
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)

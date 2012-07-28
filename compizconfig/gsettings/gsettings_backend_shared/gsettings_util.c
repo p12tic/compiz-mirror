@@ -955,14 +955,16 @@ updateCurrentProfileName (CCSBackend *backend, const char *profile)
     }
 
     if (!found)
+    {
 	g_variant_builder_add (newProfilesBuilder, "s", profile);
 
-    newProfiles = g_variant_new ("as", newProfilesBuilder);
-    ccsGSettingsBackendSetExistingProfiles (backend, newProfiles);
+	newProfiles = g_variant_new ("as", newProfilesBuilder);
+	ccsGSettingsBackendSetExistingProfiles (backend, newProfiles);
 
-    g_variant_unref (newProfiles);
+	g_variant_unref (newProfiles);
+    }
+
     g_variant_builder_unref (newProfilesBuilder);
-
     g_variant_unref (profiles);
 
     ccsGSettingsBackendSetCurrentProfile (backend, profile);
