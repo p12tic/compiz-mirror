@@ -932,33 +932,33 @@ writeVariantToKey (GSettings  *settings,
 }
 
 gboolean
-insertStringIntoVariantIfNew (GVariant **profiles, const char *profile)
+insertStringIntoVariantIfNew (GVariant **variant, const char *string)
 {
-    char	    *prof;
-    GVariantBuilder *newProfilesBuilder;
+    char	    *str;
+    GVariantBuilder *newVariantBuilder;
     GVariantIter    iter;
     gboolean        found = FALSE;
 
-    newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    newVariantBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    g_variant_iter_init (&iter, *profiles);
-    while (g_variant_iter_loop (&iter, "s", &prof))
+    g_variant_iter_init (&iter, *variant);
+    while (g_variant_iter_loop (&iter, "s", &str))
     {
-	g_variant_builder_add (newProfilesBuilder, "s", prof);
+	g_variant_builder_add (newVariantBuilder, "s", str);
 
 	if (!found)
-	    found = (g_strcmp0 (prof, profile) == 0);
+	    found = (g_strcmp0 (str, string) == 0);
     }
 
     if (!found)
     {
-	g_variant_builder_add (newProfilesBuilder, "s", profile);
+	g_variant_builder_add (newVariantBuilder, "s", string);
 
-	g_variant_unref (*profiles);
-	*profiles = g_variant_new ("as", newProfilesBuilder);
+	g_variant_unref (*variant);
+	*variant = g_variant_new ("as", newVariantBuilder);
     }
 
-    g_variant_builder_unref (newProfilesBuilder);
+    g_variant_builder_unref (newVariantBuilder);
 
     return !found;
 }
