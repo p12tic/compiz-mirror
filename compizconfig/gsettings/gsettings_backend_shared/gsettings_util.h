@@ -1,4 +1,4 @@
-#ifndef _COMPIZ_GSETTINGS_UTIL_H
+		#ifndef _COMPIZ_GSETTINGS_UTIL_H
 #define _COMPIZ_GSETTINGS_UTIL_H
 
 #include <ccs.h>
@@ -167,6 +167,9 @@ void writeVariantToKey (GSettings  *settings,
 			const char *key,
 			GVariant   *value);
 
+void
+updateCurrentProfileName (CCSBackend *backend, const char *profile);
+
 CCSContext *
 ccsGSettingsBackendGetContext (CCSBackend *backend);
 
@@ -178,9 +181,6 @@ ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 						const char *plugin,
 						const char *path,
 						CCSContext *context);
-
-void
-updateCurrentProfileName (CCSBackend *backend, const char *profile);
 
 void
 ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
