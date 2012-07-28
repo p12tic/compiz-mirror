@@ -1,4 +1,4 @@
-		#ifndef _COMPIZ_GSETTINGS_UTIL_H
+#ifndef _COMPIZ_GSETTINGS_UTIL_H
 #define _COMPIZ_GSETTINGS_UTIL_H
 
 #include <ccs.h>
