@@ -1,13 +1,49 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
+#include <boost/shared_ptr.hpp>
+
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
 #include "wrap_gsettings.h"
+#include "ccs_gsettings_backend_mock.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
 using ::testing::Return;
+using ::testing::MatcherInterface;
+using ::testing::MatchResultListener;
+using ::testing::AllOf;
+using ::testing::Matcher;
+
+class GVariantSubtypeMatcher :
+    public ::testing::MatcherInterface<GVariant *>
+{
+    public:
+	GVariantSubtypeMatcher (const std::string &type) :
+	    mType (type)
+	{
+	}
+
+	virtual ~GVariantSubtypeMatcher () {}
+	virtual bool MatchAndExplain (GVariant *x, MatchResultListener *listener) const
+	{
+	    return g_variant_type_is_subtype_of (G_VARIANT_TYPE (mType.c_str ()), g_variant_get_type (x));
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "is subtype of " << mType;
+	}
+    private:
+
+	std::string mType;
+};
+
+inline Matcher<GVariant *> IsVariantSubtypeOf (const std::string &type)
+{
+    return MakeMatcher (new GVariantSubtypeMatcher (type));
+}
 
 TEST_P(CCSGSettingsTest, TestTestFixtures)
 {
@@ -15,6 +51,32 @@ TEST_P(CCSGSettingsTest, TestTestFixtures)
 
 TEST_F(CCSGSettingsTestIndependent, TestTest)
 {
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
+{
+    g_type_init ();
+
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    GVariantBuilder builder;
+
+    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&builder, "s", "foo");
+    g_variant_builder_add (&builder, "s", "bar");
+    g_variant_builder_add (&builder, "s", "baz");
+
+    GVariant *existingProfiles = g_variant_builder_end (&builder);
+
+    EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
+    EXPECT_CALL (*gmock, setExistingProfiles (IsVariantSubtypeOf ("as")));
+    EXPECT_CALL (*gmock, setCurrentProfile (_));
+
+    updateCurrentProfileName (backend.get (), "narr");
+
+    g_variant_unref (existingProfiles);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)

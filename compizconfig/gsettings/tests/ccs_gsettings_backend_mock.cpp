@@ -20,7 +20,7 @@ CCSGSettingsBackendInterface ccsGSettingsBackendGMockInterface =
 CCSBackend *
 ccsGSettingsBackendGMockNew ()
 {
-    CCSBackend *backend = (CCSBackend *) calloc (1, sizeof (CCSBackend *));
+    CCSBackend *backend = (CCSBackend *) calloc (1, sizeof (CCSBackend));
 
     if (!backend)
 	return NULL;
@@ -35,7 +35,7 @@ ccsGSettingsBackendGMockNew ()
 
     ccsObjectInit (backend, &ccsDefaultObjectAllocator);
     ccsObjectAddInterface (backend, (const CCSInterface *) &ccsGSettingsBackendGMockInterface, GET_INTERFACE_TYPE (CCSGSettingsBackendInterface));
-    ccsObjectSetPrivate (backend, reinterpret_cast <CCSPrivate *> (backend));
+    ccsObjectSetPrivate (backend, reinterpret_cast <CCSPrivate *> (gmock));
 
     return backend;
 }
