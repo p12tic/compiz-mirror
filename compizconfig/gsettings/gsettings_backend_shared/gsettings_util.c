@@ -931,37 +931,56 @@ writeVariantToKey (GSettings  *settings,
     g_settings_set_value (settings, key, value);
 }
 
+typedef int (*ComparisonPredicate) (const void *s1, const void *s2);
+
+gboolean
+insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
+					   const char *string,
+					   ComparisonPredicate insert,
+					   ComparisonPredicate append)
+{
+    char	    *str;
+    GVariantBuilder *newVariantBuilder;
+    GVariantIter    iter;
+    gboolean        doAppend = FALSE;
+
+    newVariantBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+    g_variant_iter_init (&iter, *variant);
+    while (g_variant_iter_loop (&iter, "s", &str))
+    {
+	gboolean doInsert = TRUE;
+	if (insert)
+	    doInsert = (*insert) (str, string);
+
+	if (doInsert)
+	    g_variant_builder_add (newVariantBuilder, "s", str);
+
+	if (!doAppend && append)
+	    doAppend = (*append) (str, string);
+    }
+
+    if (!doAppend)
+    {
+	g_variant_builder_add (newVariantBuilder, "s", string);
+
+	g_variant_unref (*variant);
+	*variant = g_variant_new ("as", newVariantBuilder);
+    }
+
+    g_variant_builder_unref (newVariantBuilder);
+
+    return !doAppend;
+}
+
 void
 updateCurrentProfileName (CCSBackend *backend, const char *profile)
 {
     GVariant        *profiles;
-    char	    *prof;
-    GVariant        *newProfiles;
-    GVariantBuilder *newProfilesBuilder;
-    GVariantIter    iter;
-    gboolean        found = FALSE;
 
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
-
-    newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
-
-    g_variant_iter_init (&iter, profiles);
-    while (g_variant_iter_loop (&iter, "s", &prof))
-    {
-	g_variant_builder_add (newProfilesBuilder, "s", prof);
-
-	if (!found)
-	    found = (g_strcmp0 (prof, profile) == 0);
-    }
-
-    if (!found)
-	g_variant_builder_add (newProfilesBuilder, "s", profile);
-
-    newProfiles = g_variant_new ("as", newProfilesBuilder);
-    ccsGSettingsBackendSetExistingProfiles (backend, newProfiles);
-
-    g_variant_unref (newProfiles);
-    g_variant_builder_unref (newProfilesBuilder);
+    if (insertStringIntoVariantIfMatchesPredicate (&profiles, profile, NULL, g_str_equal))
+	ccsGSettingsBackendSetExistingProfiles (backend, profiles);
 
     g_variant_unref (profiles);
 
