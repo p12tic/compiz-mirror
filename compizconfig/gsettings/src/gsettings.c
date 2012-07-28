@@ -794,29 +794,20 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     return ret;
 }
 
-static Bool
-deleteProfile (CCSBackend *backend,
-	       CCSContext *context,
-	       char       *profile)
+static void
+unsetAllChangedPluginKeysInProfile (CCSBackend *backend,
+				    CCSContext *context,
+				    GVariant *pluginsWithChangedKeys,
+				    const char * profile)
 {
-    GVariant        *plugins;
-    GVariant        *profiles;
-    GVariant        *newProfiles;
-    GVariantBuilder *newProfilesBuilder;
-    char            *plugin, *prof;
     GVariantIter    iter;
-    char            *profileSettingsPath = makeCompizProfilePath (profile);
-    GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    char            *plugin;
 
-    plugins = g_settings_get_value (priv->currentProfileSettings, "plugins-with-set-keys");
-    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
-
-    g_variant_iter_init (&iter, plugins);
+    g_variant_iter_init (&iter, pluginsWithChangedKeys);
     while (g_variant_iter_loop (&iter, "s", &plugin))
     {
 	GSettings *settings;
-	gchar *pathName = makeCompizPluginPath (priv->currentProfile, plugin);
+	gchar *pathName = makeCompizPluginPath (profile, plugin);
 
 	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
 	g_free (pathName);
@@ -836,6 +827,27 @@ deleteProfile (CCSBackend *backend,
 	    g_strfreev (keys);
 	}
     }
+}
+
+static Bool
+deleteProfile (CCSBackend *backend,
+	       CCSContext *context,
+	       char       *profile)
+{
+    GVariant        *plugins;
+    GVariant        *profiles;
+    GVariant        *newProfiles;
+    GVariantBuilder *newProfilesBuilder;
+    char	    *prof;
+    GVariantIter    iter;
+    char            *profileSettingsPath = makeCompizProfilePath (profile);
+    GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    plugins = g_settings_get_value (priv->currentProfileSettings, "plugins-with-set-keys");
+    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
+
+    unsetAllChangedPluginKeysInProfile (backend, context, plugins, priv->currentProfile);
 
     /* Remove the profile from existing-profiles */
     g_settings_reset (profileSettings, "plugins-with-set-values");
