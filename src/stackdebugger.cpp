@@ -252,7 +252,7 @@ StackDebugger::cmpStack (CompWindowList &windows,
         ++lrrit;
 
 	if (lsrit != mLastServerWindows.rend())
-	    lsrit++;
+        ++lsrit;
 
 	if (i != serverSideWindows.size ())
 	    i++;
