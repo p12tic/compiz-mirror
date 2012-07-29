@@ -274,7 +274,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 
     // TODO consider removing this loop and skipPostPrepareScreen
     for (CompWindowVector::reverse_iterator rit = mLastClientList.rbegin ();
-	 rit != mLastClientList.rend (); rit++)
+     rit != mLastClientList.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *aw = AnimWindow::get (w);
