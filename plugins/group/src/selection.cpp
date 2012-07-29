@@ -317,7 +317,7 @@ Selection::toGroup ()
 	    GroupScreen::get (screen)->mGroups.push_front (group);
 	}
 
-        for (; it != end (); it++)
+        for (; it != end (); ++it)
         {
 	    cw = *it;
 	    GROUP_WINDOW (cw);
