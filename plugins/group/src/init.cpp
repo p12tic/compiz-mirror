@@ -185,7 +185,7 @@ GroupScreen::applyInitialActions ()
 	    }
 	}
 
-	rit++;
+    ++rit;
     }
 
     return false;
