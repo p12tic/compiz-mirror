@@ -1753,7 +1753,6 @@ static void
 initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
-    char *name;
     char *value;
     int num, j;
     i->forString.restriction = NULL;
@@ -1796,6 +1795,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
+        char *name;
 	    for (j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
