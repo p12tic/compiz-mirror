@@ -3002,7 +3002,7 @@ cps::WindowManager::insertServerWindow(CompWindow* w, Window aboveId)
 	{
 	    break;
 	}
-	it++;
+    ++it;
     }
 
     if (it == serverWindows.end ())
