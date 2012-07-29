@@ -573,7 +573,7 @@ CompositeScreen::updateOutputWindow ()
 
 	for (CompWindowList::reverse_iterator rit =
 	     screen->windows ().rbegin ();
-	     rit != screen->windows ().rend (); rit++)
+         rit != screen->windows ().rend (); ++rit)
 	    if (CompositeWindow::get (*rit)->overlayWindow ())
 	    {
 		tmpRegion -= (*rit)->region ();
