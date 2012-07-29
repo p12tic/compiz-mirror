@@ -200,12 +200,11 @@ SessionScreen::getIntForProp (xmlNodePtr node,
 			      const char *prop)
 {
     xmlChar *temp;
-    int     num;
 
     temp = xmlGetProp (node, BAD_CAST prop);
     if (temp)
     {
-	num = xmlXPathCastStringToNumber (temp);
+    int num = xmlXPathCastStringToNumber (temp);
 	xmlFree (temp);
 
 	return num;
