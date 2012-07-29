@@ -632,7 +632,6 @@ GridScreen::handleEvent (XEvent *event)
 {
     CompOutput out;
     CompWindow *w;
-    bool       check = false;
 
     screen->handleEvent (event);
 
@@ -696,6 +695,7 @@ GridScreen::handleEvent (XEvent *event)
 
     if (lastEdge != edge)
     {
+        bool check = false;
 		lastSlot = desiredSlot;
 
 		if (edge == NoEdge)
