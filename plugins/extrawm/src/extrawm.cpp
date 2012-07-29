@@ -32,7 +32,7 @@ ExtraWMScreen::addAttentionWindow (CompWindow *w)
     std::list <CompWindow *>::iterator it;
 
     /* check if the window is already there */
-    for (it = attentionWindows.begin (); it != attentionWindows.end (); it++)
+    for (it = attentionWindows.begin (); it != attentionWindows.end (); ++it)
     {
 	if (*it == w)
 	    return;
