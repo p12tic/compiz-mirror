@@ -3404,7 +3404,7 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 
     mask = modHandler->virtualToRealModMask (key.modifiers ());
 
-    for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
+    for (it = keyGrabs.begin (); it != keyGrabs.end (); ++it)
     {
 	if (key.keycode () == (*it).keycode &&
 	    mask           == (*it).modifiers)
