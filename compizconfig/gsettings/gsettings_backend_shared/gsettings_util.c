@@ -6,6 +6,11 @@
 
 INTERFACE_TYPE (CCSGSettingsBackendInterface);
 
+int voidcmp0 (const void *v1, const void *v2)
+{
+    return g_strcmp0 ((const char *) v1, (const char *) v2);
+}
+
 GList *
 variantTypeToPossibleSettingType (const gchar *vt)
 {

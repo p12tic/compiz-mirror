@@ -859,10 +859,6 @@ deleteProfile (CCSBackend *backend,
 {
     GVariant        *plugins;
     GVariant        *profiles;
-    GVariant        *newProfiles;
-    GVariantBuilder *newProfilesBuilder;
-    char	    *prof;
-    GVariantIter    iter;
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
@@ -873,20 +869,10 @@ deleteProfile (CCSBackend *backend,
     /* Remove the profile from existing-profiles */
     ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
 
-    g_variant_iter_init (&iter, profiles);
-    newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    insertStringIntoVariantIfMatchesPredicate (&profiles, profile, voidcmp0, NULL);
 
-    while (g_variant_iter_loop (&iter, "s", &prof))
-    {
-	if (g_strcmp0 (prof, profile))
-	    g_variant_builder_add (newProfilesBuilder, "s", prof);
-    }
-
-    newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (priv->compizconfigSettings, "existing-profiles", newProfiles);
-
-    g_variant_unref (newProfiles);
-    g_variant_builder_unref (newProfilesBuilder);
+    ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+    g_variant_unref (profiles);
 
     updateProfile (backend, context);
 

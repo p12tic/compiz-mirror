@@ -174,6 +174,8 @@ void writeVariantToKey (GSettings  *settings,
 
 typedef int (*ComparisonPredicate) (const void *s1, const void *s2);
 
+int voidcmp0 (const void *v1, const void *v2);
+
 gboolean
 insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
 					   const char *string,
