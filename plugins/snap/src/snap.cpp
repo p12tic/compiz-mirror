@@ -289,7 +289,7 @@ SnapWindow::updateScreenEdges ()
 
 	    if (!e->screenEdge)
 	    {
-		it++;
+        ++it;
 		continue;
 	    }
 
