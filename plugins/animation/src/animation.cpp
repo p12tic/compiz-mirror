@@ -2931,7 +2931,7 @@ AnimWindow::~AnimWindow ()
 
     // Destroy each persistent data object
     PersistentDataMap::iterator itData = persistentData.begin ();
-    for (; itData != persistentData.end (); itData++)
+    for (; itData != persistentData.end (); ++itData)
 	delete itData->second;
 
     persistentData.clear ();
