@@ -153,7 +153,7 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
     while (it != mEvents.end ())
     {
 	mFetchXEvent->getNextXEvent ((*it));
-	it++;
+    ++it;
     }
 
     XSync (mDpy, FALSE);
