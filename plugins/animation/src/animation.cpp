@@ -978,7 +978,7 @@ void
 PrivateAnimScreen::eventMatchesChanged (CompOption                *opt,
 					AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     foreach (CompOption::Value &val, opt->value ().list ())
 	val.match ().update ();
@@ -988,7 +988,7 @@ void
 PrivateAnimScreen::eventOptionsChanged (CompOption                *opt,
 					AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     updateOptionSets (getCorrespondingAnimEvent (num));
 }
@@ -997,7 +997,7 @@ void
 PrivateAnimScreen::eventEffectsChanged (CompOption                *opt,
 					AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     updateEventEffects (getCorrespondingAnimEvent (num), false);
 }
@@ -1006,7 +1006,7 @@ void
 PrivateAnimScreen::eventRandomEffectsChanged (CompOption                *opt,
 					      AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     updateEventEffects (getCorrespondingAnimEvent (num), true);
 }
