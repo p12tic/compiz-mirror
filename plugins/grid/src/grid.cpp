@@ -932,7 +932,7 @@ GridScreen::preparePaint (int msSinceLastPaint)
 {
 	std::vector<Animation>::iterator iter;
 
-	for (iter = animations.begin (); iter != animations.end (); iter++)
+    for (iter = animations.begin (); iter != animations.end (); ++iter)
 	{
 		Animation& anim = *iter;
 		anim.timer -= msSinceLastPaint;
