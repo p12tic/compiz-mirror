@@ -596,10 +596,10 @@ PrivateAnimScreen::getActualEffect (AnimEffect effect,
     bool allRandom = optionGetAllRandom ();
     AnimEffectVector *randomEffects = &mRandomEffects[animEvent].effects;
     unsigned int nRandomEffects = randomEffects->size ();
-    unsigned int nFirstRandomEffect = 0;
 
     if ((effect == AnimEffectRandom) || allRandom)
     {
+    unsigned int nFirstRandomEffect = 0;
 	if (nRandomEffects == 0) // no random animation selected, assume "all"
 	{
 	    randomEffects = &mEventEffectsAllowed[animEvent];
