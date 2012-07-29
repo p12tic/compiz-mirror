@@ -1336,7 +1336,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 		cit = mList.begin ();
 
 	for (std::list <Decoration::Ptr>::iterator it = mList.begin ();
-	     it != mList.end (); it++)
+         it != mList.end (); ++it)
 	{
 	    const Decoration::Ptr &d = *it;
 
