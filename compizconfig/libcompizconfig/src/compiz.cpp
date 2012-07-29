@@ -1551,11 +1551,12 @@ initListValue (CCSSettingValue * v,
 	       void * optionPBv)
 {
     xmlNode **nodes;
-    int num, j;
+    int num;
 
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
+    int j;
 	for (j = 0; j < num; j++)
 	{
 	    void *valuePBv = NULL;
