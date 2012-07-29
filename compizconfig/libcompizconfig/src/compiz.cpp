@@ -1793,7 +1793,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	if (num)
 	{
         int j;
-        char *name;
+        char *name, *value;
 	    for (j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
