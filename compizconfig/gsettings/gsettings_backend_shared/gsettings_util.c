@@ -931,8 +931,6 @@ writeVariantToKey (GSettings  *settings,
     g_settings_set_value (settings, key, value);
 }
 
-typedef int (*ComparisonPredicate) (const void *s1, const void *s2);
-
 gboolean
 insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
 					   const char *string,
@@ -1038,4 +1036,16 @@ void
 ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value)
 {
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendSetCurrentProfile) (backend, value);
+}
+
+GVariant *
+ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetPluginsWithSetKeys) (backend);
+}
+
+void
+ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend, const char *profile)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendClearPluginsWithSetKeys) (backend, profile);
 }
