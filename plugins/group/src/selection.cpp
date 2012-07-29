@@ -127,7 +127,7 @@ groupFindWindowsInRegion (CompRegion     reg)
 	    ret->push_back (w);
 	}
 
-	rit++;
+    ++rit;
     }
 
     return ret;
