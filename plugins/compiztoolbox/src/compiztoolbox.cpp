@@ -278,7 +278,7 @@ BaseSwitchScreen::switchToWindow (bool toNext,
 
     if (toNext)
     {
-	it++;
+    ++it;
 	if (it == windows.end ())
 	    w = windows.front ();
 	else
