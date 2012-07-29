@@ -330,7 +330,7 @@ SnapWindow::updateScreenEdges ()
 	    }
 	    else
 	    {
-		it++;
+        ++it;
 	    }
 	}
     }
