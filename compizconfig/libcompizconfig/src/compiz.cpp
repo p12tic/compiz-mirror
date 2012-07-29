@@ -1750,7 +1750,6 @@ static void
 initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
-    char *value;
     int num;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
@@ -1770,6 +1769,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "sort", &num);
 	if (num)
 	{
+        char *value;
 	    int val = 0; /* Start sorting at 0 unless otherwise specified. */
 
 	    value = getStringFromXPath (node->doc, nodes[0], "@start");
