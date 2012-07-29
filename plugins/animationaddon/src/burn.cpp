@@ -392,11 +392,11 @@ BurnAnim::step ()
 	// force animation to continue until particle systems are done
 	mRemainingTime = timestep;
 
-    int nParticles;
     Particle *part;
 
     if (mRemainingTime > 0)
     {
+    int nParticles;
 	if (mHasSmoke)
 	{
 	    float partxg = outRect.width () / 40.0;
