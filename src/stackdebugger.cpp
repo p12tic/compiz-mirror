@@ -81,7 +81,7 @@ StackDebugger::removeServerWindow (Window id)
     /* Find the toplevel window in the list and remove it */
     for (CompWindowList::iterator it = mLastServerWindows.begin ();
 	 it != mLastServerWindows.end ();
-	 it++)
+     ++it)
     {
 	if ((*it)->id () == id)
 	{
