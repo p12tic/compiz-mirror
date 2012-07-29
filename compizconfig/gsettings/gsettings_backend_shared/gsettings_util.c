@@ -990,6 +990,56 @@ updateCurrentProfileName (CCSBackend *backend, const char *profile)
     ccsGSettingsBackendSetCurrentProfile (backend, profile);
 }
 
+gboolean
+updateProfile (CCSBackend *backend, CCSContext *context)
+{
+    const char *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
+    char *profile = strdup (ccsGetProfile (context));
+
+    if (!profile)
+	profile = strdup (DEFAULTPROF);
+
+    if (!strlen (profile))
+    {
+	free (profile);
+	profile = strdup (DEFAULTPROF);
+    }
+
+    if (g_strcmp0 (profile, currentProfile))
+	updateCurrentProfileName (backend, profile);
+
+    free (profile);
+
+    return TRUE;
+}
+
+gboolean
+deleteProfile (CCSBackend *backend,
+	       CCSContext *context,
+	       char       *profile)
+{
+    GVariant        *plugins;
+    GVariant        *profiles;
+    const char      *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
+
+    plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
+    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
+
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
+
+    /* Remove the profile from existing-profiles */
+    ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
+
+    insertStringIntoVariantIfMatchesPredicate (&profiles, profile, voidcmp0, NULL);
+
+    ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+    g_variant_unref (profiles);
+
+    updateProfile (backend, context);
+
+    return TRUE;
+}
+
 CCSContext *
 ccsGSettingsBackendGetContext (CCSBackend *backend)
 {

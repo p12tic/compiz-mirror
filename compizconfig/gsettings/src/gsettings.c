@@ -499,30 +499,6 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
     free (cleanSettingName);
 }
 
-static gboolean
-updateProfile (CCSBackend *backend, CCSContext *context)
-{
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    char *profile = strdup (ccsGetProfile (context));
-
-    if (!profile)
-	profile = strdup (DEFAULTPROF);
-
-    if (!strlen (profile))
-    {
-	free (profile);
-	profile = strdup (DEFAULTPROF);
-    }
-
-    if (g_strcmp0 (profile, priv->currentProfile))
-	updateCurrentProfileName (backend, profile);
-
-    free (profile);
-
-    return TRUE;
-}
-
 static char*
 getCurrentProfileName (CCSBackend *backend)
 {
@@ -860,33 +836,6 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     g_variant_unref (value);
 
     return ret;
-}
-
-gboolean
-deleteProfile (CCSBackend *backend,
-	       CCSContext *context,
-	       char       *profile)
-{
-    GVariant        *plugins;
-    GVariant        *profiles;
-    const char      *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
-
-    plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
-    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
-
-    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
-
-    /* Remove the profile from existing-profiles */
-    ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
-
-    insertStringIntoVariantIfMatchesPredicate (&profiles, profile, voidcmp0, NULL);
-
-    ccsGSettingsBackendSetExistingProfiles (backend, profiles);
-    g_variant_unref (profiles);
-
-    updateProfile (backend, context);
-
-    return TRUE;
 }
 
 static char *
