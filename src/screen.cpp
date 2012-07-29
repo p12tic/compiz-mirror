@@ -3225,7 +3225,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 
     std::list<cps::Grab *>::iterator it;
 
-    for (it = privateScreen.eventManager.grabsBegin (); it != privateScreen.eventManager.grabsEnd (); it++)
+    for (it = privateScreen.eventManager.grabsBegin (); it != privateScreen.eventManager.grabsEnd (); ++it)
     {
 	va_start (ap, first);
 
