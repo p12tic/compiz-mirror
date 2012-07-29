@@ -193,7 +193,6 @@ ccpSettingToValue (CCSSetting        *s,
     else
     {
 	CCSSettingValueList list;
-	int                 i = 0;
 	CompOption::Type    type;
 
 	ccsGetList (s, &list);
@@ -208,6 +207,7 @@ ccpSettingToValue (CCSSetting        *s,
 	}
 	else
 	{
+        int i = 0;
 	    CompOption::Value::Vector val (ccsSettingValueListLength (list));
 
 	    while (list)
