@@ -1619,7 +1619,7 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
     xmlNode **nodes;
     char *name;
     char *value;
-    int num, j;
+    int num;
     i->forInt.min = std::numeric_limits <short>::min ();
     i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
@@ -1653,6 +1653,7 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "desc", &num);
 	if (num)
 	{
+        int j;
 	    for (j = 0; j < num; j++)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
