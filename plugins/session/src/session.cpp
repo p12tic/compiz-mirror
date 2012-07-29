@@ -500,7 +500,7 @@ SessionScreen::readWindow (CompWindow *w)
     getWindowTitle (w->id (), title);
     getTextProperty (w->id (), roleAtom, role);
 
-    for (item = items.begin (); item != items.end (); item++)
+    for (item = items.begin (); item != items.end (); ++item)
     {
 	if (!clientId.empty () && clientId == item->clientId)
 	{
