@@ -558,7 +558,7 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 			selected = windows.front ();
 		    else
 			selected = *it;
-		    it--;
+            --it;
 		}
 
 		CompWindowList::iterator del = it;
