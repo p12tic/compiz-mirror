@@ -2228,7 +2228,7 @@ cps::StartupSequence::removeSequence (SnStartupSequence *sequence)
 
     std::list<CompStartupSequence *>::iterator it = startupSequences.begin ();
 
-    for (; it != startupSequences.end (); it++)
+    for (; it != startupSequences.end (); ++it)
     {
 	if ((*it)->sequence == sequence)
 	{
