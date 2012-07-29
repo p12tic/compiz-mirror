@@ -2272,7 +2272,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 {
     xmlNode **nodes;
     xmlNode **optNodes;
-    int num, i;
+    int num;
     void *groupListPBv = NULL;
     void *subgroupListPBv = NULL;
 
@@ -2297,6 +2297,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
+    int i;
 	for (i = 0; i < num; i++)
 	{
 	    void *optionPBv = NULL;
