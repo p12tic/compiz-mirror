@@ -609,7 +609,6 @@ Decoration::Decoration (int   type,
     updateState (0),
     mPixmapReceiver (requestor, this)
 {
-    int		    left, right, top, bottom;
     int		    x1, y1, x2, y2;
 
     if (!texture && type == WINDOW_DECORATION_TYPE_PIXMAP)
@@ -620,10 +619,7 @@ Decoration::Decoration (int   type,
 
     if (type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-	left   = 0;
-	right  = minWidth;
-	top    = 0;
-	bottom = minHeight;
+    int left = 0, right = minWidth, top = 0, bottom = minHeight;
 
 	for (unsigned int i = 0; i  < nQuad; i++)
 	{
