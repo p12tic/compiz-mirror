@@ -227,7 +227,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
     // Now initiate focus animations (after the restack chains are formed
     // right above)
     for (CompWindowVector::reverse_iterator rit = mLastClientList.rbegin ();
-	 rit != mLastClientList.rend (); rit++)
+     rit != mLastClientList.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *aw = AnimWindow::get (w);
