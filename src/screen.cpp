@@ -226,7 +226,7 @@ cps::EventManager::removeFileWatch (CompFileWatchHandle handle)
 {
     std::list<CompFileWatch *>::iterator it;
 
-    for (it = fileWatch.begin (); it != fileWatch.end (); it++)
+    for (it = fileWatch.begin (); it != fileWatch.end (); ++it)
 	if ((*it)->handle == handle)
 	    break;
 
