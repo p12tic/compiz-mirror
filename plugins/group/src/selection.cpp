@@ -186,7 +186,7 @@ Selection::deselect (GroupSelection *group)
 	}
 
 	(*it) = cw;
-	it++;
+    ++it;
     }
 }
 
