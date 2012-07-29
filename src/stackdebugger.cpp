@@ -105,7 +105,7 @@ StackDebugger::overrideRedirectRestack (Window toplevel, Window sibling)
     {
 	for (CompWindowList::iterator it = mLastServerWindows.begin ();
 	     it != mLastServerWindows.end ();
-	     it++)
+         ++it)
 	{
 	    if (sibling == (*it)->id () ||
 		sibling == (*it)->frame ())
