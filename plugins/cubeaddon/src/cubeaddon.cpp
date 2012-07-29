@@ -1001,7 +1001,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
     {
 	float       *quad;
     int         j;
-	float       rS, r, x, y, z, w;
+    float       rS, r, x, y, z;
 	if (optionGetDeformation () != DeformationSphere ||
 	    !optionGetDeformCaps ())
 	{
@@ -1039,6 +1039,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	else
 	{
         int i;
+        float w;
 	    rS = cDist2 + 0.5;
 
 	    mCapFill[0] = 0.0;
