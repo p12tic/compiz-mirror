@@ -1754,7 +1754,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
     char *value;
-    int num, j;
+    int num;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
     i->forString.extensible = FALSE;
@@ -1795,6 +1795,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
+        int j;
         char *name;
 	    for (j = 0; j < num; j++)
 	    {
