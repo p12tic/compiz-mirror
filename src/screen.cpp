@@ -3510,7 +3510,7 @@ cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
 {
     std::list<ButtonGrab>::iterator it;
 
-    for (it = buttonGrabs.begin (); it != buttonGrabs.end (); it++)
+    for (it = buttonGrabs.begin (); it != buttonGrabs.end (); ++it)
     {
 	if (button.button ()    == (*it).button &&
 	    button.modifiers () == (*it).modifiers)
