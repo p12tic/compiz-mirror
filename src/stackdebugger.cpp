@@ -335,7 +335,7 @@ StackDebugger::checkSanity (CompWindowList &serverWindows, bool verbose)
 
     /* go backwards down the stack */
     for (CompWindowList::reverse_iterator rit = serverWindows.rbegin ();
-	 rit != serverWindows.rend (); rit++)
+     rit != serverWindows.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 
