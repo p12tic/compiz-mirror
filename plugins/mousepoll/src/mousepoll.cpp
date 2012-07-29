@@ -61,7 +61,7 @@ MousepollScreen::updatePosition ()
         {
             MousePoller *poller = *it;
  
-            it++;
+            ++it;
             poller->mPoint = pos;
             poller->mCallback (pos);
         }
