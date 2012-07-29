@@ -410,7 +410,6 @@ initListValuePB (CCSSettingValue * v,
 static void
 initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    int j;
     i->forInt.min = std::numeric_limits <short>::min ();
     i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
@@ -423,7 +422,7 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 
     if (!basicMetadata)
     {
-    int num = option.int_desc_size ();
+    int j, num = option.int_desc_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::IntDescription & intDescMetadata =
