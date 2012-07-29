@@ -493,7 +493,7 @@ GroupScreen::~GroupScreen ()
 		{
 		    GroupTabBarSlot *slot = *rit;
 		    delete slot;
-		    rit--;
+            --rit;
 		}
 
 		group->mTabBar->mSlots.clear ();
