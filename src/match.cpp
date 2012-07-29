@@ -236,8 +236,8 @@ matchOpsEqual (MatchOp::List &list1,
 		break;
 	}
 
-	it1++;
-	it2++;
+    ++it1;
+    ++it2;
     }
 
     return true;
