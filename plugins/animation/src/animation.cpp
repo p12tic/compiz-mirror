@@ -1383,7 +1383,7 @@ PrivateAnimScreen::donePaint ()
 
     /* Paint list includes destroyed windows */
     for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
-	 rit != pl.rend (); rit++)
+     rit != pl.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *animWin = AnimWindow::get (w);
