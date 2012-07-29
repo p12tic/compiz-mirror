@@ -800,7 +800,7 @@ CompositeScreen::handlePaintTimeout ()
 
 	Display *dpy = screen->dpy ();
 	std::map<Damage, XRectangle>::iterator d = priv->damages.begin ();
-    for (; d != priv->damages.end (); d++)
+    for (; d != priv->damages.end (); ++d)
 	{
 	    XserverRegion sub = XFixesCreateRegion (dpy, &d->second, 1);
 	    if (sub != None)
