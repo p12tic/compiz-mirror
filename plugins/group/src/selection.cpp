@@ -120,7 +120,7 @@ groupFindWindowsInRegion (CompRegion     reg)
 	     */
 	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, *ret))
 	    {
-		rit++;
+        ++rit;
 		continue;
 	    }
 
