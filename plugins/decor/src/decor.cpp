@@ -831,7 +831,7 @@ DecorationList::updateDecoration (Window   id,
 	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i, requestor);
 
 	    /* Try to replace an existing decoration */
-	    for (; it != mList.end (); it++)
+        for (; it != mList.end (); ++it)
 	    {
 		if ((*it)->frameType == d->frameType &&
 		    (*it)->frameState == d->frameState &&
