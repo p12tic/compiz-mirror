@@ -244,7 +244,7 @@ SnapWindow::updateWindowsEdges ()
 	    }
 	    else
 	    {
-		it++;
+        ++it;
 	    }
 	}
     }
