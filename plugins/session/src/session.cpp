@@ -266,7 +266,7 @@ SessionScreen::addWindowNode (CompWindow *w,
 {
     CompString clientId, command, string;
     CompString resName, resClass;
-    int        x, y, width, height;
+    int        x, y;
     xmlNodePtr node, childNode;
 
     if (!getClientLeaderProperty (w, clientIdAtom, clientId) &&
@@ -318,9 +318,9 @@ SessionScreen::addWindowNode (CompWindow *w,
 	x -= w->border ().left;
 	y -= w->border ().top;
 
-	width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
+    int width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
 			                  w->serverWidth ();
-	height = (w->saveMask () & CWHeight) ? w->saveWc ().height :
+    int height = (w->saveMask () & CWHeight) ? w->saveWc ().height :
 			                   w->serverHeight ();
 
 	addIntegerPropToNode (childNode, "x", x);
