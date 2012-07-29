@@ -949,7 +949,7 @@ PrivateScaleScreen::checkForWindowAt (int x, int y)
     int                              x1, y1, x2, y2;
     CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
 
-    for (; rit != screen->windows ().rend (); rit++)
+    for (; rit != screen->windows ().rend (); ++rit)
     {
 	CompWindow *w = *rit;
 	SCALE_WINDOW (w);
