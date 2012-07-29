@@ -2938,7 +2938,7 @@ cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
 	{
 	    break;
 	}
-	it++;
+    ++it;
     }
 
     if (it == windows.end ())
