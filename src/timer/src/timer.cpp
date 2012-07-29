@@ -152,7 +152,7 @@ CompTimeoutSource::callback ()
     }
 
     std::list<CompTimer*>::const_iterator i = requeue.begin ();
-    for (; i != requeue.end (); i++)
+    for (; i != requeue.end (); ++i)
     {
 	CompTimer *t = *i;
 	handler->addTimer (t);
