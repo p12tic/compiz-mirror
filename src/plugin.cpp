@@ -294,7 +294,7 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
     }
 
     it = windowManager.begin ();
-    for (;it != fail; it++)
+    for (;it != fail; ++it)
     {
 	w = *it;
 	p->vTable->finiWindow (w);
