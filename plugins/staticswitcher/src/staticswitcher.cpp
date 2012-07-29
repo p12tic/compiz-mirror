@@ -566,7 +566,7 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 		windows.erase (del);
 	    }
 	    else
-		it++;
+        ++it;
 	}
 
 	if (!inList)
