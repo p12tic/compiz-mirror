@@ -616,7 +616,6 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
     float              ang, sx1g, sx2g, sy1g, sy2g;
-	int                iang;
 	
 	CubeScreen::MultioutputMode   cMOM = cubeScreen->multioutputMode ();
 	int                           caD = caScreen->optionGetDeformation ();
@@ -760,7 +759,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 		    ang = atanf (a1 / cDist);
 		    a2 = sqrtf (radSquare - a2);
-		    iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
+            int iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
 
 		    v[2] += ((caScreen->mCosT [iang] * a2) - cDist) * caScreen->mDeform * inv;
 		    v[0] += ((caScreen->mSinT [iang] * a2) - a1) * sw * caScreen->mDeform;
