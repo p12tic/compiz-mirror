@@ -52,7 +52,7 @@ function (compiz_add_install_recompile_gsettings_schemas _schemadir_user)
 
 	# Recompile GSettings Schemas
 	install (CODE "
-		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_schemadir_user} -DSCHEMADIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/recompile_gsettings_schemas_in_dir_user_env.cmake)
+		 execute_process (COMMAND cmake -DSCHEMADIR_USER=${_schemadir_user} -DSCHEMADIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${COMPIZ_CMAKE_MODULE_PATH}/recompile_gsettings_schemas_in_dir_user_env.cmake)
 		 ")
 
     endif (GSETTINGS_GLOBAL_INSTALL_DIR_SET)
@@ -75,7 +75,7 @@ function (compiz_install_gsettings_schema _src _dst)
 
 	# Install schema file
 	install (CODE "
-		 execute_process (COMMAND cmake -DFILE=${_src} -DINSTALLDIR_USER=${_dst} -DINSTALLDIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${compiz_SOURCE_DIR}/cmake/copy_file_install_user_env.cmake)
+		 execute_process (COMMAND cmake -DFILE=${_src} -DINSTALLDIR_USER=${_dst} -DINSTALLDIR_ROOT=${GSETTINGS_GLOBAL_INSTALL_DIR} -P ${COMPIZ_CMAKE_MODULE_PATH}/copy_file_install_user_env.cmake)
 		 ")
 
 	get_property (COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE_SET
