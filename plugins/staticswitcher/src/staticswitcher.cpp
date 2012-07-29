@@ -562,7 +562,7 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 		}
 
 		CompWindowList::iterator del = it;
-		it++;
+        ++it;
 		windows.erase (del);
 	    }
 	    else
