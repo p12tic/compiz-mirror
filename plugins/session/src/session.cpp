@@ -266,7 +266,6 @@ SessionScreen::addWindowNode (CompWindow *w,
 {
     CompString clientId, command, string;
     CompString resName, resClass;
-    int        x, y;
     xmlNodePtr node, childNode;
 
     if (!getClientLeaderProperty (w, clientIdAtom, clientId) &&
@@ -307,8 +306,8 @@ SessionScreen::addWindowNode (CompWindow *w,
     childNode = xmlNewChild (node, NULL, BAD_CAST "geometry", NULL);
     if (childNode)
     {
-	x = (w->saveMask () & CWX) ? w->saveWc ().x : w->serverX ();
-	y = (w->saveMask () & CWY) ? w->saveWc ().y : w->serverY ();
+    int x = (w->saveMask () & CWX) ? w->saveWc ().x : w->serverX ();
+    int y = (w->saveMask () & CWY) ? w->saveWc ().y : w->serverY ();
 	if (!w->onAllViewports ())
 	{
 	    x += screen->vp ().x () * screen->width ();
