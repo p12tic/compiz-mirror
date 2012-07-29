@@ -983,7 +983,7 @@ GroupSelection::finishTabbing ()
     /* Move all windows to their animation target position */
     for (CompWindowList::iterator it = mWindows.begin ();
 	 it != mWindows.end ();
-	 it++)
+     ++it)
     {
 	CompWindow *w = *it;
 	GROUP_WINDOW (w);
