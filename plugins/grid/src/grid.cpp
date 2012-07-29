@@ -447,7 +447,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
 
-	for (iter = animations.begin (); iter != animations.end () && animating; iter++)
+    for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
 	{
 		Animation& anim = *iter;
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
