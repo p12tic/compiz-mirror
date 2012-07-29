@@ -343,12 +343,13 @@ initListValuePB (CCSSettingValue * v,
 		 CCSSettingInfo * i,
 		 const OptionMetadata & option)
 {
-    int num, j;
+    int num;
 
     num = option.default_value_size ();
 
     if (num)
     {
+    int j;
 	for (j = 0; j < num; j++)
 	{
 	    CCSSettingValue *val;
