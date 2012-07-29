@@ -249,7 +249,7 @@ StackDebugger::cmpStack (CompWindowList &windows,
 	    err = true;
 
 	if (lrrit != windows.rend ())
-	    lrrit++;
+        ++lrrit;
 
 	if (lsrit != mLastServerWindows.rend())
 	    lsrit++;
