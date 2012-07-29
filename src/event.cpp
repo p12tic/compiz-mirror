@@ -2005,7 +2005,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 					if (sibling)
 					{
 					    for (CompWindowList::reverse_iterator rit = windowsLostFocus.rbegin ();
-						 rit != windowsLostFocus.rend (); rit++)
+                         rit != windowsLostFocus.rend (); ++rit)
 					    {
 						(*rit)->restackAbove (sibling);
 					    }
