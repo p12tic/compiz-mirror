@@ -611,7 +611,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	int                i, oldVCount = geometry.vCount;
 	GLfloat            *v;
 	int                offX = 0, offY = 0;
-	int                sx1, sx2, sw, sy1, sy2, sh, cLast;
+    int                sx1, sx2, sw, sy1, sy2, sh;
 	float              lastX, lastZ = 0.0, radSquare, last[2][4];
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
@@ -728,7 +728,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    last[0][0] = -1000000000.0;
 	    last[1][0] = -1000000000.0;
 
-	    cLast = 0;
+        int cLast = 0;
 	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
 		if (last[0][0] == v[0] && last[0][1] == v[1])
