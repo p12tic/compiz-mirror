@@ -201,7 +201,7 @@ SnapWindow::updateWindowsEdges ()
 	    {
 		if (e->id == w->id ())
 		    e->passed = true;
-		it++;
+        ++it;
 		continue;
 	    }
 
