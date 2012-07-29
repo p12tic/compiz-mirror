@@ -1121,7 +1121,7 @@ RingScreen::windowRemove (CompWindow *w)
 			selected = *it;
     		    else
 			selected = mWindows.front ();
-		    it--;
+            --it;
 
 		    mSelectedWindow = selected;
 		    renderWindowTitle ();
