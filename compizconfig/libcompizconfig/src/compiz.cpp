@@ -468,7 +468,6 @@ initFloatInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 static void
 initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    int num, j;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
     i->forString.extensible = FALSE;
@@ -481,7 +480,7 @@ initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 	if (option.has_sort_start ())
 	    i->forString.sortStartsAt = option.sort_start ();
 
-	num = option.str_restriction_size ();
+    int j, num = option.str_restriction_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::StringRestriction &
