@@ -298,7 +298,7 @@ GroupScreen::postLoad ()
 	bool topIdInGroup = false;
 	for (std::list <Window>::iterator it = group->mWindowIds.begin ();
 	     it != group->mWindowIds.end ();
-	     it++)
+         ++it)
 	{
 	    CompWindow *w = screen->findWindow (*it);
 
