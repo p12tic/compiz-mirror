@@ -149,7 +149,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 
     // Go in reverse order so that restack chains are handled properly
     for (CompWindowVector::reverse_iterator rit = mLastClientList.rbegin ();
-	 rit != mLastClientList.rend (); rit++)
+     rit != mLastClientList.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *aw = AnimWindow::get (w);
