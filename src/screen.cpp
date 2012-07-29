@@ -3436,7 +3436,7 @@ cps::GrabManager::updatePassiveKeyGrabs ()
 
     XUngrabKey (screen->dpy(), AnyKey, AnyModifier, screen->root());
 
-    for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
+    for (it = keyGrabs.begin (); it != keyGrabs.end (); ++it)
     {
 	if (!((*it).modifiers & CompNoMask))
 	{
