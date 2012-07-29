@@ -26,9 +26,13 @@ class CCSGSettingsBackendGMockInterface
 								CCSContext * context) = 0;
 	virtual void registerGConfClient () = 0;
 	virtual void unregisterGConfClient () = 0;
+	virtual const char * getCurrentProfile () = 0;
 	virtual GVariant * getExistingProfiles () = 0;
 	virtual void setExistingProfiles (GVariant *) = 0;
 	virtual void setCurrentProfile (const gchar *) = 0;
+	virtual GVariant * getPluginsWithSetKeys () = 0;
+	virtual void clearPluginsWithSetKeys (const char *) = 0;
+	virtual void unsetAllChangedPluginKeysInProfile (CCSContext *, GVariant *, const char *) = 0;
 };
 
 class CCSGSettingsBackendGMock :
@@ -48,9 +52,13 @@ class CCSGSettingsBackendGMock :
 								       CCSContext * context));
 	MOCK_METHOD0 (registerGConfClient, void ());
 	MOCK_METHOD0 (unregisterGConfClient, void ());
+	MOCK_METHOD0 (getCurrentProfile, const char * ());
 	MOCK_METHOD0 (getExistingProfiles, GVariant * ());
 	MOCK_METHOD1 (setExistingProfiles, void (GVariant *));
 	MOCK_METHOD1 (setCurrentProfile, void (const gchar *));
+	MOCK_METHOD0 (getPluginsWithSetKeys, GVariant * ());
+	MOCK_METHOD1 (clearPluginsWithSetKeys, void (const char *));
+	MOCK_METHOD3 (unsetAllChangedPluginKeysInProfile, void (CCSContext *, GVariant *, const char *));
 
 	CCSBackend * getBackend () { return mBackend; }
 
@@ -95,6 +103,12 @@ class CCSGSettingsBackendGMock :
 	    (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->unregisterGConfClient ();
 	}
 
+	static const char *
+	ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->getCurrentProfile ();
+	}
+
 	static GVariant *
 	ccsGSettingsBackendGetExistingProfiles (CCSBackend *backend)
 	{
@@ -111,6 +125,27 @@ class CCSGSettingsBackendGMock :
 	ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value)
 	{
 	    (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->setCurrentProfile (value);
+	}
+
+	static GVariant *
+	ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->getPluginsWithSetKeys ();
+	}
+
+	static void
+	ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend, const char *profile)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->clearPluginsWithSetKeys (profile);
+	}
+
+	static void
+	ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
+							       CCSContext *context,
+							       GVariant   *pluginKeys,
+							       const char *profile)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->unsetAllChangedPluginKeysInProfile (context, pluginKeys, profile);
 	}
 };
 

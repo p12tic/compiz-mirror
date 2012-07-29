@@ -1025,6 +1025,12 @@ ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnregisterGConfClient) (backend);
 }
 
+const char *
+ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetCurrentProfile) (backend);
+}
+
 GVariant *
 ccsGSettingsBackendGetExistingProfiles (CCSBackend *backend)
 {
@@ -1053,4 +1059,13 @@ void
 ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend, const char *profile)
 {
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendClearPluginsWithSetKeys) (backend, profile);
+}
+
+void
+ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
+						       CCSContext *context,
+						       GVariant   *pluginKeys,
+						       const char *profile)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnsetAllChangedPluginKeysInProfile) (backend, context, pluginKeys, profile);
 }
