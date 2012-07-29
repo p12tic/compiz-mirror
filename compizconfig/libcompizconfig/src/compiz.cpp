@@ -2330,11 +2330,12 @@ addStringsFromPath (CCSStringList * list,
 		    void * stringListPBv)
 {
     xmlNode **nodes;
-    int num, i;
+    int num;
     nodes = getNodesFromXPath (node->doc, node, path, &num);
 
     if (num)
     {
+    int i;
 	for (i = 0; i < num; i++)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
