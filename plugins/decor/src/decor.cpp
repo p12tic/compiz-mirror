@@ -880,7 +880,7 @@ DecorationList::updateDecoration (Window   id,
 		std::list <Decoration::Ptr>::iterator it = mList.begin ();
 
 		/* Use an existing decoration */
-		for (; it != mList.end (); it++)
+        for (; it != mList.end (); ++it)
 		{
 		    if ((*it)->frameType == frameType &&
 			(*it)->frameState == frameState &&
