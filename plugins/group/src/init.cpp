@@ -502,7 +502,7 @@ GroupScreen::~GroupScreen ()
 	    }
 
 	    delete group;
-	    rit++;
+        ++rit;
 	}
     }
 
