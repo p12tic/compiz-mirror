@@ -1050,7 +1050,7 @@ namespace GLFragment {
 
 	    it = s->fragmentStorage ()->programs.begin ();
 
-	    for (; it != s->fragmentStorage ()->programs.end (); it++)
+        for (; it != s->fragmentStorage ()->programs.end (); ++it)
 	    {
 		foreach (FunctionId i, (*it)->signature)
 		    if (i == id)
