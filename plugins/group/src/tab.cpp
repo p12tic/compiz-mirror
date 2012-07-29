@@ -1854,7 +1854,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 
 	/* Count from left to the requested top tab */
 	for (it = group->mTabBar->mSlots.begin (); (*it) && ((*it) != topTab);
-	     it++, distanceNew++);
+         ++it, distanceNew++);
 
 	if (distanceNew < distanceOld)
 	    group->mTabBar->mChangeAnimationDirection = 1;   /*left */
