@@ -615,7 +615,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     float              radSquare, last[2][4];
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
-	float              a1, a2, ang, vpx, vpy, sx1g, sx2g, sy1g, sy2g;
+    float              ang, vpx, vpy, sx1g, sx2g, sy1g, sy2g;
 	int                iang;
 	
 	CubeScreen::MultioutputMode   cMOM = cubeScreen->multioutputMode ();
@@ -754,8 +754,8 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		{
 		    last[cLast][0] = v[0];
 		    last[cLast][1] = v[1];
-		    a1 = (((vpx - sx1) / (float)sw) - 0.5);
-		    a2 = (((vpy - sy1) / (float)sh) - 0.5);
+            float a1 = (((vpx - sx1) / (float)sw) - 0.5);
+            float a2 = (((vpy - sy1) / (float)sh) - 0.5);
 		    a2 *= a2;
 
 		    ang = atanf (a1 / cDist);
