@@ -612,7 +612,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	GLfloat            *v;
 	int                offX = 0, offY = 0;
     int                sx1, sx2, sw, sy1, sy2, sh;
-    float              lastZ = 0.0, radSquare, last[2][4];
+    float              radSquare, last[2][4];
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
 	float              a1, a2, ang, vpx, vpy, sx1g, sx2g, sy1g, sy2g;
@@ -696,7 +696,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
-        float lastX = -1000000000.0;
+        float lastX = -1000000000.0, lastZ = 0.0;
 	
 	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
