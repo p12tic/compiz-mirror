@@ -1026,7 +1026,7 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 	bool skip = false;
 
 	for (iterator it = initialPlugins.begin(); it != initialPlugins.end();
-		it++)
+        ++it)
 	{
 	    if ((*it) == opt.s())
 	    {
