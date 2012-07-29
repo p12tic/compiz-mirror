@@ -26,6 +26,9 @@ typedef GVariant * (*CCSGSettingsBackendGetExistingProfiles) (CCSBackend *backen
 typedef void (*CCSGSettingsBackendSetExistingProfiles) (CCSBackend *backend, GVariant *value);
 typedef void (*CCSGSettingsBackendSetCurrentProfile) (CCSBackend *backend, const gchar *value);
 
+typedef GVariant * (*CCSGSettingsBackendGetPluginsWithSetKeys) (CCSBackend *backend);
+typedef void (*CCSGSettingsBackendClearPluginsWithSetKeys) (CCSBackend *backend, const char *profile);
+
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
@@ -36,6 +39,8 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendGetExistingProfiles gsettingsBackendGetExistingProfiles;
     CCSGSettingsBackendSetExistingProfiles gsettingsBackendSetExistingProfiles;
     CCSGSettingsBackendSetCurrentProfile gsettingsBackendSetCurrentProfile;
+    CCSGSettingsBackendGetPluginsWithSetKeys gsettingsBackendGetPluginsWithSetKeys;
+    CCSGSettingsBackendClearPluginsWithSetKeys gsettingsBackendClearPluginsWithSetKeys;
 };
 
 unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
@@ -167,6 +172,14 @@ void writeVariantToKey (GSettings  *settings,
 			const char *key,
 			GVariant   *value);
 
+typedef int (*ComparisonPredicate) (const void *s1, const void *s2);
+
+gboolean
+insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
+					   const char *string,
+					   ComparisonPredicate insert,
+					   ComparisonPredicate append);
+
 void
 updateCurrentProfileName (CCSBackend *backend, const char *profile);
 
@@ -196,6 +209,12 @@ ccsGSettingsBackendSetExistingProfiles (CCSBackend *backend, GVariant *value);
 
 void
 ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value);
+
+GVariant *
+ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend);
+
+void
+ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend, const char *profile);
 
 COMPIZCONFIG_END_DECLS
 
