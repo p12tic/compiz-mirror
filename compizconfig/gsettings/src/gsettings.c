@@ -586,6 +586,14 @@ ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
 #endif
 }
 
+static const char *
+ccsGSettingsBackendGetCurrentProfileDefault (CCSBackend *backend)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return priv->currentProfile;
+}
+
 static GVariant *
 ccsGSettingsBackendGetExistingProfilesDefault (CCSBackend *backend)
 {
@@ -641,17 +649,54 @@ ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend, const ch
     g_free (profileSettingsPath);
 }
 
+static void
+ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backend,
+							      CCSContext *context,
+							      GVariant *pluginsWithChangedKeys,
+							      const char * profile)
+{
+    GVariantIter    iter;
+    char            *plugin;
+
+    g_variant_iter_init (&iter, pluginsWithChangedKeys);
+    while (g_variant_iter_loop (&iter, "s", &plugin))
+    {
+	GSettings *settings;
+	gchar *pathName = makeCompizPluginPath (profile, plugin);
+
+	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
+	g_free (pathName);
+
+	/* The GSettings documentation says not to use this API
+	 * because we should know our own schema ... though really
+	 * we don't because we autogenerate schemas ... */
+	if (settings)
+	{
+	    char **keys = g_settings_list_keys (settings);
+	    char **key_ptr;
+
+	    /* Unset all the keys */
+	    for (key_ptr = keys; *key_ptr; key_ptr++)
+		g_settings_reset (settings, *key_ptr);
+
+	    g_strfreev (keys);
+	}
+    }
+}
+
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
     ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault,
     ccsGSettingsBackendRegisterGConfClientDefault,
     ccsGSettingsBackendUnregisterGConfClientDefault,
+    ccsGSettingsBackendGetCurrentProfileDefault,
     ccsGSettingsBackendGetExistingProfilesDefault,
     ccsGSettingsBackendSetExistingProfilesDefault,
     ccsGSettingsBackendSetCurrentProfileDefault,
     ccsGSettingsBackendGetPluginsWithSetKeysDefault,
-    ccsGSettingsBackendClearPluginsWithSetKeysDefault
+    ccsGSettingsBackendClearPluginsWithSetKeysDefault,
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault
 };
 
 static Bool
@@ -817,76 +862,27 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     return ret;
 }
 
-static void
-unsetAllChangedPluginKeysInProfile (CCSBackend *backend,
-				    CCSContext *context,
-				    GVariant *pluginsWithChangedKeys,
-				    const char * profile)
-{
-    GVariantIter    iter;
-    char            *plugin;
-
-    g_variant_iter_init (&iter, pluginsWithChangedKeys);
-    while (g_variant_iter_loop (&iter, "s", &plugin))
-    {
-	GSettings *settings;
-	gchar *pathName = makeCompizPluginPath (profile, plugin);
-
-	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
-	g_free (pathName);
-
-	/* The GSettings documentation says not to use this API
-	 * because we should know our own schema ... though really
-	 * we don't because we autogenerate schemas ... */
-	if (settings)
-	{
-	    char **keys = g_settings_list_keys (settings);
-	    char **key_ptr;
-
-	    /* Unset all the keys */
-	    for (key_ptr = keys; *key_ptr; key_ptr++)
-		g_settings_reset (settings, *key_ptr);
-
-	    g_strfreev (keys);
-	}
-    }
-}
-
-static Bool
+gboolean
 deleteProfile (CCSBackend *backend,
 	       CCSContext *context,
 	       char       *profile)
 {
     GVariant        *plugins;
     GVariant        *profiles;
-    GVariant        *newProfiles;
-    GVariantBuilder *newProfilesBuilder;
-    char	    *prof;
-    GVariantIter    iter;
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    const char      *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
 
     plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
 
-    unsetAllChangedPluginKeysInProfile (backend, context, plugins, priv->currentProfile);
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
 
     /* Remove the profile from existing-profiles */
     ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
 
-    g_variant_iter_init (&iter, profiles);
-    newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    insertStringIntoVariantIfMatchesPredicate (&profiles, profile, voidcmp0, NULL);
 
-    while (g_variant_iter_loop (&iter, "s", &prof))
-    {
-	if (g_strcmp0 (prof, profile))
-	    g_variant_builder_add (newProfilesBuilder, "s", prof);
-    }
-
-    newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (priv->compizconfigSettings, "existing-profiles", newProfiles);
-
-    g_variant_unref (newProfiles);
-    g_variant_builder_unref (newProfilesBuilder);
+    ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+    g_variant_unref (profiles);
 
     updateProfile (backend, context);
 

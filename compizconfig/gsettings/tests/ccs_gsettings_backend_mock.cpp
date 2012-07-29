@@ -12,9 +12,13 @@ CCSGSettingsBackendInterface ccsGSettingsBackendGMockInterface =
     CCSGSettingsBackendGMock::ccsGSettingsBackendGetSettingsObjectForPluginWithPath,
     CCSGSettingsBackendGMock::ccsGSettingsBackendRegisterGConfClient,
     CCSGSettingsBackendGMock::ccsGSettingsBackendUnregisterGConfClient,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendGetCurrentProfile,
     CCSGSettingsBackendGMock::ccsGSettingsBackendGetExistingProfiles,
     CCSGSettingsBackendGMock::ccsGSettingsBackendSetExistingProfiles,
-    CCSGSettingsBackendGMock::ccsGSettingsBackendSetCurrentProfile
+    CCSGSettingsBackendGMock::ccsGSettingsBackendSetCurrentProfile,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendGetPluginsWithSetKeys,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendClearPluginsWithSetKeys,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile
 };
 
 CCSBackend *
