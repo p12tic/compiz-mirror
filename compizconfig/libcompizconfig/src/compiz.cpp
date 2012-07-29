@@ -745,14 +745,12 @@ static void
 initOptionsFromPB (CCSPlugin * plugin,
 		   const PluginMetadata & pluginPB)
 {
-    int numOpt, i;
-
     if (pluginPB.has_screen ())
     {
 	const ScreenMetadata &screenPB = pluginPB.screen ();
 
 	// Screen options
-	numOpt = screenPB.option_size ();
+    int i, numOpt = screenPB.option_size ();
 	for (i = 0; i < numOpt; i++)
 	    addOptionFromPB (plugin,
 			     screenPB.group_desc (),
