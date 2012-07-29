@@ -553,7 +553,7 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 
 		if (w == selected)
 		{
-		    it++;
+            ++it;
 		    if (it == windows.end ())
 			selected = windows.front ();
 		    else
