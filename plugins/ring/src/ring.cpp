@@ -1130,7 +1130,7 @@ RingScreen::windowRemove (CompWindow *w)
 		mWindows.erase (it);
 		break;
 	    }
-	    it++;
+        ++it;
 	}
 
 	if (!inList)
