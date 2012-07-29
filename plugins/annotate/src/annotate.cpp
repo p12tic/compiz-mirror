@@ -779,12 +779,11 @@ void
 AnnoScreen::handleMotionEvent (int	  xRoot,
 		       	       int	  yRoot)
 {
-    static unsigned short clearColor[] = { 0, 0, 0, 0 };
-
     CompRect damageRect;
 
     if (grabIndex)
     {
+    static unsigned short clearColor[] = { 0, 0, 0, 0 };
 	switch (drawMode)
 	{
 	case EraseMode:
