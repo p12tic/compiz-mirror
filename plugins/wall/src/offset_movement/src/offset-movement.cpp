@@ -45,7 +45,7 @@ compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
 
     for (std::vector <CompRect>::const_iterator it = rects.begin ();
 	 it != rects.end ();
-	 it++)
+     ++it)
     {
 	const CompRect &r = *it;
 
