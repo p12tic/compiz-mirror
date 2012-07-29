@@ -972,7 +972,7 @@ GridScreen::donePaint ()
 		if (anim.complete)
 			iter = animations.erase(iter);
 		else
-			iter++;
+            ++iter;
 	}
 
 	if (animations.empty ())
