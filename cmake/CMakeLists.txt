@@ -8,6 +8,8 @@ set (_files
     CompizPlugin.cmake
     CompizPackage.cmake
     CompizBcop.cmake
+    copy_file_install_user_env.cmake
+    recompile_gsettings_schemas_in_dir_user_env.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/CompizDefaults.cmake
 )
 
