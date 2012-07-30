@@ -376,7 +376,7 @@ CloneScreen::initiate (CompAction         *action,
         }
         else
         {
-        ++it;
+	    ++it;
         }
     }
 

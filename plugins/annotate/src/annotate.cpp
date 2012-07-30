@@ -783,7 +783,7 @@ AnnoScreen::handleMotionEvent (int	  xRoot,
 
     if (grabIndex)
     {
-    static unsigned short clearColor[] = { 0, 0, 0, 0 };
+	static unsigned short clearColor[] = { 0, 0, 0, 0 };
 	switch (drawMode)
 	{
 	case EraseMode:

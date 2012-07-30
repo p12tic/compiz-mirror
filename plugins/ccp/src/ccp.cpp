@@ -207,7 +207,7 @@ ccpSettingToValue (CCSSetting        *s,
 	}
 	else
 	{
-        int i = 0;
+	    int i = 0;
 	    CompOption::Value::Vector val (ccsSettingValueListLength (list));
 
 	    while (list)

@@ -396,7 +396,7 @@ BurnAnim::step ()
 
     if (mRemainingTime > 0)
     {
-    int nParticles;
+	int nParticles;
 	if (mHasSmoke)
 	{
 	    float partxg = outRect.width () / 40.0;
