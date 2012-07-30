@@ -267,7 +267,7 @@ BaseSwitchScreen::switchToWindow (bool toNext,
     if (!grabIndex)
 	return NULL;
 
-    for (it = windows.begin (); it != windows.end (); it++, cur++)
+    for (it = windows.begin (); it != windows.end (); ++it, ++cur)
     {
 	if (*it == selectedWindow)
 	    break;
