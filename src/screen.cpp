@@ -333,7 +333,7 @@ cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
     CompWatchFd *			w;
 
     for (it = watchFds.begin();
-	it != watchFds.end (); ++it)
+	 it != watchFds.end (); ++it)
     {
 	if ((*it)->mHandle == handle)
 	    break;
