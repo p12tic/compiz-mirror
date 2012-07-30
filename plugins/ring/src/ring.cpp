@@ -221,14 +221,14 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		     unsigned int	       mask)
 {
     bool       status;
-    bool       pixmap = true;
 
     RING_SCREEN (screen);
 
     if (rs->mState != RingScreen::RingStateNone)
     {
 	GLWindowPaintAttrib sAttrib = attrib;
-	bool		  scaled = false;
+	bool scaled = false;
+	bool pixmap = true;
 
     	if (window->mapNum ())
 	{
