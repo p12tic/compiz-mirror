@@ -333,7 +333,7 @@ cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
     CompWatchFd *			w;
 
     for (it = watchFds.begin();
-     it != watchFds.end (); ++it)
+	it != watchFds.end (); ++it)
     {
 	if ((*it)->mHandle == handle)
 	    break;
@@ -1026,7 +1026,7 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 	bool skip = false;
 
 	for (iterator it = initialPlugins.begin(); it != initialPlugins.end();
-        ++it)
+		++it)
 	{
 	    if ((*it) == opt.s())
 	    {
@@ -2938,7 +2938,7 @@ cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
 	{
 	    break;
 	}
-    ++it;
+	++it;
     }
 
     if (it == windows.end ())
@@ -3002,7 +3002,7 @@ cps::WindowManager::insertServerWindow(CompWindow* w, Window aboveId)
 	{
 	    break;
 	}
-    ++it;
+	++it;
     }
 
     if (it == serverWindows.end ())

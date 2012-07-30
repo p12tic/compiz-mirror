@@ -109,7 +109,7 @@ CompTimeoutSource::prepare (int &timeout)
 		break;
 	    if (t->maxLeft () < (unsigned int) timeout)
 		timeout = (int) t->maxLeft ();
-        ++it;
+	    ++it;
 	}
     }
     else

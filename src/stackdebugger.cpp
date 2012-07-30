@@ -81,7 +81,7 @@ StackDebugger::removeServerWindow (Window id)
     /* Find the toplevel window in the list and remove it */
     for (CompWindowList::iterator it = mLastServerWindows.begin ();
 	 it != mLastServerWindows.end ();
-     ++it)
+	 ++it)
     {
 	if ((*it)->id () == id)
 	{
@@ -105,7 +105,7 @@ StackDebugger::overrideRedirectRestack (Window toplevel, Window sibling)
     {
 	for (CompWindowList::iterator it = mLastServerWindows.begin ();
 	     it != mLastServerWindows.end ();
-         ++it)
+	     ++it)
 	{
 	    if (sibling == (*it)->id () ||
 		sibling == (*it)->frame ())
@@ -153,7 +153,7 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
     while (it != mEvents.end ())
     {
 	mFetchXEvent->getNextXEvent ((*it));
-    ++it;
+	++it;
     }
 
     XSync (mDpy, FALSE);
@@ -249,10 +249,10 @@ StackDebugger::cmpStack (CompWindowList &windows,
 	    err = true;
 
 	if (lrrit != windows.rend ())
-        ++lrrit;
+	    ++lrrit;
 
 	if (lsrit != mLastServerWindows.rend())
-        ++lsrit;
+	    ++lsrit;
 
 	if (i != serverSideWindows.size ())
 	    i++;
