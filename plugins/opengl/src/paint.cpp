@@ -714,107 +714,6 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
     fbo->tex ()->disable ();
 }
 
-#define ADD_RECT(vertexBuffer, m, n, x1, y1, x2, y2) \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];	   \
-	data[0] = COMP_TEX_COORD_X (mat, x1);        \
-	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }						   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];	   \
-	data[0] = COMP_TEX_COORD_X (mat, x1);        \
-	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }						   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];	   \
-	data[0] = COMP_TEX_COORD_X (mat, x2);        \
-	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }						   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];	   \
-	data[0] = COMP_TEX_COORD_X (mat, x2);        \
-	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }						   \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
-	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
-	data[0] = COMP_TEX_COORD_X (mat, x1);        \
-	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
-	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
-	data[0] = COMP_TEX_COORD_X (mat, x2);        \
-	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }
-
-#define ADD_QUAD(vertexBuffer, m, n, x1, y1, x2, y2) \
-    for (it = 0; it < n; it++)				\
-    {							\
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];		\
-	data[0] = COMP_TEX_COORD_XY (mat, x1, y1);   \
-	data[1] = COMP_TEX_COORD_YX (mat, x1, y1);   \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }							\
-    for (it = 0; it < n; it++)				\
-    {							\
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];		\
-	data[0] = COMP_TEX_COORD_XY (mat, x1, y2);   \
-	data[1] = COMP_TEX_COORD_YX (mat, x1, y2);   \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }							\
-    for (it = 0; it < n; it++)				\
-    {							\
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];	        \
-	data[0] = COMP_TEX_COORD_XY (mat, x2, y1);   \
-	data[1] = COMP_TEX_COORD_YX (mat, x2, y1);   \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }							\
-    for (it = 0; it < n; it++)				\
-    {							\
-	GLfloat data[2];                             \
-        const GLTexture::Matrix &mat = m[it];	        \
-	data[0] = COMP_TEX_COORD_XY (mat, x2, y1);   \
-	data[1] = COMP_TEX_COORD_YX (mat, x2, y1);   \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }							\
-    for (it = 0; it < n; it++)                       \
-    {                                                \
-	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
-	data[0] = COMP_TEX_COORD_XY (mat, x1, y2);   \
-	data[1] = COMP_TEX_COORD_YX (mat, x1, y2);   \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
-	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
-	data[0] = COMP_TEX_COORD_XY (mat, x2, y2);   \
-	data[1] = COMP_TEX_COORD_YX (mat, x2, y2);   \
-	vertexBuffer->addTexCoords (it, 1, data);    \
-	}
-
-
 static inline void
 addSingleQuad (GLVertexBuffer *vertexBuffer,
 	       const        GLTexture::MatrixList &matrix,
@@ -836,15 +735,109 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
     };
     vertexBuffer->addVertices (6, vertexData);
 
-    unsigned int it;
-
     if (rect)
     {
-	ADD_RECT (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2);
+	unsigned int it;
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_X (mat, x1);
+	    data[1] = COMP_TEX_COORD_Y (mat, y1);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_X (mat, x1);
+	    data[1] = COMP_TEX_COORD_Y (mat, y2);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_X (mat, x2);
+	    data[1] = COMP_TEX_COORD_Y (mat, y1);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_X (mat, x2);
+	    data[1] = COMP_TEX_COORD_Y (mat, y1);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_X (mat, x1);
+	    data[1] = COMP_TEX_COORD_Y (mat, y2);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_X (mat, x2);
+	    data[1] = COMP_TEX_COORD_Y (mat, y2);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
     }
     else
     {
-	ADD_QUAD (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2);
+	unsigned int it;
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_XY (mat, x1, y1);
+	    data[1] = COMP_TEX_COORD_YX (mat, x1, y1);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_XY (mat, x1, y2);
+	    data[1] = COMP_TEX_COORD_YX (mat, x1, y2);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_XY (mat, x2, y1);
+	    data[1] = COMP_TEX_COORD_YX (mat, x2, y1);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_XY (mat, x2, y1);
+	    data[1] = COMP_TEX_COORD_YX (mat, x2, y1);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_XY (mat, x1, y2);
+	    data[1] = COMP_TEX_COORD_YX (mat, x1, y2);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
+	for (it = 0; it < nMatrix; it++)
+	{
+	    GLfloat data[2];
+	    const GLTexture::Matrix &mat = matrix[it];
+	    data[0] = COMP_TEX_COORD_XY (mat, x2, y2);
+	    data[1] = COMP_TEX_COORD_YX (mat, x2, y2);
+	    vertexBuffer->addTexCoords (it, 1, data);
+	}
     }
     n++;
 }
