@@ -784,7 +784,7 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    mState == RingScreen::RingStateOut)
 	{
 	    for (std::vector <RingDrawSlot>::iterator it = mDrawSlots.begin ();
-		it != mDrawSlots.end (); ++it)
+		 it != mDrawSlots.end (); ++it)
 	    {
 		CompWindow *w = (*it).w;
 

@@ -770,7 +770,7 @@ PrivateScaleScreen::layoutThumbsSingle ()
     windows.clear ();
 
     for (std::map<ScaleWindow *, ScaleSlot>::iterator it = slotWindows.begin ();
-	it != slotWindows.end (); ++it)
+	 it != slotWindows.end (); ++it)
     {
 	slots.push_back (it->second);
 	windows.push_back (it->first);
