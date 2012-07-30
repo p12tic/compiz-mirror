@@ -34,9 +34,9 @@ COMPIZ_PLUGIN_20090315 (wobbly, WobblyPluginVTable)
 void
 WobblyWindow::findNextWestEdge (Object *object)
 {
-    int v, v1, v2;
-    int s, start;
-    int e, end;
+    int v1, v2;
+    int start;
+    int end;
     int x;
     int output;
     int workAreaEdge;
@@ -56,6 +56,7 @@ WobblyWindow::findNextWestEdge (Object *object)
 
     if (x >= workAreaEdge)
     {
+	int v, s, e;
 	v1 = workAreaEdge;
 
 	foreach (CompWindow *p, ::screen->windows ())
