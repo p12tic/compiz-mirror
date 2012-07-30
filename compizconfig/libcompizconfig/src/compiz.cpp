@@ -349,7 +349,7 @@ initListValuePB (CCSSettingValue * v,
 
     if (num)
     {
-    int j;
+	int j;
 	for (j = 0; j < num; j++)
 	{
 	    CCSSettingValue *val;
@@ -422,7 +422,7 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 
     if (!basicMetadata)
     {
-    int j, num = option.int_desc_size ();
+	int j, num = option.int_desc_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::IntDescription & intDescMetadata =
@@ -480,7 +480,7 @@ initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 	if (option.has_sort_start ())
 	    i->forString.sortStartsAt = option.sort_start ();
 
-    int j, num = option.str_restriction_size ();
+	int j, num = option.str_restriction_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::StringRestriction &
@@ -750,7 +750,7 @@ initOptionsFromPB (CCSPlugin * plugin,
 	const ScreenMetadata &screenPB = pluginPB.screen ();
 
 	// Screen options
-    int i, numOpt = screenPB.option_size ();
+	int i, numOpt = screenPB.option_size ();
 	for (i = 0; i < numOpt; i++)
 	    addOptionFromPB (plugin,
 			     screenPB.group_desc (),
@@ -1553,7 +1553,7 @@ initListValue (CCSSettingValue * v,
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
-    int j;
+	int j;
 	for (j = 0; j < num; j++)
 	{
 	    void *valuePBv = NULL;
@@ -1649,8 +1649,8 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "desc", &num);
 	if (num)
 	{
-        char *name;
-        int j;
+	    char *name;
+	    int j;
 	    for (j = 0; j < num; j++)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
@@ -1769,7 +1769,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "sort", &num);
 	if (num)
 	{
-        char *value;
+	    char *value;
 	    int val = 0; /* Start sorting at 0 unless otherwise specified. */
 
 	    value = getStringFromXPath (node->doc, nodes[0], "@start");
@@ -1792,8 +1792,8 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
-        int j;
-        char *name, *value;
+	    int j;
+	    char *name, *value;
 	    for (j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
@@ -2294,7 +2294,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
-    int i;
+	int i;
 	for (i = 0; i < num; i++)
 	{
 	    void *optionPBv = NULL;
@@ -2332,7 +2332,7 @@ addStringsFromPath (CCSStringList * list,
 
     if (num)
     {
-    int i;
+	int i;
 	for (i = 0; i < num; i++)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
