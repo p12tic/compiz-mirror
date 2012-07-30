@@ -90,7 +90,7 @@ ExtraWMScreen::activateDemandsAttention (CompAction         *action,
 	 * again, and that would mean that we'd want to handle them
 	 * if they became wanting attention again) */
 
-    for (; it != es->attentionWindows.end (); ++it)
+	for (; it != es->attentionWindows.end (); ++it)
 	{
 	    CompWindow *w = *it;
 

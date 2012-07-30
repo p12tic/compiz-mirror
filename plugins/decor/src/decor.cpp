@@ -619,7 +619,7 @@ Decoration::Decoration (int   type,
 
     if (type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-    int left = 0, right = minWidth, top = 0, bottom = minHeight;
+	int left = 0, right = minWidth, top = 0, bottom = minHeight;
 
 	for (unsigned int i = 0; i  < nQuad; i++)
 	{
@@ -831,7 +831,7 @@ DecorationList::updateDecoration (Window   id,
 	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i, requestor);
 
 	    /* Try to replace an existing decoration */
-        for (; it != mList.end (); ++it)
+	    for (; it != mList.end (); ++it)
 	    {
 		if ((*it)->frameType == d->frameType &&
 		    (*it)->frameState == d->frameState &&
@@ -880,7 +880,7 @@ DecorationList::updateDecoration (Window   id,
 		std::list <Decoration::Ptr>::iterator it = mList.begin ();
 
 		/* Use an existing decoration */
-        for (; it != mList.end (); ++it)
+		for (; it != mList.end (); ++it)
 		{
 		    if ((*it)->frameType == frameType &&
 			(*it)->frameState == frameState &&
@@ -1336,7 +1336,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 		cit = mList.begin ();
 
 	for (std::list <Decoration::Ptr>::iterator it = mList.begin ();
-         it != mList.end (); ++it)
+	    it != mList.end (); ++it)
 	{
 	    const Decoration::Ptr &d = *it;
 

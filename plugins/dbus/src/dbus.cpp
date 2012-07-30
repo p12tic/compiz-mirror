@@ -211,7 +211,7 @@ dbusHandleRootIntrospectMessage (DBusConnection *connection,
     CompPlugin::List::const_iterator it = plugins.begin ();
     if (it != plugins.end ())
     {
-    for (; it != plugins.end (); ++it)
+	for (; it != plugins.end (); ++it)
 	{
 	    CompPlugin::VTable *v = it->vTable;
 	    if (v)
