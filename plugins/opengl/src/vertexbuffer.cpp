@@ -159,7 +159,7 @@ void GLVertexBuffer::addVertices (GLuint nVertices, GLfloat *vertices)
 
 GLfloat *GLVertexBuffer::getVertices() const
 {
-    return priv->vertexData.data();
+    return &priv->vertexData[0];
 }
 
 int GLVertexBuffer::getVertexStride() const
