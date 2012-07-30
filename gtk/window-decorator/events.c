@@ -457,9 +457,9 @@ title_event (WnckWindow       *win,
 
     if (gtkwd_event->button == 1)
     {
-    static int last_button_num = 0;
-    static int last_button_x = 0;
-    static int last_button_y = 0;
+	static int last_button_num = 0;
+	static int last_button_x = 0;
+	static int last_button_y = 0;
 	if (gtkwd_event->button == last_button_num		        &&
 	    gtkwd_event->window == last_button_xwindow		        &&
 	    gtkwd_event->time < last_button_time + double_click_timeout &&
