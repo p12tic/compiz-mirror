@@ -936,16 +936,17 @@ writeVariantToKey (GSettings  *settings,
     g_settings_set_value (settings, key, value);
 }
 
+/* This shouldn't be one function */
 gboolean
 insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
 					   const char *string,
-					   ComparisonPredicate insert,
-					   ComparisonPredicate append)
+					   ComparisonPredicate shouldInsertIntoListFunc,
+					   ComparisonPredicate checkIfItemAlreadyInListFunc)
 {
     char	    *str;
     GVariantBuilder *newVariantBuilder;
     GVariantIter    iter;
-    gboolean        doAppend = FALSE;
+    gboolean        foundItemInListAlready = FALSE;
 
     newVariantBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
@@ -953,27 +954,25 @@ insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
     while (g_variant_iter_loop (&iter, "s", &str))
     {
 	gboolean doInsert = TRUE;
-	if (insert)
-	    doInsert = (*insert) (str, string);
+	if (shouldInsertIntoListFunc)
+	    doInsert = (*shouldInsertIntoListFunc) (str, string);
 
 	if (doInsert)
 	    g_variant_builder_add (newVariantBuilder, "s", str);
 
-	if (!doAppend && append)
-	    doAppend = (*append) (str, string);
+	if (!foundItemInListAlready && checkIfItemAlreadyInListFunc)
+	    foundItemInListAlready = (*checkIfItemAlreadyInListFunc) (str, string);
     }
 
-    if (!doAppend)
-    {
+    if (!foundItemInListAlready && checkIfItemAlreadyInListFunc)
 	g_variant_builder_add (newVariantBuilder, "s", string);
 
-	g_variant_unref (*variant);
-	*variant = g_variant_new ("as", newVariantBuilder);
-    }
+    g_variant_unref (*variant);
+    *variant = g_variant_new ("as", newVariantBuilder);
 
     g_variant_builder_unref (newVariantBuilder);
 
-    return !doAppend;
+    return !foundItemInListAlready;
 }
 
 void

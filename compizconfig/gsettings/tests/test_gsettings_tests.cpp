@@ -13,10 +13,12 @@
 using ::testing::Values;
 using ::testing::ValuesIn;
 using ::testing::Return;
+using ::testing::ReturnNull;
 using ::testing::Invoke;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
+using ::testing::Not;
 using ::testing::Matcher;
 
 class GVariantSubtypeMatcher :
@@ -171,7 +173,6 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
 					    boost::bind (ccsFreeMockContext, _1));
 
     CCSGSettingsBackendGMock *mockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
-    CCSContextGMock *mockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
 
     std::string currentProfile ("foo");
 
@@ -183,11 +184,18 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
 
     existingProfiles = g_variant_builder_end (&existingProfilesBuilder);
 
-    EXPECT_CALL (*mockBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
-    EXPECT_CALL (*mockContext, getProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*mockBackend, getPluginsWithSetKeys ()).WillOnce (ReturnNull ());
+    EXPECT_CALL (*mockBackend, unsetAllChangedPluginKeysInProfile (context.get (), NULL, _));
+    EXPECT_CALL (*mockBackend, clearPluginsWithSetKeys (_));
 
-    EXPECT_CALL (*mockBackend, getExistingProfiles ()).WillRepeatedly (Return (existingProfiles));
-    EXPECT_CALL (*mockBackend, getExistingProfiles ()).WillRepeatedly (Return (existingProfiles));
+    EXPECT_CALL (*mockBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*mockBackend, getExistingProfiles ()).WillOnce (Return (existingProfiles));
+    EXPECT_CALL (*mockBackend, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
+							   Not (GVariantHasValueInArray<const gchar *> ("s",
+													"foo",
+													boost::bind (streq, _1, _2))))));
+
+    EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
 
     deleteProfile (backend.get (), context.get (), "foo");
 
