@@ -695,7 +695,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
-	    float lastX = -1000000000.0, lastZ = 0.0;
+	    float lastX = std::numeric_limits <float>::min (), lastZ = 0.0;
 	
 	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
