@@ -204,7 +204,7 @@ SessionScreen::getIntForProp (xmlNodePtr node,
     temp = xmlGetProp (node, BAD_CAST prop);
     if (temp)
     {
-    int num = xmlXPathCastStringToNumber (temp);
+	int num = xmlXPathCastStringToNumber (temp);
 	xmlFree (temp);
 
 	return num;
@@ -306,8 +306,8 @@ SessionScreen::addWindowNode (CompWindow *w,
     childNode = xmlNewChild (node, NULL, BAD_CAST "geometry", NULL);
     if (childNode)
     {
-    int x = (w->saveMask () & CWX) ? w->saveWc ().x : w->serverX ();
-    int y = (w->saveMask () & CWY) ? w->saveWc ().y : w->serverY ();
+	int x = (w->saveMask () & CWX) ? w->saveWc ().x : w->serverX ();
+	int y = (w->saveMask () & CWY) ? w->saveWc ().y : w->serverY ();
 	if (!w->onAllViewports ())
 	{
 	    x += screen->vp ().x () * screen->width ();
@@ -317,9 +317,9 @@ SessionScreen::addWindowNode (CompWindow *w,
 	x -= w->border ().left;
 	y -= w->border ().top;
 
-    int width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
+	int width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
 			                  w->serverWidth ();
-    int height = (w->saveMask () & CWHeight) ? w->saveWc ().height :
+	int height = (w->saveMask () & CWHeight) ? w->saveWc ().height :
 			                   w->serverHeight ();
 
 	addIntegerPropToNode (childNode, "x", x);
