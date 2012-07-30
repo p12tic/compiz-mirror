@@ -43,10 +43,10 @@ int main (int argc, char **argv)
     if (testfilecmake.is_open ())
     {
 	for (map <string, vector<string> >::iterator it = testCases.begin ();
-	    it != testCases.end (); ++it)
+	     it != testCases.end (); ++it)
 	{
 	    for (vector <string>::iterator jt = it->second.begin ();
-		jt != it->second.end (); ++jt)
+		 jt != it->second.end (); ++jt)
 	    {
 		if (testfilecmake.good ())
 		{
