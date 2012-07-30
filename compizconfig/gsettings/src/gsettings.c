@@ -672,7 +672,9 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendSetCurrentProfileDefault,
     ccsGSettingsBackendGetPluginsWithSetKeysDefault,
     ccsGSettingsBackendClearPluginsWithSetKeysDefault,
-    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault,
+    ccsGSettingsBackendUpdateProfileDefault,
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault
 };
 
 static Bool
@@ -743,7 +745,7 @@ finiBackend (CCSBackend *backend)
 Bool
 readInit (CCSBackend *backend, CCSContext * context)
 {
-    return updateProfile (backend, context);
+    return ccsGSettingsBackendUpdateProfile (backend, context);
 }
 
 void
@@ -769,7 +771,7 @@ readSetting (CCSBackend *backend,
 Bool
 writeInit (CCSBackend *backend, CCSContext * context)
 {
-    return updateProfile (backend, context);
+    return ccsGSettingsBackendUpdateProfile (backend, context);
 }
 
 void
@@ -874,6 +876,14 @@ hasProfileSupport (CCSBackend *backend)
     return TRUE;
 }
 
+static Bool
+ccsGSettingsDeleteProfileWrapper (CCSBackend *backend,
+				  CCSContext *context,
+				  char       *profile)
+{
+    return deleteProfile (backend, context, profile);
+}
+
 static CCSBackendInterface gsettingsVTable = {
     getName,
     getShortDesc,
@@ -893,7 +903,7 @@ static CCSBackendInterface gsettingsVTable = {
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     getExistingProfiles,
-    deleteProfile
+    ccsGSettingsDeleteProfileWrapper
 };
 
 

@@ -977,7 +977,7 @@ insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
 }
 
 void
-updateCurrentProfileName (CCSBackend *backend, const char *profile)
+ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile)
 {
     GVariant        *profiles;
 
@@ -991,7 +991,7 @@ updateCurrentProfileName (CCSBackend *backend, const char *profile)
 }
 
 gboolean
-updateProfile (CCSBackend *backend, CCSContext *context)
+ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context)
 {
     const char *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
     char *profile = strdup (ccsGetProfile (context));
@@ -1006,7 +1006,7 @@ updateProfile (CCSBackend *backend, CCSContext *context)
     }
 
     if (g_strcmp0 (profile, currentProfile))
-	updateCurrentProfileName (backend, profile);
+	ccsGSettingsBackendUpdateCurrentProfileName (backend, profile);
 
     free (profile);
 
@@ -1016,7 +1016,7 @@ updateProfile (CCSBackend *backend, CCSContext *context)
 gboolean
 deleteProfile (CCSBackend *backend,
 	       CCSContext *context,
-	       char       *profile)
+	       const char *profile)
 {
     GVariant        *plugins;
     GVariant        *profiles;
@@ -1027,15 +1027,15 @@ deleteProfile (CCSBackend *backend,
 
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
 
-    /* Remove the profile from existing-profiles */
     ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
 
     insertStringIntoVariantIfMatchesPredicate (&profiles, profile, voidcmp0, NULL);
-
+    /* Remove the profile from existing-profiles */
     ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+
     g_variant_unref (profiles);
 
-    updateProfile (backend, context);
+    ccsGSettingsBackendUpdateProfile (backend, context);
 
     return TRUE;
 }
@@ -1119,3 +1119,18 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
 {
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnsetAllChangedPluginKeysInProfile) (backend, context, pluginKeys, profile);
 }
+
+gboolean
+ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUpdateProfile) (backend, context);
+}
+
+void
+ccsGSettingsBackendUpdateCurrentProfileName (CCSBackend *backend, const char *profile)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUpdateCurrentProfileName) (backend, profile);
+}
+
+CCSContext *
+ccsGSettingsBackendGetContext (CCSBackend *backend);

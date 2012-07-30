@@ -33,6 +33,9 @@ typedef void (*CCSGSettingsBackendClearPluginsWithSetKeys) (CCSBackend *backend,
 
 typedef void (*CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile) (CCSBackend *backend, CCSContext *, GVariant *, const char *);
 
+typedef gboolean (*CCSGSettingsBackendUpdateProfile) (CCSBackend *, CCSContext *);
+typedef void (*CCSGSettingsBackendUpdateCurrentProfileName) (CCSBackend *backend, const char *profile);
+
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
@@ -47,6 +50,8 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendGetPluginsWithSetKeys gsettingsBackendGetPluginsWithSetKeys;
     CCSGSettingsBackendClearPluginsWithSetKeys gsettingsBackendClearPluginsWithSetKeys;
     CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile gsettingsBackendUnsetAllChangedPluginKeysInProfile;
+    CCSGSettingsBackendUpdateProfile gsettingsBackendUpdateProfile;
+    CCSGSettingsBackendUpdateCurrentProfileName gsettingsBackendUpdateCurrentProfileName;
 };
 
 unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
@@ -183,12 +188,9 @@ typedef int (*ComparisonPredicate) (const void *s1, const void *s2);
 int voidcmp0 (const void *v1, const void *v2);
 
 gboolean
-updateProfile (CCSBackend *backend, CCSContext *context);
-
-gboolean
 deleteProfile (CCSBackend *backend,
 	       CCSContext *context,
-	       char       *profile);
+	       const char *profile);
 
 gboolean
 insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
@@ -196,8 +198,11 @@ insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
 					   ComparisonPredicate insert,
 					   ComparisonPredicate append);
 
+gboolean
+ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context);
+
 void
-updateCurrentProfileName (CCSBackend *backend, const char *profile);
+ccsGSettingsBackendUpdateCurrentProfileName (CCSBackend *backend, const char *profile);
 
 CCSContext *
 ccsGSettingsBackendGetContext (CCSBackend *backend);
@@ -240,6 +245,14 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
 						       CCSContext *context,
 						       GVariant   *pluginKeys,
 						       const char *profile);
+
+/* Default implementations, should be moved */
+
+void
+ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile);
+
+gboolean
+ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context);
 
 COMPIZCONFIG_END_DECLS
 
