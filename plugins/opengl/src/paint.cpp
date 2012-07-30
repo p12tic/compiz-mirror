@@ -722,7 +722,6 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
 	       int          y1,
 	       int          x2,
 	       int          y2,
-	       int          &n,
 	       bool         rect)
 {
     GLfloat vertexData[18] = {
@@ -839,7 +838,6 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
 	    vertexBuffer->addTexCoords (it, 1, data);
 	}
     }
-    n++;
 }
 
 static void
@@ -850,7 +848,6 @@ addQuads (GLVertexBuffer *vertexBuffer,
 	  int          y1,
 	  int          x2,
 	  int          y2,
-	  int          &n,
 	  bool         rect,
 	  unsigned int maxGridWidth,
 	  unsigned int maxGridHeight)
@@ -862,7 +859,7 @@ addQuads (GLVertexBuffer *vertexBuffer,
 
     if (nQuadsX == 1 && nQuadsY == 1)
     {
-	addSingleQuad (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2, n, rect);
+	addSingleQuad (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2, rect);
     }
     else
     {
@@ -879,7 +876,7 @@ addQuads (GLVertexBuffer *vertexBuffer,
 		nx2 = MIN (nx1 + (int) quadWidth, x2);
 
 		addSingleQuad (vertexBuffer, matrix, nMatrix,
-		               nx1, ny1, nx2, ny2, n, rect);
+		               nx1, ny1, nx2, ny2, rect);
 	    }
 	}
     }
@@ -914,7 +911,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	BoxPtr  pClip;
 	int     nClip;
 	BoxRec  cbox;
-	int     n, it, x1, y1, x2, y2;
+	int     it, x1, y1, x2, y2;
 	bool    rect = true;
 
 	for (it = 0; it < nMatrix; it++)
@@ -928,8 +925,6 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	pBox = const_cast <Region> (region.handle ())->rects;
 	nBox = const_cast <Region> (region.handle ())->numRects;
-
-	n = priv->vertexBuffer->countVertices () / 6;
 
 	while (nBox--)
 	{
@@ -957,7 +952,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		{
 		    addQuads (priv->vertexBuffer, matrix, nMatrix,
 			      x1, y1, x2, y2,
-			      n, rect,
+			      rect,
 			      maxGridWidth, maxGridHeight);
 		}
 		else
@@ -983,7 +978,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 			{
 			    addQuads (priv->vertexBuffer, matrix, nMatrix,
 				      cbox.x1, cbox.y1, cbox.x2, cbox.y2,
-				      n, rect,
+				      rect,
 				      maxGridWidth, maxGridHeight);
 			}
 		    }
