@@ -611,11 +611,11 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	int                i, oldVCount = geometry.vCount;
 	GLfloat            *v;
 	int                offX = 0, offY = 0;
-    int                sx1, sx2, sw, sy1, sy2, sh;
-    float              radSquare, last[2][4];
+	int                sx1, sx2, sw, sy1, sy2, sh;
+	float              radSquare, last[2][4];
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
-    float              ang, sx1g, sx2g, sy1g, sy2g;
+	float              ang, sx1g, sx2g, sy1g, sy2g;
 	
 	CubeScreen::MultioutputMode   cMOM = cubeScreen->multioutputMode ();
 	int                           caD = caScreen->optionGetDeformation ();
@@ -695,7 +695,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
-        float lastX = -1000000000.0, lastZ = 0.0;
+	    float lastX = -1000000000.0, lastZ = 0.0;
 	
 	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
@@ -727,7 +727,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    last[0][0] = -1000000000.0;
 	    last[1][0] = -1000000000.0;
 
-        int cLast = 0;
+	    int cLast = 0;
 	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
 		if (last[0][0] == v[0] && last[0][1] == v[1])
@@ -745,21 +745,21 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		    continue;
 		}
 		
-        float vpx = v[0] + offX;
-        float vpy = v[1] + offY;
+		float vpx = v[0] + offX;
+		float vpy = v[1] + offY;
 		
 		if (vpx >= sx1g && vpx < sx2g &&
 		    vpy >= sy1g && vpy < sy2g)
 		{
 		    last[cLast][0] = v[0];
 		    last[cLast][1] = v[1];
-            float a1 = (((vpx - sx1) / (float)sw) - 0.5);
-            float a2 = (((vpy - sy1) / (float)sh) - 0.5);
+		    float a1 = (((vpx - sx1) / (float)sw) - 0.5);
+		    float a2 = (((vpy - sy1) / (float)sh) - 0.5);
 		    a2 *= a2;
 
 		    ang = atanf (a1 / cDist);
 		    a2 = sqrtf (radSquare - a2);
-            int iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
+		    int iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
 
 		    v[2] += ((caScreen->mCosT [iang] * a2) - cDist) * caScreen->mDeform * inv;
 		    v[0] += ((caScreen->mSinT [iang] * a2) - a1) * sw * caScreen->mDeform;
@@ -1000,8 +1000,8 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
         mCapDeformType != optionGetDeformation ())
     {
 	float       *quad;
-    int         j;
-    float       rS, r, x, y, z;
+	int         j;
+	float       rS, r, x, y, z;
 	if (optionGetDeformation () != DeformationSphere ||
 	    !optionGetDeformCaps ())
 	{
@@ -1038,8 +1038,8 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	}
 	else
 	{
-        int i;
-        float w;
+	    int i;
+	    float w;
 	    rS = cDist2 + 0.5;
 
 	    mCapFill[0] = 0.0;
