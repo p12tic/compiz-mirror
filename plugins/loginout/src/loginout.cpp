@@ -190,7 +190,7 @@ LoginoutScreen::preparePaint (int        ms)
     if (in > 0.0 || out > 0.0)
     {
 	val  = (in * optionGetInOpacity () / 100.0) + (1.0 - in);
-    float val2 = (out * optionGetOutOpacity () / 100.0) + (1.0 - out);
+	float val2 = (out * optionGetOutOpacity () / 100.0) + (1.0 - out);
 	opacity = MIN (val, val2);
 
 	val  = (in * optionGetInSaturation () / 100.0) + (1.0 - in);

@@ -318,7 +318,7 @@ GroupSelection::raiseWindows (CompWindow     *top)
 	if ((w->id () != top->id ()) && (gw->mGroup == this))
 	{
 	    (*it) = w;
-        ++it;
+	    ++it;
 	}
     }
 

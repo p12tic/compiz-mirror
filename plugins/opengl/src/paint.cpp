@@ -244,7 +244,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
 	/* detect occlusions */
-    for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
+	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
 	{
 	    w = (*rit);
 	    gw = GLWindow::get (w);
