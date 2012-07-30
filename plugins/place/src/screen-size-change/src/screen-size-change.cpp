@@ -92,8 +92,8 @@ compiz::place::ScreenSizeChangeObject::adjustForSize (const CompSize &oldSize,
 
 	g.setPos (g.pos ());
 
-    int shiftX = vpX * (newSize.width () - oldSize.width ()),
-        shiftY = vpY * (newSize.width () - oldSize.height ());
+	int shiftX = vpX * (newSize.width () - oldSize.width ()),
+	    shiftY = vpY * (newSize.width () - oldSize.height ());
 
 	/* if coords. relative to viewport are outside new viewport area,
 	   shift window left/up so that it falls inside */
