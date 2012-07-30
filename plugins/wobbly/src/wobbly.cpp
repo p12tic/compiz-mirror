@@ -251,9 +251,9 @@ WobblyWindow::findNextEastEdge (Object *object)
 void
 WobblyWindow::findNextNorthEdge (Object *object)
 {
-    int v, v1, v2;
-    int s, start;
-    int e, end;
+    int v1, v2;
+    int start;
+    int end;
     int y;
     int output;
     int workAreaEdge;
@@ -273,6 +273,7 @@ WobblyWindow::findNextNorthEdge (Object *object)
 
     if (y >= workAreaEdge)
     {
+	int v, s, e;
 	v1 = workAreaEdge;
 
 	foreach (CompWindow *p, ::screen->windows ())
