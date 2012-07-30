@@ -765,7 +765,7 @@ addStringsFromPB (CCSStringList * list,
 {
     StringList::const_iterator it;
 
-    for (it = strings.begin (); it != strings.end (); it++)
+    for (it = strings.begin (); it != strings.end (); ++it)
     {
 	const char *value = (*it).c_str ();
 
