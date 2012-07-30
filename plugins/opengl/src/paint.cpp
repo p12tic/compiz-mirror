@@ -714,7 +714,7 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
     fbo->tex ()->disable ();
 }
 
-static inline void
+static void
 addSingleQuad (GLVertexBuffer *vertexBuffer,
 	       const        GLTexture::MatrixList &matrix,
 	       unsigned int nMatrix,
@@ -842,7 +842,7 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
     n++;
 }
 
-static inline void
+static void
 addQuads (GLVertexBuffer *vertexBuffer,
 	  const        GLTexture::MatrixList &matrix,
 	  unsigned int nMatrix,
