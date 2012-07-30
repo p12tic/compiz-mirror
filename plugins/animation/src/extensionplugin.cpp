@@ -149,7 +149,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 
     // Go in reverse order so that restack chains are handled properly
     for (CompWindowVector::reverse_iterator rit = mLastClientList.rbegin ();
-	rit != mLastClientList.rend (); ++rit)
+	 rit != mLastClientList.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *aw = AnimWindow::get (w);
@@ -227,7 +227,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
     // Now initiate focus animations (after the restack chains are formed
     // right above)
     for (CompWindowVector::reverse_iterator rit = mLastClientList.rbegin ();
-	rit != mLastClientList.rend (); ++rit)
+	 rit != mLastClientList.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *aw = AnimWindow::get (w);
@@ -274,7 +274,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 
     // TODO consider removing this loop and skipPostPrepareScreen
     for (CompWindowVector::reverse_iterator rit = mLastClientList.rbegin ();
-	rit != mLastClientList.rend (); ++rit)
+	 rit != mLastClientList.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *aw = AnimWindow::get (w);
@@ -433,12 +433,12 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 		wOldAbove = wStart;
 	    }
 	    else if (clients[(unsigned)changeStart] ==
-		mLastClientList[(unsigned)changeEnd] && // lowered
+		     mLastClientList[(unsigned)changeEnd] && // lowered
 		     // We don't animate lowering if there is no
 		     // window above this window, since this window needs
 		     // to be drawn on such a "host" in animPaintWindow
 		     // (at least for now).
-		(unsigned int)changeEnd < n - 1)
+		     (unsigned int)changeEnd < n - 1)
 	    {
 		wRestacked = wChangeStart;
 		wStart = wRestacked;
