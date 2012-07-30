@@ -572,8 +572,8 @@ CompositeScreen::updateOutputWindow ()
 	CompRegion    tmpRegion (screen->region ());
 
 	for (CompWindowList::reverse_iterator rit =
-	    screen->windows ().rbegin ();
-	    rit != screen->windows ().rend (); ++rit)
+	     screen->windows ().rbegin ();
+	     rit != screen->windows ().rend (); ++rit)
 	    if (CompositeWindow::get (*rit)->overlayWindow ())
 	    {
 		tmpRegion -= (*rit)->region ();
@@ -769,8 +769,8 @@ CompositeScreen::handlePaintTimeout ()
 	if (priv->overlayWindowCount)
 	{
 	    for (CompWindowList::reverse_iterator rit =
-		screen->windows ().rbegin ();
-		rit != screen->windows ().rend (); ++rit)
+		 screen->windows ().rbegin ();
+		 rit != screen->windows ().rend (); ++rit)
 	    {
 		CompWindow *w = (*rit);
 
