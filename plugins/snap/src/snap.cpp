@@ -201,7 +201,7 @@ SnapWindow::updateWindowsEdges ()
 	    {
 		if (e->id == w->id ())
 		    e->passed = true;
-        ++it;
+		++it;
 		continue;
 	    }
 
@@ -244,7 +244,7 @@ SnapWindow::updateWindowsEdges ()
 	    }
 	    else
 	    {
-        ++it;
+		++it;
 	    }
 	}
     }
@@ -289,7 +289,7 @@ SnapWindow::updateScreenEdges ()
 
 	    if (!e->screenEdge)
 	    {
-        ++it;
+		++it;
 		continue;
 	    }
 
@@ -330,7 +330,7 @@ SnapWindow::updateScreenEdges ()
 	    }
 	    else
 	    {
-        ++it;
+		++it;
 	    }
 	}
     }

@@ -1222,7 +1222,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    if (optionGetGroundSize () > 0.0)
 	    {
-        unsigned short color[4];
+		unsigned short color[4];
 		glBegin (GL_QUADS);
 		color[0] = optionGetGroundColor1 ()[0];
 		color[1] = optionGetGroundColor1 ()[1];

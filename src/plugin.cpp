@@ -331,7 +331,7 @@ CompPlugin::screenInitPlugins (CompScreen *s)
 	if (p->vTable->initScreen (s))
 	    s->initPluginForScreen (p);
 
-    ++it;
+	++it;
     }
 
     return true;
