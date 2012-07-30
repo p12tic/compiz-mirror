@@ -9,7 +9,7 @@ class CCSGSettingsTeardownSetupInterface
 	virtual void TearDown () = 0;
 };
 
-class CCSGSettingsTestGeneral
+class CCSGSettingsTestingEnv
 {
     public:
 
@@ -25,7 +25,7 @@ class CCSGSettingsTestGeneral
 };
 
 class CCSGSettingsTest :
-    public CCSGSettingsTestGeneral,
+    public CCSGSettingsTestingEnv,
     public ::testing::TestWithParam <CCSGSettingsTeardownSetupInterface *>
 {
     public:
@@ -37,13 +37,13 @@ class CCSGSettingsTest :
 
 	virtual void SetUp ()
 	{
-	    CCSGSettingsTestGeneral::SetUpEnv ();
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	    mFuncs->SetUp ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestGeneral::TearDownEnv ();
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	    mFuncs->TearDown ();
 	}
 
@@ -53,19 +53,19 @@ class CCSGSettingsTest :
 };
 
 class CCSGSettingsTestIndependent :
-    public CCSGSettingsTestGeneral,
+    public CCSGSettingsTestingEnv,
     public ::testing::Test
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    CCSGSettingsTestGeneral::SetUpEnv ();
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestGeneral::TearDownEnv ();
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
 };
 

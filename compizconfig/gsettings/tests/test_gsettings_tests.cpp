@@ -107,19 +107,19 @@ struct CCSTypeIsVariantType
 
 class CCSGSettingsTestVariantTypeFixture :
     public ::testing::TestWithParam <CCSTypeIsVariantType>,
-    public CCSGSettingsTestGeneral
+    public CCSGSettingsTestingEnv
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    CCSGSettingsTestGeneral::SetUpEnv ();
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	    mType = GetParam ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestGeneral::TearDownEnv ();
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
 
 
@@ -302,19 +302,19 @@ namespace
 
 class CCSGSettingsTestArrayVariantSubTypeFixture :
     public ::testing::TestWithParam <ArrayVariantInfo>,
-    public CCSGSettingsTestGeneral
+    public CCSGSettingsTestingEnv
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    CCSGSettingsTestGeneral::SetUpEnv ();
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	    mAVInfo = GetParam ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestGeneral::TearDownEnv ();
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	    g_variant_unref (v);
 	}
 
@@ -865,7 +865,7 @@ namespace
 
 class CCSGSettingsTestVariantTypeToCCSTypeListFixture :
     public ::testing::TestWithParam <GListContainerVariantTypeWrapper>,
-    public CCSGSettingsTestGeneral
+    public CCSGSettingsTestingEnv
 {
     public:
 
@@ -876,12 +876,12 @@ class CCSGSettingsTestVariantTypeToCCSTypeListFixture :
 
 	virtual void SetUp ()
 	{
-	    CCSGSettingsTestGeneral::SetUpEnv ();
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestGeneral::TearDownEnv ();
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
 
     protected:
