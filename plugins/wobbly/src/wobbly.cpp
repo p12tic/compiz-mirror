@@ -2145,7 +2145,6 @@ WobblyWindow::grabNotify (int          x,
 	if (ensureModel ())
 	{
 	    Spring *s;
-	    int	   i;
 
 	    if (wScreen->optionGetMaximizeEffect ())
 	    {
@@ -2211,6 +2210,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetGrabWindowMatch ().evaluate (window))
 	    {
+		int i;
 		for (i = 0; i < model->numSprings; i++)
 		{
 		    s = &model->springs[i];
