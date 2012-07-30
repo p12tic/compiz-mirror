@@ -1835,7 +1835,7 @@ writeOption (CCSSetting * setting)
 }
 
 static void
-updateCurrentProfileName (char *profile)
+ccsGSettingsBackendUpdateCurrentProfileName (char *profile)
 {
     GConfSchema *schema;
     GConfValue  *value;
@@ -1940,7 +1940,7 @@ checkProfile (CCSContext *context)
 	}
 
 	/* update current profile name */
-	updateCurrentProfileName (currentProfile);
+	ccsGSettingsBackendUpdateCurrentProfileName (currentProfile);
     }
 
     if (lastProfile)

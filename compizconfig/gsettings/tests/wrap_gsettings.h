@@ -2,7 +2,6 @@
 #define _COMPIZ_COMPIZCONFIG_GSETTINGS_WRAP_GSETTINGS
 
 #include <glib-object.h>
-#include <compizconfig_ccs_setting_mock.h>
 
 G_BEGIN_DECLS
 

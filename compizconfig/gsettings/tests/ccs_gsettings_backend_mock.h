@@ -33,6 +33,8 @@ class CCSGSettingsBackendGMockInterface
 	virtual GVariant * getPluginsWithSetKeys () = 0;
 	virtual void clearPluginsWithSetKeys (const char *) = 0;
 	virtual void unsetAllChangedPluginKeysInProfile (CCSContext *, GVariant *, const char *) = 0;
+	virtual gboolean updateProfile (CCSContext *) = 0;
+	virtual void updateCurrentProfileName (const char *) = 0;
 };
 
 class CCSGSettingsBackendGMock :
@@ -59,6 +61,8 @@ class CCSGSettingsBackendGMock :
 	MOCK_METHOD0 (getPluginsWithSetKeys, GVariant * ());
 	MOCK_METHOD1 (clearPluginsWithSetKeys, void (const char *));
 	MOCK_METHOD3 (unsetAllChangedPluginKeysInProfile, void (CCSContext *, GVariant *, const char *));
+	MOCK_METHOD1 (updateProfile, gboolean (CCSContext *));
+	MOCK_METHOD1 (updateCurrentProfileName, void (const char *));
 
 	CCSBackend * getBackend () { return mBackend; }
 
@@ -146,6 +150,18 @@ class CCSGSettingsBackendGMock :
 							       const char *profile)
 	{
 	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->unsetAllChangedPluginKeysInProfile (context, pluginKeys, profile);
+	}
+
+	static gboolean
+	ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->updateProfile (context);
+	}
+
+	static void
+	ccsGSettingsBackendUpdateCurrentProfileName (CCSBackend *backend, const char *profile)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->updateCurrentProfileName (profile);
 	}
 };
 

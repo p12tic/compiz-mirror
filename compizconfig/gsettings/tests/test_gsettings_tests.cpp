@@ -7,14 +7,18 @@
 #include "gsettings.h"
 #include "wrap_gsettings.h"
 #include "ccs_gsettings_backend_mock.h"
+#include "compizconfig_ccs_context_mock.h"
+#include "compizconfig_ccs_setting_mock.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
 using ::testing::Return;
+using ::testing::ReturnNull;
 using ::testing::Invoke;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
+using ::testing::Not;
 using ::testing::Matcher;
 
 class GVariantSubtypeMatcher :
@@ -135,7 +139,7 @@ TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
 											     boost::bind (streq, _1, _2)))));
     EXPECT_CALL (*gmock, setCurrentProfile (_));
 
-    updateCurrentProfileName (backend.get (), "narr");
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), "narr");
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameExisting)
@@ -156,7 +160,46 @@ TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameExisting)
     EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
     EXPECT_CALL (*gmock, setCurrentProfile (_));
 
-    updateCurrentProfileName (backend.get (), "foo");
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), "foo");
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
+{
+    g_type_init ();
+
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (ccsFreeMockContext, _1));
+
+    CCSGSettingsBackendGMock *mockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    std::string currentProfile ("foo");
+
+    GVariant *existingProfiles = NULL;
+    GVariantBuilder existingProfilesBuilder;
+
+    g_variant_builder_init (&existingProfilesBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&existingProfilesBuilder, "s", "foo");
+
+    existingProfiles = g_variant_builder_end (&existingProfilesBuilder);
+
+    EXPECT_CALL (*mockBackend, getPluginsWithSetKeys ()).WillOnce (ReturnNull ());
+    EXPECT_CALL (*mockBackend, unsetAllChangedPluginKeysInProfile (context.get (), NULL, _));
+    EXPECT_CALL (*mockBackend, clearPluginsWithSetKeys (_));
+
+    EXPECT_CALL (*mockBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*mockBackend, getExistingProfiles ()).WillOnce (Return (existingProfiles));
+    EXPECT_CALL (*mockBackend, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
+							   Not (GVariantHasValueInArray<const gchar *> ("s",
+													"foo",
+													boost::bind (streq, _1, _2))))));
+
+    EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
+
+    deleteProfile (backend.get (), context.get (), "foo");
+
+    //g_variant_unref (existingProfiles);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)
