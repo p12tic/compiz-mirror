@@ -1694,7 +1694,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     int      gridW, gridH;
     int      nMatrix = matrix.size ();
     BoxRec full;
- 
+
     full = clip.handle ()->extents;
     if (region.handle ()->extents.x1 > full.x1)
 	full.x1 = region.handle ()->extents.x1;
@@ -1704,7 +1704,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	full.x2 = region.handle ()->extents.x2;
     if (region.handle ()->extents.y2 < full.y2)
 	full.y2 = region.handle ()->extents.y2;
- 
+
     CompRect outRect (window->outputRect ());
     wx     = outRect.x ();
     wy     = outRect.y ();
@@ -1739,7 +1739,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
  	{
 	    if (matrix[it].xy != 0.0f ||
 		matrix[it].yx != 0.0f)
- 	    {
+    {
 		rect = false;
 		break;
  	    }
@@ -1749,7 +1749,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	nBox = const_cast <Region> (region.handle ())->numRects;
 
 	while (nBox--)
- 	{
+	{
 	    x1 = pBox->x1;
 	    y1 = pBox->y1;
 	    x2 = pBox->x2;
@@ -1767,12 +1767,12 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		y2 = full.y2;
 
 	    if (x1 < x2 && y1 < y2)
- 	    {
+	{
 		nClip = const_cast <Region> (clip.handle ())->numRects;
 		pClip = const_cast <Region> (clip.handle ())->rects;
 
 		while (nClip--)
- 		{
+	    {
 		    cbox = *pClip;
 		    GLVector*** grid;
 		    int i = 0;
@@ -1781,7 +1781,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		    pClip++;
 
 		    if (nClip > 1)
- 		    {
+	{
 			if (cbox.x1 < x1)
 			    x1 = cbox.x1;
 			if (cbox.y1 < y1)
@@ -1790,10 +1790,10 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 			    x2 = cbox.x2;
 			if (cbox.y2 > y2)
 			    y2 = cbox.y2;
- 		    }
+	}
 
 		    if (x1 < x2 && y1 < y2)
- 		    {
+	{
 			// compute how many quads we'll get in both directions
 			iw = ((x2 - x1 - 1) / gridW) + 1;
 			ih = ((y2 - y1 - 1) / gridH) + 1;
@@ -1803,9 +1803,9 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 			// evaluate deformed coords.
 			for (x = x1, i = 0;; x += gridW)
-			{
-			    if (x > x2)
-				x = x2;
+	    {
+		if (x > x2)
+		    x = x2;
 
 			    grid [i] = new GLVector*[ih + 1];
 			    for (y = y1, j = 0;; y += gridH)
@@ -1815,8 +1815,8 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
  
 				model->bezierPatchEvaluate (float(x - wx) / width,
 							    float(y - wy) / height,
-							    &deformedX,
-							    &deformedY);
+						&deformedX,
+						&deformedY);
 
 				grid[i][j] = new GLVector [2];
 				grid[i][j][0] = GLVector (deformedX,
@@ -1830,19 +1830,19 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 				    break;
 
 				j++;
-			    }
+		    }
 
 			    if (x == x2)
 				break;
 
 			    i++;
-			}
+		}
 
 // 			// render
 			for (j = 0; j < ih; j++)
-			{
+		{
 			    for (i = 0; i < iw; i++)
-			    {
+		    {
 				addSingleQuad (gWindow->vertexBuffer (), matrix, nMatrix,
 						grid[i][j][0][0], grid[i][j][0][1],
 						grid[i+1][j+1][0][0], grid[i+1][j+1][0][1],
@@ -1853,15 +1853,15 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 						grid[i][j+1][1][0], grid[i][j+1][1][1],
 						grid[i+1][j][1][0], grid[i+1][j][1][1],
 						n, rect);
-			    }
-			}
+		    }
+		}
 
 // 			// free our grid
 			for (i = 0; i < iw + 1; i++)
 			{       
 			    {
 				delete [] grid[i][j];
-			    }
+	    }
 
 			    delete [] grid[i];
 			}
@@ -1869,7 +1869,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		    }
 		}
 	    }
- 	}
+	}
     }
 }
 

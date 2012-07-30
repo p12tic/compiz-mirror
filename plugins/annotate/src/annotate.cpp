@@ -794,9 +794,9 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    for (angle = 0; angle <= 360; angle += 1)
 	    {
 		vertexData[0] = ellipse.center.x () +
-		                (ellipse.radiusX * sinf (angle * DEG2RAD));
+			 (ellipse.radiusX * sinf (angle * DEG2RAD));
 		vertexData[1] = ellipse.center.y () +
-		                (ellipse.radiusY * cosf (angle * DEG2RAD));
+			 (ellipse.radiusY * cosf (angle * DEG2RAD));
 		streamingBuffer->addVertices (1, vertexData);
 	    }
 
@@ -823,14 +823,14 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    for (angle = 360; angle >= 0; angle -= 1)
 	    {
 		vertexData[0] = ellipse.center.x () + ((ellipse.radiusX -
-		                offset) * sinf (angle * DEG2RAD));
+			  offset) * sinf (angle * DEG2RAD));
 		vertexData[1] = ellipse.center.y () + ((ellipse.radiusY -
-				offset) * cosf (angle * DEG2RAD));
+			  offset) * cosf (angle * DEG2RAD));
 		vertexData[2] = 0.0f;
 		vertexData[3] = ellipse.center.x () + ((ellipse.radiusX +
-		                offset) * sinf (angle * DEG2RAD));
+			  offset) * sinf (angle * DEG2RAD));
 		vertexData[4] = ellipse.center.y () + ((ellipse.radiusY +
-		                offset) * cosf (angle * DEG2RAD));
+			  offset) * cosf (angle * DEG2RAD));
 		vertexData[5] = 0.0f;
 		streamingBuffer->addVertices (2, vertexData);
 	    }

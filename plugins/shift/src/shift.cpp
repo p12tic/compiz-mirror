@@ -230,11 +230,11 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 
 bool
 ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
-                      const GLMatrix            &transform,
-                      const CompRegion          &region,
-                      unsigned int               mask)
+		      const GLMatrix		&transform,
+		      const CompRegion		&region,
+		      unsigned int		mask)
 {
-    bool status;
+    bool       status;
 
     SHIFT_SCREEN (screen);
     if (ss->mState != ShiftStateNone && !ss->mPaintingAbove &&
@@ -273,8 +273,8 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 	if (scaled && !gWindow->textures ().empty ())
 	{
 	    GLWindowPaintAttrib wAttrib (attrib);
-	    GLMatrix            wTransform = transform;
-	    ShiftSlot          *slot = ss->mActiveSlot->slot;
+	    GLMatrix wTransform = transform;
+	    ShiftSlot      *slot = ss->mActiveSlot->slot;
 
 	    float sx     = ss->mAnim * slot->tx;
 	    float sy     = ss->mAnim * slot->ty;
@@ -424,10 +424,10 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 		if (gWindow->vertexBuffer ()->countVertices ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
-		    GLMatrix            wTransform (transform);
+		    GLMatrix		wTransform (transform);
 
 		    if (gWindow->textures ().empty ())
-		        sAttrib.opacity = gWindow->paintAttrib ().opacity;
+			sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
 		    wAttrib = GLWindowPaintAttrib (sAttrib);
 
@@ -438,8 +438,8 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 		    wTransform.translate (sx, sy, sz);
 
 		    wTransform.translate (window->x () +
-		                            (window->width ()  * sscale / 2),
-		                          window->y () +
+				     (window->width ()  * sscale / 2),
+				     window->y () +
 		                            (window->height ()  * sscale / 2.0),
 		                          0.0f);
 
@@ -1151,11 +1151,11 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (optionGetReflection ())
 	{
-	    GLMatrix        rTransform = sTransform;
+	    GLMatrix	   rTransform = sTransform;
 	    GLMatrix        r2Transform;
 	    GLushort        colorData[4];
 	    GLfloat         vertexData[12];
-	    int             cull, cullInv;
+	    int            cull, cullInv;
 	    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	    glGetIntegerv (GL_CULL_FACE_MODE, &cull);

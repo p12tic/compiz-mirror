@@ -177,10 +177,10 @@ public:
     /// Should be overriden by a base animation class in every extension plugin.
     virtual ExtensionPluginInfo *getExtensionPluginInfo ();
 
-    void drawTexture (GLTexture                 *texture,
+    void drawTexture (GLTexture          *texture,
                       const GLMatrix            &transform,
                       const GLWindowPaintAttrib &attrib,
-                      unsigned int               mask);
+		      unsigned int       mask);
 
     // Utility methods
 

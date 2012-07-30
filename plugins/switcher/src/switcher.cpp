@@ -955,8 +955,8 @@ SwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 {
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     GLMatrix        wTransform (transform);
-    int             zoomType = NORMAL_WINDOW_MASK;
-    bool            status;
+    int	       zoomType = NORMAL_WINDOW_MASK;
+    bool       status;
 
     if (window->id () == sScreen->popupWindow)
     {
@@ -1010,8 +1010,8 @@ SwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	for (i = 0; i < 4; i++)
 	{
 	    color[i] = (unsigned int)sScreen->fgColor[i] *
-	               gWindow->lastPaintAttrib ().opacity /
-	               0xffff;
+		       gWindow->lastPaintAttrib ().opacity /
+		       0xffff;
 	}
 
 	streamingBuffer->begin (GL_TRIANGLES);

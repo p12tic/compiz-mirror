@@ -351,7 +351,7 @@ InfoWindow::ungrabNotify ()
 void
 InfoLayer::draw (const GLMatrix &transform,
                  int             x,
-                 int             y)
+	   	 int y)
 {
     BOX   box;
     float opacity;
@@ -367,7 +367,7 @@ InfoLayer::draw (const GLMatrix &transform,
 	GLfloat            textureData[8];
 	GLfloat            vertexData[12];
 	GLTexture         *tex = texture[i];
-	GLTexture::Matrix  matrix = tex->matrix ();
+	GLTexture::Matrix matrix = tex->matrix ();
 	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	tex->enable (GLTexture::Good);

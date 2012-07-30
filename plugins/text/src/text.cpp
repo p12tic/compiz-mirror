@@ -489,10 +489,10 @@ CompText::getHeight () const
 void
 CompText::draw (const GLMatrix &transform,
                 float           x,
-                float           y,
-                float           alpha) const
+	        float y,
+	        float alpha) const
 {
-    GLint           oldBlendSrc, oldBlendDst;
+    GLint      oldBlendSrc, oldBlendDst;
     GLushort        colorData[4];
     GLfloat         textureData[8];
     GLfloat         vertexData[12];
@@ -553,7 +553,7 @@ CompText::draw (const GLMatrix &transform,
 	streamingBuffer->addColors (1, colorData);
 	streamingBuffer->addVertices (4, vertexData);
 	streamingBuffer->addTexCoords (0, 4, textureData);
- 
+
 	streamingBuffer->end ();
 	streamingBuffer->render (transform);
 

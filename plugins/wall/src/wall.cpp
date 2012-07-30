@@ -905,7 +905,7 @@ WallScreen::initiateFlip (Direction         direction,
 inline void
 wallDrawQuad (const GLMatrix    &transform,
               GLTexture::Matrix *matrix,
-              BOX               *box)
+	      BOX               *box)
 {
     GLfloat textureData[8];
     GLfloat vertexData[12];

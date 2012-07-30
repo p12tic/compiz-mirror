@@ -154,7 +154,7 @@ bool
 ObsWindow::glDraw (const GLMatrix            &transform,
 		   const GLWindowPaintAttrib &attrib,
 		   const CompRegion          &region,
-		   unsigned int              mask)
+		   unsigned int        mask)
 {
     GLWindowPaintAttrib wAttrib (attrib);
     int factor;

@@ -80,10 +80,10 @@ NegScreen::toggle (CompAction         *action,
 }
 
 void
-NegWindow::glDrawTexture (GLTexture                 *texture,
+NegWindow::glDrawTexture (GLTexture          *texture,
                           const GLMatrix            &transform,
                           const GLWindowPaintAttrib &attrib,
-                          unsigned int              mask)
+			  unsigned int       mask)
 {
     bool              doNeg = false;
     GLTexture         *tex = NULL;
@@ -451,7 +451,7 @@ NegScreen::NegScreen (CompScreen *screen) :
 					  _1, _2));
     optionSetExcludeMatchNotify (boost::bind (&NegScreen::optionChanged, this,
 					      _1, _2));
-    optionSetNegDecorationsNotify (boost::bind (&NegScreen::optionChanged, this,
+	optionSetNegDecorationsNotify (boost::bind (&NegScreen::optionChanged, this,
 					  _1, _2));
 
 }

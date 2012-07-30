@@ -833,10 +833,10 @@ class GLWindowInterface :
 	 * @param region Describes which region will be drawn
 	 * @param mask   Bitmask which describes how this window is drawn
 	 */
-	virtual bool glDraw (const GLMatrix 	       &matrix,
+	virtual bool glDraw (const GLMatrix 	&matrix,
 			     const GLWindowPaintAttrib &attrib,
-			     const CompRegion 	       &region,
-			     unsigned int              mask);
+			     const CompRegion 	&region,
+			     unsigned int	mask);
 
 	/**
 	 * Hookable function to add points to a window

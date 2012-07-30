@@ -109,7 +109,7 @@ ScaleAddonWindow::drawTitle (const GLMatrix &transform)
 void
 ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
 {
-    GLint oldBlendSrc, oldBlendDst;
+    GLint         oldBlendSrc, oldBlendDst;
     GLushort colorData[4];
     GLfloat  vertexData[12];
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();

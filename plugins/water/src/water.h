@@ -41,7 +41,7 @@
 
 #define K 0.1964f
 
-#define TEXTURE_NUM  3
+#define TEXTURE_NUM 3
 #define PROG_NUM 3
 
 #define INDEX(ws, i) (((ws)->fboIndex + (i)) % TEXTURE_NUM)
@@ -72,9 +72,9 @@ class WaterScreen :
 
 	bool fboPrologue (int fboIndex);
 	void fboEpilogue ();
-	bool fboUpdate   (float dt, float fade);
+	bool fboUpdate (float dt, float fade);
 
-	void waterUpdate   (float dt);
+	void waterUpdate (float dt);
 	void waterVertices (GLenum type, XPoint *p, int n, float v);
 
 	bool rainTimeout ();

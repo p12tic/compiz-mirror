@@ -882,7 +882,7 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 	                  transform,
 	                  *GLScreen::get (::screen)->projectionMatrix (),
 	                  viewport,
-	                  &x, &y, &z))
+			     &x, &y, &z))
 		return false;
 
 	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
@@ -894,12 +894,12 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 	for (; nPoints; nPoints--, object++)
 	{
 	    if (!project (object->position ().x (),
-	                  object->position ().y (),
-	                  object->position ().z (),
+			     object->position ().y (),
+			     object->position ().z (),
 	                  transform,
 	                  *GLScreen::get (::screen)->projectionMatrix (),
 	                  viewport,
-                          &x, &y, &z))
+			     &x, &y, &z))
 		return false;
 
 	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
@@ -1551,10 +1551,10 @@ PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
 }
 
 void
-PrivateAnimWindow::glDrawTexture (GLTexture                 *texture,
+PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
                                   const GLMatrix            &transform,
                                   const GLWindowPaintAttrib &attrib,
-                                  unsigned int               mask)
+				  unsigned int       mask)
 {
     if (mCurAnimation)
     {
@@ -1565,10 +1565,10 @@ PrivateAnimWindow::glDrawTexture (GLTexture                 *texture,
 }
 
 void
-Animation::drawTexture (GLTexture                *texture,
+Animation::drawTexture (GLTexture          *texture,
                         const GLMatrix            &transform,
                         const GLWindowPaintAttrib &attrib,
-                        unsigned int               mask)
+			unsigned int       mask)
 {
     mCurPaintAttrib = attrib;
 }

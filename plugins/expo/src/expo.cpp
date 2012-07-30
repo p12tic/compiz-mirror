@@ -42,7 +42,7 @@ COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
 bool
 ExpoScreen::dndInit (CompAction          *action,
-                     CompAction::State    state,
+		     CompAction::State   state,
                      CompOption::Vector  &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -62,8 +62,8 @@ ExpoScreen::dndInit (CompAction          *action,
 }
 
 bool
-ExpoScreen::dndFini (CompAction         *action,
-                     CompAction::State   state,
+ExpoScreen::dndFini (CompAction          *action,
+		     CompAction::State   state,
                      CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -88,8 +88,8 @@ ExpoScreen::dndFini (CompAction         *action,
 }
 
 bool
-ExpoScreen::doExpo (CompAction         *action,
-                    CompAction::State   state,
+ExpoScreen::doExpo (CompAction          *action,
+		    CompAction::State   state,
                     CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -134,8 +134,8 @@ ExpoScreen::doExpo (CompAction         *action,
 }
 
 bool
-ExpoScreen::termExpo (CompAction         *action,
-                      CompAction::State   state,
+ExpoScreen::termExpo (CompAction          *action,
+		      CompAction::State   state,
                       CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -170,8 +170,8 @@ ExpoScreen::termExpo (CompAction         *action,
 }
 
 bool
-ExpoScreen::exitExpo (CompAction         *action,
-                      CompAction::State   state,
+ExpoScreen::exitExpo (CompAction          *action,
+		      CompAction::State   state,
                       CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -189,8 +189,8 @@ ExpoScreen::exitExpo (CompAction         *action,
 }
 
 bool
-ExpoScreen::nextVp (CompAction         *action,
-                    CompAction::State   state,
+ExpoScreen::nextVp (CompAction          *action,
+		    CompAction::State   state,
                     CompOption::Vector &options)
 {
     unsigned int newX, newY;
@@ -220,8 +220,8 @@ ExpoScreen::nextVp (CompAction         *action,
 }
 
 bool
-ExpoScreen::prevVp (CompAction         *action,
-                    CompAction::State   state,
+ExpoScreen::prevVp (CompAction          *action,
+		    CompAction::State   state,
                     CompOption::Vector &options)
 {
     int newX, newY;
@@ -463,7 +463,7 @@ ExpoScreen::updateWraps (bool enable)
 
 void
 ExpoScreen::paint (CompOutput::ptrList &outputs,
-                   unsigned int         mask)
+		   unsigned int         mask)
 {
     int width = outputs.front ()->width ();
     int height = outputs.front ()->height ();
@@ -683,8 +683,8 @@ unproject (float winx, float winy, float winz,
 void
 ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib &attrib,
                                      const GLMatrix            &transform,
-                                     CompOutput                *output,
-                                     int                        vertex[2])
+				     CompOutput                 *output,
+				     int                        vertex[2])
 {
     GLMatrix sTransform (transform);
     float    p1[3], p2[3], v[3], alpha;
@@ -751,9 +751,9 @@ void
 ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
                        const GLMatrix            &transform,
                        const CompRegion          &region,
-                       CompOutput                *output,
-                       unsigned int               mask,
-                       bool                       reflection)
+		       CompOutput                 *output,
+		       unsigned int               mask,
+		       bool                       reflection)
 {
     GLfloat vertexData[12];
     GLushort colorData[16];
@@ -1183,8 +1183,8 @@ bool
 ExpoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
                            const GLMatrix            &transform,
                            const CompRegion          &region,
-                           CompOutput                *output,
-                           unsigned int               mask)
+			   CompOutput                 *output,
+			   unsigned int               mask)
 {
     if (expoCam > 0.0)
 	mask |= PAINT_SCREEN_TRANSFORMED_MASK | PAINT_SCREEN_CLEAR_MASK;
@@ -1196,8 +1196,8 @@ void
 ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
                                       const GLMatrix            &transform,
                                       const CompRegion          &region,
-                                      CompOutput                *output,
-                                      unsigned int               mask)
+				      CompOutput                 *output,
+				      unsigned int               mask)
 {
     expoActive = false;
 
@@ -1231,13 +1231,13 @@ bool
 ExpoWindow::glDraw (const GLMatrix            &transform,
                     const GLWindowPaintAttrib &attrib,
                     const CompRegion          &region,
-                    unsigned int               mask)
+		    unsigned int        mask)
 {
     if (eScreen->expoCam == 0.0f)
 	return gWindow->glDraw (transform, attrib, region, mask);
 
     GLWindowPaintAttrib eAttrib (attrib);
-    int                 expoAnimation;
+    int                expoAnimation;
 
     expoAnimation = eScreen->optionGetExpoAnimation ();
 
@@ -1282,8 +1282,8 @@ void
 ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
                            const CompRegion            &region,
                            const CompRegion            &clip,
-                           unsigned int                 maxGridWidth,
-                           unsigned int                 maxGridHeight)
+			   unsigned int                 maxGridWidth,
+			   unsigned int                 maxGridHeight)
 {
     if (eScreen->expoCam > 0.0        &&
 	screen->desktopWindowCount () &&
@@ -1344,10 +1344,10 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
 }
 
 void
-ExpoWindow::glDrawTexture (GLTexture                 *texture,
+ExpoWindow::glDrawTexture (GLTexture           *texture,
                            const GLMatrix            &transform,
                            const GLWindowPaintAttrib &attrib,
-                           unsigned int               mask)
+			   unsigned int        mask)
 {
     if (eScreen->expoCam > 0.0                                 &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve &&
@@ -1416,7 +1416,7 @@ bool
 ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
                      const GLMatrix            &transform,
                      const CompRegion          &region,
-                     unsigned int               mask)
+		     unsigned int               mask)
 {
     if (eScreen->expoActive)
     {
@@ -1444,7 +1444,7 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	{
 	    if (zoomAnim && eScreen->paintingVp == eScreen->selectedVp)
 		opacity = attrib.opacity *
-		                      (1 - sigmoidProgress (eScreen->expoCam));
+			  (1 - sigmoidProgress (eScreen->expoCam));
 	    else
 		opacity = 0;
 	}

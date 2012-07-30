@@ -431,7 +431,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 {
     CompRect rect;
     GLMatrix sTransform (transform);
-    std::vector<Animation>::iterator iter;
+	std::vector<Animation>::iterator iter;
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     GLfloat         vertexData[12];
     GLushort        colorData[4];
@@ -440,18 +440,18 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
     getPaintRectangle (rect);
 
-    for (unsigned int i = 0; i < animations.size (); i++)
-	setCurrentRect (animations.at (i));
+	for (unsigned int i = 0; i < animations.size (); i++)
+		setCurrentRect (animations.at (i));
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
     glGetBooleanv (GL_BLEND, &isBlendingEnabled);
     glEnable (GL_BLEND);
 
-    for (iter = animations.begin (); iter != animations.end () && animating; iter++)
-    {
-	Animation& anim = *iter;
-	float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
+	for (iter = animations.begin (); iter != animations.end () && animating; iter++)
+	{
+		Animation& anim = *iter;
+		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetFillColor ();
 
 	colorData[0] = alpha * color[0];
@@ -479,13 +479,13 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	streamingBuffer->end ();
 	streamingBuffer->render (sTransform);
 
-	/* Set outline rect smaller to avoid damage issues */
-	anim.currentRect.setGeometry (anim.currentRect.x () + 1,
-				      anim.currentRect.y () + 1,
-				      anim.currentRect.width () - 2,
-				      anim.currentRect.height () - 2);
+		/* Set outline rect smaller to avoid damage issues */
+		anim.currentRect.setGeometry (anim.currentRect.x () + 1,
+					      anim.currentRect.y () + 1,
+					      anim.currentRect.width () - 2,
+					      anim.currentRect.height () - 2);
 
-	/* draw outline */
+		/* draw outline */
 	alpha = ((float) optionGetOutlineColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetOutlineColor ();
 
@@ -503,7 +503,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	vertexData[9]  = anim.currentRect.x2 ();
 	vertexData[10] = anim.currentRect.y1 ();
 
-	glLineWidth (2.0);
+		glLineWidth (2.0);
 
 	streamingBuffer->begin (GL_LINE_LOOP);
 	streamingBuffer->addColors (1, colorData);
@@ -511,12 +511,12 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
 	streamingBuffer->end ();
 	streamingBuffer->render (sTransform);
-    }
+	}
 
-    if (!animating)
-    {
+	if (!animating)
+	{
 	/* draw filled rectangle */
-	float alpha = (float) optionGetFillColorAlpha () / 65535.0f;
+		float alpha = (float) optionGetFillColorAlpha () / 65535.0f;
 	color = optionGetFillColor ();
 
 	colorData[0] = alpha * color[0];
@@ -544,14 +544,14 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	streamingBuffer->end ();
 	streamingBuffer->render (sTransform);
 
-	/* Set outline rect smaller to avoid damage issues */
+		/* Set outline rect smaller to avoid damage issues */
 	rect.setGeometry (rect.x () + 1,
 			  rect.y () + 1,
 			  rect.width () - 2,
 			  rect.height () - 2);
 
-	/* draw outline */
-	alpha = (float) optionGetOutlineColorAlpha () / 65535.0f;
+		/* draw outline */
+		alpha = (float) optionGetOutlineColorAlpha () / 65535.0f;
 	color = optionGetOutlineColor ();
 
 	colorData[0] = alpha * color[0];
@@ -568,7 +568,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	vertexData[9]  = rect.x2 ();
 	vertexData[10] = rect.y1 ();
 
-	glLineWidth (2.0);
+		glLineWidth (2.0);
 
 	streamingBuffer->begin (GL_LINE_LOOP);
 	streamingBuffer->addColors (1, colorData);
@@ -576,10 +576,10 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
 	streamingBuffer->end ();
 	streamingBuffer->render (sTransform);
-    }
+	}
 
     if (!isBlendingEnabled)
-	glDisable (GL_BLEND);
+    glDisable (GL_BLEND);
 }
 
 bool

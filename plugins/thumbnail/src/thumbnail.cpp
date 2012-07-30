@@ -532,10 +532,10 @@ void
 ThumbScreen::paintTexture (const GLMatrix &transform,
                            GLushort       *color,
                            int             wx,
-                           int             wy,
-                           int             width,
-                           int             height,
-                           int             off)
+			  int wy,
+			  int width,
+			  int height,
+			  int off)
 {
     GLfloat         textureData[8];
     GLfloat         vertexData[12];

@@ -1517,11 +1517,11 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 {
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
-    BoxRec   	    box;
-    GLMatrix 	    sTransform (transform);
+    BoxRec   	   box;
+    GLMatrix 	   sTransform (transform);
     GLfloat         vertexData [12];
     GLfloat         vertexData2[24];
-    GLint    	    origSrc, origDst;
+    GLint    	   origSrc, origDst;
     GLushort	    fc[4], bc[4];
 
 #ifdef USE_GLES
@@ -1536,7 +1536,7 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 #endif
 
     /* Premultiply the alpha values */
-    bc[3] =  (float) borderColor[3] / (float) 65535.0f;
+    bc[3] = (float) borderColor[3] / (float) 65535.0f;
     bc[0] = ((float) borderColor[0] / 65535.0f) * bc[3];
     bc[1] = ((float) borderColor[1] / 65535.0f) * bc[3];
     bc[2] = ((float) borderColor[2] / 65535.0f) * bc[3];

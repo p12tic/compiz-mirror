@@ -293,7 +293,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
     geometry.texUnits = (int)nMatrix;
     geometry.vertices = NULL;
     geometry.vCount = 0;
-    geometry.texCoordSize = 4;
+	geometry.texCoordSize = 4;
     geometry.vertexStride = 3 + geometry.texUnits * geometry.texCoordSize;
 
     vSize = geometry.vertexStride;

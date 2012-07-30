@@ -197,10 +197,10 @@ GLWindowInterface::glPaint (const GLWindowPaintAttrib &attrib,
     WRAPABLE_DEF (glPaint, attrib, transform, region, mask)
 
 bool
-GLWindowInterface::glDraw (const GLMatrix            &transform,
+GLWindowInterface::glDraw (const GLMatrix     &transform,
 			   const GLWindowPaintAttrib &attrib,
-			   const CompRegion          &region,
-			   unsigned int              mask)
+			   const CompRegion   &region,
+			   unsigned int       mask)
     WRAPABLE_DEF (glDraw, transform, attrib, region, mask)
 
 void
@@ -213,10 +213,10 @@ GLWindowInterface::glAddGeometry (const GLTexture::MatrixList &matrix,
 		  maxGridWidth, maxGridHeight)
 
 void
-GLWindowInterface::glDrawTexture (GLTexture                 *texture,
+GLWindowInterface::glDrawTexture (GLTexture          *texture,
                                   const GLMatrix            &transform,
 				  const GLWindowPaintAttrib &attrib,
-				  unsigned int              mask)
+				  unsigned int       mask)
     WRAPABLE_DEF (glDrawTexture, texture, transform, attrib, mask)
 
 const CompRegion &

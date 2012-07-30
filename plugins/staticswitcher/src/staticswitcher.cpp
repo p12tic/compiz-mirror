@@ -795,8 +795,8 @@ StaticSwitchScreen::preparePaint (int msSinceLastPaint)
 void
 StaticSwitchScreen::paintRect (const GLMatrix &transform,
                                CompRect       &box,
-                               int             offset,
-                               unsigned short *color,
+			       int offset,
+			       unsigned short *color,
 			       unsigned short opacity)
 {
     GLushort colorData[4] = {
@@ -1002,10 +1002,10 @@ StaticSwitchScreen::donePaint ()
 void
 StaticSwitchScreen::paintSelectionRect (const GLMatrix &transform,
                                         int             x,
-                                        int             y,
-                                        float           dx,
-                                        float           dy,
-                                        unsigned int    opacity)
+					int          y,
+					float        dx,
+					float        dy,
+					unsigned int opacity)
 {
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     GLushort        colorData[4];
@@ -1031,7 +1031,7 @@ StaticSwitchScreen::paintSelectionRect (const GLMatrix &transform,
 	colorData[i] = (float)fgColor[i] * opacity * op / 0xffffffff;
 
     sTransform.translate (x + previewBorder / 2 + (dx * w),
-                                       y + previewBorder / 2 + (dy * h), 0.0f);
+		  y + previewBorder / 2 + (dy * h), 0.0f);
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 

@@ -220,10 +220,10 @@ SvgWindow::~SvgWindow ()
 }
 
 bool
-SvgWindow::glDraw (const GLMatrix            &transform,
+SvgWindow::glDraw (const GLMatrix     &transform,
 		   const GLWindowPaintAttrib &attrib,
-		   const CompRegion          &region,
-		   unsigned int              mask)
+		   const CompRegion   &region,
+		   unsigned int       mask)
 {
     bool status = gWindow->glDraw (transform, attrib, region, mask);
 

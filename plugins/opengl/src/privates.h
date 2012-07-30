@@ -142,7 +142,7 @@ class PrivateGLScreen :
 
 	void paintBackground (const GLMatrix   &transform,
 	                      const CompRegion &region,
-                              bool             transformed);
+			      bool             transformed);
 
 	void paintOutputRegion (const GLMatrix   &transform,
 			        const CompRegion &region,

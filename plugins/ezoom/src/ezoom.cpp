@@ -378,13 +378,13 @@ EZoomScreen::donePaint ()
 /* Draws a box from the screen coordinates inx1,iny1 to inx2,iny2 */
 void
 EZoomScreen::drawBox (const GLMatrix &transform,
-                      CompOutput     *output,
-                      CompRect        box)
+		     CompOutput          *output,
+		     CompRect             box)
 {
     GLMatrix zTransform (transform);
     int      x1, x2, y1, y2;
-    int      inx1, inx2, iny1, iny2;
-    int      out = output->id ();
+    int		  inx1, inx2, iny1, iny2;
+    int	          out = output->id ();
     GLushort colorData[4];
     GLfloat  vertexData[12];
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
@@ -1091,16 +1091,16 @@ EZoomScreen::freeCursor (CursorTexture * cursor)
 
 /* Translate into place and draw the scaled cursor.  */
 void
-EZoomScreen::drawCursor (CompOutput     *output,
-                         const GLMatrix &transform)
+EZoomScreen::drawCursor (CompOutput          *output,
+	    		const GLMatrix      &transform)
 {
-    int out = output->id ();
+    int         out = output->id ();
 
     if (cursor.isSet)
     {
 	GLMatrix        sTransform (transform);
-	float           scaleFactor;
-	int             ax, ay, x, y;
+	float	      scaleFactor;
+	int           ax, ay, x, y;
 	GLfloat         textureData[8];
 	GLfloat         vertexData[12];
 	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
@@ -1171,7 +1171,7 @@ void
 EZoomScreen::updateCursor (CursorTexture *cursor)
 {
     unsigned char *pixels;
-    int            i;
+    int           i;
     Display       *dpy = screen->dpy ();
 
     if (!cursor->isSet)

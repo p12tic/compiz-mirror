@@ -441,12 +441,12 @@ MagScreen::paintSimple ()
     glEnable (GL_SCISSOR_TEST);
 
     modelview.translate ((float)(posX - (screen->width () / 2)) * 2 / screen->width (),
-			 (float)(posY - (screen->height () / 2)) * 2 / -screen->height (), 0.0);
+		  (float)(posY - (screen->height () / 2)) * 2 / -screen->height (), 0.0);
 
     modelview.scale (zoom, zoom, 1.0);
 
     modelview.translate ((float)((screen->width () / 2) - posX) * 2 / screen->width (),
-			 (float)((screen->height () / 2) - posY) * 2 / -screen->height (), 0.0);
+		  (float)((screen->height () / 2) - posY) * 2 / -screen->height (), 0.0);
 
     GLfloat vertices[] = {
 	vc[0], vc[2], 0,
@@ -535,7 +535,7 @@ MagScreen::paintSimple ()
     /* Restore blending state */
 #if USE_GLES
     if (!isBlendingEnabled)
-	glDisable (GL_BLEND);
+    glDisable (GL_BLEND);
     glBlendFuncSeparate (blendSrcRGB, blendDstRGB, blendSrcAlpha, blendDstAlpha);
 #else
     glPopAttrib ();

@@ -78,7 +78,7 @@ WaterScreen::waterUpdate (float dt)
     GLfloat fade = 1.0f;
 
     if (count < 1000)
-    {
+	{
 	if (count > 1)
 	    fade = 0.90f + (float) count / 10000.0f;
 	else
@@ -133,9 +133,9 @@ WaterScreen::waterUpdate (float dt)
 
 void
 WaterScreen::waterVertices (GLenum type,
-			    XPoint *p,
-			    int    n,
-			    float  v)
+			  XPoint *p,
+			  int    n,
+			  float  v)
 {
     if (!fboPrologue (INDEX (this, 0)))
 	return;
@@ -153,9 +153,9 @@ WaterScreen::waterVertices (GLenum type,
 	    data[1] = ((((float) screen->height () - (float) p->y)/
 			(float) screen->height ()) * 2.0f) - 1.0f;
 	    data[2] = 0.0f;
-	    p++;
+	p++;
 	    vertexBuffer[SET]->addVertices  (1, &data[0]);
-	}
+    }
 	vertexBuffer[SET]->end();
 
 	vertexBuffer[SET]->addUniform ("color", v);
@@ -252,7 +252,7 @@ WaterScreen::waterSetup ()
     t0 = (unsigned char *) (d1 + (size));
 
     if (GL::vboEnabled && GL::shaders)
-    {
+	{
 	program[SET]    = new GLProgram (set_water_vertices_vertex_shader,
 				         set_water_vertices_fragment_shader);
 
@@ -287,10 +287,10 @@ WaterScreen::waterSetup ()
 
 	vertexBuffer[PAINT] = new GLVertexBuffer (GL::STATIC_DRAW);
 	vertexBuffer[PAINT]->setProgram (program[PAINT]);
-    }
+	}
 
     if (GL::fboEnabled)
-    {
+	{
 	CompSize size(texWidth, texHeight);
 	for (int i = 0; i < TEXTURE_NUM; i++)
 	{
@@ -305,8 +305,8 @@ WaterScreen::waterSetup ()
 		useFbo = false;
 		delete waterFbo[i];
 		break;
-	    }
 	}
+    }
     }
 }
 
@@ -777,7 +777,7 @@ WaterScreen::WaterScreen (CompScreen *screen) :
     waterSetup ();
 
     optionSetOffsetScaleNotify (boost::bind (&WaterScreen::optionChange, this, _2));
-    optionSetRainDelayNotify   (boost::bind (&WaterScreen::optionChange, this, _2));
+    optionSetRainDelayNotify (boost::bind (&WaterScreen::optionChange, this, _2));
     optionSetLightVecXNotify   (boost::bind (&WaterScreen::optionChange, this, _2));
     optionSetLightVecYNotify   (boost::bind (&WaterScreen::optionChange, this, _2));
     optionSetLightVecZNotify   (boost::bind (&WaterScreen::optionChange, this, _2));

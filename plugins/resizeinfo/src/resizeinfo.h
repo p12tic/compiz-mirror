@@ -59,7 +59,7 @@ class InfoLayer
 
 	void draw (const GLMatrix &transform,
 	           int             x,
-	           int             y);
+	 	   int y);
 
 	void renderBackground ();
 	void renderText ();

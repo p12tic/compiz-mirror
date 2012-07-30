@@ -152,10 +152,10 @@ DecorWindow::doUpdateGroupShadows ()
  */
 
 bool
-DecorWindow::glDraw (const GLMatrix            &transform,
+DecorWindow::glDraw (const GLMatrix     &transform,
 		     const GLWindowPaintAttrib &attrib,
-		     const CompRegion          &region,
-		     unsigned int              mask)
+		     const CompRegion   &region,
+		     unsigned int       mask)
 {
     bool status;
 
@@ -204,10 +204,10 @@ DecorWindow::glDraw (const GLMatrix            &transform,
 }
 
 void
-DecorWindow::glDecorate (const GLMatrix            &transform,
+DecorWindow::glDecorate (const GLMatrix     &transform,
 			 const GLWindowPaintAttrib &attrib,
-			 const CompRegion          &region,
-			 unsigned int              mask)
+		         const CompRegion   &region,
+		         unsigned int       mask)
 {
 #ifdef USE_GLES
     GLboolean isBlendingEnabled = GL_TRUE;
@@ -268,7 +268,7 @@ DecorWindow::glDecorate (const GLMatrix            &transform,
 	{
 	    glEnable (GL_BLEND);
 	    gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
-	                            attrib, mask);
+				    attrib, mask);
 	    glDisable (GL_BLEND);
 	}
     }

@@ -712,7 +712,7 @@ WorkaroundsWindow::getFixedWindowType ()
 	resName = CompString (classHint.res_name);
 	XFree (classHint.res_name);
     }
-
+    
     /* FIXME: Is this the best way to detect a notification type window? */
     if (ws->optionGetNotificationDaemonFix ())
     {

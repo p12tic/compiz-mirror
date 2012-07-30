@@ -258,7 +258,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (scaled && pixmap)
 	{
 	    GLWindowPaintAttrib wAttrib (gWindow->lastPaintAttrib ());
-	    GLMatrix            wTransform = transform;
+	    GLMatrix           wTransform = transform;
 
 	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 		return false;
@@ -378,10 +378,10 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		if (gWindow->vertexBuffer ()->countVertices ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
-		    GLMatrix            wTransform = transform;
+		    GLMatrix	       wTransform = transform;
 
 		    if (!pixmap)
-		        sAttrib.opacity = gWindow->paintAttrib ().opacity;
+			sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
 		    if (mSlot)
 		        wAttrib.brightness = (float)wAttrib.brightness *
@@ -391,7 +391,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		    wTransform.scale (scale, scale, 1.0f);
 		    wTransform.translate ((x - window->x ()) / scale - window->x (),
 		                          (y - window->y ()) / scale - window->y (),
-		                          0.0f);
+				          0.0f);
 
 		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
 		}

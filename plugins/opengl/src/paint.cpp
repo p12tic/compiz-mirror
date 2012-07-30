@@ -70,7 +70,7 @@ GLScreen::glApplyTransform (const GLScreenPaintAttrib &sAttrib,
 void
 PrivateGLScreen::paintBackground (const GLMatrix   &transform,
                                   const CompRegion &region,
-                                  bool             transformed)
+				  bool             transformed)
 {
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     GLfloat         vertexData[18];
@@ -569,7 +569,7 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	if (GL::stencilBuffer)
 	    glDisable (GL_STENCIL_TEST);
 	else
-	    glDisableOutputClipping ();
+	glDisableOutputClipping ();
     }
     else
     {
@@ -715,38 +715,38 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 }
 
 #define ADD_RECT(vertexBuffer, m, n, x1, y1, x2, y2) \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    for (it = 0; it < n; it++)			   \
+    {						   \
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];	   \
 	data[0] = COMP_TEX_COORD_X (mat, x1);        \
 	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    }						   \
+    for (it = 0; it < n; it++)			   \
+    {						   \
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];	   \
 	data[0] = COMP_TEX_COORD_X (mat, x1);        \
 	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    }						   \
+    for (it = 0; it < n; it++)			   \
+    {						   \
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];	   \
 	data[0] = COMP_TEX_COORD_X (mat, x2);        \
 	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    }						   \
+    for (it = 0; it < n; it++)			   \
+    {						   \
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];	   \
 	data[0] = COMP_TEX_COORD_X (mat, x2);        \
 	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
+    }						   \
     for (it = 0; it < n; it++)                       \
     {                                                \
 	GLfloat data[2];                             \
@@ -765,38 +765,38 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
     }
 
 #define ADD_QUAD(vertexBuffer, m, n, x1, y1, x2, y2) \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    for (it = 0; it < n; it++)				\
+    {							\
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];		\
 	data[0] = COMP_TEX_COORD_XY (mat, x1, y1);   \
 	data[1] = COMP_TEX_COORD_YX (mat, x1, y1);   \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    }							\
+    for (it = 0; it < n; it++)				\
+    {							\
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];		\
 	data[0] = COMP_TEX_COORD_XY (mat, x1, y2);   \
 	data[1] = COMP_TEX_COORD_YX (mat, x1, y2);   \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    }							\
+    for (it = 0; it < n; it++)				\
+    {							\
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];	        \
 	data[0] = COMP_TEX_COORD_XY (mat, x2, y1);   \
 	data[1] = COMP_TEX_COORD_YX (mat, x2, y1);   \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
-    for (it = 0; it < n; it++)                       \
-    {                                                \
+    }							\
+    for (it = 0; it < n; it++)				\
+    {							\
 	GLfloat data[2];                             \
-	const GLTexture::Matrix &mat = m[it];        \
+        const GLTexture::Matrix &mat = m[it];	        \
 	data[0] = COMP_TEX_COORD_XY (mat, x2, y1);   \
 	data[1] = COMP_TEX_COORD_YX (mat, x2, y1);   \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }                                                \
+    }							\
     for (it = 0; it < n; it++)                       \
     {                                                \
 	GLfloat data[2];                             \
@@ -812,19 +812,19 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 	data[0] = COMP_TEX_COORD_XY (mat, x2, y2);   \
 	data[1] = COMP_TEX_COORD_YX (mat, x2, y2);   \
 	vertexBuffer->addTexCoords (it, 1, data);    \
-    }
+	}
 
 
 static inline void
 addSingleQuad (GLVertexBuffer *vertexBuffer,
-               const GLTexture::MatrixList &matrix,
-               unsigned int nMatrix,
-               int          x1,
-               int          y1,
-               int          x2,
-               int          y2,
-               int          &n,
-               bool         rect)
+	       const        GLTexture::MatrixList &matrix,
+	       unsigned int nMatrix,
+	       int          x1,
+	       int          y1,
+	       int          x2,
+	       int          y2,
+	       int          &n,
+	       bool         rect)
 {
     GLfloat vertexData[18] = {
 	(float)x1, (float)y1, 0.0,
@@ -851,16 +851,16 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
 
 static inline void
 addQuads (GLVertexBuffer *vertexBuffer,
-          const GLTexture::MatrixList &matrix,
-          unsigned int nMatrix,
-          int          x1,
-          int          y1,
-          int          x2,
-          int          y2,
-          int          &n,
-          bool         rect,
-          unsigned int maxGridWidth,
-          unsigned int maxGridHeight)
+	  const        GLTexture::MatrixList &matrix,
+	  unsigned int nMatrix,
+	  int          x1,
+	  int          y1,
+	  int          x2,
+	  int          y2,
+	  int          &n,
+	  bool         rect,
+	  unsigned int maxGridWidth,
+	  unsigned int maxGridHeight)
 {
     int nQuadsX = (maxGridWidth == MAXSHORT) ? 1 :
 	1 + (x2 - x1 - 1) / (int) maxGridWidth;  // ceil. division
@@ -1003,12 +1003,12 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 #ifndef USE_GLES
 static void
 enableLegacyOBSAndRender (GLScreen                  *gs,
-                          GLWindow                  *w,
-                          GLTexture                 *texture,
+					 GLWindow	    *w,
+					 GLTexture	    *texture,
                           const GLMatrix            &transform,
                           const GLWindowPaintAttrib &attrib,
-                          GLTexture::Filter         filter,
-                          unsigned int              mask)
+					 GLTexture::Filter  filter,
+					 unsigned int	    mask)
 {
     // XXX: This codepath only works with !GL::vbo so that's the only case
     //      where you'll find it's called. At least for now.
@@ -1208,10 +1208,10 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 #endif
 
 void
-GLWindow::glDrawTexture (GLTexture                 *texture,
+GLWindow::glDrawTexture (GLTexture          *texture,
                          const GLMatrix            &transform,
 			 const GLWindowPaintAttrib &attrib,
-			 unsigned int              mask)
+			 unsigned int       mask)
 {
     WRAPABLE_HND_FUNCTN (glDrawTexture, texture, transform, attrib, mask)
 
@@ -1235,7 +1235,7 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
 
     if (!GLVertexBuffer::enabled ())
 	enableLegacyOBSAndRender (priv->gScreen, this, texture, transform,
-                                  attrib, filter, mask);
+						 attrib, filter, mask);
     else
 	priv->vertexBuffer->render (transform, attrib);
     #endif
@@ -1248,10 +1248,10 @@ GLWindow::glDrawTexture (GLTexture                 *texture,
 }
 
 bool
-GLWindow::glDraw (const GLMatrix            &transform,
+GLWindow::glDraw (const GLMatrix     &transform,
 		  const GLWindowPaintAttrib &attrib,
-		  const CompRegion          &region,
-		  unsigned int              mask)
+		  const CompRegion   &region,
+		  unsigned int       mask)
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, glDraw, transform,
 			      attrib, region, mask)

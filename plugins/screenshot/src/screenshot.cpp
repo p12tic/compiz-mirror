@@ -289,11 +289,11 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    transform.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
 	    transform.scale (1.0f / output->width (),
-	                     -1.0f / output->height (),
-	                     1.0f);
+	    	      -1.0f / output->height (),
+	    	      1.0f);
 	    transform.translate (-output->region ()->extents.x1,
-	                         -output->region ()->extents.y2,
-	                         0.0f);
+	    		  -output->region ()->extents.y2,
+	    		  0.0f);
 
 	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 

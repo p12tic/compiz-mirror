@@ -85,10 +85,10 @@ class StaticSwitchScreen :
 			unsigned short opacity);
 	void paintSelectionRect (const GLMatrix &transform,
 	                         int             x,
-	                         int             y,
-	                         float           dx,
-	                         float           dy,
-	                         unsigned int    opacity);
+				 int          y,
+				 float        dx,
+				 float        dy,
+				 unsigned int opacity);
 	void getMinimizedAndMatch (bool &minimizedOption,
 				   CompMatch *&match);
 	bool getMipmap ();

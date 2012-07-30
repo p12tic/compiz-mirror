@@ -79,8 +79,8 @@ class CompText
 
 	void draw (const GLMatrix &transform,
 	           float x,
-	           float y,
-	           float alpha) const;
+		   float y,
+		   float alpha) const;
 
     private:
 	int width;

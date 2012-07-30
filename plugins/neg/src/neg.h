@@ -88,7 +88,7 @@ class NegWindow :
 	glDrawTexture (GLTexture                 *texture,
 	               const GLMatrix            &transform,
 	               const GLWindowPaintAttrib &attrib,
-	               unsigned int              mask);
+		      unsigned int       mask);
 
 	void toggle ();
 };

@@ -660,11 +660,11 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	GL::renderbufferStorage = (GL::GLRenderbufferStorageProc)
 	    getProcAddress ("glRenderbufferStorageEXT");
 
-	if (GL::genFramebuffers         &&
-	    GL::deleteFramebuffers      &&
-	    GL::bindFramebuffer         &&
-	    GL::checkFramebufferStatus  &&
-	    GL::framebufferTexture2D    &&
+	if (GL::genFramebuffers        &&
+	    GL::deleteFramebuffers     &&
+	    GL::bindFramebuffer        &&
+	    GL::checkFramebufferStatus &&
+	    GL::framebufferTexture2D   &&
 	    GL::generateMipmap          &&
 	    GL::genRenderbuffers        &&
 	    GL::deleteRenderbuffers     &&
@@ -1780,7 +1780,7 @@ GLXDoubleBuffer::blit (const CompRegion &region) const
     const CompRect::vector &blitRects (region.rects ());
 
     if (setting[VSYNC])
-	GL::waitForVideoSync ();
+        GL::waitForVideoSync ();
 
     foreach (const CompRect &r, blitRects)
     {
@@ -1902,8 +1902,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 {
     if (clearBuffers)
     {
-       if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-           glClear (GL_COLOR_BUFFER_BIT);
+	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
     // Blending is disabled by default. Each operation/plugin
@@ -2002,12 +2002,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     glViewport (0, 0, screen->width (), screen->height ());
 
     if (useFbo)
-    {
+	    {
 	GLFramebufferObject::rebind (oldFbo);
 
 	// FIXME: does not work if screen dimensions exceed max texture size
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
-    }
+	}
 
     bool fullscreen = useFbo ||
                       optionGetAlwaysSwapBuffers () ||
