@@ -1151,7 +1151,6 @@ convertProperty (Display *dpy,
 #define N_TARGETS 4
 
     Atom conversionTargets[N_TARGETS];
-    long icccmVersion[] = { 2, 0 };
 
     conversionTargets[0] = Atoms::targets;
     conversionTargets[1] = Atoms::multiple;
@@ -1167,9 +1166,12 @@ convertProperty (Display *dpy,
 			 XA_INTEGER, 32, PropModeReplace,
 			 (unsigned char *) &time, 1);
     else if (target == Atoms::version)
+    {
+	long icccmVersion[] = { 2, 0 };
 	XChangeProperty (dpy, w, property,
 			 XA_INTEGER, 32, PropModeReplace,
 			 (unsigned char *) icccmVersion, 2);
+    }
     else
 	return false;
 
