@@ -169,7 +169,7 @@ int GLVertexBuffer::getVertexStride() const
 
 int GLVertexBuffer::countVertices() const
 {
-    return priv->vertexData.size();
+    return priv->vertexData.size() / 3;
 }
 
 void GLVertexBuffer::setVertexOffset (GLuint vOffset)
