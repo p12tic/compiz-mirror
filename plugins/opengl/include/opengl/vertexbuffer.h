@@ -92,6 +92,7 @@ class GLVertexBuffer
 	// color is always RGBA (4 parts), count is number of rgba groups
 	void addColors (GLuint nColors, const GLushort *colors);
 
+	void color4us (GLushort r, GLushort g, GLushort b, GLushort a);
 	void color4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 	void colorDefault ();
 

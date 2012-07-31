@@ -991,15 +991,13 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 #ifndef USE_GLES
 static void
 enableLegacyOBSAndRender (GLScreen                  *gs,
-					 GLWindow	    *w,
-					 GLTexture	    *texture,
+                          GLWindow                  *w,
+                          GLTexture                 *texture,
                           const GLMatrix            &transform,
                           const GLWindowPaintAttrib &attrib,
-					 GLTexture::Filter  filter,
-					 unsigned int	    mask)
+                          GLTexture::Filter          filter,
+                          unsigned int               mask)
 {
-    // XXX: This codepath only works with !GL::vbo so that's the only case
-    //      where you'll find it's called. At least for now.
 
     if (GL::canDoSaturated && attrib.saturation != COLOR)
     {
@@ -1021,7 +1019,7 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 	glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
 	glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-	glColor4f (1.0f, 1.0f, 1.0f, 0.5f);
+	w->vertexBuffer ()->color4f (1.0f, 1.0f, 1.0f, 0.5f);
 
 	GL::activeTexture (GL_TEXTURE1_ARB);
 
@@ -1145,44 +1143,21 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 
 	texture->disable ();
 
-	glColor4usv (defaultColor);
 	gs->setTexEnvMode (GL_REPLACE);
     }
     else
     {
 	texture->enable (filter);
+	GLushort opacity = (mask & PAINT_WINDOW_BLEND_MASK) ?
+	                   attrib.opacity : OPAQUE;
+	GLushort brightness = ((GLuint)attrib.brightness * opacity) / 65535;
 
-	if (mask & PAINT_WINDOW_BLEND_MASK)
-	{
-	    if (attrib.opacity != OPAQUE ||
-		attrib.brightness != BRIGHT)
-	    {
-		GLushort color;
-
-		color = (attrib.opacity * attrib.brightness) >> 16;
-
-		gs->setTexEnvMode (GL_MODULATE);
-		glColor4us (color, color, color, attrib.opacity);
-
-		w->vertexBuffer ()->render (transform, attrib);
-
-		glColor4usv (defaultColor);
-		gs->setTexEnvMode (GL_REPLACE);
-	    }
-	    else
-	    {
-		w->vertexBuffer ()->render (transform, attrib);
-	    }
-	}
-	else if (attrib.brightness != BRIGHT)
+	if (brightness < BRIGHT || opacity < OPAQUE)
 	{
 	    gs->setTexEnvMode (GL_MODULATE);
-	    glColor4us (attrib.brightness, attrib.brightness,
-			attrib.brightness, BRIGHT);
-
+	    w->vertexBuffer ()->color4us (brightness, brightness,
+	                                  brightness, opacity);
 	    w->vertexBuffer ()->render (transform, attrib);
-
-	    glColor4usv (defaultColor);
 	    gs->setTexEnvMode (GL_REPLACE);
 	}
 	else
@@ -1221,7 +1196,7 @@ GLWindow::glDrawTexture (GLTexture          *texture,
     priv->vertexBuffer->render (transform, attrib);
     #else
 
-    if (!GLVertexBuffer::enabled ())
+    if (!GLVertexBuffer::enabled () || !GL::shaders)
 	enableLegacyOBSAndRender (priv->gScreen, this, texture, transform,
 						 attrib, filter, mask);
     else
