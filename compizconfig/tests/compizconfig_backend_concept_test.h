@@ -22,6 +22,8 @@
 #include <compizconfig_ccs_setting_mock.h>
 #include <compizconfig_ccs_context_mock.h>
 
+#include "gtest_shared_characterwrapper.h"
+
 using ::testing::Eq;
 using ::testing::SetArgPointee;
 using ::testing::DoAll;
@@ -121,36 +123,6 @@ operator<< (::std::ostream &os, const CCSSettingButtonValue &v)
 {
     return os << "Button " << v.button << "Button Key Mask: " << std::hex << v.buttonModMask << "Edge Mask: " << v.edgeMask << std::dec << std::endl;
 }
-
-class CharacterWrapper :
-    boost::noncopyable
-{
-    public:
-
-	explicit CharacterWrapper (char *c) :
-	    mChar (c)
-	{
-	}
-
-	~CharacterWrapper ()
-	{
-	    free (mChar);
-	}
-
-	operator char * ()
-	{
-	    return mChar;
-	}
-
-	operator const char * () const
-	{
-	    return mChar;
-	}
-
-    private:
-
-	char *mChar;
-};
 
 class CCSListWrapper :
     boost::noncopyable

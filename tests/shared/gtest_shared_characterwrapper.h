@@ -1,6 +1,8 @@
 #ifndef _COMPIZ_GTEST_SHARED_CHARACTERWRAPPER
 #define _COMPIZ_GTEST_SHARED_CHARACTERWRAPPER
 
+#include <boost/noncopyable.hpp>
+
 class CharacterWrapper :
     boost::noncopyable
 {
