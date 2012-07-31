@@ -370,7 +370,7 @@ WallpaperScreen::handleEvent (XEvent *event)
 {
     screen->handleEvent (event);
 
-    if (!screen->desktopWindowCount () && fakeDesktop == None && backgroundsPrimary.size())
+    if (!screen->desktopWindowCount () && fakeDesktop == None && !backgroundsPrimary.empty())
 	createFakeDesktopWindow ();
 
     if ((screen->desktopWindowCount () > 1 || backgroundsPrimary.empty())
@@ -571,7 +571,7 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 {
     WALLPAPER_SCREEN (screen);
 
-    if ((!ws->desktop || ws->desktop == window) && ws->backgroundsPrimary.size() &&
+    if ((!ws->desktop || ws->desktop == window) && ws->!backgroundsPrimary.empty() &&
 	window->alpha () && window->type () & CompWindowTypeDesktopMask)
     {
 	int filterIdx;
