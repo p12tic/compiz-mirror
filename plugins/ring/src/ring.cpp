@@ -1138,7 +1138,7 @@ RingScreen::windowRemove (CompWindow *w)
 
 	/* Terminate if the window closed was the last window in the list */
 
-	if (!mWindows.size ())
+	if (mWindows.empty ())
 	{
 	    CompOption o ("root", CompOption::TypeInt);
 	    CompOption::Vector opts;
