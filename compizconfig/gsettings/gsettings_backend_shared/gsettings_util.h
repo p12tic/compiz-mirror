@@ -193,10 +193,12 @@ deleteProfile (CCSBackend *backend,
 	       const char *profile);
 
 gboolean
-insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
-					   const char *string,
-					   ComparisonPredicate insert,
-					   ComparisonPredicate append);
+appendStringToVariantIfUnique (GVariant	  **variant,
+			       const char *string);
+
+void
+removeItemFromVariant (GVariant	  **variant,
+		       const char *string);
 
 gboolean
 ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context);
