@@ -298,7 +298,7 @@ ColorfilterWindow::glDrawTexture (GLTexture 		   *texture,
     /* We are filtering a decoration */
     if ((cfs->optionGetFilterDecorations () &&
 	isFiltered &&
-	cfs->!filtersFunctions.empty ()))
+	!cfs->filtersFunctions.empty ()))
 	shouldFilter = true;
 
     /* Check if filters have to be loaded and load them if so
