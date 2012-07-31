@@ -711,7 +711,7 @@ GridScreen::handleEvent (XEvent *event)
 
 		if (lastSlot != desiredSlot)
 		{
-			if (animations.size ())
+			if (!animations.empty ())
 				/* Begin fading previous animation instance */
 				animations.at (animations.size () - 1).fadingOut = true;
 
