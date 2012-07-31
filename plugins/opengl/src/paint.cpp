@@ -999,7 +999,10 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
                           unsigned int               mask)
 {
 
-    if (GL::canDoSaturated && attrib.saturation != COLOR)
+    if (GL::canDoSaturated && (attrib.saturation != COLOR
+        // XXX Workaround for brightness fade problems, as seen in expo:
+        || attrib.brightness < BRIGHT  // FIXME: This should not be required.
+       ))
     {
 	GLfloat constant[4];
 
