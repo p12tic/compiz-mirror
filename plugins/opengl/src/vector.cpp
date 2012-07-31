@@ -66,13 +66,13 @@ GLVector::GLVector (float x,
     v[3] = w;
 }
 
-float &
+float&
 GLVector::operator[] (int item)
 {
     return v[item];
 }
 
-float &
+float&
 GLVector::operator[] (VectorCoordsEnum coord)
 {
     int item = (int) coord;

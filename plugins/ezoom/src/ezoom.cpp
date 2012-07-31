@@ -382,7 +382,7 @@ EZoomScreen::drawBox (const GLMatrix &transform,
 		     CompRect             box)
 {
     GLMatrix zTransform (transform);
-    int      x1, x2, y1, y2;
+    int           x1,x2,y1,y2;
     int		  inx1, inx2, iny1, iny2;
     int	          out = output->id ();
     GLushort colorData[4];
@@ -1172,7 +1172,7 @@ EZoomScreen::drawCursor (CompOutput          *output,
 /* Create (if necessary) a texture to store the cursor,
  * fetch the cursor with XFixes. Store it.  */
 void
-EZoomScreen::updateCursor (CursorTexture *cursor)
+EZoomScreen::updateCursor (CursorTexture * cursor)
 {
     unsigned char *pixels;
     int           i;

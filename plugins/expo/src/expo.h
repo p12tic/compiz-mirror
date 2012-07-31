@@ -52,15 +52,15 @@ class ExpoScreen :
 			    const CompRegion&, CompOutput *, unsigned int);
 	void glPaintTransformedOutput (const GLScreenPaintAttrib&,
 				       const GLMatrix&, const CompRegion&,
-	                               CompOutput*, unsigned int);
+				       CompOutput *, unsigned int);
 
-	bool dndInit (CompAction*, CompAction::State, CompOption::Vector&);
-	bool dndFini (CompAction*, CompAction::State, CompOption::Vector&);
-	bool doExpo (CompAction*, CompAction::State, CompOption::Vector&);
-	bool exitExpo (CompAction*, CompAction::State, CompOption::Vector&);
-	bool termExpo (CompAction*, CompAction::State, CompOption::Vector&);
-	bool nextVp (CompAction*, CompAction::State, CompOption::Vector&);
-	bool prevVp (CompAction*, CompAction::State, CompOption::Vector&);
+	bool dndInit (CompAction *, CompAction::State, CompOption::Vector&);
+	bool dndFini (CompAction *, CompAction::State, CompOption::Vector&);
+	bool doExpo (CompAction *, CompAction::State, CompOption::Vector&);
+	bool exitExpo (CompAction *, CompAction::State, CompOption::Vector&);
+	bool termExpo (CompAction *, CompAction::State, CompOption::Vector&);
+	bool nextVp (CompAction *, CompAction::State, CompOption::Vector&);
+	bool prevVp (CompAction *, CompAction::State, CompOption::Vector&);
 
 	typedef enum {
 	    DnDNone,
