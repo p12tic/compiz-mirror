@@ -936,43 +936,85 @@ writeVariantToKey (GSettings  *settings,
     g_settings_set_value (settings, key, value);
 }
 
-/* This shouldn't be one function */
-gboolean
-insertStringIntoVariantIfMatchesPredicate (GVariant **variant,
-					   const char *string,
-					   ComparisonPredicate shouldInsertIntoListFunc,
-					   ComparisonPredicate checkIfItemAlreadyInListFunc)
+typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);
+
+typedef struct _FindItemInVariantData
 {
-    char	    *str;
-    GVariantBuilder *newVariantBuilder;
+    gboolean   found;
+    const char *item;
+} FindItemInVariantData;
+
+static void
+insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
+{
+    const char *cmp = (const char *) userData;
+
+    if (g_strcmp0 (item, cmp))
+	g_variant_builder_add (builder, "s", item);
+}
+
+static void
+findItemForVariantData (GVariantBuilder *builder, const char *item, void *userData)
+{
+    FindItemInVariantData *data = (FindItemInVariantData *) userData;
+
+    if (!data->found)
+	data->found = g_str_equal (data->item, item);
+
+    g_variant_builder_add (builder, "s", item);
+}
+
+static void
+rebuildVariant (GVariantBuilder		      *builder,
+		GVariant		      *originalVariant,
+		VariantItemCheckAndInsertFunc checkAndInsert,
+		void			      *userData)
+{
     GVariantIter    iter;
-    gboolean        foundItemInListAlready = FALSE;
+    char	    *str;
 
-    newVariantBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
-
-    g_variant_iter_init (&iter, *variant);
+    g_variant_iter_init (&iter, originalVariant);
     while (g_variant_iter_loop (&iter, "s", &str))
     {
-	gboolean doInsert = TRUE;
-	if (shouldInsertIntoListFunc)
-	    doInsert = (*shouldInsertIntoListFunc) (str, string);
-
-	if (doInsert)
-	    g_variant_builder_add (newVariantBuilder, "s", str);
-
-	if (!foundItemInListAlready && checkIfItemAlreadyInListFunc)
-	    foundItemInListAlready = (*checkIfItemAlreadyInListFunc) (str, string);
+	(*checkAndInsert) (builder, str, userData);
     }
+}
 
-    if (!foundItemInListAlready && checkIfItemAlreadyInListFunc)
-	g_variant_builder_add (newVariantBuilder, "s", string);
+gboolean
+appendStringToVariantIfUnique (GVariant	  **variant,
+			       const char *string)
+{
+    GVariantBuilder newVariantBuilder;
+    FindItemInVariantData findItemData;
+
+    memset (&findItemData, 0, sizeof (FindItemInVariantData));
+    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
+
+    findItemData.item = string;
+
+    rebuildVariant  (&newVariantBuilder, *variant, findItemForVariantData, &findItemData);
+
+    if (!findItemData.found)
+	g_variant_builder_add (&newVariantBuilder, "s", string);
 
     g_variant_unref (*variant);
-    *variant = g_variant_new ("as", newVariantBuilder);
+    *variant = g_variant_builder_end (&newVariantBuilder);
 
-    g_variant_builder_unref (newVariantBuilder);
+    return !findItemData.found;
+}
 
-    return !foundItemInListAlready;
+void
+removeItemFromVariant (GVariant	  **variant,
+		       const char *string)
+{
+    GVariantBuilder newVariantBuilder;
+
+    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
+
+    rebuildVariant (&newVariantBuilder, *variant, insertIfNotEqual, (void *) string);
+
+    g_variant_unref (*variant);
+    *variant = g_variant_builder_end (&newVariantBuilder);
 }
 
 void
@@ -981,7 +1023,7 @@ ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const c
     GVariant        *profiles;
 
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
-    if (insertStringIntoVariantIfMatchesPredicate (&profiles, profile, NULL, g_str_equal))
+    if (appendStringToVariantIfUnique (&profiles, profile))
 	ccsGSettingsBackendSetExistingProfiles (backend, profiles);
 
     g_variant_unref (profiles);
@@ -1025,10 +1067,10 @@ deleteProfile (CCSBackend *backend,
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
 
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
-
     ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
 
-    insertStringIntoVariantIfMatchesPredicate (&profiles, profile, voidcmp0, NULL);
+    removeItemFromVariant (&profiles, profile);
+
     /* Remove the profile from existing-profiles */
     ccsGSettingsBackendSetExistingProfiles (backend, profiles);
 
