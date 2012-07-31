@@ -391,7 +391,7 @@ matchAddFromString (MatchOp::List &list,
 	}
     }
 
-    if (list.size ())
+    if (!list.empty ())
 	list.front ()->flags &= ~MATCH_OP_AND_MASK;
 
 }
