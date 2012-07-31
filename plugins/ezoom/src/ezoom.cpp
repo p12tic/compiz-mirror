@@ -1098,7 +1098,7 @@ EZoomScreen::drawCursor (CompOutput          *output,
 
     if (cursor.isSet)
     {
-	GLMatrix        sTransform (transform);
+	GLMatrix      sTransform = transform;
 	float	      scaleFactor;
 	int           ax, ay, x, y;
 	GLfloat         textureData[8];
@@ -1109,7 +1109,7 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	 * XXX: expo knows how to handle mouse when zoomed, so we back off
 	 * when expo is active.
 	 */
-	if (screen->grabExist ("expo"))
+	if (screen->grabExist ( "expo"))
 	{
 	    cursorZoomInactive ();
 	    return;
@@ -1128,6 +1128,8 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	x = -cursor.hotX;
 	y = -cursor.hotY;
 
+	glEnable (GL_BLEND);
+	glEnable (GL_TEXTURE_2D);
 	glBindTexture (GL_TEXTURE_2D, cursor.texture);
 
 	streamingBuffer->begin (GL_TRIANGLE_STRIP);
@@ -1150,18 +1152,20 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	textureData[0] = 0;
 	textureData[1] = 0;
 	textureData[2] = 0;
-	textureData[3] = cursor.height;
-	textureData[4] = cursor.width;
+	textureData[3] = 1;
+	textureData[4] = 1;
 	textureData[5] = 0;
-	textureData[6] = cursor.width;
-	textureData[7] = cursor.height;
+	textureData[6] = 1;
+	textureData[7] = 1;
 
-	streamingBuffer->addTexCoords (1, 4, textureData);
+	streamingBuffer->addTexCoords (0, 4, textureData);
 
 	streamingBuffer->end ();
 	streamingBuffer->render (sTransform);
 
 	glBindTexture (GL_TEXTURE_2D, 0);
+	glDisable (GL_TEXTURE_2D);
+	glDisable (GL_BLEND);
     }
 }
 
@@ -1185,6 +1189,8 @@ EZoomScreen::updateCursor (CursorTexture *cursor)
 
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
     }
     else {
 	glEnable (GL_TEXTURE_2D);
