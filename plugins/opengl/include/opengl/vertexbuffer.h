@@ -82,15 +82,15 @@ class GLVertexBuffer
 	int end ();
 
 	// vertices and normals are 3 parts, count is number of xyz groups
-	void addVertices (GLuint nVertices, GLfloat *vertices);
+	void addVertices (GLuint nVertices, const GLfloat *vertices);
 	GLfloat *getVertices () const;  // AKA GLWindow::Geometry::vertices
 	int getVertexStride () const;   // AKA GLWindow::Geometry::vertexStride
 	int countVertices () const;     // AKA GLWindow::Geometry::vCount
 
-	void addNormals (GLuint nNormals, GLfloat *normals);
+	void addNormals (GLuint nNormals, const GLfloat *normals);
 
 	// color is always RGBA (4 parts), count is number of rgba groups
-	void addColors (GLuint nColors, GLushort *colors);
+	void addColors (GLuint nColors, const GLushort *colors);
 
 	void color4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 	void colorDefault ();
@@ -98,7 +98,7 @@ class GLVertexBuffer
 	// texture is index, texcoords are 2 parts, count is number of pairs
 	void addTexCoords (GLuint texture,
 	                   GLuint nTexcoords,
-	                   GLfloat *texcoords);
+	                   const GLfloat *texcoords);
 
 	void addUniform (const char *name, GLfloat value);
 	void addUniform (const char *name, GLint value);

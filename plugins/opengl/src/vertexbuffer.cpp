@@ -147,7 +147,7 @@ int GLVertexBuffer::end ()
     return 0;
 }
 
-void GLVertexBuffer::addVertices (GLuint nVertices, GLfloat *vertices)
+void GLVertexBuffer::addVertices (GLuint nVertices, const GLfloat *vertices)
 {
     priv->vertexData.reserve (priv->vertexData.size () + (nVertices * 3));
 
@@ -182,7 +182,7 @@ void GLVertexBuffer::setMaxVertices (GLint vMax)
     priv->maxVertices = vMax;
 }
 
-void GLVertexBuffer::addNormals (GLuint nNormals, GLfloat *normals)
+void GLVertexBuffer::addNormals (GLuint nNormals, const GLfloat *normals)
 {
     priv->normalData.reserve (priv->normalData.size () + (nNormals * 3));
 
@@ -192,7 +192,7 @@ void GLVertexBuffer::addNormals (GLuint nNormals, GLfloat *normals)
     }
 }
 
-void GLVertexBuffer::addColors (GLuint nColors, GLushort *colors)
+void GLVertexBuffer::addColors (GLuint nColors, const GLushort *colors)
 {
     priv->colorData.reserve (priv->colorData.size () + (nColors * 4));
 
@@ -220,7 +220,7 @@ void GLVertexBuffer::colorDefault ()
 
 void GLVertexBuffer::addTexCoords (GLuint texture,
                                    GLuint nTexcoords,
-                                   GLfloat *texcoords)
+                                   const GLfloat *texcoords)
 {
     if (texture >= PrivateVertexBuffer::MAX_TEXTURES)
 	return;
