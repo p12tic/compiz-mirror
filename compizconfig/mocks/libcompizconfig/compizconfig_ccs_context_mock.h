@@ -26,7 +26,7 @@ class CCSContextGMockInterface
 	virtual Bool pluginIsActive (char *name) = 0;
 	virtual CCSPluginList getActivePluginList () = 0;
 	virtual CCSStringList getSortedPluginStringList () = 0;
-	virtual char * getBackend () = 0;
+	virtual const char * getBackend () = 0;
 	virtual Bool setBackend (char *name) = 0;
 	virtual void setIntegrationEnabled (Bool value) = 0;
 	virtual void setProfile (char *name) = 0;
@@ -74,7 +74,7 @@ class CCSContextGMock :
 	MOCK_METHOD1 (pluginIsActive, Bool (char *));
 	MOCK_METHOD0 (getActivePluginList, CCSPluginList ());
 	MOCK_METHOD0 (getSortedPluginStringList, CCSStringList ());
-	MOCK_METHOD0 (getBackend, char * ());
+	MOCK_METHOD0 (getBackend, const char * ());
 	MOCK_METHOD1 (setBackend, Bool (char *));
 	MOCK_METHOD1 (setIntegrationEnabled, void (Bool));
 	MOCK_METHOD1 (setProfile, void (char *));
@@ -186,7 +186,7 @@ class CCSContextGMock :
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->getSortedPluginStringList ();
 	}
 
-	static char *
+	static const char *
 	ccsGetBackend (CCSContext *context)
 	{
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->getBackend ();

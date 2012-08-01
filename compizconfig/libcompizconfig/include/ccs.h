@@ -157,7 +157,7 @@ typedef Bool (*CCSContextPluginIsActive) (CCSContext *context, char *name);
 typedef CCSPluginList (*CCSContextGetActivePluginList) (CCSContext *context);
 typedef CCSStringList (*CCSContextGetSortedPluginStringList) (CCSContext *context);
 typedef Bool (*CCSContextSetBackend) (CCSContext *context, char *name);
-typedef char * (*CCSContextGetBackend) (CCSContext *context);
+typedef const char * (*CCSContextGetBackend) (CCSContext *context);
 typedef void (*CCSContextSetIntegrationEnabled) (CCSContext *context, Bool value);
 typedef void (*CCSContextSetProfile) (CCSContext *context, char *name);
 typedef void (*CCSContextSetPluginListAutoSort) (CCSContext *context, Bool value);
@@ -238,16 +238,6 @@ void * ccsContextGetChangedSettingsBindable (CCSContext *context);
 struct _CCSContext
 {
     CCSObject object;
-};
-
-struct _CCSBackendInfo
-{
-    char *name;              /* name of the backend */
-    char *shortDesc;         /* backend's short description */
-    char *longDesc;          /* backend's long description */
-    Bool integrationSupport; /* does the backend support DE integration? */
-    Bool profileSupport;     /* does the backend support profiles? */
-    unsigned int refCount;   /* reference count */
 };
 
 /* CCSPluginInterface */
@@ -845,7 +835,7 @@ CCSStringList ccsGetSortedPluginStringList (CCSContext *context);
 Bool ccsSetBackend (CCSContext *context,
 		    char       *name);
 /* Retrieves the name of the backend active for the context. */
-char * ccsGetBackend (CCSContext *context);
+const char * ccsGetBackend (CCSContext *context);
 
 /* Enable/disable DE integration for a context. */
 void ccsSetIntegrationEnabled (CCSContext *context,
