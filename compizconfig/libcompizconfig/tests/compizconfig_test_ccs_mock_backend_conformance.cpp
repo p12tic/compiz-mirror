@@ -94,6 +94,8 @@ class MockCCSBackendConceptTestEnvironment :
 
 	const CCSBackendInfo * GetInfo ()
 	{
+	    EXPECT_CALL (*mBackendGMock, getInfo ()).WillOnce (Return (&mockBackendInfo));
+
 	    return &mockBackendInfo;
 	}
 
@@ -530,4 +532,5 @@ class MockCCSBackendConceptTestEnvironment :
 INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestReadWrite,
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
-
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestInfo,
+			 ::testing::Values (boost::shared_static_cast <CCSBackendConceptTestEnvironmentFactoryInterface> (boost::make_shared <CCSBackendConceptTestEnvironmentFactory <MockCCSBackendConceptTestEnvironment> > ())));
