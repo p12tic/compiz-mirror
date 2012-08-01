@@ -1226,9 +1226,9 @@ const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend)
 }
 
 static Bool
-ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *backend)
 {
-    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendGetInfo (dbPrivate->backend)->integrationSupport;
 }
@@ -1238,29 +1238,29 @@ const char * ccsDynamicBackendGetBackendName (CCSDynamicBackend *backend)
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->getBackendName) (backend);
 }
 
-Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsRead) (DYNAMIC_BACKEND_PRIVities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->supportsRead) (backend);
 }
 
-Bool ccsDynamicBackendSupportsWrite (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+Bool ccsDynamicBackendSupportsWrite (CCSDynamicBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsWrite) (DYNAMIC_BACKEND_PRIVities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->supportsWrite) (backend);
 }
 
-Bool ccsDynamicBackendSupportsProfiles (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+Bool ccsDynamicBackendSupportsProfiles (CCSDynamicBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsProfiles) (DYNAMIC_BACKEND_PRIVities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->supportsProfiles) (backend);
 }
 
-Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+Bool ccsDynamicBackendSupportsIntegration (CCSDynamicBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsIntegration) (DYNAMIC_BACKEND_PRIVities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->supportsIntegration) (backend);
 }
 
-CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->getRawBackend) (DYNAMIC_BACKEND_PRIVities);
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->getRawBackend) (backend);
 }
 
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend)
@@ -1402,33 +1402,33 @@ ccsDynamicBackendGetBackendNameDefault (CCSDynamicBackend *backend)
 }
 
 static Bool
-ccsDynamicBackendSupportsReadDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+ccsDynamicBackendSupportsReadDefault (CCSDynamicBackend *backend)
 {
-    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendHasReadSetting (dbPrivate->backend);
 }
 
 static Bool
-ccsDynamicBackendSupportsWriteDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+ccsDynamicBackendSupportsWriteDefault (CCSDynamicBackend *backend)
 {
-    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendHasWriteSetting (dbPrivate->backend);
 }
 
 static Bool
-ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *backend)
 {
-    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendGetInfo (dbPrivate->backend)->profileSupport;
 
 }
 
-static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
+static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *backend)
 {
-    DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
+    DYNAMIC_BACKEND_PRIV (backend);
 
     return dbPrivate->backend;
 }
