@@ -20,11 +20,7 @@ TEST(CCSBackendTest, TestMock)
 
     CCSStringList profiles = NULL;
 
-    EXPECT_CALL (*mock, getName ());
-    EXPECT_CALL (*mock, getShortDesc ());
-    EXPECT_CALL (*mock, getLongDesc ());
-    EXPECT_CALL (*mock, hasProfileSupport ());
-    EXPECT_CALL (*mock, hasIntegrationSupport ());
+    EXPECT_CALL (*mock, getInfo ());
     EXPECT_CALL (*mock, executeEvents (_));
     EXPECT_CALL (*mock, init (_));
     EXPECT_CALL (*mock, fini ());
@@ -39,11 +35,7 @@ TEST(CCSBackendTest, TestMock)
     EXPECT_CALL (*mock, getExistingProfiles (_)).WillRepeatedly (Return (profiles));
     EXPECT_CALL (*mock, deleteProfile (_, _));
 
-    ccsBackendGetName (backend);
-    ccsBackendGetShortDesc (backend);
-    ccsBackendGetLongDesc (backend);
-    ccsBackendHasProfileSupport (backend);
-    ccsBackendHasIntegrationSupport (backend);
+    ccsBackendGetInfo (backend);
     ccsBackendExecuteEvents (backend, 0);
     ccsBackendInit (backend, NULL);
     ccsBackendFini (backend);
