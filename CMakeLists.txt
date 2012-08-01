@@ -217,6 +217,6 @@ _print_configure_results ()
 _check_compiz_cmake_macro (${CMAKE_MODULE_PATH_ORIG})
 
 # Enable coverage reporting for compiz
-enable_coverage_report()
+compiz_generate_coverage_report()
 
 

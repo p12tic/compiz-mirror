@@ -35,6 +35,7 @@ target_link_libraries (compizconfig_test_gsettings
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 
+<<<<<<< TREE
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/backend-conformance-config.h.in
 		${CMAKE_CURRENT_BINARY_DIR}/backend-conformance-config.h)
 
@@ -57,5 +58,5 @@ target_link_libraries (compizconfig_test_gsettings_conformance
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 
-compiz_discover_tests (compizconfig_test_gsettings)
-compiz_discover_tests (compizconfig_test_gsettings_conformance)
+compiz_discover_tests (compizconfig_test_gsettings COVERAGE gsettings_backend_shared)
+compiz_discover_tests (compizconfig_test_gsettings_conformance COVERAGE gsettings_backend_shared gsettings)
