@@ -1070,10 +1070,10 @@ ccsFreeDynamicBackend (CCSDynamicBackend *DynamicBackend)
 {
     DYNAMIC_BACKEND_PRIV (DynamicBackend);
 
-    ccsBackendUnref (bcPrivate->backend);
+    ccsBackendUnref (dbPrivate->backend);
 
-    if (bcPrivate->dlhand)
-	dlclose (bcPrivate->dlhand);
+    if (dbPrivate->dlhand)
+	dlclose (dbPrivate->dlhand);
 
     ccsObjectFinalize (DynamicBackend);
     free (DynamicBackend);
@@ -1096,7 +1096,7 @@ CCSDynamicBackend *
 ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend, void *dlhand)
 {
     CCSDynamicBackend *dynamicBackend = calloc (1, sizeof (CCSDynamicBackend));
-    CCSDynamicBackendPrivate *bcPrivate = NULL;
+    CCSDynamicBackendPrivate *dbPrivate = NULL;
 
     if (!dynamicBackend)
 	return NULL;
@@ -1104,18 +1104,18 @@ ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBack
     ccsObjectInit (dynamicBackend, &ccsDefaultObjectAllocator);
     ccsDynamicBackendRef (dynamicBackend);
 
-    bcPrivate = calloc (1, sizeof (CCSDynamicBackendPrivate));
+    dbPrivate = calloc (1, sizeof (CCSDynamicBackendPrivate));
 
-    if (!bcPrivate)
+    if (!dbPrivate)
     {
 	ccsDynamicBackendUnref (dynamicBackend);
 	return NULL;
     }
 
-    bcPrivate->dlhand = dlhand;
-    bcPrivate->backend = backend;
+    dbPrivate->dlhand = dlhand;
+    dbPrivate->backend = backend;
 
-    ccsObjectSetPrivate (dynamicBackend, (CCSPrivate *) bcPrivate);
+    ccsObjectSetPrivate (dynamicBackend, (CCSPrivate *) dbPrivate);
     ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendWrapperInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
     ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendInterface, GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
 
@@ -1230,7 +1230,7 @@ ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *DYNAMIC_BACKEND_
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return ccsBackendGetInfo (bcPrivate->backend)->integrationSupport;
+    return ccsBackendGetInfo (dbPrivate->backend)->integrationSupport;
 }
 
 Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
@@ -1393,7 +1393,7 @@ ccsDynamicBackendSupportsReadDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIViti
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return ccsBackendHasReadSetting (bcPrivate->backend);
+    return ccsBackendHasReadSetting (dbPrivate->backend);
 }
 
 static Bool
@@ -1401,7 +1401,7 @@ ccsDynamicBackendSupportsWriteDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVit
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return ccsBackendHasWriteSetting (bcPrivate->backend);
+    return ccsBackendHasWriteSetting (dbPrivate->backend);
 }
 
 static Bool
@@ -1409,7 +1409,7 @@ ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRI
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return ccsBackendGetInfo (bcPrivate->backend)->profileSupport;
+    return ccsBackendGetInfo (dbPrivate->backend)->profileSupport;
 
 }
 
@@ -1417,44 +1417,44 @@ static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *DY
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return bcPrivate->backend;
+    return dbPrivate->backend;
 }
 
 static const CCSBackendInfo * ccsDynamicBackendGetInfoWrapper (CCSBackend *backend)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    return ccsBackendGetInfo (bcPrivate->backend);
+    return ccsBackendGetInfo (dbPrivate->backend);
 }
 
 static Bool ccsDynamicBackendInitWrapper (CCSBackend *backend, CCSContext *context)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    return ccsBackendInit (bcPrivate->backend, context);
+    return ccsBackendInit (dbPrivate->backend, context);
 }
 
 static Bool ccsDynamicBackendFiniWrapper (CCSBackend *backend)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    return ccsBackendFini (bcPrivate->backend);
+    return ccsBackendFini (dbPrivate->backend);
 }
 
 static void ccsDynamicBackendExecuteEventsWrapper (CCSBackend *backend, unsigned int flags)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasExecuteEvents (bcPrivate->backend))
-	ccsBackendExecuteEvents (bcPrivate->backend, flags);
+    if (ccsBackendHasExecuteEvents (dbPrivate->backend))
+	ccsBackendExecuteEvents (dbPrivate->backend, flags);
 }
 
 static Bool ccsDynamicBackendReadInitWrapper (CCSBackend *backend, CCSContext *context)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasReadInit (bcPrivate->backend))
-	return ccsBackendReadInit (bcPrivate->backend, context);
+    if (ccsBackendHasReadInit (dbPrivate->backend))
+	return ccsBackendReadInit (dbPrivate->backend, context);
 
     return TRUE;
 }
@@ -1463,24 +1463,24 @@ static void ccsDynamicBackendReadSettingWrapper (CCSBackend *backend, CCSContext
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasReadSetting (bcPrivate->backend))
-	ccsBackendReadSetting (bcPrivate->backend, context, setting);
+    if (ccsBackendHasReadSetting (dbPrivate->backend))
+	ccsBackendReadSetting (dbPrivate->backend, context, setting);
 }
 
 static void ccsDynamicBackendReadDoneWrapper (CCSBackend *backend, CCSContext *context)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasReadDone (bcPrivate->backend))
-	ccsBackendReadDone (bcPrivate->backend, context);
+    if (ccsBackendHasReadDone (dbPrivate->backend))
+	ccsBackendReadDone (dbPrivate->backend, context);
 }
 
 static Bool ccsDynamicBackendWriteInitWrapper (CCSBackend *backend, CCSContext *context)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasWriteInit (bcPrivate->backend))
-	return ccsBackendWriteInit (bcPrivate->backend, context);
+    if (ccsBackendHasWriteInit (dbPrivate->backend))
+	return ccsBackendWriteInit (dbPrivate->backend, context);
 
     return TRUE;
 }
@@ -1489,33 +1489,33 @@ static void ccsDynamicBackendWriteSettingWrapper (CCSBackend *backend, CCSContex
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasWriteSetting (bcPrivate->backend))
-	ccsBackendWriteSetting (bcPrivate->backend, context, setting);
+    if (ccsBackendHasWriteSetting (dbPrivate->backend))
+	ccsBackendWriteSetting (dbPrivate->backend, context, setting);
 }
 
 static void ccsDynamicBackendWriteDoneWrapper (CCSBackend *backend, CCSContext *context)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasWriteDone (bcPrivate->backend))
-	ccsBackendWriteDone (bcPrivate->backend, context);
+    if (ccsBackendHasWriteDone (dbPrivate->backend))
+	ccsBackendWriteDone (dbPrivate->backend, context);
 }
 
 static void ccsDynamicBackendUpdateSettingWrapper (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasUpdateSetting (bcPrivate->backend))
-	ccsBackendUpdateSetting (bcPrivate->backend, context, plugin, setting);
+    if (ccsBackendHasUpdateSetting (dbPrivate->backend))
+	ccsBackendUpdateSetting (dbPrivate->backend, context, plugin, setting);
 }
 
 static Bool ccsDynamicBackendGetSettingIsIntegratedWrapper (CCSBackend *backend, CCSSetting *setting)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasGetSettingIsIntegrated (bcPrivate->backend) &&
+    if (ccsBackendHasGetSettingIsIntegrated (dbPrivate->backend) &&
 	ccsDynamicBackendSupportsIntegration ((CCSDynamicBackend *) backend))
-	return ccsBackendGetSettingIsIntegrated (bcPrivate->backend, setting);
+	return ccsBackendGetSettingIsIntegrated (dbPrivate->backend, setting);
 
     return FALSE;
 }
@@ -1524,8 +1524,8 @@ static Bool ccsDynamicBackendGetSettingIsReadOnlyWrapper (CCSBackend *backend, C
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasGetSettingIsReadOnly (bcPrivate->backend))
-	return ccsBackendGetSettingIsReadOnly (bcPrivate->backend, setting);
+    if (ccsBackendHasGetSettingIsReadOnly (dbPrivate->backend))
+	return ccsBackendGetSettingIsReadOnly (dbPrivate->backend, setting);
 
     return FALSE;
 }
@@ -1534,9 +1534,9 @@ static CCSStringList ccsDynamicBackendGetExistingProfilesWrapper (CCSBackend *ba
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasGetExistingProfiles (bcPrivate->backend) &&
+    if (ccsBackendHasGetExistingProfiles (dbPrivate->backend) &&
 	ccsDynamicBackendSupportsProfiles ((CCSDynamicBackend *) backend))
-	return ccsBackendGetExistingProfiles (bcPrivate->backend, context);
+	return ccsBackendGetExistingProfiles (dbPrivate->backend, context);
 
     static CCSStringList sl = NULL;
 
@@ -1547,9 +1547,9 @@ static Bool ccsDynamicBackendDeleteProfileWrapper (CCSBackend *backend, CCSConte
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
-    if (ccsBackendHasDeleteProfile (bcPrivate->backend) &&
+    if (ccsBackendHasDeleteProfile (dbPrivate->backend) &&
 	ccsDynamicBackendSupportsProfiles ((CCSDynamicBackend *) backend))
-	return ccsBackendDeleteProfile (bcPrivate->backend, context, profile);
+	return ccsBackendDeleteProfile (dbPrivate->backend, context, profile);
 
     return FALSE;
 }
