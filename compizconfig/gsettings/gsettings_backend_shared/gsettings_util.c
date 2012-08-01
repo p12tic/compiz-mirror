@@ -6,6 +6,16 @@
 
 INTERFACE_TYPE (CCSGSettingsBackendInterface);
 
+const CCSBackendInfo gsettingsBackendInfo =
+{
+    "gsettings",
+    "GSettings Configuration Backend",
+    "GSettings Configuration Backend for libccs",
+    TRUE,
+    TRUE,
+    1
+};
+
 int voidcmp0 (const void *v1, const void *v2)
 {
     return g_strcmp0 ((const char *) v1, (const char *) v2);

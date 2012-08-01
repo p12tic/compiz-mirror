@@ -13,6 +13,8 @@ COMPIZCONFIG_BEGIN_DECLS
 typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
+extern const CCSBackendInfo gsettingsBackendInfo;
+
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
 typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, GObject *);
 typedef GSettings * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CCSBackend *backend,
