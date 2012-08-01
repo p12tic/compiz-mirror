@@ -197,6 +197,8 @@ class CCSBackendConceptTestEnvironmentInterface
 				    CCSContextGMock *gmockContext) = 0;
 	virtual void TearDown (CCSBackend *) = 0;
 
+	virtual const CCSBackendInfo * GetInfo () = 0;
+
 	virtual void PreWrite (CCSContextGMock *,
 			       CCSPluginGMock  *,
 			       CCSSettingGMock *,
@@ -699,14 +701,14 @@ class CCSBackendConceptTestParam :
 
 };
 
-class CCSBackendConformanceTest :
+class CCSBackendConformanceTestParameterized :
     public ::testing::TestWithParam <CCSBackendConceptTestParamInterface::Ptr>
 {
     public:
 
-	virtual ~CCSBackendConformanceTest () {}
+	virtual ~CCSBackendConformanceTestParameterized () {}
 
-	CCSBackendConformanceTest () :
+	CCSBackendConformanceTestParameterized () :
 	    profileName ("mock")
 	{
 	}
@@ -718,7 +720,7 @@ class CCSBackendConformanceTest :
 
 	virtual void SetUp ()
 	{
-	    CCSBackendConformanceTest::SpawnContext (context);
+	    CCSBackendConformanceTestParameterized::SpawnContext (context);
 	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
 
 	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
@@ -728,7 +730,7 @@ class CCSBackendConformanceTest :
 
 	virtual void TearDown ()
 	{
-	    CCSBackendConformanceTest::GetParam ()->TearDown (mBackend);
+	    CCSBackendConformanceTestParameterized::GetParam ()->TearDown (mBackend);
 	}
 
     protected:
@@ -1030,7 +1032,7 @@ GenerateTestingParametersForBackendInterface ()
 }
 
 class CCSBackendConformanceTestReadWrite :
-    public CCSBackendConformanceTest
+    public CCSBackendConformanceTestParameterized
 {
     public:
 
@@ -1038,14 +1040,14 @@ class CCSBackendConformanceTestReadWrite :
 
 	virtual void SetUp ()
 	{
-	    CCSBackendConformanceTest::SetUp ();
+	    CCSBackendConformanceTestParameterized::SetUp ();
 
 	    pluginName = "mock";
 	    settingName = GetParam ()->keyname ();
 	    VALUE = GetParam ()->value ();
 
-	    CCSBackendConformanceTest::SpawnPlugin (pluginName, context, plugin);
-	    CCSBackendConformanceTest::SpawnSetting (settingName, GetParam ()->type (), plugin, setting);
+	    CCSBackendConformanceTestParameterized::SpawnPlugin (pluginName, context, plugin);
+	    CCSBackendConformanceTestParameterized::SpawnSetting (settingName, GetParam ()->type (), plugin, setting);
 
 	    gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin.get ());
 	    gmockSetting = (CCSSettingGMock *) ccsObjectGetPrivate (setting.get ());
@@ -1053,7 +1055,7 @@ class CCSBackendConformanceTestReadWrite :
 
 	virtual void TearDown ()
 	{
-	    CCSBackendConformanceTest::TearDown ();
+	    CCSBackendConformanceTestParameterized::TearDown ();
 	}
 
     protected:
@@ -1070,61 +1072,61 @@ class CCSBackendConformanceTestReadWrite :
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestReadValue)
 {
-    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Read");
+    SCOPED_TRACE (CCSBackendConformanceTestParameterized::GetParam ()->what () + "Read");
 
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->nativeWrite (CCSBackendConformanceTest::GetParam ()->testEnv (),
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PreRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->nativeWrite (CCSBackendConformanceTestParameterized::GetParam ()->testEnv (),
 							 pluginName, settingName, VALUE);
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PostRead (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
-    ccsBackendReadSetting (CCSBackendConformanceTest::GetBackend (), context.get (), setting.get ());
+    ccsBackendReadSetting (CCSBackendConformanceTestParameterized::GetBackend (), context.get (), setting.get ());
 }
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateMockedValue)
 {
-    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "UpdateMocked");
+    SCOPED_TRACE (CCSBackendConformanceTestParameterized::GetParam ()->what () + "UpdateMocked");
 
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->nativeWrite (CCSBackendConformanceTest::GetParam ()->testEnv (),
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PreUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->nativeWrite (CCSBackendConformanceTestParameterized::GetParam ()->testEnv (),
 							 pluginName, settingName, VALUE);
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
-    ccsBackendUpdateSetting (CCSBackendConformanceTest::GetBackend (), context.get (), plugin.get (), setting.get ());
+    ccsBackendUpdateSetting (CCSBackendConformanceTestParameterized::GetBackend (), context.get (), plugin.get (), setting.get ());
 }
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateKeyedValue)
 {
-    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "UpdateMocked");
+    SCOPED_TRACE (CCSBackendConformanceTestParameterized::GetParam ()->what () + "UpdateMocked");
 
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->nativeWrite (CCSBackendConformanceTest::GetParam ()->testEnv (),
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PreUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->nativeWrite (CCSBackendConformanceTestParameterized::GetParam ()->testEnv (),
 							 pluginName, settingName, VALUE);
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PostUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->setReadExpectation () (gmockSetting, VALUE);
 
     EXPECT_CALL (*gmockContext, findPlugin (_)).WillOnce (Return (plugin.get ()));
     EXPECT_CALL (*gmockPlugin, findSetting (_)).WillOnce (Return (setting.get ()));
 
-    EXPECT_TRUE (CCSBackendConformanceTest::GetParam ()->testEnv ()->UpdateSettingAtKey (pluginName, settingName));
+    EXPECT_TRUE (CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->UpdateSettingAtKey (pluginName, settingName));
 }
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 {
-    SCOPED_TRACE (CCSBackendConformanceTest::GetParam ()->what () + "Write");
+    SCOPED_TRACE (CCSBackendConformanceTestParameterized::GetParam ()->what () + "Write");
 
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PreWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
-    CCSBackendConformanceTest::GetParam ()->setWriteExpectationAndWrite () (pluginName,
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PreWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->setWriteExpectationAndWrite () (pluginName,
 									   settingName,
 									   VALUE,
 									   setting,
 									   boost::bind (ccsBackendWriteSetting,
-											CCSBackendConformanceTest::GetBackend (),
+											CCSBackendConformanceTestParameterized::GetBackend (),
 											context.get (),
 											setting.get ()),
 									   GetParam ()->testEnv ());
-    CCSBackendConformanceTest::GetParam ()->testEnv ()->PostWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
+    CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PostWrite (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
 
 }
 
