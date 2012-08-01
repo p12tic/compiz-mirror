@@ -31,7 +31,7 @@ typedef void (*CCSGSettingsBackendSetExistingProfiles) (CCSBackend *backend, GVa
 typedef void (*CCSGSettingsBackendSetCurrentProfile) (CCSBackend *backend, const gchar *value);
 
 typedef GVariant * (*CCSGSettingsBackendGetPluginsWithSetKeys) (CCSBackend *backend);
-typedef void (*CCSGSettingsBackendClearPluginsWithSetKeys) (CCSBackend *backend, const char *profile);
+typedef void (*CCSGSettingsBackendClearPluginsWithSetKeys) (CCSBackend *backend);
 
 typedef void (*CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile) (CCSBackend *backend, CCSContext *, GVariant *, const char *);
 
@@ -242,7 +242,7 @@ GVariant *
 ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend);
 
 void
-ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend, const char *profile);
+ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend);
 
 void
 ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,

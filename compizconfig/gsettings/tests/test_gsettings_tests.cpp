@@ -190,7 +190,7 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
 
     EXPECT_CALL (*mockBackend, getPluginsWithSetKeys ()).WillOnce (ReturnNull ());
     EXPECT_CALL (*mockBackend, unsetAllChangedPluginKeysInProfile (context.get (), NULL, Eq (currentProfile)));
-    EXPECT_CALL (*mockBackend, clearPluginsWithSetKeys (Eq (currentProfile)));
+    EXPECT_CALL (*mockBackend, clearPluginsWithSetKeys ());
 
     EXPECT_CALL (*mockBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
     EXPECT_CALL (*mockBackend, getExistingProfiles ()).WillOnce (Return (existingProfiles));
@@ -202,8 +202,6 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
     EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
 
     deleteProfile (backend.get (), context.get (), currentProfile.c_str ());
-
-    //g_variant_unref (existingProfiles);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)

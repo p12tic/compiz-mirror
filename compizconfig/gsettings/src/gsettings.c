@@ -590,11 +590,14 @@ static void
 ccsGSettingsBackendSetCurrentProfileDefault (CCSBackend *backend, const gchar *value)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    gchar           *profilePath = makeCompizProfilePath (value);
 
     /* Change the current profile and current profile settings */
-    free (priv->currentProfile);
+    if (priv->currentProfile)
+	free (priv->currentProfile);
 
-    gchar           *profilePath = makeCompizProfilePath (value);
+    if (priv->currentProfileSettings)
+	free (priv->currentProfileSettings);
 
     priv->currentProfile = strdup (value);
     priv->currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
@@ -608,21 +611,14 @@ GVariant *
 ccsGSettingsBackendGetPluginsWithSetKeysDefault (CCSBackend *backend)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
     return g_settings_get_value (priv->currentProfileSettings, "plugins-with-set-keys");
 }
 
 void
-ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend, const char *profile)
+ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend)
 {
-    char            *profileSettingsPath = makeCompizProfilePath (profile);
-
-    /* This looks weird, we are leaking this ... */
-    GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
-
-    g_settings_reset (profileSettings, "plugins-with-set-keys");
-
-    g_free (profileSettingsPath);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    g_settings_reset (priv->currentProfileSettings, "plugins-with-set-keys");
 }
 
 static void
