@@ -43,7 +43,9 @@ GLVertexBuffer *PrivateVertexBuffer::streamingBuffer = NULL;
 
 bool GLVertexBuffer::enabled ()
 {
-    return GL::vboEnabled;
+    // FIXME: GL::shaders shouldn't be a requirement here. But for now,
+    //        fglrx doesn't have GL::shaders and that causes blending problems.
+    return GL::vboEnabled && GL::shaders;
 }
 
 GLVertexBuffer::GLVertexBuffer () :
@@ -198,14 +200,6 @@ void GLVertexBuffer::addColors (GLuint nColors, const GLushort *colors)
     {
 	priv->colorData.push_back (colors[i] / 65535.0f);
     }
-}
-
-void GLVertexBuffer::color4us (GLushort r, GLushort g, GLushort b, GLushort a)
-{
-    priv->color[0] = r / 65535.0f;
-    priv->color[1] = g / 65535.0f;
-    priv->color[2] = b / 65535.0f;
-    priv->color[3] = a / 65535.0f;
 }
 
 void GLVertexBuffer::color4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a)
@@ -367,7 +361,7 @@ int GLVertexBuffer::render (const GLMatrix            &projection,
     if (!priv->vertexData.size ())
 	return -1;
 
-    if (enabled () && GL::shaders)
+    if (enabled ())
 	return priv->render (&projection, &modelview, &attrib);
     else
 	return priv->legacyRender (projection, modelview, attrib);
