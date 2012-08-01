@@ -1072,7 +1072,7 @@ deleteProfile (CCSBackend *backend,
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
 
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
-    ccsGSettingsBackendClearPluginsWithSetKeys (backend, profile);
+    ccsGSettingsBackendClearPluginsWithSetKeys (backend);
 
     removeItemFromVariant (&profiles, profile);
 
@@ -1152,9 +1152,9 @@ ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend)
 }
 
 void
-ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend, const char *profile)
+ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend)
 {
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendClearPluginsWithSetKeys) (backend, profile);
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendClearPluginsWithSetKeys) (backend);
 }
 
 void
