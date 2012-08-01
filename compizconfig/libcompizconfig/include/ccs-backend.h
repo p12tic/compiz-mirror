@@ -137,6 +137,7 @@ struct _CCSDynamicBackend
     CCSObject object;
 };
 
+typedef const char * (*CCSDynamicBackendGetBackendName) (CCSDynamicBackend *);
 typedef Bool (*CCSDynamicBackendSupportsRead) (CCSDynamicBackend *);
 typedef Bool (*CCSDynamicBackendSupportsWrite) (CCSDynamicBackend *);
 typedef Bool (*CCSDynamicBackendSupportsProfiles) (CCSDynamicBackend *);
@@ -145,6 +146,7 @@ typedef CCSBackend * (*CCSDynamicBackendGetRawBackend) (CCSDynamicBackend *);
 
 struct _CCSDynamicBackendInterface
 {
+    CCSDynamicBackendGetBackendName getBackendName;
     CCSDynamicBackendSupportsRead supportsRead;
     CCSDynamicBackendSupportsWrite supportsWrite;
     CCSDynamicBackendSupportsProfiles supportsProfiles;
@@ -152,6 +154,7 @@ struct _CCSDynamicBackendInterface
     CCSDynamicBackendGetRawBackend getRawBackend;
 };
 
+const char * ccsDynamicBackendGetBackendName (CCSDynamicBackend *);
 Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *);
 Bool ccsDynamicBackendSupportsWrite (CCSDynamicBackend *);
 Bool ccsDynamicBackendSupportsProfiles (CCSDynamicBackend *);
