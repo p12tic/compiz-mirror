@@ -46,6 +46,11 @@ class CCSGSettingsBackendEnv :
 	{
 	}
 
+	const CCSBackendInfo * GetInfo ()
+	{
+	    return &gsettingsBackendInfo;
+	}
+
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
@@ -437,3 +442,5 @@ const std::string CCSGSettingsBackendEnv::profileName = "mock";
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestReadWrite,
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <CCSGSettingsBackendEnv> ());
 
+INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestInfo,
+			 ::testing::Values (boost::shared_static_cast <CCSBackendConceptTestEnvironmentFactoryInterface> (boost::make_shared <CCSBackendConceptTestEnvironmentFactory <CCSGSettingsBackendEnv> > ())));
