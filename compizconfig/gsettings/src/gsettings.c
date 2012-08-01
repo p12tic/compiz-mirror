@@ -840,16 +840,6 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     return ret;
 }
 
-const CCSBackendInfo gsettingsBackendInfo =
-{
-    "gsettings",
-    "GSettings Configuration Backend",
-    "GSettings Configuration Backend for libccs",
-    TRUE,
-    TRUE,
-    1
-};
-
 static const CCSBackendInfo *
 getInfo (CCSBackend *backend)
 {
