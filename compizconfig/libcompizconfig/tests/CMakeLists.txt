@@ -1,4 +1,4 @@
-include_directories (${GTEST_INCLUDE_DIRS})
+ include_directories (${GTEST_INCLUDE_DIRS})
 include_directories (${CMAKE_SOURCE_DIR}/include)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig)
 link_directories (${CMAKE_INSTALL_PREFIX}/lib)
@@ -63,7 +63,7 @@ target_link_libraries (compizconfig_test_ccs_setting
 		       compizconfig_ccs_plugin_mock
 		       compizconfig_ccs_setting_mock)
 
-compiz_discover_tests (compizconfig_test_ccs_object)
-compiz_discover_tests (compizconfig_test_ccs_context)
-compiz_discover_tests (compizconfig_test_ccs_plugin)
-compiz_discover_tests (compizconfig_test_ccs_setting)
+compiz_discover_tests (test-ccs-object COVERAGE compizconfig)
+compiz_discover_tests (test-context COVERAGE context-mock)
+compiz_discover_tests (test-plugin COVERAGE plugin-mock)
+compiz_discover_tests (test-setting COVERAGE setting-mock)
