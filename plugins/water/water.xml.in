@@ -69,7 +69,7 @@
 		<_short>lightVec Z</_short>
 		<_long>Light vector Z coordinate</_long>
 		<default>0.0</default>
-		<min>0.1</min>
+		<min>-1</min>
 		<max>1</max>
 		<precision>0.1</precision>
 	    </option>
