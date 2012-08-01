@@ -23,4 +23,4 @@ target_link_libraries (compizconfig_test_gsettings
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 
-compiz_discover_tests (compizconfig_test_gsettings)
+compiz_discover_tests (compizconfig_test_gsettings COVERAGE gsettings_backend_shared)

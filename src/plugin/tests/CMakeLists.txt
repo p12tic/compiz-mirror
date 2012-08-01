@@ -32,5 +32,5 @@ target_link_libraries(
   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
-compiz_discover_tests ( compiz_plugin_test )
+compiz_discover_tests ( compiz_plugin_test COVERAGE compiz_plugin compiz_core )
 
