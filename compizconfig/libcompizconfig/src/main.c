@@ -321,7 +321,7 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
 
     if (cPrivate->backend)
-	ccsInfo ("Backend     : %s", ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name);
+	ccsInfo ("Backend     : %s", ccsDynamicBackendGetBackendName (cPrivate->backend));
 	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
 	ccsInfo ("Profile     : %s",
 	    (cPrivate->profile && strlen (cPrivate->profile)) ?
@@ -1176,7 +1176,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     {
 	/* no action needed if the backend is the same */
 
-	if (strcmp (ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name, name) == 0)
+	if (strcmp (ccsDynamicBackendGetBackendName (cPrivate->backend), name) == 0)
 	    return TRUE;
 
 	ccsDynamicBackendUnref (cPrivate->backend);
@@ -2982,7 +2982,7 @@ ccsGetBackendDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
-    return ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name;
+    return ccsDynamicBackendGetBackendName (cPrivate->backend);
 }
 
 const char *
