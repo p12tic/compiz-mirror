@@ -1233,6 +1233,11 @@ ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *DYNAMIC_BACKEND_
     return ccsBackendGetInfo (dbPrivate->backend)->integrationSupport;
 }
 
+const char * ccsDynamicBackendGetBackendName (CCSDynamicBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->getBackendName) (backend);
+}
+
 Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
 {
     return (*(GET_INTERFACE (CCSDynamicBackendInterface, DYNAMIC_BACKEND_PRIVities))->supportsRead) (DYNAMIC_BACKEND_PRIVities);
@@ -1386,6 +1391,14 @@ static Bool ccsBackendHasDeleteProfile (CCSBackend *backend)
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->deleteProfile) (backend, context, name);
+}
+
+static const char *
+ccsDynamicBackendGetBackendNameDefault (CCSDynamicBackend *backend)
+{
+    DYNAMIC_BACKEND_PRIV (backend);
+
+    return ccsBackendGetInfo (dbPrivate->backend)->name;
 }
 
 static Bool
@@ -5476,6 +5489,7 @@ const CCSBackendInterface ccsDynamicBackendInterfaceWrapper =
 
 const CCSDynamicBackendInterface ccsDefaultDynamicBackendInterface =
 {
+    ccsDynamicBackendGetBackendNameDefault,
     ccsDynamicBackendSupportsReadDefault,
     ccsDynamicBackendSupportsWriteDefault,
     ccsDynamicBackendSupportsIntegrationDefault,
