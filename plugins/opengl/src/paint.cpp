@@ -513,10 +513,10 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     if ((mask & CLIP_PLANE_MASK) == CLIP_PLANE_MASK)
     {
-	sTransform.toScreenSpace (output, -sAttrib.zTranslate);
-
 	if (GL::stencilBuffer)
 	{
+	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
+
 	    GLboolean depthTestEnabled = glIsEnabled (GL_DEPTH_TEST);
 #ifdef USE_GLES
 	    GLboolean saveColorMask[4];
@@ -562,7 +562,10 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
 	}
 	else
+	{
 	    glEnableOutputClipping (sTransform, region, output);
+	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
+	}
 
 	priv->paintOutputRegion (sTransform, region, output, mask);
 
