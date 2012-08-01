@@ -79,6 +79,6 @@ target_link_libraries (compizconfig_test_ccs_setting
 		       compizconfig_ccs_setting_mock)
 
 compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
-compiz_discover_tests (test-context COVERAGE compizconfig_ccs_context_mock)
-compiz_discover_tests (test-plugin COVERAGE compizconfig_ccs_plugin_mock)
-compiz_discover_tests (test-setting COVERAGE compizconfig_ccs_setting_mock)
+compiz_discover_tests (compizconfig_test_ccs_context COVERAGE compizconfig_ccs_context_mock)
+compiz_discover_tests (compizconfig_test_ccs_plugin COVERAGE compizconfig_ccs_plugin_mock)
+compiz_discover_tests (compizconfig_test_ccs_setting COVERAGE compizconfig_ccs_setting_mock)
