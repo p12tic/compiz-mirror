@@ -29,6 +29,7 @@
 COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSBackend	  CCSBackend;
+typedef struct _CCSBackendInfo    CCSBackendInfo;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
 
@@ -39,6 +40,16 @@ typedef struct _CCSSetting CCSSetting;
 struct _CCSBackend
 {
     CCSObject        object;
+};
+
+struct _CCSBackendInfo
+{
+    const char *name;              /* name of the backend */
+    const char *shortDesc;         /* backend's short description */
+    const char *longDesc;          /* backend's long description */
+    Bool integrationSupport; /* does the backend support DE integration? */
+    Bool profileSupport;     /* does the backend support profiles? */
+    unsigned int refCount;   /* reference count */
 };
 
 typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
@@ -66,19 +77,11 @@ typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSBackend *, CCSSetting * s
 typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSBackend *, CCSContext * context);
 typedef Bool (*CCSBackendDeleteProfileFunc) (CCSBackend *, CCSContext * context, char * name);
 
-typedef char * (*CCSBackendGetNameFunc) (CCSBackend *);
-typedef char * (*CCSBackendGetShortDescFunc) (CCSBackend *);
-typedef char * (*CCSBackendGetLongDescFunc) (CCSBackend *);
-typedef Bool (*CCSBackendHasIntegrationSupportFunc) (CCSBackend *);
-typedef Bool (*CCSBackendHasProfileSupportFunc) (CCSBackend *);
+typedef const CCSBackendInfo * (*CCSBackendGetInfoFunc) (CCSBackend *);
 
 struct _CCSBackendInterface
 {
-    CCSBackendGetNameFunc getName;
-    CCSBackendGetShortDescFunc getShortDesc;
-    CCSBackendGetLongDescFunc getLongDesc;
-    CCSBackendHasIntegrationSupportFunc hasIntegrationSupport;
-    CCSBackendHasProfileSupportFunc hasProfileSupport;
+    CCSBackendGetInfoFunc      backendGetInfo;
 
     /* something like a event loop call for the backend,
        so it can check for file changes (gconf changes in the gconf backend)
@@ -107,12 +110,7 @@ struct _CCSBackendInterface
 
 unsigned int ccsCCSBackendInterfaceGetType ();
 
-char * ccsBackendGetName (CCSBackend *backend);
-char * ccsBackendGetShortDesc (CCSBackend *backend);
-char * ccsBackendGetLongDesc (CCSBackend *backend);
-Bool ccsBackendHasIntegrationSupport (CCSBackend *backend);
-Bool ccsBackendHasProfileSupport (CCSBackend *backend);
-
+const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend);
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend);
 void ccsBackendExecuteEvents (CCSBackend *backend, unsigned int flags);
 Bool ccsBackendInit (CCSBackend *backend, CCSContext *context);
@@ -147,7 +145,6 @@ ccsOpenBackend (const char *name, CCSBackendInterface **interface);
 /* Constructor method */
 CCSBackend *
 ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
-
 
 CCSBackendInterface* getBackendInfo (void);
 

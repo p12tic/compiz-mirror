@@ -2124,48 +2124,23 @@ deleteProfile (CCSBackend *backend,
     return status;
 }
 
-static char *
-getName (CCSBackend *backend)
+const CCSBackendInfo gconfBackendInfo =
 {
-    static char name[] = "gconf";
+    "gconf",
+    "GConf Configuration Backend",
+    "GConf Configuration Backend for libccs",
+    TRUE,
+    TRUE
+};
 
-    return name;
-}
-
-static char *
-getShortDesc (CCSBackend *backend)
+static const CCSBackendInfo *
+getInfo (CCSBackend *backend)
 {
-    static char shortDesc[] = "GConf Configuration Backend";
-
-    return shortDesc;
-}
-
-static char *
-getLongDesc (CCSBackend *backend)
-{
-    static char longDesc[] = "GConf Configuration Backend for libccs";
-
-    return longDesc;
-}
-
-static Bool
-hasIntegrationSupport (CCSBackend *backend)
-{
-    return TRUE;
-}
-
-static Bool
-hasProfileSupport (CCSBackend *backend)
-{
-    return TRUE;
+    return &gconfBackendInfo;
 }
 
 static CCSBackendInterface gconfVTable = {
-    getName,
-    getShortDesc,
-    getLongDesc,
-    hasIntegrationSupport,
-    hasProfileSupport,
+    getInfo,
     processEvents,
     initBackend,
     finiBackend,
