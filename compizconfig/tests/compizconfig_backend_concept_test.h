@@ -801,6 +801,7 @@ Bool boolValues[] = { TRUE, FALSE, TRUE };
 int intValues[] = { 1, 2, 3 };
 float floatValues[] = { 1.0, 2.0, 3.0 };
 const char * stringValues[] = { "foo", "grill", "bar" };
+const char * matchValues[] = { "type=foo", "class=bar", "xid=42" };
 
 const unsigned int NUM_COLOR_VALUES = 3;
 
@@ -999,6 +1000,17 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListReadExpectation, _1, _2),
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListString"),
+	boost::make_shared <ConceptParam> (backendEnvFactory,
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromMatchArray,
+													     impl::matchValues,
+													     sizeof (impl::matchValues) / sizeof (impl::matchValues[0]), _1),
+												TypeMatch, true)),
+					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
+					   TypeList,
+					   "match_list_setting",
+					   boost::bind (SetListReadExpectation, _1, _2),
+					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
+					   "TestListMatch"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromColorArray,
 													     impl::getColorValueList (),
