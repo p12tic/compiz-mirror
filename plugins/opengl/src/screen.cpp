@@ -2002,12 +2002,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     glViewport (0, 0, screen->width (), screen->height ());
 
     if (useFbo)
-	    {
+    {
 	GLFramebufferObject::rebind (oldFbo);
 
 	// FIXME: does not work if screen dimensions exceed max texture size
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
-	}
+    }
 
     bool fullscreen = useFbo ||
                       optionGetAlwaysSwapBuffers () ||

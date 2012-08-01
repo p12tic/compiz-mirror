@@ -572,7 +572,7 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	if (GL::stencilBuffer)
 	    glDisable (GL_STENCIL_TEST);
 	else
-	glDisableOutputClipping ();
+	    glDisableOutputClipping ();
     }
     else
     {
