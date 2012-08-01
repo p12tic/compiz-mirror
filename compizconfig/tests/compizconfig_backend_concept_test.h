@@ -292,6 +292,8 @@ class CCSBackendConceptTestEnvironmentFactoryInterface
 {
     public:
 
+	typedef boost::shared_ptr <CCSBackendConceptTestEnvironmentFactoryInterface> Ptr;
+
 	virtual ~CCSBackendConceptTestEnvironmentFactoryInterface () {}
 
 	virtual CCSBackendConceptTestEnvironmentInterface::Ptr ConstructTestEnv () = 0;
@@ -701,39 +703,18 @@ class CCSBackendConceptTestParam :
 
 };
 
-class CCSBackendConformanceTestParameterized :
-    public ::testing::TestWithParam <CCSBackendConceptTestParamInterface::Ptr>
+class CCSBackendConformanceSpawnObjectsTestFixtureBase
 {
-    public:
+    protected:
 
-	virtual ~CCSBackendConformanceTestParameterized () {}
-
-	CCSBackendConformanceTestParameterized () :
+	CCSBackendConformanceSpawnObjectsTestFixtureBase () :
 	    profileName ("mock")
 	{
 	}
 
-	CCSBackend * GetBackend ()
+	virtual ~CCSBackendConformanceSpawnObjectsTestFixtureBase ()
 	{
-	    return mBackend;
 	}
-
-	virtual void SetUp ()
-	{
-	    CCSBackendConformanceTestParameterized::SpawnContext (context);
-	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context);
-
-	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
-
-	    mBackend = GetParam ()->testEnv ()->SetUp (context.get (), gmockContext);
-	}
-
-	virtual void TearDown ()
-	{
-	    CCSBackendConformanceTestParameterized::GetParam ()->TearDown (mBackend);
-	}
-
-    protected:
 
 	/* Having the returned context, setting and plugin
 	 * as out params is awkward, but GTest doesn't let
@@ -780,16 +761,78 @@ class CCSBackendConformanceTestParameterized :
 	    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&(mSpawnedSettingInfo.back ())));
 	}
 
-    protected:
+	void
+	SetupContext ()
+	{
+	    SpawnContext (context);
+	    gmockContext = (CCSContextGMock *) ccsObjectGetPrivate (context.get ());
+
+	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
+	}
+
+	CCSBackend * GetBackend ()
+	{
+	    return mBackend;
+	}
 
 	boost::shared_ptr <CCSContext> context;
 	CCSContextGMock *gmockContext;
+	CCSBackend *mBackend;
 
     private:
 
 	std::vector <CCSSettingInfo> mSpawnedSettingInfo;
-	CCSBackend *mBackend;
-	std::string profileName;
+	std::string		     profileName;
+};
+
+class CCSBackendConformanceTestParameterizedByBackendFixture :
+    public CCSBackendConformanceSpawnObjectsTestFixtureBase,
+    public ::testing::TestWithParam <CCSBackendConceptTestEnvironmentFactoryInterface::Ptr>
+{
+    public:
+
+	CCSBackendConformanceTestParameterizedByBackendFixture () :
+	    mTestEnv (GetParam ()->ConstructTestEnv ())
+	{
+	}
+
+	virtual void SetUp ()
+	{
+	    SetupContext ();
+	    mBackend = mTestEnv->SetUp (context.get (), gmockContext);
+	}
+
+	virtual void TearDown ()
+	{
+	    if (mTestEnv)
+		mTestEnv->TearDown (mBackend);
+
+	    mTestEnv.reset ();
+	}
+
+    protected:
+
+	CCSBackendConceptTestEnvironmentInterface::Ptr mTestEnv;
+};
+
+class CCSBackendConformanceTestParameterized :
+    public CCSBackendConformanceSpawnObjectsTestFixtureBase,
+    public ::testing::TestWithParam <CCSBackendConceptTestParamInterface::Ptr>
+{
+    public:
+
+	virtual ~CCSBackendConformanceTestParameterized () {}
+
+	virtual void SetUp ()
+	{
+	    SetupContext ();
+	    mBackend = GetParam ()->testEnv ()->SetUp (context.get (), gmockContext);
+	}
+
+	virtual void TearDown ()
+	{
+	    CCSBackendConformanceTestParameterized::GetParam ()->TearDown (mBackend);
+	}
 };
 
 namespace compizconfig
@@ -1130,7 +1173,30 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestWriteValue)
 
 }
 
+class CCSBackendConformanceTestInfo :
+    public CCSBackendConformanceTestParameterizedByBackendFixture
+{
+};
 
+TEST_P (CCSBackendConformanceTestInfo, TestGetInfo)
+{
+    const CCSBackendInfo *knownBackendInfo = mTestEnv->GetInfo ();
+    const CCSBackendInfo *retreivedBackendInfo = ccsBackendGetInfo (GetBackend ());
+
+    EXPECT_THAT (retreivedBackendInfo->name, Eq (knownBackendInfo->name));
+    EXPECT_THAT (retreivedBackendInfo->shortDesc, Eq (knownBackendInfo->shortDesc));
+    EXPECT_THAT (retreivedBackendInfo->longDesc, Eq (knownBackendInfo->longDesc));
+
+    if (knownBackendInfo->profileSupport)
+	EXPECT_TRUE (retreivedBackendInfo->profileSupport);
+    else
+	EXPECT_FALSE (retreivedBackendInfo->profileSupport);
+
+    if (knownBackendInfo->integrationSupport)
+	EXPECT_TRUE (retreivedBackendInfo->integrationSupport);
+    else
+	EXPECT_FALSE (retreivedBackendInfo->integrationSupport);
+}
 
 #endif
 
