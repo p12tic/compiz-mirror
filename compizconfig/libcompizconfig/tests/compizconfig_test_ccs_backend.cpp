@@ -27,7 +27,7 @@ TEST(CCSBackendTest, TestMock)
     EXPECT_CALL (*mock, hasIntegrationSupport ());
     EXPECT_CALL (*mock, executeEvents (_));
     EXPECT_CALL (*mock, init (_));
-    EXPECT_CALL (*mock, fini (_));
+    EXPECT_CALL (*mock, fini ());
     EXPECT_CALL (*mock, readInit (_));
     EXPECT_CALL (*mock, readSetting (_,_));
     EXPECT_CALL (*mock, readDone (_));
@@ -46,7 +46,7 @@ TEST(CCSBackendTest, TestMock)
     ccsBackendHasIntegrationSupport (backend);
     ccsBackendExecuteEvents (backend, 0);
     ccsBackendInit (backend, NULL);
-    ccsBackendFini (backend, NULL);
+    ccsBackendFini (backend);
     ccsBackendReadInit (backend, NULL);
     ccsBackendReadSetting (backend, NULL, NULL);
     ccsBackendReadDone (backend, NULL);
