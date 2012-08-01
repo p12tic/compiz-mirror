@@ -12,11 +12,7 @@ class CCSBackendGMockInterface
 
 	virtual ~CCSBackendGMockInterface () {};
 
-	virtual char * getName () = 0;
-	virtual char * getShortDesc () = 0;
-	virtual char * getLongDesc () = 0;
-	virtual Bool hasProfileSupport () = 0;
-	virtual Bool hasIntegrationSupport () = 0;
+	virtual const CCSBackendInfo * getInfo () = 0;
 	virtual void executeEvents (unsigned int) = 0;
 	virtual Bool init (CCSContext *context) = 0;
 	virtual Bool fini () = 0;
@@ -39,11 +35,7 @@ class CCSBackendGMock :
     public:
 
 	/* Mock implementations */
-	MOCK_METHOD0 (getName, char * ());
-	MOCK_METHOD0 (getShortDesc, char * ());
-	MOCK_METHOD0 (getLongDesc, char * ());
-	MOCK_METHOD0 (hasProfileSupport, Bool ());
-	MOCK_METHOD0 (hasIntegrationSupport, Bool ());
+	MOCK_METHOD0 (getInfo, const CCSBackendInfo * ());
 	MOCK_METHOD1 (executeEvents, void (unsigned int));
 	MOCK_METHOD1 (init, Bool (CCSContext *));
 	MOCK_METHOD0 (fini, Bool ());
@@ -62,29 +54,9 @@ class CCSBackendGMock :
     public:
 
 	/* Thunking C to C++ */
-	static char * ccsBackendGetName (CCSBackend *backend)
+	static const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend)
 	{
-	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->getName ();
-	}
-
-	static char * ccsBackendGetShortDesc (CCSBackend *backend)
-	{
-	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->getShortDesc ();
-	}
-
-	static char * ccsBackendGetLongDesc (CCSBackend *backend)
-	{
-	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->getLongDesc ();
-	}
-
-	static Bool ccsBackendHasIntegrationSupport (CCSBackend *backend)
-	{
-	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->hasIntegrationSupport ();
-	}
-
-	static Bool ccsBackendHasProfileSupport (CCSBackend *backend)
-	{
-	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->hasProfileSupport ();
+	    return ((CCSBackendGMock *) ccsObjectGetPrivate (backend))->getInfo ();
 	}
 
 	static void ccsBackendExecuteEvents (CCSBackend *backend, unsigned int flags)

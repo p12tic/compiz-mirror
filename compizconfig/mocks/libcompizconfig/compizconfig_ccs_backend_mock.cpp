@@ -7,11 +7,7 @@
 
 CCSBackendInterface CCSBackendGMockInterface =
 {
-    CCSBackendGMock::ccsBackendGetName,
-    CCSBackendGMock::ccsBackendGetShortDesc,
-    CCSBackendGMock::ccsBackendGetLongDesc,
-    CCSBackendGMock::ccsBackendHasIntegrationSupport,
-    CCSBackendGMock::ccsBackendHasProfileSupport,
+    CCSBackendGMock::ccsBackendGetInfo,
     CCSBackendGMock::ccsBackendExecuteEvents,
     CCSBackendGMock::ccsBackendInit,
     CCSBackendGMock::ccsBackendFini,
