@@ -150,13 +150,14 @@ endfunction (compiz_generate_testfile_target)
 # Create target to discover tests
 function (compiz_discover_tests EXECUTABLE)
 
-    if (${CMAKE_BUILD_TYPE} MATCHES "coverage")
+    string (TOLOWER "${CMAKE_BUILD_TYPE}" COVERAGE_BUILD_TYPE)
+    if (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
 	parse_arguments (ARG "COVERAGE" "" ${ARGN})
 
 	foreach (COVERAGE ${ARG_COVERAGE})
 	    compiz_add_to_coverage_report (${COVERAGE} ${EXECUTABLE})
 	endforeach ()
-    endif (${CMAKE_BUILD_TYPE} MATCHES "coverage")
+    endif (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
 
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD
