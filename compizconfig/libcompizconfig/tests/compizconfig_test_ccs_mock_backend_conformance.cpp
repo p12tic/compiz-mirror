@@ -46,6 +46,15 @@ class ValueForKeyRetreival
 namespace
 {
     void doNothingWithCCSSetting (CCSSetting *) {};
+
+    const CCSBackendInfo mockBackendInfo =
+    {
+	"mock",
+	"Mock Backend",
+	"Mock Backend for libccs",
+	TRUE,
+	TRUE
+    };
 }
 
 class MockCCSBackendConceptTestEnvironment :
@@ -81,6 +90,11 @@ class MockCCSBackendConceptTestEnvironment :
 				&MockCCSBackendConceptTestEnvironment::WriteValueToMap)));
 
 	    return mBackend;
+	}
+
+	const CCSBackendInfo * GetInfo ()
+	{
+	    return &mockBackendInfo;
 	}
 
 	void TearDown (CCSBackend *backend)
