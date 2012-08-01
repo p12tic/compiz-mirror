@@ -16,4 +16,4 @@ target_link_libraries (compiz_test_window_constrainment_to_hints
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-compiz_discover_tests (compiz_test_window_constrainment_to_hints)
+compiz_discover_tests (compiz_test_window_constrainment_to_hints COVERAGE compiz_window_constrainment)

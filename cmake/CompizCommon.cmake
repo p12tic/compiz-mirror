@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
+include (ParseArguments)
+
 if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     message (SEND_ERROR "Building in the source directory is not supported.")
     message (FATAL_ERROR "Please remove the created \"CMakeCache.txt\" file, the \"CMakeFiles\" directory and create a build directory and call \"${CMAKE_COMMAND} <path to the sources>\".")
@@ -70,6 +72,18 @@ elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
 
+function (compiz_add_to_coverage_report TARGET TEST)
+
+    set_property (GLOBAL APPEND PROPERTY
+		  COMPIZ_COVERAGE_REPORT_TARGETS
+		  ${TARGET})
+
+    set_property (GLOBAL APPEND PROPERTY
+		  COMPIZ_COVERAGE_REPORT_TESTS
+		  ${TARGET})
+
+endfunction ()
+
 function (compiz_add_test_to_testfile CURRENT_BINARY_DIR TEST)
 
     message (STATUS "Will discover tests in ${TEST}")
@@ -135,6 +149,14 @@ endfunction (compiz_generate_testfile_target)
 
 # Create target to discover tests
 function (compiz_discover_tests EXECUTABLE)
+
+    if (${CMAKE_BUILD_TYPE} MATCHES "coverage")
+	parse_arguments (ARG "COVERAGE" "" ${ARGN})
+
+	foreach (COVERAGE ${ARG_COVERAGE})
+	    compiz_add_to_coverage_report (${COVERAGE} ${EXECUTABLE})
+	endforeach ()
+    endif (${CMAKE_BUILD_TYPE} MATCHES "coverage")
 
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD
