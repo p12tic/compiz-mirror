@@ -620,7 +620,7 @@ ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend, const ch
     /* This looks weird, we are leaking this ... */
     GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
 
-    g_settings_reset (profileSettings, "plugins-with-set-values");
+    g_settings_reset (profileSettings, "plugins-with-set-keys");
 
     g_free (profileSettingsPath);
 }
