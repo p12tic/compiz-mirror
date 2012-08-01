@@ -1128,7 +1128,8 @@ const CCSBackendInfo gconfBackendInfo =
     "GSettings Configuration Backend",
     "GSettings Configuration Backend for libccs",
     TRUE,
-    TRUE
+    TRUE,
+    1
 };
 
 static const CCSBackendInfo *
