@@ -321,7 +321,7 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
 
     if (cPrivate->backend)
-	ccsInfo ("Backend     : %s", ccsBackendGetName ((CCSBackend *) cPrivate->backend));
+	ccsInfo ("Backend     : %s", ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name);
 	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
 	ccsInfo ("Profile     : %s",
 	    (cPrivate->profile && strlen (cPrivate->profile)) ?
@@ -908,19 +908,9 @@ ccsFreePluginConflict (CCSPluginConflict * c)
 void
 ccsFreeBackendInfo (CCSBackendInfo * b)
 {
-    if (!b)
-	return;
-
-    if (b->name)
-	free (b->name);
-
-    if (b->shortDesc)
-	free (b->shortDesc);
-
-    if (b->longDesc)
-	free (b->longDesc);
-
-    free (b);
+    /* Does nothing, as backend info is
+     * the owned by the backend library
+     * itself */
 }
 
 void
@@ -1186,7 +1176,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     {
 	/* no action needed if the backend is the same */
 
-	if (strcmp (ccsBackendGetName ((CCSBackend *) cPrivate->backend), name) == 0)
+	if (strcmp (ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name, name) == 0)
 	    return TRUE;
 
 	ccsDynamicBackendUnref (cPrivate->backend);
@@ -1230,29 +1220,9 @@ ccsSetBackend (CCSContext *context, char *name)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextSetBackend) (context, name);
 }
 
-char * ccsBackendGetName (CCSBackend *backend)
+const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getName) (backend);
-}
-
-char * ccsBackendGetShortDesc (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getShortDesc) (backend);
-}
-
-char * ccsBackendGetLongDesc (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getLongDesc) (backend);
-}
-
-Bool ccsBackendHasIntegrationSupport (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->hasIntegrationSupport) (backend);
-}
-
-Bool ccsBackendHasProfileSupport (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->hasProfileSupport) (backend);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendGetInfo) (backend);
 }
 
 static Bool
@@ -1260,7 +1230,7 @@ ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *DYNAMIC_BACKEND_
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return ccsBackendHasIntegrationSupport (bcPrivate->backend);
+    return ccsBackendGetInfo (bcPrivate->backend)->integrationSupport;
 }
 
 Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
@@ -1439,7 +1409,8 @@ ccsDynamicBackendSupportsProfilesDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRI
 {
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
-    return ccsBackendHasProfileSupport (bcPrivate->backend);
+    return ccsBackendGetInfo (bcPrivate->backend)->profileSupport;
+
 }
 
 static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
@@ -1449,46 +1420,18 @@ static CCSBackend * ccsDynamicBackendGetRawBackendDefault (CCSDynamicBackend *DY
     return bcPrivate->backend;
 }
 
+static const CCSBackendInfo * ccsDynamicBackendGetInfoWrapper (CCSBackend *backend)
+{
+    DYNAMIC_BACKEND_PRIV (backend);
+
+    return ccsBackendGetInfo (bcPrivate->backend);
+}
+
 static Bool ccsDynamicBackendInitWrapper (CCSBackend *backend, CCSContext *context)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 
     return ccsBackendInit (bcPrivate->backend, context);
-}
-
-static char * ccsDynamicBackendGetNameWrapper (CCSBackend *backend)
-{
-    DYNAMIC_BACKEND_PRIV (backend);
-
-    return ccsBackendGetName (bcPrivate->backend);
-}
-
-static char * ccsDynamicBackendGetShortDescWrapper (CCSBackend *backend)
-{
-    DYNAMIC_BACKEND_PRIV (backend);
-
-    return ccsBackendGetShortDesc (bcPrivate->backend);
-}
-
-static char * ccsDynamicBackendGetLongDescWrapper (CCSBackend *backend)
-{
-    DYNAMIC_BACKEND_PRIV (backend);
-
-    return ccsBackendGetName (bcPrivate->backend);
-}
-
-static Bool ccsDynamicBackendHasIntegrationSupportWrapper (CCSBackend *backend)
-{
-    DYNAMIC_BACKEND_PRIV (backend);
-
-    return ccsBackendHasIntegrationSupport (bcPrivate->backend);
-}
-
-static Bool ccsDynamicBackendHasProfileSupportWrapper (CCSBackend *backend)
-{
-    DYNAMIC_BACKEND_PRIV (backend);
-
-    return ccsBackendHasProfileSupport (bcPrivate->backend);
 }
 
 static Bool ccsDynamicBackendFiniWrapper (CCSBackend *backend)
@@ -1571,7 +1514,7 @@ static Bool ccsDynamicBackendGetSettingIsIntegratedWrapper (CCSBackend *backend,
     DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasGetSettingIsIntegrated (bcPrivate->backend) &&
-	ccsBackendHasIntegrationSupport (bcPrivate->backend))
+	ccsDynamicBackendSupportsIntegration ((CCSDynamicBackend *) backend))
 	return ccsBackendGetSettingIsIntegrated (bcPrivate->backend, setting);
 
     return FALSE;
@@ -1592,7 +1535,7 @@ static CCSStringList ccsDynamicBackendGetExistingProfilesWrapper (CCSBackend *ba
     DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasGetExistingProfiles (bcPrivate->backend) &&
-	ccsBackendHasProfileSupport (bcPrivate->backend))
+	ccsDynamicBackendSupportsProfiles ((CCSDynamicBackend *) backend))
 	return ccsBackendGetExistingProfiles (bcPrivate->backend, context);
 
     static CCSStringList sl = NULL;
@@ -1605,7 +1548,7 @@ static Bool ccsDynamicBackendDeleteProfileWrapper (CCSBackend *backend, CCSConte
     DYNAMIC_BACKEND_PRIV (backend);
 
     if (ccsBackendHasDeleteProfile (bcPrivate->backend) &&
-	ccsBackendHasProfileSupport (bcPrivate->backend))
+	ccsDynamicBackendSupportsProfiles ((CCSDynamicBackend *) backend))
 	return ccsBackendDeleteProfile (bcPrivate->backend, context, profile);
 
     return FALSE;
@@ -3015,7 +2958,7 @@ ccsGetSortedPluginStringList (CCSContext *context)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetSortedPluginStringList) (context);
 }
 
-char *
+const char *
 ccsGetBackendDefault (CCSContext * context)
 {
     if (!context)
@@ -3026,10 +2969,10 @@ ccsGetBackendDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
-    return (*(GET_INTERFACE (CCSBackendInterface, cPrivate->backend))->getName) ((CCSBackend *) cPrivate->backend);
+    return ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name;
 }
 
-char *
+const char *
 ccsGetBackend (CCSContext *context)
 {
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetBackend) (context);
@@ -3842,7 +3785,6 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
     void *dlhand = NULL;
     char *err = NULL;
     Bool found = FALSE;
-    CCSBackendInfo *info;
 
     dlerror ();
 
@@ -3865,10 +3807,12 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
+    const CCSBackendInfo *info = (*vt->backendGetInfo) (NULL);
+
     CCSBackendInfoList l = *bl;
     while (l)
     {
-	if (!strcmp (l->data->name, (*vt->getName) (NULL)))
+	if (!strcmp (l->data->name, info->name))
 	{
 	    found = TRUE;
 	    break;
@@ -3890,14 +3834,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    info->refCount = 1;
-    info->name = strdup ((*vt->getName) (NULL));
-    info->shortDesc = (vt->getShortDesc) ? strdup ((*vt->getShortDesc) (NULL)) : strdup ("");
-    info->longDesc = (vt->getLongDesc) ? strdup ((*vt->getLongDesc) (NULL)) : strdup ("");
-    info->integrationSupport = (*vt->hasIntegrationSupport) (NULL);
-    info->profileSupport = (*vt->hasProfileSupport) (NULL);
-
-    *bl = ccsBackendInfoListAppend (*bl, info);
+    *bl = ccsBackendInfoListAppend (*bl, (CCSBackendInfo *) info);
     dlclose (dlhand);
 }
 
@@ -5520,11 +5457,7 @@ static const CCSSettingInterface ccsDefaultSettingInterface =
 
 const CCSBackendInterface ccsDynamicBackendInterfaceWrapper =
 {
-    ccsDynamicBackendGetNameWrapper,
-    ccsDynamicBackendGetShortDescWrapper,
-    ccsDynamicBackendGetLongDescWrapper,
-    ccsDynamicBackendHasIntegrationSupportWrapper,
-    ccsDynamicBackendHasProfileSupportWrapper,
+    ccsDynamicBackendGetInfoWrapper,
     ccsDynamicBackendExecuteEventsWrapper,
     ccsDynamicBackendInitWrapper,
     ccsDynamicBackendFiniWrapper,
