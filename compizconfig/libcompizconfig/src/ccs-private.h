@@ -32,7 +32,7 @@
 #define SETTING_PRIV(s) \
     CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (s);
 #define DYNAMIC_BACKEND_PRIV(bc) \
-    CCSDynamicBackendPrivate *bcPrivate = (CCSDynamicBackendPrivate *) ccsObjectGetPrivate (bc);
+    CCSDynamicBackendPrivate *dbPrivate = (CCSDynamicBackendPrivate *) ccsObjectGetPrivate (bc);
 
 extern Bool basicMetadata;
 
