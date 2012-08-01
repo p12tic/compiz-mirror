@@ -35,7 +35,6 @@ target_link_libraries (compizconfig_test_gsettings
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 
-<<<<<<< TREE
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/backend-conformance-config.h.in
 		${CMAKE_CURRENT_BINARY_DIR}/backend-conformance-config.h)
 
