@@ -533,4 +533,4 @@ INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestReadWri
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
 INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestInfo,
-			 ::testing::Values (boost::shared_static_cast <CCSBackendConceptTestEnvironmentFactoryInterface> (boost::make_shared <CCSBackendConceptTestEnvironmentFactory <MockCCSBackendConceptTestEnvironment> > ())));
+			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <MockCCSBackendConceptTestEnvironment> ());

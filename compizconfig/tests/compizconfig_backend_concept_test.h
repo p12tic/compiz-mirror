@@ -1071,6 +1071,15 @@ GenerateTestingParametersForBackendInterface ()
 
     return ::testing::ValuesIn (testParam);
 }
+
+template <typename I>
+::testing::internal::ParamGenerator<typename CCSBackendConceptTestEnvironmentFactoryInterface::Ptr>
+GenerateTestingEnvFactoryBackendInterface ()
+{
+    boost::shared_ptr <CCSBackendConceptTestEnvironmentFactoryInterface> f (boost::make_shared <CCSBackendConceptTestEnvironmentFactory <I> > ());
+    return ::testing::Values (f);
+}
+
 }
 }
 
