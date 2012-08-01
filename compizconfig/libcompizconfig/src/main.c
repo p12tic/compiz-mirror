@@ -321,7 +321,11 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
 
     if (cPrivate->backend)
+<<<<<<< TREE
 	ccsInfo ("Backend     : %s", ccsBackendGetName ((CCSBackend *) cPrivate->backend));
+=======
+	ccsInfo ("Backend     : %s", ccsBackendGetInfo (cPrivate->backend)->name);
+>>>>>>> MERGE-SOURCE
 	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
 	ccsInfo ("Profile     : %s",
 	    (cPrivate->profile && strlen (cPrivate->profile)) ?
@@ -908,19 +912,9 @@ ccsFreePluginConflict (CCSPluginConflict * c)
 void
 ccsFreeBackendInfo (CCSBackendInfo * b)
 {
-    if (!b)
-	return;
-
-    if (b->name)
-	free (b->name);
-
-    if (b->shortDesc)
-	free (b->shortDesc);
-
-    if (b->longDesc)
-	free (b->longDesc);
-
-    free (b);
+    /* Does nothing, as backend info is
+     * the owned by the backend library
+     * itself */
 }
 
 void
@@ -1186,7 +1180,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     {
 	/* no action needed if the backend is the same */
 
-	if (strcmp (ccsBackendGetName ((CCSBackend *) cPrivate->backend), name) == 0)
+	if (strcmp (ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name, name) == 0)
 	    return TRUE;
 
 	ccsDynamicBackendUnref (cPrivate->backend);
@@ -1230,29 +1224,9 @@ ccsSetBackend (CCSContext *context, char *name)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextSetBackend) (context, name);
 }
 
-char * ccsBackendGetName (CCSBackend *backend)
+const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend)
 {
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getName) (backend);
-}
-
-char * ccsBackendGetShortDesc (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getShortDesc) (backend);
-}
-
-char * ccsBackendGetLongDesc (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->getLongDesc) (backend);
-}
-
-Bool ccsBackendHasIntegrationSupport (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->hasIntegrationSupport) (backend);
-}
-
-Bool ccsBackendHasProfileSupport (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSBackendInterface, backend))->hasProfileSupport) (backend);
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendGetInfo) (backend);
 }
 
 static Bool
@@ -3015,7 +2989,7 @@ ccsGetSortedPluginStringList (CCSContext *context)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetSortedPluginStringList) (context);
 }
 
-char *
+const char *
 ccsGetBackendDefault (CCSContext * context)
 {
     if (!context)
@@ -3026,10 +3000,14 @@ ccsGetBackendDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
+<<<<<<< TREE
     return (*(GET_INTERFACE (CCSBackendInterface, cPrivate->backend))->getName) ((CCSBackend *) cPrivate->backend);
+=======
+    return ccsBackendGetInfo (cPrivate->backend)->name;
+>>>>>>> MERGE-SOURCE
 }
 
-char *
+const char *
 ccsGetBackend (CCSContext *context)
 {
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetBackend) (context);
@@ -3842,7 +3820,6 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
     void *dlhand = NULL;
     char *err = NULL;
     Bool found = FALSE;
-    CCSBackendInfo *info;
 
     dlerror ();
 
@@ -3865,10 +3842,12 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
+    const CCSBackendInfo *info = (*vt->backendGetInfo) (NULL);
+
     CCSBackendInfoList l = *bl;
     while (l)
     {
-	if (!strcmp (l->data->name, (*vt->getName) (NULL)))
+	if (!strcmp (l->data->name, info->name))
 	{
 	    found = TRUE;
 	    break;
@@ -3890,14 +3869,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    info->refCount = 1;
-    info->name = strdup ((*vt->getName) (NULL));
-    info->shortDesc = (vt->getShortDesc) ? strdup ((*vt->getShortDesc) (NULL)) : strdup ("");
-    info->longDesc = (vt->getLongDesc) ? strdup ((*vt->getLongDesc) (NULL)) : strdup ("");
-    info->integrationSupport = (*vt->hasIntegrationSupport) (NULL);
-    info->profileSupport = (*vt->hasProfileSupport) (NULL);
-
-    *bl = ccsBackendInfoListAppend (*bl, info);
+    *bl = ccsBackendInfoListAppend (*bl, (CCSBackendInfo *) info);
     dlclose (dlhand);
 }
 
