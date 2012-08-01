@@ -43,6 +43,9 @@
     <key type="as" name="string-list-setting">
       <default>[""]</default>
     </key>
+    <key type="as" name="match-list-setting">
+      <default>[""]</default>
+    </key>
     <key type="as" name="color-list-setting">
       <default>[""]</default>
     </key>
