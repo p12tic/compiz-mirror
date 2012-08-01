@@ -321,7 +321,7 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
 
     if (cPrivate->backend)
-	ccsInfo ("Backend     : %s", ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name);
+	ccsInfo ("Backend     : %s", ccsDynamicBackendGetBackendName (cPrivate->backend));
 	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
 	ccsInfo ("Profile     : %s",
 	    (cPrivate->profile && strlen (cPrivate->profile)) ?
@@ -1176,7 +1176,7 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     {
 	/* no action needed if the backend is the same */
 
-	if (strcmp (ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name, name) == 0)
+	if (strcmp (ccsDynamicBackendGetBackendName (cPrivate->backend), name) == 0)
 	    return TRUE;
 
 	ccsDynamicBackendUnref (cPrivate->backend);
@@ -1231,6 +1231,11 @@ ccsDynamicBackendSupportsIntegrationDefault (CCSDynamicBackend *DYNAMIC_BACKEND_
     DYNAMIC_BACKEND_PRIV (DYNAMIC_BACKEND_PRIVities);
 
     return ccsBackendGetInfo (dbPrivate->backend)->integrationSupport;
+}
+
+const char * ccsDynamicBackendGetBackendName (CCSDynamicBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSDynamicBackendInterface, backend))->getBackendName) (backend);
 }
 
 Bool ccsDynamicBackendSupportsRead (CCSDynamicBackend *DYNAMIC_BACKEND_PRIVities)
@@ -1386,6 +1391,14 @@ static Bool ccsBackendHasDeleteProfile (CCSBackend *backend)
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->deleteProfile) (backend, context, name);
+}
+
+static const char *
+ccsDynamicBackendGetBackendNameDefault (CCSDynamicBackend *backend)
+{
+    DYNAMIC_BACKEND_PRIV (backend);
+
+    return ccsBackendGetInfo (dbPrivate->backend)->name;
 }
 
 static Bool
@@ -2969,7 +2982,7 @@ ccsGetBackendDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
-    return ccsBackendGetInfo ((CCSBackend *) cPrivate->backend)->name;
+    return ccsDynamicBackendGetBackendName (cPrivate->backend);
 }
 
 const char *
@@ -5476,6 +5489,7 @@ const CCSBackendInterface ccsDynamicBackendInterfaceWrapper =
 
 const CCSDynamicBackendInterface ccsDefaultDynamicBackendInterface =
 {
+    ccsDynamicBackendGetBackendNameDefault,
     ccsDynamicBackendSupportsReadDefault,
     ccsDynamicBackendSupportsWriteDefault,
     ccsDynamicBackendSupportsIntegrationDefault,
