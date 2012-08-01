@@ -21,4 +21,4 @@ target_link_libraries (compiz_test_wall_offset_movement
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
                        )
 
-compiz_discover_tests (compiz_test_wall_offset_movement)
+compiz_discover_tests (compiz_test_wall_offset_movement COVERAGE compiz_wall_offset_movement)
