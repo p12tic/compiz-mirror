@@ -443,4 +443,4 @@ INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestRe
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <CCSGSettingsBackendEnv> ());
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestInfo,
-			 ::testing::Values (boost::shared_static_cast <CCSBackendConceptTestEnvironmentFactoryInterface> (boost::make_shared <CCSBackendConceptTestEnvironmentFactory <CCSGSettingsBackendEnv> > ())));
+			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <CCSGSettingsBackendEnv> ());
