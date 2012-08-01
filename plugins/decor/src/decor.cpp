@@ -209,10 +209,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-#ifdef USE_GLES
-    GLboolean isBlendingEnabled = GL_TRUE;
-#endif
-
     if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
