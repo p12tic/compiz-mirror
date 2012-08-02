@@ -275,6 +275,32 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateUpperToLowerForGSettings)
     EXPECT_EQ (std::string (keyname), "plugin-option");
 }
 
+TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsNoTrunc)
+{
+    std::string keyname ("FoO_BaR");
+    std::string expected ("foo-bar");
+
+    CharacterWrapper translated (translateKeyForGSettings (keyname.c_str ()));
+
+    EXPECT_EQ (std::string (translated), expected);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsTrunc)
+{
+    const unsigned int OVER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE + 1;
+    std::string keyname;
+
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+	keyname.push_back ('a');
+
+    ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
+
+    CharacterWrapper translated (translateKeyForGSettings (keyname.c_str ()));
+    std::string      stringOfTranslated (translated);
+
+    EXPECT_EQ (stringOfTranslated.size (), MAX_GSETTINGS_KEY_SIZE);
+}
+
 TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForCCS)
 {
     std::string keyname ("plugin-option");
