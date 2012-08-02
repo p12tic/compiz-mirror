@@ -202,6 +202,22 @@ void
 removeItemFromVariant (GVariant	  **variant,
 		       const char *string);
 
+CCSSettingValueList
+readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+
+CCSSettingValueList
+readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+
+CCSSettingValueList
+readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+
+CCSSettingValueList
+readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+
+CCSSettingValueList
+readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+
+
 gboolean
 ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context);
 

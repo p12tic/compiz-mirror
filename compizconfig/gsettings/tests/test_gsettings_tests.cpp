@@ -22,6 +22,7 @@ using ::testing::AllOf;
 using ::testing::Not;
 using ::testing::Matcher;
 using ::testing::Eq;
+using ::testing::NiceMock;
 
 class GVariantSubtypeMatcher :
     public ::testing::MatcherInterface<GVariant *>
@@ -1149,3 +1150,261 @@ TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidTypeGood)
 
     g_variant_unref (v);
 }
+
+typedef CCSSettingValueList (*ReadValueListOfDataTypeFunc) (GVariantIter *, guint nItems, CCSSetting *setting);
+
+class ReadListValueTypeTestParam
+{
+    public:
+
+	typedef boost::function <CCSSettingValueList (GVariantIter *, guint nItems, CCSSetting *setting)> ReadValueListFunc;
+	typedef boost::function <GVariant * ()> GVariantPopulator;
+	typedef boost::function <CCSSettingValueList (CCSSetting *)> CCSSettingValueListPopulator;
+
+	ReadListValueTypeTestParam (const ReadValueListFunc &readFunc,
+				    const GVariantPopulator &variantPopulator,
+				    const CCSSettingValueListPopulator &listPopulator,
+				    const CCSSettingType    &type) :
+	    mReadFunc (readFunc),
+	    mVariantPopulator (variantPopulator),
+	    mListPopulator (listPopulator),
+	    mType (type)
+	{
+	}
+
+	CCSSettingValueList read (GVariantIter *iter, guint nItems, CCSSetting *setting) const
+	{
+	    return mReadFunc (iter, nItems, setting);
+	}
+
+	boost::shared_ptr <GVariant> populateVariant () const
+	{
+	    return boost::shared_ptr <GVariant> (mVariantPopulator (), boost::bind (g_variant_unref, _1));
+	}
+
+	boost::shared_ptr <_CCSSettingValueList> populateList (CCSSetting *setting) const
+	{
+	    return boost::shared_ptr <_CCSSettingValueList> (mListPopulator (setting), boost::bind (ccsSettingValueListFree, _1, TRUE));
+	}
+
+	CCSSettingType type () const { return mType; }
+
+    private:
+
+	ReadValueListFunc mReadFunc;
+	GVariantPopulator mVariantPopulator;
+	CCSSettingValueListPopulator mListPopulator;
+	CCSSettingType    mType;
+
+};
+
+namespace compizconfig
+{
+    namespace test
+    {
+	namespace impl
+	{
+	    Bool boolValues[] = { TRUE, FALSE, TRUE };
+	    int intValues[] = { 1, 2, 3 };
+	    float floatValues[] = { 1.0, 2.0, 3.0 };
+	    const char * stringValues[] = { "foo", "grill", "bar" };
+	    const char * matchValues[] = { "type=foo", "class=bar", "xid=42" };
+
+	    const unsigned int NUM_COLOR_VALUES = 3;
+
+	    CCSSettingColorValue *
+	    getColorValueList ()
+	    {
+		static const unsigned short max = std::numeric_limits <unsigned short>::max ();
+		static const unsigned short maxD2 = max / 2;
+		static const unsigned short maxD4 = max / 4;
+		static const unsigned short maxD8 = max / 8;
+
+		static CCSSettingColorValue colorValues[NUM_COLOR_VALUES] = { { .color = { maxD2, maxD4, maxD8, max } },
+									      { .color = { maxD8, maxD4, maxD2, max } },
+									      { .color = { max, maxD4, maxD2, maxD8 } }
+									    };
+		static bool colorValueListInitialized = false;
+
+		if (!colorValueListInitialized)
+		{
+		    for (unsigned int i = 0; i < NUM_COLOR_VALUES; i++)
+		    {
+			CharacterWrapper s (ccsColorToString (&colorValues[i]));
+
+			ccsStringToColor (s, &colorValues[i]);
+		    }
+
+		    colorValueListInitialized = true;
+		}
+
+		return colorValues;
+	    }
+/*
+	    CCSSettingKeyValue keyValue = { XK_A,
+					    (1 << 0)};
+
+	    CCSSettingButtonValue buttonValue = { 1,
+						  (1 << 0),
+						  (1 << 1) };
+*/
+
+	    namespace populators
+	    {
+		namespace variant
+		{
+		    GVariant * boolean ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("ab"));
+			g_variant_builder_add (&vb, "b", boolValues[0]);
+			g_variant_builder_add (&vb, "b", boolValues[1]);
+			g_variant_builder_add (&vb, "b", boolValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * integer ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("ai"));
+			g_variant_builder_add (&vb, "i", intValues[0]);
+			g_variant_builder_add (&vb, "i", intValues[1]);
+			g_variant_builder_add (&vb, "i", intValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * doubleprecision ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("ad"));
+			g_variant_builder_add (&vb, "d", floatValues[0]);
+			g_variant_builder_add (&vb, "d", floatValues[1]);
+			g_variant_builder_add (&vb, "d", floatValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * string ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("as"));
+			g_variant_builder_add (&vb, "s", stringValues[0]);
+			g_variant_builder_add (&vb, "s", stringValues[1]);
+			g_variant_builder_add (&vb, "s", stringValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * color ()
+		    {
+			GVariantBuilder vb;
+
+			CharacterWrapper s1 (ccsColorToString (&(getColorValueList ()[0])));
+			CharacterWrapper s2 (ccsColorToString (&(getColorValueList ()[1])));
+			CharacterWrapper s3 (ccsColorToString (&(getColorValueList ()[2])));
+
+			char * c1 = s1;
+			char * c2 = s2;
+			char * c3 = s3;
+
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("as"));
+			g_variant_builder_add (&vb, "s", c1);
+			g_variant_builder_add (&vb, "s", c2);
+			g_variant_builder_add (&vb, "s", c3);
+			return g_variant_builder_end (&vb);
+		    }
+		}
+
+		namespace list
+		{
+		    CCSSettingValueList boolean (CCSSetting *setting)
+		    {
+			return ccsGetValueListFromBoolArray (boolValues, sizeof (boolValues) / sizeof (boolValues[0]), setting);
+		    }
+
+		    CCSSettingValueList integer (CCSSetting *setting)
+		    {
+			return ccsGetValueListFromIntArray (intValues, sizeof (intValues) / sizeof (intValues[0]), setting);
+		    }
+
+		    CCSSettingValueList doubleprecision (CCSSetting *setting)
+		    {
+			return ccsGetValueListFromFloatArray (floatValues, sizeof (floatValues) / sizeof (floatValues[0]), setting);
+		    }
+
+		    CCSSettingValueList string (CCSSetting *setting)
+		    {
+			return ccsGetValueListFromStringArray (stringValues, sizeof (stringValues) / sizeof (stringValues[0]), setting);
+		    }
+
+		    CCSSettingValueList color (CCSSetting *setting)
+		    {
+			return ccsGetValueListFromColorArray (getColorValueList (), 3, setting);
+		    }
+		}
+	    }
+	}
+    }
+}
+
+class CCSGSettingsTestReadListValueTypes :
+    public ::testing::TestWithParam <ReadListValueTypeTestParam>
+{
+};
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueGoodAllocation)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info =
+    {
+	.forList =
+	{
+	    GetParam ().type (),
+	    NULL
+	}
+    };
+
+    boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
+    GVariantIter			    iter;
+
+    g_variant_iter_init (&iter, variant.get ());
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter, 3, mockSetting.get ()),
+							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+}
+
+namespace variant_populators = compizconfig::test::impl::populators::variant;
+namespace list_populators = compizconfig::test::impl::populators::list;
+
+ReadListValueTypeTestParam readListValueTypeTestParam[] =
+{
+    ReadListValueTypeTestParam (boost::bind (readBoolListValue, _1, _2, _3),
+				boost::bind (variant_populators::boolean),
+				boost::bind (list_populators::boolean, _1),
+				TypeBool),
+    ReadListValueTypeTestParam (boost::bind (readIntListValue, _1, _2, _3),
+				boost::bind (variant_populators::integer),
+				boost::bind (list_populators::integer, _1),
+				TypeInt),
+    ReadListValueTypeTestParam (boost::bind (readFloatListValue, _1, _2, _3),
+				boost::bind (variant_populators::doubleprecision),
+				boost::bind (list_populators::doubleprecision, _1),
+				TypeFloat),
+    ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3),
+				boost::bind (variant_populators::string),
+				boost::bind (list_populators::string, _1),
+				TypeBool),
+    ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3),
+				boost::bind (variant_populators::color),
+				boost::bind (list_populators::color, _1),
+				TypeColor)
+};
+
+INSTANTIATE_TEST_CASE_P (TestGSettingsReadListValueParameterized, CCSGSettingsTestReadListValueTypes,
+			 ::testing::ValuesIn (readListValueTypeTestParam));
