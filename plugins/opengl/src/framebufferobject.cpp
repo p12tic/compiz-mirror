@@ -123,7 +123,7 @@ GLFramebufferObject::allocate (const CompSize &size, const char *image,
 	if (GL::stencilBuffer)
 	{
 	    (*GL::bindRenderbuffer) (GL::RENDERBUFFER, priv->rbStencilId);
-	    (*GL::renderbufferStorage) (GL::RENDERBUFFER, GL::DEPTH24_STENCIL8, size.width (), size.height ());
+	    (*GL::renderbufferStorage) (GL::RENDERBUFFER, GL::STENCIL_INDEX8, size.width (), size.height ());
 	}
     }
 
@@ -159,7 +159,6 @@ GLFramebufferObject::bind ()
     (*GL::bindFramebuffer) (GL::FRAMEBUFFER, priv->fboId);
     priv->boundId = priv->fboId;
 
-    (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::DEPTH_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
     (*GL::framebufferRenderbuffer) (GL::FRAMEBUFFER, GL::STENCIL_ATTACHMENT, GL::RENDERBUFFER, priv->rbStencilId);
 
     return old;

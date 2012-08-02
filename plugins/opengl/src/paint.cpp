@@ -517,52 +517,27 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	{
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
 
-	    GLboolean depthTestEnabled = glIsEnabled (GL_DEPTH_TEST);
-#ifdef USE_GLES
-	    GLboolean saveColorMask[4];
-	    GLboolean saveDepthMask;
-	    // WARNING: glGetBooleanv involves a roundtrip and is extremely
-	    //          slow. Use only on ES where we have no glPushAttrib.
-	    glGetBooleanv (GL_COLOR_WRITEMASK, saveColorMask);
-	    glGetBooleanv (GL_DEPTH_WRITEMASK, &saveDepthMask);
-#else
-	    glPushAttrib (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#endif
-
-	    glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	    glDepthMask (GL_FALSE);
-
 	    glClearStencil (0);
 	    glClear (GL_STENCIL_BUFFER_BIT);
 	    glEnable (GL_STENCIL_TEST);
 	    glStencilFunc (GL_ALWAYS, 1, 1);
 	    glStencilOp (GL_KEEP, GL_KEEP, GL_REPLACE);
 
-	    glDisable (GL_DEPTH_TEST);
-
 	    GLVertexBuffer vb;
-
 	    vb.setAutoProgram (priv->autoProgram);
-
 	    glBufferStencil (sTransform, vb, output);
-
+	    glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	    glStencilMask (1);
 	    vb.render (sTransform);
-
-#ifdef USE_GLES
-	    glColorMask (saveColorMask[0], saveColorMask[1], saveColorMask[2], saveColorMask[3]);
-	    glDepthMask (saveDepthMask);
-#else
-	    glPopAttrib ();
-#endif
-
-	    if (depthTestEnabled)
-		glEnable (GL_DEPTH_TEST);
+	    glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	    glStencilFunc (GL_EQUAL, 1, 1);
 	    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
 	}
 	else
 	{
+	    // FIXME: This old code path doesn't quite work any more.
+	    //        e.g. The LHS of screen is missing during wall slides.
 	    glEnableOutputClipping (sTransform, region, output);
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
 	}

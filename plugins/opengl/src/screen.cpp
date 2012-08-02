@@ -474,19 +474,11 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::disableVertexAttribArray = glDisableVertexAttribArray;
     GL::vertexAttribPointer = glVertexAttribPointer;
 
-    if (GL::stencilBuffer)
-    {
-	if (strstr (glExtensions, "GL_OES_packed_depth_stencil"))
-	{
-	    GL::genRenderbuffers = glGenRenderbuffers;
-	    GL::deleteRenderbuffers = glDeleteRenderbuffers;
-	    GL::bindRenderbuffer = glBindRenderbuffer;
-	    GL::framebufferRenderbuffer = glFramebufferRenderbuffer;
-	    GL::renderbufferStorage = glRenderbufferStorage;
-	}
-	else
-	    GL::stencilBuffer = false;
-    }
+    GL::genRenderbuffers = glGenRenderbuffers;
+    GL::deleteRenderbuffers = glDeleteRenderbuffers;
+    GL::bindRenderbuffer = glBindRenderbuffer;
+    GL::framebufferRenderbuffer = glFramebufferRenderbuffer;
+    GL::renderbufferStorage = glRenderbufferStorage;
 
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -1906,9 +1898,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
-    // Blending is disabled by default. Each operation/plugin
-    // should enable it (and reset it) as needed.
-    glDisable(GL_BLEND);
+    // Disable everything that we don't usually need and could slow us down
+    glDisable (GL_BLEND);
+    glDisable (GL_STENCIL_TEST);
+    glDisable (GL_DEPTH_TEST);
+    glDepthMask (GL_FALSE);
+    glStencilMask (0);
 
     GLFramebufferObject *oldFbo = NULL;
     bool useFbo = false;
