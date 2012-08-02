@@ -1162,7 +1162,7 @@ TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateMockedValue)
 
 TEST_P (CCSBackendConformanceTestReadWrite, TestUpdateKeyedValue)
 {
-    SCOPED_TRACE (CCSBackendConformanceTestParameterized::GetParam ()->what () + "UpdateMocked");
+    SCOPED_TRACE (CCSBackendConformanceTestParameterized::GetParam ()->what () + "UpdateKeyed");
 
     CCSBackendConformanceTestParameterized::GetParam ()->testEnv ()->PreUpdate (gmockContext, gmockPlugin, gmockSetting, GetParam ()->type ());
     CCSBackendConformanceTestParameterized::GetParam ()->nativeWrite (CCSBackendConformanceTestParameterized::GetParam ()->testEnv (),
