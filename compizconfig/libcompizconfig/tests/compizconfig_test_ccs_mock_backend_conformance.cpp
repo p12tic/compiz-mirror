@@ -104,6 +104,30 @@ class MockCCSBackendConceptTestEnvironment :
 	    ccsFreeMockBackend (backend);
 	}
 
+	void SetReadInitExpectation (CCSContext *context,
+				     CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*mBackendGMock, readInit (context)).WillOnce (Return (TRUE));
+	}
+
+	void SetReadDoneExpectation (CCSContext *context,
+				     CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*mBackendGMock, readDone (context));
+	}
+
+	void SetWriteInitExpectation (CCSContext *context,
+				      CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*mBackendGMock, writeInit (context)).WillOnce (Return (TRUE));
+	}
+
+	void SetWriteDoneExpectation (CCSContext *context,
+				      CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*mBackendGMock, writeDone (context));
+	}
+
 	void PreWrite (CCSContextGMock *gmockContext,
 		       CCSPluginGMock  *gmockPlugin,
 		       CCSSettingGMock *gmockSetting,
@@ -533,4 +557,7 @@ INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestReadWri
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
 INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestInfo,
+			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <MockCCSBackendConceptTestEnvironment> ());
+
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestInitFiniFuncs,
 			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <MockCCSBackendConceptTestEnvironment> ());
