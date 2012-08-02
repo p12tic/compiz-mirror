@@ -354,12 +354,29 @@ int GLVertexBuffer::render (const GLMatrix            &modelview,
     return render (*projection, modelview, attrib);
 }
 
+
+#if 0
+#define PRINT_MATRIX(m) printMatrix ((m), #m)
+static void printMatrix (const GLMatrix &matrix, const char *title = NULL)
+{
+    const float *m = matrix.getMatrix();
+    printf ("--- %s ---\n", title ? title : "?");
+    for (int y = 0; y < 4; y++)
+	printf ("[%5.1f %5.1f %5.1f %5.1f]\n", m[y], m[y+4], m[y+8], m[y+12]);
+}
+#else
+#define PRINT_MATRIX(m)
+#endif
+
 int GLVertexBuffer::render (const GLMatrix            &projection,
                             const GLMatrix            &modelview,
                             const GLWindowPaintAttrib &attrib)
 {
     if (!priv->vertexData.size ())
 	return -1;
+
+    PRINT_MATRIX(modelview);
+    PRINT_MATRIX(projection);
 
     if (enabled ())
 	return priv->render (&projection, &modelview, &attrib);
