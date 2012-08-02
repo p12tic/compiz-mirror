@@ -94,7 +94,7 @@ target_link_libraries (test-setting
 		       plugin-mock
 		       setting-mock)
 
-compiz_discover_tests (test-ccs-object)
-compiz_discover_tests (test-context)
-compiz_discover_tests (test-plugin)
-compiz_discover_tests (test-setting)
+compiz_discover_tests (test-ccs-object COVERAGE compizconfig)
+compiz_discover_tests (test-context COVERAGE context-mock)
+compiz_discover_tests (test-plugin COVERAGE plugin-mock)
+compiz_discover_tests (test-setting COVERAGE setting-mock)
