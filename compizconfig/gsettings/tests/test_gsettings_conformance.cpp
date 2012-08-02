@@ -100,7 +100,7 @@ class CCSGSettingsBackendEnv :
 	void SetReadInitExpectation (CCSContext *context,
 				     CCSContextGMock *gmockContext)
 	{
-
+	    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (profileName.c_str ()));
 	}
 
 	void SetReadDoneExpectation (CCSContext *context,
@@ -111,6 +111,7 @@ class CCSGSettingsBackendEnv :
 	void SetWriteInitExpectation (CCSContext *context,
 				      CCSContextGMock *gmockContext)
 	{
+	    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (profileName.c_str ()));
 	}
 
 	void SetWriteDoneExpectation (CCSContext *context,
@@ -464,4 +465,7 @@ INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestRe
 			 compizconfig::test::GenerateTestingParametersForBackendInterface <CCSGSettingsBackendEnv> ());
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestInfo,
+			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <CCSGSettingsBackendEnv> ());
+
+INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendConcept, CCSBackendConformanceTestInitFiniFuncs,
 			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <CCSGSettingsBackendEnv> ());
