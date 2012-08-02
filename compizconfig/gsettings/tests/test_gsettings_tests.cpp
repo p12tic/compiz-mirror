@@ -378,6 +378,22 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     g_free (pluginName);
 }
 
+TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPathBadPathname)
+{
+    std::string compiz_gsettings_path ("org/this/path/is/wrong/");
+    std::string fake_option_path ("PROFILENAME/plugins/PLUGINNAME");
+
+    compiz_gsettings_path += fake_option_path;
+
+    CharacterWrapper pluginName (strdup ("aaa"));
+    char             *pluginNameC = pluginName;
+    unsigned int screenNum = 1;
+
+    EXPECT_FALSE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginNameC, &screenNum));
+    EXPECT_EQ (std::string (pluginNameC), "aaa");
+    EXPECT_EQ (screenNum, 1);
+}
+
 TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
 {
     gchar *a = makeCompizProfilePath ("alpha");
