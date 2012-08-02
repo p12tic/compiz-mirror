@@ -97,6 +97,27 @@ class CCSGSettingsBackendEnv :
 	    ccsFreeDynamicBackend (mBackend);
 	}
 
+	void SetReadInitExpectation (CCSContext *context,
+				     CCSContextGMock *gmockContext)
+	{
+
+	}
+
+	void SetReadDoneExpectation (CCSContext *context,
+				     CCSContextGMock *gmockContext)
+	{
+	}
+
+	void SetWriteInitExpectation (CCSContext *context,
+				      CCSContextGMock *gmockContext)
+	{
+	}
+
+	void SetWriteDoneExpectation (CCSContext *context,
+				      CCSContextGMock *gmockContext)
+	{
+	}
+
 	void PreWrite (CCSContextGMock *gmockContext,
 		       CCSPluginGMock  *gmockPlugin,
 		       CCSSettingGMock *gmockSetting,

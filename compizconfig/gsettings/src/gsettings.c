@@ -597,7 +597,7 @@ ccsGSettingsBackendSetCurrentProfileDefault (CCSBackend *backend, const gchar *v
 	free (priv->currentProfile);
 
     if (priv->currentProfileSettings)
-	free (priv->currentProfileSettings);
+	g_object_unref (priv->currentProfileSettings);
 
     priv->currentProfile = strdup (value);
     priv->currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
