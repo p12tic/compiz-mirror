@@ -488,6 +488,11 @@ namespace GVariantSubtypeWrappers
     {
 	return g_variant_type_is_array (g_variant_get_type (v));
     }
+
+    gboolean unknown (GVariant *)
+    {
+	return FALSE;
+    }
 }
 
 struct ArrayVariantInfo
@@ -504,6 +509,7 @@ namespace
     const char *vInt = "i";
     const char *vDouble = "d";
     const char *vArray = "as";
+    const char *vUnknown = "";
 
     ArrayVariantInfo arrayVariantInfo[] =
     {
@@ -517,7 +523,8 @@ namespace
 	{ &GVariantSubtypeWrappers::edge, TypeEdge, vString },
 	{ &GVariantSubtypeWrappers::integer, TypeInt, vInt },
 	{ &GVariantSubtypeWrappers::doubleprecision, TypeFloat, vDouble },
-	{ &GVariantSubtypeWrappers::list, TypeList, vArray }
+	{ &GVariantSubtypeWrappers::list, TypeList, vArray },
+	{ &GVariantSubtypeWrappers::unknown, TypeNum, vUnknown }
     };
 }
 
