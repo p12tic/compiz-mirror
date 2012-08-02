@@ -1089,7 +1089,9 @@ GLScreen::~GLScreen ()
     glXDestroyContext (screen->dpy (), priv->ctx);
     #endif
 
-    delete priv->scratchFbo;
+    if (priv->scratchFbo)
+	delete priv->scratchFbo;
+
     delete priv;
 }
 
@@ -1311,7 +1313,8 @@ PrivateGLScreen::outputChangeNotify ()
 {
     screen->outputChangeNotify ();
 
-    scratchFbo->allocate (*screen, NULL, GL_BGRA);
+    if (scratchFbo)
+	scratchFbo->allocate (*screen, NULL, GL_BGRA);
     updateView ();
 }
 
@@ -1909,7 +1912,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     bool useFbo = false;
 
     /* Clear the color buffer where appropriate */
-    if (GL::fboEnabled)
+    if (GL::fboEnabled && scratchFbo)
     {
 	oldFbo = scratchFbo->bind ();
 	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
