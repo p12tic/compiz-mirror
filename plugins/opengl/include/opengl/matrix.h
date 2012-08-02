@@ -45,7 +45,6 @@ class GLMatrix {
 	void toScreenSpace (const CompOutput *output, float z);
 
 	bool invert ();
-	void transpose ();
 
 	void rotate (const float angle, const float x,
 		     const float y, const float z);
