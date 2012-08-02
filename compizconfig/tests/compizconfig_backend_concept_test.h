@@ -197,6 +197,18 @@ class CCSBackendConceptTestEnvironmentInterface
 				    CCSContextGMock *gmockContext) = 0;
 	virtual void TearDown (CCSBackend *) = 0;
 
+	virtual void SetReadInitExpectation (CCSContext      *,
+					     CCSContextGMock *) = 0;
+
+	virtual void SetReadDoneExpectation (CCSContext      *,
+					     CCSContextGMock *) = 0;
+
+	virtual void SetWriteInitExpectation (CCSContext      *,
+					      CCSContextGMock *) = 0;
+
+	virtual void SetWriteDoneExpectation (CCSContext      *,
+					      CCSContextGMock *) = 0;
+
 	virtual const CCSBackendInfo * GetInfo () = 0;
 
 	virtual void PreWrite (CCSContextGMock *,
@@ -1205,6 +1217,59 @@ TEST_P (CCSBackendConformanceTestInfo, TestGetInfo)
 	EXPECT_TRUE (retreivedBackendInfo->integrationSupport);
     else
 	EXPECT_FALSE (retreivedBackendInfo->integrationSupport);
+}
+
+class CCSBackendConformanceTestInitFiniFuncs :
+    public CCSBackendConformanceTestParameterizedByBackendFixture
+{
+};
+
+TEST_P (CCSBackendConformanceTestInitFiniFuncs, TestReadInit)
+{
+    CCSBackend *backend = GetBackend ();
+    CCSBackendInterface *backendInterface = GET_INTERFACE (CCSBackendInterface, backend);
+
+    if (backendInterface->readInit)
+    {
+	mTestEnv->SetReadInitExpectation (context.get (), gmockContext);
+	ccsBackendReadInit (backend, context.get ());
+    }
+}
+
+TEST_P (CCSBackendConformanceTestInitFiniFuncs, TestReadDone)
+{
+    CCSBackend *backend = GetBackend ();
+    CCSBackendInterface *backendInterface = GET_INTERFACE (CCSBackendInterface, backend);
+
+    if (backendInterface->readDone)
+    {
+	mTestEnv->SetReadDoneExpectation (context.get (), gmockContext);
+	ccsBackendReadDone (backend, context.get ());
+    }
+}
+
+TEST_P (CCSBackendConformanceTestInitFiniFuncs, TestWriteInit)
+{
+    CCSBackend *backend = GetBackend ();
+    CCSBackendInterface *backendInterface = GET_INTERFACE (CCSBackendInterface, backend);
+
+    if (backendInterface->writeInit)
+    {
+	mTestEnv->SetWriteInitExpectation (context.get (), gmockContext);
+	ccsBackendWriteInit (backend, context.get ());
+    }
+}
+
+TEST_P (CCSBackendConformanceTestInitFiniFuncs, TestWriteDone)
+{
+    CCSBackend *backend = GetBackend ();
+    CCSBackendInterface *backendInterface = GET_INTERFACE (CCSBackendInterface, backend);
+
+    if (backendInterface->writeDone)
+    {
+	mTestEnv->SetWriteDoneExpectation (context.get (), gmockContext);
+	ccsBackendWriteDone (backend, context.get ());
+    }
 }
 
 #endif
