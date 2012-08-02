@@ -275,6 +275,32 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateUpperToLowerForGSettings)
     EXPECT_EQ (std::string (keyname), "plugin-option");
 }
 
+TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsNoTrunc)
+{
+    std::string keyname ("FoO_BaR");
+    std::string expected ("foo-bar");
+
+    CharacterWrapper translated (translateKeyForGSettings (keyname.c_str ()));
+
+    EXPECT_EQ (std::string (translated), expected);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsTrunc)
+{
+    const unsigned int OVER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE + 1;
+    std::string keyname;
+
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+	keyname.push_back ('a');
+
+    ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
+
+    CharacterWrapper translated (translateKeyForGSettings (keyname.c_str ()));
+    std::string      stringOfTranslated (translated);
+
+    EXPECT_EQ (stringOfTranslated.size (), MAX_GSETTINGS_KEY_SIZE);
+}
+
 TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForCCS)
 {
     std::string keyname ("plugin-option");
@@ -350,6 +376,22 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     EXPECT_EQ (screenNum, 0);
 
     g_free (pluginName);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPathBadPathname)
+{
+    std::string compiz_gsettings_path ("org/this/path/is/wrong/");
+    std::string fake_option_path ("PROFILENAME/plugins/PLUGINNAME");
+
+    compiz_gsettings_path += fake_option_path;
+
+    CharacterWrapper pluginName (strdup ("aaa"));
+    char             *pluginNameC = pluginName;
+    unsigned int screenNum = 1;
+
+    EXPECT_FALSE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginNameC, &screenNum));
+    EXPECT_EQ (std::string (pluginNameC), "aaa");
+    EXPECT_EQ (screenNum, 1);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
@@ -446,6 +488,11 @@ namespace GVariantSubtypeWrappers
     {
 	return g_variant_type_is_array (g_variant_get_type (v));
     }
+
+    gboolean unknown (GVariant *)
+    {
+	return FALSE;
+    }
 }
 
 struct ArrayVariantInfo
@@ -462,6 +509,7 @@ namespace
     const char *vInt = "i";
     const char *vDouble = "d";
     const char *vArray = "as";
+    const char *vUnknown = "";
 
     ArrayVariantInfo arrayVariantInfo[] =
     {
@@ -475,7 +523,8 @@ namespace
 	{ &GVariantSubtypeWrappers::edge, TypeEdge, vString },
 	{ &GVariantSubtypeWrappers::integer, TypeInt, vInt },
 	{ &GVariantSubtypeWrappers::doubleprecision, TypeFloat, vDouble },
-	{ &GVariantSubtypeWrappers::list, TypeList, vArray }
+	{ &GVariantSubtypeWrappers::list, TypeList, vArray },
+	{ &GVariantSubtypeWrappers::unknown, TypeNum, vUnknown }
     };
 }
 
