@@ -192,7 +192,6 @@ class WallWindow :
 	GLWindow   *glWindow;
 
 	bool isSliding;
-	bool painted;
 };
 
 #define WALL_SCREEN(s) \

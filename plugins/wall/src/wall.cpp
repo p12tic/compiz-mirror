@@ -1303,10 +1303,6 @@ WallScreen::preparePaint (int msSinceLastPaint)
 	screen->handleCompizEvent ("wall", "end_viewport_switch", o);
     }
 
-    foreach (CompWindow *w, screen->windows ())
-	if (!WallWindow::get (w)->isSliding)
-	    WallWindow::get (w)->painted = false;
-
     cScreen->preparePaint (msSinceLastPaint);
 }
 
@@ -1767,8 +1763,7 @@ WallScreen::~WallScreen ()
 WallWindow::WallWindow (CompWindow *window) :
     PluginClassHandler <WallWindow, CompWindow> (window),
     window (window),
-    glWindow (GLWindow::get (window)),
-    painted (false)
+    glWindow (GLWindow::get (window))
 {
     WALL_SCREEN (screen);
 
