@@ -23,6 +23,7 @@
 #include <compizconfig_ccs_context_mock.h>
 
 #include "gtest_shared_characterwrapper.h"
+#include "compizconfig_test_value_combiners.h"
 
 using ::testing::Eq;
 using ::testing::SetArgPointee;
@@ -851,54 +852,8 @@ namespace compizconfig
 {
 namespace test
 {
-namespace impl
-{
 
-Bool boolValues[] = { TRUE, FALSE, TRUE };
-int intValues[] = { 1, 2, 3 };
-float floatValues[] = { 1.0, 2.0, 3.0 };
-const char * stringValues[] = { "foo", "grill", "bar" };
-const char * matchValues[] = { "type=foo", "class=bar", "xid=42" };
-
-const unsigned int NUM_COLOR_VALUES = 3;
-
-CCSSettingColorValue *
-getColorValueList ()
-{
-    static const unsigned short max = std::numeric_limits <unsigned short>::max ();
-    static const unsigned short maxD2 = max / 2;
-    static const unsigned short maxD4 = max / 4;
-    static const unsigned short maxD8 = max / 8;
-
-    static CCSSettingColorValue colorValues[NUM_COLOR_VALUES] = { { .color = { maxD2, maxD4, maxD8, max } },
-								  { .color = { maxD8, maxD4, maxD2, max } },
-								  { .color = { max, maxD4, maxD2, maxD8 } }
-								};
-    static bool colorValueListInitialized = false;
-
-    if (!colorValueListInitialized)
-    {
-	for (unsigned int i = 0; i < NUM_COLOR_VALUES; i++)
-	{
-	    CharacterWrapper s (ccsColorToString (&colorValues[i]));
-
-	    ccsStringToColor (s, &colorValues[i]);
-	}
-
-	colorValueListInitialized = true;
-    }
-
-    return colorValues;
-}
-
-CCSSettingKeyValue keyValue = { XK_A,
-				(1 << 0)};
-
-CCSSettingButtonValue buttonValue = { 1,
-				      (1 << 0),
-				      (1 << 1) };
-
-}
+namespace list_populators = impl::populators::list;
 
 typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
 
@@ -1014,9 +969,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetEdgeWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestEdge"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromIntArray,
-													     impl::intValues,
-													     sizeof (impl::intValues) / sizeof (impl::intValues[0]), _1),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::integer, _1),
 												TypeInt, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
@@ -1025,9 +978,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListInt"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromFloatArray,
-													     impl::floatValues,
-													     sizeof (impl::floatValues) / sizeof (impl::floatValues[0]), _1),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::doubleprecision, _1),
 												TypeFloat, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
@@ -1036,9 +987,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListFloat"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromBoolArray,
-													     impl::boolValues,
-													     sizeof (impl::boolValues) / sizeof (impl::boolValues[0]), _1),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::boolean, _1),
 												TypeBool, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
@@ -1047,9 +996,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListBool"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromStringArray,
-													     impl::stringValues,
-													     sizeof (impl::stringValues) / sizeof (impl::stringValues[0]), _1),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::string, _1),
 												TypeString, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
@@ -1058,9 +1005,7 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListString"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromMatchArray,
-													     impl::matchValues,
-													     sizeof (impl::matchValues) / sizeof (impl::matchValues[0]), _1),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::match, _1),
 												TypeMatch, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
@@ -1069,10 +1014,8 @@ GenerateTestingParametersForBackendInterface ()
 					   boost::bind (SetListWriteExpectation, _1, _2, _3, _4, _5, _6),
 					   "TestListMatch"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
-					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (ccsGetValueListFromColorArray,
-													     impl::getColorValueList (),
-													     impl::NUM_COLOR_VALUES, _1),
-											       TypeColor, true)),
+					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::color, _1),
+											        TypeColor, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "color_list_setting",
