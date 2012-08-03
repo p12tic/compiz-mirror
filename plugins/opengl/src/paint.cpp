@@ -403,6 +403,27 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     }
 }
 
+// transformIsSimple tells you if it's simple enough to use scissoring
+static bool
+transformIsSimple (const GLMatrix &transform)
+{
+    const float *t = transform.getMatrix ();
+    return // t[0] can be anything (x scale)
+           t[1] == 0.0f &&
+           t[2] == 0.0f &&
+           t[3] == 0.0f &&
+           t[4] == 0.0f &&
+           // t[5] can be anything (y scale)
+           t[6] == 0.0f &&
+           t[7] == 0.0f &&
+           t[8] == 0.0f &&
+           t[9] == 0.0f &&
+           // t[10] can be anything (z scale)
+           t[11] == 0.0f &&
+           // t[12]..t[14] can be anything (translation)
+           t[15] == 1.0f;
+}
+
 void
 GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
 				  const CompRegion &region,
@@ -410,40 +431,21 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
 {
     WRAPABLE_HND_FUNCTN (glEnableOutputClipping, transform, region, output)
 
-    #ifndef USE_GLES
-    GLdouble h = screen->height ();
+    // FIXME: Add proper scaling support (t[0], t[5])
 
-    GLdouble p1[2] = { static_cast<GLdouble> (region.handle ()->extents.x1),
-                       static_cast<GLdouble> (h - region.handle ()->extents.y2) };
-    GLdouble p2[2] = { static_cast<GLdouble> (region.handle ()->extents.x2),
-                       static_cast<GLdouble> (h - region.handle ()->extents.y1) };
+    // Bottom-left corner of the output:
+    GLint x = output->x1 ();
+    GLint y = screen->height () - output->y2 ();
+    GLsizei w = output->width ();
+    GLsizei h = output->height ();
 
-    GLdouble halfW = output->width () / 2.0;
-    GLdouble halfH = output->height () / 2.0;
+    // Transformed (only scale and translation is supported!)
+    const float *t = transform.getMatrix ();
+    GLint tx = x + t[12] * w;
+    GLint ty = y + t[13] * h;
 
-    GLdouble cx = output->x1 () + halfW;
-    GLdouble cy = (h - output->y2 ()) + halfH;
-
-    GLdouble top[4]    = { 0.0, halfH / (cy - p1[1]), 0.0, 1.0 };
-    GLdouble bottom[4] = { 0.0, halfH / (cy - p2[1]), 0.0, 1.0 };
-    GLdouble left[4]   = { halfW / (cx - p1[0]), 0.0, 0.0, 1.0 };
-    GLdouble right[4]  = { halfW / (cx - p2[0]), 0.0, 0.0, 1.0 };
-
-    glPushMatrix ();
-    glLoadMatrixf (transform.getMatrix ());
-
-    glClipPlane (GL_CLIP_PLANE0, top);
-    glClipPlane (GL_CLIP_PLANE1, bottom);
-    glClipPlane (GL_CLIP_PLANE2, left);
-    glClipPlane (GL_CLIP_PLANE3, right);
-
-    glEnable (GL_CLIP_PLANE0);
-    glEnable (GL_CLIP_PLANE1);
-    glEnable (GL_CLIP_PLANE2);
-    glEnable (GL_CLIP_PLANE3);
-
-    glPopMatrix ();
-    #endif
+    glScissor (tx, ty, w, h);
+    glEnable (GL_SCISSOR_TEST);
 }
 
 void
@@ -451,12 +453,7 @@ GLScreen::glDisableOutputClipping ()
 {
     WRAPABLE_HND_FUNCTN (glDisableOutputClipping)
 
-    #ifndef USE_GLES
-    glDisable (GL_CLIP_PLANE0);
-    glDisable (GL_CLIP_PLANE1);
-    glDisable (GL_CLIP_PLANE2);
-    glDisable (GL_CLIP_PLANE3);
-    #endif
+    glDisable (GL_SCISSOR_TEST);
 }
 
 void
@@ -513,7 +510,14 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     if ((mask & CLIP_PLANE_MASK) == CLIP_PLANE_MASK)
     {
-	if (GL::stencilBuffer)
+	bool simple = transformIsSimple (sTransform);
+
+	if (simple)
+	{
+	    glEnableOutputClipping (sTransform, region, output);
+	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
+	}
+	else if (GL::stencilBuffer)
 	{
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
 
@@ -536,18 +540,17 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	}
 	else
 	{
-	    // FIXME: This old code path doesn't quite work any more.
-	    //        e.g. The LHS of screen is missing during wall slides.
-	    glEnableOutputClipping (sTransform, region, output);
+	    // This won't look quite right but should never happen.
+	    // Give a warning?
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
 	}
 
 	priv->paintOutputRegion (sTransform, region, output, mask);
 
-	if (GL::stencilBuffer)
-	    glDisable (GL_STENCIL_TEST);
-	else
+	if (simple)
 	    glDisableOutputClipping ();
+	else if (GL::stencilBuffer)
+	    glDisable (GL_STENCIL_TEST);
     }
     else
     {
