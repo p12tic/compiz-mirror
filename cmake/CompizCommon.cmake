@@ -82,6 +82,71 @@ if (USE_GLES)
     endif (NOT OPENGLES2_FOUND)
 endif (USE_GLES)
 
+# Parse arguments passed to a function into several lists separated by
+# upper-case identifiers and options that do not have an associated list e.g.:
+#
+# SET(arguments
+#   hello OPTION3 world
+#   LIST3 foo bar
+#   OPTION2
+#   LIST1 fuz baz
+#   )
+# PARSE_ARGUMENTS(ARG "LIST1;LIST2;LIST3" "OPTION1;OPTION2;OPTION3" ${arguments})
+#
+# results in 7 distinct variables:
+#  * ARG_DEFAULT_ARGS: hello;world
+#  * ARG_LIST1: fuz;baz
+#  * ARG_LIST2:
+#  * ARG_LIST3: foo;bar
+#  * ARG_OPTION1: FALSE
+#  * ARG_OPTION2: TRUE
+#  * ARG_OPTION3: TRUE
+#
+# taken from http://www.cmake.org/Wiki/CMakeMacroParseArguments 
+
+MACRO(PARSE_ARGUMENTS prefix arg_names option_names)
+    SET(DEFAULT_ARGS)
+    FOREACH(arg_name ${arg_names})    
+        SET(${prefix}_${arg_name})
+    ENDFOREACH(arg_name)
+    FOREACH(option ${option_names})
+        SET(${prefix}_${option} FALSE)
+    ENDFOREACH(option)
+    
+    SET(current_arg_name DEFAULT_ARGS)
+    SET(current_arg_list)
+    FOREACH(arg ${ARGN})            
+        SET(larg_names ${arg_names})    
+        LIST(FIND larg_names "${arg}" is_arg_name)                   
+        IF (is_arg_name GREATER -1)
+            SET(${prefix}_${current_arg_name} ${current_arg_list})
+            SET(current_arg_name ${arg})
+            SET(current_arg_list)
+        ELSE (is_arg_name GREATER -1)
+            SET(loption_names ${option_names})    
+            LIST(FIND loption_names "${arg}" is_option)            
+            IF (is_option GREATER -1)
+                SET(${prefix}_${arg} TRUE)
+            ELSE (is_option GREATER -1)
+                SET(current_arg_list ${current_arg_list} ${arg})
+            ENDIF (is_option GREATER -1)
+        ENDIF (is_arg_name GREATER -1)
+    ENDFOREACH(arg)
+    SET(${prefix}_${current_arg_name} ${current_arg_list})
+ENDMACRO(PARSE_ARGUMENTS)
+
+function (compiz_add_to_coverage_report TARGET TEST)
+
+    set_property (GLOBAL APPEND PROPERTY
+		  COMPIZ_COVERAGE_REPORT_TARGETS
+		  ${TARGET})
+
+    set_property (GLOBAL APPEND PROPERTY
+		  COMPIZ_COVERAGE_REPORT_TESTS
+		  ${TARGET})
+
+endfunction ()
+
 function (compiz_add_test_to_testfile CURRENT_BINARY_DIR TEST)
 
     message (STATUS "Will discover tests in ${TEST}")
@@ -147,6 +212,15 @@ endfunction (compiz_generate_testfile_target)
 
 # Create target to discover tests
 function (compiz_discover_tests EXECUTABLE)
+
+    string (TOLOWER "${CMAKE_BUILD_TYPE}" COVERAGE_BUILD_TYPE)
+    if (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
+	parse_arguments (ARG "COVERAGE" "" ${ARGN})
+
+	foreach (COVERAGE ${ARG_COVERAGE})
+	    compiz_add_to_coverage_report (${COVERAGE} ${EXECUTABLE})
+	endforeach ()
+    endif (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
 
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD

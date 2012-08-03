@@ -21,4 +21,4 @@ target_link_libraries (compiz_test_composite_pixmapbinding
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
                        )
 
-compiz_discover_tests (compiz_test_composite_pixmapbinding)
+compiz_discover_tests (compiz_test_composite_pixmapbinding COVERAGE compiz_composite_pixmapbinding)
