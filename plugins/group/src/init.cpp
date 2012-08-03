@@ -118,7 +118,7 @@ GroupScreen::optionChanged (CompOption *opt,
 					      glowProperty->textureSize),
 				    GL_RGBA, GL_UNSIGNED_BYTE);
 
-		if (optionGetGlow () && mGroups.size ())
+		if (optionGetGlow () && !mGroups.empty ())
 		{
 		    foreach (CompWindow *w, screen->windows ())
 		    {
@@ -228,7 +228,7 @@ GroupScreen::checkFunctions ()
 	 mGrabState == GroupScreen::ScreenGrabTabDrag)
 	 functionsMask |= (GL_PAINT_OUTPUT |
 			   GL_PAINT_TRANSFORMED_OUTPUT);
-    else if (mGroups.size ())
+    else if (!mGroups.empty ())
     {
 	foreach (GroupSelection *group, mGroups)
 	{

@@ -436,7 +436,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 
 		    if (temp == "fragment.texcoord[0]")
 			data->addFetchOp (arg1.c_str (), NULL, target);
-		    else if (offsets.size ())
+		    else if (!offsets.empty ())
 		    {
 			arg2 = programFindOffset (
 					      offsets.begin (),

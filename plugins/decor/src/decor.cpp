@@ -1323,7 +1323,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
     std::list <Decoration::Ptr>::iterator cit = mList.end ();
     DECOR_WINDOW (w);
 
-    if (mList.size ())
+    if (!mList.empty ())
     {
         const unsigned int typeMatch = (1 << 0);
         const unsigned int stateMatch = (1 << 1);

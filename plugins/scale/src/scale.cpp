@@ -517,7 +517,7 @@ PrivateScaleScreen::layoutSlots ()
 	case ScaleOptions::MultioutputModeOnAllOutputDevices:
 	    {
 		SlotArea::vector slotAreas = getSlotAreas ();
-		if (slotAreas.size ())
+		if (!slotAreas.empty ())
 		{
 		    foreach (SlotArea &sa, slotAreas)
 			layoutSlotsForArea (sa.workArea, sa.nWindows);

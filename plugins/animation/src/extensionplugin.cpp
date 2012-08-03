@@ -432,13 +432,13 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 		wEnd = wRestacked;
 		wOldAbove = wStart;
 	    }
-	    else if (clients[(unsigned)changeStart] ==
-		     mLastClientList[(unsigned)changeEnd] && // lowered
+	    else if ((unsigned int)changeEnd < n - 1 &&
+		     clients[(unsigned)changeStart] ==
+		     mLastClientList[(unsigned)changeEnd]) // lowered
 		     // We don't animate lowering if there is no
 		     // window above this window, since this window needs
 		     // to be drawn on such a "host" in animPaintWindow
 		     // (at least for now).
-		     (unsigned int)changeEnd < n - 1)
 	    {
 		wRestacked = wChangeStart;
 		wStart = wRestacked;

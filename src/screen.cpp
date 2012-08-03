@@ -2132,7 +2132,7 @@ PrivateScreen::detectOutputDevices (CoreOptions& coreOptions)
 	CompString	  name;
 	CompOption::Value value;
 
-	if (screenInfo.size ())
+	if (!screenInfo.empty ())
 	{
 	    CompOption::Value::Vector l;
 	    foreach (XineramaScreenInfo xi, screenInfo)
