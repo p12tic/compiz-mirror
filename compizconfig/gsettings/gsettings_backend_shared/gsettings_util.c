@@ -1042,10 +1042,13 @@ gboolean
 ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context)
 {
     const char *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
-    char *profile = strdup (ccsGetProfile (context));
+    const char *ccsProfile = ccsGetProfile (context);
+    char *profile = NULL;
 
-    if (!profile)
+    if (!ccsProfile)
 	profile = strdup (DEFAULTPROF);
+    else
+	profile = strdup (ccsProfile);
 
     if (!strlen (profile))
     {
