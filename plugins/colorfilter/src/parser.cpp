@@ -149,7 +149,7 @@ FragmentParser::getFirstArgument (const CompString &line,
 {
     CompString arg;
     CompString string;
-    size_t next, temp, orig;
+    size_t next, orig;
     int length;
     CompString retArg;
 
@@ -167,6 +167,7 @@ FragmentParser::getFirstArgument (const CompString &line,
     if ((next = string.find (",", pos)) != std::string::npos ||
 	(next = string.find (";", pos)) != std::string::npos)
     {
+	size_t temp;
 	length = next - pos;
 	if (!length)
 	{
