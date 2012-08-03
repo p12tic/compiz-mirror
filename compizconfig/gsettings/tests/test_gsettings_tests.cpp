@@ -1410,3 +1410,45 @@ ReadListValueTypeTestParam readListValueTypeTestParam[] =
 
 INSTANTIATE_TEST_CASE_P (TestGSettingsReadListValueParameterized, CCSGSettingsTestReadListValueTypes,
 			 ::testing::ValuesIn (readListValueTypeTestParam));
+
+class CCSGSettingsBackendReadListValueBadTypesTest :
+    public ::testing::TestWithParam <CCSSettingType>
+{
+};
+
+TEST_P (CCSGSettingsBackendReadListValueBadTypesTest, TestGSettingsReadListValueFailsOnNonVariantTypes)
+{
+    GVariant			   *variant = NULL;
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info =
+    {
+	.forList =
+	{
+	    GetParam (),
+	    NULL
+	}
+    };
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+
+    EXPECT_THAT (readListValue (variant, mockSetting.get (), &ccsDefaultObjectAllocator), IsNull ());
+}
+
+CCSSettingType readListValueNonVariantTypes[] =
+{
+    TypeAction,
+    TypeKey,
+    TypeButton,
+    TypeEdge,
+    TypeBell,
+    TypeList,
+    TypeNum
+};
+
+INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendReadListValueBadTypesTestParameterized,
+			 CCSGSettingsBackendReadListValueBadTypesTest,
+			 ::testing::ValuesIn (readListValueNonVariantTypes));
