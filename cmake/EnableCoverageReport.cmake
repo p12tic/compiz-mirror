@@ -30,7 +30,7 @@
 # GNU General Public License for more details.
 #
 
-INCLUDE(ParseArguments)
+INCLUDE(CompizCommon)
 
 FIND_PACKAGE(Lcov)
 FIND_PACKAGE(gcovr)
