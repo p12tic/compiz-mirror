@@ -11,6 +11,7 @@
 #include "compizconfig_ccs_setting_mock.h"
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
+#include "compizconfig_ccs_mocked_allocator.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
@@ -24,6 +25,8 @@ using ::testing::Not;
 using ::testing::Matcher;
 using ::testing::Eq;
 using ::testing::NiceMock;
+using ::testing::StrictMock;
+using ::testing::IsNull;
 
 class GVariantSubtypeMatcher :
     public ::testing::MatcherInterface<GVariant *>
@@ -181,12 +184,14 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
     CCSGSettingsBackendGMock *mockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
 
     std::string currentProfile ("foo");
+    std::string otherProfile ("other");
 
     GVariant *existingProfiles = NULL;
     GVariantBuilder existingProfilesBuilder;
 
     g_variant_builder_init (&existingProfilesBuilder, G_VARIANT_TYPE ("as"));
     g_variant_builder_add (&existingProfilesBuilder, "s", currentProfile.c_str ());
+    g_variant_builder_add (&existingProfilesBuilder, "s", otherProfile.c_str ());
 
     existingProfiles = g_variant_builder_end (&existingProfilesBuilder);
 
@@ -199,7 +204,10 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
     EXPECT_CALL (*mockBackend, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
 							   Not (GVariantHasValueInArray<const gchar *> ("s",
 													currentProfile.c_str (),
-													boost::bind (streq, _1, _2))))));
+													boost::bind (streq, _1, _2))),
+							   GVariantHasValueInArray<const gchar *> ("s",
+												   otherProfile.c_str (),
+												   boost::bind (streq, _1, _2)))));
 
     EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
 
@@ -1158,7 +1166,10 @@ class ReadListValueTypeTestParam
 {
     public:
 
-	typedef boost::function <CCSSettingValueList (GVariantIter *, guint nItems, CCSSetting *setting)> ReadValueListFunc;
+	typedef boost::function <CCSSettingValueList (GVariantIter *,
+						      guint nItems,
+						      CCSSetting *setting,
+						      CCSObjectAllocationInterface *allocator)> ReadValueListFunc;
 	typedef boost::function <GVariant * ()> GVariantPopulator;
 	typedef boost::function <CCSSettingValueList (CCSSetting *)> CCSSettingValueListPopulator;
 
@@ -1173,9 +1184,12 @@ class ReadListValueTypeTestParam
 	{
 	}
 
-	CCSSettingValueList read (GVariantIter *iter, guint nItems, CCSSetting *setting) const
+	CCSSettingValueList read (GVariantIter *iter,
+				  guint        nItems,
+				  CCSSetting   *setting,
+				  CCSObjectAllocationInterface *allocator) const
 	{
-	    return mReadFunc (iter, nItems, setting);
+	    return mReadFunc (iter, nItems, setting, allocator);
 	}
 
 	boost::shared_ptr <GVariant> populateVariant () const
@@ -1303,8 +1317,73 @@ TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueGoodAllocation)
     ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
     ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
 
-    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter, 3, mockSetting.get ()),
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter,
+									      3,
+									      mockSetting.get (),
+									      &ccsDefaultObjectAllocator),
 							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+
+    EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
+}
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueThroughListValueDispatch)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info =
+    {
+	.forList =
+	{
+	    GetParam ().type (),
+	    NULL
+	}
+    };
+
+    boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
+    GVariantIter			    iter;
+
+    g_variant_iter_init (&iter, variant.get ());
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (readListValue (variant.get (),
+									   mockSetting.get (),
+									   &ccsDefaultObjectAllocator),
+							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+
+    EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
+}
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueBadAllocation)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+    StrictMock <ObjectAllocationGMock> objectAllocationGMock;
+    FailingObjectAllocation fakeFailingAllocator;
+
+    CCSObjectAllocationInterface failingAllocatorGMock = failingAllocator;
+    failingAllocatorGMock.allocator = reinterpret_cast <void *> (&objectAllocationGMock);
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    GVariantIter			    iter;
+    g_variant_iter_init (&iter, variant.get ());
+
+    EXPECT_CALL (objectAllocationGMock, calloc_ (_, _)).WillOnce (Invoke (&fakeFailingAllocator,
+								       &FailingObjectAllocation::calloc_));
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter,
+									      3,
+									      mockSetting.get (),
+									      &failingAllocatorGMock));
+
+    EXPECT_THAT (readValueList.get (), IsNull ());
 }
 
 namespace variant_populators = compizconfig::test::impl::populators::variant;
@@ -1312,23 +1391,23 @@ namespace list_populators = compizconfig::test::impl::populators::list;
 
 ReadListValueTypeTestParam readListValueTypeTestParam[] =
 {
-    ReadListValueTypeTestParam (boost::bind (readBoolListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readBoolListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::boolean),
 				boost::bind (list_populators::boolean, _1),
 				TypeBool),
-    ReadListValueTypeTestParam (boost::bind (readIntListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readIntListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::integer),
 				boost::bind (list_populators::integer, _1),
 				TypeInt),
-    ReadListValueTypeTestParam (boost::bind (readFloatListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readFloatListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::doubleprecision),
 				boost::bind (list_populators::doubleprecision, _1),
 				TypeFloat),
-    ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::string),
 				boost::bind (list_populators::string, _1),
-				TypeBool),
-    ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3),
+				TypeString),
+    ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::color),
 				boost::bind (list_populators::color, _1),
 				TypeColor)
@@ -1336,3 +1415,119 @@ ReadListValueTypeTestParam readListValueTypeTestParam[] =
 
 INSTANTIATE_TEST_CASE_P (TestGSettingsReadListValueParameterized, CCSGSettingsTestReadListValueTypes,
 			 ::testing::ValuesIn (readListValueTypeTestParam));
+
+class CCSGSettingsBackendReadListValueBadTypesTest :
+    public ::testing::TestWithParam <CCSSettingType>
+{
+};
+
+TEST_P (CCSGSettingsBackendReadListValueBadTypesTest, TestGSettingsReadListValueFailsOnNonVariantTypes)
+{
+    GVariant			   *variant = NULL;
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info =
+    {
+	.forList =
+	{
+	    GetParam (),
+	    NULL
+	}
+    };
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+
+    EXPECT_THAT (readListValue (variant, mockSetting.get (), &ccsDefaultObjectAllocator), IsNull ());
+}
+
+CCSSettingType readListValueNonVariantTypes[] =
+{
+    TypeAction,
+    TypeKey,
+    TypeButton,
+    TypeEdge,
+    TypeBell,
+    TypeList,
+    TypeNum
+};
+
+INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendReadListValueBadTypesTestParameterized,
+			 CCSGSettingsBackendReadListValueBadTypesTest,
+			 ::testing::ValuesIn (readListValueNonVariantTypes));
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplCurrentProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (currentProfile.c_str ()));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplDifferentProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("other");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (otherProfile.c_str ()));
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (otherProfile)));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplNullProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("other");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (ReturnNull ());
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (std::string (DEFAULTPROF))));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplEmptyStringProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (otherProfile.c_str ()));
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (std::string (DEFAULTPROF))));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}

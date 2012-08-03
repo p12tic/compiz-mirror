@@ -158,7 +158,7 @@ CCSSettingButtonValue readButtonFromVariant (GVariant *gsettingsValue, Bool *suc
 unsigned int readEdgeFromVariant (GVariant *gsettingsValue);
 
 CCSSettingValueList
-readListValue (GVariant *gsettingsValue, CCSSetting *setting);
+readListValue (GVariant *gsettingsValue, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
 Bool
 writeListValue (CCSSettingValueList list,
@@ -203,19 +203,19 @@ removeItemFromVariant (GVariant	  **variant,
 		       const char *string);
 
 CCSSettingValueList
-readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
 CCSSettingValueList
-readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
 CCSSettingValueList
-readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
 CCSSettingValueList
-readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
 CCSSettingValueList
-readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting);
+readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
 
 gboolean

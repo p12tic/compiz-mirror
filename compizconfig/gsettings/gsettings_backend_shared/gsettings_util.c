@@ -494,10 +494,10 @@ getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCS
 }
 
 CCSSettingValueList
-readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *ai)
 {
     CCSSettingValueList list = NULL;
-    Bool *array = malloc (nItems * sizeof (Bool));
+    Bool *array = (*ai->calloc_) (ai->allocator, 1, nItems * sizeof (Bool));
     Bool *arrayCounter = array;
     gboolean value;
 
@@ -515,10 +515,10 @@ readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
-readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *ai)
 {
     CCSSettingValueList list = NULL;
-    int *array = malloc (nItems * sizeof (int));
+    int *array = (*ai->calloc_) (ai->allocator, 1, nItems * sizeof (int));
     int *arrayCounter = array;
     gint value;
 
@@ -536,10 +536,10 @@ readIntListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
-readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *ai)
 {
     CCSSettingValueList list = NULL;
-    float *array = malloc (nItems * sizeof (float));
+    float *array = (*ai->calloc_) (ai->allocator, 1, nItems * sizeof (float));
     float *arrayCounter = array;
     gdouble value;
 
@@ -557,10 +557,10 @@ readFloatListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
-readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *ai)
 {
     CCSSettingValueList list = NULL;
-    const gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
+    const gchar **array = (*ai->calloc_) (ai->allocator, 1, (nItems + 1) * sizeof (gchar *));
     const gchar **arrayCounter = array;
     gchar *value;
 
@@ -580,11 +580,11 @@ readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
-readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
+readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *ai)
 {
     CCSSettingValueList list = NULL;
     char		 *colorValue;
-    CCSSettingColorValue *array = calloc (1, nItems * sizeof (CCSSettingColorValue));
+    CCSSettingColorValue *array = (*ai->calloc_) (ai->allocator, 1, nItems * sizeof (CCSSettingColorValue));
     unsigned int i = 0;
 
     if (!array)
@@ -604,7 +604,7 @@ readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting)
 }
 
 CCSSettingValueList
-readListValue (GVariant *gsettingsValue, CCSSetting *setting)
+readListValue (GVariant *gsettingsValue, CCSSetting *setting, CCSObjectAllocationInterface *ai)
 {
     CCSSettingType      listType = ccsSettingGetInfo (setting)->forList.listType;
     gboolean		hasVariantType;
@@ -623,20 +623,20 @@ readListValue (GVariant *gsettingsValue, CCSSetting *setting)
     switch (listType)
     {
     case TypeBool:
-	list = readBoolListValue (&iter, nItems, setting);
+	list = readBoolListValue (&iter, nItems, setting, ai);
 	break;
     case TypeInt:
-	list = readIntListValue (&iter, nItems, setting);
+	list = readIntListValue (&iter, nItems, setting, ai);
 	break;
     case TypeFloat:
-	list = readFloatListValue (&iter, nItems, setting);
+	list = readFloatListValue (&iter, nItems, setting, ai);
 	break;
     case TypeString:
     case TypeMatch:
-	list = readStringListValue (&iter, nItems, setting);
+	list = readStringListValue (&iter, nItems, setting, ai);
 	break;
     case TypeColor:
-	list = readColorListValue (&iter, nItems, setting);
+	list = readColorListValue (&iter, nItems, setting, ai);
 	break;
     default:
 	break;
@@ -954,6 +954,8 @@ insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
 {
     const char *cmp = (const char *) userData;
 
+    printf ("cmp: %s %s\n", item, cmp);
+
     if (g_strcmp0 (item, cmp))
 	g_variant_builder_add (builder, "s", item);
 }
@@ -1040,10 +1042,13 @@ gboolean
 ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context)
 {
     const char *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
-    char *profile = strdup (ccsGetProfile (context));
+    const char *ccsProfile = ccsGetProfile (context);
+    char *profile = NULL;
 
-    if (!profile)
+    if (!ccsProfile)
 	profile = strdup (DEFAULTPROF);
+    else
+	profile = strdup (ccsProfile);
 
     if (!strlen (profile))
     {
