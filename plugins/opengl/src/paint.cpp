@@ -968,12 +968,12 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 #ifndef USE_GLES
 static void
 enableLegacyOBSAndRender (GLScreen                  *gs,
-					 GLWindow	    *w,
-					 GLTexture	    *texture,
+                          GLWindow                  *w,
+                          GLTexture                 *texture,
                           const GLMatrix            &transform,
                           const GLWindowPaintAttrib &attrib,
-					 GLTexture::Filter  filter,
-					 unsigned int	    mask)
+                          GLTexture::Filter          filter,
+                          unsigned int               mask)
 {
     // XXX: This codepath only works with !GL::vbo so that's the only case
     //      where you'll find it's called. At least for now.
