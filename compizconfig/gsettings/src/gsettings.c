@@ -313,7 +313,7 @@ readOption (CCSBackend *backend, CCSSetting * setting)
 	break;
     case TypeList:
 	{
-	    CCSSettingValueList list = readListValue (gsettingsValue, setting);
+	    CCSSettingValueList list = readListValue (gsettingsValue, setting, &ccsDefaultObjectAllocator);
 
 	    if (list)
 	    {

@@ -11,6 +11,7 @@
 #include "compizconfig_ccs_setting_mock.h"
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
+#include "compizconfig_ccs_mocked_allocator.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
@@ -24,6 +25,8 @@ using ::testing::Not;
 using ::testing::Matcher;
 using ::testing::Eq;
 using ::testing::NiceMock;
+using ::testing::StrictMock;
+using ::testing::IsNull;
 
 class GVariantSubtypeMatcher :
     public ::testing::MatcherInterface<GVariant *>
@@ -1158,7 +1161,10 @@ class ReadListValueTypeTestParam
 {
     public:
 
-	typedef boost::function <CCSSettingValueList (GVariantIter *, guint nItems, CCSSetting *setting)> ReadValueListFunc;
+	typedef boost::function <CCSSettingValueList (GVariantIter *,
+						      guint nItems,
+						      CCSSetting *setting,
+						      CCSObjectAllocationInterface *allocator)> ReadValueListFunc;
 	typedef boost::function <GVariant * ()> GVariantPopulator;
 	typedef boost::function <CCSSettingValueList (CCSSetting *)> CCSSettingValueListPopulator;
 
@@ -1173,9 +1179,12 @@ class ReadListValueTypeTestParam
 	{
 	}
 
-	CCSSettingValueList read (GVariantIter *iter, guint nItems, CCSSetting *setting) const
+	CCSSettingValueList read (GVariantIter *iter,
+				  guint        nItems,
+				  CCSSetting   *setting,
+				  CCSObjectAllocationInterface *allocator) const
 	{
-	    return mReadFunc (iter, nItems, setting);
+	    return mReadFunc (iter, nItems, setting, allocator);
 	}
 
 	boost::shared_ptr <GVariant> populateVariant () const
@@ -1303,8 +1312,40 @@ TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueGoodAllocation)
     ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
     ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
 
-    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter, 3, mockSetting.get ()),
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter,
+									      3,
+									      mockSetting.get (),
+									      &ccsDefaultObjectAllocator),
 							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+
+    EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
+}
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueBadAllocation)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+    StrictMock <ObjectAllocationGMock> objectAllocationGMock;
+    FailingObjectAllocation fakeFailingAllocator;
+
+    CCSObjectAllocationInterface failingAllocatorGMock = failingAllocator;
+    failingAllocatorGMock.allocator = reinterpret_cast <void *> (&objectAllocationGMock);
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    GVariantIter			    iter;
+    g_variant_iter_init (&iter, variant.get ());
+
+    EXPECT_CALL (objectAllocationGMock, calloc_ (_, _)).WillOnce (Invoke (&fakeFailingAllocator,
+								       &FailingObjectAllocation::calloc_));
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter,
+									      3,
+									      mockSetting.get (),
+									      &failingAllocatorGMock));
+
+    EXPECT_THAT (readValueList.get (), IsNull ());
 }
 
 namespace variant_populators = compizconfig::test::impl::populators::variant;
@@ -1312,23 +1353,23 @@ namespace list_populators = compizconfig::test::impl::populators::list;
 
 ReadListValueTypeTestParam readListValueTypeTestParam[] =
 {
-    ReadListValueTypeTestParam (boost::bind (readBoolListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readBoolListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::boolean),
 				boost::bind (list_populators::boolean, _1),
 				TypeBool),
-    ReadListValueTypeTestParam (boost::bind (readIntListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readIntListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::integer),
 				boost::bind (list_populators::integer, _1),
 				TypeInt),
-    ReadListValueTypeTestParam (boost::bind (readFloatListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readFloatListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::doubleprecision),
 				boost::bind (list_populators::doubleprecision, _1),
 				TypeFloat),
-    ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::string),
 				boost::bind (list_populators::string, _1),
 				TypeBool),
-    ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3),
+    ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::color),
 				boost::bind (list_populators::color, _1),
 				TypeColor)
