@@ -407,7 +407,7 @@ class CCSGSettingsBackendEnv :
 						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
 						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
 						 TypeList);
-	    return readListValue (variant, setting);
+	    return readListValue (variant, setting, &ccsDefaultObjectAllocator);
 	}
 
 	void PreUpdate (CCSContextGMock *gmockContext,
