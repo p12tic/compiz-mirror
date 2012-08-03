@@ -535,7 +535,8 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
 	tmpProgram->setUniform3f ("paintAttrib", attribs[0], attribs[1], attribs[2]);
     }
 
-    glDrawArrays (primitiveType, 0, maxVertices > 0 ?
+
+    glDrawArrays (primitiveType, vertexOffset, maxVertices > 0 ?
 				    std::min (static_cast <int> (vertexData.size () / 3),
 					      maxVertices) :
 				    vertexData.size () / 3);
@@ -608,7 +609,7 @@ int PrivateVertexBuffer::legacyRender (const GLMatrix            &projection,
 	glTexCoordPointer (2, GL_FLOAT, 0, &textureData[i][0]);
     }
 
-    glDrawArrays (primitiveType, 0, vertexData.size () / 3);
+    glDrawArrays (primitiveType, vertexOffset, vertexData.size () / 3);
 
     glDisableClientState (GL_VERTEX_ARRAY);
     glDisableClientState (GL_NORMAL_ARRAY);
