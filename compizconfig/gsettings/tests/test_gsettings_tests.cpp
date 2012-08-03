@@ -1457,3 +1457,39 @@ CCSSettingType readListValueNonVariantTypes[] =
 INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendReadListValueBadTypesTestParameterized,
 			 CCSGSettingsBackendReadListValueBadTypesTest,
 			 ::testing::ValuesIn (readListValueNonVariantTypes));
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplCurrentProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (currentProfile.c_str ()));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplDifferentProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("other");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (otherProfile.c_str ()));
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (otherProfile)));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
