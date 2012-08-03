@@ -510,12 +510,12 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     if ((mask & CLIP_PLANE_MASK) == CLIP_PLANE_MASK)
     {
-	bool simple = transformIsSimple (sTransform);
-
-	if (simple)
+	if (transformIsSimple (sTransform))
 	{
 	    glEnableOutputClipping (sTransform, region, output);
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
+	    priv->paintOutputRegion (sTransform, region, output, mask);
+	    glDisableOutputClipping ();
 	}
 	else if (GL::stencilBuffer)
 	{
@@ -537,20 +537,16 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 	    glStencilFunc (GL_EQUAL, 1, 1);
 	    glStencilOp (GL_KEEP, GL_KEEP, GL_KEEP);
+	    priv->paintOutputRegion (sTransform, region, output, mask);
+	    glDisable (GL_STENCIL_TEST);
 	}
 	else
 	{
 	    // This won't look quite right but should never happen.
 	    // Give a warning?
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
+	    priv->paintOutputRegion (sTransform, region, output, mask);
 	}
-
-	priv->paintOutputRegion (sTransform, region, output, mask);
-
-	if (simple)
-	    glDisableOutputClipping ();
-	else if (GL::stencilBuffer)
-	    glDisable (GL_STENCIL_TEST);
     }
     else
     {
