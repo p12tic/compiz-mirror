@@ -184,12 +184,14 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
     CCSGSettingsBackendGMock *mockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
 
     std::string currentProfile ("foo");
+    std::string otherProfile ("other");
 
     GVariant *existingProfiles = NULL;
     GVariantBuilder existingProfilesBuilder;
 
     g_variant_builder_init (&existingProfilesBuilder, G_VARIANT_TYPE ("as"));
     g_variant_builder_add (&existingProfilesBuilder, "s", currentProfile.c_str ());
+    g_variant_builder_add (&existingProfilesBuilder, "s", otherProfile.c_str ());
 
     existingProfiles = g_variant_builder_end (&existingProfilesBuilder);
 
@@ -202,7 +204,10 @@ TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
     EXPECT_CALL (*mockBackend, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
 							   Not (GVariantHasValueInArray<const gchar *> ("s",
 													currentProfile.c_str (),
-													boost::bind (streq, _1, _2))))));
+													boost::bind (streq, _1, _2))),
+							   GVariantHasValueInArray<const gchar *> ("s",
+												   otherProfile.c_str (),
+												   boost::bind (streq, _1, _2)))));
 
     EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
 
