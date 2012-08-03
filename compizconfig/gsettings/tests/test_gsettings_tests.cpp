@@ -1321,6 +1321,39 @@ TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueGoodAllocation)
     EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
 }
 
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueThroughListValueDispatch)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info =
+    {
+	.forList =
+	{
+	    GetParam ().type (),
+	    NULL
+	}
+    };
+
+    boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
+    GVariantIter			    iter;
+
+    g_variant_iter_init (&iter, variant.get ());
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (readListValue (variant.get (),
+									   mockSetting.get (),
+									   &ccsDefaultObjectAllocator),
+							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+
+    EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
+}
+
 TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueBadAllocation)
 {
     boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
@@ -1368,7 +1401,7 @@ ReadListValueTypeTestParam readListValueTypeTestParam[] =
     ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::string),
 				boost::bind (list_populators::string, _1),
-				TypeBool),
+				TypeString),
     ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3, _4),
 				boost::bind (variant_populators::color),
 				boost::bind (list_populators::color, _1),
