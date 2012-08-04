@@ -949,8 +949,6 @@ insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
 {
     const char *cmp = (const char *) userData;
 
-    printf ("cmp: %s %s\n", item, cmp);
-
     if (g_strcmp0 (item, cmp))
 	g_variant_builder_add (builder, "s", item);
 }
