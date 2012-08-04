@@ -154,6 +154,10 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestReset
     ASSERT_EQ (strlen (VALUE), length);
     ASSERT_THAT (v, Eq (VALUE));
 
+    /* g_settings_reset appears to unref the value,
+     * so we need to keep it alive */
+    g_variant_ref (value.get ());
+
     ccsGSettingsWrapperResetKey (wrapper.get (), KEY.c_str ());
 
     value.reset (g_settings_get_value (settings, KEY.c_str ()),
