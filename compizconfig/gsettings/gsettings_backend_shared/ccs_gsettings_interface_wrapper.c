@@ -69,7 +69,9 @@ ccsGSettingsWrapperConnectToChangedSignalDefault (CCSGSettingsWrapper *wrapper,
 						  GCallback	       callback,
 						  gpointer	       data)
 {
-    //g_signal_connect (object, "changed", callback, data);
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    g_signal_connect (gswPrivate->settings, "changed", callback, data);
 }
 
 static void
