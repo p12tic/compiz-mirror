@@ -106,7 +106,17 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestGetGSettingsW
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestSetValueOnWrapper)
 {
-    FAIL ();
+    const unsigned int VALUE = 2;
+    const std::string KEY ("integer-setting");
+    boost::shared_ptr <GVariant> variant (g_variant_new ("i", VALUE, NULL),
+					  boost::bind (g_variant_unref, _1));
+    ccsGSettingsWrapperSetValue (wrapper.get (), KEY.c_str (), variant.get ());
+
+    boost::shared_ptr <GVariant> value (g_settings_get_value (settings, KEY.c_str ()),
+					boost::bind (g_variant_unref, _1));
+
+    int v = g_variant_get_int32 (value.get ());
+    EXPECT_EQ (VALUE, v);
 }
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetValueOnWrapper)
