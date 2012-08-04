@@ -59,7 +59,9 @@ ccsGSettingsWrapperGetSchemaNameDefault (CCSGSettingsWrapper *wrapper)
 static const char *
 ccsGSettingsWrapperGetPathDefault (CCSGSettingsWrapper *wrapper)
 {
-    return NULL;
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return gswPrivate->path;
 }
 
 void
