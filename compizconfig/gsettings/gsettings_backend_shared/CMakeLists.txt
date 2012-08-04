@@ -17,6 +17,7 @@ if (GSETTINGS_UTIL_FOUND)
 
     add_library (gsettings_backend_shared SHARED
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface_wrapper.c
+		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c)
 
