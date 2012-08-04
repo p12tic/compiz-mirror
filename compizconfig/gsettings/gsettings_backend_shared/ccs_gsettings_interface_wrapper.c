@@ -36,7 +36,9 @@ static void ccsGSettingsWrapperResetKeyDefault (CCSGSettingsWrapper *wrapper, co
 
 static char ** ccsGSettingsWrapperListKeysDefault (CCSGSettingsWrapper *wrapper)
 {
-    return NULL;
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return g_settings_list_keys (gswPrivate->settings);
 }
 
 static GSettings * ccsGSettingsWrapperGetGSettingsDefault (CCSGSettingsWrapper *wrapper)

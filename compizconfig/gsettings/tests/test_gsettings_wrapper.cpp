@@ -168,7 +168,22 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListK
 {
     const char * EXPECTED_KEYS[] =
     {
-	"bar"
+	"bell-setting",
+	"bool-list-setting",
+	"boolean-setting",
+	"button-setting",
+	"color-list-setting",
+	"color-setting",
+	"edge-setting",
+	"float-list-setting",
+	"float-setting",
+	"int-list-setting",
+	"integer-setting",
+	"key-setting",
+	"match-list-setting",
+	"match-setting",
+	"string-list-setting",
+	"string-setting"
     };
 
     boost::shared_ptr <gchar *> keys (ccsGSettingsWrapperListKeys (wrapper.get ()),
