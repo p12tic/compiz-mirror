@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -12,6 +14,7 @@
 #include <ccs_gsettings_interface_wrapper.h>
 
 using ::testing::NotNull;
+using ::testing::Eq;
 
 class TestGSettingsWrapperWithMemoryBackendEnv :
     public ::testing::Test
@@ -136,7 +139,29 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetVa
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestResetKeyOnWrapper)
 {
-    FAIL ();
+    const char * DEFAULT = "";
+    const char * VALUE = "foo";
+    const std::string KEY ("string-setting");
+    boost::shared_ptr <GVariant> variant (g_variant_new ("s", VALUE, NULL),
+					  boost::bind (g_variant_unref, _1));
+    ccsGSettingsWrapperSetValue (wrapper.get (), KEY.c_str (), variant.get ());
+
+    boost::shared_ptr <GVariant> value (g_settings_get_value (settings, KEY.c_str ()),
+					boost::bind (g_variant_unref, _1));
+
+    gsize      length;
+    const char *v = g_variant_get_string (value.get (), &length);
+    ASSERT_EQ (strlen (VALUE), length);
+    ASSERT_THAT (v, Eq (VALUE));
+
+    ccsGSettingsWrapperResetKey (wrapper.get (), v);
+
+    value.reset (g_settings_get_value (settings, KEY.c_str ()),
+		 boost::bind (g_variant_unref, _1));
+
+    v = g_variant_get_string (value.get (), &length);
+    ASSERT_EQ (strlen (DEFAULT), length);
+    ASSERT_THAT (v, Eq (DEFAULT));
 }
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListKeysOnWrapper)
