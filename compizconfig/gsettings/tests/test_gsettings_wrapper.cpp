@@ -6,7 +6,7 @@
 #include <boost/bind.hpp>
 
 #include "test_gsettings_tests.h"
-#include "gsettings-mock-schemas-config.h"
+#include <gsettings-mock-schemas-config.h>
 #include <ccs_gsettings_interface_wrapper.h>
 
 using ::testing::NotNull;
