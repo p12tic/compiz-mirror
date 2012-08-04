@@ -51,22 +51,17 @@ variantTypeToPossibleSettingType (const gchar *vt)
     return possibleTypesList;
 }
 
-GObject *
-findObjectInListWithPropertySchemaName (const gchar *schemaName,
-					GList	    *iter)
+CCSGSettingsWrapper *
+findCCSGSettingsWrapperBySchemaName (const gchar *schemaName,
+				     GList	 *iter)
 {
     while (iter)
     {
-	GObject   *obj = (GObject *) iter->data;
-	gchar	  *name = NULL;
+	CCSGSettingsWrapper   *obj = iter->data;
+	const gchar	      *name = ccsGSettingsWrapperGetSchemaName (obj);
 
-	g_object_get (obj,
-		      "schema",
-		      &name, NULL);
 	if (g_strcmp0 (name, schemaName) != 0)
 	    obj = NULL;
-
-	g_free (name);
 
 	if (obj)
 	    return obj;
@@ -341,7 +336,7 @@ attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *l
 }
 
 Bool
-findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper  *settings,
 				      const char *path,
 				      const gchar *keyName,
 				      CCSContext *context,
@@ -366,7 +361,7 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
 	{
 	    /* Couldn't find setting straight off the bat,
 	     * try and find the best match */
-	    GVariant *value = g_settings_get_value (settings, keyName);
+	    GVariant *value = ccsGSettingsWrapperGetValue (settings, keyName);
 
 	    if (value)
 	    {
@@ -401,7 +396,7 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
 
 Bool
 updateSettingWithGSettingsKeyName (CCSBackend *backend,
-				   GSettings *settings,
+				   CCSGSettingsWrapper *settings,
 				   gchar     *keyName,
 				   CCSBackendUpdateFunc updateSetting)
 {
@@ -412,7 +407,7 @@ updateSettingWithGSettingsKeyName (CCSBackend *backend,
     CCSSetting   *setting;
     Bool         ret = TRUE;
 
-    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
+    pathOrig = strdup (ccsGSettingsWrapperGetPath (settings));
 
     if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
 	(*updateSetting) (backend, context, plugin, setting);
@@ -480,9 +475,9 @@ checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gc
 }
 
 GVariant *
-getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCSSettingType type)
+getVariantAtKey (CCSGSettingsWrapper *settings, const char *key, const char *pathName, CCSSettingType type)
 {
-    GVariant *gsettingsValue = g_settings_get_value (settings, key);
+    GVariant *gsettingsValue = ccsGSettingsWrapperGetValue (settings, key);
 
     if (!checkReadVariantIsValid (gsettingsValue, type, pathName))
     {
@@ -934,11 +929,11 @@ Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
 }
 
 void
-writeVariantToKey (GSettings  *settings,
+writeVariantToKey (CCSGSettingsWrapper  *settings,
 		   const char *key,
 		   GVariant   *value)
 {
-    g_settings_set_value (settings, key, value);
+    ccsGSettingsWrapperSetValue (settings, key, value);
 }
 
 typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);
@@ -1100,12 +1095,12 @@ ccsGSettingsBackendGetContext (CCSBackend *backend)
 
 void
 ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend,
-					   GObject *object)
+					   CCSGSettingsWrapper *object)
 {
      (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendConnectToChangedSignal) (backend, object);
 }
 
-GSettings *
+CCSGSettingsWrapper *
 ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 						const char *plugin,
 						const char *path,

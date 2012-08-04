@@ -197,3 +197,46 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListK
 	       sizeof (EXPECTED_KEYS) /
 	       sizeof (EXPECTED_KEYS[0]));
 }
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetSchemaName)
+{
+    FAIL ();
+}
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetPath)
+{
+    FAIL ();
+}
+
+namespace signal_test
+{
+    class VerificationInterface
+    {
+	public:
+
+	    virtual ~VerificationInterface () {}
+	    virtual void Verify (GSettings *settings, gchar *keyname) = 0;
+    };
+
+    class VerificationMock :
+	public VerificationInterface
+    {
+	public:
+
+	    MOCK_METHOD2 (Verify, void (GSettings *settings, gchar *keyname));
+    };
+
+
+    void dummyChangedSignal (GSettings   *s,
+			     gchar       *keyName,
+			     gpointer    user_data)
+    {
+	VerificationInterface *verifier = reinterpret_cast <VerificationInterface *> (user_data);
+	verifier->Verify (s, keyName);
+    }
+}
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestConnectToChangedSignal)
+{
+    FAIL ();
+}

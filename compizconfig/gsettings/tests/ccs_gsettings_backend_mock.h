@@ -20,10 +20,10 @@ class CCSGSettingsBackendGMockInterface
 	virtual ~CCSGSettingsBackendGMockInterface () {}
 
 	virtual CCSContext * getContext () = 0;
-	virtual void connectToChangedSignal (GObject *) = 0;
-	virtual GSettings * getSettingsObjectForPluginWithPath (const char * plugin,
-								const char * path,
-								CCSContext * context) = 0;
+	virtual void connectToChangedSignal (CCSGSettingsWrapper *) = 0;
+	virtual CCSGSettingsWrapper * getSettingsObjectForPluginWithPath (const char * plugin,
+									  const char * path,
+									  CCSContext * context) = 0;
 	virtual void registerGConfClient () = 0;
 	virtual void unregisterGConfClient () = 0;
 	virtual const char * getCurrentProfile () = 0;
@@ -48,10 +48,10 @@ class CCSGSettingsBackendGMock :
 	}
 
 	MOCK_METHOD0 (getContext, CCSContext * ());
-	MOCK_METHOD1 (connectToChangedSignal, void (GObject *));
-	MOCK_METHOD3 (getSettingsObjectForPluginWithPath, GSettings * (const char * plugin,
-								       const char * path,
-								       CCSContext * context));
+	MOCK_METHOD1 (connectToChangedSignal, void (CCSGSettingsWrapper *));
+	MOCK_METHOD3 (getSettingsObjectForPluginWithPath, CCSGSettingsWrapper * (const char * plugin,
+										 const char * path,
+										 CCSContext * context));
 	MOCK_METHOD0 (registerGConfClient, void ());
 	MOCK_METHOD0 (unregisterGConfClient, void ());
 	MOCK_METHOD0 (getCurrentProfile, const char * ());
@@ -79,12 +79,12 @@ class CCSGSettingsBackendGMock :
 	}
 
 	static void
-	ccsGSettingsBackendConnectToValueChangedSignal (CCSBackend *backend, GObject *object)
+	ccsGSettingsBackendConnectToValueChangedSignal (CCSBackend *backend, CCSGSettingsWrapper *object)
 	{
 	    (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->connectToChangedSignal(object);
 	}
 
-	static GSettings *
+	static CCSGSettingsWrapper *
 	ccsGSettingsBackendGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 							       const char *plugin,
 							       const char *path,

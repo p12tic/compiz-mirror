@@ -17,6 +17,10 @@ typedef GVariant * (*CCSGSettingsWrapperGetValue) (CCSGSettingsWrapper *, const 
 typedef void (*CCSGSettingsWrapperResetKey) (CCSGSettingsWrapper *, const char *);
 typedef char ** (*CCSGSettingsWrapperListKeys) (CCSGSettingsWrapper *);
 typedef GSettings * (*CCSGSettingsWrapperGetGSettings) (CCSGSettingsWrapper *);
+typedef const char * (*CCSGSettingsWrapperGetSchemaName) (CCSGSettingsWrapper *);
+typedef const char * (*CCSGSettingsWrapperGetPath) (CCSGSettingsWrapper *);
+typedef void (*CCSGSettingsWrapperConnectToChangedSignal) (CCSGSettingsWrapper *, GCallback, gpointer);
+typedef void (*CCSGSettingsWrapperFree) (CCSGSettingsWrapper *);
 
 struct _CCSGSettingsWrapperInterface
 {
@@ -25,6 +29,10 @@ struct _CCSGSettingsWrapperInterface
     CCSGSettingsWrapperResetKey gsettingsWrapperResetKey;
     CCSGSettingsWrapperListKeys gsettingsWrapperListKeys;
     CCSGSettingsWrapperGetGSettings gsettingsWrapperGetGSettings;
+    CCSGSettingsWrapperGetSchemaName gsettingsWrapperGetSchemaName;
+    CCSGSettingsWrapperGetPath       gsettingsWrapperGetPath;
+    CCSGSettingsWrapperConnectToChangedSignal gsettingsWrapperConnectToChangedSignal;
+    CCSGSettingsWrapperFree gsettingsWrapperFree;
 };
 
 struct _CCSGSettingsWrapper
@@ -37,8 +45,14 @@ GVariant * ccsGSettingsWrapperGetValue (CCSGSettingsWrapper *, const char *);
 void ccsGSettingsWrapperResetKey (CCSGSettingsWrapper *, const char *);
 char **ccsGSettingsWrapperListKeys (CCSGSettingsWrapper *);
 GSettings * ccsGSettingsWrapperGetGSettings (CCSGSettingsWrapper *);
+const char * ccsGSettingsWrapperGetSchemaName (CCSGSettingsWrapper *);
+const char * ccsGSettingsWrapperGetPath (CCSGSettingsWrapper *);
+void ccsGSettingsWrapperConnectToChangedSignal (CCSGSettingsWrapper *, GCallback, gpointer);
+void ccsFreeGSettingsWrapper (CCSGSettingsWrapper *wrapper);
 
 unsigned int ccsCCSGSettingsWrapperInterfaceGetType ();
+
+CCSREF_HDR (GSettingsWrapper, CCSGSettingsWrapper);
 
 COMPIZCONFIG_END_DECLS
 

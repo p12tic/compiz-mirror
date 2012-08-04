@@ -12,8 +12,9 @@ ccsGSettingsWrapperNewForSchemaWithPath (const char *schema,
 					 const char *path,
 					 CCSObjectAllocationInterface *ai);
 
-void
-ccsFreeGSettingsWrapper (CCSGSettingsWrapper *);
+CCSGSettingsWrapper *
+ccsGSettingsWrapperNewForSchema (const char *schema,
+				 CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS
 

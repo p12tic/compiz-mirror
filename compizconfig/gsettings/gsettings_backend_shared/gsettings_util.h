@@ -10,17 +10,19 @@ COMPIZCONFIG_BEGIN_DECLS
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include "ccs_gsettings_interface.h"
+
 typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 extern const CCSBackendInfo gsettingsBackendInfo;
 
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
-typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, GObject *);
-typedef GSettings * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CCSBackend *backend,
-									      const char *plugin,
-									      const char *path,
-									      CCSContext *context);
+typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, CCSGSettingsWrapper *);
+typedef CCSGSettingsWrapper * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CCSBackend *backend,
+											const char *plugin,
+											const char *path,
+											CCSContext *context);
 typedef void (*CCSGSettingsBackendRegisterGConfClient) (CCSBackend *backend);
 typedef void (*CCSGSettingsBackendUnregisterGConfClient) (CCSBackend *backend);
 
@@ -94,9 +96,9 @@ appendToPluginsWithSetKeysList (const gchar    *plugin,
 				char	       ***newWrittenPlugins,
 				gsize	       *newWrittenPluginsSize);
 
-GObject *
-findObjectInListWithPropertySchemaName (const gchar *schemaName,
-					GList	    *iter);
+CCSGSettingsWrapper *
+findCCSGSettingsWrapperBySchemaName (const gchar *schemaName,
+				     GList	 *iter);
 
 CCSSettingList
 filterAllSettingsMatchingType (CCSSettingType type,
@@ -110,7 +112,7 @@ CCSSetting *
 attemptToFindCCSSettingFromLossyName (CCSSettingList settingList, const gchar *lossyName, CCSSettingType type);
 
 Bool
-findSettingAndPluginToUpdateFromPath (GSettings  *settings,
+findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper *settings,
 				      const char *path,
 				      const gchar *keyName,
 				      CCSContext *context,
@@ -119,7 +121,7 @@ findSettingAndPluginToUpdateFromPath (GSettings  *settings,
 				      char **uncleanKeyName);
 
 Bool updateSettingWithGSettingsKeyName (CCSBackend *backend,
-					GSettings *settings,
+					CCSGSettingsWrapper *settings,
 					gchar     *keyName,
 					CCSBackendUpdateFunc updateSetting);
 
@@ -139,7 +141,7 @@ Bool
 checkReadVariantIsValid (GVariant *gsettingsValue, CCSSettingType type, const gchar *pathName);
 
 GVariant *
-getVariantAtKey (GSettings *settings, const char *key, const char *pathName, CCSSettingType type);
+getVariantAtKey (CCSGSettingsWrapper *settings, const char *key, const char *pathName, CCSSettingType type);
 
 const char * readStringFromVariant (GVariant *gsettingsValue);
 
@@ -181,7 +183,7 @@ Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant);
 
 Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
 
-void writeVariantToKey (GSettings  *settings,
+void writeVariantToKey (CCSGSettingsWrapper *settings,
 			const char *key,
 			GVariant   *value);
 
@@ -228,9 +230,9 @@ CCSContext *
 ccsGSettingsBackendGetContext (CCSBackend *backend);
 
 void
-ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend, GObject *object);
+ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend, CCSGSettingsWrapper *object);
 
-GSettings *
+CCSGSettingsWrapper *
 ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 						const char *plugin,
 						const char *path,
