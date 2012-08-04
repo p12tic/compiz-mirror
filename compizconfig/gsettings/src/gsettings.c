@@ -614,7 +614,7 @@ ccsGSettingsBackendSetCurrentProfileDefault (CCSBackend *backend, const gchar *v
     priv->currentProfile = strdup (value);
     priv->currentProfileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID,
 									    profilePath,
-									    backend->object.object_allocation->allocator);
+									    backend->object.object_allocation);
 
     GVariant *currentProfileVariant = g_variant_new ("s", value, NULL);
 
@@ -707,12 +707,12 @@ initBackend (CCSBackend *backend, CCSContext * context)
     ccsObjectSetPrivate (backend, (CCSPrivate *) priv);
 
     priv->compizconfigSettings = ccsGSettingsWrapperNewForSchema (COMPIZCONFIG_SCHEMA_ID,
-								  backend->object.object_allocation->allocator);
+								  backend->object.object_allocation);
     priv->currentProfile = getCurrentProfileName (backend);
     currentProfilePath = makeCompizProfilePath (priv->currentProfile);
     priv->currentProfileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID,
 									    currentProfilePath,
-									    backend->object.object_allocation->allocator);
+									    backend->object.object_allocation);
     priv->context = context;
 
     g_free (currentProfilePath);
