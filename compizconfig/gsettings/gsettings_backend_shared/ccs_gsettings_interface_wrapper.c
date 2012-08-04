@@ -31,15 +31,19 @@ static const char ** ccsGSettingsWrapperListKeysDefault (CCSGSettingsWrapper *wr
     return NULL;
 }
 
+static GSettings * ccsGSettingsWrapperGetGSettingsDefault (CCSGSettingsWrapper *wrapper)
+{
+    return NULL;
+}
+
 const CCSGSettingsWrapperInterface interface =
 {
     ccsGSettingsWrapperSetValueDefault,
     ccsGSettingsWrapperGetValueDefault,
     ccsGSettingsWrapperResetKeyDefault,
-    ccsGSettingsWrapperListKeysDefault
+    ccsGSettingsWrapperListKeysDefault,
+    ccsGSettingsWrapperGetGSettingsDefault
 };
-
-INTERFACE_TYPE (CCSGSettingsWrapperInterface);
 
 static CCSGSettingsWrapperPrivate *
 allocatePrivateWrapper (CCSObjectAllocationInterface *ai, CCSGSettingsWrapper *wrapper)

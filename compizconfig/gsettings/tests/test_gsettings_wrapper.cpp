@@ -56,6 +56,16 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestWrapperConstruction)
     EXPECT_THAT (wrapper.get (), NotNull ());
 }
 
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestGetGSettingsWrapper)
+{
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
+											      mockPath.c_str (),
+											      &ccsDefaultObjectAllocator),
+						     boost::bind (ccsFreeGSettingsWrapper, _1));
+
+    EXPECT_THAT (ccsGSettingsWrapperGetGSettings (wrapper.get ()), NotNull ());
+}
+
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestSetValueOnWrapper)
 {
     FAIL ();
