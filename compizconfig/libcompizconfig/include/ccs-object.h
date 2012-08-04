@@ -124,6 +124,17 @@ ccsAllocateType ();
 
 #define GET_INTERFACE(CType, o) (CType *) ccsObjectGetInterface (o, GET_INTERFACE_TYPE(CType))
 
+#define CCSREF_OBJ(type,dtype) \
+    void ccs##type##Ref (dtype *d) \
+    { \
+	ccsObjectRef (d); \
+    } \
+    \
+    void ccs##type##Unref (dtype *d) \
+    { \
+	ccsObjectUnref (d, ccsFree##type); \
+    } \
+
 COMPIZCONFIG_END_DECLS
 
 #endif

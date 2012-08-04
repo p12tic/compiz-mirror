@@ -15,6 +15,8 @@
 
 using ::testing::NotNull;
 using ::testing::Eq;
+using ::testing::_;
+
 
 class TestGSettingsWrapperWithMemoryBackendEnv :
     public ::testing::Test
@@ -196,4 +198,64 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListK
     ASSERT_EQ (g_strv_length (keys.get ()),
 	       sizeof (EXPECTED_KEYS) /
 	       sizeof (EXPECTED_KEYS[0]));
+}
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetSchemaName)
+{
+    EXPECT_THAT (ccsGSettingsWrapperGetSchemaName (wrapper.get ()), Eq (mockSchema));
+}
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetPath)
+{
+    EXPECT_THAT (ccsGSettingsWrapperGetPath (wrapper.get ()), Eq (mockPath));
+}
+
+namespace signal_test
+{
+    class VerificationInterface
+    {
+	public:
+
+	    virtual ~VerificationInterface () {}
+	    virtual void Verify (GSettings *settings, gchar *keyname) = 0;
+    };
+
+    class VerificationMock :
+	public VerificationInterface
+    {
+	public:
+
+	    MOCK_METHOD2 (Verify, void (GSettings *settings, gchar *keyname));
+    };
+
+
+    void dummyChangedSignal (GSettings   *s,
+			     gchar       *keyName,
+			     gpointer    user_data)
+    {
+	VerificationInterface *verifier = reinterpret_cast <VerificationInterface *> (user_data);
+	verifier->Verify (s, keyName);
+    }
+}
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestConnectToChangedSignal)
+{
+    std::string keyname ("int-setting");
+    signal_test::VerificationMock mv;
+
+    /* We're not able to verify the keyname
+     * at the moment, need a person who knows
+     * GSignal better than I do to figure this
+     * one out */
+    EXPECT_CALL (mv, Verify (settings, _));
+
+    ccsGSettingsWrapperConnectToChangedSignal (wrapper.get (),
+					       (GCallback) signal_test::dummyChangedSignal,
+					       (gpointer) static_cast <signal_test::VerificationInterface *> (&mv));
+
+    g_signal_emit_by_name (G_OBJECT (settings),
+			   "changed",
+			   settings,
+			   keyname.c_str (),
+			   NULL);
 }

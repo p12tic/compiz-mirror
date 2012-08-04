@@ -48,13 +48,65 @@ static GSettings * ccsGSettingsWrapperGetGSettingsDefault (CCSGSettingsWrapper *
     return gswPrivate->settings;
 }
 
+static const char *
+ccsGSettingsWrapperGetSchemaNameDefault (CCSGSettingsWrapper *wrapper)
+{
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return gswPrivate->schema;
+}
+
+static const char *
+ccsGSettingsWrapperGetPathDefault (CCSGSettingsWrapper *wrapper)
+{
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return gswPrivate->path;
+}
+
+void
+ccsGSettingsWrapperConnectToChangedSignalDefault (CCSGSettingsWrapper *wrapper,
+						  GCallback	       callback,
+						  gpointer	       data)
+{
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    g_signal_connect (gswPrivate->settings, "changed", callback, data);
+}
+
+static void
+ccsFreeGSettingsWrapperDefault (CCSGSettingsWrapper *wrapper)
+{
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    if (gswPrivate->settings)
+	g_object_unref (gswPrivate->settings);
+
+    if (gswPrivate->path)
+	(*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
+						     gswPrivate->path);
+
+    if (gswPrivate->schema)
+	(*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
+						     gswPrivate->schema);
+
+    ccsObjectFinalize (wrapper);
+
+    (*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
+						 wrapper);
+}
+
 const CCSGSettingsWrapperInterface interface =
 {
     ccsGSettingsWrapperSetValueDefault,
     ccsGSettingsWrapperGetValueDefault,
     ccsGSettingsWrapperResetKeyDefault,
     ccsGSettingsWrapperListKeysDefault,
-    ccsGSettingsWrapperGetGSettingsDefault
+    ccsGSettingsWrapperGetGSettingsDefault,
+    ccsGSettingsWrapperGetSchemaNameDefault,
+    ccsGSettingsWrapperGetPathDefault,
+    ccsGSettingsWrapperConnectToChangedSignalDefault,
+    ccsFreeGSettingsWrapperDefault
 };
 
 static CCSGSettingsWrapperPrivate *
@@ -204,26 +256,4 @@ ccsGSettingsWrapperNewForSchema (const char *schema,
     initCCSGSettingsWrapperObject (wrapper, priv, ai);
 
     return wrapper;
-}
-
-void
-ccsFreeGSettingsWrapper (CCSGSettingsWrapper *wrapper)
-{
-    GSETTINGS_WRAPPER_PRIVATE (wrapper);
-
-    if (gswPrivate->settings)
-	g_object_unref (gswPrivate->settings);
-
-    if (gswPrivate->path)
-	(*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
-						     gswPrivate->path);
-
-    if (gswPrivate->schema)
-	(*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
-						     gswPrivate->schema);
-
-    ccsObjectFinalize (wrapper);
-
-    (*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
-						 wrapper);
 }

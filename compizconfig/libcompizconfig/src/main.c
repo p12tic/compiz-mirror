@@ -987,17 +987,6 @@ CCSREF (IntDesc, CCSIntDesc)
 CCSREF (StrRestriction, CCSStrRestriction)
 CCSREF (StrExtension, CCSStrExtension)
 
-#define CCSREF_OBJ(type,dtype) \
-    void ccs##type##Ref (dtype *d) \
-    { \
-	ccsObjectRef (d); \
-    } \
-    \
-    void ccs##type##Unref (dtype *d) \
-    { \
-	ccsObjectUnref (d, ccsFree##type); \
-    } \
-
 CCSREF_OBJ (Plugin, CCSPlugin)
 CCSREF_OBJ (Setting, CCSSetting)
 CCSREF_OBJ (Backend, CCSBackend)

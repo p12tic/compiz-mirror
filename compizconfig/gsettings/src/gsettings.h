@@ -62,6 +62,7 @@
 #include <gconf/gconf-value.h>
 #endif
 
+#include <ccs_gsettings_interface.h>
 
 typedef enum {
     OptionInt,
@@ -74,8 +75,8 @@ typedef enum {
 struct _CCSGSettingsBackendPrivate
 {
     GList	   *settingsList;
-    GSettings   *compizconfigSettings;
-    GSettings   *currentProfileSettings;
+    CCSGSettingsWrapper *compizconfigSettings;
+    CCSGSettingsWrapper *currentProfileSettings;
 
     char	    *currentProfile;
     CCSContext  *context;

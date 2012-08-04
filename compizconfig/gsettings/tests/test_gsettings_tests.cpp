@@ -12,6 +12,7 @@
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
 #include "compizconfig_ccs_mocked_allocator.h"
+//#include "ccs_gsettings_wrapper_mock.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
@@ -663,7 +664,7 @@ TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithS
     EXPECT_EQ (std::string (newWrittenPlugins[0]), std::string ("foo"));
     EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
 }
-
+/*
 class CCSGSettingsTestGObjectListWithProperty :
     public CCSGSettingsTestIndependent
 {
@@ -717,6 +718,7 @@ TEST_F(CCSGSettingsTestGObjectListWithProperty, TestNoFindNonexistingObjectWithS
 
     EXPECT_EQ (NULL, findObjectInListWithPropertySchemaName ("foo", objectSchemaList));
 }
+*/
 
 class CCSGSettingsTestFindSettingLossy :
     public CCSGSettingsTestIndependent
