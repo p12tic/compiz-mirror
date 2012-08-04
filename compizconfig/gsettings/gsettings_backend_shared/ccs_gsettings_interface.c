@@ -25,7 +25,7 @@ ccsGSettingsWrapperResetKey (CCSGSettingsWrapper *wrapper,
     return (*(GET_INTERFACE (CCSGSettingsWrapperInterface, wrapper))->gsettingsWrapperResetKey) (wrapper, key);
 }
 
-const char **
+char **
 ccsGSettingsWrapperListKeys (CCSGSettingsWrapper *wrapper)
 {
     return (*(GET_INTERFACE (CCSGSettingsWrapperInterface, wrapper))->gsettingsWrapperListKeys) (wrapper);

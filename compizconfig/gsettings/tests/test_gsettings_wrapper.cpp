@@ -166,5 +166,15 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestReset
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListKeysOnWrapper)
 {
-    FAIL ();
+    const char * EXPECTED_KEYS[] =
+    {
+	"bar"
+    };
+
+    boost::shared_ptr <gchar *> keys (ccsGSettingsWrapperListKeys (wrapper.get ()),
+				      boost::bind (g_strfreev, _1));
+
+    ASSERT_EQ (g_strv_length (keys.get ()),
+	       sizeof (EXPECTED_KEYS) /
+	       sizeof (EXPECTED_KEYS[0]));
 }

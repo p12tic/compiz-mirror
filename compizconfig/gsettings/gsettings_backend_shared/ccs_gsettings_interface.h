@@ -15,7 +15,7 @@ typedef struct _CCSGSettingsWrapperInterface  CCSGSettingsWrapperInterface;
 typedef void (*CCSGSettingsWrapperSetValue) (CCSGSettingsWrapper *, const char *, GVariant *);
 typedef GVariant * (*CCSGSettingsWrapperGetValue) (CCSGSettingsWrapper *, const char *);
 typedef void (*CCSGSettingsWrapperResetKey) (CCSGSettingsWrapper *, const char *);
-typedef const char ** (*CCSGSettingsWrapperListKeys) (CCSGSettingsWrapper *);
+typedef char ** (*CCSGSettingsWrapperListKeys) (CCSGSettingsWrapper *);
 typedef GSettings * (*CCSGSettingsWrapperGetGSettings) (CCSGSettingsWrapper *);
 
 struct _CCSGSettingsWrapperInterface
@@ -35,7 +35,7 @@ struct _CCSGSettingsWrapper
 void ccsGSettingsWrapperSetValue (CCSGSettingsWrapper *, const char *, GVariant *);
 GVariant * ccsGSettingsWrapperGetValue (CCSGSettingsWrapper *, const char *);
 void ccsGSettingsWrapperResetKey (CCSGSettingsWrapper *, const char *);
-const char ** ccsGSettingsWrapperListKeys (CCSGSettingsWrapper *);
+char **ccsGSettingsWrapperListKeys (CCSGSettingsWrapper *);
 GSettings * ccsGSettingsWrapperGetGSettings (CCSGSettingsWrapper *);
 
 unsigned int ccsCCSGSettingsWrapperInterfaceGetType ();
