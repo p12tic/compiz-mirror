@@ -150,16 +150,16 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestReset
 					boost::bind (g_variant_unref, _1));
 
     gsize      length;
-    const char *v = g_variant_get_string (value.get (), &length);
+    std::string v (g_variant_get_string (value.get (), &length));
     ASSERT_EQ (strlen (VALUE), length);
     ASSERT_THAT (v, Eq (VALUE));
 
-    ccsGSettingsWrapperResetKey (wrapper.get (), v);
+    ccsGSettingsWrapperResetKey (wrapper.get (), KEY.c_str ());
 
     value.reset (g_settings_get_value (settings, KEY.c_str ()),
 		 boost::bind (g_variant_unref, _1));
 
-    v = g_variant_get_string (value.get (), &length);
+    v = std::string (g_variant_get_string (value.get (), &length));
     ASSERT_EQ (strlen (DEFAULT), length);
     ASSERT_THAT (v, Eq (DEFAULT));
 }
