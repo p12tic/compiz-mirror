@@ -26,15 +26,18 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 
 	virtual void SetUp ()
 	{
-	    g_type_init ();
+	    g_setenv ("G_SLICE", "always-malloc", 1);
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
 	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+
+	    g_type_init ();
 	}
 
 	virtual void TearDown ()
 	{
 	    g_unsetenv ("GSETTINGS_BACKEND");
 	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
+	    g_unsetenv ("G_SLICE");
 	}
 
     protected:

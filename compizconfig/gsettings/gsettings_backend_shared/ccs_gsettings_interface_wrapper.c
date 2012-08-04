@@ -207,4 +207,7 @@ ccsFreeGSettingsWrapper (CCSGSettingsWrapper *wrapper)
 						     gswPrivate->schema);
 
     ccsObjectFinalize (wrapper);
+
+    (*wrapper->object.object_allocation->free_) (wrapper->object.object_allocation->allocator,
+						 wrapper);
 }
