@@ -205,7 +205,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetSc
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetPath)
 {
-    FAIL ();
+    EXPECT_THAT (ccsGSettingsWrapperGetPath (wrapper.get ()), Eq (mockPath));
 }
 
 namespace signal_test
