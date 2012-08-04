@@ -69,7 +69,7 @@ ccsGSettingsWrapperConnectToChangedSignalDefault (CCSGSettingsWrapper *wrapper,
 						  GCallback	       callback,
 						  gpointer	       data)
 {
-    //g_signal_connect (object, "changed", (GCallback) valueChanged, (gpointer) backend);
+    //g_signal_connect (object, "changed", callback, data);
 }
 
 static void

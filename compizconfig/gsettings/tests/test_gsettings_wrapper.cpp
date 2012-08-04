@@ -238,5 +238,20 @@ namespace signal_test
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestConnectToChangedSignal)
 {
-    FAIL ();
+    std::string keyname ("int-setting");
+    signal_test::VerificationMock mv;
+
+    EXPECT_CALL (mv, Verify (settings, Eq (keyname)));
+
+    ccsGSettingsWrapperConnectToChangedSignal (wrapper.get (),
+					       (GCallback) signal_test::dummyChangedSignal,
+					       (gpointer) static_cast <signal_test::VerificationInterface *> (&mv));
+
+    g_signal_emit_by_name (G_OBJECT (settings),
+			   "changed",
+			   G_TYPE_SETTINGS,
+			   settings,
+			   G_TYPE_STRING,
+			   keyname.c_str (),
+			   NULL);
 }
