@@ -1,4 +1,5 @@
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}
+include_directories (${CMAKE_CURRENT_BINARY_DIR}
+		     ${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_CURRENT_SOURCE_DIR}/../src
                      ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/tests
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig
@@ -29,5 +30,8 @@ target_link_libraries (compizconfig_test_gsettings
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
+
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/gsettings-mock-schemas-config.h.in
+		${CMAKE_CURRENT_BINARY_DIR}/gsettings-mock-schemas-config.h)
 
 compiz_discover_tests (compizconfig_test_gsettings COVERAGE gsettings_backend_shared)
