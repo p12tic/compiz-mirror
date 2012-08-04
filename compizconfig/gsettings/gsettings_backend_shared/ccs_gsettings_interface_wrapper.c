@@ -51,7 +51,9 @@ static GSettings * ccsGSettingsWrapperGetGSettingsDefault (CCSGSettingsWrapper *
 static const char *
 ccsGSettingsWrapperGetSchemaNameDefault (CCSGSettingsWrapper *wrapper)
 {
-    return NULL;
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return gswPrivate->schema;
 }
 
 static const char *
