@@ -20,6 +20,9 @@ static GVariant * ccsGSettingsWrapperGetValueDefault (CCSGSettingsWrapper *wrapp
 
 static void ccsGSettingsWrapperSetValueDefault (CCSGSettingsWrapper *wrapper, const char *key, GVariant *variant)
 {
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    g_settings_set_value (gswPrivate->settings, key, variant);
 }
 
 static void ccsGSettingsWrapperResetKeyDefault (CCSGSettingsWrapper *wrapper, const char *key)
