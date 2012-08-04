@@ -33,7 +33,9 @@ static const char ** ccsGSettingsWrapperListKeysDefault (CCSGSettingsWrapper *wr
 
 static GSettings * ccsGSettingsWrapperGetGSettingsDefault (CCSGSettingsWrapper *wrapper)
 {
-    return NULL;
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return gswPrivate->settings;
 }
 
 const CCSGSettingsWrapperInterface interface =
