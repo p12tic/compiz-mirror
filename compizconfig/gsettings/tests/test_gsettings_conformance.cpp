@@ -6,6 +6,7 @@
 #include <gio/gio.h>
 
 #include "backend-conformance-config.h"
+#include "gsettings-mock-schemas-config.h"
 
 #include <ccs.h>
 #include <compizconfig_backend_concept_test.h>
@@ -15,12 +16,6 @@
 using ::testing::AtLeast;
 using ::testing::Pointee;
 using ::testing::ReturnNull;
-
-namespace
-{
-const std::string MOCK_SCHEMA ("org.compiz.mock");
-const std::string MOCK_PATH (MOCK_SCHEMA_PATH);
-}
 
 class CCSGSettingsBackendEnv :
     public CCSBackendConceptTestEnvironmentInterface

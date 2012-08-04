@@ -36,8 +36,8 @@ target_link_libraries (compizconfig_test_gsettings
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/backend-conformance-config.h.in
-		${CMAKE_CURRENT_BINARY_DIR}/backend-conformance-config.h)
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/gsettings-mock-schemas-config.h.in
+		${CMAKE_CURRENT_BINARY_DIR}/gsettings-mock-schemas-config.h)
 
 add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.mock.gschema.xml
 		    COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/org.compiz.mock.gschema.xml ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.mock.gschema.xml
