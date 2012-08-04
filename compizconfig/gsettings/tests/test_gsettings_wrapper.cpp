@@ -24,6 +24,8 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 	{
 	}
 
+	virtual CCSObjectAllocationInterface * GetAllocator () = 0;
+
 	virtual void SetUp ()
 	{
 	    g_setenv ("G_SLICE", "always-malloc", 1);
@@ -44,9 +46,44 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 
 	std::string mockSchema;
 	std::string mockPath;
+	boost::shared_ptr <CCSGSettingsWrapper> wrapper;
+	GSettings   *settings;
 };
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestWrapperConstruction)
+class TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator :
+    public TestGSettingsWrapperWithMemoryBackendEnv
+{
+    protected:
+
+	CCSObjectAllocationInterface * GetAllocator ()
+	{
+	    return &ccsDefaultObjectAllocator;
+	}
+};
+
+class TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit :
+    public TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator::SetUp ();
+
+	    wrapper.reset (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
+								    mockPath.c_str (),
+								    GetAllocator ()),
+			   boost::bind (ccsFreeGSettingsWrapper, _1));
+
+	    ASSERT_THAT (wrapper.get (), NotNull ());
+
+	    settings = ccsGSettingsWrapperGetGSettings (wrapper.get ());
+
+	    ASSERT_THAT (settings, NotNull ());
+	}
+};
+
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestWrapperConstruction)
 {
     boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
 											      mockPath.c_str (),
@@ -56,32 +93,33 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestWrapperConstruction)
     EXPECT_THAT (wrapper.get (), NotNull ());
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestGetGSettingsWrapper)
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestGetGSettingsWrapper)
 {
     boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
 											      mockPath.c_str (),
 											      &ccsDefaultObjectAllocator),
 						     boost::bind (ccsFreeGSettingsWrapper, _1));
 
+    ASSERT_THAT (wrapper.get (), NotNull ());
     EXPECT_THAT (ccsGSettingsWrapperGetGSettings (wrapper.get ()), NotNull ());
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestSetValueOnWrapper)
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestSetValueOnWrapper)
 {
     FAIL ();
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestGetValueOnWrapper)
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetValueOnWrapper)
 {
     FAIL ();
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestResetKeyOnWrapper)
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestResetKeyOnWrapper)
 {
     FAIL ();
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestListKeysOnWrapper)
+TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListKeysOnWrapper)
 {
     FAIL ();
 }
