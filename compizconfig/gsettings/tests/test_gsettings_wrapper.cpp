@@ -200,7 +200,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListK
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetSchemaName)
 {
-    FAIL ();
+    EXPECT_THAT (ccsGSettingsWrapperGetSchemaName (wrapper.get ()), Eq (mockSchema));
 }
 
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetPath)
