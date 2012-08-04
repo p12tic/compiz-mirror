@@ -12,7 +12,6 @@ add_subdirectory (gsettings)
 
 if (COMPIZ_BUILD_TESTING)
     add_subdirectory (mocks)
-    add_subdirectory (tests)
 endif (COMPIZ_BUILD_TESTING)
 
 add_custom_target (pyclean)

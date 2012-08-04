@@ -59,6 +59,9 @@ add_custom_target (compiz_gsettings_mock_schema ALL
 
 add_gsettings_schema_to_recompilation_list (compiz_gsettings_mock_schema)
 
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/backend-conformance-config.h.in
+		${CMAKE_CURRENT_BINARY_DIR}/backend-conformance-config.h)
+
 target_link_libraries (compizconfig_test_gsettings_conformance
 		       gsettings_backend_shared
 		       compizconfig_ccs_setting_mock
