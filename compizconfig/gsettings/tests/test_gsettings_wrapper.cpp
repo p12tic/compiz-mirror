@@ -123,7 +123,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetVa
 {
     const double VALUE = 3.0;
     const std::string KEY ("float-setting");
-    boost::shared_ptr <GVariant> variant (g_variant_new ("i", VALUE, NULL),
+    boost::shared_ptr <GVariant> variant (g_variant_new ("d", VALUE, NULL),
 					  boost::bind (g_variant_unref, _1));
     g_settings_set_value (settings, KEY.c_str (), variant.get ());
     boost::shared_ptr <GVariant> value (ccsGSettingsWrapperGetValue (wrapper.get (),

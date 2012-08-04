@@ -15,7 +15,9 @@ struct _CCSGSettingsWrapperPrivate
 
 static GVariant * ccsGSettingsWrapperGetValueDefault (CCSGSettingsWrapper *wrapper, const char *key)
 {
-    return NULL;
+    GSETTINGS_WRAPPER_PRIVATE (wrapper);
+
+    return g_settings_get_value (gswPrivate->settings, key);
 }
 
 static void ccsGSettingsWrapperSetValueDefault (CCSGSettingsWrapper *wrapper, const char *key, GVariant *variant)
