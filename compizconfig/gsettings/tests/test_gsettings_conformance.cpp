@@ -29,7 +29,7 @@ class CCSGSettingsBackendEnv :
 	}
 
 	/* A wrapper to prevent signals from being added */
-	static void connectToSignalWrapper (CCSBackend *backend, GObject *object)
+	static void connectToSignalWrapper (CCSBackend *backend, CCSGSettingsWrapper *wrapper)
 	{
 	};
 
@@ -445,7 +445,7 @@ class CCSGSettingsBackendEnv :
 
     private:
 
-	GSettings  *mSettings;
+	CCSGSettingsWrapper  *mSettings;
 	CCSContext *mContext;
 	CCSDynamicBackend *mBackend;
 	CCSBackend		   *mGSettingsBackend;
