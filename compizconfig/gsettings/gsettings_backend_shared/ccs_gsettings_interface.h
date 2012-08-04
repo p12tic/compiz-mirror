@@ -29,6 +29,8 @@ struct _CCSGSettingsWrapper
     CCSObject object;
 };
 
+unsigned int ccsCCSGSettingsWrapperInterfaceGetType ();
+
 COMPIZCONFIG_END_DECLS
 
 #endif

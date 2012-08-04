@@ -5,6 +5,8 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
+#include <glib-object.h>
+
 #include "test_gsettings_tests.h"
 #include <gsettings-mock-schemas-config.h>
 #include <ccs_gsettings_interface_wrapper.h>
@@ -24,6 +26,7 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 
 	virtual void SetUp ()
 	{
+	    g_type_init ();
 	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
 	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
 	}
@@ -43,7 +46,8 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 TEST_F (TestGSettingsWrapperWithMemoryBackendEnv, TestWrapperConstruction)
 {
     boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
-											      mockPath.c_str ()),
+											      mockPath.c_str (),
+											      &ccsDefaultObjectAllocator),
 						     boost::bind (ccsFreeGSettingsWrapper, _1));
 
     EXPECT_THAT (wrapper.get (), NotNull ());
