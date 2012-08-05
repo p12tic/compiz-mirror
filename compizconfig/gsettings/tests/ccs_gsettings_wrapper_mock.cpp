@@ -33,6 +33,8 @@ ccsMockGSettingsWrapperNew ()
     ccsObjectAddInterface (wrapper, (const CCSInterface *) &mockInterface, GET_INTERFACE_TYPE (CCSGSettingsWrapperInterface));
     ccsObjectSetPrivate (wrapper, (CCSPrivate *) gmockWrapper);
 
+    ccsGSettingsWrapperRef (wrapper);
+
     return wrapper;
 }
 
