@@ -40,6 +40,8 @@ typedef void (*CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile) (CCSBacken
 typedef gboolean (*CCSGSettingsBackendUpdateProfile) (CCSBackend *, CCSContext *);
 typedef void (*CCSGSettingsBackendUpdateCurrentProfileName) (CCSBackend *backend, const char *profile);
 
+typedef gboolean (*CCSGSettingsBackendAddProfile) (CCSBackend *backend, const char *profile);
+
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
@@ -56,6 +58,7 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile gsettingsBackendUnsetAllChangedPluginKeysInProfile;
     CCSGSettingsBackendUpdateProfile gsettingsBackendUpdateProfile;
     CCSGSettingsBackendUpdateCurrentProfileName gsettingsBackendUpdateCurrentProfileName;
+    CCSGSettingsBackendAddProfile gsettingsBackendAddProfile;
 };
 
 unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
@@ -276,6 +279,10 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
 						       GVariant   *pluginKeys,
 						       const char *profile);
 
+void
+ccsGSettingsBackendAddProfile (CCSBackend *backend,
+			       const char *profile);
+
 /* Default implementations, should be moved */
 
 void
@@ -289,6 +296,9 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backen
 							      CCSContext *context,
 							      GVariant *pluginsWithChangedKeys,
 							      const char * profile);
+
+gboolean ccsGSettingsBackendAddProfileDefault (CCSBackend *backend,
+					       const char *profile);
 
 
 COMPIZCONFIG_END_DECLS

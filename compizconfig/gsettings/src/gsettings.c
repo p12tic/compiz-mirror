@@ -620,7 +620,8 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendClearPluginsWithSetKeysDefault,
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault,
     ccsGSettingsBackendUpdateProfileDefault,
-    ccsGSettingsBackendUpdateCurrentProfileNameDefault
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault,
+    ccsGSettingsBackendAddProfileDefault
 };
 
 static Bool
