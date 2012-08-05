@@ -944,13 +944,21 @@ typedef struct _FindItemInVariantData
     const char *item;
 } FindItemInVariantData;
 
+typedef struct _InsertIfNotEqualData
+{
+    gboolean   skipped;
+    const char *item;
+} InsertIfNotEqualData;
+
 static void
 insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
 {
-    const char *cmp = (const char *) userData;
+    InsertIfNotEqualData *data = (InsertIfNotEqualData *) userData;
 
-    if (g_strcmp0 (item, cmp))
+    if (g_strcmp0 (item, data->item))
 	g_variant_builder_add (builder, "s", item);
+    else
+	data->skipped = TRUE;
 }
 
 static void
@@ -1003,18 +1011,25 @@ appendStringToVariantIfUnique (GVariant	  **variant,
     return !findItemData.found;
 }
 
-void
-removeItemFromVariant (GVariant	  **variant,
-		       const char *string)
+gboolean removeItemFromVariant (GVariant   **variant,
+				const char *string)
 {
     GVariantBuilder newVariantBuilder;
 
+    InsertIfNotEqualData data =
+    {
+	FALSE,
+	string
+    };
+
     g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
 
-    rebuildVariant (&newVariantBuilder, *variant, insertIfNotEqual, (void *) string);
+    rebuildVariant (&newVariantBuilder, *variant, insertIfNotEqual, (void *) &data);
 
     g_variant_unref (*variant);
     *variant = g_variant_builder_end (&newVariantBuilder);
+
+    return data.skipped;
 }
 
 void
@@ -1109,6 +1124,7 @@ deleteProfile (CCSBackend *backend,
     GVariant        *plugins;
     GVariant        *profiles;
     const char      *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
+    gboolean        ret = FALSE;
 
     plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
@@ -1116,14 +1132,13 @@ deleteProfile (CCSBackend *backend,
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
     ccsGSettingsBackendClearPluginsWithSetKeys (backend);
 
-    removeItemFromVariant (&profiles, profile);
+    ret = removeItemFromVariant (&profiles, profile);
 
     /* Remove the profile from existing-profiles */
     ccsGSettingsBackendSetExistingProfiles (backend, profiles);
-
     ccsGSettingsBackendUpdateProfile (backend, context);
 
-    return TRUE;
+    return ret;
 }
 
 void

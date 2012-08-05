@@ -89,6 +89,15 @@ class CCSGSettingsBackendEnv :
 	    g_unsetenv ("GSETTINGS_BACKEND");
 	    g_unsetenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
 
+	    GVariantBuilder noProfilesBuilder;
+	    g_variant_builder_init (&noProfilesBuilder, G_VARIANT_TYPE ("as"));
+	    g_variant_builder_add (&noProfilesBuilder, "s", "Default");
+	    GVariant *noProfiles = g_variant_builder_end (&noProfilesBuilder);
+
+	    ccsGSettingsBackendClearPluginsWithSetKeys (mGSettingsBackend);
+	    ccsGSettingsBackendSetExistingProfiles (mGSettingsBackend, noProfiles);
+	    ccsGSettingsBackendSetCurrentProfile (mGSettingsBackend, "Default");
+
 	    ccsFreeDynamicBackend (mBackend);
 	}
 
@@ -103,7 +112,11 @@ class CCSGSettingsBackendEnv :
 	}
 
 	void SetDeleteProfileExpectation (const std::string &profileToDelete,
-					  CCSContext *context, CCSContextGMock *gmockContext) {}
+					  CCSContext *context,
+					  CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*gmockContext, getProfile ());
+	}
 
 	void SetReadInitExpectation (CCSContext *context,
 				     CCSContextGMock *gmockContext)
