@@ -1228,10 +1228,12 @@ class CCSBackendConformanceTestProfileHandling :
 {
     public:
 
+	static const std::string PROFILE_DEFAULT;
 	static const std::string PROFILE_FOO;
 	static const std::string PROFILE_BAR;
 };
 
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_DEFAULT ("Default");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
 
@@ -1251,9 +1253,12 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 2);
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_BAR));
+	ASSERT_EQ (ccsStringListLength (iter), 3);
+
+	/* Default profile must always be there */
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_BAR));
     }
 }
 
@@ -1282,9 +1287,10 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonCurrentProfile)
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 1);
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next), IsNull ());
+	ASSERT_EQ (ccsStringListLength (iter), 2);
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next), IsNull ());
     }
 }
 
@@ -1313,9 +1319,10 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonExistantCurrentPr
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 1);
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next), IsNull ());
+	ASSERT_EQ (ccsStringListLength (iter), 2);
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next), IsNull ());
     }
 }
 
