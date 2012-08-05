@@ -6,7 +6,7 @@
 #include "compizconfig_ccs_backend_mock.h"
 
 using ::testing::_;
-using ::testing::Return;
+using ::testing::ReturnNull;
 
 class CCSBackendTest :
     public ::testing::Test
@@ -17,8 +17,6 @@ TEST(CCSBackendTest, TestMock)
 {
     CCSBackend *backend = ccsMockBackendNew ();
     CCSBackendGMock *mock = (CCSBackendGMock *) ccsObjectGetPrivate (backend);
-
-    CCSStringList profiles = NULL;
 
     EXPECT_CALL (*mock, getInfo ());
     EXPECT_CALL (*mock, executeEvents (_));
@@ -32,7 +30,7 @@ TEST(CCSBackendTest, TestMock)
     EXPECT_CALL (*mock, writeDone (_));
     EXPECT_CALL (*mock, getSettingIsIntegrated (_));
     EXPECT_CALL (*mock, getSettingIsReadOnly (_));
-    EXPECT_CALL (*mock, getExistingProfiles (_)).WillRepeatedly (Return (profiles));
+    EXPECT_CALL (*mock, getExistingProfiles (_)).WillRepeatedly (ReturnNull ());
     EXPECT_CALL (*mock, deleteProfile (_, _));
 
     ccsBackendGetInfo (backend);
