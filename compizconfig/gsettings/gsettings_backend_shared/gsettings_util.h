@@ -219,6 +219,14 @@ readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSO
 CCSSettingValueList
 readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);
 
+gchar *
+makeSettingPath (const char *currentProfile, CCSSetting *setting);
+
+CCSGSettingsWrapper *
+getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting);
+
+void
+resetOptionToDefault (CCSBackend *backend, CCSSetting * setting);
 
 gboolean
 ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context);

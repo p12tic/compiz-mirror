@@ -1018,6 +1018,39 @@ removeItemFromVariant (GVariant	  **variant,
 }
 
 void
+resetOptionToDefault (CCSBackend *backend, CCSSetting * setting)
+{
+    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+
+    ccsGSettingsWrapperResetKey (settings, cleanSettingName);
+
+    free (cleanSettingName);
+}
+
+gchar *
+makeSettingPath (const char *currentProfile, CCSSetting *setting)
+{
+    return makeCompizPluginPath (currentProfile,
+				 ccsPluginGetName (ccsSettingGetParent (setting)));
+}
+
+CCSGSettingsWrapper *
+getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
+{
+    CCSGSettingsWrapper *ret = NULL;
+    gchar *pathName = makeSettingPath (ccsGSettingsBackendGetCurrentProfile (backend), setting);
+
+    ret = ccsGSettingsGetSettingsObjectForPluginWithPath (backend,
+							  ccsPluginGetName (ccsSettingGetParent (setting)),
+							  pathName,
+							  ccsPluginGetContext (ccsSettingGetParent (setting)));
+
+    g_free (pathName);
+    return ret;
+}
+
+void
 ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile)
 {
     GVariant        *profiles;
