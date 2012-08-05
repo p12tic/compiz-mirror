@@ -99,9 +99,9 @@ ctypedef CCSList CCSStrRestrictionList
 ctypedef CCSList CCSStrExtensionList
 
 cdef struct CCSBackendInfo:
-    const char * name
-    const char * shortDesc
-    const char * longDesc
+    char         * name
+    char         * shortDesc
+    char         * longDesc
     Bool         integrationSupport
     Bool         profileSupport
     unsigned int refCount
