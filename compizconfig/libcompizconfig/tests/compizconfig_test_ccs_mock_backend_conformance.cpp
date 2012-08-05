@@ -104,6 +104,31 @@ class MockCCSBackendConceptTestEnvironment :
 	    ccsFreeMockBackend (backend);
 	}
 
+	void AddProfile (const std::string &profile)
+	{
+	    mProfiles.push_back (profile);
+	}
+
+	void SetGetExistingProfilesExpectation (CCSContext      *context,
+						CCSContextGMock *gmockContext)
+	{
+	    CCSStringList stringList = NULL;
+
+	    for (std::vector <std::string>::iterator it = mProfiles.begin ();
+		 it != mProfiles.end ();
+		 ++it)
+	    {
+		CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+
+		string->value = strdup ((*it).c_str ());
+		ccsStringRef (string);
+
+		stringList = ccsStringListAppend (stringList, string);
+	    }
+
+	    EXPECT_CALL (*mBackendGMock, getExistingProfiles (context)).WillOnce (Return (stringList));
+	}
+
 	void SetReadInitExpectation (CCSContext *context,
 				     CCSContextGMock *gmockContext)
 	{
@@ -551,6 +576,7 @@ class MockCCSBackendConceptTestEnvironment :
 	CCSBackendGMock *mBackendGMock;
 	CCSContext *mContext;
 	std::map <std::string, VariantTypes> mValues;
+	std::vector <std::string> mProfiles;
 };
 
 INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestReadWrite,
@@ -560,4 +586,7 @@ INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestInfo,
 			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <MockCCSBackendConceptTestEnvironment> ());
 
 INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestInitFiniFuncs,
+			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <MockCCSBackendConceptTestEnvironment> ());
+
+INSTANTIATE_TEST_CASE_P (MockCCSBackendConcept, CCSBackendConformanceTestProfileHandling,
 			 compizconfig::test::GenerateTestingEnvFactoryBackendInterface <MockCCSBackendConceptTestEnvironment> ());

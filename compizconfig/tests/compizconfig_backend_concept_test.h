@@ -198,6 +198,10 @@ class CCSBackendConceptTestEnvironmentInterface
 				    CCSContextGMock *gmockContext) = 0;
 	virtual void TearDown (CCSBackend *) = 0;
 
+	virtual void AddProfile (const std::string &profile) = 0;
+	virtual void SetGetExistingProfilesExpectation (CCSContext *,
+							CCSContextGMock *) = 0;
+
 	virtual void SetReadInitExpectation (CCSContext      *,
 					     CCSContextGMock *) = 0;
 
@@ -1212,6 +1216,40 @@ TEST_P (CCSBackendConformanceTestInitFiniFuncs, TestWriteDone)
     {
 	mTestEnv->SetWriteDoneExpectation (context.get (), gmockContext);
 	ccsBackendWriteDone (backend, context.get ());
+    }
+}
+
+class CCSBackendConformanceTestProfileHandling :
+    public CCSBackendConformanceTestParameterizedByBackendFixture
+{
+    public:
+
+	static const std::string PROFILE_FOO;
+	static const std::string PROFILE_BAR;
+};
+
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
+
+TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
+{
+    CCSBackend *backend = GetBackend ();
+    CCSBackendInterface *backendInterface = GET_INTERFACE (CCSBackendInterface, backend);
+
+    if (backendInterface->getExistingProfiles)
+    {
+	mTestEnv->AddProfile (PROFILE_FOO);
+	mTestEnv->AddProfile (PROFILE_BAR);
+
+	mTestEnv->SetGetExistingProfilesExpectation (context.get (), gmockContext);
+	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
+							     boost::bind (ccsStringListFree, _1, TRUE));
+
+	CCSStringList iter = existingProfiles.get ();
+
+	ASSERT_EQ (ccsStringListLength (iter), 2);
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_BAR));
     }
 }
 
