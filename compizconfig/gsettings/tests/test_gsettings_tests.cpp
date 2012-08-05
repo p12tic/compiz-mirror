@@ -1543,3 +1543,70 @@ TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplEmptyStringProf
 
     ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
 }
+
+class CCSGSettingsTestFindSettingAndPluginToUpdateFromPath :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	CCSGSettingsTestFindSettingAndPluginToUpdateFromPath () :
+	    wrapper (ccsMockGSettingsWrapperNew (),
+		     boost::bind (&ccsGSettingsWrapperUnref, _1)),
+	    gmockWrapper (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()))),
+	    context (ccsMockContextNew (),
+		     boost::bind (ccsFreeMockContext, _1)),
+	    gmockContext (reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context.get ()))),
+	    plugin (NULL),
+	    setting (NULL),
+	    uncleanKeyName (NULL)
+	{
+	}
+
+	~CCSGSettingsTestFindSettingAndPluginToUpdateFromPath ()
+	{
+	    if (plugin)
+		ccsPluginUnref (plugin);
+
+	    if (setting)
+		ccsSettingUnref (setting);
+
+	    if (uncleanKeyName)
+		free (uncleanKeyName);
+	}
+
+	void SetPathAndKeyname (const std::string &setPath,
+				const std::string &setKeyName)
+	{
+	    path = setPath;
+	    keyName = setKeyName;
+	}
+
+    protected:
+
+	boost::shared_ptr <CCSGSettingsWrapper> wrapper;
+	CCSGSettingsWrapperGMock *gmockWrapper;
+	boost::shared_ptr <CCSContext> context;
+	CCSContextGMock *gmockContext;
+	std::string path;
+	std::string keyName;
+	CCSPlugin			   *plugin;
+	CCSSetting			   *setting;
+	char			   *uncleanKeyName;
+};
+
+TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestFindSettingAndPluginToUpdateFromPathBadPath)
+{
+    SetPathAndKeyname ("/wrong", "foo");
+
+    EXPECT_FALSE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+							path.c_str (),
+							keyName.c_str (),
+							context.get (),
+							&plugin,
+							&setting,
+							&uncleanKeyName));
+
+    EXPECT_THAT (plugin, IsNull ());
+    EXPECT_THAT (setting, IsNull ());
+    EXPECT_THAT (uncleanKeyName, IsNull ());
+}
