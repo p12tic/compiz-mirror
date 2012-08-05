@@ -1555,14 +1555,17 @@ TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplEmptyStringProf
     ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
 }
 
-class CCSGSettingsTestFindSettingAndPluginToUpdateFromPath :
+class CCSGSettingsUpdateHandlersTest :
     public CCSGSettingsTestIndependent
 {
     public:
 
-	CCSGSettingsTestFindSettingAndPluginToUpdateFromPath () :
+	CCSGSettingsUpdateHandlersTest () :
+	    gsettingsBackend (ccsGSettingsBackendGMockNew (),
+			      boost::bind (ccsGSettingsBackendGMockFree, _1)),
+	    gmockBackend (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (gsettingsBackend.get ()))),
 	    wrapper (ccsMockGSettingsWrapperNew (),
-		     boost::bind (&ccsGSettingsWrapperUnref, _1)),
+		     boost::bind (ccsGSettingsWrapperUnref, _1)),
 	    gmockWrapper (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()))),
 	    context (ccsMockContextNew (),
 		     boost::bind (ccsFreeMockContext, _1)),
@@ -1573,7 +1576,7 @@ class CCSGSettingsTestFindSettingAndPluginToUpdateFromPath :
 	{
 	}
 
-	~CCSGSettingsTestFindSettingAndPluginToUpdateFromPath ()
+	~CCSGSettingsUpdateHandlersTest ()
 	{
 	    if (plugin)
 		ccsPluginUnref (plugin);
@@ -1594,6 +1597,8 @@ class CCSGSettingsTestFindSettingAndPluginToUpdateFromPath :
 
     protected:
 
+	boost::shared_ptr <CCSBackend> gsettingsBackend;
+	CCSGSettingsBackendGMock *gmockBackend;
 	boost::shared_ptr <CCSGSettingsWrapper> wrapper;
 	CCSGSettingsWrapperGMock *gmockWrapper;
 	boost::shared_ptr <CCSContext> context;
@@ -1605,7 +1610,7 @@ class CCSGSettingsTestFindSettingAndPluginToUpdateFromPath :
 	char			   *uncleanKeyName;
 };
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestBadPath)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestBadPath)
 {
     SetPathAndKeyname ("/wrong", "foo");
 
@@ -1622,7 +1627,7 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestBadPath)
     EXPECT_THAT (uncleanKeyName, IsNull ());
 }
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestNoPluginFound)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestNoPluginFound)
 {
     SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", "foo-bar");
 
@@ -1641,7 +1646,7 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestNoPluginFound)
     EXPECT_THAT (uncleanKeyName, IsNull ());
 }
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestNoSettingFound)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestNoSettingFound)
 {
     CCSPlugin *mockPlugin = ccsMockPluginNew ();
     CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
@@ -1668,7 +1673,7 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestNoSettingFound
     EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
 }
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestSettingNotFoundAndNoTypeMatches)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestSettingNotFoundAndNoTypeMatches)
 {
     GVariant *value = g_variant_new_int16 (2);
     CCSPlugin *mockPlugin = ccsMockPluginNew ();
@@ -1696,7 +1701,7 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestSettingNotFoun
     EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
 }
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestSettingNotFoundAndNoSettingMatches)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestSettingNotFoundAndNoSettingMatches)
 {
     GVariant *value = g_variant_new_int32 (2);
     CCSPlugin *mockPlugin = ccsMockPluginNew ();
@@ -1738,7 +1743,7 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestSettingNotFoun
     EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
 }
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestSettingMatches)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestSettingMatches)
 {
     CCSPlugin *mockPlugin = ccsMockPluginNew ();
     CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
@@ -1764,7 +1769,7 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestSettingMatches
     EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
 }
 
-TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestFoundSetting)
+TEST_F (CCSGSettingsUpdateHandlersTest, TestFoundSetting)
 {
     GVariant *value = g_variant_new_int32 (2);
     CCSPlugin *mockPlugin = ccsMockPluginNew ();
@@ -1803,4 +1808,49 @@ TEST_F (CCSGSettingsTestFindSettingAndPluginToUpdateFromPath, TestFoundSetting)
     EXPECT_EQ (plugin, mockPlugin);
     EXPECT_THAT (setting, mockSetting);
     EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestUnfindableSettingToUpdateSetttingsWithGSettingsKeyName)
+{
+    SetPathAndKeyname ("/wrong", "bad-key");
+
+    EXPECT_CALL (*gmockBackend, getContext ()).WillOnce (Return (context.get ()));
+    EXPECT_CALL (*gmockWrapper, getPath ()).WillOnce (Return (path.c_str ()));
+
+    EXPECT_FALSE (updateSettingWithGSettingsKeyName (gsettingsBackend.get (),
+						     wrapper.get (),
+						     keyName.c_str (),
+						     NULL));
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeySuccess)
+{
+    CCSSettingType    TYPE = TypeInt;
+    const std::string KEY ("good-key");
+    const std::string PATH ("/org/compiz/mock/plugins/mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_variant_new_int32 (2)),
+					boost::bind (g_variant_unref, _1));
+
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value.get ()));
+    EXPECT_EQ (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), value.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeyFailure)
+{
+    CCSSettingType    TYPE = TypeString;
+    const std::string KEY ("good-key");
+    const std::string PATH ("/org/compiz/mock/plugins/mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_variant_new_int32 (2)),
+					boost::bind (g_variant_unref, _1));
+
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value.get ()));
+    EXPECT_THAT (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), IsNull ());
 }

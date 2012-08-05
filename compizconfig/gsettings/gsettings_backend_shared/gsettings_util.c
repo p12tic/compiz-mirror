@@ -397,7 +397,7 @@ findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper  *settings,
 Bool
 updateSettingWithGSettingsKeyName (CCSBackend *backend,
 				   CCSGSettingsWrapper *settings,
-				   gchar     *keyName,
+				   const gchar     *keyName,
 				   CCSBackendUpdateFunc updateSetting)
 {
     CCSContext   *context = ccsGSettingsBackendGetContext (backend);
