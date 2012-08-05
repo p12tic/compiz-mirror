@@ -150,8 +150,6 @@ class MockCCSBackendConceptTestEnvironment :
 		string->value = strdup ((*it).c_str ());
 		ccsStringRef (string);
 
-		printf ("%s\n", string->value);
-
 		stringList = ccsStringListAppend (stringList, string);
 	    }
 
