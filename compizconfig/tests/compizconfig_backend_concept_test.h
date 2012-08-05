@@ -224,6 +224,8 @@ class ItemInCCSListMatcher :
 	    {
 		if (mMatcher.MatchAndExplain ((*(reinterpret_cast <I *> (iter->data))), listener))
 		    return true;
+
+		iter = iter->next;
 	    }
 
 	    return false;
@@ -1350,18 +1352,17 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
 							     boost::bind (ccsStringListFree, _1, TRUE));
 
-	CCSStringList iter = existingProfiles.get ();
-
-	ASSERT_EQ (ccsStringListLength (iter), 4);
+	ASSERT_EQ (ccsStringListLength (existingProfiles.get ()), 4);
 
 	/* Default profile must always be there */
 	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_DEFAULT)));
 
 	/* Current profile should also be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_MOCK)));
 
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->next->data)->value, Eq (PROFILE_BAR));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_FOO)));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_BAR)));
+	EXPECT_THAT (existingProfiles.get (), Not (IsStringItemInStringCCSList (Eq (PROFILE_BAZ))));
     }
 }
 
@@ -1385,18 +1386,19 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonCurrentProfile)
 	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
 							     boost::bind (ccsStringListFree, _1, TRUE));
 
-	CCSStringList iter = existingProfiles.get ();
-
-	ASSERT_EQ (ccsStringListLength (iter), 3);
+	ASSERT_EQ (ccsStringListLength (existingProfiles.get ()), 3);
 
 	/* Default profile must always be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_DEFAULT)));
 
 	/* Current profile should also be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_MOCK)));
 
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->next), IsNull ());
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_FOO)));
+
+	/* PROFILE_BAR was deleted */
+	EXPECT_THAT (existingProfiles.get (), Not (IsStringItemInStringCCSList (Eq (PROFILE_BAR))));
+	EXPECT_THAT (existingProfiles.get (), Not (IsStringItemInStringCCSList (Eq (PROFILE_BAZ))));
     }
 }
 
@@ -1421,18 +1423,17 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonExistantCurrentPr
 	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
 							     boost::bind (ccsStringListFree, _1, TRUE));
 
-	CCSStringList iter = existingProfiles.get ();
-
-	ASSERT_EQ (ccsStringListLength (iter), 4);
+	ASSERT_EQ (ccsStringListLength (existingProfiles.get ()), 4);
 
 	/* Default profile must always be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_DEFAULT)));
 
 	/* Current profile should also be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_MOCK)));
 
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->next->data)->value, Eq (PROFILE_BAR));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_FOO)));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_BAR)));
+	EXPECT_THAT (existingProfiles.get (), Not (IsStringItemInStringCCSList (Eq (PROFILE_BAZ))));
     }
 }
 
@@ -1463,13 +1464,16 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteCurrentProfile)
 	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
 							     boost::bind (ccsStringListFree, _1, TRUE));
 
-	CCSStringList iter = existingProfiles.get ();
-
-	ASSERT_EQ (ccsStringListLength (iter), 2);
+	ASSERT_EQ (ccsStringListLength (existingProfiles.get ()), 2);
 	/* Default profile must always be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next), IsNull ());
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_DEFAULT)));
+
+	/* Old current profile shouldn't be there */
+	EXPECT_THAT (existingProfiles.get (), Not (IsStringItemInStringCCSList (Eq (PROFILE_BAR))));
+
+	/* New current profile should be there */
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_FOO)));
+	EXPECT_THAT (existingProfiles.get (), Not (IsStringItemInStringCCSList (Eq (PROFILE_BAZ))));
     }
 }
 
