@@ -96,9 +96,6 @@ class MockCCSBackendConceptTestEnvironment :
 				this,
 				&MockCCSBackendConceptTestEnvironment::DeleteProfile)));
 
-	    /* Always have a Default profile */
-	    AddProfile ("Default");
-
 	    return mBackend;
 	}
 
@@ -124,14 +121,36 @@ class MockCCSBackendConceptTestEnvironment :
 	{
 	    CCSStringList stringList = NULL;
 
+	    CCSString *defaultProfile = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+	    CCSString *currentProfile = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+
+	    EXPECT_CALL (*gmockContext, getProfile ());
+
+	    defaultProfile->value = strdup ("Default");
+	    currentProfile->value = strdup (ccsGetProfile (context));
+
+	    ccsStringRef (defaultProfile);
+	    ccsStringRef (currentProfile);
+
+	    stringList = ccsStringListAppend (stringList, defaultProfile);
+	    stringList = ccsStringListAppend (stringList, currentProfile);
+
+	    printf ("%s %s\n", defaultProfile->value, currentProfile->value);
+
 	    for (std::vector <std::string>::iterator it = mProfiles.begin ();
 		 it != mProfiles.end ();
 		 ++it)
 	    {
+		if (*it == defaultProfile->value ||
+		    *it == currentProfile->value)
+		    continue;
+
 		CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
 
 		string->value = strdup ((*it).c_str ());
 		ccsStringRef (string);
+
+		printf ("%s\n", string->value);
 
 		stringList = ccsStringListAppend (stringList, string);
 	    }

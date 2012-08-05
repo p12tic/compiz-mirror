@@ -1228,14 +1228,18 @@ class CCSBackendConformanceTestProfileHandling :
 {
     public:
 
+	static const std::string PROFILE_MOCK;
 	static const std::string PROFILE_DEFAULT;
 	static const std::string PROFILE_FOO;
 	static const std::string PROFILE_BAR;
+	static const std::string PROFILE_BAZ;
 };
 
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_MOCK ("mock");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_DEFAULT ("Default");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAZ ("baz");
 
 TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 {
@@ -1253,12 +1257,16 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 3);
+	ASSERT_EQ (ccsStringListLength (iter), 4);
 
 	/* Default profile must always be there */
 	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_BAR));
+
+	/* Current profile should also be there */
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
+
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->next->data)->value, Eq (PROFILE_BAR));
     }
 }
 
@@ -1274,9 +1282,6 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonCurrentProfile)
 
 	CharacterWrapper PROFILE_BAR_CHAR (strdup (PROFILE_BAR.c_str ()));
 
-	/* Make sure that backends know what profile is being deleted */
-	ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (PROFILE_FOO.c_str ()));
-
 	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAR, context.get (), gmockContext);
 	EXPECT_TRUE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAR_CHAR));
 
@@ -1287,10 +1292,16 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonCurrentProfile)
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 2);
+	ASSERT_EQ (ccsStringListLength (iter), 3);
+
+	/* Default profile must always be there */
 	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next), IsNull ());
+
+	/* Current profile should also be there */
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
+
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->next), IsNull ());
     }
 }
 
@@ -1304,13 +1315,10 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonExistantCurrentPr
 	mTestEnv->AddProfile (PROFILE_FOO);
 	mTestEnv->AddProfile (PROFILE_BAR);
 
-	CharacterWrapper PROFILE_BAR_CHAR (strdup (PROFILE_BAR.c_str ()));
+	CharacterWrapper PROFILE_BAZ_CHAR (strdup (PROFILE_BAZ.c_str ()));
 
-	/* Make sure that backends know what profile is being deleted */
-	ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (PROFILE_FOO.c_str ()));
-
-	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAR, context.get (), gmockContext);
-	EXPECT_TRUE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAR_CHAR));
+	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAZ, context.get (), gmockContext);
+	EXPECT_FALSE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAZ_CHAR));
 
 	/* Check to make sure that the profile is no longer there */
 	mTestEnv->SetGetExistingProfilesExpectation (context.get (), gmockContext);
@@ -1319,10 +1327,16 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonExistantCurrentPr
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 2);
+	ASSERT_EQ (ccsStringListLength (iter), 4);
+
+	/* Default profile must always be there */
 	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next), IsNull ());
+
+	/* Current profile should also be there */
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
+
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next->next->data)->value, Eq (PROFILE_BAR));
     }
 }
 
@@ -1344,6 +1358,9 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteCurrentProfile)
 	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAR, context.get (), gmockContext);
 	EXPECT_TRUE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAR_CHAR));
 
+	/* Now that we've deleted the profile, getProfile can no longer refer to it */
+	ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (PROFILE_FOO.c_str ()));
+
 	/* Check to make sure that the profile is no longer there */
 	mTestEnv->SetGetExistingProfilesExpectation (context.get (), gmockContext);
 	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
@@ -1351,9 +1368,12 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteCurrentProfile)
 
 	CCSStringList iter = existingProfiles.get ();
 
-	ASSERT_EQ (ccsStringListLength (iter), 1);
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next), IsNull ());
+	ASSERT_EQ (ccsStringListLength (iter), 2);
+	/* Default profile must always be there */
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_FOO));
+	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->next), IsNull ());
+
     }
 }
 

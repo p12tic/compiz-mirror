@@ -781,7 +781,7 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     while (g_variant_iter_loop (&iter, "s", &profile))
     {
 	CCSString *str = malloc (sizeof (CCSString));
-	
+
 	str->value = strdup (profile);
 
 	ret = ccsStringListAppend (ret, str);
