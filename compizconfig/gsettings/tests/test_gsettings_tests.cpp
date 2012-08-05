@@ -1822,3 +1822,35 @@ TEST_F (CCSGSettingsUpdateHandlersTest, TestUnfindableSettingToUpdateSetttingsWi
 						     keyName.c_str (),
 						     NULL));
 }
+
+TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeySuccess)
+{
+    CCSSettingType    TYPE = TypeInt;
+    const std::string KEY ("good-key");
+    const std::string PATH ("/org/compiz/mock/plugins/mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_variant_new_int32 (2)),
+					boost::bind (g_variant_unref, _1));
+
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value.get ()));
+    EXPECT_EQ (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), value.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeyFailure)
+{
+    CCSSettingType    TYPE = TypeString;
+    const std::string KEY ("good-key");
+    const std::string PATH ("/org/compiz/mock/plugins/mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_variant_new_int32 (2)),
+					boost::bind (g_variant_unref, _1));
+
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value.get ()));
+    EXPECT_THAT (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), IsNull ());
+}
