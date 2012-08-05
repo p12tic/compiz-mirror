@@ -357,7 +357,7 @@ findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper  *settings,
 	*uncleanKeyName = translateKeyForCCS (keyName);
 
 	*setting = ccsFindSetting (*plugin, *uncleanKeyName);
-	if (!setting)
+	if (!*setting)
 	{
 	    /* Couldn't find setting straight off the bat,
 	     * try and find the best match */
