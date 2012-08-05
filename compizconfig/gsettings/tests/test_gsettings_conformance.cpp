@@ -92,9 +92,16 @@ class CCSGSettingsBackendEnv :
 	    ccsFreeDynamicBackend (mBackend);
 	}
 
-	void AddProfile (const std::string &profile) {}
+	void AddProfile (const std::string &profile)
+	{
+	    ccsGSettingsBackendAddProfile (mGSettingsBackend, profile.c_str ());
+	}
+
 	void SetGetExistingProfilesExpectation (CCSContext *context,
-						CCSContextGMock *gmockContext) {}
+						CCSContextGMock *gmockContext)
+	{
+	}
+
 	void SetDeleteProfileExpectation (const std::string &profileToDelete,
 					  CCSContext *context, CCSContextGMock *gmockContext) {}
 
