@@ -96,6 +96,9 @@ class MockCCSBackendConceptTestEnvironment :
 				this,
 				&MockCCSBackendConceptTestEnvironment::DeleteProfile)));
 
+	    /* Always have a Default profile */
+	    AddProfile ("Default");
+
 	    return mBackend;
 	}
 
