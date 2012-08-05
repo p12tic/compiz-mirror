@@ -1050,17 +1050,27 @@ getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
     return ret;
 }
 
-void
-ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile)
+gboolean
+ccsGSettingsBackendAddProfileDefault (CCSBackend *backend, const char *profile)
 {
     GVariant        *profiles;
+    gboolean	    ret = FALSE;
 
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
     if (appendStringToVariantIfUnique (&profiles, profile))
+    {
+	ret = TRUE;
 	ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+    }
 
     g_variant_unref (profiles);
+    return ret;
+}
 
+void
+ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile)
+{
+    ccsGSettingsBackendAddProfile (backend, profile);
     ccsGSettingsBackendSetCurrentProfile (backend, profile);
 }
 
@@ -1242,6 +1252,12 @@ void
 ccsGSettingsBackendUpdateCurrentProfileName (CCSBackend *backend, const char *profile)
 {
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUpdateCurrentProfileName) (backend, profile);
+}
+
+void
+ccsGSettingsBackendAddProfile (CCSBackend *backend, const char *profile)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendAddProfile) (backend, profile);
 }
 
 CCSContext *
