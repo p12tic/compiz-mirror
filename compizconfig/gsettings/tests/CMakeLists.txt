@@ -32,6 +32,7 @@ add_executable (compizconfig_test_gsettings_conformance
 target_link_libraries (compizconfig_test_gsettings
 		       gsettings_backend_shared
 		       compizconfig_ccs_setting_mock
+		       compizconfig_ccs_plugin_mock
                        compizconfig_ccs_context_mock
 		       compizconfig_ccs_gsettings_backend_mock
 		       compizconfig_ccs_gsettings_wrapper_mock

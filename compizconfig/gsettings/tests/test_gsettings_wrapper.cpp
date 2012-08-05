@@ -10,7 +10,6 @@
 #include <glib-object.h>
 
 #include "test_gsettings_tests.h"
-#include <gsettings-mock-schemas-config.h>
 #include <ccs_gsettings_interface_wrapper.h>
 
 using ::testing::NotNull;
@@ -18,12 +17,12 @@ using ::testing::Eq;
 using ::testing::_;
 
 
-class TestGSettingsWrapperWithMemoryBackendEnv :
-    public ::testing::Test
+class CCSGSettingsWrapperTest :
+    public CCSGSettingsTestWithMemoryBackend
 {
     public:
 
-	TestGSettingsWrapperWithMemoryBackendEnv () :
+	CCSGSettingsWrapperTest () :
 	    mockSchema ("org.compiz.mock"),
 	    mockPath ("/org/compiz/mock/mock")
 	{
@@ -33,18 +32,12 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 
 	virtual void SetUp ()
 	{
-	    g_setenv ("G_SLICE", "always-malloc", 1);
-	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
-
-	    g_type_init ();
+	    CCSGSettingsTestWithMemoryBackend::SetUp ();
 	}
 
 	virtual void TearDown ()
 	{
-	    g_unsetenv ("GSETTINGS_BACKEND");
-	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
-	    g_unsetenv ("G_SLICE");
+	    CCSGSettingsTestWithMemoryBackend::TearDown ();
 	}
 
     protected:
@@ -55,8 +48,8 @@ class TestGSettingsWrapperWithMemoryBackendEnv :
 	GSettings   *settings;
 };
 
-class TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator :
-    public TestGSettingsWrapperWithMemoryBackendEnv
+class CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest :
+    public CCSGSettingsWrapperTest
 {
     protected:
 
@@ -66,14 +59,14 @@ class TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator :
 	}
 };
 
-class TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit :
-    public TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator
+class CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest :
+    public CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator::SetUp ();
+	    CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest::SetUp ();
 
 	    wrapper.reset (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
 								    mockPath.c_str (),
@@ -88,7 +81,7 @@ class TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit :
 	}
 };
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestWrapperConstruction)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest, TestWrapperConstruction)
 {
     boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
 											      mockPath.c_str (),
@@ -98,7 +91,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestWrapperConstr
     EXPECT_THAT (wrapper.get (), NotNull ());
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestGetGSettingsWrapper)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest, TestGetGSettingsWrapper)
 {
     boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsGSettingsWrapperNewForSchemaWithPath (mockSchema.c_str (),
 											      mockPath.c_str (),
@@ -109,7 +102,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocator, TestGetGSettingsW
     EXPECT_THAT (ccsGSettingsWrapperGetGSettings (wrapper.get ()), NotNull ());
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestSetValueOnWrapper)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestSetValueOnWrapper)
 {
     const unsigned int VALUE = 2;
     const std::string KEY ("integer-setting");
@@ -124,7 +117,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestSetVa
     EXPECT_EQ (VALUE, v);
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetValueOnWrapper)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestGetValueOnWrapper)
 {
     const double VALUE = 3.0;
     const std::string KEY ("float-setting");
@@ -139,7 +132,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetVa
     EXPECT_EQ (VALUE, v);
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestResetKeyOnWrapper)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestResetKeyOnWrapper)
 {
     const char * DEFAULT = "";
     const char * VALUE = "foo";
@@ -166,7 +159,7 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestReset
     ASSERT_THAT (v, Eq (DEFAULT));
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListKeysOnWrapper)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestListKeysOnWrapper)
 {
     const char * EXPECTED_KEYS[] =
     {
@@ -196,12 +189,12 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestListK
 	       sizeof (EXPECTED_KEYS[0]));
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetSchemaName)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestGetSchemaName)
 {
     EXPECT_THAT (ccsGSettingsWrapperGetSchemaName (wrapper.get ()), Eq (mockSchema));
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestGetPath)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestGetPath)
 {
     EXPECT_THAT (ccsGSettingsWrapperGetPath (wrapper.get ()), Eq (mockPath));
 }
@@ -234,7 +227,7 @@ namespace signal_test
     }
 }
 
-TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestConnectToChangedSignal)
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestConnectToChangedSignal)
 {
     std::string keyname ("int-setting");
     signal_test::VerificationMock mv;
