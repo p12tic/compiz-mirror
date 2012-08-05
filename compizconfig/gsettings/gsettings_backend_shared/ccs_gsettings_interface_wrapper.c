@@ -204,6 +204,7 @@ initCCSGSettingsWrapperObject (CCSGSettingsWrapper *wrapper,
     ccsObjectInit (wrapper, ai);
     ccsObjectAddInterface (wrapper, (const CCSInterface *) &interface, GET_INTERFACE_TYPE (CCSGSettingsWrapperInterface));
     ccsObjectSetPrivate (wrapper, (CCSPrivate *) priv);
+    ccsGSettingsWrapperRef (wrapper);
 }
 
 CCSGSettingsWrapper *
