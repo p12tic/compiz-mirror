@@ -222,7 +222,7 @@ class ItemInCCSListMatcher :
 
 	    while (iter)
 	    {
-		if (mMatcher.MatchAndExplain ((*(reinterpret_cast <I *> (iter->data)))))
+		if (mMatcher.MatchAndExplain ((*(reinterpret_cast <I *> (iter->data))), listener))
 		    return true;
 	    }
 
@@ -231,12 +231,16 @@ class ItemInCCSListMatcher :
 
 	virtual void DescribeTo (std::ostream *os) const
 	{
-	    *os << "found in list (" << mMatcher.DescribeTo (os) << ")";
+	    *os << "found in list (";
+	    mMatcher.DescribeTo (os);
+	    *os << ")";
 	}
 
 	virtual void DescribeNegationTo (std::ostream *os) const
 	{
-	    *os << "not found in list (" << mMatcher.DescribeNegationTo (os) << ")";
+	    *os << "not found in list (";
+	    mMatcher.DescribeNegationTo (os);
+	    *os << ")";
 	}
 
     private:
@@ -1321,6 +1325,17 @@ const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAZ ("baz");
 
+/* A workaround for templates inside of macros not
+ * expanding correctly */
+namespace
+{
+    Matcher <CCSStringList>
+    IsStringItemInStringCCSList (const Matcher <CCSString> &matcher)
+    {
+	return IsItemInCCSList <CCSString, CCSStringList> (matcher);
+    }
+}
+
 TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 {
     CCSBackend *backend = GetBackend ();
@@ -1340,7 +1355,7 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 	ASSERT_EQ (ccsStringListLength (iter), 4);
 
 	/* Default profile must always be there */
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_DEFAULT));
+	EXPECT_THAT (existingProfiles.get (), IsStringItemInStringCCSList (Eq (PROFILE_DEFAULT)));
 
 	/* Current profile should also be there */
 	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next->data)->value, Eq (PROFILE_MOCK));
