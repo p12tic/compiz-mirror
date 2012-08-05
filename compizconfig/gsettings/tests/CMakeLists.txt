@@ -10,6 +10,10 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 
 pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig)
 
+add_library (compizconfig_ccs_gsettings_wrapper_mock STATIC
+	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.cpp
+	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.h)
+
 add_library (compizconfig_ccs_gsettings_backend_mock STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.cpp
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.h)
@@ -29,6 +33,7 @@ target_link_libraries (compizconfig_test_gsettings
 		       compizconfig_ccs_setting_mock
                        compizconfig_ccs_context_mock
 		       compizconfig_ccs_gsettings_backend_mock
+		       compizconfig_ccs_gsettings_wrapper_mock
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
