@@ -1062,8 +1062,9 @@ ccsGSettingsBackendAddProfileDefault (CCSBackend *backend, const char *profile)
 	ret = TRUE;
 	ccsGSettingsBackendSetExistingProfiles (backend, profiles);
     }
+    else
+	g_variant_unref (profiles);
 
-    g_variant_unref (profiles);
     return ret;
 }
 
@@ -1119,8 +1120,6 @@ deleteProfile (CCSBackend *backend,
 
     /* Remove the profile from existing-profiles */
     ccsGSettingsBackendSetExistingProfiles (backend, profiles);
-
-    g_variant_unref (profiles);
 
     ccsGSettingsBackendUpdateProfile (backend, context);
 
