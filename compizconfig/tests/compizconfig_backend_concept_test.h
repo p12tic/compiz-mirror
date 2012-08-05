@@ -1318,6 +1318,7 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonExistantCurrentPr
 	CharacterWrapper PROFILE_BAZ_CHAR (strdup (PROFILE_BAZ.c_str ()));
 
 	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAZ, context.get (), gmockContext);
+
 	EXPECT_FALSE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAZ_CHAR));
 
 	/* Check to make sure that the profile is no longer there */
