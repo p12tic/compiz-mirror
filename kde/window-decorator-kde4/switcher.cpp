@@ -224,7 +224,7 @@ KWD::Switcher::updateWindowProperties ()
 {
     long	    *data = NULL;
     decor_quad_t    quads[N_QUADS_MAX];
-    unsigned int    nOffset = 1, frameType, frameState, frameActions;
+    unsigned int    nOffset = 1;
     int		    nQuad;
     int		    lh, rh;
     int		    w;
@@ -243,7 +243,7 @@ KWD::Switcher::updateWindowProperties ()
     decor_quads_to_property (data, nOffset - 1, mX11Pixmap,
 			     &mBorder, &mBorder, &mBorder, &mBorder,
 			     0, 0,
-			     quads, nQuad, frameType, frameState, frameActions);
+			     quads, nQuad, 0, 0, 0);
 #else
     decor_quads_to_property (data, nOffset - 1, mPixmap.handle (),
 			     &mBorder, &mBorder, &mBorder, &mBorder,
