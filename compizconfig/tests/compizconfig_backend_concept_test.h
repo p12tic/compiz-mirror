@@ -1288,10 +1288,18 @@ class CCSBackendConformanceTestProfileHandling :
 {
     public:
 
+	static const std::string PROFILE_MOCK;
 	static const std::string PROFILE_DEFAULT;
 	static const std::string PROFILE_FOO;
 	static const std::string PROFILE_BAR;
+	static const std::string PROFILE_BAZ;
 };
+
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_MOCK ("mock");
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_DEFAULT ("Default");
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
+const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAZ ("baz");
 
 TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 {
