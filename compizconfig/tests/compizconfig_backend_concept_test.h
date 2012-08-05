@@ -1310,6 +1310,9 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteNonExistantCurrentPr
 	ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (PROFILE_FOO.c_str ()));
 
 	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAR, context.get (), gmockContext);
+
+	/* Before deleting the profile, getProfile can no longer refer to it */
+	ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (PROFILE_FOO.c_str ()));
 	EXPECT_TRUE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAR_CHAR));
 
 	/* Check to make sure that the profile is no longer there */
