@@ -1846,11 +1846,89 @@ TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeyFailure)
     const std::string PATH ("/org/compiz/mock/plugins/mock");
     boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
 						     boost::bind (ccsGSettingsWrapperUnref, _1));
-    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_variant_new_int32 (2)),
-					boost::bind (g_variant_unref, _1));
+    GVariant *value = g_variant_new_int32 (2);
 
     CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
 
-    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value.get ()));
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value));
     EXPECT_THAT (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), IsNull ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestMakeSettingPath)
+{
+    CharacterWrapper  PLUGIN (strdup ("mock"));
+    char	      *PLUGIN_STR = PLUGIN;
+    std::string  PROFILE ("mock");
+    std::string  EXPECTED_PATH ("/org/compiz/profiles/mock/plugins/mock/");
+    boost::shared_ptr <CCSPlugin> plugin (ccsMockPluginNew (),
+					  boost::bind (ccsPluginUnref, _1));
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin));
+    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
+					   boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting));
+
+    EXPECT_CALL (*gmockSetting, getParent ()).WillOnce (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, getName ()).WillOnce (Return (PLUGIN_STR));
+
+    CharacterWrapper path (makeSettingPath (PROFILE.c_str (), setting.get ()));
+    std::string      pathString (path);
+
+    EXPECT_EQ (pathString, EXPECTED_PATH);
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestFindSettingsObject)
+{
+    CharacterWrapper  PLUGIN (strdup ("mock"));
+    char	      *PLUGIN_STR = PLUGIN;
+    std::string  PROFILE ("mock");
+    std::string  EXPECTED_PATH ("/org/compiz/profiles/mock/plugins/mock/");
+    boost::shared_ptr <CCSPlugin> plugin (ccsMockPluginNew (),
+					  boost::bind (ccsPluginUnref, _1));
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin));
+    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
+					   boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting));
+
+    EXPECT_CALL (*gmockSetting, getParent ()).WillOnce (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, getName ()).WillOnce (Return (PLUGIN_STR));
+
+    CharacterWrapper path (makeSettingPath (PROFILE.c_str (), setting.get ()));
+    std::string      pathString (path);
+
+    EXPECT_EQ (pathString, EXPECTED_PATH);
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestResetOptionToDefault)
+{
+    CharacterWrapper  SETTING_NAME (strdup ("Mock_setting"));
+    char	      *SETTING_NAME_STR = SETTING_NAME;
+    CharacterWrapper  TRANSLATED_SETTING_NAME (translateKeyForGSettings (SETTING_NAME));
+    CharacterWrapper  PLUGIN (strdup ("mock"));
+    char	      *PLUGIN_STR = PLUGIN;
+    std::string  PROFILE ("mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+    boost::shared_ptr <CCSPlugin> plugin (ccsMockPluginNew (),
+					  boost::bind (ccsPluginUnref, _1));
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
+					    boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting.get ()));
+
+    EXPECT_CALL (*gmockSetting, getName ()).WillRepeatedly (Return (SETTING_NAME_STR));
+    EXPECT_CALL (*gmockSetting, getParent ()).WillRepeatedly (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return (PLUGIN_STR));
+    EXPECT_CALL (*gmockPlugin, getContext ()).WillRepeatedly (ReturnNull ());
+
+    EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (std::string (PLUGIN)),
+								    _,
+								    IsNull ())).WillOnce (Return (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, resetKey (Eq (std::string (TRANSLATED_SETTING_NAME))));
+
+    resetOptionToDefault (backend.get (), setting.get ());
 }

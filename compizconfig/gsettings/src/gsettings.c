@@ -97,28 +97,7 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
     return settingsObj;
 }
 
-static gchar *
-makeSettingPath (const char *currentProfile, CCSSetting *setting)
-{
-    return makeCompizPluginPath (currentProfile,
-				 ccsPluginGetName (ccsSettingGetParent (setting)));
-}
 
-static CCSGSettingsWrapper *
-getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
-{
-    CCSGSettingsWrapper *ret = NULL;
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-    gchar *pathName = makeSettingPath (priv->currentProfile, setting);
-
-    ret = ccsGSettingsGetSettingsObjectForPluginWithPath (backend,
-							  ccsPluginGetName (ccsSettingGetParent (setting)),
-							  pathName,
-							  ccsPluginGetContext (ccsSettingGetParent (setting)));
-
-    g_free (pathName);
-    return ret;
-}
 
 static Bool
 isIntegratedOption (CCSSetting *setting,
@@ -366,17 +345,6 @@ writeIntegratedOption (CCSBackend *backend,
 #endif
 
     return;
-}
-
-static void
-resetOptionToDefault (CCSBackend *backend, CCSSetting * setting)
-{
-    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
-    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
-
-    ccsGSettingsWrapperResetKey (settings, cleanSettingName);
-
-    free (cleanSettingName);
 }
 
 void
