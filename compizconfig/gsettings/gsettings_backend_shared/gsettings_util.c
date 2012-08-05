@@ -1117,6 +1117,41 @@ deleteProfile (CCSBackend *backend,
     return TRUE;
 }
 
+void
+ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backend,
+							      CCSContext *context,
+							      GVariant *pluginsWithChangedKeys,
+							      const char * profile)
+{
+    GVariantIter    iter;
+    char            *plugin;
+
+    g_variant_iter_init (&iter, pluginsWithChangedKeys);
+    while (g_variant_iter_loop (&iter, "s", &plugin))
+    {
+	CCSGSettingsWrapper *settings;
+	gchar *pathName = makeCompizPluginPath (profile, plugin);
+
+	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
+	g_free (pathName);
+
+	/* The GSettings documentation says not to use this API
+	 * because we should know our own schema ... though really
+	 * we don't because we autogenerate schemas ... */
+	if (settings)
+	{
+	    char **keys = ccsGSettingsWrapperListKeys (settings);
+	    char **key_ptr;
+
+	    /* Unset all the keys */
+	    for (key_ptr = keys; *key_ptr; key_ptr++)
+		ccsGSettingsWrapperResetKey (settings, *key_ptr);
+
+	    g_strfreev (keys);
+	}
+    }
+}
+
 CCSContext *
 ccsGSettingsBackendGetContext (CCSBackend *backend)
 {

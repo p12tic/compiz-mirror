@@ -2,6 +2,7 @@
 #include <boost/bind.hpp>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_array.hpp>
 
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
@@ -1924,6 +1925,7 @@ TEST_F (CCSGSettingsTestIndependent, TestResetOptionToDefault)
     EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return (PLUGIN_STR));
     EXPECT_CALL (*gmockPlugin, getContext ()).WillRepeatedly (ReturnNull ());
 
+    EXPECT_CALL (*gmockBackend, getCurrentProfile ()).WillRepeatedly (Return (PROFILE.c_str ()));
     EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (std::string (PLUGIN)),
 								    _,
 								    IsNull ())).WillOnce (Return (wrapper.get ()));
@@ -1931,4 +1933,78 @@ TEST_F (CCSGSettingsTestIndependent, TestResetOptionToDefault)
     EXPECT_CALL (*gmockWrapper, resetKey (Eq (std::string (TRANSLATED_SETTING_NAME))));
 
     resetOptionToDefault (backend.get (), setting.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUnsetAllChangedPluginKeysInProfileDefaultImpl)
+{
+    std::string PLUGIN_FOO ("foo");
+    std::string PLUGIN_BAR ("bar");
+
+    std::string KEY_EXAMPLE_ONE ("example-one");
+    std::string KEY_EXAMPLE_TWO ("example-two");
+    std::string KEY_EXAMPLE_THREE ("example-three");
+
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (ccsFreeMockContext, _1));
+
+    GVariantBuilder pluginsWithChangedKeysBuilder;
+
+    const unsigned short NUM_KEYS = 3;
+
+    gchar ** fooKeys = (gchar **) calloc (1, sizeof (char *) * (NUM_KEYS + 1));
+    fooKeys[0] = g_strdup (KEY_EXAMPLE_ONE.c_str ());
+    fooKeys[1] = g_strdup (KEY_EXAMPLE_TWO.c_str ());
+    fooKeys[2] = g_strdup (KEY_EXAMPLE_THREE.c_str ());
+    fooKeys[3] = NULL;
+
+    gchar ** barKeys = (gchar **) calloc (1, sizeof (char *) * (NUM_KEYS + 1));
+    barKeys[0] = g_strdup (KEY_EXAMPLE_ONE.c_str ());
+    barKeys[1] = g_strdup (KEY_EXAMPLE_TWO.c_str ());
+    barKeys[2] = g_strdup (KEY_EXAMPLE_THREE.c_str ());
+    barKeys[3] = NULL;
+
+    g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", PLUGIN_FOO.c_str ());
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", PLUGIN_BAR.c_str ());
+
+    boost::shared_ptr <GVariant> pluginsWithChangedKeys (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+							 boost::bind (g_variant_unref, _1));
+
+    boost::shared_ptr <CCSGSettingsWrapper> wrapperForFoo (ccsMockGSettingsWrapperNew (),
+							   boost::bind (ccsGSettingsWrapperUnref, _1));
+    CCSGSettingsWrapperGMock *gmockWrapperForFoo = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapperForFoo.get ()));
+    boost::shared_ptr <CCSGSettingsWrapper> wrapperForBar (ccsMockGSettingsWrapperNew (),
+							   boost::bind (ccsGSettingsWrapperUnref, _1));
+    CCSGSettingsWrapperGMock *gmockWrapperForBar = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapperForBar.get ()));
+
+
+    /* Get the settings wrapper */
+    EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (PLUGIN_FOO), _, context.get ())).WillOnce (Return (wrapperForFoo.get ()));
+
+    /* List the keys */
+    EXPECT_CALL (*gmockWrapperForFoo, listKeys ()).WillOnce (Return (fooKeys));
+
+    /* Unset all the keys */
+    EXPECT_CALL (*gmockWrapperForFoo, resetKey (Eq (KEY_EXAMPLE_ONE)));
+    EXPECT_CALL (*gmockWrapperForFoo, resetKey (Eq (KEY_EXAMPLE_TWO)));
+    EXPECT_CALL (*gmockWrapperForFoo, resetKey (Eq (KEY_EXAMPLE_THREE)));
+
+    /* Get the settings wrapper */
+    EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (PLUGIN_BAR), _, context.get ())).WillOnce (Return (wrapperForBar.get ()));
+
+    /* List the keys */
+    EXPECT_CALL (*gmockWrapperForBar, listKeys ()).WillOnce (Return (barKeys));
+
+    /* Unset all the keys */
+    EXPECT_CALL (*gmockWrapperForBar, resetKey (Eq (KEY_EXAMPLE_ONE)));
+    EXPECT_CALL (*gmockWrapperForBar, resetKey (Eq (KEY_EXAMPLE_TWO)));
+    EXPECT_CALL (*gmockWrapperForBar, resetKey (Eq (KEY_EXAMPLE_THREE)));
+
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (backend.get (),
+								  context.get (),
+								  pluginsWithChangedKeys.get (),
+								  "mock");
 }

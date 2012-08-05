@@ -284,6 +284,13 @@ ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const c
 gboolean
 ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context);
 
+void
+ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backend,
+							      CCSContext *context,
+							      GVariant *pluginsWithChangedKeys,
+							      const char * profile);
+
+
 COMPIZCONFIG_END_DECLS
 
 #endif
