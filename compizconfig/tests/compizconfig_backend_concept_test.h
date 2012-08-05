@@ -126,6 +126,33 @@ operator<< (::std::ostream &os, const CCSSettingButtonValue &v)
     return os << "Button " << v.button << "Button Key Mask: " << std::hex << v.buttonModMask << "Edge Mask: " << v.edgeMask << std::dec << std::endl;
 }
 
+bool
+operator== (const CCSString &lhs,
+	    const std::string &rhs)
+{
+    if (rhs == lhs.value)
+	return true;
+
+    return false;
+}
+
+bool
+operator== (const std::string &lhs,
+	    const CCSString &rhs)
+{
+    if (lhs == rhs.value)
+	return true;
+
+    return false;
+}
+
+::std::ostream &
+operator<< (::std::ostream &os, CCSString &string)
+{
+    os << string.value << std::endl;
+    return os;
+}
+
 class CCSListWrapper :
     boost::noncopyable
 {
@@ -184,12 +211,8 @@ class ItemInCCSListMatcher :
 {
     public:
 
-	typedef boost::function <bool (const I &, const I &)> CmpFunc;
-
-	ItemInCCSListMatcher (const I &item,
-			      const CmpFunc &func) :
-	    mItem (item),
-	    mFunc (func)
+	ItemInCCSListMatcher (const Matcher<I> &matcher) :
+	    mMatcher (matcher)
 	{
 	}
 
@@ -199,8 +222,7 @@ class ItemInCCSListMatcher :
 
 	    while (iter)
 	    {
-		if (mFunc (*(reinterpret_cast <I *> (iter->data)),
-			   mItem))
+		if (mMatcher.MatchAndExplain ((*(reinterpret_cast <I *> (iter->data)))))
 		    return true;
 	    }
 
@@ -209,25 +231,23 @@ class ItemInCCSListMatcher :
 
 	virtual void DescribeTo (std::ostream *os) const
 	{
-	    *os << "found in list";
+	    *os << "found in list (" << mMatcher.DescribeTo (os) << ")";
 	}
 
 	virtual void DescribeNegationTo (std::ostream *os) const
 	{
-	    *os << "not found in list";
+	    *os << "not found in list (" << mMatcher.DescribeNegationTo (os) << ")";
 	}
 
     private:
 
-	const I & mItem;
-	CmpFunc   mFunc;
+	const Matcher<I> & mMatcher;
 };
 
 template <typename I, typename L>
-Matcher<L> IsItemInCCSList (const I &item,
-			    const typename ItemInCCSListMatcher <I, L>::CmpFunc &cmp)
+Matcher<L> IsItemInCCSList (const Matcher<I> &matcher)
 {
-    return MakeMatcher (new ItemInCCSListMatcher <I, L> (item, cmp));
+    return MakeMatcher (new ItemInCCSListMatcher <I, L> (matcher));
 }
 
 namespace
