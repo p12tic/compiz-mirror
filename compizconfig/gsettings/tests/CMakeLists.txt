@@ -19,11 +19,9 @@ add_library (compizconfig_ccs_gsettings_backend_mock STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.h)
 
 add_executable (compizconfig_test_gsettings
-		${CMAKE_CURRENT_SOURCE_DIR}/wrap_gsettings.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_tests.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_wrapper.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/wrap_gsettings.h
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_tests.h)
 
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../libcompizconfig/tests)
