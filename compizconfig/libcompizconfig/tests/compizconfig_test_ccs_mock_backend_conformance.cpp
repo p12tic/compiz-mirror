@@ -89,6 +89,13 @@ class MockCCSBackendConceptTestEnvironment :
 				this,
 				&MockCCSBackendConceptTestEnvironment::WriteValueToMap)));
 
+	    ON_CALL (*mBackendGMock, deleteProfile (_, _))
+		    .WillByDefault (
+			WithArgs <1> (
+			    Invoke (
+				this,
+				&MockCCSBackendConceptTestEnvironment::DeleteProfile)));
+
 	    return mBackend;
 	}
 
@@ -127,6 +134,14 @@ class MockCCSBackendConceptTestEnvironment :
 	    }
 
 	    EXPECT_CALL (*mBackendGMock, getExistingProfiles (context)).WillOnce (Return (stringList));
+	}
+
+	void SetDeleteProfileExpectation (const std::string &profileForDeletion,
+					  CCSContext	    *context,
+					  CCSContextGMock   *gmockContext)
+	{
+	    EXPECT_CALL (*mBackendGMock, deleteProfile (context,
+							Eq (profileForDeletion)));
 	}
 
 	void SetReadInitExpectation (CCSContext *context,
@@ -402,6 +417,24 @@ class MockCCSBackendConceptTestEnvironment :
 	}
 
     protected:
+
+	bool DeleteProfile (const std::string &profileToDelete)
+	{
+	    std::vector <std::string>::iterator it = std::find (mProfiles.begin (),
+								mProfiles.end (),
+								profileToDelete);
+
+	    if (it != mProfiles.end ())
+	    {
+		mProfiles.erase (it);
+		return true;
+	    }
+	    else
+	    {
+		return false;
+	    }
+
+	}
 
 	void ReadValueIntoSetting (CCSSetting *setting)
 	{
