@@ -1925,6 +1925,7 @@ TEST_F (CCSGSettingsTestIndependent, TestResetOptionToDefault)
     EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return (PLUGIN_STR));
     EXPECT_CALL (*gmockPlugin, getContext ()).WillRepeatedly (ReturnNull ());
 
+    EXPECT_CALL (*gmockBackend, getCurrentProfile ()).WillRepeatedly (Return (PROFILE.c_str ()));
     EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (std::string (PLUGIN)),
 								    _,
 								    IsNull ())).WillOnce (Return (wrapper.get ()));
