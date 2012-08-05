@@ -144,21 +144,17 @@ TEST_F (TestGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInit, TestReset
     const char * DEFAULT = "";
     const char * VALUE = "foo";
     const std::string KEY ("string-setting");
-    boost::shared_ptr <GVariant> variant (g_variant_new ("s", VALUE, NULL),
+    boost::shared_ptr <GVariant> variant (g_variant_ref_sink (g_variant_new ("s", VALUE, NULL)),
 					  boost::bind (g_variant_unref, _1));
     ccsGSettingsWrapperSetValue (wrapper.get (), KEY.c_str (), variant.get ());
 
-    boost::shared_ptr <GVariant> value (g_settings_get_value (settings, KEY.c_str ()),
+    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_settings_get_value (settings, KEY.c_str ())),
 					boost::bind (g_variant_unref, _1));
 
     gsize      length;
     std::string v (g_variant_get_string (value.get (), &length));
     ASSERT_EQ (strlen (VALUE), length);
     ASSERT_THAT (v, Eq (VALUE));
-
-    /* g_settings_reset appears to unref the value,
-     * so we need to keep it alive */
-    g_variant_ref (value.get ());
 
     ccsGSettingsWrapperResetKey (wrapper.get (), KEY.c_str ());
 

@@ -12,6 +12,10 @@ pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig)
 
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../libcompizconfig/tests)
 
+add_library (compizconfig_ccs_gsettings_wrapper_mock STATIC
+	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.cpp
+	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.h)
+
 add_library (compizconfig_ccs_gsettings_backend_mock STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.cpp
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.h)
@@ -32,19 +36,10 @@ target_link_libraries (compizconfig_test_gsettings
 		       compizconfig_ccs_setting_mock
                        compizconfig_ccs_context_mock
 		       compizconfig_ccs_gsettings_backend_mock
+		       compizconfig_ccs_gsettings_wrapper_mock
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
-
-add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.mock.gschema.xml
-		    COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/org.compiz.mock.gschema.xml ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.mock.gschema.xml
-		    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/org.compiz.mock.gschema.xml
-		    VERBATIM)
-
-add_custom_target (compiz_gsettings_mock_schema ALL
-		   DEPENDS ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.mock.gschema.xml)
-
-add_gsettings_schema_to_recompilation_list (compiz_gsettings_mock_schema)
 
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/gsettings-mock-schemas-config.h.in
 		${CMAKE_CURRENT_BINARY_DIR}/gsettings-mock-schemas-config.h)
