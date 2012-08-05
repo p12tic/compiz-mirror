@@ -89,7 +89,6 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 
     ccsGSettingsWrapperSetValue (priv->currentProfileSettings, "plugins-with-set-keys", newWrittenPluginsVariant);
 
-    g_variant_unref (newWrittenPluginsVariant);
     g_variant_unref (writtenPlugins);
     g_free (schemaName);
     g_strfreev (newWrittenPlugins);
@@ -588,7 +587,6 @@ ccsGSettingsBackendSetCurrentProfileDefault (CCSBackend *backend, const gchar *v
 
     ccsGSettingsWrapperSetValue (priv->compizconfigSettings, "current-profile", currentProfileVariant);
 
-    g_variant_unref (currentProfileVariant);
     g_free (profilePath);
 }
 
