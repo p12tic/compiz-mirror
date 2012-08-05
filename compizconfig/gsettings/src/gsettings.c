@@ -776,6 +776,9 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
 
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
+    /* Update the current profile in case it was changed compizconfig side */
+    ccsGSettingsBackendUpdateProfile (backend, context);
+
     value = ccsGSettingsWrapperGetValue (priv->compizconfigSettings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
     while (g_variant_iter_loop (&iter, "s", &profile))

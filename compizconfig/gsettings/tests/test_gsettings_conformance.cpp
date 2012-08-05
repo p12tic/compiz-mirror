@@ -109,13 +109,14 @@ class CCSGSettingsBackendEnv :
 	void SetGetExistingProfilesExpectation (CCSContext *context,
 						CCSContextGMock *gmockContext)
 	{
+	    EXPECT_CALL (*gmockContext, getProfile ()).Times (AtLeast (1));
 	}
 
 	void SetDeleteProfileExpectation (const std::string &profileToDelete,
 					  CCSContext *context,
 					  CCSContextGMock *gmockContext)
 	{
-	    EXPECT_CALL (*gmockContext, getProfile ());
+	    EXPECT_CALL (*gmockContext, getProfile ()).Times (AtLeast (1));
 	}
 
 	void SetReadInitExpectation (CCSContext *context,
