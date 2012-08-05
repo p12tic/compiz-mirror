@@ -178,6 +178,66 @@ class CCSListWrapper :
 	boost::shared_ptr <CCSSetting> mSettingReference;
 };
 
+template <typename I, typename L>
+class ItemInCCSListMatcher :
+    public ::testing::MatcherInterface <L>
+{
+    public:
+
+	typedef boost::function <bool (const I &, const I &)> CmpFunc;
+
+	ItemInCCSListMatcher (const I &item,
+			      const CmpFunc &func) :
+	    mItem (item),
+	    mFunc (func)
+	{
+	}
+
+	virtual bool MatchAndExplain (L list, MatchResultListener *listener) const
+	{
+	    L iter = list;
+
+	    while (iter)
+	    {
+		if (mFunc (*(reinterpret_cast <I *> (iter->data)),
+			   mItem))
+		    return true;
+	    }
+
+	    return false;
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "found in list";
+	}
+
+	virtual void DescribeNegationTo (std::ostream *os) const
+	{
+	    *os << "not found in list";
+	}
+
+    private:
+
+	const I & mItem;
+	CmpFunc   mFunc;
+};
+
+template <typename I, typename L>
+Matcher<L> IsItemInCCSList (const I &item,
+			    const typename ItemInCCSListMatcher <I, L>::CmpFunc &cmp)
+{
+    return MakeMatcher (new ItemInCCSListMatcher <I, L> (item, cmp));
+}
+
+namespace
+{
+    bool ccsStringCmp (const CCSString &a, const CCSString &b)
+    {
+	return std::string (a.value) == b.value;
+    }
+}
+
 typedef boost::variant <bool,
 			int,
 			float,
