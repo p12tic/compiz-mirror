@@ -20,6 +20,7 @@ using ::testing::ValuesIn;
 using ::testing::Return;
 using ::testing::ReturnNull;
 using ::testing::Invoke;
+using ::testing::WithArgs;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
@@ -155,7 +156,8 @@ TEST_F(CCSGSettingsTestProfiles, TestAddProfile)
     EXPECT_CALL (*gmock, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
 						     GVariantHasValueInArray<const gchar *> ("s",
 											     newProfileName.c_str (),
-											     boost::bind (streq, _1, _2)))));
+											     boost::bind (streq, _1, _2)))))
+	    .WillOnce (WithArgs <0> (Invoke (g_variant_unref)));
 
     ccsGSettingsBackendAddProfileDefault (backend.get (), newProfileName.c_str ());
 }
@@ -217,7 +219,8 @@ TEST_F(CCSGSettingsTestProfiles, TestDeleteProfileExistingProfile)
 													boost::bind (streq, _1, _2))),
 							   GVariantHasValueInArray<const gchar *> ("s",
 												   otherProfile.c_str (),
-												   boost::bind (streq, _1, _2)))));
+												   boost::bind (streq, _1, _2)))))
+	    .WillOnce (WithArgs <0> (Invoke (g_variant_unref)));
 
     EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
 
