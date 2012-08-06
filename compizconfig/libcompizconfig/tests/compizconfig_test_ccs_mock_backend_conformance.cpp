@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+\#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <ccs.h>
@@ -95,9 +95,6 @@ class MockCCSBackendConceptTestEnvironment :
 			    Invoke (
 				this,
 				&MockCCSBackendConceptTestEnvironment::DeleteProfile)));
-
-	    /* Always have a Default profile */
-	    AddProfile ("Default");
 
 	    return mBackend;
 	}
