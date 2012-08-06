@@ -126,10 +126,20 @@ bool streq (const char * const &s1, const char * const &s2)
 
 }
 
-TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
+class CCSGSettingsTestProfiles :
+    public CCSGSettingsTestIndependent
 {
-    g_type_init ();
+    public:
 
+	static const std::string newProfileName;
+	static const std::string existingProfileName;
+};
+
+const std::string CCSGSettingsTestProfiles::existingProfileName ("ExistingProfile");
+const std::string CCSGSettingsTestProfiles::newProfileName ("NewProfile");
+
+TEST_F(CCSGSettingsTestProfiles, TestAddProfile)
+{
     boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
 					    boost::bind (ccsGSettingsBackendGMockFree, _1));
     CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
@@ -137,47 +147,45 @@ TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameAppendNew)
     GVariantBuilder builder;
 
     g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
-    g_variant_builder_add (&builder, "s", "foo");
+    g_variant_builder_add (&builder, "s", existingProfileName.c_str ());
 
     GVariant *existingProfiles = g_variant_builder_end (&builder);
-
-    std::string newProfileName ("narr");
 
     EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
     EXPECT_CALL (*gmock, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
 						     GVariantHasValueInArray<const gchar *> ("s",
 											     newProfileName.c_str (),
 											     boost::bind (streq, _1, _2)))));
+
+    ccsGSettingsBackendAddProfileDefault (backend.get (), newProfileName.c_str ());
+}
+
+TEST_F(CCSGSettingsTestProfiles, TestUpdateCurrentProfileNameAppendNew)
+{
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    EXPECT_CALL (*gmock, addProfile (Eq (newProfileName)));
     EXPECT_CALL (*gmock, setCurrentProfile (Eq (newProfileName)));
 
     ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), newProfileName.c_str ());
 }
 
-TEST_F(CCSGSettingsTestIndependent, TestUpdateCurrentProfileNameExisting)
+TEST_F(CCSGSettingsTestProfiles, TestUpdateCurrentProfileNameExisting)
 {
-    g_type_init ();
-
     boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
 					    boost::bind (ccsGSettingsBackendGMockFree, _1));
     CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
 
-    GVariantBuilder builder;
+    EXPECT_CALL (*gmock, addProfile (Eq (existingProfileName)));
+    EXPECT_CALL (*gmock, setCurrentProfile (Eq (existingProfileName)));
 
-    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
-    g_variant_builder_add (&builder, "s", "foo");
-
-    GVariant *existingProfiles = g_variant_builder_end (&builder);
-
-    EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
-    EXPECT_CALL (*gmock, setCurrentProfile (_));
-
-    ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), "foo");
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), existingProfileName.c_str ());
 }
 
-TEST_F(CCSGSettingsTestIndependent, TestDeleteProfileExistingProfile)
+TEST_F(CCSGSettingsTestProfiles, TestDeleteProfileExistingProfile)
 {
-    g_type_init ();
-
     boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
 					    boost::bind (ccsGSettingsBackendGMockFree, _1));
     boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
