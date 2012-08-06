@@ -431,20 +431,23 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
 {
     WRAPABLE_HND_FUNCTN (glEnableOutputClipping, transform, region, output)
 
-    // FIXME: Add proper scaling support (t[0], t[5])
-
     // Bottom-left corner of the output:
-    GLint x = output->x1 ();
-    GLint y = screen->height () - output->y2 ();
-    GLsizei w = output->width ();
-    GLsizei h = output->height ();
+    const GLint x = output->x1 ();
+    const GLint y = screen->height () - output->y2 ();
+    const GLsizei w = output->width ();
+    const GLsizei h = output->height ();
 
     // Transformed (only scale and translation is supported!)
     const float *t = transform.getMatrix ();
-    GLint tx = x + t[12] * w;
-    GLint ty = y + t[13] * h;
+    const GLfloat scalex = t[0], scaley = t[5], transx = t[12], transy = t[13];
+    const GLfloat centrex = x + w / 2.0f;
+    const GLfloat centrey = y + h / 2.0f;
+    const GLfloat scaledw = w * scalex;
+    const GLfloat scaledh = h * scaley;
+    const GLint tx = centrex - (scaledw / 2.0f) + transx * w;
+    const GLint ty = centrey - (scaledh / 2.0f) + transy * h;
 
-    glScissor (tx, ty, w, h);
+    glScissor (tx, ty, scaledw, scaledh);
     glEnable (GL_SCISSOR_TEST);
 }
 
