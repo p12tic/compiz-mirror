@@ -1477,36 +1477,5 @@ TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteCurrentProfile)
     }
 }
 
-TEST_P (CCSBackendConformanceTestProfileHandling, TestDeleteCurrentProfile)
-{
-    CCSBackend *backend = GetBackend ();
-    CCSBackendInterface *backendInterface = GET_INTERFACE (CCSBackendInterface, backend);
-
-    if (backendInterface->getExistingProfiles)
-    {
-	mTestEnv->AddProfile (PROFILE_FOO);
-	mTestEnv->AddProfile (PROFILE_BAR);
-
-	CharacterWrapper PROFILE_BAR_CHAR (strdup (PROFILE_BAR.c_str ()));
-
-	/* Make sure that backends know what profile is being deleted */
-	ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (PROFILE_BAR.c_str ()));
-
-	mTestEnv->SetDeleteProfileExpectation (PROFILE_BAR, context.get (), gmockContext);
-	EXPECT_TRUE (ccsBackendDeleteProfile (backend, context.get (), PROFILE_BAR_CHAR));
-
-	/* Check to make sure that the profile is no longer there */
-	mTestEnv->SetGetExistingProfilesExpectation (context.get (), gmockContext);
-	boost::shared_ptr <_CCSStringList> existingProfiles (ccsBackendGetExistingProfiles (backend, context.get ()),
-							     boost::bind (ccsStringListFree, _1, TRUE));
-
-	CCSStringList iter = existingProfiles.get ();
-
-	ASSERT_EQ (ccsStringListLength (iter), 1);
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->data)->value, Eq (PROFILE_FOO));
-	EXPECT_THAT (reinterpret_cast <CCSString *> (iter->next), IsNull ());
-    }
-}
-
 #endif
 
