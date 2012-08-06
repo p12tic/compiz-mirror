@@ -137,11 +137,10 @@ TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest, TestRe
     const char * DEFAULT = "";
     const char * VALUE = "foo";
     const std::string KEY ("string-setting");
-    boost::shared_ptr <GVariant> variant (g_variant_ref_sink (g_variant_new ("s", VALUE, NULL)),
-					  boost::bind (g_variant_unref, _1));
-    ccsGSettingsWrapperSetValue (wrapper.get (), KEY.c_str (), variant.get ());
+    GVariant *variant = g_variant_new ("s", VALUE);
+    ccsGSettingsWrapperSetValue (wrapper.get (), KEY.c_str (), variant);
 
-    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_settings_get_value (settings, KEY.c_str ())),
+    boost::shared_ptr <GVariant> value (g_settings_get_value (settings, KEY.c_str ()),
 					boost::bind (g_variant_unref, _1));
 
     gsize      length;
