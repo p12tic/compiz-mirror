@@ -1138,6 +1138,10 @@ deleteProfile (CCSBackend *backend,
     ccsGSettingsBackendSetExistingProfiles (backend, profiles);
     ccsGSettingsBackendUpdateProfile (backend, context);
 
+    /* Since we do not call g_settings_set_value on
+     * plugins, we must also unref the variant */
+    g_variant_unref (plugins);
+
     return ret;
 }
 
