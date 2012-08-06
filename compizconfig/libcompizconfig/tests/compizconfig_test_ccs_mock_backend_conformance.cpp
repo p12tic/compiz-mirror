@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+\#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <ccs.h>
@@ -96,9 +96,6 @@ class MockCCSBackendConceptTestEnvironment :
 				this,
 				&MockCCSBackendConceptTestEnvironment::DeleteProfile)));
 
-	    /* Always have a Default profile */
-	    AddProfile ("Default");
-
 	    return mBackend;
 	}
 
@@ -137,8 +134,6 @@ class MockCCSBackendConceptTestEnvironment :
 
 	    stringList = ccsStringListAppend (stringList, defaultProfile);
 	    stringList = ccsStringListAppend (stringList, currentProfile);
-
-	    printf ("%s %s\n", defaultProfile->value, currentProfile->value);
 
 	    for (std::vector <std::string>::iterator it = mProfiles.begin ();
 		 it != mProfiles.end ();
