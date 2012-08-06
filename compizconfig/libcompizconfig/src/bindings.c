@@ -213,13 +213,13 @@ ccsButtonBindingToString (CCSSettingButtonValue *button)
 {
     char *binding;
     char *edges;
-    char buttonStr[256];
 
     edges = ccsEdgesToModString (button->edgeMask);
     binding = stringAppend (edges, ccsModifiersToString (button->buttonModMask));
 
     if (button->button)
     {
+        char buttonStr[256];
         snprintf (buttonStr, 256, "Button%d", button->button);
         binding = stringAppend (binding, buttonStr);
     }

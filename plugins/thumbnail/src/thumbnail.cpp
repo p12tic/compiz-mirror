@@ -998,7 +998,7 @@ ThumbScreen::donePaint ()
     if (oldThumb.opacity > 0.0 && oldThumb.opacity < 1.0)
 	damageThumbs.push_back (&oldThumb);
 
-    if (damageThumbs.size ())
+    if (!damageThumbs.empty ())
     {
 	foreach (Thumbnail *t, damageThumbs)
 	    damageThumbRegion (t);

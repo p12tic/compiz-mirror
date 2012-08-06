@@ -212,9 +212,9 @@ addSingleQuad (GLVertexBuffer *vertexBuffer,
 void
 WobblyWindow::findNextWestEdge (Object *object)
 {
-    int v, v1, v2;
-    int s, start;
-    int e, end;
+    int v1, v2;
+    int start;
+    int end;
     int x;
     int output;
     int workAreaEdge;
@@ -234,6 +234,7 @@ WobblyWindow::findNextWestEdge (Object *object)
 
     if (x >= workAreaEdge)
     {
+	int v, s, e;
 	v1 = workAreaEdge;
 
 	foreach (CompWindow *p, ::screen->windows ())
@@ -320,9 +321,9 @@ WobblyWindow::findNextWestEdge (Object *object)
 void
 WobblyWindow::findNextEastEdge (Object *object)
 {
-    int v, v1, v2;
-    int s, start;
-    int e, end;
+    int v1, v2;
+    int start;
+    int end;
     int x;
     int output;
     int workAreaEdge;
@@ -342,6 +343,7 @@ WobblyWindow::findNextEastEdge (Object *object)
 
     if (x <= workAreaEdge)
     {
+	int v, s, e;
 	v1 = workAreaEdge;
 
 	foreach (CompWindow *p, ::screen->windows ())
@@ -427,9 +429,9 @@ WobblyWindow::findNextEastEdge (Object *object)
 void
 WobblyWindow::findNextNorthEdge (Object *object)
 {
-    int v, v1, v2;
-    int s, start;
-    int e, end;
+    int v1, v2;
+    int start;
+    int end;
     int y;
     int output;
     int workAreaEdge;
@@ -449,6 +451,7 @@ WobblyWindow::findNextNorthEdge (Object *object)
 
     if (y >= workAreaEdge)
     {
+	int v, s, e;
 	v1 = workAreaEdge;
 
 	foreach (CompWindow *p, ::screen->windows ())
@@ -534,9 +537,9 @@ WobblyWindow::findNextNorthEdge (Object *object)
 void
 WobblyWindow::findNextSouthEdge (Object *object)
 {
-    int v, v1, v2;
-    int s, start;
-    int e, end;
+    int v1, v2;
+    int start;
+    int end;
     int y;
     int output;
     int workAreaEdge;
@@ -556,6 +559,7 @@ WobblyWindow::findNextSouthEdge (Object *object)
 
     if (y <= workAreaEdge)
     {
+	int v, s, e;
 	v1 = workAreaEdge;
 
 	foreach (CompWindow *p, ::screen->windows ())
@@ -2306,7 +2310,6 @@ WobblyWindow::grabNotify (int          x,
 	if (ensureModel ())
 	{
 	    Spring *s;
-	    int	   i;
 
 	    if (wScreen->optionGetMaximizeEffect ())
 	    {
@@ -2372,6 +2375,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetGrabWindowMatch ().evaluate (window))
 	    {
+		int i;
 		for (i = 0; i < model->numSprings; i++)
 		{
 		    s = &model->springs[i];

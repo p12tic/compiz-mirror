@@ -448,7 +448,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     glGetBooleanv (GL_BLEND, &isBlendingEnabled);
     glEnable (GL_BLEND);
 
-	for (iter = animations.begin (); iter != animations.end () && animating; iter++)
+	for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
 	{
 		Animation& anim = *iter;
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
@@ -687,7 +687,6 @@ GridScreen::handleEvent (XEvent *event)
 {
     CompOutput out;
     CompWindow *w;
-    bool       check = false;
 
     screen->handleEvent (event);
 
@@ -751,6 +750,7 @@ GridScreen::handleEvent (XEvent *event)
 
     if (lastEdge != edge)
     {
+		bool check = false;
 		lastSlot = desiredSlot;
 
 		if (edge == NoEdge)
@@ -766,7 +766,7 @@ GridScreen::handleEvent (XEvent *event)
 
 		if (lastSlot != desiredSlot)
 		{
-			if (animations.size ())
+			if (!animations.empty ())
 				/* Begin fading previous animation instance */
 				animations.at (animations.size () - 1).fadingOut = true;
 
@@ -987,7 +987,7 @@ GridScreen::preparePaint (int msSinceLastPaint)
 {
 	std::vector<Animation>::iterator iter;
 
-	for (iter = animations.begin (); iter != animations.end (); iter++)
+	for (iter = animations.begin (); iter != animations.end (); ++iter)
 	{
 		Animation& anim = *iter;
 		anim.timer -= msSinceLastPaint;
@@ -1027,7 +1027,7 @@ GridScreen::donePaint ()
 		if (anim.complete)
 			iter = animations.erase(iter);
 		else
-			iter++;
+			++iter;
 	}
 
 	if (animations.empty ())

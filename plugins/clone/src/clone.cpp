@@ -371,7 +371,7 @@ CloneScreen::initiate (CompAction         *action,
         }
         else
         {
-	    it++;
+	    ++it;
         }
     }
 
@@ -528,7 +528,7 @@ CloneScreen::outputChangeNotify ()
 {
     std::list <Clone *>::iterator it;
 
-    for (it = clones.begin (); it != clones.end (); it++)
+    for (it = clones.begin (); it != clones.end (); ++it)
     {
 	if ((unsigned int) (*it)->dst >= screen->outputDevs ().size () ||
 	    (unsigned int) (*it)->src >= screen->outputDevs ().size ())

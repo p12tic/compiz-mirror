@@ -222,14 +222,14 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		     unsigned int	       mask)
 {
     bool       status;
-    bool       pixmap = true;
 
     RING_SCREEN (screen);
 
     if (rs->mState != RingScreen::RingStateNone)
     {
 	GLWindowPaintAttrib sAttrib = attrib;
-	bool		  scaled = false;
+	bool scaled = false;
+	bool pixmap = true;
 
     	if (window->mapNum ())
 	{
@@ -770,7 +770,7 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    mState == RingScreen::RingStateOut)
 	{
 	    for (std::vector <RingDrawSlot>::iterator it = mDrawSlots.begin ();
-		 it != mDrawSlots.end (); it++)
+		 it != mDrawSlots.end (); ++it)
 	    {
 		CompWindow *w = (*it).w;
 
@@ -1100,12 +1100,12 @@ RingScreen::windowRemove (CompWindow *w)
 
 		if (w == selected)
 		{
-		    it++;
+		    ++it;
 		    if (it != mWindows.end ())
 			selected = *it;
     		    else
 			selected = mWindows.front ();
-		    it--;
+		    --it;
 
 		    mSelectedWindow = selected;
 		    renderWindowTitle ();
@@ -1114,7 +1114,7 @@ RingScreen::windowRemove (CompWindow *w)
 		mWindows.erase (it);
 		break;
 	    }
-	    it++;
+	    ++it;
 	}
 
 	if (!inList)
@@ -1122,7 +1122,7 @@ RingScreen::windowRemove (CompWindow *w)
 
 	/* Terminate if the window closed was the last window in the list */
 
-	if (!mWindows.size ())
+	if (mWindows.empty ())
 	{
 	    CompOption o ("root", CompOption::TypeInt);
 	    CompOption::Vector opts;

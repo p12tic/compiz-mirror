@@ -601,10 +601,10 @@ PrivateAnimScreen::getActualEffect (AnimEffect effect,
     bool allRandom = optionGetAllRandom ();
     AnimEffectVector *randomEffects = &mRandomEffects[animEvent].effects;
     unsigned int nRandomEffects = randomEffects->size ();
-    unsigned int nFirstRandomEffect = 0;
 
     if ((effect == AnimEffectRandom) || allRandom)
     {
+	unsigned int nFirstRandomEffect = 0;
 	if (nRandomEffects == 0) // no random animation selected, assume "all"
 	{
 	    randomEffects = &mEventEffectsAllowed[animEvent];
@@ -1027,7 +1027,7 @@ void
 PrivateAnimScreen::eventMatchesChanged (CompOption                *opt,
 					AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     foreach (CompOption::Value &val, opt->value ().list ())
 	val.match ().update ();
@@ -1037,7 +1037,7 @@ void
 PrivateAnimScreen::eventOptionsChanged (CompOption                *opt,
 					AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     updateOptionSets (getCorrespondingAnimEvent (num));
 }
@@ -1046,7 +1046,7 @@ void
 PrivateAnimScreen::eventEffectsChanged (CompOption                *opt,
 					AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     updateEventEffects (getCorrespondingAnimEvent (num), false);
 }
@@ -1055,7 +1055,7 @@ void
 PrivateAnimScreen::eventRandomEffectsChanged (CompOption                *opt,
 					      AnimationOptions::Options num)
 {
-    if (mExtensionPlugins.size () == 0)
+    if (mExtensionPlugins.empty ())
 	initAnimationList ();
     updateEventEffects (getCorrespondingAnimEvent (num), true);
 }
@@ -1316,7 +1316,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 	/* Paint list includes destroyed windows */
 	for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
-	     rit != pl.rend (); rit++)
+	     rit != pl.rend (); ++rit)
 	{
 	    CompWindow *w = (*rit);
 	    AnimWindow *animWin = AnimWindow::get (w);
@@ -1432,7 +1432,7 @@ PrivateAnimScreen::donePaint ()
 
     /* Paint list includes destroyed windows */
     for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
-	 rit != pl.rend (); rit++)
+	 rit != pl.rend (); ++rit)
     {
 	CompWindow *w = (*rit);
 	AnimWindow *animWin = AnimWindow::get (w);
@@ -2955,7 +2955,7 @@ AnimWindow::~AnimWindow ()
 
     // Destroy each persistent data object
     PersistentDataMap::iterator itData = persistentData.begin ();
-    for (; itData != persistentData.end (); itData++)
+    for (; itData != persistentData.end (); ++itData)
 	delete itData->second;
 
     persistentData.clear ();

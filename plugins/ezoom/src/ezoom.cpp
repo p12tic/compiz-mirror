@@ -1546,7 +1546,6 @@ EZoomScreen::zoomSpecific (CompAction         *action,
 			  CompOption::Vector options,
 			  float		     target)
 {
-    int          x, y;
     int          out = screen->outputDeviceForPoint (pointerX, pointerY);
     CompWindow   *w;
 
@@ -1565,8 +1564,8 @@ EZoomScreen::zoomSpecific (CompAction         *action,
     }
     else
     {
-        x = CompOption::getIntOptionNamed (options, "x", 0);
-        y = CompOption::getIntOptionNamed (options, "y", 0);
+        int x = CompOption::getIntOptionNamed (options, "x", 0);
+        int y = CompOption::getIntOptionNamed (options, "y", 0);
         setCenter (x, y, false);
     }
 
