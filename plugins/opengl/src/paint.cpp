@@ -520,7 +520,8 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	    priv->paintOutputRegion (sTransform, region, output, mask);
 	    glDisableOutputClipping ();
 	}
-	else if (GL::stencilBuffer)
+	else if ( (GL::fboEnabled && GL::fboStencilSupported) ||
+                  GL::stencilBuffer )
 	{
 	    sTransform.toScreenSpace (output, -sAttrib.zTranslate);
 

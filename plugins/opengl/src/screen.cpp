@@ -152,6 +152,7 @@ namespace GL {
     GLint maxTextureSize = 0;
     bool  fboSupported = false;
     bool  fboEnabled = false;
+    bool  fboStencilSupported = false;
     bool  vboSupported = false;
     bool  vboEnabled = false;
     bool  shaders = false;
@@ -421,6 +422,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	GL::postSubBuffer = (GL::EGLPostSubBufferNVProc)
 	    eglGetProcAddress ("eglPostSubBufferNV");
 
+    GL::fboStencilSupported = GL::fboSupported &&
+        strstr (glExtensions, "GL_OES_packed_depth_stencil");
+
     if (!GL::fboSupported &&
 	!GL::postSubBuffer)
     {
@@ -666,6 +670,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    )
 	    GL::fboSupported = true;
     }
+
+    GL::fboStencilSupported = GL::fboSupported &&
+        strstr (glExtensions, "GL_EXT_packed_depth_stencil");
 
     if (strstr (glExtensions, "GL_ARB_vertex_buffer_object"))
     {

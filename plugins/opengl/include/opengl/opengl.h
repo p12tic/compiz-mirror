@@ -437,7 +437,7 @@ namespace GL {
     static const GLenum 		    COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0;
     static const GLenum 		    DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT;
     static const GLenum			    STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT;
-    static const GLenum			    STENCIL_INDEX8 = GL_STENCIL_INDEX8;
+    static const GLenum			    DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_OES;
 
     /* OpenGL|ES does not support different draw/read framebuffers */
     static const GLenum 		    DRAW_FRAMEBUFFER = GL_FRAMEBUFFER;
@@ -473,7 +473,7 @@ namespace GL {
     static const GLenum 		  COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0_EXT;
     static const GLenum 		  DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT_EXT;
     static const GLenum			  STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT_EXT;
-    static const GLenum			  STENCIL_INDEX8 = GL_STENCIL_INDEX8_EXT;
+    static const GLenum			  DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_EXT;
 
     static const GLenum 		  DRAW_FRAMEBUFFER = GL_DRAW_FRAMEBUFFER_EXT;
     static const GLenum 		  READ_FRAMEBUFFER = GL_READ_FRAMEBUFFER_EXT;
@@ -511,6 +511,7 @@ namespace GL {
     extern bool  textureCompression;
     extern GLint maxTextureSize;
     extern bool  fboSupported;
+    extern bool  fboStencilSupported;
     extern bool  fboEnabled;
     extern bool  vboSupported;
     extern bool  vboEnabled;
