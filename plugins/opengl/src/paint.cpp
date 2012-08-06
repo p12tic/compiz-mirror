@@ -442,12 +442,22 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
     const GLfloat scalex = t[0], scaley = t[5], transx = t[12], transy = t[13];
     const GLfloat centrex = x + w / 2.0f;
     const GLfloat centrey = y + h / 2.0f;
-    const GLfloat scaledw = w * scalex;
-    const GLfloat scaledh = h * scaley;
-    const GLint tx = centrex - (scaledw / 2.0f) + transx * w;
-    const GLint ty = centrey - (scaledh / 2.0f) + transy * h;
+    GLfloat scaledw = w * scalex;
+    GLfloat scaledh = h * scaley;
+    GLfloat tx = centrex - (scaledw / 2.0f) + transx * w;
+    GLfloat ty = centrey - (scaledh / 2.0f) + transy * h;
 
-    glScissor (tx, ty, scaledw, scaledh);
+    if (scaledw < 0.0f)
+    {
+	tx += scaledw;
+	scaledw = -scaledw;
+    }
+    if (scaledh < 0.0f)
+    {
+	ty += scaledh;
+	scaledh = -scaledh;
+    }
+    glScissor (tx, ty, roundf (scaledw), roundf (scaledh));
     glEnable (GL_SCISSOR_TEST);
 }
 
