@@ -17,10 +17,39 @@ using ::testing::AtLeast;
 using ::testing::Pointee;
 using ::testing::ReturnNull;
 
+namespace
+{
+    template <typename T>
+    class AutoDestroyHelper
+    {
+	public:
+
+	    typedef void (*SimpleDestructor) (T *);
+	    typedef boost::shared_ptr <T> TPtr;
+
+	    AutoDestroyHelper (T *t,
+			       SimpleDestructor d) :
+		mShared (t, boost::bind (d, _1))
+	    {
+	    }
+
+	    operator const TPtr & ()
+	    {
+		return mShared;
+	    }
+
+	private:
+
+	    TPtr mShared;
+    };
+}
+
 class CCSGSettingsBackendEnv :
     public CCSBackendConceptTestEnvironmentInterface
 {
     public:
+
+	typedef boost::shared_ptr <GVariant> GVariantShared;
 
 	CCSGSettingsBackendEnv () :
 	    pluginToMatch ("mock")
@@ -94,11 +123,23 @@ class CCSGSettingsBackendEnv :
 	    g_variant_builder_add (&noProfilesBuilder, "s", "Default");
 	    GVariant *noProfiles = g_variant_builder_end (&noProfilesBuilder);
 
+	    GVariantBuilder pluginKeysBuilder;
+	    g_variant_builder_init (&pluginKeysBuilder, G_VARIANT_TYPE ("as"));
+	    g_variant_builder_add (&pluginKeysBuilder, "s", "mock");
+	    GVariant *pluginKeys = g_variant_builder_end (&pluginKeysBuilder);
+
+	    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (mGSettingsBackend,
+								   mContext,
+								   pluginKeys,
+								   ccsGSettingsBackendGetCurrentProfile (
+								       mGSettingsBackend));
 	    ccsGSettingsBackendClearPluginsWithSetKeys (mGSettingsBackend);
 	    ccsGSettingsBackendSetExistingProfiles (mGSettingsBackend, noProfiles);
 	    ccsGSettingsBackendSetCurrentProfile (mGSettingsBackend, "Default");
 
 	    ccsFreeDynamicBackend (mBackend);
+
+	    g_variant_unref (pluginKeys);
 	}
 
 	void AddProfile (const std::string &profile)
@@ -315,52 +356,47 @@ class CCSGSettingsBackendEnv :
 	Bool ReadBoolAtKey (const std::string &plugin,
 			    const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeBool);
-	    return readBoolFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeBool));
+	    return readBoolFromVariant (variant.get ());
 	}
 
 	int ReadIntegerAtKey (const std::string &plugin,
 					const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeInt);
-	    return readIntFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeInt));
+	    return readIntFromVariant (variant.get ());
 	}
 
 	float ReadFloatAtKey (const std::string &plugin,
 				      const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeFloat);
-	    return readFloatFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeFloat));
+	    return readFloatFromVariant (variant.get ());
 	}
 
 	const char * ReadStringAtKey (const std::string &plugin,
 				      const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeString);
-	    return readStringFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeString));
+	    return readStringFromVariant (variant.get ());
 	}
 
 	CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
 				       const std::string &key)
 	{
 	    Bool success = FALSE;
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeColor);
-	    CCSSettingColorValue value = readColorFromVariant (variant, &success);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeColor));
+	    CCSSettingColorValue value = readColorFromVariant (variant.get (), &success);
 	    EXPECT_TRUE (success);
 	    return value;
 	}
@@ -369,11 +405,10 @@ class CCSGSettingsBackendEnv :
 				       const std::string &key)
 	{
 	    Bool success = FALSE;
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeKey);
-	    CCSSettingKeyValue value = readKeyFromVariant (variant, &success);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeKey));
+	    CCSSettingKeyValue value = readKeyFromVariant (variant.get (), &success);
 	    EXPECT_TRUE (success);
 	    return value;
 	}
@@ -382,11 +417,10 @@ class CCSGSettingsBackendEnv :
 				       const std::string &key)
 	{
 	    Bool success = FALSE;
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeButton);
-	    CCSSettingButtonValue value = readButtonFromVariant (variant, &success);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeButton));
+	    CCSSettingButtonValue value = readButtonFromVariant (variant.get (), &success);
 	    EXPECT_TRUE (success);
 	    return value;
 	}
@@ -394,42 +428,38 @@ class CCSGSettingsBackendEnv :
 	unsigned int ReadEdgeAtKey (const std::string &plugin,
 				       const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeEdge);
-	    return readEdgeFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeEdge));
+	    return readEdgeFromVariant (variant.get ());
 	}
 
 	const char * ReadMatchAtKey (const std::string &plugin,
 				     const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeMatch);
-	    return readStringFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeMatch));
+	    return readStringFromVariant (variant.get ());
 	}
 
 	Bool ReadBellAtKey (const std::string &plugin,
 				       const std::string &key)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeBell);
-	    return readBoolFromVariant (variant);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeBell));
+	    return readBoolFromVariant (variant.get ());
 	}
 
 	CCSSettingValueList ReadListAtKey (const std::string &plugin,
 					   const std::string &key,
 					   CCSSetting        *setting)
 	{
-	    GVariant *variant = getVariantAtKey (mSettings,
-						 CharacterWrapper (translateKeyForGSettings (key.c_str ())),
-						 CharacterWrapper (makeCompizPluginPath (profileName.c_str (), plugin.c_str ())),
-						 TypeList);
-	    return readListValue (variant, setting, &ccsDefaultObjectAllocator);
+	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+							      key,
+							      TypeList));
+	    return readListValue (variant.get (), setting, &ccsDefaultObjectAllocator);
 	}
 
 	void PreUpdate (CCSContextGMock *gmockContext,
@@ -471,6 +501,28 @@ class CCSGSettingsBackendEnv :
 	}
 
     private:
+
+	GVariantShared
+	ReadVariantAtKeyToShared (const std::string   &plugin,
+				  const std::string   &key,
+				  CCSSettingType	  type)
+	{
+	    CharacterWrapper translatedKey (translateKeyForGSettings (key.c_str ()));
+	    CharacterWrapper pluginPath (makeCompizPluginPath (profileName.c_str (),
+							       plugin.c_str ()));
+
+	    GVariant *rawVariant = getVariantAtKey (mSettings,
+						    translatedKey,
+						    pluginPath,
+						    type);
+
+	    GVariantShared shared (AutoDestroyHelper <GVariant> (rawVariant,
+								 g_variant_unref));
+
+
+
+	    return shared;
+	}
 
 	CCSGSettingsWrapper  *mSettings;
 	CCSContext *mContext;
