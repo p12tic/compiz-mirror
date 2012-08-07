@@ -65,6 +65,29 @@ COMPIZCONFIG_BEGIN_DECLS
 	void ccs##type##Ref (dtype *);  \
 	void ccs##type##Unref (dtype *);
 
+#define CCSREF_OBJ(type,dtype) \
+    void ccs##type##Ref (dtype *d) \
+    { \
+	ccsObjectRef (d); \
+    } \
+    \
+    void ccs##type##Unref (dtype *d) \
+    { \
+	ccsObjectUnref (d, ccsFree##type); \
+    } \
+
+#define CCSREF(type,dtype) \
+	void ccs##type##Ref (dtype *d)  \
+	{ \
+	    d->refCount++; \
+	} \
+	void ccs##type##Unref (dtype *d) \
+	{ \
+	    d->refCount--; \
+	    if (d->refCount == 0) \
+		ccsFree##type (d); \
+	} \
+
 COMPIZCONFIG_END_DECLS
 
 #endif
