@@ -47,6 +47,24 @@ COMPIZCONFIG_BEGIN_DECLS
 #define FALSE 0
 #endif
 
+/**
+ * reference counting
+ *
+ * ccsSettingRef
+ * References the settings object so it can be kept in a list and
+ * unreferenced later with freeObj (mixed with objects that need
+ * to be freed and need not be freed)
+ *
+ * ccsSettingUnref
+ * Unreferences the settings object, when the reference count reaches
+ * zero, the object is freed
+ *
+ */
+
+#define CCSREF_HDR(type,dtype) \
+	void ccs##type##Ref (dtype *);  \
+	void ccs##type##Unref (dtype *);
+
 COMPIZCONFIG_END_DECLS
 
 #endif
