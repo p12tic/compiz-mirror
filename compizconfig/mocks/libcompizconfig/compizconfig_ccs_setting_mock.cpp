@@ -5,6 +5,8 @@
 
 #include "compizconfig_ccs_setting_mock.h"
 
+using ::testing::NiceMock;
+
 CCSSettingInterface CCSSettingGMockInterface =
 {
     CCSSettingGMock::ccsSettingGetName,
@@ -50,8 +52,8 @@ CCSSettingInterface CCSSettingGMockInterface =
     CCSSettingGMock::ccsSettingFree
 };
 
-CCSSetting *
-ccsMockSettingNew ()
+static CCSSetting *
+allocateSettingObjectWithMockInterface ()
 {
     CCSSetting *setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
 
@@ -60,11 +62,37 @@ ccsMockSettingNew ()
 
     ccsObjectInit (setting, &ccsDefaultObjectAllocator);
 
-    CCSSettingGMock *mock = new CCSSettingGMock ();
-    ccsObjectSetPrivate (setting, (CCSPrivate *) mock);
     ccsObjectAddInterface (setting, (CCSInterface *) &CCSSettingGMockInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
 
     ccsSettingRef (setting);
+
+    return setting;
+}
+
+CCSSetting *
+ccsMockSettingNew ()
+{
+    CCSSetting *setting = allocateSettingObjectWithMockInterface ();
+
+    if (!setting)
+	return NULL;
+
+    CCSSettingGMock *mock = new CCSSettingGMock (setting);
+    ccsObjectSetPrivate (setting, (CCSPrivate *) mock);
+
+    return setting;
+}
+
+CCSSetting *
+ccsNiceMockSettingNew ()
+{
+    CCSSetting *setting = allocateSettingObjectWithMockInterface ();
+
+    if (!setting)
+	return NULL;
+
+    NiceMock <CCSSettingGMock> *mock = new NiceMock <CCSSettingGMock> (setting);
+    ccsObjectSetPrivate (setting, (CCSPrivate *) mock);
 
     return setting;
 }
