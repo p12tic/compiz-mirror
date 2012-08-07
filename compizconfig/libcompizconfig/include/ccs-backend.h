@@ -22,8 +22,12 @@
 #ifndef CCS_BACKEND_H
 #define CCS_BACKEND_H
 
-#include <ccs.h>
+#include <ccs-defs.h>
+#include <ccs-list.h>
+#include <ccs-string.h>
 
+typedef struct _CCSSetting	  CCSSetting;
+typedef struct _CCSContext	  CCSContext;
 typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendVTable  CCSBackendVTable;
 
