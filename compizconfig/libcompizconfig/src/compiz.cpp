@@ -343,12 +343,13 @@ initListValuePB (CCSSettingValue * v,
 		 CCSSettingInfo * i,
 		 const OptionMetadata & option)
 {
-    int num, j;
+    int num;
 
     num = option.default_value_size ();
 
     if (num)
     {
+	int j;
 	for (j = 0; j < num; j++)
 	{
 	    CCSSettingValue *val;
@@ -409,7 +410,6 @@ initListValuePB (CCSSettingValue * v,
 static void
 initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    int num, j;
     i->forInt.min = std::numeric_limits <short>::min ();
     i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
@@ -422,7 +422,7 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 
     if (!basicMetadata)
     {
-	num = option.int_desc_size ();
+	int j, num = option.int_desc_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::IntDescription & intDescMetadata =
@@ -468,7 +468,6 @@ initFloatInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 static void
 initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    int num, j;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
     i->forString.extensible = FALSE;
@@ -481,7 +480,7 @@ initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 	if (option.has_sort_start ())
 	    i->forString.sortStartsAt = option.sort_start ();
 
-	num = option.str_restriction_size ();
+	int j, num = option.str_restriction_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::StringRestriction &
@@ -746,14 +745,12 @@ static void
 initOptionsFromPB (CCSPlugin * plugin,
 		   const PluginMetadata & pluginPB)
 {
-    int numOpt, i;
-
     if (pluginPB.has_screen ())
     {
 	const ScreenMetadata &screenPB = pluginPB.screen ();
 
 	// Screen options
-	numOpt = screenPB.option_size ();
+	int i, numOpt = screenPB.option_size ();
 	for (i = 0; i < numOpt; i++)
 	    addOptionFromPB (plugin,
 			     screenPB.group_desc (),
@@ -768,7 +765,7 @@ addStringsFromPB (CCSStringList * list,
 {
     StringList::const_iterator it;
 
-    for (it = strings.begin (); it != strings.end (); it++)
+    for (it = strings.begin (); it != strings.end (); ++it)
     {
 	const char *value = (*it).c_str ();
 
@@ -1551,11 +1548,12 @@ initListValue (CCSSettingValue * v,
 	       void * optionPBv)
 {
     xmlNode **nodes;
-    int num, j;
+    int num;
 
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
+	int j;
 	for (j = 0; j < num; j++)
 	{
 	    void *valuePBv = NULL;
@@ -1616,9 +1614,8 @@ static void
 initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
-    char *name;
     char *value;
-    int num, j;
+    int num;
     i->forInt.min = std::numeric_limits <short>::min ();
     i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
@@ -1652,6 +1649,8 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "desc", &num);
 	if (num)
 	{
+	    char *name;
+	    int j;
 	    for (j = 0; j < num; j++)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
@@ -1751,9 +1750,7 @@ static void
 initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
-    char *name;
-    char *value;
-    int num, j;
+    int num;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
     i->forString.extensible = FALSE;
@@ -1772,6 +1769,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "sort", &num);
 	if (num)
 	{
+	    char *value;
 	    int val = 0; /* Start sorting at 0 unless otherwise specified. */
 
 	    value = getStringFromXPath (node->doc, nodes[0], "@start");
@@ -1794,6 +1792,8 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
+	    int j;
+	    char *name, *value;
 	    for (j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
@@ -2269,7 +2269,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 {
     xmlNode **nodes;
     xmlNode **optNodes;
-    int num, i;
+    int num;
     void *groupListPBv = NULL;
     void *subgroupListPBv = NULL;
 
@@ -2294,6 +2294,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
+	int i;
 	for (i = 0; i < num; i++)
 	{
 	    void *optionPBv = NULL;
@@ -2326,11 +2327,12 @@ addStringsFromPath (CCSStringList * list,
 		    void * stringListPBv)
 {
     xmlNode **nodes;
-    int num, i;
+    int num;
     nodes = getNodesFromXPath (node->doc, node, path, &num);
 
     if (num)
     {
+	int i;
 	for (i = 0; i < num; i++)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
