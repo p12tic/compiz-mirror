@@ -656,7 +656,7 @@ PrivateGLScreen::handleEvent (XEvent *event)
 		    GLWindow::get (w)->priv->icons.clear ();
 	    }
 	    break;
-	break;
+
 	default:
 	    if (event->type == cScreen->damageEvent () + XDamageNotify)
 	    {
