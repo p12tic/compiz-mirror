@@ -1,7 +1,7 @@
 <compiz>
     <plugin name="commands" useBcop="true">
 	<_short>Commands</_short>
-	<_long>Assigns bundings to arbitrary commands</_long>
+	<_long>Assigns bindings to arbitrary commands</_long>
 	<category>General</category>
 	<deps>
 	    <relation type="after">

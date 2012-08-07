@@ -146,7 +146,7 @@ protected:
     void Run ()
     {
 	for (std::deque <CompTimer *>::iterator it = timers.begin ();
-	     it != timers.end (); it++)
+	     it != timers.end (); ++it)
 	    (*it)->start ();
 
 	/* TimeoutHandler::timers should have the timer that

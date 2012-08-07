@@ -60,8 +60,8 @@ MousepollScreen::updatePosition ()
         for (it = pollers.begin (); it != pollers.end (); )
         {
             MousePoller *poller = *it;
- 
-            it++;
+
+            ++it;
             poller->mPoint = pos;
             poller->mCallback (pos);
         }
