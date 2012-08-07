@@ -963,19 +963,6 @@ ccsFreeString (CCSString *str)
     free (str);
 }
 
-#define CCSREF(type,dtype) \
-	void ccs##type##Ref (dtype *d)  \
-	{ \
-	    d->refCount++; \
-	} \
-	void ccs##type##Unref (dtype *d) \
-	{ \
-	    d->refCount--; \
-	    if (d->refCount == 0) \
-		ccsFree##type (d); \
-	} \
-
-
 CCSREF (String, CCSString)
 CCSREF (Group, CCSGroup)
 CCSREF (SubGroup, CCSSubGroup)
@@ -985,17 +972,6 @@ CCSREF (BackendInfo, CCSBackendInfo)
 CCSREF (IntDesc, CCSIntDesc)
 CCSREF (StrRestriction, CCSStrRestriction)
 CCSREF (StrExtension, CCSStrExtension)
-
-#define CCSREF_OBJ(type,dtype) \
-    void ccs##type##Ref (dtype *d) \
-    { \
-	ccsObjectRef (d); \
-    } \
-    \
-    void ccs##type##Unref (dtype *d) \
-    { \
-	ccsObjectUnref (d, ccsFree##type); \
-    } \
 
 CCSREF_OBJ (Plugin, CCSPlugin)
 CCSREF_OBJ (Setting, CCSSetting)
