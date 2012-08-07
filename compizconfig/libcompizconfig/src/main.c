@@ -2709,7 +2709,7 @@ ccsGetBackendDefault (CCSContext * context)
     if (!cPrivate->backend)
 	return NULL;
 
-    return cPrivate->backend->vTable->name;
+    return ccsBackendGetInfo (cPrivate->backend)->name;
 }
 
 const char *
