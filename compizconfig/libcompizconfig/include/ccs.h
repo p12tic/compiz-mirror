@@ -831,7 +831,7 @@ void ccsSetPluginListAutoSort (CCSContext *context,
 			       Bool       value);
 
 /* Retrieve current profile of the context. */
-const char *ccsGetProfile (CCSContext *context);
+const char * ccsGetProfile (CCSContext *context);
 
 /* Retrieves current DE integration status for a context */
 Bool ccsGetIntegrationEnabled (CCSContext *context);
