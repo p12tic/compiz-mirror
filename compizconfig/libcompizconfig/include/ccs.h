@@ -841,7 +841,7 @@ CCSStringList ccsGetSortedPluginStringList (CCSContext *context);
 Bool ccsSetBackend (CCSContext *context,
 		    char       *name);
 /* Retrieves the name of the backend active for the context. */
-char * ccsGetBackend (CCSContext *context);
+const char * ccsGetBackend (CCSContext *context);
 
 /* Enable/disable DE integration for a context. */
 void ccsSetIntegrationEnabled (CCSContext *context,
@@ -856,7 +856,7 @@ void ccsSetPluginListAutoSort (CCSContext *context,
 			       Bool       value);
 
 /* Retrieve current profile of the context. */
-char * ccsGetProfile (CCSContext *context);
+const char * ccsGetProfile (CCSContext *context);
 
 /* Retrieves current DE integration status for a context */
 Bool ccsGetIntegrationEnabled (CCSContext *context);
