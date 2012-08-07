@@ -178,4 +178,6 @@ CCSBackendInterface* getBackendInfo (void);
 
 COMPIZCONFIG_END_DECLS
 
+COMPIZCONFIG_END_DECLS
+
 #endif
