@@ -19,34 +19,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _CCS_DEFS_H
-#define _CCS_DEFS_H
+#ifndef _CCS_STRING_H
+#define _CCS_STRING_H
 
-#include <stddef.h>  /* for NULL */
-
-#ifdef  __cplusplus
-# define COMPIZCONFIG_BEGIN_DECLS  extern "C" {
-# define COMPIZCONFIG_END_DECLS    }
-#else
-# define COMPIZCONFIG_BEGIN_DECLS
-# define COMPIZCONFIG_END_DECLS
-#endif
-
+/* Doesn't seem to make sense to have this header
+ * dependency, but we can only declare a typed list
+ * once */
+#include <ccs-list.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
-#ifndef Bool
-#define Bool int
-#endif
+typedef struct _CCSString	  CCSString;
 
-#ifndef TRUE
-#define TRUE ~0
-#endif
+struct _CCSString
+{
+    char 	 *value;
+    unsigned int refCount;
+};
 
-#ifndef FALSE
-#define FALSE 0
-#endif
+void ccsFreeString (CCSString *str);
+
+CCSLIST_HDR (String, CCSString);
 
 COMPIZCONFIG_END_DECLS
 
 #endif
+
