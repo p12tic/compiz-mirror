@@ -211,7 +211,7 @@ dbusHandleRootIntrospectMessage (DBusConnection *connection,
     CompPlugin::List::const_iterator it = plugins.begin ();
     if (it != plugins.end ())
     {
-	for (; it != plugins.end (); it++)
+	for (; it != plugins.end (); ++it)
 	{
 	    CompPlugin::VTable *v = it->vTable;
 	    if (v)
@@ -1525,7 +1525,7 @@ DbusScreen::handleMessage (DBusConnection *connection,
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     /* root messages */
-    if (path.size () == 0)
+    if (path.empty ())
     {
 #if GET_PLUGIN_METADATA_ENABLED
 	if (dbus_message_is_method_call (message,

@@ -1150,7 +1150,6 @@ KWD::Window::updateProperty (long         *data,
     unsigned int    frameType = 0xffffff;
     unsigned int    frameState = 0;
     unsigned int    frameActions = 0;
-    int		    nQuad = 0;
     int             left, right, top, bottom, width, height;
     unsigned int    saveState;
     bool            allocated = false;
@@ -1204,6 +1203,7 @@ KWD::Window::updateProperty (long         *data,
 
     if (mType != Normal2D)
     {
+      int nQuad = 0;
       if (!data)
       {
           allocated = true;

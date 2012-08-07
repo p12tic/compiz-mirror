@@ -236,8 +236,8 @@ matchOpsEqual (MatchOp::List &list1,
 		break;
 	}
 
-	it1++;
-	it2++;
+	++it1;
+	++it2;
     }
 
     return true;
@@ -391,7 +391,7 @@ matchAddFromString (MatchOp::List &list,
 	}
     }
 
-    if (list.size ())
+    if (!list.empty ())
 	list.front ()->flags &= ~MATCH_OP_AND_MASK;
 
 }
