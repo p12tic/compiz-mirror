@@ -1,3 +1,6 @@
+#ifndef _COMPIZCONFIG_CCS_BACKEND_MOCK_H
+#define _COMPIZCONFIG_CCS_BACKEND_MOCK_H
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -34,6 +37,13 @@ class CCSBackendGMock :
 {
     public:
 
+	CCSBackendGMock (CCSBackend *b) :
+	    mBackend (b)
+	{
+	}
+
+	CCSBackend * backend () { return mBackend; }
+
 	/* Mock implementations */
 	MOCK_METHOD0 (getInfo, const CCSBackendInfo * ());
 	MOCK_METHOD1 (executeEvents, void (unsigned int));
@@ -50,6 +60,10 @@ class CCSBackendGMock :
 	MOCK_METHOD1 (getSettingIsReadOnly, Bool (CCSSetting *));
 	MOCK_METHOD1 (getExistingProfiles, CCSStringList (CCSContext *));
 	MOCK_METHOD2 (deleteProfile, Bool (CCSContext *, char *name));
+
+    private:
+
+	CCSBackend *mBackend;
 
     public:
 
@@ -132,3 +146,5 @@ class CCSBackendGMock :
 };
 
 extern CCSBackendInterface CCSBackendGMockInterface;
+
+#endif
