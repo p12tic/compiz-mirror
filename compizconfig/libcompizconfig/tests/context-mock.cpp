@@ -54,7 +54,7 @@ ccsMockContextNew ()
 
     ccsObjectInit (context, &ccsDefaultObjectAllocator);
 
-    CCSContextGMock *mock = new CCSContextGMock ();
+    CCSContextGMock *mock = new CCSContextGMock (context);
     ccsObjectSetPrivate (context, (CCSPrivate *) mock);
     ccsObjectAddInterface (context, (CCSInterface *) &CCSContextGMockInterface, GET_INTERFACE_TYPE (CCSContextInterface));
 

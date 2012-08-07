@@ -39,7 +39,7 @@ ccsMockPluginNew ()
 
     ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
 
-    CCSPluginGMock *mock = new CCSPluginGMock ();
+    CCSPluginGMock *mock = new CCSPluginGMock (plugin);
     ccsObjectSetPrivate (plugin, (CCSPrivate *) mock);
     ccsObjectAddInterface (plugin, (CCSInterface *) &CCSPluginGMockInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
