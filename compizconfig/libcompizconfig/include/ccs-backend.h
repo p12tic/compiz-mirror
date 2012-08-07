@@ -29,15 +29,12 @@
 COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSSetting	  CCSSetting;
+typedef struct _CCSPlugin         CCSPlugin;
 typedef struct _CCSContext	  CCSContext;
 typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendInfo    CCSBackendInfo;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
-
-typedef struct _CCSContext CCSContext;
-typedef struct _CCSPlugin  CCSPlugin;
-typedef struct _CCSSetting CCSSetting;
 
 struct _CCSBackend
 {
