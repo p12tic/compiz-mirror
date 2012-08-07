@@ -160,6 +160,7 @@ public:
 			    const CompRegion            &clip,
 			    unsigned int                maxGridWidth,
 			    unsigned int                maxGridHeight);
+    virtual void drawGeometry ();
 
     virtual bool paintWindowUsed () { return false; }
     virtual bool paintWindow (GLWindow			*gWindow,
@@ -178,7 +179,6 @@ public:
     virtual ExtensionPluginInfo *getExtensionPluginInfo ();
 
     void drawTexture (GLTexture          *texture,
-                      const GLMatrix            &transform,
                       const GLWindowPaintAttrib &attrib,
 		      unsigned int       mask);
 

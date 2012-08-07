@@ -19,10 +19,6 @@
  * Hexagon tessellator added by : Mike Slegeir
  * E-mail                       : mikeslegeir@mail.utexas.edu>
  *
- * Ported to GLES by : Travis Watkins
- *                     (C) 2011 Linaro Limited
- * E-mail            : travis.watkins@linaro.org
- *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -39,32 +35,6 @@
  */
 
 #include "private.h"
-
-// use the old structure then copy the data we want out of it
-class GridGeometry
-{
-    public:
-
-	GridGeometry () :
-	    vertices (NULL),
-	    vertexSize (0),
-	    vertexStride (0),
-	    vCount (0),
-	    texUnits (0),
-	    texCoordSize (0)
-	{
-	}
-
-    public:
-
-	GLfloat  *vertices;
-	int      vertexSize;
-	int      vertexStride;
-	int      vCount;
-	int      texUnits;
-	int      texCoordSize;
-};
-
 
 // =====================  Effect: Dodge  =========================
 
@@ -247,9 +217,10 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		       unsigned int                maxGridWidth,
 		       unsigned int                maxGridHeight)
 {
-    GridGeometry geometry;
+#if 0 // Grid animations not ported yet
     unsigned int nMatrix = matrix.size ();
-    int nVertices;
+    int nVertices, nIndices;
+    GLushort *i;
     GLfloat *v;
     int x1, y1, x2, y2;
     float winContentsY, winContentsHeight;
@@ -263,6 +234,8 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
     if (region.isEmpty ()) // nothing to do
 	return;
+
+    GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
 
     for (unsigned int it = 0; it < nMatrix; it++)
     {
@@ -291,14 +264,21 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
     winContentsHeight = oheight - outExtents.top - outExtents.bottom;
 
     geometry.texUnits = (int)nMatrix;
-    geometry.vertices = NULL;
-    geometry.vCount = 0;
-	geometry.texCoordSize = 4;
-    geometry.vertexStride = 3 + geometry.texUnits * geometry.texCoordSize;
 
+    if (geometry.vCount == 0)
+    {
+	// reset
+	geometry.indexCount = 0;
+	geometry.texCoordSize = 4;
+    }
+    geometry.vertexStride = 3 + geometry.texUnits * geometry.texCoordSize;
     vSize = geometry.vertexStride;
+
     nVertices = geometry.vCount;
+    nIndices = geometry.indexCount;
+
     v = geometry.vertices + (nVertices * vSize);
+    i = geometry.indices + nIndices;
 
     // For each clip passed to this function
     foreach (const CompRect &pClip, region.rects ())
@@ -336,22 +316,38 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	nVertX = ceil ((x2 - x1) / gridW) + 2;
 	nVertY = (gridH ? ceil ((y2 - y1) / gridH) : 0) + 2;
 
+	// Allocate 4 indices for each quad
+	int newIndexSize = nIndices + ((nVertX - 1) * (nVertY - 1) * 4);
+
+	if (newIndexSize > geometry.indexSize)
+	{
+	    if (!geometry.moreIndices (newIndexSize))
+		return;
+
+	    i = geometry.indices + nIndices;
+	}
+	// Assign quad vertices to indices
+	for (int jy = 0; jy < nVertY - 1; jy++)
+	{
+	    for (int jx = 0; jx < nVertX - 1; jx++)
+	    {
+		*i++ = nVertices + nVertX * (2 * jy + 1) + jx;
+		*i++ = nVertices + nVertX * (2 * jy + 1) + jx + 1;
+		*i++ = nVertices + nVertX * 2 * jy + jx + 1;
+		*i++ = nVertices + nVertX * 2 * jy + jx;
+
+		nIndices += 4;
+	    }
+	}
+
 	// Allocate vertices
 	int newVertexSize =
 	    (nVertices + nVertX * (2 * nVertY - 2)) * vSize;
-	if (newVertexSize > geometry.vertexSize || geometry.vertices == NULL)
+	if (newVertexSize > geometry.vertexSize)
 	{
-	    if (geometry.vertices == NULL)
-		geometry.vertices = (GLfloat *)
-		                      malloc (sizeof (GLfloat) * newVertexSize);
-	    else
-		geometry.vertices = (GLfloat *)
-		  realloc (geometry.vertices, sizeof (GLfloat) * newVertexSize);
-
-	    if (!geometry.vertices)
+	    if (!geometry.moreVertices (newVertexSize))
 		return;
 
-	    geometry.vertexSize = newVertexSize;
 	    v = geometry.vertices + (nVertices * vSize);
 	}
 
@@ -593,8 +589,55 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    }
 	}
     }
-
     geometry.vCount = nVertices;
+    geometry.indexCount = nIndices;
+#endif
+}
+
+void
+GridAnim::drawGeometry ()
+{
+#if 0 // Grid animations not ported yet
+    GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
+
+    int     texUnit = geometry.texUnits;
+    int     currentTexUnit = 0;
+    int     stride = geometry.vertexStride;
+    GLfloat *vertices = geometry.vertices + (stride - 3);
+
+    stride *= (int) sizeof (GLfloat);
+
+    glVertexPointer (3, GL_FLOAT, stride, vertices);
+
+    while (texUnit--)
+    {
+	if (texUnit != currentTexUnit)
+	{
+	    (*GL::clientActiveTexture) ((GLenum)(GL_TEXTURE0_ARB + texUnit));
+	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	    currentTexUnit = texUnit;
+	}
+	vertices -= geometry.texCoordSize;
+	glTexCoordPointer (geometry.texCoordSize,
+			   GL_FLOAT, stride, vertices);
+    }
+
+    glDrawElements (GL_QUADS, geometry.indexCount,
+		    GL_UNSIGNED_SHORT, geometry.indices);
+
+    // disable all texture coordinate arrays except 0
+    texUnit = geometry.texUnits;
+    if (texUnit > 1)
+    {
+	while (--texUnit)
+	{
+	    (*GL::clientActiveTexture) ((GLenum)(GL_TEXTURE0_ARB + texUnit));
+	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+	}
+
+	(*GL::clientActiveTexture) (GL_TEXTURE0_ARB);
+    }
+#endif
 }
 
 GridTransformAnim::GridTransformAnim (CompWindow *w,

@@ -409,6 +409,7 @@ private:
 			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
     void glDrawTexture (GLTexture *texture, const GLMatrix &,
                         const GLWindowPaintAttrib &, unsigned int);
+    //void glDrawGeometry ();
 };
 
 class RollUpAnim :

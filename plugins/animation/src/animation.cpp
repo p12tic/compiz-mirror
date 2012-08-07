@@ -1479,6 +1479,7 @@ PrivateAnimWindow::enablePainting (bool enabling)
 {
     gWindow->glPaintSetEnabled (this, enabling);
     gWindow->glAddGeometrySetEnabled (this, enabling);
+    //gWindow->glDrawGeometrySetEnabled (this, enabling);
     gWindow->glDrawTextureSetEnabled (this, enabling);
 }
 
@@ -1552,7 +1553,7 @@ PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 void
 PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
-                                  const GLMatrix            &transform,
+                                  const GLMatrix     &transform,
                                   const GLWindowPaintAttrib &attrib,
 				  unsigned int       mask)
 {
@@ -1564,13 +1565,36 @@ PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
     gWindow->glDrawTexture (texture, transform, attrib, mask);
 }
 
+#if 0 // Not ported yet
+void
+PrivateAnimWindow::glDrawGeometry ()
+{
+    if (mCurAnimation)
+    {
+	if (mCurAnimation->initialized ())
+	    mCurAnimation->drawGeometry ();
+    }
+    else
+    {
+	gWindow->glDrawGeometry ();
+    }
+}
+#endif
+
 void
 Animation::drawTexture (GLTexture          *texture,
-                        const GLMatrix            &transform,
                         const GLWindowPaintAttrib &attrib,
 			unsigned int       mask)
 {
     mCurPaintAttrib = attrib;
+}
+
+void
+Animation::drawGeometry ()
+{
+#if 0 // Not ported yet
+    mAWindow->priv->gWindow->glDrawGeometry ();
+#endif
 }
 
 bool
@@ -1639,7 +1663,16 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     if (mCurAnimation->postPaintWindowUsed ())
     {
+#if 0 // Not ported yet
+	// Transform to make post-paint coincide with the window
+	glPushMatrix ();
+	glLoadMatrixf (wTransform.getMatrix ());
+#endif
 	mCurAnimation->postPaintWindow ();
+
+#if 0 // Not ported yet
+	glPopMatrix ();
+#endif
     }
 
     return status;

@@ -101,5 +101,6 @@ public:
 		      const CompRegion            &clip,
 		      unsigned int                maxGridWidth,
 		      unsigned int                maxGridHeight);
+    void drawGeometry ();
 };
 #endif
