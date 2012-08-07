@@ -120,7 +120,7 @@ strlwc (char * s)
     memset (l, 0, ASCIILINESZ + 1);
     i = 0;
 
-    while (s[i] && i < ASCIILINESZ)
+    while (i < ASCIILINESZ && s[i])
     {
 	l[i] = (char) tolower ((int) s[i]);
 	i++;
