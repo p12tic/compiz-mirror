@@ -809,7 +809,7 @@ AnimWindow::expandBBWithPoint2DTransform (GLVector &coords,
 
 static bool
 project (float objx, float objy, float objz, 
-         GLMatrix modelview, GLMatrix projection,
+         const float modelview[16], const float projection[16],
          const GLint viewport[4],
          float *winx, float *winy, float *winz)
 {
@@ -874,15 +874,17 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 	 output.width (),
 	 output.height ()};
 
+    const float *projection =
+        GLScreen::get (::screen)->projectionMatrix ()->getMatrix ();
+
     if (points) // use points
     {
 	for (; nPoints; nPoints--, points += 3)
 	{
 	    if (!project (points[0], points[1], points[2],
-	                  transform,
-	                  *GLScreen::get (::screen)->projectionMatrix (),
+	                  transform.getMatrix (), projection,
 	                  viewport,
-			     &x, &y, &z))
+	                  &x, &y, &z))
 		return false;
 
 	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
@@ -894,12 +896,11 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 	for (; nPoints; nPoints--, object++)
 	{
 	    if (!project (object->position ().x (),
-			     object->position ().y (),
-			     object->position ().z (),
-	                  transform,
-	                  *GLScreen::get (::screen)->projectionMatrix (),
+	                  object->position ().y (),
+	                  object->position ().z (),
+	                  transform.getMatrix (), projection,
 	                  viewport,
-			     &x, &y, &z))
+	                  &x, &y, &z))
 		return false;
 
 	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
