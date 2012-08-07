@@ -1,3 +1,6 @@
+#ifndef _COMPIZCONFIG_CCS_SETTING_MOCK
+#define _COMPIZCONFIG_CCS_SETTING_MOCK
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -364,3 +367,5 @@ class CCSSettingGMock :
 };
 
 extern CCSSettingInterface CCSSettingGMockInterface;
+
+#endif
