@@ -53,6 +53,13 @@ class CCSContextGMock :
 {
     public:
 
+	CCSContextGMock (CCSContext *c) :
+	    mContext (c)
+	{
+	}
+
+	CCSContext * context () { return mContext; }
+
 	MOCK_METHOD0 (getPlugins, CCSPluginList ());
 	MOCK_METHOD0 (getCategories, CCSPluginCategory * ());
 	MOCK_METHOD0 (getChangedSettings, CCSSettingList ());
@@ -87,6 +94,10 @@ class CCSContextGMock :
 	MOCK_METHOD0 (getExistingProfiles, CCSStringList ());
 	MOCK_METHOD0 (checkForSettingsUpgrade, Bool ());
 	MOCK_METHOD0 (loadPlugins, void ());
+
+    private:
+
+	CCSContext *mContext;
 
     public:
 
