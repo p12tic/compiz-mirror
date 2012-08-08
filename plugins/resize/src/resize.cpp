@@ -742,134 +742,17 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	BoxRec box;
 	int    wi, he, cwi, che;        /* size of window contents (c prefix for constrained)*/
 	int    wX, wY, wWidth, wHeight; /* rect. for window contents+borders */
-	int    workAreaSnapDistance = 15;
 
 	wi = savedGeometry.width;
 	he = savedGeometry.height;
 
 	if (!mask)
 	{
-	    int        xDist, yDist;
-	    int        minPointerOffsetX, minPointerOffsetY;
-
-	    CompWindow::Geometry server = w->serverGeometry ();
-
-	    xDist = xRoot - (server.x () + (server.width () / 2));
-	    yDist = yRoot - (server.y () + (server.height () / 2));
-
-	    /* decision threshold is 10% of window size */
-	    minPointerOffsetX = MIN (20, server.width () / 10);
-	    minPointerOffsetY = MIN (20, server.height () / 10);
-
-	    /* if we reached the threshold in one direction,
-	       make the threshold in the other direction smaller
-	       so there is a chance that this threshold also can
-	       be reached (by diagonal movement) */
-	    if (abs (xDist) > minPointerOffsetX)
-		minPointerOffsetY /= 2;
-	    else if (abs (yDist) > minPointerOffsetY)
-		minPointerOffsetX /= 2;
-
-	    if (abs (xDist) > minPointerOffsetX)
-	    {
-		if (xDist > 0)
-		    mask |= ResizeRightMask;
-		else
-		    mask |= ResizeLeftMask;
-	    }
-
-	    if (abs (yDist) > minPointerOffsetY)
-	    {
-		if (yDist > 0)
-		    mask |= ResizeDownMask;
-		else
-		    mask |= ResizeUpMask;
-	    }
-
-	    /* if the pointer movement was enough to determine a
-	       direction, warp the pointer to the appropriate edge
-	       and set the right cursor */
-	    if (mask)
-	    {
-		Cursor     cursor;
-		CompAction *action;
-		int        pointerAdjustX = 0;
-		int        pointerAdjustY = 0;
-
-		action = &optionGetInitiateKey ();
-		action->setState (action->state () |
-				  CompAction::StateTermButton);
-
-		if (mask & ResizeRightMask)
-			pointerAdjustX = server.x () + server.width () +
-					 w->border ().right - xRoot;
-		else if (mask & ResizeLeftMask)
-			pointerAdjustX = server.x () - w->border ().left -
-					 xRoot;
-
-		if (mask & ResizeDownMask)
-			pointerAdjustY = server.y () + server.height () +
-					 w->border ().bottom - yRoot;
-		else if (mask & ResizeUpMask)
-			pointerAdjustY = server.y () - w->border ().top - yRoot;
-
-		screen->warpPointer (pointerAdjustX, pointerAdjustY);
-
-		cursor = cursorFromResizeMask (mask);
-		screen->updateGrab (grabIndex, cursor);
-	    }
+	    setUpMask(xRoot, yRoot);
 	}
 	else
 	{
-	    /* only accumulate pointer movement if a mask is
-	       already set as we don't have a use for the
-	       difference information otherwise */
-
-	    if (centered || optionGetResizeFromCenter ())
-	    {
-		pointerDx += (xRoot - lastPointerX) * 2;
-		pointerDy += (yRoot - lastPointerY) * 2;
-	    }
-	    else
-	    {
-		pointerDx += xRoot - lastPointerX;
-		pointerDy += yRoot - lastPointerY;
-	    }
-	    
-	    /* If we hit the edge of the screen while resizing
-	     * the window and the adjacent window edge has not hit
-	     * the edge of the screen, then accumulate pointer motion
-	     * in the opposite direction. (So the apparant x / y
-	     * mixup here is intentional)
-	     */
-
-	    if (isConstrained)
-	    {
-		if (mask == ResizeLeftMask)
-		{
-		    if (xRoot == 0 &&
-			geometry.x - w->border ().left > grabWindowWorkArea->left ())
-			pointerDx += abs (yRoot - lastPointerY) * -1;
-		}
-		else if (mask == ResizeRightMask)
-		{
-		    if (xRoot == screen->width () -1 &&
-			geometry.x + geometry.width + w->border ().right < grabWindowWorkArea->right ())
-			pointerDx += abs (yRoot - lastPointerY);
-		}
-		if (mask == ResizeUpMask)
-		{
-		    if (yRoot == 0 &&
-			geometry.y - w->border ().top > grabWindowWorkArea->top ())
-			pointerDy += abs (xRoot - lastPointerX) * -1;
-		}
-		else if (mask == ResizeDownMask)
-		{
-		    if (yRoot == screen->height () -1 &&
-			geometry.y + geometry.height + w->border ().bottom < grabWindowWorkArea->bottom ())
-			pointerDx += abs (yRoot - lastPointerY);
-		}
-	    }
+	    accumulatePointerMotion(xRoot, yRoot);
 	}
 
 	if (mask & ResizeLeftMask)
@@ -906,291 +789,21 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	    damageRectangle (&box);
 	}
 
-	/* constrain to work area */
 	if (offWorkAreaConstrained)
-	{
-	    if (mask & ResizeUpMask)
-	    {
-		int decorTop = savedGeometry.y + savedGeometry.height -
-		    (che + w->border ().top);
-
-		if (grabWindowWorkArea->y () > decorTop)
-		    che -= grabWindowWorkArea->y () - decorTop;
-	    }
-	    if (mask & ResizeDownMask)
-	    {
-		int decorBottom = savedGeometry.y + che + w->border ().bottom;
-
-		if (decorBottom >
-		    grabWindowWorkArea->y () + grabWindowWorkArea->height ())
-		    che -= decorBottom - (grabWindowWorkArea->y () +
-					  grabWindowWorkArea->height ());
-	    }
-	    if (mask & ResizeLeftMask)
-	    {
-		int decorLeft = savedGeometry.x + savedGeometry.width -
-		    (cwi + w->border ().left);
-
-		if (grabWindowWorkArea->x () > decorLeft)
-		    cwi -= grabWindowWorkArea->x () - decorLeft;
-	    }
-	    if (mask & ResizeRightMask)
-	    {
-		int decorRight = savedGeometry.x + cwi + w->border ().right;
-
-		if (decorRight >
-		    grabWindowWorkArea->x () + grabWindowWorkArea->width ())
-		    cwi -= decorRight - (grabWindowWorkArea->x () +
-				         grabWindowWorkArea->width ());
-	    }
-	}
+	    constrainToWorkArea(che, cwi);
 
 	wi = cwi;
 	he = che;
 
 	/* compute rect. for window + borders */
-	wWidth  = wi + w->border ().left + w->border ().right;
-	wHeight = he + w->border ().top + w->border ().bottom;
+	computeWindowPlusBordersRect(wX, wY, wWidth, wHeight, /*out*/
+	        wi, he); /*in*/
 
-	if (centered || optionGetResizeFromCenter ())
-	{
-	    if (mask & ResizeLeftMask)
-		wX = geometry.x + geometry.width -
-		     (wi + w->border ().left);
-	    else
-		wX = geometry.x - w->border ().left;
-
-	    if (mask & ResizeUpMask)
-		wY = geometry.y + geometry.height -
-		     (he + w->border ().top);
-	    else
-		wY = geometry.y - w->border ().top;
-	}
-	else
-	{
-	    if (mask & ResizeLeftMask)
-		wX = savedGeometry.x + savedGeometry.width -
-		     (wi + w->border ().left);
-	    else
-		wX = savedGeometry.x - w->border ().left;
-
-	    if (mask & ResizeUpMask)
-		wY = savedGeometry.y + savedGeometry.height -
-		     (he + w->border ().top);
-	    else
-		wY = savedGeometry.y - w->border ().top;
-	}
-
-	/* Check if resized edge(s) are near output work-area boundaries */
-	foreach (CompOutput &output, ::screen->outputDevs ())
-	{
-	    const CompRect &workArea = output.workArea ();
-
-	    /* if window and work-area intersect in x axis */
-	    if (wX + wWidth > workArea.x () &&
-		wX < workArea.x2 ())
-	    {
-		if (mask & ResizeLeftMask)
-		{
-		    int dw = workArea.x () - wX;
-
-		    if (0 < dw && dw < workAreaSnapDistance)
-		    {
-			wi     -= dw;
-			wWidth -= dw;
-			wX     += dw;
-		    }
-		}
-		else if (mask & ResizeRightMask)
-		{
-		    int dw = wX + wWidth - workArea.x2 ();
-
-		    if (0 < dw && dw < workAreaSnapDistance)
-		    {
-			wi     -= dw;
-			wWidth -= dw;
-		    }
-		}
-	    }
-
-	    /* if window and work-area intersect in y axis */
-	    if (wY + wHeight > workArea.y () &&
-		wY < workArea.y2 ())
-	    {
-		if (mask & ResizeUpMask)
-		{
-		    int dh = workArea.y () - wY;
-
-		    if (0 < dh && dh < workAreaSnapDistance)
-		    {
-			he      -= dh;
-			wHeight -= dh;
-			wY      += dh;
-		    }
-		}
-		else if (mask & ResizeDownMask)
-		{
-		    int dh = wY + wHeight - workArea.y2 ();
-
-		    if (0 < dh && dh < workAreaSnapDistance)
-		    {
-			he      -= dh;
-			wHeight -= dh;
-		    }
-		}
-	    }
-	}
+	snapWindowToWorkAreaBoundaries(wi, he, wX, wY, wWidth, wHeight);
 
 	if (isConstrained)
-	{
-	    int minHeight = 50;
-
-	    /* rect. for a minimal height window + borders
-	       (used for the constraining in X axis) */
-	    int minimalInputHeight = minHeight +
-				     w->border ().top + w->border ().bottom;
-
-	    /* small hot-spot square (on window's corner or edge) that is to be
-	       constrained to the combined output work-area region */
-	    int x, y;
-	    int width = w->border ().top; /* square size = title bar height */
-	    int height = width;
-	    bool status; /* whether or not hot-spot is in the region */
-
-	    /* compute x & y for constrained hot-spot rect */
-	    if (mask & ResizeLeftMask)
-		x = wX;
-	    else if (mask & ResizeRightMask)
-		x = wX + wWidth - width;
-	    else
-		x = MIN (MAX (xRoot, wX), wX + wWidth - width);
-
-	    if (mask & ResizeUpMask)
-		y = wY;
-	    else if (mask & ResizeDownMask)
-		y = wY + wHeight - height;
-	    else
-		y = MIN (MAX (yRoot, wY), wY + wHeight - height);
-
-	    status = constraintRegion.contains (x, y, width, height);
-
-	    /* only constrain movement if previous position was valid */
-	    if (inRegionStatus)
-	    {
-		bool xStatus = false;
-		int yForXResize = y;
-		int nx = x;
-		int nw = wi;
-		int nh = he;
-		int minWidth  = 50;
-
-		if (mask & (ResizeLeftMask | ResizeRightMask))
-		{
-		    xStatus = status;
-
-		    if (mask & ResizeUpMask)
-			yForXResize = wY + wHeight - minimalInputHeight;
-		    else if (mask & ResizeDownMask)
-			yForXResize = wY + minimalInputHeight - height;
-		    else
-			yForXResize = y;
-
-		    if (!constraintRegion.contains (x, yForXResize,
-						    width, height))
-		    {
-			if (lastGoodHotSpotY >= 0)
-			    yForXResize = lastGoodHotSpotY;
-			else
-			    yForXResize = y;
-		    }
-		}
-		if (mask & ResizeLeftMask)
-		{
-		    while ((nw > minWidth) && !xStatus)
-		    {
-			xStatus = constraintRegion.contains (nx, yForXResize,
-							     width, height);
-			if (!xStatus)
-			{
-			    nw--;
-			    nx++;
-			}
-		    }
-		    if (nw > minWidth)
-		    {
-			x = nx;
-			wi = nw;
-		    }
-		}
-		else if (mask & ResizeRightMask)
-		{
-		    while ((nw > minWidth) && !xStatus)
-		    {
-			xStatus = constraintRegion.contains (nx, yForXResize,
-							     width, height);
-			if (!xStatus)
-			{
-			    nw--;
-			    nx--;
-			}
-		    }
-		    if (nw > minWidth)
-		    {
-			x = nx;
-			wi = nw;
-		    }
-		}
-
-		if (mask & ResizeUpMask)
-		{
-		    while ((nh > minHeight) && !status)
-		    {
-			status = constraintRegion.contains (x, y,
-							    width, height);
-			if (!status)
-			{
-			    nh--;
-			    y++;
-			}
-		    }
-		    if (nh > minHeight)
-			he = nh;
-		}
-		else if (mask & ResizeDownMask)
-		{
-		    while ((nh > minHeight) && !status)
-		    {
-			status = constraintRegion.contains (x, y,
-							    width, height);
-			if (!status)
-			{
-			    nh--;
-			    y--;
-			}
-		    }
-		    if (nh > minHeight)
-			he = nh;
-		}
-
-		if (((mask & (ResizeLeftMask | ResizeRightMask)) && xStatus) ||
-		    ((mask & (ResizeUpMask | ResizeDownMask)) && status))
-		{
-		    /* hot-spot inside work-area region, store good values */
-		    lastGoodHotSpotY = y;
-		    lastGoodSize     = CompSize (wi, he);
-		}
-		else
-		{
-		    /* failed to find a good hot-spot position, restore size */
-		    wi = lastGoodSize.width ();
-		    he = lastGoodSize.height ();
-		}
-	    }
-	    else
-	    {
-		inRegionStatus = status;
-	    }
-	}
+	    limitMovementToConstraintRegion(wi, he, /*in/out*/
+	        xRoot, yRoot, wX, wY, wWidth, wHeight); /*in*/
 
 	if (mode != ResizeOptions::ModeNormal)
 	{
@@ -1202,23 +815,7 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	    damageRectangle (&box);
 	}
 
-	if (centered || optionGetResizeFromCenter ())
-	{
-	    if ((mask & ResizeLeftMask) || (mask & ResizeRightMask))
-		geometry.x -= ((wi - geometry.width) / 2);
-	    if ((mask & ResizeUpMask) || (mask & ResizeDownMask))
-		geometry.y -= ((he - geometry.height) / 2);
-	}
-	else
-	{
-	    if (mask & ResizeLeftMask)
-		geometry.x -= wi - geometry.width;
-	    if (mask & ResizeUpMask)
-		geometry.y -= he - geometry.height;
-	}
-
-	geometry.width  = wi;
-	geometry.height = he;
+	computeGeometry(wi, he);
 
 	if (mode != ResizeOptions::ModeNormal)
 	{
@@ -1739,6 +1336,452 @@ ResizeScreen::optionChanged (CompOption		    *option,
 
     if (mask)
 	resizeMaskValueToKeyMask (valueMask, mask);
+}
+
+void
+ResizeScreen::snapWindowToWorkAreaBoundaries(int &wi, int &he,
+		int &wX, int &wY, int &wWidth, int &wHeight)
+{
+    int workAreaSnapDistance = 15;
+
+    /* Check if resized edge(s) are near output work-area boundaries */
+    foreach (CompOutput &output, ::screen->outputDevs ())
+    {
+        const CompRect &workArea = output.workArea ();
+
+        /* if window and work-area intersect in x axis */
+        if (wX + wWidth > workArea.x () &&
+                wX < workArea.x2 ())
+        {
+            if (mask & ResizeLeftMask)
+            {
+                int dw = workArea.x () - wX;
+
+                if (0 < dw && dw < workAreaSnapDistance)
+                {
+                    wi     -= dw;
+                    wWidth -= dw;
+                    wX     += dw;
+                }
+            }
+            else if (mask & ResizeRightMask)
+            {
+                int dw = wX + wWidth - workArea.x2 ();
+
+                if (0 < dw && dw < workAreaSnapDistance)
+                {
+                    wi     -= dw;
+                    wWidth -= dw;
+                }
+            }
+        }
+
+        /* if window and work-area intersect in y axis */
+        if (wY + wHeight > workArea.y () &&
+                wY < workArea.y2 ())
+        {
+            if (mask & ResizeUpMask)
+            {
+                int dh = workArea.y () - wY;
+
+                if (0 < dh && dh < workAreaSnapDistance)
+                {
+                    he      -= dh;
+                    wHeight -= dh;
+                    wY      += dh;
+                }
+            }
+            else if (mask & ResizeDownMask)
+            {
+                int dh = wY + wHeight - workArea.y2 ();
+
+                if (0 < dh && dh < workAreaSnapDistance)
+                {
+                    he      -= dh;
+                    wHeight -= dh;
+                }
+            }
+        }
+    }
+}
+
+void
+ResizeScreen::setUpMask(int xRoot, int yRoot)
+{
+    int xDist, yDist;
+    int minPointerOffsetX, minPointerOffsetY;
+
+    CompWindow::Geometry server = w->serverGeometry ();
+
+    xDist = xRoot - (server.x () + (server.width () / 2));
+    yDist = yRoot - (server.y () + (server.height () / 2));
+
+    /* decision threshold is 10% of window size */
+    minPointerOffsetX = MIN (20, server.width () / 10);
+    minPointerOffsetY = MIN (20, server.height () / 10);
+
+    /* if we reached the threshold in one direction,
+       make the threshold in the other direction smaller
+       so there is a chance that this threshold also can
+       be reached (by diagonal movement) */
+    if (abs (xDist) > minPointerOffsetX)
+        minPointerOffsetY /= 2;
+    else if (abs (yDist) > minPointerOffsetY)
+        minPointerOffsetX /= 2;
+
+    if (abs (xDist) > minPointerOffsetX)
+    {
+        if (xDist > 0)
+            mask |= ResizeRightMask;
+        else
+            mask |= ResizeLeftMask;
+    }
+
+    if (abs (yDist) > minPointerOffsetY)
+    {
+        if (yDist > 0)
+            mask |= ResizeDownMask;
+        else
+            mask |= ResizeUpMask;
+    }
+
+    /* if the pointer movement was enough to determine a
+       direction, warp the pointer to the appropriate edge
+       and set the right cursor */
+    if (mask)
+    {
+        Cursor     cursor;
+        CompAction *action;
+        int        pointerAdjustX = 0;
+        int        pointerAdjustY = 0;
+
+        action = &optionGetInitiateKey ();
+        action->setState (action->state () |
+                CompAction::StateTermButton);
+
+        if (mask & ResizeRightMask)
+            pointerAdjustX = server.x () + server.width () +
+                w->border ().right - xRoot;
+        else if (mask & ResizeLeftMask)
+            pointerAdjustX = server.x () - w->border ().left -
+                xRoot;
+
+        if (mask & ResizeDownMask)
+            pointerAdjustY = server.y () + server.height () +
+                w->border ().bottom - yRoot;
+        else if (mask & ResizeUpMask)
+            pointerAdjustY = server.y () - w->border ().top - yRoot;
+
+        screen->warpPointer (pointerAdjustX, pointerAdjustY);
+
+        cursor = cursorFromResizeMask (mask);
+        screen->updateGrab (grabIndex, cursor);
+    }
+}
+
+void
+ResizeScreen::accumulatePointerMotion(int xRoot, int yRoot)
+{
+    /* only accumulate pointer movement if a mask is
+       already set as we don't have a use for the
+       difference information otherwise */
+
+    if (centered || optionGetResizeFromCenter ())
+    {
+        pointerDx += (xRoot - lastPointerX) * 2;
+        pointerDy += (yRoot - lastPointerY) * 2;
+    }
+    else
+    {
+        pointerDx += xRoot - lastPointerX;
+        pointerDy += yRoot - lastPointerY;
+    }
+
+    /* If we hit the edge of the screen while resizing
+     * the window and the adjacent window edge has not hit
+     * the edge of the screen, then accumulate pointer motion
+     * in the opposite direction. (So the apparant x / y
+     * mixup here is intentional)
+     */
+
+    if (isConstrained)
+    {
+        if (mask == ResizeLeftMask)
+        {
+            if (xRoot == 0 &&
+                    geometry.x - w->border ().left > grabWindowWorkArea->left ())
+                pointerDx += abs (yRoot - lastPointerY) * -1;
+        }
+        else if (mask == ResizeRightMask)
+        {
+            if (xRoot == screen->width () -1 &&
+                    geometry.x + geometry.width + w->border ().right < grabWindowWorkArea->right ())
+                pointerDx += abs (yRoot - lastPointerY);
+        }
+        if (mask == ResizeUpMask)
+        {
+            if (yRoot == 0 &&
+                    geometry.y - w->border ().top > grabWindowWorkArea->top ())
+                pointerDy += abs (xRoot - lastPointerX) * -1;
+        }
+        else if (mask == ResizeDownMask)
+        {
+            if (yRoot == screen->height () -1 &&
+                    geometry.y + geometry.height + w->border ().bottom < grabWindowWorkArea->bottom ())
+                pointerDx += abs (yRoot - lastPointerY);
+        }
+    }
+}
+
+void
+ResizeScreen::constrainToWorkArea(int &che, int &cwi)
+{
+    if (mask & ResizeUpMask)
+    {
+        int decorTop = savedGeometry.y + savedGeometry.height -
+            (che + w->border ().top);
+
+        if (grabWindowWorkArea->y () > decorTop)
+            che -= grabWindowWorkArea->y () - decorTop;
+    }
+    if (mask & ResizeDownMask)
+    {
+        int decorBottom = savedGeometry.y + che + w->border ().bottom;
+
+        if (decorBottom >
+                grabWindowWorkArea->y () + grabWindowWorkArea->height ())
+            che -= decorBottom - (grabWindowWorkArea->y () +
+                    grabWindowWorkArea->height ());
+    }
+    if (mask & ResizeLeftMask)
+    {
+        int decorLeft = savedGeometry.x + savedGeometry.width -
+            (cwi + w->border ().left);
+
+        if (grabWindowWorkArea->x () > decorLeft)
+            cwi -= grabWindowWorkArea->x () - decorLeft;
+    }
+    if (mask & ResizeRightMask)
+    {
+        int decorRight = savedGeometry.x + cwi + w->border ().right;
+
+        if (decorRight >
+                grabWindowWorkArea->x () + grabWindowWorkArea->width ())
+            cwi -= decorRight - (grabWindowWorkArea->x () +
+                    grabWindowWorkArea->width ());
+    }
+}
+
+void
+ResizeScreen::limitMovementToConstraintRegion(int &wi, int &he,
+		int xRoot, int yRoot, int wX, int wY, int wWidth, int wHeight)
+{
+    int minHeight = 50;
+
+    /* rect. for a minimal height window + borders
+       (used for the constraining in X axis) */
+    int minimalInputHeight = minHeight +
+        w->border ().top + w->border ().bottom;
+
+    /* small hot-spot square (on window's corner or edge) that is to be
+       constrained to the combined output work-area region */
+    int x, y;
+    int width = w->border ().top; /* square size = title bar height */
+    int height = width;
+    bool status; /* whether or not hot-spot is in the region */
+
+    /* compute x & y for constrained hot-spot rect */
+    if (mask & ResizeLeftMask)
+        x = wX;
+    else if (mask & ResizeRightMask)
+        x = wX + wWidth - width;
+    else
+        x = MIN (MAX (xRoot, wX), wX + wWidth - width);
+
+    if (mask & ResizeUpMask)
+        y = wY;
+    else if (mask & ResizeDownMask)
+        y = wY + wHeight - height;
+    else
+        y = MIN (MAX (yRoot, wY), wY + wHeight - height);
+
+    status = constraintRegion.contains (x, y, width, height);
+
+    /* only constrain movement if previous position was valid */
+    if (inRegionStatus)
+    {
+        bool xStatus = false;
+        int yForXResize = y;
+        int nx = x;
+        int nw = wi;
+        int nh = he;
+        int minWidth  = 50;
+
+        if (mask & (ResizeLeftMask | ResizeRightMask))
+        {
+            xStatus = status;
+
+            if (mask & ResizeUpMask)
+                yForXResize = wY + wHeight - minimalInputHeight;
+            else if (mask & ResizeDownMask)
+                yForXResize = wY + minimalInputHeight - height;
+            else
+                yForXResize = y;
+
+            if (!constraintRegion.contains (x, yForXResize,
+                        width, height))
+            {
+                if (lastGoodHotSpotY >= 0)
+                    yForXResize = lastGoodHotSpotY;
+                else
+                    yForXResize = y;
+            }
+        }
+        if (mask & ResizeLeftMask)
+        {
+            while ((nw > minWidth) && !xStatus)
+            {
+                xStatus = constraintRegion.contains (nx, yForXResize,
+                        width, height);
+                if (!xStatus)
+                {
+                    nw--;
+                    nx++;
+                }
+            }
+            if (nw > minWidth)
+            {
+                x = nx;
+                wi = nw;
+            }
+        }
+        else if (mask & ResizeRightMask)
+        {
+            while ((nw > minWidth) && !xStatus)
+            {
+                xStatus = constraintRegion.contains (nx, yForXResize,
+                        width, height);
+                if (!xStatus)
+                {
+                    nw--;
+                    nx--;
+                }
+            }
+            if (nw > minWidth)
+            {
+                x = nx;
+                wi = nw;
+            }
+        }
+
+        if (mask & ResizeUpMask)
+        {
+            while ((nh > minHeight) && !status)
+            {
+                status = constraintRegion.contains (x, y,
+                        width, height);
+                if (!status)
+                {
+                    nh--;
+                    y++;
+                }
+            }
+            if (nh > minHeight)
+                he = nh;
+        }
+        else if (mask & ResizeDownMask)
+        {
+            while ((nh > minHeight) && !status)
+            {
+                status = constraintRegion.contains (x, y,
+                        width, height);
+                if (!status)
+                {
+                    nh--;
+                    y--;
+                }
+            }
+            if (nh > minHeight)
+                he = nh;
+        }
+
+        if (((mask & (ResizeLeftMask | ResizeRightMask)) && xStatus) ||
+                ((mask & (ResizeUpMask | ResizeDownMask)) && status))
+        {
+            /* hot-spot inside work-area region, store good values */
+            lastGoodHotSpotY = y;
+            lastGoodSize     = CompSize (wi, he);
+        }
+        else
+        {
+            /* failed to find a good hot-spot position, restore size */
+            wi = lastGoodSize.width ();
+            he = lastGoodSize.height ();
+        }
+    }
+    else
+    {
+        inRegionStatus = status;
+    }
+}
+
+void
+ResizeScreen::computeWindowPlusBordersRect(int &wX, int &wY, int &wWidth, int &wHeight,
+	int wi, int he)
+{
+    wWidth  = wi + w->border ().left + w->border ().right;
+    wHeight = he + w->border ().top + w->border ().bottom;
+
+    if (centered || optionGetResizeFromCenter ())
+    {
+        if (mask & ResizeLeftMask)
+            wX = geometry.x + geometry.width -
+                (wi + w->border ().left);
+        else
+            wX = geometry.x - w->border ().left;
+
+        if (mask & ResizeUpMask)
+            wY = geometry.y + geometry.height -
+                (he + w->border ().top);
+        else
+            wY = geometry.y - w->border ().top;
+    }
+    else
+    {
+        if (mask & ResizeLeftMask)
+            wX = savedGeometry.x + savedGeometry.width -
+                (wi + w->border ().left);
+        else
+            wX = savedGeometry.x - w->border ().left;
+
+        if (mask & ResizeUpMask)
+            wY = savedGeometry.y + savedGeometry.height -
+                (he + w->border ().top);
+        else
+            wY = savedGeometry.y - w->border ().top;
+    }
+}
+
+void
+ResizeScreen::computeGeometry(int wi, int he)
+{
+    if (centered || optionGetResizeFromCenter ())
+    {
+        if ((mask & ResizeLeftMask) || (mask & ResizeRightMask))
+            geometry.x -= ((wi - geometry.width) / 2);
+        if ((mask & ResizeUpMask) || (mask & ResizeDownMask))
+            geometry.y -= ((he - geometry.height) / 2);
+    }
+    else
+    {
+        if (mask & ResizeLeftMask)
+            geometry.x -= wi - geometry.width;
+        if (mask & ResizeUpMask)
+            geometry.y -= he - geometry.height;
+    }
+
+    geometry.width  = wi;
+    geometry.height = he;
 }
 
 ResizeScreen::ResizeScreen (CompScreen *s) :
