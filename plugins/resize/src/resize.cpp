@@ -1794,6 +1794,9 @@ ResizeScreen::enableOrDisableVerticalMaximization(int yRoot)
        for a vertical maximization */    
     int max_edge_distance = 5;
 
+    if (!optionGetMaximizeVertically())
+        return;
+
     if (centered || optionGetResizeFromCenter ())
     {
         if (maximized_vertically)
