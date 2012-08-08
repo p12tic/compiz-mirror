@@ -91,15 +91,12 @@ void GLVertexBuffer::begin (GLenum primitiveType /* = GL_TRIANGLES */)
 	priv->textureData[i].clear ();
 }
 
-bool GLVertexBuffer::end ()
+int GLVertexBuffer::end ()
 {
     if (priv->vertexData.empty ())
-	return false;
-
-    if (!enabled ())
 	return 0;
 
-    if (!priv->vertexData.size ())
+    if (!enabled ())
 	return 0;
 
     GL::bindBuffer (GL_ARRAY_BUFFER, priv->vertexBuffer);
