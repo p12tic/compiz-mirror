@@ -96,13 +96,13 @@ void GLVertexBuffer::begin ()
     begin (GL_TRIANGLES);
 }
 
-int GLVertexBuffer::end ()
+bool GLVertexBuffer::end ()
 {
-    if (!enabled ())
-	return 0;
+    if (priv->vertexData.empty ())
+	return false;
 
-    if (!priv->vertexData.size ())
-	return -1;
+    if (!enabled ())
+	return true;
 
     GL::bindBuffer (GL_ARRAY_BUFFER, priv->vertexBuffer);
     GL::bufferData (GL_ARRAY_BUFFER,
@@ -144,7 +144,7 @@ int GLVertexBuffer::end ()
 
     GL::bindBuffer (GL_ARRAY_BUFFER, 0);
 
-    return 0;
+    return true;
 }
 
 void GLVertexBuffer::addVertices (GLuint nVertices, const GLfloat *vertices)

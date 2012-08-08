@@ -231,9 +231,7 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	    if (width && height)
 		priv->gWindow->glAddGeometry (ml, iconReg, iconReg);
 
-	    priv->gWindow->vertexBuffer ()->end ();
-
-	    if (priv->gWindow->vertexBuffer ()->countVertices ())
+	    if (priv->gWindow->vertexBuffer ()->end ())
 	    {
 		GLMatrix           wTransform (transform);
 

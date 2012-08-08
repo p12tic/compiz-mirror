@@ -79,7 +79,7 @@ class GLVertexBuffer
 	void begin (GLenum primitiveType);
 	// default primitiveType is GL_TRIANGLES
 	void begin ();
-	int end ();
+	bool end ();
 
 	// vertices and normals are 3 parts, count is number of xyz groups
 	void addVertices (GLuint nVertices, const GLfloat *vertices);

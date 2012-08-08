@@ -258,9 +258,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    }
 	}
 
-	gWindow->vertexBuffer ()->end ();
-
-	if (gWindow->vertexBuffer ()->countVertices ())
+	if (gWindow->vertexBuffer ()->end ())
 	{
 	    glEnable (GL_BLEND);
 	    gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
@@ -287,9 +285,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    ml[0] = gWindow->matrices ()[0];
 	    gWindow->vertexBuffer ()->begin ();
 	    gWindow->glAddGeometry (ml, window->frameRegion (), region);
-	    gWindow->vertexBuffer ()->end ();
-
-	    if (gWindow->vertexBuffer ()->countVertices ())
+	    if (gWindow->vertexBuffer ()->end ())
 		gWindow->glDrawTexture (gWindow->textures ()[0], transform,
 		                        attrib, mask);
 	}
@@ -302,9 +298,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		ml[0] = gWindow->matrices ()[i];
 		gWindow->vertexBuffer ()->begin ();
 		gWindow->glAddGeometry (ml, regions[i], region);
-		gWindow->vertexBuffer ()->end ();
-
-		if (gWindow->vertexBuffer ()->countVertices ())
+		if (gWindow->vertexBuffer ()->end ())
 		    gWindow->glDrawTexture (gWindow->textures ()[i], transform,
 		                            attrib, mask);
 	    }

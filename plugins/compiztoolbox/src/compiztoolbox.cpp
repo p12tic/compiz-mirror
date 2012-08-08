@@ -534,9 +534,7 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 	gWindow->glAddGeometry (matrix, iconReg, infiniteRegion);
 	gWindow->glAddGeometrySetCurrentIndex (addWindowGeometryIndex);
 
-	gWindow->vertexBuffer ()->end ();
-
-	if (gWindow->vertexBuffer ()->countVertices ())
+	if (gWindow->vertexBuffer ()->end ())
 	{
 	    GLMatrix           wTransform (transform);
 

@@ -1262,9 +1262,7 @@ GLWindow::glDraw (const GLMatrix     &transform,
 	ml[0] = priv->matrices[i];
 	priv->vertexBuffer->begin ();
 	glAddGeometry (ml, priv->regions[i], reg);
-	priv->vertexBuffer->end ();
-
-	if (priv->vertexBuffer->countVertices())
+	if (priv->vertexBuffer->end ())
 	    glDrawTexture (priv->textures[i], transform, attrib, mask);
     }
 

@@ -373,9 +373,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 		gWindow->vertexBuffer ()->begin ();
 		gWindow->glAddGeometry (matricies, iconReg, iconReg);
-		gWindow->vertexBuffer ()->end ();
-
-		if (gWindow->vertexBuffer ()->countVertices ())
+		if (gWindow->vertexBuffer ()->end ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
 		    GLMatrix	       wTransform = transform;
