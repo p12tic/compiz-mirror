@@ -102,7 +102,7 @@ int GLVertexBuffer::end ()
 	return 0;
 
     if (!priv->vertexData.size ())
-	return -1;
+	return 0;
 
     GL::bindBuffer (GL_ARRAY_BUFFER, priv->vertexBuffer);
     GL::bufferData (GL_ARRAY_BUFFER,
@@ -144,7 +144,7 @@ int GLVertexBuffer::end ()
 
     GL::bindBuffer (GL_ARRAY_BUFFER, 0);
 
-    return 0;
+    return countVertices ();
 }
 
 void GLVertexBuffer::addVertices (GLuint nVertices, const GLfloat *vertices)
@@ -167,7 +167,7 @@ int GLVertexBuffer::getVertexStride() const
     return 3; // as seen in addVertices
 }
 
-int GLVertexBuffer::countVertices() const
+int GLVertexBuffer::countVertices () const
 {
     return priv->vertexData.size() / 3;
 }

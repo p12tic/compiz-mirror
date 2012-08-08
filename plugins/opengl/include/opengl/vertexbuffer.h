@@ -79,6 +79,13 @@ class GLVertexBuffer
 	void begin (GLenum primitiveType);
 	// default primitiveType is GL_TRIANGLES
 	void begin ();
+
+	/**
+	 * Saves client buffered vertices into a vertex buffer
+	 * and returns the number of vertices saved
+	 *
+	 * @return the number of vertices in this buffer
+	 */
 	int end ();
 
 	// vertices and normals are 3 parts, count is number of xyz groups

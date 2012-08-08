@@ -1686,7 +1686,8 @@ WobblyScreen::donePaint ()
 }
 
 void
-WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
+WobblyWindow::glAddGeometry (GLVertexBuffer		 *vertexBuffer,
+			     const GLTexture::MatrixList &matrix,
 			     const CompRegion            &region,
 			     const CompRegion            &clip,
 			     unsigned int                maxGridWidth,
@@ -1847,7 +1848,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		{
 			    for (i = 0; i < iw; i++)
 		    {
-				addSingleQuad (gWindow->vertexBuffer (), matrix, nMatrix,
+				addSingleQuad (vertexBuffer, matrix, nMatrix,
 						grid[i][j][0][0], grid[i][j][0][1],
 						grid[i+1][j+1][0][0], grid[i+1][j+1][0][1],
 						grid[i][j+1][0][0], grid[i][j+1][0][1],

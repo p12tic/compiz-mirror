@@ -251,15 +251,16 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 	{
 	    matrix[0] = context->texture[0].matrices[i];
 
-	    gWindow->vertexBuffer ()->begin ();
-	    gWindow->glAddGeometry (matrix, context->box, reg);
-	    gWindow->vertexBuffer ()->end ();
+	    gWindow->clearVertices ();
+	    gWindow->addVertexDataForGeometry (matrix, context->box, reg);
+	    if (gWindow->saveVertices ())
+	    {
+		if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
+		    mask |= PAINT_WINDOW_BLEND_MASK;
 
-	    if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
-		mask |= PAINT_WINDOW_BLEND_MASK;
-
-	    gWindow->glDrawTexture (context->texture[0].textures[i], transform,
-	                            attrib, mask);
+		gWindow->glDrawTexture (context->texture[0].textures[i], transform,
+					attrib, mask);
+	    }
 
 	    if (rect.width () > 0 && rect.height () > 0)
 	    {
@@ -323,12 +324,11 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 		    saveFilter = gScreen->filter (SCREEN_TRANS_FILTER);
 		    gScreen->setFilter (SCREEN_TRANS_FILTER, GLTexture::Good);
 
-		    gWindow->vertexBuffer ()->begin ();
-		    gWindow->glAddGeometry (matrix, r, reg);
-		    gWindow->vertexBuffer ()->end ();
-
-		    gWindow->glDrawTexture (context->texture[1].textures[j],
-					    transform, attrib, mask);
+		    gWindow->clearVertices ();
+		    gWindow->addVertexDataForGeometry (matrix, r, reg);
+		    if (gWindow->saveVertices ())
+			gWindow->glDrawTexture (context->texture[1].textures[j],
+						transform, attrib, mask);
 
 		    gScreen->setFilter (SCREEN_TRANS_FILTER, saveFilter);
 		}

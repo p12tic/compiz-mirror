@@ -216,7 +216,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	GLTexture::MatrixList ml (1);
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
-	gWindow->vertexBuffer ()->begin ();
+	gWindow->clearVertices ();
 	const CompRegion *preg = NULL;
 
 	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
@@ -254,13 +254,11 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    {
 		ml[0] = wd->quad[i].matrix;
 		const CompRegionRef boxRegion (box.region ());
-		gWindow->glAddGeometry (ml, boxRegion, reg);
+		gWindow->addVertexDataForGeometry (ml, boxRegion, reg);
 	    }
 	}
 
-	gWindow->vertexBuffer ()->end ();
-
-	if (gWindow->vertexBuffer ()->countVertices ())
+	if (gWindow->saveVertices ())
 	{
 	    glEnable (GL_BLEND);
 	    gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
@@ -285,11 +283,10 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	if (gWindow->textures ().size () == 1)
 	{
 	    ml[0] = gWindow->matrices ()[0];
-	    gWindow->vertexBuffer ()->begin ();
-	    gWindow->glAddGeometry (ml, window->frameRegion (), region);
-	    gWindow->vertexBuffer ()->end ();
+	    gWindow->clearVertices ();
+	    gWindow->addVertexDataForGeometry (ml, window->frameRegion (), region);
 
-	    if (gWindow->vertexBuffer ()->countVertices ())
+	    if (gWindow->saveVertices ())
 		gWindow->glDrawTexture (gWindow->textures ()[0], transform,
 		                        attrib, mask);
 	}
@@ -300,11 +297,10 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    for (unsigned int i = 0; i < gWindow->textures ().size (); i++)
 	    {
 		ml[0] = gWindow->matrices ()[i];
-		gWindow->vertexBuffer ()->begin ();
-		gWindow->glAddGeometry (ml, regions[i], region);
-		gWindow->vertexBuffer ()->end ();
+		gWindow->clearVertices ();
+		gWindow->addVertexDataForGeometry (ml, regions[i], region);
 
-		if (gWindow->vertexBuffer ()->countVertices ())
+		if (gWindow->saveVertices ())
 		    gWindow->glDrawTexture (gWindow->textures ()[i], transform,
 		                            attrib, mask);
 	    }

@@ -855,7 +855,8 @@ class GLWindowInterface :
 	 * @param min
 	 * @param max
 	 */
-	virtual void glAddGeometry (const GLTexture::MatrixList &matrices,
+	virtual void glAddGeometry (GLVertexBuffer		*vertexBuffer,
+				    const GLTexture::MatrixList &matrices,
 				    const CompRegion 		&region,
 				    const CompRegion 		&clipRegion,
 				    unsigned int		min = MAXSHORT,
@@ -914,9 +915,26 @@ class GLWindow :
 	void updatePaintAttribs ();
 
 	/**
-	 * Returns the window vertex buffer object
+	 * Clears all vertex data for this window
 	 */
-	GLVertexBuffer * vertexBuffer ();
+	void clearVertices ();
+
+	/**
+	 * Adds geometry data for the vertex buffer internal to
+	 * to this window, the geometry data will be processed by
+	 * and added to the vertex buffer by plugins in glAddGeometry
+	 */
+	void addVertexDataForGeometry (const GLTexture::MatrixList &matrices,
+				       const CompRegion 	   &region,
+				       const CompRegion 	   &clipRegion,
+				       unsigned int		   min = MAXSHORT,
+				       unsigned int		   max = MAXSHORT);
+
+	/**
+	 * Saves added vertex data for this window, returns
+	 * true if any vertex data was saved
+	 */
+	bool saveVertices ();
 
 	/**
 	 * Add a vertex and/or fragment shader function to the pipeline.
@@ -937,7 +955,7 @@ class GLWindow :
 	WRAPABLE_HND (1, GLWindowInterface, bool, glDraw, const GLMatrix &,
 		      const GLWindowPaintAttrib &, const CompRegion &,
 	              unsigned int);
-	WRAPABLE_HND (2, GLWindowInterface, void, glAddGeometry,
+	WRAPABLE_HND (2, GLWindowInterface, void, glAddGeometry, GLVertexBuffer *,
 		      const GLTexture::MatrixList &, const CompRegion &,
 		      const CompRegion &,
 		      unsigned int = MAXSHORT, unsigned int = MAXSHORT);

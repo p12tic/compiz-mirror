@@ -11,7 +11,8 @@ public:
 		       const AnimEffect info,
 		       const CompRect &icon);
     
-    void addGeometry (const GLTexture::MatrixList &matrix,
+    void addGeometry (GLVertexBuffer *vertexBuffer,
+		      const GLTexture::MatrixList &matrix,
 		      const CompRegion            &region,
 		      const CompRegion            &clip,
 		      unsigned int                maxGridWidth,

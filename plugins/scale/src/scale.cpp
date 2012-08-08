@@ -226,14 +226,12 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	    GLTexture::MatrixList ml (1);
 
 	    ml[0] = icon->matrix ();
-	    priv->gWindow->vertexBuffer ()->begin ();
+	    priv->gWindow->clearVertices ();
 
 	    if (width && height)
-		priv->gWindow->glAddGeometry (ml, iconReg, iconReg);
+		priv->gWindow->addVertexDataForGeometry (ml, iconReg, iconReg);
 
-	    priv->gWindow->vertexBuffer ()->end ();
-
-	    if (priv->gWindow->vertexBuffer ()->countVertices ())
+	    if (priv->gWindow->saveVertices ())
 	    {
 		GLMatrix           wTransform (transform);
 

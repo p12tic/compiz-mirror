@@ -371,11 +371,10 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 		matricies.push_back (matrix);
 
-		gWindow->vertexBuffer ()->begin ();
-		gWindow->glAddGeometry (matricies, iconReg, iconReg);
-		gWindow->vertexBuffer ()->end ();
+		gWindow->clearVertices ();
+		gWindow->addVertexDataForGeometry (matricies, iconReg, iconReg);
 
-		if (gWindow->vertexBuffer ()->countVertices ())
+		if (gWindow->saveVertices ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
 		    GLMatrix	       wTransform = transform;

@@ -1279,7 +1279,8 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 #define EXPO_GRID_SIZE 100
 
 void
-ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
+ExpoWindow::glAddGeometry (GLVertexBuffer               *vertexBuffer,
+			   const GLTexture::MatrixList& matrices,
 			   const CompRegion&            region,
 			   const CompRegion&            clip,
 			   unsigned int                 maxGridWidth,
@@ -1289,19 +1290,20 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 	screen->desktopWindowCount () &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve)
     {
-	int         i, oldVCount = gWindow->vertexBuffer ()->countVertices ();
+	int         i, oldVCount = vertexBuffer->countVertices ();
 	GLfloat     *v;
 	CompPoint   offset;
 	float       lastX, lastZ = 0.0;
 	const float radSquare = pow (eScreen->curveDistance, 2) + 0.25;
 	float       ang;
 
-	gWindow->glAddGeometry (matrices, region, clip,
+	gWindow->glAddGeometry (vertexBuffer,
+				matrices, region, clip,
 				MIN(maxGridWidth , EXPO_GRID_SIZE),
 				maxGridHeight);
 
-	int stride = gWindow->vertexBuffer ()->getVertexStride ();
-	v  = gWindow->vertexBuffer ()->getVertices ();
+	int stride = vertexBuffer->getVertexStride ();
+	v  = vertexBuffer->getVertices ();
 	v += stride - 3;
 	v += stride * oldVCount;
 
@@ -1313,7 +1315,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 
 	lastX = -1000000000.0;
 
-	for (i = oldVCount; i < gWindow->vertexBuffer ()->countVertices (); i++)
+	for (i = oldVCount; i < vertexBuffer->countVertices (); i++)
 	{
 	    if (v[0] == lastX)
 	    {
@@ -1339,7 +1341,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
     }
     else
     {
-	gWindow->glAddGeometry (matrices, region, clip, maxGridWidth, maxGridHeight);
+	gWindow->glAddGeometry (vertexBuffer, matrices, region, clip, maxGridWidth, maxGridHeight);
     }
 }
 
