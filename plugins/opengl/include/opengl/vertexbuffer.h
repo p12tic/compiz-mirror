@@ -76,9 +76,7 @@ class GLVertexBuffer
 
 	static GLVertexBuffer *streamingBuffer ();
 
-	void begin (GLenum primitiveType);
-	// default primitiveType is GL_TRIANGLES
-	void begin ();
+	void begin (GLenum primitiveType = GL_TRIANGLES);
 	bool end ();
 
 	// vertices and normals are 3 parts, count is number of xyz groups

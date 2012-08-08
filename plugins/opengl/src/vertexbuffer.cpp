@@ -75,7 +75,7 @@ GLVertexBuffer *GLVertexBuffer::streamingBuffer ()
     return PrivateVertexBuffer::streamingBuffer;
 }
 
-void GLVertexBuffer::begin (GLenum primitiveType)
+void GLVertexBuffer::begin (GLenum primitiveType /* = GL_TRIANGLES */)
 {
     priv->primitiveType = primitiveType;
 
@@ -89,11 +89,6 @@ void GLVertexBuffer::begin (GLenum primitiveType)
     priv->nTextures = 0;
     for (int i = 0; i < PrivateVertexBuffer::MAX_TEXTURES; i++)
 	priv->textureData[i].clear ();
-}
-
-void GLVertexBuffer::begin ()
-{
-    begin (GL_TRIANGLES);
 }
 
 bool GLVertexBuffer::end ()
