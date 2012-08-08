@@ -527,6 +527,8 @@ resizeInitiate (CompAction         *action,
 		    rs->constraintRegion += output.workArea ();
 	    }
 	}
+
+        rs->maximized_vertically = false;
     }
 
     return false;
@@ -584,6 +586,17 @@ resizeTerminate (CompAction         *action,
 
 		mask = CWX | CWY | CWWidth | CWHeight;
 	    }
+	    else if (rs->maximized_vertically)
+	    {
+	        w->maximize(CompWindowStateMaximizedVertMask);
+
+		xwc.x      = rs->geometryWithoutVertMax.x;
+		xwc.y      = rs->geometryWithoutVertMax.y;
+		xwc.width  = rs->geometryWithoutVertMax.width;
+		xwc.height = rs->geometryWithoutVertMax.height;
+
+		mask = CWX | CWY | CWWidth | CWHeight;
+	    }
 	}
 	else
 	{
@@ -607,12 +620,22 @@ resizeTerminate (CompAction         *action,
 	    }
 	    else
 	    {
-		xwc.x      = geometry.x;
-		xwc.y      = geometry.y;
-		xwc.width  = geometry.width;
-		xwc.height = geometry.height;
+	        if (rs->maximized_vertically)
+	        {
+	            w->maximize(CompWindowStateMaximizedVertMask);
+		    xwc.x      = geometry.x;
+		    xwc.width  = geometry.width;
+	            mask = CWX | CWWidth ;
+	        }
+	        else
+	        {
+		    xwc.x      = geometry.x;
+		    xwc.y      = geometry.y;
+		    xwc.width  = geometry.width;
+		    xwc.height = geometry.height;
+	            mask = CWX | CWY | CWWidth | CWHeight;
+	        }
 
-		mask = CWX | CWY | CWWidth | CWHeight;
 	    }
 
 	    if (rs->mode != ResizeOptions::ModeNormal)
@@ -814,6 +837,8 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 
 	    damageRectangle (&box);
 	}
+
+	enableOrDisableVerticalMaximization(yRoot);
 
 	computeGeometry(wi, he);
 
@@ -1763,25 +1788,87 @@ ResizeScreen::computeWindowPlusBordersRect(int &wX, int &wY, int &wWidth, int &w
 }
 
 void
+ResizeScreen::enableOrDisableVerticalMaximization(int yRoot)
+{
+    /* maximum distance between the pointer and a work area edge (top or bottom)
+       for a vertical maximization */    
+    int max_edge_distance = 5;
+
+    if (centered || optionGetResizeFromCenter ())
+    {
+        if (maximized_vertically)
+        {
+	    geometry = geometryWithoutVertMax;
+            maximized_vertically = false;
+        }
+    }
+    else if (mask & ResizeUpMask)
+    {
+	if (yRoot - grabWindowWorkArea->top() <= max_edge_distance
+		&& !maximized_vertically)
+	{
+	    maximized_vertically = true;
+	    geometryWithoutVertMax = geometry;
+	}
+	else if (yRoot - grabWindowWorkArea->top() > max_edge_distance
+		&& maximized_vertically)
+	{
+	    geometry = geometryWithoutVertMax;
+	    maximized_vertically = false;
+	}
+    }
+    else if (mask & ResizeDownMask)
+    {
+	if (grabWindowWorkArea->bottom() - yRoot <= 5
+		&& !maximized_vertically)
+	{
+	    maximized_vertically = true;
+	    geometryWithoutVertMax = geometry;
+	}
+	else if (grabWindowWorkArea->bottom() - yRoot > 5
+		&& maximized_vertically)
+	{
+	    geometry = geometryWithoutVertMax;
+	    maximized_vertically = false;
+	}
+    }
+}
+
+void
 ResizeScreen::computeGeometry(int wi, int he)
 {
+    XRectangle *regular_geometry;
+    if (maximized_vertically)
+        regular_geometry = &geometryWithoutVertMax;
+    else
+        regular_geometry = &geometry;
+        
     if (centered || optionGetResizeFromCenter ())
     {
         if ((mask & ResizeLeftMask) || (mask & ResizeRightMask))
-            geometry.x -= ((wi - geometry.width) / 2);
+            regular_geometry->x -= ((wi - regular_geometry->width) / 2);
         if ((mask & ResizeUpMask) || (mask & ResizeDownMask))
-            geometry.y -= ((he - geometry.height) / 2);
+            regular_geometry->y -= ((he - regular_geometry->height) / 2);
     }
     else
     {
         if (mask & ResizeLeftMask)
-            geometry.x -= wi - geometry.width;
+            regular_geometry->x -= wi - regular_geometry->width;
         if (mask & ResizeUpMask)
-            geometry.y -= he - geometry.height;
+            regular_geometry->y -= he - regular_geometry->height;
     }
 
-    geometry.width  = wi;
-    geometry.height = he;
+    regular_geometry->width  = wi;
+    regular_geometry->height = he;
+
+    if (maximized_vertically)
+    {
+        geometry.x = geometryWithoutVertMax.x;
+        geometry.width = geometryWithoutVertMax.width;
+        geometry.y = grabWindowWorkArea->y() + w->border().top;
+        geometry.height = grabWindowWorkArea->height() - w->border().top
+            - w->border().bottom;
+    }
 }
 
 ResizeScreen::ResizeScreen (CompScreen *s) :
@@ -1789,6 +1876,7 @@ ResizeScreen::ResizeScreen (CompScreen *s) :
     gScreen (GLScreen::get (s)),
     cScreen (CompositeScreen::get (s)),
     w (NULL),
+    maximized_vertically(false),
     outlineMask (0),
     rectangleMask (0),
     stretchMask (0),

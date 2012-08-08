@@ -118,6 +118,11 @@ class ResizeScreen :
 	XRectangle	 savedGeometry;
 	XRectangle	 geometry;
 
+        /* geometry without the vertical maximization.
+           Its value is undefined when maximized_vertically == false */
+	XRectangle	 geometryWithoutVertMax;
+        bool maximized_vertically;
+
 	int		 outlineMask;
 	int		 rectangleMask;
 	int		 stretchMask;
@@ -162,6 +167,7 @@ private:
 			int xRoot, int yRoot, int wX, int wY, int wWidth, int wHeight);
 	void computeWindowPlusBordersRect(int &wX, int &wY, int &wWidth, int &wHeight,
 	        int wi, int he);
+        void enableOrDisableVerticalMaximization(int yRoot);
 	void computeGeometry(int wi, int he);
 };
 
