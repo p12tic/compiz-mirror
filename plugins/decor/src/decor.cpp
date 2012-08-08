@@ -283,6 +283,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	if (gWindow->textures ().size () == 1)
 	{
 	    ml[0] = gWindow->matrices ()[0];
+
 	    gWindow->clearVertices ();
 	    gWindow->addVertexDataForGeometry (ml, window->frameRegion (), region);
 
@@ -297,6 +298,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    for (unsigned int i = 0; i < gWindow->textures ().size (); i++)
 	    {
 		ml[0] = gWindow->matrices ()[i];
+
 		gWindow->clearVertices ();
 		gWindow->addVertexDataForGeometry (ml, regions[i], region);
 

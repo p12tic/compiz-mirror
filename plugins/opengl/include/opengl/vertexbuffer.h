@@ -76,10 +76,8 @@ class GLVertexBuffer
 
 	static GLVertexBuffer *streamingBuffer ();
 
-	void begin (GLenum primitiveType);
-	// default primitiveType is GL_TRIANGLES
-	void begin ();
 
+	void begin (GLenum primitiveType = GL_TRIANGLES);
 	/**
 	 * Saves client buffered vertices into a vertex buffer
 	 * and returns the number of vertices saved

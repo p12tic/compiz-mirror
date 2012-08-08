@@ -908,6 +908,8 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			GLfloat         vertexData[12];
 			GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
+			glEnable (GL_BLEND);
+
 			/* fill rectangle */
 			colorData[0] = optionGetHighlightColorRed ();
 			colorData[1] = optionGetHighlightColorGreen ();
@@ -942,6 +944,8 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			paintRect (sTransform, box, 2, color, opacity);
 			color = optionGetHighlightBorderInlayColor ();
 			paintRect (sTransform, box, 1, color, opacity);
+
+			glDisable (GL_BLEND);
 		    }
 		}
 	    }
@@ -1018,6 +1022,8 @@ StaticSwitchScreen::paintSelectionRect (const GLMatrix &transform,
     w = previewWidth + previewBorder;
     h = previewHeight + previewBorder;
 
+    glEnable (GL_BLEND);
+
     if (dx > xCount - 1)
 	op = 1.0 - MIN (1.0, dx - (xCount - 1));
     else if (dx + (dy * xCount) > count - 1)
@@ -1028,7 +1034,7 @@ StaticSwitchScreen::paintSelectionRect (const GLMatrix &transform,
 	op = 1.0;
 
     for (unsigned int i = 0; i < 4; i++)
-	colorData[i] = (float)fgColor[i] * opacity * op / 0xffffffff;
+	colorData[i] = (float)fgColor[i] * opacity * op / 0xffff;
 
     sTransform.translate (x + previewBorder / 2 + (dx * w),
 		  y + previewBorder / 2 + (dy * h), 0.0f);
@@ -1119,6 +1125,8 @@ StaticSwitchScreen::paintSelectionRect (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (sTransform);
+
+    glDisable (GL_BLEND);
 }
 
 bool
