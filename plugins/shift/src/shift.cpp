@@ -1183,6 +1183,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    }
 
 	    glCullFace (cull);
+	    glEnable(GL_BLEND);
 	    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	    r2Transform.translate (0.0, 0.0, -DEFAULT_Z_CAMERA);
 
@@ -1253,6 +1254,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    }
 
 	    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	    glDisable(GL_BLEND);
 	}
 
 	/* Drawing normal windows */
