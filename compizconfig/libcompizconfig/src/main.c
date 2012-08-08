@@ -1013,6 +1013,9 @@ openBackend (char *backend)
 
     if (!dlhand && home && strlen (home))
     {
+	if (dlname)
+	    free (dlname);
+
 	if (asprintf (&dlname, "%s/.compizconfig/backends/lib%s.so",
 		      home, backend) == -1)
 	    dlname = NULL;
@@ -1024,9 +1027,9 @@ openBackend (char *backend)
 
     if (!dlhand)
     {
-        if (dlname) {
-	        free (dlname);
-        }
+	if (dlname)
+	    free (dlname);
+
 	if (asprintf (&dlname, "%s/compizconfig/backends/lib%s.so",
 		      LIBDIR, backend) == -1)
 	    dlname = NULL;
@@ -4259,14 +4262,25 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     completedUpgrades = fopen (dupath, "a+");
 
     if (!path)
+    {
+	free (dupath);
+	fclose (completedUpgrades);
 	return FALSE;
+    }
 
     nFile = scandir (path, &nameList, upgradeNameFilter, alphasort);
     if (nFile <= 0)
+    {
+	free (dupath);
+	fclose (completedUpgrades);
 	return FALSE;
+    }
 
     if (!completedUpgrades)
     {
+	free (nameList);
+	free (dupath);
+	fclose (completedUpgrades);
 	ccsWarning ("Error opening done_upgrades");
 	return FALSE;
     }
