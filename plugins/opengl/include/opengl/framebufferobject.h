@@ -43,9 +43,6 @@ struct PrivateGLFramebufferObject;
  * 5. rebind (old)
  * 6. use the rendered texture via tex ()
  * 7. go to 2 or 3, or delete to quit (requires a GL context)
- *
- * TODO: add depth/stencil attachments
- * FIXME: written for OpenGL ES 2 only, desktop OpenGL might not work.
  */
 class GLFramebufferObject
 {
