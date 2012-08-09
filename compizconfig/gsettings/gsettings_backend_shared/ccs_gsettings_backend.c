@@ -12,15 +12,15 @@
 #include "gsettings_shared.h"
 
 void
-ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegrationBackend *integration)
+ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegration *integration)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     if (priv->integration)
-	ccsIntegrationBackendUnref (priv->integration);
+	ccsIntegrationUnref (priv->integration);
 
     priv->integration = integration;
-    ccsIntegrationBackendRef (integration);
+    ccsIntegrationRef (integration);
 }
 
 CCSStringList
@@ -316,7 +316,7 @@ ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSett
     const char *settingName = ccsSettingGetName (setting);
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    return ccsIntegrationBackendGetIntegratedOptionIndex (priv->integration, pluginName, settingName);
+    return ccsIntegrationGetIntegratedOptionIndex (priv->integration, pluginName, settingName);
 }
 
 Bool
@@ -324,7 +324,7 @@ ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting 
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    return ccsIntegrationBackendReadOptionIntoSetting (priv->integration,
+    return ccsIntegrationReadOptionIntoSetting (priv->integration,
 						       backend,
 						       priv->context,
 						       setting,
@@ -336,7 +336,7 @@ ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    ccsIntegrationBackendWriteSettingIntoOption (priv->integration,
+    ccsIntegrationWriteSettingIntoOption (priv->integration,
 						 backend,
 						 priv->context,
 						 setting,
@@ -408,8 +408,6 @@ ccsGSettingsBackendDetachFromBackend (CCSBackend *backend)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    ccsGSettingsBackendUnregisterGConfClient (backend);
-
     if (priv->currentProfile)
     {
 	free (priv->currentProfile);
@@ -429,7 +427,7 @@ ccsGSettingsBackendDetachFromBackend (CCSBackend *backend)
 
     priv->compizconfigSettings = NULL;
 
-    ccsIntegrationBackendUnref (priv->integration);
+    ccsIntegrationUnref (priv->integration);
 
     free (priv);
     ccsObjectSetPrivate (backend, NULL);

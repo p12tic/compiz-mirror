@@ -5,13 +5,13 @@ COMPIZCONFIG_BEGIN_DECLS
 
 #ifdef USE_GCONF
 
-CCSIntegrationBackend *
+CCSIntegration *
 ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai);
 
 void
-ccsGConfIntegrationBackendFree (CCSIntegrationBackend *integration);
+ccsGConfIntegrationBackendFree (CCSIntegration *integration);
 
 #endif
 

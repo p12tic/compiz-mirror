@@ -10,8 +10,6 @@ CCSGSettingsBackendInterface ccsGSettingsBackendGMockInterface =
     CCSGSettingsBackendGMock::ccsGSettingsBackendGetContext,
     CCSGSettingsBackendGMock::ccsGSettingsBackendConnectToValueChangedSignal,
     CCSGSettingsBackendGMock::ccsGSettingsBackendGetSettingsObjectForPluginWithPath,
-    CCSGSettingsBackendGMock::ccsGSettingsBackendRegisterGConfClient,
-    CCSGSettingsBackendGMock::ccsGSettingsBackendUnregisterGConfClient,
     CCSGSettingsBackendGMock::ccsGSettingsBackendGetCurrentProfile,
     CCSGSettingsBackendGMock::ccsGSettingsBackendGetExistingProfiles,
     CCSGSettingsBackendGMock::ccsGSettingsBackendSetExistingProfiles,

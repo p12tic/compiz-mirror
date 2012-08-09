@@ -36,58 +36,58 @@ typedef struct _CCSBackendInfo    CCSBackendInfo;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
 
-typedef struct _CCSIntegrationBackend CCSIntegrationBackend;
-typedef struct _CCSIntegrationBackendInterface CCSIntegrationBackendInterface;
+typedef struct _CCSIntegration CCSIntegration;
+typedef struct _CCSIntegrationInterface CCSIntegrationInterface;
 
-typedef int (*CCSIntegrationBackendGetIntegratedOptionIndex) (CCSIntegrationBackend *integration,
+typedef int (*CCSIntegrationGetIntegratedOptionIndex) (CCSIntegration *integration,
 							      const char *pluginName,
 							      const char *settingName);
-typedef Bool (*CCSIntegrationBackendReadOptionIntoSetting) (CCSIntegrationBackend *integration,
+typedef Bool (*CCSIntegrationReadOptionIntoSetting) (CCSIntegration *integration,
 							    CCSBackend		  *backend,
 							    CCSContext		  *context,
 							    CCSSetting		  *setting,
 							    int			  index);
-typedef void (*CCSIntegrationBackendWriteSettingIntoOption) (CCSIntegrationBackend *integration,
+typedef void (*CCSIntegrationWriteSettingIntoOption) (CCSIntegration *integration,
 							     CCSBackend		   *backend,
 							     CCSContext		   *context,
 							     CCSSetting		   *setting,
 							     int		   index);
-typedef void (*CCSFreeIntegrationBackend) (CCSIntegrationBackend *integration);
+typedef void (*CCSFreeIntegrationBackend) (CCSIntegration *integration);
 
-struct _CCSIntegrationBackendInterface
+struct _CCSIntegrationInterface
 {
-    CCSIntegrationBackendGetIntegratedOptionIndex getIntegratedOptionIndex;
-    CCSIntegrationBackendReadOptionIntoSetting readOptionIntoSetting;
-    CCSIntegrationBackendWriteSettingIntoOption writeSettingIntoOption;
+    CCSIntegrationGetIntegratedOptionIndex getIntegratedOptionIndex;
+    CCSIntegrationReadOptionIntoSetting readOptionIntoSetting;
+    CCSIntegrationWriteSettingIntoOption writeSettingIntoOption;
     CCSFreeIntegrationBackend			freeIntegrationBackend;
 };
 
-struct _CCSIntegrationBackend
+struct _CCSIntegration
 {
     CCSObject object;
 };
 
-CCSREF_HDR (IntegrationBackend, CCSIntegrationBackend)
+CCSREF_HDR (Integration, CCSIntegration)
 
-unsigned int ccsCCSIntegrationBackendInterfaceGetType ();
+unsigned int ccsCCSIntegrationInterfaceGetType ();
 
-int ccsIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
+int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
 						   const char *pluginName,
 						   const char *settingName);
-Bool ccsIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integration,
+Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSBackend		  *backend,
 						 CCSContext		  *context,
 						 CCSSetting		  *setting,
 						 int			  index);
-void ccsIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integration,
+void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
 						  CCSBackend		   *backend,
 						  CCSContext		   *context,
 						  CCSSetting		   *setting,
 						  int			    index);
 
-void ccsFreeIntegrationBackend (CCSIntegrationBackend *integration);
+void ccsFreeIntegration (CCSIntegration *integration);
 
-CCSIntegrationBackend *
+CCSIntegration *
 ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai);
 
 struct _CCSBackend
@@ -130,7 +130,7 @@ typedef Bool (*CCSBackendGetSettingIsReadOnlyFunc) (CCSBackend *, CCSSetting * s
 typedef CCSStringList (*CCSBackendGetExistingProfilesFunc) (CCSBackend *, CCSContext * context);
 typedef Bool (*CCSBackendDeleteProfileFunc) (CCSBackend *, CCSContext * context, char * name);
 
-typedef void (*CCSBackendSetIntegration) (CCSBackend *, CCSIntegrationBackend *);
+typedef void (*CCSBackendSetIntegration) (CCSBackend *, CCSIntegration *);
 
 typedef const CCSBackendInfo * (*CCSBackendGetInfoFunc) (CCSBackend *);
 
@@ -181,7 +181,7 @@ Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting)
 Bool ccsBackendGetSettingIsReadOnly (CCSBackend *backend, CCSSetting *setting);
 CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name);
-void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegrationBackend *integration);
+void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegration *integration);
 void ccsFreeBackend (CCSBackend *backend);
 
 typedef struct _CCSDynamicBackend	  CCSDynamicBackend;

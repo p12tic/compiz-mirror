@@ -233,7 +233,7 @@ INTERFACE_TYPE (CCSPluginInterface)
 INTERFACE_TYPE (CCSSettingInterface)
 INTERFACE_TYPE (CCSBackendInterface);
 INTERFACE_TYPE (CCSDynamicBackendInterface);
-INTERFACE_TYPE (CCSIntegrationBackendInterface);
+INTERFACE_TYPE (CCSIntegrationInterface);
 
 Bool basicMetadata = FALSE;
 
@@ -979,7 +979,7 @@ CCSREF_OBJ (Plugin, CCSPlugin)
 CCSREF_OBJ (Setting, CCSSetting)
 CCSREF_OBJ (Backend, CCSBackend)
 CCSREF_OBJ (DynamicBackend, CCSDynamicBackend)
-CCSREF_OBJ (IntegrationBackend, CCSIntegrationBackend)
+CCSREF_OBJ (Integration, CCSIntegration)
 
 static void *
 openBackend (const char *backend)
@@ -1199,38 +1199,38 @@ ccsSetBackend (CCSContext *context, char *name)
 }
 
 /* Needs to go into its own file */
-int ccsIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
+int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
 						   const char *pluginName,
 						   const char *settingName)
 {
-    return (*(GET_INTERFACE (CCSIntegrationBackendInterface, integration))->getIntegratedOptionIndex) (integration, pluginName, settingName);
+    return (*(GET_INTERFACE (CCSIntegrationInterface, integration))->getIntegratedOptionIndex) (integration, pluginName, settingName);
 }
 
-Bool ccsIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integration,
+Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSBackend		  *backend,
 						 CCSContext		  *context,
 						 CCSSetting		  *setting,
 						 int			  index)
 {
-    return (*(GET_INTERFACE (CCSIntegrationBackendInterface, integration))->readOptionIntoSetting) (integration, backend, context, setting, index);
+    return (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, backend, context, setting, index);
 }
 
-void ccsIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integration,
+void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
 						  CCSBackend		   *backend,
 						  CCSContext		   *context,
 						  CCSSetting		   *setting,
 						  int			   index)
 {
-    (*(GET_INTERFACE (CCSIntegrationBackendInterface, integration))->readOptionIntoSetting) (integration, backend, context, setting, index);
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, backend, context, setting, index);
 }
 
-void ccsFreeIntegrationBackend (CCSIntegrationBackend *integration)
+void ccsFreeIntegration (CCSIntegration *integration)
 {
-    (*(GET_INTERFACE (CCSIntegrationBackendInterface, integration))->freeIntegrationBackend) (integration);
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->freeIntegrationBackend) (integration);
 }
 
 static int
-ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
+ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 						   const char		 *pluginName,
 						   const char		 *settingName)
 {
@@ -1238,7 +1238,7 @@ ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integr
 }
 
 static Bool
-ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integration,
+ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						CCSBackend	      *backend,
 						CCSContext	      *context,
 						CCSSetting	      *setting,
@@ -1248,7 +1248,7 @@ ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integrati
 }
 
 static void
-ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integration,
+ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegration *integration,
 						 CCSBackend	      *backend,
 						 CCSContext	      *context,
 						 CCSSetting	      *setting,
@@ -1257,29 +1257,29 @@ ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integrat
 }
 
 void
-ccsNullIntegrationBackendFree (CCSIntegrationBackend *integration)
+ccsNullIntegrationBackendFree (CCSIntegration *integration)
 {
     ccsObjectFinalize (integration);
     (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
 }
 
-const CCSIntegrationBackendInterface ccsNullIntegrationBackendInterface =
+const CCSIntegrationInterface ccsNullIntegrationBackendInterface =
 {
     ccsNullIntegrationBackendGetIntegratedOptionIndex,
     ccsNullIntegrationBackendReadOptionIntoSetting,
     ccsNullIntegrationBackendWriteSettingIntoOption
 };
 
-CCSIntegrationBackend *
+CCSIntegration *
 ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai)
 {
-    CCSIntegrationBackend *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegrationBackend));
+    CCSIntegration *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
 
     if (!integration)
 	return NULL;
 
     ccsObjectInit (integration, ai);
-    ccsObjectAddInterface (integration, (const CCSInterface *) &ccsNullIntegrationBackendInterface, GET_INTERFACE_TYPE (CCSIntegrationBackendInterface));
+    ccsObjectAddInterface (integration, (const CCSInterface *) &ccsNullIntegrationBackendInterface, GET_INTERFACE_TYPE (CCSIntegrationInterface));
     return integration;
 }
 
@@ -1461,7 +1461,7 @@ static Bool ccsBackendHasSetIntegration (CCSBackend *backend)
     return (GET_INTERFACE (CCSBackendInterface, backend))->setIntegration != NULL;
 }
 
-void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegrationBackend *integration)
+void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegration *integration)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->setIntegration) (backend, integration);
 }
@@ -1640,7 +1640,7 @@ static Bool ccsDynamicBackendDeleteProfileWrapper (CCSBackend *backend, CCSConte
     return FALSE;
 }
 
-static void ccsDynamicBackendSetIntegrationWrapper (CCSBackend *backend, CCSIntegrationBackend *integration)
+static void ccsDynamicBackendSetIntegrationWrapper (CCSBackend *backend, CCSIntegration *integration)
 {
     DYNAMIC_BACKEND_PRIV (backend);
 

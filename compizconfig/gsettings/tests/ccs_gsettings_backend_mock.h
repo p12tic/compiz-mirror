@@ -24,8 +24,6 @@ class CCSGSettingsBackendGMockInterface
 	virtual CCSGSettingsWrapper * getSettingsObjectForPluginWithPath (const char * plugin,
 									  const char * path,
 									  CCSContext * context) = 0;
-	virtual void registerGConfClient () = 0;
-	virtual void unregisterGConfClient () = 0;
 	virtual const char * getCurrentProfile () = 0;
 	virtual GVariant * getExistingProfiles () = 0;
 	virtual void setExistingProfiles (GVariant *) = 0;
@@ -53,8 +51,6 @@ class CCSGSettingsBackendGMock :
 	MOCK_METHOD3 (getSettingsObjectForPluginWithPath, CCSGSettingsWrapper * (const char * plugin,
 										 const char * path,
 										 CCSContext * context));
-	MOCK_METHOD0 (registerGConfClient, void ());
-	MOCK_METHOD0 (unregisterGConfClient, void ());
 	MOCK_METHOD0 (getCurrentProfile, const char * ());
 	MOCK_METHOD0 (getExistingProfiles, GVariant * ());
 	MOCK_METHOD1 (setExistingProfiles, void (GVariant *));
@@ -95,18 +91,6 @@ class CCSGSettingsBackendGMock :
 	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->getSettingsObjectForPluginWithPath (plugin,
 																	path,
 																	context);
-	}
-
-	static void
-	ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend)
-	{
-	    (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->registerGConfClient ();
-	}
-
-	static void
-	ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
-	{
-	    (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->unregisterGConfClient ();
 	}
 
 	static const char *

@@ -361,7 +361,7 @@ findDisplaySettingForPlugin (CCSContext *context,
 }
 
 int
-ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
+ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 						    const char		  *settingName,
 						    const char		  *pluginName)
 {
@@ -399,7 +399,7 @@ gnomeGConfValueChanged (GConfClient *client,
 			GConfEntry  *entry,
 			gpointer    user_data)
 {
-    CCSIntegrationBackend *integration = (CCSIntegrationBackend *)user_data;
+    CCSIntegration *integration = (CCSIntegration *)user_data;
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) integration;
     char       *keyName = (char*) gconf_entry_get_key (entry);
     int        i, last = 0, num = 0;
@@ -486,7 +486,7 @@ gnomeGConfValueChanged (GConfClient *client,
 }
 
 void
-finiGConfClient (CCSIntegrationBackend *integration)
+finiGConfClient (CCSIntegration *integration)
 {
     int i;
 
@@ -513,7 +513,7 @@ finiGConfClient (CCSIntegrationBackend *integration)
 }
 
 void
-initGConfClient (CCSIntegrationBackend *integration)
+initGConfClient (CCSIntegration *integration)
 {
     int i;
 
@@ -580,7 +580,7 @@ getButtonBindingForSetting (CCSContext   *context,
 }
 
 Bool
-ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integration,
+ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSBackend	       *backend,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
@@ -818,7 +818,7 @@ setButtonBindingForSetting (CCSContext   *context,
 }
 
 void
-ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegrationBackend *integration,
+ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  CCSBackend		 *backend,
 						  CCSContext		 *context,
 						  CCSSetting		 *setting,
@@ -830,7 +830,7 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegrationBackend *integra
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (!priv->client)
-	ccsGSettingsBackendRegisterGConfClient (backend);
+	initGConfClient (integration);
 
     switch (specialOptions[index].type)
     {
@@ -1013,7 +1013,7 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegrationBackend *integra
 }
 
 void
-ccsGConfIntegrationBackendFree (CCSIntegrationBackend *integration)
+ccsGConfIntegrationBackendFree (CCSIntegration *integration)
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
@@ -1025,7 +1025,7 @@ ccsGConfIntegrationBackendFree (CCSIntegrationBackend *integration)
     free (integration);
 }
 
-const CCSIntegrationBackendInterface ccsGConfIntegrationBackendInterface =
+const CCSIntegrationInterface ccsGConfIntegrationBackendInterface =
 {
     ccsGConfIntegrationBackendGetIntegratedOptionIndex,
     ccsGConfIntegrationBackendReadOptionIntoSetting,
@@ -1034,10 +1034,10 @@ const CCSIntegrationBackendInterface ccsGConfIntegrationBackendInterface =
 };
 
 static CCSGConfIntegrationBackendPrivate *
-addPrivate (CCSIntegrationBackend *backend,
+addPrivate (CCSIntegration *backend,
 	    CCSObjectAllocationInterface *ai)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegrationBackend));
+    CCSGConfIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
 
     if (!priv)
     {
@@ -1050,12 +1050,12 @@ addPrivate (CCSIntegrationBackend *backend,
     return priv;
 }
 
-CCSIntegrationBackend *
+CCSIntegration *
 ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai)
 {
-    CCSIntegrationBackend *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegrationBackend));
+    CCSIntegration *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
 
     if (!integration)
 	return NULL;
@@ -1068,9 +1068,9 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
 
     ccsObjectAddInterface (integration,
 			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,
-			   GET_INTERFACE_TYPE (CCSIntegrationBackendInterface));
+			   GET_INTERFACE_TYPE (CCSIntegrationInterface));
 
-    ccsIntegrationBackendRef (integration);
+    ccsIntegrationRef (integration);
 
     return integration;
 }

@@ -27,7 +27,7 @@ CCSStringList
 ccsGSettingsGetExistingProfiles (CCSBackend *backend, CCSContext *context);
 
 void
-ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegrationBackend *integration);
+ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegration *integration);
 
 typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;

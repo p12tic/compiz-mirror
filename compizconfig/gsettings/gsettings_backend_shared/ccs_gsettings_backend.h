@@ -26,7 +26,7 @@ struct _CCSGSettingsBackendPrivate
     char	    *currentProfile;
     CCSContext	    *context;
 
-    CCSIntegrationBackend *integration;
+    CCSIntegration *integration;
 
 #ifdef USE_GCONF
 
