@@ -19,8 +19,6 @@ typedef CCSGSettingsWrapper * (*CCSGSettingsBackendGetSettingsObjectForPluginWit
 											const char *plugin,
 											const char *path,
 											CCSContext *context);
-typedef void (*CCSGSettingsBackendRegisterGConfClient) (CCSBackend *backend);
-typedef void (*CCSGSettingsBackendUnregisterGConfClient) (CCSBackend *backend);
 
 typedef const char * (*CCSGSettingsBackendGetCurrentProfile) (CCSBackend *backend);
 
@@ -43,8 +41,6 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
     CCSGSettingsBackendConnectToChangedSignal gsettingsBackendConnectToChangedSignal;
     CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
-    CCSGSettingsBackendRegisterGConfClient gsettingsBackendRegisterGConfClient;
-    CCSGSettingsBackendUnregisterGConfClient gsettingsBackendUnregisterGConfClient;
     CCSGSettingsBackendGetCurrentProfile   gsettingsBackendGetCurrentProfile;
     CCSGSettingsBackendGetExistingProfiles gsettingsBackendGetExistingProfiles;
     CCSGSettingsBackendSetExistingProfiles gsettingsBackendSetExistingProfiles;
@@ -76,12 +72,6 @@ ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
 						const char *plugin,
 						const char *path,
 						CCSContext *context);
-
-void
-ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
-
-void
-ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend);
 
 const char *
 ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend);

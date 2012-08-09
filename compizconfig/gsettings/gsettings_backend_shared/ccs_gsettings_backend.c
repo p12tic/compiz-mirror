@@ -8,6 +8,7 @@
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
+#include "gconf-integration.h"
 #include "gsettings_shared.h"
 
 CCSStringList
@@ -230,25 +231,6 @@ ccsGSettingsBackendConnectToValueChangedSignalDefault (CCSBackend *backend, CCSG
     ccsGSettingsWrapperConnectToChangedSignal (wrapper, (GCallback) ccsGSettingsValueChanged, (gpointer) backend);
 }
 
-static void
-ccsGSettingsBackendRegisterGConfClientDefault (CCSBackend *backend)
-{
-#ifdef USE_GCONF
-    initGConfClient (backend);
-#endif
-}
-
-static void
-ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
-{
-#ifdef USE_GCONF
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    gconf_client_clear_cache (priv->client);
-    finiGConfClient (backend);
-#endif
-}
-
 static const char *
 ccsGSettingsBackendGetCurrentProfileDefault (CCSBackend *backend)
 {
@@ -316,8 +298,6 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
     ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault,
-    ccsGSettingsBackendRegisterGConfClientDefault,
-    ccsGSettingsBackendUnregisterGConfClientDefault,
     ccsGSettingsBackendGetCurrentProfileDefault,
     ccsGSettingsBackendGetExistingProfilesDefault,
     ccsGSettingsBackendSetExistingProfilesDefault,
@@ -376,8 +356,6 @@ ccsGSettingsBackendDetachFromBackend (CCSBackend *backend)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    ccsGSettingsBackendUnregisterGConfClient (backend);
-
     if (priv->currentProfile)
     {
 	free (priv->currentProfile);
@@ -396,6 +374,8 @@ ccsGSettingsBackendDetachFromBackend (CCSBackend *backend)
     ccsGSettingsWrapperUnref (priv->compizconfigSettings);
 
     priv->compizconfigSettings = NULL;
+
+    ccsIntegrationUnref (priv->integration);
 
     free (priv);
     ccsObjectSetPrivate (backend, NULL);
@@ -424,6 +404,12 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
     ccsGSettingsBackendAddProfile (backend, "Default");
 
     g_free (currentProfilePath);
+
+#ifdef USE_GCONF
+    priv->integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
+#else
+    priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
+#endif
 
     return TRUE;
 }

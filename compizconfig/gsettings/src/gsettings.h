@@ -40,7 +40,6 @@
 #include <gio/gio.h>
 
 #include "gsettings_shared.h"
-
 #include <ccs_gsettings_interface.h>
 
 #endif

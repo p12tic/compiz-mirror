@@ -31,10 +31,31 @@
  *
  **/
 
+#ifdef USE_GCONF
+#include <ccs-backend.h>
+#include <gconf/gconf.h>
+#include <gconf/gconf-client.h>
+#include <gconf/gconf-value.h>
 #include "gsettings_shared.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
-#ifdef USE_GCONF
+#include "gconf-integration.h"
+
+typedef enum {
+    OptionInt,
+    OptionBool,
+    OptionKey,
+    OptionString,
+    OptionSpecial,
+} SpecialOptionType;
+
+typedef struct _SpecialOptionGConf {
+    const char*       settingName;
+    const char*       pluginName;
+    Bool	      screen;
+    const char*       gnomeName;
+    SpecialOptionType type;
+} SpecialOptionGConf;
 
 const SpecialOptionGConf specialOptions[] = {
     {"run_key", "gnomecompat", FALSE,
@@ -310,6 +331,16 @@ static const char* watchedGConfGnomeDirectories[] = {
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOptionGConf))
 
+typedef struct _CCSGConfIntegrationBackendPrivate CCSGConfIntegrationBackendPrivate;
+
+struct _CCSGConfIntegrationBackendPrivate
+{
+    CCSBackend *backend;
+    CCSContext *context;
+    GConfClient *client;
+    guint       *gnomeGConfNotifyIds;
+};
+
 static CCSSetting *
 findDisplaySettingForPlugin (CCSContext *context,
 			     const char *plugin,
@@ -329,9 +360,10 @@ findDisplaySettingForPlugin (CCSContext *context,
     return s;
 }
 
-Bool
-isGConfIntegratedOption (CCSSetting *setting,
-			 int	    *index)
+int
+ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
+						    const char		  *settingName,
+						    const char		  *pluginName)
 {
     unsigned int i;
 
@@ -339,14 +371,14 @@ isGConfIntegratedOption (CCSSetting *setting,
     {
 	const SpecialOptionGConf *opt = &specialOptions[i];
 
-	if (strcmp (ccsSettingGetName (setting), opt->settingName) != 0)
+	if (strcmp (settingName, opt->settingName) != 0)
 	    continue;
 
-	if (ccsPluginGetName (ccsSettingGetParent (setting)))
+	if (pluginName)
 	{
 	    if (!opt->pluginName)
 		continue;
-	    if (strcmp (ccsPluginGetName (ccsSettingGetParent (setting)), opt->pluginName) != 0)
+	    if (strcmp (pluginName, opt->pluginName) != 0)
 		continue;
 	}
 	else
@@ -355,13 +387,10 @@ isGConfIntegratedOption (CCSSetting *setting,
 		continue;
 	}
 
-	if (index)
-	    *index = i;
-
-	return TRUE;
+	return i;
     }
 
-    return FALSE;
+    return -1;
 }
 
 void
@@ -370,17 +399,18 @@ gnomeGConfValueChanged (GConfClient *client,
 			GConfEntry  *entry,
 			gpointer    user_data)
 {
-    CCSContext *context = (CCSContext *)user_data;
+    CCSIntegration *integration = (CCSIntegration *)user_data;
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) integration;
     char       *keyName = (char*) gconf_entry_get_key (entry);
     int        i, last = 0, num = 0;
     Bool       needInit = TRUE;
 
-    if (!ccsGetIntegrationEnabled (context))
+    /* We don't care if integration is not enabled */
+    if (!ccsGetIntegrationEnabled (priv->context))
 	return;
 
     /* we have to loop multiple times here, because one Gnome
        option may be integrated with multiple Compiz options */
-
     while (1)
     {
 	for (i = last, num = -1; i < N_SOPTIONS; i++)
@@ -405,24 +435,24 @@ gnomeGConfValueChanged (GConfClient *client,
 
 	    if (needInit)
 	    {
-		readInit (NULL, context);
+		ccsBackendReadInit (priv->backend, priv->context);
 		needInit = FALSE;
 	    }
 
-	    s = findDisplaySettingForPlugin (context, "core",
+	    s = findDisplaySettingForPlugin (priv->context, "core",
 					     "window_menu_button");
 	    if (s)
-		readSetting (NULL, context, s);
+		ccsBackendReadSetting (priv->backend, priv->context, s);
 
-	    s = findDisplaySettingForPlugin (context, "move",
+	    s = findDisplaySettingForPlugin (priv->context, "move",
 					     "initiate_button");
 	    if (s)
-		readSetting (NULL, context, s);
+		ccsBackendReadSetting (priv->backend, priv->context, s);
 
-	    s = findDisplaySettingForPlugin (context, "resize",
+	    s = findDisplaySettingForPlugin (priv->context, "resize",
 					     "initiate_button");
 	    if (s)
-		readSetting (NULL, context, s);
+		ccsBackendReadSetting (priv->backend, priv->context, s);
 	}
 	else
 	{
@@ -430,7 +460,7 @@ gnomeGConfValueChanged (GConfClient *client,
 	    CCSSetting    *setting;
 	    SpecialOptionGConf *opt = (SpecialOptionGConf *) &specialOptions[num];
 
-	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
+	    plugin = ccsFindPlugin (priv->context, (char*) opt->pluginName);
 	    if (plugin)
 	    {
 		for (i = 0; i < 1; i++)
@@ -441,10 +471,10 @@ gnomeGConfValueChanged (GConfClient *client,
 		    {
 			if (needInit)
 			{
-			    readInit (NULL, context);
+			    ccsBackendReadInit (priv->backend, priv->context);
 			    needInit = FALSE;
 			}
-			readSetting (NULL, context, setting);
+			ccsBackendReadSetting (priv->backend, priv->context, setting);
 		    }
 
 		    /* do not read display settings multiple
@@ -456,11 +486,11 @@ gnomeGConfValueChanged (GConfClient *client,
 }
 
 void
-initGConfClient (CCSBackend *backend)
+initGConfClient  (CCSIntegration *integration)
 {
     int i;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     priv->client = gconf_client_get_default ();
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
@@ -475,29 +505,32 @@ initGConfClient (CCSBackend *backend)
 }
 
 void
-finiGConfClient (CCSBackend *backend)
+finiGConfClient (CCSIntegration *integration)
 {
     int i;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    if (priv->client)
     {
-	if (priv->gnomeGConfNotifyIds[i])
+	for (i = 0; i < NUM_WATCHED_DIRS; i++)
 	{
-	    gconf_client_notify_remove (priv->client, priv->gnomeGConfNotifyIds[0]);
-	    priv->gnomeGConfNotifyIds[i] = 0;
+	    if (priv->gnomeGConfNotifyIds[i])
+	    {
+		gconf_client_notify_remove (priv->client, priv->gnomeGConfNotifyIds[0]);
+		priv->gnomeGConfNotifyIds[i] = 0;
+	    }
+	    gconf_client_remove_dir (priv->client, watchedGConfGnomeDirectories[i], NULL);
 	}
-	gconf_client_remove_dir (priv->client, watchedGConfGnomeDirectories[i], NULL);
-    }
-    gconf_client_suggest_sync (priv->client, NULL);
+	gconf_client_suggest_sync (priv->client, NULL);
 
-    g_object_unref (priv->client);
-    priv->client = NULL;
+	g_object_unref (priv->client);
+	priv->client = NULL;
+    }
 }
 
 static unsigned int
-getGnomeMouseButtonModifier(GConfClient *client)
+getGnomeMouseButtonModifier (GConfClient *client)
 {
     unsigned int modMask = 0;
     GError       *err = NULL;
@@ -540,21 +573,24 @@ getButtonBindingForSetting (CCSContext   *context,
 }
 
 Bool
-readGConfIntegratedOption (CCSBackend *backend,
-			   CCSContext *context,
-			   CCSSetting *setting,
-			   int	      index)
+ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
+						 CCSContext	       *context,
+						 CCSSetting	       *setting,
+						 int		       index)
 {
     GConfValue *gconfValue;
     GError     *err = NULL;
     Bool       ret = FALSE;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     
     if (!priv->client)
-	ccsGSettingsBackendRegisterGConfClient (backend);
+	initGConfClient (integration);
 
-    ret = readOption (backend, setting);
+    ret = ccsSettingIsReadableByBackend (setting);
+
+    if (!ret)
+	return FALSE;
 
     gconfValue = gconf_client_get (priv->client,
 				   specialOptions[index].gnomeName,
@@ -713,7 +749,8 @@ readGConfIntegratedOption (CCSBackend *backend,
 }
 
 static Bool
-setGnomeMouseButtonModifier (GConfClient *client, unsigned int modMask)
+setGnomeMouseButtonModifier (GConfClient *client,
+			     unsigned int modMask)
 {
     char   *modifiers, *currentValue;
     GError *err = NULL;
@@ -774,18 +811,18 @@ setButtonBindingForSetting (CCSContext   *context,
 }
 
 void
-writeGConfIntegratedOption (CCSBackend *backend,
-			    CCSContext *context,
-			    CCSSetting *setting,
-			    int	       index)
+ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
+						  CCSContext		 *context,
+						  CCSSetting		 *setting,
+						  int			 index)
 {
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
-    
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    
     if (!priv->client)
-	ccsGSettingsBackendRegisterGConfClient (backend);
+	initGConfClient (integration);
 
     switch (specialOptions[index].type)
     {
@@ -966,4 +1003,69 @@ writeGConfIntegratedOption (CCSBackend *backend,
     if (err)
 	g_error_free (err);
 }
+
+void
+ccsGConfIntegrationBackendFree (CCSIntegration *integration)
+{
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+
+    finiGConfClient (integration);
+
+    priv->backend = NULL;
+
+    ccsObjectFinalize (integration);
+    free (integration);
+}
+
+const CCSIntegrationInterface ccsGConfIntegrationBackendInterface =
+{
+    ccsGConfIntegrationBackendGetIntegratedOptionIndex,
+    ccsGConfIntegrationBackendReadOptionIntoSetting,
+    ccsGConfIntegrationBackendWriteOptionFromSetting,
+    ccsGConfIntegrationBackendFree
+};
+
+static CCSGConfIntegrationBackendPrivate *
+addPrivate (CCSIntegration *backend,
+	    CCSObjectAllocationInterface *ai)
+{
+    CCSGConfIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
+
+    if (!priv)
+    {
+	ccsObjectFinalize (backend);
+	free (backend);
+    }
+
+    ccsObjectSetPrivate (backend, (CCSPrivate *) priv);
+
+    return priv;
+}
+
+CCSIntegration *
+ccsGConfIntegrationBackendNew (CCSBackend *backend,
+			       CCSContext *context,
+			       CCSObjectAllocationInterface *ai)
+{
+    CCSIntegration *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
+
+    if (!integration)
+	return NULL;
+
+    ccsObjectInit (integration, ai);
+
+    CCSGConfIntegrationBackendPrivate *priv = addPrivate (integration, ai);
+    priv->backend = backend;
+    priv->context = context;
+
+    ccsObjectAddInterface (integration,
+			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,
+			   GET_INTERFACE_TYPE (CCSIntegrationInterface));
+
+    ccsIntegrationRef (integration);
+
+    return integration;
+}
+
+
 #endif

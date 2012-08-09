@@ -12,59 +12,6 @@ COMPIZCONFIG_BEGIN_DECLS
 
 #include "ccs_gsettings_interface.h"
 
-#ifdef USE_GCONF
-
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
-
-
-typedef enum {
-    OptionInt,
-    OptionBool,
-    OptionKey,
-    OptionString,
-    OptionSpecial,
-} SpecialOptionType;
-
-typedef struct _SpecialOptionGConf {
-    const char*       settingName;
-    const char*       pluginName;
-    Bool	      screen;
-    const char*       gnomeName;
-    SpecialOptionType type;
-} SpecialOptionGConf;
-
-Bool
-isGConfIntegratedOption (CCSSetting *setting,
-			 int	    *index);
-
-void
-gnomeGConfValueChanged (GConfClient *client,
-			guint       cnxn_id,
-			GConfEntry  *entry,
-			gpointer    user_data);
-
-void
-initGConfClient (CCSBackend *backend);
-
-void
-finiGConfClient (CCSBackend *backend);
-
-Bool
-readGConfIntegratedOption (CCSBackend *backend,
-			   CCSContext *context,
-			   CCSSetting *setting,
-			   int	      index);
-
-void
-writeGConfIntegratedOption (CCSBackend *backend,
-			    CCSContext *context,
-			    CCSSetting *setting,
-			    int	       index);
-
-#endif
-
 /* some forward declarations */
 void
 ccsGSettingsValueChanged (GSettings   *settings,
@@ -263,10 +210,6 @@ void writeSetting (CCSBackend *backend,
 		   CCSContext *context,
 		   CCSSetting *setting);
 void writeOption (CCSBackend *backend, CCSSetting *setting);
-
-Bool
-isIntegratedOption (CCSSetting *setting,
-		    int        *index);
 
 COMPIZCONFIG_END_DECLS
 
