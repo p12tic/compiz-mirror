@@ -91,13 +91,13 @@ void GLVertexBuffer::begin (GLenum primitiveType /* = GL_TRIANGLES */)
 	priv->textureData[i].clear ();
 }
 
-int GLVertexBuffer::end ()
+bool GLVertexBuffer::end ()
 {
     if (priv->vertexData.empty ())
-	return 0;
+	return false;
 
     if (!enabled ())
-	return 0;
+	return true;
 
     GL::bindBuffer (GL_ARRAY_BUFFER, priv->vertexBuffer);
     GL::bufferData (GL_ARRAY_BUFFER,
@@ -139,7 +139,7 @@ int GLVertexBuffer::end ()
 
     GL::bindBuffer (GL_ARRAY_BUFFER, 0);
 
-    return countVertices ();
+    return true;
 }
 
 void GLVertexBuffer::addVertices (GLuint nVertices, const GLfloat *vertices)
