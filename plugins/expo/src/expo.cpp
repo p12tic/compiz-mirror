@@ -35,7 +35,7 @@ COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 			    (sigmoid (1) - sigmoid (0)))
 
 #define interpolate(a, b, val) (((val) * (a)) + ((1 - (val)) * (b)))
-#define DND_THRESHOLD 5
+static const unsigned int DND_THRESHOLD = 5;
 
 bool
 ExpoScreen::dndInit (CompAction          *action,
