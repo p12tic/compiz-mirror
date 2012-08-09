@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
+#include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_interface_wrapper.h"
 
 GList *
 variantTypeToPossibleSettingType (const gchar *vt)
@@ -38,22 +40,17 @@ variantTypeToPossibleSettingType (const gchar *vt)
     return possibleTypesList;
 }
 
-GObject *
-findObjectInListWithPropertySchemaName (const gchar *schemaName,
-					GList	    *iter)
+CCSGSettingsWrapper *
+findCCSGSettingsWrapperBySchemaName (const gchar *schemaName,
+				     GList	 *iter)
 {
     while (iter)
     {
-	GObject   *obj = (GObject *) iter->data;
-	gchar	  *name = NULL;
+	CCSGSettingsWrapper   *obj = iter->data;
+	const gchar	      *name = ccsGSettingsWrapperGetSchemaName (obj);
 
-	g_object_get (obj,
-		      "schema",
-		      &name, NULL);
 	if (g_strcmp0 (name, schemaName) != 0)
 	    obj = NULL;
-
-	g_free (name);
 
 	if (obj)
 	    return obj;

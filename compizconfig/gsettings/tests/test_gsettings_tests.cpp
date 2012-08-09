@@ -1,13 +1,19 @@
+#include <tr1/tuple>
+
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
+#include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_wrapper_mock.h"
 #include "gsettings_mocks.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
 using ::testing::Return;
+using ::testing::IsNull;
 
 TEST_P(CCSGSettingsTest, TestTestFixtures)
 {
@@ -431,60 +437,72 @@ TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithS
     EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
 }
 
-class CCSGSettingsTestGObjectListWithProperty :
+class CCSGSettingsTestGSettingsWrapperWithSchemaName :
     public CCSGSettingsTestIndependent
 {
     public:
 
-	virtual void SetUp ()
+	typedef std::tr1::tuple <boost::shared_ptr <CCSGSettingsWrapper>, CCSGSettingsWrapperGMock *> WrapperMock;
+
+	CCSGSettingsTestGSettingsWrapperWithSchemaName () :
+	    objectSchemaGList (NULL)
 	{
 	    CCSGSettingsTestIndependent::SetUp ();
-	    g_type_init ();
-
-	    objectSchemaList = NULL;
 	}
 
-	virtual void TearDown ()
+	~CCSGSettingsTestGSettingsWrapperWithSchemaName ()
 	{
-	    GList *iter = objectSchemaList;
-
-	    while (iter)
-	    {
-		g_object_unref ((GObject *) iter->data);
-		iter = g_list_next (iter);
-	    }
-
-	    g_list_free (objectSchemaList);
-	    objectSchemaList = NULL;
+	    g_list_free (objectSchemaGList);
 	    CCSGSettingsTestIndependent::TearDown ();
 	}
 
-	CCSGSettingsWrapGSettings * AddObjectWithSchemaName (const std::string &schemaName)
+	WrapperMock
+	AddObject ()
 	{
-	    CCSGSettingsWrapGSettings *wrapGSettingsObject =
-		    compizconfig_gsettings_wrap_gsettings_new (COMPIZCONFIG_GSETTINGS_TYPE_MOCK_WRAP_GSETTINGS, schemaName.c_str ());
-	    objectSchemaList = g_list_append (objectSchemaList, wrapGSettingsObject);
+	    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+							     boost::bind (ccsGSettingsWrapperUnref, _1));
+	    CCSGSettingsWrapperGMock			  *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
 
-	    return wrapGSettingsObject;
+	    objectSchemaGList = g_list_append (objectSchemaGList, wrapper.get ());
+	    objectSchemaList.push_back (wrapper);
+
+	    return WrapperMock (wrapper, gmockWrapper);
 	}
+
+	static const std::string VALUE_FOO;
+	static const std::string VALUE_BAR;
+	static const std::string VALUE_BAZ;
 
     protected:
 
-	GList *objectSchemaList;
+	GList						       *objectSchemaGList;
+	std::vector <boost::shared_ptr <CCSGSettingsWrapper> > objectSchemaList;
 };
 
-TEST_F(CCSGSettingsTestGObjectListWithProperty, TestFindExistingObjectWithSchema)
-{
-    GObject *obj = reinterpret_cast <GObject *> (AddObjectWithSchemaName ("foo"));
+const std::string CCSGSettingsTestGSettingsWrapperWithSchemaName::VALUE_FOO = "foo";
+const std::string CCSGSettingsTestGSettingsWrapperWithSchemaName::VALUE_BAR = "bar";
+const std::string CCSGSettingsTestGSettingsWrapperWithSchemaName::VALUE_BAZ = "baz";
 
-    EXPECT_EQ (findObjectInListWithPropertySchemaName ("foo", objectSchemaList), obj);
+TEST_F(CCSGSettingsTestGSettingsWrapperWithSchemaName, TestFindExistingObjectWithSchema)
+{
+    WrapperMock wr1 (AddObject ());
+    WrapperMock wr2 (AddObject ());
+
+    EXPECT_CALL (*(std::tr1::get <1> (wr1)), getSchemaName ()).WillRepeatedly (Return (VALUE_BAR.c_str ()));
+    EXPECT_CALL (*(std::tr1::get <1> (wr2)), getSchemaName ()).WillRepeatedly (Return (VALUE_FOO.c_str ()));
+
+    EXPECT_EQ (findCCSGSettingsWrapperBySchemaName (VALUE_FOO.c_str (), objectSchemaGList), (std::tr1::get <0> (wr2)).get ());
 }
 
-TEST_F(CCSGSettingsTestGObjectListWithProperty, TestNoFindNonexistingObjectWithSchema)
+TEST_F(CCSGSettingsTestGSettingsWrapperWithSchemaName, TestNoFindNonexistingObjectWithSchema)
 {
-    AddObjectWithSchemaName ("bar");
+    WrapperMock wr1 (AddObject ());
+    WrapperMock wr2 (AddObject ());
 
-    EXPECT_EQ (NULL, findObjectInListWithPropertySchemaName ("foo", objectSchemaList));
+    EXPECT_CALL (*(std::tr1::get <1> (wr1)), getSchemaName ()).WillRepeatedly (Return (VALUE_BAR.c_str ()));
+    EXPECT_CALL (*(std::tr1::get <1> (wr2)), getSchemaName ()).WillRepeatedly (Return (VALUE_BAZ.c_str ()));
+
+    EXPECT_THAT (findCCSGSettingsWrapperBySchemaName (VALUE_FOO.c_str (), objectSchemaGList), IsNull ());
 }
 
 class CCSGSettingsTestFindSettingLossy :
