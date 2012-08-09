@@ -83,7 +83,7 @@ TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBli
     ASSERT_DEATH ({
 		    dbStrict.render (blitRegion, false);
 		  },
-		  ".fatal.");
+		  ".*");
 }
 
 TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
