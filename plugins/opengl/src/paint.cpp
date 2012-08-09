@@ -864,13 +864,30 @@ addQuads (GLVertexBuffer *vertexBuffer,
 }
 
 void
-GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
+GLWindow::clearVertices ()
+{
+    priv->vertexBuffer->begin ();
+}
+
+void
+GLWindow::addVertexDataForGeometry (const GLTexture::MatrixList &matrices,
+				    const CompRegion	        &region,
+				    const CompRegion	        &clipRegion,
+				    unsigned int	        min,
+				    unsigned int		max)
+{
+    glAddGeometry (priv->vertexBuffer, matrices, region, clipRegion, min, max);
+}
+
+void
+GLWindow::glAddGeometry (GLVertexBuffer		     *vertexBuffer,
+			 const GLTexture::MatrixList &matrix,
 			 const CompRegion            &region,
 			 const CompRegion            &clip,
 			 unsigned int                maxGridWidth,
 			 unsigned int                maxGridHeight)
 {
-    WRAPABLE_HND_FUNCTN (glAddGeometry, matrix, region, clip)
+    WRAPABLE_HND_FUNCTN (glAddGeometry, vertexBuffer, matrix, region, clip)
 
     BoxRec full;
     int    nMatrix = matrix.size ();
@@ -931,7 +948,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 		if (nClip == 1)
 		{
-		    addQuads (priv->vertexBuffer, matrix, nMatrix,
+		    addQuads (vertexBuffer, matrix, nMatrix,
 			      x1, y1, x2, y2,
 			      rect,
 			      maxGridWidth, maxGridHeight);
@@ -957,7 +974,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 			if (cbox.x1 < cbox.x2 && cbox.y1 < cbox.y2)
 			{
-			    addQuads (priv->vertexBuffer, matrix, nMatrix,
+			    addQuads (vertexBuffer, matrix, nMatrix,
 				      cbox.x1, cbox.y1, cbox.x2, cbox.y2,
 				      rect,
 				      maxGridWidth, maxGridHeight);
@@ -969,10 +986,17 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     }
 }
 
+bool
+GLWindow::saveVertices ()
+{
+    return priv->vertexBuffer->end ();
+}
+
 #ifndef USE_GLES
 static void
 enableLegacyOBSAndRender (GLScreen                  *gs,
                           GLWindow                  *w,
+			  GLVertexBuffer	    *vertexBuffer,
                           GLTexture                 *texture,
                           const GLMatrix            &transform,
                           const GLWindowPaintAttrib &attrib,
@@ -1078,7 +1102,7 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 		glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 		glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-		w->vertexBuffer ()->render (transform, attrib);
+		vertexBuffer->render (transform, attrib);
 
 		texture->disable ();
 
@@ -1088,7 +1112,7 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 	    }
 	    else
 	    {
-		w->vertexBuffer ()->render (transform, attrib);
+		vertexBuffer->render (transform, attrib);
 	    }
 
 	    texture->disable ();
@@ -1115,7 +1139,7 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 
 	    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
-	    w->vertexBuffer ()->render (transform, attrib);
+	    vertexBuffer->render (transform, attrib);
 	}
 
 	texture->disable ();
@@ -1145,14 +1169,14 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 		gs->setTexEnvMode (GL_MODULATE);
 		glColor4us (color, color, color, attrib.opacity);
 
-		w->vertexBuffer ()->render (transform, attrib);
+		vertexBuffer->render (transform, attrib);
 
 		glColor4usv (defaultColor);
 		gs->setTexEnvMode (GL_REPLACE);
 	    }
 	    else
 	    {
-		w->vertexBuffer ()->render (transform, attrib);
+		vertexBuffer->render (transform, attrib);
 	    }
 	}
 	else if (attrib.brightness != BRIGHT)
@@ -1161,14 +1185,14 @@ enableLegacyOBSAndRender (GLScreen                  *gs,
 	    glColor4us (attrib.brightness, attrib.brightness,
 			attrib.brightness, BRIGHT);
 
-	    w->vertexBuffer ()->render (transform, attrib);
+	    vertexBuffer->render (transform, attrib);
 
 	    glColor4usv (defaultColor);
 	    gs->setTexEnvMode (GL_REPLACE);
 	}
 	else
 	{
-	    w->vertexBuffer ()->render (transform, attrib);
+	    vertexBuffer->render (transform, attrib);
 	}
 
 	texture->disable ();
@@ -1203,7 +1227,7 @@ GLWindow::glDrawTexture (GLTexture          *texture,
     #else
 
     if (!GLVertexBuffer::enabled ())
-	enableLegacyOBSAndRender (priv->gScreen, this, texture, transform,
+	enableLegacyOBSAndRender (priv->gScreen, this, priv->vertexBuffer, texture, transform,
 						 attrib, filter, mask);
     else
 	priv->vertexBuffer->render (transform, attrib);
@@ -1260,9 +1284,10 @@ GLWindow::glDraw (const GLMatrix     &transform,
     for (unsigned int i = 0; i < priv->textures.size (); i++)
     {
 	ml[0] = priv->matrices[i];
-	priv->vertexBuffer->begin ();
-	glAddGeometry (ml, priv->regions[i], reg);
-	if (priv->vertexBuffer->end ())
+	clearVertices ();
+	addVertexDataForGeometry (ml, priv->regions[i], reg);
+
+	if (saveVertices ())
 	    glDrawTexture (priv->textures[i], transform, attrib, mask);
     }
 

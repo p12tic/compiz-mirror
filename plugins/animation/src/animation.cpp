@@ -1485,7 +1485,8 @@ PrivateAnimWindow::enablePainting (bool enabling)
 }
 
 void
-PrivateAnimWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
+PrivateAnimWindow::glAddGeometry (GLVertexBuffer	      *vertexBuffer,
+				  const GLTexture::MatrixList &matrix,
 				  const CompRegion            &region,
 				  const CompRegion            &clip,
 				  unsigned int                maxGridWidth,
@@ -1495,12 +1496,12 @@ PrivateAnimWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     if (mCurAnimation)
     {
 	if (mCurAnimation->initialized ())
-	    mCurAnimation->addGeometry (matrix, region, clip,
+	    mCurAnimation->addGeometry (vertexBuffer, matrix, region, clip,
 					maxGridWidth, maxGridHeight);
     }
     else
     {
-	gWindow->glAddGeometry (matrix, region, clip,
+	gWindow->glAddGeometry (vertexBuffer, matrix, region, clip,
 				maxGridWidth, maxGridHeight);
     }
 }
@@ -1522,18 +1523,21 @@ Animation::shouldDamageWindowOnEnd ()
 }
 
 void
-Animation::addGeometry (const GLTexture::MatrixList &matrix,
+Animation::addGeometry (GLVertexBuffer *vertexBuffer,
+			const GLTexture::MatrixList &matrix,
 			const CompRegion            &region,
 			const CompRegion            &clip,
 			unsigned int                maxGridWidth,
 			unsigned int                maxGridHeight)
 {
-    mAWindow->priv->gWindow->glAddGeometry (matrix, region, clip,
+    mAWindow->priv->gWindow->glAddGeometry (vertexBuffer,
+					    matrix, region, clip,
 					    maxGridWidth, maxGridHeight);
 }
 
 void
-PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
+PartialWindowAnim::addGeometry (GLVertexBuffer		    *vertexBuffer,
+				const GLTexture::MatrixList &matrix,
 				const CompRegion            &region,
 				const CompRegion            &clip,
 				unsigned int                maxGridWidth,
@@ -1542,12 +1546,12 @@ PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
     if (mUseDrawRegion)
     {
 	CompRegion awRegion (region.intersected (mDrawRegion));
-	Animation::addGeometry (matrix, awRegion, clip,
+	Animation::addGeometry (vertexBuffer, matrix, awRegion, clip,
 				maxGridWidth, maxGridHeight);
     }
     else
     {
-	Animation::addGeometry (matrix, region, clip,
+	Animation::addGeometry (vertexBuffer, matrix, region, clip,
 				maxGridWidth, maxGridHeight);
     }
 }

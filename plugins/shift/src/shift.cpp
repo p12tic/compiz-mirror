@@ -413,13 +413,13 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 		iconReg = CompRegion (0, 0, icon->width (), icon->height ());
 
-		gWindow->vertexBuffer ()->begin ();
+		gWindow->clearVertices ();
 
 		matl.push_back (icon->matrix ());
 
-		gWindow->glAddGeometry (matl, iconReg, iconReg);
+		gWindow->addVertexDataForGeometry (matl, iconReg, iconReg);
 
-		if (gWindow->vertexBuffer ()->end ())
+		if (gWindow->saveVertices ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
 		    GLMatrix		wTransform (transform);

@@ -166,7 +166,7 @@ int GLVertexBuffer::getVertexStride() const
     return 3; // as seen in addVertices
 }
 
-int GLVertexBuffer::countVertices() const
+int GLVertexBuffer::countVertices () const
 {
     return priv->vertexData.size() / 3;
 }

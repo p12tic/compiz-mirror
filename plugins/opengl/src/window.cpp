@@ -204,12 +204,13 @@ GLWindowInterface::glDraw (const GLMatrix     &transform,
     WRAPABLE_DEF (glDraw, transform, attrib, region, mask)
 
 void
-GLWindowInterface::glAddGeometry (const GLTexture::MatrixList &matrix,
+GLWindowInterface::glAddGeometry (GLVertexBuffer	      *vertexBuffer,
+				  const GLTexture::MatrixList &matrix,
 				  const CompRegion            &region,
 				  const CompRegion            &clip,
 				  unsigned int                maxGridWidth,
 				  unsigned int                maxGridHeight)
-    WRAPABLE_DEF (glAddGeometry, matrix, region, clip,
+    WRAPABLE_DEF (glAddGeometry, vertexBuffer, matrix, region, clip,
 		  maxGridWidth, maxGridHeight)
 
 void
@@ -282,12 +283,6 @@ GLWindow::updatePaintAttribs ()
     priv->paint.opacity    = cw->opacity ();
     priv->paint.brightness = cw->brightness ();
     priv->paint.saturation = cw->saturation ();
-}
-
-GLVertexBuffer *
-GLWindow::vertexBuffer ()
-{
-    return priv->vertexBuffer;
 }
 
 const GLTexture::List &
