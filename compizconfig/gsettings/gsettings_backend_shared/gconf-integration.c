@@ -30,12 +30,32 @@
  *	Sam Spilsbury <sam.spilsbury@canonical.com>
  *
  **/
+#ifdef USE_GCONF
 
 #include <ccs-backend.h>
 #include "gsettings_shared.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
-#ifdef USE_GCONF
+#include <gconf/gconf.h>
+#include <gconf/gconf-client.h>
+#include <gconf/gconf-value.h>
+#include "gconf-integration.h"
+
+typedef enum {
+    OptionInt,
+    OptionBool,
+    OptionKey,
+    OptionString,
+    OptionSpecial,
+} SpecialOptionType;
+
+typedef struct _SpecialOptionGConf {
+    const char*       settingName;
+    const char*       pluginName;
+    Bool	      screen;
+    const char*       gnomeName;
+    SpecialOptionType type;
+} SpecialOptionGConf;
 
 const SpecialOptionGConf specialOptions[] = {
     {"run_key", "gnomecompat", FALSE,
@@ -466,29 +486,6 @@ gnomeGConfValueChanged (GConfClient *client,
 }
 
 void
-initGConfClient (CCSIntegrationBackend *integration)
-{
-    int i;
-
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-
-    if (priv->client)
-	finiGConfClient (integration);
-
-    priv->client = gconf_client_get_default ();
-
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
-    {
-	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (priv->client,
-								watchedGConfGnomeDirectories[i],
-								gnomeGConfValueChanged, integration,
-								NULL, NULL);
-	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
-			      GCONF_CLIENT_PRELOAD_NONE, NULL);
-    }
-}
-
-void
 finiGConfClient (CCSIntegrationBackend *integration)
 {
     int i;
@@ -514,6 +511,30 @@ finiGConfClient (CCSIntegrationBackend *integration)
 	priv->client = NULL;
     }
 }
+
+void
+initGConfClient (CCSIntegrationBackend *integration)
+{
+    int i;
+
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+
+    if (priv->client)
+	finiGConfClient (integration);
+
+    priv->client = gconf_client_get_default ();
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    {
+	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (priv->client,
+								watchedGConfGnomeDirectories[i],
+								gnomeGConfValueChanged, integration,
+								NULL, NULL);
+	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
+			      GCONF_CLIENT_PRELOAD_NONE, NULL);
+    }
+}
+
 
 static unsigned int
 getGnomeMouseButtonModifier(GConfClient *client)

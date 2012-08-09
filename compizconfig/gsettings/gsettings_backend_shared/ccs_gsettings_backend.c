@@ -8,6 +8,7 @@
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
+#include "gconf-integration.h"
 #include "gsettings_shared.h"
 
 void

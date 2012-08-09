@@ -12,55 +12,6 @@ COMPIZCONFIG_BEGIN_DECLS
 
 #include "ccs_gsettings_interface.h"
 
-CCSIntegrationBackend *
-ccsGConfIntegrationBackendNew (CCSBackend *backend,
-			       CCSContext *context,
-			       CCSObjectAllocationInterface *ai);
-
-void
-ccsGConfIntegrationBackendFree (CCSIntegrationBackend *integration);
-
-#ifdef USE_GCONF
-
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
-
-
-typedef enum {
-    OptionInt,
-    OptionBool,
-    OptionKey,
-    OptionString,
-    OptionSpecial,
-} SpecialOptionType;
-
-typedef struct _SpecialOptionGConf {
-    const char*       settingName;
-    const char*       pluginName;
-    Bool	      screen;
-    const char*       gnomeName;
-    SpecialOptionType type;
-} SpecialOptionGConf;
-
-Bool
-isGConfIntegratedOption (CCSSetting *setting,
-			 int	    *index);
-
-void
-gnomeGConfValueChanged (GConfClient *client,
-			guint       cnxn_id,
-			GConfEntry  *entry,
-			gpointer    user_data);
-
-void
-initGConfClient (CCSIntegrationBackend *backend);
-
-void
-finiGConfClient (CCSIntegrationBackend *backend);
-
-#endif
-
 /* some forward declarations */
 void
 ccsGSettingsValueChanged (GSettings   *settings,
