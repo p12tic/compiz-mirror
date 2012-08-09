@@ -2700,6 +2700,7 @@ loadPluginMetadataFromProtoBuf (char *pbPath,
 	     pluginMetadata->ParseFromZeroCopyStream (&inputStream)))
 	    success = TRUE;
 	inputStream.Close ();
+	fclose (pbFile);
     }
 
     return success;
@@ -2767,6 +2768,8 @@ writePBFile (char *pbFilePath,
 	else
 	    pluginBriefPB->SerializeToZeroCopyStream (&outputStream);
 	outputStream.Close ();
+
+	fclose (pbFile);
     }
 }
 #endif
