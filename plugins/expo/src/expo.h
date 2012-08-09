@@ -109,7 +109,6 @@ class ExpoScreen :
 	float curveRadius;
 
 	std::vector<GLfloat> vpNormals;
-	std::vector<GLfloat> winNormals;
 
 	CompScreen::GrabHandle grabIndex;
 

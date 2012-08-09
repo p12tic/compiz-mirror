@@ -1354,16 +1354,9 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 	eScreen->gScreen->lighting ()                          &&
 	screen->desktopWindowCount ())
     {
-/* XXX: Curve mode not ported right now */
-/*	unsigned int i, idx, vCount;
 	CompPoint    offset;
-	float        x;
 	GLfloat      *v;
-
-	vCount = gWindow->geometry ().vCount;
-
-	if (eScreen->winNormals.size () < vCount * 3)
-	    eScreen->winNormals.resize (vCount * 3);
+	GLVertexBuffer *vb = gWindow->vertexBuffer ();
 
 	if (!window->onAllViewports ())
 	{
@@ -1371,38 +1364,31 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 	    offset = window->getMovementForOffset (offset);
 	}
 
-	v = gWindow->geometry ().vertices +
-	    (gWindow->geometry ().vertexStride - 3);
+	int stride = vb->getVertexStride ();
+	v = vb->getVertices () + stride - 3;
 
-	for (i = 0; i < vCount; i++)
+	for (int i = 0; i < vb->countVertices (); i++)
 	{
-	    x = (float) (v[0] + offset.x () - screen->width () / 2) *
-		        eScreen->curveAngle / screen->width ();
+	    float x = (v[0] + offset.x () - screen->width () / 2) *
+		      eScreen->curveAngle / screen->width ();
 
 	    while (x < 0)
 		x += 360.0;
 
-	    idx = floor (x);
+	    int idx = floor (x);
 
-	    eScreen->winNormals[i * 3] = -eScreen->vpNormals[idx * 3];
-	    eScreen->winNormals[(i * 3) + 1] =
-		eScreen->vpNormals[(idx * 3) + 1];
-	    eScreen->winNormals[(i * 3) + 2] =
-		eScreen->vpNormals[(idx * 3) + 2];
+	    GLfloat normal[3];
+	    normal[0] = -eScreen->vpNormals[idx * 3];
+	    normal[1] = eScreen->vpNormals[(idx * 3) + 1];
+	    normal[2] = eScreen->vpNormals[(idx * 3) + 2];
+	    vb->addNormals (1, normal);
 
-	    v += gWindow->geometry ().vertexStride;
+	    v += stride;
 	}
 
 	glEnable (GL_NORMALIZE);
-	glNormalPointer (GL_FLOAT,0, &eScreen->winNormals.at (0));
-
-	glEnableClientState (GL_NORMAL_ARRAY);
-
-	gWindow->glDrawTexture (texture, attrib, mask);
-
+	gWindow->glDrawTexture (texture, transform, attrib, mask);
 	glDisable (GL_NORMALIZE);
-	glDisableClientState (GL_NORMAL_ARRAY);
-	glNormal3f (0.0, 0.0, -1.0); */
     }
     else
     {
