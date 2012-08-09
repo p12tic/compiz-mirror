@@ -35,6 +35,7 @@ COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 			    (sigmoid (1) - sigmoid (0)))
 
 #define interpolate(a, b, val) (((val) * (a)) + ((1 - (val)) * (b)))
+#define DND_THRESHOLD 5
 
 bool
 ExpoScreen::dndInit (CompAction          *action,
@@ -354,6 +355,7 @@ ExpoScreen::handleEvent (XEvent *event)
 		doubleClick = false;
 	    }
 	    cScreen->damageScreen ();
+	    prevClickPoint = CompPoint(event->xbutton.x, event->xbutton.y);
 	}
 	break;
 
@@ -367,7 +369,9 @@ ExpoScreen::handleEvent (XEvent *event)
 		clickTime   = 0;
 		doubleClick = false;
 	    }
-	    else if (doubleClick)
+	    else if (doubleClick ||
+	    ((abs (prevClickPoint.x () - event->xbutton.x) <= DND_THRESHOLD) &&
+	     (abs (prevClickPoint.y () - event->xbutton.y) <= DND_THRESHOLD)))
 	    {
 		CompAction& action = optionGetExpoKey ();
 
