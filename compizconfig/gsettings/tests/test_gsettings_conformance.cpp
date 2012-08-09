@@ -220,6 +220,10 @@ class CCSGSettingsBackendEnv :
 
 	    /* Set the new integration, drop our reference on it */
 	    CCSIntegrationBackend *integration = ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator);
+	    CCSIntegrationBackendGMock *gmockIntegration = reinterpret_cast <CCSIntegrationBackendGMock *> (ccsObjectGetPrivate (integration));
+
+	    EXPECT_CALL (*gmockIntegration, getIntegratedOptionIndex (_, _)).WillRepeatedly (Return (-1));
+
 	    ccsBackendSetIntegration ((CCSBackend *) mBackend, integration);
 	    ccsIntegrationBackendUnref (integration);
 
@@ -464,7 +468,7 @@ class CCSGSettingsBackendEnv :
 	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, isReadOnly ()).WillRepeatedly (Return (FALSE));
+	    EXPECT_CALL (*gmockSetting, isReadableByBackend ()).WillRepeatedly (Return (TRUE));
 
 	    if (type == TypeList)
 	    {
@@ -598,7 +602,7 @@ class CCSGSettingsBackendEnv :
 	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
 	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, isReadOnly ()).WillRepeatedly (Return (FALSE));
+	    EXPECT_CALL (*gmockSetting, isReadableByBackend ()).WillRepeatedly (Return (TRUE));
 
 	    if (type == TypeList)
 	    {

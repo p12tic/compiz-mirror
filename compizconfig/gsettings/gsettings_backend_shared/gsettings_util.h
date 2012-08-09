@@ -253,19 +253,6 @@ resetOptionToDefault (CCSBackend *backend, CCSSetting * setting);
 
 /* Should all be living in gsettings.h */
 
-Bool readInit (CCSBackend *, CCSContext * context);
-void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
-Bool readOption (CCSBackend *backend, CCSSetting * setting);
-Bool writeInit (CCSBackend *, CCSContext * context);
-void writeSetting (CCSBackend *backend,
-		   CCSContext *context,
-		   CCSSetting *setting);
-void writeOption (CCSBackend *backend, CCSSetting *setting);
-
-Bool
-isIntegratedOption (CCSSetting *setting,
-		    int        *index);
-
 COMPIZCONFIG_END_DECLS
 
 #endif

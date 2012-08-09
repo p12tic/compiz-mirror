@@ -49,6 +49,7 @@ CCSSettingInterface CCSSettingGMockInterface =
     CCSSettingGMock::ccsResetToDefault,
     CCSSettingGMock::ccsSettingIsIntegrated,
     CCSSettingGMock::ccsSettingIsReadOnly,
+    CCSSettingGMock::ccsSettingIsReadableByBackend,
     CCSSettingGMock::ccsSettingFree
 };
 

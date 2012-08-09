@@ -2765,6 +2765,11 @@ Bool ccsSettingIsReadOnly (CCSSetting *setting)
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingIsReadOnly) (setting);
 }
 
+Bool ccsSettingIsReadableByBackend (CCSSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingIsReadableByBackend) (setting);
+}
+
 void
 ccsContextDestroy (CCSContext * context)
 {
@@ -5269,6 +5274,54 @@ Bool ccsSettingGetIsReadOnlyDefault (CCSSetting *setting)
 	return FALSE;
 
     return ccsBackendGetSettingIsReadOnly ((CCSBackend *) cPrivate->backend, setting);
+}
+
+Bool ccsSettingGetIsReadableByBackendDefault (CCSSetting *setting)
+{
+    static const CCSSettingType readableSettingTypes[] =
+    {
+	TypeBool,
+	TypeInt,
+	TypeFloat,
+	TypeString,
+	TypeColor,
+	TypeKey,
+	TypeButton,
+	TypeEdge,
+	TypeBell,
+	TypeMatch,
+	TypeList
+    };
+    static const unsigned int readableSettingTypesNum = sizeof (readableSettingTypes) / sizeof (readableSettingTypes[0]);
+    int i = 0;
+    Bool isReadableType = FALSE;
+    CCSSettingType type;
+
+    CONTEXT_PRIV (ccsPluginGetContext (ccsSettingGetParent (setting)));
+
+    if (!cPrivate->backend)
+	return FALSE;
+
+    type = ccsSettingGetType (setting);
+
+    /* It is impossible for certain settings to have a schema,
+     * such as actions and read only settings, so in that case
+     * just return FALSE since compizconfig doesn't expect us
+     * to read them anyways */
+    for (i = 0; i < readableSettingTypesNum; ++i)
+    {
+	if (readableSettingTypes[i] == type)
+	{
+	    isReadableType = TRUE;
+	    break;
+	}
+    }
+
+    if (isReadableType &&
+	!ccsSettingIsReadOnly (setting))
+    {
+	return TRUE;
+    }
 
     return FALSE;
 }
@@ -5493,6 +5546,7 @@ static const CCSSettingInterface ccsDefaultSettingInterface =
     ccsSettingResetToDefaultDefault,
     ccsSettingGetIsIntegratedDefault,
     ccsSettingGetIsReadOnlyDefault,
+    ccsSettingGetIsReadableByBackendDefault,
     ccsFreeSettingDefault
 };
 

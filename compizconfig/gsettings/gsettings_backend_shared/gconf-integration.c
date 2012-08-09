@@ -574,7 +574,10 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integrat
     if (!priv->client)
 	initGConfClient (integration);
 
-    ret = readOption (backend, setting);
+    ret = ccsSettingIsReadableByBackend (setting);
+
+    if (!ret)
+	return FALSE;
 
     gconfValue = gconf_client_get (priv->client,
 				   specialOptions[index].gnomeName,
