@@ -464,7 +464,7 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 									    currentProfilePath,
 									    backend->object.object_allocation);
     priv->context = context;
-    priv->integration = ccsGConfIntegrationBackendNew (backend, backend->object.object_allocation);
+    priv->integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
 
     /* Always ensure that we have a default profile */
     ccsGSettingsBackendAddProfile (backend, "Default");

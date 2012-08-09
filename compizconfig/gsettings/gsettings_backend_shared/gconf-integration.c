@@ -316,6 +316,9 @@ typedef struct _CCSGConfIntegrationBackendPrivate CCSGConfIntegrationBackendPriv
 struct _CCSGConfIntegrationBackendPrivate
 {
     CCSBackend *backend;
+    CCSContext *context;
+    GConfClient *client;
+    guint       *gnomeGConfNotifyIds;
 };
 
 static CCSSetting *
@@ -376,17 +379,18 @@ gnomeGConfValueChanged (GConfClient *client,
 			GConfEntry  *entry,
 			gpointer    user_data)
 {
-    CCSContext *context = (CCSContext *)user_data;
+    CCSIntegrationBackend *integration = (CCSIntegrationBackend *)user_data;
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) integration;
     char       *keyName = (char*) gconf_entry_get_key (entry);
     int        i, last = 0, num = 0;
     Bool       needInit = TRUE;
 
-    if (!ccsGetIntegrationEnabled (context))
+    /* We don't care if integration is not enabled */
+    if (!ccsGetIntegrationEnabled (priv->context))
 	return;
 
     /* we have to loop multiple times here, because one Gnome
        option may be integrated with multiple Compiz options */
-
     while (1)
     {
 	for (i = last, num = -1; i < N_SOPTIONS; i++)
@@ -411,24 +415,24 @@ gnomeGConfValueChanged (GConfClient *client,
 
 	    if (needInit)
 	    {
-		readInit (NULL, context);
+		ccsBackendReadInit (priv->backend, priv->context);
 		needInit = FALSE;
 	    }
 
-	    s = findDisplaySettingForPlugin (context, "core",
+	    s = findDisplaySettingForPlugin (priv->context, "core",
 					     "window_menu_button");
 	    if (s)
-		readSetting (NULL, context, s);
+		ccsBackendReadSetting (priv->backend, priv->context, s);
 
-	    s = findDisplaySettingForPlugin (context, "move",
+	    s = findDisplaySettingForPlugin (priv->context, "move",
 					     "initiate_button");
 	    if (s)
-		readSetting (NULL, context, s);
+		ccsBackendReadSetting (priv->backend, priv->context, s);
 
-	    s = findDisplaySettingForPlugin (context, "resize",
+	    s = findDisplaySettingForPlugin (priv->context, "resize",
 					     "initiate_button");
 	    if (s)
-		readSetting (NULL, context, s);
+		ccsBackendReadSetting (priv->backend, priv->context, s);
 	}
 	else
 	{
@@ -436,7 +440,7 @@ gnomeGConfValueChanged (GConfClient *client,
 	    CCSSetting    *setting;
 	    SpecialOptionGConf *opt = (SpecialOptionGConf *) &specialOptions[num];
 
-	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
+	    plugin = ccsFindPlugin (priv->context, (char*) opt->pluginName);
 	    if (plugin)
 	    {
 		for (i = 0; i < 1; i++)
@@ -447,10 +451,10 @@ gnomeGConfValueChanged (GConfClient *client,
 		    {
 			if (needInit)
 			{
-			    readInit (NULL, context);
+			    ccsBackendReadInit (priv->backend, priv->context);
 			    needInit = FALSE;
 			}
-			readSetting (NULL, context, setting);
+			ccsBackendReadSetting (priv->backend, priv->context, setting);
 		    }
 
 		    /* do not read display settings multiple
@@ -462,18 +466,22 @@ gnomeGConfValueChanged (GConfClient *client,
 }
 
 void
-initGConfClient (CCSBackend *backend)
+initGConfClient (CCSIntegrationBackend *integration)
 {
     int i;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+
+    if (priv->client)
+	finiGConfClient (integration);
+
     priv->client = gconf_client_get_default ();
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
 	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (priv->client,
 								watchedGConfGnomeDirectories[i],
-								gnomeGConfValueChanged, priv->context,
+								gnomeGConfValueChanged, integration,
 								NULL, NULL);
 	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
@@ -481,15 +489,14 @@ initGConfClient (CCSBackend *backend)
 }
 
 void
-finiGConfClient (CCSBackend *backend)
+finiGConfClient (CCSIntegrationBackend *integration)
 {
     int i;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (priv->client)
     {
-
 	gconf_client_clear_cache (priv->client);
 
 	for (i = 0; i < NUM_WATCHED_DIRS; i++)
@@ -562,10 +569,10 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integrat
     GError     *err = NULL;
     Bool       ret = FALSE;
 
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     
     if (!priv->client)
-	initGConfClient (backend);
+	initGConfClient (integration);
 
     ret = readOption (backend, setting);
 
@@ -796,7 +803,7 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegrationBackend *integra
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
     
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (!priv->client)
 	ccsGSettingsBackendRegisterGConfClient (backend);
@@ -986,7 +993,7 @@ ccsGConfIntegrationBackendFree (CCSIntegrationBackend *integration)
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
-    finiGConfClient (priv->backend);
+    finiGConfClient (integration);
 
     priv->backend = NULL;
 
@@ -1021,6 +1028,7 @@ addPrivate (CCSIntegrationBackend *backend,
 
 CCSIntegrationBackend *
 ccsGConfIntegrationBackendNew (CCSBackend *backend,
+			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai)
 {
     CCSIntegrationBackend *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegrationBackend));
@@ -1032,6 +1040,7 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
 
     CCSGConfIntegrationBackendPrivate *priv = addPrivate (integration, ai);
     priv->backend = backend;
+    priv->context = context;
 
     ccsObjectAddInterface (integration,
 			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,

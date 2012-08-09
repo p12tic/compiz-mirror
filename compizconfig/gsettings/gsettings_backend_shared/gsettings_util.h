@@ -14,6 +14,7 @@ COMPIZCONFIG_BEGIN_DECLS
 
 CCSIntegrationBackend *
 ccsGConfIntegrationBackendNew (CCSBackend *backend,
+			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai);
 
 void
@@ -53,22 +54,10 @@ gnomeGConfValueChanged (GConfClient *client,
 			gpointer    user_data);
 
 void
-initGConfClient (CCSBackend *backend);
+initGConfClient (CCSIntegrationBackend *backend);
 
 void
-finiGConfClient (CCSBackend *backend);
-
-Bool
-readGConfIntegratedOption (CCSBackend *backend,
-			   CCSContext *context,
-			   CCSSetting *setting,
-			   int	      index);
-
-void
-writeGConfIntegratedOption (CCSBackend *backend,
-			    CCSContext *context,
-			    CCSSetting *setting,
-			    int	       index);
+finiGConfClient (CCSIntegrationBackend *backend);
 
 #endif
 

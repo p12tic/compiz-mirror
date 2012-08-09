@@ -29,8 +29,7 @@ struct _CCSGSettingsBackendPrivate
     CCSIntegrationBackend *integration;
 
 #ifdef USE_GCONF
-    GConfClient *client;
-    guint       *gnomeGConfNotifyIds;
+
 #endif
 
 };
