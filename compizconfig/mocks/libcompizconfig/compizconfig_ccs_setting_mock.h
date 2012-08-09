@@ -59,6 +59,7 @@ class CCSSettingGMockInterface
 	virtual void resetToDefault (Bool) = 0;
 	virtual Bool isIntegrated () = 0;
 	virtual Bool isReadOnly () = 0;
+	virtual Bool isReadableByBackend () = 0;
 };
 
 class CCSSettingGMock :
@@ -117,6 +118,7 @@ class CCSSettingGMock :
 	MOCK_METHOD1 (resetToDefault, void (Bool));
 	MOCK_METHOD0 (isIntegrated, Bool ());
 	MOCK_METHOD0 (isReadOnly, Bool ());
+	MOCK_METHOD0 (isReadableByBackend, Bool ());
 
     private:
 
@@ -358,6 +360,11 @@ class CCSSettingGMock :
 	static void ccsSettingSetPrivatePtr (CCSSetting *setting, void *ptr)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setPrivatePtr (ptr);
+	}
+
+	static Bool ccsSettingIsReadableByBackend (CCSSetting *setting)
+	{
+	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->isReadableByBackend ();
 	}
 
 	static void ccsSettingFree (CCSSetting *setting)
