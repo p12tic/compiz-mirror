@@ -69,15 +69,6 @@ struct _CCSIntegrationBackend
 
 CCSREF_HDR (IntegrationBackend, CCSIntegrationBackend)
 
-/*
-typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
-typedef struct _CCSIntegratedSettingInterface CCSIntegratedSettingInterface;
-
-struct _CCSIntegratedSetting
-{
-
-};
-*/
 unsigned int ccsCCSIntegrationBackendInterfaceGetType ();
 
 int ccsIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
@@ -95,6 +86,9 @@ void ccsIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integra
 						  int			    index);
 
 void ccsFreeIntegrationBackend (CCSIntegrationBackend *integration);
+
+CCSIntegrationBackend *
+ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai);
 
 struct _CCSBackend
 {

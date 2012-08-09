@@ -1229,6 +1229,60 @@ void ccsFreeIntegrationBackend (CCSIntegrationBackend *integration)
     (*(GET_INTERFACE (CCSIntegrationBackendInterface, integration))->freeIntegrationBackend) (integration);
 }
 
+static int
+ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
+						   const char		 *pluginName,
+						   const char		 *settingName)
+{
+    return -1;
+}
+
+static Bool
+ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integration,
+						CCSBackend	      *backend,
+						CCSContext	      *context,
+						CCSSetting	      *setting,
+						int		      index)
+{
+    return FALSE;
+}
+
+static void
+ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integration,
+						 CCSBackend	      *backend,
+						 CCSContext	      *context,
+						 CCSSetting	      *setting,
+						 int		      index)
+{
+}
+
+void
+ccsNullIntegrationBackendFree (CCSIntegrationBackend *integration)
+{
+    ccsObjectFinalize (integration);
+    (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
+}
+
+const CCSIntegrationBackendInterface ccsNullIntegrationBackendInterface =
+{
+    ccsNullIntegrationBackendGetIntegratedOptionIndex,
+    ccsNullIntegrationBackendReadOptionIntoSetting,
+    ccsNullIntegrationBackendWriteSettingIntoOption
+};
+
+CCSIntegrationBackend *
+ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai)
+{
+    CCSIntegrationBackend *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegrationBackend));
+
+    if (!integration)
+	return NULL;
+
+    ccsObjectInit (integration, ai);
+    ccsObjectAddInterface (integration, (const CCSInterface *) &ccsNullIntegrationBackendInterface, GET_INTERFACE_TYPE (CCSIntegrationBackendInterface));
+    return integration;
+}
+
 const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendGetInfo) (backend);
