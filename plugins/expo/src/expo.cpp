@@ -1351,6 +1351,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
                            const GLWindowPaintAttrib &attrib,
 			   unsigned int        mask)
 {
+#if 0  // FIXME: Needs to be re-ported again (no gWindow->vertexBuffer ())
     if (eScreen->expoCam > 0.0                                 &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve &&
 	eScreen->gScreen->lighting ()                          &&
@@ -1393,6 +1394,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 	glDisable (GL_NORMALIZE);
     }
     else
+#endif
     {
 //	glEnable (GL_NORMALIZE);
 	gWindow->glDrawTexture (texture, transform, attrib, mask);
