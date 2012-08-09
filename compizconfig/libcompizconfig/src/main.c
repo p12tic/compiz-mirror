@@ -233,6 +233,7 @@ INTERFACE_TYPE (CCSPluginInterface)
 INTERFACE_TYPE (CCSSettingInterface)
 INTERFACE_TYPE (CCSBackendInterface);
 INTERFACE_TYPE (CCSDynamicBackendInterface);
+INTERFACE_TYPE (CCSIntegrationInterface);
 
 Bool basicMetadata = FALSE;
 
@@ -978,6 +979,7 @@ CCSREF_OBJ (Plugin, CCSPlugin)
 CCSREF_OBJ (Setting, CCSSetting)
 CCSREF_OBJ (Backend, CCSBackend)
 CCSREF_OBJ (DynamicBackend, CCSDynamicBackend)
+CCSREF_OBJ (Integration, CCSIntegration)
 
 static void *
 openBackend (const char *backend)
@@ -1196,6 +1198,87 @@ ccsSetBackend (CCSContext *context, char *name)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextSetBackend) (context, name);
 }
 
+/* Needs to go into its own file */
+int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
+						   const char *pluginName,
+						   const char *settingName)
+{
+    return (*(GET_INTERFACE (CCSIntegrationInterface, integration))->getIntegratedOptionIndex) (integration, pluginName, settingName);
+}
+
+Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
+						 CCSContext		  *context,
+						 CCSSetting		  *setting,
+						 int			  index)
+{
+    return (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, context, setting, index);
+}
+
+void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
+						  CCSContext		   *context,
+						  CCSSetting		   *setting,
+						  int			   index)
+{
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, context, setting, index);
+}
+
+void ccsFreeIntegration (CCSIntegration *integration)
+{
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->freeIntegrationBackend) (integration);
+}
+
+static int
+ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
+						   const char		 *pluginName,
+						   const char		 *settingName)
+{
+    return -1;
+}
+
+static Bool
+ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
+						CCSContext	      *context,
+						CCSSetting	      *setting,
+						int		      index)
+{
+    return FALSE;
+}
+
+static void
+ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegration *integration,
+						 CCSContext	      *context,
+						 CCSSetting	      *setting,
+						 int		      index)
+{
+}
+
+void
+ccsNullIntegrationBackendFree (CCSIntegration *integration)
+{
+    ccsObjectFinalize (integration);
+    (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
+}
+
+const CCSIntegrationInterface ccsNullIntegrationBackendInterface =
+{
+    ccsNullIntegrationBackendGetIntegratedOptionIndex,
+    ccsNullIntegrationBackendReadOptionIntoSetting,
+    ccsNullIntegrationBackendWriteSettingIntoOption
+};
+
+CCSIntegration *
+ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai)
+{
+    CCSIntegration *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
+
+    if (!integration)
+	return NULL;
+
+    ccsObjectInit (integration, ai);
+    ccsObjectAddInterface (integration, (const CCSInterface *) &ccsNullIntegrationBackendInterface, GET_INTERFACE_TYPE (CCSIntegrationInterface));
+    return integration;
+}
+
 const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->backendGetInfo) (backend);
@@ -1367,6 +1450,16 @@ static Bool ccsBackendHasDeleteProfile (CCSBackend *backend)
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name)
 {
     return (*(GET_INTERFACE (CCSBackendInterface, backend))->deleteProfile) (backend, context, name);
+}
+
+static Bool ccsBackendHasSetIntegration (CCSBackend *backend)
+{
+    return (GET_INTERFACE (CCSBackendInterface, backend))->setIntegration != NULL;
+}
+
+void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegration *integration)
+{
+    return (*(GET_INTERFACE (CCSBackendInterface, backend))->setIntegration) (backend, integration);
 }
 
 static const char *
@@ -1541,6 +1634,15 @@ static Bool ccsDynamicBackendDeleteProfileWrapper (CCSBackend *backend, CCSConte
 	return ccsBackendDeleteProfile (dbPrivate->backend, context, profile);
 
     return FALSE;
+}
+
+static void ccsDynamicBackendSetIntegrationWrapper (CCSBackend *backend, CCSIntegration *integration)
+{
+    DYNAMIC_BACKEND_PRIV (backend);
+
+    if (ccsBackendHasSetIntegration (backend) &&
+	ccsDynamicBackendSupportsIntegration ((CCSDynamicBackend *) backend))
+	return ccsBackendSetIntegration (dbPrivate->backend, integration);
 }
 
 Bool
@@ -2711,6 +2813,11 @@ Bool ccsSettingIsIntegrated (CCSSetting *setting)
 Bool ccsSettingIsReadOnly (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingIsReadOnly) (setting);
+}
+
+Bool ccsSettingIsReadableByBackend (CCSSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingIsReadableByBackend) (setting);
 }
 
 void
@@ -5217,6 +5324,54 @@ Bool ccsSettingGetIsReadOnlyDefault (CCSSetting *setting)
 	return FALSE;
 
     return ccsBackendGetSettingIsReadOnly ((CCSBackend *) cPrivate->backend, setting);
+}
+
+Bool ccsSettingGetIsReadableByBackendDefault (CCSSetting *setting)
+{
+    static const CCSSettingType readableSettingTypes[] =
+    {
+	TypeBool,
+	TypeInt,
+	TypeFloat,
+	TypeString,
+	TypeColor,
+	TypeKey,
+	TypeButton,
+	TypeEdge,
+	TypeBell,
+	TypeMatch,
+	TypeList
+    };
+    static const unsigned int readableSettingTypesNum = sizeof (readableSettingTypes) / sizeof (readableSettingTypes[0]);
+    int i = 0;
+    Bool isReadableType = FALSE;
+    CCSSettingType type;
+
+    CONTEXT_PRIV (ccsPluginGetContext (ccsSettingGetParent (setting)));
+
+    if (!cPrivate->backend)
+	return FALSE;
+
+    type = ccsSettingGetType (setting);
+
+    /* It is impossible for certain settings to have a schema,
+     * such as actions and read only settings, so in that case
+     * just return FALSE since compizconfig doesn't expect us
+     * to read them anyways */
+    for (i = 0; i < readableSettingTypesNum; ++i)
+    {
+	if (readableSettingTypes[i] == type)
+	{
+	    isReadableType = TRUE;
+	    break;
+	}
+    }
+
+    if (isReadableType &&
+	!ccsSettingIsReadOnly (setting))
+    {
+	return TRUE;
+    }
 
     return FALSE;
 }
@@ -5441,6 +5596,7 @@ static const CCSSettingInterface ccsDefaultSettingInterface =
     ccsSettingResetToDefaultDefault,
     ccsSettingGetIsIntegratedDefault,
     ccsSettingGetIsReadOnlyDefault,
+    ccsSettingGetIsReadableByBackendDefault,
     ccsFreeSettingDefault
 };
 
@@ -5460,7 +5616,8 @@ const CCSBackendInterface ccsDynamicBackendInterfaceWrapper =
     ccsDynamicBackendGetSettingIsIntegratedWrapper,
     ccsDynamicBackendGetSettingIsReadOnlyWrapper,
     ccsDynamicBackendGetExistingProfilesWrapper,
-    ccsDynamicBackendDeleteProfileWrapper
+    ccsDynamicBackendDeleteProfileWrapper,
+    ccsDynamicBackendSetIntegrationWrapper
 };
 
 const CCSDynamicBackendInterface ccsDefaultDynamicBackendInterface =
