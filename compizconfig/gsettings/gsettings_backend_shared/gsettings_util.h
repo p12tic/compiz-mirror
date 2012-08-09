@@ -12,56 +12,77 @@ COMPIZCONFIG_BEGIN_DECLS
 
 #include "ccs_gsettings_interface.h"
 
+#ifdef USE_GCONF
+
+#include <gconf/gconf.h>
+#include <gconf/gconf-client.h>
+#include <gconf/gconf-value.h>
+
+
+typedef enum {
+    OptionInt,
+    OptionBool,
+    OptionKey,
+    OptionString,
+    OptionSpecial,
+} SpecialOptionType;
+
+typedef struct _SpecialOptionGConf {
+    const char*       settingName;
+    const char*       pluginName;
+    Bool	      screen;
+    const char*       gnomeName;
+    SpecialOptionType type;
+} SpecialOptionGConf;
+
+Bool
+isGConfIntegratedOption (CCSSetting *setting,
+			 int	    *index);
+
+void
+gnomeGConfValueChanged (GConfClient *client,
+			guint       cnxn_id,
+			GConfEntry  *entry,
+			gpointer    user_data);
+
+void
+initGConfClient (CCSBackend *backend);
+
+void
+finiGConfClient (CCSBackend *backend);
+
+Bool
+readGConfIntegratedOption (CCSBackend *backend,
+			   CCSContext *context,
+			   CCSSetting *setting,
+			   int	      index);
+
+void
+writeGConfIntegratedOption (CCSBackend *backend,
+			    CCSContext *context,
+			    CCSSetting *setting,
+			    int	       index);
+
+#endif
+
+/* some forward declarations */
+void
+ccsGSettingsValueChanged (GSettings   *settings,
+			  gchar	      *keyname,
+			  gpointer    user_data);
+
+void ccsGSettingsWriteIntegratedOption (CCSBackend *backend,
+					CCSContext *context,
+					CCSSetting *setting,
+					int        index);
+
+CCSStringList
+ccsGSettingsGetExistingProfiles (CCSBackend *backend, CCSContext *context);
+
 typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 extern const CCSBackendInfo gsettingsBackendInfo;
-
-typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
-typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, CCSGSettingsWrapper *);
-typedef CCSGSettingsWrapper * (*CCSGSettingsBackendGetSettingsObjectForPluginWithPath) (CCSBackend *backend,
-											const char *plugin,
-											const char *path,
-											CCSContext *context);
-typedef void (*CCSGSettingsBackendRegisterGConfClient) (CCSBackend *backend);
-typedef void (*CCSGSettingsBackendUnregisterGConfClient) (CCSBackend *backend);
-
-typedef const char * (*CCSGSettingsBackendGetCurrentProfile) (CCSBackend *backend);
-
-typedef GVariant * (*CCSGSettingsBackendGetExistingProfiles) (CCSBackend *backend);
-typedef void (*CCSGSettingsBackendSetExistingProfiles) (CCSBackend *backend, GVariant *value);
-typedef void (*CCSGSettingsBackendSetCurrentProfile) (CCSBackend *backend, const gchar *value);
-
-typedef GVariant * (*CCSGSettingsBackendGetPluginsWithSetKeys) (CCSBackend *backend);
-typedef void (*CCSGSettingsBackendClearPluginsWithSetKeys) (CCSBackend *backend);
-
-typedef void (*CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile) (CCSBackend *backend, CCSContext *, GVariant *, const char *);
-
-typedef gboolean (*CCSGSettingsBackendUpdateProfile) (CCSBackend *, CCSContext *);
-typedef void (*CCSGSettingsBackendUpdateCurrentProfileName) (CCSBackend *backend, const char *profile);
-
-typedef gboolean (*CCSGSettingsBackendAddProfile) (CCSBackend *backend, const char *profile);
-
-struct _CCSGSettingsBackendInterface
-{
-    CCSGSettingsBackendGetContext gsettingsBackendGetContext;
-    CCSGSettingsBackendConnectToChangedSignal gsettingsBackendConnectToChangedSignal;
-    CCSGSettingsBackendGetSettingsObjectForPluginWithPath gsettingsBackendGetSettingsObjectForPluginWithPath;
-    CCSGSettingsBackendRegisterGConfClient gsettingsBackendRegisterGConfClient;
-    CCSGSettingsBackendUnregisterGConfClient gsettingsBackendUnregisterGConfClient;
-    CCSGSettingsBackendGetCurrentProfile   gsettingsBackendGetCurrentProfile;
-    CCSGSettingsBackendGetExistingProfiles gsettingsBackendGetExistingProfiles;
-    CCSGSettingsBackendSetExistingProfiles gsettingsBackendSetExistingProfiles;
-    CCSGSettingsBackendSetCurrentProfile gsettingsBackendSetCurrentProfile;
-    CCSGSettingsBackendGetPluginsWithSetKeys gsettingsBackendGetPluginsWithSetKeys;
-    CCSGSettingsBackendClearPluginsWithSetKeys gsettingsBackendClearPluginsWithSetKeys;
-    CCSGSettingsBackendUnsetAllChangedPluginKeysInProfile gsettingsBackendUnsetAllChangedPluginKeysInProfile;
-    CCSGSettingsBackendUpdateProfile gsettingsBackendUpdateProfile;
-    CCSGSettingsBackendUpdateCurrentProfileName gsettingsBackendUpdateCurrentProfileName;
-    CCSGSettingsBackendAddProfile gsettingsBackendAddProfile;
-};
-
-unsigned int ccsCCSGSettingsBackendInterfaceGetType ();
 
 gchar *
 getSchemaNameForPlugin (const char *plugin);
@@ -230,75 +251,21 @@ getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting);
 void
 resetOptionToDefault (CCSBackend *backend, CCSSetting * setting);
 
-gboolean
-ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context);
 
-void
-ccsGSettingsBackendUpdateCurrentProfileName (CCSBackend *backend, const char *profile);
+/* Should all be living in gsettings.h */
 
-CCSContext *
-ccsGSettingsBackendGetContext (CCSBackend *backend);
+Bool readInit (CCSBackend *, CCSContext * context);
+void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
+Bool readOption (CCSBackend *backend, CCSSetting * setting);
+Bool writeInit (CCSBackend *, CCSContext * context);
+void writeSetting (CCSBackend *backend,
+		   CCSContext *context,
+		   CCSSetting *setting);
+void writeOption (CCSBackend *backend, CCSSetting *setting);
 
-void
-ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend, CCSGSettingsWrapper *object);
-
-CCSGSettingsWrapper *
-ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
-						const char *plugin,
-						const char *path,
-						CCSContext *context);
-
-void
-ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend);
-
-void
-ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend);
-
-const char *
-ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend);
-
-GVariant *
-ccsGSettingsBackendGetExistingProfiles (CCSBackend *backend);
-
-void
-ccsGSettingsBackendSetExistingProfiles (CCSBackend *backend, GVariant *value);
-
-void
-ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value);
-
-GVariant *
-ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend);
-
-void
-ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend);
-
-void
-ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
-						       CCSContext *context,
-						       GVariant   *pluginKeys,
-						       const char *profile);
-
-void
-ccsGSettingsBackendAddProfile (CCSBackend *backend,
-			       const char *profile);
-
-/* Default implementations, should be moved */
-
-void
-ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile);
-
-gboolean
-ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context);
-
-void
-ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backend,
-							      CCSContext *context,
-							      GVariant *pluginsWithChangedKeys,
-							      const char * profile);
-
-gboolean ccsGSettingsBackendAddProfileDefault (CCSBackend *backend,
-					       const char *profile);
-
+Bool
+isIntegratedOption (CCSSetting *setting,
+		    int        *index);
 
 COMPIZCONFIG_END_DECLS
 

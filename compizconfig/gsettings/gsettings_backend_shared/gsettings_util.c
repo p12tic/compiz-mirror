@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
-
-INTERFACE_TYPE (CCSGSettingsBackendInterface);
+#include "ccs_gsettings_backend_interface.h"
 
 const CCSBackendInfo gsettingsBackendInfo =
 {
@@ -1066,57 +1065,6 @@ getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 }
 
 gboolean
-ccsGSettingsBackendAddProfileDefault (CCSBackend *backend, const char *profile)
-{
-    GVariant        *profiles;
-    gboolean	    ret = FALSE;
-
-    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
-    if (appendStringToVariantIfUnique (&profiles, profile))
-    {
-	ret = TRUE;
-	ccsGSettingsBackendSetExistingProfiles (backend, profiles);
-    }
-    else
-	g_variant_unref (profiles);
-
-    return ret;
-}
-
-void
-ccsGSettingsBackendUpdateCurrentProfileNameDefault (CCSBackend *backend, const char *profile)
-{
-    ccsGSettingsBackendAddProfile (backend, profile);
-    ccsGSettingsBackendSetCurrentProfile (backend, profile);
-}
-
-gboolean
-ccsGSettingsBackendUpdateProfileDefault (CCSBackend *backend, CCSContext *context)
-{
-    const char *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
-    const char *ccsProfile = ccsGetProfile (context);
-    char *profile = NULL;
-
-    if (!ccsProfile)
-	profile = strdup (DEFAULTPROF);
-    else
-	profile = strdup (ccsProfile);
-
-    if (!strlen (profile))
-    {
-	free (profile);
-	profile = strdup (DEFAULTPROF);
-    }
-
-    if (g_strcmp0 (profile, currentProfile))
-	ccsGSettingsBackendUpdateCurrentProfileName (backend, profile);
-
-    free (profile);
-
-    return TRUE;
-}
-
-gboolean
 deleteProfile (CCSBackend *backend,
 	       CCSContext *context,
 	       const char *profile)
@@ -1145,138 +1093,395 @@ deleteProfile (CCSBackend *backend,
     return ret;
 }
 
-void
-ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backend,
-							      CCSContext *context,
-							      GVariant *pluginsWithChangedKeys,
-							      const char * profile)
+/* This was all in gsettings.c, it probably needs to live there again */
+Bool
+isIntegratedOption (CCSSetting *setting,
+		    int        *index)
 {
-    GVariantIter    iter;
-    char            *plugin;
+#ifdef USE_GCONF
+    return isGConfIntegratedOption (setting, index);
+#else
+    return FALSE;
+#endif
+}
 
-    g_variant_iter_init (&iter, pluginsWithChangedKeys);
-    while (g_variant_iter_loop (&iter, "s", &plugin))
+static Bool
+readIntegratedOption (CCSBackend *backend,
+		      CCSContext *context,
+		      CCSSetting *setting,
+		      int        index)
+{
+#ifdef USE_GCONF
+    return readGConfIntegratedOption (backend, context, setting, index);
+#else
+    return FALSE;
+#endif
+}
+
+GVariant *
+getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
+{
+    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
+    char *cleanSettingName = getNameForCCSSetting (setting);
+    gchar *pathName = makeSettingPath (ccsGSettingsBackendGetCurrentProfile (backend), setting);
+    GVariant *gsettingsValue = getVariantAtKey (settings,
+						cleanSettingName,
+						pathName,
+						ccsSettingGetType (setting));
+
+    free (cleanSettingName);
+    free (pathName);
+    return gsettingsValue;
+}
+
+Bool
+readOption (CCSBackend *backend, CCSSetting * setting)
+{
+    Bool       ret = FALSE;
+    GVariant   *gsettingsValue = NULL;
+
+    /* It is impossible for certain settings to have a schema,
+     * such as actions and read only settings, so in that case
+     * just return FALSE since compizconfig doesn't expect us
+     * to read them anyways */
+
+    if (ccsSettingGetType (setting) == TypeAction ||
+	ccsSettingIsReadOnly (setting))
     {
-	CCSGSettingsWrapper *settings;
-	gchar *pathName = makeCompizPluginPath (profile, plugin);
-
-	settings = ccsGSettingsGetSettingsObjectForPluginWithPath (backend, plugin, pathName, context);
-	g_free (pathName);
-
-	/* The GSettings documentation says not to use this API
-	 * because we should know our own schema ... though really
-	 * we don't because we autogenerate schemas ... */
-	if (settings)
-	{
-	    char **keys = ccsGSettingsWrapperListKeys (settings);
-	    char **key_ptr;
-
-	    /* Unset all the keys */
-	    for (key_ptr = keys; *key_ptr; key_ptr++)
-		ccsGSettingsWrapperResetKey (settings, *key_ptr);
-
-	    g_strfreev (keys);
-	}
+	return FALSE;
     }
-}
 
-CCSContext *
-ccsGSettingsBackendGetContext (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetContext) (backend);
-}
+    gsettingsValue = getVariantForCCSSetting (backend, setting);
 
+    switch (ccsSettingGetType (setting))
+    {
+    case TypeString:
+	{
+	    const char *value;
+	    value = readStringFromVariant (gsettingsValue);
+	    if (value)
+	    {
+		ccsSetString (setting, value, TRUE);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeMatch:
+	{
+	    const char * value;
+	    value = readStringFromVariant (gsettingsValue);
+	    if (value)
+	    {
+		ccsSetMatch (setting, value, TRUE);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeInt:
+	{
+	    int value;
+	    value = readIntFromVariant (gsettingsValue);
+
+	    ccsSetInt (setting, value, TRUE);
+	    ret = TRUE;
+	}
+	break;
+    case TypeBool:
+	{
+	    Bool value;
+	    value = readBoolFromVariant (gsettingsValue);
+
+	    ccsSetBool (setting, value, TRUE);
+	    ret = TRUE;
+	}
+	break;
+    case TypeFloat:
+	{
+	    float value;
+	    value = readFloatFromVariant (gsettingsValue);
+
+	    ccsSetFloat (setting, value, TRUE);
+	    ret = TRUE;
+	}
+	break;
+    case TypeColor:
+	{
+	    Bool success = FALSE;
+	    CCSSettingColorValue color = readColorFromVariant (gsettingsValue, &success);
+
+	    if (success)
+	    {
+		ccsSetColor (setting, color, TRUE);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeKey:
+	{
+	    Bool success = FALSE;
+	    CCSSettingKeyValue key = readKeyFromVariant (gsettingsValue, &success);
+
+	    if (success)
+	    {
+		ccsSetKey (setting, key, TRUE);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeButton:
+	{
+	    Bool success = FALSE;
+	    CCSSettingButtonValue button = readButtonFromVariant (gsettingsValue, &success);
+
+	    if (success)
+	    {
+		ccsSetButton (setting, button, TRUE);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeEdge:
+	{
+	    unsigned int edges = readEdgeFromVariant (gsettingsValue);
+
+	    ccsSetEdge (setting, edges, TRUE);
+	    ret = TRUE;
+	}
+	break;
+    case TypeBell:
+	{
+	    Bool value;
+	    value = readBoolFromVariant (gsettingsValue);
+
+	    ccsSetBell (setting, value, TRUE);
+	    ret = TRUE;
+	}
+	break;
+    case TypeList:
+	{
+	    CCSSettingValueList list = readListValue (gsettingsValue, setting, &ccsDefaultObjectAllocator);
+
+	    if (list)
+	    {
+		CCSSettingValueList iter = list;
+
+		while (iter)
+		{
+		    ((CCSSettingValue *) iter->data)->parent = setting;
+		    iter = iter->next;
+		}
+
+		ccsSetList (setting, list, TRUE);
+		ccsSettingValueListFree (list, TRUE);
+		ret = TRUE;
+	    }
+	}
+	break;
+    default:
+	ccsWarning ("Attempt to read unsupported setting type %d!",
+	       ccsSettingGetType (setting));
+	break;
+    }
+
+    g_variant_unref (gsettingsValue);
+
+    return ret;
+}
 
 void
-ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend,
-					   CCSGSettingsWrapper *object)
+ccsGSettingsWriteIntegratedOption (CCSBackend *backend,
+				   CCSContext *context,
+				   CCSSetting *setting,
+				   int        index)
 {
-     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendConnectToChangedSignal) (backend, object);
-}
+#ifdef USE_GCONF
+    writeGConfIntegratedOption (backend, context, setting, index);
+#endif
 
-CCSGSettingsWrapper *
-ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
-						const char *plugin,
-						const char *path,
-						CCSContext *context)
-{
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetSettingsObjectForPluginWithPath) (backend, plugin, path, context);
+    return;
 }
 
 void
-ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend)
+writeOption (CCSBackend *backend, CCSSetting * setting)
 {
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendRegisterGConfClient) (backend);
+    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
+    char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
+    GVariant *gsettingsValue = NULL;
+    Bool success = FALSE;
+
+    switch (ccsSettingGetType (setting))
+    {
+    case TypeString:
+	{
+	    char *value;
+	    if (ccsGetString (setting, &value))
+	    {
+		success = writeStringToVariant (value, &gsettingsValue);
+	    }
+	}
+	break;
+    case TypeMatch:
+	{
+	    char *value;
+	    if (ccsGetMatch (setting, &value))
+	    {
+		success = writeStringToVariant (value, &gsettingsValue);
+	    }
+	}
+	break;
+    case TypeFloat:
+	{
+	    float value;
+	    if (ccsGetFloat (setting, &value))
+	    {
+		success = writeFloatToVariant (value, &gsettingsValue);
+	    }
+	}
+	break;
+    case TypeInt:
+	{
+	    int value;
+	    if (ccsGetInt (setting, &value))
+	    {
+		success = writeIntToVariant (value, &gsettingsValue);
+	    }
+	}
+	break;
+    case TypeBool:
+	{
+	    Bool value;
+	    if (ccsGetBool (setting, &value))
+	    {
+		success = writeBoolToVariant (value, &gsettingsValue);
+	    }
+	}
+	break;
+    case TypeColor:
+	{
+	    CCSSettingColorValue value;
+
+	    if (!ccsGetColor (setting, &value))
+		break;
+
+	    success = writeColorToVariant (value, &gsettingsValue);
+	}
+	break;
+    case TypeKey:
+	{
+	    CCSSettingKeyValue key;
+
+	    if (!ccsGetKey (setting, &key))
+		break;
+
+	    success = writeKeyToVariant (key, &gsettingsValue);
+	}
+	break;
+    case TypeButton:
+	{
+	    CCSSettingButtonValue button;
+
+	    if (!ccsGetButton (setting, &button))
+		break;
+
+	    success = writeButtonToVariant (button, &gsettingsValue);
+	}
+	break;
+    case TypeEdge:
+	{
+	    unsigned int edges;
+
+	    if (!ccsGetEdge (setting, &edges))
+		break;
+
+	    success = writeEdgeToVariant (edges, &gsettingsValue);
+	}
+	break;
+    case TypeBell:
+	{
+	    Bool value;
+	    if (ccsGetBell (setting, &value))
+	    {
+		success = writeBoolToVariant (value, &gsettingsValue);
+	    }
+	}
+	break;
+    case TypeList:
+	{
+	    CCSSettingValueList  list = NULL;
+
+	    if (!ccsGetList (setting, &list))
+		return;
+
+	    success = writeListValue (list,
+				      ccsSettingGetInfo (setting)->forList.listType,
+				      &gsettingsValue);
+	}
+	break;
+    default:
+	ccsWarning ("Attempt to write unsupported setting type %d",
+	       ccsSettingGetType (setting));
+	break;
+    }
+
+    if (success && gsettingsValue)
+    {
+	/* g_settings_set_value will consume the reference
+	 * so there is no need to unref value here */
+	writeVariantToKey (settings, cleanSettingName, gsettingsValue);
+    }
+
+    free (cleanSettingName);
+}
+
+Bool
+readInit (CCSBackend *backend, CCSContext * context)
+{
+    return ccsGSettingsBackendUpdateProfile (backend, context);
 }
 
 void
-ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
+readSetting (CCSBackend *backend,
+	     CCSContext *context,
+	     CCSSetting *setting)
 {
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnregisterGConfClient) (backend);
+    Bool status;
+    int  index;
+
+    if (ccsGetIntegrationEnabled (context) &&
+	isIntegratedOption (setting, &index))
+    {
+	status = readIntegratedOption (backend, context, setting, index);
+    }
+    else
+	status = readOption (backend, setting);
+
+    if (!status)
+	ccsResetToDefault (setting, TRUE);
 }
 
-const char *
-ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend)
+Bool
+writeInit (CCSBackend *backend, CCSContext * context)
 {
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetCurrentProfile) (backend);
-}
-
-GVariant *
-ccsGSettingsBackendGetExistingProfiles (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetExistingProfiles) (backend);
-}
-
-void
-ccsGSettingsBackendSetExistingProfiles (CCSBackend *backend, GVariant *value)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendSetExistingProfiles) (backend, value);
-}
-
-void
-ccsGSettingsBackendSetCurrentProfile (CCSBackend *backend, const gchar *value)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendSetCurrentProfile) (backend, value);
-}
-
-GVariant *
-ccsGSettingsBackendGetPluginsWithSetKeys (CCSBackend *backend)
-{
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetPluginsWithSetKeys) (backend);
+    return ccsGSettingsBackendUpdateProfile (backend, context);
 }
 
 void
-ccsGSettingsBackendClearPluginsWithSetKeys (CCSBackend *backend)
+writeSetting (CCSBackend *backend,
+	      CCSContext *context,
+	      CCSSetting *setting)
 {
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendClearPluginsWithSetKeys) (backend);
-}
+    int index;
 
-void
-ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (CCSBackend *backend,
-						       CCSContext *context,
-						       GVariant   *pluginKeys,
-						       const char *profile)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnsetAllChangedPluginKeysInProfile) (backend, context, pluginKeys, profile);
-}
+    if (ccsGetIntegrationEnabled (context) &&
+	isIntegratedOption (setting, &index))
+    {
+	ccsGSettingsWriteIntegratedOption (backend, context, setting, index);
+    }
+    else if (ccsSettingGetIsDefault (setting))
+    {
+	resetOptionToDefault (backend, setting);
+    }
+    else
+	writeOption (backend, setting);
 
-gboolean
-ccsGSettingsBackendUpdateProfile (CCSBackend *backend, CCSContext *context)
-{
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUpdateProfile) (backend, context);
 }
-
-void
-ccsGSettingsBackendUpdateCurrentProfileName (CCSBackend *backend, const char *profile)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUpdateCurrentProfileName) (backend, profile);
-}
-
-void
-ccsGSettingsBackendAddProfile (CCSBackend *backend, const char *profile)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendAddProfile) (backend, profile);
-}
-
-CCSContext *
-ccsGSettingsBackendGetContext (CCSBackend *backend);

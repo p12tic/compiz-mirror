@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <gsettings_util.h>
-
 #include <gio/gio.h>
 
 #include "backend-conformance-config.h"
@@ -10,6 +8,9 @@
 
 #include <ccs.h>
 #include <compizconfig_backend_concept_test.h>
+
+#include <gsettings_util.h>
+#include <ccs_gsettings_backend_interface.h>
 
 #include <iostream>
 

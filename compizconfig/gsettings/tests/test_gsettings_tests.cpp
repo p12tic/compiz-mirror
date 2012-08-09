@@ -6,6 +6,7 @@
 
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
+#include "ccs_gsettings_backend.h"
 #include "ccs_gsettings_backend_mock.h"
 #include "compizconfig_ccs_context_mock.h"
 #include "compizconfig_ccs_plugin_mock.h"

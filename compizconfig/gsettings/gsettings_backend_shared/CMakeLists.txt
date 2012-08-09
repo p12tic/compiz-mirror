@@ -1,7 +1,6 @@
 include (FindPkgConfig)
 
-pkg_check_modules (GSETTINGS_UTIL glib-2.0>=2.28
-                                  gio-2.0>=2.25.0)
+compiz_pkg_check_modules (GSETTINGS_UTIL ${_deps})
 
 if (GSETTINGS_UTIL_FOUND)
 
@@ -16,8 +15,11 @@ if (GSETTINGS_UTIL_FOUND)
 		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig)
 
     add_library (gsettings_backend_shared SHARED
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gconf-integration.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface_wrapper.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c
+		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_interface.c
+		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c)
 
