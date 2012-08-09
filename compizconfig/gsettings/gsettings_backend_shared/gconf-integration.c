@@ -1035,7 +1035,7 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,
 			   GET_INTERFACE_TYPE (CCSIntegrationBackendInterface));
 
-    ccsIntegrationBackendRef (backend);
+    ccsIntegrationBackendRef (integration);
 
     return integration;
 }
