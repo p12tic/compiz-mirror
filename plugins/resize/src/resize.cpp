@@ -1822,13 +1822,13 @@ ResizeScreen::enableOrDisableVerticalMaximization(int yRoot)
     }
     else if (mask & ResizeDownMask)
     {
-	if (grabWindowWorkArea->bottom() - yRoot <= 5
+	if (grabWindowWorkArea->bottom() - yRoot <= max_edge_distance
 		&& !maximized_vertically)
 	{
 	    maximized_vertically = true;
 	    geometryWithoutVertMax = geometry;
 	}
-	else if (grabWindowWorkArea->bottom() - yRoot > 5
+	else if (grabWindowWorkArea->bottom() - yRoot > max_edge_distance
 		&& maximized_vertically)
 	{
 	    geometry = geometryWithoutVertMax;
