@@ -5,7 +5,21 @@
 
 G_BEGIN_DECLS
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <malloc.h>
+#include <string.h>
+#include <dirent.h>
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "gsettings_util.h"
+
+#define BUFSIZE 512
+#define NUM_WATCHED_DIRS 3
 
 extern const char * const PLUGIN_SCHEMA_ID_PREFIX;
 extern const char * const COMPIZCONFIG_SCHEMA_ID;

@@ -93,7 +93,7 @@ static Bool readInit (CCSBackend *backend, CCSContext * context);
 static void readSetting (CCSBackend *backend, CCSContext * context, CCSSetting * setting);
 static Bool readOption (CCSSetting * setting);
 static Bool writeInit (CCSBackend *backend, CCSContext * context);
-static void writeIntegratedOption (CCSContext *context, CCSSetting *setting,
+static void ccsGSettingsWriteIntegratedOption (CCSContext *context, CCSSetting *setting,
 				   int        index);
 
 typedef enum {
@@ -447,12 +447,12 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
 	isIntegratedOption (setting, &index))
     {
 	writeInit (backend, context);
-	writeIntegratedOption (context, setting, index);
+	ccsGSettingsWriteIntegratedOption (context, setting, index);
     }
 }
 
 static void
-valueChanged (GConfClient *client,
+ccsGSettingsValueChanged (GConfClient *client,
 	      guint       cnxn_id,
 	      GConfEntry  *entry,
 	      gpointer    user_data)
@@ -608,7 +608,7 @@ initClient (CCSContext *context)
 
     client = gconf_client_get_for_engine (conf);
 
-    compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
+    compizNotifyId = gconf_client_notify_add (client, COMPIZ, ccsGSettingsValueChanged,
 					      context, NULL, NULL);
     gconf_client_add_dir (client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
 
@@ -1500,7 +1500,7 @@ setButtonBindingForSetting (CCSContext   *context,
 }
 
 static void
-writeIntegratedOption (CCSContext *context,
+ccsGSettingsWriteIntegratedOption (CCSContext *context,
 		       CCSSetting *setting,
 		       int        index)
 {
@@ -2032,7 +2032,7 @@ writeSetting (CCSBackend *backend,
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
     {
-	writeIntegratedOption (context, setting, index);
+	ccsGSettingsWriteIntegratedOption (context, setting, index);
     }
     else if (ccsSettingGetIsDefault (setting))
     {

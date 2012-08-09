@@ -31,7 +31,9 @@
  *
  **/
 
-#include "gsettings.h"
+#include "gsettings_shared.h"
+#include "ccs_gsettings_backend_interface.h"
+#include "ccs_gsettings_backend.h"
 #ifdef USE_GCONF
 
 const SpecialOptionGConf specialOptions[] = {

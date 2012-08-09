@@ -4,8 +4,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <gsettings_shared.h>
 #include <ccs-backend.h>
+#include "ccs_gsettings_backend_interface.h"
 
 using ::testing::_;
 using ::testing::Return;

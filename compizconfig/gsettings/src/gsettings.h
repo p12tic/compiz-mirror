@@ -34,13 +34,6 @@
 #ifndef _COMPIZCONFIG_BACKEND_GSETTINGS_GSETTINGS_H
 #define _COMPIZCONFIG_BACKEND_GSETTINGS_GSETTINGS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include <string.h>
-#include <dirent.h>
-
 #include <ccs.h>
 #include <ccs-backend.h>
 
@@ -48,92 +41,6 @@
 
 #include "gsettings_shared.h"
 
-#define BUFSIZE 512
-
-#define NUM_WATCHED_DIRS 3
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#ifdef USE_GCONF
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
-#endif
-
 #include <ccs_gsettings_interface.h>
-
-typedef enum {
-    OptionInt,
-    OptionBool,
-    OptionKey,
-    OptionString,
-    OptionSpecial,
-} SpecialOptionType;
-
-struct _CCSGSettingsBackendPrivate
-{
-    GList	   *settingsList;
-    CCSGSettingsWrapper *compizconfigSettings;
-    CCSGSettingsWrapper *currentProfileSettings;
-
-    char	    *currentProfile;
-    CCSContext  *context;
-
-#ifdef USE_GCONF
-    GConfClient *client;
-    guint       *gnomeGConfNotifyIds;
-#endif
-
-};
-
-Bool readInit (CCSBackend *, CCSContext * context);
-void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
-Bool readOption (CCSBackend *backend, CCSSetting * setting);
-Bool writeInit (CCSBackend *, CCSContext * context);
-void writeOption (CCSBackend *backend, CCSSetting *setting);
-
-#ifdef USE_GCONF
-
-
-
-typedef struct _SpecialOptionGConf {
-    const char*       settingName;
-    const char*       pluginName;
-    Bool	      screen;
-    const char*       gnomeName;
-    SpecialOptionType type;
-} SpecialOptionGConf;
-
-Bool
-isGConfIntegratedOption (CCSSetting *setting,
-			 int	    *index);
-
-void
-gnomeGConfValueChanged (GConfClient *client,
-			guint       cnxn_id,
-			GConfEntry  *entry,
-			gpointer    user_data);
-
-void
-initGConfClient (CCSBackend *backend);
-
-void
-finiGConfClient (CCSBackend *backend);
-
-Bool
-readGConfIntegratedOption (CCSBackend *backend,
-			   CCSContext *context,
-			   CCSSetting *setting,
-			   int	      index);
-
-void
-writeGConfIntegratedOption (CCSBackend *backend,
-			    CCSContext *context,
-			    CCSSetting *setting,
-			    int	       index);
-
-#endif
 
 #endif
