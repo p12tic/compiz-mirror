@@ -78,7 +78,7 @@ WaterScreen::waterUpdate (float dt)
     GLfloat fade = 1.0f;
 
     if (count < 1000)
-	{
+    {
 	if (count > 1)
 	    fade = 0.90f + (float) count / 10000.0f;
 	else
@@ -95,8 +95,11 @@ WaterScreen::waterUpdate (float dt)
     vertexBuffer[UPDATE]->addTexCoords (0, 6, &textureData[0]);
     vertexBuffer[UPDATE]->end ();
 
-    // TODO: use GLTexture facilities here, instead of manually setting active
-    //       texture, especially when there will be texture unit support
+    /*
+     * Cleanup:
+     * Use GLTexture facilities here, instead of manually setting active
+     * texture, especially when there will be texture unit support
+     */
     glActiveTexture (GL_TEXTURE0);
     waterFbo[INDEX (this, 2)]->tex ()->setFilter (GL_NEAREST);
     glBindTexture (GL_TEXTURE_2D, waterFbo[INDEX (this, 2)]->tex ()->name ());
@@ -149,13 +152,13 @@ WaterScreen::waterVertices (GLenum type,
 	float data[3];
 	for (int i = 0; i < n; i++)
 	{
-	    data[0] = (((float) p->x / (float) screen->width ())  * 2.0f) - 1.0f;
-	    data[1] = ((((float) screen->height () - (float) p->y)/
-			(float) screen->height ()) * 2.0f) - 1.0f;
+	    data[0] = ((float) p->x / (float) screen->width ()) * 2.0f - 1.0f;
+	    data[1] = (((float) screen->height () - (float) p->y) /
+	                (float) screen->height ()) * 2.0f - 1.0f;
 	    data[2] = 0.0f;
-	p++;
+	    p++;
 	    vertexBuffer[SET]->addVertices  (1, &data[0]);
-    }
+	}
 	vertexBuffer[SET]->end();
 
 	vertexBuffer[SET]->addUniform ("color", v);
@@ -252,9 +255,9 @@ WaterScreen::waterSetup ()
     t0 = (unsigned char *) (d1 + (size));
 
     if (GL::vboEnabled && GL::shaders)
-	{
-	program[SET]    = new GLProgram (set_water_vertices_vertex_shader,
-				         set_water_vertices_fragment_shader);
+    {
+	program[SET] = new GLProgram (set_water_vertices_vertex_shader,
+	                              set_water_vertices_fragment_shader);
 
 	if (target == GL_TEXTURE_2D)
 	    sprintf (buf, update_water_vertices_fragment_shader.c_str (),
@@ -287,10 +290,10 @@ WaterScreen::waterSetup ()
 
 	vertexBuffer[PAINT] = new GLVertexBuffer (GL::STATIC_DRAW);
 	vertexBuffer[PAINT]->setProgram (program[PAINT]);
-	}
+    }
 
     if (GL::fboEnabled)
-	{
+    {
 	CompSize size(texWidth, texHeight);
 	for (int i = 0; i < TEXTURE_NUM; i++)
 	{
@@ -300,20 +303,20 @@ WaterScreen::waterSetup ()
 	    // check if FBOs are working. If not, fallback to software textures
 	    oldFbo = waterFbo[i]->bind ();
 	    waterFbo[i]->rebind (oldFbo);
- 	    if (!waterFbo[i]->checkStatus ())
+	    if (!waterFbo[i]->checkStatus ())
 	    {
 		useFbo = false;
 		delete waterFbo[i];
 		break;
+	    }
 	}
-    }
     }
 }
 
 void
 WaterScreen::glPaintCompositedOutput (const CompRegion    &region,
-				      GLFramebufferObject *fbo,
-				      unsigned int         mask)
+                                      GLFramebufferObject *fbo,
+                                      unsigned int         mask)
 {
     if (count)
     {
@@ -444,7 +447,7 @@ WaterScreen::preparePaint (int msSinceLastPaint)
 
 	}
 
-	waterUpdate (0.8);
+	waterUpdate (0.8f);
     }
 
     cScreen->preparePaint (msSinceLastPaint);
@@ -483,6 +486,7 @@ WaterScreen::handleMotionEvent ()
 
 	cScreen->damageScreen ();
     }
+
 }
 
 static bool
