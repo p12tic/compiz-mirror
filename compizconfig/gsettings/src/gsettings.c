@@ -34,6 +34,7 @@
 #define CCS_LOG_DOMAIN "gsettings"
 
 #include "gsettings.h"
+#include "gconf-integration.h"
 
 static void
 valueChanged (GSettings   *settings,
@@ -43,6 +44,7 @@ valueChanged (GSettings   *settings,
 static GList	   *settingsList = NULL;
 static GSettings   *compizconfigSettings = NULL;
 static GSettings   *currentProfileSettings = NULL;
+static CCSIntegration *integration = NULL;
 
 char *currentProfile = NULL;
 
@@ -121,17 +123,22 @@ static Bool
 isIntegratedOption (CCSSetting *setting,
 		    int        *index)
 {
-#ifdef USE_GCONF
-    return isGConfIntegratedOption (setting, index);
-#else
-    return FALSE;
-#endif
+    const char *settingName = ccsSettingGetName (setting);
+    CCSPlugin  *plugin      = ccsSettingGetParent (setting);
+    const char *pluginName  = ccsPluginGetName (plugin);
+
+    int indexTmp =  ccsIntegrationGetIntegratedOptionIndex (integration, pluginName, settingName);
+
+    if (index)
+	*index = indexTmp;
+
+    return indexTmp != -1;
 }
 
 static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
-    int          index;
+    int          index = -1;
 
     readInit (backend, context);
     if (!readOption (setting))
@@ -363,11 +370,7 @@ readIntegratedOption (CCSContext *context,
 		      CCSSetting *setting,
 		      int        index)
 {
-#ifdef USE_GCONF
-    return readGConfIntegratedOption (context, setting, index);
-#else
-    return FALSE;
-#endif
+    return ccsIntegrationReadOptionIntoSetting (integration, context, setting, index);
 }
 
 Bool
@@ -649,11 +652,7 @@ writeIntegratedOption (CCSContext *context,
 		       CCSSetting *setting,
 		       int        index)
 {
-#ifdef USE_GCONF
-    writeGConfIntegratedOption (context, setting, index);
-#endif
-
-    return;
+    ccsIntegrationWriteSettingIntoOption (integration, context, setting, index);
 }
 
 static void
@@ -910,15 +909,17 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
 
-#ifdef USE_GCONF
-    initGConfClient (context);
-#endif
-
     currentProfile = getCurrentProfileName ();
     currentProfilePath = makeCompizProfilePath (currentProfile);
     currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
 
     g_free (currentProfilePath);
+
+#ifdef USE_GCONF
+    integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
+#else
+    integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
+#endif
 
     return TRUE;
 }
@@ -929,11 +930,6 @@ finiBackend (CCSBackend *backend)
     GList *l = settingsList;
 
     processEvents (backend, 0);
-
-#ifdef USE_GCONF
-    gconf_client_clear_cache (client);
-    finiGConfClient ();
-#endif
 
     if (currentProfile)
     {
@@ -954,6 +950,9 @@ finiBackend (CCSBackend *backend)
     }
 
     g_object_unref (G_OBJECT (compizconfigSettings));
+
+    ccsIntegrationUnref (integration);
+    integration = NULL;
 
     processEvents (backend, 0);
     return TRUE;
