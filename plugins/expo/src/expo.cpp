@@ -24,6 +24,7 @@
  **/
 
 #include "expo.h"
+#include "click-threshold.h"
 #include <math.h>
 #include <GL/glu.h>
 #include <X11/cursorfont.h>
@@ -35,7 +36,6 @@ COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 			    (sigmoid (1) - sigmoid (0)))
 
 #define interpolate(a, b, val) (((val) * (a)) + ((1 - (val)) * (b)))
-static const unsigned int DND_THRESHOLD = 5;
 
 bool
 ExpoScreen::dndInit (CompAction          *action,
@@ -370,8 +370,9 @@ ExpoScreen::handleEvent (XEvent *event)
 		doubleClick = false;
 	    }
 	    else if (doubleClick ||
-	    ((abs (prevClickPoint.x () - event->xbutton.x) <= DND_THRESHOLD) &&
-	     (abs (prevClickPoint.y () - event->xbutton.y) <= DND_THRESHOLD)))
+		     compiz::expo::clickMovementInThreshold(prevClickPoint,
+							    event->xbutton.x,
+							    event->xbutton.y))
 	    {
 		CompAction& action = optionGetExpoKey ();
 
