@@ -37,6 +37,8 @@
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
 #include "gconf-integration.h"
+#include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_interface_wrapper.h"
 
 GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
@@ -225,6 +227,7 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
 	    char *value;
 	    if (ccsGetMatch (setting, &value))
 	    {
+
 		success = writeStringToVariant (value, &gsettingsValue);
 	    }
 	}

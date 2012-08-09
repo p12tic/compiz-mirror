@@ -34,6 +34,8 @@ typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 extern const CCSBackendInfo gsettingsBackendInfo;
 
+typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
+
 gchar *
 getSchemaNameForPlugin (const char *plugin);
 
