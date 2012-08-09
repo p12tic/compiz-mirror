@@ -238,7 +238,7 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 		wTransform.scale (scale, scale, 1.0f);
 		wTransform.translate (x / scale, y / scale, 0.0f);
 
-		priv->gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
+		priv->gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, sAttrib, mask);
 	    }
 	}
     }

@@ -285,7 +285,7 @@ public:
     // GLWindowInterface methods
     bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		  const CompRegion &, unsigned int);
-    void glAddGeometry (GLVertexBuffer *vertexBuffer, const GLTexture::MatrixList &,
+    void glAddGeometry (GLVertexBuffer &vertexBuffer, const GLTexture::MatrixList &,
 			const CompRegion &, const CompRegion &,
 			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
 

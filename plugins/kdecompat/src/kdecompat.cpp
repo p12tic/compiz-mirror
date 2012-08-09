@@ -349,7 +349,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		gtw->glDraw (wTransform, attrib,
 				 infiniteRegion, paintMask);
 	    else if (icon)
-		gtw->glDrawTexture (icon, wTransform, attrib, paintMask);
+		gtw->glDrawTextureWithInternalVertexBuffer (icon, wTransform, attrib, paintMask);
 	}
     }
     

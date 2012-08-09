@@ -855,14 +855,29 @@ class GLWindowInterface :
 	 * @param min
 	 * @param max
 	 */
-	virtual void glAddGeometry (GLVertexBuffer		*vertexBuffer,
+	virtual void glAddGeometry (GLVertexBuffer		&vertexBuffer,
 				    const GLTexture::MatrixList &matrices,
 				    const CompRegion 		&region,
 				    const CompRegion 		&clipRegion,
 				    unsigned int		min = MAXSHORT,
 				    unsigned int		max = MAXSHORT);
-	virtual void glDrawTexture (GLTexture *texture, const GLMatrix &,
-	                            const GLWindowPaintAttrib &, unsigned int);
+
+	/**
+	 * Hookable function to draw a texture with a specified vertexBuffer
+	 * for this window
+	 *
+	 * @brief glDrawTexture
+	 * @param vertexBuffer the vertex buffer containing vertex data to draw
+	 * the texture with
+	 * @param texture the texture to draw
+	 * @param matrix a 3D transformation matrix used to transform the texture
+	 * @param mask paint operations mask
+	 */
+	virtual void glDrawTexture (GLVertexBuffer	      &vertexBuffer,
+				    GLTexture		      *texture,
+				    const GLMatrix	      &matrix,
+				    const GLWindowPaintAttrib &attrib,
+				    unsigned int	      mask);
 };
 
 class GLWindow :
@@ -949,19 +964,36 @@ class GLWindow :
 
 	GLTexture *getIcon (int width, int height);
 
+	/**
+	 * Draws a texture with this window's internal vertex buffer
+	 *
+	 * @brief glDrawTextureWithInternalVertexBuffer
+	 * @param texture texture to draw
+	 * @param matrix 3D transformation matrix
+	 * @param attrib basic opacity/brightness/saturation
+	 * @param mask paint operations mask
+	 */
+	void glDrawTextureWithInternalVertexBuffer (GLTexture		      *texture,
+						    const GLMatrix	      &matrix,
+						    const GLWindowPaintAttrib &attrib,
+						    unsigned int	      mask);
+
 	WRAPABLE_HND (0, GLWindowInterface, bool, glPaint,
 		      const GLWindowPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, unsigned int);
 	WRAPABLE_HND (1, GLWindowInterface, bool, glDraw, const GLMatrix &,
 		      const GLWindowPaintAttrib &, const CompRegion &,
 	              unsigned int);
-	WRAPABLE_HND (2, GLWindowInterface, void, glAddGeometry, GLVertexBuffer *,
+	WRAPABLE_HND (2, GLWindowInterface, void, glAddGeometry, GLVertexBuffer &,
 		      const GLTexture::MatrixList &, const CompRegion &,
 		      const CompRegion &,
 		      unsigned int = MAXSHORT, unsigned int = MAXSHORT);
 	WRAPABLE_HND (3, GLWindowInterface, void, glDrawTexture,
-		      GLTexture *texture, const GLMatrix &,
-	              const GLWindowPaintAttrib &, unsigned int);
+		      GLVertexBuffer &vertexBuffer,
+		      GLTexture *texture,
+		      const GLMatrix &,
+		      const GLWindowPaintAttrib &,
+		      unsigned int);
 
 	friend class GLScreen;
 	friend class PrivateGLScreen;

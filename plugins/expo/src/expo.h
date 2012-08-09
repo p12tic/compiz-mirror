@@ -144,11 +144,11 @@ class ExpoWindow :
 		     const CompRegion&, unsigned int);
 	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
 		      const CompRegion&, unsigned int);
-	void glAddGeometry (GLVertexBuffer *vertexBuffer, const GLTexture::MatrixList&,
+	void glAddGeometry (GLVertexBuffer &vertexBuffer, const GLTexture::MatrixList&,
 			    const CompRegion&, const CompRegion&,
 			    unsigned int, unsigned int);
-	void glDrawTexture (GLTexture*, const GLMatrix&,
-	                    const GLWindowPaintAttrib&, unsigned int);
+	void glDrawTexture (GLVertexBuffer &vertexBuffer, GLTexture*, const GLMatrix&,
+			    const GLWindowPaintAttrib&, unsigned int);
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;

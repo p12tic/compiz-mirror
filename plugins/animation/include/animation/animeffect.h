@@ -155,7 +155,7 @@ public:
 				int dwidth, int dheight) { return true; }
 
     virtual void adjustPointerIconSize () {}
-    virtual void addGeometry (GLVertexBuffer		*vertexBuffer,
+    virtual void addGeometry (GLVertexBuffer		&vertexBuffer,
 			      const GLTexture::MatrixList &matrix,
 			    const CompRegion            &region,
 			    const CompRegion            &clip,

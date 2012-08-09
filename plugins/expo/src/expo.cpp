@@ -1279,7 +1279,7 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 #define EXPO_GRID_SIZE 100
 
 void
-ExpoWindow::glAddGeometry (GLVertexBuffer               *vertexBuffer,
+ExpoWindow::glAddGeometry (GLVertexBuffer               &vertexBuffer,
 			   const GLTexture::MatrixList& matrices,
 			   const CompRegion&            region,
 			   const CompRegion&            clip,
@@ -1290,7 +1290,7 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               *vertexBuffer,
 	screen->desktopWindowCount () &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve)
     {
-	int         i, oldVCount = vertexBuffer->countVertices ();
+	int         i, oldVCount = vertexBuffer.countVertices ();
 	GLfloat     *v;
 	CompPoint   offset;
 	float       lastX, lastZ = 0.0;
@@ -1302,8 +1302,8 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               *vertexBuffer,
 				MIN(maxGridWidth , EXPO_GRID_SIZE),
 				maxGridHeight);
 
-	int stride = vertexBuffer->getVertexStride ();
-	v  = vertexBuffer->getVertices ();
+	int stride = vertexBuffer.getVertexStride ();
+	v  = vertexBuffer.getVertices ();
 	v += stride - 3;
 	v += stride * oldVCount;
 
@@ -1315,7 +1315,7 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               *vertexBuffer,
 
 	lastX = -1000000000.0;
 
-	for (i = oldVCount; i < vertexBuffer->countVertices (); i++)
+	for (i = oldVCount; i < vertexBuffer.countVertices (); i++)
 	{
 	    if (v[0] == lastX)
 	    {
@@ -1346,12 +1346,12 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               *vertexBuffer,
 }
 
 void
-ExpoWindow::glDrawTexture (GLTexture           *texture,
+ExpoWindow::glDrawTexture (GLVertexBuffer	     &vertexBuffer,
+			   GLTexture		     *texture,
                            const GLMatrix            &transform,
                            const GLWindowPaintAttrib &attrib,
 			   unsigned int        mask)
 {
-#if 0  // FIXME: Needs to be re-ported again (no gWindow->vertexBuffer ())
     if (eScreen->expoCam > 0.0                                 &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve &&
 	eScreen->gScreen->lighting ()                          &&
@@ -1359,7 +1359,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
     {
 	CompPoint    offset;
 	GLfloat      *v;
-	GLVertexBuffer *vb = gWindow->vertexBuffer ();
+	GLVertexBuffer *vb = &vertexBuffer;
 
 	if (!window->onAllViewports ())
 	{
@@ -1390,14 +1390,13 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 	}
 
 	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (texture, transform, attrib, mask);
+	gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
 	glDisable (GL_NORMALIZE);
     }
     else
-#endif
     {
 //	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (texture, transform, attrib, mask);
+	gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
 //	glDisable (GL_NORMALIZE);
     }
 }

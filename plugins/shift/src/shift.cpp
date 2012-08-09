@@ -456,7 +456,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 		                          0.0f);
 		    wTransform.scale (scale, scale, 1.0f);
 
-		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
+		    gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, wAttrib, mask);
 		}
 	    }
 	}

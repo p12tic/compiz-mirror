@@ -1506,7 +1506,7 @@ WobblyScreen::donePaint ()
 }
 
 void
-WobblyWindow::glAddGeometry (GLVertexBuffer		 *vertexBuffer,
+WobblyWindow::glAddGeometry (GLVertexBuffer		 &vertexBuffer,
 			     const GLTexture::MatrixList &matrix,
 			     const CompRegion            &region,
 			     const CompRegion            &clip,
@@ -1535,13 +1535,13 @@ WobblyWindow::glAddGeometry (GLVertexBuffer		 *vertexBuffer,
     if (gridH > (int) maxGridHeight)
 	gridH = (int) maxGridHeight;
 
-    int oldCount = vertexBuffer->countVertices ();
+    int oldCount = vertexBuffer.countVertices ();
     gWindow->glAddGeometry (vertexBuffer, matrix, region, clip, gridW, gridH);
-    int newCount = vertexBuffer->countVertices ();
+    int newCount = vertexBuffer.countVertices ();
 
-    int stride = vertexBuffer->getVertexStride ();
-    GLfloat *v = vertexBuffer->getVertices () + oldCount * stride;
-    GLfloat *vMax = vertexBuffer->getVertices () + newCount * stride;
+    int stride = vertexBuffer.getVertexStride ();
+    GLfloat *v = vertexBuffer.getVertices () + oldCount * stride;
+    GLfloat *vMax = vertexBuffer.getVertices () + newCount * stride;
 
     for (; v < vMax; v += stride)
     {

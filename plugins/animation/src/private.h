@@ -404,11 +404,11 @@ private:
     // GLWindowInterface methods
     bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		  const CompRegion &, unsigned int);
-    void glAddGeometry (GLVertexBuffer *,
+    void glAddGeometry (GLVertexBuffer &,
 			const GLTexture::MatrixList &,
 			const CompRegion &, const CompRegion &,
 			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
-    void glDrawTexture (GLTexture *texture, const GLMatrix &,
+    void glDrawTexture (GLVertexBuffer &vertexBuffer, GLTexture *texture, const GLMatrix &,
                         const GLWindowPaintAttrib &, unsigned int);
     //void glDrawGeometry ();
 };

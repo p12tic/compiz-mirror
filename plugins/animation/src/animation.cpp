@@ -1485,7 +1485,7 @@ PrivateAnimWindow::enablePainting (bool enabling)
 }
 
 void
-PrivateAnimWindow::glAddGeometry (GLVertexBuffer	      *vertexBuffer,
+PrivateAnimWindow::glAddGeometry (GLVertexBuffer	      &vertexBuffer,
 				  const GLTexture::MatrixList &matrix,
 				  const CompRegion            &region,
 				  const CompRegion            &clip,
@@ -1523,7 +1523,7 @@ Animation::shouldDamageWindowOnEnd ()
 }
 
 void
-Animation::addGeometry (GLVertexBuffer *vertexBuffer,
+Animation::addGeometry (GLVertexBuffer &vertexBuffer,
 			const GLTexture::MatrixList &matrix,
 			const CompRegion            &region,
 			const CompRegion            &clip,
@@ -1536,7 +1536,7 @@ Animation::addGeometry (GLVertexBuffer *vertexBuffer,
 }
 
 void
-PartialWindowAnim::addGeometry (GLVertexBuffer		    *vertexBuffer,
+PartialWindowAnim::addGeometry (GLVertexBuffer		    &vertexBuffer,
 				const GLTexture::MatrixList &matrix,
 				const CompRegion            &region,
 				const CompRegion            &clip,
@@ -1557,7 +1557,8 @@ PartialWindowAnim::addGeometry (GLVertexBuffer		    *vertexBuffer,
 }
 
 void
-PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
+PrivateAnimWindow::glDrawTexture (GLVertexBuffer     &vertexBuffer,
+				  GLTexture          *texture,
                                   const GLMatrix     &transform,
                                   const GLWindowPaintAttrib &attrib,
 				  unsigned int       mask)
@@ -1567,7 +1568,7 @@ PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
 	mCurAnimation->setCurPaintAttrib (attrib);
     }
 
-    gWindow->glDrawTexture (texture, transform, attrib, mask);
+    gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
 }
 
 #if 0 // Not ported yet

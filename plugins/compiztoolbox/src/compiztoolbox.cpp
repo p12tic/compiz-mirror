@@ -544,7 +544,7 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 				  sAttrib.yTranslate / sAttrib.yScale - g.y (),
 				  0.0f);
 
-	    gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
+	    gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, sAttrib, mask);
 	}
     }
 }
