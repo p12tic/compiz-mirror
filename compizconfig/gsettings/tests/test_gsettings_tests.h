@@ -63,19 +63,18 @@ class CCSGSettingsTestIndependent :
     public CCSGSettingsTestingEnv,
     public ::testing::Test
 {
-<<<<<<< TREE
     public:
 
 	virtual void SetUp ()
 	{
 	    g_type_init ();
 
-	    g_setenv ("G_SLICE", "always-malloc", 1);
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	}
 
 	virtual void TearDown ()
 	{
-	    g_unsetenv ("G_SLICE");
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
 };
 
@@ -100,18 +99,3 @@ class CCSGSettingsTestWithMemoryBackend :
 };
 
 #endif
-=======
-    public:
-
-	virtual void SetUp ()
-	{
-	    CCSGSettingsTestingEnv::SetUpEnv ();
-	}
-
-	virtual void TearDown ()
-	{
-	    CCSGSettingsTestingEnv::TearDownEnv ();
-	}
-};
-
->>>>>>> MERGE-SOURCE
