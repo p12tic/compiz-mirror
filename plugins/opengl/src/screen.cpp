@@ -2011,6 +2011,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	GLFramebufferObject::rebind (oldFbo);
 
 	// FIXME: does not work if screen dimensions exceed max texture size
+	//        We should try to use glBlitFramebuffer instead.
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
