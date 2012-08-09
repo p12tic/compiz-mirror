@@ -77,3 +77,26 @@ ccsGSettingsBackendAddProfile (CCSBackend *backend, const char *profile)
 {
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendAddProfile) (backend, profile);
 }
+
+int
+ccsGSettingsBackendGetIntegratedOptionIndex (CCSBackend *backend,
+					     CCSSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetIntegratedOptionIndex) (backend, setting);
+}
+
+Bool
+ccsGSettingsBackendReadIntegratedOption (CCSBackend *backend,
+					 CCSSetting *setting,
+					 int	    index)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendReadIntegratedOption) (backend, setting, index);
+}
+
+void
+ccsGSettingsBackendWriteIntegratedOption (CCSBackend *backend,
+					  CCSSetting *setting,
+					  int	     index)
+{
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendWriteIntegratedOption) (backend, setting, index);
+}

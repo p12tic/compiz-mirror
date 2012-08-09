@@ -233,20 +233,11 @@ ccsGSettingsBackendConnectToValueChangedSignalDefault (CCSBackend *backend, CCSG
 static void
 ccsGSettingsBackendRegisterGConfClientDefault (CCSBackend *backend)
 {
-#ifdef USE_GCONF
-    initGConfClient (backend);
-#endif
 }
 
 static void
 ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
 {
-#ifdef USE_GCONF
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    gconf_client_clear_cache (priv->client);
-    finiGConfClient (backend);
-#endif
 }
 
 static const char *
@@ -345,7 +336,7 @@ addPrivateToBackend (CCSBackend *backend, CCSObjectAllocationInterface *ai)
     return priv;
 }
 
-static char*
+static char *
 getCurrentProfileName (CCSBackend *backend)
 {
     GVariant *value;
@@ -397,6 +388,8 @@ ccsGSettingsBackendDetachFromBackend (CCSBackend *backend)
 
     priv->compizconfigSettings = NULL;
 
+    ccsIntegrationBackendUnref (priv->integration);
+
     free (priv);
     ccsObjectSetPrivate (backend, NULL);
 
@@ -419,6 +412,7 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 									    currentProfilePath,
 									    backend->object.object_allocation);
     priv->context = context;
+    priv->integration = ccsGConfIntegrationBackendNew (backend, backend->object.object_allocation);
 
     /* Always ensure that we have a default profile */
     ccsGSettingsBackendAddProfile (backend, "Default");

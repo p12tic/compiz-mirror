@@ -1094,30 +1094,6 @@ deleteProfile (CCSBackend *backend,
 }
 
 /* This was all in gsettings.c, it probably needs to live there again */
-Bool
-isIntegratedOption (CCSSetting *setting,
-		    int        *index)
-{
-#ifdef USE_GCONF
-    return isGConfIntegratedOption (setting, index);
-#else
-    return FALSE;
-#endif
-}
-
-static Bool
-readIntegratedOption (CCSBackend *backend,
-		      CCSContext *context,
-		      CCSSetting *setting,
-		      int        index)
-{
-#ifdef USE_GCONF
-    return readGConfIntegratedOption (backend, context, setting, index);
-#else
-    return FALSE;
-#endif
-}
-
 GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 {
@@ -1289,19 +1265,6 @@ readOption (CCSBackend *backend, CCSSetting * setting)
 }
 
 void
-ccsGSettingsWriteIntegratedOption (CCSBackend *backend,
-				   CCSContext *context,
-				   CCSSetting *setting,
-				   int        index)
-{
-#ifdef USE_GCONF
-    writeGConfIntegratedOption (backend, context, setting, index);
-#endif
-
-    return;
-}
-
-void
 writeOption (CCSBackend *backend, CCSSetting * setting)
 {
     CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
@@ -1445,12 +1408,12 @@ readSetting (CCSBackend *backend,
 	     CCSSetting *setting)
 {
     Bool status;
-    int  index;
+    int  index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
 
     if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index))
+	index != -1)
     {
-	status = readIntegratedOption (backend, context, setting, index);
+	status = ccsGSettingsBackendReadIntegratedOption (backend, setting, index);
     }
     else
 	status = readOption (backend, setting);
@@ -1470,12 +1433,12 @@ writeSetting (CCSBackend *backend,
 	      CCSContext *context,
 	      CCSSetting *setting)
 {
-    int index;
+    int index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
 
     if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index))
+	index != -1)
     {
-	ccsGSettingsWriteIntegratedOption (backend, context, setting, index);
+	ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
     }
     else if (ccsSettingGetIsDefault (setting))
     {

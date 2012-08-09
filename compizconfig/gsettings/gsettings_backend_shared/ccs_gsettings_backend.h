@@ -2,6 +2,7 @@
 #define _COMPIZCONFIG_CCS_GSETTINGS_BACKEND_H
 
 #include <ccs-defs.h>
+#include <ccs-backend.h>
 #include <glib.h>
 
 COMPIZCONFIG_BEGIN_DECLS
@@ -23,7 +24,9 @@ struct _CCSGSettingsBackendPrivate
     CCSGSettingsWrapper *currentProfileSettings;
 
     char	    *currentProfile;
-    CCSContext  *context;
+    CCSContext	    *context;
+
+    CCSIntegrationBackend *integration;
 
 #ifdef USE_GCONF
     GConfClient *client;

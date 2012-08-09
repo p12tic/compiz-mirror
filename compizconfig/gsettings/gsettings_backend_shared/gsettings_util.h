@@ -12,6 +12,13 @@ COMPIZCONFIG_BEGIN_DECLS
 
 #include "ccs_gsettings_interface.h"
 
+CCSIntegrationBackend *
+ccsGConfIntegrationBackendNew (CCSBackend *backend,
+			       CCSObjectAllocationInterface *ai);
+
+void
+ccsGConfIntegrationBackendFree (CCSIntegrationBackend *integration);
+
 #ifdef USE_GCONF
 
 #include <gconf/gconf.h>
