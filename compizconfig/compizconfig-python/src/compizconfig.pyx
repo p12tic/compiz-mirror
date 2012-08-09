@@ -316,6 +316,7 @@ cdef extern char* ccsGetProfile (CCSContext * context)
 
 '''Backends'''
 cdef extern CCSBackendInfoList * ccsGetExistingBackends ()
+cdef extern void ccsBackendInfoListFree (CCSBackendInfoList *, Bool freeObj)
 cdef extern Bool ccsSetBackend (CCSContext * context, char * name)
 cdef extern char* ccsGetBackend (CCSContext * context)
 
@@ -1051,7 +1052,7 @@ cdef class Profile:
         self.context = context
         self.name = strdup (name)
 
-    def __dealloc (self):
+    def __dealloc__ (self):
         free (self.name)
 
     def Delete (self):
@@ -1204,8 +1205,9 @@ cdef class Context:
 
         self.backends = {}
         cdef CCSBackendInfoList * backendList
+        cdef CCSBackendInfoList * origBackendList
         cdef CCSBackendInfo * backendInfo
-        backendList = ccsGetExistingBackends ()
+        origBackendList = backendList = ccsGetExistingBackends ()
         while backendList != NULL:
             backendInfo = <CCSBackendInfo *> backendList.data
             info = (backendInfo.name, backendInfo.shortDesc,
@@ -1213,6 +1215,9 @@ cdef class Context:
                     backendInfo.integrationSupport)
             self.backends[backendInfo.name] = Backend (self, info)
             backendList = backendList.next
+
+        ccsBackendInfoListFree (origBackendList, True)
+
         self.currentBackend = self.backends[ccsGetBackend (self.ccsContext)]
     
     def ResetProfile (self):
