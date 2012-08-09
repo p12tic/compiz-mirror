@@ -96,7 +96,8 @@ public:
     void init ();
     void updateBB (CompOutput &output);
     bool updateBBUsed () { return true; }
-    void addGeometry (const GLTexture::MatrixList &matrix,
+    void addGeometry (GLVertexBuffer             *vertexBuffer,
+		      const GLTexture::MatrixList &matrix,
 		      const CompRegion            &region,
 		      const CompRegion            &clip,
 		      unsigned int                maxGridWidth,

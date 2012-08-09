@@ -211,17 +211,15 @@ GridAnim::~GridAnim ()
 }
 
 void
-GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
+GridAnim::addGeometry (GLVertexBuffer              *vertexBuffer,
+		       const GLTexture::MatrixList &matrix,
 		       const CompRegion            &region,
 		       const CompRegion            &clip,
 		       unsigned int                maxGridWidth,
 		       unsigned int                maxGridHeight)
 {
-#if 0 // Grid animations not ported yet
-    unsigned int nMatrix = matrix.size ();
-    int nVertices, nIndices;
-    GLushort *i;
-    GLfloat *v;
+   
+    GLfloat *v, *vMax;
     int x1, y1, x2, y2;
     float winContentsY, winContentsHeight;
     float deformedX, deformedY;
@@ -229,22 +227,10 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
     int nVertX, nVertY;
     int vSize;
     float gridW, gridH;
-    bool rect = true;
     bool notUsing3dCoords = !using3D ();
 
     if (region.isEmpty ()) // nothing to do
 	return;
-
-    GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
-
-    for (unsigned int it = 0; it < nMatrix; it++)
-    {
-	if (matrix[it].xy != 0.0f || matrix[it].yx != 0.0f)
-	{
-	    rect = false;
-	    break;
-	}
-    }
 
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
@@ -263,30 +249,13 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
     winContentsY = oy + outExtents.top;
     winContentsHeight = oheight - outExtents.top - outExtents.bottom;
 
-    geometry.texUnits = (int)nMatrix;
+    vSize = vertexBuffer->getVertexStride ();
 
-    if (geometry.vCount == 0)
     {
-	// reset
-	geometry.indexCount = 0;
-	geometry.texCoordSize = 4;
-    }
-    geometry.vertexStride = 3 + geometry.texUnits * geometry.texCoordSize;
-    vSize = geometry.vertexStride;
-
-    nVertices = geometry.vCount;
-    nIndices = geometry.indexCount;
-
-    v = geometry.vertices + (nVertices * vSize);
-    i = geometry.indices + nIndices;
-
-    // For each clip passed to this function
-    foreach (const CompRect &pClip, region.rects ())
-    {
-	x1 = pClip.x1 ();
-	y1 = pClip.y1 ();
-	x2 = pClip.x2 ();
-	y2 = pClip.y2 ();
+	x1 = outRect.x1 ();
+	y1 = outRect.y1 ();
+	x2 = outRect.x2 ();
+	y2 = outRect.y2 ();
 
 	gridW = (float)owidth / (mGridWidth - 1);
 
@@ -316,58 +285,23 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	nVertX = ceil ((x2 - x1) / gridW) + 2;
 	nVertY = (gridH ? ceil ((y2 - y1) / gridH) : 0) + 2;
 
-	// Allocate 4 indices for each quad
-	int newIndexSize = nIndices + ((nVertX - 1) * (nVertY - 1) * 4);
-
-	if (newIndexSize > geometry.indexSize)
-	{
-	    if (!geometry.moreIndices (newIndexSize))
-		return;
-
-	    i = geometry.indices + nIndices;
-	}
-	// Assign quad vertices to indices
-	for (int jy = 0; jy < nVertY - 1; jy++)
-	{
-	    for (int jx = 0; jx < nVertX - 1; jx++)
-	    {
-		*i++ = nVertices + nVertX * (2 * jy + 1) + jx;
-		*i++ = nVertices + nVertX * (2 * jy + 1) + jx + 1;
-		*i++ = nVertices + nVertX * 2 * jy + jx + 1;
-		*i++ = nVertices + nVertX * 2 * jy + jx;
-
-		nIndices += 4;
-	    }
-	}
-
-	// Allocate vertices
-	int newVertexSize =
-	    (nVertices + nVertX * (2 * nVertY - 2)) * vSize;
-	if (newVertexSize > geometry.vertexSize)
-	{
-	    if (!geometry.moreVertices (newVertexSize))
-		return;
-
-	    v = geometry.vertices + (nVertices * vSize);
-	}
-
-	float rowTexCoordQ = 1;
-	float prevRowCellWidth = 0;	// this initial value won't be used
-	float rowCellWidth = 0;
-	int clipRowSize = nVertX * vSize;
-
+	GLWindow *gWindow = GLWindow::get (mWindow);
+	int oldCount = vertexBuffer->countVertices ();
+	gWindow->glAddGeometry (vertexBuffer, matrix, region, clip,
+	                        nVertX, nVertY);
+	int newCount = vertexBuffer->countVertices ();
+	v = vertexBuffer->getVertices () + (oldCount * vSize);
+	vMax = vertexBuffer->getVertices () + (newCount * vSize);
+ 
 	// For each vertex
-	float y = y1;
-	for (int jy = 0; jy < nVertY; jy++)
+	for (; v < vMax; v += vSize)
 	{
+	    float x = v[0];
+	    float y = v[1];
 	    float topiyFloat;
-	    bool applyOffsets = true;
 
 	    if (y > y2)
 		y = y2;
-
-	    // Do calculations for y here to avoid repeating
-	    // them unnecessarily in the x loop
 
 	    if (mCurWindowEvent == WindowEventShade ||
 		mCurWindowEvent == WindowEventUnshade)
@@ -376,7 +310,6 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		{
 		    topiyFloat = (y - oy) / mDecorTopHeight;
 		    topiyFloat = MIN (topiyFloat, 0.999);	// avoid 1.0
-		    applyOffsets = false;
 		}
 		else if (y2 > winContentsY + winContentsHeight)	// if at bottom
 		{
@@ -384,7 +317,6 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 			(mDecorBottomHeight ? (y - winContentsY -
 					       winContentsHeight) /
 			 mDecorBottomHeight : 0);
-		    applyOffsets = false;
 		}
 		else		// in window contents (only in Y coords)
 		{
@@ -407,8 +339,6 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 	    // End of calculations for y
 
-	    float x = x1;
-	    for (int jx = 0; jx < nVertX; jx++)
 	    {
 		if (x > x2)
 		    x = x2;
@@ -462,182 +392,19 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		deformedY = inyRest * hor1y + iny * hor2y;
 		deformedZ = inyRest * hor1z + iny * hor2z;
 
-		// Texture coordinates (s, t, r, q)
-
-		if (mUseQTexCoord)
-		{
-		    if (jx == 1)
-			rowCellWidth = deformedX - v[-3];
-
-		    // do only once per row for all rows except row 0
-		    if (jy > 0 && jx == 1)
-		    {
-			rowTexCoordQ = (rowCellWidth / prevRowCellWidth);
-
-			for (unsigned int it = 0; it < nMatrix; it++, v += 4)
-			{
-			    // update first column
-			    // (since we didn't know rowTexCoordQ before)
-			    v[-vSize]     *= rowTexCoordQ; // multiply s & t by q
-			    v[-vSize + 1] *= rowTexCoordQ;
-			    v[-vSize + 3] = rowTexCoordQ;  // copy q
-			}
-			v -= nMatrix * 4;
-		    }
-		}
-
-		// Loop for each texture element
-		// (4 texture coordinates for each one)
-		for (unsigned int it = 0; it < nMatrix; it++, v += 4)
-		{
-		    float offsetY = 0;
-
-		    if (rect)
-		    {
-			if (applyOffsets && y < y2)
-			    offsetY = objToTopLeft->mOffsetTexCoordForQuadAfter.y ();
-			v[0] = COMP_TEX_COORD_X (matrix[it], x); // s
-			v[1] = COMP_TEX_COORD_Y (matrix[it], y + offsetY); // t
-		    }
-		    else
-		    {
-			if (applyOffsets && y < y2)
-			    // FIXME:
-			    // The correct y offset below produces wrong
-			    // texture coordinates for some reason.
-			    offsetY = 0;
-			    // offsetY = objToTopLeft->offsetTexCoordForQuadAfter.y;
-			v[0] = COMP_TEX_COORD_XY (matrix[it], x, y + offsetY); // s
-			v[1] = COMP_TEX_COORD_YX (matrix[it], x, y + offsetY); // t
-		    }
-		    v[2] = 0; // r
-
-		    if (0 < jy && jy < nVertY - 1)
-		    {
-			// copy s, t, r to duplicate row
-			memcpy (v + clipRowSize, v, 3 * sizeof (GLfloat));
-			v[3 + clipRowSize] = 1; // q
-		    }
-
-		    if (applyOffsets &&
-			objToTopLeft->mOffsetTexCoordForQuadBefore.y () != 0)
-		    {
-			// After copying to next row, update texture y coord
-			// by following object's offset
-			offsetY = objToTopLeft->mOffsetTexCoordForQuadBefore.y ();
-			if (rect)
-			{
-			    v[1] = COMP_TEX_COORD_Y (matrix[it], y + offsetY);
-			}
-			else
-			{
-			    v[0] = COMP_TEX_COORD_XY (matrix[it],
-						      x, y + offsetY);
-			    v[1] = COMP_TEX_COORD_YX (matrix[it],
-						      x, y + offsetY);
-			}
-		    }
-		    if (mUseQTexCoord)
-		    {
-			v[3] = rowTexCoordQ; // q
-
-			if (jx > 0)	// since column 0 is updated when jx == 1
-			{
-			    // multiply s & t by q
-			    v[0] *= rowTexCoordQ;
-			    v[1] *= rowTexCoordQ;
-			}
-		    }
-		    else
-		    {
-			v[3] = 1; // q
-		    }
-		}
-
 		v[0] = deformedX;
 		v[1] = deformedY;
 		v[2] = deformedZ;
 
-		// Copy vertex coordinates to duplicate row
-		if (0 < jy && jy < nVertY - 1)
-		    memcpy (v + clipRowSize, v, 3 * sizeof (GLfloat));
-
-		nVertices++;
-
-		// increment x properly (so that coordinates fall on grid intersections)
-		x = rightix * gridW + ox;
-
-		v += 3; // move on to next vertex
-	    }
-	    if (mUseQTexCoord)
-		prevRowCellWidth = rowCellWidth;
-
-	    if (0 < jy && jy < nVertY - 1)
-	    {
-		v += clipRowSize;	// skip the duplicate row
-		nVertices += nVertX;
-	    }
-	    // increment y properly (so that coordinates fall on grid intersections)
-	    if (mCurWindowEvent == WindowEventShade ||
-		mCurWindowEvent == WindowEventUnshade)
-	    {
-		y += gridH;
-	    }
-	    else
-	    {
-		y = bottomiy * gridH + oy;
 	    }
 	}
     }
-    geometry.vCount = nVertices;
-    geometry.indexCount = nIndices;
-#endif
 }
 
 void
 GridAnim::drawGeometry ()
 {
-#if 0 // Grid animations not ported yet
-    GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
-
-    int     texUnit = geometry.texUnits;
-    int     currentTexUnit = 0;
-    int     stride = geometry.vertexStride;
-    GLfloat *vertices = geometry.vertices + (stride - 3);
-
-    stride *= (int) sizeof (GLfloat);
-
-    glVertexPointer (3, GL_FLOAT, stride, vertices);
-
-    while (texUnit--)
-    {
-	if (texUnit != currentTexUnit)
-	{
-	    (*GL::clientActiveTexture) ((GLenum)(GL_TEXTURE0_ARB + texUnit));
-	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	    currentTexUnit = texUnit;
-	}
-	vertices -= geometry.texCoordSize;
-	glTexCoordPointer (geometry.texCoordSize,
-			   GL_FLOAT, stride, vertices);
-    }
-
-    glDrawElements (GL_QUADS, geometry.indexCount,
-		    GL_UNSIGNED_SHORT, geometry.indices);
-
-    // disable all texture coordinate arrays except 0
-    texUnit = geometry.texUnits;
-    if (texUnit > 1)
-    {
-	while (--texUnit)
-	{
-	    (*GL::clientActiveTexture) ((GLenum)(GL_TEXTURE0_ARB + texUnit));
-	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	}
-
-	(*GL::clientActiveTexture) (GL_TEXTURE0_ARB);
-    }
-#endif
+    // Deprecated
 }
 
 GridTransformAnim::GridTransformAnim (CompWindow *w,
