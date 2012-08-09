@@ -14,21 +14,6 @@ COMPIZCONFIG_BEGIN_DECLS
 typedef struct _CCSBackend CCSBackend;
 typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
 
-/* FIXME: This should not be here, but getting it to be
- * part of its own file is a lot more work than we currently
- * have time to do right now */
-struct _CCSGSettingsBackendPrivate
-{
-    GList	   *settingsList;
-    CCSGSettingsWrapper *compizconfigSettings;
-    CCSGSettingsWrapper *currentProfileSettings;
-
-    char	    *currentProfile;
-    CCSContext	    *context;
-
-    CCSIntegration *integration;
-};
-
 Bool
 ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context);
 
