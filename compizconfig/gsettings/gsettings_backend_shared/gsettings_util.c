@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
+#include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_interface_wrapper.h"
 #include "ccs_gsettings_backend_interface.h"
 
 const CCSBackendInfo gsettingsBackendInfo =

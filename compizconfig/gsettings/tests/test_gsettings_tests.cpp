@@ -1,5 +1,8 @@
+#include <tr1/tuple>
+
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
@@ -14,6 +17,7 @@
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
 #include "compizconfig_ccs_mocked_allocator.h"
+#include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_wrapper_mock.h"
 
 using ::testing::Values;
