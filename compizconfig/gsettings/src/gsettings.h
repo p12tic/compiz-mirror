@@ -56,14 +56,6 @@
 #define _GNU_SOURCE
 #endif
 
-typedef enum {
-    OptionInt,
-    OptionBool,
-    OptionKey,
-    OptionString,
-    OptionSpecial,
-} SpecialOptionType;
-
 char *currentProfile;
 
 Bool readInit (CCSBackend *, CCSContext * context);
@@ -71,50 +63,5 @@ void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
 Bool readOption (CCSSetting * setting);
 Bool writeInit (CCSBackend *, CCSContext * context);
 void writeOption (CCSSetting *setting);
-
-#ifdef USE_GCONF
-
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
-
-GConfClient *client;
-guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
-
-typedef struct _SpecialOptionGConf {
-    const char*       settingName;
-    const char*       pluginName;
-    Bool	      screen;
-    const char*       gnomeName;
-    SpecialOptionType type;
-} SpecialOptionGConf;
-
-Bool
-isGConfIntegratedOption (CCSSetting *setting,
-			 int	    *index);
-
-void
-gnomeGConfValueChanged (GConfClient *client,
-			guint       cnxn_id,
-			GConfEntry  *entry,
-			gpointer    user_data);
-
-void
-initGConfClient (CCSContext *context);
-
-void
-finiGConfClient (void);
-
-Bool
-readGConfIntegratedOption (CCSContext *context,
-			   CCSSetting *setting,
-			   int	      index);
-
-void
-writeGConfIntegratedOption (CCSContext *context,
-			    CCSSetting *setting,
-			    int	       index);
-
-#endif
 
 #endif

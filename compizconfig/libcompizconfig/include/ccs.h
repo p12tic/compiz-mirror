@@ -572,6 +572,9 @@ Bool ccsSettingIsIntegrated (CCSSetting *setting);
 /* Checks if a given setting is read-only. */
 Bool ccsSettingIsReadOnly (CCSSetting *setting);
 
+/* Checks if a setting is readable by backends */
+Bool ccsSettingIsReadableByBackend (CCSSetting *setting);
+
 typedef char * (*CCSSettingGetName) (CCSSetting *);
 typedef char * (*CCSSettingGetShortDesc) (CCSSetting *);
 typedef char * (*CCSSettingGetLongDesc) (CCSSetting *);
@@ -612,6 +615,7 @@ typedef Bool (*CCSSettingGetList) (CCSSetting *setting, CCSSettingValueList *dat
 typedef void (*CCSSettingResetToDefault) (CCSSetting *setting, Bool processChanged);
 typedef Bool (*CCSSettingIsIntegrated) (CCSSetting *setting);
 typedef Bool (*CCSSettingIsReadOnly) (CCSSetting *setting);
+typedef Bool (*CCSSettingIsReadableByBackend) (CCSSetting *setting);
 typedef void (*CCSSettingDestructor) (CCSSetting *setting);
 
 unsigned int ccsCCSSettingInterfaceGetType ();
@@ -658,6 +662,7 @@ struct _CCSSettingInterface
     CCSSettingResetToDefault settingResetToDefault;
     CCSSettingIsIntegrated settingIsIntegrated;
     CCSSettingIsReadOnly settingIsReadOnly;
+    CCSSettingIsReadableByBackend settingIsReadableByBackend;
     CCSSettingDestructor settingDestructor;
 };
 
