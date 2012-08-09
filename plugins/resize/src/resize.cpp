@@ -1791,7 +1791,7 @@ void
 ResizeScreen::enableOrDisableVerticalMaximization(int yRoot)
 {
     /* maximum distance between the pointer and a work area edge (top or bottom)
-       for a vertical maximization */    
+       for a vertical maximization */
     const int max_edge_distance = 5;
 
     if (!optionGetMaximizeVertically())
