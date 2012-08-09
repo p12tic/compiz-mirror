@@ -61,14 +61,6 @@ class GLVertexBuffer
 	static bool enabled ();
 
 	GLVertexBuffer ();
-
-	/* FIXME: We need to be a bit more
-	 * careful here ... any plugin could pass
-	 * in a legacy GL_*_DRAW or GL_*_DRAW_ARB
-	 * which are not the same tokens and will
-	 * crash if using the former with glBufferDataARB
-	 * or using the latter with glBufferData
-	 */
 	GLVertexBuffer (GLenum usage);
 	~GLVertexBuffer ();
 

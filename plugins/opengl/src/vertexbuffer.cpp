@@ -58,6 +58,10 @@ GLVertexBuffer::GLVertexBuffer () :
 GLVertexBuffer::GLVertexBuffer (GLenum usage) :
     priv (new PrivateVertexBuffer ())
 {
+    if (usage != GL::STATIC_DRAW &&
+        usage != GL::DYNAMIC_DRAW &&
+        usage != GL::STREAM_DRAW)
+	usage = GL::STATIC_DRAW;
     priv->usage = usage;
     colorDefault ();
 }
