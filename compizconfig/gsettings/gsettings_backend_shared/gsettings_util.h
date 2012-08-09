@@ -5,6 +5,8 @@
 #include <glib-object.h>
 #include <ccs.h>
 
+typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
+
 gchar *
 getSchemaNameForPlugin (const char *plugin);
 
@@ -41,9 +43,9 @@ appendToPluginsWithSetKeysList (const gchar    *plugin,
 				char	       ***newWrittenPlugins,
 				gsize	       *newWrittenPluginsSize);
 
-GObject *
-findObjectInListWithPropertySchemaName (const gchar *schemaName,
-					GList	    *iter);
+CCSGSettingsWrapper *
+findCCSGSettingsWrapperBySchemaName (const gchar *schemaName,
+				     GList	 *iter);
 
 CCSSettingList
 filterAllSettingsMatchingType (CCSSettingType type,

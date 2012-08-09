@@ -35,6 +35,8 @@
 
 #include "gsettings.h"
 #include "gconf-integration.h"
+#include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_interface_wrapper.h"
 
 static void
 valueChanged (GSettings   *settings,
@@ -42,8 +44,8 @@ valueChanged (GSettings   *settings,
 	      gpointer    user_data);
 
 static GList	   *settingsList = NULL;
-static GSettings   *compizconfigSettings = NULL;
-static GSettings   *currentProfileSettings = NULL;
+static CCSGSettingsWrapper *compizconfigSettings = NULL;
+static CCSGSettingsWrapper *currentProfileSettings = NULL;
 static CCSIntegration *integration = NULL;
 
 char *currentProfile = NULL;
@@ -53,18 +55,18 @@ static void writeIntegratedOption (CCSContext *context,
 				   CCSSetting *setting,
 				   int        index);
 
-static GSettings *
+static CCSGSettingsWrapper *
 getSettingsObjectForPluginWithPath (const char *plugin,
 				  const char *path,
 				  CCSContext *context)
 {
-    GSettings *settingsObj = NULL;
+    CCSGSettingsWrapper *settingsObj = NULL;
     gchar *schemaName = getSchemaNameForPlugin (plugin);
     GVariant        *writtenPlugins;
     gsize            newWrittenPluginsSize;
     gchar           **newWrittenPlugins;
 
-    settingsObj = (GSettings *) findObjectInListWithPropertySchemaName (schemaName, settingsList);
+    settingsObj = findCCSGSettingsWrapperBySchemaName (schemaName, settingsList);
 
     if (settingsObj)
     {
@@ -74,10 +76,8 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 
     /* No existing settings object found for this schema, create one */
     
-    settingsObj = g_settings_new_with_path (schemaName, path);
-
-    g_signal_connect (G_OBJECT (settingsObj), "changed", (GCallback) valueChanged, (gpointer) context);
-
+    settingsObj = ccsGSettingsWrapperNewForSchemaWithPath (schemaName, path, &ccsDefaultObjectAllocator);
+    ccsGSettingsWrapperConnectToChangedSignal (settingsObj, (GCallback) valueChanged, (gpointer) context);
     settingsList = g_list_append (settingsList, (void *) settingsObj);
 
     /* Also write the plugin name to the list of modified plugins so
@@ -86,11 +86,14 @@ getSettingsObjectForPluginWithPath (const char *plugin,
      * store keys that have changed from their defaults ... though
      * gsettings doesn't seem to give you a way to get all of the schemas */
 
-    writtenPlugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
+    writtenPlugins = ccsGSettingsWrapperGetValue (currentProfileSettings, "plugins-with-set-keys");
 
     appendToPluginsWithSetKeysList (plugin, writtenPlugins, &newWrittenPlugins, &newWrittenPluginsSize);
 
-    g_settings_set_strv (currentProfileSettings, "plugins-with-set-keys", (const gchar * const *)newWrittenPlugins);
+    GVariant *newWrittenPluginsVariant = g_variant_new_strv ((const gchar * const *) newWrittenPlugins, newWrittenPluginsSize);
+
+    ccsGSettingsWrapperSetValue (currentProfileSettings, "plugins-with-set-keys", newWrittenPluginsVariant);
+
 
     g_free (schemaName);
     g_strfreev (newWrittenPlugins);
@@ -105,10 +108,10 @@ makeSettingPath (CCSSetting *setting)
                              ccsPluginGetName (ccsSettingGetParent (setting)));
 }
 
-static GSettings *
+static CCSGSettingsWrapper *
 getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
-    GSettings *ret = NULL;
+    CCSGSettingsWrapper *ret = NULL;
     gchar *pathName = makeSettingPath (setting);
 
     ret = getSettingsObjectForPluginWithPath (ccsPluginGetName (ccsSettingGetParent (setting)),
@@ -159,21 +162,29 @@ valueChanged (GSettings   *settings,
 	      gchar	  *keyName,
 	      gpointer    user_data)
 {
+    GValue       schemaNameValue = G_VALUE_INIT;
     CCSContext   *context = (CCSContext *)user_data;
     char	 *uncleanKeyName;
-    char	 *path, *pathOrig;
+    char	 *path;
+    const char   *pathOrig;
     char         *pluginName;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
-    g_object_get (G_OBJECT (settings), "path", &pathOrig, NULL);
+    g_value_init (&schemaNameValue, G_TYPE_STRING);
+    g_object_get_property (G_OBJECT (settings), "schema-id", &schemaNameValue);
 
-    path = pathOrig;
+    const char *schemaName = g_value_get_string (&schemaNameValue);
+    CCSGSettingsWrapper *wrapper = findCCSGSettingsWrapperBySchemaName (schemaName, settingsList);
+
+    pathOrig = ccsGSettingsWrapperGetPath (wrapper);
+    path = strdup (pathOrig);
 
     if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
     {
-	g_free (pathOrig);
+	g_value_unset (&schemaNameValue);
+	g_free (path);
 	return;
     }
 
@@ -186,7 +197,7 @@ valueChanged (GSettings   *settings,
     {
 	/* Couldn't find setting straight off the bat,
 	 * try and find the best match */
-	GVariant *value = g_settings_get_value (settings, keyName);
+	GVariant *value = ccsGSettingsWrapperGetValue (wrapper, keyName);
 
 	if (value)
 	{
@@ -217,24 +228,26 @@ valueChanged (GSettings   *settings,
 	if (!setting)
 	{
 	    ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, path);
+	    g_value_unset (&schemaNameValue);
 	    g_free (pluginName);
 	    free (uncleanKeyName);
-	    g_free (pathOrig);
+	    g_free (path);
 	    return;
 	}
     }
 
     updateSetting (NULL, context, plugin, setting);
 
+    g_value_unset (&schemaNameValue);
     g_free (pluginName);
     free (uncleanKeyName);
-    g_free (pathOrig);
+    g_free (path);
 }
 
 static Bool
 readListValue (CCSSetting *setting)
 {
-    GSettings		*settings = getSettingsObjectForCCSSetting (setting);
+    CCSGSettingsWrapper	*settings = getSettingsObjectForCCSSetting (setting);
     gboolean		hasVariantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
@@ -248,7 +261,7 @@ readListValue (CCSSetting *setting)
     if (!hasVariantType)
 	return FALSE;
 
-    value = g_settings_get_value (settings, cleanSettingName);
+    value = ccsGSettingsWrapperGetValue (settings, cleanSettingName);
     if (!value)
     {
 	ccsSetList (setting, NULL, TRUE);
@@ -376,7 +389,7 @@ readIntegratedOption (CCSContext *context,
 Bool
 readOption (CCSSetting * setting)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (setting);
     GVariant   *gsettingsValue = NULL;
     Bool       ret = FALSE;
 
@@ -394,7 +407,7 @@ readOption (CCSSetting * setting)
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
     /* first check if the key is set */
-    gsettingsValue = g_settings_get_value (settings, cleanSettingName);
+    gsettingsValue = ccsGSettingsWrapperGetValue (settings, cleanSettingName);
 
     if (!gsettingsValue)
     {
@@ -547,7 +560,7 @@ static void
 writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
-    GSettings  		*settings = getSettingsObjectForCCSSetting (setting);
+    CCSGSettingsWrapper *settings = getSettingsObjectForCCSSetting (setting);
     GVariant 		*value = NULL;
     CCSSettingValueList list;
 
@@ -640,8 +653,7 @@ writeListValue (CCSSetting *setting,
 
     if (value)
     {
-	g_settings_set_value (settings, cleanSettingName, value);
-	g_variant_unref (value);
+	ccsGSettingsWrapperSetValue (settings, cleanSettingName, value);
     }
     
     free (cleanSettingName);
@@ -658,19 +670,17 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-  
+    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
-    g_settings_reset (settings, cleanSettingName);
-
+    ccsGSettingsWrapperResetKey (settings, cleanSettingName);
     free (cleanSettingName);
 }
 
 void
 writeOption (CCSSetting * setting)
 {
-    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
+    CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
 
     switch (ccsSettingGetType (setting))
@@ -680,7 +690,8 @@ writeOption (CCSSetting * setting)
 	    char *value;
 	    if (ccsGetString (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		GVariant *v = g_variant_new ("s", value);
+		ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    }
 	}
 	break;
@@ -689,7 +700,8 @@ writeOption (CCSSetting * setting)
 	    char *value;
 	    if (ccsGetMatch (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		GVariant *v = g_variant_new ("s", value);
+		ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    }
 	}
     case TypeFloat:
@@ -697,7 +709,8 @@ writeOption (CCSSetting * setting)
 	    float value;
 	    if (ccsGetFloat (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "d", (double) value, NULL);
+		GVariant *v = g_variant_new ("d", (double) value);
+		ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    }
 	}
 	break;
@@ -706,7 +719,8 @@ writeOption (CCSSetting * setting)
 	    int value;
 	    if (ccsGetInt (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "i", value, NULL);
+		GVariant *v = g_variant_new ("i", value);
+		ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    }
 	}
 	break;
@@ -715,7 +729,8 @@ writeOption (CCSSetting * setting)
 	    Bool value;
 	    if (ccsGetBool (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "b", value, NULL);
+		GVariant *v = g_variant_new ("b", value);
+		ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    }
 	}
 	break;
@@ -731,7 +746,8 @@ writeOption (CCSSetting * setting)
 	    if (!colString)
 		break;
 
-	    g_settings_set (settings, cleanSettingName, "s", colString, NULL);
+	    GVariant *v = g_variant_new ("s", colString);
+	    ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    free (colString);
 	}
 	break;
@@ -747,7 +763,8 @@ writeOption (CCSSetting * setting)
 	    if (!keyString)
 		break;
 
-	    g_settings_set (settings, cleanSettingName, "s", keyString, NULL);
+	    GVariant *v = g_variant_new ("s", keyString);
+	    ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    free (keyString);
 	}
 	break;
@@ -763,7 +780,8 @@ writeOption (CCSSetting * setting)
 	    if (!buttonString)
 		break;
 
-	    g_settings_set (settings, cleanSettingName, "s", buttonString, NULL);
+	    GVariant *v = g_variant_new ("s", buttonString);
+	    ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    free (buttonString);
 	}
 	break;
@@ -779,7 +797,8 @@ writeOption (CCSSetting * setting)
 	    if (!edgeString)
 		break;
 
-	    g_settings_set (settings, cleanSettingName, "s", edgeString, NULL);
+	    GVariant *v = g_variant_new ("s", edgeString);
+	    ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    free (edgeString);
 	}
 	break;
@@ -788,7 +807,8 @@ writeOption (CCSSetting * setting)
 	    Bool value;
 	    if (ccsGetBell (setting, &value))
 	    {
-		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		GVariant *v = g_variant_new ("b", value);
+		ccsGSettingsWrapperSetValue (settings, cleanSettingName, v);
 	    }
 	}
 	break;
@@ -819,7 +839,7 @@ updateCurrentProfileName (const char *profile)
     GVariantIter    iter;
     gboolean        found = FALSE;
 
-    profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
+    profiles = ccsGSettingsWrapperGetValue (compizconfigSettings,  "existing-profiles");
 
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
@@ -836,7 +856,7 @@ updateCurrentProfileName (const char *profile)
 	g_variant_builder_add (newProfilesBuilder, "s", profile);
 
     newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
+    ccsGSettingsWrapperSetValue (compizconfigSettings, "existing-profiles", newProfiles);
 
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
@@ -845,9 +865,12 @@ updateCurrentProfileName (const char *profile)
     free (currentProfile);
 
     currentProfile = strdup (profile);
-    currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
+    currentProfileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID,
+								      profilePath,
+								      &ccsDefaultObjectAllocator);
 
-    g_settings_set (compizconfigSettings, "current-profile", "s", profile, NULL);
+    GVariant *currentProfileVariant = g_variant_new ("s", currentProfile);
+    ccsGSettingsWrapperSetValue (compizconfigSettings, "current-profile", currentProfileVariant);
 
     g_free (profilePath);
 }
@@ -880,7 +903,7 @@ getCurrentProfileName (void)
     GVariant *value;
     char     *ret = NULL;
 
-    value = g_settings_get_value (compizconfigSettings, "current-profile");
+    value = ccsGSettingsWrapperGetValue (compizconfigSettings, "current-profile");
 
     if (value)
 	ret = strdup (g_variant_get_string (value, NULL));
@@ -907,11 +930,13 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     g_type_init ();
 
-    compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
-
+    compizconfigSettings = ccsGSettingsWrapperNewForSchema (COMPIZCONFIG_SCHEMA_ID,
+							    backend->object.object_allocation);
     currentProfile = getCurrentProfileName ();
     currentProfilePath = makeCompizProfilePath (currentProfile);
-    currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
+    currentProfileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID,
+								      currentProfilePath,
+								      backend->object.object_allocation);
 
     g_free (currentProfilePath);
 
@@ -939,17 +964,17 @@ finiBackend (CCSBackend *backend)
 
     while (l)
     {
-	g_object_unref (G_OBJECT (l->data));
+	ccsGSettingsWrapperUnref ((CCSGSettingsWrapper *) (l->data));
 	l = g_list_next (l);
     }
 
     if (currentProfileSettings)
     {
-	g_object_unref (currentProfileSettings);
+	ccsGSettingsWrapperUnref (currentProfileSettings);
 	currentProfileSettings = NULL;
     }
 
-    g_object_unref (G_OBJECT (compizconfigSettings));
+    ccsGSettingsWrapperUnref (compizconfigSettings);
 
     ccsIntegrationUnref (integration);
     integration = NULL;
@@ -1038,7 +1063,7 @@ getExistingProfiles (CCSBackend *backend, CCSContext *context)
     GVariantIter  iter;
     CCSStringList ret = NULL;
 
-    value = g_settings_get_value (compizconfigSettings,  "existing-profiles");
+    value = ccsGSettingsWrapperGetValue (compizconfigSettings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
     while (g_variant_iter_loop (&iter, "s", &profile))
     {
@@ -1066,15 +1091,15 @@ deleteProfile (CCSBackend *backend,
     char            *plugin, *prof;
     GVariantIter    iter;
     char            *profileSettingsPath = makeCompizProfilePath (profile);
-    GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
+    CCSGSettingsWrapper *profileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID, profileSettingsPath, &ccsDefaultObjectAllocator);
 
-    plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
-    profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
+    plugins = ccsGSettingsWrapperGetValue (currentProfileSettings, "plugins-with-set-keys");
+    profiles = ccsGSettingsWrapperGetValue (compizconfigSettings, "existing-profiles");
 
     g_variant_iter_init (&iter, plugins);
     while (g_variant_iter_loop (&iter, "s", &plugin))
     {
-	GSettings *settings;
+	CCSGSettingsWrapper *settings;
 	gchar *pathName = makeCompizPluginPath (currentProfile, plugin);
 
 	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
@@ -1085,19 +1110,19 @@ deleteProfile (CCSBackend *backend,
 	 * we don't because we autogenerate schemas ... */
 	if (settings)
 	{
-	    char **keys = g_settings_list_keys (settings);
+	    char **keys = ccsGSettingsWrapperListKeys (settings);
 	    char **key_ptr;
 
 	    /* Unset all the keys */
 	    for (key_ptr = keys; *key_ptr; key_ptr++)
-		g_settings_reset (settings, *key_ptr);
+		ccsGSettingsWrapperResetKey (settings, *key_ptr);
 
 	    g_strfreev (keys);
 	}
     }
 
     /* Remove the profile from existing-profiles */
-    g_settings_reset (profileSettings, "plugins-with-set-values");
+    ccsGSettingsWrapperResetKey (profileSettings, "plugins-with-set-values");
 
     g_variant_iter_init (&iter, profiles);
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
@@ -1109,7 +1134,7 @@ deleteProfile (CCSBackend *backend,
     }
 
     newProfiles = g_variant_new ("as", newProfilesBuilder);
-    g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
+    ccsGSettingsWrapperSetValue (compizconfigSettings, "existing-profiles", newProfiles);
 
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
