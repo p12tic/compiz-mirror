@@ -27,11 +27,6 @@ struct _CCSGSettingsBackendPrivate
     CCSContext	    *context;
 
     CCSIntegration *integration;
-
-#ifdef USE_GCONF
-
-#endif
-
 };
 
 Bool

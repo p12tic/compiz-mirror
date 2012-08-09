@@ -31,8 +31,8 @@ class CCSIntegrationGMockInterface
 	virtual ~CCSIntegrationGMockInterface () {}
 
 	virtual int getIntegratedOptionIndex (const char *pluginName, const char *settingName) = 0;
-	virtual Bool readOptionIntoSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting, int index) = 0;
-	virtual void writeOptionFromSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting, int index) = 0;
+	virtual Bool readOptionIntoSetting (CCSContext *context, CCSSetting *setting, int index) = 0;
+	virtual void writeOptionFromSetting (CCSContext *context, CCSSetting *setting, int index) = 0;
 };
 
 class CCSIntegrationGMock :
@@ -41,8 +41,8 @@ class CCSIntegrationGMock :
     public:
 
 	MOCK_METHOD2 (getIntegratedOptionIndex, int (const char *, const char *));
-	MOCK_METHOD4 (readOptionIntoSetting, Bool (CCSBackend *, CCSContext *, CCSSetting *, int));
-	MOCK_METHOD4 (writeOptionFromSetting, void (CCSBackend *, CCSContext *, CCSSetting *, int));
+	MOCK_METHOD3 (readOptionIntoSetting, Bool (CCSContext *, CCSSetting *, int));
+	MOCK_METHOD3 (writeOptionFromSetting, void (CCSContext *, CCSSetting *, int));
 
 
 	CCSIntegrationGMock (CCSIntegration *integration) :
@@ -68,22 +68,20 @@ class CCSIntegrationGMock :
 
 	static
 	Bool CCSIntegrationReadOptionIntoSetting (CCSIntegration *integration,
-							 CCSBackend		  *backend,
 							 CCSContext		  *context,
 							 CCSSetting		  *setting,
 							 int			  index)
 	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->readOptionIntoSetting (backend, context, setting, index);
+	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->readOptionIntoSetting (context, setting, index);
 	}
 
 	static
 	void CCSIntegrationWriteSettingIntoOption (CCSIntegration *integration,
-							  CCSBackend		   *backend,
 							  CCSContext		   *context,
 							  CCSSetting		   *setting,
 							  int			    index)
 	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (backend, context, setting, index);
+	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (context, setting, index);
 	}
 
 	static

@@ -325,7 +325,6 @@ ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting 
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     return ccsIntegrationReadOptionIntoSetting (priv->integration,
-						       backend,
 						       priv->context,
 						       setting,
 						       index);
@@ -337,7 +336,6 @@ ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     ccsIntegrationWriteSettingIntoOption (priv->integration,
-						 backend,
 						 priv->context,
 						 setting,
 						 index);
@@ -462,6 +460,12 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
     ccsGSettingsBackendAddProfile (backend, "Default");
 
     g_free (currentProfilePath);
+
+#ifdef USE_GCONF
+    priv->integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
+#else
+    priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
+#endif
 
     return TRUE;
 }

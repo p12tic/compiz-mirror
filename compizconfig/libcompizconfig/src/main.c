@@ -1198,7 +1198,6 @@ ccsSetBackend (CCSContext *context, char *name)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextSetBackend) (context, name);
 }
 
-/* Needs to go into its own file */
 int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
 						   const char *pluginName,
 						   const char *settingName)
@@ -1207,21 +1206,19 @@ int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
 }
 
 Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
-						 CCSBackend		  *backend,
 						 CCSContext		  *context,
 						 CCSSetting		  *setting,
 						 int			  index)
 {
-    return (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, backend, context, setting, index);
+    return (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, context, setting, index);
 }
 
 void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
-						  CCSBackend		   *backend,
 						  CCSContext		   *context,
 						  CCSSetting		   *setting,
 						  int			   index)
 {
-    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, backend, context, setting, index);
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, context, setting, index);
 }
 
 void ccsFreeIntegration (CCSIntegration *integration)
@@ -1239,7 +1236,6 @@ ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 
 static Bool
 ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
-						CCSBackend	      *backend,
 						CCSContext	      *context,
 						CCSSetting	      *setting,
 						int		      index)
@@ -1249,7 +1245,6 @@ ccsNullIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 
 static void
 ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegration *integration,
-						 CCSBackend	      *backend,
 						 CCSContext	      *context,
 						 CCSSetting	      *setting,
 						 int		      index)

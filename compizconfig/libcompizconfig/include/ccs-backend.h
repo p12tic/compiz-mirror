@@ -43,12 +43,10 @@ typedef int (*CCSIntegrationGetIntegratedOptionIndex) (CCSIntegration *integrati
 							      const char *pluginName,
 							      const char *settingName);
 typedef Bool (*CCSIntegrationReadOptionIntoSetting) (CCSIntegration *integration,
-							    CCSBackend		  *backend,
 							    CCSContext		  *context,
 							    CCSSetting		  *setting,
 							    int			  index);
 typedef void (*CCSIntegrationWriteSettingIntoOption) (CCSIntegration *integration,
-							     CCSBackend		   *backend,
 							     CCSContext		   *context,
 							     CCSSetting		   *setting,
 							     int		   index);
@@ -75,12 +73,10 @@ int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
 						   const char *pluginName,
 						   const char *settingName);
 Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
-						 CCSBackend		  *backend,
 						 CCSContext		  *context,
 						 CCSSetting		  *setting,
 						 int			  index);
 void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
-						  CCSBackend		   *backend,
 						  CCSContext		   *context,
 						  CCSSetting		   *setting,
 						  int			    index);

@@ -201,9 +201,6 @@ getSettingsObjectForCCSSetting (CCSBackend *backend, CCSSetting *setting);
 void
 resetOptionToDefault (CCSBackend *backend, CCSSetting * setting);
 
-
-/* Should all be living in gsettings.h */
-
 COMPIZCONFIG_END_DECLS
 
 #endif

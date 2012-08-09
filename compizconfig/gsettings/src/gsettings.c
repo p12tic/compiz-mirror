@@ -36,6 +36,7 @@
 #include "gsettings.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
+#include "gconf-integration.h"
 
 GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)

@@ -31,14 +31,13 @@
  *
  **/
 #ifdef USE_GCONF
-
 #include <ccs-backend.h>
-#include "gsettings_shared.h"
-#include "ccs_gsettings_backend_interface.h"
-#include "ccs_gsettings_backend.h"
 #include <gconf/gconf.h>
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
+#include "gsettings_shared.h"
+#include "ccs_gsettings_backend_interface.h"
+#include "ccs_gsettings_backend.h"
 #include "gconf-integration.h"
 
 typedef enum {
@@ -535,9 +534,8 @@ initGConfClient (CCSIntegration *integration)
     }
 }
 
-
 static unsigned int
-getGnomeMouseButtonModifier(GConfClient *client)
+getGnomeMouseButtonModifier (GConfClient *client)
 {
     unsigned int modMask = 0;
     GError       *err = NULL;
@@ -581,7 +579,6 @@ getButtonBindingForSetting (CCSContext   *context,
 
 Bool
 ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
-						 CCSBackend	       *backend,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
 						 int		       index)
@@ -757,7 +754,8 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 }
 
 static Bool
-setGnomeMouseButtonModifier (GConfClient *client, unsigned int modMask)
+setGnomeMouseButtonModifier (GConfClient *client,
+			     unsigned int modMask)
 {
     char   *modifiers, *currentValue;
     GError *err = NULL;
@@ -819,14 +817,13 @@ setButtonBindingForSetting (CCSContext   *context,
 
 void
 ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
-						  CCSBackend		 *backend,
 						  CCSContext		 *context,
 						  CCSSetting		 *setting,
 						  int			 index)
 {
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
-    
+
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (!priv->client)
