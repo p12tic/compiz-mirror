@@ -158,17 +158,21 @@ class ResizeScreen :
 
 private:
 	/* Helper functions for handleMotionEvent() */
-	void snapWindowToWorkAreaBoundaries(int &wi, int &he,
-			int &wX, int &wY, int &wWidth, int &wHeight);
-	void setUpMask(int xRoot, int yRoot);
-	void accumulatePointerMotion(int xRoot, int yRoot);
-	void constrainToWorkArea(int &che, int &cwi);
-	void limitMovementToConstraintRegion(int &wi, int &he,
-			int xRoot, int yRoot, int wX, int wY, int wWidth, int wHeight);
-	void computeWindowPlusBordersRect(int &wX, int &wY, int &wWidth, int &wHeight,
-	        int wi, int he);
-        void enableOrDisableVerticalMaximization(int yRoot);
-	void computeGeometry(int wi, int he);
+	void snapWindowToWorkAreaBoundaries (int &wi, int &he,
+					     int &wX, int &wY,
+					     int &wWidth, int &wHeight);
+	void setUpMask (int xRoot, int yRoot);
+	void accumulatePointerMotion (int xRoot, int yRoot);
+	void constrainToWorkArea (int &che, int &cwi);
+	void limitMovementToConstraintRegion (int &wi, int &he,
+					      int xRoot, int yRoot,
+					      int wX, int wY,
+					      int wWidth, int wHeight);
+	void computeWindowPlusBordersRect (int &wX, int &wY,
+					   int &wWidth, int &wHeight,
+					   int wi, int he);
+	void enableOrDisableVerticalMaximization (int yRoot);
+	void computeGeometry (int wi, int he);
 };
 
 class ResizeWindow :
