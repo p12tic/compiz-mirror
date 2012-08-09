@@ -18,6 +18,124 @@ using ::testing::AtLeast;
 using ::testing::Pointee;
 using ::testing::ReturnNull;
 
+CCSIntegrationBackend *
+ccsMockIntegrationBackendNew (CCSObjectAllocationInterface *ai);
+
+void
+ccsMockIntegrationBackendFree (CCSIntegrationBackend *integration);
+
+class CCSIntegrationBackendGMockInterface
+{
+    public:
+
+	virtual ~CCSIntegrationBackendGMockInterface () {}
+
+	virtual int getIntegratedOptionIndex (const char *pluginName, const char *settingName) = 0;
+	virtual Bool readOptionIntoSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting, int index) = 0;
+	virtual void writeOptionFromSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting, int index) = 0;
+};
+
+class CCSIntegrationBackendGMock :
+    public CCSIntegrationBackendGMockInterface
+{
+    public:
+
+	MOCK_METHOD2 (getIntegratedOptionIndex, int (const char *, const char *));
+	MOCK_METHOD4 (readOptionIntoSetting, Bool (CCSBackend *, CCSContext *, CCSSetting *, int));
+	MOCK_METHOD4 (writeOptionFromSetting, void (CCSBackend *, CCSContext *, CCSSetting *, int));
+
+
+	CCSIntegrationBackendGMock (CCSIntegrationBackend *integration) :
+	    mIntegration (integration)
+	{
+	}
+
+	CCSIntegrationBackend *
+	getIntegrationBackend ()
+	{
+	    return mIntegration;
+	}
+
+    public:
+
+	static
+	int ccsIntegrationBackendGetIntegratedOptionIndex (CCSIntegrationBackend *integration,
+							   const char *pluginName,
+							   const char *settingName)
+	{
+	    return reinterpret_cast <CCSIntegrationBackendGMockInterface *> (ccsObjectGetPrivate (integration))->getIntegratedOptionIndex (pluginName, settingName);
+	}
+
+	static
+	Bool ccsIntegrationBackendReadOptionIntoSetting (CCSIntegrationBackend *integration,
+							 CCSBackend		  *backend,
+							 CCSContext		  *context,
+							 CCSSetting		  *setting,
+							 int			  index)
+	{
+	    return reinterpret_cast <CCSIntegrationBackendGMockInterface *> (ccsObjectGetPrivate (integration))->readOptionIntoSetting (backend, context, setting, index);
+	}
+
+	static
+	void ccsIntegrationBackendWriteSettingIntoOption (CCSIntegrationBackend *integration,
+							  CCSBackend		   *backend,
+							  CCSContext		   *context,
+							  CCSSetting		   *setting,
+							  int			    index)
+	{
+	    return reinterpret_cast <CCSIntegrationBackendGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (backend, context, setting, index);
+	}
+
+	static
+	void ccsFreeIntegrationBackend (CCSIntegrationBackend *integration)
+	{
+	    ccsMockIntegrationBackendFree (integration);
+	}
+
+    private:
+
+	CCSIntegrationBackend *mIntegration;
+};
+
+const CCSIntegrationBackendInterface mockIntegrationBackendInterface =
+{
+    CCSIntegrationBackendGMock::ccsIntegrationBackendGetIntegratedOptionIndex,
+    CCSIntegrationBackendGMock::ccsIntegrationBackendReadOptionIntoSetting,
+    CCSIntegrationBackendGMock::ccsIntegrationBackendWriteSettingIntoOption,
+    CCSIntegrationBackendGMock::ccsFreeIntegrationBackend
+};
+
+CCSIntegrationBackend *
+ccsMockIntegrationBackendNew (CCSObjectAllocationInterface *ai)
+{
+    CCSIntegrationBackend *integration = reinterpret_cast <CCSIntegrationBackend *> ((*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegrationBackend)));
+
+    if (!integration)
+	return NULL;
+
+    CCSIntegrationBackendGMock *gmockBackend = new CCSIntegrationBackendGMock (integration);
+
+    ccsObjectInit (integration, ai);
+    ccsObjectSetPrivate (integration, (CCSPrivate *) gmockBackend);
+    ccsObjectAddInterface (integration, (const CCSInterface *) &mockIntegrationBackendInterface, GET_INTERFACE_TYPE (CCSIntegrationBackendInterface));
+
+    ccsObjectRef (integration);
+
+    return integration;
+}
+
+void
+ccsMockIntegrationBackendFree (CCSIntegrationBackend *integration)
+{
+    CCSIntegrationBackendGMock *gmockBackend = reinterpret_cast <CCSIntegrationBackendGMock *> (ccsObjectGetPrivate (integration));
+
+    delete gmockBackend;
+
+    ccsObjectSetPrivate (integration, NULL);
+    ccsObjectFinalize (integration);
+    (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
+}
+
 namespace
 {
     template <typename T>
@@ -94,10 +212,16 @@ class CCSGSettingsBackendEnv :
 
 	    mGSettingsBackend = ccsDynamicBackendGetRawBackend (mBackend);
 
+
 	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
 
 	    if (backendInit)
 		(*backendInit) ((CCSBackend *) mBackend, mContext);
+
+	    /* Set the new integration, drop our reference on it */
+	    CCSIntegrationBackend *integration = ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator);
+	    ccsBackendSetIntegration ((CCSBackend *) mBackend, integration);
+	    ccsIntegrationBackendUnref (integration);
 
 	    overloadedInterface = GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend);
 	    overloadedInterface->gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;

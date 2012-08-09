@@ -34,12 +34,13 @@
 #define CCS_LOG_DOMAIN "gsettings"
 
 #include "gsettings.h"
+#include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
 
 static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
-    int          index;
+    int index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
 
     readInit (backend, context);
     if (!readOption (backend, setting))
@@ -48,10 +49,10 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
     }
 
     if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index))
+	index != -1)
     {
 	writeInit (backend, context);
-	ccsGSettingsWriteIntegratedOption (backend, context, setting, index);
+	ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
     }
 }
 
@@ -89,7 +90,7 @@ getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
     if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
-    if (!isIntegratedOption (setting, NULL))
+    if (ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting) == -1)
 	return FALSE;
 
     return TRUE;
@@ -132,7 +133,8 @@ static CCSBackendInterface gsettingsVTable = {
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     ccsGSettingsGetExistingProfiles,
-    ccsGSettingsDeleteProfileWrapper
+    ccsGSettingsDeleteProfileWrapper,
+    ccsGSettingsSetIntegration
 };
 
 CCSBackendInterface *

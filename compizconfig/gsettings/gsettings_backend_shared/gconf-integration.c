@@ -487,21 +487,25 @@ finiGConfClient (CCSBackend *backend)
 
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    gconf_client_clear_cache (priv->client);
-
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    if (priv->client)
     {
-	if (priv->gnomeGConfNotifyIds[i])
-	{
-	    gconf_client_notify_remove (priv->client, priv->gnomeGConfNotifyIds[0]);
-	    priv->gnomeGConfNotifyIds[i] = 0;
-	}
-	gconf_client_remove_dir (priv->client, watchedGConfGnomeDirectories[i], NULL);
-    }
-    gconf_client_suggest_sync (priv->client, NULL);
 
-    g_object_unref (priv->client);
-    priv->client = NULL;
+	gconf_client_clear_cache (priv->client);
+
+	for (i = 0; i < NUM_WATCHED_DIRS; i++)
+	{
+	    if (priv->gnomeGConfNotifyIds[i])
+	    {
+		gconf_client_notify_remove (priv->client, priv->gnomeGConfNotifyIds[0]);
+		priv->gnomeGConfNotifyIds[i] = 0;
+	    }
+	    gconf_client_remove_dir (priv->client, watchedGConfGnomeDirectories[i], NULL);
+	}
+	gconf_client_suggest_sync (priv->client, NULL);
+
+	g_object_unref (priv->client);
+	priv->client = NULL;
+    }
 }
 
 static unsigned int
@@ -1029,9 +1033,7 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
     CCSGConfIntegrationBackendPrivate *priv = addPrivate (integration, ai);
     priv->backend = backend;
 
-    initGConfClient (priv->backend);
-
-    ccsObjectAddInterface (backend,
+    ccsObjectAddInterface (integration,
 			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,
 			   GET_INTERFACE_TYPE (CCSIntegrationBackendInterface));
 

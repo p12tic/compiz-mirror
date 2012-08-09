@@ -10,6 +10,18 @@
 #include "ccs_gsettings_interface_wrapper.h"
 #include "gsettings_shared.h"
 
+void
+ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegrationBackend *integration)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    if (priv->integration)
+	ccsIntegrationBackendUnref (priv->integration);
+
+    priv->integration = integration;
+    ccsIntegrationBackendRef (integration);
+}
+
 CCSStringList
 ccsGSettingsGetExistingProfiles (CCSBackend *backend, CCSContext *context)
 {
@@ -303,6 +315,41 @@ ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend)
     ccsGSettingsWrapperResetKey (priv->currentProfileSettings, "plugins-with-set-keys");
 }
 
+int
+ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSetting *setting)
+{
+    CCSPlugin  *plugin      = ccsSettingGetParent (setting);
+    const char *pluginName  = ccsPluginGetName (plugin);
+    const char *settingName = ccsSettingGetName (setting);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return ccsIntegrationBackendGetIntegratedOptionIndex (priv->integration, pluginName, settingName);
+}
+
+Bool
+ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return ccsIntegrationBackendReadOptionIntoSetting (priv->integration,
+						       backend,
+						       priv->context,
+						       setting,
+						       index);
+}
+
+void
+ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    ccsIntegrationBackendWriteSettingIntoOption (priv->integration,
+						 backend,
+						 priv->context,
+						 setting,
+						 index);
+}
+
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
@@ -318,7 +365,10 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault,
     ccsGSettingsBackendUpdateProfileDefault,
     ccsGSettingsBackendUpdateCurrentProfileNameDefault,
-    ccsGSettingsBackendAddProfileDefault
+    ccsGSettingsBackendAddProfileDefault,
+    ccsGSettingsBackendGetIntegratedOptionIndexDefault,
+    ccsGSettingsBackendReadIntegratedOptionDefault,
+    ccsGSettingsBackendWriteIntegratedOptionDefault
 };
 
 static CCSGSettingsBackendPrivate *
