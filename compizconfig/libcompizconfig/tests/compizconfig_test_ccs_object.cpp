@@ -93,6 +93,8 @@ TEST(CCSObjectTest, InterfaceAdd)
     EXPECT_EQ (((CCSObject *) to)->n_interfaces, 1);
     EXPECT_EQ (*((CCSObject *) to)->interface_types, 1);
 
+    ccsObjectFinalize (to);
+
     free (to);
 }
 
@@ -155,6 +157,8 @@ TEST(CCSObjectTest, SetPrivateGetPrivate)
 
     EXPECT_EQ (&i, (int *) p);
     EXPECT_EQ (i, (*((int *) p)));
+
+    free (to);
 }
 
 void ccsFreeTestingObjectWrapper (TestingObjectWrapper *wrapper)
@@ -186,6 +190,8 @@ TEST(CCSObjectTest, TestRefUnrefFreesObject)
     EXPECT_CALL (GoogleMockDummy::_mockDummy, freeTestingObjectWrapper (to));
 
     ccsTestingObjectWrapperUnref (to);
+
+    free (to);
 }
 
 TEST(CCSObjectTest, TestFinalizeFreesEverything)
@@ -216,6 +222,8 @@ TEST(CCSObjectTest, TestFinalizeFreesEverything)
     EXPECT_EQ (NULL, ((CCSObject *) to)->interfaces);
     EXPECT_EQ (((CCSObject *) to)->n_interfaces, 0);
     EXPECT_EQ (NULL, ((CCSObject *) to)->interface_types);
+
+    free (to);
 }
 
 TEST(CCSObjectTest, TestReallocFailures)

@@ -343,14 +343,22 @@ struct CCSTypeIsVariantType
 };
 
 class CCSGSettingsTestVariantTypeFixture :
-    public ::testing::TestWithParam <CCSTypeIsVariantType>
+    public ::testing::TestWithParam <CCSTypeIsVariantType>,
+    public CCSGSettingsTestingEnv
 {
     public:
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	    mType = GetParam ();
 	}
+
+	virtual void TearDown ()
+	{
+	    CCSGSettingsTestingEnv::TearDownEnv ();
+	}
+
 
     protected:
 
@@ -553,17 +561,20 @@ namespace
 }
 
 class CCSGSettingsTestArrayVariantSubTypeFixture :
-    public ::testing::TestWithParam <ArrayVariantInfo>
+    public ::testing::TestWithParam <ArrayVariantInfo>,
+    public CCSGSettingsTestingEnv
 {
     public:
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestingEnv::SetUpEnv ();
 	    mAVInfo = GetParam ();
 	}
 
 	virtual void TearDown ()
 	{
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	    g_variant_unref (v);
 	}
 
@@ -626,14 +637,14 @@ class CCSGSettingsTestPluginsWithSetKeysGVariantSetup :
 	virtual void SetUp ()
 	{
 	    CCSGSettingsTestIndependent::SetUp ();
-	    builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+	    GVariantBuilder builder;
 
-	    g_variant_builder_add (builder, "s", "foo");
-	    g_variant_builder_add (builder, "s", "bar");
+	    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
 
-	    writtenPlugins = g_variant_new ("as", builder);
+	    g_variant_builder_add (&builder, "s", "foo");
+	    g_variant_builder_add (&builder, "s", "bar");
 
-	    g_variant_builder_unref (builder);
+	    writtenPlugins = g_variant_builder_end (&builder);
 
 	    newWrittenPlugins = NULL;
 	    newWrittenPluginsSize = 0;
@@ -1127,13 +1138,24 @@ namespace
 }
 
 class CCSGSettingsTestVariantTypeToCCSTypeListFixture :
-    public ::testing::TestWithParam <GListContainerVariantTypeWrapper>
+    public ::testing::TestWithParam <GListContainerVariantTypeWrapper>,
+    public CCSGSettingsTestingEnv
 {
     public:
 
 	CCSGSettingsTestVariantTypeToCCSTypeListFixture () :
 	    mListContainer (GetParam ())
 	{
+	}
+
+	virtual void SetUp ()
+	{
+	    CCSGSettingsTestingEnv::SetUpEnv ();
+	}
+
+	virtual void TearDown ()
+	{
+	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
 
     protected:
