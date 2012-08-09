@@ -23,7 +23,6 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <stdio.h>
 #include <core/windowextents.h>
 #include <core/point.h>
 #include <X11/Xlib.h>
