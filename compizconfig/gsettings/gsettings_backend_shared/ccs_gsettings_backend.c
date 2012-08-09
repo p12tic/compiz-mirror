@@ -245,16 +245,6 @@ ccsGSettingsBackendConnectToValueChangedSignalDefault (CCSBackend *backend, CCSG
     ccsGSettingsWrapperConnectToChangedSignal (wrapper, (GCallback) ccsGSettingsValueChanged, (gpointer) backend);
 }
 
-static void
-ccsGSettingsBackendRegisterGConfClientDefault (CCSBackend *backend)
-{
-}
-
-static void
-ccsGSettingsBackendUnregisterGConfClientDefault (CCSBackend *backend)
-{
-}
-
 static const char *
 ccsGSettingsBackendGetCurrentProfileDefault (CCSBackend *backend)
 {
@@ -357,8 +347,6 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
     ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault,
-    ccsGSettingsBackendRegisterGConfClientDefault,
-    ccsGSettingsBackendUnregisterGConfClientDefault,
     ccsGSettingsBackendGetCurrentProfileDefault,
     ccsGSettingsBackendGetExistingProfilesDefault,
     ccsGSettingsBackendSetExistingProfilesDefault,

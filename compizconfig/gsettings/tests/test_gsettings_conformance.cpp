@@ -181,14 +181,6 @@ class CCSGSettingsBackendEnv :
 	{
 	};
 
-	static void registerGConfClientWrapper (CCSBackend *backend)
-	{
-	}
-
-	static void unregisterGConfClientWrapper (CCSBackend *backend)
-	{
-	}
-
 	const CCSBackendInfo * GetInfo ()
 	{
 	    return &gsettingsBackendInfo;
@@ -229,8 +221,6 @@ class CCSGSettingsBackendEnv :
 
 	    overloadedInterface = GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend);
 	    overloadedInterface->gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
-	    overloadedInterface->gsettingsBackendRegisterGConfClient = CCSGSettingsBackendEnv::registerGConfClientWrapper;
-	    overloadedInterface->gsettingsBackendUnregisterGConfClient = CCSGSettingsBackendEnv::unregisterGConfClientWrapper;
 
 	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock",
 									CharacterWrapper (makeCompizPluginPath (profileName.c_str (), "mock")),

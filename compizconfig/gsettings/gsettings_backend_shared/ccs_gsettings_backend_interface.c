@@ -3,18 +3,6 @@
 
 INTERFACE_TYPE (CCSGSettingsBackendInterface);
 
-void
-ccsGSettingsBackendRegisterGConfClient (CCSBackend *backend)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendRegisterGConfClient) (backend);
-}
-
-void
-ccsGSettingsBackendUnregisterGConfClient (CCSBackend *backend)
-{
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendUnregisterGConfClient) (backend);
-}
-
 const char *
 ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend)
 {
