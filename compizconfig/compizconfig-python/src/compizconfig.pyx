@@ -1216,7 +1216,7 @@ cdef class Context:
             self.backends[backendInfo.name] = Backend (self, info)
             backendList = backendList.next
 
-        ccsBackendInfoListFree (origBackendList, True)
+        ccsBackendInfoListFree (origBackendList, False)
 
         self.currentBackend = self.backends[ccsGetBackend (self.ccsContext)]
     
