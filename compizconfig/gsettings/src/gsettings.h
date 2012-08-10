@@ -34,34 +34,21 @@
 #ifndef _COMPIZCONFIG_BACKEND_GSETTINGS_GSETTINGS_H
 #define _COMPIZCONFIG_BACKEND_GSETTINGS_GSETTINGS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include <string.h>
-#include <dirent.h>
-
 #include <ccs.h>
 #include <ccs-backend.h>
 
 #include <gio/gio.h>
 
-#include "gsettings_shared.h"
-
 #define BUFSIZE 512
-
-#define NUM_WATCHED_DIRS 3
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
-char *currentProfile;
-
 Bool readInit (CCSBackend *, CCSContext * context);
 void readSetting (CCSBackend *, CCSContext * context, CCSSetting * setting);
-Bool readOption (CCSSetting * setting);
+Bool readOption (CCSBackend *, CCSSetting * setting);
 Bool writeInit (CCSBackend *, CCSContext * context);
-void writeOption (CCSSetting *setting);
+void writeOption (CCSBackend *, CCSSetting *setting);
 
 #endif

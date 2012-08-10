@@ -5,7 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "test_gsettings_tests.h"
-#include "gsettings.h"
+#include "gsettings_shared.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_wrapper_mock.h"
 #include "gsettings_mocks.h"

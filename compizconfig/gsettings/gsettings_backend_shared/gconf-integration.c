@@ -37,7 +37,7 @@
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
 #include "gconf-integration.h"
-#include "gsettings.h"
+#include "gsettings_shared.h"
 
 typedef enum {
     OptionInt,

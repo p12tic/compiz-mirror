@@ -4,6 +4,8 @@
 #include "gsettings_shared.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
+#include "ccs_gsettings_backend.h"
+#include "ccs_gsettings_backend_interface.h"
 
 GList *
 variantTypeToPossibleSettingType (const gchar *vt)
@@ -224,6 +226,197 @@ variantIsValidForCCSType (GVariant *gsettingsValue,
     return valid;
 }
 
+typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);
+
+typedef struct _FindItemInVariantData
+{
+    gboolean   found;
+    const char *item;
+} FindItemInVariantData;
+
+typedef struct _InsertIfNotEqualData
+{
+    gboolean   skipped;
+    const char *item;
+} InsertIfNotEqualData;
+
+static void
+insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
+{
+    InsertIfNotEqualData *data = (InsertIfNotEqualData *) userData;
+
+    if (g_strcmp0 (item, data->item))
+	g_variant_builder_add (builder, "s", item);
+    else
+	data->skipped = TRUE;
+}
+
+static void
+findItemForVariantData (GVariantBuilder *builder, const char *item, void *userData)
+{
+    FindItemInVariantData *data = (FindItemInVariantData *) userData;
+
+    if (!data->found)
+	data->found = g_str_equal (data->item, item);
+
+    g_variant_builder_add (builder, "s", item);
+}
+
+static void
+rebuildVariant (GVariantBuilder		      *builder,
+		GVariant		      *originalVariant,
+		VariantItemCheckAndInsertFunc checkAndInsert,
+		void			      *userData)
+{
+    GVariantIter    iter;
+    char	    *str;
+
+    g_variant_iter_init (&iter, originalVariant);
+    while (g_variant_iter_loop (&iter, "s", &str))
+    {
+	(*checkAndInsert) (builder, str, userData);
+    }
+}
+
+gboolean
+appendStringToVariantIfUnique (GVariant	  **variant,
+			       const char *string)
+{
+    GVariantBuilder newVariantBuilder;
+    FindItemInVariantData findItemData;
+
+    memset (&findItemData, 0, sizeof (FindItemInVariantData));
+    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
+
+    findItemData.item = string;
+
+    rebuildVariant  (&newVariantBuilder, *variant, findItemForVariantData, &findItemData);
+
+    if (!findItemData.found)
+	g_variant_builder_add (&newVariantBuilder, "s", string);
+
+    g_variant_unref (*variant);
+    *variant = g_variant_builder_end (&newVariantBuilder);
+
+    return !findItemData.found;
+}
+
+gboolean removeItemFromVariant (GVariant   **variant,
+				const char *string)
+{
+    GVariantBuilder newVariantBuilder;
+
+    InsertIfNotEqualData data =
+    {
+	FALSE,
+	string
+    };
+
+    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
+
+    rebuildVariant (&newVariantBuilder, *variant, insertIfNotEqual, (void *) &data);
+
+    g_variant_unref (*variant);
+    *variant = g_variant_builder_end (&newVariantBuilder);
+
+    return data.skipped;
+}
+
+Bool
+findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper  *settings,
+				      const char *path,
+				      const gchar *keyName,
+				      CCSContext *context,
+				      CCSPlugin **plugin,
+				      CCSSetting **setting,
+				      char **uncleanKeyName)
+{
+    char         *pluginName;
+    unsigned int screenNum;
+
+    if (!decomposeGSettingsPath (path, &pluginName, &screenNum))
+	return FALSE;
+
+    *plugin = ccsFindPlugin (context, pluginName);
+
+    if (*plugin)
+    {
+	*uncleanKeyName = translateKeyForCCS (keyName);
+
+	*setting = ccsFindSetting (*plugin, *uncleanKeyName);
+	if (!*setting)
+	{
+	    /* Couldn't find setting straight off the bat,
+	     * try and find the best match */
+	    GVariant *value = ccsGSettingsWrapperGetValue (settings, keyName);
+
+	    if (value)
+	    {
+		GList *possibleSettingTypes = variantTypeToPossibleSettingType (g_variant_get_type_string (value));
+		GList *iter = possibleSettingTypes;
+
+		while (iter)
+		{
+		    *setting = attemptToFindCCSSettingFromLossyName (ccsGetPluginSettings (*plugin),
+								     keyName,
+								     (CCSSettingType) GPOINTER_TO_INT (iter->data));
+
+		    if (*setting)
+			break;
+
+		    iter = iter->next;
+		}
+
+		g_list_free (possibleSettingTypes);
+		g_variant_unref (value);
+	    }
+	}
+    }
+
+    g_free (pluginName);
+
+    if (!*plugin || !*setting)
+	return FALSE;
+
+    return TRUE;
+}
+
+Bool
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   CCSGSettingsWrapper *settings,
+				   const gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting)
+{
+    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
+    char	 *uncleanKeyName = NULL;
+    char	 *pathOrig;
+    CCSPlugin    *plugin;
+    CCSSetting   *setting;
+    Bool         ret = TRUE;
+
+    pathOrig = strdup (ccsGSettingsWrapperGetPath (settings));
+
+    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
+	(*updateSetting) (backend, context, plugin, setting);
+    else
+    {
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
+	 ret = FALSE;
+    }
+
+    g_free (pathOrig);
+
+    if (uncleanKeyName)
+	g_free (uncleanKeyName);
+
+    return ret;
+}
+
 Bool
 appendToPluginsWithSetKeysList (const gchar *plugin,
 				GVariant    *writtenPlugins,
@@ -337,3 +530,31 @@ makeCompizPluginPath (const gchar *profileName, const gchar *pluginName)
                          "plugins", pluginName, "/", NULL);
 }
 
+gboolean
+deleteProfile (CCSBackend *backend,
+	       CCSContext *context,
+	       const char *profile)
+{
+    GVariant        *plugins;
+    GVariant        *profiles;
+    const char      *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
+    gboolean        ret = FALSE;
+
+    plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
+    profiles = ccsGSettingsBackendGetExistingProfiles (backend);
+
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
+    ccsGSettingsBackendClearPluginsWithSetKeys (backend);
+
+    ret = removeItemFromVariant (&profiles, profile);
+
+    /* Remove the profile from existing-profiles */
+    ccsGSettingsBackendSetExistingProfiles (backend, profiles);
+    ccsGSettingsBackendUpdateProfile (backend, context);
+
+    /* Since we do not call g_settings_set_value on
+     * plugins, we must also unref the variant */
+    g_variant_unref (plugins);
+
+    return ret;
+}

@@ -67,4 +67,22 @@ makeCompizProfilePath (const gchar *profilename);
 gchar *
 makeCompizPluginPath (const gchar *profileName, const gchar *pluginName);
 
+gboolean removeItemFromVariant (GVariant   **variant,
+				const char *string);
+
+gboolean
+appendStringToVariantIfUnique (GVariant	  **variant,
+			       const char *string);
+
+Bool
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   CCSGSettingsWrapper *settings,
+				   const gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting);
+
+gboolean
+deleteProfile (CCSBackend *backend,
+	       CCSContext *context,
+	       const char *profile);
+
 #endif
