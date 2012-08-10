@@ -3819,13 +3819,6 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    info = calloc (1, sizeof (CCSBackendInfo));
-    if (!info)
-    {
-	dlclose (dlhand);
-	return;
-    }
-
     *bl = ccsBackendInfoListAppend (*bl, (CCSBackendInfo *) info);
     dlclose (dlhand);
 }
