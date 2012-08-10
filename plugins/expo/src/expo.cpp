@@ -370,7 +370,8 @@ ExpoScreen::handleEvent (XEvent *event)
 		doubleClick = false;
 	    }
 	    else if (doubleClick ||
-		     compiz::expo::clickMovementInThreshold(prevClickPoint,
+		     compiz::expo::clickMovementInThreshold(prevClickPoint.x (),
+							    prevClickPoint.y (),
 							    event->xbutton.x,
 							    event->xbutton.y))
 	    {

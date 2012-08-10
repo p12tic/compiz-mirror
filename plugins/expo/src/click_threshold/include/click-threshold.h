@@ -30,8 +30,8 @@ namespace compiz
 {
     namespace expo
     {
-	bool clickMovementInThreshold(const CompPoint &previousPoint,
-				      int x, int y);
+	bool clickMovementInThreshold(int previousX, int previousY,
+				      int currentX, int currentY);
     }
 }
 

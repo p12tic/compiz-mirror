@@ -35,54 +35,45 @@ class ExpoClickThresholdTest :
 
 TEST(ExpoClickThresholdTest, TestNotMove)
 {
-    CompPoint first(10, 10);
-    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (first, 10, 10));
+    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (10, 10, 10, 10));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveNearLeft)
 {
-    CompPoint first(10, 10);
-    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (first, 8, 8));
+    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (10, 10, 8, 8));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveNearRight)
 {
-    CompPoint first(10, 10);
-    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (first, 13, 13));
+    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (10, 10, 13, 13));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveFarLeft)
 {
-    CompPoint first(10, 10);
-    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (first, 1, 1));
+    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (10, 10, 1, 1));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveFarRight)
 {
-    CompPoint first(10, 10);
-    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (first, 30, 30));
+    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (10, 10, 30, 30));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveNearX)
 {
-    CompPoint first(10, 10);
-    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (first, 13, 10));
+    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (10, 10, 13, 10));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveNearY)
 {
-    CompPoint first(10, 10);
-    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (first, 10, 13));
+    EXPECT_TRUE(compiz::expo::clickMovementInThreshold (10, 10, 10, 13));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveFarX)
 {
-    CompPoint first(10, 10);
-    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (first, 30, 10));
+    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (10, 10, 30, 10));
 }
 
 TEST(ExpoClickThresholdTest, TestMoveFarY)
 {
-    CompPoint first(10, 10);
-    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (first, 10, 30));
+    EXPECT_FALSE(compiz::expo::clickMovementInThreshold (10, 10, 10, 30));
 }

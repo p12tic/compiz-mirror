@@ -25,14 +25,14 @@
 #include "click-threshold.h"
 #include <stdlib.h>
 
-static const unsigned int DND_THRESHOLD = 5;
+static const int DND_THRESHOLD = 5;
 
 bool
-compiz::expo::clickMovementInThreshold(const CompPoint &previousPoint,
-				       int x, int y)
+compiz::expo::clickMovementInThreshold(int previousX, int previousY,
+				       int currentX, int currentY)
 {
-    if ((abs (previousPoint.x () - x) <= static_cast<int>(DND_THRESHOLD)) &&
-	(abs (previousPoint.y () - y) <= static_cast<int>(DND_THRESHOLD)))
+    if ((abs (previousX - currentX) <= DND_THRESHOLD) &&
+	(abs (previousY - currentY) <= DND_THRESHOLD))
 	return true;
     else
 	return false;
