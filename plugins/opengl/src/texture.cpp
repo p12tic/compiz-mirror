@@ -323,7 +323,7 @@ PrivateTexture::loadImageData (const char   *image,
 	matrix.xx = 1.0f / width;
 	matrix.yy = 1.0f / height;
 	matrix.y0 = 0.0f;
-	mipmap = GL::fboEnabled && (GL::textureNonPowerOfTwoMipmap || pot);
+	mipmap = GL::generateMipmap && (GL::textureNonPowerOfTwoMipmap || pot);
     }
     else
     {
@@ -616,15 +616,19 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
     attribs[i++] = GLX_MIPMAP_TEXTURE_EXT;
     attribs[i++] = config->mipmap;
 
+    bool pot = POWER_OF_TWO (width) && POWER_OF_TWO (height);
+
     /* If no texture target is specified in the fbconfig, or only the
        TEXTURE_2D target is specified and GL_texture_non_power_of_two
        is not supported, then allow the server to choose the texture target. */
     if (config->textureTargets & GLX_TEXTURE_2D_BIT_EXT &&
-       (GL::textureNonPowerOfTwo ||
-       (POWER_OF_TWO (width) && POWER_OF_TWO (height))))
+       (GL::textureNonPowerOfTwo || pot))
 	target = GLX_TEXTURE_2D_EXT;
     else if (config->textureTargets & GLX_TEXTURE_RECTANGLE_BIT_EXT)
 	target = GLX_TEXTURE_RECTANGLE_EXT;
+
+    mipmap = GL::generateMipmap != NULL &&
+             (pot || GL::textureNonPowerOfTwoMipmap);
 
     /* Workaround for broken texture from pixmap implementations,
        that don't advertise any texture target in the fbconfig. */
@@ -674,7 +678,6 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
 		matrix.yy = -1.0f / height;
 		matrix.y0 = 1.0f;
 	    }
-	    mipmap = config->mipmap;
 	    break;
 	case GLX_TEXTURE_RECTANGLE_EXT:
 	    texTarget = GL_TEXTURE_RECTANGLE_ARB;
@@ -690,7 +693,6 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
 		matrix.yy = -1.0f;
 		matrix.y0 = height;
 	    }
-	    mipmap = false;
 	    break;
 	default:
 	    compLogMessage ("core", CompLogLevelWarn,
