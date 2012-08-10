@@ -222,11 +222,10 @@ GridAnim::addGeometry (GLVertexBuffer              &vertexBuffer,
 {
    
     GLfloat *v, *vMax;
-    int x1, y1, x2, y2;
+    int y1, x2, y2;
     float winContentsY, winContentsHeight;
     float deformedX, deformedY;
     float deformedZ = 0;
-    int nVertX, nVertY;
     int vSize;
     float gridW, gridH;
     bool notUsing3dCoords = !using3D ();
@@ -255,7 +254,6 @@ GridAnim::addGeometry (GLVertexBuffer              &vertexBuffer,
 
     // Indentation kept to provide a clean diff with the old code, for now...
     {
-	x1 = outRect.x1 ();
 	y1 = outRect.y1 ();
 	x2 = outRect.x2 ();
 	y2 = outRect.y2 ();
@@ -283,15 +281,10 @@ GridAnim::addGeometry (GLVertexBuffer              &vertexBuffer,
 	else
 	    gridH = (float)oheight / (mGridHeight - 1);
 
-	// nVertX, nVertY: number of vertices for this clip in x and y dimensions
-	// + 2 to avoid running short of vertices in some cases
-	nVertX = ceil ((x2 - x1) / gridW) + 2;
-	nVertY = (gridH ? ceil ((y2 - y1) / gridH) : 0) + 2;
-
 	GLWindow *gWindow = GLWindow::get (mWindow);
 	int oldCount = vertexBuffer.countVertices ();
 	gWindow->glAddGeometry (vertexBuffer, matrix, region, clip,
-	                        nVertX, nVertY);
+	                        gridW, gridH);
 	int newCount = vertexBuffer.countVertices ();
 	v = vertexBuffer.getVertices () + (oldCount * vSize);
 	vMax = vertexBuffer.getVertices () + (newCount * vSize);
