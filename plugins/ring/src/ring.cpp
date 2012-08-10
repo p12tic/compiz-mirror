@@ -392,7 +392,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		                          (y - window->y ()) / scale - window->y (),
 				          0.0f);
 
-		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
+		    gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, wAttrib, mask);
 		}
 	    }
 	}

@@ -204,7 +204,7 @@ GLWindowInterface::glDraw (const GLMatrix     &transform,
     WRAPABLE_DEF (glDraw, transform, attrib, region, mask)
 
 void
-GLWindowInterface::glAddGeometry (GLVertexBuffer	      *vertexBuffer,
+GLWindowInterface::glAddGeometry (GLVertexBuffer	      &vertexBuffer,
 				  const GLTexture::MatrixList &matrix,
 				  const CompRegion            &region,
 				  const CompRegion            &clip,
@@ -214,11 +214,12 @@ GLWindowInterface::glAddGeometry (GLVertexBuffer	      *vertexBuffer,
 		  maxGridWidth, maxGridHeight)
 
 void
-GLWindowInterface::glDrawTexture (GLTexture          *texture,
+GLWindowInterface::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
+				  GLTexture		    *texture,
                                   const GLMatrix            &transform,
 				  const GLWindowPaintAttrib &attrib,
 				  unsigned int       mask)
-    WRAPABLE_DEF (glDrawTexture, texture, transform, attrib, mask)
+    WRAPABLE_DEF (glDrawTexture, vertexBuffer, texture, transform, attrib, mask)
 
 const CompRegion &
 GLWindow::clip () const

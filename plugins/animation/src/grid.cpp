@@ -213,7 +213,7 @@ GridAnim::~GridAnim ()
 }
 
 void
-GridAnim::addGeometry (GLVertexBuffer              *vertexBuffer,
+GridAnim::addGeometry (GLVertexBuffer              &vertexBuffer,
 		       const GLTexture::MatrixList &matrix,
 		       const CompRegion            &region,
 		       const CompRegion            &clip,
@@ -251,7 +251,7 @@ GridAnim::addGeometry (GLVertexBuffer              *vertexBuffer,
     winContentsY = oy + outExtents.top;
     winContentsHeight = oheight - outExtents.top - outExtents.bottom;
 
-    vSize = vertexBuffer->getVertexStride ();
+    vSize = vertexBuffer.getVertexStride ();
 
     {
 	x1 = outRect.x1 ();
@@ -288,12 +288,12 @@ GridAnim::addGeometry (GLVertexBuffer              *vertexBuffer,
 	nVertY = (gridH ? ceil ((y2 - y1) / gridH) : 0) + 2;
 
 	GLWindow *gWindow = GLWindow::get (mWindow);
-	int oldCount = vertexBuffer->countVertices ();
+	int oldCount = vertexBuffer.countVertices ();
 	gWindow->glAddGeometry (vertexBuffer, matrix, region, clip,
 	                        nVertX, nVertY);
-	int newCount = vertexBuffer->countVertices ();
-	v = vertexBuffer->getVertices () + (oldCount * vSize);
-	vMax = vertexBuffer->getVertices () + (newCount * vSize);
+	int newCount = vertexBuffer.countVertices ();
+	v = vertexBuffer.getVertices () + (oldCount * vSize);
+	vMax = vertexBuffer.getVertices () + (newCount * vSize);
  
 	// For each vertex
 	for (; v < vMax; v += vSize)

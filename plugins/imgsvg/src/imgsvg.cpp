@@ -258,7 +258,7 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 		if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
 		    mask |= PAINT_WINDOW_BLEND_MASK;
 
-		gWindow->glDrawTexture (context->texture[0].textures[i], transform,
+		gWindow->glDrawTextureWithInternalVertexBuffer (context->texture[0].textures[i], transform,
 					attrib, mask);
 	    }
 
@@ -327,7 +327,7 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 		    gWindow->clearVertices ();
 		    gWindow->addVertexDataForGeometry (matrix, r, reg);
 		    if (gWindow->saveVertices ())
-			gWindow->glDrawTexture (context->texture[1].textures[j],
+			gWindow->glDrawTextureWithInternalVertexBuffer (context->texture[1].textures[j],
 						transform, attrib, mask);
 
 		    gScreen->setFilter (SCREEN_TRANS_FILTER, saveFilter);

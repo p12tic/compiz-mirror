@@ -96,7 +96,7 @@ public:
     void init ();
     void updateBB (CompOutput &output);
     bool updateBBUsed () { return true; }
-    void addGeometry (GLVertexBuffer             *vertexBuffer,
+    void addGeometry (GLVertexBuffer              &vertexBuffer,
 		      const GLTexture::MatrixList &matrix,
 		      const CompRegion            &region,
 		      const CompRegion            &clip,

@@ -11,7 +11,7 @@ public:
 		       const AnimEffect info,
 		       const CompRect &icon);
     
-    void addGeometry (GLVertexBuffer *vertexBuffer,
+    void addGeometry (GLVertexBuffer &vertexBuffer,
 		      const GLTexture::MatrixList &matrix,
 		      const CompRegion            &region,
 		      const CompRegion            &clip,
