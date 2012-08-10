@@ -11,6 +11,30 @@
 #include "gconf-integration.h"
 #include "gsettings_shared.h"
 
+struct _CCSGSettingsBackendPrivate
+{
+    GList	   *settingsList;
+    CCSGSettingsWrapper *compizconfigSettings;
+    CCSGSettingsWrapper *currentProfileSettings;
+
+    char	    *currentProfile;
+    CCSContext	    *context;
+
+    CCSIntegration *integration;
+};
+
+void
+ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegration *integration)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    if (priv->integration)
+	ccsIntegrationUnref (priv->integration);
+
+    priv->integration = integration;
+    ccsIntegrationRef (integration);
+}
+
 CCSStringList
 ccsGSettingsGetExistingProfiles (CCSBackend *backend, CCSContext *context)
 {

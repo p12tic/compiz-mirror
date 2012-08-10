@@ -173,7 +173,7 @@ gboolean
 appendStringToVariantIfUnique (GVariant	  **variant,
 			       const char *string);
 
-void
+gboolean
 removeItemFromVariant (GVariant	  **variant,
 		       const char *string);
 

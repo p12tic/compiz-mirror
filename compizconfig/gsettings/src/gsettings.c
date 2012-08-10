@@ -34,31 +34,12 @@
 #define CCS_LOG_DOMAIN "gsettings"
 
 #include "gsettings.h"
+#include "gsettings_shared.h"
+#include "gconf-integration.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
-#include "gconf-integration.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
-
-static void
-updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
-{
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-    int          index = ccsIntegrationGetIntegratedOptionIndex (priv->integration, ccsPluginGetName (plugin), ccsSettingGetName (setting));
-
-    readInit (backend, context);
-    if (!readOption (backend, setting))
-    {
-	ccsResetToDefault (setting, TRUE);
-    }
-
-    if (ccsGetIntegrationEnabled (context) &&
-	index != -1)
-    {
-	writeInit (backend, context);
-	ccsGSettingsWriteIntegratedOption (backend, context, setting, index);
-    }
-}
 
 GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
@@ -71,9 +52,16 @@ getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 						pathName,
 						ccsSettingGetType (setting));
 
-    free (cleanSettingName);
-    free (pathName);
     return gsettingsValue;
+}
+
+static Bool
+readIntegratedOption (CCSBackend *backend,
+		      CCSContext *context,
+		      CCSSetting *setting,
+		      int        index)
+{
+    return ccsGSettingsBackendReadIntegratedOption (backend, setting, index);
 }
 
 Bool
@@ -86,7 +74,6 @@ readOption (CCSBackend *backend, CCSSetting * setting)
      * such as actions and read only settings, so in that case
      * just return FALSE since compizconfig doesn't expect us
      * to read them anyways */
-
     if (!ccsSettingIsReadableByBackend (setting))
 	return FALSE;
 
@@ -227,8 +214,18 @@ readOption (CCSBackend *backend, CCSSetting * setting)
     return ret;
 }
 
+static void
+writeIntegratedOption (CCSBackend *backend,
+		       CCSContext *context,
+		       CCSSetting *setting,
+		       int        index)
+{
+    ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
+}
+
 void
-writeOption (CCSBackend *backend, CCSSetting * setting)
+writeOption (CCSBackend *backend,
+	     CCSSetting *setting)
 {
     CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
@@ -360,6 +357,25 @@ writeOption (CCSBackend *backend, CCSSetting * setting)
     free (cleanSettingName);
 }
 
+static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    int          index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
+
+    readInit (backend, context);
+    if (!readOption (backend, setting))
+    {
+	ccsResetToDefault (setting, TRUE);
+    }
+
+    if (ccsGetIntegrationEnabled (context) &&
+	index != -1)
+    {
+	writeInit (backend, context);
+	ccsGSettingsWriteIntegratedOption (backend, context, setting, index);
+    }
+}
+
 Bool
 readInit (CCSBackend *backend, CCSContext * context)
 {
@@ -371,15 +387,13 @@ readSetting (CCSBackend *backend,
 	     CCSContext *context,
 	     CCSSetting *setting)
 {
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
     Bool status;
-    CCSPlugin *plugin = ccsSettingGetParent (setting);
-    int  index = ccsIntegrationGetIntegratedOptionIndex (priv->integration, ccsPluginGetName (plugin), ccsSettingGetName (setting));
+    int  index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
 
     if (ccsGetIntegrationEnabled (context) &&
 	index != -1)
     {
-	status = ccsIntegrationReadOptionIntoSetting (priv->integration, context, setting, index);
+	status = readIntegratedOption (backend, context, setting, index);
     }
     else
 	status = readOption (backend, setting);
@@ -399,14 +413,12 @@ writeSetting (CCSBackend *backend,
 	      CCSContext *context,
 	      CCSSetting *setting)
 {
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-    CCSPlugin *plugin = ccsSettingGetParent (setting);
-    int  index = ccsIntegrationGetIntegratedOptionIndex (priv->integration, ccsPluginGetName (plugin), ccsSettingGetName (setting));
+    int  index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
 
     if (ccsGetIntegrationEnabled (context) &&
 	index != -1)
     {
-	ccsIntegrationWriteSettingIntoOption (priv->integration, context, setting, index);
+	writeIntegratedOption (backend, context, setting, index);
     }
     else if (ccsSettingGetIsDefault (setting))
     {
@@ -448,13 +460,10 @@ finiBackend (CCSBackend *backend)
 static Bool
 getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
 {
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-    CCSPlugin		       *plugin = ccsSettingGetParent (setting);
-
     if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
-    if (ccsIntegrationGetIntegratedOptionIndex (priv->integration, ccsPluginGetName (plugin), ccsSettingGetName (setting)) == -1)
+    if (ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting) == -1)
 	return FALSE;
 
     return TRUE;
@@ -474,13 +483,12 @@ getInfo (CCSBackend *backend)
 }
 
 static Bool
-ccsGSettingsDeleteProfileWrapper (CCSBackend *backend,
-				  CCSContext *context,
-				  char       *profile)
+ccsGSettingsWrapDeleteProfile (CCSBackend *backend,
+			       CCSContext *context,
+			       char       *profile)
 {
     return deleteProfile (backend, context, profile);
 }
-
 
 static CCSBackendInterface gsettingsVTable = {
     getInfo,
@@ -497,7 +505,8 @@ static CCSBackendInterface gsettingsVTable = {
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     ccsGSettingsGetExistingProfiles,
-    ccsGSettingsDeleteProfileWrapper
+    ccsGSettingsWrapDeleteProfile,
+    ccsGSettingsSetIntegration
 };
 
 CCSBackendInterface *
@@ -505,4 +514,3 @@ getBackendInfo (void)
 {
     return &gsettingsVTable;
 }
-

@@ -17,6 +17,7 @@
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
 #include "compizconfig_ccs_mocked_allocator.h"
+#include "gsettings_shared.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_wrapper_mock.h"
 

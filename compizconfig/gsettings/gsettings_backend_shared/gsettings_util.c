@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
+#include "ccs_gsettings_backend.h"
+#include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
-#include "ccs_gsettings_backend_interface.h"
 
 const CCSBackendInfo gsettingsBackendInfo =
 {
@@ -236,6 +237,138 @@ variantIsValidForCCSType (GVariant *gsettingsValue,
     return valid;
 }
 
+typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);
+
+typedef struct _FindItemInVariantData
+{
+    gboolean   found;
+    const char *item;
+} FindItemInVariantData;
+
+typedef struct _InsertIfNotEqualData
+{
+    gboolean   skipped;
+    const char *item;
+} InsertIfNotEqualData;
+
+static void
+insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
+{
+    InsertIfNotEqualData *data = (InsertIfNotEqualData *) userData;
+
+    if (g_strcmp0 (item, data->item))
+	g_variant_builder_add (builder, "s", item);
+    else
+	data->skipped = TRUE;
+}
+
+static void
+findItemForVariantData (GVariantBuilder *builder, const char *item, void *userData)
+{
+    FindItemInVariantData *data = (FindItemInVariantData *) userData;
+
+    if (!data->found)
+	data->found = g_str_equal (data->item, item);
+
+    g_variant_builder_add (builder, "s", item);
+}
+
+static void
+rebuildVariant (GVariantBuilder		      *builder,
+		GVariant		      *originalVariant,
+		VariantItemCheckAndInsertFunc checkAndInsert,
+		void			      *userData)
+{
+    GVariantIter    iter;
+    char	    *str;
+
+    g_variant_iter_init (&iter, originalVariant);
+    while (g_variant_iter_loop (&iter, "s", &str))
+    {
+	(*checkAndInsert) (builder, str, userData);
+    }
+}
+
+gboolean
+appendStringToVariantIfUnique (GVariant	  **variant,
+			       const char *string)
+{
+    GVariantBuilder newVariantBuilder;
+    FindItemInVariantData findItemData;
+
+    memset (&findItemData, 0, sizeof (FindItemInVariantData));
+    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
+
+    findItemData.item = string;
+
+    rebuildVariant  (&newVariantBuilder, *variant, findItemForVariantData, &findItemData);
+
+    if (!findItemData.found)
+	g_variant_builder_add (&newVariantBuilder, "s", string);
+
+    g_variant_unref (*variant);
+    *variant = g_variant_builder_end (&newVariantBuilder);
+
+    return !findItemData.found;
+}
+
+gboolean removeItemFromVariant (GVariant   **variant,
+				const char *string)
+{
+    GVariantBuilder newVariantBuilder;
+
+    InsertIfNotEqualData data =
+    {
+	FALSE,
+	string
+    };
+
+    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
+
+    rebuildVariant (&newVariantBuilder, *variant, insertIfNotEqual, (void *) &data);
+
+    g_variant_unref (*variant);
+    *variant = g_variant_builder_end (&newVariantBuilder);
+
+    return data.skipped;
+}
+
+Bool
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   CCSGSettingsWrapper *settings,
+				   const gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting)
+{
+    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
+    char	 *uncleanKeyName = NULL;
+    char	 *pathOrig;
+    CCSPlugin    *plugin;
+    CCSSetting   *setting;
+    Bool         ret = TRUE;
+
+    pathOrig = strdup (ccsGSettingsWrapperGetPath (settings));
+
+    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
+	(*updateSetting) (backend, context, plugin, setting);
+    else
+    {
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
+	 ret = FALSE;
+    }
+
+    g_free (pathOrig);
+
+    if (uncleanKeyName)
+	g_free (uncleanKeyName);
+
+    return ret;
+}
+
 Bool
 appendToPluginsWithSetKeysList (const gchar *plugin,
 				GVariant    *writtenPlugins,
@@ -393,42 +526,6 @@ findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper  *settings,
 	return FALSE;
 
     return TRUE;
-}
-
-Bool
-updateSettingWithGSettingsKeyName (CCSBackend *backend,
-				   CCSGSettingsWrapper *settings,
-				   const gchar     *keyName,
-				   CCSBackendUpdateFunc updateSetting)
-{
-    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
-    char	 *uncleanKeyName = NULL;
-    char	 *pathOrig;
-    CCSPlugin    *plugin;
-    CCSSetting   *setting;
-    Bool         ret = TRUE;
-
-    pathOrig = strdup (ccsGSettingsWrapperGetPath (settings));
-
-    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
-	(*updateSetting) (backend, context, plugin, setting);
-    else
-    {
-	/* We hit a situation where either the key stored in GSettings couldn't be
-	 * matched at all to a key in the xml file, or where there were multiple matches.
-	 * Unfortunately, there isn't much we can do about this, other than try
-	 * and warn the user and bail out. It just means that if the key was updated
-	 * externally we won't know about the change until the next reload of settings */
-	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
-	 ret = FALSE;
-    }
-
-    g_free (pathOrig);
-
-    if (uncleanKeyName)
-	free (uncleanKeyName);
-
-    return ret;
 }
 
 gchar *
@@ -937,87 +1034,6 @@ writeVariantToKey (CCSGSettingsWrapper  *settings,
     ccsGSettingsWrapperSetValue (settings, key, value);
 }
 
-typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);
-
-typedef struct _FindItemInVariantData
-{
-    gboolean   found;
-    const char *item;
-} FindItemInVariantData;
-
-static void
-insertIfNotEqual (GVariantBuilder *builder, const char *item, void *userData)
-{
-    const char *cmp = (const char *) userData;
-
-    if (g_strcmp0 (item, cmp))
-	g_variant_builder_add (builder, "s", item);
-}
-
-static void
-findItemForVariantData (GVariantBuilder *builder, const char *item, void *userData)
-{
-    FindItemInVariantData *data = (FindItemInVariantData *) userData;
-
-    if (!data->found)
-	data->found = g_str_equal (data->item, item);
-
-    g_variant_builder_add (builder, "s", item);
-}
-
-static void
-rebuildVariant (GVariantBuilder		      *builder,
-		GVariant		      *originalVariant,
-		VariantItemCheckAndInsertFunc checkAndInsert,
-		void			      *userData)
-{
-    GVariantIter    iter;
-    char	    *str;
-
-    g_variant_iter_init (&iter, originalVariant);
-    while (g_variant_iter_loop (&iter, "s", &str))
-    {
-	(*checkAndInsert) (builder, str, userData);
-    }
-}
-
-gboolean
-appendStringToVariantIfUnique (GVariant	  **variant,
-			       const char *string)
-{
-    GVariantBuilder newVariantBuilder;
-    FindItemInVariantData findItemData;
-
-    memset (&findItemData, 0, sizeof (FindItemInVariantData));
-    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
-
-    findItemData.item = string;
-
-    rebuildVariant  (&newVariantBuilder, *variant, findItemForVariantData, &findItemData);
-
-    if (!findItemData.found)
-	g_variant_builder_add (&newVariantBuilder, "s", string);
-
-    g_variant_unref (*variant);
-    *variant = g_variant_builder_end (&newVariantBuilder);
-
-    return !findItemData.found;
-}
-
-void
-removeItemFromVariant (GVariant	  **variant,
-		       const char *string)
-{
-    GVariantBuilder newVariantBuilder;
-
-    g_variant_builder_init (&newVariantBuilder, G_VARIANT_TYPE ("as"));
-
-    rebuildVariant (&newVariantBuilder, *variant, insertIfNotEqual, (void *) string);
-
-    g_variant_unref (*variant);
-    *variant = g_variant_builder_end (&newVariantBuilder);
-}
-
 void
 resetOptionToDefault (CCSBackend *backend, CCSSetting * setting)
 {
@@ -1059,6 +1075,7 @@ deleteProfile (CCSBackend *backend,
     GVariant        *plugins;
     GVariant        *profiles;
     const char      *currentProfile = ccsGSettingsBackendGetCurrentProfile (backend);
+    gboolean        ret = FALSE;
 
     plugins = ccsGSettingsBackendGetPluginsWithSetKeys (backend);
     profiles = ccsGSettingsBackendGetExistingProfiles (backend);
@@ -1066,16 +1083,15 @@ deleteProfile (CCSBackend *backend,
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (backend, context, plugins, currentProfile);
     ccsGSettingsBackendClearPluginsWithSetKeys (backend);
 
-    removeItemFromVariant (&profiles, profile);
+    ret = removeItemFromVariant (&profiles, profile);
 
     /* Remove the profile from existing-profiles */
     ccsGSettingsBackendSetExistingProfiles (backend, profiles);
-
     ccsGSettingsBackendUpdateProfile (backend, context);
 
     /* Since we do not call g_settings_set_value on
      * plugins, we must also unref the variant */
     g_variant_unref (plugins);
 
-    return TRUE;
+    return ret;
 }

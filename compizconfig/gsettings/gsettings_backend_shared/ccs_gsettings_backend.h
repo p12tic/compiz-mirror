@@ -7,28 +7,8 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
-#ifdef USE_GCONF
-#include <gconf/gconf-client.h>
-#endif
-
 typedef struct _CCSBackend CCSBackend;
 typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
-
-/* FIXME: This should not be here, but getting it to be
- * part of its own file is a lot more work than we currently
- * have time to do right now */
-struct _CCSGSettingsBackendPrivate
-{
-    GList	   *settingsList;
-    CCSGSettingsWrapper *compizconfigSettings;
-    CCSGSettingsWrapper *currentProfileSettings;
-
-    char	    *currentProfile;
-    CCSContext  *context;
-
-    CCSIntegration *integration;
-
-};
 
 Bool
 ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context);
@@ -52,6 +32,9 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backen
 
 gboolean ccsGSettingsBackendAddProfileDefault (CCSBackend *backend,
 					       const char *profile);
+
+void ccsGSettingsSetIntegration (CCSBackend *backend,
+				 CCSIntegration *integration);
 
 COMPIZCONFIG_END_DECLS
 

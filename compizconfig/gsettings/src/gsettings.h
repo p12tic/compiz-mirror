@@ -39,7 +39,10 @@
 
 #include <gio/gio.h>
 
-#include "gsettings_shared.h"
-#include <ccs_gsettings_interface.h>
+#define BUFSIZE 512
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 
 #endif
