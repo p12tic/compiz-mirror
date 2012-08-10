@@ -1,33 +1,33 @@
-INCLUDE_DIRECTORIES (
+include_directories (
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${Boost_INCLUDE_DIRS}
   ${GLIBMM_INCLUDE_DIRS}
 )
 
-LINK_DIRECTORIES (${GLIBMM_LIBRARY_DIRS} ${COMPIZ_LIBRARY_DIRS})
+link_directories (${GLIBMM_LIBRARY_DIRS} ${COMPIZ_LIBRARY_DIRS})
 
-SET (
+set (
   PRIVATE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/click-threshold.h
 )
 
-SET(
+set (
   SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/click-threshold.cpp
 )
 
-ADD_LIBRARY(
+add_library (
   compiz_expo_click_threshold STATIC
   ${SRCS}
   ${PRIVATE_HEADERS}
 )
 
 if (COMPIZ_BUILD_TESTING)
-ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
+  add_subdirectory ( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 endif (COMPIZ_BUILD_TESTING)
 
-TARGET_LINK_LIBRARIES(
+target_link_libraries (
   compiz_expo_click_threshold
   compiz_point
 )
