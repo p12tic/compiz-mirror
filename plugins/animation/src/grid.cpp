@@ -253,6 +253,7 @@ GridAnim::addGeometry (GLVertexBuffer              &vertexBuffer,
 
     vSize = vertexBuffer.getVertexStride ();
 
+    // Indentation kept to provide a clean diff with the old code, for now...
     {
 	x1 = outRect.x1 ();
 	y1 = outRect.y1 ();
@@ -341,6 +342,7 @@ GridAnim::addGeometry (GLVertexBuffer              &vertexBuffer,
 
 	    // End of calculations for y
 
+	    // Indentation kept to provide a clean diff with the old code...
 	    {
 		if (x > x2)
 		    x = x2;
