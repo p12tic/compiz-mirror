@@ -176,8 +176,9 @@ gboolean
 appendStringToVariantIfUnique (GVariant	  **variant,
 			       const char *string);
 
-gboolean removeItemFromVariant (GVariant	  **variant,
-				const char *string);
+gboolean
+removeItemFromVariant (GVariant	  **variant,
+		       const char *string);
 
 CCSSettingValueList
 readBoolListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSObjectAllocationInterface *allocator);

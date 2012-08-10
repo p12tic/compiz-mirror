@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gsettings_shared.h"
+#include "ccs_gsettings_backend.h"
+#include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
-#include "ccs_gsettings_backend_interface.h"
 
 const CCSBackendInfo gsettingsBackendInfo =
 {
@@ -237,6 +238,42 @@ variantIsValidForCCSType (GVariant *gsettingsValue,
 }
 
 Bool
+updateSettingWithGSettingsKeyName (CCSBackend *backend,
+				   CCSGSettingsWrapper *settings,
+				   const gchar     *keyName,
+				   CCSBackendUpdateFunc updateSetting)
+{
+    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
+    char	 *uncleanKeyName = NULL;
+    char	 *pathOrig;
+    CCSPlugin    *plugin;
+    CCSSetting   *setting;
+    Bool         ret = TRUE;
+
+    pathOrig = strdup (ccsGSettingsWrapperGetPath (settings));
+
+    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
+	(*updateSetting) (backend, context, plugin, setting);
+    else
+    {
+	/* We hit a situation where either the key stored in GSettings couldn't be
+	 * matched at all to a key in the xml file, or where there were multiple matches.
+	 * Unfortunately, there isn't much we can do about this, other than try
+	 * and warn the user and bail out. It just means that if the key was updated
+	 * externally we won't know about the change until the next reload of settings */
+	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
+	 ret = FALSE;
+    }
+
+    g_free (pathOrig);
+
+    if (uncleanKeyName)
+	g_free (uncleanKeyName);
+
+    return ret;
+}
+
+Bool
 appendToPluginsWithSetKeysList (const gchar *plugin,
 				GVariant    *writtenPlugins,
 				char	       ***newWrittenPlugins,
@@ -393,42 +430,6 @@ findSettingAndPluginToUpdateFromPath (CCSGSettingsWrapper  *settings,
 	return FALSE;
 
     return TRUE;
-}
-
-Bool
-updateSettingWithGSettingsKeyName (CCSBackend *backend,
-				   CCSGSettingsWrapper *settings,
-				   const gchar     *keyName,
-				   CCSBackendUpdateFunc updateSetting)
-{
-    CCSContext   *context = ccsGSettingsBackendGetContext (backend);
-    char	 *uncleanKeyName = NULL;
-    char	 *pathOrig;
-    CCSPlugin    *plugin;
-    CCSSetting   *setting;
-    Bool         ret = TRUE;
-
-    pathOrig = strdup (ccsGSettingsWrapperGetPath (settings));
-
-    if (findSettingAndPluginToUpdateFromPath (settings, pathOrig, keyName, context, &plugin, &setting, &uncleanKeyName))
-	(*updateSetting) (backend, context, plugin, setting);
-    else
-    {
-	/* We hit a situation where either the key stored in GSettings couldn't be
-	 * matched at all to a key in the xml file, or where there were multiple matches.
-	 * Unfortunately, there isn't much we can do about this, other than try
-	 * and warn the user and bail out. It just means that if the key was updated
-	 * externally we won't know about the change until the next reload of settings */
-	 ccsWarning ("Unable to find setting %s, for path %s", uncleanKeyName, pathOrig);
-	 ret = FALSE;
-    }
-
-    g_free (pathOrig);
-
-    if (uncleanKeyName)
-	free (uncleanKeyName);
-
-    return ret;
 }
 
 gchar *

@@ -11,11 +11,6 @@ G_BEGIN_DECLS
 #include <malloc.h>
 #include <string.h>
 #include <dirent.h>
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
 #include "gsettings_util.h"
 
 #define BUFSIZE 512
@@ -26,6 +21,7 @@ extern const char * const COMPIZCONFIG_SCHEMA_ID;
 extern const char * const COMPIZCONFIG_PATH;
 extern const char * const PROFILE_SCHEMA_ID;
 #define METACITY "/apps/metacity"
+#define NUM_WATCHED_DIRS 3
 extern const char * const PROFILE_PATH_PREFIX;
 extern const char * const DEFAULTPROF;
 extern const unsigned int MAX_GSETTINGS_KEY_SIZE;

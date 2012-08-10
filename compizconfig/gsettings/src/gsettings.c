@@ -34,9 +34,10 @@
 #define CCS_LOG_DOMAIN "gsettings"
 
 #include "gsettings.h"
+#include "gsettings_shared.h"
+#include "gconf-integration.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
-#include "gconf-integration.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
 
@@ -51,11 +52,17 @@ getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 						pathName,
 						ccsSettingGetType (setting));
 
-    free (cleanSettingName);
-    free (pathName);
     return gsettingsValue;
 }
 
+static Bool
+readIntegratedOption (CCSBackend *backend,
+		      CCSContext *context,
+		      CCSSetting *setting,
+		      int        index)
+{
+    return ccsGSettingsBackendReadIntegratedOption (backend, setting, index);
+}
 
 Bool
 readOption (CCSBackend *backend, CCSSetting * setting)
@@ -63,6 +70,10 @@ readOption (CCSBackend *backend, CCSSetting * setting)
     Bool       ret = FALSE;
     GVariant   *gsettingsValue = NULL;
 
+    /* It is impossible for certain settings to have a schema,
+     * such as actions and read only settings, so in that case
+     * just return FALSE since compizconfig doesn't expect us
+     * to read them anyways */
     if (!ccsSettingIsReadableByBackend (setting))
 	return FALSE;
 
@@ -203,8 +214,18 @@ readOption (CCSBackend *backend, CCSSetting * setting)
     return ret;
 }
 
+static void
+writeIntegratedOption (CCSBackend *backend,
+		       CCSContext *context,
+		       CCSSetting *setting,
+		       int        index)
+{
+    ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
+}
+
 void
-writeOption (CCSBackend *backend, CCSSetting * setting)
+writeOption (CCSBackend *backend,
+	     CCSSetting *setting)
 {
     CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
     char *cleanSettingName = translateKeyForGSettings (ccsSettingGetName (setting));
@@ -353,7 +374,7 @@ readSetting (CCSBackend *backend,
     if (ccsGetIntegrationEnabled (context) &&
 	index != -1)
     {
-	status = ccsGSettingsBackendReadIntegratedOption (backend, setting, index);
+	status = readIntegratedOption (backend, context, setting, index);
     }
     else
 	status = readOption (backend, setting);
@@ -378,7 +399,7 @@ writeSetting (CCSBackend *backend,
     if (ccsGetIntegrationEnabled (context) &&
 	index != -1)
     {
-	ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
+	writeIntegratedOption (backend, context, setting, index);
     }
     else if (ccsSettingGetIsDefault (setting))
     {
@@ -462,13 +483,12 @@ getInfo (CCSBackend *backend)
 }
 
 static Bool
-ccsGSettingsDeleteProfileWrapper (CCSBackend *backend,
-				  CCSContext *context,
-				  char       *profile)
+ccsGSettingsWrapDeleteProfile (CCSBackend *backend,
+			       CCSContext *context,
+			       char       *profile)
 {
     return deleteProfile (backend, context, profile);
 }
-
 
 static CCSBackendInterface gsettingsVTable = {
     getInfo,
@@ -485,7 +505,7 @@ static CCSBackendInterface gsettingsVTable = {
     getSettingIsIntegrated,
     getSettingIsReadOnly,
     ccsGSettingsGetExistingProfiles,
-    ccsGSettingsDeleteProfileWrapper,
+    ccsGSettingsWrapDeleteProfile,
     ccsGSettingsSetIntegration
 };
 
@@ -494,4 +514,3 @@ getBackendInfo (void)
 {
     return &gsettingsVTable;
 }
-
