@@ -3998,10 +3998,21 @@ ccsGetExistingBackends ()
 	    free (backenddir);
 	}
     }
-
-    if (home && strlen (home))
+    else
     {
-	if (asprintf (&backenddir, "%s/.compizconfig/backends", home) == -1)
+	if (home && strlen (home))
+	{
+	    if (asprintf (&backenddir, "%s/.compizconfig/backends", home) == -1)
+		backenddir = NULL;
+
+	    if (backenddir)
+	    {
+		getBackendInfoFromDir (&rv, backenddir);
+		free (backenddir);
+	    }
+	}
+
+	if (asprintf (&backenddir, "%s/compizconfig/backends", LIBDIR) == -1)
 	    backenddir = NULL;
 
 	if (backenddir)
@@ -4011,14 +4022,6 @@ ccsGetExistingBackends ()
 	}
     }
 
-    if (asprintf (&backenddir, "%s/compizconfig/backends", LIBDIR) == -1)
-	backenddir = NULL;
-
-    if (backenddir)
-    {
-	getBackendInfoFromDir (&rv, backenddir);
-	free (backenddir);
-    }
     return rv;
 }
 
