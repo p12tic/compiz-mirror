@@ -39,8 +39,6 @@
 
 #include <gio/gio.h>
 
-#define BUFSIZE 512
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif

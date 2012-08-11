@@ -1,5 +1,7 @@
 #include "gsettings_shared.h"
 
+const unsigned int BUFSIZE = 512;
+
 const char * const COMPIZCONFIG_SCHEMA_ID = "org.compiz";
 const char * const COMPIZCONFIG_PATH = "/org/compiz/";
 

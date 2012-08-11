@@ -31,13 +31,17 @@
  *
  **/
 #ifdef USE_GCONF
+
+#define METACITY "/apps/metacity"
+#define NUM_WATCHED_DIRS 3
+
+#include <stdlib.h>
+#include <string.h>
+#include <ccs.h>
 #include <ccs-backend.h>
 #include <gconf/gconf.h>
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
-#include "gsettings_shared.h"
-#include "ccs_gsettings_backend_interface.h"
-#include "ccs_gsettings_backend.h"
 #include "gnome-integration.h"
 
 typedef enum {
