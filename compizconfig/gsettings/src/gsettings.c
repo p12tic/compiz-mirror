@@ -151,8 +151,8 @@ readListValue (CCSBackend *backend,
     case TypeString:
     case TypeMatch:
 	{
-	    const gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
-	    const gchar **arrayCounter = array;
+	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
+	    gchar **arrayCounter = array;
 	    gchar *value;
 
 	    if (!array)
@@ -164,8 +164,8 @@ readListValue (CCSBackend *backend,
 	    while (g_variant_iter_next (&iter, "s", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    g_strfreev ((char **) array);
+	    list = ccsGetValueListFromStringArray ((const gchar **) array, nItems, setting);
+	    g_strfreev (array);
 	}
 	break;
     case TypeColor:
