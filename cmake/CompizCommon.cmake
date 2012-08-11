@@ -70,20 +70,159 @@ elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
 
+# Parse arguments passed to a function into several lists separated by
+# upper-case identifiers and options that do not have an associated list e.g.:
+#
+# SET(arguments
+#   hello OPTION3 world
+#   LIST3 foo bar
+#   OPTION2
+#   LIST1 fuz baz
+#   )
+# PARSE_ARGUMENTS(ARG "LIST1;LIST2;LIST3" "OPTION1;OPTION2;OPTION3" ${arguments})
+#
+# results in 7 distinct variables:
+#  * ARG_DEFAULT_ARGS: hello;world
+#  * ARG_LIST1: fuz;baz
+#  * ARG_LIST2:
+#  * ARG_LIST3: foo;bar
+#  * ARG_OPTION1: FALSE
+#  * ARG_OPTION2: TRUE
+#  * ARG_OPTION3: TRUE
+#
+# taken from http://www.cmake.org/Wiki/CMakeMacroParseArguments 
+
+MACRO(PARSE_ARGUMENTS prefix arg_names option_names)
+    SET(DEFAULT_ARGS)
+    FOREACH(arg_name ${arg_names})    
+        SET(${prefix}_${arg_name})
+    ENDFOREACH(arg_name)
+    FOREACH(option ${option_names})
+        SET(${prefix}_${option} FALSE)
+    ENDFOREACH(option)
+    
+    SET(current_arg_name DEFAULT_ARGS)
+    SET(current_arg_list)
+    FOREACH(arg ${ARGN})            
+        SET(larg_names ${arg_names})    
+        LIST(FIND larg_names "${arg}" is_arg_name)                   
+        IF (is_arg_name GREATER -1)
+            SET(${prefix}_${current_arg_name} ${current_arg_list})
+            SET(current_arg_name ${arg})
+            SET(current_arg_list)
+        ELSE (is_arg_name GREATER -1)
+            SET(loption_names ${option_names})    
+            LIST(FIND loption_names "${arg}" is_option)            
+            IF (is_option GREATER -1)
+                SET(${prefix}_${arg} TRUE)
+            ELSE (is_option GREATER -1)
+                SET(current_arg_list ${current_arg_list} ${arg})
+            ENDIF (is_option GREATER -1)
+        ENDIF (is_arg_name GREATER -1)
+    ENDFOREACH(arg)
+    SET(${prefix}_${current_arg_name} ${current_arg_list})
+ENDMACRO(PARSE_ARGUMENTS)
+
+function (compiz_add_to_coverage_report TARGET TEST)
+
+    set_property (GLOBAL APPEND PROPERTY
+		  COMPIZ_COVERAGE_REPORT_TARGETS
+		  ${TARGET})
+
+    set_property (GLOBAL APPEND PROPERTY
+		  COMPIZ_COVERAGE_REPORT_TESTS
+		  ${TARGET})
+
+endfunction ()
+
+function (compiz_add_test_to_testfile CURRENT_BINARY_DIR TEST)
+
+    message (STATUS "Will discover tests in ${TEST}")
+
+    set (INCLUDE_STR "INCLUDE (${CURRENT_BINARY_DIR}/${TEST}_test.cmake) \n")
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY COMPIZ_TEST_INCLUDE_FILES
+		  ${INCLUDE_STR})
+
+endfunction (compiz_add_test_to_testfile)
+
+function (compiz_generate_testfile_target)
+
+    # Adding a rule for the toplevel CTestTestfile.cmake
+    # will cause enable_testing not to generate the file
+    # for this directory, so we need to do some of the work
+    # that command did for us
+
+    file (WRITE ${CMAKE_BINARY_DIR}/CompizCTestTestfile.cmake "")
+
+    file (GLOB ALL_DIRS "*")
+
+    foreach (DIR ${ALL_DIRS})
+	if (IS_DIRECTORY ${DIR} AND NOT ${DIR} STREQUAL ${CMAKE_BINARY_DIR})
+	    file (RELATIVE_PATH RDIR ${CMAKE_CURRENT_SOURCE_DIR} ${DIR})
+	    file (APPEND ${compiz_BINARY_DIR}/CompizCTestTestfile.cmake
+	          "SUBDIRS (${RDIR})\n")
+	endif (IS_DIRECTORY ${DIR} AND NOT ${DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    endforeach ()
+
+    get_property (COMPIZ_TEST_INCLUDE_FILES_SET
+		  GLOBAL PROPERTY COMPIZ_TEST_INCLUDE_FILES
+		  SET)
+
+    if (NOT COMPIZ_TEST_INCLUDE_FILES_SET)
+	message (WARNING "No tests were added for discovery, not generating CTestTestfile.cmake rule")
+    endif (NOT COMPIZ_TEST_INCLUDE_FILES_SET)
+
+    get_property (COMPIZ_TEST_INCLUDE_FILES
+		  GLOBAL PROPERTY COMPIZ_TEST_INCLUDE_FILES)
+
+    foreach (INCLUDEFILE ${COMPIZ_TEST_INCLUDE_FILES})
+	file (APPEND ${compiz_BINARY_DIR}/CompizCTestTestfile.cmake ${INCLUDEFILE})
+    endforeach ()
+
+    # Overwrite any existing CTestTestfile.cmake - we cannot use
+    # configure_file as enable_testing () will clobber the result
+
+    add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/CTestTestfileValid
+		        COMMAND cat ${CMAKE_BINARY_DIR}/CompizCTestTestfile.cmake > ${CMAKE_BINARY_DIR}/CTestTestfile.cmake && touch ${CMAKE_BINARY_DIR}/CTestTestfileValid
+		        COMMENT "Generating CTestTestfile.cmake"
+		        VERBATIM)
+
+    add_custom_target (compiz_generate_ctest_testfile ALL
+		       DEPENDS ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+
+    # Invalidate the CTestTestfile.cmake
+    if (EXISTS ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+	execute_process (COMMAND rm ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+    endif (EXISTS ${CMAKE_BINARY_DIR}/CTestTestfileValid)
+endfunction (compiz_generate_testfile_target)
+
 # Create target to discover tests
 function (compiz_discover_tests EXECUTABLE)
 
-    add_dependencies (${EXECUTABLE}
-		      compiz_discover_gtest_tests)
+    string (TOLOWER "${CMAKE_BUILD_TYPE}" COVERAGE_BUILD_TYPE)
+    if (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
+	parse_arguments (ARG "COVERAGE" "" ${ARGN})
+
+	foreach (COVERAGE ${ARG_COVERAGE})
+	    compiz_add_to_coverage_report (${COVERAGE} ${EXECUTABLE})
+	endforeach ()
+    endif (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
 
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD
 			COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE} --gtest_list_tests | ${CMAKE_BINARY_DIR}/compiz_gtest/compiz_discover_gtest_tests ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMENT "Discovering Tests in ${EXECUTABLE}"
-			DEPENDS 
 			VERBATIM)
-endfunction ()
+
+    add_dependencies (${EXECUTABLE}
+		      compiz_discover_gtest_tests)
+
+    compiz_add_test_to_testfile (${CMAKE_CURRENT_BINARY_DIR} ${EXECUTABLE})
+
+endfunction (compiz_discover_tests)
 
 function (compiz_ensure_linkage)
     find_program (LDCONFIG_EXECUTABLE ldconfig)
@@ -334,7 +473,7 @@ function (compiz_translate_xml _src _dst)
     	add_custom_command (
 	    OUTPUT ${_dst}
 	    COMMAND cat ${_src} |
-		    sed -e 's;<_;<;g' -e 's;</_;</;g' > 
+		    sed -e 's:<_:<:g' -e 's:</_:</:g' > 
 		    ${_dst}
 	    DEPENDS ${_src}
 	)
@@ -361,7 +500,7 @@ function (compiz_translate_desktop_file _src _dst)
     	add_custom_command (
 	    OUTPUT ${_dst}
 	    COMMAND cat ${_src} |
-		    sed -e 's;^_;;g' >
+		    sed -e 's:^_::g' >
 		    ${_dst}
 	    DEPENDS ${_src}
 	)

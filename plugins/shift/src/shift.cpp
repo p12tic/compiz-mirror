@@ -1162,7 +1162,6 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	if (optionGetReflection ())
 	{
 	    GLMatrix	   rTransform = sTransform;
-	    unsigned short color[4];
 	    int            cull, cullInv;
 	    glGetIntegerv (GL_CULL_FACE_MODE, &cull);
 	    cullInv = (cull == GL_BACK)? GL_FRONT : GL_BACK;
@@ -1223,6 +1222,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    if (optionGetGroundSize () > 0.0)
 	    {
+		unsigned short color[4];
 		glBegin (GL_QUADS);
 		color[0] = optionGetGroundColor1 ()[0];
 		color[1] = optionGetGroundColor1 ()[1];
@@ -1452,13 +1452,14 @@ ShiftScreen::donePaint ()
 		CompWindow *w;
 
 		CompWindow *pw = NULL;
-		int i;
 
 		mState = ShiftStateIn;
 		mMoreAdjust = true;
 		cScreen->damageScreen ();
 
 		if (!mCancelled && mMvTarget != 0)
+		{
+		    int i;
 		    for (i = 0; i < mNSlots; i++)
 		    {
 			w = mDrawSlots[i].w;
@@ -1472,6 +1473,7 @@ ShiftScreen::donePaint ()
 			    pw = w;
 			}
 		    }
+		}
 
 		if (!mCancelled && mSelectedWindow)
 		{

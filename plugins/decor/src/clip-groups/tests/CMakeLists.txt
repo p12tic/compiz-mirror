@@ -11,4 +11,4 @@ target_link_libraries (compiz_test_decor_clip_groups
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-compiz_discover_tests (compiz_test_decor_clip_groups)
+compiz_discover_tests (compiz_test_decor_clip_groups COVERAGE compiz_decor_clip_groups)
