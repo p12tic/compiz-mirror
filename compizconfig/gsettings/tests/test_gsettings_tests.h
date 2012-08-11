@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <glib-object.h>
 
 using ::testing::TestWithParam;
 
@@ -60,6 +61,8 @@ class CCSGSettingsTestIndependent :
 
 	virtual void SetUp ()
 	{
+	    g_type_init ();
+
 	    CCSGSettingsTestingEnv::SetUpEnv ();
 	}
 
@@ -68,4 +71,25 @@ class CCSGSettingsTestIndependent :
 	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
 };
+
+class CCSGSettingsTestWithMemoryBackend :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    CCSGSettingsTestIndependent::SetUp ();
+	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
+	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+	}
+
+	virtual void TearDown ()
+	{
+	    g_unsetenv ("GSETTINGS_BACKEND");
+	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
+	    CCSGSettingsTestIndependent::TearDown ();
+	}
+};
+
 
