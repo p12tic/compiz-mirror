@@ -8,7 +8,7 @@
  *
  * Ported to Compiz 0.9.x
  * Copyright : (c) 2010 Scott Moreau <oreaus@gmail.com>
- * 
+ *
  * This plugin and parts of its code have been inspired by the showmouse plugin
  * by Dennis Kasprzyk
  *
@@ -293,24 +293,24 @@ WizardScreen::drawParticles (ParticleSystem * ps)
     if (ps->hardLimit > ps->vertex_cache_count)
     {
 	ps->vertices_cache =
-	    (GLfloat*) realloc (ps->vertices_cache,
-		    ps->hardLimit * 4 * 3 * sizeof (GLfloat));
+		(GLfloat*) realloc (ps->vertices_cache,
+				    ps->hardLimit * 4 * 3 * sizeof (GLfloat));
 	ps->vertex_cache_count = ps->hardLimit;
     }
 
     if (ps->hardLimit > ps->coords_cache_count)
     {
 	ps->coords_cache =
-	    (GLfloat*) realloc (ps->coords_cache,
-		    ps->hardLimit * 4 * 2 * sizeof (GLfloat));
+		(GLfloat*) realloc (ps->coords_cache,
+				    ps->hardLimit * 4 * 2 * sizeof (GLfloat));
 	ps->coords_cache_count = ps->hardLimit;
     }
 
     if (ps->hardLimit > ps->color_cache_count)
     {
 	ps->colors_cache =
-	    (GLfloat*) realloc (ps->colors_cache,
-		    ps->hardLimit * 4 * 4 * sizeof (GLfloat));
+		(GLfloat*) realloc (ps->colors_cache,
+				    ps->hardLimit * 4 * 4 * sizeof (GLfloat));
 	ps->color_cache_count = ps->hardLimit;
     }
 
@@ -319,8 +319,8 @@ WizardScreen::drawParticles (ParticleSystem * ps)
 	if (ps->dcolors_cache_count < ps->hardLimit)
 	{
 	    ps->dcolors_cache =
-		(GLfloat*) realloc (ps->dcolors_cache,
-			ps->hardLimit * 4 * 4 * sizeof (GLfloat));
+		    (GLfloat*) realloc (ps->dcolors_cache,
+					ps->hardLimit * 4 * 4 * sizeof (GLfloat));
 	    ps->dcolors_cache_count = ps->hardLimit;
 	}
     }
@@ -388,7 +388,7 @@ WizardScreen::drawParticles (ParticleSystem * ps)
 
 	    if (part->t > ps->tnew)		//New particles start at a == 1
 		colors[3] = part->a + (1. - part->a) * (part->t - ps->tnew)
-					/ (1. - ps->tnew);
+			    / (1. - ps->tnew);
 	    else if (part->t < ps->told)	//Old particles fade to a = 0
 		colors[3] = part->a * part->t / ps->told;
 	    else				//The others have their own a
@@ -471,7 +471,7 @@ updateParticles (ParticleSystem * ps, float time)
 	    //Additional aging of particles increases if softLimit is exceeded
 	    if (ps->lastCount > ps->softLimit)
 		part->t += part->vt * time * (ps->lastCount - ps->softLimit)
-					/ (ps->hardLimit - ps->softLimit);
+			   / (ps->hardLimit - ps->softLimit);
 
 	    //Global gravity
 	    part->vx += ps->gx * time;
@@ -484,7 +484,7 @@ updateParticles (ParticleSystem * ps, float time)
 		if (gi->strength != 0)
 		{
 		    gdist = sqrt ((part->x-gi->x)*(part->x-gi->x)
-				    + (part->y-gi->y)*(part->y-gi->y));
+				  + (part->y-gi->y)*(part->y-gi->y));
 		    if (gdist > 1)
 		    {
 			gangle = atan2 (gi->y-part->y, gi->x-part->x);
@@ -513,7 +513,7 @@ updateParticles (ParticleSystem * ps, float time)
 		if (gpart->t > 0.0f)
 		{
 		    gdist = sqrt ((part->x-gpart->x)*(part->x-gpart->x)
-				    + (part->y-gpart->y)*(part->y-gpart->y));
+				  + (part->y-gpart->y)*(part->y-gpart->y));
 		    if (gdist > 1)
 		    {
 			gangle = atan2 (part->y-gpart->y, part->x-gpart->x);
@@ -599,12 +599,12 @@ genNewParticles (ParticleSystem *ps, Emitter *e)
 		part->a = 0.;
 
 	    //HSL to RGB conversion from Wikipedia simplified by S = 1
-            h = rRange (e->h, e->dh); //Random hue within range
+	    h = rRange (e->h, e->dh); //Random hue within range
 	    if (h < 0)
 		h += 1.;
-            else if (t > 1)
+	    else if (t > 1)
 		h -= 1.;
-            l = rRange (e->l, e->dl); //Random lightness ...
+	    l = rRange (e->l, e->dl); //Random lightness ...
 	    if (l > 1)
 		l = 1.;
 	    else if (l < 0)
@@ -616,9 +616,9 @@ genNewParticles (ParticleSystem *ps, Emitter *e)
 	    for (j = 0; j < 3; j++)
 	    {
 		t = h + (1-j)/3.;
-                if (t < 0)
+		if (t < 0)
 		    t += 1.;
-                else if (t > 1)
+		else if (t > 1)
 		    t -= 1.;
 		if (t < 1/6.)
 		    part->c[j] = p + ((q-p)*6*t);
@@ -691,7 +691,7 @@ WizardScreen::preparePaint (int time)
 	initParticles (optionGetHardLimit (), optionGetSoftLimit (), ps);
 	ps->darken = optionGetDarken ();
 	ps->blendMode = (optionGetBlend ()) ? GL_ONE :
-				GL_ONE_MINUS_SRC_ALPHA;
+					      GL_ONE_MINUS_SRC_ALPHA;
 	ps->tnew = optionGetTnew ();
 	ps->told = optionGetTold ();
 	ps->gx = optionGetGx ();
@@ -704,7 +704,7 @@ WizardScreen::preparePaint (int time)
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0,
-			GL_RGBA, GL_UNSIGNED_BYTE, particleTex);
+		      GL_RGBA, GL_UNSIGNED_BYTE, particleTex);
 	glBindTexture (GL_TEXTURE_2D, 0);
     }
 
@@ -828,10 +828,10 @@ WizardScreen::preparePaint (int time)
 		&& ei->set_active && !((int)random ()&0xff))
 		ei->active = !ei->active;
 	    if (ei->active && (
-		(ei->trigger == TRIGGER_PERSISTENT) ||
-		(ei->trigger == TRIGGER_RANDOMSHOT && !((int)random()&0xff)) ||
-		(ei->trigger == TRIGGER_RANDOMPERIOD)
-		))
+		    (ei->trigger == TRIGGER_PERSISTENT) ||
+		    (ei->trigger == TRIGGER_RANDOMSHOT && !((int)random()&0xff)) ||
+		    (ei->trigger == TRIGGER_RANDOMPERIOD)
+		    ))
 		genNewParticles (ps, ei);
 	}
     }
@@ -928,7 +928,7 @@ WizardScreen::WizardScreen (CompScreen *screen) :
 
 #define optionNotify(name)						       \
     optionSet##name##Notify (boost::bind (&WizardScreen::optionChanged,	       \
-					    this, _1, _2))
+    this, _1, _2))
 
     optionNotify (GStrength);
     optionNotify (GPosx);
