@@ -8,7 +8,7 @@
 #include "gsettings_shared.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_wrapper_mock.h"
-#include "gsettings_mocks.h"
+#include "compizconfig_ccs_setting_mock.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
