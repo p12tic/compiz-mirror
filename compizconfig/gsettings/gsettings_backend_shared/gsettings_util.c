@@ -666,7 +666,7 @@ readStringListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSO
     while (g_variant_iter_next (iter, "s", &value))
 	*arrayCounter++ = value;
 
-    list = ccsGetValueListFromStringArray ((gchar **) array, nItems, setting);
+    list = ccsGetValueListFromStringArray ((const gchar **) array, nItems, setting);
     g_strfreev (array);
 
     return list;
