@@ -39,6 +39,7 @@
 #include <string.h>
 #include <ccs.h>
 #include <ccs-backend.h>
+#include <ccs-object.h>
 #include <gconf/gconf.h>
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>

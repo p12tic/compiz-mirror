@@ -234,6 +234,7 @@ INTERFACE_TYPE (CCSSettingInterface)
 INTERFACE_TYPE (CCSBackendInterface);
 INTERFACE_TYPE (CCSDynamicBackendInterface);
 INTERFACE_TYPE (CCSIntegrationInterface);
+INTERFACE_TYPE (CCSIntegratedSettingInterface);
 
 Bool basicMetadata = FALSE;
 
@@ -242,7 +243,6 @@ ccsSetBasicMetadata (Bool value)
 {
     basicMetadata = value;
 }
-
 static void
 initGeneralOptions (CCSContext * context)
 {
@@ -5498,6 +5498,36 @@ CCSStrExtensionList ccsGetPluginStrExtensionsDefault (CCSPlugin *plugin)
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetPluginStrExtensions) (plugin);
+}
+
+CCSSettingValue ccsIntegratedSettingReadValue (CCSIntegratedSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->readValue) (setting);
+}
+
+void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value)
+{
+    (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->writeValue) (setting, value);
+}
+
+const char * ccsIntegratedSettingPluginName (CCSIntegratedSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->pluginName) (setting);
+}
+
+const char * ccsIntegratedSettingSettingName (CCSIntegratedSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->settingName) (setting);
+}
+
+CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *setting)
+{
+    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->getType) (setting);
+}
+
+void ccsFreeIntegratedSetting (CCSIntegratedSetting *setting)
+{
+    (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->free) (setting);
 }
 
 static  const CCSPluginInterface ccsDefaultPluginInterface =

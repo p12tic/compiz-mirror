@@ -28,6 +28,7 @@
 #include <ccs-list.h>
 #include <ccs-string.h>
 #include <ccs-backend.h>
+#include <ccs-setting-types.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
@@ -299,24 +300,6 @@ struct _CCSPlugin
 {
     CCSObject object;
 };
-
-typedef enum _CCSSettingType
-{
-    /* This needs to be in the same order as CompOptionType for consistency */
-    TypeBool,
-    TypeInt,
-    TypeFloat,
-    TypeString,
-    TypeColor,
-    TypeAction,
-    TypeKey,
-    TypeButton,
-    TypeEdge,
-    TypeBell,
-    TypeMatch,
-    TypeList,
-    TypeNum
-} CCSSettingType;
 
 struct _CCSSubGroup
 {

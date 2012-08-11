@@ -25,6 +25,7 @@
 #include <ccs-object.h>
 #include <ccs-string.h>
 #include <ccs-list.h>
+#include <ccs-setting-types.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
@@ -90,6 +91,45 @@ struct _CCSBackend
 {
     CCSObject        object;
 };
+
+typedef struct _CCSSettingValue CCSSettingValue;
+typedef enum _CCSSettingType CCSSettingType;
+
+typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
+typedef struct _CCSIntegratedSettingInterface CCSIntegratedSettingInterface;
+
+typedef CCSSettingValue (*CCSIntegratedSettingReadValue) (CCSIntegratedSetting *);
+typedef void (*CCSIntegratedSettingWriteValue) (CCSIntegratedSetting *, CCSSettingValue);
+typedef const char * (*CCSIntegratedSettingPluginName) (CCSIntegratedSetting *);
+typedef const char * (*CCSIntegratedSettingSettingName) (CCSIntegratedSetting *);
+typedef CCSSettingType (*CCSIntegratedSettingGetType) (CCSIntegratedSetting *);
+typedef void (*CCSIntegratedSettingFree) (CCSIntegratedSetting *);
+
+struct _CCSIntegratedSettingInterface
+{
+    CCSIntegratedSettingReadValue readValue;
+    CCSIntegratedSettingWriteValue writeValue;
+    CCSIntegratedSettingPluginName pluginName;
+    CCSIntegratedSettingSettingName settingName;
+    CCSIntegratedSettingGetType       getType;
+    CCSIntegratedSettingFree       free;
+};
+
+struct _CCSIntegratedSetting
+{
+    CCSObject object;
+};
+
+CCSSettingValue ccsIntegratedSettingReadValue(CCSIntegratedSetting *);
+void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *, CCSSettingValue);
+const char * ccsIntegratedSettingPluginName (CCSIntegratedSetting *);
+const char * ccsIntegratedSettingSettingName (CCSIntegratedSetting *);
+CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *);
+void ccsFreeIntegratedSetting (CCSIntegratedSetting *);
+
+CCSREF_HDR (IntegratedSetting, CCSIntegratedSetting);
+
+unsigned int ccsCCSIntegratedSettingInterfaceGetType ();
 
 struct _CCSBackendInfo
 {
