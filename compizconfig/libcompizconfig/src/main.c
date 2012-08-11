@@ -236,6 +236,7 @@ INTERFACE_TYPE (CCSDynamicBackendInterface);
 INTERFACE_TYPE (CCSIntegrationInterface);
 INTERFACE_TYPE (CCSIntegratedSettingInterface);
 INTERFACE_TYPE (CCSIntegratedSettingsStorageInterface);
+INTERFACE_TYPE (CCSIntegratedSettingFactoryInterface);
 
 Bool basicMetadata = FALSE;
 
@@ -5710,6 +5711,15 @@ ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *stora
 
     ccsObjectFinalize (storage);
     (*storage->object.object_allocation->free_) (storage->object.object_allocation->allocator, storage);
+}
+
+CCSIntegratedSetting *
+ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+									    const char *pluginName,
+									    const char *settingName,
+									    CCSSettingType type)
+{
+    return (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->createIntegratedSettingForCCSSettingNameAndType) (factory, pluginName, settingName, type);
 }
 
 static  const CCSPluginInterface ccsDefaultPluginInterface =

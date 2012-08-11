@@ -168,6 +168,32 @@ ccsIntegratedSettingsStorageDefaultImplNew (CCSObjectAllocationInterface *ai);
 void
 ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *storage);
 
+typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
+typedef struct _CCSIntegratedSettingFactoryInterface CCSIntegratedSettingFactoryInterface;
+
+typedef CCSIntegratedSetting * (*CCSIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType) (CCSIntegratedSettingFactory *factory,
+													      const char		  *pluginName,
+													      const char		  *settingName,
+													      CCSSettingType		  type);
+
+struct _CCSIntegratedSettingFactoryInterface
+{
+    CCSIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType createIntegratedSettingForCCSSettingNameAndType;
+};
+
+struct _CCSIntegratedSettingFactory
+{
+    CCSObject object;
+};
+
+unsigned int ccsIntegratedSettingFactoryInterfaceGetType ();
+
+CCSIntegratedSetting *
+ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+									    const char			*pluginName,
+									    const char			*settingName,
+									    CCSSettingType		type);
+
 struct _CCSBackendInfo
 {
     const char *name;              /* name of the backend */
