@@ -318,6 +318,39 @@ ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend)
     ccsGSettingsWrapperResetKey (priv->currentProfileSettings, "plugins-with-set-keys");
 }
 
+int
+ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSetting *setting)
+{
+    CCSPlugin  *plugin      = ccsSettingGetParent (setting);
+    const char *pluginName  = ccsPluginGetName (plugin);
+    const char *settingName = ccsSettingGetName (setting);
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return ccsIntegrationGetIntegratedOptionIndex (priv->integration, pluginName, settingName);
+}
+
+Bool
+ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    return ccsIntegrationReadOptionIntoSetting (priv->integration,
+						       priv->context,
+						       setting,
+						       index);
+}
+
+void
+ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
+{
+    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
+
+    ccsIntegrationWriteSettingIntoOption (priv->integration,
+						 priv->context,
+						 setting,
+						 index);
+}
+
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
@@ -331,7 +364,10 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault,
     ccsGSettingsBackendUpdateProfileDefault,
     ccsGSettingsBackendUpdateCurrentProfileNameDefault,
-    ccsGSettingsBackendAddProfileDefault
+    ccsGSettingsBackendAddProfileDefault,
+    ccsGSettingsBackendGetIntegratedOptionIndexDefault,
+    ccsGSettingsBackendReadIntegratedOptionDefault,
+    ccsGSettingsBackendWriteIntegratedOptionDefault
 };
 
 static CCSGSettingsBackendPrivate *
