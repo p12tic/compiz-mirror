@@ -46,15 +46,6 @@
 
 #include "ccs_gnome_integration.h"
 
-#define CompAltMask        (1 << 16)
-#define CompMetaMask       (1 << 17)
-#define CompSuperMask      (1 << 18)
-#define CompHyperMask      (1 << 19)
-#define CompModeSwitchMask (1 << 20)
-#define CompNumLockMask    (1 << 21)
-#define CompScrollLockMask (1 << 22)
-
-#define METACITY     "/apps/metacity"
 #define COMPIZ       "/apps/compiz-1"
 #define COMPIZCONFIG "/apps/compizconfig-1"
 #define PROFILEPATH  COMPIZCONFIG "/profiles"
@@ -77,17 +68,9 @@
 				 "%s/plugins/%s/%s/options/%s", COMPIZ, \
 				 ccsPluginGetName (ccsSettingGetParent (setting)), keyName, ccsSettingGetName (setting));
 
-static const char* watchedGnomeDirectories[] = {
-    METACITY,
-    "/desktop/gnome/applications/terminal",
-    "/apps/panel/applets/window_list/prefs"
-};
-#define NUM_WATCHED_DIRS 3
-
 static GConfClient *client = NULL;
 static GConfEngine *conf = NULL;
 static guint compizNotifyId;
-static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
 static CCSIntegration *integration = NULL;
 
@@ -98,310 +81,6 @@ static Bool readOption (CCSSetting * setting);
 static Bool writeInit (CCSBackend *backend, CCSContext * context);
 static void writeIntegratedOption (CCSContext *context, CCSSetting *setting,
 				   int        index);
-
-typedef enum {
-    OptionInt,
-    OptionBool,
-    OptionKey,
-    OptionBell,
-    OptionString,
-    OptionSpecial,
-} SpecialOptionType;
-
-typedef struct _SpecialOption {
-    const char*       settingName;
-    const char*       pluginName;
-    Bool	      screen;
-    const char*       gnomeName;
-    SpecialOptionType type;
-} SpecialOption;
-
-const SpecialOption specialOptions[] = {
-    {"run_key", "gnomecompat", FALSE,
-     METACITY "/global_keybindings/panel_run_dialog", OptionKey},
-    {"main_menu_key", "gnomecompat", FALSE,
-     METACITY "/global_keybindings/panel_main_menu", OptionKey},
-    {"run_command_screenshot_key", "gnomecompat", FALSE,
-     METACITY "/global_keybindings/run_command_screenshot", OptionKey},
-    {"run_command_window_screenshot_key", "gnomecompat", FALSE,
-     METACITY "/global_keybindings/run_command_window_screenshot", OptionKey},
-    {"run_command_terminal_key", "gnomecompat", FALSE,
-     METACITY "/global_keybindings/run_command_terminal", OptionKey},
-
-    {"toggle_window_maximized_key", "core", FALSE,
-     METACITY "/window_keybindings/toggle_maximized", OptionKey},
-    {"minimize_window_key", "core", FALSE,
-     METACITY "/window_keybindings/minimize", OptionKey},
-    {"maximize_window_key", "core", FALSE,
-     METACITY "/window_keybindings/maximize", OptionKey},
-    {"unmaximize_window_key", "core", FALSE,
-     METACITY "/window_keybindings/unmaximize", OptionKey},
-    {"maximize_window_horizontally_key", "core", FALSE,
-     METACITY "/window_keybindings/maximize_horizontally", OptionKey},
-    {"maximize_window_vertically_key", "core", FALSE,
-     METACITY "/window_keybindings/maximize_vertically", OptionKey},
-    {"raise_window_key", "core", FALSE,
-     METACITY "/window_keybindings/raise", OptionKey},
-    {"lower_window_key", "core", FALSE,
-     METACITY "/window_keybindings/lower", OptionKey},
-    {"close_window_key", "core", FALSE,
-     METACITY "/window_keybindings/close", OptionKey},
-    {"toggle_window_shaded_key", "core", FALSE,
-     METACITY "/window_keybindings/toggle_shaded", OptionKey},
-
-    {"show_desktop_key", "core", FALSE,
-     METACITY "/global_keybindings/show_desktop", OptionKey},
-
-    {"initiate_key", "move", FALSE,
-     METACITY "/window_keybindings/begin_move", OptionKey},
-    {"initiate_key", "resize", FALSE,
-     METACITY "/window_keybindings/begin_resize", OptionKey},
-    {"window_menu_key", "core", FALSE,
-     METACITY "/window_keybindings/activate_window_menu", OptionKey},
-
-    /* integration of Metacity's mouse_button_modifier option */
-    {"initiate_button", "move", FALSE,
-     METACITY "/window_keybindings/begin_move", OptionSpecial},
-    {"initiate_button", "resize", FALSE,
-     METACITY "/window_keybindings/begin_resize", OptionSpecial},
-    {"window_menu_button", "core", FALSE,
-     METACITY "/window_keybindings/activate_window_menu", OptionSpecial},
-    {"mouse_button_modifier", NULL, FALSE,
-     METACITY "/general/mouse_button_modifier", OptionSpecial},
-    /* integration of the Metacity's option to swap mouse buttons */
-    {"resize_with_right_button", NULL, FALSE,
-     METACITY "/general/resize_with_right_button", OptionSpecial},
-
-    {"visual_bell", "fade", TRUE,
-     METACITY "/general/visual_bell", OptionBell},
-    {"fullscreen_visual_bell", "fade", TRUE,
-     METACITY "/general/visual_bell_type", OptionSpecial},
-
-    {"next_key", "staticswitcher", FALSE,
-     METACITY "/global_keybindings/switch_windows", OptionKey},
-    {"prev_key", "staticswitcher", FALSE,
-     METACITY "/global_keybindings/switch_windows_backward", OptionKey},
-
-    {"toggle_sticky_key", "extrawm", FALSE,
-     METACITY "/window_keybindings/toggle_on_all_workspaces", OptionKey},
-    {"toggle_fullscreen_key", "extrawm", FALSE,
-     METACITY "/window_keybindings/toggle_fullscreen", OptionKey},
-
-    {"command0", "commands", FALSE,
-     METACITY "/keybinding_commands/command_1", OptionString},
-    {"command1", "commands", FALSE,
-     METACITY "/keybinding_commands/command_2", OptionString},
-    {"command2", "commands", FALSE,
-     METACITY "/keybinding_commands/command_3", OptionString},
-    {"command3", "commands", FALSE,
-     METACITY "/keybinding_commands/command_4", OptionString},
-    {"command4", "commands", FALSE,
-     METACITY "/keybinding_commands/command_5", OptionString},
-    {"command5", "commands", FALSE,
-     METACITY "/keybinding_commands/command_6", OptionString},
-    {"command6", "commands", FALSE,
-     METACITY "/keybinding_commands/command_7", OptionString},
-    {"command7", "commands", FALSE,
-     METACITY "/keybinding_commands/command_8", OptionString},
-    {"command8", "commands", FALSE,
-     METACITY "/keybinding_commands/command_9", OptionString},
-    {"command9", "commands", FALSE,
-     METACITY "/keybinding_commands/command_10", OptionString},
-    {"command10", "commands", FALSE,
-     METACITY "/keybinding_commands/command_11", OptionString},
-    {"command11", "commands", FALSE,
-     METACITY "/keybinding_commands/command_12", OptionString},
-
-    {"run_command0_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_1", OptionKey},
-    {"run_command1_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_2", OptionKey},
-    {"run_command2_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_3", OptionKey},
-    {"run_command3_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_4", OptionKey},
-    {"run_command4_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_5", OptionKey},
-    {"run_command5_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_6", OptionKey},
-    {"run_command6_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_7", OptionKey},
-    {"run_command7_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_8", OptionKey},
-    {"run_command8_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_9", OptionKey},
-    {"run_command9_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_10", OptionKey},
-    {"run_command10_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_11", OptionKey},
-    {"run_command11_key", "commands", FALSE,
-     METACITY "/global_keybindings/run_command_12", OptionKey},
-
-    {"rotate_to_1_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_1", OptionKey},
-    {"rotate_to_2_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_2", OptionKey},
-    {"rotate_to_3_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_3", OptionKey},
-    {"rotate_to_4_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_4", OptionKey},
-    {"rotate_to_5_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_5", OptionKey},
-    {"rotate_to_6_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_6", OptionKey},
-    {"rotate_to_7_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_7", OptionKey},
-    {"rotate_to_8_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_8", OptionKey},
-    {"rotate_to_9_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_9", OptionKey},
-    {"rotate_to_10_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_10", OptionKey},
-    {"rotate_to_11_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_11", OptionKey},
-    {"rotate_to_12_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
-
-    {"rotate_left_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
-    {"rotate_right_key", "rotate", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
-
-    {"switch_to_1_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_1", OptionKey},
-    {"switch_to_2_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_2", OptionKey},
-    {"switch_to_3_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_3", OptionKey},
-    {"switch_to_4_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_4", OptionKey},
-    {"switch_to_5_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_5", OptionKey},
-    {"switch_to_6_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_6", OptionKey},
-    {"switch_to_7_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_7", OptionKey},
-    {"switch_to_8_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_8", OptionKey},
-    {"switch_to_9_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_9", OptionKey},
-    {"switch_to_10_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_10", OptionKey},
-    {"switch_to_11_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_11", OptionKey},
-    {"switch_to_12_key", "vpswitch", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
-
-    {"up_key", "wall", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_up", OptionKey},
-    {"down_key", "wall", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_down", OptionKey},
-    {"left_key", "wall", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
-    {"right_key", "wall", FALSE,
-     METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
-    {"left_window_key", "wall", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_left", OptionKey},
-    {"right_window_key", "wall", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_right", OptionKey},
-    {"up_window_key", "wall", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_up", OptionKey},
-    {"down_window_key", "wall", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_down", OptionKey},
-
-    {"put_topleft_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_corner_nw", OptionKey},
-    {"put_topright_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_corner_ne", OptionKey},
-    {"put_bottomleft_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_corner_sw", OptionKey},
-    {"put_bottomright_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_corner_se", OptionKey},
-    {"put_left_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_side_w", OptionKey},
-    {"put_right_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_side_e", OptionKey},
-    {"put_top_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_side_n", OptionKey},
-    {"put_bottom_key", "put", FALSE,
-     METACITY "/window_keybindings/move_to_side_s", OptionKey},
-
-    {"rotate_to_1_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_1", OptionKey},
-    {"rotate_to_2_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_2", OptionKey},
-    {"rotate_to_3_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_3", OptionKey},
-    {"rotate_to_4_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_4", OptionKey},
-    {"rotate_to_5_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_5", OptionKey},
-    {"rotate_to_6_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_6", OptionKey},
-    {"rotate_to_7_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_7", OptionKey},
-    {"rotate_to_8_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_8", OptionKey},
-    {"rotate_to_9_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_9", OptionKey},
-    {"rotate_to_10_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_10", OptionKey},
-    {"rotate_to_11_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_11", OptionKey},
-    {"rotate_to_12_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_12", OptionKey},
-
-    {"rotate_left_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_left", OptionKey},
-    {"rotate_right_window_key", "rotate", FALSE,
-     METACITY "/window_keybindings/move_to_workspace_right", OptionKey},
-
-    {"command_screenshot", "gnomecompat", FALSE,
-     METACITY "/keybinding_commands/command_screenshot", OptionString},
-    {"command_window_screenshot", "gnomecompat", FALSE,
-     METACITY "/keybinding_commands/command_window_screenshot", OptionString},
-    {"command_terminal", "gnomecompat", FALSE,
-     "/desktop/gnome/applications/terminal/exec", OptionString},
-
-    {"current_viewport", "thumbnail", TRUE,
-     "/apps/panel/applets/window_list/prefs/display_all_workspaces",
-     OptionSpecial},
-
-    {"autoraise", "core", FALSE,
-     METACITY "/general/auto_raise", OptionBool},
-    {"autoraise_delay", "core", FALSE,
-     METACITY "/general/auto_raise_delay", OptionInt},
-    {"raise_on_click", "core", FALSE,
-     METACITY "/general/raise_on_click", OptionBool},
-    {"click_to_focus", "core", FALSE,
-     METACITY "/general/focus_mode", OptionSpecial},
-
-    {"audible_bell", "core", FALSE,
-     METACITY "/general/audible_bell", OptionBool},
-    /*{"hsize", "core", TRUE,
-     METACITY "/general/num_workspaces", OptionInt},*/
-};
-
-#define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
-
-static CCSSetting *
-findDisplaySettingForPlugin (CCSContext *context,
-			     const char *plugin,
-			     const char *setting)
-{
-    CCSPlugin  *p;
-    CCSSetting *s;
-
-    p = ccsFindPlugin (context, plugin);
-    if (!p)
-	return NULL;
-
-    s = ccsFindSetting (p, setting);
-    if (!s)
-	return NULL;
-
-    return s;
-}
 
 static Bool
 isIntegratedOption (CCSSetting *setting,
@@ -494,101 +173,8 @@ valueChanged (GConfClient *client,
 }
 
 static void
-gnomeValueChanged (GConfClient *client,
-		   guint       cnxn_id,
-		   GConfEntry  *entry,
-		   gpointer    user_data)
-{
-    CCSContext *context = (CCSContext *)user_data;
-    char       *keyName = (char*) gconf_entry_get_key (entry);
-    int        i, last = 0, num = 0;
-    Bool       needInit = TRUE;
-
-    if (!ccsGetIntegrationEnabled (context))
-	return;
-
-    /* we have to loop multiple times here, because one Gnome
-       option may be integrated with multiple Compiz options */
-
-    while (1)
-    {
-	for (i = last, num = -1; i < N_SOPTIONS; i++)
-	{
-	    if (strcmp (specialOptions[i].gnomeName, keyName) == 0)
-	    {
-		num = i;
-		last = i + 1;
-		break;
-	    }
-	}
-
-	if (num < 0)
-	    break;
-
-	if ((strcmp (specialOptions[num].settingName,
-		     "mouse_button_modifier") == 0) ||
-	    (strcmp (specialOptions[num].settingName,
-		    "resize_with_right_button") == 0))
-	{
-	    CCSSetting *s;
-
-	    if (needInit)
-	    {
-		readInit (NULL, context);
-		needInit = FALSE;
-	    }
-
-	    s = findDisplaySettingForPlugin (context, "core",
-					     "window_menu_button");
-	    if (s)
-		readSetting (NULL, context, s);
-
-	    s = findDisplaySettingForPlugin (context, "move",
-					     "initiate_button");
-	    if (s)
-		readSetting (NULL, context, s);
-
-	    s = findDisplaySettingForPlugin (context, "resize",
-					     "initiate_button");
-	    if (s)
-		readSetting (NULL, context, s);
-	}
-	else
-	{
-	    CCSPlugin     *plugin = NULL;
-	    CCSSetting    *setting;
-	    SpecialOption *opt = (SpecialOption *) &specialOptions[num];
-
-	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
-	    if (plugin)
-	    {
-		for (i = 0; i < 1; i++)
-		{
-		    setting = ccsFindSetting (plugin, (char*) opt->settingName);
-
-		    if (setting)
-		    {
-			if (needInit)
-			{
-			    readInit (NULL, context);
-			    needInit = FALSE;
-			}
-			readSetting (NULL, context, setting);
-		    }
-
-		    /* do not read display settings multiple
-		       times for multiscreen environments */
-		}
-	    }
-	}
-    }
-}
-
-static void
 initClient (CCSBackend *backend, CCSContext *context)
 {
-    int i;
-
     client = gconf_client_get_for_engine (conf);
     integration = ccsGConfIntegrationBackendNewWithClient (backend,
 							   context,
@@ -598,40 +184,17 @@ initClient (CCSBackend *backend, CCSContext *context)
     compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
 					      context, NULL, NULL);
     gconf_client_add_dir (client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
-
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
-    {
-	gnomeNotifyIds[i] = gconf_client_notify_add (client,
-						     watchedGnomeDirectories[i],
-						     gnomeValueChanged, context,
-						     NULL, NULL);
-	gconf_client_add_dir (client, watchedGnomeDirectories[i],
-			      GCONF_CLIENT_PRELOAD_NONE, NULL);
-    }
 }
 
 static void
 finiClient (void)
 {
-    int i;
-
     if (compizNotifyId)
     {
 	gconf_client_notify_remove (client, compizNotifyId);
 	compizNotifyId = 0;
     }
     gconf_client_remove_dir (client, COMPIZ, NULL);
-
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
-    {
-	if (gnomeNotifyIds[i])
-	{
-	    gconf_client_notify_remove (client, gnomeNotifyIds[0]);
-	    gnomeNotifyIds[i] = 0;
-	}
-	gconf_client_remove_dir (client, watchedGnomeDirectories[i], NULL);
-    }
-
     gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
