@@ -5,6 +5,12 @@ COMPIZCONFIG_BEGIN_DECLS
 
 #ifdef USE_GCONF
 
+typedef struct _CCSBackend CCSBackend;
+typedef struct _CCSContext CCSContext;
+typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
+typedef struct _CCSIntegration CCSIntegration;
+
+
 CCSIntegration *
 ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
