@@ -128,6 +128,7 @@ CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *);
 void ccsFreeIntegratedSetting (CCSIntegratedSetting *);
 
 CCSREF_HDR (IntegratedSetting, CCSIntegratedSetting);
+CCSLIST_HDR (IntegratedSetting, CCSIntegratedSetting);
 
 unsigned int ccsCCSIntegratedSettingInterfaceGetType ();
 
@@ -136,6 +137,36 @@ ccsSharedIntegratedSettingNew (const char *pluginName,
 			       const char *settingName,
 			       CCSSettingType type,
 			       CCSObjectAllocationInterface *ai);
+
+typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
+typedef struct _CCSIntegratedSettingsStorageInterface CCSIntegratedSettingsStorageInterface;
+
+typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettings) (CCSIntegratedSettingsStorage *storage,
+										      const char *pluginName,
+										      const char *settingName);
+
+struct _CCSIntegratedSettingsStorageInterface
+{
+    CCSIntegratedSettingsStorageFindMatchingSettings findMatchingSettings;
+};
+
+struct _CCSIntegratedSettingsStorage
+{
+    CCSObject object;
+};
+
+CCSIntegratedSettingList
+ccsIntegratedSettingsStorageFindMatchingSettings (CCSIntegratedSettingsStorage *storage,
+						  const char *pluginName,
+						  const char *settingName);
+
+unsigned int ccsCCSIntegratedSettingsStorageInterfaceGetType ();
+
+CCSIntegratedSettingsStorage *
+ccsIntegratedSettingsStorageDefaultImplNew (CCSObjectAllocationInterface *ai);
+
+void
+ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *storage);
 
 struct _CCSBackendInfo
 {
