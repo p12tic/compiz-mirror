@@ -1,5 +1,9 @@
 #ifndef _COMPIZCONFIG_CCS_MOCKED_ALLOCATION_H
 #define _COMPIZCONFIG_CCS_MOCKED_ALLOCATION_H
+
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
 class AllocationInterface
 {
     public:
