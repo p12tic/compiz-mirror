@@ -363,7 +363,7 @@ findDisplaySettingForPlugin (CCSContext *context,
     return s;
 }
 
-int
+static int
 ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 						    const char		  *settingName,
 						    const char		  *pluginName)
@@ -396,7 +396,7 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
     return -1;
 }
 
-void
+static void
 gnomeGConfValueChanged (GConfClient *client,
 			guint       cnxn_id,
 			GConfEntry  *entry,
@@ -488,7 +488,7 @@ gnomeGConfValueChanged (GConfClient *client,
     }
 }
 
-void
+static void
 finiGConfClient (CCSIntegration *integration)
 {
     int i;
@@ -515,7 +515,7 @@ finiGConfClient (CCSIntegration *integration)
     }
 }
 
-void
+static void
 initGConfClient (CCSIntegration *integration)
 {
     int i;
@@ -581,7 +581,7 @@ getButtonBindingForSetting (CCSContext   *context,
     return ccsSettingGetValue (s)->value.asButton.button;
 }
 
-Bool
+static Bool
 ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
@@ -819,7 +819,7 @@ setButtonBindingForSetting (CCSContext   *context,
     }
 }
 
-void
+static void
 ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  CCSContext		 *context,
 						  CCSSetting		 *setting,
@@ -1013,7 +1013,7 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	g_error_free (err);
 }
 
-void
+static void
 ccsGConfIntegrationBackendFree (CCSIntegration *integration)
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);

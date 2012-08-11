@@ -16,9 +16,6 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai);
 
-void
-ccsGConfIntegrationBackendFree (CCSIntegration *integration);
-
 #endif
 
 COMPIZCONFIG_END_DECLS
