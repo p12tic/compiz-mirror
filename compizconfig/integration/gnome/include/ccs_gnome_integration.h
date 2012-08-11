@@ -7,6 +7,7 @@ typedef struct _CCSBackend CCSBackend;
 typedef struct _CCSContext CCSContext;
 typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
 typedef struct _CCSIntegration CCSIntegration;
+typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
 typedef struct _GConfClient GConfClient;
 
 
@@ -20,6 +21,39 @@ ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
 					 CCSContext *context,
 					 CCSObjectAllocationInterface *ai,
 					 GConfClient *client);
+
+typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
+typedef struct _CCSGNOMEIntegratedSettingInterface CCSGNOMEIntegratedSettingInterface;
+
+typedef enum {
+    OptionInt,
+    OptionBool,
+    OptionKey,
+    OptionString,
+    OptionSpecial,
+} SpecialOptionType;
+
+typedef SpecialOptionType (*CCSGNOMEIntegratedSettingGetSpecialOptionType) (CCSGNOMEIntegratedSetting *);
+
+struct _CCSGNOMEIntegratedSettingInterface
+{
+    CCSGNOMEIntegratedSettingGetSpecialOptionType getSpecialOptionType;
+};
+
+struct _CCSGNOMEIntegratedSetting
+{
+    CCSObject object;
+};
+
+unsigned int ccsCCSGNOMEIntegratedSettingInterfaceGetType ();
+
+SpecialOptionType
+ccsGNOMEIntegratedSettingGetSpecialOptionType (CCSGNOMEIntegratedSetting *);
+
+CCSGNOMEIntegratedSetting *
+ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
+			      SpecialOptionType    type,
+			      CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS
 
