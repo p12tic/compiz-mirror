@@ -60,7 +60,7 @@ typedef struct _SpecialOptionGConf {
     SpecialOptionType type;
 } SpecialOptionGConf;
 
-const SpecialOptionGConf specialOptions[] = {
+static const SpecialOptionGConf specialOptions[] = {
     {"run_key", "gnomecompat", FALSE,
      METACITY "/global_keybindings/panel_run_dialog", OptionKey},
     {"main_menu_key", "gnomecompat", FALSE,
@@ -516,10 +516,27 @@ finiGConfClient (CCSIntegration *integration)
 }
 
 static void
-initGConfClient (CCSIntegration *integration)
+registerGConfClient (CCSIntegration *integration,
+		     GConfClient    *client)
 {
     int i;
 
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    {
+	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
+								watchedGConfGnomeDirectories[i],
+								gnomeGConfValueChanged, integration,
+								NULL, NULL);
+	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
+			      GCONF_CLIENT_PRELOAD_NONE, NULL);
+    }
+}
+
+static void
+initGConfClient (CCSIntegration *integration)
+{
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (priv->client)
@@ -527,15 +544,7 @@ initGConfClient (CCSIntegration *integration)
 
     priv->client = gconf_client_get_default ();
 
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
-    {
-	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (priv->client,
-								watchedGConfGnomeDirectories[i],
-								gnomeGConfValueChanged, integration,
-								NULL, NULL);
-	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
-			      GCONF_CLIENT_PRELOAD_NONE, NULL);
-    }
+    registerGConfClient (integration, priv->client);
 }
 
 static unsigned int
@@ -1051,10 +1060,10 @@ addPrivate (CCSIntegration *backend,
     return priv;
 }
 
-CCSIntegration *
-ccsGConfIntegrationBackendNew (CCSBackend *backend,
-			       CCSContext *context,
-			       CCSObjectAllocationInterface *ai)
+static CCSIntegration *
+ccsGConfIntegrationBackendNewCommon (CCSBackend *backend,
+				     CCSContext *context,
+				     CCSObjectAllocationInterface *ai)
 {
     CCSIntegration *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
 
@@ -1072,6 +1081,29 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			   GET_INTERFACE_TYPE (CCSIntegrationInterface));
 
     ccsIntegrationRef (integration);
+
+    return integration;
+}
+
+CCSIntegration *
+ccsGConfIntegrationBackendNew (CCSBackend *backend,
+			       CCSContext *context,
+			       CCSObjectAllocationInterface *ai)
+{
+    return ccsGConfIntegrationBackendNewCommon (backend, context, ai);
+}
+
+CCSIntegration *
+ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
+					 CCSContext *context,
+					 CCSObjectAllocationInterface *ai,
+					 GConfClient *client)
+{
+    CCSIntegration *integration = ccsGConfIntegrationBackendNewCommon (backend, context, ai);
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+
+    priv->client = client;
+    registerGConfClient (integration, client);
 
     return integration;
 }

@@ -605,11 +605,15 @@ gnomeValueChanged (GConfClient *client,
 }
 
 static void
-initClient (CCSContext *context)
+initClient (CCSBackend *backend, CCSContext *context)
 {
     int i;
 
     client = gconf_client_get_for_engine (conf);
+    integration = ccsGConfIntegrationBackendNewWithClient (backend,
+							   context,
+							   &ccsDefaultObjectAllocator,
+							   client);
 
     compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
 					      context, NULL, NULL);
@@ -652,6 +656,9 @@ finiClient (void)
 
     g_object_unref (client);
     client = NULL;
+
+    ccsIntegrationUnref (integration);
+    integration = NULL;
 }
 
 static void
@@ -770,7 +777,8 @@ copyGconfRecursively (GConfEngine *conf,
 }
 
 static void
-copyGconfTree (CCSContext  *context,
+copyGconfTree (CCSBackend  *backend,
+	       CCSContext  *context,
 	       const gchar *from,
 	       const gchar *to,
 	       Bool        associate,
@@ -789,7 +797,7 @@ copyGconfTree (CCSContext  *context,
 
     gconf_engine_suggest_sync (conf, NULL);
 
-    initClient (context);
+    initClient (backend, context);
 }
 
 static Bool
@@ -1891,7 +1899,8 @@ getCurrentProfileName (void)
 }
 
 static Bool
-checkProfile (CCSContext *context)
+checkProfile (CCSBackend *backend,
+	      CCSContext *context)
 {
     const char *profileCCS;
     char *lastProfile;
@@ -1916,7 +1925,8 @@ checkProfile (CCSContext *context)
 
 	    if (pathName)
 	    {
-		copyGconfTree (context, COMPIZ, pathName,
+		copyGconfTree (backend,
+			       context, COMPIZ, pathName,
 			       TRUE, "/schemas" COMPIZ);
 		free (pathName);
 	    }
@@ -1931,11 +1941,11 @@ checkProfile (CCSContext *context)
 
 	if (pathName)
 	{
-    	    copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
+	    copyGconfTree (backend, context, pathName, COMPIZ, FALSE, NULL);
 
     	    /* delete the new profile tree in /apps/compizconfig-1
     	       to avoid user modification in the wrong tree */
-    	    copyGconfTree (context, pathName, NULL, TRUE, NULL);
+	    copyGconfTree (backend, context, pathName, NULL, TRUE, NULL);
     	    free (pathName);
 	}
 
@@ -1964,10 +1974,8 @@ initBackend (CCSBackend *backend, CCSContext * context)
 {
     g_type_init ();
 
-    integration = NULL;
-
     conf = gconf_engine_get_default ();
-    initClient (context);
+    initClient (backend, context);
 
     currentProfile = getCurrentProfileName ();
 
@@ -1995,7 +2003,7 @@ finiBackend (CCSBackend *backend)
 static Bool
 readInit (CCSBackend *backend, CCSContext * context)
 {
-    return checkProfile (context);
+    return checkProfile (backend, context);
 }
 
 static void
@@ -2021,7 +2029,7 @@ readSetting (CCSBackend *backend,
 static Bool
 writeInit (CCSBackend *backend, CCSContext * context)
 {
-    return checkProfile (context);
+    return checkProfile (backend, context);
 }
 
 static void
@@ -2110,7 +2118,7 @@ deleteProfile (CCSBackend *backend,
     char     path[BUFSIZE];
     gboolean status = FALSE;
 
-    checkProfile (context);
+    checkProfile (backend, context);
 
     snprintf (path, BUFSIZE, "%s/%s", PROFILEPATH, profile);
 

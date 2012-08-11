@@ -3,12 +3,11 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
-#ifdef USE_GCONF
-
 typedef struct _CCSBackend CCSBackend;
 typedef struct _CCSContext CCSContext;
 typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
 typedef struct _CCSIntegration CCSIntegration;
+typedef struct _GConfClient GConfClient;
 
 
 CCSIntegration *
@@ -16,7 +15,11 @@ ccsGConfIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai);
 
-#endif
+CCSIntegration *
+ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
+					 CCSContext *context,
+					 CCSObjectAllocationInterface *ai,
+					 GConfClient *client);
 
 COMPIZCONFIG_END_DECLS
 
