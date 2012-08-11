@@ -42,7 +42,7 @@
 #include <gconf/gconf.h>
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
-#include "gnome-integration.h"
+#include "ccs_gnome_integration.h"
 
 typedef enum {
     OptionInt,

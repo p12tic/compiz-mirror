@@ -13,14 +13,8 @@ if (GSETTINGS_UTIL_FOUND)
     include_directories (${GSETTINGS_UTIL_LIB_INCLUDES})
 
     link_directories (${GSETTINGS_UTIL_LIBRARY_DIRS}
-		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig)
-
-    add_library (compizconfig_gnome_integration STATIC
-		 ${CMAKE_CURRENT_SOURCE_DIR}/gnome-integration.c)
-
-    target_link_libraries (compizconfig_gnome_integration
-			   compizconfig
-			   ${GSETTINGS_UTIL_LIBRARIES})
+		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig
+		      ${compiz_BINARY_DIR}/compizconfig/integration/gnome)
 
     add_library (gsettings_backend_shared SHARED
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c

@@ -8,8 +8,6 @@ include (CompizGSettings)
 set (_deps glib-2.0>=2.20.0
 	   gio-2.0>=2.25.0)
 
-option (USE_GCONF "Enable legacy GNOME 2.x option integration with GConf" ON)
-
 if (USE_GCONF)
     list (APPEND _deps gconf-2.0>=2.31.1)
 
