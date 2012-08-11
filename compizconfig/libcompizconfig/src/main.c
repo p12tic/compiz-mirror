@@ -981,6 +981,7 @@ CCSREF_OBJ (Setting, CCSSetting)
 CCSREF_OBJ (Backend, CCSBackend)
 CCSREF_OBJ (DynamicBackend, CCSDynamicBackend)
 CCSREF_OBJ (Integration, CCSIntegration)
+CCSREF_OBJ (IntegratedSetting, CCSIntegratedSetting);
 
 static void *
 openBackend (const char *backend)
@@ -5528,6 +5529,105 @@ CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *setting)
 void ccsFreeIntegratedSetting (CCSIntegratedSetting *setting)
 {
     (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->free) (setting);
+}
+
+/* CCSSharedIntegratedSetting implementation */
+
+typedef struct _CCSSharedIntegratedSettingPrivate CCSSharedIntegratedSettingPrivate;
+
+struct _CCSSharedIntegratedSettingPrivate
+{
+    const char *pluginName;
+    const char *settingName;
+    CCSSettingType type;
+};
+
+static CCSSettingValue ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting *setting)
+{
+    CCSSettingValue value;
+    memset (&value, 0, sizeof (CCSSettingValue));
+
+    ccsWarning ("unexpected call to ccsSharedIntegratedSettingReadValue on %p", setting);
+
+    return value;
+}
+
+static void
+ccsSharedIntegratedSettingWriteValue (CCSIntegratedSetting *setting,
+				      CCSSettingValue value)
+{
+    ccsWarning ("unexpected call to ccsSharedIntegratedSettingWriteValue on %p", setting);
+}
+
+static const char *
+ccsSharedIntegratedSettingSettingName (CCSIntegratedSetting *setting)
+{
+    CCSSharedIntegratedSettingPrivate *priv = (CCSSharedIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+
+    return priv->settingName;
+}
+
+static const char *
+ccsSharedIntegratedSettingPluginName (CCSIntegratedSetting *setting)
+{
+    CCSSharedIntegratedSettingPrivate *priv = (CCSSharedIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+
+    return priv->pluginName;
+}
+
+static CCSSettingType
+ccsSharedIntegratedSettingGetType (CCSIntegratedSetting *setting)
+{
+    CCSSharedIntegratedSettingPrivate *priv = (CCSSharedIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+
+    return priv->type;
+}
+
+static void
+ccsSharedIntegratedSettingFree (CCSIntegratedSetting *setting)
+{
+    ccsObjectFinalize (setting);
+    (*setting->object.object_allocation->free_) (setting->object.object_allocation->allocator, setting);
+}
+
+const CCSIntegratedSettingInterface ccsSharedIntegratedSettingInterface =
+{
+    ccsSharedIntegratedSettingReadValue,
+    ccsSharedIntegratedSettingWriteValue,
+    ccsSharedIntegratedSettingSettingName,
+    ccsSharedIntegratedSettingPluginName,
+    ccsSharedIntegratedSettingGetType,
+    ccsSharedIntegratedSettingFree
+};
+
+CCSIntegratedSetting *
+ccsSharedIntegratedSettingNew (const char *pluginName,
+			       const char *settingName,
+			       CCSSettingType type,
+			       CCSObjectAllocationInterface *ai)
+{
+    CCSIntegratedSetting *setting = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSetting));
+
+    if (!setting)
+	return NULL;
+
+    CCSSharedIntegratedSettingPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSSharedIntegratedSettingPrivate));
+
+    if (!priv)
+    {
+	(*ai->free_) (ai->allocator, setting);
+	return NULL;
+    }
+
+    priv->pluginName = pluginName;
+    priv->settingName = settingName;
+    priv->type = type;
+
+    ccsObjectSetPrivate (setting, (CCSPrivate *) priv);
+    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsSharedIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
+    ccsIntegratedSettingRef (setting);
+
+    return setting;
 }
 
 static  const CCSPluginInterface ccsDefaultPluginInterface =

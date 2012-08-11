@@ -131,6 +131,12 @@ CCSREF_HDR (IntegratedSetting, CCSIntegratedSetting);
 
 unsigned int ccsCCSIntegratedSettingInterfaceGetType ();
 
+CCSIntegratedSetting *
+ccsSharedIntegratedSettingNew (const char *pluginName,
+			       const char *settingName,
+			       CCSSettingType type,
+			       CCSObjectAllocationInterface *ai);
+
 struct _CCSBackendInfo
 {
     const char *name;              /* name of the backend */
