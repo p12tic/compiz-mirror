@@ -55,6 +55,12 @@ ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
 			      SpecialOptionType    type,
 			      CCSObjectAllocationInterface *ai);
 
+CCSIntegratedSetting *
+ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
+			      GConfClient		*client,
+			      const char		*section,
+			      CCSObjectAllocationInterface *ai);
+
 COMPIZCONFIG_END_DECLS
 
 #endif
