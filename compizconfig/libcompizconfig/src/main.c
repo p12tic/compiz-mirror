@@ -321,10 +321,11 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
 
     if (cPrivate->backend)
 	ccsInfo ("Backend     : %s", ccsBackendGetInfo (cPrivate->backend)->name);
-	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
-	ccsInfo ("Profile     : %s",
-	    (cPrivate->profile && strlen (cPrivate->profile)) ?
-	    cPrivate->profile : "default");
+
+    ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
+    ccsInfo ("Profile     : %s",
+	(cPrivate->profile && strlen (cPrivate->profile)) ?
+	cPrivate->profile : "default");
 
     return context;
 }
@@ -2921,9 +2922,9 @@ ccsReadSettingsDefault (CCSContext * context)
     if (!ccsBackendHasReadSetting (cPrivate->backend))
 	return;
 
-    if (ccsBackendHasReadInit (cPrivate->backend))
-	if (!ccsBackendReadInit (cPrivate->backend, context))
-	    return;
+    if (ccsBackendHasReadInit (cPrivate->backend) &&
+	!ccsBackendReadInit (cPrivate->backend, context))
+	return;
 
     CCSPluginList pl = cPrivate->plugins;
     while (pl)
