@@ -323,10 +323,11 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
 
     if (cPrivate->backend)
 	ccsInfo ("Backend     : %s", ccsDynamicBackendGetBackendName (cPrivate->backend));
-	ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
-	ccsInfo ("Profile     : %s",
-	    (cPrivate->profile && strlen (cPrivate->profile)) ?
-	    cPrivate->profile : "default");
+
+    ccsInfo ("Integration : %s", cPrivate->deIntegration ? "true" : "false");
+    ccsInfo ("Profile     : %s",
+	(cPrivate->profile && strlen (cPrivate->profile)) ?
+	cPrivate->profile : "default");
 
     return context;
 }
