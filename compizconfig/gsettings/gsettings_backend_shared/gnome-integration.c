@@ -1,6 +1,6 @@
 /**
  *
- * GSettings libccs backend
+ * compizconfig gnome integration backend
  *
  * gnome-integration.c
  *
