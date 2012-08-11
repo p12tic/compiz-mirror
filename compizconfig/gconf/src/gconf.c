@@ -44,6 +44,8 @@
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
 
+#include "ccs_gnome_integration.h"
+
 #define CompAltMask        (1 << 16)
 #define CompMetaMask       (1 << 17)
 #define CompSuperMask      (1 << 18)
@@ -87,6 +89,7 @@ static GConfEngine *conf = NULL;
 static guint compizNotifyId;
 static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
+static CCSIntegration *integration = NULL;
 
 /* some forward declarations */
 static Bool readInit (CCSBackend *backend, CCSContext * context);
@@ -1960,6 +1963,8 @@ static Bool
 initBackend (CCSBackend *backend, CCSContext * context)
 {
     g_type_init ();
+
+    integration = NULL;
 
     conf = gconf_engine_get_default ();
     initClient (context);
