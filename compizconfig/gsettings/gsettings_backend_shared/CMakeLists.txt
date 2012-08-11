@@ -15,7 +15,6 @@ if (GSETTINGS_UTIL_FOUND)
 		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig)
 
     add_library (gsettings_backend_shared SHARED
-		 ${CMAKE_CURRENT_SOURCE_DIR}/gconf-integration.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface_wrapper.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend.c
