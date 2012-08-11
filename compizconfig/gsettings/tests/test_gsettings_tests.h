@@ -6,8 +6,6 @@
 #include <glib-object.h>
 #include <gsettings-mock-schemas-config.h>
 
-#include <gsettings-mock-schemas-config.h>
-
 using ::testing::TestWithParam;
 
 class CCSGSettingsTeardownSetupInterface
