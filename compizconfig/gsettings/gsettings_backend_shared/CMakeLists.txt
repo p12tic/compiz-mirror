@@ -15,19 +15,26 @@ if (GSETTINGS_UTIL_FOUND)
     link_directories (${GSETTINGS_UTIL_LIBRARY_DIRS}
 		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig)
 
+    add_library (compizconfig_gnome_integration STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gnome-integration.c)
+
+    target_link_libraries (compizconfig_gnome_integration
+			   compizconfig
+			   ${GSETTINGS_UTIL_LIBRARIES})
+
     add_library (gsettings_backend_shared SHARED
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface_wrapper.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_interface.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c
-		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c
-		 ${CMAKE_CURRENT_SOURCE_DIR}/gnome-integration.c)
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c)
 
 
     target_link_libraries (gsettings_backend_shared
 			   ${GSETTINGS_UTIL_LIBRARIES}
-			   compizconfig)
+			   compizconfig
+			   compizconfig_gnome_integration)
 
     install (TARGETS gsettings_backend_shared
 	     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
