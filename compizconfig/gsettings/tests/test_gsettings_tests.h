@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <glib.h>
 #include <glib-object.h>
+#include <gsettings-mock-schemas-config.h>
 
 #include <gsettings-mock-schemas-config.h>
 
