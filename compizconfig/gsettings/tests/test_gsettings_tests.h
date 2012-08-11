@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <glib-object.h>
+#include <gsettings-mock-schemas-config.h>
 
 using ::testing::TestWithParam;
 
