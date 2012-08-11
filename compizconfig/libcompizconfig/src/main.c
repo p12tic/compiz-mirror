@@ -1122,7 +1122,6 @@ ccsOpenBackend (const CCSInterfaceTable *interfaces, CCSContext *context, const 
     if (!vt)
     {
 	dlclose (dlhand);
-	vt = NULL;
 	return NULL;
     }
 
