@@ -33,11 +33,8 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backen
 gboolean ccsGSettingsBackendAddProfileDefault (CCSBackend *backend,
 					       const char *profile);
 
-CCSStringList
-ccsGSettingsGetExistingProfiles (CCSBackend *backend, CCSContext *context);
-
-void
-ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegration *integration);
+void ccsGSettingsSetIntegration (CCSBackend *backend,
+				 CCSIntegration *integration);
 
 COMPIZCONFIG_END_DECLS
 

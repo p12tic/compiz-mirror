@@ -11,8 +11,6 @@
 #include "gconf-integration.h"
 #include "gsettings_shared.h"
 
-typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
-
 struct _CCSGSettingsBackendPrivate
 {
     GList	   *settingsList;
@@ -46,8 +44,6 @@ ccsGSettingsGetExistingProfiles (CCSBackend *backend, CCSContext *context)
     CCSStringList ret = NULL;
 
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    ccsGSettingsBackendUpdateProfile (backend, context);
 
     value = ccsGSettingsWrapperGetValue (priv->compizconfigSettings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
@@ -322,39 +318,6 @@ ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend)
     ccsGSettingsWrapperResetKey (priv->currentProfileSettings, "plugins-with-set-keys");
 }
 
-int
-ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSetting *setting)
-{
-    CCSPlugin  *plugin      = ccsSettingGetParent (setting);
-    const char *pluginName  = ccsPluginGetName (plugin);
-    const char *settingName = ccsSettingGetName (setting);
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    return ccsIntegrationGetIntegratedOptionIndex (priv->integration, pluginName, settingName);
-}
-
-Bool
-ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
-{
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    return ccsIntegrationReadOptionIntoSetting (priv->integration,
-						       priv->context,
-						       setting,
-						       index);
-}
-
-void
-ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
-{
-    CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
-
-    ccsIntegrationWriteSettingIntoOption (priv->integration,
-						 priv->context,
-						 setting,
-						 index);
-}
-
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendGetContextDefault,
     ccsGSettingsBackendConnectToValueChangedSignalDefault,
@@ -368,10 +331,7 @@ static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {
     ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault,
     ccsGSettingsBackendUpdateProfileDefault,
     ccsGSettingsBackendUpdateCurrentProfileNameDefault,
-    ccsGSettingsBackendAddProfileDefault,
-    ccsGSettingsBackendGetIntegratedOptionIndexDefault,
-    ccsGSettingsBackendReadIntegratedOptionDefault,
-    ccsGSettingsBackendWriteIntegratedOptionDefault
+    ccsGSettingsBackendAddProfileDefault
 };
 
 static CCSGSettingsBackendPrivate *
@@ -389,7 +349,7 @@ addPrivateToBackend (CCSBackend *backend, CCSObjectAllocationInterface *ai)
     return priv;
 }
 
-static char *
+static char*
 getCurrentProfileName (CCSBackend *backend)
 {
     GVariant *value;
@@ -464,16 +424,16 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 									    backend->object.object_allocation);
     priv->context = context;
 
-#ifdef USE_GCONF
-    priv->integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
-#else
-    priv->integration = ccsNullIntegrationBackendNew ();
-#endif
-
     /* Always ensure that we have a default profile */
     ccsGSettingsBackendAddProfile (backend, "Default");
 
     g_free (currentProfilePath);
+
+#ifdef USE_GCONF
+    priv->integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
+#else
+    priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
+#endif
 
     return TRUE;
 }
