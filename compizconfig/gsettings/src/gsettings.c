@@ -35,7 +35,6 @@
 
 #include "gsettings.h"
 #include "gsettings_shared.h"
-#include "gnome-integration.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
 #include "ccs_gsettings_interface.h"
