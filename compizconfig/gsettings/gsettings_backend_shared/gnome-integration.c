@@ -2,7 +2,7 @@
  *
  * GSettings libccs backend
  *
- * gconf-integration.c
+ * gnome-integration.c
  *
  * Copyright (c) 2011 Canonical Ltd
  *
@@ -38,7 +38,7 @@
 #include "gsettings_shared.h"
 #include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend.h"
-#include "gconf-integration.h"
+#include "gnome-integration.h"
 
 typedef enum {
     OptionInt,

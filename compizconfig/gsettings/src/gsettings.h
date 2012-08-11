@@ -2,7 +2,7 @@
  *
  * GSettings libccs backend
  *
- * gconf-integration.c
+ * gsettings.h
  *
  * Copyright (c) 2011 Canonical Ltd
  *

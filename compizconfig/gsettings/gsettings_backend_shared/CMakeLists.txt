@@ -22,7 +22,7 @@ if (GSETTINGS_UTIL_FOUND)
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_interface.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_constants.c
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c
-		 ${CMAKE_CURRENT_SOURCE_DIR}/gconf-integration.c)
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gnome-integration.c)
 
 
     target_link_libraries (gsettings_backend_shared
