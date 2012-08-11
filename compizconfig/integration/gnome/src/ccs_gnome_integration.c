@@ -550,6 +550,67 @@ const CCSIntegratedSettingInterface ccsGConfIntegratedSettingInterface =
     ccsGConfIntegratedSettingFree
 };
 
+typedef struct _CCSGConfIntegratedSettingFactoryPrivate CCSGConfIntegratedSettingFactoryPrivate;
+
+struct _CCSGConfIntegratedSettingFactoryPrivate
+{
+    GConfClient *client;
+};
+
+CCSIntegratedSetting *
+ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+										 const char		     *pluginName,
+										 const char		     *settingName,
+										 CCSSettingType		     type)
+{
+    // XXX
+
+    return NULL;
+}
+
+const CCSIntegratedSettingFactoryInterface ccsGConfIntegratedSettingFactoryInterface =
+{
+    ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType
+};
+
+CCSIntegratedSettingFactory *
+ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
+				     CCSObjectAllocationInterface *ai)
+{
+    CCSIntegratedSettingFactory *factory = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSettingFactory));
+
+    if (!factory)
+	return NULL;
+
+    CCSGConfIntegratedSettingFactoryPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGConfIntegratedSettingFactoryPrivate));
+
+    if (!priv)
+    {
+	(*ai->free_) (ai->allocator, factory);
+	return NULL;
+    }
+
+    priv->client = (GConfClient *) g_object_ref (client);
+
+    ccsObjectInit (factory, ai);
+    ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
+    ccsObjectAddInterface (factory, (const CCSInterface *) &ccsGConfIntegratedSettingFactoryInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingFactoryInterface));
+
+    return factory;
+}
+
+void
+ccsGConfIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
+{
+    CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
+
+    if (priv->client)
+	g_object_unref (priv->client);
+
+    ccsObjectFinalize (factory);
+    (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
+}
+
 CCSIntegratedSetting *
 ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
 			      GConfClient		*client,

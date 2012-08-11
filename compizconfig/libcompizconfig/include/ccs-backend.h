@@ -186,7 +186,7 @@ struct _CCSIntegratedSettingFactory
     CCSObject object;
 };
 
-unsigned int ccsIntegratedSettingFactoryInterfaceGetType ();
+unsigned int ccsCCSIntegratedSettingFactoryInterfaceGetType ();
 
 CCSIntegratedSetting *
 ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
