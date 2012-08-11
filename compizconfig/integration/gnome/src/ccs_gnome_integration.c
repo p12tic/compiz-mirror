@@ -550,12 +550,79 @@ const CCSIntegratedSettingInterface ccsGConfIntegratedSettingInterface =
     ccsGConfIntegratedSettingFree
 };
 
+CCSIntegratedSetting *
+ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
+			      GConfClient		*client,
+			      const char		*section,
+			      CCSObjectAllocationInterface *ai)
+{
+    CCSIntegratedSetting *setting = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSetting));
+
+    if (!setting)
+	return NULL;
+
+    CCSGConfIntegratedSettingPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGConfIntegratedSettingPrivate));
+
+    if (!priv)
+    {
+	(*ai->free_) (ai->allocator, priv);
+	return NULL;
+    }
+
+    priv->gnomeIntegratedSetting = base;
+    priv->client = (GConfClient *) g_object_ref (client);
+    priv->sectionName = section;
+
+    ccsObjectInit (setting, ai);
+    ccsObjectSetPrivate (setting, (CCSPrivate *) priv);
+    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsGConfIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
+    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsGConfGNOMEIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSGNOMEIntegratedSettingInterface));
+    ccsIntegratedSettingRef (setting);
+
+    return setting;
+}
+
 typedef struct _CCSGConfIntegratedSettingFactoryPrivate CCSGConfIntegratedSettingFactoryPrivate;
 
 struct _CCSGConfIntegratedSettingFactoryPrivate
 {
     GConfClient *client;
+    GHashTable  *pluginsToSettingsSectionsHashTable;
+    GHashTable  *pluginsToSettingsSpecialTypesHashTable;
 };
+
+static CCSIntegratedSetting *
+createNewGConfIntegratedSetting (GConfClient *client,
+				 const char  *sectionName,
+				 const char  *pluginName,
+				 const char  *settingName,
+				 CCSSettingType type,
+				 SpecialOptionType specialOptionType,
+				 CCSObjectAllocationInterface *ai)
+{
+    CCSIntegratedSetting *sharedIntegratedSetting = ccsSharedIntegratedSettingNew (pluginName, settingName, type, ai);
+
+    if (!sharedIntegratedSetting)
+	return NULL;
+
+    CCSGNOMEIntegratedSetting *gnomeIntegratedSetting = ccsGNOMEIntegratedSettingNew (sharedIntegratedSetting, specialOptionType, ai);
+
+    if (!gnomeIntegratedSetting)
+    {
+	ccsIntegratedSettingUnref (sharedIntegratedSetting);
+	return NULL;
+    }
+
+    CCSIntegratedSetting *gconfIntegratedSetting = ccsGConfIntegratedSettingNew (gnomeIntegratedSetting, client, sectionName, ai);
+
+    if (!gconfIntegratedSetting)
+    {
+	ccsIntegratedSettingUnref ((CCSIntegratedSetting *) gnomeIntegratedSetting);
+	return NULL;
+    }
+
+    return gconfIntegratedSetting;
+}
 
 CCSIntegratedSetting *
 ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
@@ -563,7 +630,19 @@ ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType 
 										 const char		     *settingName,
 										 CCSSettingType		     type)
 {
-    // XXX
+    CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
+    GHashTable                              *settingsSectionsHashTable = g_hash_table_lookup (priv->pluginsToSettingsSectionsHashTable, pluginName);
+    GHashTable                              *settingsSpecialTypesHashTable = g_hash_table_lookup (priv->pluginsToSettingsSpecialTypesHashTable, pluginName);
+
+    if (settingsSectionsHashTable &&
+	settingsSpecialTypesHashTable)
+    {
+	const gchar *sectionName = g_hash_table_lookup (settingsSectionsHashTable, settingName);
+	SpecialOptionType specialType = (SpecialOptionType) GPOINTER_TO_INT (g_hash_table_lookup (settingsSpecialTypesHashTable, settingName));
+
+	return createNewGConfIntegratedSetting (priv->client, sectionName, pluginName, settingName, type, specialType, factory->object.object_allocation);
+    }
+
 
     return NULL;
 }
@@ -609,38 +688,6 @@ ccsGConfIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
 
     ccsObjectFinalize (factory);
     (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
-}
-
-CCSIntegratedSetting *
-ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
-			      GConfClient		*client,
-			      const char		*section,
-			      CCSObjectAllocationInterface *ai)
-{
-    CCSIntegratedSetting *setting = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSetting));
-
-    if (!setting)
-	return NULL;
-
-    CCSGConfIntegratedSettingPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGConfIntegratedSettingPrivate));
-
-    if (!priv)
-    {
-	(*ai->free_) (ai->allocator, priv);
-	return NULL;
-    }
-
-    priv->gnomeIntegratedSetting = base;
-    priv->client = (GConfClient *) g_object_ref (client);
-    priv->sectionName = section;
-
-    ccsObjectInit (setting, ai);
-    ccsObjectSetPrivate (setting, (CCSPrivate *) priv);
-    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsGConfIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
-    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsGConfGNOMEIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSGNOMEIntegratedSettingInterface));
-    ccsIntegratedSettingRef (setting);
-
-    return setting;
 }
 
 static CCSSetting *
