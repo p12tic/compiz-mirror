@@ -882,9 +882,8 @@ readListValue (CCSSetting *setting,
 
 	    for (; valueList; valueList = valueList->next, i++)
 		array[i] = strdup (gconf_value_get_string (valueList->data));
-	    list = ccsGetValueListFromStringArray ((const gchar **) array, nItems, setting);
+	    list = ccsGetValueListFromStringArray ((const char **) array, nItems, setting);
 	    g_strfreev (array);
-	    free (array);
 	}
 	break;
     case TypeColor:
