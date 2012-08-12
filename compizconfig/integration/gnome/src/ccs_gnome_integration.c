@@ -716,7 +716,9 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 		break;
 	    }
 
-	    value.value.asString = (char *) gconf_value_get_string (gconfValue);
+	    const char *str = gconf_value_get_string (gconfValue);
+
+	    value.value.asString = strdup (str ? str : "");
 	    break;
 	default:
 	    ccsError ("unreachable case hit?");
@@ -1504,27 +1506,16 @@ initGConfClient (CCSIntegration *integration)
 }
 
 static unsigned int
-getGnomeMouseButtonModifier (GConfClient *client)
+getGnomeMouseButtonModifier (CCSIntegratedSetting *mouseButtonModifierSetting)
 {
     unsigned int modMask = 0;
-    GError       *err = NULL;
-    char         *value;
+    CCSSettingValue v = ccsIntegratedSettingReadValue (mouseButtonModifierSetting, TypeString);
 
-    value = gconf_client_get_string (client,
-				     METACITY "/general/mouse_button_modifier",
-				     &err);
+    g_print ("got: %s\n", v.value.asString);
 
-    if (err)
-    {
-	g_error_free (err);
-	return 0;
-    }
+    modMask = ccsStringToModifiers (v.value.asString);
 
-    if (!value)
-	return 0;
-
-    modMask = ccsStringToModifiers (value);
-    g_free (value);
+    free (v.value.asString);
 
     return modMask;
 }
@@ -1580,9 +1571,9 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	break;
     case OptionString:
 	{
-	    const char *str = ccsIntegratedSettingReadValue (integratedSetting, TypeString).value.asString;
+	    char *str = ccsIntegratedSettingReadValue (integratedSetting, TypeString).value.asString;
 
-	    ccsSetString (setting, strdup (str ? str : ""), TRUE);
+	    ccsSetString (setting, str, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -1601,31 +1592,13 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		    ccsSetKey (setting, key, TRUE);
 		    ret = TRUE;
 		}
+
+		free (v.value.asString);
 	    }
 	}
 	break;
     case OptionSpecial:
 	{
-	    GConfValue *gconfValue;
-	    GError     *err = NULL;
-
-	    gconfValue = gconf_client_get (priv->client,
-					   ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) integratedSetting),
-					   &err);
-
-	    if (err)
-	    {
-		g_error_free (err);
-		ccsError ("error encountered while reading GConf setting");
-		break;
-	    }
-
-	    if (!gconfValue)
-	    {
-		ccsError ("NULL encountered while reading GConf setting");
-		break;
-	    }
-
 	    const char *settingName = ccsSettingGetName (setting);
 	    const char *pluginName  = ccsPluginGetName (ccsSettingGetParent (setting));
 
@@ -1633,16 +1606,9 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	    {
 		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeBool);
 
-		g_print ("read: %p\n", &v);
-
-		if (gconfValue->type == GCONF_VALUE_BOOL)
-		{
-		    gboolean showAll;
-
-		    showAll = gconf_value_get_bool (gconfValue);
-		    ccsSetBool (setting, !showAll, TRUE);
-		    ret = TRUE;
-		}
+		Bool showAll = v.value.asBool;
+		ccsSetBool (setting, !showAll, TRUE);
+		ret = TRUE;
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
@@ -1650,20 +1616,17 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 
 		g_print ("read: %p\n", &v);
 
-		if (gconfValue->type == GCONF_VALUE_STRING)
+		const char *value = v.value.asString;
+		if (value)
 		{
-		    const char *value;
+		    Bool fullscreen;
 
-		    value = gconf_value_get_string (gconfValue);
-		    if (value)
-		    {
-			Bool fullscreen;
-
-			fullscreen = strcmp (value, "fullscreen") == 0;
-			ccsSetBool (setting, fullscreen, TRUE);
-			ret = TRUE;
-		    }
+		    fullscreen = strcmp (value, "fullscreen") == 0;
+		    ccsSetBool (setting, fullscreen, TRUE);
+		    ret = TRUE;
 		}
+
+		free (v.value.asString);
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
@@ -1671,19 +1634,16 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 
 		g_print ("read: %p\n", &v);
 
-		if (gconfValue->type == GCONF_VALUE_STRING)
+		const char *focusMode = v.value.asString;
+
+		if (focusMode)
 		{
-		    const char *focusMode;
-
-		    focusMode = gconf_value_get_string (gconfValue);
-
-		    if (focusMode)
-		    {
-			Bool clickToFocus = (strcmp (focusMode, "click") == 0);
-			ccsSetBool (setting, clickToFocus, TRUE);
-			ret = TRUE;
-		    }
+		    Bool clickToFocus = (strcmp (focusMode, "click") == 0);
+		    ccsSetBool (setting, clickToFocus, TRUE);
+		    ret = TRUE;
 		}
+
+		free (v.value.asString);
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
@@ -1697,7 +1657,11 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		memset (&button, 0, sizeof (CCSSettingButtonValue));
 		ccsGetButton (setting, &button);
 
-		button.buttonModMask = getGnomeMouseButtonModifier (priv->client);
+		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+														ccsGNOMEIntegratedPluginNames.SPECIAL,
+														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
+
+		button.buttonModMask = getGnomeMouseButtonModifier (integratedSettingsMBM->data);
 
 		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
@@ -1710,9 +1674,7 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		g_print ("read: %p\n", &v);
 		
 		resizeWithRightButton =
-		    gconf_client_get_bool (priv->client, METACITY
-					   "/general/resize_with_right_button",
-					   &err);
+		   v.value.asBool;
 
 		if (strcmp (settingName, "window_menu_button") == 0)
 		    button.button = resizeWithRightButton ? 2 : 3;
@@ -1725,7 +1687,6 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		ret = TRUE;
 	    }
 
-	    gconf_value_free (gconfValue);
 	}
      	break;
     default:
