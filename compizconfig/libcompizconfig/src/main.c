@@ -5566,14 +5566,14 @@ CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin)
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetPluginStrExtensions) (plugin);
 }
 
-CCSSettingValue ccsIntegratedSettingReadValue (CCSIntegratedSetting *setting)
+CCSSettingValue ccsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingType type)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->readValue) (setting);
+    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->readValue) (setting, type);
 }
 
-void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value)
+void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value, CCSSettingType type)
 {
-    (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->writeValue) (setting, value);
+    (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->writeValue) (setting, value, type);
 }
 
 const char * ccsIntegratedSettingPluginName (CCSIntegratedSetting *setting)
@@ -5607,7 +5607,8 @@ struct _CCSSharedIntegratedSettingPrivate
     CCSSettingType type;
 };
 
-static CCSSettingValue ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting *setting)
+static CCSSettingValue ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting *setting,
+							    CCSSettingType	 type)
 {
     CCSSettingValue value;
     memset (&value, 0, sizeof (CCSSettingValue));
@@ -5619,7 +5620,8 @@ static CCSSettingValue ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting
 
 static void
 ccsSharedIntegratedSettingWriteValue (CCSIntegratedSetting *setting,
-				      CCSSettingValue value)
+				      CCSSettingValue	   value,
+				      CCSSettingType	   type)
 {
     ccsWarning ("unexpected call to ccsSharedIntegratedSettingWriteValue on %p", setting);
 }

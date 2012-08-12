@@ -43,8 +43,8 @@ typedef enum _CCSSettingType CCSSettingType;
 typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
 typedef struct _CCSIntegratedSettingInterface CCSIntegratedSettingInterface;
 
-typedef CCSSettingValue (*CCSIntegratedSettingReadValue) (CCSIntegratedSetting *);
-typedef void (*CCSIntegratedSettingWriteValue) (CCSIntegratedSetting *, CCSSettingValue);
+typedef CCSSettingValue (*CCSIntegratedSettingReadValue) (CCSIntegratedSetting *, CCSSettingType);
+typedef void (*CCSIntegratedSettingWriteValue) (CCSIntegratedSetting *, CCSSettingValue, CCSSettingType);
 typedef const char * (*CCSIntegratedSettingPluginName) (CCSIntegratedSetting *);
 typedef const char * (*CCSIntegratedSettingSettingName) (CCSIntegratedSetting *);
 typedef CCSSettingType (*CCSIntegratedSettingGetType) (CCSIntegratedSetting *);
@@ -65,8 +65,8 @@ struct _CCSIntegratedSetting
     CCSObject object;
 };
 
-CCSSettingValue ccsIntegratedSettingReadValue(CCSIntegratedSetting *);
-void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *, CCSSettingValue);
+CCSSettingValue ccsIntegratedSettingReadValue(CCSIntegratedSetting *, CCSSettingType);
+void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *, CCSSettingValue, CCSSettingType);
 const char * ccsIntegratedSettingPluginName (CCSIntegratedSetting *);
 const char * ccsIntegratedSettingSettingName (CCSIntegratedSetting *);
 CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *);

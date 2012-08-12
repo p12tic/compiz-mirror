@@ -202,10 +202,12 @@ typedef enum {
 } SpecialOptionType;
 
 typedef SpecialOptionType (*CCSGNOMEIntegratedSettingGetSpecialOptionType) (CCSGNOMEIntegratedSetting *);
+typedef const char * (*CCSGNOMEIntegratedSettingGetGNOMEName) (CCSGNOMEIntegratedSetting *);
 
 struct _CCSGNOMEIntegratedSettingInterface
 {
     CCSGNOMEIntegratedSettingGetSpecialOptionType getSpecialOptionType;
+    CCSGNOMEIntegratedSettingGetGNOMEName getGNOMEName;
 };
 
 struct _CCSGNOMEIntegratedSetting
@@ -217,6 +219,9 @@ unsigned int ccsCCSGNOMEIntegratedSettingInterfaceGetType ();
 
 SpecialOptionType
 ccsGNOMEIntegratedSettingGetSpecialOptionType (CCSGNOMEIntegratedSetting *);
+
+const char *
+ccsGNOMEIntegratedSettingGetGNOMEName (CCSGNOMEIntegratedSetting *);
 
 CCSGNOMEIntegratedSetting *
 ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
