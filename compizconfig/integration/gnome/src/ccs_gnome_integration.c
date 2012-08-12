@@ -1697,7 +1697,8 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 }
 
 static Bool
-setGnomeMouseButtonModifier (GConfClient *client,
+setGnomeMouseButtonModifier (GConfClient	 *client,
+			     CCSIntegratedSetting *setting,
 			     unsigned int modMask)
 {
     char   *modifiers, *currentValue;
@@ -1706,6 +1707,11 @@ setGnomeMouseButtonModifier (GConfClient *client,
     modifiers = ccsModifiersToString (modMask);
     if (!modifiers)
 	return FALSE;
+
+    CCSSettingValue value;
+    memset (&value, 0, sizeof (CCSSettingValue));
+
+    ccsIntegratedSettingWriteValue (setting, value, TypeString);
 
     currentValue = gconf_client_get_string (client,
 					    METACITY
@@ -1773,10 +1779,14 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     if (!priv->client)
 	initGConfClient (integration);
 
+    CCSSettingValue value = (*(ccsSettingGetValue (setting)));
+
     switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
     {
     case OptionInt:
 	{
+	    ccsIntegratedSettingWriteValue (integratedSetting, value, TypeInt);
+
 	    int newValue, currentValue;
 	    if (!ccsGetInt (setting, &newValue))
 		break;
@@ -1789,6 +1799,8 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	break;
     case OptionBool:
 	{
+	    ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
+
 	    Bool     newValue;
 	    gboolean currentValue;
 	    if (!ccsGetBool (setting, &newValue))
@@ -1803,6 +1815,8 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	break;
     case OptionString:
 	{
+	    ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
+
 	    char  *newValue;
 	    gchar *currentValue;
 	    if (!ccsGetString (setting, &newValue))
@@ -1819,7 +1833,7 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	}
 	break;
     case OptionKey:
-	{
+	{   
 	    char  *newValue;
 	    gchar *currentValue;
 
@@ -1831,6 +1845,8 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		    /* Metacity doesn't like "Disabled", it wants "disabled" */
 		    newValue[0] = 'd';
 		}
+
+		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
 
 		currentValue = gconf_client_get_string (priv->client,
 							optionName, &err);
@@ -1848,11 +1864,13 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	break;
     case OptionSpecial:
 	{
-	    const char *settingName = specialOptions[index].settingName;
-	    const char *pluginName  = specialOptions[index].pluginName;
+	    const char *settingName = ccsSettingGetName (setting);
+	    const char *pluginName  = ccsPluginGetName (ccsSettingGetParent (setting));
 
 	    if (strcmp (settingName, "current_viewport") == 0)
 	    {
+		value.value.asBool = !value.value.asBool;
+
 		Bool currentViewport;
 
 		if (!ccsGetBool (setting, &currentViewport))
@@ -1860,6 +1878,8 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 
 		gconf_client_set_bool (priv->client, optionName,
 				       !currentViewport, NULL);
+
+		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
@@ -1878,6 +1898,10 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						 newValue, NULL);
 		    g_free (currentValue);
 		}
+
+		value.value.asString = newValue;
+
+		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
@@ -1897,6 +1921,10 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						 newValue, NULL);
 		    g_free (currentValue);
 		}
+
+		value.value.asString = newValue;
+
+		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
@@ -1916,6 +1944,13 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		     resizeWithRightButton = TRUE;
 		}
 
+		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+														ccsGNOMEIntegratedPluginNames.SPECIAL,
+														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
+
+		value.value.asBool = resizeWithRightButton;
+		ccsIntegratedSettingWriteValue (integratedSettingsMBM->data, value, TypeBool);
+
 		currentValue =
 		    gconf_client_get_bool (priv->client, METACITY
 					   "/general/resize_with_right_button",
@@ -1930,8 +1965,12 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 					   resizeWithRightButton, NULL);
 		}
 
+		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+														ccsGNOMEIntegratedPluginNames.SPECIAL,
+														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
+
 		modMask = ccsSettingGetValue (setting)->value.asButton.buttonModMask;
-		if (setGnomeMouseButtonModifier (priv->client, modMask))
+		if (setGnomeMouseButtonModifier (priv->client, integratedSettings->data, modMask))
 		{
 		    setButtonBindingForSetting (context, "move",
 						"initiate_button", 1, modMask);
