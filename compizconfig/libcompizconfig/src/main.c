@@ -1258,7 +1258,7 @@ void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
 						  CCSSetting		   *setting,
 						  int			   index)
 {
-    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->readOptionIntoSetting) (integration, context, setting, index);
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->writeSettingIntoOption) (integration, context, setting, index);
 }
 
 void ccsFreeIntegration (CCSIntegration *integration)
