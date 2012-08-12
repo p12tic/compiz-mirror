@@ -645,6 +645,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting)
 
     // XXX
 
+    ccsInfo ("called ccsGConfIntegratedSettingReadValue!\n");
+
     return ccsIntegratedSettingReadValue ((CCSIntegratedSetting *) priv->gnomeIntegratedSetting);
 }
 
@@ -654,6 +656,8 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
 
     // XXX
+
+    ccsInfo ("called ccsGConfIntegratedSettingWriteValue!\n");
 
     return ccsIntegratedSettingWriteValue ((CCSIntegratedSetting *) priv->gnomeIntegratedSetting, value);
 }
@@ -1483,6 +1487,10 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
     if (!ret)
 	return FALSE;
 
+    CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting);
+
+    g_print ("got: %p\n", &v);
+
     gconfValue = gconf_client_get (priv->client,
 				   specialOptions[index].gnomeName,
 				   &err);
@@ -1716,7 +1724,11 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     if (!priv->client)
 	initGConfClient (integration);
 
-    switch (specialOptions[index].type)
+    CCSSettingValue v = *(ccsSettingGetValue (setting));
+
+    ccsIntegratedSettingWriteValue (integratedSetting, v);
+
+    switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
     {
     case OptionInt:
 	{
