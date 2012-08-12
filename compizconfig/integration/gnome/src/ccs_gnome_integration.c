@@ -735,12 +735,62 @@ void
 ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value, CCSSettingType type)
 {
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+    const char			     *gnomeName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+    GError			     *err;
 
     // XXX
+    switch (type)
+    {
+	case TypeInt:
+	    {
+		int currentValue = gconf_client_get_int (priv->client, gnomeName, &err);
+
+		if (!err && (currentValue != value.value.asInt))
+		    gconf_client_set_int(priv->client, gnomeName,
+					 value.value.asInt, NULL);
+	    }
+	    break;
+	case TypeBool:
+	    {
+		Bool     newValue = value.value.asBool;
+		gboolean currentValue;
+
+		currentValue = gconf_client_get_bool (priv->client, gnomeName, &err);
+
+		if (!err && ((currentValue && !newValue) ||
+			     (!currentValue && newValue)))
+		    gconf_client_set_bool (priv->client, gnomeName,
+					   newValue, NULL);
+	    }
+	    break;
+	case TypeString:
+	    {
+		char  *newValue = value.value.asString;
+		gchar *currentValue;
+
+		currentValue = gconf_client_get_string (priv->client, gnomeName, &err);
+
+		if (!err && currentValue)
+		{
+		    if (strcmp (currentValue, newValue) != 0)
+			gconf_client_set_string (priv->client, gnomeName,
+						 newValue, NULL);
+		    g_free (currentValue);
+		}
+	    }
+	    break;
+	default:
+	    ccsError ("unexpected type, shouldn't be reached!\n");
+	    break;
+    }
+
+    if (err)
+    {
+	g_error_free (err);
+	ccsError ("encountered error whilst trying to write value");
+    }
 
     ccsInfo ("called ccsGConfIntegratedSettingWriteValue!\n");
-
-    return ccsIntegratedSettingWriteValue ((CCSIntegratedSetting *) priv->gnomeIntegratedSetting, value, type);
 }
 
 const char *
@@ -1697,12 +1747,10 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 }
 
 static Bool
-setGnomeMouseButtonModifier (GConfClient	 *client,
-			     CCSIntegratedSetting *setting,
+setGnomeMouseButtonModifier (CCSIntegratedSetting *setting,
 			     unsigned int modMask)
 {
-    char   *modifiers, *currentValue;
-    GError *err = NULL;
+    char   *modifiers;
 
     modifiers = ccsModifiersToString (modMask);
     if (!modifiers)
@@ -1711,25 +1759,8 @@ setGnomeMouseButtonModifier (GConfClient	 *client,
     CCSSettingValue value;
     memset (&value, 0, sizeof (CCSSettingValue));
 
+    value.value.asString = modifiers;
     ccsIntegratedSettingWriteValue (setting, value, TypeString);
-
-    currentValue = gconf_client_get_string (client,
-					    METACITY
-					    "/general/mouse_button_modifier",
-					    &err);
-    if (err)
-    {
-	free (modifiers);
-	g_error_free (err);
-	return FALSE;
-    }
-
-    if (!currentValue || (strcmp (currentValue, modifiers) != 0))
-	gconf_client_set_string (client,
-				 METACITY "/general/mouse_button_modifier",
-				 modifiers, NULL);
-    if (currentValue)
-	g_free (currentValue);
 
     free (modifiers);
 
@@ -1772,7 +1803,6 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  int			 index)
 {
     GError     *err = NULL;
-    const char *optionName = specialOptions[index].gnomeName;
 
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
@@ -1784,58 +1814,17 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
     {
     case OptionInt:
-	{
-	    ccsIntegratedSettingWriteValue (integratedSetting, value, TypeInt);
-
-	    int newValue, currentValue;
-	    if (!ccsGetInt (setting, &newValue))
-		break;
-	    currentValue = gconf_client_get_int (priv->client, optionName, &err);
-
-	    if (!err && (currentValue != newValue))
-		gconf_client_set_int(priv->client, specialOptions[index].gnomeName,
-				     newValue, NULL);
-	}
+	ccsIntegratedSettingWriteValue (integratedSetting, value, TypeInt);
 	break;
     case OptionBool:
-	{
-	    ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
-
-	    Bool     newValue;
-	    gboolean currentValue;
-	    if (!ccsGetBool (setting, &newValue))
-		break;
-	    currentValue = gconf_client_get_bool (priv->client, optionName, &err);
-
-	    if (!err && ((currentValue && !newValue) ||
-			 (!currentValue && newValue)))
-		gconf_client_set_bool (priv->client, specialOptions[index].gnomeName,
-				       newValue, NULL);
-	}
+	ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
 	break;
     case OptionString:
-	{
-	    ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
-
-	    char  *newValue;
-	    gchar *currentValue;
-	    if (!ccsGetString (setting, &newValue))
-		break;
-	    currentValue = gconf_client_get_string (priv->client, optionName, &err);
-
-    	    if (!err && currentValue)
-	    {
-		if (strcmp (currentValue, newValue) != 0)
-		    gconf_client_set_string (priv->client, optionName,
-		     			     newValue, NULL);
-		g_free (currentValue);
-	    }
-	}
+	ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
 	break;
     case OptionKey:
 	{   
 	    char  *newValue;
-	    gchar *currentValue;
 
 	    newValue = ccsKeyBindingToString (&(ccsSettingGetValue (setting)->value.asKey));
 	    if (newValue)
@@ -1847,17 +1836,6 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		}
 
 		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
-
-		currentValue = gconf_client_get_string (priv->client,
-							optionName, &err);
-
-		if (!err && currentValue)
-		{
-		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (priv->client, optionName,
-				 		 newValue, NULL);
-    		    g_free (currentValue);
-		}
 		free (newValue);
 	    }
 	}
@@ -1867,62 +1845,26 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	    const char *settingName = ccsSettingGetName (setting);
 	    const char *pluginName  = ccsPluginGetName (ccsSettingGetParent (setting));
 
+	    /* ccsIntegratedSettingWriteValue isn't expecting a copy, hence the casts
+	     * to (char *) */
+
 	    if (strcmp (settingName, "current_viewport") == 0)
 	    {
 		value.value.asBool = !value.value.asBool;
-
-		Bool currentViewport;
-
-		if (!ccsGetBool (setting, &currentViewport))
-		    break;
-
-		gconf_client_set_bool (priv->client, optionName,
-				       !currentViewport, NULL);
 
 		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		Bool  fullscreen;
-		gchar *currentValue, *newValue;
-		if (!ccsGetBool (setting, &fullscreen))
-		    break;
-
-		newValue = fullscreen ? "fullscreen" : "frame_flash";
-		currentValue = gconf_client_get_string (priv->client,
-							optionName, &err);
-		if (!err && currentValue)
-		{
-		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (priv->client, optionName,
-						 newValue, NULL);
-		    g_free (currentValue);
-		}
-
-		value.value.asString = newValue;
+		const char *newValue = value.value.asBool ? "fullscreen" : "frame_flash";
+		value.value.asString = (char *) newValue;
 
 		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
-		Bool  clickToFocus;
-		gchar *newValue, *currentValue;
-		if (!ccsGetBool (setting, &clickToFocus))
-		    break;
-
-		newValue = clickToFocus ? "click" : "sloppy";
-		currentValue = gconf_client_get_string (priv->client,
-							optionName, &err);
-
-		if (!err && currentValue)
-		{
-		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (priv->client, optionName,
-						 newValue, NULL);
-		    g_free (currentValue);
-		}
-
-		value.value.asString = newValue;
+		const char *newValue = value.value.asBool ? "click" : "sloppy";
+		value.value.asString = (char *) newValue;
 
 		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
 	    }
@@ -1934,7 +1876,6 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	    {
 		unsigned int modMask;
 		Bool         resizeWithRightButton = FALSE;
-		gboolean     currentValue;
 
 		if ((getButtonBindingForSetting (context, "resize",
 						 "initiate_button") == 3) ||
@@ -1944,33 +1885,19 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		     resizeWithRightButton = TRUE;
 		}
 
-		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
-														ccsGNOMEIntegratedPluginNames.SPECIAL,
-														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
-
-		value.value.asBool = resizeWithRightButton;
-		ccsIntegratedSettingWriteValue (integratedSettingsMBM->data, value, TypeBool);
-
-		currentValue =
-		    gconf_client_get_bool (priv->client, METACITY
-					   "/general/resize_with_right_button",
-					   &err);
-
-		if (!err && ((currentValue && !resizeWithRightButton) ||
-			     (!currentValue && resizeWithRightButton)))
-		{
-		    gconf_client_set_bool (priv->client,
-					   METACITY
-					   "/general/resize_with_right_button",
-					   resizeWithRightButton, NULL);
-		}
-
 		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
+		value.value.asBool = resizeWithRightButton;
+		ccsIntegratedSettingWriteValue (integratedSettings->data, value, TypeBool);
+
+		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+														ccsGNOMEIntegratedPluginNames.SPECIAL,
+														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
+
 		modMask = ccsSettingGetValue (setting)->value.asButton.buttonModMask;
-		if (setGnomeMouseButtonModifier (priv->client, integratedSettings->data, modMask))
+		if (setGnomeMouseButtonModifier (integratedSettingsMBM->data, modMask))
 		{
 		    setButtonBindingForSetting (context, "move",
 						"initiate_button", 1, modMask);
