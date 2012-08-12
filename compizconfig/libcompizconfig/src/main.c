@@ -906,9 +906,10 @@ ccsFreePluginConflict (CCSPluginConflict * c)
 }
 
 CCSBackendInfo *
-ccsCopyBackendInfoFromBackend (CCSBackendInterface *interface)
+ccsCopyBackendInfoFromBackend (CCSBackend *backend,
+			       const CCSBackendInterface *interface)
 {
-    const CCSBackendInfo *backendInfo = (*interface->backendGetInfo) (NULL);
+    const CCSBackendInfo *backendInfo = (*interface->backendGetInfo) (backend);
 
     if (!backendInfo)
 	return NULL;
@@ -3593,7 +3594,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    CCSBackendInfo *info = ccsCopyBackendInfoFromBackend (vt);
+    CCSBackendInfo *info = ccsCopyBackendInfoFromBackend (NULL, vt);
 
     if (!info)
     {
@@ -3639,7 +3640,9 @@ backendNameFilter (const struct dirent *name)
 }
 
 static void
-getBackendInfoFromDir (CCSBackendInfoList * bl, char *path)
+getBackendInfoFromDir (CCSBackendInfoList * bl,
+		       char *path,
+		       const char *currentBackend)
 {
 
     struct dirent **nameList;
@@ -3654,6 +3657,9 @@ getBackendInfoFromDir (CCSBackendInfoList * bl, char *path)
 
     for (i = 0; i < nFile; i++)
     {
+	if (strncmp (currentBackend, &(nameList[i]->d_name[3]), strlen (currentBackend)) == 0)
+	    continue;
+
 	char file[1024];
 	sprintf (file, "%s/%s", path, nameList[i]->d_name);
 	addBackendInfo (bl, file);
@@ -3665,22 +3671,31 @@ getBackendInfoFromDir (CCSBackendInfoList * bl, char *path)
 }
 
 CCSBackendInfoList
-ccsGetExistingBackends ()
+ccsGetExistingBackends (CCSContext *context)
 {
     CCSBackendInfoList rv = NULL;
     char *home = getenv ("HOME");
-    char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
+    char *overrideBackend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
     char *backenddir;
+    const char *currentBackend = ccsGetBackend (context);
 
-    if (override_backend && strlen (override_backend))
+    CONTEXT_PRIV (context);
+
+    const CCSBackendInterface *currentBackendInterface =
+	    GET_INTERFACE (CCSBackendInterface, cPrivate->backend);
+
+    rv = ccsBackendInfoListAppend (rv, ccsCopyBackendInfoFromBackend ((CCSBackend *) cPrivate->backend,
+								      currentBackendInterface));
+
+    if (overrideBackend && strlen (overrideBackend))
     {
 	if (asprintf (&backenddir, "%s",
-		      override_backend) == -1)
+		      overrideBackend) == -1)
 	    backenddir = NULL;
 
 	if (backenddir)
 	{
-	    getBackendInfoFromDir (&rv, backenddir);
+	    getBackendInfoFromDir (&rv, backenddir, currentBackend);
 	    free (backenddir);
 	}
     }
@@ -3693,7 +3708,7 @@ ccsGetExistingBackends ()
 
 	    if (backenddir)
 	    {
-		getBackendInfoFromDir (&rv, backenddir);
+		getBackendInfoFromDir (&rv, backenddir, currentBackend);
 		free (backenddir);
 	    }
 	}
@@ -3703,7 +3718,7 @@ ccsGetExistingBackends ()
 
 	if (backenddir)
 	{
-	    getBackendInfoFromDir (&rv, backenddir);
+	    getBackendInfoFromDir (&rv, backenddir, currentBackend);
 	    free (backenddir);
 	}
     }
