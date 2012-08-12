@@ -103,10 +103,10 @@ static const SpecialOptionGConf specialOptions[] = {
      METACITY "/window_keybindings/begin_resize", OptionSpecial},
     {"window_menu_button", "core", FALSE,
      METACITY "/window_keybindings/activate_window_menu", OptionSpecial},
-    {"mouse_button_modifier", NULL, FALSE,
+    {"mouse_button_modifier", "__special", FALSE,
      METACITY "/general/mouse_button_modifier", OptionSpecial},
     /* integration of the Metacity's option to swap mouse buttons */
-    {"resize_with_right_button", NULL, FALSE,
+    {"resize_with_right_button", "__special", FALSE,
      METACITY "/general/resize_with_right_button", OptionSpecial},
 
     {"visual_bell", "fade", TRUE,
@@ -582,8 +582,8 @@ const CCSIntegratedSettingInterface ccsGNOMEIntegratedSettingInterface =
 {
     ccsGNOMEIntegratedSettingReadValue,
     ccsGNOMEIntegratedSettingWriteValue,
-    ccsGNOMEIntegratedSettingSettingName,
     ccsGNOMEIntegratedSettingPluginName,
+    ccsGNOMEIntegratedSettingSettingName,
     ccsGNOMEIntegratedSettingGetType,
     ccsGNOMEIntegratedSettingFree
 };
@@ -705,8 +705,8 @@ const CCSIntegratedSettingInterface ccsGConfIntegratedSettingInterface =
 {
     ccsGConfIntegratedSettingReadValue,
     ccsGConfIntegratedSettingWriteValue,
-    ccsGConfIntegratedSettingSettingName,
     ccsGConfIntegratedSettingPluginName,
+    ccsGConfIntegratedSettingSettingName,
     ccsGConfIntegratedSettingGetType,
     ccsGConfIntegratedSettingFree
 };
@@ -1222,6 +1222,11 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 {
     unsigned int i;
 
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+												    pluginName,
+												    settingName);
+
     for (i = 0; i < N_SOPTIONS; i++)
     {
 	const SpecialOptionGConf *opt = &specialOptions[i];
@@ -1240,6 +1245,14 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 	{
 	    if (opt->pluginName)
 		continue;
+	}
+
+	CCSIntegratedSettingList iter = integratedSettings;
+
+	while (iter)
+	{
+	    g_print ("would update %p\n", ccsIntegratedSettingSettingName (iter->data));
+	    iter = iter->next;
 	}
 
 	return i;
@@ -1960,13 +1973,13 @@ ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
 
     unsigned int i = 0;
 
-    for (; i < 0; i++)
+    for (; i < N_SOPTIONS; i++)
     {
-	CCSIntegratedSetting *setting = ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
-															 specialOptions[i].gnomeName,
-															 specialOptions[i].pluginName,
-															 specialOptions[i].settingName,
-															 TypeInt);
+	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
+														    specialOptions[i].gnomeName,
+														    specialOptions[i].pluginName,
+														    specialOptions[i].settingName,
+														    TypeInt);
 
 	ccsIntegratedSettingsStorageAddSetting (priv->storage, setting);
     }

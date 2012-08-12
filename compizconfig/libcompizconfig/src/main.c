@@ -5653,8 +5653,8 @@ const CCSIntegratedSettingInterface ccsSharedIntegratedSettingInterface =
 {
     ccsSharedIntegratedSettingReadValue,
     ccsSharedIntegratedSettingWriteValue,
-    ccsSharedIntegratedSettingSettingName,
     ccsSharedIntegratedSettingPluginName,
+    ccsSharedIntegratedSettingSettingName,
     ccsSharedIntegratedSettingGetType,
     ccsSharedIntegratedSettingFree
 };
@@ -5732,6 +5732,8 @@ ccsIntegratedSettingsStorageDefaultFindMatchingSettings (CCSIntegratedSettingsSt
 	{
 	    returnList = ccsIntegratedSettingListAppend (returnList, iter->data);
 	}
+
+	iter = iter->next;
     }
 
     return returnList;
@@ -5742,7 +5744,7 @@ ccsIntegratedSettingsStorageDefaultAddSetting (CCSIntegratedSettingsStorage *sto
 					       CCSIntegratedSetting	    *setting)
 {
     CCSIntegratedSettingsStorageDefaultPrivate *priv = (CCSIntegratedSettingsStorageDefaultPrivate *) ccsObjectGetPrivate (storage);
-    ccsIntegratedSettingListAppend (priv->settingList, setting);
+    priv->settingList = ccsIntegratedSettingListAppend (priv->settingList, setting);
 }
 
 const CCSIntegratedSettingsStorageInterface ccsIntegratedSettingsStorageDefaultImplInterface =
