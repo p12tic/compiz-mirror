@@ -37,61 +37,6 @@ typedef struct _CCSBackendInfo    CCSBackendInfo;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
 
-typedef struct _CCSIntegration CCSIntegration;
-typedef struct _CCSIntegrationInterface CCSIntegrationInterface;
-
-typedef int (*CCSIntegrationGetIntegratedOptionIndex) (CCSIntegration *integration,
-							      const char *pluginName,
-							      const char *settingName);
-typedef Bool (*CCSIntegrationReadOptionIntoSetting) (CCSIntegration *integration,
-							    CCSContext		  *context,
-							    CCSSetting		  *setting,
-							    int			  index);
-typedef void (*CCSIntegrationWriteSettingIntoOption) (CCSIntegration *integration,
-							     CCSContext		   *context,
-							     CCSSetting		   *setting,
-							     int		   index);
-typedef void (*CCSFreeIntegrationBackend) (CCSIntegration *integration);
-
-struct _CCSIntegrationInterface
-{
-    CCSIntegrationGetIntegratedOptionIndex getIntegratedOptionIndex;
-    CCSIntegrationReadOptionIntoSetting readOptionIntoSetting;
-    CCSIntegrationWriteSettingIntoOption writeSettingIntoOption;
-    CCSFreeIntegrationBackend			freeIntegrationBackend;
-};
-
-struct _CCSIntegration
-{
-    CCSObject object;
-};
-
-CCSREF_HDR (Integration, CCSIntegration)
-
-unsigned int ccsCCSIntegrationInterfaceGetType ();
-
-int ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
-						   const char *pluginName,
-						   const char *settingName);
-Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
-						 CCSContext		  *context,
-						 CCSSetting		  *setting,
-						 int			  index);
-void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
-						  CCSContext		   *context,
-						  CCSSetting		   *setting,
-						  int			    index);
-
-void ccsFreeIntegration (CCSIntegration *integration);
-
-CCSIntegration *
-ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai);
-
-struct _CCSBackend
-{
-    CCSObject        object;
-};
-
 typedef struct _CCSSettingValue CCSSettingValue;
 typedef enum _CCSSettingType CCSSettingType;
 
@@ -202,6 +147,67 @@ ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSI
 									    const char			*pluginName,
 									    const char			*settingName,
 									    CCSSettingType		type);
+
+typedef struct _CCSIntegration CCSIntegration;
+typedef struct _CCSIntegrationInterface CCSIntegrationInterface;
+
+typedef CCSIntegratedSetting * (*CCSIntegrationGetIntegratedOptionIndex) (CCSIntegration *integration,
+									  const char *pluginName,
+									  const char *settingName,
+									  int	  *index);
+typedef Bool (*CCSIntegrationReadOptionIntoSetting) (CCSIntegration *integration,
+						     CCSContext	    *context,
+						     CCSSetting	    *setting,
+						     CCSIntegratedSetting *integratedSetting,
+						     int	    index);
+typedef void (*CCSIntegrationWriteSettingIntoOption) (CCSIntegration *integration,
+						      CCSContext     *context,
+						      CCSSetting     *setting,
+						      CCSIntegratedSetting *integratedSetting,
+						      int	     index);
+typedef void (*CCSFreeIntegrationBackend) (CCSIntegration *integration);
+
+struct _CCSIntegrationInterface
+{
+    CCSIntegrationGetIntegratedOptionIndex getIntegratedOptionIndex;
+    CCSIntegrationReadOptionIntoSetting readOptionIntoSetting;
+    CCSIntegrationWriteSettingIntoOption writeSettingIntoOption;
+    CCSFreeIntegrationBackend			freeIntegrationBackend;
+};
+
+struct _CCSIntegration
+{
+    CCSObject object;
+};
+
+CCSREF_HDR (Integration, CCSIntegration)
+
+unsigned int ccsCCSIntegrationInterfaceGetType ();
+
+CCSIntegratedSetting * ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
+							       const char *pluginName,
+							       const char *settingName,
+							       int	  *index);
+Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
+					  CCSContext		  *context,
+					  CCSSetting		  *setting,
+					  CCSIntegratedSetting    *integratedSetting,
+					  int			  index);
+void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
+					   CCSContext		   *context,
+					   CCSSetting		   *setting,
+					   CCSIntegratedSetting *integratedSetting,
+					   int			    index);
+
+void ccsFreeIntegration (CCSIntegration *integration);
+
+CCSIntegration *
+ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai);
+
+struct _CCSBackend
+{
+    CCSObject        object;
+};
 
 struct _CCSBackendInfo
 {

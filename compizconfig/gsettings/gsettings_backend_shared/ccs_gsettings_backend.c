@@ -328,7 +328,11 @@ ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSett
     const char *settingName = ccsSettingGetName (setting);
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    return ccsIntegrationGetIntegratedOptionIndex (priv->integration, pluginName, settingName);
+    int index = 0;
+
+    ccsIntegrationGetIntegratedOptionIndex (priv->integration, pluginName, settingName, &index);
+
+    return index;
 }
 
 Bool
@@ -339,6 +343,7 @@ ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting 
     return ccsIntegrationReadOptionIntoSetting (priv->integration,
 						       priv->context,
 						       setting,
+						NULL,
 						       index);
 }
 
@@ -350,6 +355,7 @@ ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting
     ccsIntegrationWriteSettingIntoOption (priv->integration,
 						 priv->context,
 						 setting,
+					  NULL,
 						 index);
 }
 

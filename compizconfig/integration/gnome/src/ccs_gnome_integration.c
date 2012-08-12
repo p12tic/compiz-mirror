@@ -1215,10 +1215,11 @@ populateSpecialTypesHashTables ()
 }
 
 
-static int
+static CCSIntegratedSetting *
 ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 						    const char		  *pluginName,
-						    const char		  *settingName)
+						    const char		  *settingName,
+						    int			  *index)
 {
     unsigned int i;
 
@@ -1255,10 +1256,16 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 	    iter = iter->next;
 	}
 
-	return i;
+	if (index)
+	    *index = i;
+
+	return integratedSettings->data;
     }
 
-    return -1;
+    if (index)
+	*index = -1;
+
+    return NULL;
 }
 
 static void
@@ -1459,6 +1466,7 @@ static Bool
 ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
+						 CCSIntegratedSetting   *integratedSetting,
 						 int		       index)
 {
     GConfValue *gconfValue;
@@ -1697,6 +1705,7 @@ static void
 ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  CCSContext		 *context,
 						  CCSSetting		 *setting,
+						  CCSIntegratedSetting   *integratedSetting,
 						  int			 index)
 {
     GError     *err = NULL;
