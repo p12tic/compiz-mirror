@@ -1070,10 +1070,11 @@ void ccsDeleteProfile (CCSContext *context,
 
 /* Copies backend info out from backend */
 CCSBackendInfo *
-ccsCopyBackendInfoFromBackend (CCSBackendInterface *backendInterface);
+ccsCopyBackendInfoFromBackend (CCSBackend	   *backend,
+			       const CCSBackendInterface *backendInterface);
 
 /* Enumerates the available backends. */
-CCSBackendInfoList ccsGetExistingBackends (void);
+CCSBackendInfoList ccsGetExistingBackends (CCSContext *);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
 
