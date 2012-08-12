@@ -745,7 +745,7 @@
 				</option>
 				<option name="e_g" type="list">
 					<_short>Gravity</_short>
-					<_long>The strength of the gravity effect, these particles have. (See gravity probability. May be especially resource consuming.</_long>
+                                        <_long>The strength of the gravity effect, these particles have. (See gravity probability. May be especially resource consuming.)</_long>
 					<type>int</type>
 					<min>-1000</min>
 					<max>1000</max>
@@ -783,7 +783,7 @@
 				</option>
 				<option name="e_gp" type="list">
 					<_short>Gravity Probability</_short>
-					<_long>The probability that a particle has the gravity effect, that has been set up above. This value represents gravity particles out of 10000 particles. (Using gravity on too many particles may be very resource consuming)</_long>
+                                        <_long>The probability that a particle has the gravity effect, that has been set up above. This value represents gravity particles out of 10000 particles. (Using gravity on too many particles may be very resource consuming.)</_long>
 					<type>int</type>
 					<min>0</min>
 					<max>10000</max>
@@ -807,14 +807,14 @@
 					<_short>Advanced</_short>
 					<option name="hard_limit" type="int">
 						<_short>Hard limit for particles</_short>
-						<_long>If this hard limit is reached, no new particles are created</_long>
+                                                <_long>If this hard limit is reached, no new particles are created.</_long>
 						<default>3000</default>
 						<min>100</min>
 						<max>5000</max>
 					</option>
 					<option name="soft_limit" type="int">
 						<_short>Soft limit for particles</_short>
-						<_long>This soft limit can be exceeded. If this happens, particles will die faster</_long>
+                                                <_long>This soft limit can be exceeded. If this happens, particles will die faster.</_long>
 						<default>2000</default>
 						<min>100</min>
 						<max>5000</max>
@@ -834,7 +834,7 @@
 					</option>
 					<option name="tnew" type="float">
 						<_short>New particle time</_short>
-						<_long>If the age of a particle is above this value, it is regarded as new and is especially bright and large. Particles are born at the age of 1.0 and die at the age of 0.0</_long>
+                                                <_long>If the age of a particle is above this value, it is regarded as new and is especially bright and large. Particles are born at the age of 1.0 and die at the age of 0.0.</_long>
 						<default>0.98</default>
 						<min>0.0</min>
 						<max>1.0</max>
@@ -842,7 +842,7 @@
 					</option>
 					<option name="told" type="float">
 						<_short>Old particle time</_short>
-						<_long>If the age of a particle is below this value, it is regarded as old and starts to fade. Particles are born at the age of 1.0 and die at the age of 0.0</_long>
+                                                <_long>If the age of a particle is below this value, it is regarded as old and starts to fade. Particles are born at the age of 1.0 and die at the age of 0.0.</_long>
 						<default>0.4</default>
 						<min>0.0</min>
 						<max>1.0</max>
