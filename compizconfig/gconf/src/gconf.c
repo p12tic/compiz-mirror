@@ -868,12 +868,15 @@ readListValue (CCSSetting *setting,
     case TypeString:
     case TypeMatch:
 	{
-	    gchar **array = malloc (nItems * sizeof (char*));
+	    gchar **array = malloc ((nItems + 1) * sizeof (char*));
 	    if (!array)
 		break;
 
 	    for (; valueList; valueList = valueList->next, i++)
 		array[i] = strdup (gconf_value_get_string (valueList->data));
+
+	    array[nItems] = NULL;
+
 	    list = ccsGetValueListFromStringArray ((const char **) array, nItems, setting);
 	    g_strfreev (array);
 	}
