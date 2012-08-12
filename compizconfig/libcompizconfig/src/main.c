@@ -5699,11 +5699,11 @@ ccsSharedIntegratedSettingNew (const char *pluginName,
 }
 
 CCSIntegratedSettingList
-ccsIntegratedSettingsStorageFindMatchingSettings (CCSIntegratedSettingsStorage *storage,
-						  const char *pluginName,
-						  const char *settingName)
+ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (CCSIntegratedSettingsStorage *storage,
+									const char *pluginName,
+									const char *settingName)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->findMatchingSettings) (storage, pluginName, settingName);
+    return (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->findMatchingSettingsByPluginAndSettingName) (storage, pluginName, settingName);
 }
 
 void
@@ -5722,9 +5722,9 @@ struct _CCSIntegratedSettingsStorageDefaultPrivate
 };
 
 CCSIntegratedSettingList
-ccsIntegratedSettingsStorageDefaultFindMatchingSettings (CCSIntegratedSettingsStorage *storage,
-							 const char *pluginName,
-							 const char *settingName)
+ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPluginAndSettingName (CCSIntegratedSettingsStorage *storage,
+									       const char *pluginName,
+									       const char *settingName)
 {
     CCSIntegratedSettingsStorageDefaultPrivate *priv = (CCSIntegratedSettingsStorageDefaultPrivate *) ccsObjectGetPrivate (storage);
     CCSIntegratedSettingList		       returnList = NULL;
@@ -5757,7 +5757,7 @@ ccsIntegratedSettingsStorageDefaultAddSetting (CCSIntegratedSettingsStorage *sto
 
 const CCSIntegratedSettingsStorageInterface ccsIntegratedSettingsStorageDefaultImplInterface =
 {
-    ccsIntegratedSettingsStorageDefaultFindMatchingSettings,
+    ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPluginAndSettingName,
     ccsIntegratedSettingsStorageDefaultAddSetting
 };
 

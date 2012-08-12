@@ -86,15 +86,15 @@ ccsSharedIntegratedSettingNew (const char *pluginName,
 typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
 typedef struct _CCSIntegratedSettingsStorageInterface CCSIntegratedSettingsStorageInterface;
 
-typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettings) (CCSIntegratedSettingsStorage *storage,
-										      const char *pluginName,
-										      const char *settingName);
+typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName) (CCSIntegratedSettingsStorage *storage,
+													    const char *pluginName,
+													    const char *settingName);
 typedef void (*CCSIntegratedSettingsStorageAddSetting) (CCSIntegratedSettingsStorage *storage,
 							CCSIntegratedSetting	     *setting);
 
 struct _CCSIntegratedSettingsStorageInterface
 {
-    CCSIntegratedSettingsStorageFindMatchingSettings findMatchingSettings;
+    CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName findMatchingSettingsByPluginAndSettingName;
     CCSIntegratedSettingsStorageAddSetting	     addSetting;
 };
 
@@ -104,9 +104,9 @@ struct _CCSIntegratedSettingsStorage
 };
 
 CCSIntegratedSettingList
-ccsIntegratedSettingsStorageFindMatchingSettings (CCSIntegratedSettingsStorage *storage,
-						  const char *pluginName,
-						  const char *settingName);
+ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (CCSIntegratedSettingsStorage *storage,
+									const char *pluginName,
+									const char *settingName);
 
 void
 ccsIntegratedSettingsStorageAddSetting (CCSIntegratedSettingsStorage *storage,

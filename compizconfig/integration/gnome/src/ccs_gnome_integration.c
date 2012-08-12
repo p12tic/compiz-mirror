@@ -1360,9 +1360,9 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
     unsigned int i;
 
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-    CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
-												    pluginName,
-												    settingName);
+    CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
+															  pluginName,
+															  settingName);
 
     for (i = 0; i < N_SOPTIONS; i++)
     {
@@ -1707,13 +1707,13 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		memset (&button, 0, sizeof (CCSSettingButtonValue));
 		ccsGetButton (setting, &button);
 
-		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
 
 		button.buttonModMask = getGnomeMouseButtonModifier (integratedSettingsMBM->data);
 
-		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
@@ -1885,14 +1885,14 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		     resizeWithRightButton = TRUE;
 		}
 
-		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
 		value.value.asBool = resizeWithRightButton;
 		ccsIntegratedSettingWriteValue (integratedSettings->data, value, TypeBool);
 
-		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettings (priv->storage,
+		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
 
