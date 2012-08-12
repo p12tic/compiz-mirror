@@ -907,12 +907,48 @@ ccsFreePluginConflict (CCSPluginConflict * c)
     free (c);
 }
 
-void
-ccsFreeBackendInfo (CCSBackendInfo * b)
+CCSBackendInfo *
+ccsCopyBackendInfoFromBackend (CCSBackendInterface *interface)
 {
-    /* Does nothing, as backend info is
-     * the owned by the backend library
-     * itself */
+    const CCSBackendInfo *backendInfo = (*interface->backendGetInfo) (NULL);
+
+    if (!backendInfo)
+	return NULL;
+
+    CCSBackendInfo *info = calloc (1, sizeof (CCSBackendInfo));
+
+    if (!info)
+	return NULL;
+
+    memcpy (info, backendInfo, sizeof (CCSBackendInfo));
+
+    /* This is an abuse here -
+     * in order to minimize code duplication ccsGetBackendInfo returns
+     * const static data, but when we're dealing with the copies we're
+     * dealing with heap allocated memory, since you can't access the
+     * const data in the case that the libraries are not open.
+     * Thus the cast. */
+
+    info->name = (const char *) strdup (backendInfo->name);
+    info->shortDesc = (const char *) strdup (backendInfo->shortDesc);
+    info->longDesc = (const char *) strdup (backendInfo->longDesc);
+
+    return info;
+}
+
+void
+ccsFreeBackendInfo (CCSBackendInfo *b)
+{
+    if (b->name)
+	free ((char *) b->name);
+
+    if (b->shortDesc)
+	free ((char *) b->shortDesc);
+
+    if (b->longDesc)
+	free ((char *) b->longDesc);
+
+    free (b);
 }
 
 void
@@ -3906,7 +3942,13 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    const CCSBackendInfo *info = (*vt->backendGetInfo) (NULL);
+    CCSBackendInfo *info = ccsCopyBackendInfoFromBackend (vt);
+
+    if (!info)
+    {
+	dlclose (dlhand);
+	return;
+    }
 
     CCSBackendInfoList l = *bl;
     while (l)
@@ -3926,7 +3968,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
-    *bl = ccsBackendInfoListAppend (*bl, (CCSBackendInfo *) info);
+    *bl = ccsBackendInfoListAppend (*bl, info);
     dlclose (dlhand);
 }
 
