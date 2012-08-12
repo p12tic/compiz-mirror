@@ -315,7 +315,7 @@ cdef extern void ccsSetProfile (CCSContext * context, char * name)
 cdef extern char* ccsGetProfile (CCSContext * context)
 
 '''Backends'''
-cdef extern CCSBackendInfoList * ccsGetExistingBackends ()
+cdef extern CCSBackendInfoList * ccsGetExistingBackends (CCSContext *)
 cdef extern void ccsBackendInfoListFree (CCSBackendInfoList *, Bool freeObj)
 cdef extern Bool ccsSetBackend (CCSContext * context, char * name)
 cdef extern char* ccsGetBackend (CCSContext * context)
@@ -1207,7 +1207,7 @@ cdef class Context:
         cdef CCSBackendInfoList * backendList
         cdef CCSBackendInfoList * origBackendList
         cdef CCSBackendInfo * backendInfo
-        origBackendList = backendList = ccsGetExistingBackends ()
+        origBackendList = backendList = ccsGetExistingBackends (self.ccsContext)
         while backendList != NULL:
             backendInfo = <CCSBackendInfo *> backendList.data
             info = (backendInfo.name, backendInfo.shortDesc,
