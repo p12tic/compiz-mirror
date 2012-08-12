@@ -365,8 +365,8 @@ findDisplaySettingForPlugin (CCSContext *context,
 
 static int
 ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
-						    const char		  *settingName,
-						    const char		  *pluginName)
+						    const char		  *pluginName,
+						    const char		  *settingName)
 {
     unsigned int i;
 
@@ -403,7 +403,7 @@ gnomeGConfValueChanged (GConfClient *client,
 			gpointer    user_data)
 {
     CCSIntegration *integration = (CCSIntegration *)user_data;
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) integration;
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     char       *keyName = (char*) gconf_entry_get_key (entry);
     int        i, last = 0, num = 0;
     Bool       needInit = TRUE;
