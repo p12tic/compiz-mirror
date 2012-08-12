@@ -86,14 +86,21 @@ ccsSharedIntegratedSettingNew (const char *pluginName,
 typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
 typedef struct _CCSIntegratedSettingsStorageInterface CCSIntegratedSettingsStorageInterface;
 
+typedef Bool (*CCSIntegratedSettingsStorageFindPredicate) (CCSIntegratedSetting *, void *);
+
 typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName) (CCSIntegratedSettingsStorage *storage,
 													    const char *pluginName,
 													    const char *settingName);
 typedef void (*CCSIntegratedSettingsStorageAddSetting) (CCSIntegratedSettingsStorage *storage,
 							CCSIntegratedSetting	     *setting);
 
+typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettingsByPredicate) (CCSIntegratedSettingsStorage *storage,
+												 CCSIntegratedSettingsStorageFindPredicate pred,
+												 void			     *data);
+
 struct _CCSIntegratedSettingsStorageInterface
 {
+    CCSIntegratedSettingsStorageFindMatchingSettingsByPredicate findMatchingSettingsByPredicate;
     CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName findMatchingSettingsByPluginAndSettingName;
     CCSIntegratedSettingsStorageAddSetting	     addSetting;
 };
@@ -102,6 +109,11 @@ struct _CCSIntegratedSettingsStorage
 {
     CCSObject object;
 };
+
+CCSIntegratedSettingList
+ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (CCSIntegratedSettingsStorage *storage,
+							     CCSIntegratedSettingsStorageFindPredicate pred,
+							     void			  *data);
 
 CCSIntegratedSettingList
 ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (CCSIntegratedSettingsStorage *storage,
