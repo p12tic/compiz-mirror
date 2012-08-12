@@ -144,10 +144,13 @@ typedef struct _CCSIntegratedSettingsStorageInterface CCSIntegratedSettingsStora
 typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettings) (CCSIntegratedSettingsStorage *storage,
 										      const char *pluginName,
 										      const char *settingName);
+typedef void (*CCSIntegratedSettingsStorageAddSetting) (CCSIntegratedSettingsStorage *storage,
+							CCSIntegratedSetting	     *setting);
 
 struct _CCSIntegratedSettingsStorageInterface
 {
     CCSIntegratedSettingsStorageFindMatchingSettings findMatchingSettings;
+    CCSIntegratedSettingsStorageAddSetting	     addSetting;
 };
 
 struct _CCSIntegratedSettingsStorage
@@ -159,6 +162,10 @@ CCSIntegratedSettingList
 ccsIntegratedSettingsStorageFindMatchingSettings (CCSIntegratedSettingsStorage *storage,
 						  const char *pluginName,
 						  const char *settingName);
+
+void
+ccsIntegratedSettingsStorageAddSetting (CCSIntegratedSettingsStorage *storage,
+					CCSIntegratedSetting	    *setting);
 
 unsigned int ccsCCSIntegratedSettingsStorageInterfaceGetType ();
 

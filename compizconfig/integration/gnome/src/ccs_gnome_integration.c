@@ -465,6 +465,7 @@ const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames =
     "gnomecompat",
     "rotate",
     "put",
+    "wall",
     "vpswitch",
     "commands",
     "extrawm",
@@ -489,7 +490,9 @@ struct _CCSGConfIntegrationBackendPrivate
     CCSBackend *backend;
     CCSContext *context;
     GConfClient *client;
-    guint       *gnomeGConfNotifyIds;
+    guint       gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
+    CCSIntegratedSettingFactory  *factory;
+    CCSIntegratedSettingsStorage *storage;
 };
 
 INTERFACE_TYPE (CCSGNOMEIntegratedSettingInterface);
@@ -1896,7 +1899,7 @@ static CCSGConfIntegrationBackendPrivate *
 addPrivate (CCSIntegration *backend,
 	    CCSObjectAllocationInterface *ai)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
+    CCSGConfIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGConfIntegrationBackendPrivate));
 
     if (!priv)
     {
@@ -1952,6 +1955,22 @@ ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     priv->client = client;
+    priv->factory = ccsGConfIntegratedSettingFactoryNew (priv->client, ai);
+    priv->storage = ccsIntegratedSettingsStorageDefaultImplNew (ai);
+
+    unsigned int i = 0;
+
+    for (; i < 0; i++)
+    {
+	CCSIntegratedSetting *setting = ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
+															 specialOptions[i].gnomeName,
+															 specialOptions[i].pluginName,
+															 specialOptions[i].settingName,
+															 TypeInt);
+
+	ccsIntegratedSettingsStorageAddSetting (priv->storage, setting);
+    }
+
     registerGConfClient (integration, client);
 
     return integration;

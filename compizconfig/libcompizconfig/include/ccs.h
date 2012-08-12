@@ -1068,6 +1068,10 @@ CCSStringList ccsGetExistingProfiles (CCSContext * context);
 void ccsDeleteProfile (CCSContext *context,
 		       char       *name);
 
+/* Copies backend info out from backend */
+CCSBackendInfo *
+ccsCopyBackendInfoFromBackend (CCSBackendInterface *backendInterface);
+
 /* Enumerates the available backends. */
 CCSBackendInfoList ccsGetExistingBackends (void);
 
