@@ -325,7 +325,162 @@ static const char* watchedGConfGnomeDirectories[] = {
     "/apps/panel/applets/window_list/prefs"
 };
 
+const CCSGNOMEIntegratedSettingNames ccsGNOMEIntegratedSettingNames =
+{
+    { "audible_bell", "audible_bell" },
+    { "click_to_focus", "focus_mode" },
+    { "raise_on_click", "raise_on_click" },
+    { "autoraise_delay", "auto_raise_delay" },
+    { "autoraise", "auto_raise" },
+    { "current_viewport", "panel" },
+    { "command_terminal", "gnome" },
+    { "command_window_screenshot", "command_window_screenshot" },
+    { "command_screenshot", "command_screenshot" },
+    { "rotate_right_window_key", "move_to_workspace_right" },
+    { "rotate_left_window_key", "move_to_workspace_left" },
+    { "rotate_to_12_window_key", "move_to_workspace_12" },
+    { "rotate_to_11_window_key", "move_to_workspace_11" },
+    { "rotate_to_10_window_key", "move_to_workspace_10" },
+    { "rotate_to_9_window_key", "move_to_workspace_9" },
+    { "rotate_to_8_window_key", "move_to_workspace_8" },
+    { "rotate_to_7_window_key", "move_to_workspace_7" },
+    { "rotate_to_6_window_key", "move_to_workspace_6" },
+    { "rotate_to_5_window_key", "move_to_workspace_5" },
+    { "rotate_to_4_window_key", "move_to_workspace_4" },
+    { "rotate_to_3_window_key", "move_to_workspace_3" },
+    { "rotate_to_2_window_key", "move_to_workspace_2" },
+    { "rotate_to_1_window_key", "move_to_workspace_1" },
+    { "put_bottom_key", "move_to_side_s" },
+    { "put_top_key", "move_to_side_n" },
+    { "put_right_key", "move_to_side_e" },
+    { "put_left_key", "move_to_side_w" },
+    { "put_bottomright_key", "move_to_corner_se" },
+    { "put_bottomleft_key", "move_to_corner_sw" },
+    { "put_topright_key", "move_to_corner_ne" },
+    { "put_topleft_key", "move_to_corner_nw" },
+    { "down_window_key", "move_to_workspace_down" },
+    { "up_window_key", "move_to_workspace_up" },
+    { "right_window_key", "move_to_workspace_right" },
+    { "left_window_key", "move_to_workspace_left" },
+    { "right_key", "switch_to_workspace_right" },
+    { "left_key", "switch_to_workspace_left" },
+    { "down_key", "switch_to_workspace_down" },
+    { "up_key", "switch_to_workspace_up" },
+    { "switch_to_12_key", "switch_to_workspace_12" },
+    { "switch_to_11_key", "switch_to_workspace_11" },
+    { "switch_to_10_key", "switch_to_workspace_10" },
+    { "switch_to_9_key", "switch_to_workspace_9" },
+    { "switch_to_8_key", "switch_to_workspace_8" },
+    { "switch_to_7_key", "switch_to_workspace_7" },
+    { "switch_to_6_key", "switch_to_workspace_6" },
+    { "switch_to_5_key", "switch_to_workspace_5" },
+    { "switch_to_4_key", "switch_to_workspace_4" },
+    { "switch_to_3_key", "switch_to_workspace_3" },
+    { "switch_to_2_key", "switch_to_workspace_2" },
+    { "switch_to_1_key", "switch_to_workspace_1" },
+    { "rotate_right_key", "switch_to_workspace_right" },
+    { "rotate_left_key", "switch_to_workspace_left" },
+    { "rotate_to_12_key", "switch_to_workspace_12" },
+    { "rotate_to_11_key", "switch_to_workspace_11" },
+    { "rotate_to_10_key", "switch_to_workspace_10" },
+    { "rotate_to_9_key", "switch_to_workspace_9" },
+    { "rotate_to_8_key", "switch_to_workspace_8" },
+    { "rotate_to_7_key", "switch_to_workspace_7" },
+    { "rotate_to_6_key", "switch_to_workspace_6" },
+    { "rotate_to_5_key", "switch_to_workspace_5" },
+    { "rotate_to_4_key", "switch_to_workspace_4" },
+    { "rotate_to_3_key", "switch_to_workspace_3" },
+    { "rotate_to_2_key", "switch_to_workspace_2" },
+    { "rotate_to_1_key", "switch_to_workspace_1" },
+    { "run_command11_key", "run_command_12" },
+    { "run_command10_key", "run_command_11" },
+    { "run_command9_key", "run_command_10" },
+    { "run_command8_key", "run_command_9" },
+    { "run_command7_key", "run_command_8" },
+    { "run_command6_key", "run_command_7" },
+    { "run_command5_key", "run_command_6" },
+    { "run_command4_key", "run_command_5" },
+    { "run_command3_key", "run_command_4" },
+    { "run_command2_key", "run_command_3" },
+    { "run_command1_key", "run_command_2" },
+    { "run_command0_key", "run_command_1" },
+    { "command11", "command_12" },
+    { "command10", "command_11" },
+    { "command9", "command_10" },
+    { "command8", "command_9" },
+    { "command7", "command_8" },
+    { "command6", "command_7" },
+    { "command5", "command_6" },
+    { "command4", "command_5" },
+    { "command3", "command_4" },
+    { "command2", "command_3" },
+    { "command1", "command_2" },
+    { "command0", "command_1" },
+    { "toggle_fullscreen_key", "toggle_fullscreen" },
+    { "toggle_sticky_key", "toggle_on_all_workspaces" },
+    { "prev_key", "switch_windows_backward" },
+    { "next_key", "switch_windows" },
+    { "fullscreen_visual_bell", "visual_bell_type" },
+    { "visual_bell", "visual_bell" },
+    { "resize_with_right_button", "resize_with_right_button" },
+    { "mouse_button_modifier", "mouse_button_modifier" },
+    { "window_menu_button", "activate_window_menu" },
+    { "initiate_button", "begin_resize" },
+    { "initiate_button", "begin_move" },
+    { "window_menu_key", "activate_window_menu" },
+    { "initiate_key", "begin_resize" },
+    { "initiate_key", "begin_move" },
+    { "show_desktop_key", "show_desktop" },
+    { "toggle_window_shaded_key", "toggle_shaded" },
+    { "close_window_key", "close" },
+    { "lower_window_key", "lower" },
+    { "raise_window_key", "raise" },
+    { "maximize_window_vertically_key", "maximize_vertically" },
+    { "maximize_window_horizontally_key", "maximize_horizontally" },
+    { "unmaximize_window_key", "unmaximize" },
+    { "maximize_window_key", "maximize" },
+    { "minimize_window_key", "minimize" },
+    { "toggle_window_maximized_key", "toggle_maximized" },
+    { "run_command_terminal_key", "run_command_terminal" },
+    { "run_command_window_screenshot_key", "run_command_window_screenshot" },
+    { "run_command_screenshot_key", "run_command_screenshot" },
+    { "main_menu_key", "panel_main_menu" },
+    { "run_key", "panel_run_dialog" }
+};
+
+const CCSGConfIntegrationCategories ccsGConfIntegrationCategories =
+{
+    METACITY "/general/",
+    "/apps/panel/applets/window_list/prefs/",
+    "/desktop/gnome/applications/terminal/",
+    METACITY "/keybinding_commands/",
+    METACITY "/window_keybindings/",
+    METACITY "/global_keybindings/"
+};
+
+const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames =
+{
+    "core",
+    "thumbnail",
+    "gnomecompat",
+    "rotate",
+    "put",
+    "vpswitch",
+    "commands",
+    "extrawm",
+    "resize",
+    "move",
+    "staticswitcher",
+    "fade",
+    "__special"
+};
+
+
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOptionGConf))
+
+static GHashTable * populateCategoriesHashTables ();
+static GHashTable * populateSpecialTypesHashTables ();
+
 
 typedef struct _CCSGConfIntegrationBackendPrivate CCSGConfIntegrationBackendPrivate;
 
@@ -352,6 +507,7 @@ typedef struct _CCSGNOMEIntegratedSettingDefaultImplPrivate CCSGNOMEIntegratedSe
 struct _CCSGNOMEIntegratedSettingDefaultImplPrivate
 {
     SpecialOptionType type;
+    const char	      *gnomeName;
     CCSIntegratedSetting *sharedIntegratedSetting;
 };
 
@@ -432,6 +588,7 @@ const CCSIntegratedSettingInterface ccsGNOMEIntegratedSettingInterface =
 CCSGNOMEIntegratedSetting *
 ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
 			      SpecialOptionType    type,
+			      const char	   *gnomeName,
 			      CCSObjectAllocationInterface *ai)
 {
     CCSGNOMEIntegratedSetting *setting = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGNOMEIntegratedSetting));
@@ -448,6 +605,7 @@ ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
     }
 
     priv->sharedIntegratedSetting = base;
+    priv->gnomeName = gnomeName;
     priv->type = type;
 
     ccsObjectInit (setting, ai);
@@ -594,6 +752,7 @@ struct _CCSGConfIntegratedSettingFactoryPrivate
 static CCSIntegratedSetting *
 createNewGConfIntegratedSetting (GConfClient *client,
 				 const char  *sectionName,
+				 const char  *gnomeName,
 				 const char  *pluginName,
 				 const char  *settingName,
 				 CCSSettingType type,
@@ -605,7 +764,7 @@ createNewGConfIntegratedSetting (GConfClient *client,
     if (!sharedIntegratedSetting)
 	return NULL;
 
-    CCSGNOMEIntegratedSetting *gnomeIntegratedSetting = ccsGNOMEIntegratedSettingNew (sharedIntegratedSetting, specialOptionType, ai);
+    CCSGNOMEIntegratedSetting *gnomeIntegratedSetting = ccsGNOMEIntegratedSettingNew (sharedIntegratedSetting, specialOptionType, gnomeName, ai);
 
     if (!gnomeIntegratedSetting)
     {
@@ -626,6 +785,7 @@ createNewGConfIntegratedSetting (GConfClient *client,
 
 CCSIntegratedSetting *
 ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+										 const char		     *integratedName,
 										 const char		     *pluginName,
 										 const char		     *settingName,
 										 CCSSettingType		     type)
@@ -640,7 +800,14 @@ ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType 
 	const gchar *sectionName = g_hash_table_lookup (settingsSectionsHashTable, settingName);
 	SpecialOptionType specialType = (SpecialOptionType) GPOINTER_TO_INT (g_hash_table_lookup (settingsSpecialTypesHashTable, settingName));
 
-	return createNewGConfIntegratedSetting (priv->client, sectionName, pluginName, settingName, type, specialType, factory->object.object_allocation);
+	return createNewGConfIntegratedSetting (priv->client,
+						sectionName,
+						integratedName,
+						pluginName,
+						settingName,
+						type,
+						specialType,
+						factory->object.object_allocation);
     }
 
 
@@ -670,6 +837,8 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
     }
 
     priv->client = (GConfClient *) g_object_ref (client);
+    priv->pluginsToSettingsSectionsHashTable = populateCategoriesHashTables ();
+    priv->pluginsToSettingsSpecialTypesHashTable = populateSpecialTypesHashTables ();
 
     ccsObjectInit (factory, ai);
     ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
@@ -685,6 +854,12 @@ ccsGConfIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
 
     if (priv->client)
 	g_object_unref (priv->client);
+
+    if (priv->pluginsToSettingsSectionsHashTable)
+	g_hash_table_unref (priv->pluginsToSettingsSectionsHashTable);
+
+    if (priv->pluginsToSettingsSpecialTypesHashTable)
+	g_hash_table_unref (priv->pluginsToSettingsSpecialTypesHashTable);
 
     ccsObjectFinalize (factory);
     (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
@@ -708,6 +883,334 @@ findDisplaySettingForPlugin (CCSContext *context,
 
     return s;
 }
+
+static void destroyHashTableInternal (void *ht)
+{
+    g_hash_table_unref ((GHashTable *) ht);
+}
+
+static GHashTable *
+populateCategoriesHashTables ()
+{
+    GHashTable *masterHashTable = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, destroyHashTableInternal);
+    GHashTable *coreHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *thumbnailHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *gnomecompatHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *rotateHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *putHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *wallHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *vpswitchHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *commandsHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *extrawmHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *resizeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+
+    const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
+    const CCSGConfIntegrationCategories  *categories = &ccsGConfIntegrationCategories;
+    const CCSGNOMEIntegratedPluginNames  *plugins = &ccsGNOMEIntegratedPluginNames;
+
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->CORE, coreHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->THUMBNAIL, thumbnailHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->GNOMECOMPAT, gnomecompatHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->ROTATE, rotateHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->PUT, putHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->WALL, wallHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->VPSWITCH, vpswitchHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->COMMANDS, commandsHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->EXTRAWM, extrawmHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->STATICSWITCHER, staticswitcherHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
+
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_CLICK_TO_FOCUS.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_RAISE_ON_CLICK.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUTORAISE_DELAY.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUTORAISE.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (thumbnailHashTable, (gpointer) names->THUMBNAIL_CURRENT_VIEWPORT.compizName, (gpointer) categories->APPS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_TERMINAL.compizName, (gpointer) categories->DESKTOP);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_WINDOW_SCREENSHOT.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_SCREENSHOT.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_RIGHT_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_LEFT_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_12_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_11_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_10_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_9_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_8_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_7_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_6_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_5_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_4_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_3_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_2_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_1_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOM_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOP_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_RIGHT_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_LEFT_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOMRIGHT_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOMLEFT_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOPRIGHT_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOPLEFT_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_DOWN_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_UP_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_RIGHT_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_LEFT_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_RIGHT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_LEFT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_DOWN_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_UP_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_12_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_11_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_10_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_9_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_8_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_7_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_6_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_5_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_4_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_3_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_2_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_1_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_RIGHT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_LEFT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_12_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_11_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_10_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_9_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_8_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_7_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_6_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_5_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_4_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_3_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_2_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_1_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND11_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND10_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND9_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND8_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND7_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND6_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND5_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND4_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND3_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND2_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND1_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND0_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND11.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND10.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND9.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND8.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND7.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND6.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND5.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND4.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND3.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND2.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND1.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND0.compizName, (gpointer) categories->KEYBINDING_COMMANDS);
+    g_hash_table_insert (extrawmHashTable, (gpointer) names->EXTRAWM_TOGGLE_FULLSCREEN_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (extrawmHashTable, (gpointer) names->EXTRAWM_TOGGLE_STICKY_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) names->STATICSWITCHER_PREV_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) names->STATICSWITCHER_NEXT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (fadeHashTable, (gpointer) names->FADE_FULLSCREEN_VISUAL_BELL.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (fadeHashTable, (gpointer) names->FADE_VISUAL_BELL.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (specialHashTable, (gpointer) names->NULL_RESIZE_WITH_RIGHT_BUTTON.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (specialHashTable, (gpointer) names->NULL_MOUSE_BUTTON_MODIFIER.compizName, (gpointer) categories->GENERAL);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_WINDOW_MENU_BUTTON.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (resizeHashTable, (gpointer) names->RESIZE_INITIATE_BUTTON.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (moveHashTable, (gpointer) names->MOVE_INITIATE_BUTTON.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_WINDOW_MENU_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (resizeHashTable, (gpointer) names->RESIZE_INITIATE_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (moveHashTable, (gpointer) names->MOVE_INITIATE_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_SHOW_DESKTOP_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_TOGGLE_WINDOW_SHADED_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_CLOSE_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_LOWER_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_RAISE_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_VERTICALLY_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_HORIZONTALLY_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_UNMAXIMIZE_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MINIMIZE_WINDOW_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_TOGGLE_WINDOW_MAXIMIZED_KEY.compizName, (gpointer) categories->WINDOW_KEYBINDINGS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_TERMINAL_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_WINDOW_SCREENSHOT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+
+    return masterHashTable;
+}
+
+
+static GHashTable *
+populateSpecialTypesHashTables ()
+{
+    GHashTable *masterHashTable = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, destroyHashTableInternal);
+    GHashTable *coreHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *thumbnailHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *gnomecompatHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *rotateHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *putHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *wallHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *vpswitchHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *commandsHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *extrawmHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *resizeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+
+    const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
+    const CCSGNOMEIntegratedPluginNames  *plugins = &ccsGNOMEIntegratedPluginNames;
+
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->CORE, coreHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->THUMBNAIL, thumbnailHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->GNOMECOMPAT, gnomecompatHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->ROTATE, rotateHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->PUT, putHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->WALL, wallHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->VPSWITCH, vpswitchHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->COMMANDS, commandsHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->EXTRAWM, extrawmHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->STATICSWITCHER, staticswitcherHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
+
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, GINT_TO_POINTER (OptionBool));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_CLICK_TO_FOCUS.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_RAISE_ON_CLICK.compizName, GINT_TO_POINTER (OptionBool));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUTORAISE_DELAY.compizName, GINT_TO_POINTER (OptionInt));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUTORAISE.compizName, GINT_TO_POINTER (OptionBool));
+    g_hash_table_insert (thumbnailHashTable, (gpointer) names->THUMBNAIL_CURRENT_VIEWPORT.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_TERMINAL.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_WINDOW_SCREENSHOT.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_SCREENSHOT.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_RIGHT_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_LEFT_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_12_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_11_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_10_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_9_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_8_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_7_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_6_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_5_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_4_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_3_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_2_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_1_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOM_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOP_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_RIGHT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_LEFT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOMRIGHT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOMLEFT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOPRIGHT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOPLEFT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_DOWN_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_UP_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_RIGHT_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_LEFT_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_RIGHT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_LEFT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_DOWN_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_UP_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_12_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_11_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_10_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_9_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_8_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_7_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_6_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_5_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_4_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_3_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_2_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_1_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_RIGHT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_LEFT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_12_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_11_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_10_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_9_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_8_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_7_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_6_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_5_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_4_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_3_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_2_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_1_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND11_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND10_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND9_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND8_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND7_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND6_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND5_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND4_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND3_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND2_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND1_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND0_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND11.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND10.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND9.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND8.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND7.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND6.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND5.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND4.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND3.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND2.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND1.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND0.compizName, GINT_TO_POINTER (OptionString));
+    g_hash_table_insert (extrawmHashTable, (gpointer) names->EXTRAWM_TOGGLE_FULLSCREEN_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (extrawmHashTable, (gpointer) names->EXTRAWM_TOGGLE_STICKY_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) names->STATICSWITCHER_PREV_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) names->STATICSWITCHER_NEXT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (fadeHashTable, (gpointer) names->FADE_FULLSCREEN_VISUAL_BELL.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (fadeHashTable, (gpointer) names->FADE_VISUAL_BELL.compizName, GINT_TO_POINTER (OptionBool));
+    g_hash_table_insert (specialHashTable, (gpointer) names->NULL_RESIZE_WITH_RIGHT_BUTTON.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (specialHashTable, (gpointer) names->NULL_MOUSE_BUTTON_MODIFIER.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_WINDOW_MENU_BUTTON.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (resizeHashTable, (gpointer) names->RESIZE_INITIATE_BUTTON.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (moveHashTable, (gpointer) names->MOVE_INITIATE_BUTTON.compizName, GINT_TO_POINTER (OptionSpecial));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_WINDOW_MENU_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (resizeHashTable, (gpointer) names->RESIZE_INITIATE_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (moveHashTable, (gpointer) names->MOVE_INITIATE_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_SHOW_DESKTOP_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_TOGGLE_WINDOW_SHADED_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_CLOSE_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_LOWER_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_RAISE_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_VERTICALLY_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_HORIZONTALLY_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_UNMAXIMIZE_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MINIMIZE_WINDOW_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_TOGGLE_WINDOW_MAXIMIZED_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_TERMINAL_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_WINDOW_SCREENSHOT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, GINT_TO_POINTER (OptionKey));
+
+    return masterHashTable;
+}
+
 
 static int
 ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,

@@ -5715,11 +5715,12 @@ ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *stora
 
 CCSIntegratedSetting *
 ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+									    const char *integratedName,
 									    const char *pluginName,
 									    const char *settingName,
 									    CCSSettingType type)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->createIntegratedSettingForCCSSettingNameAndType) (factory, pluginName, settingName, type);
+    return (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->createIntegratedSettingForCCSSettingNameAndType) (factory, integratedName, pluginName, settingName, type);
 }
 
 static  const CCSPluginInterface ccsDefaultPluginInterface =
