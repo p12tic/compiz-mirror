@@ -678,8 +678,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 
     if (err)
     {
+	ccsError ("%s", err->message);
 	g_error_free (err);
-	ccsError ("error encountered while reading GConf setting");
 	return value;
     }
 
@@ -704,7 +704,6 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	    if (gconfValue->type != GCONF_VALUE_BOOL)
 	    {
 		ccsError ("Expected boolean value");
-		asm ("int $3");
 		break;
 	    }
 
@@ -737,7 +736,6 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
     const char			     *gnomeName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
     GError			     *err;
 
-    // XXX
     switch (type)
     {
 	case TypeInt:
@@ -779,14 +777,14 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 	    }
 	    break;
 	default:
-	    ccsError ("unexpected type, shouldn't be reached!\n");
+	    g_assert_not_reached ();
 	    break;
     }
 
     if (err)
     {
+	ccsError ("%s", err->message);
 	g_error_free (err);
-	ccsError ("encountered error whilst trying to write value");
     }
 }
 
@@ -1858,7 +1856,10 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     }
 
     if (err)
+    {
+	ccsError ("%s", err->message);
 	g_error_free (err);
+    }
 }
 
 static void
