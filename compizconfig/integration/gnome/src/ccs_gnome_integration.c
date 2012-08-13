@@ -333,7 +333,7 @@ const CCSGNOMEIntegratedSettingNames ccsGNOMEIntegratedSettingNames =
     { "autoraise_delay", "auto_raise_delay" },
     { "autoraise", "auto_raise" },
     { "current_viewport", "panel" },
-    { "command_terminal", "gnome" },
+    { "command_terminal", "exec" },
     { "command_window_screenshot", "command_window_screenshot" },
     { "command_screenshot", "command_screenshot" },
     { "rotate_right_window_key", "move_to_workspace_right" },
@@ -481,6 +481,7 @@ const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames =
 
 static GHashTable * populateCategoriesHashTables ();
 static GHashTable * populateSpecialTypesHashTables ();
+static GHashTable * populateSettingNameToGNOMENameHashTables ();
 
 
 typedef struct _CCSGConfIntegrationBackendPrivate CCSGConfIntegrationBackendPrivate;
@@ -666,6 +667,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 {
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
     CCSSettingValue		     *v = calloc (1, sizeof (CCSSettingValue));
+    const char			     *gnomeKeyName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+    char			     *gnomeKeyPath = g_strconcat (priv->sectionName, gnomeKeyName, NULL);
 
     v->isListChild = FALSE;
     v->parent = NULL;
@@ -675,19 +678,22 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
     GError     *err = NULL;
 
     gconfValue = gconf_client_get (priv->client,
-				   ccsGNOMEIntegratedSettingGetGNOMEName (priv->gnomeIntegratedSetting),
+				   gnomeKeyPath,
 				   &err);
+
+    if (!gconfValue)
+    {
+	asm ("int $3");
+	ccsError ("NULL encountered while reading GConf setting");
+	free (gnomeKeyPath);
+	return v;
+    }
 
     if (err)
     {
 	ccsError ("%s", err->message);
 	g_error_free (err);
-	return v;
-    }
-
-    if (!gconfValue)
-    {
-	ccsError ("NULL encountered while reading GConf setting");
+	free (gnomeKeyPath);
 	return v;
     }
 
@@ -727,6 +733,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
     }
 
     gconf_value_free (gconfValue);
+    free (gnomeKeyPath);
 
     return v;
 }
@@ -735,17 +742,18 @@ void
 ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue *v, CCSSettingType type)
 {
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
-    const char			     *gnomeName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+    const char			     *gnomeKeyName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+    char			     *gnomeKeyPath = g_strconcat (priv->sectionName, gnomeKeyName, NULL);
     GError			     *err;
 
     switch (type)
     {
 	case TypeInt:
 	    {
-		int currentValue = gconf_client_get_int (priv->client, gnomeName, &err);
+		int currentValue = gconf_client_get_int (priv->client, gnomeKeyPath, &err);
 
 		if (!err && (currentValue != v->value.asInt))
-		    gconf_client_set_int(priv->client, gnomeName,
+		    gconf_client_set_int(priv->client, gnomeKeyPath,
 					 v->value.asInt, NULL);
 	    }
 	    break;
@@ -754,11 +762,11 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 		Bool     newValue = v->value.asBool;
 		gboolean currentValue;
 
-		currentValue = gconf_client_get_bool (priv->client, gnomeName, &err);
+		currentValue = gconf_client_get_bool (priv->client, gnomeKeyPath, &err);
 
 		if (!err && ((currentValue && !newValue) ||
 			     (!currentValue && newValue)))
-		    gconf_client_set_bool (priv->client, gnomeName,
+		    gconf_client_set_bool (priv->client, gnomeKeyPath,
 					   newValue, NULL);
 	    }
 	    break;
@@ -767,12 +775,12 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 		char  *newValue = v->value.asString;
 		gchar *currentValue;
 
-		currentValue = gconf_client_get_string (priv->client, gnomeName, &err);
+		currentValue = gconf_client_get_string (priv->client, gnomeKeyPath, &err);
 
 		if (!err && currentValue)
 		{
 		    if (strcmp (currentValue, newValue) != 0)
-			gconf_client_set_string (priv->client, gnomeName,
+			gconf_client_set_string (priv->client, gnomeKeyPath,
 						 newValue, NULL);
 		    g_free (currentValue);
 		}
@@ -788,6 +796,8 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 	ccsError ("%s", err->message);
 	g_error_free (err);
     }
+
+    free (gnomeKeyPath);
 }
 
 const char *
@@ -883,6 +893,7 @@ struct _CCSGConfIntegratedSettingFactoryPrivate
     GConfClient *client;
     GHashTable  *pluginsToSettingsSectionsHashTable;
     GHashTable  *pluginsToSettingsSpecialTypesHashTable;
+    GHashTable  *pluginsToSettingNameGNOMENameHashTable;
 };
 
 static CCSIntegratedSetting *
@@ -929,16 +940,19 @@ ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType 
     CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
     GHashTable                              *settingsSectionsHashTable = g_hash_table_lookup (priv->pluginsToSettingsSectionsHashTable, pluginName);
     GHashTable                              *settingsSpecialTypesHashTable = g_hash_table_lookup (priv->pluginsToSettingsSpecialTypesHashTable, pluginName);
+    GHashTable				    *settingsSettingNameGNOMENameHashTable = g_hash_table_lookup (priv->pluginsToSettingNameGNOMENameHashTable, pluginName);
 
     if (settingsSectionsHashTable &&
-	settingsSpecialTypesHashTable)
+	settingsSpecialTypesHashTable &&
+	settingsSettingNameGNOMENameHashTable)
     {
 	const gchar *sectionName = g_hash_table_lookup (settingsSectionsHashTable, settingName);
 	SpecialOptionType specialType = (SpecialOptionType) GPOINTER_TO_INT (g_hash_table_lookup (settingsSpecialTypesHashTable, settingName));
+	const gchar *gintegratedName = g_hash_table_lookup (settingsSettingNameGNOMENameHashTable, settingName);
 
 	return createNewGConfIntegratedSetting (priv->client,
 						sectionName,
-						integratedName,
+						gintegratedName,
 						pluginName,
 						settingName,
 						type,
@@ -975,6 +989,7 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
     priv->client = (GConfClient *) g_object_ref (client);
     priv->pluginsToSettingsSectionsHashTable = populateCategoriesHashTables ();
     priv->pluginsToSettingsSpecialTypesHashTable = populateSpecialTypesHashTables ();
+    priv->pluginsToSettingNameGNOMENameHashTable = populateSettingNameToGNOMENameHashTables ();
 
     ccsObjectInit (factory, ai);
     ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
@@ -996,6 +1011,9 @@ ccsGConfIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
 
     if (priv->pluginsToSettingsSpecialTypesHashTable)
 	g_hash_table_unref (priv->pluginsToSettingsSpecialTypesHashTable);
+
+    if (priv->pluginsToSettingNameGNOMENameHashTable)
+	g_hash_table_unref (priv->pluginsToSettingNameGNOMENameHashTable);
 
     ccsObjectFinalize (factory);
     (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
@@ -1347,6 +1365,166 @@ populateSpecialTypesHashTables ()
     return masterHashTable;
 }
 
+GHashTable *
+populateSettingNameToGNOMENameHashTables ()
+{
+    GHashTable *masterHashTable = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, destroyHashTableInternal);
+    GHashTable *coreHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *thumbnailHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *gnomecompatHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *rotateHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *putHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *wallHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *vpswitchHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *commandsHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *extrawmHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *resizeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+
+    const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
+    const CCSGNOMEIntegratedPluginNames  *plugins = &ccsGNOMEIntegratedPluginNames;
+
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->CORE, coreHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->THUMBNAIL, thumbnailHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->GNOMECOMPAT, gnomecompatHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->ROTATE, rotateHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->PUT, putHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->WALL, wallHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->VPSWITCH, vpswitchHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->COMMANDS, commandsHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->EXTRAWM, extrawmHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->STATICSWITCHER, staticswitcherHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
+
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, (gpointer) names->CORE_AUDIBLE_BELL.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_CLICK_TO_FOCUS.compizName, (gpointer) names->CORE_CLICK_TO_FOCUS.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_RAISE_ON_CLICK.compizName, (gpointer) names->CORE_RAISE_ON_CLICK.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUTORAISE_DELAY.compizName, (gpointer) names->CORE_AUTORAISE_DELAY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUTORAISE.compizName, (gpointer) names->CORE_AUTORAISE.gnomeName);
+    g_hash_table_insert (thumbnailHashTable, (gpointer) names->THUMBNAIL_CURRENT_VIEWPORT.compizName, (gpointer) names->THUMBNAIL_CURRENT_VIEWPORT.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_TERMINAL.compizName, (gpointer) names->GNOMECOMPAT_COMMAND_TERMINAL.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_WINDOW_SCREENSHOT.compizName, (gpointer) names->GNOMECOMPAT_COMMAND_WINDOW_SCREENSHOT.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_COMMAND_SCREENSHOT.compizName, (gpointer) names->GNOMECOMPAT_COMMAND_SCREENSHOT.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_RIGHT_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_RIGHT_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_LEFT_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_LEFT_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_12_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_12_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_11_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_11_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_10_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_10_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_9_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_9_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_8_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_8_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_7_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_7_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_6_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_6_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_5_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_5_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_4_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_4_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_3_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_3_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_2_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_2_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_1_WINDOW_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_1_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOM_KEY.compizName, (gpointer) names->PUT_PUT_BOTTOM_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOP_KEY.compizName, (gpointer) names->PUT_PUT_TOP_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_RIGHT_KEY.compizName, (gpointer) names->PUT_PUT_RIGHT_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_LEFT_KEY.compizName, (gpointer) names->PUT_PUT_LEFT_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOMRIGHT_KEY.compizName, (gpointer) names->PUT_PUT_BOTTOMRIGHT_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_BOTTOMLEFT_KEY.compizName, (gpointer) names->PUT_PUT_BOTTOMLEFT_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOPRIGHT_KEY.compizName, (gpointer) names->PUT_PUT_TOPRIGHT_KEY.gnomeName);
+    g_hash_table_insert (putHashTable, (gpointer) names->PUT_PUT_TOPLEFT_KEY.compizName, (gpointer) names->PUT_PUT_TOPLEFT_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_DOWN_WINDOW_KEY.compizName, (gpointer) names->WALL_DOWN_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_UP_WINDOW_KEY.compizName, (gpointer) names->WALL_UP_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_RIGHT_WINDOW_KEY.compizName, (gpointer) names->WALL_RIGHT_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_LEFT_WINDOW_KEY.compizName, (gpointer) names->WALL_LEFT_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_RIGHT_KEY.compizName, (gpointer) names->WALL_RIGHT_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_LEFT_KEY.compizName, (gpointer) names->WALL_LEFT_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_DOWN_KEY.compizName, (gpointer) names->WALL_DOWN_KEY.gnomeName);
+    g_hash_table_insert (wallHashTable, (gpointer) names->WALL_UP_KEY.compizName, (gpointer) names->WALL_UP_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_12_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_12_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_11_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_11_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_10_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_10_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_9_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_9_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_8_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_8_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_7_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_7_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_6_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_6_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_5_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_5_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_4_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_4_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_3_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_3_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_2_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_2_KEY.gnomeName);
+    g_hash_table_insert (vpswitchHashTable, (gpointer) names->VPSWITCH_SWITCH_TO_1_KEY.compizName, (gpointer) names->VPSWITCH_SWITCH_TO_1_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_RIGHT_KEY.compizName, (gpointer) names->ROTATE_ROTATE_RIGHT_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_LEFT_KEY.compizName, (gpointer) names->ROTATE_ROTATE_LEFT_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_12_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_12_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_11_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_11_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_10_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_10_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_9_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_9_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_8_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_8_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_7_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_7_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_6_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_6_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_5_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_5_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_4_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_4_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_3_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_3_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_2_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_2_KEY.gnomeName);
+    g_hash_table_insert (rotateHashTable, (gpointer) names->ROTATE_ROTATE_TO_1_KEY.compizName, (gpointer) names->ROTATE_ROTATE_TO_1_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND11_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND11_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND10_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND10_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND9_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND9_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND8_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND8_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND7_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND7_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND6_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND6_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND5_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND5_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND4_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND4_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND3_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND3_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND2_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND2_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND1_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND1_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_RUN_COMMAND0_KEY.compizName, (gpointer) names->COMMANDS_RUN_COMMAND0_KEY.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND11.compizName, (gpointer) names->COMMANDS_COMMAND11.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND10.compizName, (gpointer) names->COMMANDS_COMMAND10.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND9.compizName, (gpointer) names->COMMANDS_COMMAND9.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND8.compizName, (gpointer) names->COMMANDS_COMMAND8.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND7.compizName, (gpointer) names->COMMANDS_COMMAND7.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND6.compizName, (gpointer) names->COMMANDS_COMMAND6.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND5.compizName, (gpointer) names->COMMANDS_COMMAND5.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND4.compizName, (gpointer) names->COMMANDS_COMMAND4.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND3.compizName, (gpointer) names->COMMANDS_COMMAND3.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND2.compizName, (gpointer) names->COMMANDS_COMMAND2.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND1.compizName, (gpointer) names->COMMANDS_COMMAND1.gnomeName);
+    g_hash_table_insert (commandsHashTable, (gpointer) names->COMMANDS_COMMAND0.compizName, (gpointer) names->COMMANDS_COMMAND0.gnomeName);
+    g_hash_table_insert (extrawmHashTable, (gpointer) names->EXTRAWM_TOGGLE_FULLSCREEN_KEY.compizName, (gpointer) names->EXTRAWM_TOGGLE_FULLSCREEN_KEY.gnomeName);
+    g_hash_table_insert (extrawmHashTable, (gpointer) names->EXTRAWM_TOGGLE_STICKY_KEY.compizName, (gpointer) names->EXTRAWM_TOGGLE_STICKY_KEY.gnomeName);
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) names->STATICSWITCHER_PREV_KEY.compizName, (gpointer) names->STATICSWITCHER_PREV_KEY.gnomeName);
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) names->STATICSWITCHER_NEXT_KEY.compizName, (gpointer) names->STATICSWITCHER_NEXT_KEY.gnomeName);
+    g_hash_table_insert (fadeHashTable, (gpointer) names->FADE_FULLSCREEN_VISUAL_BELL.compizName, (gpointer) names->FADE_FULLSCREEN_VISUAL_BELL.gnomeName);
+    g_hash_table_insert (fadeHashTable, (gpointer) names->FADE_VISUAL_BELL.compizName, (gpointer) names->FADE_VISUAL_BELL.gnomeName);
+    g_hash_table_insert (specialHashTable, (gpointer) names->NULL_RESIZE_WITH_RIGHT_BUTTON.compizName, (gpointer) names->NULL_RESIZE_WITH_RIGHT_BUTTON.gnomeName);
+    g_hash_table_insert (specialHashTable, (gpointer) names->NULL_MOUSE_BUTTON_MODIFIER.compizName, (gpointer) names->NULL_MOUSE_BUTTON_MODIFIER.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_WINDOW_MENU_BUTTON.compizName, (gpointer) names->CORE_WINDOW_MENU_BUTTON.gnomeName);
+    g_hash_table_insert (resizeHashTable, (gpointer) names->RESIZE_INITIATE_BUTTON.compizName, (gpointer) names->RESIZE_INITIATE_BUTTON.gnomeName);
+    g_hash_table_insert (moveHashTable, (gpointer) names->MOVE_INITIATE_BUTTON.compizName, (gpointer) names->MOVE_INITIATE_BUTTON.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_WINDOW_MENU_KEY.compizName, (gpointer) names->CORE_WINDOW_MENU_KEY.gnomeName);
+    g_hash_table_insert (resizeHashTable, (gpointer) names->RESIZE_INITIATE_KEY.compizName, (gpointer) names->RESIZE_INITIATE_KEY.gnomeName);
+    g_hash_table_insert (moveHashTable, (gpointer) names->MOVE_INITIATE_KEY.compizName, (gpointer) names->MOVE_INITIATE_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_SHOW_DESKTOP_KEY.compizName, (gpointer) names->CORE_SHOW_DESKTOP_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_TOGGLE_WINDOW_SHADED_KEY.compizName, (gpointer) names->CORE_TOGGLE_WINDOW_SHADED_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_CLOSE_WINDOW_KEY.compizName, (gpointer) names->CORE_CLOSE_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_LOWER_WINDOW_KEY.compizName, (gpointer) names->CORE_LOWER_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_RAISE_WINDOW_KEY.compizName, (gpointer) names->CORE_RAISE_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_VERTICALLY_KEY.compizName, (gpointer) names->CORE_MAXIMIZE_WINDOW_VERTICALLY_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_HORIZONTALLY_KEY.compizName, (gpointer) names->CORE_MAXIMIZE_WINDOW_HORIZONTALLY_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_UNMAXIMIZE_WINDOW_KEY.compizName, (gpointer) names->CORE_UNMAXIMIZE_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MAXIMIZE_WINDOW_KEY.compizName, (gpointer) names->CORE_MAXIMIZE_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_MINIMIZE_WINDOW_KEY.compizName, (gpointer) names->CORE_MINIMIZE_WINDOW_KEY.gnomeName);
+    g_hash_table_insert (coreHashTable, (gpointer) names->CORE_TOGGLE_WINDOW_MAXIMIZED_KEY.compizName, (gpointer) names->CORE_TOGGLE_WINDOW_MAXIMIZED_KEY.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_TERMINAL_KEY.compizName, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_TERMINAL_KEY.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_WINDOW_SCREENSHOT_KEY.compizName, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_WINDOW_SCREENSHOT_KEY.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.gnomeName);
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, (gpointer) names->GNOMECOMPAT_RUN_KEY.gnomeName);
+
+    return masterHashTable;
+}
+
 
 static CCSIntegratedSetting *
 ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
@@ -1414,8 +1592,8 @@ gnomeGConfValueChanged (GConfClient *client,
 {
     CCSIntegration *integration = (CCSIntegration *)user_data;
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-    char       *keyName = (char*) gconf_entry_get_key (entry);
-    int        i, last = 0, num = 0;
+    const gchar *keyName = (char*) gconf_entry_get_key (entry);
+    gchar       *baseName = g_path_get_basename (keyName);
 
     /* We don't care if integration is not enabled */
     if (!ccsGetIntegrationEnabled (priv->context))
@@ -1423,29 +1601,13 @@ gnomeGConfValueChanged (GConfClient *client,
 
     CCSIntegratedSettingList settingList = ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (priv->storage,
 													ccsGNOMEIntegrationFindSettingsMatchingPredicate,
-													keyName);
+													baseName);
 
     ccsIntegrationUpdateIntegratedSettings (integration,
 					    priv->context,
 					    settingList);
 
-    /* we have to loop multiple times here, because one Gnome
-       option may be integrated with multiple Compiz options */
-    while (1)
-    {
-	for (i = last, num = -1; i < N_SOPTIONS; i++)
-	{
-	    if (strcmp (specialOptions[i].gnomeName, keyName) == 0)
-	    {
-		num = i;
-		last = i + 1;
-		break;
-	    }
-	}
-
-	if (num < 0)
-	    break;
-    }
+    g_free (baseName);
 }
 
 static void
