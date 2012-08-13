@@ -932,7 +932,6 @@ createNewGConfIntegratedSetting (GConfClient *client,
 
 CCSIntegratedSetting *
 ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
-										 const char		     *integratedName,
 										 const char		     *pluginName,
 										 const char		     *settingName,
 										 CCSSettingType		     type)
@@ -948,11 +947,11 @@ ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType 
     {
 	const gchar *sectionName = g_hash_table_lookup (settingsSectionsHashTable, settingName);
 	SpecialOptionType specialType = (SpecialOptionType) GPOINTER_TO_INT (g_hash_table_lookup (settingsSpecialTypesHashTable, settingName));
-	const gchar *gintegratedName = g_hash_table_lookup (settingsSettingNameGNOMENameHashTable, settingName);
+	const gchar *integratedName = g_hash_table_lookup (settingsSettingNameGNOMENameHashTable, settingName);
 
 	return createNewGConfIntegratedSetting (priv->client,
 						sectionName,
-						gintegratedName,
+						integratedName,
 						pluginName,
 						settingName,
 						type,
@@ -2217,7 +2216,6 @@ ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
     for (; i < N_SOPTIONS; i++)
     {
 	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
-														    specialOptions[i].gnomeName,
 														    specialOptions[i].pluginName,
 														    specialOptions[i].settingName,
 														    TypeInt);

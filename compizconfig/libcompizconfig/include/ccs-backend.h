@@ -136,7 +136,6 @@ typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
 typedef struct _CCSIntegratedSettingFactoryInterface CCSIntegratedSettingFactoryInterface;
 
 typedef CCSIntegratedSetting * (*CCSIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType) (CCSIntegratedSettingFactory *factory,
-													      const char		  *integratedName,
 													      const char		  *pluginName,
 													      const char		  *settingName,
 													      CCSSettingType		  type);
@@ -155,7 +154,6 @@ unsigned int ccsCCSIntegratedSettingFactoryInterfaceGetType ();
 
 CCSIntegratedSetting *
 ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
-									    const char			*integratedName,
 									    const char			*pluginName,
 									    const char			*settingName,
 									    CCSSettingType		type);
