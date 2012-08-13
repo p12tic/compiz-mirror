@@ -180,12 +180,12 @@ extern const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames;
 
 
 CCSIntegration *
-ccsGConfIntegrationBackendNew (CCSBackend *backend,
+ccsGNOMEIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai);
 
 CCSIntegration *
-ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
+ccsGNOMEIntegrationBackendNewWithClient (CCSBackend *backend,
 					 CCSContext *context,
 					 CCSObjectAllocationInterface *ai,
 					 GConfClient *client);

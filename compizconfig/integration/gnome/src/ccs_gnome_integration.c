@@ -480,9 +480,9 @@ ccsGNOMEIntegratedSettingsList ()
 }
 
 
-typedef struct _CCSGConfIntegrationBackendPrivate CCSGConfIntegrationBackendPrivate;
+typedef struct _ccsGNOMEIntegrationBackendPrivate ccsGNOMEIntegrationBackendPrivate;
 
-struct _CCSGConfIntegrationBackendPrivate
+struct _ccsGNOMEIntegrationBackendPrivate
 {
     CCSBackend *backend;
     CCSContext *context;
@@ -1522,11 +1522,11 @@ populateSettingNameToGNOMENameHashTables ()
 
 
 static CCSIntegratedSetting *
-ccsGConfIntegrationBackendGetIntegratedSetting (CCSIntegration *integration,
+ccsGNOMEIntegrationBackendGetIntegratedSetting (CCSIntegration *integration,
 						const char		  *pluginName,
 						const char		  *settingName)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 															  pluginName,
 															  settingName);
@@ -1557,7 +1557,7 @@ gnomeGConfValueChanged (GConfClient *client,
 			gpointer    user_data)
 {
     CCSIntegration *integration = (CCSIntegration *)user_data;
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     const gchar *keyName = (char*) gconf_entry_get_key (entry);
     gchar       *baseName = g_path_get_basename (keyName);
 
@@ -1581,7 +1581,7 @@ finiGConfClient (CCSIntegration *integration)
 {
     int i;
 
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (priv->client)
     {
@@ -1609,7 +1609,7 @@ registerGConfClient (CCSIntegration *integration,
 {
     int i;
 
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
@@ -1625,7 +1625,7 @@ registerGConfClient (CCSIntegration *integration,
 static void
 unregisterAllIntegratedOptions (CCSIntegration *integration)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (priv->storage)
 	ccsIntegratedSettingsStorageDefaultImplFree (priv->storage);
@@ -1641,7 +1641,7 @@ static void
 registerAllIntegratedOptions (CCSIntegration *integration,
 			      CCSObjectAllocationInterface *ai)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     unregisterAllIntegratedOptions (integration);
 
     priv->factory = ccsGConfIntegratedSettingFactoryNew (priv->client, ai);
@@ -1665,7 +1665,7 @@ registerAllIntegratedOptions (CCSIntegration *integration,
 static void
 initGConfClient (CCSIntegration *integration)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (priv->client)
 	finiGConfClient (integration);
@@ -1708,7 +1708,7 @@ getButtonBindingForSetting (CCSContext   *context,
 }
 
 static Bool
-ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
+ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
 						 CCSIntegratedSetting   *integratedSetting)
@@ -1717,7 +1717,7 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
     CCSSettingValue *v = NULL;
     CCSSettingType  type = TypeNum;
 
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     
     if (!priv->client)
 	initGConfClient (integration);
@@ -1922,7 +1922,7 @@ setButtonBindingForSetting (CCSContext   *context,
 }
 
 static void
-ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
+ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  CCSContext		 *context,
 						  CCSSetting		 *setting,
 						  CCSIntegratedSetting   *integratedSetting)
@@ -1930,7 +1930,7 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     GError     *err = NULL;
     CCSSettingType type = TypeNum;
 
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (!priv->client)
 	initGConfClient (integration);
@@ -2061,11 +2061,11 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 }
 
 static void
-ccsGConfIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
+ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 						    CCSContext	 *context,
 						    CCSIntegratedSettingList integratedSettings)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     Bool needInit = TRUE;
 
     CCSIntegratedSettingList iter = integratedSettings;
@@ -2133,9 +2133,9 @@ ccsGConfIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 }
 
 static void
-ccsGConfIntegrationBackendFree (CCSIntegration *integration)
+ccsGNOMEIntegrationBackendFree (CCSIntegration *integration)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     finiGConfClient (integration);
 
@@ -2145,20 +2145,20 @@ ccsGConfIntegrationBackendFree (CCSIntegration *integration)
     free (integration);
 }
 
-const CCSIntegrationInterface ccsGConfIntegrationBackendInterface =
+const CCSIntegrationInterface ccsGNOMEIntegrationBackendInterface =
 {
-    ccsGConfIntegrationBackendGetIntegratedSetting,
-    ccsGConfIntegrationBackendReadOptionIntoSetting,
-    ccsGConfIntegrationBackendWriteOptionFromSetting,
-    ccsGConfIntegrationBackendUpdateIntegratedSettings,
-    ccsGConfIntegrationBackendFree
+    ccsGNOMEIntegrationBackendGetIntegratedSetting,
+    ccsGNOMEIntegrationBackendReadOptionIntoSetting,
+    ccsGNOMEIntegrationBackendWriteOptionFromSetting,
+    ccsGNOMEIntegrationBackendUpdateIntegratedSettings,
+    ccsGNOMEIntegrationBackendFree
 };
 
-static CCSGConfIntegrationBackendPrivate *
+static ccsGNOMEIntegrationBackendPrivate *
 addPrivate (CCSIntegration *backend,
 	    CCSObjectAllocationInterface *ai)
 {
-    CCSGConfIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGConfIntegrationBackendPrivate));
+    ccsGNOMEIntegrationBackendPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (ccsGNOMEIntegrationBackendPrivate));
 
     if (!priv)
     {
@@ -2172,7 +2172,7 @@ addPrivate (CCSIntegration *backend,
 }
 
 static CCSIntegration *
-ccsGConfIntegrationBackendNewCommon (CCSBackend *backend,
+ccsGNOMEIntegrationBackendNewCommon (CCSBackend *backend,
 				     CCSContext *context,
 				     CCSObjectAllocationInterface *ai)
 {
@@ -2183,14 +2183,14 @@ ccsGConfIntegrationBackendNewCommon (CCSBackend *backend,
 
     ccsObjectInit (integration, ai);
 
-    CCSGConfIntegrationBackendPrivate *priv = addPrivate (integration, ai);
+    ccsGNOMEIntegrationBackendPrivate *priv = addPrivate (integration, ai);
     priv->backend = backend;
     priv->context = context;
     priv->factory = NULL;
     priv->storage = NULL;
 
     ccsObjectAddInterface (integration,
-			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,
+			   (const CCSInterface *) &ccsGNOMEIntegrationBackendInterface,
 			   GET_INTERFACE_TYPE (CCSIntegrationInterface));
 
     ccsIntegrationRef (integration);
@@ -2199,21 +2199,21 @@ ccsGConfIntegrationBackendNewCommon (CCSBackend *backend,
 }
 
 CCSIntegration *
-ccsGConfIntegrationBackendNew (CCSBackend *backend,
+ccsGNOMEIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
 			       CCSObjectAllocationInterface *ai)
 {
-    return ccsGConfIntegrationBackendNewCommon (backend, context, ai);
+    return ccsGNOMEIntegrationBackendNewCommon (backend, context, ai);
 }
 
 CCSIntegration *
-ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
+ccsGNOMEIntegrationBackendNewWithClient (CCSBackend *backend,
 					 CCSContext *context,
 					 CCSObjectAllocationInterface *ai,
 					 GConfClient *client)
 {
-    CCSIntegration *integration = ccsGConfIntegrationBackendNewCommon (backend, context, ai);
-    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    CCSIntegration *integration = ccsGNOMEIntegrationBackendNewCommon (backend, context, ai);
+    ccsGNOMEIntegrationBackendPrivate *priv = (ccsGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     priv->client = client;
 

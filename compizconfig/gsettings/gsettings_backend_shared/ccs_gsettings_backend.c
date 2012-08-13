@@ -468,7 +468,7 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
     g_free (currentProfilePath);
 
 #ifdef USE_GCONF
-    priv->integration = ccsGConfIntegrationBackendNew (backend, context, backend->object.object_allocation);
+    priv->integration = ccsGNOMEIntegrationBackendNew (backend, context, backend->object.object_allocation);
 #else
     priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
 #endif

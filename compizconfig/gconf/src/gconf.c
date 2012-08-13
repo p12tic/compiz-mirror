@@ -175,7 +175,7 @@ static void
 initClient (CCSBackend *backend, CCSContext *context)
 {
     client = gconf_client_get_for_engine (conf);
-    integration = ccsGConfIntegrationBackendNewWithClient (backend,
+    integration = ccsGNOMEIntegrationBackendNewWithClient (backend,
 							   context,
 							   &ccsDefaultObjectAllocator,
 							   client);
