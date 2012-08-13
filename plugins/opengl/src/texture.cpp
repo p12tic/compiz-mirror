@@ -613,8 +613,6 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
 
     attribs[i++] = GLX_TEXTURE_FORMAT_EXT;
     attribs[i++] = config->textureFormat;
-    attribs[i++] = GLX_MIPMAP_TEXTURE_EXT;
-    attribs[i++] = config->mipmap;
 
     bool pot = POWER_OF_TWO (width) && POWER_OF_TWO (height);
 
@@ -627,8 +625,12 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
     else if (config->textureTargets & GLX_TEXTURE_RECTANGLE_BIT_EXT)
 	target = GLX_TEXTURE_RECTANGLE_EXT;
 
-    mipmap = GL::generateMipmap != NULL &&
+    mipmap = config->mipmap &&
+             GL::generateMipmap != NULL &&
              (pot || GL::textureNonPowerOfTwoMipmap);
+
+    attribs[i++] = GLX_MIPMAP_TEXTURE_EXT;
+    attribs[i++] = mipmap;
 
     /* Workaround for broken texture from pixmap implementations,
        that don't advertise any texture target in the fbconfig. */

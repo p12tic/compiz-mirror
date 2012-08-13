@@ -1030,16 +1030,12 @@ GLScreen::GLScreen (CompScreen *s) :
 
 	    depth = value;
 
-	    if (GL::fboSupported)
-	    {
-		(*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
-					  GLX_BIND_TO_MIPMAP_TEXTURE_EXT,
-					  &value);
-		if (value < mipmap)
-		    continue;
+	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
+	                              GLX_BIND_TO_MIPMAP_TEXTURE_EXT, &value);
+	    if (value < mipmap)
+		continue;
 
-		mipmap = value;
-	    }
+	    mipmap = value;
 
 	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
 				      GLX_Y_INVERTED_EXT, &value);
