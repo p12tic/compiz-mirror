@@ -862,20 +862,10 @@ ccsFreeSubGroup (CCSSubGroup * s)
     free (s);
 }
 
-void
-ccsFreeSettingValue (CCSSettingValue * v)
+static void
+ccsFreeSettingValueCommon (CCSSettingValue *v,
+			   CCSSettingType  type)
 {
-    if (!v)
-	return;
-
-    if (!v->parent)
-	return;
-
-    CCSSettingType type = ccsSettingGetType (v->parent);
-
-    if (v->isListChild)
-	type = ccsSettingGetInfo (v->parent)->forList.listType;
-
     switch (type)
     {
     case TypeString:
@@ -891,9 +881,38 @@ ccsFreeSettingValue (CCSSettingValue * v)
     default:
 	break;
     }
+}
+
+void
+ccsFreeSettingValue (CCSSettingValue * v)
+{
+    if (!v)
+	return;
+
+    if (!v->parent)
+    {
+	ccsError ("cannot free value without parent - use ccsFreeSettingValueWithType and specify type instead");
+	return;
+    }
+
+    CCSSettingType type = ccsSettingGetType (v->parent);
+
+    if (v->isListChild)
+	type = ccsSettingGetInfo (v->parent)->forList.listType;
+
+    ccsFreeSettingValueCommon (v, type);
 
     if (v != ccsSettingGetDefaultValue (v->parent))
 	free (v);
+}
+
+void
+ccsFreeSettingValueWithType (CCSSettingValue *v,
+			     CCSSettingType  type)
+{
+    ccsFreeSettingValueCommon (v, type);
+
+    free (v);
 }
 
 void
@@ -1281,9 +1300,9 @@ void ccsFreeIntegration (CCSIntegration *integration)
 
 static CCSIntegratedSetting *
 ccsNullIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
-						   const char		 *pluginName,
-						   const char		 *settingName,
-						   int		   *index)
+						   const char	  *pluginName,
+						   const char	  *settingName,
+						   int		  *index)
 {
     return NULL;
 }
@@ -5582,12 +5601,12 @@ CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin)
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetPluginStrExtensions) (plugin);
 }
 
-CCSSettingValue ccsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingType type)
+CCSSettingValue * ccsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingType type)
 {
     return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->readValue) (setting, type);
 }
 
-void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value, CCSSettingType type)
+void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue *value, CCSSettingType type)
 {
     (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->writeValue) (setting, value, type);
 }
@@ -5623,23 +5642,20 @@ struct _CCSSharedIntegratedSettingPrivate
     CCSSettingType type;
 };
 
-static CCSSettingValue ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting *setting,
-							    CCSSettingType	 type)
+static CCSSettingValue * ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting *setting,
+							      CCSSettingType	 type)
 {
-    CCSSettingValue value;
-    memset (&value, 0, sizeof (CCSSettingValue));
+    ccsWarning ("unexpected call to ccsSharedIntegratedSettingReadValue on %s", ccsIntegratedSettingSettingName (setting));
 
-    ccsWarning ("unexpected call to ccsSharedIntegratedSettingReadValue on %p", setting);
-
-    return value;
+    return NULL;
 }
 
 static void
 ccsSharedIntegratedSettingWriteValue (CCSIntegratedSetting *setting,
-				      CCSSettingValue	   value,
+				      CCSSettingValue	   *value,
 				      CCSSettingType	   type)
 {
-    ccsWarning ("unexpected call to ccsSharedIntegratedSettingWriteValue on %p", setting);
+    ccsWarning ("unexpected call to ccsSharedIntegratedSettingWriteValue on %s", ccsIntegratedSettingSettingName (setting));
 }
 
 static const char *

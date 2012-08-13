@@ -706,6 +706,8 @@ void ccsFreeSetting (CCSSetting *setting);
 void ccsFreeGroup (CCSGroup *group);
 void ccsFreeSubGroup (CCSSubGroup *subGroup);
 void ccsFreeSettingValue (CCSSettingValue *value);
+void ccsFreeSettingValueWithType (CCSSettingValue *v,
+				  CCSSettingType  type);
 void ccsFreePluginConflict (CCSPluginConflict *value);
 void ccsFreeBackendInfo (CCSBackendInfo *value);
 void ccsFreeIntDesc (CCSIntDesc *value);

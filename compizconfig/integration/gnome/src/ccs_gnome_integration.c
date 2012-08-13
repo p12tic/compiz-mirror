@@ -30,8 +30,8 @@
  *	Sam Spilsbury <sam.spilsbury@canonical.com>
  *
  **/
-#ifdef USE_GCONF
 
+#ifdef USE_GCONF
 #define METACITY "/apps/metacity"
 #define NUM_WATCHED_DIRS 3
 
@@ -536,7 +536,7 @@ ccsGNOMEIntegratedSettingGetGNOMENameDefault (CCSGNOMEIntegratedSetting *setting
     return priv->gnomeName;
 }
 
-CCSSettingValue
+CCSSettingValue *
 ccsGNOMEIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingType type)
 {
     CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
@@ -545,7 +545,7 @@ ccsGNOMEIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 }
 
 void
-ccsGNOMEIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value, CCSSettingType type)
+ccsGNOMEIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue *value, CCSSettingType type)
 {
     CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
 
@@ -661,13 +661,15 @@ ccsGConfIntegratedSettingGetGNOMEName (CCSGNOMEIntegratedSetting *setting)
     return ccsGNOMEIntegratedSettingGetGNOMEName (priv->gnomeIntegratedSetting);
 }
 
-CCSSettingValue
+CCSSettingValue *
 ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingType type)
 {
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
-    CCSSettingValue		     value;
+    CCSSettingValue		     *v = calloc (1, sizeof (CCSSettingValue));
 
-    memset (&value, 0, sizeof (CCSSettingValue));
+    v->isListChild = FALSE;
+    v->parent = NULL;
+    v->refCount = 1;
 
     GConfValue *gconfValue;
     GError     *err = NULL;
@@ -680,13 +682,13 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
     {
 	ccsError ("%s", err->message);
 	g_error_free (err);
-	return value;
+	return v;
     }
 
     if (!gconfValue)
     {
 	ccsError ("NULL encountered while reading GConf setting");
-	return value;
+	return v;
     }
 
     switch (type)
@@ -698,7 +700,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 		break;
 	    }
 
-	    value.value.asInt = gconf_value_get_int (gconfValue);
+	    v->value.asInt = gconf_value_get_int (gconfValue);
 	    break;
 	case TypeBool:
 	    if (gconfValue->type != GCONF_VALUE_BOOL)
@@ -707,7 +709,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 		break;
 	    }
 
-	    value.value.asBool = gconf_value_get_bool (gconfValue) ? TRUE : FALSE;
+	    v->value.asBool = gconf_value_get_bool (gconfValue) ? TRUE : FALSE;
 	    break;
 	case TypeString:
 	    if (gconfValue->type != GCONF_VALUE_STRING)
@@ -718,7 +720,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 
 	    const char *str = gconf_value_get_string (gconfValue);
 
-	    value.value.asString = strdup (str ? str : "");
+	    v->value.asString = strdup (str ? str : "");
 	    break;
 	default:
 	    g_assert_not_reached ();
@@ -726,11 +728,11 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 
     gconf_value_free (gconfValue);
 
-    return value;
+    return v;
 }
 
 void
-ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue value, CCSSettingType type)
+ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue *v, CCSSettingType type)
 {
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
     const char			     *gnomeName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
@@ -742,14 +744,14 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 	    {
 		int currentValue = gconf_client_get_int (priv->client, gnomeName, &err);
 
-		if (!err && (currentValue != value.value.asInt))
+		if (!err && (currentValue != v->value.asInt))
 		    gconf_client_set_int(priv->client, gnomeName,
-					 value.value.asInt, NULL);
+					 v->value.asInt, NULL);
 	    }
 	    break;
 	case TypeBool:
 	    {
-		Bool     newValue = value.value.asBool;
+		Bool     newValue = v->value.asBool;
 		gboolean currentValue;
 
 		currentValue = gconf_client_get_bool (priv->client, gnomeName, &err);
@@ -762,7 +764,7 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 	    break;
 	case TypeString:
 	    {
-		char  *newValue = value.value.asString;
+		char  *newValue = v->value.asString;
 		gchar *currentValue;
 
 		currentValue = gconf_client_get_string (priv->client, gnomeName, &err);
@@ -1509,11 +1511,12 @@ static unsigned int
 getGnomeMouseButtonModifier (CCSIntegratedSetting *mouseButtonModifierSetting)
 {
     unsigned int modMask = 0;
-    CCSSettingValue v = ccsIntegratedSettingReadValue (mouseButtonModifierSetting, TypeString);
+    CCSSettingType type = TypeString;
+    CCSSettingValue *v = ccsIntegratedSettingReadValue (mouseButtonModifierSetting, type);
 
-    modMask = ccsStringToModifiers (v.value.asString);
+    modMask = ccsStringToModifiers (v->value.asString);
 
-    free (v.value.asString);
+    ccsFreeSettingValueWithType (v, type);
 
     return modMask;
 }
@@ -1543,6 +1546,8 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 int		       index)
 {
     Bool       ret = FALSE;
+    CCSSettingValue *v = NULL;
+    CCSSettingType  type = TypeNum;
 
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     
@@ -1557,19 +1562,25 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
     switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting)) {
     case OptionInt:
 	{
-	    ccsSetInt (setting, ccsIntegratedSettingReadValue (integratedSetting, TypeInt).value.asInt, TRUE);
+	    type = TypeInt;
+	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
+	    ccsSetInt (setting, v->value.asInt, TRUE);
 	    ret = TRUE;
 	}
 	break;
     case OptionBool:
 	{
-	    ccsSetBool (setting, ccsIntegratedSettingReadValue (integratedSetting, TypeBool).value.asBool, TRUE);
+	    type = TypeBool;
+	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
+	    ccsSetBool (setting, v->value.asBool, TRUE);
 	    ret = TRUE;
 	}
 	break;
     case OptionString:
 	{
-	    char *str = ccsIntegratedSettingReadValue (integratedSetting, TypeString).value.asString;
+	    type = TypeString;
+	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
+	    char *str = v->value.asString;
 
 	    ccsSetString (setting, str, TRUE);
 	    ret = TRUE;
@@ -1577,21 +1588,20 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	break;
     case OptionKey:
 	{
-	    CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeString);
+	    type = TypeString;
+	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
-	    if (v.value.asString)
+	    if (v->value.asString)
 	    {
 		CCSSettingKeyValue key;
 
 		memset (&key, 0, sizeof (CCSSettingKeyValue));
 		ccsGetKey (setting, &key);
-		if (ccsStringToKeyBinding (v.value.asString, &key))
+		if (ccsStringToKeyBinding (v->value.asString, &key))
 		{
 		    ccsSetKey (setting, key, TRUE);
 		    ret = TRUE;
 		}
-
-		free (v.value.asString);
 	    }
 	}
 	break;
@@ -1602,17 +1612,19 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 
 	    if (strcmp (settingName, "current_viewport") == 0)
 	    {
-		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeBool);
+		type = TypeBool;
+		v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
-		Bool showAll = v.value.asBool;
+		Bool showAll = v->value.asBool;
 		ccsSetBool (setting, !showAll, TRUE);
 		ret = TRUE;
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeString);
+		type = TypeString;
+		v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
-		const char *value = v.value.asString;
+		const char *value = v->value.asString;
 		if (value)
 		{
 		    Bool fullscreen;
@@ -1621,14 +1633,13 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		    ccsSetBool (setting, fullscreen, TRUE);
 		    ret = TRUE;
 		}
-
-		free (v.value.asString);
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
-		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeString);
+		type = TypeString;
+		v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
-		const char *focusMode = v.value.asString;
+		const char *focusMode = v->value.asString;
 
 		if (focusMode)
 		{
@@ -1636,8 +1647,6 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		    ccsSetBool (setting, clickToFocus, TRUE);
 		    ret = TRUE;
 		}
-
-		free (v.value.asString);
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
@@ -1661,10 +1670,11 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
-		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSettings->data, TypeBool);
+		type = TypeBool;
+		v = ccsIntegratedSettingReadValue (integratedSettings->data, type);
 
 		resizeWithRightButton =
-		   v.value.asBool;
+		   v->value.asBool;
 
 		if (strcmp (settingName, "window_menu_button") == 0)
 		    button.button = resizeWithRightButton ? 2 : 3;
@@ -1683,6 +1693,9 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	break;
     }
 
+    if (v)
+	ccsFreeSettingValueWithType (v, type);
+
     return ret;
 }
 
@@ -1691,18 +1704,23 @@ setGnomeMouseButtonModifier (CCSIntegratedSetting *setting,
 			     unsigned int modMask)
 {
     char   *modifiers;
+    CCSSettingValue *v = calloc (1, sizeof (CCSSettingValue));
+
+    v->isListChild = FALSE;
+    v->parent = NULL;
+    v->refCount = 1;
 
     modifiers = ccsModifiersToString (modMask);
     if (!modifiers)
+    {
+	ccsFreeSettingValueWithType (v, TypeString);
 	return FALSE;
+    }
 
-    CCSSettingValue value;
-    memset (&value, 0, sizeof (CCSSettingValue));
+    v->value.asString = modifiers;
+    ccsIntegratedSettingWriteValue (setting, v, TypeString);
 
-    value.value.asString = modifiers;
-    ccsIntegratedSettingWriteValue (setting, value, TypeString);
-
-    free (modifiers);
+    ccsFreeSettingValueWithType (v, TypeString);
 
     return TRUE;
 }
@@ -1743,24 +1761,25 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  int			 index)
 {
     GError     *err = NULL;
+    CCSSettingType type = TypeNum;
 
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (!priv->client)
 	initGConfClient (integration);
 
-    CCSSettingValue value = (*(ccsSettingGetValue (setting)));
+    CCSSettingValue *v = ccsSettingGetValue (setting);
 
     switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
     {
     case OptionInt:
-	ccsIntegratedSettingWriteValue (integratedSetting, value, TypeInt);
+	ccsIntegratedSettingWriteValue (integratedSetting, v, TypeInt);
 	break;
     case OptionBool:
-	ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
+	ccsIntegratedSettingWriteValue (integratedSetting, v, TypeBool);
 	break;
     case OptionString:
-	ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
+	ccsIntegratedSettingWriteValue (integratedSetting, v, TypeString);
 	break;
     case OptionKey:
 	{   
@@ -1775,7 +1794,9 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		    newValue[0] = 'd';
 		}
 
-		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
+		type = TypeString;
+
+		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
 		free (newValue);
 	    }
 	}
@@ -1784,29 +1805,34 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	{
 	    const char *settingName = ccsSettingGetName (setting);
 	    const char *pluginName  = ccsPluginGetName (ccsSettingGetParent (setting));
+	    CCSSettingValue *newValue = calloc (1, sizeof (CCSSettingValue));
 
-	    /* ccsIntegratedSettingWriteValue isn't expecting a copy, hence the casts
-	     * to (char *) */
+	    newValue->isListChild = FALSE;
+	    newValue->parent = NULL;
+	    newValue->refCount = 1;
 
 	    if (strcmp (settingName, "current_viewport") == 0)
 	    {
-		value.value.asBool = !value.value.asBool;
+		newValue->value.asBool = !v->value.asBool;
+		type = TypeBool;
 
-		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeBool);
+		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		const char *newValue = value.value.asBool ? "fullscreen" : "frame_flash";
-		value.value.asString = (char *) newValue;
+		const char *newValueString = v->value.asBool ? "fullscreen" : "frame_flash";
+		newValue->value.asString = strdup (newValueString);
+		type = TypeString;
 
-		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
+		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
-		const char *newValue = value.value.asBool ? "click" : "sloppy";
-		value.value.asString = (char *) newValue;
+		const char *newValueString = v->value.asBool ? "click" : "sloppy";
+		newValue->value.asString = strdup (newValueString);
+		type = TypeString;
 
-		ccsIntegratedSettingWriteValue (integratedSetting, value, TypeString);
+		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
@@ -1829,8 +1855,10 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
-		value.value.asBool = resizeWithRightButton;
-		ccsIntegratedSettingWriteValue (integratedSettings->data, value, TypeBool);
+		newValue->value.asBool = resizeWithRightButton;
+		type = TypeBool;
+
+		ccsIntegratedSettingWriteValue (integratedSettings->data, newValue, type);
 
 		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
@@ -1851,6 +1879,9 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						modMask);
 		}
 	    }
+
+	    if (newValue)
+		ccsFreeSettingValueWithType (newValue, type);
 	}
      	break;
     }
@@ -1930,7 +1961,6 @@ ccsGConfIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 	    }
 	}
 
-	g_print ("name: %s\n", ccsIntegratedSettingSettingName (iter->data));
 	iter = iter->next;
     }
 }
