@@ -1303,7 +1303,8 @@ const CCSIntegrationInterface ccsNullIntegrationBackendInterface =
 {
     ccsNullIntegrationBackendGetIntegratedOptionIndex,
     ccsNullIntegrationBackendReadOptionIntoSetting,
-    ccsNullIntegrationBackendWriteSettingIntoOption
+    ccsNullIntegrationBackendWriteSettingIntoOption,
+    ccsNullIntegrationBackendFree
 };
 
 CCSIntegration *
