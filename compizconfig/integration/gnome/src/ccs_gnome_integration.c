@@ -40,6 +40,7 @@
 #include <ccs.h>
 #include <ccs-backend.h>
 #include <ccs-object.h>
+#include <gio/gio.h>
 #include <gconf/gconf.h>
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
@@ -476,12 +477,288 @@ const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames =
     "__special"
 };
 
+typedef struct _CCSGNOMEIntegratedSettingsList
+{
+    const char *pluginName;
+    const char *settingName;
+} CCSGNOMEIntegratedSettingsList;
+
+
+
+#define N_INTEGRATED_SETTINGS (sizeof (ccsGNOMEIntegratedSettingList) / sizeof (CCSGNOMEIntegratedSettingList))
+
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOptionGConf))
 
 static GHashTable * populateCategoriesHashTables ();
 static GHashTable * populateSpecialTypesHashTables ();
 static GHashTable * populateSettingNameToGNOMENameHashTables ();
+
+static gpointer
+ccsGNOMEIntegrationInitializeIntegratedSettingsList (gpointer data)
+{
+    CCSGNOMEIntegratedSettingsList *array = (CCSGNOMEIntegratedSettingsList *) data;
+    const CCSGNOMEIntegratedPluginNames  *plugins = &ccsGNOMEIntegratedPluginNames;
+    const CCSGNOMEIntegratedSettingNames *settings = &ccsGNOMEIntegratedSettingNames;
+
+    array[0].pluginName = plugins->CORE;
+    array[0].settingName = settings->CORE_AUDIBLE_BELL.compizName;
+    array[1].pluginName = plugins->CORE;
+    array[1].settingName = settings->CORE_CLICK_TO_FOCUS.compizName;
+    array[2].pluginName = plugins->CORE;
+    array[2].settingName = settings->CORE_RAISE_ON_CLICK.compizName;
+    array[3].pluginName = plugins->CORE;
+    array[3].settingName = settings->CORE_AUTORAISE_DELAY.compizName;
+    array[4].pluginName = plugins->CORE;
+    array[4].settingName = settings->CORE_AUTORAISE.compizName;
+    array[5].pluginName = plugins->THUMBNAIL;
+    array[5].settingName = settings->THUMBNAIL_CURRENT_VIEWPORT.compizName;
+    array[6].pluginName = plugins->GNOMECOMPAT;
+    array[6].settingName = settings->GNOMECOMPAT_COMMAND_TERMINAL.compizName;
+    array[7].pluginName = plugins->GNOMECOMPAT;
+    array[7].settingName = settings->GNOMECOMPAT_COMMAND_WINDOW_SCREENSHOT.compizName;
+    array[8].pluginName = plugins->GNOMECOMPAT;
+    array[8].settingName = settings->GNOMECOMPAT_COMMAND_SCREENSHOT.compizName;
+    array[9].pluginName = plugins->ROTATE;
+    array[9].settingName = settings->ROTATE_ROTATE_RIGHT_WINDOW_KEY.compizName;
+    array[10].pluginName = plugins->ROTATE;
+    array[10].settingName = settings->ROTATE_ROTATE_LEFT_WINDOW_KEY.compizName;
+    array[11].pluginName = plugins->ROTATE;
+    array[11].settingName = settings->ROTATE_ROTATE_TO_12_WINDOW_KEY.compizName;
+    array[12].pluginName = plugins->ROTATE;
+    array[12].settingName = settings->ROTATE_ROTATE_TO_11_WINDOW_KEY.compizName;
+    array[13].pluginName = plugins->ROTATE;
+    array[13].settingName = settings->ROTATE_ROTATE_TO_10_WINDOW_KEY.compizName;
+    array[14].pluginName = plugins->ROTATE;
+    array[14].settingName = settings->ROTATE_ROTATE_TO_9_WINDOW_KEY.compizName;
+    array[15].pluginName = plugins->ROTATE;
+    array[15].settingName = settings->ROTATE_ROTATE_TO_8_WINDOW_KEY.compizName;
+    array[16].pluginName = plugins->ROTATE;
+    array[16].settingName = settings->ROTATE_ROTATE_TO_7_WINDOW_KEY.compizName;
+    array[17].pluginName = plugins->ROTATE;
+    array[17].settingName = settings->ROTATE_ROTATE_TO_6_WINDOW_KEY.compizName;
+    array[18].pluginName = plugins->ROTATE;
+    array[18].settingName = settings->ROTATE_ROTATE_TO_5_WINDOW_KEY.compizName;
+    array[19].pluginName = plugins->ROTATE;
+    array[19].settingName = settings->ROTATE_ROTATE_TO_4_WINDOW_KEY.compizName;
+    array[20].pluginName = plugins->ROTATE;
+    array[20].settingName = settings->ROTATE_ROTATE_TO_3_WINDOW_KEY.compizName;
+    array[21].pluginName = plugins->ROTATE;
+    array[21].settingName = settings->ROTATE_ROTATE_TO_2_WINDOW_KEY.compizName;
+    array[22].pluginName = plugins->ROTATE;
+    array[22].settingName = settings->ROTATE_ROTATE_TO_1_WINDOW_KEY.compizName;
+    array[23].pluginName = plugins->PUT;
+    array[23].settingName = settings->PUT_PUT_BOTTOM_KEY.compizName;
+    array[24].pluginName = plugins->PUT;
+    array[24].settingName = settings->PUT_PUT_TOP_KEY.compizName;
+    array[25].pluginName = plugins->PUT;
+    array[25].settingName = settings->PUT_PUT_RIGHT_KEY.compizName;
+    array[26].pluginName = plugins->PUT;
+    array[26].settingName = settings->PUT_PUT_LEFT_KEY.compizName;
+    array[27].pluginName = plugins->PUT;
+    array[27].settingName = settings->PUT_PUT_BOTTOMRIGHT_KEY.compizName;
+    array[28].pluginName = plugins->PUT;
+    array[28].settingName = settings->PUT_PUT_BOTTOMLEFT_KEY.compizName;
+    array[29].pluginName = plugins->PUT;
+    array[29].settingName = settings->PUT_PUT_TOPRIGHT_KEY.compizName;
+    array[30].pluginName = plugins->PUT;
+    array[30].settingName = settings->PUT_PUT_TOPLEFT_KEY.compizName;
+    array[31].pluginName = plugins->WALL;
+    array[31].settingName = settings->WALL_DOWN_WINDOW_KEY.compizName;
+    array[32].pluginName = plugins->WALL;
+    array[32].settingName = settings->WALL_UP_WINDOW_KEY.compizName;
+    array[33].pluginName = plugins->WALL;
+    array[33].settingName = settings->WALL_RIGHT_WINDOW_KEY.compizName;
+    array[34].pluginName = plugins->WALL;
+    array[34].settingName = settings->WALL_LEFT_WINDOW_KEY.compizName;
+    array[35].pluginName = plugins->WALL;
+    array[35].settingName = settings->WALL_RIGHT_KEY.compizName;
+    array[36].pluginName = plugins->WALL;
+    array[36].settingName = settings->WALL_LEFT_KEY.compizName;
+    array[37].pluginName = plugins->WALL;
+    array[37].settingName = settings->WALL_DOWN_KEY.compizName;
+    array[38].pluginName = plugins->WALL;
+    array[38].settingName = settings->WALL_UP_KEY.compizName;
+    array[39].pluginName = plugins->VPSWITCH;
+    array[39].settingName = settings->VPSWITCH_SWITCH_TO_12_KEY.compizName;
+    array[40].pluginName = plugins->VPSWITCH;
+    array[40].settingName = settings->VPSWITCH_SWITCH_TO_11_KEY.compizName;
+    array[41].pluginName = plugins->VPSWITCH;
+    array[41].settingName = settings->VPSWITCH_SWITCH_TO_10_KEY.compizName;
+    array[42].pluginName = plugins->VPSWITCH;
+    array[42].settingName = settings->VPSWITCH_SWITCH_TO_9_KEY.compizName;
+    array[43].pluginName = plugins->VPSWITCH;
+    array[43].settingName = settings->VPSWITCH_SWITCH_TO_8_KEY.compizName;
+    array[44].pluginName = plugins->VPSWITCH;
+    array[44].settingName = settings->VPSWITCH_SWITCH_TO_7_KEY.compizName;
+    array[45].pluginName = plugins->VPSWITCH;
+    array[45].settingName = settings->VPSWITCH_SWITCH_TO_6_KEY.compizName;
+    array[46].pluginName = plugins->VPSWITCH;
+    array[46].settingName = settings->VPSWITCH_SWITCH_TO_5_KEY.compizName;
+    array[47].pluginName = plugins->VPSWITCH;
+    array[47].settingName = settings->VPSWITCH_SWITCH_TO_4_KEY.compizName;
+    array[48].pluginName = plugins->VPSWITCH;
+    array[48].settingName = settings->VPSWITCH_SWITCH_TO_3_KEY.compizName;
+    array[49].pluginName = plugins->VPSWITCH;
+    array[49].settingName = settings->VPSWITCH_SWITCH_TO_2_KEY.compizName;
+    array[50].pluginName = plugins->VPSWITCH;
+    array[50].settingName = settings->VPSWITCH_SWITCH_TO_1_KEY.compizName;
+    array[51].pluginName = plugins->ROTATE;
+    array[51].settingName = settings->ROTATE_ROTATE_RIGHT_KEY.compizName;
+    array[52].pluginName = plugins->ROTATE;
+    array[52].settingName = settings->ROTATE_ROTATE_LEFT_KEY.compizName;
+    array[53].pluginName = plugins->ROTATE;
+    array[53].settingName = settings->ROTATE_ROTATE_TO_12_KEY.compizName;
+    array[54].pluginName = plugins->ROTATE;
+    array[54].settingName = settings->ROTATE_ROTATE_TO_11_KEY.compizName;
+    array[55].pluginName = plugins->ROTATE;
+    array[55].settingName = settings->ROTATE_ROTATE_TO_10_KEY.compizName;
+    array[56].pluginName = plugins->ROTATE;
+    array[56].settingName = settings->ROTATE_ROTATE_TO_9_KEY.compizName;
+    array[57].pluginName = plugins->ROTATE;
+    array[57].settingName = settings->ROTATE_ROTATE_TO_8_KEY.compizName;
+    array[58].pluginName = plugins->ROTATE;
+    array[58].settingName = settings->ROTATE_ROTATE_TO_7_KEY.compizName;
+    array[59].pluginName = plugins->ROTATE;
+    array[59].settingName = settings->ROTATE_ROTATE_TO_6_KEY.compizName;
+    array[60].pluginName = plugins->ROTATE;
+    array[60].settingName = settings->ROTATE_ROTATE_TO_5_KEY.compizName;
+    array[61].pluginName = plugins->ROTATE;
+    array[61].settingName = settings->ROTATE_ROTATE_TO_4_KEY.compizName;
+    array[62].pluginName = plugins->ROTATE;
+    array[62].settingName = settings->ROTATE_ROTATE_TO_3_KEY.compizName;
+    array[63].pluginName = plugins->ROTATE;
+    array[63].settingName = settings->ROTATE_ROTATE_TO_2_KEY.compizName;
+    array[64].pluginName = plugins->ROTATE;
+    array[64].settingName = settings->ROTATE_ROTATE_TO_1_KEY.compizName;
+    array[65].pluginName = plugins->COMMANDS;
+    array[65].settingName = settings->COMMANDS_RUN_COMMAND11_KEY.compizName;
+    array[66].pluginName = plugins->COMMANDS;
+    array[66].settingName = settings->COMMANDS_RUN_COMMAND10_KEY.compizName;
+    array[67].pluginName = plugins->COMMANDS;
+    array[67].settingName = settings->COMMANDS_RUN_COMMAND9_KEY.compizName;
+    array[68].pluginName = plugins->COMMANDS;
+    array[68].settingName = settings->COMMANDS_RUN_COMMAND8_KEY.compizName;
+    array[69].pluginName = plugins->COMMANDS;
+    array[69].settingName = settings->COMMANDS_RUN_COMMAND7_KEY.compizName;
+    array[70].pluginName = plugins->COMMANDS;
+    array[70].settingName = settings->COMMANDS_RUN_COMMAND6_KEY.compizName;
+    array[71].pluginName = plugins->COMMANDS;
+    array[71].settingName = settings->COMMANDS_RUN_COMMAND5_KEY.compizName;
+    array[72].pluginName = plugins->COMMANDS;
+    array[72].settingName = settings->COMMANDS_RUN_COMMAND4_KEY.compizName;
+    array[73].pluginName = plugins->COMMANDS;
+    array[73].settingName = settings->COMMANDS_RUN_COMMAND3_KEY.compizName;
+    array[74].pluginName = plugins->COMMANDS;
+    array[74].settingName = settings->COMMANDS_RUN_COMMAND2_KEY.compizName;
+    array[75].pluginName = plugins->COMMANDS;
+    array[75].settingName = settings->COMMANDS_RUN_COMMAND1_KEY.compizName;
+    array[76].pluginName = plugins->COMMANDS;
+    array[76].settingName = settings->COMMANDS_RUN_COMMAND0_KEY.compizName;
+    array[77].pluginName = plugins->COMMANDS;
+    array[77].settingName = settings->COMMANDS_COMMAND11.compizName;
+    array[78].pluginName = plugins->COMMANDS;
+    array[78].settingName = settings->COMMANDS_COMMAND10.compizName;
+    array[79].pluginName = plugins->COMMANDS;
+    array[79].settingName = settings->COMMANDS_COMMAND9.compizName;
+    array[80].pluginName = plugins->COMMANDS;
+    array[80].settingName = settings->COMMANDS_COMMAND8.compizName;
+    array[81].pluginName = plugins->COMMANDS;
+    array[81].settingName = settings->COMMANDS_COMMAND7.compizName;
+    array[82].pluginName = plugins->COMMANDS;
+    array[82].settingName = settings->COMMANDS_COMMAND6.compizName;
+    array[83].pluginName = plugins->COMMANDS;
+    array[83].settingName = settings->COMMANDS_COMMAND5.compizName;
+    array[84].pluginName = plugins->COMMANDS;
+    array[84].settingName = settings->COMMANDS_COMMAND4.compizName;
+    array[85].pluginName = plugins->COMMANDS;
+    array[85].settingName = settings->COMMANDS_COMMAND3.compizName;
+    array[86].pluginName = plugins->COMMANDS;
+    array[86].settingName = settings->COMMANDS_COMMAND2.compizName;
+    array[87].pluginName = plugins->COMMANDS;
+    array[87].settingName = settings->COMMANDS_COMMAND1.compizName;
+    array[88].pluginName = plugins->COMMANDS;
+    array[88].settingName = settings->COMMANDS_COMMAND0.compizName;
+    array[89].pluginName = plugins->EXTRAWM;
+    array[89].settingName = settings->EXTRAWM_TOGGLE_FULLSCREEN_KEY.compizName;
+    array[90].pluginName = plugins->EXTRAWM;
+    array[90].settingName = settings->EXTRAWM_TOGGLE_STICKY_KEY.compizName;
+    array[91].pluginName = plugins->STATICSWITCHER;
+    array[91].settingName = settings->STATICSWITCHER_PREV_KEY.compizName;
+    array[92].pluginName = plugins->STATICSWITCHER;
+    array[92].settingName = settings->STATICSWITCHER_NEXT_KEY.compizName;
+    array[93].pluginName = plugins->FADE;
+    array[93].settingName = settings->FADE_FULLSCREEN_VISUAL_BELL.compizName;
+    array[94].pluginName = plugins->FADE;
+    array[94].settingName = settings->FADE_VISUAL_BELL.compizName;
+    array[95].pluginName = plugins->SPECIAL;
+    array[95].settingName = settings->NULL_RESIZE_WITH_RIGHT_BUTTON.compizName;
+    array[96].pluginName = plugins->SPECIAL;
+    array[96].settingName = settings->NULL_MOUSE_BUTTON_MODIFIER.compizName;
+    array[97].pluginName = plugins->CORE;
+    array[97].settingName = settings->CORE_WINDOW_MENU_BUTTON.compizName;
+    array[98].pluginName = plugins->RESIZE;
+    array[98].settingName = settings->RESIZE_INITIATE_BUTTON.compizName;
+    array[99].pluginName = plugins->MOVE;
+    array[99].settingName = settings->MOVE_INITIATE_BUTTON.compizName;
+    array[100].pluginName = plugins->CORE;
+    array[100].settingName = settings->CORE_WINDOW_MENU_KEY.compizName;
+    array[101].pluginName = plugins->RESIZE;
+    array[101].settingName = settings->RESIZE_INITIATE_KEY.compizName;
+    array[102].pluginName = plugins->MOVE;
+    array[102].settingName = settings->MOVE_INITIATE_KEY.compizName;
+    array[103].pluginName = plugins->CORE;
+    array[103].settingName = settings->CORE_SHOW_DESKTOP_KEY.compizName;
+    array[104].pluginName = plugins->CORE;
+    array[104].settingName = settings->CORE_TOGGLE_WINDOW_SHADED_KEY.compizName;
+    array[105].pluginName = plugins->CORE;
+    array[105].settingName = settings->CORE_CLOSE_WINDOW_KEY.compizName;
+    array[106].pluginName = plugins->CORE;
+    array[106].settingName = settings->CORE_LOWER_WINDOW_KEY.compizName;
+    array[107].pluginName = plugins->CORE;
+    array[107].settingName = settings->CORE_RAISE_WINDOW_KEY.compizName;
+    array[108].pluginName = plugins->CORE;
+    array[108].settingName = settings->CORE_MAXIMIZE_WINDOW_VERTICALLY_KEY.compizName;
+    array[109].pluginName = plugins->CORE;
+    array[109].settingName = settings->CORE_MAXIMIZE_WINDOW_HORIZONTALLY_KEY.compizName;
+    array[110].pluginName = plugins->CORE;
+    array[110].settingName = settings->CORE_UNMAXIMIZE_WINDOW_KEY.compizName;
+    array[111].pluginName = plugins->CORE;
+    array[111].settingName = settings->CORE_MAXIMIZE_WINDOW_KEY.compizName;
+    array[112].pluginName = plugins->CORE;
+    array[112].settingName = settings->CORE_MINIMIZE_WINDOW_KEY.compizName;
+    array[113].pluginName = plugins->CORE;
+    array[113].settingName = settings->CORE_TOGGLE_WINDOW_MAXIMIZED_KEY.compizName;
+    array[114].pluginName = plugins->GNOMECOMPAT;
+    array[114].settingName = settings->GNOMECOMPAT_RUN_COMMAND_TERMINAL_KEY.compizName;
+    array[115].pluginName = plugins->GNOMECOMPAT;
+    array[115].settingName = settings->GNOMECOMPAT_RUN_COMMAND_WINDOW_SCREENSHOT_KEY.compizName;
+    array[116].pluginName = plugins->GNOMECOMPAT;
+    array[116].settingName = settings->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName;
+    array[117].pluginName = plugins->GNOMECOMPAT;
+    array[117].settingName = settings->GNOMECOMPAT_MAIN_MENU_KEY.compizName;
+    array[118].pluginName = plugins->GNOMECOMPAT;
+    array[118].settingName = settings->GNOMECOMPAT_RUN_KEY.compizName;
+
+
+    return NULL;
+}
+
+/* We only have to use the #define here because
+ * C doesn't have a concept of "constants" setting
+ * the array size ...
+ */
+#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 119
+const CCSGNOMEIntegratedSettingsList *
+ccsGNOMEIntegratedSettingsList ()
+{
+    static GOnce initIntegratedSettings = G_ONCE_INIT;
+    static const CCSGNOMEIntegratedSettingsList settings[CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE];
+
+    g_once (&initIntegratedSettings, ccsGNOMEIntegrationInitializeIntegratedSettingsList, (gpointer) settings);
+
+    return settings;
+}
 
 
 typedef struct _CCSGConfIntegrationBackendPrivate CCSGConfIntegrationBackendPrivate;
@@ -2212,12 +2489,13 @@ ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
     priv->storage = ccsIntegratedSettingsStorageDefaultImplNew (ai);
 
     unsigned int i = 0;
+    const CCSGNOMEIntegratedSettingsList *array = ccsGNOMEIntegratedSettingsList ();
 
-    for (; i < N_SOPTIONS; i++)
+    for (; i < CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE; i++)
     {
 	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
-														    specialOptions[i].pluginName,
-														    specialOptions[i].settingName,
+														    array[i].pluginName,
+														    array[i].settingName,
 														    TypeInt);
 
 	ccsIntegratedSettingsStorageAddSetting (priv->storage, setting);
