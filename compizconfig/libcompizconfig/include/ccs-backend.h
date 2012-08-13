@@ -177,6 +177,9 @@ typedef void (*CCSIntegrationWriteSettingIntoOption) (CCSIntegration *integratio
 						      CCSSetting     *setting,
 						      CCSIntegratedSetting *integratedSetting,
 						      int	     index);
+typedef void (*CCSIntegrationUpdateIntegratedSettings) (CCSIntegration *integration,
+							CCSContext *context,
+							CCSIntegratedSettingList integratedSettings);
 typedef void (*CCSFreeIntegrationBackend) (CCSIntegration *integration);
 
 struct _CCSIntegrationInterface
@@ -184,6 +187,7 @@ struct _CCSIntegrationInterface
     CCSIntegrationGetIntegratedOptionIndex getIntegratedOptionIndex;
     CCSIntegrationReadOptionIntoSetting readOptionIntoSetting;
     CCSIntegrationWriteSettingIntoOption writeSettingIntoOption;
+    CCSIntegrationUpdateIntegratedSettings updateIntegratedSettings;
     CCSFreeIntegrationBackend			freeIntegrationBackend;
 };
 
@@ -210,6 +214,10 @@ void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
 					   CCSSetting		   *setting,
 					   CCSIntegratedSetting *integratedSetting,
 					   int			    index);
+
+void ccsIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
+					     CCSContext	    *context,
+					     CCSIntegratedSettingList integratedSettings);
 
 void ccsFreeIntegration (CCSIntegration *integration);
 

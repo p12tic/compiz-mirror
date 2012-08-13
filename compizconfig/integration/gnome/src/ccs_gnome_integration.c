@@ -726,8 +726,6 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 
     gconf_value_free (gconfValue);
 
-    ccsInfo ("called ccsGConfIntegratedSettingReadValue!\n");
-
     return value;
 }
 
@@ -789,8 +787,6 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 	g_error_free (err);
 	ccsError ("encountered error whilst trying to write value");
     }
-
-    ccsInfo ("called ccsGConfIntegratedSettingWriteValue!\n");
 }
 
 const char *
@@ -1384,14 +1380,6 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
 		continue;
 	}
 
-	CCSIntegratedSettingList iter = integratedSettings;
-
-	while (iter)
-	{
-	    g_print ("would update %p\n", ccsIntegratedSettingSettingName (iter->data));
-	    iter = iter->next;
-	}
-
 	if (index)
 	    *index = i;
 
@@ -1404,6 +1392,19 @@ ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
     return NULL;
 }
 
+static Bool
+ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
+						  void		       *userData)
+{
+    const char *findGnomeName = (const char *) userData;
+    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+
+    if (strcmp (findGnomeName, gnomeNameOfSetting) == 0)
+	return TRUE;
+
+    return FALSE;
+}
+
 static void
 gnomeGConfValueChanged (GConfClient *client,
 			guint       cnxn_id,
@@ -1414,11 +1415,18 @@ gnomeGConfValueChanged (GConfClient *client,
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     char       *keyName = (char*) gconf_entry_get_key (entry);
     int        i, last = 0, num = 0;
-    Bool       needInit = TRUE;
 
     /* We don't care if integration is not enabled */
     if (!ccsGetIntegrationEnabled (priv->context))
 	return;
+
+    CCSIntegratedSettingList settingList = ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (priv->storage,
+													ccsGNOMEIntegrationFindSettingsMatchingPredicate,
+													keyName);
+
+    ccsIntegrationUpdateIntegratedSettings (integration,
+					    priv->context,
+					    settingList);
 
     /* we have to loop multiple times here, because one Gnome
        option may be integrated with multiple Compiz options */
@@ -1436,63 +1444,6 @@ gnomeGConfValueChanged (GConfClient *client,
 
 	if (num < 0)
 	    break;
-
-	if ((strcmp (specialOptions[num].settingName,
-		     "mouse_button_modifier") == 0) ||
-	    (strcmp (specialOptions[num].settingName,
-		    "resize_with_right_button") == 0))
-	{
-	    CCSSetting *s;
-
-	    if (needInit)
-	    {
-		ccsBackendReadInit (priv->backend, priv->context);
-		needInit = FALSE;
-	    }
-
-	    s = findDisplaySettingForPlugin (priv->context, "core",
-					     "window_menu_button");
-	    if (s)
-		ccsBackendReadSetting (priv->backend, priv->context, s);
-
-	    s = findDisplaySettingForPlugin (priv->context, "move",
-					     "initiate_button");
-	    if (s)
-		ccsBackendReadSetting (priv->backend, priv->context, s);
-
-	    s = findDisplaySettingForPlugin (priv->context, "resize",
-					     "initiate_button");
-	    if (s)
-		ccsBackendReadSetting (priv->backend, priv->context, s);
-	}
-	else
-	{
-	    CCSPlugin     *plugin = NULL;
-	    CCSSetting    *setting;
-	    SpecialOptionGConf *opt = (SpecialOptionGConf *) &specialOptions[num];
-
-	    plugin = ccsFindPlugin (priv->context, (char*) opt->pluginName);
-	    if (plugin)
-	    {
-		for (i = 0; i < 1; i++)
-		{
-		    setting = ccsFindSetting (plugin, (char*) opt->settingName);
-
-		    if (setting)
-		    {
-			if (needInit)
-			{
-			    ccsBackendReadInit (priv->backend, priv->context);
-			    needInit = FALSE;
-			}
-			ccsBackendReadSetting (priv->backend, priv->context, setting);
-		    }
-
-		    /* do not read display settings multiple
-		       times for multiscreen environments */
-		}
-	    }
-	}
     }
 }
 
@@ -1560,8 +1511,6 @@ getGnomeMouseButtonModifier (CCSIntegratedSetting *mouseButtonModifierSetting)
 {
     unsigned int modMask = 0;
     CCSSettingValue v = ccsIntegratedSettingReadValue (mouseButtonModifierSetting, TypeString);
-
-    g_print ("got: %s\n", v.value.asString);
 
     modMask = ccsStringToModifiers (v.value.asString);
 
@@ -1664,8 +1613,6 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	    {
 		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeBool);
 
-		g_print ("read: %p\n", &v);
-
 		const char *value = v.value.asString;
 		if (value)
 		{
@@ -1681,8 +1628,6 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
 		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeString);
-
-		g_print ("read: %p\n", &v);
 
 		const char *focusMode = v.value.asString;
 
@@ -1717,12 +1662,8 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
-		g_print ("found integrated setting: %p\n", integratedSettings->data);
-
 		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSettings->data, TypeBool);
 
-		g_print ("read: %p\n", &v);
-		
 		resizeWithRightButton =
 		   v.value.asBool;
 
@@ -1920,6 +1861,82 @@ ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 }
 
 static void
+ccsGConfIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
+						    CCSContext	 *context,
+						    CCSIntegratedSettingList integratedSettings)
+{
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    Bool needInit = TRUE;
+
+    // XXX
+    ccsInfo ("ccsGConfIntegrationBackendUpdateSettings");
+
+    CCSIntegratedSettingList iter = integratedSettings;
+
+    while (iter)
+    {
+	CCSIntegratedSetting *integrated = iter->data;
+	const char           *settingName = ccsIntegratedSettingSettingName (integrated);
+	const char	     *pluginName = ccsIntegratedSettingPluginName (integrated);
+
+	/* Special case for mouse button modifier etc */
+	if ((strcmp (settingName,
+		     "mouse_button_modifier") == 0) ||
+	    (strcmp (settingName,
+		    "resize_with_right_button") == 0))
+	{
+	    CCSSetting *s;
+
+	    if (needInit)
+	    {
+		ccsBackendReadInit (priv->backend, priv->context);
+		needInit = FALSE;
+	    }
+
+	    s = findDisplaySettingForPlugin (priv->context, "core",
+					     "window_menu_button");
+	    if (s)
+		ccsBackendReadSetting (priv->backend, priv->context, s);
+
+	    s = findDisplaySettingForPlugin (priv->context, "move",
+					     "initiate_button");
+	    if (s)
+		ccsBackendReadSetting (priv->backend, priv->context, s);
+
+	    s = findDisplaySettingForPlugin (priv->context, "resize",
+					     "initiate_button");
+	    if (s)
+		ccsBackendReadSetting (priv->backend, priv->context, s);
+	}
+	else
+	{
+	    CCSPlugin     *plugin = NULL;
+	    CCSSetting    *setting;
+
+	    plugin = ccsFindPlugin (priv->context, pluginName);
+	    if (plugin)
+	    {
+		setting = ccsFindSetting (plugin, settingName);
+
+		if (setting)
+		{
+		    if (needInit)
+		    {
+			ccsBackendReadInit (priv->backend, priv->context);
+			needInit = FALSE;
+		    }
+
+		    ccsBackendReadSetting (priv->backend, priv->context, setting);
+		}
+	    }
+	}
+
+	g_print ("name: %s\n", ccsIntegratedSettingSettingName (iter->data));
+	iter = iter->next;
+    }
+}
+
+static void
 ccsGConfIntegrationBackendFree (CCSIntegration *integration)
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
@@ -1937,6 +1954,7 @@ const CCSIntegrationInterface ccsGConfIntegrationBackendInterface =
     ccsGConfIntegrationBackendGetIntegratedOptionIndex,
     ccsGConfIntegrationBackendReadOptionIntoSetting,
     ccsGConfIntegrationBackendWriteOptionFromSetting,
+    ccsGConfIntegrationBackendUpdateIntegratedSettings,
     ccsGConfIntegrationBackendFree
 };
 

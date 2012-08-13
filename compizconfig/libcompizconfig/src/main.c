@@ -1267,6 +1267,13 @@ void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
     (*(GET_INTERFACE (CCSIntegrationInterface, integration))->writeSettingIntoOption) (integration, context, setting, integratedSetting, index);
 }
 
+void ccsIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
+					     CCSContext	    *context,
+					     CCSIntegratedSettingList integratedSettings)
+{
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->updateIntegratedSettings) (integration, context, integratedSettings);
+}
+
 void ccsFreeIntegration (CCSIntegration *integration)
 {
     (*(GET_INTERFACE (CCSIntegrationInterface, integration))->freeIntegrationBackend) (integration);
@@ -1300,6 +1307,13 @@ ccsNullIntegrationBackendWriteSettingIntoOption (CCSIntegration *integration,
 {
 }
 
+static void
+ccsNullIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
+						   CCSContext	  *context,
+						   CCSIntegratedSettingList settings)
+{
+}
+
 void
 ccsNullIntegrationBackendFree (CCSIntegration *integration)
 {
@@ -1311,7 +1325,9 @@ const CCSIntegrationInterface ccsNullIntegrationBackendInterface =
 {
     ccsNullIntegrationBackendGetIntegratedOptionIndex,
     ccsNullIntegrationBackendReadOptionIntoSetting,
-    ccsNullIntegrationBackendWriteSettingIntoOption
+    ccsNullIntegrationBackendWriteSettingIntoOption,
+    ccsNullIntegrationBackendUpdateIntegratedSettings,
+    ccsNullIntegrationBackendFree
 };
 
 CCSIntegration *

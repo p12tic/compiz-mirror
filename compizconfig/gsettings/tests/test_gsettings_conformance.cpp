@@ -33,6 +33,7 @@ class CCSIntegrationGMockInterface
 	virtual CCSIntegratedSetting * getIntegratedOptionIndex (const char *pluginName, const char *settingName, int *index) = 0;
 	virtual Bool readOptionIntoSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *, int index) = 0;
 	virtual void writeOptionFromSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *, int index) = 0;
+	virtual void updateIntegratedSettings (CCSContext *context, CCSIntegratedSettingList settingList) = 0;
 };
 
 class CCSIntegrationGMock :
@@ -43,6 +44,7 @@ class CCSIntegrationGMock :
 	MOCK_METHOD3 (getIntegratedOptionIndex, CCSIntegratedSetting * (const char *, const char *, int *));
 	MOCK_METHOD4 (readOptionIntoSetting, Bool (CCSContext *, CCSSetting *, CCSIntegratedSetting *, int));
 	MOCK_METHOD4 (writeOptionFromSetting, void (CCSContext *, CCSSetting *, CCSIntegratedSetting *, int));
+	MOCK_METHOD2 (updateIntegratedSettings, void (CCSContext *, CCSIntegratedSettingList));
 
 
 	CCSIntegrationGMock (CCSIntegration *integration) :
@@ -87,6 +89,13 @@ class CCSIntegrationGMock :
 	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (context, setting, integrated, index);
 	}
 
+	static void CCSIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
+							    CCSContext	   *context,
+							    CCSIntegratedSettingList settingList)
+	{
+	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->updateIntegratedSettings (context, settingList);
+	}
+
 	static
 	void ccsFreeIntegration (CCSIntegration *integration)
 	{
@@ -103,6 +112,7 @@ const CCSIntegrationInterface mockIntegrationBackendInterface =
     CCSIntegrationGMock::CCSIntegrationGetIntegratedOptionIndex,
     CCSIntegrationGMock::CCSIntegrationReadOptionIntoSetting,
     CCSIntegrationGMock::CCSIntegrationWriteSettingIntoOption,
+    CCSIntegrationGMock::CCSIntegrationUpdateIntegratedSettings,
     CCSIntegrationGMock::ccsFreeIntegration
 };
 
