@@ -1623,6 +1623,46 @@ registerGConfClient (CCSIntegration *integration,
 }
 
 static void
+unregisterAllIntegratedOptions (CCSIntegration *integration)
+{
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+
+    if (priv->storage)
+	ccsIntegratedSettingsStorageDefaultImplFree (priv->storage);
+
+    if (priv->factory)
+	ccsGConfIntegratedSettingFactoryFree (priv->factory);
+
+    priv->storage = NULL;
+    priv->factory = NULL;
+}
+
+static void
+registerAllIntegratedOptions (CCSIntegration *integration,
+			      CCSObjectAllocationInterface *ai)
+{
+    CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    unregisterAllIntegratedOptions (integration);
+
+    priv->factory = ccsGConfIntegratedSettingFactoryNew (priv->client, ai);
+    priv->storage = ccsIntegratedSettingsStorageDefaultImplNew (ai);
+
+    unsigned int i = 0;
+    const CCSGNOMEIntegratedSettingsList *array = ccsGNOMEIntegratedSettingsList ();
+
+    for (; i < CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE; i++)
+    {
+	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
+														    array[i].pluginName,
+														    array[i].settingName,
+														    TypeInt);
+
+	ccsIntegratedSettingsStorageAddSetting (priv->storage, setting);
+    }
+}
+
+
+static void
 initGConfClient (CCSIntegration *integration)
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
@@ -1632,6 +1672,7 @@ initGConfClient (CCSIntegration *integration)
 
     priv->client = gconf_client_get_default ();
 
+    registerAllIntegratedOptions (integration, integration->object.object_allocation);
     registerGConfClient (integration, priv->client);
 }
 
@@ -2145,6 +2186,8 @@ ccsGConfIntegrationBackendNewCommon (CCSBackend *backend,
     CCSGConfIntegrationBackendPrivate *priv = addPrivate (integration, ai);
     priv->backend = backend;
     priv->context = context;
+    priv->factory = NULL;
+    priv->storage = NULL;
 
     ccsObjectAddInterface (integration,
 			   (const CCSInterface *) &ccsGConfIntegrationBackendInterface,
@@ -2173,22 +2216,8 @@ ccsGConfIntegrationBackendNewWithClient (CCSBackend *backend,
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     priv->client = client;
-    priv->factory = ccsGConfIntegratedSettingFactoryNew (priv->client, ai);
-    priv->storage = ccsIntegratedSettingsStorageDefaultImplNew (ai);
 
-    unsigned int i = 0;
-    const CCSGNOMEIntegratedSettingsList *array = ccsGNOMEIntegratedSettingsList ();
-
-    for (; i < CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE; i++)
-    {
-	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
-														    array[i].pluginName,
-														    array[i].settingName,
-														    TypeInt);
-
-	ccsIntegratedSettingsStorageAddSetting (priv->storage, setting);
-    }
-
+    registerAllIntegratedOptions (integration, ai);
     registerGConfClient (integration, client);
 
     return integration;
