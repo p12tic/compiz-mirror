@@ -694,7 +694,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	case TypeInt:
 	    if (gconfValue->type != GCONF_VALUE_INT)
 	    {
-		ccsError ("Expected string value");
+		ccsError ("Expected integer value");
 		break;
 	    }
 
@@ -703,7 +703,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	case TypeBool:
 	    if (gconfValue->type != GCONF_VALUE_BOOL)
 	    {
-		ccsError ("Expected string value");
+		ccsError ("Expected boolean value");
+		asm ("int $3");
 		break;
 	    }
 
@@ -721,7 +722,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	    value.value.asString = strdup (str ? str : "");
 	    break;
 	default:
-	    ccsError ("unreachable case hit?");
+	    g_assert_not_reached ();
     }
 
     gconf_value_free (gconfValue);
@@ -1611,7 +1612,7 @@ ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeBool);
+		CCSSettingValue v = ccsIntegratedSettingReadValue (integratedSetting, TypeString);
 
 		const char *value = v.value.asString;
 		if (value)
@@ -1867,9 +1868,6 @@ ccsGConfIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     Bool needInit = TRUE;
-
-    // XXX
-    ccsInfo ("ccsGConfIntegrationBackendUpdateSettings");
 
     CCSIntegratedSettingList iter = integratedSettings;
 
