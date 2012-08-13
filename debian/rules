@@ -72,10 +72,6 @@ endif
 	# remove .a files
 	rm -f debian/tmp/usr/lib/*.a
 
-	# ugly workaround for gsettings installation
-	mkdir -p debian/tmp/usr/share/glib-2.0/schemas
-	find debian/tmp -name org.compiz.*.xml | xargs mv -t debian/tmp/usr/share/glib-2.0/schemas/
-
 	dh_install --fail-missing
 
 	# remove the compizconfig dev file from compiz-dev
