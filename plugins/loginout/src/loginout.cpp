@@ -171,7 +171,7 @@ LoginoutWindow::glDraw (const GLMatrix &transform,
 void
 LoginoutScreen::preparePaint (int        ms)
 {
-    float val, val2;
+    float val;
 
     val = ((float)ms / 1000.0) / optionGetInTime ();
 
@@ -190,7 +190,7 @@ LoginoutScreen::preparePaint (int        ms)
     if (in > 0.0 || out > 0.0)
     {
 	val  = (in * optionGetInOpacity () / 100.0) + (1.0 - in);
-	val2 = (out * optionGetOutOpacity () / 100.0) + (1.0 - out);
+	float val2 = (out * optionGetOutOpacity () / 100.0) + (1.0 - out);
 	opacity = MIN (val, val2);
 
 	val  = (in * optionGetInSaturation () / 100.0) + (1.0 - in);

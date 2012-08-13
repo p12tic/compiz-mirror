@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3287-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3306-0ubuntu1) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
@@ -57,6 +57,41 @@ compiz (1:0.9.8+bzr3287-0ubuntu1) UNRELEASED; urgency=low
     - Add extra checks to avoid passing an invalid xid to XGetWindowProperty 
       which would result in fatal error: BadWindow (invalid Window parameter).
       (LP: #1019337)
+    - Fix crash LP: #1019337 properly this time.
+    - Added .convert files (for gsettings-data-convert) and a migration python
+      script (best for usage with session-migrations) for migrating some compiz
+      settings from gconf to gsettings
+    - Fix CMake error when USER environment variable is not set (LP: #1023772)
+    - Avoid severe artifacts and flickering when using LLVMpipe (LP: #1021104)
+    - Fix build failure due to invalid sed expression (LP: #1023738)
+    - Generate the CTestFile.cmake using cmake itself (LP: #1024214)
+    - Avoid random build failures "_intltool_update-NOTFOUND: not found"
+      by verifying intltool-update exists. If not, then fail cmake more 
+      cleanly with a nice error message telling the user how to install 
+      it. (LP: #1023742)
+    - Fixed CompTimerTestCallback.TimerOrder failure on slow 
+      systems (like valgrind) (LP: #1021139)
+    - Fix incorrect shell expansion, leading to invalid "sed" syntax 
+      (LP: #1029383)
+    - Install the cmake helper macros and check for them in 
+      COMPIZ_CMAKE_MODULE_PATH (LP: #1024179)
+    - Fixed: schemas were getting installed to ${DESTDIR} twice
+    - Reduced combined filesizes of Compiz' .png resources from 2.2MB to 
+      1.5MB by re compression of those with Trimage Image Compressor.
+    - Added test module for the migration script created by Francis Ginther
+    - Adds a COVERAGE argument to compiz_discover_tests
+    - Fixed various problems described in bug 1030473, optimizing 
+      performance and style (LP: #1030473)
+    - Fixed commands addon desription typo (LP: #1033085)
+    - Reduced the scope of the variable 'icccm_version', removed a break 
+      that can never be executed, added the variables 'frameType', 
+      'frameState' and 'frameActions' to decor_quads_to_property in the 
+      #else branch in KWD::Switcher::updateWindowProperties () as well and 
+      simplified calc_button_size (decor_t *d) in cairo.c.. (LP: #1030473)
+    - Always call terminate callbacks for key bindings. ATM we call just the 
+      first callback. (LP: #960652)
+    - Make valgrind shut up about some known "leaks" in python and glib.
+      Fix some leaks in the tests in the process.
   * Update compiz-core.lintian-overrides
   * Enable GSettings backend and install the schema files
   * Switch the default profile to use gsettings 
@@ -65,11 +100,6 @@ compiz (1:0.9.8+bzr3287-0ubuntu1) UNRELEASED; urgency=low
   * Update gsettings-override to new paths org.compiz.*
 
   [ Łukasz 'sil2100' Zemczak ]
-  * New upstream snapshot.
-    - Fix crash LP: #1019337 properly this time.
-    - Added .convert files (for gsettings-data-convert) and a migration python
-      script (best for usage with session-migrations) for migrating some compiz
-      settings from gconf to gsettings
   * debian/control, debian/rules:
     - add dependency and use dh-migrations
   * debian/compiz-gnome.migrations:
@@ -79,7 +109,7 @@ compiz (1:0.9.8+bzr3287-0ubuntu1) UNRELEASED; urgency=low
     - changed keybinding for initiate window picker, according to the design
       specification
 
- -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Tue, 24 Jul 2012 16:38:35 +0200
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 13 Aug 2012 08:35:44 +0300
 
 compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 

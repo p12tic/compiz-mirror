@@ -480,7 +480,7 @@ SwitchScreen::windowRemove (CompWindow *w)
 	    if (w == windows.back ())
 		newSelected = windows.begin ();
 	    else
-		newSelected++;
+		++newSelected;
 
 	    selected = *newSelected;
 	}
