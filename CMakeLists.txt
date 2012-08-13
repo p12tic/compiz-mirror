@@ -7,7 +7,9 @@ set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
 set (COMPIZ_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
 
-set (CTEST_MEMORYCHECK_COMMAND /usr/bin/valgrind CACHE FILEPATH "valgrind command" FORCE)
+include (CTest)
+
+set (MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_SOURCE_DIR}/tests/experimental-memcheck/compiz.supp CACHE FILEPATH "" FORCE)
 
 include (Dart)
 
@@ -208,11 +210,15 @@ compiz_add_distcheck ()
 compiz_add_release ()
 compiz_add_release_signoff ()
 
+if (COMPIZ_BUILD_TESTING)
+    compiz_generate_testfile_target ()
+endif (COMPIZ_BUILD_TESTING)
+
 _print_configure_results ()
 
 _check_compiz_cmake_macro (${CMAKE_MODULE_PATH_ORIG})
 
 # Enable coverage reporting for compiz
-enable_coverage_report()
+compiz_generate_coverage_report()
 
 

@@ -360,6 +360,8 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
     if (!xkbEvent.get() && !mods)
 	return false;
 
+    bool handled = false;
+
     foreach (CompOption &option, options)
     {
 	if (isBound (option, CompAction::BindingTypeKey, state, &action))
@@ -373,12 +375,11 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
 	    else if (!xkbEvent.get() && ((mods & modMask & bindMods) != bindMods))
 	        match = true;
 
-	    if (match && eventManager.triggerRelease (action, state, arguments))
-		return true;
+	    handled |= match && eventManager.triggerRelease (action, state, arguments);
 	}
     }
 
-    return false;
+    return handled;
 }
 
 bool
@@ -417,6 +418,7 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
     else if (event->event_type == KeyRelease)
     {
 	state = CompAction::StateTermKey;
+	bool handled = false;
 
 	foreach (CompOption &option, options)
 	{
@@ -430,11 +432,13 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 		if ((event->mods && ((event->mods & modMask) != bindMods)) ||
 		    (!event->mods && (modKey == bindMods)))
 		{
-		    if (eventManager.triggerRelease (action, state, arguments))
-			return true;
+		    handled |= eventManager.triggerRelease (action, state, arguments);
 		}
 	    }
 	}
+
+	if (handled)
+	    return true;
     }
 
     return false;
@@ -757,6 +761,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	}
 	break;
     case KeyRelease:
+    {
 	o[0].value ().set ((int) event->xkey.window);
 	o[1].value ().set ((int) orphanData.activeWindow);
 	o[2].value ().set ((int) event->xkey.state);
@@ -770,13 +775,19 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[6].value ().set ((int) event->xkey.keycode);
 	o[7].value ().set ((int) event->xkey.time);
 
+	bool handled = false;
+
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
-	    if (triggerKeyReleaseBindings (options, &event->xkey, o))
-		return true;
+	    handled |= triggerKeyReleaseBindings (options, &event->xkey, o);
 	}
+
+        if (handled)
+	    return true;
+
 	break;
+    }
     case EnterNotify:
 	if (event->xcrossing.mode   != NotifyGrab   &&
 	    event->xcrossing.mode   != NotifyUngrab &&
@@ -977,12 +988,16 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		if (stateEvent->event_type == KeyPress)
 		    eventManager.resetPossibleTap();
 
+		bool handled = false;
+
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
 		    CompOption::Vector &options = p->vTable->getOptions ();
-		    if (triggerStateNotifyBindings (options, stateEvent, arg))
-			return true;
+		    handled |= triggerStateNotifyBindings (options, stateEvent, arg);
 		}
+
+		if (handled)
+		    return true;
 	    }
 	    else if (xkbEvent->xkb_type == XkbBellNotify)
 	    {
@@ -2005,7 +2020,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 					if (sibling)
 					{
 					    for (CompWindowList::reverse_iterator rit = windowsLostFocus.rbegin ();
-						 rit != windowsLostFocus.rend (); rit++)
+						 rit != windowsLostFocus.rend (); ++rit)
 					    {
 						(*rit)->restackAbove (sibling);
 					    }
