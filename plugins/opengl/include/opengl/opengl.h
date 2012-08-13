@@ -50,7 +50,7 @@
 #include <opengl/programcache.h>
 #include <opengl/shadercache.h>
 
-#define COMPIZ_OPENGL_ABI 4
+#define COMPIZ_OPENGL_ABI 5
 
 #if !defined(GL_BGRA)
     #if !defined(GL_BGRA_EXT)
