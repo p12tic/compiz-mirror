@@ -30,9 +30,9 @@ class CCSIntegrationGMockInterface
 
 	virtual ~CCSIntegrationGMockInterface () {}
 
-	virtual CCSIntegratedSetting * getIntegratedOptionIndex (const char *pluginName, const char *settingName, int *index) = 0;
-	virtual Bool readOptionIntoSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *, int index) = 0;
-	virtual void writeOptionFromSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *, int index) = 0;
+	virtual CCSIntegratedSetting * getIntegratedOptionIndex (const char *pluginName, const char *settingName) = 0;
+	virtual Bool readOptionIntoSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *) = 0;
+	virtual void writeOptionFromSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *) = 0;
 	virtual void updateIntegratedSettings (CCSContext *context, CCSIntegratedSettingList settingList) = 0;
 };
 
@@ -41,9 +41,9 @@ class CCSIntegrationGMock :
 {
     public:
 
-	MOCK_METHOD3 (getIntegratedOptionIndex, CCSIntegratedSetting * (const char *, const char *, int *));
-	MOCK_METHOD4 (readOptionIntoSetting, Bool (CCSContext *, CCSSetting *, CCSIntegratedSetting *, int));
-	MOCK_METHOD4 (writeOptionFromSetting, void (CCSContext *, CCSSetting *, CCSIntegratedSetting *, int));
+	MOCK_METHOD2 (getIntegratedOptionIndex, CCSIntegratedSetting * (const char *, const char *));
+	MOCK_METHOD3 (readOptionIntoSetting, Bool (CCSContext *, CCSSetting *, CCSIntegratedSetting *));
+	MOCK_METHOD3 (writeOptionFromSetting, void (CCSContext *, CCSSetting *, CCSIntegratedSetting *));
 	MOCK_METHOD2 (updateIntegratedSettings, void (CCSContext *, CCSIntegratedSettingList));
 
 
@@ -62,31 +62,28 @@ class CCSIntegrationGMock :
 
 	static
 	CCSIntegratedSetting * CCSIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
-							   const char *pluginName,
-							   const char *settingName,
-								       int *index)
+								       const char *pluginName,
+								       const char *settingName)
 	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->getIntegratedOptionIndex (pluginName, settingName, index);
+	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->getIntegratedOptionIndex (pluginName, settingName);
 	}
 
 	static
 	Bool CCSIntegrationReadOptionIntoSetting (CCSIntegration *integration,
-							 CCSContext		  *context,
-							 CCSSetting		  *setting,
-						  CCSIntegratedSetting *integrated,
-							 int			  index)
+						  CCSContext		  *context,
+						  CCSSetting		  *setting,
+						  CCSIntegratedSetting *integrated)
 	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->readOptionIntoSetting (context, setting, integrated, index);
+	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->readOptionIntoSetting (context, setting, integrated);
 	}
 
 	static
-	void CCSIntegrationWriteSettingIntoOption (CCSIntegration *integration,
-							  CCSContext		   *context,
-							  CCSSetting		   *setting,
-						   CCSIntegratedSetting *integrated,
-							  int			    index)
+	void CCSIntegrationWriteSettingIntoOption  (CCSIntegration *integration,
+						    CCSContext		   *context,
+						    CCSSetting		   *setting,
+						    CCSIntegratedSetting *integrated)
 	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (context, setting, integrated, index);
+	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (context, setting, integrated);
 	}
 
 	static void CCSIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
@@ -225,7 +222,7 @@ class CCSGSettingsBackendEnv :
 	    CCSIntegration *integration = ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator);
 	    CCSIntegrationGMock *gmockIntegration = reinterpret_cast <CCSIntegrationGMock *> (ccsObjectGetPrivate (integration));
 
-	    EXPECT_CALL (*gmockIntegration, getIntegratedOptionIndex (_, _, _)).WillRepeatedly (ReturnNull ());
+	    EXPECT_CALL (*gmockIntegration, getIntegratedOptionIndex (_, _)).WillRepeatedly (ReturnNull ());
 
 	    ccsBackendSetIntegration ((CCSBackend *) mBackend, integration);
 	    ccsIntegrationUnref (integration);

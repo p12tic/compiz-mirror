@@ -320,7 +320,7 @@ ccsGSettingsBackendClearPluginsWithSetKeysDefault (CCSBackend *backend)
     ccsGSettingsWrapperResetKey (priv->currentProfileSettings, "plugins-with-set-keys");
 }
 
-int
+CCSIntegratedSetting *
 ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSetting *setting)
 {
     CCSPlugin  *plugin      = ccsSettingGetParent (setting);
@@ -328,35 +328,29 @@ ccsGSettingsBackendGetIntegratedOptionIndexDefault (CCSBackend *backend, CCSSett
     const char *settingName = ccsSettingGetName (setting);
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
-    int index = 0;
-
-    ccsIntegrationGetIntegratedOptionIndex (priv->integration, pluginName, settingName, &index);
-
-    return index;
+    return ccsIntegrationGetIntegratedSetting (priv->integration, pluginName, settingName);
 }
 
 Bool
-ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
+ccsGSettingsBackendReadIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *integrated)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     return ccsIntegrationReadOptionIntoSetting (priv->integration,
-						       priv->context,
-						       setting,
-						NULL,
-						       index);
+						priv->context,
+						setting,
+						integrated);
 }
 
 void
-ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, int index)
+ccsGSettingsBackendWriteIntegratedOptionDefault (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *integrated)
 {
     CCSGSettingsBackendPrivate *priv = (CCSGSettingsBackendPrivate *) ccsObjectGetPrivate (backend);
 
     ccsIntegrationWriteSettingIntoOption (priv->integration,
-						 priv->context,
-						 setting,
-					  NULL,
-						 index);
+					  priv->context,
+					  setting,
+					  integrated);
 }
 
 static CCSGSettingsBackendInterface gsettingsAdditionalDefaultInterface = {

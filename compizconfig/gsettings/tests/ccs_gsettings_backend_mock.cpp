@@ -19,7 +19,10 @@ CCSGSettingsBackendInterface ccsGSettingsBackendGMockInterface =
     CCSGSettingsBackendGMock::ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile,
     CCSGSettingsBackendGMock::ccsGSettingsBackendUpdateProfile,
     CCSGSettingsBackendGMock::ccsGSettingsBackendUpdateCurrentProfileName,
-    CCSGSettingsBackendGMock::ccsGSettingsBackendAddProfile
+    CCSGSettingsBackendGMock::ccsGSettingsBackendAddProfile,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendGetIntegratedSetting,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendReadIntegratedOption,
+    CCSGSettingsBackendGMock::ccsGSettingsBackendWriteIntegratedOption
 };
 
 CCSBackend *

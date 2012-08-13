@@ -66,25 +66,24 @@ ccsGSettingsBackendAddProfile (CCSBackend *backend, const char *profile)
     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendAddProfile) (backend, profile);
 }
 
-int
-ccsGSettingsBackendGetIntegratedOptionIndex (CCSBackend *backend,
-					     CCSSetting *setting)
+CCSIntegratedSetting * ccsGSettingsBackendGetIntegratedSetting (CCSBackend *backend,
+								CCSSetting *setting)
 {
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetIntegratedOptionIndex) (backend, setting);
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetIntegratedSetting) (backend, setting);
 }
 
 Bool
-ccsGSettingsBackendReadIntegratedOption (CCSBackend *backend,
-					 CCSSetting *setting,
-					 int	    index)
+ccsGSettingsBackendReadIntegratedOption (CCSBackend	      *backend,
+					 CCSSetting	      *setting,
+					 CCSIntegratedSetting *integrated)
 {
-    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendReadIntegratedOption) (backend, setting, index);
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendReadIntegratedOption) (backend, setting, integrated);
 }
 
 void
-ccsGSettingsBackendWriteIntegratedOption (CCSBackend *backend,
-					  CCSSetting *setting,
-					  int	     index)
+ccsGSettingsBackendWriteIntegratedOption (CCSBackend	       *backend,
+					  CCSSetting	       *setting,
+					  CCSIntegratedSetting *integrated)
 {
-    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendWriteIntegratedOption) (backend, setting, index);
+    (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendWriteIntegratedOption) (backend, setting, integrated);
 }

@@ -12,6 +12,7 @@ typedef struct _CCSGSettingsBackend          CCSGSettingsBackend;
 typedef struct _CCSGSettingsWrapper	     CCSGSettingsWrapper;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 typedef struct _CCSSetting		     CCSSetting;
+typedef struct _CCSIntegratedSetting	     CCSIntegratedSetting;
 typedef struct _CCSContext		     CCSContext;
 
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
@@ -37,9 +38,9 @@ typedef void (*CCSGSettingsBackendUpdateCurrentProfileName) (CCSBackend *backend
 
 typedef gboolean (*CCSGSettingsBackendAddProfile) (CCSBackend *backend, const char *profile);
 
-typedef int (*CCSGSettingsBackendGetIntegratedOptionIndex) (CCSBackend *backend, CCSSetting *setting);
-typedef Bool (*CCSGSettingsBackendReadIntegratedOption) (CCSBackend *backend, CCSSetting *setting, int index);
-typedef void (*CCSGSettingsBackendWriteIntegratedOption) (CCSBackend *backend, CCSSetting *setting, int index);
+typedef CCSIntegratedSetting * (*CCSGSettingsBackendGetIntegratedSetting) (CCSBackend *backend, CCSSetting *setting);
+typedef Bool (*CCSGSettingsBackendReadIntegratedOption) (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *);
+typedef void (*CCSGSettingsBackendWriteIntegratedOption) (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *);
 
 struct _CCSGSettingsBackendInterface
 {
@@ -56,7 +57,7 @@ struct _CCSGSettingsBackendInterface
     CCSGSettingsBackendUpdateProfile gsettingsBackendUpdateProfile;
     CCSGSettingsBackendUpdateCurrentProfileName gsettingsBackendUpdateCurrentProfileName;
     CCSGSettingsBackendAddProfile gsettingsBackendAddProfile;
-    CCSGSettingsBackendGetIntegratedOptionIndex gsettingsBackendGetIntegratedOptionIndex;
+    CCSGSettingsBackendGetIntegratedSetting gsettingsBackendGetIntegratedSetting;
     CCSGSettingsBackendReadIntegratedOption gsettingsBackendReadIntegratedOption;
     CCSGSettingsBackendWriteIntegratedOption gsettingsBackendWriteIntegratedOption;
 };
@@ -110,18 +111,18 @@ ccsGSettingsBackendAddProfile (CCSBackend *backend,
 			       const char *profile);
 
 
-int
-ccsGSettingsBackendGetIntegratedOptionIndex (CCSBackend *backend,
-					     CCSSetting *setting);
+CCSIntegratedSetting *
+ccsGSettingsBackendGetIntegratedSetting (CCSBackend *backend,
+					 CCSSetting *setting);
 
 Bool
 ccsGSettingsBackendReadIntegratedOption (CCSBackend *backend,
 					 CCSSetting *setting,
-					 int index);
+					 CCSIntegratedSetting *integrated);
 void
 ccsGSettingsBackendWriteIntegratedOption (CCSBackend *backend,
 					  CCSSetting *setting,
-					  int index);
+					  CCSIntegratedSetting *integrated);
 
 COMPIZCONFIG_END_DECLS
 

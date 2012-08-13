@@ -56,11 +56,10 @@ getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 
 static Bool
 readIntegratedOption (CCSBackend *backend,
-		      CCSContext *context,
 		      CCSSetting *setting,
-		      int        index)
+		      CCSIntegratedSetting *integrated)
 {
-    return ccsGSettingsBackendReadIntegratedOption (backend, setting, index);
+    return ccsGSettingsBackendReadIntegratedOption (backend, setting, integrated);
 }
 
 Bool
@@ -215,11 +214,10 @@ readOption (CCSBackend *backend, CCSSetting * setting)
 
 static void
 writeIntegratedOption (CCSBackend *backend,
-		       CCSContext *context,
 		       CCSSetting *setting,
-		       int        index)
+		       CCSIntegratedSetting *integrated)
 {
-    ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
+    ccsGSettingsBackendWriteIntegratedOption (backend, setting, integrated);
 }
 
 void
@@ -368,12 +366,12 @@ readSetting (CCSBackend *backend,
 	     CCSSetting *setting)
 {
     Bool status;
-    int  index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
+    CCSIntegratedSetting *integrated = ccsGSettingsBackendGetIntegratedSetting (backend, setting);
 
     if (ccsGetIntegrationEnabled (context) &&
-	index != -1)
+	integrated)
     {
-	status = readIntegratedOption (backend, context, setting, index);
+	status = readIntegratedOption (backend, setting, integrated);
     }
     else
 	status = readOption (backend, setting);
@@ -393,12 +391,12 @@ writeSetting (CCSBackend *backend,
 	      CCSContext *context,
 	      CCSSetting *setting)
 {
-    int index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
+    CCSIntegratedSetting *integrated = ccsGSettingsBackendGetIntegratedSetting (backend, setting);
 
     if (ccsGetIntegrationEnabled (context) &&
-	index != -1)
+	integrated)
     {
-	writeIntegratedOption (backend, context, setting, index);
+	writeIntegratedOption (backend, setting, integrated);
     }
     else if (ccsSettingGetIsDefault (setting))
     {
@@ -412,7 +410,7 @@ writeSetting (CCSBackend *backend,
 static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
-    int index = ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting);
+    CCSIntegratedSetting *integrated = ccsGSettingsBackendGetIntegratedSetting (backend, setting);
 
     ccsBackendReadInit (backend, context);
     if (!readOption (backend, setting))
@@ -421,10 +419,10 @@ updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSS
     }
 
     if (ccsGetIntegrationEnabled (context) &&
-	index != -1)
+	integrated)
     {
 	ccsBackendWriteInit (backend, context);
-	ccsGSettingsBackendWriteIntegratedOption (backend, setting, index);
+	ccsGSettingsBackendWriteIntegratedOption (backend, setting, integrated);
     }
 }
 
@@ -462,7 +460,7 @@ getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
     if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
-    if (ccsGSettingsBackendGetIntegratedOptionIndex (backend, setting) == -1)
+    if (!ccsGSettingsBackendGetIntegratedSetting (backend, setting))
 	return FALSE;
 
     return TRUE;

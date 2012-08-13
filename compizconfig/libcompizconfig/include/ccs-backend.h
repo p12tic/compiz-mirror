@@ -161,20 +161,17 @@ ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSI
 typedef struct _CCSIntegration CCSIntegration;
 typedef struct _CCSIntegrationInterface CCSIntegrationInterface;
 
-typedef CCSIntegratedSetting * (*CCSIntegrationGetIntegratedOptionIndex) (CCSIntegration *integration,
-									  const char *pluginName,
-									  const char *settingName,
-									  int	  *index);
+typedef CCSIntegratedSetting * (*CCSIntegrationGetIntegratedSetting) (CCSIntegration *integration,
+								      const char *pluginName,
+								      const char *settingName);
 typedef Bool (*CCSIntegrationReadOptionIntoSetting) (CCSIntegration *integration,
 						     CCSContext	    *context,
 						     CCSSetting	    *setting,
-						     CCSIntegratedSetting *integratedSetting,
-						     int	    index);
+						     CCSIntegratedSetting *integratedSetting);
 typedef void (*CCSIntegrationWriteSettingIntoOption) (CCSIntegration *integration,
 						      CCSContext     *context,
 						      CCSSetting     *setting,
-						      CCSIntegratedSetting *integratedSetting,
-						      int	     index);
+						      CCSIntegratedSetting *integratedSetting);
 typedef void (*CCSIntegrationUpdateIntegratedSettings) (CCSIntegration *integration,
 							CCSContext *context,
 							CCSIntegratedSettingList integratedSettings);
@@ -182,7 +179,7 @@ typedef void (*CCSFreeIntegrationBackend) (CCSIntegration *integration);
 
 struct _CCSIntegrationInterface
 {
-    CCSIntegrationGetIntegratedOptionIndex getIntegratedOptionIndex;
+    CCSIntegrationGetIntegratedSetting getIntegratedSetting;
     CCSIntegrationReadOptionIntoSetting readOptionIntoSetting;
     CCSIntegrationWriteSettingIntoOption writeSettingIntoOption;
     CCSIntegrationUpdateIntegratedSettings updateIntegratedSettings;
@@ -198,20 +195,17 @@ CCSREF_HDR (Integration, CCSIntegration)
 
 unsigned int ccsCCSIntegrationInterfaceGetType ();
 
-CCSIntegratedSetting * ccsIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
-							       const char *pluginName,
-							       const char *settingName,
-							       int	  *index);
+CCSIntegratedSetting * ccsIntegrationGetIntegratedSetting (CCSIntegration *integration,
+							   const char *pluginName,
+							   const char *settingName);
 Bool ccsIntegrationReadOptionIntoSetting (CCSIntegration *integration,
 					  CCSContext		  *context,
 					  CCSSetting		  *setting,
-					  CCSIntegratedSetting    *integratedSetting,
-					  int			  index);
+					  CCSIntegratedSetting    *integratedSetting);
 void ccsIntegrationWriteSettingIntoOption (CCSIntegration *integration,
 					   CCSContext		   *context,
 					   CCSSetting		   *setting,
-					   CCSIntegratedSetting *integratedSetting,
-					   int			    index);
+					   CCSIntegratedSetting *integratedSetting);
 
 void ccsIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
 					     CCSContext	    *context,

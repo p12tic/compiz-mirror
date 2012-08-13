@@ -79,36 +79,36 @@ static Bool readInit (CCSBackend *backend, CCSContext * context);
 static void readSetting (CCSBackend *backend, CCSContext * context, CCSSetting * setting);
 static Bool readOption (CCSSetting * setting);
 static Bool writeInit (CCSBackend *backend, CCSContext * context);
-static void writeIntegratedOption (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *integrated,
-				   int        index);
+static void writeIntegratedOption (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *integrated);
 
 static Bool
 isIntegratedOption (CCSSetting *setting,
-		    int        *index,
 		    CCSIntegratedSetting **integrated)
 {
     CCSPlugin    *plugin = ccsSettingGetParent (setting);
     const char   *pluginName = ccsPluginGetName (plugin);
     const char   *settingName = ccsSettingGetName (setting);
-    *integrated = ccsIntegrationGetIntegratedOptionIndex (integration, pluginName, settingName, index);
+    CCSIntegratedSetting *tmp = ccsIntegrationGetIntegratedSetting (integration, pluginName, settingName);
 
-    return *integrated != NULL;
+    if (integrated)
+	*integrated = tmp;
+
+    return tmp != NULL;
 }
 
 static void
 updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
 {
-    int          index;
     CCSIntegratedSetting *integrated;
     readInit (backend, context);
     if (!readOption (setting))
 	ccsResetToDefault (setting, TRUE);
 
     if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index, &integrated))
+	isIntegratedOption (setting, &integrated))
     {
 	writeInit (backend, context);
-	writeIntegratedOption (context, setting, integrated, index);
+	writeIntegratedOption (context, setting, integrated);
     }
 }
 
@@ -477,10 +477,9 @@ readListValue (CCSSetting *setting,
 static Bool
 readIntegratedOption (CCSContext *context,
 		      CCSSetting *setting,
-		      CCSIntegratedSetting *integrated,
-		      int        index)
+		      CCSIntegratedSetting *integrated)
 {
-    return ccsIntegrationReadOptionIntoSetting (integration, context, setting, integrated, index);
+    return ccsIntegrationReadOptionIntoSetting (integration, context, setting, integrated);
 }
 
 static Bool
@@ -784,10 +783,9 @@ writeListValue (CCSSetting *setting,
 static void
 writeIntegratedOption (CCSContext *context,
 		       CCSSetting *setting,
-		       CCSIntegratedSetting *integrated,
-		       int        index)
+		       CCSIntegratedSetting *integrated)
 {
-    ccsIntegrationWriteSettingIntoOption (integration, context, setting, integrated, index);
+    ccsIntegrationWriteSettingIntoOption (integration, context, setting, integrated);
 }
 
 static void
@@ -1093,13 +1091,12 @@ readSetting (CCSBackend *backend,
 	     CCSSetting *setting)
 {
     Bool status;
-    int  index;
     CCSIntegratedSetting *integrated;
 
     if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index, &integrated))
+	isIntegratedOption (setting, &integrated))
     {
-	status = readIntegratedOption (context, setting, integrated, index);
+	status = readIntegratedOption (context, setting, integrated);
     }
     else
 	status = readOption (setting);
@@ -1119,13 +1116,12 @@ writeSetting (CCSBackend *backend,
 	      CCSContext *context,
 	      CCSSetting *setting)
 {
-    int index;
     CCSIntegratedSetting *integrated;
 
     if (ccsGetIntegrationEnabled (context) &&
-	isIntegratedOption (setting, &index, &integrated))
+	isIntegratedOption (setting, &integrated))
     {
-	writeIntegratedOption (context, setting, integrated, index);
+	writeIntegratedOption (context, setting, integrated);
     }
     else if (ccsSettingGetIsDefault (setting))
     {
@@ -1139,12 +1135,10 @@ writeSetting (CCSBackend *backend,
 static Bool
 getSettingIsIntegrated (CCSBackend *backend, CCSSetting * setting)
 {
-    CCSIntegratedSetting *integrated;
-
     if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
-    if (!isIntegratedOption (setting, NULL, &integrated))
+    if (!isIntegratedOption (setting, NULL))
 	return FALSE;
 
     return TRUE;

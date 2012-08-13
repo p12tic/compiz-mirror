@@ -1522,18 +1522,14 @@ populateSettingNameToGNOMENameHashTables ()
 
 
 static CCSIntegratedSetting *
-ccsGConfIntegrationBackendGetIntegratedOptionIndex (CCSIntegration *integration,
-						    const char		  *pluginName,
-						    const char		  *settingName,
-						    int			  *index)
+ccsGConfIntegrationBackendGetIntegratedSetting (CCSIntegration *integration,
+						const char		  *pluginName,
+						const char		  *settingName)
 {
     CCSGConfIntegrationBackendPrivate *priv = (CCSGConfIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
 															  pluginName,
 															  settingName);
-
-    if (index)
-	*index = -1;
 
     if (integratedSettings)
 	return integratedSettings->data;
@@ -1674,8 +1670,7 @@ static Bool
 ccsGConfIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
-						 CCSIntegratedSetting   *integratedSetting,
-						 int		       index)
+						 CCSIntegratedSetting   *integratedSetting)
 {
     Bool       ret = FALSE;
     CCSSettingValue *v = NULL;
@@ -1889,8 +1884,7 @@ static void
 ccsGConfIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  CCSContext		 *context,
 						  CCSSetting		 *setting,
-						  CCSIntegratedSetting   *integratedSetting,
-						  int			 index)
+						  CCSIntegratedSetting   *integratedSetting)
 {
     GError     *err = NULL;
     CCSSettingType type = TypeNum;
@@ -2112,7 +2106,7 @@ ccsGConfIntegrationBackendFree (CCSIntegration *integration)
 
 const CCSIntegrationInterface ccsGConfIntegrationBackendInterface =
 {
-    ccsGConfIntegrationBackendGetIntegratedOptionIndex,
+    ccsGConfIntegrationBackendGetIntegratedSetting,
     ccsGConfIntegrationBackendReadOptionIntoSetting,
     ccsGConfIntegrationBackendWriteOptionFromSetting,
     ccsGConfIntegrationBackendUpdateIntegratedSettings,

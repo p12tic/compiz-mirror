@@ -34,6 +34,10 @@ class CCSGSettingsBackendGMockInterface
 	virtual gboolean updateProfile (CCSContext *) = 0;
 	virtual void updateCurrentProfileName (const char *) = 0;
 	virtual gboolean addProfile (const char *) = 0;
+	virtual CCSIntegratedSetting * getIntegratedSetting (CCSSetting *) = 0;
+	virtual Bool readIntegratedOption (CCSSetting *, CCSIntegratedSetting *) = 0;
+	virtual void writeIntegratedOption (CCSSetting *, CCSIntegratedSetting *) = 0;
+
 };
 
 class CCSGSettingsBackendGMock :
@@ -61,6 +65,9 @@ class CCSGSettingsBackendGMock :
 	MOCK_METHOD1 (updateProfile, gboolean (CCSContext *));
 	MOCK_METHOD1 (updateCurrentProfileName, void (const char *));
 	MOCK_METHOD1 (addProfile, gboolean (const char *));
+	MOCK_METHOD1 (getIntegratedSetting, CCSIntegratedSetting * (CCSSetting *));
+	MOCK_METHOD2 (readIntegratedOption, Bool (CCSSetting *, CCSIntegratedSetting *));
+	MOCK_METHOD2 (writeIntegratedOption, void (CCSSetting *, CCSIntegratedSetting *));
 
 	CCSBackend * getBackend () { return mBackend; }
 
@@ -154,6 +161,25 @@ class CCSGSettingsBackendGMock :
 	ccsGSettingsBackendAddProfile (CCSBackend *backend, const char *profile)
 	{
 	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->addProfile (profile);
+	}
+
+	static CCSIntegratedSetting *
+	ccsGSettingsBackendGetIntegratedSetting (CCSBackend *backend, CCSSetting *setting)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->getIntegratedSetting (setting);
+	}
+
+	static Bool
+	ccsGSettingsBackendReadIntegratedOption (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *integrated)
+	{
+	    return (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->readIntegratedOption (setting, integrated);
+
+	}
+
+	static void
+	ccsGSettingsBackendWriteIntegratedOption (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *integrated)
+	{
+	    (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend)))->writeIntegratedOption (setting, integrated);
 	}
 };
 
