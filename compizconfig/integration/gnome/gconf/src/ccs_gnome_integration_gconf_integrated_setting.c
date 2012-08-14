@@ -95,6 +95,7 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	    v->value.asBool = gconf_value_get_bool (gconfValue) ? TRUE : FALSE;
 	    break;
 	case TypeString:
+	case TypeKey:
 	    if (gconfValue->type != GCONF_VALUE_STRING)
 	    {
 		ccsError ("Expected string value");
