@@ -9,6 +9,7 @@
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
 #include "ccs_gnome_integration.h"
+#include "ccs_gnome_integration_gconf_integrated_setting_factory.h"
 #include "gsettings_shared.h"
 
 struct _CCSGSettingsBackendPrivate
@@ -21,6 +22,8 @@ struct _CCSGSettingsBackendPrivate
     CCSContext	    *context;
 
     CCSIntegration *integration;
+
+    CCSGNOMEValueChangeData valueChangeData;
 };
 
 void
@@ -469,12 +472,18 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 
 #ifdef USE_GCONF
     CCSIntegratedSettingsStorage *storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
-    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (NULL, &ccsDefaultObjectAllocator);
+
+    priv->valueChangeData.storage = storage;
+    priv->valueChangeData.context = priv->context;
+
+    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (NULL, &priv->valueChangeData, &ccsDefaultObjectAllocator);
 
     priv->integration = ccsGNOMEIntegrationBackendNew (backend, context, factory, storage, backend->object.object_allocation);
 #else
     priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
 #endif
+
+    priv->valueChangeData.integration = priv->integration;
 
     return TRUE;
 }

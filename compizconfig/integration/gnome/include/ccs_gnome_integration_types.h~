@@ -22,3 +22,5 @@ typedef enum {
     OptionSpecial,
 } SpecialOptionType;
 
+#endif
+

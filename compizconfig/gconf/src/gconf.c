@@ -45,6 +45,7 @@
 #include <gconf/gconf-value.h>
 
 #include "ccs_gnome_integration.h"
+#include "ccs_gnome_integration_gconf_integrated_setting_factory.h"
 
 #define COMPIZ       "/apps/compiz-1"
 #define COMPIZCONFIG "/apps/compizconfig-1"
@@ -72,7 +73,12 @@ static GConfClient *client = NULL;
 static GConfEngine *conf = NULL;
 static guint compizNotifyId;
 static char *currentProfile = NULL;
-static CCSIntegration *integration = NULL;
+static CCSGNOMEValueChangeData valueChangeData =
+{
+    NULL,
+    NULL,
+    NULL
+};
 
 /* some forward declarations */
 static Bool readInit (CCSBackend *backend, CCSContext * context);
@@ -88,7 +94,7 @@ isIntegratedOption (CCSSetting *setting,
     CCSPlugin    *plugin = ccsSettingGetParent (setting);
     const char   *pluginName = ccsPluginGetName (plugin);
     const char   *settingName = ccsSettingGetName (setting);
-    CCSIntegratedSetting *tmp = ccsIntegrationGetIntegratedSetting (integration, pluginName, settingName);
+    CCSIntegratedSetting *tmp = ccsIntegrationGetIntegratedSetting (valueChangeData.integration, pluginName, settingName);
 
     if (integrated)
 	*integrated = tmp;
@@ -176,14 +182,15 @@ initClient (CCSBackend *backend, CCSContext *context)
 {
     client = gconf_client_get_for_engine (conf);
 
-    CCSIntegratedSettingsStorage *storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
-    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (client, &ccsDefaultObjectAllocator);
+    valueChangeData.context = context;
+    valueChangeData.storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
+    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (client, &valueChangeData, &ccsDefaultObjectAllocator);
 
-    integration = ccsGNOMEIntegrationBackendNew (backend,
-						 context,
-						 factory,
-						 storage,
-						 &ccsDefaultObjectAllocator);
+    valueChangeData.integration = ccsGNOMEIntegrationBackendNew (backend,
+								 context,
+								 factory,
+								 valueChangeData.storage,
+								 &ccsDefaultObjectAllocator);
 
     compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
 					      context, NULL, NULL);
@@ -204,8 +211,9 @@ finiClient (void)
     g_object_unref (client);
     client = NULL;
 
-    ccsIntegrationUnref (integration);
-    integration = NULL;
+    ccsIntegrationUnref (valueChangeData.integration);
+
+    memset (&valueChangeData, 0, sizeof (CCSGNOMEValueChangeData));
 }
 
 static void
@@ -484,7 +492,7 @@ readIntegratedOption (CCSContext *context,
 		      CCSSetting *setting,
 		      CCSIntegratedSetting *integrated)
 {
-    return ccsIntegrationReadOptionIntoSetting (integration, context, setting, integrated);
+    return ccsIntegrationReadOptionIntoSetting (valueChangeData.integration, context, setting, integrated);
 }
 
 static Bool
@@ -790,7 +798,7 @@ writeIntegratedOption (CCSContext *context,
 		       CCSSetting *setting,
 		       CCSIntegratedSetting *integrated)
 {
-    ccsIntegrationWriteSettingIntoOption (integration, context, setting, integrated);
+    ccsIntegrationWriteSettingIntoOption (valueChangeData.integration, context, setting, integrated);
 }
 
 static void

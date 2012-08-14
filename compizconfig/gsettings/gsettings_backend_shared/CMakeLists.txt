@@ -5,7 +5,8 @@ compiz_pkg_check_modules (GSETTINGS_UTIL ${_deps})
 if (GSETTINGS_UTIL_FOUND)
 
     set (GSETTINGS_UTIL_LIB_INCLUDES
-	 ${compiz_SOURCE_DIR}/compizconfig/integration/gnome/include
+         ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/include
+         ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/gconf/include
 	 ${compiz_SOURCE_DIR}/compizconfig/libcompizconfig/include
 	 ${GSETTINGS_UTIL_INCLUDE_DIRS}
 	 ${CMAKE_CURRENT_SOURCE_DIR}/../src)
@@ -14,7 +15,8 @@ if (GSETTINGS_UTIL_FOUND)
 
     link_directories (${GSETTINGS_UTIL_LIBRARY_DIRS}
 		      ${compiz_BINARY_DIR}/compizconfig/libcompizconfig
-		      ${compiz_BINARY_DIR}/compizconfig/integration/gnome)
+                      ${compiz_BINARY_DIR}/compizconfig/integration/gnome
+                      ${CMAKE_BINARY_DIR}/compizconfig/integration/gnome/gconf)
 
     add_library (gsettings_backend_shared SHARED
 		 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c
@@ -28,7 +30,9 @@ if (GSETTINGS_UTIL_FOUND)
     target_link_libraries (gsettings_backend_shared
 			   ${GSETTINGS_UTIL_LIBRARIES}
 			   compizconfig
-			   compizconfig_gnome_integration)
+                           compizconfig_gnome_integration
+                           compizconfig_gnome_integration_gconf_setting_factory
+                           compizconfig_gnome_integration_gconf_integrated_setting)
 
     install (TARGETS gsettings_backend_shared
 	     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)

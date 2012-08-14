@@ -1040,6 +1040,7 @@ CCSREF_OBJ (Backend, CCSBackend)
 CCSREF_OBJ (DynamicBackend, CCSDynamicBackend)
 CCSREF_OBJ (Integration, CCSIntegration)
 CCSREF_OBJ (IntegratedSetting, CCSIntegratedSetting);
+CCSREF_OBJ (IntegratedSettingFactory, CCSIntegratedSettingFactory);
 
 static void *
 openBackend (const char *backend)
@@ -5885,6 +5886,12 @@ ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSI
 									    CCSSettingType type)
 {
     return (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->createIntegratedSettingForCCSSettingNameAndType) (factory, integration, pluginName, settingName, type);
+}
+
+void
+ccsFreeIntegratedSettingFactory (CCSIntegratedSettingFactory *factory)
+{
+    (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->free) (factory);
 }
 
 static  const CCSPluginInterface ccsDefaultPluginInterface =

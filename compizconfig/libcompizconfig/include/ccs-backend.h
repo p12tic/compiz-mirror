@@ -148,15 +148,20 @@ typedef CCSIntegratedSetting * (*CCSIntegratedSettingFactoryCreateIntegratedSett
 													      const char		  *settingName,
 													      CCSSettingType		  type);
 
+typedef void (*CCSIntegratedSettingFactoryFree) (CCSIntegratedSettingFactory *);
+
 struct _CCSIntegratedSettingFactoryInterface
 {
     CCSIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType createIntegratedSettingForCCSSettingNameAndType;
+    CCSIntegratedSettingFactoryFree free;
 };
 
 struct _CCSIntegratedSettingFactory
 {
     CCSObject object;
 };
+
+CCSREF_HDR (IntegratedSettingFactory, CCSIntegratedSettingFactory);
 
 unsigned int ccsCCSIntegratedSettingFactoryInterfaceGetType ();
 
@@ -166,6 +171,9 @@ ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSI
 									    const char			*pluginName,
 									    const char			*settingName,
 									    CCSSettingType		type);
+
+void
+ccsFreeIntegratedSettingFactory (CCSIntegratedSettingFactory *factory);
 
 typedef struct _CCSIntegration CCSIntegration;
 typedef struct _CCSIntegrationInterface CCSIntegrationInterface;
