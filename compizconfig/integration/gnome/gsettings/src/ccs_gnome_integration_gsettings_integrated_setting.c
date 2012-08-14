@@ -52,6 +52,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
     v->parent = NULL;
     v->refCount = 1;
 
+    g_print ("translated name: %s\n", gsettingsTranslatedName);
+
     GVariant *variant = ccsGSettingsWrapperGetValue (priv->wrapper, gsettingsTranslatedName);
 
     if (!variant)
@@ -65,18 +67,20 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
     switch (type)
     {
 	case TypeInt:
-	    if (variantType != G_VARIANT_TYPE_INT32)
+	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_INT32))
 	    {
 		ccsError ("Expected integer value");
+		asm ("int $3");
 		break;
 	    }
 
 	    v->value.asInt = readIntFromVariant (variant);
 	    break;
 	case TypeBool:
-	    if (variantType != G_VARIANT_TYPE_BOOLEAN)
+	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_BOOLEAN))
 	    {
 		ccsError ("Expected boolean value");
+		asm ("int $3");
 		break;
 	    }
 
@@ -84,14 +88,35 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    break;
 	case TypeString:
 	{
-	    if (variantType != G_VARIANT_TYPE_STRING)
+	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_STRING))
 	    {
 		ccsError ("Expected string value");
+		asm ("int $3");
 		break;
 	    }
 
 	    const char *str = readStringFromVariant (variant);
 	    v->value.asString = strdup (str ? str : "");
+	    break;
+	}
+	case TypeKey:
+	{
+	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE ("as")))
+	    {
+		ccsError ("Expected array-of-string value");
+		asm ("int $3");
+		break;
+	    }
+
+	    gsize len;
+	    const gchar **strv = g_variant_get_strv (variant, &len);
+
+	    if (strv)
+		v->value.asString = strdup (strv[0] ? strv[0] : "");
+	    else
+		v->value.asString = strdup ("");
+
+	    g_free (strv);
 	    break;
 	}
 	default:
@@ -151,7 +176,16 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
 			writeStringToVariant (currentValue, &newVariant);
 		}
 	    }
-	    break;
+	case TypeKey:
+	    {
+		GVariantBuilder strvBuilder;
+
+		g_variant_builder_init (&strvBuilder, G_VARIANT_TYPE ("as"));
+		g_variant_builder_add (&strvBuilder, v->value.asString);
+		newVariant = g_variant_builder_end (&strvBuilder);
+
+		break;
+	    }
 	default:
 	    g_assert_not_reached ();
 	    break;

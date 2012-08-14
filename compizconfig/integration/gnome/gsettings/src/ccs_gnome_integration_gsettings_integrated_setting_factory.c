@@ -165,7 +165,9 @@ initializeGSettingsWrappers (CCSGNOMEIntegrationGSettingsWrapperFactory *factory
 			     CCSGNOMEValueChangeData			*data)
 {
     const CCSGSettingsWrapperIntegratedSchemasQuarks *quarks = ccsGNOMEGSettingsWrapperQuarks ();
-    GHashTable *quarksToGSettingsWrappers = g_hash_table_new_full (g_int_hash, g_int_equal, NULL, ccsGSettingsWrapperUnrefWrapper);
+    GHashTable *quarksToGSettingsWrappers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, ccsGSettingsWrapperUnrefWrapper);
+
+    g_print ("inserting %i %i %i\n", quarks->ORG_COMPIZ_INTEGRATED, quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS, quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES);
 
     g_hash_table_insert (quarksToGSettingsWrappers, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED),
 			 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (factory,
@@ -204,11 +206,14 @@ ccsGSettingsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndT
     if (!priv->quarksToGSettingsWrappersHashTable)
 	priv->quarksToGSettingsWrappersHashTable = initializeGSettingsWrappers (priv->wrapperFactory, priv->valueChangeData);
 
+    g_print ("%p %p %p\n", settingsGSettingsWrapperQuarksHashTable, settingsSpecialTypesHashTable, settingsSettingNameGNOMENameHashTable);
+
     if (settingsGSettingsWrapperQuarksHashTable &&
 	settingsSpecialTypesHashTable &&
 	settingsSettingNameGNOMENameHashTable)
     {
 	GQuark  wrapperQuark = GPOINTER_TO_INT (g_hash_table_lookup (settingsGSettingsWrapperQuarksHashTable, settingName));
+	g_print ("looking up %i\n", wrapperQuark);
 	CCSGSettingsWrapper *wrapper = g_hash_table_lookup (priv->quarksToGSettingsWrappersHashTable, GINT_TO_POINTER (wrapperQuark));
 	SpecialOptionType specialType = (SpecialOptionType) GPOINTER_TO_INT (g_hash_table_lookup (settingsSpecialTypesHashTable, settingName));
 	const gchar *integratedName = g_hash_table_lookup (settingsSettingNameGNOMENameHashTable, settingName);
