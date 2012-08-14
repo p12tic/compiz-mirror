@@ -52,6 +52,13 @@
 
 #define COMPIZ_OPENGL_ABI 5
 
+/*
+ * Some plugins check for #ifdef USE_MODERN_COMPIZ_GL. Support it for now, but
+ * but the offending code should be changed to:  #if COMPIZ_OPENGL_ABI >= 5
+ * Or the preprocessor checks should be removed altogether.
+ */
+#define USE_MODERN_COMPIZ_GL 1
+
 #if !defined(GL_BGRA)
     #if !defined(GL_BGRA_EXT)
 	#error GL_BGRA support is required
