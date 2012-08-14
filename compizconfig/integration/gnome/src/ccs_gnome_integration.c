@@ -204,7 +204,7 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	break;
     case OptionKey:
 	{
-	    type = TypeString;
+	    type = TypeKey;
 	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
 	    if (v->value.asString)
@@ -409,7 +409,7 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		    newValue[0] = 'd';
 		}
 
-		type = TypeString;
+		type = TypeKey;
 
 		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
 		free (newValue);
