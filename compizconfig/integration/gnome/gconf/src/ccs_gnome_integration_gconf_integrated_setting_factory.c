@@ -23,6 +23,7 @@ struct _CCSGConfIntegratedSettingFactoryPrivate
     GHashTable  *pluginsToSettingsSectionsHashTable;
     GHashTable  *pluginsToSettingsSpecialTypesHashTable;
     GHashTable  *pluginsToSettingNameGNOMENameHashTable;
+    CCSGNOMEValueChangeData *valueChangedData;
 };
 
 Bool
@@ -122,7 +123,7 @@ finiGConfClient (GConfClient    *client,
 static void
 registerGConfClient (GConfClient    *client,
 		     guint	    *gnomeGConfNotifyIds,
-		     CCSIntegration *integration,
+		     CCSGNOMEValueChangeData *data,
 		     GConfClientNotifyFunc func)
 {
     int i;
@@ -131,7 +132,7 @@ registerGConfClient (GConfClient    *client,
     {
 	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
 							  watchedGConfGnomeDirectories[i],
-							  func, (gpointer) integration,
+							  func, (gpointer) data,
 							  NULL, NULL);
 	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
@@ -161,7 +162,7 @@ ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType 
 	initGConfClient (factory);
 
     if (!priv->gnomeGConfNotifyIds[0])
-	registerGConfClient (priv->client, priv->gnomeGConfNotifyIds, integration, gnomeGConfValueChanged);
+	registerGConfClient (priv->client, priv->gnomeGConfNotifyIds, priv->valueChangedData, gnomeGConfValueChanged);
 
     if (settingsSectionsHashTable &&
 	settingsSpecialTypesHashTable &&
@@ -214,7 +215,7 @@ const CCSIntegratedSettingFactoryInterface ccsGConfIntegratedSettingFactoryInter
 
 CCSIntegratedSettingFactory *
 ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
-				     GConfClientNotifyFunc	  func,
+				     CCSGNOMEValueChangeData	  *valueChangedData,
 				     CCSObjectAllocationInterface *ai)
 {
     CCSIntegratedSettingFactory *factory = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSettingFactory));
@@ -234,6 +235,7 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
     priv->pluginsToSettingsSectionsHashTable = ccsGNOMEIntegrationPopulateCategoriesHashTables ();
     priv->pluginsToSettingsSpecialTypesHashTable = ccsGNOMEIntegrationPopulateSpecialTypesHashTables ();
     priv->pluginsToSettingNameGNOMENameHashTable = ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ();
+    priv->valueChangedData = valueChangedData;
 
     ccsObjectInit (factory, ai);
     ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
