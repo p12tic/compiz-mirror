@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/org/compiz/integrated/" id="org.compiz.integrated">
+	<key type="b" name="current-viewport">
+	    <default>false</default>
+	</key>
+	<key type="s" name="command-terminal">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command-window-screenshot">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command-screenshot">
+	    <default>""</default>
+	</key>
+	<key type="as" name="run-command11-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command10-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command9-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command8-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command7-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command6-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command5-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command4-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command3-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command2-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command1-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command0-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="s" name="command11">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command10">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command9">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command8">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command7">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command6">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command5">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command4">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command3">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command2">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command1">
+	    <default>""</default>
+	</key>
+	<key type="s" name="command0">
+	    <default>""</default>
+	</key>
+	<key type="as" name="run-command-terminal-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command-window-screenshot-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-command-screenshot-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="main-menu-key">
+	    <default>["Disabled"]</default>
+	</key>
+	<key type="as" name="run-key">
+	    <default>["Disabled"]</default>
+	</key>
+    </schema>
+</schemalist>
+

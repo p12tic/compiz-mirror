@@ -8,7 +8,7 @@ if (USE_GCONF)
 
     compiz_pkg_check_modules (COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION ${_deps})
 
-    if (COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION)
+    if (COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_FOUND)
 
 	add_definitions (-DUSE_GCONF)
 
@@ -43,6 +43,33 @@ if (USE_GCONF)
 			       compizconfig
 			       gsettings_backend_shared
 			       ${COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATIONLIBRARIES})
+
+	find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
+
+	if (GLIB_COMPILE_SCHEMAS)
+
+	    set (_integrated_gschema      org.compiz.integrated)
+	    set (_integrated_gschema_file ${_integrated_gschema}.gschema.xml)
+	    set (_integrated_gschema_src  ${CMAKE_CURRENT_SOURCE_DIR}/${_integrated_gschema_file})
+	    set (_integrated_gschema_dest ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_integrated_gschema_file})
+
+	    configure_file (${_integrated_gschema_src} ${_integrated_gschema_dest})
+
+	    add_custom_command (
+		OUTPUT ${CMAKE_BINARY_DIR}/glib-2.0/schemas/gschemas.compiled
+		COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/glib-2.0/schemas/
+			${CMAKE_BINARY_DIR}/glib-2.0/schemas/
+	    )
+
+	    add_custom_target (compiz_gsettings_integrated_settings_schema ALL
+			       DEPENDS ${_integrated_gschema_src})
+
+	    add_gsettings_schema_to_recompilation_list (compiz_gsettings_integrated_settings_schema)
+
+	    compiz_install_gsettings_schema (${_integrated_gschema_dest}
+					     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+
+	endif (GLIB_COMPILE_SCHEMAS)
 
     endif (COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_FOUND)
 
