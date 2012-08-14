@@ -21,7 +21,8 @@ if (USE_GCONF)
 			  ${COMPIZCONFIG_GNOME_INTEGRATION_LIBRARY_DIRS})
 
 	add_library (compizconfig_gnome_integration STATIC
-		     ${CMAKE_CURRENT_SOURCE_DIR}/src/ccs_gnome_integration.c)
+		     ${CMAKE_CURRENT_SOURCE_DIR}/src/ccs_gnome_integration.c
+		     ${CMAKE_CURRENT_SOURCE_DIR}/src/ccs_gnome_integration_constants.c)
 
 	target_link_libraries (compizconfig_gnome_integration
 			       compizconfig
