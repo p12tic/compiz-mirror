@@ -30,7 +30,7 @@ if (USE_GCONF)
 			       compizconfig_gnome_integrated_setting
 			       compizconfig_gnome_integration_constants
 			       compizconfig
-			       gsettings_backend_shared
+                               compizconfig_gsettings_util
 			       ${COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_LIBRARIES})
 
 	add_library (compizconfig_gnome_integration_gsettings_setting_factory STATIC
@@ -41,7 +41,7 @@ if (USE_GCONF)
 			       compizconfig_gnome_integrated_setting
 			       compizconfig_gnome_integration_gsettings_integrated_setting
 			       compizconfig
-			       gsettings_backend_shared
+                               compizconfig_gsettings_util
 			       ${COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATIONLIBRARIES})
 
 	find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)

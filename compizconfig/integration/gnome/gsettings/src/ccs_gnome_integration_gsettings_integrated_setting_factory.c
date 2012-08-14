@@ -78,6 +78,13 @@ ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (CCSObjectAllocationInterface 
     return wrapperFactory;
 }
 
+void
+ccsGNOMEIntegrationGSettingsWrapperDefaultImpl (CCSGNOMEIntegrationGSettingsWrapperFactory *factory)
+{
+    ccsObjectFinalize (factory);
+    (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
+}
+
 typedef struct _CCSGSettingsIntegratedSettingFactoryPrivate CCSGSettingsIntegratedSettingFactoryPrivate;
 
 struct _CCSGSettingsIntegratedSettingFactoryPrivate

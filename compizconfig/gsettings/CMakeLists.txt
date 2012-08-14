@@ -16,9 +16,10 @@ endif (USE_GCONF)
 
 add_subdirectory (gsettings_backend_shared)
 
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared
+                     ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/gsettings/include)
 
-compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES gsettings_backend_shared)
+compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES compizconfig_gsettings_backend)
 
 find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
 
