@@ -68,14 +68,7 @@ class GLVertexBuffer
 
 	static GLVertexBuffer *streamingBuffer ();
 
-
 	void begin (GLenum primitiveType = GL_TRIANGLES);
-	/**
-	 * Saves client buffered vertices into a vertex buffer
-	 * and returns the number of vertices saved
-	 *
-	 * @return whether or not the vertex save operation succeeded
-	 */
 	bool end ();
 
 	// vertices and normals are 3 parts, count is number of xyz groups

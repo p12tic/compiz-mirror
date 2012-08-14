@@ -85,10 +85,9 @@ class NegWindow :
 	bool isNeg;
 
 	void
-	glDrawTexture (GLVertexBuffer &vertexBuffer,
-		       GLTexture                 *texture,
-		       const GLMatrix            &transform,
-		       const GLWindowPaintAttrib &attrib,
+	glDrawTexture (GLTexture                 *texture,
+	               const GLMatrix            &transform,
+	               const GLWindowPaintAttrib &attrib,
 		      unsigned int       mask);
 
 	void toggle ();

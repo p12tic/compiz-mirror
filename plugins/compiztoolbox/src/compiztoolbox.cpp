@@ -528,13 +528,13 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 	sAttrib.xTranslate = wx - g.x ();
 	sAttrib.yTranslate = wy - g.y ();
 
-	gWindow->clearVertices ();
+	gWindow->vertexBuffer ()->begin ();
 
 	gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
-	gWindow->addVertexDataForGeometry (matrix, iconReg, infiniteRegion);
+	gWindow->glAddGeometry (matrix, iconReg, infiniteRegion);
 	gWindow->glAddGeometrySetCurrentIndex (addWindowGeometryIndex);
 
-	if (gWindow->saveVertices ())
+	if (gWindow->vertexBuffer ()->end ())
 	{
 	    GLMatrix           wTransform (transform);
 
@@ -544,7 +544,7 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 				  sAttrib.yTranslate / sAttrib.yScale - g.y (),
 				  0.0f);
 
-	    gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, sAttrib, mask);
+	    gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
 	}
     }
 }

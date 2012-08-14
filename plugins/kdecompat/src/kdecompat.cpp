@@ -264,7 +264,6 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	unsigned int   paintMask = mask | PAINT_WINDOW_TRANSFORMED_MASK;
 	float          xScale = 1.0f, yScale = 1.0f, xTranslate, yTranslate;
 	GLTexture      *icon = NULL;
-	unsigned int   iconNVertices = 0;
 
 	if (!tw)
 	    continue;
@@ -323,16 +322,13 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		matrices[0].x0 -= (tw->x () * icon->matrix ().xx);
 		matrices[0].y0 -= (tw->y () * icon->matrix ().yy);
 
-		gtw->clearVertices ();
-		gtw->addVertexDataForGeometry (matrices, tw->geometry (), infiniteRegion);
-		iconNVertices = gtw->saveVertices ();
+		gtw->vertexBuffer ()->begin ();
+		gtw->glAddGeometry (matrices, tw->geometry (), infiniteRegion);
+		gtw->vertexBuffer ()->end ();
 	    }
 	}
 
-	bool canDrawIcon = icon && iconNVertices;
-
-	if (!gtw->textures ().empty () ||
-	    canDrawIcon)
+	if (!gtw->textures ().empty () || icon)
 	{
 	    GLMatrix           wTransform (transform);
 
@@ -349,7 +345,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		gtw->glDraw (wTransform, attrib,
 				 infiniteRegion, paintMask);
 	    else if (icon)
-		gtw->glDrawTextureWithInternalVertexBuffer (icon, wTransform, attrib, paintMask);
+		gtw->glDrawTexture (icon, wTransform, attrib, paintMask);
 	}
     }
     

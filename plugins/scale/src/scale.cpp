@@ -226,19 +226,19 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	    GLTexture::MatrixList ml (1);
 
 	    ml[0] = icon->matrix ();
-	    priv->gWindow->clearVertices ();
+	    priv->gWindow->vertexBuffer ()->begin ();
 
 	    if (width && height)
-		priv->gWindow->addVertexDataForGeometry (ml, iconReg, iconReg);
+		priv->gWindow->glAddGeometry (ml, iconReg, iconReg);
 
-	    if (priv->gWindow->saveVertices ())
+	    if (priv->gWindow->vertexBuffer ()->end ())
 	    {
 		GLMatrix           wTransform (transform);
 
 		wTransform.scale (scale, scale, 1.0f);
 		wTransform.translate (x / scale, y / scale, 0.0f);
 
-		priv->gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, sAttrib, mask);
+		priv->gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
 	    }
 	}
     }

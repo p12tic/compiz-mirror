@@ -1285,8 +1285,7 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 #define EXPO_GRID_SIZE 100
 
 void
-ExpoWindow::glAddGeometry (GLVertexBuffer               &vertexBuffer,
-			   const GLTexture::MatrixList& matrices,
+ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 			   const CompRegion&            region,
 			   const CompRegion&            clip,
 			   unsigned int                 maxGridWidth,
@@ -1296,20 +1295,19 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               &vertexBuffer,
 	screen->desktopWindowCount () &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve)
     {
-	int         i, oldVCount = vertexBuffer.countVertices ();
+	int         i, oldVCount = gWindow->vertexBuffer ()->countVertices ();
 	GLfloat     *v;
 	CompPoint   offset;
 	float       lastX, lastZ = 0.0;
 	const float radSquare = pow (eScreen->curveDistance, 2) + 0.25;
 	float       ang;
 
-	gWindow->glAddGeometry (vertexBuffer,
-				matrices, region, clip,
+	gWindow->glAddGeometry (matrices, region, clip,
 				MIN(maxGridWidth , EXPO_GRID_SIZE),
 				maxGridHeight);
 
-	int stride = vertexBuffer.getVertexStride ();
-	v  = vertexBuffer.getVertices ();
+	int stride = gWindow->vertexBuffer ()->getVertexStride ();
+	v  = gWindow->vertexBuffer ()->getVertices ();
 	v += stride - 3;
 	v += stride * oldVCount;
 
@@ -1321,7 +1319,7 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               &vertexBuffer,
 
 	lastX = -1000000000.0;
 
-	for (i = oldVCount; i < vertexBuffer.countVertices (); i++)
+	for (i = oldVCount; i < gWindow->vertexBuffer ()->countVertices (); i++)
 	{
 	    if (v[0] == lastX)
 	    {
@@ -1347,13 +1345,12 @@ ExpoWindow::glAddGeometry (GLVertexBuffer               &vertexBuffer,
     }
     else
     {
-	gWindow->glAddGeometry (vertexBuffer, matrices, region, clip, maxGridWidth, maxGridHeight);
+	gWindow->glAddGeometry (matrices, region, clip, maxGridWidth, maxGridHeight);
     }
 }
 
 void
-ExpoWindow::glDrawTexture (GLVertexBuffer	     &vertexBuffer,
-			   GLTexture		     *texture,
+ExpoWindow::glDrawTexture (GLTexture           *texture,
                            const GLMatrix            &transform,
                            const GLWindowPaintAttrib &attrib,
 			   unsigned int        mask)
@@ -1365,7 +1362,7 @@ ExpoWindow::glDrawTexture (GLVertexBuffer	     &vertexBuffer,
     {
 	CompPoint    offset;
 	GLfloat      *v;
-	GLVertexBuffer *vb = &vertexBuffer;
+	GLVertexBuffer *vb = gWindow->vertexBuffer ();
 
 	if (!window->onAllViewports ())
 	{
@@ -1396,13 +1393,13 @@ ExpoWindow::glDrawTexture (GLVertexBuffer	     &vertexBuffer,
 	}
 
 	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+	gWindow->glDrawTexture (texture, transform, attrib, mask);
 	glDisable (GL_NORMALIZE);
     }
     else
     {
 //	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+	gWindow->glDrawTexture (texture, transform, attrib, mask);
 //	glDisable (GL_NORMALIZE);
     }
 }

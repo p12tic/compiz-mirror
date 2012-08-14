@@ -413,13 +413,13 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 		iconReg = CompRegion (0, 0, icon->width (), icon->height ());
 
-		gWindow->clearVertices ();
+		gWindow->vertexBuffer ()->begin ();
 
 		matl.push_back (icon->matrix ());
 
-		gWindow->addVertexDataForGeometry (matl, iconReg, iconReg);
+		gWindow->glAddGeometry (matl, iconReg, iconReg);
 
-		if (gWindow->saveVertices ())
+		if (gWindow->vertexBuffer ()->end ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
 		    GLMatrix		wTransform (transform);
@@ -456,7 +456,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 		                          0.0f);
 		    wTransform.scale (scale, scale, 1.0f);
 
-		    gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, wAttrib, mask);
+		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
 		}
 	    }
 	}

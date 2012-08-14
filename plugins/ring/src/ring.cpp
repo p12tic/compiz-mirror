@@ -371,10 +371,9 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 		matricies.push_back (matrix);
 
-		gWindow->clearVertices ();
-		gWindow->addVertexDataForGeometry (matricies, iconReg, iconReg);
-
-		if (gWindow->saveVertices ())
+		gWindow->vertexBuffer ()->begin ();
+		gWindow->glAddGeometry (matricies, iconReg, iconReg);
+		if (gWindow->vertexBuffer ()->end ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
 		    GLMatrix	       wTransform = transform;
@@ -392,7 +391,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		                          (y - window->y ()) / scale - window->y (),
 				          0.0f);
 
-		    gWindow->glDrawTextureWithInternalVertexBuffer (icon, wTransform, wAttrib, mask);
+		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
 		}
 	    }
 	}

@@ -80,8 +80,7 @@ NegScreen::toggle (CompAction         *action,
 }
 
 void
-NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
-			  GLTexture          *texture,
+NegWindow::glDrawTexture (GLTexture          *texture,
                           const GLMatrix            &transform,
                           const GLWindowPaintAttrib &attrib,
 			  unsigned int       mask)
@@ -117,7 +116,7 @@ NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
 	if (true)
 	{
 	    gWindow->addShaders ("neg", "", fragment_function);
-	    gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+	    gWindow->glDrawTexture (texture, transform, attrib, mask);
 	}
 	else /* Texture manipulation negation */
 	{
@@ -255,7 +254,7 @@ NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
 			glTexEnvf(GL_TEXTURE_ENV,
 				  GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-			gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+			gWindow->glDrawTexture (texture, transform, attrib, mask);
 
 			/* disable the current texture */
 			texture->disable ();
@@ -271,7 +270,7 @@ NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
 		    {
 			/* fully opaque and bright */
 
-			gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+			gWindow->glDrawTexture (texture, transform, attrib, mask);
 		    }
 
 		    /* disable the current texture */
@@ -307,7 +306,7 @@ NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
 
 		    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
-		    gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+		    gWindow->glDrawTexture (texture, transform, attrib, mask);
 		}
 
 		/* disable the current texture */
@@ -373,13 +372,13 @@ NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
 		    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 		    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-		    gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+		    gWindow->glDrawTexture (texture, transform, attrib, mask);
 		}
 		else
 		{
 		    /* no adjustments to saturation, brightness or opacity */
 
-		    gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+		    gWindow->glDrawTexture (texture, transform, attrib, mask);
 		}
 
 		/* disable the current texture */
@@ -394,7 +393,7 @@ NegWindow::glDrawTexture (GLVertexBuffer	    &vertexBuffer,
     else
     {
 	/* not negative */
-	gWindow->glDrawTexture (vertexBuffer, texture, transform, attrib, mask);
+	gWindow->glDrawTexture (texture, transform, attrib, mask);
     }
 }
 
