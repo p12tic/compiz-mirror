@@ -86,6 +86,7 @@ class ExpoScreen :
 
 	CompPoint prevCursor;
 	CompPoint newCursor;
+	CompPoint prevClickPoint;
 
 	CompPoint origVp;
 	CompPoint selectedVp;
