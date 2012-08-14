@@ -31,7 +31,7 @@
  *
  **/
 
-//#ifdef USE_GCONF
+#ifdef USE_GCONF
 #define METACITY "/apps/metacity"
 #define NUM_WATCHED_DIRS 3
 
@@ -480,14 +480,12 @@ ccsGNOMEIntegratedSettingsList ()
 }
 
 
-typedef struct _ccsGNOMEIntegrationBackendPrivate CCGNOMEIntegrationBackendPrivate;
+typedef struct _CCSGNOMEIntegrationBackendPrivate CCGNOMEIntegrationBackendPrivate;
 
-struct _ccsGNOMEIntegrationBackendPrivate
+struct _CCSGNOMEIntegrationBackendPrivate
 {
     CCSBackend *backend;
     CCSContext *context;
-    GConfClient *client;
-    guint       gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
     CCSIntegratedSettingFactory  *factory;
     CCSIntegratedSettingsStorage *storage;
 };
@@ -740,7 +738,7 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
     const char			     *gnomeKeyName = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
     char			     *gnomeKeyPath = g_strconcat (priv->sectionName, gnomeKeyName, NULL);
-    GError			     *err;
+    GError			     *err = NULL;
 
     switch (type)
     {
@@ -887,6 +885,7 @@ typedef struct _CCSGConfIntegratedSettingFactoryPrivate CCSGConfIntegratedSettin
 struct _CCSGConfIntegratedSettingFactoryPrivate
 {
     GConfClient *client;
+    guint       gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
     GHashTable  *pluginsToSettingsSectionsHashTable;
     GHashTable  *pluginsToSettingsSpecialTypesHashTable;
     GHashTable  *pluginsToSettingNameGNOMENameHashTable;
@@ -926,8 +925,96 @@ createNewGConfIntegratedSetting (GConfClient *client,
     return gconfIntegratedSetting;
 }
 
+static Bool
+ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
+						  void		       *userData)
+{
+    const char *findGnomeName = (const char *) userData;
+    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+
+    if (strcmp (findGnomeName, gnomeNameOfSetting) == 0)
+	return TRUE;
+
+    return FALSE;
+}
+
+
+static void
+gnomeGConfValueChanged (GConfClient *client,
+			guint       cnxn_id,
+			GConfEntry  *entry,
+			gpointer    user_data)
+{
+    CCSIntegration *integration = (CCSIntegration *)user_data;
+    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    const gchar *keyName = (char*) gconf_entry_get_key (entry);
+    gchar       *baseName = g_path_get_basename (keyName);
+
+    /* We don't care if integration is not enabled */
+    if (!ccsGetIntegrationEnabled (priv->context))
+	return;
+
+    CCSIntegratedSettingList settingList = ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (priv->storage,
+													ccsGNOMEIntegrationFindSettingsMatchingPredicate,
+													baseName);
+
+    ccsIntegrationUpdateIntegratedSettings (integration,
+					    priv->context,
+					    settingList);
+
+    g_free (baseName);
+}
+
+static void
+finiGConfClient (GConfClient    *client,
+		 guint		*gnomeGConfNotifyIds)
+{
+    int i;
+
+    gconf_client_clear_cache (client);
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    {
+	if (gnomeGConfNotifyIds[i])
+	{
+	    gconf_client_notify_remove (client, gnomeGConfNotifyIds[0]);
+	    gnomeGConfNotifyIds[i] = 0;
+	}
+	gconf_client_remove_dir (client, watchedGConfGnomeDirectories[i], NULL);
+    }
+    gconf_client_suggest_sync (client, NULL);
+
+    g_object_unref (client);
+}
+
+static void
+registerGConfClient (GConfClient    *client,
+		     guint	    *gnomeGConfNotifyIds,
+		     CCSIntegration *integration)
+{
+    int i;
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    {
+	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
+							  watchedGConfGnomeDirectories[i],
+							  gnomeGConfValueChanged, (gpointer) integration,
+							  NULL, NULL);
+	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
+			      GCONF_CLIENT_PRELOAD_NONE, NULL);
+    }
+}
+
+static void
+initGConfClient (CCSIntegratedSettingFactory *factory)
+{
+    CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
+    priv->client = gconf_client_get_default ();
+}
+
 CCSIntegratedSetting *
 ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+										 CCSIntegration		     *integration,
 										 const char		     *pluginName,
 										 const char		     *settingName,
 										 CCSSettingType		     type)
@@ -936,6 +1023,12 @@ ccsGConfIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType 
     GHashTable                              *settingsSectionsHashTable = g_hash_table_lookup (priv->pluginsToSettingsSectionsHashTable, pluginName);
     GHashTable                              *settingsSpecialTypesHashTable = g_hash_table_lookup (priv->pluginsToSettingsSpecialTypesHashTable, pluginName);
     GHashTable				    *settingsSettingNameGNOMENameHashTable = g_hash_table_lookup (priv->pluginsToSettingNameGNOMENameHashTable, pluginName);
+
+    if (!priv->client)
+	initGConfClient (factory);
+
+    if (!priv->gnomeGConfNotifyIds[0])
+	registerGConfClient (priv->client, priv->gnomeGConfNotifyIds, integration);
 
     if (settingsSectionsHashTable &&
 	settingsSpecialTypesHashTable &&
@@ -981,7 +1074,7 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
 	return NULL;
     }
 
-    priv->client = (GConfClient *) g_object_ref (client);
+    priv->client = client ? (GConfClient *) g_object_ref (client) : NULL;
     priv->pluginsToSettingsSectionsHashTable = populateCategoriesHashTables ();
     priv->pluginsToSettingsSpecialTypesHashTable = populateSpecialTypesHashTables ();
     priv->pluginsToSettingNameGNOMENameHashTable = populateSettingNameToGNOMENameHashTables ();
@@ -998,8 +1091,7 @@ ccsGConfIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
 {
     CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
 
-    if (priv->client)
-	g_object_unref (priv->client);
+    finiGConfClient (priv->client, priv->gnomeGConfNotifyIds);
 
     if (priv->pluginsToSettingsSectionsHashTable)
 	g_hash_table_unref (priv->pluginsToSettingsSectionsHashTable);
@@ -1520,108 +1612,6 @@ populateSettingNameToGNOMENameHashTables ()
     return masterHashTable;
 }
 
-
-static CCSIntegratedSetting *
-ccsGNOMEIntegrationBackendGetIntegratedSetting (CCSIntegration *integration,
-						const char		  *pluginName,
-						const char		  *settingName)
-{
-    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-    CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
-															  pluginName,
-															  settingName);
-
-    if (integratedSettings)
-	return integratedSettings->data;
-
-    return NULL;
-}
-
-static Bool
-ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
-						  void		       *userData)
-{
-    const char *findGnomeName = (const char *) userData;
-    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
-
-    if (strcmp (findGnomeName, gnomeNameOfSetting) == 0)
-	return TRUE;
-
-    return FALSE;
-}
-
-static void
-gnomeGConfValueChanged (GConfClient *client,
-			guint       cnxn_id,
-			GConfEntry  *entry,
-			gpointer    user_data)
-{
-    CCSIntegration *integration = (CCSIntegration *)user_data;
-    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-    const gchar *keyName = (char*) gconf_entry_get_key (entry);
-    gchar       *baseName = g_path_get_basename (keyName);
-
-    /* We don't care if integration is not enabled */
-    if (!ccsGetIntegrationEnabled (priv->context))
-	return;
-
-    CCSIntegratedSettingList settingList = ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (priv->storage,
-													ccsGNOMEIntegrationFindSettingsMatchingPredicate,
-													baseName);
-
-    ccsIntegrationUpdateIntegratedSettings (integration,
-					    priv->context,
-					    settingList);
-
-    g_free (baseName);
-}
-
-static void
-finiGConfClient (CCSIntegration *integration)
-{
-    int i;
-
-    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-
-    if (priv->client)
-    {
-	gconf_client_clear_cache (priv->client);
-
-	for (i = 0; i < NUM_WATCHED_DIRS; i++)
-	{
-	    if (priv->gnomeGConfNotifyIds[i])
-	    {
-		gconf_client_notify_remove (priv->client, priv->gnomeGConfNotifyIds[0]);
-		priv->gnomeGConfNotifyIds[i] = 0;
-	    }
-	    gconf_client_remove_dir (priv->client, watchedGConfGnomeDirectories[i], NULL);
-	}
-	gconf_client_suggest_sync (priv->client, NULL);
-
-	g_object_unref (priv->client);
-	priv->client = NULL;
-    }
-}
-
-static void
-registerGConfClient (CCSIntegration *integration,
-		     GConfClient    *client)
-{
-    int i;
-
-    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
-    {
-	priv->gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
-								watchedGConfGnomeDirectories[i],
-								gnomeGConfValueChanged, integration,
-								NULL, NULL);
-	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
-			      GCONF_CLIENT_PRELOAD_NONE, NULL);
-    }
-}
-
 static void
 unregisterAllIntegratedOptions (CCSIntegration *integration)
 {
@@ -1638,14 +1628,9 @@ unregisterAllIntegratedOptions (CCSIntegration *integration)
 }
 
 static void
-registerAllIntegratedOptions (CCSIntegration *integration,
-			      CCSObjectAllocationInterface *ai)
+registerAllIntegratedOptions (CCSIntegration *integration)
 {
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-    unregisterAllIntegratedOptions (integration);
-
-    priv->factory = ccsGConfIntegratedSettingFactoryNew (priv->client, ai);
-    priv->storage = ccsIntegratedSettingsStorageDefaultImplNew (ai);
 
     unsigned int i = 0;
     const CCSGNOMEIntegratedSettingsList *array = ccsGNOMEIntegratedSettingsList ();
@@ -1653,6 +1638,7 @@ registerAllIntegratedOptions (CCSIntegration *integration,
     for (; i < CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE; i++)
     {
 	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
+														    integration,
 														    array[i].pluginName,
 														    array[i].settingName,
 														    TypeInt);
@@ -1661,19 +1647,24 @@ registerAllIntegratedOptions (CCSIntegration *integration,
     }
 }
 
-
-static void
-initGConfClient (CCSIntegration *integration)
+static CCSIntegratedSetting *
+ccsGNOMEIntegrationBackendGetIntegratedSetting (CCSIntegration *integration,
+						const char		  *pluginName,
+						const char		  *settingName)
 {
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
-    if (priv->client)
-	finiGConfClient (integration);
+    if (ccsIntegratedSettingsStorageEmpty (priv->storage))
+	registerAllIntegratedOptions (integration);
 
-    priv->client = gconf_client_get_default ();
+    CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
+															  pluginName,
+															  settingName);
 
-    registerAllIntegratedOptions (integration, integration->object.object_allocation);
-    registerGConfClient (integration, priv->client);
+    if (integratedSettings)
+	return integratedSettings->data;
+
+    return NULL;
 }
 
 static unsigned int
@@ -1719,8 +1710,8 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
     
-    if (!priv->client)
-	initGConfClient (integration);
+    if (ccsIntegratedSettingsStorageEmpty (priv->storage))
+	registerAllIntegratedOptions (integration);
 
     ret = ccsSettingIsReadableByBackend (setting);
 
@@ -1932,8 +1923,8 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
-    if (!priv->client)
-	initGConfClient (integration);
+    if (ccsIntegratedSettingsStorageEmpty (priv->storage))
+	registerAllIntegratedOptions (integration);
 
     CCSSettingValue *v = ccsSettingGetValue (setting);
 
@@ -2137,7 +2128,7 @@ ccsGNOMEIntegrationBackendFree (CCSIntegration *integration)
 {
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
-    finiGConfClient (integration);
+    unregisterAllIntegratedOptions (integration);
 
     priv->backend = NULL;
 
@@ -2174,6 +2165,8 @@ addPrivate (CCSIntegration *backend,
 static CCSIntegration *
 ccsGNOMEIntegrationBackendNewCommon (CCSBackend *backend,
 				     CCSContext *context,
+				     CCSIntegratedSettingFactory *factory,
+				     CCSIntegratedSettingsStorage *storage,
 				     CCSObjectAllocationInterface *ai)
 {
     CCSIntegration *integration = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration));
@@ -2186,8 +2179,8 @@ ccsGNOMEIntegrationBackendNewCommon (CCSBackend *backend,
     CCGNOMEIntegrationBackendPrivate *priv = addPrivate (integration, ai);
     priv->backend = backend;
     priv->context = context;
-    priv->factory = NULL;
-    priv->storage = NULL;
+    priv->factory = factory;
+    priv->storage = storage;
 
     ccsObjectAddInterface (integration,
 			   (const CCSInterface *) &ccsGNOMEIntegrationBackendInterface,
@@ -2201,26 +2194,11 @@ ccsGNOMEIntegrationBackendNewCommon (CCSBackend *backend,
 CCSIntegration *
 ccsGNOMEIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
+			       CCSIntegratedSettingFactory *factory,
+			       CCSIntegratedSettingsStorage *storage,
 			       CCSObjectAllocationInterface *ai)
 {
-    return ccsGNOMEIntegrationBackendNewCommon (backend, context, ai);
-}
-
-CCSIntegration *
-ccsGNOMEIntegrationBackendNewWithClient (CCSBackend *backend,
-					 CCSContext *context,
-					 CCSObjectAllocationInterface *ai,
-					 GConfClient *client)
-{
-    CCSIntegration *integration = ccsGNOMEIntegrationBackendNewCommon (backend, context, ai);
-    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
-
-    priv->client = client;
-
-    registerAllIntegratedOptions (integration, ai);
-    registerGConfClient (integration, client);
-
-    return integration;
+    return ccsGNOMEIntegrationBackendNewCommon (backend, context, factory, storage, ai);
 }
 
 

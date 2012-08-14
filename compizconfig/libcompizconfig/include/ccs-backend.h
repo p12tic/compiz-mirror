@@ -36,6 +36,7 @@ typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendInfo    CCSBackendInfo;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
+typedef struct _CCSIntegration    CCSIntegration;
 
 typedef struct _CCSSettingValue CCSSettingValue;
 typedef enum _CCSSettingType CCSSettingType;
@@ -98,11 +99,14 @@ typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSetti
 												 CCSIntegratedSettingsStorageFindPredicate pred,
 												 void			     *data);
 
+typedef Bool (*CCSIntegratedSettingsStorageEmpty) (CCSIntegratedSettingsStorage *storage);
+
 struct _CCSIntegratedSettingsStorageInterface
 {
     CCSIntegratedSettingsStorageFindMatchingSettingsByPredicate findMatchingSettingsByPredicate;
     CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName findMatchingSettingsByPluginAndSettingName;
     CCSIntegratedSettingsStorageAddSetting	     addSetting;
+    CCSIntegratedSettingsStorageEmpty		     empty;
 };
 
 struct _CCSIntegratedSettingsStorage
@@ -124,6 +128,9 @@ void
 ccsIntegratedSettingsStorageAddSetting (CCSIntegratedSettingsStorage *storage,
 					CCSIntegratedSetting	    *setting);
 
+Bool
+ccsIntegratedSettingsStorageEmpty (CCSIntegratedSettingsStorage *storage);
+
 unsigned int ccsCCSIntegratedSettingsStorageInterfaceGetType ();
 
 CCSIntegratedSettingsStorage *
@@ -136,6 +143,7 @@ typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
 typedef struct _CCSIntegratedSettingFactoryInterface CCSIntegratedSettingFactoryInterface;
 
 typedef CCSIntegratedSetting * (*CCSIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType) (CCSIntegratedSettingFactory *factory,
+													      CCSIntegration		  *integration,
 													      const char		  *pluginName,
 													      const char		  *settingName,
 													      CCSSettingType		  type);
@@ -154,6 +162,7 @@ unsigned int ccsCCSIntegratedSettingFactoryInterfaceGetType ();
 
 CCSIntegratedSetting *
 ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+									    CCSIntegration		*integration,
 									    const char			*pluginName,
 									    const char			*settingName,
 									    CCSSettingType		type);

@@ -468,7 +468,10 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
     g_free (currentProfilePath);
 
 #ifdef USE_GCONF
-    priv->integration = ccsGNOMEIntegrationBackendNew (backend, context, backend->object.object_allocation);
+    CCSIntegratedSettingsStorage *storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
+    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (NULL, &ccsDefaultObjectAllocator);
+
+    priv->integration = ccsGNOMEIntegrationBackendNew (backend, context, factory, storage, backend->object.object_allocation);
 #else
     priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
 #endif

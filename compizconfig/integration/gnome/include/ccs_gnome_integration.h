@@ -8,6 +8,8 @@ typedef struct _CCSContext CCSContext;
 typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
 typedef struct _CCSIntegration CCSIntegration;
 typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
+typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
+typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
 typedef struct _GConfClient GConfClient;
 
 typedef struct _CCSSettingIntegratedSettingPair CCSSettingIntegratedSettingPair;
@@ -182,13 +184,13 @@ extern const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames;
 CCSIntegration *
 ccsGNOMEIntegrationBackendNew (CCSBackend *backend,
 			       CCSContext *context,
+			       CCSIntegratedSettingFactory *factory,
+			       CCSIntegratedSettingsStorage *storage,
 			       CCSObjectAllocationInterface *ai);
 
-CCSIntegration *
-ccsGNOMEIntegrationBackendNewWithClient (CCSBackend *backend,
-					 CCSContext *context,
-					 CCSObjectAllocationInterface *ai,
-					 GConfClient *client);
+CCSIntegratedSettingFactory *
+ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
+				     CCSObjectAllocationInterface *ai);
 
 typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
 typedef struct _CCSGNOMEIntegratedSettingInterface CCSGNOMEIntegratedSettingInterface;

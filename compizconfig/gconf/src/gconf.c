@@ -175,10 +175,15 @@ static void
 initClient (CCSBackend *backend, CCSContext *context)
 {
     client = gconf_client_get_for_engine (conf);
-    integration = ccsGNOMEIntegrationBackendNewWithClient (backend,
-							   context,
-							   &ccsDefaultObjectAllocator,
-							   client);
+
+    CCSIntegratedSettingsStorage *storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
+    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (client, &ccsDefaultObjectAllocator);
+
+    integration = ccsGNOMEIntegrationBackendNew (backend,
+						 context,
+						 factory,
+						 storage,
+						 &ccsDefaultObjectAllocator);
 
     compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
 					      context, NULL, NULL);

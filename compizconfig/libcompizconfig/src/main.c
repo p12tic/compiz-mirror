@@ -5747,6 +5747,12 @@ ccsIntegratedSettingsStorageAddSetting (CCSIntegratedSettingsStorage *storage,
     (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->addSetting) (storage, setting);
 }
 
+Bool
+ccsIntegratedSettingsStorageEmpty (CCSIntegratedSettingsStorage *factory)
+{
+    return (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, factory))->empty) (factory);
+}
+
 /* CCSIntegratedSettingsStorageDefault implementation */
 typedef struct _CCSIntegratedSettingsStorageDefaultPrivate CCSIntegratedSettingsStorageDefaultPrivate;
 
@@ -5821,11 +5827,19 @@ ccsIntegratedSettingsStorageDefaultAddSetting (CCSIntegratedSettingsStorage *sto
     priv->settingList = ccsIntegratedSettingListAppend (priv->settingList, setting);
 }
 
+Bool
+ccsIntegratedSettingsStorageDefaultEmpty (CCSIntegratedSettingsStorage *storage)
+{
+    CCSIntegratedSettingsStorageDefaultPrivate *priv = (CCSIntegratedSettingsStorageDefaultPrivate *) ccsObjectGetPrivate (storage);
+    return priv->settingList == NULL;
+}
+
 const CCSIntegratedSettingsStorageInterface ccsIntegratedSettingsStorageDefaultImplInterface =
 {
     ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPredicate,
     ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPluginAndSettingName,
-    ccsIntegratedSettingsStorageDefaultAddSetting
+    ccsIntegratedSettingsStorageDefaultAddSetting,
+    ccsIntegratedSettingsStorageDefaultEmpty
 };
 
 CCSIntegratedSettingsStorage *
@@ -5865,11 +5879,12 @@ ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *stora
 
 CCSIntegratedSetting *
 ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSIntegratedSettingFactory *factory,
+									    CCSIntegration	        *integration,
 									    const char *pluginName,
 									    const char *settingName,
 									    CCSSettingType type)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->createIntegratedSettingForCCSSettingNameAndType) (factory, pluginName, settingName, type);
+    return (*(GET_INTERFACE (CCSIntegratedSettingFactoryInterface, factory))->createIntegratedSettingForCCSSettingNameAndType) (factory, integration, pluginName, settingName, type);
 }
 
 static  const CCSPluginInterface ccsDefaultPluginInterface =
