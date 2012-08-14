@@ -61,7 +61,6 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 
     if (!gconfValue)
     {
-	asm ("int $3");
 	ccsError ("NULL encountered while reading GConf setting");
 	free (gnomeKeyPath);
 	return v;
