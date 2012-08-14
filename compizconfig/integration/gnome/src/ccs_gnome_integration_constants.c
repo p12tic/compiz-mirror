@@ -419,9 +419,182 @@ ccsGNOMEIntegratedSettingsList ()
     return settings;
 }
 
+gpointer
+ccsGNOMEGSettingsIntegrationInitializeIntegratedSchemasQuarks (gpointer data)
+{
+    CCSGSettingsWrapperIntegratedSchemasQuarks *quarks = (CCSGSettingsWrapperIntegratedSchemasQuarks *) data;
+
+    static const char *org_compiz_integrated = "org.compiz.integrated";
+    static const char *org_gnome_desktop_wm_keybindings = "org.gnome.desktop.wm.keybindings";
+    static const char *org_gnome_desktop_wm_preferences = "org.gnome.desktop.wm.preferences";
+
+    quarks->ORG_COMPIZ_INTEGRATED = g_quark_from_string (org_compiz_integrated);
+    quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS = g_quark_from_string (org_gnome_desktop_wm_keybindings);
+    quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES = g_quark_from_string (org_gnome_desktop_wm_preferences);
+
+    return NULL;
+}
+
+const CCSGSettingsWrapperIntegratedSchemasQuarks *
+ccsGNOMEGSettingsWrapperQuarks ()
+{
+    static GOnce initIntegratedSchemaQuarks = G_ONCE_INIT;
+    static const CCSGSettingsWrapperIntegratedSchemasQuarks quarks;
+
+    g_once (&initIntegratedSchemaQuarks, ccsGNOMEGSettingsIntegrationInitializeIntegratedSchemasQuarks, (gpointer) &quarks);
+
+    return &quarks;
+}
+
 static void destroyHashTableInternal (void *ht)
 {
     g_hash_table_unref ((GHashTable *) ht);
+}
+
+GHashTable *
+ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQuarksHashTable ()
+{
+    GHashTable *masterHashTable = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, destroyHashTableInternal);
+    GHashTable *coreHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *thumbnailHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *gnomecompatHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *rotateHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *putHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *wallHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *vpswitchHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *commandsHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *extrawmHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *resizeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+
+    const CCSGNOMEIntegratedPluginNames  *plugins = &ccsGNOMEIntegratedPluginNames;
+    const CCSGSettingsWrapperIntegratedSchemasQuarks *quarks = ccsGNOMEGSettingsWrapperQuarks ();
+
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (thumbnailHashTable, (gpointer) plugins->THUMBNAIL, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (putHashTable, (gpointer) plugins->PUT, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (wallHashTable, (gpointer) plugins->WALL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (vpswitchHashTable, (gpointer) plugins->VPSWITCH, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (rotateHashTable, (gpointer) plugins->ROTATE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (commandsHashTable, (gpointer) plugins->COMMANDS, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (extrawmHashTable, (gpointer) plugins->EXTRAWM, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (extrawmHashTable, (gpointer) plugins->EXTRAWM, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) plugins->STATICSWITCHER, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (staticswitcherHashTable, (gpointer) plugins->STATICSWITCHER, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (fadeHashTable, (gpointer) plugins->FADE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (fadeHashTable, (gpointer) plugins->FADE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (specialHashTable, (gpointer) plugins->SPECIAL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (specialHashTable, (gpointer) plugins->SPECIAL, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (resizeHashTable, (gpointer) plugins->RESIZE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (moveHashTable, (gpointer) plugins->MOVE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (resizeHashTable, (gpointer) plugins->RESIZE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (moveHashTable, (gpointer) plugins->MOVE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (coreHashTable, (gpointer) plugins->CORE, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_KEYBINDINGS));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (gnomecompatHashTable, (gpointer) plugins->GNOMECOMPAT, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+
+
+    return masterHashTable;
 }
 
 GHashTable *

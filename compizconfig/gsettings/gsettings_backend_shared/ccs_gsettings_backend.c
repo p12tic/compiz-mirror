@@ -478,6 +478,8 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 
     CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (NULL, &priv->valueChangeData, &ccsDefaultObjectAllocator);
 
+    priv->valueChangeData.factory = factory;
+
     priv->integration = ccsGNOMEIntegrationBackendNew (backend, context, factory, storage, backend->object.object_allocation);
 #else
     priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);

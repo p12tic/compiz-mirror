@@ -37,6 +37,19 @@ struct _CCSGNOMEIntegratedSettingDefaultImplPrivate
     CCSIntegratedSetting *sharedIntegratedSetting;
 };
 
+Bool
+ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
+						  void		       *userData)
+{
+    const char *findGnomeName = (const char *) userData;
+    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+
+    if (strcmp (findGnomeName, gnomeNameOfSetting) == 0)
+	return TRUE;
+
+    return FALSE;
+}
+
 SpecialOptionType
 ccsGNOMEIntegratedSettingGetSpecialOptionDefault (CCSGNOMEIntegratedSetting *setting)
 {

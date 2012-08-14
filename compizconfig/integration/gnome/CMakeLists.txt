@@ -1,6 +1,7 @@
 include (FindPkgConfig)
 
 add_subdirectory (gconf)
+add_subdirectory (gsettings)
 
 if (USE_GCONF)
 

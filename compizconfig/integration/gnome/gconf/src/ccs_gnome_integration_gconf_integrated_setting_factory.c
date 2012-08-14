@@ -26,19 +26,6 @@ struct _CCSGConfIntegratedSettingFactoryPrivate
     CCSGNOMEValueChangeData *valueChangedData;
 };
 
-Bool
-ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
-						  void		       *userData)
-{
-    const char *findGnomeName = (const char *) userData;
-    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
-
-    if (strcmp (findGnomeName, gnomeNameOfSetting) == 0)
-	return TRUE;
-
-    return FALSE;
-}
-
 static void
 gnomeGConfValueChanged (GConfClient *client,
 			guint       cnxn_id,

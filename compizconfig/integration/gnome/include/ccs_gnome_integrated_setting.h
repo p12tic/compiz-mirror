@@ -29,6 +29,10 @@ struct _CCSGNOMEIntegratedSetting
 
 unsigned int ccsCCSGNOMEIntegratedSettingInterfaceGetType ();
 
+Bool
+ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
+						  void		       *userData);
+
 SpecialOptionType
 ccsGNOMEIntegratedSettingGetSpecialOptionType (CCSGNOMEIntegratedSetting *);
 

@@ -77,6 +77,7 @@ static CCSGNOMEValueChangeData valueChangeData =
 {
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -184,11 +185,11 @@ initClient (CCSBackend *backend, CCSContext *context)
 
     valueChangeData.context = context;
     valueChangeData.storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
-    CCSIntegratedSettingFactory *factory = ccsGConfIntegratedSettingFactoryNew (client, &valueChangeData, &ccsDefaultObjectAllocator);
+    valueChangeData.factory = ccsGConfIntegratedSettingFactoryNew (client, &valueChangeData, &ccsDefaultObjectAllocator);
 
     valueChangeData.integration = ccsGNOMEIntegrationBackendNew (backend,
 								 context,
-								 factory,
+								 valueChangeData.factory,
 								 valueChangeData.storage,
 								 &ccsDefaultObjectAllocator);
 

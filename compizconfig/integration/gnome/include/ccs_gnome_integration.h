@@ -10,6 +10,7 @@ typedef struct _CCSGNOMEValueChangeData
 {
     CCSIntegration *integration;
     CCSIntegratedSettingsStorage *storage;
+    CCSIntegratedSettingFactory *factory;
     CCSContext     *context;
 } CCSGNOMEValueChangeData;
 

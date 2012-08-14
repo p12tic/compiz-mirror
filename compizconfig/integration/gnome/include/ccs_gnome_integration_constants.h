@@ -181,6 +181,25 @@ extern const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames;
 
 extern const char* watchedGConfGnomeDirectories[];
 
+typedef struct _CCSGSettingsWrapperIntegratedSchemasQuarks
+{
+    GQuark ORG_GNOME_DESKTOP_WM_PREFERENCES;
+    GQuark ORG_GNOME_DESKTOP_WM_KEYBINDINGS;
+    GQuark ORG_COMPIZ_INTEGRATED;
+} CCSGSettingsWrapperIntegratedSchemasQuarks;
+
+const CCSGSettingsWrapperIntegratedSchemasQuarks *ccsGNOMEGSettingsWrapperQuarks ();
+
+GHashTable * ccsGNOMEIntegrationPopulateCategoriesHashTables ();
+GHashTable * ccsGNOMEIntegrationPopulateSpecialTypesHashTables ();
+GHashTable * ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ();
+GHashTable * ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQuarksHashTable ();
+
+/* We only have to use the #define here because
+ * C doesn't have a concept of "constants" setting
+ * the array size ...
+ */
+#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 119
 
 typedef struct _CCSGNOMEIntegratedSettingsList
 {
@@ -188,15 +207,6 @@ typedef struct _CCSGNOMEIntegratedSettingsList
     const char *settingName;
 } CCSGNOMEIntegratedSettingsList;
 
-GHashTable * ccsGNOMEIntegrationPopulateCategoriesHashTables ();
-GHashTable * ccsGNOMEIntegrationPopulateSpecialTypesHashTables ();
-GHashTable * ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ();
-
-/* We only have to use the #define here because
- * C doesn't have a concept of "constants" setting
- * the array size ...
- */
-#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 119
 const CCSGNOMEIntegratedSettingsList * ccsGNOMEIntegratedSettingsList ();
 
 COMPIZCONFIG_END_DECLS
