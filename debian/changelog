@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
