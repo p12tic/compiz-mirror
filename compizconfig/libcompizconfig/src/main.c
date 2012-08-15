@@ -308,7 +308,7 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
 
     ccsObjectSetPrivate (context, (CCSPrivate *) ccsPrivate);
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     cPrivate->object_interfaces = object_interfaces;
     cPrivate->screenNum = screenNum;
@@ -331,7 +331,7 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
 static void *
 ccsContextGetPrivatePtrDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->privatePtr;
 }
@@ -339,7 +339,7 @@ ccsContextGetPrivatePtrDefault (CCSContext *context)
 static void
 ccsContextSetPrivatePtrDefault (CCSContext *context, void *ptr)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     cPrivate->privatePtr = ptr;
 }
@@ -347,7 +347,7 @@ ccsContextSetPrivatePtrDefault (CCSContext *context, void *ptr)
 static CCSPluginList
 ccsContextGetPluginsDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->plugins;
 }
@@ -355,7 +355,7 @@ ccsContextGetPluginsDefault (CCSContext *context)
 static CCSPluginCategory *
 ccsContextGetCategoriesDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->categories;
 }
@@ -363,7 +363,7 @@ ccsContextGetCategoriesDefault (CCSContext *context)
 static CCSSettingList
 ccsContextGetChangedSettingsDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->changedSettings;
 }
@@ -371,7 +371,7 @@ ccsContextGetChangedSettingsDefault (CCSContext *context)
 static unsigned int
 ccsContextGetScreenNumDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->screenNum;
 }
@@ -379,7 +379,7 @@ ccsContextGetScreenNumDefault (CCSContext *context)
 static Bool
 ccsContextAddChangedSettingDefault (CCSContext *context, CCSSetting *setting)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     cPrivate->changedSettings = ccsSettingListAppend (cPrivate->changedSettings, setting);
 
@@ -389,7 +389,7 @@ ccsContextAddChangedSettingDefault (CCSContext *context, CCSSetting *setting)
 static Bool
 ccsContextClearChangedSettingsDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     cPrivate->changedSettings = ccsSettingListFree (cPrivate->changedSettings, FALSE);
 
@@ -399,7 +399,7 @@ ccsContextClearChangedSettingsDefault (CCSContext *context)
 static CCSSettingList
 ccsContextStealChangedSettingsDefault (CCSContext *context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     CCSSettingList l = cPrivate->changedSettings;
 
@@ -486,11 +486,11 @@ ccsSetActivePluginList (CCSContext * context, CCSStringList list)
     CCSPluginList l;
     CCSPlugin     *plugin;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     for (l = cPrivate->plugins; l; l = l->next)
     {
-	PLUGIN_PRIV (l->data);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, l->data);
 	pPrivate->active = FALSE;
     }
 
@@ -500,7 +500,7 @@ ccsSetActivePluginList (CCSContext * context, CCSStringList list)
 
 	if (plugin)
 	{
-	    PLUGIN_PRIV (plugin);
+	    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 	    pPrivate->active = TRUE;
 	}
     }
@@ -509,7 +509,7 @@ ccsSetActivePluginList (CCSContext * context, CCSStringList list)
     plugin = ccsFindPlugin (context, "core");
     if (plugin)
     {
-	PLUGIN_PRIV (plugin);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 	pPrivate->active = TRUE;
     }
 }
@@ -557,7 +557,7 @@ ccsFindPluginDefault (CCSContext * context, const char *name)
     if (!name)
 	name = "";
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     CCSPluginList l = cPrivate->plugins;
     while (l)
@@ -583,7 +583,7 @@ ccsFindSettingDefault (CCSPlugin * plugin, const char *name)
     if (!plugin)
 	return NULL;
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     if (!name)
 	name = "";
@@ -622,7 +622,7 @@ ccsPluginIsActiveDefault (CCSContext * context, char *name)
     if (!plugin)
 	return FALSE;
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->active;
 }
@@ -707,7 +707,7 @@ ccsFreeContext (CCSContext * c)
     if (!c)
 	return;
 
-    CONTEXT_PRIV (c);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, c);
 
     if (cPrivate->profile)
 	free (cPrivate->profile);
@@ -730,7 +730,7 @@ ccsFreePlugin (CCSPlugin * p)
     if (!p)
 	return;
 
-    PLUGIN_PRIV (p);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, p);
 
     free (pPrivate->name);
     free (pPrivate->shortDesc);
@@ -768,7 +768,7 @@ ccsFreePlugin (CCSPlugin * p)
 static void
 ccsFreeSettingDefault (CCSSetting *s)
 {
-    SETTING_PRIV (s);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, s);
 
     free (sPrivate->name);
     free (sPrivate->shortDesc);
@@ -1051,7 +1051,7 @@ Bool
 ccsSetBackendDefault (CCSContext * context, char *name)
 {
     Bool fallbackMode = FALSE;
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (cPrivate->backend)
     {
@@ -1365,7 +1365,7 @@ copyFromDefault (CCSSetting * setting)
 {
     CCSSettingValue *value;
 
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->value != &sPrivate->defaultValue)
 	ccsFreeSettingValue (sPrivate->value);
@@ -1388,7 +1388,7 @@ copyFromDefault (CCSSetting * setting)
 void
 ccsSettingResetToDefaultDefault (CCSSetting * setting, Bool processChanged)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->value != &sPrivate->defaultValue)
     {
@@ -1463,7 +1463,7 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 Bool
 ccsSettingSetIntDefault (CCSSetting * setting, int data, Bool processChanged)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeInt)
 	return FALSE;
@@ -1498,7 +1498,7 @@ ccsSettingSetIntDefault (CCSSetting * setting, int data, Bool processChanged)
 Bool
 ccsSettingSetFloatDefault (CCSSetting * setting, float data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeFloat)
 	return FALSE;
@@ -1535,7 +1535,7 @@ ccsSettingSetFloatDefault (CCSSetting * setting, float data, Bool processChanged
 Bool
 ccsSettingSetBoolDefault (CCSSetting * setting, Bool data, Bool processChanged)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeBool)
 	return FALSE;
@@ -1571,7 +1571,7 @@ ccsSettingSetBoolDefault (CCSSetting * setting, Bool data, Bool processChanged)
 Bool
 ccsSettingSetStringDefault (CCSSetting * setting, const char *data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeString)
 	return FALSE;
@@ -1609,7 +1609,7 @@ ccsSettingSetStringDefault (CCSSetting * setting, const char *data, Bool process
 Bool
 ccsSettingSetColorDefault (CCSSetting * setting, CCSSettingColorValue data, Bool processChanged)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeColor)
 	return FALSE;
@@ -1644,7 +1644,7 @@ ccsSettingSetColorDefault (CCSSetting * setting, CCSSettingColorValue data, Bool
 Bool
 ccsSettingSetMatchDefault (CCSSetting * setting, const char *data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeMatch)
 	return FALSE;
@@ -1682,7 +1682,7 @@ ccsSettingSetMatchDefault (CCSSetting * setting, const char *data, Bool processC
 Bool
 ccsSettingSetKeyDefault (CCSSetting * setting, CCSSettingKeyValue data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeKey)
 	return FALSE;
@@ -1718,7 +1718,7 @@ ccsSettingSetKeyDefault (CCSSetting * setting, CCSSettingKeyValue data, Bool pro
 Bool
 ccsSettingSetButtonDefault (CCSSetting * setting, CCSSettingButtonValue data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeButton)
 	return FALSE;
@@ -1755,7 +1755,7 @@ ccsSettingSetButtonDefault (CCSSetting * setting, CCSSettingButtonValue data, Bo
 Bool
 ccsSettingSetEdgeDefault (CCSSetting * setting, unsigned int data, Bool processChanged)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeEdge)
 	return FALSE;
@@ -1788,7 +1788,7 @@ ccsSettingSetEdgeDefault (CCSSetting * setting, unsigned int data, Bool processC
 Bool
 ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeBell)
 	return FALSE;
@@ -1823,7 +1823,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
     CCSSettingValueList l2 = NULL;
 
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     while (l1)
     {
@@ -1887,7 +1887,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 Bool
 ccsSettingSetListDefault (CCSSetting * setting, CCSSettingValueList data, Bool processChanged)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeList)
 	return FALSE;
@@ -1945,7 +1945,7 @@ ccsSettingSetListDefault (CCSSetting * setting, CCSSettingValueList data, Bool p
 Bool
 ccsSettingSetValueDefault (CCSSetting * setting, CCSSettingValue * data, Bool processChanged)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     switch (sPrivate->type)
     {
@@ -1991,7 +1991,7 @@ ccsSettingSetValueDefault (CCSSetting * setting, CCSSettingValue * data, Bool pr
 Bool
 ccsSettingGetIntDefault (CCSSetting * setting, int *data)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     if (sPrivate->type != TypeInt)
 	return FALSE;
@@ -2003,7 +2003,7 @@ ccsSettingGetIntDefault (CCSSetting * setting, int *data)
 Bool
 ccsSettingGetFloatDefault (CCSSetting * setting, float *data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeFloat)
 	return FALSE;
@@ -2015,7 +2015,7 @@ ccsSettingGetFloatDefault (CCSSetting * setting, float *data)
 Bool
 ccsSettingGetBoolDefault (CCSSetting * setting, Bool * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeBool)
 	return FALSE;
@@ -2027,7 +2027,7 @@ ccsSettingGetBoolDefault (CCSSetting * setting, Bool * data)
 Bool
 ccsSettingGetStringDefault (CCSSetting * setting, char **data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeString)
 	return FALSE;
@@ -2039,7 +2039,7 @@ ccsSettingGetStringDefault (CCSSetting * setting, char **data)
 Bool
 ccsSettingGetColorDefault (CCSSetting * setting, CCSSettingColorValue * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeColor)
 	return TRUE;
@@ -2051,7 +2051,7 @@ ccsSettingGetColorDefault (CCSSetting * setting, CCSSettingColorValue * data)
 Bool
 ccsSettingGetMatchDefault (CCSSetting * setting, char **data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeMatch)
 	return FALSE;
@@ -2063,7 +2063,7 @@ ccsSettingGetMatchDefault (CCSSetting * setting, char **data)
 Bool
 ccsSettingGetKeyDefault (CCSSetting * setting, CCSSettingKeyValue * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeKey)
 	return FALSE;
@@ -2075,7 +2075,7 @@ ccsSettingGetKeyDefault (CCSSetting * setting, CCSSettingKeyValue * data)
 Bool
 ccsSettingGetButtonDefault (CCSSetting * setting, CCSSettingButtonValue * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeButton)
 	return FALSE;
@@ -2087,7 +2087,7 @@ ccsSettingGetButtonDefault (CCSSetting * setting, CCSSettingButtonValue * data)
 Bool
 ccsSettingGetEdgeDefault (CCSSetting * setting, unsigned int * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeEdge)
 	return FALSE;
@@ -2099,7 +2099,7 @@ ccsSettingGetEdgeDefault (CCSSetting * setting, unsigned int * data)
 Bool
 ccsSettingGetBellDefault (CCSSetting * setting, Bool * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeBell)
 	return FALSE;
@@ -2111,7 +2111,7 @@ ccsSettingGetBellDefault (CCSSetting * setting, Bool * data)
 Bool
 ccsSettingGetListDefault (CCSSetting * setting, CCSSettingValueList * data)
 {
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (sPrivate->type != TypeList)
 	return FALSE;
@@ -2291,7 +2291,7 @@ ccsContextDestroy (CCSContext * context)
     if (!context)
 	return;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (cPrivate->backend)
     {
@@ -2309,14 +2309,14 @@ ccsContextDestroy (CCSContext * context)
 CCSPluginList
 ccsGetActivePluginListDefault (CCSContext * context)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     CCSPluginList rv = NULL;
     CCSPluginList l = cPrivate->plugins;
 
     while (l)
     {
-	PLUGIN_PRIV (l->data);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, l->data);
 	if (pPrivate->active && strcmp (ccsPluginGetName (l->data), "ccp"))
 	{
 	    rv = ccsPluginListAppend (rv, l->data);
@@ -2529,7 +2529,7 @@ ccsGetBackendDefault (CCSContext * context)
     if (!context)
 	return NULL;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!cPrivate->backend)
 	return NULL;
@@ -2549,7 +2549,7 @@ ccsGetIntegrationEnabledDefault (CCSContext * context)
     if (!context)
 	return FALSE;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->deIntegration;
 }
@@ -2569,7 +2569,7 @@ ccsGetProfileDefault (CCSContext * context)
     if (!context)
 	return NULL;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->profile;
 }
@@ -2589,7 +2589,7 @@ ccsGetPluginListAutoSortDefault (CCSContext * context)
     if (!context)
 	return FALSE;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     return cPrivate->pluginListAutoSort;
 }
@@ -2606,7 +2606,7 @@ ccsGetPluginListAutoSort (CCSContext *context)
 void
 ccsSetIntegrationEnabledDefault (CCSContext * context, Bool value)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     /* no action required if nothing changed */
     if ((!cPrivate->deIntegration && !value) ||
@@ -2655,7 +2655,7 @@ ccsWriteAutoSortedPluginList (CCSContext *context)
 void
 ccsSetPluginListAutoSortDefault (CCSContext * context, Bool value)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     /* no action required if nothing changed */
     if ((!cPrivate->pluginListAutoSort && !value) ||
@@ -2684,7 +2684,7 @@ ccsSetProfileDefault (CCSContext * context, char *name)
     if (!name)
 	name = "";
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     /* no action required if profile stays the same */
     if (cPrivate->profile && (strcmp (cPrivate->profile, name) == 0))
@@ -2712,7 +2712,7 @@ ccsProcessEventsDefault (CCSContext * context, unsigned int flags)
     if (!context)
 	return;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     ccsCheckFileWatches ();
 
@@ -2735,7 +2735,7 @@ ccsReadSettingsDefault (CCSContext * context)
     if (!context)
 	return;
     
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
     
     if (!cPrivate->backend)
 	return;
@@ -2750,7 +2750,7 @@ ccsReadSettingsDefault (CCSContext * context)
     CCSPluginList pl = cPrivate->plugins;
     while (pl)
     {
-	PLUGIN_PRIV (pl->data);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, pl->data);
 	CCSSettingList sl = pPrivate->settings;
 
 	while (sl)
@@ -2781,7 +2781,8 @@ ccsReadPluginSettingsDefault (CCSPlugin * plugin)
     if (!plugin || !ccsPluginGetContext (plugin))
 	return;
 
-    CONTEXT_PRIV (ccsPluginGetContext (plugin));
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!cPrivate->backend)
 	return;
@@ -2793,7 +2794,7 @@ ccsReadPluginSettingsDefault (CCSPlugin * plugin)
 	if (!(*cPrivate->backend->vTable->readInit) (ccsPluginGetContext (plugin)))
 	    return;
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     CCSSettingList sl = pPrivate->settings;
     while (sl)
@@ -2818,7 +2819,7 @@ ccsWriteSettingsDefault (CCSContext * context)
     if (!context)
 	return;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!cPrivate->backend)
 	return;
@@ -2833,7 +2834,7 @@ ccsWriteSettingsDefault (CCSContext * context)
     CCSPluginList pl = cPrivate->plugins;
     while (pl)
     {
-	PLUGIN_PRIV (pl->data);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, pl->data);
 	CCSSettingList sl = pPrivate->settings;
 
 	while (sl)
@@ -2867,7 +2868,7 @@ ccsWriteChangedSettingsDefault (CCSContext * context)
     if (!context)
 	return;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
     
     if (!cPrivate->backend)
 	return;
@@ -2946,8 +2947,10 @@ ccsPluginSetActive (CCSPlugin * plugin, Bool value)
     if (!plugin)
 	return FALSE;
 
-    PLUGIN_PRIV (plugin);
-    CONTEXT_PRIV (ccsPluginGetContext (plugin));
+    CCSContext *context = ccsPluginGetContext (plugin);
+
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     pPrivate->active = value;
 
@@ -2967,7 +2970,7 @@ ccsCanEnablePluginDefault (CCSContext * context, CCSPlugin * plugin)
     /* look if the plugin to be loaded requires a plugin not present */
     sl = ccsPluginGetRequiresPlugins (plugin);
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     while (sl)
     {
@@ -3189,7 +3192,7 @@ ccsCanDisablePluginDefault (CCSContext * context, CCSPlugin * plugin)
     CCSPluginList pl;
     CCSStringList sl;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     /* look if the plugin to be unloaded is required by another plugin */
     pl = cPrivate->plugins;
@@ -3297,7 +3300,7 @@ ccsGetExistingProfilesDefault (CCSContext * context)
     if (!context)
 	return NULL;
     
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
     
     if (!cPrivate->backend)
 	return NULL;
@@ -3323,7 +3326,7 @@ ccsDeleteProfileDefault (CCSContext * context, char *name)
     if (!context)
 	return;
     
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
     
     if (!cPrivate->backend)
 	return;
@@ -3516,12 +3519,12 @@ ccsExportToFileDefault (CCSContext *context,
     if (!exportFile)
 	return FALSE;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     for (p = cPrivate->plugins; p; p = p->next)
     {
 	plugin = p->data;
-	PLUGIN_PRIV (plugin);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
 	if (!pPrivate->loaded)
 	    ccsLoadPluginSettings (plugin);
@@ -3623,7 +3626,7 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
     char         *sectionName = strdup (ccsPluginGetName (ccsSettingGetParent (setting)));
     char         *iniValue = NULL;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (asprintf (&keyName, "+s%d_%s", cPrivate->screenNum, ccsSettingGetName (setting)) == -1)
 	return FALSE;
@@ -3781,7 +3784,7 @@ ccsProcessSettingMinus (IniDictionary      *dict,
     char         *sectionName = strdup (ccsPluginGetName (ccsSettingGetParent (setting)));
     char         *iniValue = NULL;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (asprintf (&keyName, "-s%d_%s", cPrivate->screenNum, ccsSettingGetName (setting)) == -1)
 	return FALSE;
@@ -3933,7 +3936,7 @@ Bool
 ccsProcessUpgrade (CCSContext *context,
 		   CCSSettingsUpgrade *upgrade)
 {
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     IniDictionary      *dict = ccsIniOpen (upgrade->file);
     CCSPluginList      pl = cPrivate->plugins;
@@ -4355,12 +4358,12 @@ ccsImportFromFileDefault (CCSContext *context,
     if (!importFile)
 	return FALSE;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     for (p = cPrivate->plugins; p; p = p->next)
     {
 	plugin = p->data;
-	PLUGIN_PRIV (plugin);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
 	if (!pPrivate->loaded)
 	    ccsLoadPluginSettings (plugin);
@@ -4516,70 +4519,70 @@ ccsImportFromFile (CCSContext *context, const char *fileName, Bool overwriteNonD
 char *
 ccsPluginGetNameDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->name;
 }
 
 char * ccsPluginGetShortDescDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->shortDesc;
 }
 
 char * ccsPluginGetLongDescDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->longDesc;
 }
 
 char * ccsPluginGetHintsDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->hints;
 }
 
 char * ccsPluginGetCategoryDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->category;
 }
 
 CCSStringList ccsPluginGetLoadAfterDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->loadAfter;
 }
 
 CCSStringList ccsPluginGetLoadBeforeDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->loadBefore;
 }
 
 CCSStringList ccsPluginGetRequiresPluginsDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->requiresPlugin;
 }
 
 CCSStringList ccsPluginGetConflictPluginsDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->conflictPlugin;
 }
 
 CCSStringList ccsPluginGetProvidesFeaturesDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->providesFeature;
 }
@@ -4591,28 +4594,28 @@ void * ccsPluginGetProvidesFeaturesBindable (CCSPlugin *plugin)
 
 CCSStringList ccsPluginGetRequiresFeaturesDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->requiresFeature;
 }
 
 void * ccsPluginGetPrivatePtrDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->privatePtr;
 }
 
 void ccsPluginSetPrivatePtrDefault (CCSPlugin *plugin, void *ptr)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     pPrivate->privatePtr = ptr;
 }
 
 CCSContext * ccsPluginGetContextDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->context;
 }
@@ -4690,7 +4693,7 @@ CCSContext * ccsPluginGetContext (CCSPlugin *plugin)
 
 CCSSettingList ccsGetPluginSettingsDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     if (!pPrivate->loaded)
 	ccsLoadPluginSettings (plugin);
@@ -4705,7 +4708,7 @@ CCSSettingList ccsGetPluginSettings (CCSPlugin *plugin)
 
 CCSGroupList ccsGetPluginGroupsDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     if (!pPrivate->loaded)
 	ccsLoadPluginSettings (plugin);
@@ -4794,7 +4797,9 @@ Bool ccsSettingGetIsIntegratedDefault (CCSSetting *setting)
     if (!setting)
 	return FALSE;
 
-    CONTEXT_PRIV (ccsPluginGetContext (ccsSettingGetParent (setting)));
+    CCSPlugin *plugin = ccsSettingGetParent (setting);
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!cPrivate->backend)
 	return FALSE;
@@ -4810,7 +4815,9 @@ Bool ccsSettingGetIsReadOnlyDefault (CCSSetting *setting)
     if (!setting)
 	return FALSE;
 
-    CONTEXT_PRIV (ccsPluginGetContext (ccsSettingGetParent (setting)));
+    CCSPlugin *plugin = ccsSettingGetParent (setting);
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!cPrivate->backend)
 	return FALSE;
@@ -4825,105 +4832,105 @@ Bool ccsSettingGetIsReadOnlyDefault (CCSSetting *setting)
 char *
 ccsSettingGetNameDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->name;
 }
 
 char * ccsSettingGetShortDescDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->shortDesc;
 }
 
 char * ccsSettingGetLongDescDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->longDesc;
 }
 
 CCSSettingType ccsSettingGetTypeDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->type;
 }
 
 CCSSettingInfo * ccsSettingGetInfoDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return &sPrivate->info;
 }
 
 char * ccsSettingGetGroupDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->group;
 }
 
 char * ccsSettingGetSubGroupDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->subGroup;
 }
 
 char * ccsSettingGetHintsDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->hints;
 }
 
 CCSSettingValue * ccsSettingGetDefaultValueDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return &sPrivate->defaultValue;
 }
 
 CCSSettingValue * ccsSettingGetValueDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->value;
 }
 
 Bool ccsSettingGetIsDefaultDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->isDefault;
 }
 
 CCSPlugin * ccsSettingGetParentDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->parent;
 }
 
 void * ccsSettingGetPrivatePtrDefault (CCSSetting *setting)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->privatePtr;
 }
 
 void ccsSettingSetPrivatePtrDefault (CCSSetting *setting, void *ptr)
 {
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     sPrivate->privatePtr = ptr;
 }
 
 CCSStrExtensionList ccsGetPluginStrExtensionsDefault (CCSPlugin *plugin)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     if (!pPrivate->loaded)
 	ccsLoadPluginSettings (plugin);
