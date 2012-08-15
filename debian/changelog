@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
@@ -18,6 +18,18 @@ compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
   * Update apport hook for python3 ; thanks to Edward Donovan (LP: #1013171)
 
  -- Didier Roche <didrocks@ubuntu.com>  Tue, 03 Jul 2012 12:05:54 +0200
+
+compiz (1:0.9.8+bzr3249-0ubuntu3) quantal; urgency=low
+
+  * Remove unity-2d 2nd fallback mechanism for autologin as unity-2d
+    is now deprecated: (part one of LP: #1035261)
+    - debian/65compiz_profile-on-session,
+      debian/compiz-gnome.install:
+      remove conffile and don't install it
+    - debian/compiz-gnome.maintscript:
+      remove it on upgrade
+
+ -- Didier Roche <didrocks@ubuntu.com>  Wed, 15 Aug 2012 14:58:39 +0200
 
 compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 
