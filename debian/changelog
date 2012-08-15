@@ -1,3 +1,15 @@
+compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
+
+  * Remove unity-2d 2nd fallback mechanism for autologin as unity-2d
+    is now deprecated: (part one of LP: #1035261)
+    - debian/65compiz_profile-on-session,
+      debian/compiz-gnome.install:
+      remove conffile and don't install it
+    - debian/compiz-gnome.maintscript:
+      remove it on upgrade
+
+ -- Didier Roche <didrocks@ubuntu.com>  Wed, 15 Aug 2012 14:43:54 +0200
+
 compiz (1:0.9.8+bzr3249-0ubuntu2) quantal; urgency=low
 
   * debian/control:
