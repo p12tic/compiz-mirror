@@ -26,41 +26,15 @@
 #ifndef _RESIZE_H
 #define _RESIZE_H
 
-#include <boost/shared_ptr.hpp>
 #include <core/screen.h>
 #include <core/pluginclasshandler.h>
-#include <core/propertywriter.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
 #include "resize_options.h"
-
-#define RESIZE_SCREEN(s) ResizeScreen *rs = ResizeScreen::get(s)
-#define RESIZE_WINDOW(w) ResizeWindow *rw = ResizeWindow::get(w)
-
-#define ResizeUpMask    (1L << 0)
-#define ResizeDownMask  (1L << 1)
-#define ResizeLeftMask  (1L << 2)
-#define ResizeRightMask (1L << 3)
-
-struct _ResizeKeys {
-    const char	 *name;
-    int		 dx;
-    int		 dy;
-    unsigned int warpMask;
-    unsigned int resizeMask;
-} rKeys[] = {
-    { "Left",  -1,  0, ResizeLeftMask | ResizeRightMask, ResizeLeftMask },
-    { "Right",  1,  0, ResizeLeftMask | ResizeRightMask, ResizeRightMask },
-    { "Up",     0, -1, ResizeUpMask | ResizeDownMask,    ResizeUpMask },
-    { "Down",   0,  1, ResizeUpMask | ResizeDownMask,    ResizeDownMask }
-};
-
-#define NUM_KEYS (sizeof (rKeys) / sizeof (rKeys[0]))
-
-#define MIN_KEY_WIDTH_INC  24
-#define MIN_KEY_HEIGHT_INC 24
+#include "resize-logic.h"
+#include "resize-defs.h"
 
 class ResizeScreen :
     public PluginClassHandler<ResizeScreen,CompScreen>,
@@ -74,25 +48,9 @@ class ResizeScreen :
 
 	void handleEvent (XEvent *event);
 
-	void getPaintRectangle (BoxPtr pBox);
-	void getStretchRectangle (BoxPtr pBox);
-
-	void sendResizeNotify ();
-	void updateWindowProperty ();
-
-	void finishResizing ();
-
-	void updateWindowSize ();
-
 	bool glPaintOutput (const GLScreenPaintAttrib &,
 			    const GLMatrix &, const CompRegion &, CompOutput *,
 			    unsigned int);
-
-	void damageRectangle (BoxPtr pBox);
-	Cursor cursorFromResizeMask (unsigned int mask);
-
-	void handleKeyEvent (KeyCode keycode);
-	void handleMotionEvent (int xRoot, int yRoot);
 
 	void optionChanged (CompOption *o, Options);
 	void resizeMaskValueToKeyMask (int valueMask,
@@ -105,74 +63,9 @@ class ResizeScreen :
 			       unsigned short            *fillColor);
 
     public:
+	ResizeLogic logic;
 
 	GLScreen        *gScreen;
-	CompositeScreen *cScreen;
-
-	Atom	       resizeNotifyAtom;
-	PropertyWriter resizeInformationAtom;
-
-	CompWindow	 *w;
-	int		 mode;
-	bool		 centered;
-	XRectangle	 savedGeometry;
-	XRectangle	 geometry;
-
-        /* geometry without the vertical maximization.
-           Its value is undefined when maximized_vertically == false */
-	XRectangle	 geometryWithoutVertMax;
-        bool maximized_vertically;
-
-	int		 outlineMask;
-	int		 rectangleMask;
-	int		 stretchMask;
-	int		 centeredMask;
-
-	int          releaseButton;
-	unsigned int mask;
-	int          pointerDx;
-	int          pointerDy;
-	KeyCode      key[NUM_KEYS];
-
-	CompScreen::GrabHandle grabIndex;
-
-	Cursor leftCursor;
-	Cursor rightCursor;
-	Cursor upCursor;
-	Cursor upLeftCursor;
-	Cursor upRightCursor;
-	Cursor downCursor;
-	Cursor downLeftCursor;
-	Cursor downRightCursor;
-	Cursor middleCursor;
-	Cursor cursor[NUM_KEYS];
-
-	bool       isConstrained;
-	CompRegion constraintRegion;
-	bool       inRegionStatus;
-	int        lastGoodHotSpotY;
-	CompSize   lastGoodSize;
-
-	bool		 offWorkAreaConstrained;
-	boost::shared_ptr <CompRect> grabWindowWorkArea;
-
-private:
-	/* Helper functions for handleMotionEvent() */
-	void snapWindowToWorkAreaBoundaries (int &wi, int &he,
-					     int &wX, int &wY,
-					     int &wWidth, int &wHeight);
-	void setUpMask (int xRoot, int yRoot);
-	void accumulatePointerMotion (int xRoot, int yRoot);
-	void constrainToWorkArea (int &che, int &cwi);
-	void limitMovementToConstraintRegion (int &wi, int &he,
-					      int xRoot, int yRoot,
-					      int wX, int wY,
-					      int wWidth, int wHeight);
-	void computeWindowPlusBordersRect (int &wX, int &wY,
-					   int &wWidth, int &wHeight,
-					   int wi, int he);
-	void enableOrDisableVerticalMaximization (int yRoot);
-	void computeGeometry (int wi, int he);
 };
 
 class ResizeWindow :
