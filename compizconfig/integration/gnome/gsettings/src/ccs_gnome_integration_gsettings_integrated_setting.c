@@ -157,7 +157,8 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
 	    break;
 	case TypeString:
 	    {
-		char  *newValue = v->value.asString;
+		const char  *defaultValue = "";
+		const char  *newValue = v->value.asString ? v->value.asString : defaultValue;
 		gsize len = 0;
 		const gchar *currentValue = g_variant_get_string (variant, &len);
 
@@ -167,16 +168,17 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
 			writeStringToVariant (currentValue, &newVariant);
 		}
 	    }
+	    break;
 	case TypeKey:
 	    {
+		const char  *defaultValue = "";
 		GVariantBuilder strvBuilder;
 
 		g_variant_builder_init (&strvBuilder, G_VARIANT_TYPE ("as"));
-		g_variant_builder_add (&strvBuilder, "s", v->value.asString);
+		g_variant_builder_add (&strvBuilder, "s", v->value.asString ? v->value.asString :  defaultValue);
 		newVariant = g_variant_builder_end (&strvBuilder);
-
-		break;
 	    }
+	    break;
 	default:
 	    g_assert_not_reached ();
 	    break;
@@ -185,6 +187,8 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
     /* g_settings_set_value consumes the reference */
     if (newVariant)
 	ccsGSettingsWrapperSetValue (priv->wrapper, gsettingsTranslatedName, newVariant);
+    else
+	ccsGSettingsWrapperResetKey (priv->wrapper, gsettingsTranslatedName);
 
     g_variant_unref (variant);
     free (gsettingsTranslatedName);

@@ -409,7 +409,10 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		    newValue[0] = 'd';
 		}
 
+		/* Really this is a lie - the writer expects a string
+		 * but it needs to know if its a key or a string */
 		type = TypeKey;
+		v->value.asString = newValue;
 
 		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
 		free (newValue);
@@ -435,7 +438,7 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		const char *newValueString = v->value.asBool ? "fullscreen" : "frame_flash";
+		const char *newValueString = v->value.asString ? "fullscreen" : "frame_flash";
 		newValue->value.asString = strdup (newValueString);
 		type = TypeString;
 
@@ -443,11 +446,11 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
-		const char *newValueString = v->value.asBool ? "click" : "sloppy";
+		const char *newValueString = v->value.asString ? "click" : "sloppy";
 		newValue->value.asString = strdup (newValueString);
 		type = TypeString;
 
-		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
+		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
