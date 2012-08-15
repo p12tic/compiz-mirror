@@ -25,14 +25,8 @@
 #include <ccs.h>
 #include <ccs-backend.h>
 
-#define CONTEXT_PRIV(c) \
-    CCSContextPrivate *cPrivate = (CCSContextPrivate *) ccsObjectGetPrivate (c);
-#define PLUGIN_PRIV(p) \
-    CCSPluginPrivate *pPrivate = (CCSPluginPrivate *) ccsObjectGetPrivate (p);
-#define SETTING_PRIV(s) \
-    CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (s);
-#define DYNAMIC_BACKEND_PRIV(bc) \
-    CCSDynamicBackendPrivate *dbPrivate = (CCSDynamicBackendPrivate *) ccsObjectGetPrivate (bc);
+#define GET_PRIVATE(Private, obj) \
+    (Private *) ccsObjectGetPrivate (obj);
 
 extern Bool basicMetadata;
 
