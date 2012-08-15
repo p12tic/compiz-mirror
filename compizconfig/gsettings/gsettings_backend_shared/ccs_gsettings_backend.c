@@ -485,5 +485,6 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 
     priv->valueChangeData.integration = priv->integration;
 
+    g_free (currentProfilePath);
     return TRUE;
 }
