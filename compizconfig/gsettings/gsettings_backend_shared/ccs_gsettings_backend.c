@@ -468,11 +468,6 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
 									    backend->object.object_allocation);
     priv->context = context;
 
-    /* Always ensure that we have a default profile */
-    ccsGSettingsBackendAddProfile (backend, "Default");
-
-    g_free (currentProfilePath);
-
     CCSGNOMEIntegrationGSettingsWrapperFactory *wrapperFactory = ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (&ccsDefaultObjectAllocator);
     CCSIntegratedSettingsStorage *storage = ccsIntegratedSettingsStorageDefaultImplNew (&ccsDefaultObjectAllocator);
 
