@@ -473,5 +473,7 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
     priv->integration = ccsNullIntegrationBackendNew (backend->object.object_allocation);
 #endif
 
+    g_free (currentProfilePath);
+
     return TRUE;
 }
