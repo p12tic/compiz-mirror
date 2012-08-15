@@ -5459,7 +5459,7 @@ Bool ccsSettingGetIsReadableByBackendDefault (CCSSetting *setting)
     Bool isReadableType = FALSE;
     CCSSettingType type;
 
-    CCSPlugin  *plugin = ccsSettingGetParent (setting);
+    CCSPlugin *plugin = ccsSettingGetParent (setting);
     CCSContext *context = ccsPluginGetContext (plugin);
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
