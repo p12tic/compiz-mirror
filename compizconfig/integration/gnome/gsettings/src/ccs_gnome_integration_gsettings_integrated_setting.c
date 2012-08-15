@@ -172,7 +172,7 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
 		GVariantBuilder strvBuilder;
 
 		g_variant_builder_init (&strvBuilder, G_VARIANT_TYPE ("as"));
-		g_variant_builder_add (&strvBuilder, v->value.asString);
+		g_variant_builder_add (&strvBuilder, "s", v->value.asString);
 		newVariant = g_variant_builder_end (&strvBuilder);
 
 		break;
