@@ -29,6 +29,7 @@ if (GLIB_COMPILE_SCHEMAS)
     set (_top_gschema_file ${_top_gschema}.gschema.xml)
     set (_top_gschema_src  ${CMAKE_CURRENT_SOURCE_DIR}/${_top_gschema_file})
     set (_top_gschema_dest ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_top_gschema_file})
+    set (_top_gschema_inst ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas/)
 
     configure_file (${_top_gschema_src} ${_top_gschema_dest})
 
@@ -38,10 +39,18 @@ if (GLIB_COMPILE_SCHEMAS)
 		${CMAKE_BINARY_DIR}/glib-2.0/schemas/
     )
 
-    add_gsettings_schema_to_recompilation_list (compizconfig)
+    add_custom_command (OUTPUT ${_top_gschema_dest}
+			COMMAND cp -r ${_top_gschema_src} ${_top_gschema_dest}
+			DEPENDS ${_top_gschema_src}
+			VERBATIM)
+
+    add_custom_target (compiz_gsettings_schema
+		       DEPENDS ${_top_gschema_dest})
+
+    add_gsettings_schema_to_recompilation_list (compiz_gsettings_schema)
 
     compiz_install_gsettings_schema (${_top_gschema_dest}
-				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+				     ${_top_gschema_inst})
 
 endif (GLIB_COMPILE_SCHEMAS)
 
