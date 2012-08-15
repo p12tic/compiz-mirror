@@ -7,6 +7,10 @@ compiz (1:0.9.8+bzr3249-0ubuntu3) UNRELEASED; urgency=low
     - remove the TODO copy now removed upstream
   * debian/compiz-plugins.install:
     - install stackswitch, trip plugins
+  * debian/rules, debian/control:
+    - remove the compiz gnome-control-center key sedding through metacity.
+      Compiz now directly ships them.
+    - we do not need metacity-common anymore as a build-dep then
 
   [ Matthieu Baerts (matttbe) ]
   * Update apport hook for python3 ; thanks to Edward Donovan (LP: #1013171)

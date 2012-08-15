@@ -46,15 +46,6 @@ override_dh_install:
 		echo "X-Ubuntu-Gettext-Domain=compiz" >> $$d; \
 	done;
 
-	# create compiz keybindings file based on the metacity ones.
-	mkdir -p $(CURDIR)/debian/tmp/usr/share/gnome-control-center/keybindings/
-	# keep package=metacity to get the right translation :)
-	for i in launchers navigation screenshot system windows ; do \
-	    sed 's/wm_name=\"Metacity\"/wm_name=\"Compiz\"/' /usr/share/gnome-control-center/keybindings/50-metacity-$${i}.xml > $(CURDIR)/debian/tmp/usr/share/gnome-control-center/keybindings/50-compiz-$${i}.xml ; \
-    done
-	# add some selected keys
-	sed -i 's#key=\"/apps/metacity/general/num_workspaces\" comparison=\"gt\"##g' $(CURDIR)/debian/tmp/usr/share/gnome-control-center/keybindings/50-compiz-navigation.xml
-
 	# cmake findcompiz_install use COMPIZ_DESTDIR and using COMPIZ_DESTDIR and
 	# DESTDIR together is completely broken upstream
 	# So, doing the same in debian/rules to find a way to install things in the
