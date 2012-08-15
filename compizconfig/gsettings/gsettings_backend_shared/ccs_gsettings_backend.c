@@ -470,9 +470,6 @@ ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context)
     priv->integration = ccsNullIntegrationBackendNew ();
 #endif
 
-    /* Always ensure that we have a default profile */
-    ccsGSettingsBackendAddProfile (backend, "Default");
-
     g_free (currentProfilePath);
 
     return TRUE;
