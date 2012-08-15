@@ -349,6 +349,7 @@ ResizeScreen::ResizeScreen (CompScreen *s) :
     logic.mScreen = new resize::CompScreenImpl (screen);
     logic.cScreen = resize::CompositeScreenImpl::wrap (CompositeScreen::get (s));
     logic.gScreen = resize::GLScreenImpl::wrap (gScreen);
+    logic.options = this;
 
     CompOption::Vector atomTemplate;
     Display *dpy = s->dpy ();
