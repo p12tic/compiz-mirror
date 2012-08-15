@@ -110,9 +110,6 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 	return settingsObj;
     }
 
-    if (strcmp (plugin, "mock") == 0)
-	asm ("int $3");
-
     /* No existing settings object found for this schema, create one */
     
     settingsObj = ccsGSettingsWrapperNewForSchemaWithPath (schemaName, path, &ccsDefaultObjectAllocator);
