@@ -1679,7 +1679,7 @@ static Bool ccsDynamicBackendDeleteProfileWrapper (CCSBackend *backend, CCSConte
 
 static void ccsDynamicBackendSetIntegrationWrapper (CCSBackend *backend, CCSIntegration *integration)
 {
-    DYNAMIC_BACKEND_PRIV (backend);
+    CCSDynamicBackendPrivate *dbPrivate = GET_PRIVATE (CCSDynamicBackendPrivate, backend);
 
     if (ccsBackendHasSetIntegration (backend) &&
 	ccsDynamicBackendSupportsIntegration ((CCSDynamicBackend *) backend))
@@ -5422,7 +5422,9 @@ Bool ccsSettingGetIsReadableByBackendDefault (CCSSetting *setting)
     Bool isReadableType = FALSE;
     CCSSettingType type;
 
-    CONTEXT_PRIV (ccsPluginGetContext (ccsSettingGetParent (setting)));
+    CCSPlugin *plugin = ccsSettingGetParent (setting);
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!cPrivate->backend)
 	return FALSE;
