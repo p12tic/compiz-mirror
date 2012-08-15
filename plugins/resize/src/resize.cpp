@@ -35,6 +35,7 @@
 #include "resize.h"
 
 #include "window-impl.h"
+#include "property-writer-impl.h"
 #include "resize-window-impl.h"
 #include "screen-impl.h"
 #include "gl-screen-impl.h"
@@ -367,9 +368,9 @@ ResizeScreen::ResizeScreen (CompScreen *s) :
 
     logic.resizeNotifyAtom = XInternAtom (s->dpy (), "_COMPIZ_RESIZE_NOTIFY", 0);
 
-    logic.resizeInformationAtom = new PropertyWriterImpl(
+    logic.resizeInformationAtom = new resize::PropertyWriterImpl (
 	    new PropertyWriter ("_COMPIZ_RESIZE_INFORMATION",
-				atomTemplate);
+				atomTemplate));
 
     for (unsigned int i = 0; i < NUM_KEYS; i++)
 	logic.key[i] = XKeysymToKeycode (s->dpy (), XStringToKeysym (logic.rKeys[i].name));
