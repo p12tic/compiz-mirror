@@ -1,3 +1,9 @@
+compiz (1:0.9.8+bzr3249-0ubuntu4) UNRELEASED; urgency=low
+
+  * Restore the maintainer script, the profile part is needed
+
+ -- Didier Roche <didrocks@ubuntu.com>  Wed, 15 Aug 2012 17:35:58 +0200
+
 compiz (1:0.9.8+bzr3249-0ubuntu3) quantal; urgency=low
 
   * Remove unity-2d 2nd fallback mechanism for autologin as unity-2d
