@@ -101,7 +101,7 @@ COMPIZ_PLUGIN_20090315 (animation, AnimPluginVTable);
 #define FAKE_ICON_SIZE 4
 
 const char *eventNames[AnimEventNum] =
-{"Open", "Close", "Minimize", "Shade", "Focus"};
+{"Open", "Close", "Minimize", "Shade", "UnMinimize", "Focus"};
 
 int chosenEffectOptionIds[AnimEventNum] =
 {
@@ -109,7 +109,8 @@ int chosenEffectOptionIds[AnimEventNum] =
     AnimationOptions::CloseEffects,
     AnimationOptions::MinimizeEffects,
     AnimationOptions::ShadeEffects,
-    AnimationOptions::FocusEffects
+    AnimationOptions::UnminimizeEffects,
+    AnimationOptions::FocusEffects,
 };
 
 int randomEffectOptionIds[AnimEventNum] =
@@ -118,6 +119,7 @@ int randomEffectOptionIds[AnimEventNum] =
     AnimationOptions::CloseRandomEffects,
     AnimationOptions::MinimizeRandomEffects,
     AnimationOptions::ShadeRandomEffects,
+    AnimationOptions::UnminimizeRandomEffects,
     -1
 };
 
@@ -127,6 +129,7 @@ int customOptionOptionIds[AnimEventNum] =
     AnimationOptions::CloseOptions,
     AnimationOptions::MinimizeOptions,
     AnimationOptions::ShadeOptions,
+    AnimationOptions::UnminimizeOptions,
     AnimationOptions::FocusOptions
 };
 
@@ -136,6 +139,7 @@ int matchOptionIds[AnimEventNum] =
     AnimationOptions::CloseMatches,
     AnimationOptions::MinimizeMatches,
     AnimationOptions::ShadeMatches,
+    AnimationOptions::UnminimizeMatches,
     AnimationOptions::FocusMatches
 };
 
@@ -145,6 +149,7 @@ int durationOptionIds[AnimEventNum] =
     AnimationOptions::CloseDurations,
     AnimationOptions::MinimizeDurations,
     AnimationOptions::ShadeDurations,
+    AnimationOptions::UnminimizeDurations,
     AnimationOptions::FocusDurations
 };
 
@@ -541,7 +546,7 @@ PrivateAnimWindow::updateSelectionRow (unsigned int r)
 }
 
 // Assumes events in the metadata are in
-// [Open, Close, Minimize, Focus, Shade] order
+// [Open, Close, Minimize, Shade, UnMinimize, Focus] order
 // and effects among those are in alphabetical order
 // but with "(Event) None" first and "(Event) Random" last.
 AnimEffect
@@ -2168,7 +2173,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 
     int duration = 200;
     AnimEffect chosenEffect =
-	getMatchingAnimSelection (w, AnimEventMinimize, &duration);
+	getMatchingAnimSelection (w, AnimEventUnMinimize, &duration);
 
     aw->mNewState = NormalState;
 
@@ -2202,7 +2207,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 	if (startingNew)
 	{
 	    AnimEffect effectToBePlayed =
-		getActualEffect (chosenEffect, AnimEventMinimize);
+		getActualEffect (chosenEffect, AnimEventUnMinimize);
 
 	    // handle empty random effect list
 	    if (effectToBePlayed == AnimEffectNone)
@@ -2446,7 +2451,7 @@ PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 AnimEffectInfo::AnimEffectInfo (const char *name,
 				bool usedO, bool usedC, bool usedM,
-				bool usedS, bool usedF,
+				bool usedS, bool usedU, bool usedF,
 				CreateAnimFunc create,
 				bool isRestackAnim) :
     name (name),
@@ -2457,6 +2462,7 @@ AnimEffectInfo::AnimEffectInfo (const char *name,
     usedForEvents[AnimEventClose] = usedC;
     usedForEvents[AnimEventMinimize] = usedM;
     usedForEvents[AnimEventShade] = usedS;
+    usedForEvents[AnimEventUnMinimize] = usedU;
     usedForEvents[AnimEventFocus] = usedF;
 }
 
@@ -2579,67 +2585,67 @@ PrivateAnimScreen::initAnimationList ()
     int i = 0;
     animEffects[i++] = AnimEffectNone =
 	new AnimEffectInfo ("animation:None",
-			    true, true, true, true, true, 0);
+			    true, true, true, true, true, true, 0);
     animEffects[i++] = AnimEffectRandom =
 	new AnimEffectInfo ("animation:Random",
-			    true, true, true, true, false, 0);
+			    true, true, true, true, true, false, 0);
     animEffects[i++] = AnimEffectCurvedFold =
 	new AnimEffectInfo ("animation:Curved Fold",
-			    true, true, true, true, false,
+			    true, true, true, true, true, false,
 			    &createAnimation<CurvedFoldAnim>);
     animEffects[i++] = AnimEffectDodge =
 	new AnimEffectInfo ("animation:Dodge",
-			    false, false, false, false, true,
+			    false, false, false, false, false, true,
 			    &createAnimation<DodgeAnim>,
 			    true);
     animEffects[i++] = AnimEffectDream =
 	new AnimEffectInfo ("animation:Dream",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<DreamAnim>);
     animEffects[i++] = AnimEffectFade =
 	new AnimEffectInfo ("animation:Fade",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<FadeAnim>);
     animEffects[i++] = AnimEffectFocusFade =
 	new AnimEffectInfo ("animation:Focus Fade",
-			    false, false, false, false, true,
+			    false, false, false, false, false, true,
 			    &createAnimation<FocusFadeAnim>,
 			    true);
     animEffects[i++] = AnimEffectGlide1 =
 	new AnimEffectInfo ("animation:Glide 1",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<GlideAnim>);
     animEffects[i++] = AnimEffectGlide2 =
 	new AnimEffectInfo ("animation:Glide 2",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<Glide2Anim>);
     animEffects[i++] = AnimEffectHorizontalFolds =
 	new AnimEffectInfo ("animation:Horizontal Folds",
-			    true, true, true, true, false,
+			    true, true, true, true, true, false,
 			    &createAnimation<HorizontalFoldsAnim>);
     animEffects[i++] = AnimEffectMagicLamp =
 	new AnimEffectInfo ("animation:Magic Lamp",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<MagicLampAnim>);
     animEffects[i++] = AnimEffectMagicLampWavy =
 	new AnimEffectInfo ("animation:Magic Lamp Wavy",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<MagicLampWavyAnim>);
     animEffects[i++] = AnimEffectRollUp =
 	new AnimEffectInfo ("animation:Roll Up",
-			    false, false, false, true, false,
+			    false, false, false, true, true, false,
 			    &createAnimation<RollUpAnim>);
     animEffects[i++] = AnimEffectSidekick =
 	new AnimEffectInfo ("animation:Sidekick",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<SidekickAnim>);
     animEffects[i++] = AnimEffectWave =
 	new AnimEffectInfo ("animation:Wave",
-			    true, true, true, false, true,
+			    true, true, true, false, true, true,
 			    &createAnimation<WaveAnim>);
     animEffects[i++] = AnimEffectZoom =
 	new AnimEffectInfo ("animation:Zoom",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<ZoomAnim>);
 
     animExtensionPluginInfo.effectOptions = &getOptions ();

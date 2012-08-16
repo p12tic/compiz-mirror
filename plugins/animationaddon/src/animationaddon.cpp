@@ -139,51 +139,51 @@ PrivateAnimAddonScreen::initAnimationList ()
 
     animEffects[i++] = AnimEffectAirplane =
 	new AnimEffectInfo ("animationaddon:Airplane",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<AirplaneAnim>);
 
     animEffects[i++] = AnimEffectBeamUp =
 	new AnimEffectInfo ("animationaddon:Beam Up",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<BeamUpAnim>);
     animEffects[i++] = AnimEffectBurn =
 	new AnimEffectInfo ("animationaddon:Burn",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<BurnAnim>);
     animEffects[i++] = AnimEffectDissolve =
 	new AnimEffectInfo ("animationaddon:Dissolve",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<DissolveAnim>);
     animEffects[i++] = AnimEffectDomino =
 	new AnimEffectInfo ("animationaddon:Domino",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<DominoAnim>);
     animEffects[i++] = AnimEffectExplode =
 	new AnimEffectInfo ("animationaddon:Explode",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<ExplodeAnim>);
 
     animEffects[i++] = AnimEffectFold =
 	new AnimEffectInfo ("animationaddon:Fold",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<FoldAnim>);
 
     animEffects[i++] = AnimEffectGlide3 =
 	new AnimEffectInfo ("animationaddon:Glide 3",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<Glide3Anim>);
 
     animEffects[i++] = AnimEffectLeafSpread =
 	new AnimEffectInfo ("animationaddon:Leaf Spread",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<LeafSpreadAnim>);
     animEffects[i++] = AnimEffectRazr =
 	new AnimEffectInfo ("animationaddon:Razr",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<RazrAnim>);
     animEffects[i++] = AnimEffectSkewer =
 	new AnimEffectInfo ("animationaddon:Skewer",
-			    true, true, true, false, false,
+			    true, true, true, false, true, false,
 			    &createAnimation<SkewerAnim>);
 
     animAddonExtPluginInfo.effectOptions = &getOptions ();

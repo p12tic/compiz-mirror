@@ -16,7 +16,7 @@ class AnimEffectInfo
 {
 public:
      AnimEffectInfo (const char *name,
-		     bool usedO, bool usedC, bool usedM, bool usedS, bool usedF,
+		     bool usedO, bool usedC, bool usedM, bool usedS, bool usedU, bool usedF,
 		     CreateAnimFunc create, bool isRestackAnim = false);
      ~AnimEffectInfo () {}
      
@@ -28,7 +28,7 @@ public:
 							       
     /// To be set to true for the window event animation list(s) that
     /// the new animation (value) should be added to
-    /// (0: open, 1: close, 2: minimize, 3: shade, 4: focus)
+    /// (0: open, 1: close, 2: minimize, 3: shade, 4: unminimize, 5: focus)
     bool usedForEvents[AnimEventNum];
 
     /// Creates an instance of the Animation subclass and returns it as an
