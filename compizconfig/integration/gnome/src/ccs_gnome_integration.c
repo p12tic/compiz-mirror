@@ -522,6 +522,9 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 
     CCSIntegratedSettingList iter = integratedSettings;
 
+    /* Do not allow recursing back into writeIntegratedSetting */
+    ccsIntegrationDisallowIntegratedWrites (integration);
+
     while (iter)
     {
 	CCSIntegratedSetting *integrated = iter->data;
@@ -582,6 +585,8 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 
 	iter = iter->next;
     }
+
+    ccsIntegrationAllowIntegratedWrites (integration);
 }
 
 static void
