@@ -387,6 +387,9 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     if (priv->noWrites)
 	return;
 
+    /* Do not allow recursing back into writeIntegratedSetting */
+    ccsIntegrationDisallowIntegratedWrites (integration);
+
     CCSSettingValue *v = ccsSettingGetValue (setting);
 
     switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
@@ -513,6 +516,10 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	ccsError ("%s", err->message);
 	g_error_free (err);
     }
+
+    /* we should immediately write changed settings */
+    ccsWriteChangedSettings (priv->context);
+    ccsIntegrationAllowIntegratedWrites (integration);
 }
 
 static void
@@ -524,9 +531,6 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
     Bool needInit = TRUE;
 
     CCSIntegratedSettingList iter = integratedSettings;
-
-    /* Do not allow recursing back into writeIntegratedSetting */
-    ccsIntegrationDisallowIntegratedWrites (integration);
 
     while (iter)
     {
@@ -588,10 +592,6 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 
 	iter = iter->next;
     }
-
-    /* we should immediately write changed settings */
-    ccsWriteChangedSettings (priv->context);
-    ccsIntegrationAllowIntegratedWrites (integration);
 }
 
 static void

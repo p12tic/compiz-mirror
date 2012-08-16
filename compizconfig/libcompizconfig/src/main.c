@@ -3492,9 +3492,13 @@ ccsWriteChangedSettingsDefault (CCSContext * context)
     if (!ccsBackendWriteInit ((CCSBackend *) cPrivate->backend, context))
 	return;
 
-    if (ccsSettingListLength (cPrivate->changedSettings))
+    /* We must immediately steal the changed settings list
+     * if we recurse into this function */
+    CCSSettingList changedSettings = ccsContextStealChangedSettings (context);
+
+    if (ccsSettingListLength (changedSettings))
     {
-	CCSSettingList l = cPrivate->changedSettings;
+	CCSSettingList l = changedSettings;
 
 	while (l)
 	{
@@ -3505,8 +3509,7 @@ ccsWriteChangedSettingsDefault (CCSContext * context)
 
     ccsBackendWriteDone ((CCSBackend *) cPrivate->backend,context);
 
-    cPrivate->changedSettings =
-	ccsSettingListFree (cPrivate->changedSettings, FALSE);
+    ccsSettingListFree (changedSettings, FALSE);
 }
 
 void
