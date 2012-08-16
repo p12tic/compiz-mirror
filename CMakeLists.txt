@@ -9,6 +9,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
 
 include (CTest)
 
+set (MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes)
 set (MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_SOURCE_DIR}/tests/experimental-memcheck/compiz.supp CACHE FILEPATH "" FORCE)
 
 include (Dart)
