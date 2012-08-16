@@ -23,19 +23,41 @@
  * Author: Daniel d'Andrada <daniel.dandrada@canonical.com>
  */
 
-#ifndef RESIZE_GL_SCREEN_INTERFACE
-#define RESIZE_GL_SCREEN_INTERFACE
+#ifndef RESIZE_COMPOSITE_WINDOW_IMPL_H
+#define RESIZE_COMPOSITE_WINDOW_IMPL_H
+
+#include "composite-window-interface.h"
 
 namespace resize
 {
 
-class GLScreenInterface
+class CompositeWindowImpl : public CompositeWindowInterface
 {
     public:
-	virtual ~GLScreenInterface () {}
-	virtual void glPaintOutputSetEnabled (bool enable) = 0;
+	CompositeWindowImpl (CompositeWindow *impl)
+	    : mImpl (impl)
+	{
+	}
+
+	static CompositeWindowImpl *wrap (CompositeWindow *impl)
+	{
+	    if (impl)
+		return new CompositeWindowImpl (impl);
+	    else
+		return NULL;
+	}
+
+	virtual void damageRectSetEnabled (bool enable)
+	{
+	    mImpl->damageRectSetEnabled (resizeWindow, enable);
+	}
+
+	ResizeWindow *resizeWindow;
+    private:
+	CompositeWindow *mImpl;
 };
 
 } /* namespace resize */
 
-#endif /* RESIZE_GL_SCREEN_INTERFACE */
+#endif /* RESIZE_COMPOSITE_WINDOW_IMPL_H */
+

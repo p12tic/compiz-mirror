@@ -65,22 +65,7 @@ resizeInitiateDefaultMode (CompAction	      *action,
 			   CompOption::Vector &options)
 {
     RESIZE_SCREEN (screen);
-
-    bool result = rs->logic.initiateResizeDefaultMode(action, state, options);
-
-    if (rs->logic.mode != ResizeOptions::ModeNormal)
-    {
-	ResizeWindow *rw =
-	    static_cast<resize::ResizeWindowImpl*>(rs->logic.w->getResizeInterface())->impl ();
-
-	if (rw->gWindow && rs->logic.mode == ResizeOptions::ModeStretch)
-	    rw->gWindow->glPaintSetEnabled (rw, true);
-	if (rw->cWindow && rs->logic.mode == ResizeOptions::ModeStretch)
-	    rw->cWindow->damageRectSetEnabled (rw, true);
-	rs->gScreen->glPaintOutputSetEnabled (rs->gScreen, true);
-    }
-
-    return result;
+    return rs->logic.initiateResizeDefaultMode(action, state, options);
 }
 
 static bool
@@ -89,21 +74,7 @@ resizeTerminate (CompAction         *action,
 	         CompOption::Vector &options)
 {
     RESIZE_SCREEN (screen);
-    bool result = rs->logic.terminateResize(action, state, options);
-
-    if (rs->logic.mode != ResizeOptions::ModeNormal)
-    {
-	ResizeWindow *rw =
-	    static_cast<resize::ResizeWindowImpl*>(rs->logic.w->getResizeInterface())->impl ();
-
-	if (rw->gWindow && rs->logic.mode == ResizeOptions::ModeStretch)
-	    rw->gWindow->glPaintSetEnabled (rw, false);
-	if (rw->cWindow && rs->logic.mode == ResizeOptions::ModeStretch)
-	    rw->cWindow->damageRectSetEnabled (rw, false);
-	rs->gScreen->glPaintOutputSetEnabled (rs->gScreen, false);
-    }
-
-    return result;
+    return rs->logic.terminateResize(action, state, options);
 }
 
 void

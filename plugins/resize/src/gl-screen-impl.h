@@ -43,10 +43,9 @@ class GLScreenImpl : public GLScreenInterface
 
 	virtual ~GLScreenImpl() {}
 
-	virtual void glPaintOutputSetEnabled (GLScreenInterface *,
-					      bool enable)
+	virtual void glPaintOutputSetEnabled (bool enable)
 	{
-	    mImpl->glPaintOutputSetEnabled(mImpl, enable);
+	    mImpl->glPaintOutputSetEnabled(ResizeScreen::get(screen), enable);
 	}
 
 	static GLScreenImpl *wrap (GLScreen *impl)

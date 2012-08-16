@@ -32,6 +32,8 @@ namespace resize
 {
 
 class ResizeWindowInterface;
+class GLWindowInterface;
+class CompositeWindowInterface;
 
 /*
  * Interface between a concrete CompWindow
@@ -77,6 +79,8 @@ class CompWindowInterface
 	virtual bool evaluate (CompMatch &match) = 0;
 
 	virtual ResizeWindowInterface *getResizeInterface () = 0;
+	virtual GLWindowInterface *getGLInterface () = 0;
+	virtual CompositeWindowInterface *getCompositeInterface () = 0;
 };
 
 } /* namespace resize */

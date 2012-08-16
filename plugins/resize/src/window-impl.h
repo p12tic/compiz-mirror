@@ -30,6 +30,8 @@
 #include "window-interface.h"
 
 #include "resize-window-impl.h"
+#include "gl-window-impl.h"
+#include "composite-window-impl.h"
 
 namespace resize
 {
@@ -41,6 +43,21 @@ class CompWindowImpl : public CompWindowInterface
 	    : mImpl (impl)
 	{
 	    mResizeImpl = ResizeWindowImpl::wrap(ResizeWindow::get (impl));
+
+	    mGLImpl = GLWindowImpl::wrap(GLWindow::get (impl));
+	    if (mGLImpl)
+		mGLImpl->resizeWindow = ResizeWindow::get (impl);
+
+	    mCompositeImpl = CompositeWindowImpl::wrap(CompositeWindow::get (impl));
+	    if (mCompositeImpl)
+		mCompositeImpl->resizeWindow = ResizeWindow::get (impl);
+	}
+
+	virtual ~CompWindowImpl ()
+	{
+	    delete mResizeImpl;
+	    delete mGLImpl;
+	    delete mCompositeImpl;
 	}
 
 	CompWindow *impl()
@@ -189,9 +206,21 @@ class CompWindowImpl : public CompWindowInterface
 	    return mResizeImpl;
 	}
 
+	virtual GLWindowInterface *getGLInterface ()
+	{
+	    return mGLImpl;
+	}
+
+	virtual CompositeWindowInterface *getCompositeInterface ()
+	{
+	    return mCompositeImpl;
+	}
+
     private:
 	CompWindow *mImpl;
 	ResizeWindowImpl *mResizeImpl;
+	GLWindowImpl *mGLImpl;
+	CompositeWindowImpl *mCompositeImpl;
 };
 
 } /* namespace resize */

@@ -36,6 +36,8 @@
 #include "gl-screen-interface.h"
 #include "composite-screen-interface.h"
 #include "window-interface.h"
+#include "composite-window-interface.h"
+#include "gl-window-interface.h"
 #include "resize-window-interface.h"
 #include "property-writer-interface.h"
 
@@ -1285,6 +1287,15 @@ ResizeLogic::initiateResize (CompAction		*action,
 	    mode = initMode;
 	}
 
+	if (mode != ResizeOptions::ModeNormal)
+	{
+	    if (w->getGLInterface () && mode == ResizeOptions::ModeStretch)
+		w->getGLInterface ()->glPaintSetEnabled (true);
+	    if (w->getCompositeInterface () && mode == ResizeOptions::ModeStretch)
+		w->getCompositeInterface ()->damageRectSetEnabled (true);
+	    gScreen->glPaintOutputSetEnabled (true);
+	}
+
 	if (!grabIndex)
 	{
 	    Cursor cursor;
@@ -1470,6 +1481,14 @@ ResizeLogic::terminateResize (CompAction        *action,
 
 	    }
 
+	    if (mode != ResizeOptions::ModeNormal)
+	    {
+		if (w->getGLInterface () && mode == ResizeOptions::ModeStretch)
+		    w->getGLInterface ()->glPaintSetEnabled (false);
+		if (w->getCompositeInterface () && mode == ResizeOptions::ModeStretch)
+		    w->getCompositeInterface ()->damageRectSetEnabled (false);
+		gScreen->glPaintOutputSetEnabled (false);
+	    }
 	}
 
 	if ((mask & CWWidth) &&

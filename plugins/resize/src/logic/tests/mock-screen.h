@@ -59,7 +59,7 @@ class MockScreen :  public CompScreenInterface,
 	MOCK_CONST_METHOD0(height, int());
 
 	/* from GLSCreenInterface  */
-	MOCK_METHOD2(glPaintOutputSetEnabled, void(GLScreenInterface *screen, bool enable));
+	MOCK_METHOD1(glPaintOutputSetEnabled, void(bool enable));
 
 	/* from CompositeScreenInterface */
 	MOCK_METHOD0(compositingActive, bool());

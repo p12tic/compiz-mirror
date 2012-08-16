@@ -110,6 +110,18 @@ public:
 
 	EXPECT_CALL (mockWindow, configureXWindow (_,_))
 	    .Times(AnyNumber());
+
+	EXPECT_CALL (mockWindow, getGLInterface ())
+	    .WillRepeatedly (Return (&mockWindow));
+
+	EXPECT_CALL (mockWindow, getCompositeInterface ())
+	    .WillRepeatedly (Return (&mockWindow));
+
+	EXPECT_CALL (mockWindow, glPaintSetEnabled(_))
+	    .Times(AnyNumber());
+
+	EXPECT_CALL (mockWindow, damageRectSetEnabled(_))
+	    .Times(AnyNumber());
     }
 
     void SetUpMockScreenExpectations ()
@@ -144,6 +156,9 @@ public:
 
 	EXPECT_CALL (mockScreen, xkbEvent ())
 	    .WillRepeatedly (Return (0));
+
+	EXPECT_CALL (mockScreen, glPaintOutputSetEnabled (_))
+	    .Times(AnyNumber());
     }
 
     void SetUpFakePropertyWriter ()

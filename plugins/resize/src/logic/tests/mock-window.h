@@ -29,11 +29,15 @@
 #include <gmock/gmock.h>
 
 #include "window-interface.h"
+#include "gl-window-interface.h"
+#include "composite-window-interface.h"
 
 namespace resize
 {
 
-class MockWindow : public CompWindowInterface
+class MockWindow :  public CompWindowInterface,
+		    public GLWindowInterface,
+		    public CompositeWindowInterface
 {
 public:
     MOCK_METHOD0(id, Window());
@@ -68,6 +72,14 @@ public:
     MOCK_METHOD1(evaluate, bool(CompMatch &match));
 
     MOCK_METHOD0(getResizeInterface, ResizeWindowInterface*());
+    MOCK_METHOD0(getGLInterface, GLWindowInterface*());
+    MOCK_METHOD0(getCompositeInterface, CompositeWindowInterface*());
+
+    /* from GLWindowInterface  */
+    MOCK_METHOD1(glPaintSetEnabled, void(bool enable));
+
+    /* from CompositeWindowInterface  */
+    MOCK_METHOD1(damageRectSetEnabled, void(bool enable));
 };
 
 } /* namespace resize */

@@ -23,19 +23,40 @@
  * Author: Daniel d'Andrada <daniel.dandrada@canonical.com>
  */
 
-#ifndef RESIZE_GL_SCREEN_INTERFACE
-#define RESIZE_GL_SCREEN_INTERFACE
+#ifndef RESIZE_GL_WINDOW_IMPL_H
+#define RESIZE_GL_WINDOW_IMPL_H
+
+#include "gl-window-interface.h"
 
 namespace resize
 {
 
-class GLScreenInterface
+class GLWindowImpl : public GLWindowInterface
 {
     public:
-	virtual ~GLScreenInterface () {}
-	virtual void glPaintOutputSetEnabled (bool enable) = 0;
+	GLWindowImpl (GLWindow *impl)
+	    : mImpl (impl)
+	{
+	}
+
+	static GLWindowImpl *wrap (GLWindow *impl)
+	{
+	    if (impl)
+		return new GLWindowImpl (impl);
+	    else
+		return NULL;
+	}
+
+	virtual void glPaintSetEnabled (bool enable)
+	{
+	    mImpl->glPaintSetEnabled (resizeWindow, enable);
+	}
+
+	ResizeWindow *resizeWindow;
+    private:
+	GLWindow *mImpl;
 };
 
 } /* namespace resize */
 
-#endif /* RESIZE_GL_SCREEN_INTERFACE */
+#endif /* RESIZE_GL_WINDOW_IMPL_H */
