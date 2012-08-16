@@ -1291,6 +1291,16 @@ void ccsIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
     (*(GET_INTERFACE (CCSIntegrationInterface, integration))->updateIntegratedSettings) (integration, context, integratedSettings);
 }
 
+void ccsIntegrationDisallowIntegratedWrites (CCSIntegration *integration)
+{
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->disallowIntegratedWrites) (integration);
+}
+
+void ccsIntegrationAllowIntegratedWrites (CCSIntegration *integration)
+{
+    (*(GET_INTERFACE (CCSIntegrationInterface, integration))->allowIntegratedWrites) (integration);
+}
+
 void ccsFreeIntegration (CCSIntegration *integration)
 {
     (*(GET_INTERFACE (CCSIntegrationInterface, integration))->freeIntegrationBackend) (integration);

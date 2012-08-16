@@ -34,6 +34,8 @@ class CCSIntegrationGMockInterface
 	virtual Bool readOptionIntoSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *) = 0;
 	virtual void writeOptionFromSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *) = 0;
 	virtual void updateIntegratedSettings (CCSContext *context, CCSIntegratedSettingList settingList) = 0;
+	virtual void disallowIntegratedWrites () = 0;
+	virtual void allowIntegratedWrites () = 0;
 };
 
 class CCSIntegrationGMock :
@@ -45,6 +47,8 @@ class CCSIntegrationGMock :
 	MOCK_METHOD3 (readOptionIntoSetting, Bool (CCSContext *, CCSSetting *, CCSIntegratedSetting *));
 	MOCK_METHOD3 (writeOptionFromSetting, void (CCSContext *, CCSSetting *, CCSIntegratedSetting *));
 	MOCK_METHOD2 (updateIntegratedSettings, void (CCSContext *, CCSIntegratedSettingList));
+	MOCK_METHOD0 (disallowIntegratedWrites, void ());
+	MOCK_METHOD0 (allowIntegratedWrites, void ());
 
 
 	CCSIntegrationGMock (CCSIntegration *integration) :
@@ -99,6 +103,16 @@ class CCSIntegrationGMock :
 	    ccsMockIntegrationBackendFree (integration);
 	}
 
+	static void ccsIntegrationDisallowIntegratedWrites (CCSIntegration *integration)
+	{
+	    reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->disallowIntegratedWrites ();
+	}
+
+	static void ccsIntegrationAllowIntegratedWrites (CCSIntegration *integration)
+	{
+	    reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->allowIntegratedWrites ();
+	}
+
     private:
 
 	CCSIntegration *mIntegration;
@@ -110,6 +124,8 @@ const CCSIntegrationInterface mockIntegrationBackendInterface =
     CCSIntegrationGMock::CCSIntegrationReadOptionIntoSetting,
     CCSIntegrationGMock::CCSIntegrationWriteSettingIntoOption,
     CCSIntegrationGMock::CCSIntegrationUpdateIntegratedSettings,
+    CCSIntegrationGMock::ccsIntegrationDisallowIntegratedWrites,
+    CCSIntegrationGMock::ccsIntegrationAllowIntegratedWrites,
     CCSIntegrationGMock::ccsFreeIntegration
 };
 
