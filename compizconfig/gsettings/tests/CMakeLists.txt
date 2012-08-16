@@ -10,6 +10,8 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 
 pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 add_library (compizconfig_ccs_gsettings_wrapper_mock STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.cpp
 	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.h)
