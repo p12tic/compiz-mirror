@@ -212,6 +212,14 @@ struct _CCSIntegrationInterface
     CCSFreeIntegrationBackend			freeIntegrationBackend;
 };
 
+/**
+ * @brief The _CCSIntegration struct
+ *
+ * An object that represents integration with a desktop environment. Generally
+ * these objects store a list of hardcoded settings that can be retrieved using
+ * ccsIntegrationGetIntegratedOptionIndex and then written to and read
+ * from using the readOptionIntoSetting and writeOptionIntoSetting.
+ */
 struct _CCSIntegration
 {
     CCSObject object;
