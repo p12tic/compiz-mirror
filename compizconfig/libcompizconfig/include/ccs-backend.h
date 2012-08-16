@@ -36,6 +36,17 @@ typedef struct _CCSBackendInfo    CCSBackendInfo;
 typedef struct _CCSBackendPrivate CCSBackendPrivate;
 typedef struct _CCSBackendInterface  CCSBackendInterface;
 
+
+/**
+ * @brief CCSBackend
+ *
+ * This object represents CCSBackend directly in memory. It does
+ * not represent the details that come with a loaded backend.
+ *
+ * Backends are capable of reading, writing and updating settings
+ * from intergrated locations. Clients should check if these functions
+ * are supported first as the function pointers are permitted to be NULL.
+ */
 struct _CCSBackend
 {
     CCSObject        object;
@@ -109,10 +120,45 @@ struct _CCSBackendInterface
 
 unsigned int ccsCCSBackendInterfaceGetType ();
 
+/**
+ * @brief ccsBackendGetInfo
+ * @param backend a CCSBackend *
+ * @return a const CCSBackendInfo * for this backend
+ *
+ * This function returns some basic info about this backend, what its
+ * name is, what it suppoirts etc
+ */
 const CCSBackendInfo * ccsBackendGetInfo (CCSBackend *backend);
 Bool ccsBackendHasExecuteEvents (CCSBackend *backend);
+
+/**
+ * @brief ccsBackendExecuteEvents
+ * @param backend a CCSBackend *
+ * @param flags ProcessEventsGlibMainLoopMask or 0
+ *
+ * something like a event loop call for the backend,
+ * so it can check for file changes (gconf changes in the gconf backend)
+ */
 void ccsBackendExecuteEvents (CCSBackend *backend, unsigned int flags);
+
+/**
+ * @brief ccsBackendInit
+ * @param backend
+ * @param context
+ * @return
+ *
+ * Initializes a backend for a context
+ */
 Bool ccsBackendInit (CCSBackend *backend, CCSContext *context);
+
+/**
+ * @brief ccsBackendFini
+ * @param backend
+ * @param context
+ * @return
+ *
+ * Cleans up the backend
+ */
 Bool ccsBackendFini (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendHasReadInit (CCSBackend *backend);
 Bool ccsBackendReadInit (CCSBackend *backend, CCSContext *context);
@@ -137,11 +183,25 @@ Bool ccsBackendHasDeleteProfile (CCSBackend *backend);
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name);
 void ccsFreeBackend (CCSBackend *backend);
 
-/* Backend opener method */
+/**
+ * @brief ccsOpenBackend
+ * @param name the name of the backend to open
+ * @param interface storage for this backend's interface
+ * @return a dlopen handle for this backend
+ */
 void *
 ccsOpenBackend (const char *name, CCSBackendInterface **interface);
 
-/* Constructor method */
+/**
+ * @brief ccsBackendNewWithDynamicInterface
+ * @param context
+ * @param interface
+ * @param dlhand
+ * @return
+ *
+ * Creates a new CCSBackend for a CCSBackendInterface and dlopen handle
+ * dlhand
+ */
 CCSBackend *
 ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterface *interface, void *dlhand);
 
