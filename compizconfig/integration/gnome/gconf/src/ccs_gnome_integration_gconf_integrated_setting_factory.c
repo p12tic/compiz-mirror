@@ -116,21 +116,22 @@ registerGConfClient (GConfClient    *client,
     int i;
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
-    {
 	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
 							  watchedGConfGnomeDirectories[i],
 							  func, (gpointer) data,
 							  NULL, NULL);
-	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
-			      GCONF_CLIENT_PRELOAD_NONE, NULL);
-    }
 }
 
 static void
 initGConfClient (CCSIntegratedSettingFactory *factory)
 {
+    int i;
     CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
     priv->client = gconf_client_get_default ();
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
+			      GCONF_CLIENT_PRELOAD_NONE, NULL);
 }
 
 CCSIntegratedSetting *
@@ -178,7 +179,8 @@ ccsGConfIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
 {
     CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
 
-    finiGConfClient (priv->client, priv->gnomeGConfNotifyIds);
+    if (priv->client)
+	finiGConfClient (priv->client, priv->gnomeGConfNotifyIds);
 
     if (priv->pluginsToSettingsSectionsHashTable)
 	g_hash_table_unref (priv->pluginsToSettingsSectionsHashTable);
@@ -218,7 +220,17 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
 	return NULL;
     }
 
-    priv->client = client ? (GConfClient *) g_object_ref (client) : NULL;
+    if (client)
+    {
+	int i;
+	priv->client = (GConfClient *) g_object_ref (client);
+	for (i = 0; i < NUM_WATCHED_DIRS; i++)
+	    gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
+				  GCONF_CLIENT_PRELOAD_NONE, NULL);
+    }
+    else
+	priv->client = NULL;
+
     priv->pluginsToSettingsSectionsHashTable = ccsGNOMEIntegrationPopulateCategoriesHashTables ();
     priv->pluginsToSettingsSpecialTypesHashTable = ccsGNOMEIntegrationPopulateSpecialTypesHashTables ();
     priv->pluginsToSettingNameGNOMENameHashTable = ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ();
@@ -227,6 +239,8 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
     ccsObjectInit (factory, ai);
     ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
     ccsObjectAddInterface (factory, (const CCSInterface *) &ccsGConfIntegratedSettingFactoryInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingFactoryInterface));
+
+    ccsIntegratedSettingFactoryRef (factory);
 
     return factory;
 }

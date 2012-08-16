@@ -1041,6 +1041,7 @@ CCSREF_OBJ (DynamicBackend, CCSDynamicBackend)
 CCSREF_OBJ (Integration, CCSIntegration)
 CCSREF_OBJ (IntegratedSetting, CCSIntegratedSetting);
 CCSREF_OBJ (IntegratedSettingFactory, CCSIntegratedSettingFactory);
+CCSREF_OBJ (IntegratedSettingsStorage, CCSIntegratedSettingsStorage);
 
 static void *
 openBackend (const char *backend)
@@ -5771,9 +5772,15 @@ ccsIntegratedSettingsStorageAddSetting (CCSIntegratedSettingsStorage *storage,
 }
 
 Bool
-ccsIntegratedSettingsStorageEmpty (CCSIntegratedSettingsStorage *factory)
+ccsIntegratedSettingsStorageEmpty (CCSIntegratedSettingsStorage *storage)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, factory))->empty) (factory);
+    return (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->empty) (storage);
+}
+
+void
+ccsFreeIntegratedSettingsStorage (CCSIntegratedSettingsStorage *storage)
+{
+    (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->empty) (storage);
 }
 
 /* CCSIntegratedSettingsStorageDefault implementation */
@@ -5857,12 +5864,25 @@ ccsIntegratedSettingsStorageDefaultEmpty (CCSIntegratedSettingsStorage *storage)
     return priv->settingList == NULL;
 }
 
+void
+ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *storage)
+{
+    CCSIntegratedSettingsStorageDefaultPrivate *priv = (CCSIntegratedSettingsStorageDefaultPrivate *) ccsObjectGetPrivate (storage);
+
+    if (priv->settingList)
+	ccsIntegratedSettingListFree (priv->settingList, TRUE);
+
+    ccsObjectFinalize (storage);
+    (*storage->object.object_allocation->free_) (storage->object.object_allocation->allocator, storage);
+}
+
 const CCSIntegratedSettingsStorageInterface ccsIntegratedSettingsStorageDefaultImplInterface =
 {
     ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPredicate,
     ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPluginAndSettingName,
     ccsIntegratedSettingsStorageDefaultAddSetting,
-    ccsIntegratedSettingsStorageDefaultEmpty
+    ccsIntegratedSettingsStorageDefaultEmpty,
+    ccsIntegratedSettingsStorageDefaultImplFree
 };
 
 CCSIntegratedSettingsStorage *
@@ -5885,19 +5905,9 @@ ccsIntegratedSettingsStorageDefaultImplNew (CCSObjectAllocationInterface *ai)
     ccsObjectSetPrivate (storage, (CCSPrivate *) priv);
     ccsObjectAddInterface (storage, (const CCSInterface *) &ccsIntegratedSettingsStorageDefaultImplInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingsStorageInterface));
 
+    ccsIntegratedSettingsStorageRef (storage);
+
     return storage;
-}
-
-void
-ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *storage)
-{
-    CCSIntegratedSettingsStorageDefaultPrivate *priv = (CCSIntegratedSettingsStorageDefaultPrivate *) ccsObjectGetPrivate (storage);
-
-    if (priv->settingList)
-	ccsIntegratedSettingListFree (priv->settingList, TRUE);
-
-    ccsObjectFinalize (storage);
-    (*storage->object.object_allocation->free_) (storage->object.object_allocation->allocator, storage);
 }
 
 CCSIntegratedSetting *
