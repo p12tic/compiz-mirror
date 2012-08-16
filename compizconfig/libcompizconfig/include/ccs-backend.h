@@ -376,9 +376,29 @@ void ccsBackendReadDone (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendWriteInit (CCSBackend *backend, CCSContext *context);
 void ccsBackendWriteSetting (CCSBackend *backend, CCSContext *context, CCSSetting *setting);
 void ccsBackendWriteDone (CCSBackend *backend, CCSContext *context);
+
+/**
+ * @brief ccsBackendUpdateSetting
+ * @param backend The backend on which the update should be processed
+ * @param context The context on which the backend resides.
+ * @param plugin The plugin for the setting
+ * @param setting The setting itself.
+ *
+ * This causes the specified setting to be re-read from the configuration
+ * database and re-written to any integrated keys. It should genrally
+ * be called by calback functions which know that the value
+ * has changed.
+ */
 void ccsBackendUpdateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting);
 Bool ccsBackendGetSettingIsIntegrated (CCSBackend *backend, CCSSetting *setting);
 Bool ccsBackendGetSettingIsReadOnly (CCSBackend *backend, CCSSetting *setting);
+
+/**
+ * @brief ccsBackendGetExistingProfiles
+ * @param backend
+ * @param context
+ * @return a CCSStringist of available profiles for this backend
+ */
 CCSStringList ccsBackendGetExistingProfiles (CCSBackend *backend, CCSContext *context);
 Bool ccsBackendDeleteProfile (CCSBackend *backend, CCSContext *context, char *name);
 void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegration *integration);
@@ -389,6 +409,16 @@ typedef struct _CCSDynamicBackendPrivate CCSDynamicBackendPrivate;
 typedef struct _CCSDynamicBackendInterface  CCSDynamicBackendInterface;
 typedef struct _CCSInterfaceTable         CCSInterfaceTable;
 
+/**
+ * @brief The _CCSDynamicBackend struct
+ *
+ * This object represents a CCSBackend loaded in memory as a dlopen
+ * object. It implements the CCSBackend interface and provides an
+ * interface of its own for managing the dynamic backend and checking
+ * its capabilities.
+ *
+ * All function pointers are fully implemented and are safe to call
+ */
 struct _CCSDynamicBackend
 {
     CCSObject object;
