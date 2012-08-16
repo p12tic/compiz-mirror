@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include <ccs.h>
 #include <ccs-backend.h>
 #include <ccs-object.h>
