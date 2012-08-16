@@ -62,17 +62,25 @@ add_dependencies (compizconfig_wrapper compizconfig)
 
 if (COMPIZ_BUILD_TESTING)
 
+        find_program (BASH_EXECUTABLE bash)
 	find_program (PYTHON_EXECUTABLE python)
 	mark_as_advanced (FORCE PYTHON_EXECUTABLE)
 
 	file (GLOB PYTHON_TESTS "tests/test_*.py")
 
-	if (PYTHON_EXECUTABLE)
+        if (PYTHON_EXECUTABLE AND
+            BASH_EXECUTABLE)
 		foreach (PYTHON_TEST_FILE ${PYTHON_TESTS})
 			get_filename_component (PYTHON_TEST ${PYTHON_TEST_FILE} NAME_WE)
 			message (STATUS "Adding test " ${PYTHON_TEST})
-			add_test (NAME CompizConfigPython.${PYTHON_TEST} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_TEST_FILE})
+                        add_test (NAME CompizConfigPython.${PYTHON_TEST}
+                                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                                  COMMAND ${BASH_EXECUTABLE}
+                                  ${CMAKE_SOURCE_DIR}/tests/util/run_with_ld_library_path.sh
+                                  ${CMAKE_BINARY_DIR}/compizconfig/libcompizconfig/src
+                                  ${PYTHON_EXECUTABLE} ${PYTHON_TEST_FILE})
 		endforeach (PYTHON_TEST_FILE)
-	endif (PYTHON_EXECUTABLE)
+        endif (PYTHON_EXECUTABLE AND
+               BASH_EXECUTABLE)
 
 endif (COMPIZ_BUILD_TESTING)
