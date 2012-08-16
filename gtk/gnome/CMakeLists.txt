@@ -29,7 +29,7 @@ if (BUILD_GNOME)
 	list (APPEND _keybindings_files_translated ${CMAKE_CURRENT_BINARY_DIR}/${_keybinding_file_no_in})
     endforeach (_keybinding_file ${keybinding_files})
 
-    add_custom_target (compiz-gnome-keybindings DEPENDS
+    add_custom_target (compiz-gnome-keybindings ALL DEPENDS
 		       ${_keybindings_files_translated})
 
     install (

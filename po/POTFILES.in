@@ -3,6 +3,11 @@ gtk/window-decorator/events.c
 gtk/window-decorator/forcequit.c
 gtk/window-decorator/gtk-window-decorator.c
 gtk/window-decorator/gwd.schemas.in
+gtk/gnome/50-compiz-launchers.xml.in
+gtk/gnome/50-compiz-navigation.xml.in
+gtk/gnome/50-compiz-screenshot.xml.in
+gtk/gnome/50-compiz-windows.xml.in
+gtk/gnome/50-compiz-system.xml.in
 metadata/core.xml.in
 plugins/annotate/annotate.xml.in
 plugins/blur/blur.xml.in
