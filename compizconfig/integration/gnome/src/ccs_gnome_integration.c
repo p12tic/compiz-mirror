@@ -589,6 +589,8 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 	iter = iter->next;
     }
 
+    /* we should immediately write changed settings */
+    ccsWriteChangedSettings (priv->context);
     ccsIntegrationAllowIntegratedWrites (integration);
 }
 
