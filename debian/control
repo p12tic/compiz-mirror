@@ -51,7 +51,6 @@ Build-Depends: cmake (>= 2.6),
                protobuf-compiler,
                python-all-dev,
                python-pyrex,
-               metacity-common,
                gnome-control-center-dev,
                gsettings-desktop-schemas-dev,
 Standards-Version: 3.9.3
