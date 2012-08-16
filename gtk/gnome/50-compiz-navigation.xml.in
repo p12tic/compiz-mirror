@@ -37,14 +37,6 @@
 
 	<KeyListEntry name="switch-group" _description="Switch windows of an app directly"/>
 
-	<KeyListEntry name="/apps/metacity/global_keybindings/switch_panels"/>
-
-	<KeyListEntry name="/apps/metacity/global_keybindings/cycle_windows"/>
-
-	<KeyListEntry name="/apps/metacity/global_keybindings/cycle_group"/>
-
-	<KeyListEntry name="/apps/metacity/global_keybindings/cycle_panels"/>
-
 	<KeyListEntry name="show-desktop" _description="Hide all normal windows" />
 
 	<KeyListEntry name="switch-to-workspace-1" _description="Switch to workspace 1" />
