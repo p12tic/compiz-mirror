@@ -76,7 +76,7 @@ unregisterAllIntegratedOptions (CCSIntegration *integration)
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
 
     if (priv->storage)
-	ccsIntegratedSettingsStorageDefaultImplFree (priv->storage);
+	ccsIntegratedSettingsStorageUnref (priv->storage);
 
     if (priv->factory)
 	ccsIntegratedSettingFactoryUnref (priv->factory);

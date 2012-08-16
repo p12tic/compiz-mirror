@@ -101,18 +101,23 @@ typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSetti
 
 typedef Bool (*CCSIntegratedSettingsStorageEmpty) (CCSIntegratedSettingsStorage *storage);
 
+typedef void (*CCSIntegratedSettingsStorageFree) (CCSIntegratedSettingsStorage *storage);
+
 struct _CCSIntegratedSettingsStorageInterface
 {
     CCSIntegratedSettingsStorageFindMatchingSettingsByPredicate findMatchingSettingsByPredicate;
     CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName findMatchingSettingsByPluginAndSettingName;
     CCSIntegratedSettingsStorageAddSetting	     addSetting;
     CCSIntegratedSettingsStorageEmpty		     empty;
+    CCSIntegratedSettingsStorageFree		     free;
 };
 
 struct _CCSIntegratedSettingsStorage
 {
     CCSObject object;
 };
+
+CCSREF_HDR (IntegratedSettingsStorage, CCSIntegratedSettingsStorage);
 
 CCSIntegratedSettingList
 ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (CCSIntegratedSettingsStorage *storage,
@@ -131,13 +136,13 @@ ccsIntegratedSettingsStorageAddSetting (CCSIntegratedSettingsStorage *storage,
 Bool
 ccsIntegratedSettingsStorageEmpty (CCSIntegratedSettingsStorage *storage);
 
+void
+ccsFreeIntegratedSettingsStorage (CCSIntegratedSettingsStorage *storage);
+
 unsigned int ccsCCSIntegratedSettingsStorageInterfaceGetType ();
 
 CCSIntegratedSettingsStorage *
 ccsIntegratedSettingsStorageDefaultImplNew (CCSObjectAllocationInterface *ai);
-
-void
-ccsIntegratedSettingsStorageDefaultImplFree (CCSIntegratedSettingsStorage *storage);
 
 typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
 typedef struct _CCSIntegratedSettingFactoryInterface CCSIntegratedSettingFactoryInterface;

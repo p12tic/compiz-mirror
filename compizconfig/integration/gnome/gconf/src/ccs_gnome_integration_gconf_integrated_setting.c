@@ -149,6 +149,7 @@ ccsGConfIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
 	    }
 	    break;
 	case TypeString:
+	case TypeKey:
 	    {
 		char  *newValue = v->value.asString;
 		gchar *currentValue;
@@ -207,9 +208,6 @@ ccsGConfIntegratedSettingFree (CCSIntegratedSetting *setting)
 {
     CCSGConfIntegratedSettingPrivate *priv = (CCSGConfIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
 
-    if (priv->client)
-	g_object_unref (priv->client);
-
     ccsIntegratedSettingUnref ((CCSIntegratedSetting *) priv->gnomeIntegratedSetting);
     ccsObjectFinalize (setting);
 
@@ -252,7 +250,7 @@ ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
     }
 
     priv->gnomeIntegratedSetting = base;
-    priv->client = (GConfClient *) g_object_ref (client);
+    priv->client = client;
     priv->sectionName = section;
 
     ccsObjectInit (setting, ai);

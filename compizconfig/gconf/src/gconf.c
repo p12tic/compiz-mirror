@@ -200,6 +200,8 @@ initClient (CCSBackend *backend, CCSContext *context)
 static void
 finiClient (void)
 {
+    ccsIntegrationUnref (valueChangeData.integration);
+
     if (compizNotifyId)
     {
 	gconf_client_notify_remove (client, compizNotifyId);
@@ -210,8 +212,6 @@ finiClient (void)
 
     g_object_unref (client);
     client = NULL;
-
-    ccsIntegrationUnref (valueChangeData.integration);
 
     memset (&valueChangeData, 0, sizeof (CCSGNOMEValueChangeData));
 }
