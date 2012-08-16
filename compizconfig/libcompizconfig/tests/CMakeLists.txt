@@ -7,6 +7,8 @@ link_directories (${CMAKE_INSTALL_PREFIX}/lib)
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../mocks/libcompizconfig)
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../tests/)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 add_executable (compizconfig_test_ccs_object
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_object.cpp)
 
