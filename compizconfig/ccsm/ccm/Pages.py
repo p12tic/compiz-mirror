@@ -905,15 +905,21 @@ class ProfileBackendPage(object):
     
     def BackendChanged(self, widget):
         shortDesc = widget.get_active_text()
-        name = ""
-        for backend in self.Context.Backends.values():
-            if backend.ShortDesc == shortDesc:
-                name = backend.Name
+        backend = None
+
+        for b in self.Context.Backends.values():
+            print "%s ... %s" % (shortDesc, b.ShortDesc)
+            if b.ShortDesc == shortDesc:
+                print "%s" % b.Name
+                backend = b
                 break
-        
-        if name != "":
+
+        if backend is not None:
             self.Context.ResetProfile()
-            self.Context.CurrentBackend = self.Context.Backends[name]
+
+            print backend.Name
+
+            self.Context.CurrentBackend = backend
             self.UpdateProfiles()
         else:
             raise Exception(_("Backend not found."))

@@ -1103,7 +1103,6 @@ void
 ccsFreeBackend (CCSBackend *backend)
 {
     ccsBackendFini (backend);
-
     ccsObjectFinalize (backend);
     free (backend);
 }

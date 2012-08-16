@@ -447,9 +447,7 @@ initBackend (CCSBackend *backend, CCSContext * context)
 static Bool
 finiBackend (CCSBackend *backend)
 {
-    processEvents (backend, 0);
     ccsGSettingsBackendDetachFromBackend (backend);
-    processEvents (backend, 0);
 
     return TRUE;
 }
