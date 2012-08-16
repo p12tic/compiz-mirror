@@ -48,6 +48,7 @@ struct _CCSGNOMEIntegrationBackendPrivate
     CCSContext *context;
     CCSIntegratedSettingFactory  *factory;
     CCSIntegratedSettingsStorage *storage;
+    Bool       noWrites;
 };
 
 static CCSSetting *
@@ -383,6 +384,9 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     if (ccsIntegratedSettingsStorageEmpty (priv->storage))
 	registerAllIntegratedOptions (integration);
 
+    if (priv->noWrites)
+	return;
+
     CCSSettingValue *v = ccsSettingGetValue (setting);
 
     switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
@@ -581,6 +585,20 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 }
 
 static void
+ccsGNOMEIntegrationDisallowIntegratedWrites (CCSIntegration *integration)
+{
+    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    priv->noWrites = TRUE;
+}
+
+static void
+ccsGNOMEIntegrationAllowIntegratedWrites (CCSIntegration *integration)
+{
+    CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
+    priv->noWrites = FALSE;
+}
+
+static void
 ccsGNOMEIntegrationBackendFree (CCSIntegration *integration)
 {
     CCGNOMEIntegrationBackendPrivate *priv = (CCGNOMEIntegrationBackendPrivate *) ccsObjectGetPrivate (integration);
@@ -599,6 +617,8 @@ const CCSIntegrationInterface ccsGNOMEIntegrationBackendInterface =
     ccsGNOMEIntegrationBackendReadOptionIntoSetting,
     ccsGNOMEIntegrationBackendWriteOptionFromSetting,
     ccsGNOMEIntegrationBackendUpdateIntegratedSettings,
+    ccsGNOMEIntegrationDisallowIntegratedWrites,
+    ccsGNOMEIntegrationAllowIntegratedWrites,
     ccsGNOMEIntegrationBackendFree
 };
 
@@ -638,6 +658,7 @@ ccsGNOMEIntegrationBackendNewCommon (CCSBackend *backend,
     priv->context = context;
     priv->factory = factory;
     priv->storage = storage;
+    priv->noWrites = FALSE;
 
     ccsObjectAddInterface (integration,
 			   (const CCSInterface *) &ccsGNOMEIntegrationBackendInterface,
