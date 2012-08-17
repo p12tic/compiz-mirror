@@ -422,12 +422,7 @@ CcpScreen::reload ()
 bool
 CcpScreen::timeout ()
 {
-    unsigned int flags = 0;
-
-    if (CompPlugin::find ("glib"))
-	flags |= ProcessEventsNoGlibMainLoopMask;
-
-    ccsProcessEvents (mContext, flags);
+    ccsProcessEvents (mContext, ProcessEventsNoGlibMainLoopMask);
 
     CCSSettingList list = ccsContextStealChangedSettings (mContext);
 
