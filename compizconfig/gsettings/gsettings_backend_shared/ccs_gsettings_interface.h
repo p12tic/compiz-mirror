@@ -35,6 +35,16 @@ struct _CCSGSettingsWrapperInterface
     CCSGSettingsWrapperFree gsettingsWrapperFree;
 };
 
+/**
+ * @brief The _CCSGSettingsWrapper struct
+ *
+ * A wrapper around GSettings.
+ *
+ * This wrapper exists for testing purposes and presents the subset
+ * of interface that we wish to use from GSettings anways. It does not
+ * have any of the typed functions and it is the programmer's responsibility
+ * to supply a GVariant to setValue and getValue that is valid.
+ */
 struct _CCSGSettingsWrapper
 {
     CCSObject object;
