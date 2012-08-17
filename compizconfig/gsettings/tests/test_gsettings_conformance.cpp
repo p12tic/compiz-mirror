@@ -136,29 +136,12 @@ ccsMockIntegrationBackendFree (CCSIntegration *integration)
 
 namespace
 {
-    template <typename T>
-    class AutoDestroyHelper
+    template <typename T, typename TDel>
+    boost::shared_ptr <T>
+    AutoDestroy (T *t, TDel d)
     {
-	public:
-
-	    typedef void (*SimpleDestructor) (T *);
-	    typedef boost::shared_ptr <T> TPtr;
-
-	    AutoDestroyHelper (T *t,
-			       SimpleDestructor d) :
-		mShared (t, boost::bind (d, _1))
-	    {
-	    }
-
-	    operator const TPtr & ()
-	    {
-		return mShared;
-	    }
-
-	private:
-
-	    TPtr mShared;
-    };
+	return boost::shared_ptr <T> (t, boost::bind (d, _1));
+    }
 }
 
 class CCSGSettingsBackendEnv :
@@ -633,8 +616,7 @@ class CCSGSettingsBackendEnv :
 						    pluginPath,
 						    type);
 
-	    GVariantShared shared (AutoDestroyHelper <GVariant> (rawVariant,
-								 g_variant_unref));
+	    GVariantShared shared (AutoDestroy (rawVariant, g_variant_unref));
 
 
 
