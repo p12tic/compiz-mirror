@@ -63,6 +63,9 @@ endif
 	# remove .a files
 	rm -f debian/tmp/usr/lib/*.a
 
+	# remove gconf schema files
+	rm -rf debian/tmp/usr/share/gconf/schemas/
+
 	dh_install --fail-missing
 
 	# remove the compizconfig dev file from compiz-dev

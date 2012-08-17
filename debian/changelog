@@ -107,6 +107,7 @@ compiz (1:0.9.8+bzr3308-0ubuntu1) UNRELEASED; urgency=low
   * Add dependency on gsettings-desktop-schemas(-dev)
   * Add compiz-gnome.gsettings-override
   * Update gsettings-override to new paths org.compiz.*
+  * Disable gconf schemas installation
 
   [ Łukasz 'sil2100' Zemczak ]
   * debian/control, debian/rules:
