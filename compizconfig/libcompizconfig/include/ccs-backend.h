@@ -41,25 +41,56 @@ typedef struct _CCSIntegration    CCSIntegration;
 typedef struct _CCSSettingValue CCSSettingValue;
 typedef enum _CCSSettingType CCSSettingType;
 
+typedef struct _CCSIntegratedSettingInfo CCSIntegratedSettingInfo;
+typedef struct _CCSIntegratedSettingInfoInterface CCSIntegratedSettingInfoInterface;
+
+typedef const char * (*CCSIntegratedSettingInfoPluginName) (CCSIntegratedSettingInfo *);
+typedef const char * (*CCSIntegratedSettingInfoSettingName) (CCSIntegratedSettingInfo *);
+typedef CCSSettingType (*CCSIntegratedSettingInfoGetType) (CCSIntegratedSettingInfo *);
+typedef void (*CCSIntegratedSettingInfoFree) (CCSIntegratedSettingInfo *);
+
+struct _CCSIntegratedSettingInfoInterface
+{
+    CCSIntegratedSettingInfoPluginName pluginName;
+    CCSIntegratedSettingInfoSettingName settingName;
+    CCSIntegratedSettingInfoGetType       getType;
+    CCSIntegratedSettingInfoFree	  free;
+};
+
+/**
+ * @brief The _CCSIntegratedSettingInfo struct
+ *
+ * This interface represents some basic information about a DE
+ * integrated setting, it cannot be operated upon itself
+ */
+struct _CCSIntegratedSettingInfo
+{
+    CCSObject object;
+};
+
 typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
 typedef struct _CCSIntegratedSettingInterface CCSIntegratedSettingInterface;
 
 typedef CCSSettingValue * (*CCSIntegratedSettingReadValue) (CCSIntegratedSetting *, CCSSettingType);
 typedef void (*CCSIntegratedSettingWriteValue) (CCSIntegratedSetting *, CCSSettingValue *, CCSSettingType);
-typedef const char * (*CCSIntegratedSettingPluginName) (CCSIntegratedSetting *);
-typedef const char * (*CCSIntegratedSettingSettingName) (CCSIntegratedSetting *);
-typedef CCSSettingType (*CCSIntegratedSettingGetType) (CCSIntegratedSetting *);
 typedef void (*CCSIntegratedSettingFree) (CCSIntegratedSetting *);
 
 struct _CCSIntegratedSettingInterface
 {
     CCSIntegratedSettingReadValue readValue;
     CCSIntegratedSettingWriteValue writeValue;
-    CCSIntegratedSettingPluginName pluginName;
-    CCSIntegratedSettingSettingName settingName;
-    CCSIntegratedSettingGetType       getType;
     CCSIntegratedSettingFree       free;
 };
+
+const char * ccsIntegratedSettingInfoPluginName (CCSIntegratedSettingInfo *);
+const char * ccsIntegratedSettingInfoSettingName (CCSIntegratedSettingInfo *);
+CCSSettingType ccsIntegratedSettingInfoGetType (CCSIntegratedSettingInfo *);
+void ccsFreeIntegratedSettingInfo (CCSIntegratedSettingInfo *);
+
+CCSREF_HDR (IntegratedSettingInfo, CCSIntegratedSettingInfo);
+CCSLIST_HDR (IntegratedSettingInfo, CCSIntegratedSettingInfo);
+
+unsigned int ccsCCSIntegratedSettingInfoInterfaceGetType ();
 
 /**
  * @brief The _CCSIntegratedSetting struct
@@ -75,9 +106,6 @@ struct _CCSIntegratedSetting
 
 CCSSettingValue * ccsIntegratedSettingReadValue(CCSIntegratedSetting *, CCSSettingType);
 void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *, CCSSettingValue *, CCSSettingType);
-const char * ccsIntegratedSettingPluginName (CCSIntegratedSetting *);
-const char * ccsIntegratedSettingSettingName (CCSIntegratedSetting *);
-CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *);
 void ccsFreeIntegratedSetting (CCSIntegratedSetting *);
 
 CCSREF_HDR (IntegratedSetting, CCSIntegratedSetting);
@@ -86,25 +114,22 @@ CCSLIST_HDR (IntegratedSetting, CCSIntegratedSetting);
 unsigned int ccsCCSIntegratedSettingInterfaceGetType ();
 
 /**
- * @brief ccsSharedIntegratedSettingNew
+ * @brief ccsSharedIntegratedInfoSettingNew
  * @param pluginName Plugin name of the integrated setting
  * @param settingName Compiz name of the integrated setting
  * @param type A CCSSettingType
  * @param ai A CCSObjectAllocationInterface *
- * @return a new CCSIntegratedSetting
+ * @return a new CCSIntegratedSettingInfo
  *
- * ccsSharedIntegratedSettingNew () returns the most fundamental
- * implementation of a CCSIntegratedSetting *, which is basic
+ * ccsSharedIntegratedSettingInfoNew () returns the most fundamental
+ * implementation of a CCSIntegratedSettingInfo *, which is basic
  * information about it, the plugin name, setting name, and type.
- *
- * It isn't useful in its current form for integration into most
- * DE's so usually implementations will use this object by composition
  */
-CCSIntegratedSetting *
-ccsSharedIntegratedSettingNew (const char *pluginName,
-			       const char *settingName,
-			       CCSSettingType type,
-			       CCSObjectAllocationInterface *ai);
+CCSIntegratedSettingInfo *
+ccsSharedIntegratedSettingInfoNew (const char *pluginName,
+				   const char *settingName,
+				   CCSSettingType type,
+				   CCSObjectAllocationInterface *ai);
 
 typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
 typedef struct _CCSIntegratedSettingsStorageInterface CCSIntegratedSettingsStorageInterface;

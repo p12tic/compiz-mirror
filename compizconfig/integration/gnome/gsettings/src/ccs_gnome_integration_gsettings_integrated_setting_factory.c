@@ -130,24 +130,24 @@ createNewGSettingsIntegratedSetting (CCSGSettingsWrapper *wrapper,
 				     SpecialOptionType specialOptionType,
 				     CCSObjectAllocationInterface *ai)
 {
-    CCSIntegratedSetting *sharedIntegratedSetting = ccsSharedIntegratedSettingNew (pluginName, settingName, type, ai);
+    CCSIntegratedSettingInfo *sharedIntegratedSettingInfo = ccsSharedIntegratedSettingInfoNew (pluginName, settingName, type, ai);
 
-    if (!sharedIntegratedSetting)
+    if (!sharedIntegratedSettingInfo)
 	return NULL;
 
-    CCSGNOMEIntegratedSetting *gnomeIntegratedSetting = ccsGNOMEIntegratedSettingNew (sharedIntegratedSetting, specialOptionType, gnomeName, ai);
+    CCSGNOMEIntegratedSettingInfo *gnomeIntegratedSettingInfo = ccsGNOMEIntegratedSettingInfoNew (sharedIntegratedSettingInfo, specialOptionType, gnomeName, ai);
 
-    if (!gnomeIntegratedSetting)
+    if (!gnomeIntegratedSettingInfo)
     {
-	ccsIntegratedSettingUnref (sharedIntegratedSetting);
+	ccsIntegratedSettingInfoUnref (sharedIntegratedSettingInfo);
 	return NULL;
     }
 
-    CCSIntegratedSetting *gsettingsIntegratedSetting = ccsGSettingsIntegratedSettingNew (gnomeIntegratedSetting, wrapper, ai);
+    CCSIntegratedSetting *gsettingsIntegratedSetting = ccsGSettingsIntegratedSettingNew (gnomeIntegratedSettingInfo, wrapper, ai);
 
     if (!gsettingsIntegratedSetting)
     {
-	ccsIntegratedSettingUnref ((CCSIntegratedSetting *) gsettingsIntegratedSetting);
+	ccsIntegratedSettingInfoUnref ((CCSIntegratedSettingInfo *) gnomeIntegratedSettingInfo);
 	return NULL;
     }
 

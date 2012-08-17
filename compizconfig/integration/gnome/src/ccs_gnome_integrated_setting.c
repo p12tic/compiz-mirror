@@ -10,29 +10,29 @@
 #include "ccs_gnome_integrated_setting.h"
 #include "ccs_gnome_integration_constants.h"
 
-INTERFACE_TYPE (CCSGNOMEIntegratedSettingInterface);
+INTERFACE_TYPE (CCSGNOMEIntegratedSettingInfoInterface);
 
 SpecialOptionType
-ccsGNOMEIntegratedSettingGetSpecialOptionType (CCSGNOMEIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingInfoGetSpecialOptionType (CCSGNOMEIntegratedSettingInfo *info)
 {
-    return (*(GET_INTERFACE (CCSGNOMEIntegratedSettingInterface, setting))->getSpecialOptionType) (setting);
+    return (*(GET_INTERFACE (CCSGNOMEIntegratedSettingInfoInterface, info))->getSpecialOptionType) (info);
 }
 
 const char *
-ccsGNOMEIntegratedSettingGetGNOMEName (CCSGNOMEIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingInfoGetGNOMEName (CCSGNOMEIntegratedSettingInfo *info)
 {
-    return (*(GET_INTERFACE (CCSGNOMEIntegratedSettingInterface, setting))->getGNOMEName) (setting);
+    return (*(GET_INTERFACE (CCSGNOMEIntegratedSettingInfoInterface, info))->getGNOMEName) (info);
 }
 
 /* CCSGNOMEIntegratedSettingDefaultImpl implementation */
 
-typedef struct _CCSGNOMEIntegratedSettingDefaultImplPrivate CCSGNOMEIntegratedSettingDefaultImplPrivate;
+typedef struct _CCSGNOMEIntegratedSettingInfoDefaultImplPrivate CCSGNOMEIntegratedSettingInfoDefaultImplPrivate;
 
-struct _CCSGNOMEIntegratedSettingDefaultImplPrivate
+struct _CCSGNOMEIntegratedSettingInfoDefaultImplPrivate
 {
     SpecialOptionType type;
     const char	      *gnomeName;
-    CCSIntegratedSetting *sharedIntegratedSetting;
+    CCSIntegratedSettingInfo *sharedIntegratedSettingInfo;
 };
 
 Bool
@@ -40,7 +40,7 @@ ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
 						  void		       *userData)
 {
     const char *findGnomeName = (const char *) userData;
-    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingGetGNOMEName ((CCSGNOMEIntegratedSetting *) setting);
+    const char *gnomeNameOfSetting = ccsGNOMEIntegratedSettingInfoGetGNOMEName ((CCSGNOMEIntegratedSettingInfo *) setting);
 
     if (strcmp (findGnomeName, gnomeNameOfSetting) == 0)
 	return TRUE;
@@ -49,116 +49,98 @@ ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
 }
 
 SpecialOptionType
-ccsGNOMEIntegratedSettingGetSpecialOptionDefault (CCSGNOMEIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingGetSpecialOptionDefault (CCSGNOMEIntegratedSettingInfo *info)
 {
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
     return priv->type;
 }
 
 const char *
-ccsGNOMEIntegratedSettingGetGNOMENameDefault (CCSGNOMEIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingGetGNOMENameDefault (CCSGNOMEIntegratedSettingInfo *info)
 {
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
     return priv->gnomeName;
 }
 
-CCSSettingValue *
-ccsGNOMEIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingType type)
+const char *
+ccsGNOMEIntegratedSettingInfoPluginName (CCSIntegratedSettingInfo *info)
 {
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
-    return ccsIntegratedSettingReadValue (priv->sharedIntegratedSetting, type);
-}
-
-void
-ccsGNOMEIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingValue *value, CCSSettingType type)
-{
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
-
-    ccsIntegratedSettingWriteValue (priv->sharedIntegratedSetting, value, type);
+    return ccsIntegratedSettingInfoPluginName (priv->sharedIntegratedSettingInfo);
 }
 
 const char *
-ccsGNOMEIntegratedSettingPluginName (CCSIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingInfoSettingName (CCSIntegratedSettingInfo *info)
 {
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
-    return ccsIntegratedSettingPluginName (priv->sharedIntegratedSetting);
-}
-
-const char *
-ccsGNOMEIntegratedSettingSettingName (CCSIntegratedSetting *setting)
-{
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
-
-    return ccsIntegratedSettingSettingName (priv->sharedIntegratedSetting);
+    return ccsIntegratedSettingInfoSettingName (priv->sharedIntegratedSettingInfo);
 }
 
 CCSSettingType
-ccsGNOMEIntegratedSettingGetType (CCSIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingInfoGetType (CCSIntegratedSettingInfo *info)
 {
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
-    return ccsIntegratedSettingGetType (priv->sharedIntegratedSetting);
+    return ccsIntegratedSettingInfoGetType (priv->sharedIntegratedSettingInfo);
 }
 
 void
-ccsGNOMEIntegratedSettingFree (CCSIntegratedSetting *setting)
+ccsGNOMEIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
 {
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingDefaultImplPrivate *) ccsObjectGetPrivate (setting);
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
-    ccsIntegratedSettingUnref (priv->sharedIntegratedSetting);
-    ccsObjectFinalize (setting);
+    ccsIntegratedSettingInfoUnref (priv->sharedIntegratedSettingInfo);
+    ccsObjectFinalize (info);
 
-    (*setting->object.object_allocation->free_) (setting->object.object_allocation->allocator, setting);
+    (*info->object.object_allocation->free_) (info->object.object_allocation->allocator, info);
 }
 
-CCSGNOMEIntegratedSettingInterface ccsGNOMEIntegratedSettingDefaultImplInterface =
+CCSGNOMEIntegratedSettingInfoInterface ccsGNOMEIntegratedSettingInfoDefaultImplInterface =
 {
     ccsGNOMEIntegratedSettingGetSpecialOptionDefault,
     ccsGNOMEIntegratedSettingGetGNOMENameDefault
 };
 
-const CCSIntegratedSettingInterface ccsGNOMEIntegratedSettingInterface =
+const CCSIntegratedSettingInfoInterface ccsGNOMEIntegratedSettingInfoInterface =
 {
-    ccsGNOMEIntegratedSettingReadValue,
-    ccsGNOMEIntegratedSettingWriteValue,
-    ccsGNOMEIntegratedSettingPluginName,
-    ccsGNOMEIntegratedSettingSettingName,
-    ccsGNOMEIntegratedSettingGetType,
-    ccsGNOMEIntegratedSettingFree
+    ccsGNOMEIntegratedSettingInfoPluginName,
+    ccsGNOMEIntegratedSettingInfoSettingName,
+    ccsGNOMEIntegratedSettingInfoGetType,
+    ccsGNOMEIntegratedSettingInfoFree
 };
 
-CCSGNOMEIntegratedSetting *
-ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
-			      SpecialOptionType    type,
-			      const char	   *gnomeName,
-			      CCSObjectAllocationInterface *ai)
+CCSGNOMEIntegratedSettingInfo *
+ccsGNOMEIntegratedSettingInfoNew (CCSIntegratedSettingInfo *base,
+				  SpecialOptionType    type,
+				  const char	   *gnomeName,
+				  CCSObjectAllocationInterface *ai)
 {
-    CCSGNOMEIntegratedSetting *setting = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGNOMEIntegratedSetting));
+    CCSGNOMEIntegratedSettingInfo *info = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGNOMEIntegratedSettingInfo));
 
-    if (!setting)
+    if (!info)
 	return NULL;
 
-    CCSGNOMEIntegratedSettingDefaultImplPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGNOMEIntegratedSettingDefaultImplPrivate));
+    CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate));
 
     if (!priv)
     {
-	(*ai->free_) (ai->allocator, setting);
+	(*ai->free_) (ai->allocator, info);
 	return NULL;
     }
 
-    priv->sharedIntegratedSetting = base;
+    priv->sharedIntegratedSettingInfo = base;
     priv->gnomeName = gnomeName;
     priv->type = type;
 
-    ccsObjectInit (setting, ai);
-    ccsObjectSetPrivate (setting, (CCSPrivate *) priv);
-    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsGNOMEIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
-    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsGNOMEIntegratedSettingDefaultImplInterface, GET_INTERFACE_TYPE (CCSGNOMEIntegratedSettingInterface));
-    ccsIntegratedSettingRef ((CCSIntegratedSetting *) setting);
+    ccsObjectInit (info, ai);
+    ccsObjectSetPrivate (info, (CCSPrivate *) priv);
+    ccsObjectAddInterface (info, (const CCSInterface *) &ccsGNOMEIntegratedSettingInfoInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInfoInterface));
+    ccsObjectAddInterface (info, (const CCSInterface *) &ccsGNOMEIntegratedSettingInfoDefaultImplInterface, GET_INTERFACE_TYPE (CCSGNOMEIntegratedSettingInfoInterface));
+    ccsIntegratedSettingInfoRef ((CCSIntegratedSettingInfo *) info);
 
-    return setting;
+    return info;
 }

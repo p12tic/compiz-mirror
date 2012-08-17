@@ -176,7 +176,7 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
     if (!ret)
 	return FALSE;
 
-    switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting)) {
+    switch (ccsGNOMEIntegratedSettingInfoGetSpecialOptionType ((CCSGNOMEIntegratedSettingInfo *) integratedSetting)) {
     case OptionInt:
 	{
 	    type = TypeInt;
@@ -392,7 +392,7 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 
     CCSSettingValue *v = ccsSettingGetValue (setting);
 
-    switch (ccsGNOMEIntegratedSettingGetSpecialOptionType ((CCSGNOMEIntegratedSetting *) integratedSetting))
+    switch (ccsGNOMEIntegratedSettingInfoGetSpecialOptionType ((CCSGNOMEIntegratedSettingInfo *) integratedSetting))
     {
     case OptionInt:
 	ccsIntegratedSettingWriteValue (integratedSetting, v, TypeInt);
@@ -535,8 +535,8 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
     while (iter)
     {
 	CCSIntegratedSetting *integrated = iter->data;
-	const char           *settingName = ccsIntegratedSettingSettingName (integrated);
-	const char	     *pluginName = ccsIntegratedSettingPluginName (integrated);
+	const char           *settingName = ccsIntegratedSettingInfoSettingName ((CCSIntegratedSettingInfo *)integrated);
+	const char	     *pluginName = ccsIntegratedSettingInfoPluginName ((CCSIntegratedSettingInfo *) integrated);
 
 	/* Special case for mouse button modifier etc */
 	if ((strcmp (settingName,

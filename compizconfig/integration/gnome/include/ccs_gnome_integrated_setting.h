@@ -8,18 +8,18 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
+typedef struct _CCSIntegratedSettingInfo      CCSIntegratedSettingInfo;
 
-typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
-typedef struct _CCSGNOMEIntegratedSettingInterface CCSGNOMEIntegratedSettingInterface;
+typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
+typedef struct _CCSGNOMEIntegratedSettingInfoInterface CCSGNOMEIntegratedSettingInfoInterface;
 
-typedef SpecialOptionType (*CCSGNOMEIntegratedSettingGetSpecialOptionType) (CCSGNOMEIntegratedSetting *);
-typedef const char * (*CCSGNOMEIntegratedSettingGetGNOMEName) (CCSGNOMEIntegratedSetting *);
+typedef SpecialOptionType (*CCSGNOMEIntegratedSettingInfoGetSpecialOptionType) (CCSGNOMEIntegratedSettingInfo *);
+typedef const char * (*CCSGNOMEIntegratedSettingInfoGetGNOMEName) (CCSGNOMEIntegratedSettingInfo *);
 
-struct _CCSGNOMEIntegratedSettingInterface
+struct _CCSGNOMEIntegratedSettingInfoInterface
 {
-    CCSGNOMEIntegratedSettingGetSpecialOptionType getSpecialOptionType;
-    CCSGNOMEIntegratedSettingGetGNOMEName getGNOMEName;
+    CCSGNOMEIntegratedSettingInfoGetSpecialOptionType getSpecialOptionType;
+    CCSGNOMEIntegratedSettingInfoGetGNOMEName getGNOMEName;
 };
 
 /**
@@ -30,28 +30,28 @@ struct _CCSGNOMEIntegratedSettingInterface
  * and implements) and also adds the concept of an GNOME side keyname
  * and option type for that keyname (as the types do not match 1-1)
  */
-struct _CCSGNOMEIntegratedSetting
+struct _CCSGNOMEIntegratedSettingInfo
 {
     CCSObject object;
 };
 
-unsigned int ccsCCSGNOMEIntegratedSettingInterfaceGetType ();
+unsigned int ccsCCSGNOMEIntegratedSettingInfoInterfaceGetType ();
 
 Bool
 ccsGNOMEIntegrationFindSettingsMatchingPredicate (CCSIntegratedSetting *setting,
 						  void		       *userData);
 
 SpecialOptionType
-ccsGNOMEIntegratedSettingGetSpecialOptionType (CCSGNOMEIntegratedSetting *);
+ccsGNOMEIntegratedSettingInfoGetSpecialOptionType (CCSGNOMEIntegratedSettingInfo *);
 
 const char *
-ccsGNOMEIntegratedSettingGetGNOMEName (CCSGNOMEIntegratedSetting *);
+ccsGNOMEIntegratedSettingInfoGetGNOMEName (CCSGNOMEIntegratedSettingInfo *);
 
-CCSGNOMEIntegratedSetting *
-ccsGNOMEIntegratedSettingNew (CCSIntegratedSetting *base,
-			      SpecialOptionType    type,
-			      const char	   *gnomeName,
-			      CCSObjectAllocationInterface *ai);
+CCSGNOMEIntegratedSettingInfo *
+ccsGNOMEIntegratedSettingInfoNew (CCSIntegratedSettingInfo *base,
+				  SpecialOptionType    type,
+				  const char	   *gnomeName,
+				  CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS
 

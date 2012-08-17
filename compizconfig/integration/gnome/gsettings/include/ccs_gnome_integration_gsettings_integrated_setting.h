@@ -7,7 +7,7 @@
 COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
-typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
+typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
 typedef struct _CCSGSettingsWrapper       CCSGSettingsWrapper;
 
 /**
@@ -22,7 +22,7 @@ typedef struct _CCSGSettingsWrapper       CCSGSettingsWrapper;
  * methods are called.
  */
 CCSIntegratedSetting *
-ccsGSettingsIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
+ccsGSettingsIntegratedSettingNew (CCSGNOMEIntegratedSettingInfo *base,
 				  CCSGSettingsWrapper       *wrapper,
 				  CCSObjectAllocationInterface *ai);
 
