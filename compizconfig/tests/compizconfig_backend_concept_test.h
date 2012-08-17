@@ -274,7 +274,74 @@ typedef boost::variant <bool,
 			unsigned int,
 			CCSListWrapper::Ptr> VariantTypes;
 
-class CCSBackendConceptTestEnvironmentInterface
+class CCSSettingsConceptTestEnvironmentInterface
+{
+    public:
+
+	virtual void SetUp () = 0;
+	virtual void TearDown () = 0;
+
+	virtual void WriteBoolAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteIntegerAtKey (const std::string &plugin,
+					const std::string &key,
+					const VariantTypes &value) = 0;
+	virtual void WriteFloatAtKey (const std::string &plugin,
+				      const std::string &key,
+				      const VariantTypes &value) = 0;
+	virtual void WriteStringAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteColorAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteKeyAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteButtonAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteEdgeAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteMatchAtKey (const std::string &plugin,
+				      const std::string &key,
+				      const VariantTypes &value) = 0;
+	virtual void WriteBellAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value) = 0;
+	virtual void WriteListAtKey (const std::string &plugin,
+				     const std::string &key,
+				     const VariantTypes &value) = 0;
+
+	virtual Bool ReadBoolAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual int ReadIntegerAtKey (const std::string &plugin,
+					const std::string &key) = 0;
+	virtual float ReadFloatAtKey (const std::string &plugin,
+				      const std::string &key) = 0;
+	virtual const char * ReadStringAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual const char * ReadMatchAtKey (const std::string &plugin,
+				      const std::string &key) = 0;
+	virtual Bool ReadBellAtKey (const std::string &plugin,
+				       const std::string &key) = 0;
+	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
+						    const std::string &key,
+						    CCSSetting *setting) = 0;
+};
+
+class CCSBackendConceptTestEnvironmentInterface :
+    public CCSSettingsConceptTestEnvironmentInterface
 {
     public:
 
@@ -315,40 +382,6 @@ class CCSBackendConceptTestEnvironmentInterface
 				CCSSettingGMock *,
 				CCSSettingType) = 0;
 
-	virtual void WriteBoolAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteIntegerAtKey (const std::string &plugin,
-					const std::string &key,
-					const VariantTypes &value) = 0;
-	virtual void WriteFloatAtKey (const std::string &plugin,
-				      const std::string &key,
-				      const VariantTypes &value) = 0;
-	virtual void WriteStringAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteColorAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteKeyAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteButtonAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteEdgeAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteMatchAtKey (const std::string &plugin,
-				      const std::string &key,
-				      const VariantTypes &value) = 0;
-	virtual void WriteBellAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value) = 0;
-	virtual void WriteListAtKey (const std::string &plugin,
-				     const std::string &key,
-				     const VariantTypes &value) = 0;
-
 	virtual void PreRead (CCSContextGMock *,
 			      CCSPluginGMock  *,
 			      CCSSettingGMock *,
@@ -357,30 +390,6 @@ class CCSBackendConceptTestEnvironmentInterface
 			       CCSPluginGMock  *,
 			       CCSSettingGMock *,
 			       CCSSettingType) = 0;
-
-	virtual Bool ReadBoolAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual int ReadIntegerAtKey (const std::string &plugin,
-					const std::string &key) = 0;
-	virtual float ReadFloatAtKey (const std::string &plugin,
-				      const std::string &key) = 0;
-	virtual const char * ReadStringAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual const char * ReadMatchAtKey (const std::string &plugin,
-				      const std::string &key) = 0;
-	virtual Bool ReadBellAtKey (const std::string &plugin,
-				       const std::string &key) = 0;
-	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
-				     const std::string &key,
-						    CCSSetting *setting) = 0;
 
 	virtual void PreUpdate (CCSContextGMock *,
 			      CCSPluginGMock  *,
