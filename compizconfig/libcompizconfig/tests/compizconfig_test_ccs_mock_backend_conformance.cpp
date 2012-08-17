@@ -57,10 +57,10 @@ namespace
     };
 }
 
-class MockCCSBackendConceptTestEnvironment :
-    public CCSBackendConceptTestEnvironmentInterface
+class MockCCSSettingsTestEnvironment :
+    public CCSSettingsConceptTestEnvironmentInterface
 {
-    private:
+    public:
 
 	virtual void SetUp ()
 	{
@@ -68,6 +68,173 @@ class MockCCSBackendConceptTestEnvironment :
 
 	virtual void TearDown ()
 	{
+	}
+
+	void WriteBoolAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteIntegerAtKey (const std::string &plugin,
+				const std::string &key,
+				const VariantTypes &value)
+
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteFloatAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteMatchAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteStringAtKey (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteColorAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteKeyAtKey (const std::string &plugin,
+			    const std::string &key,
+			    const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteButtonAtKey (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteEdgeAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteBellAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	void WriteListAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mValues[keynameFromPluginKey (plugin, key)] = value;
+	}
+
+	virtual Bool ReadBoolAtKey (const std::string &plugin,
+				    const std::string &key)
+	{
+	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	}
+
+	virtual int ReadIntegerAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return ValueForKeyRetreival <int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual float ReadFloatAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return ValueForKeyRetreival <float> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual const char * ReadStringAtKey (const std::string &plugin,
+					      const std::string &key)
+	{
+	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
+						     const std::string &key)
+	{
+	    return ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
+						 const std::string &key)
+	{
+	    return ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
+						       const std::string &key)
+	{
+	    return ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return ValueForKeyRetreival <unsigned int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual const char * ReadMatchAtKey (const std::string &plugin,
+					     const std::string &key)
+	{
+	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+	}
+
+	virtual Bool ReadBellAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	}
+
+	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
+						   const std::string &key,
+						   CCSSetting	     *setting)
+	{
+	    CCSListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+
+	    return ccsCopyList (*lw, lw->setting ().get ());
+	}
+
+    private:
+
+	std::map <std::string, VariantTypes> mValues;
+};
+
+class MockCCSBackendConceptTestEnvironment :
+    public CCSBackendConceptTestEnvironmentInterface
+{
+    private:
+
+	virtual void SetUp ()
+	{
+	    mMockCCSSettingTestEnvironment.SetUp ();
+	}
+
+	virtual void TearDown ()
+	{
+	    mMockCCSSettingTestEnvironment.SetUp ();
 	}
 
     public:
@@ -224,84 +391,6 @@ class MockCCSBackendConceptTestEnvironment :
 	{
 	}
 
-	void WriteBoolAtKey (const std::string &plugin,
-			     const std::string &key,
-			     const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteIntegerAtKey (const std::string &plugin,
-				const std::string &key,
-				const VariantTypes &value)
-
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteFloatAtKey (const std::string &plugin,
-			      const std::string &key,
-			      const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteMatchAtKey (const std::string &plugin,
-			      const std::string &key,
-			      const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteStringAtKey (const std::string &plugin,
-			       const std::string &key,
-			       const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteColorAtKey (const std::string &plugin,
-			      const std::string &key,
-			      const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteKeyAtKey (const std::string &plugin,
-			    const std::string &key,
-			    const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteButtonAtKey (const std::string &plugin,
-			       const std::string &key,
-			       const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteEdgeAtKey (const std::string &plugin,
-			     const std::string &key,
-			     const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteBellAtKey (const std::string &plugin,
-			     const std::string &key,
-			     const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
-	void WriteListAtKey (const std::string &plugin,
-			     const std::string &key,
-			     const VariantTypes &value)
-	{
-	    mValues[keynameFromPluginKey (plugin, key)] = value;
-	}
-
 	void PreRead (CCSContextGMock *gmockContext,
 		      CCSPluginGMock  *gmockPlugin,
 		      CCSSettingGMock *gmockSetting,
@@ -328,75 +417,6 @@ class MockCCSBackendConceptTestEnvironment :
 		       CCSSettingGMock *gmockSetting,
 		       CCSSettingType  type)
 	{
-	}
-
-	virtual Bool ReadBoolAtKey (const std::string &plugin,
-				    const std::string &key)
-	{
-	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
-	}
-
-	virtual int ReadIntegerAtKey (const std::string &plugin,
-				      const std::string &key)
-	{
-	    return ValueForKeyRetreival <int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual float ReadFloatAtKey (const std::string &plugin,
-				      const std::string &key)
-	{
-	    return ValueForKeyRetreival <float> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual const char * ReadStringAtKey (const std::string &plugin,
-					      const std::string &key)
-	{
-	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
-						     const std::string &key)
-	{
-	    return ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
-						 const std::string &key)
-	{
-	    return ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
-						       const std::string &key)
-	{
-	    return ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    return ValueForKeyRetreival <unsigned int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual const char * ReadMatchAtKey (const std::string &plugin,
-					     const std::string &key)
-	{
-	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
-	}
-
-	virtual Bool ReadBellAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
-	}
-
-	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
-						   const std::string &key,
-						   CCSSetting	     *setting)
-	{
-	    CCSListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
-
-	    return ccsCopyList (*lw, lw->setting ().get ());
 	}
 
 	void PreUpdate (CCSContextGMock *gmockContext,
@@ -444,6 +464,151 @@ class MockCCSBackendConceptTestEnvironment :
 	    return true;
 	}
 
+	void WriteBoolAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteBoolAtKey (plugin, key, value);
+	}
+
+	void WriteIntegerAtKey (const std::string &plugin,
+				const std::string &key,
+				const VariantTypes &value)
+
+	{
+	    mMockCCSSettingTestEnvironment.WriteIntegerAtKey (plugin, key, value);
+	}
+
+	void WriteFloatAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteFloatAtKey (plugin, key, value);
+	}
+
+	void WriteMatchAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteMatchAtKey (plugin, key, value);;
+	}
+
+	void WriteStringAtKey (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteStringAtKey (plugin, key, value);
+	}
+
+	void WriteColorAtKey (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteColorAtKey (plugin, key, value);
+	}
+
+	void WriteKeyAtKey (const std::string &plugin,
+			    const std::string &key,
+			    const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteKeyAtKey (plugin, key, value);
+	}
+
+	void WriteButtonAtKey (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteButtonAtKey (plugin, key, value);
+	}
+
+	void WriteEdgeAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteEdgeAtKey (plugin, key, value);
+	}
+
+	void WriteBellAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteBellAtKey (plugin, key, value);
+	}
+
+	void WriteListAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
+	{
+	    mMockCCSSettingTestEnvironment.WriteListAtKey (plugin, key, value);
+	}
+
+	virtual Bool ReadBoolAtKey (const std::string &plugin,
+				    const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadBoolAtKey (plugin, key);
+	}
+
+	virtual int ReadIntegerAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadIntegerAtKey (plugin, key);
+	}
+
+	virtual float ReadFloatAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadFloatAtKey (plugin, key);;
+	}
+
+	virtual const char * ReadStringAtKey (const std::string &plugin,
+					      const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadStringAtKey (plugin, key);
+	}
+
+	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
+						     const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadColorAtKey (plugin, key);
+	}
+
+	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
+						 const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadKeyAtKey (plugin, key);
+	}
+
+	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
+						       const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadButtonAtKey (plugin, key);
+	}
+
+	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadEdgeAtKey (plugin, key);
+	}
+
+	virtual const char * ReadMatchAtKey (const std::string &plugin,
+					     const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadMatchAtKey (plugin, key);
+	}
+
+	virtual Bool ReadBellAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadBellAtKey (plugin, key);
+	}
+
+	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
+						   const std::string &key,
+						   CCSSetting	     *setting)
+	{
+	    return mMockCCSSettingTestEnvironment.ReadListAtKey (plugin, key, setting);
+	}
+
     protected:
 
 	bool DeleteProfile (const std::string &profileToDelete)
@@ -461,8 +626,9 @@ class MockCCSBackendConceptTestEnvironment :
 	    {
 		return false;
 	    }
-
 	}
+
+    private:
 
 	void ReadValueIntoSetting (CCSSetting *setting)
 	{
@@ -633,10 +799,10 @@ class MockCCSBackendConceptTestEnvironment :
 
     private:
 
+	MockCCSSettingsTestEnvironment mMockCCSSettingTestEnvironment;
 	CCSBackend *mBackend;
 	CCSBackendGMock *mBackendGMock;
 	CCSContext *mContext;
-	std::map <std::string, VariantTypes> mValues;
 	std::vector <std::string> mProfiles;
 };
 
