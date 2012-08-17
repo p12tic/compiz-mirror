@@ -12,7 +12,8 @@
 #include <gsettings_util.h>
 #include <ccs_gsettings_backend_interface.h>
 
-#include <iostream>
+#include "gtest_shared_autodestroy.h"
+#include "test_gsettings_tests.h"
 
 using ::testing::AtLeast;
 using ::testing::Pointee;
@@ -135,8 +136,21 @@ ccsMockIntegrationBackendFree (CCSIntegration *integration)
 }
 
 class CCSGSettingsBackendEnv :
-    public CCSBackendConceptTestEnvironmentInterface
+    public CCSBackendConceptTestEnvironmentInterface,
+    public CCSGSettingsMemoryBackendTestingEnv
 {
+    private:
+
+	virtual void SetUp ()
+	{
+	    SetUpEnv ();
+	}
+
+	virtual void TearDown ()
+	{
+	    TearDownEnv ();
+	}
+
     public:
 
 	typedef boost::shared_ptr <GVariant> GVariantShared;

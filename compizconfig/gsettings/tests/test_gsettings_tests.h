@@ -30,6 +30,28 @@ class CCSGSettingsTestingEnv
 	}
 };
 
+class CCSGSettingsMemoryBackendTestingEnv :
+    public CCSGSettingsTestingEnv
+{
+    public:
+
+	virtual void SetUpEnv ()
+	{
+	    CCSGSettingsTestingEnv::SetUpEnv ();
+
+	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
+	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+	}
+
+	virtual void TearDownEnv ()
+	{
+	    g_unsetenv ("GSETTINGS_BACKEND");
+	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
+
+	    CCSGSettingsTestingEnv::TearDownEnv ();
+	}
+};
+
 class CCSGSettingsTest :
     public CCSGSettingsTestingEnv,
     public ::testing::TestWithParam <CCSGSettingsTeardownSetupInterface *>
@@ -78,21 +100,20 @@ class CCSGSettingsTestIndependent :
 };
 
 class CCSGSettingsTestWithMemoryBackend :
-    public CCSGSettingsTestIndependent
+    public CCSGSettingsTestIndependent,
+    public CCSGSettingsMemoryBackendTestingEnv
 {
     public:
 
 	virtual void SetUp ()
 	{
 	    CCSGSettingsTestIndependent::SetUp ();
-	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+	    CCSGSettingsMemoryBackendTestingEnv::SetUpEnv ();
 	}
 
 	virtual void TearDown ()
 	{
-	    g_unsetenv ("GSETTINGS_BACKEND");
-	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
+	    CCSGSettingsMemoryBackendTestingEnv::TearDownEnv ();
 	    CCSGSettingsTestIndependent::TearDown ();
 	}
 };

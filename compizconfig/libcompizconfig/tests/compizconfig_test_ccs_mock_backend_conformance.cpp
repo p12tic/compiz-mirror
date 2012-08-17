@@ -60,6 +60,16 @@ namespace
 class MockCCSBackendConceptTestEnvironment :
     public CCSBackendConceptTestEnvironmentInterface
 {
+    private:
+
+	virtual void SetUp ()
+	{
+	}
+
+	virtual void TearDown ()
+	{
+	}
+
     public:
 
 	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
