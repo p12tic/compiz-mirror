@@ -234,6 +234,7 @@ INTERFACE_TYPE (CCSSettingInterface)
 INTERFACE_TYPE (CCSBackendInterface);
 INTERFACE_TYPE (CCSDynamicBackendInterface);
 INTERFACE_TYPE (CCSIntegrationInterface);
+INTERFACE_TYPE (CCSIntegratedSettingInfoInterface);
 INTERFACE_TYPE (CCSIntegratedSettingInterface);
 INTERFACE_TYPE (CCSIntegratedSettingsStorageInterface);
 INTERFACE_TYPE (CCSIntegratedSettingFactoryInterface);
@@ -1040,6 +1041,7 @@ CCSREF_OBJ (Backend, CCSBackend)
 CCSREF_OBJ (DynamicBackend, CCSDynamicBackend)
 CCSREF_OBJ (Integration, CCSIntegration)
 CCSREF_OBJ (IntegratedSetting, CCSIntegratedSetting);
+CCSREF_OBJ (IntegratedSettingInfo, CCSIntegratedSettingInfo);
 CCSREF_OBJ (IntegratedSettingFactory, CCSIntegratedSettingFactory);
 CCSREF_OBJ (IntegratedSettingsStorage, CCSIntegratedSettingsStorage);
 
@@ -5628,19 +5630,24 @@ void ccsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSettingVa
     (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->writeValue) (setting, value, type);
 }
 
-const char * ccsIntegratedSettingPluginName (CCSIntegratedSetting *setting)
+const char * ccsIntegratedSettingInfoPluginName (CCSIntegratedSettingInfo *info)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->pluginName) (setting);
+    return (*(GET_INTERFACE (CCSIntegratedSettingInfoInterface, info))->pluginName) (info);
 }
 
-const char * ccsIntegratedSettingSettingName (CCSIntegratedSetting *setting)
+const char * ccsIntegratedSettingInfoSettingName (CCSIntegratedSettingInfo *info)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->settingName) (setting);
+    return (*(GET_INTERFACE (CCSIntegratedSettingInfoInterface, info))->settingName) (info);
 }
 
-CCSSettingType ccsIntegratedSettingGetType (CCSIntegratedSetting *setting)
+CCSSettingType ccsIntegratedSettingInfoGetType (CCSIntegratedSettingInfo *info)
 {
-    return (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->getType) (setting);
+    return (*(GET_INTERFACE (CCSIntegratedSettingInfoInterface, info))->getType) (info);
+}
+
+void ccsFreeIntegratedSettingInfo (CCSIntegratedSettingInfo *info)
+{
+    (*(GET_INTERFACE (CCSIntegratedSettingInfoInterface, info))->free) (info);
 }
 
 void ccsFreeIntegratedSetting (CCSIntegratedSetting *setting)
@@ -5648,90 +5655,72 @@ void ccsFreeIntegratedSetting (CCSIntegratedSetting *setting)
     (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->free) (setting);
 }
 
-/* CCSSharedIntegratedSetting implementation */
+/* CCSSharedIntegratedSettingInfo implementation */
 
-typedef struct _CCSSharedIntegratedSettingPrivate CCSSharedIntegratedSettingPrivate;
+typedef struct _CCSSharedIntegratedSettingInfoPrivate CCSSharedIntegratedSettingInfoPrivate;
 
-struct _CCSSharedIntegratedSettingPrivate
+struct _CCSSharedIntegratedSettingInfoPrivate
 {
     const char *pluginName;
     const char *settingName;
     CCSSettingType type;
 };
 
-static CCSSettingValue * ccsSharedIntegratedSettingReadValue (CCSIntegratedSetting *setting,
-							      CCSSettingType	 type)
-{
-    ccsWarning ("unexpected call to ccsSharedIntegratedSettingReadValue on %s", ccsIntegratedSettingSettingName (setting));
-
-    return NULL;
-}
-
-static void
-ccsSharedIntegratedSettingWriteValue (CCSIntegratedSetting *setting,
-				      CCSSettingValue	   *value,
-				      CCSSettingType	   type)
-{
-    ccsWarning ("unexpected call to ccsSharedIntegratedSettingWriteValue on %s", ccsIntegratedSettingSettingName (setting));
-}
-
 static const char *
-ccsSharedIntegratedSettingSettingName (CCSIntegratedSetting *setting)
+ccsSharedIntegratedSettingInfoSettingName (CCSIntegratedSettingInfo *setting)
 {
-    CCSSharedIntegratedSettingPrivate *priv = (CCSSharedIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+    CCSSharedIntegratedSettingInfoPrivate *priv = (CCSSharedIntegratedSettingInfoPrivate *) ccsObjectGetPrivate (setting);
 
     return priv->settingName;
 }
 
 static const char *
-ccsSharedIntegratedSettingPluginName (CCSIntegratedSetting *setting)
+ccsSharedIntegratedSettingInfoPluginName (CCSIntegratedSettingInfo *setting)
 {
-    CCSSharedIntegratedSettingPrivate *priv = (CCSSharedIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+    CCSSharedIntegratedSettingInfoPrivate *priv = (CCSSharedIntegratedSettingInfoPrivate *) ccsObjectGetPrivate (setting);
 
     return priv->pluginName;
 }
 
 static CCSSettingType
-ccsSharedIntegratedSettingGetType (CCSIntegratedSetting *setting)
+ccsSharedIntegratedSettingInfoGetType (CCSIntegratedSettingInfo *setting)
 {
-    CCSSharedIntegratedSettingPrivate *priv = (CCSSharedIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
+    CCSSharedIntegratedSettingInfoPrivate *priv = (CCSSharedIntegratedSettingInfoPrivate *) ccsObjectGetPrivate (setting);
 
     return priv->type;
 }
 
 static void
-ccsSharedIntegratedSettingFree (CCSIntegratedSetting *setting)
+ccsSharedIntegratedSettingInfoFree (CCSIntegratedSettingInfo *setting)
 {
     ccsObjectFinalize (setting);
     (*setting->object.object_allocation->free_) (setting->object.object_allocation->allocator, setting);
 }
 
-const CCSIntegratedSettingInterface ccsSharedIntegratedSettingInterface =
+const CCSIntegratedSettingInfoInterface ccsSharedIntegratedSettingInfoInterface =
 {
-    ccsSharedIntegratedSettingReadValue,
-    ccsSharedIntegratedSettingWriteValue,
-    ccsSharedIntegratedSettingPluginName,
-    ccsSharedIntegratedSettingSettingName,
-    ccsSharedIntegratedSettingGetType,
-    ccsSharedIntegratedSettingFree
+    ccsSharedIntegratedSettingInfoPluginName,
+    ccsSharedIntegratedSettingInfoSettingName,
+    ccsSharedIntegratedSettingInfoGetType,
+    ccsSharedIntegratedSettingInfoFree
 };
 
-CCSIntegratedSetting *
-ccsSharedIntegratedSettingNew (const char *pluginName,
-			       const char *settingName,
-			       CCSSettingType type,
-			       CCSObjectAllocationInterface *ai)
+CCSIntegratedSettingInfo *
+ccsSharedIntegratedSettingInfoNew (const char *pluginName,
+				   const char *settingName,
+				   CCSSettingType type,
+				   CCSObjectAllocationInterface *ai)
 {
-    CCSIntegratedSetting *setting = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSetting));
+    CCSIntegratedSettingInfo *info = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegratedSetting));
 
-    if (!setting)
+    if (!info)
 	return NULL;
 
-    CCSSharedIntegratedSettingPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSSharedIntegratedSettingPrivate));
+    CCSSharedIntegratedSettingInfoPrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSSharedIntegratedSettingInfoPrivate));
 
     if (!priv)
     {
-	(*ai->free_) (ai->allocator, setting);
+	(*ai->free_) (ai->allocator, info);
 	return NULL;
     }
 
@@ -5739,12 +5728,12 @@ ccsSharedIntegratedSettingNew (const char *pluginName,
     priv->settingName = settingName;
     priv->type = type;
 
-    ccsObjectInit (setting, ai);
-    ccsObjectSetPrivate (setting, (CCSPrivate *) priv);
-    ccsObjectAddInterface (setting, (const CCSInterface *) &ccsSharedIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
-    ccsIntegratedSettingRef (setting);
+    ccsObjectInit (info, ai);
+    ccsObjectSetPrivate (info, (CCSPrivate *) priv);
+    ccsObjectAddInterface (info, (const CCSInterface *) &ccsSharedIntegratedSettingInfoInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInfoInterface));
+    ccsIntegratedSettingInfoRef (info);
 
-    return setting;
+    return info;
 }
 
 CCSIntegratedSettingList
@@ -5802,8 +5791,8 @@ ccsIntegratedSettingsStorageFindByNamesPredicate (CCSIntegratedSetting *setting,
 {
     CCSIntegratedSettingsStorageFindByNamesData *findNamesData = (CCSIntegratedSettingsStorageFindByNamesData *) data;
 
-    const char *sPluginName = ccsIntegratedSettingPluginName (setting);
-    const char *sSettingName = ccsIntegratedSettingSettingName (setting);
+    const char *sPluginName = ccsIntegratedSettingInfoPluginName ((CCSIntegratedSettingInfo *) setting);
+    const char *sSettingName = ccsIntegratedSettingInfoSettingName ((CCSIntegratedSettingInfo *) setting);
 
     if (strcmp (sPluginName, findNamesData->pluginName) == 0 &&
 	strcmp (sSettingName, findNamesData->settingName) == 0)

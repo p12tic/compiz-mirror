@@ -7,7 +7,8 @@
 COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
-typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
+typedef struct _CCSIntegratedSettingInfo      CCSIntegratedSettingInfo;
+typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
 typedef struct _GConfClient		   GConfClient;
 
 /**
@@ -22,7 +23,7 @@ typedef struct _GConfClient		   GConfClient;
  * write to GConf keys when necessary.
  */
 CCSIntegratedSetting *
-ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
+ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSettingInfo *base,
 			      GConfClient		*client,
 			      const char		*section,
 			      CCSObjectAllocationInterface *ai);
