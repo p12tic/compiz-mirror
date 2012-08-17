@@ -61,6 +61,13 @@ struct _CCSIntegratedSettingInterface
     CCSIntegratedSettingFree       free;
 };
 
+/**
+ * @brief The _CCSIntegratedSetting struct
+ *
+ * A CCSIntegratedSetting represents an desktop environment setting which
+ * we are "integrated" with - its functionality is more or less a subset
+ * of CCSSetting, values can be written and read from it but not much else.
+ */
 struct _CCSIntegratedSetting
 {
     CCSObject object;
@@ -78,6 +85,21 @@ CCSLIST_HDR (IntegratedSetting, CCSIntegratedSetting);
 
 unsigned int ccsCCSIntegratedSettingInterfaceGetType ();
 
+/**
+ * @brief ccsSharedIntegratedSettingNew
+ * @param pluginName Plugin name of the integrated setting
+ * @param settingName Compiz name of the integrated setting
+ * @param type A CCSSettingType
+ * @param ai A CCSObjectAllocationInterface *
+ * @return a new CCSIntegratedSetting
+ *
+ * ccsSharedIntegratedSettingNew () returns the most fundamental
+ * implementation of a CCSIntegratedSetting *, which is basic
+ * information about it, the plugin name, setting name, and type.
+ *
+ * It isn't useful in its current form for integration into most
+ * DE's so usually implementations will use this object by composition
+ */
 CCSIntegratedSetting *
 ccsSharedIntegratedSettingNew (const char *pluginName,
 			       const char *settingName,
@@ -87,6 +109,11 @@ ccsSharedIntegratedSettingNew (const char *pluginName,
 typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
 typedef struct _CCSIntegratedSettingsStorageInterface CCSIntegratedSettingsStorageInterface;
 
+/**
+ * A predicate definition to find a CCSIntegratedSetting in a
+ * CCSIntegratedSettingStorage object. Returns true if the user
+ * predicate matches. The void * is some user-specified data
+ */
 typedef Bool (*CCSIntegratedSettingsStorageFindPredicate) (CCSIntegratedSetting *, void *);
 
 typedef CCSIntegratedSettingList (*CCSIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName) (CCSIntegratedSettingsStorage *storage,
@@ -112,6 +139,13 @@ struct _CCSIntegratedSettingsStorageInterface
     CCSIntegratedSettingsStorageFree		     free;
 };
 
+/**
+ * @brief The _CCSIntegratedSettingsStorage struct
+ *
+ * CCSIntegratedSettingsStorage represents a list of currently active integrated
+ * DE settings. Access is restricted such that settings can only be added and
+ * the list can only be searched by predicates.
+ */
 struct _CCSIntegratedSettingsStorage
 {
     CCSObject object;
@@ -119,11 +153,27 @@ struct _CCSIntegratedSettingsStorage
 
 CCSREF_HDR (IntegratedSettingsStorage, CCSIntegratedSettingsStorage);
 
+/**
+ * @brief ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate
+ * @param storage
+ * @param pred
+ * @param data
+ * @return a CCSIntegratedSettingList of CCSIntegratedSetting objects
+ * matching CCSIntegratedSettingsStorageFindPredicate
+ */
 CCSIntegratedSettingList
 ccsIntegratedSettingsStorageFindMatchingSettingsByPredicate (CCSIntegratedSettingsStorage *storage,
 							     CCSIntegratedSettingsStorageFindPredicate pred,
 							     void			  *data);
 
+/**
+ * @brief ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName
+ * @param storage
+ * @param pluginName
+ * @param settingName
+ * @return a CCSIntegratedSettingList of CCSIntegratedSetting objects
+ * with the specified plugin and setting names.
+ */
 CCSIntegratedSettingList
 ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (CCSIntegratedSettingsStorage *storage,
 									const char *pluginName,
@@ -161,6 +211,16 @@ struct _CCSIntegratedSettingFactoryInterface
     CCSIntegratedSettingFactoryFree free;
 };
 
+/**
+ * @brief The _CCSIntegratedSettingFactory struct
+ *
+ * CCSIntegratedSettingFactory is an interface for creating a CCSIntegratedSetting
+ * for a particular integration backend when appropriate. It doesn't make sense to load
+ * such information on startup until we need it as we might never write to these settings
+ * and loading them is an expensive process. In addition, we need to allow a place
+ * for testing code to prevent CCSIntegratedSetting objects from pulling
+ * in dependencies that they shouldn't.
+ */
 struct _CCSIntegratedSettingFactory
 {
     CCSObject object;
