@@ -135,11 +135,13 @@ ccsMockIntegrationBackendFree (CCSIntegration *integration)
     (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
 }
 
-class CCSGSettingsBackendEnv :
-    public CCSBackendConceptTestEnvironmentInterface,
+class CCSGSettingsStorageEnv :
+    public CCSSettingsConceptTestEnvironmentInterface,
     public CCSGSettingsMemoryBackendTestingEnv
 {
-    private:
+    public:
+
+	typedef boost::shared_ptr <GVariant> GVariantShared;
 
 	virtual void SetUp ()
 	{
@@ -151,162 +153,12 @@ class CCSGSettingsBackendEnv :
 	    TearDownEnv ();
 	}
 
-    public:
-
-	typedef boost::shared_ptr <GVariant> GVariantShared;
-
-	CCSGSettingsBackendEnv () :
-	    pluginToMatch ("mock")
-	{
-	    g_type_init ();
-	}
-
-	/* A wrapper to prevent signals from being added */
-	static void connectToSignalWrapper (CCSBackend *backend, CCSGSettingsWrapper *wrapper)
-	{
-	};
-
-	const CCSBackendInfo * GetInfo ()
-	{
-	    return &gsettingsBackendInfo;
-	}
-
-	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
-	{
-	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
-
-	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-	    g_setenv ("GSETTINGS_BACKEND", "memory", true);
-	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
-
-	    mContext = context;
-
-	    std::string path ("gsettings");
-
-	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsOpenBackend (&ccsDefaultInterfaceTable, mContext, path.c_str ()));
-
-	    EXPECT_TRUE (mBackend);
-
-	    mGSettingsBackend = ccsDynamicBackendGetRawBackend (mBackend);
-
-
-	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
-
-	    if (backendInit)
-		(*backendInit) ((CCSBackend *) mBackend, mContext);
-
-	    /* Set the new integration, drop our reference on it */
-	    CCSIntegration *integration = ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator);
-	    CCSIntegrationGMock *gmockIntegration = reinterpret_cast <CCSIntegrationGMock *> (ccsObjectGetPrivate (integration));
-
-	    EXPECT_CALL (*gmockIntegration, getIntegratedOptionIndex (_, _)).WillRepeatedly (Return (-1));
-
-	    ccsBackendSetIntegration ((CCSBackend *) mBackend, integration);
-	    ccsIntegrationUnref (integration);
-
-	    overloadedInterface = GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend);
-	    overloadedInterface->gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
-
-	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock",
-									CharacterWrapper (makeCompizPluginPath (profileName.c_str (), "mock")),
-									mContext);
-
-	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
-
-	    return (CCSBackend *) mBackend;
-	}
-
-	void TearDown (CCSBackend *)
-	{
-	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
-	    g_unsetenv ("GSETTINGS_BACKEND");
-	    g_unsetenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
-
-	    GVariantBuilder noProfilesBuilder;
-	    g_variant_builder_init (&noProfilesBuilder, G_VARIANT_TYPE ("as"));
-	    g_variant_builder_add (&noProfilesBuilder, "s", "Default");
-	    GVariant *noProfiles = g_variant_builder_end (&noProfilesBuilder);
-
-	    GVariantBuilder pluginKeysBuilder;
-	    g_variant_builder_init (&pluginKeysBuilder, G_VARIANT_TYPE ("as"));
-	    g_variant_builder_add (&pluginKeysBuilder, "s", "mock");
-	    GVariant *pluginKeys = g_variant_builder_end (&pluginKeysBuilder);
-
-	    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (mGSettingsBackend,
-								   mContext,
-								   pluginKeys,
-								   ccsGSettingsBackendGetCurrentProfile (
-								       mGSettingsBackend));
-	    ccsGSettingsBackendClearPluginsWithSetKeys (mGSettingsBackend);
-	    ccsGSettingsBackendSetExistingProfiles (mGSettingsBackend, noProfiles);
-	    ccsGSettingsBackendSetCurrentProfile (mGSettingsBackend, "Default");
-
-	    ccsFreeDynamicBackend (mBackend);
-
-	    g_variant_unref (pluginKeys);
-	}
-
-	void AddProfile (const std::string &profile)
-	{
-	    ccsGSettingsBackendAddProfile (mGSettingsBackend, profile.c_str ());
-	}
-
-	void SetGetExistingProfilesExpectation (CCSContext *context,
-						CCSContextGMock *gmockContext)
-	{
-	    EXPECT_CALL (*gmockContext, getProfile ()).Times (AtLeast (1));
-	}
-
-	void SetDeleteProfileExpectation (const std::string &profileToDelete,
-					  CCSContext *context,
-					  CCSContextGMock *gmockContext)
-	{
-	    EXPECT_CALL (*gmockContext, getProfile ()).Times (AtLeast (1));
-	}
-
-	void SetReadInitExpectation (CCSContext *context,
-				     CCSContextGMock *gmockContext)
-	{
-	    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (profileName.c_str ()));
-	}
-
-	void SetReadDoneExpectation (CCSContext *context,
-				     CCSContextGMock *gmockContext)
+	CCSGSettingsStorageEnv (CCSGSettingsWrapper *settings,
+				const std::string   &profileName) :
+	    mSettings (settings),
+	    profileName (profileName)
 	{
 	}
-
-	void SetWriteInitExpectation (CCSContext *context,
-				      CCSContextGMock *gmockContext)
-	{
-	    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (profileName.c_str ()));
-	}
-
-	void SetWriteDoneExpectation (CCSContext *context,
-				      CCSContextGMock *gmockContext)
-	{
-	}
-
-	void PreWrite (CCSContextGMock *gmockContext,
-		       CCSPluginGMock  *gmockPlugin,
-		       CCSSettingGMock *gmockSetting,
-		       CCSSettingType  type)
-	{
-	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillRepeatedly (Return (FALSE));
-	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getIsDefault ()).WillRepeatedly (Return (FALSE));
-
-	    if (type == TypeList)
-		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
-	}
-
-	void PostWrite (CCSContextGMock *gmockContext,
-			CCSPluginGMock  *gmockPlugin,
-			CCSSettingGMock *gmockSetting,
-			CCSSettingType  type) {}
 
 	void WriteBoolAtKey (const std::string &plugin,
 			     const std::string &key,
@@ -432,31 +284,6 @@ class CCSGSettingsBackendEnv :
 		throw std::exception ();
 	}
 
-	void PreRead (CCSContextGMock *gmockContext,
-		      CCSPluginGMock  *gmockPlugin,
-		      CCSSettingGMock *gmockSetting,
-		      CCSSettingType  type)
-	{
-	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillOnce (Return (FALSE));
-	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
-	    EXPECT_CALL (*gmockSetting, isReadableByBackend ()).WillRepeatedly (Return (TRUE));
-
-	    if (type == TypeList)
-	    {
-		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
-		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
-	    }
-	}
-
-	void PostRead (CCSContextGMock *gmockContext,
-		       CCSPluginGMock  *gmockPlugin,
-		       CCSSettingGMock *gmockSetting,
-		       CCSSettingType  type) {}
-
 	Bool ReadBoolAtKey (const std::string &plugin,
 			    const std::string &key)
 	{
@@ -566,6 +393,234 @@ class CCSGSettingsBackendEnv :
 	    return readListValue (variant.get (), setting, &ccsDefaultObjectAllocator);
 	}
 
+    private:
+
+	GVariantShared
+	ReadVariantAtKeyToShared (const std::string   &plugin,
+				  const std::string   &key,
+				  CCSSettingType	  type)
+	{
+	    CharacterWrapper translatedKey (translateKeyForGSettings (key.c_str ()));
+	    CharacterWrapper pluginPath (makeCompizPluginPath (profileName.c_str (),
+							       plugin.c_str ()));
+
+	    GVariant *rawVariant = getVariantAtKey (mSettings,
+						    translatedKey,
+						    pluginPath,
+						    type);
+
+	    GVariantShared shared (AutoDestroy (rawVariant, g_variant_unref));
+
+
+
+	    return shared;
+	}
+
+	CCSGSettingsWrapper  *mSettings;
+	std::string	     profileName;
+
+
+};
+
+class CCSGSettingsBackendEnv :
+    public CCSBackendConceptTestEnvironmentInterface,
+    public CCSGSettingsMemoryBackendTestingEnv
+{
+    private:
+
+	virtual void SetUp ()
+	{
+	}
+
+	virtual void TearDown ()
+	{
+	}
+
+    public:
+
+	CCSGSettingsBackendEnv () :
+	    pluginToMatch ("mock")
+	{
+	    g_type_init ();
+	}
+
+	/* A wrapper to prevent signals from being added */
+	static void connectToSignalWrapper (CCSBackend *backend, CCSGSettingsWrapper *wrapper)
+	{
+	};
+
+	const CCSBackendInfo * GetInfo ()
+	{
+	    return &gsettingsBackendInfo;
+	}
+
+	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
+	{
+	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
+
+	    SetUpEnv ();
+	    g_setenv ("LIBCOMPIZCONFIG_BACKEND_PATH", BACKEND_BINARY_PATH, true);
+
+	    mContext = context;
+
+	    std::string path ("gsettings");
+
+	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsOpenBackend (&ccsDefaultInterfaceTable, mContext, path.c_str ()));
+
+	    EXPECT_TRUE (mBackend);
+
+	    mGSettingsBackend = ccsDynamicBackendGetRawBackend (mBackend);
+
+
+	    CCSBackendInitFunc backendInit = (GET_INTERFACE (CCSBackendInterface, mBackend))->backendInit;
+
+	    if (backendInit)
+		(*backendInit) ((CCSBackend *) mBackend, mContext);
+
+	    /* Set the new integration, drop our reference on it */
+	    CCSIntegration *integration = ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator);
+	    CCSIntegrationGMock *gmockIntegration = reinterpret_cast <CCSIntegrationGMock *> (ccsObjectGetPrivate (integration));
+
+	    EXPECT_CALL (*gmockIntegration, getIntegratedOptionIndex (_, _)).WillRepeatedly (Return (-1));
+
+	    ccsBackendSetIntegration ((CCSBackend *) mBackend, integration);
+	    ccsIntegrationUnref (integration);
+
+	    overloadedInterface = GET_INTERFACE (CCSGSettingsBackendInterface, mGSettingsBackend);
+	    overloadedInterface->gsettingsBackendConnectToChangedSignal = CCSGSettingsBackendEnv::connectToSignalWrapper;
+
+	    mSettings = ccsGSettingsGetSettingsObjectForPluginWithPath (mGSettingsBackend, "mock",
+									CharacterWrapper (makeCompizPluginPath (profileName.c_str (), "mock")),
+									mContext);
+
+	    mStorage.reset (new CCSGSettingsStorageEnv (mSettings, profileName));
+
+	    ON_CALL (*gmockContext, getProfile ()).WillByDefault (Return (profileName.c_str ()));
+
+	    return (CCSBackend *) mBackend;
+	}
+
+	void TearDown (CCSBackend *)
+	{
+	    GVariantBuilder noProfilesBuilder;
+	    g_variant_builder_init (&noProfilesBuilder, G_VARIANT_TYPE ("as"));
+	    g_variant_builder_add (&noProfilesBuilder, "s", "Default");
+	    GVariant *noProfiles = g_variant_builder_end (&noProfilesBuilder);
+
+	    GVariantBuilder pluginKeysBuilder;
+	    g_variant_builder_init (&pluginKeysBuilder, G_VARIANT_TYPE ("as"));
+	    g_variant_builder_add (&pluginKeysBuilder, "s", "mock");
+	    GVariant *pluginKeys = g_variant_builder_end (&pluginKeysBuilder);
+
+	    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfile (mGSettingsBackend,
+								   mContext,
+								   pluginKeys,
+								   ccsGSettingsBackendGetCurrentProfile (
+								       mGSettingsBackend));
+	    ccsGSettingsBackendClearPluginsWithSetKeys (mGSettingsBackend);
+	    ccsGSettingsBackendSetExistingProfiles (mGSettingsBackend, noProfiles);
+	    ccsGSettingsBackendSetCurrentProfile (mGSettingsBackend, "Default");
+
+	    ccsFreeDynamicBackend (mBackend);
+
+	    ccsGSettingsWrapperUnref (mSettings);
+	    mStorage.reset ();
+
+	    g_variant_unref (pluginKeys);
+
+	    TearDownEnv ();
+	    g_unsetenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
+	}
+
+	void AddProfile (const std::string &profile)
+	{
+	    ccsGSettingsBackendAddProfile (mGSettingsBackend, profile.c_str ());
+	}
+
+	void SetGetExistingProfilesExpectation (CCSContext *context,
+						CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*gmockContext, getProfile ()).Times (AtLeast (1));
+	}
+
+	void SetDeleteProfileExpectation (const std::string &profileToDelete,
+					  CCSContext *context,
+					  CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*gmockContext, getProfile ()).Times (AtLeast (1));
+	}
+
+	void SetReadInitExpectation (CCSContext *context,
+				     CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (profileName.c_str ()));
+	}
+
+	void SetReadDoneExpectation (CCSContext *context,
+				     CCSContextGMock *gmockContext)
+	{
+	}
+
+	void SetWriteInitExpectation (CCSContext *context,
+				      CCSContextGMock *gmockContext)
+	{
+	    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (profileName.c_str ()));
+	}
+
+	void SetWriteDoneExpectation (CCSContext *context,
+				      CCSContextGMock *gmockContext)
+	{
+	}
+
+	void PreWrite (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type)
+	{
+	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillRepeatedly (Return (FALSE));
+	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getIsDefault ()).WillRepeatedly (Return (FALSE));
+
+	    if (type == TypeList)
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
+	}
+
+	void PostWrite (CCSContextGMock *gmockContext,
+			CCSPluginGMock  *gmockPlugin,
+			CCSSettingGMock *gmockSetting,
+			CCSSettingType  type) {}
+
+
+
+	void PreRead (CCSContextGMock *gmockContext,
+		      CCSPluginGMock  *gmockPlugin,
+		      CCSSettingGMock *gmockSetting,
+		      CCSSettingType  type)
+	{
+	    EXPECT_CALL (*gmockContext, getIntegrationEnabled ()).WillOnce (Return (FALSE));
+	    EXPECT_CALL (*gmockPlugin, getContext ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockPlugin, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getName ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, getParent ()).Times (AtLeast (1));
+	    EXPECT_CALL (*gmockSetting, isReadableByBackend ()).WillRepeatedly (Return (TRUE));
+
+	    if (type == TypeList)
+	    {
+		EXPECT_CALL (*gmockSetting, getInfo ()).Times (AtLeast (1));
+		EXPECT_CALL (*gmockSetting, getDefaultValue ()).WillRepeatedly (ReturnNull ());
+	    }
+	}
+
+	void PostRead (CCSContextGMock *gmockContext,
+		       CCSPluginGMock  *gmockPlugin,
+		       CCSSettingGMock *gmockSetting,
+		       CCSSettingType  type) {}
+
 	void PreUpdate (CCSContextGMock *gmockContext,
 		      CCSPluginGMock  *gmockPlugin,
 		      CCSSettingGMock *gmockSetting,
@@ -604,30 +659,154 @@ class CCSGSettingsBackendEnv :
 	    return false;
 	}
 
-    private:
-
-	GVariantShared
-	ReadVariantAtKeyToShared (const std::string   &plugin,
-				  const std::string   &key,
-				  CCSSettingType	  type)
+	void WriteBoolAtKey (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value)
 	{
-	    CharacterWrapper translatedKey (translateKeyForGSettings (key.c_str ()));
-	    CharacterWrapper pluginPath (makeCompizPluginPath (profileName.c_str (),
-							       plugin.c_str ()));
-
-	    GVariant *rawVariant = getVariantAtKey (mSettings,
-						    translatedKey,
-						    pluginPath,
-						    type);
-
-	    GVariantShared shared (AutoDestroy (rawVariant, g_variant_unref));
-
-
-
-	    return shared;
+	    mStorage->WriteBoolAtKey (plugin, key, value);
 	}
 
+	void WriteIntegerAtKey (const std::string &plugin,
+				const std::string &key,
+				const VariantTypes &value)
+	{
+	    mStorage->WriteIntegerAtKey (plugin, key, value);
+	}
+
+	void WriteFloatAtKey (const std::string &plugin,
+				      const std::string &key,
+				      const VariantTypes &value)
+	{
+	    mStorage->WriteFloatAtKey (plugin, key, value);
+	}
+
+	void WriteStringAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value)
+	{
+	    mStorage->WriteStringAtKey (plugin, key, value);
+	}
+
+	void WriteColorAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value)
+	{
+	    mStorage->WriteColorAtKey (plugin, key, value);
+	}
+
+	void WriteKeyAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value)
+	{
+	    mStorage->WriteKeyAtKey (plugin, key, value);
+	}
+
+	void WriteButtonAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value)
+	{
+	    mStorage->WriteButtonAtKey (plugin, key, value);
+	}
+
+	void WriteEdgeAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value)
+	{
+	    mStorage->WriteEdgeAtKey (plugin, key, value);
+	}
+
+	void WriteMatchAtKey (const std::string &plugin,
+				      const std::string &key,
+				      const VariantTypes &value)
+	{
+	    mStorage->WriteMatchAtKey (plugin, key, value);
+	}
+
+	void WriteBellAtKey (const std::string &plugin,
+				       const std::string &key,
+				       const VariantTypes &value)
+	{
+	    mStorage->WriteBellAtKey (plugin, key, value);
+	}
+
+	void WriteListAtKey (const std::string &plugin,
+				     const std::string &key,
+				     const VariantTypes &value)
+	{
+	    mStorage->WriteListAtKey (plugin, key, value);
+	}
+
+	Bool ReadBoolAtKey (const std::string &plugin,
+			    const std::string &key)
+	{
+	    return mStorage->ReadBoolAtKey (plugin, key);
+	}
+
+	int ReadIntegerAtKey (const std::string &plugin,
+					const std::string &key)
+	{
+	    return mStorage->ReadIntegerAtKey (plugin, key);
+	}
+
+	float ReadFloatAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return mStorage->ReadFloatAtKey (plugin, key);
+	}
+
+	const char * ReadStringAtKey (const std::string &plugin,
+				      const std::string &key)
+	{
+	    return mStorage->ReadStringAtKey (plugin, key);
+	}
+
+	CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mStorage->ReadColorAtKey (plugin, key);
+	}
+
+	CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mStorage->ReadKeyAtKey (plugin, key);
+	}
+
+	CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mStorage->ReadButtonAtKey (plugin, key);
+	}
+
+	unsigned int ReadEdgeAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mStorage->ReadEdgeAtKey (plugin, key);
+	}
+
+	const char * ReadMatchAtKey (const std::string &plugin,
+				     const std::string &key)
+	{
+	    return mStorage->ReadMatchAtKey (plugin, key);
+	}
+
+	Bool ReadBellAtKey (const std::string &plugin,
+				       const std::string &key)
+	{
+	    return mStorage->ReadBellAtKey (plugin, key);
+	}
+
+	CCSSettingValueList ReadListAtKey (const std::string &plugin,
+					   const std::string &key,
+					   CCSSetting        *setting)
+	{
+	    return mStorage->ReadListAtKey (plugin, key, setting);
+	}
+
+    private:
+
 	CCSGSettingsWrapper  *mSettings;
+	boost::shared_ptr <CCSGSettingsStorageEnv> mStorage;
 	CCSContext *mContext;
 	CCSDynamicBackend *mBackend;
 	CCSBackend		   *mGSettingsBackend;
