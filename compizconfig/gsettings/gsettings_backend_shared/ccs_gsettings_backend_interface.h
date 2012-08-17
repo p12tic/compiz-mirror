@@ -42,6 +42,19 @@ typedef CCSIntegratedSetting * (*CCSGSettingsBackendGetIntegratedSetting) (CCSBa
 typedef Bool (*CCSGSettingsBackendReadIntegratedOption) (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *);
 typedef void (*CCSGSettingsBackendWriteIntegratedOption) (CCSBackend *backend, CCSSetting *setting, CCSIntegratedSetting *);
 
+/**
+ * @brief The _CCSGSettingsBackendInterface struct
+ *
+ * This interface represents a loaded CCSGSettingsBackend and some of the
+ * special operations that go with it. It is mainly an interface that
+ * exists for testing purposes - there are some operations which we
+ * want to mock out or replace since they can't be done in testing mode.
+ *
+ * CCSGSettingsBackendInterface isn't an interface that is implemented
+ * by any objects itself - it is attached to an existing CCSBackend
+ * at runtime, and the CCSBackend is passed to any utility functions in
+ * the GSettings backend.
+ */
 struct _CCSGSettingsBackendInterface
 {
     CCSGSettingsBackendGetContext gsettingsBackendGetContext;
