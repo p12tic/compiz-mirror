@@ -1923,11 +1923,11 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    GLFramebufferObject::rebind (oldFbo);
     }
 
+#ifdef UNSAFE_ARM_SGX_FIXME
     refreshSubBuffer = ((lastMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                         !(mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                         (mask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK));
 
-#ifdef USE_GLES
     if (refreshSubBuffer)
     {
 	// FIXME: We shouldn't have to substract a 1X1 pixel region here !!
@@ -1976,8 +1976,20 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	{
 	    GLMatrix identity;
 
+#ifdef UNSAFE_ARM_SGX_FIXME
+	    /*
+	     * FIXME:
+	     * This code is unsafe and causes Unity bug 1036520.
+	     * So it probably needs to be replaced with something else
+	     * on platforms where it is required.
+	     *
+	     * We should NEVER be extending tmpRegion, because that's
+	     * telling windows/plugins it is OK to paint outside the
+	     * damaged region.
+	     */
 	    if (refreshSubBuffer)
 		tmpRegion = CompRegion (*output);
+#endif
 
 	    outputRegion = tmpRegion & CompRegion (*output);
 
