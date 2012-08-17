@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3307-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3308-0ubuntu1) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
@@ -99,6 +99,8 @@ compiz (1:0.9.8+bzr3307-0ubuntu1) UNRELEASED; urgency=low
     - Make valgrind shut up about some known "leaks" in python and glib.
       Fix some leaks in the tests in the process.
     - Implemented single click exit from expo screen. (LP: #1033531)
+    - Restore the fix for avoiding re-entering the glib event loop and 
+      crashing. (LP: #1036490)
   * Update compiz-core.lintian-overrides
   * Enable GSettings backend and install the schema files
   * Switch the default profile to use gsettings 
@@ -116,7 +118,7 @@ compiz (1:0.9.8+bzr3307-0ubuntu1) UNRELEASED; urgency=low
     - changed keybinding for initiate window picker, according to the design
       specification
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Tue, 14 Aug 2012 09:46:58 +0300
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 17 Aug 2012 15:17:25 +0300
 
 compiz (1:0.9.8+bzr3249-0ubuntu4) quantal; urgency=low
 
