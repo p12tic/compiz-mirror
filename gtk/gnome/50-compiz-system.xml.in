@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KeyListEntries schema="org.compiz.integrated" wm_name="Compiz" group="system" _name="System" package="compiz">
+
+	<KeyListEntry name="panel-run-dialog" _description="Show the run command prompt" />
+
+	<KeyListEntry name="panel-main-menu" _description="Show the activities overview" />
+
+</KeyListEntries>
