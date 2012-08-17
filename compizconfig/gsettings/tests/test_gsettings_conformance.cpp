@@ -160,16 +160,6 @@ ccsMockIntegrationBackendFree (CCSIntegration *integration)
     (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
 }
 
-namespace
-{
-    template <typename T, typename TDel>
-    boost::shared_ptr <T>
-    AutoDestroy (T *t, TDel d)
-    {
-	return boost::shared_ptr <T> (t, boost::bind (d, _1));
-    }
-}
-
 class CCSGSettingsBackendEnv :
     public CCSBackendConceptTestEnvironmentInterface
 {
