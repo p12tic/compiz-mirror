@@ -24,6 +24,7 @@
  **/
 
 #include "expo.h"
+#include "click-threshold.h"
 #include <math.h>
 #include <GL/glu.h>
 #include <X11/cursorfont.h>
@@ -354,6 +355,7 @@ ExpoScreen::handleEvent (XEvent *event)
 		doubleClick = false;
 	    }
 	    cScreen->damageScreen ();
+	    prevClickPoint = CompPoint(event->xbutton.x, event->xbutton.y);
 	}
 	break;
 
@@ -367,7 +369,11 @@ ExpoScreen::handleEvent (XEvent *event)
 		clickTime   = 0;
 		doubleClick = false;
 	    }
-	    else if (doubleClick)
+	    else if (doubleClick ||
+		     compiz::expo::clickMovementInThreshold(prevClickPoint.x (),
+							    prevClickPoint.y (),
+							    event->xbutton.x,
+							    event->xbutton.y))
 	    {
 		CompAction& action = optionGetExpoKey ();
 
