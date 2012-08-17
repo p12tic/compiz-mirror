@@ -22,6 +22,14 @@ struct _CCSGNOMEIntegratedSettingInterface
     CCSGNOMEIntegratedSettingGetGNOMEName getGNOMEName;
 };
 
+/**
+ * @brief The _CCSGNOMEIntegratedSetting struct
+ *
+ * CCSGNOMEIntegratedSetting represents an integrated setting in
+ * GNOME - it builds upon CCSSharedIntegratedSetting (which it composes
+ * and implements) and also adds the concept of an GNOME side keyname
+ * and option type for that keyname (as the types do not match 1-1)
+ */
 struct _CCSGNOMEIntegratedSetting
 {
     CCSObject object;

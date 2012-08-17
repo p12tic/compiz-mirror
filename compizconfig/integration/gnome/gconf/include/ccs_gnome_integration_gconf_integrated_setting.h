@@ -10,6 +10,17 @@ typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
 typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
 typedef struct _GConfClient		   GConfClient;
 
+/**
+ * @brief ccsGConfIntegratedSettingNew
+ * @param base a CCSGNOMEIntegratedSetting
+ * @param client a GConfClient
+ * @param section the preceeding path to the keyname
+ * @param ai a CCSObjectAllocationInterface
+ * @return
+ *
+ * Creates the GConf implementation of a CCSIntegratedSetting, which will
+ * write to GConf keys when necessary.
+ */
 CCSIntegratedSetting *
 ccsGConfIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
 			      GConfClient		*client,
