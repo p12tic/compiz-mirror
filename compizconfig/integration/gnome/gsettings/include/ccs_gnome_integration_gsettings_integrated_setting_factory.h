@@ -27,6 +27,11 @@ struct _CCSGNOMEIntegrationGSettingsWrapperFactoryInterface
     CCSGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper newGSettingsWrapper;
 };
 
+/**
+ * @brief The _CCSGNOMEIntegrationGSettingsWrapperFactory struct
+ *
+ * Will create new CCSGSettingsIntegratedSetting objects on demand
+ */
 struct _CCSGNOMEIntegrationGSettingsWrapperFactory
 {
     CCSObject object;

@@ -10,7 +10,17 @@ typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
 typedef struct _CCSGNOMEIntegratedSetting CCSGNOMEIntegratedSetting;
 typedef struct _CCSGSettingsWrapper       CCSGSettingsWrapper;
 
-
+/**
+ * @brief ccsGSettingsIntegratedSettingNew
+ * @param base
+ * @param wrapper
+ * @param ai
+ * @return
+ *
+ * The GSettings implementation of CCSIntegratedSetting *, which will
+ * write using a CCSGSettingsWrapper * object when the read and write
+ * methods are called.
+ */
 CCSIntegratedSetting *
 ccsGSettingsIntegratedSettingNew (CCSGNOMEIntegratedSetting *base,
 				  CCSGSettingsWrapper       *wrapper,
