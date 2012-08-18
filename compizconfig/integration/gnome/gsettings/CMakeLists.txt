@@ -1,6 +1,6 @@
 include (FindPkgConfig)
 
-if (USE_GCONF)
+if (USE_GSETTINGS)
 
     set (_deps
 	glib-2.0>=2.20.0
@@ -73,4 +73,4 @@ if (USE_GCONF)
 
     endif (COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_FOUND)
 
-endif (USE_GCONF)
+endif (USE_GSETTINGS)
