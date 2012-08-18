@@ -10,7 +10,11 @@ add_subdirectory (libcompizconfig)
 add_subdirectory (compizconfig-python)
 add_subdirectory (integration)
 add_subdirectory (ccsm)
-add_subdirectory (gconf)
+
+if (USE_GCONF)
+    add_subdirectory (gconf)
+endif (USE_GCONF)
+
 add_subdirectory (gsettings)
 
 if (COMPIZ_BUILD_TESTING)
