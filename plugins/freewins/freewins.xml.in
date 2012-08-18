@@ -57,7 +57,7 @@
 		<_short>Transformation Behaviour</_short>
 		<option name="snap_mods" type="list">
 		  <_short>Snap Modifier</_short>
-		  <_long>Use this bindings to enable/disable snapping.</_long>
+		  <_long>Use these bindings to enable/disable snapping.</_long>
 			  <type>int</type>
 			  <min>0</min>
 			  <max>3</max>
@@ -83,7 +83,7 @@
 		<_short>Rotation</_short>
 		  <option name="invert_mods" type="list">
 		  <_short>Invert Modifier</_short>
-		  <_long>Use this bindings to invert the rotation mode.</_long>
+		  <_long>Use these bindings to invert the rotation mode.</_long>
 			  <type>int</type>
 			  <min>0</min>
 			  <max>3</max>
@@ -238,7 +238,7 @@
 		            <value>2</value><name>Determine on Click</name>
 		        </desc>
 				    <desc>
-		            <value>3</value><name>Interchangable</name>
+		            <value>3</value><name>Interchangeable</name>
 		        </desc>
 				    <desc>
 		            <value>4</value><name>Switch</name>
@@ -282,7 +282,7 @@
 			</option>
 			<option type="bool" name="disable_on_transformed_screen">
 				    <_short>Disable on Transformed Screen</_short>
-				    <_long>Disable rotation on transformed screen. This prevents ugly looking clipped windows when the screen is transformed</_long>
+				    <_long>Disable rotation on transformed screen. This prevents ugly looking clipped windows when the screen is transformed.</_long>
 				    <default>False</default>
 			</option>
 		</subgroup>
@@ -336,7 +336,7 @@
 		    </option>
 		<option type="bool" name="immediate_moves">
 		    <_short>Immediate Moves</_short>
-		    <_long>Don't allow plugins like wobbly to transform the transformed window while it's being moved</_long>
+		    <_long>Don't allow plugins like wobbly to transform the transformed window while it's being moved.</_long>
 		    <default>True</default>
 		</option>
 		</subgroup>
