@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
+#include <glib.h>
 
 #include <ccs.h>
 #include <ccs-backend.h>

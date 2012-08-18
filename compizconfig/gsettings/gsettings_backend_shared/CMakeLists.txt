@@ -27,12 +27,20 @@ if (GSETTINGS_UTIL_FOUND)
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gsettings_util.c)
 
 
+    set (GSETTINGS_BACKEND_SHARED_ADDITIONAL_LIBRARIES
+	 compizconfig
+	 compizconfig_gnome_integration)
+
+    if (USE_GCONF)
+	list (APPEND GSETTINGS_BACKEND_SHARED_ADDITIONAL_LIBRARIES
+	      compizconfig_gnome_integration_gconf_setting_factory)
+	list (APPEND GSETTINGS_BACKEND_SHARED_ADDITIONAL_LIBRARIES
+	      compizconfig_gnome_integration_gconf_integrated_setting)
+    endif (USE_GCONF)
+
     target_link_libraries (gsettings_backend_shared
 			   ${GSETTINGS_UTIL_LIBRARIES}
-			   compizconfig
-                           compizconfig_gnome_integration
-                           compizconfig_gnome_integration_gconf_setting_factory
-                           compizconfig_gnome_integration_gconf_integrated_setting)
+			   ${GSETTINGS_BACKEND_SHARED_ADDITIONAL_LIBRARIES})
 
     install (TARGETS gsettings_backend_shared
 	     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
