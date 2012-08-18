@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Author(s): 
+ * Author(s):
  * Rodolfo Granata <warlock.cc@gmail.com>
  *
  * Button binding support and Reset added by:
@@ -36,10 +36,10 @@
  * whether that be rotation or scaling to make better use of screen space
  * or just as a toy.
  *
- * Todo: 
+ * Todo:
  *  - Fully implement an input redirection system by
  *    finding an inverse matrix, multiplying by it,
- *    translating to the actual window co-ords and 
+ *    translating to the actual window co-ords and
  *    XSendEvent() the co-ords to the actual window.
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
@@ -199,8 +199,8 @@ class FWTransformedWindowInfo
 	float angY;
 	float angZ;
 
-    float scaleX;
-    float scaleY;
+	float scaleX;
+	float scaleY;
 
 	// Window transformation
 
@@ -212,7 +212,7 @@ class FWTransformedWindowInfo
 
 	float unsnapScaleX;
 	float unsnapScaleY;
-    
+
 };
 
 class FWAnimationInfo
@@ -253,11 +253,11 @@ class FWAnimationInfo
 };
 
 class FWScreen :
-    public PluginClassHandler <FWScreen, CompScreen>,
-    public ScreenInterface,
-    public CompositeScreenInterface,
-    public GLScreenInterface,
-    public FreewinsOptions
+	public PluginClassHandler <FWScreen, CompScreen>,
+	public ScreenInterface,
+	public CompositeScreenInterface,
+	public GLScreenInterface,
+	public FreewinsOptions
 {
     public:
 
@@ -304,58 +304,58 @@ class FWScreen :
 
 	bool
 	initiateFWRotate (CompAction         *action,
-			    CompAction::State  state,
-			    CompOption::Vector options);
+			  CompAction::State  state,
+			  CompOption::Vector options);
 
 	bool
 	terminateFWRotate (CompAction          *action,
-			     CompAction::State   state,
-			     CompOption::Vector  options);
+			   CompAction::State   state,
+			   CompOption::Vector  options);
 
 	bool
 	initiateFWScale (CompAction         *action,
-			   CompAction::State  state,
-			   CompOption::Vector options);
+			 CompAction::State  state,
+			 CompOption::Vector options);
 
 	bool
 	terminateFWScale (CompAction         *action,
-			    CompAction::State  state,
-			    CompOption::Vector options);
+			  CompAction::State  state,
+			  CompOption::Vector options);
 
 	bool
 	rotate (CompAction         *action,
-		  CompAction::State  state,
-		  CompOption::Vector options, int dx, int dy, int dz);
+		CompAction::State  state,
+		CompOption::Vector options, int dx, int dy, int dz);
 
 	bool
 	scale (CompAction          *action,
-		 CompAction::State   state,
-		 CompOption::Vector  options,
-		 int		     scale);
+	       CompAction::State   state,
+	       CompOption::Vector  options,
+	       int		     scale);
 	bool
 	resetFWTransform (CompAction         *action,
-			    CompAction::State  state,
-			    CompOption::Vector options);
+			  CompAction::State  state,
+			  CompOption::Vector options);
 
 	bool
 	rotateAction (CompAction         *action,
-			CompAction::State  state,
-			CompOption::Vector options);
+		      CompAction::State  state,
+		      CompOption::Vector options);
 
 	bool
 	incrementRotateAction (CompAction         *action,
-				 CompAction::State  state,
-				 CompOption::Vector options);
+			       CompAction::State  state,
+			       CompOption::Vector options);
 
 	bool
 	scaleAction (CompAction         *action,
-		       CompAction::State  state,
-		       CompOption::Vector options);
+		     CompAction::State  state,
+		     CompOption::Vector options);
 
 	bool
 	toggleFWAxis (CompAction         *action,
-			CompAction::State  state,
-			CompOption::Vector options);
+		      CompAction::State  state,
+		      CompOption::Vector options);
 
 	void
 	addWindowToList (FWWindowInputInfo *info);
@@ -368,30 +368,30 @@ class FWScreen :
 
 	void
 	rotateProjectVector (GLVector &vector,
-			       GLMatrix &transform,
-			       GLdouble *resultX,
-			       GLdouble *resultY,
-			       GLdouble *resultZ);
+			     GLMatrix &transform,
+			     GLdouble *resultX,
+			     GLdouble *resultY,
+			     GLdouble *resultZ);
 
 	void
 	perspectiveDistortAndResetZ (GLMatrix &transform);
 
 	void
 	modifyMatrix  (GLMatrix &transform,
-			 float angX, float angY, float angZ,
-			 float tX, float tY, float tZ,
-			 float scX, float scY, float scZ,
-			 float adjustX, float adjustY, bool paint);
+		       float angX, float angY, float angZ,
+		       float tX, float tY, float tZ,
+		       float scX, float scY, float scZ,
+		       float adjustX, float adjustY, bool paint);
 
 	CompRect
 	createSizedRect (float xScreen1,
-			   float xScreen2,
-			   float xScreen3,
-			   float xScreen4,
-			   float yScreen1,
-			   float yScreen2,
-			   float yScreen3,
-			   float yScreen4);
+			 float xScreen2,
+			 float xScreen3,
+			 float xScreen4,
+			 float yScreen1,
+			 float yScreen2,
+			 float yScreen3,
+			 float yScreen4);
 
 	CompWindow *
 	getRealWindow (CompWindow *w);
@@ -400,10 +400,10 @@ class FWScreen :
 
 /* Freewins Window Structure */
 class FWWindow :
-    public PluginClassHandler <FWWindow, CompWindow>,
-    public WindowInterface,
-    public CompositeWindowInterface,
-    public GLWindowInterface
+	public PluginClassHandler <FWWindow, CompWindow>,
+	public WindowInterface,
+	public CompositeWindowInterface,
+	public GLWindowInterface
 {
     public:
 
@@ -483,8 +483,8 @@ class FWWindow :
 
 	void
 	saveInputShape (XRectangle **retRects,
-		        int       *retCount,
-		        int       *retOrdering);
+			int       *retCount,
+			int       *retOrdering);
 
 	void
 	adjustIPW ();
@@ -509,17 +509,17 @@ class FWWindow :
 
 	void
 	handleIPWMoveMotionEvent (unsigned int x,
-				    unsigned int y);
+				  unsigned int y);
 
 	void
 	handleIPWResizeMotionEvent (unsigned int x,
-				      unsigned int y);
+				    unsigned int y);
 
 	void
 	handleRotateMotionEvent (float dx,
-				   float dy,
-				   int x,
-				   int y);
+				 float dy,
+				 int x,
+				 int y);
 
 	void
 	handleScaleMotionEvent (float dx,
@@ -541,10 +541,10 @@ class FWWindow :
 
 	void
 	setPrepareRotation (float dx,
-			      float dy,
-			      float dz,
-			      float dsu,
-			      float dsd);
+			    float dy,
+			    float dz,
+			    float dsu,
+			    float dsd);
 
 	void
 	calculateInputOrigin (float x, float y);
@@ -582,7 +582,7 @@ class FWWindow :
     FWWindow *fww = FWWindow::get (window);
 
 class FWPluginVTable :
-    public CompPlugin::VTableForScreenAndWindow <FWScreen, FWWindow>
+	public CompPlugin::VTableForScreenAndWindow <FWScreen, FWWindow>
 {
     public:
 

@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Author(s): 
+ * Author(s):
  * Rodolfo Granata <warlock.cc@gmail.com>
  * Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -33,10 +33,10 @@
  * whether that be rotation or scaling to make better use of screen space
  * or just as a toy.
  *
- * Todo: 
+ * Todo:
  *  - Fully implement an input redirection system by
  *    finding an inverse matrix, multiplying by it,
- *    translating to the actual window co-ords and 
+ *    translating to the actual window co-ords and
  *    XSendEvent() the co-ords to the actual window.
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
@@ -65,7 +65,7 @@ FWWindow::shapeIPW ()
 	CompWindow *ipw = screen->findWindow (xipw);
 
 	if (ipw)
-	{	
+	{
 	    cairo_t 				*cr;
 	    int               width, height;
 
@@ -75,10 +75,10 @@ FWWindow::shapeIPW ()
 	    Pixmap b = XCreatePixmap (screen->dpy (), xipw, width, height, 1);
 
 	    cairo_surface_t *bitmap =
-	    cairo_xlib_surface_create_for_bitmap (screen->dpy (),
-						  b,
-						  DefaultScreenOfDisplay (screen->dpy ()),
-						  width, height);
+		    cairo_xlib_surface_create_for_bitmap (screen->dpy (),
+							  b,
+							  DefaultScreenOfDisplay (screen->dpy ()),
+							  width, height);
 
 	    cr = cairo_create (bitmap);
 
@@ -90,32 +90,32 @@ FWWindow::shapeIPW ()
 	    /* Move to our first corner (TopLeft)  */
 
 	    cairo_move_to (cr,
-		           mOutput.shapex1 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
-		           mOutput.shapey1 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
+			   mOutput.shapex1 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
+			   mOutput.shapey1 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
 
 	    /* Line to TopRight */
 
 	    cairo_line_to (cr,
-		           mOutput.shapex2 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
-		           mOutput.shapey2 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
+			   mOutput.shapex2 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
+			   mOutput.shapey2 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
 
 	    /* Line to BottomRight */
 
 	    cairo_line_to (cr,
-		           mOutput.shapex4 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
-		           mOutput.shapey4 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
+			   mOutput.shapex4 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
+			   mOutput.shapey4 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
 
 	    /* Line to BottomLeft */
 
 	    cairo_line_to (cr,
-		           mOutput.shapex3 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
-		           mOutput.shapey3 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
+			   mOutput.shapex3 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
+			   mOutput.shapey3 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
 
 	    /* Line to TopLeft*/
 
 	    cairo_line_to (cr,
-		           mOutput.shapex1 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
-		           mOutput.shapey1 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
+			   mOutput.shapex1 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
+			   mOutput.shapey1 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
 
 	    /* Ensure it's all closed up */
 
@@ -123,9 +123,9 @@ FWWindow::shapeIPW ()
 
 	    /* Fill in the box */
 
-	    cairo_set_source_rgb (cr, 1.0f, 1.0f, 1.0f);    
+	    cairo_set_source_rgb (cr, 1.0f, 1.0f, 1.0f);
 	    cairo_fill (cr);
-	 
+
 	    /* This takes the bitmap we just drew with cairo
 	      * and scans out the white bits (You can see these)
 	      * if you uncomment the following line after this
@@ -133,12 +133,12 @@ FWWindow::shapeIPW ()
 	      * leaving us with a nice and neat window shape. Yummy.
 	      */
 
-	     /* XWriteBitmapFile (ipw->screen->display->display,
-	    							 "/path/to/your/image.bmp",
-	    							 b,
-	    							 ipw->width,
-	    							 ipw->height,
-	    							 -1, -1);  */
+	    /* XWriteBitmapFile (ipw->screen->display->display,
+								 "/path/to/your/image.bmp",
+								 b,
+								 ipw->width,
+								 ipw->height,
+								 -1, -1);  */
 
 	    XShapeCombineMask (screen->dpy (), xipw,
 			       ShapeBounding,
@@ -156,8 +156,8 @@ FWWindow::shapeIPW ()
 
 void
 FWWindow::saveInputShape (XRectangle **retRects,
-			     int       *retCount,
-			     int       *retOrdering)
+			  int       *retCount,
+			  int       *retOrdering)
 {
     XRectangle *rects;
     int        count = 0, ordering;
@@ -253,21 +253,21 @@ FWWindow::createIPW ()
 
     attrib.override_redirect = true;
     //attrib.event_mask        = 0;
-    			 
+
     xwc.x = mInputRect.x ();
     xwc.y = mInputRect.y ();
     xwc.width = mInputRect.width ();
     xwc.height = mInputRect.height ();
 
     ipw = XCreateWindow (screen->dpy (),
-    			 screen->root (),
-    			 xwc.x, xwc.y, xwc.width, xwc.height, 0, CopyFromParent, InputOnly,
-    			 CopyFromParent, CWOverrideRedirect, &attrib);
+			 screen->root (),
+			 xwc.x, xwc.y, xwc.width, xwc.height, 0, CopyFromParent, InputOnly,
+			 CopyFromParent, CWOverrideRedirect, &attrib);
 
     XMapWindow (screen->dpy (), ipw);
 
     //XConfigureWindow (screen->dpy (), ipw, CWStackMode | CWX | CWY | CWWidth | CWHeight, &xwc);
- 
+
     mInput->ipw = ipw;
 
     //shapeIPW ();
@@ -340,7 +340,7 @@ FWWindow::shapeInput ()
     {
 	saveInputShape (&mInput->frameInputRects, &mInput->frameNInputRects,
 			&mInput->frameInputRectOrdering);
-    } 
+    }
     else
     {
 	mInput->frameInputRects        = NULL;

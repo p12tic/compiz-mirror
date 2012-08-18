@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Author(s): 
+ * Author(s):
  * Rodolfo Granata <warlock.cc@gmail.com>
  * Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -33,10 +33,10 @@
  * whether that be rotation or scaling to make better use of screen space
  * or just as a toy.
  *
- * Todo: 
+ * Todo:
  *  - Fully implement an input redirection system by
  *    finding an inverse matrix, multiplying by it,
- *    translating to the actual window co-ords and 
+ *    translating to the actual window co-ords and
  *    XSendEvent() the co-ords to the actual window.
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
@@ -71,8 +71,8 @@ FWScreen::rotateProjectVector (GLVector &vector,
     glGetDoublev (GL_PROJECTION_MATRIX, projection);
 
     gluProject (vector[GLVector::x], vector[GLVector::y], vector[GLVector::z],
-                modelview, projection, viewport,
-                resultX, resultY, resultZ);
+		modelview, projection, viewport,
+		resultX, resultY, resultZ);
 
     /* Y must be negated */
     *resultY = screen->height () - *resultY;
@@ -247,67 +247,67 @@ FWScreen::createSizedRect (float xScreen1,
 			   float yScreen3,
 			   float yScreen4)
 {
-        float leftmost, rightmost, topmost, bottommost;
-        Box rect;
-        
-        /* Left most point */
+    float leftmost, rightmost, topmost, bottommost;
+    Box rect;
 
-        leftmost = xScreen1;
+    /* Left most point */
 
-        if (xScreen2 <= leftmost)
-            leftmost = xScreen2;
+    leftmost = xScreen1;
 
-        if (xScreen3 <= leftmost)
-            leftmost = xScreen3;
+    if (xScreen2 <= leftmost)
+	leftmost = xScreen2;
 
-        if (xScreen4 <= leftmost)
-            leftmost = xScreen4;
+    if (xScreen3 <= leftmost)
+	leftmost = xScreen3;
 
-        /* Right most point */
+    if (xScreen4 <= leftmost)
+	leftmost = xScreen4;
 
-        rightmost = xScreen1;
+    /* Right most point */
 
-        if (xScreen2 >= rightmost)
-            rightmost = xScreen2;
+    rightmost = xScreen1;
 
-        if (xScreen3 >= rightmost)
-            rightmost = xScreen3;
+    if (xScreen2 >= rightmost)
+	rightmost = xScreen2;
 
-        if (xScreen4 >= rightmost)
-            rightmost = xScreen4;
+    if (xScreen3 >= rightmost)
+	rightmost = xScreen3;
 
-        /* Top most point */
+    if (xScreen4 >= rightmost)
+	rightmost = xScreen4;
 
-        topmost = yScreen1;
+    /* Top most point */
 
-        if (yScreen2 <= topmost)
-            topmost = yScreen2;
+    topmost = yScreen1;
 
-        if (yScreen3 <= topmost)
-            topmost = yScreen3;
+    if (yScreen2 <= topmost)
+	topmost = yScreen2;
 
-        if (yScreen4 <= topmost)
-            topmost = yScreen4;
+    if (yScreen3 <= topmost)
+	topmost = yScreen3;
 
-        /* Bottom most point */
+    if (yScreen4 <= topmost)
+	topmost = yScreen4;
 
-        bottommost = yScreen1;
+    /* Bottom most point */
 
-        if (yScreen2 >= bottommost)
-            bottommost = yScreen2;
+    bottommost = yScreen1;
 
-        if (yScreen3 >= bottommost)
-            bottommost = yScreen3;
+    if (yScreen2 >= bottommost)
+	bottommost = yScreen2;
 
-        if (yScreen4 >= bottommost)
-            bottommost = yScreen4;
+    if (yScreen3 >= bottommost)
+	bottommost = yScreen3;
 
-        rect.x1 = leftmost;
-        rect.x2 = rightmost;
-        rect.y1 = topmost;
-        rect.y2 = bottommost;
+    if (yScreen4 >= bottommost)
+	bottommost = yScreen4;
 
-        return CompRect (leftmost, topmost, rightmost - leftmost, bottommost - topmost);
+    rect.x1 = leftmost;
+    rect.x2 = rightmost;
+    rect.y1 = topmost;
+    rect.y2 = bottommost;
+
+    return CompRect (leftmost, topmost, rightmost - leftmost, bottommost - topmost);
 }
 
 CompRect
@@ -316,44 +316,44 @@ FWWindow::calculateWindowRect (GLVector c1,
 			       GLVector c3,
 			       GLVector c4)
 {
-	FREEWINS_SCREEN (screen);
+    FREEWINS_SCREEN (screen);
 
 
-        GLMatrix transform;
-        GLdouble xScreen1 = 0.0f, yScreen1 = 0.0f, zScreen1 = 0.0f;
-        GLdouble xScreen2 = 0.0f, yScreen2 = 0.0f, zScreen2 = 0.0f;
-        GLdouble xScreen3 = 0.0f, yScreen3 = 0.0f, zScreen3 = 0.0f;
-        GLdouble xScreen4 = 0.0f, yScreen4 = 0.0f, zScreen4 = 0.0f;
+    GLMatrix transform;
+    GLdouble xScreen1 = 0.0f, yScreen1 = 0.0f, zScreen1 = 0.0f;
+    GLdouble xScreen2 = 0.0f, yScreen2 = 0.0f, zScreen2 = 0.0f;
+    GLdouble xScreen3 = 0.0f, yScreen3 = 0.0f, zScreen3 = 0.0f;
+    GLdouble xScreen4 = 0.0f, yScreen4 = 0.0f, zScreen4 = 0.0f;
 
-        transform.reset ();
-        fws->modifyMatrix (transform,
-			mTransform.angX,
-			mTransform.angY,
-			mTransform.angZ,
-			mIMidX, mIMidY, 0.0f,
-			mTransform.scaleX,
-			mTransform.scaleY, 0.0f, 0.0f, 0.0f, false);  
+    transform.reset ();
+    fws->modifyMatrix (transform,
+		       mTransform.angX,
+		       mTransform.angY,
+		       mTransform.angZ,
+		       mIMidX, mIMidY, 0.0f,
+		       mTransform.scaleX,
+		       mTransform.scaleY, 0.0f, 0.0f, 0.0f, false);
 
-        fws->rotateProjectVector(c1, transform, &xScreen1, &yScreen1, &zScreen1);
-        fws->rotateProjectVector(c2, transform, &xScreen2, &yScreen2, &zScreen2);
-        fws->rotateProjectVector(c3, transform, &xScreen3, &yScreen3, &zScreen3);
-        fws->rotateProjectVector(c4, transform, &xScreen4, &yScreen4, &zScreen4);
-       
-	/* Save the non-rectangular points so that we can shape the rectangular IPW */        
+    fws->rotateProjectVector(c1, transform, &xScreen1, &yScreen1, &zScreen1);
+    fws->rotateProjectVector(c2, transform, &xScreen2, &yScreen2, &zScreen2);
+    fws->rotateProjectVector(c3, transform, &xScreen3, &yScreen3, &zScreen3);
+    fws->rotateProjectVector(c4, transform, &xScreen4, &yScreen4, &zScreen4);
 
-    	mOutput.shapex1 = xScreen1;
-    	mOutput.shapex2 = xScreen2;
-    	mOutput.shapex3 = xScreen3;
-    	mOutput.shapex4 = xScreen4;
-    	mOutput.shapey1 = yScreen1;
-    	mOutput.shapey2 = yScreen2;
-    	mOutput.shapey3 = yScreen3;
-    	mOutput.shapey4 = yScreen4;
+    /* Save the non-rectangular points so that we can shape the rectangular IPW */
+
+    mOutput.shapex1 = xScreen1;
+    mOutput.shapex2 = xScreen2;
+    mOutput.shapex3 = xScreen3;
+    mOutput.shapex4 = xScreen4;
+    mOutput.shapey1 = yScreen1;
+    mOutput.shapey2 = yScreen2;
+    mOutput.shapey3 = yScreen3;
+    mOutput.shapey4 = yScreen4;
 
 
-        return fws->createSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
-				    yScreen1, yScreen2, yScreen3, yScreen4);
-           
+    return fws->createSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+				yScreen1, yScreen2, yScreen3, yScreen4);
+
 }
 
 void
@@ -403,11 +403,11 @@ FWWindow::calculateOutputOrigin (float x, float y)
 {
     while (value > 0)
     {
-        value -= 360;
+	value -= 360;
     }
 
     if (value < 0)
-        value += 360;
+	value += 360;
 
     return value;
 }*/
@@ -423,64 +423,64 @@ FWWindow::determineZAxisClick (int px,
     if (!mCan2D && motion)
     {
 
-        static int steps;
+	static int steps;
 
-        /* Check if we are going in a particular 3D direction
-         * because if we are going left/right and we suddenly 
-         * change to 2D mode this would not be expected behaviour.
-         * It is only if we have a change in direction that we want
-         * to change to 2D rotation.
-         */
+	/* Check if we are going in a particular 3D direction
+	 * because if we are going left/right and we suddenly
+	 * change to 2D mode this would not be expected behaviour.
+	 * It is only if we have a change in direction that we want
+	 * to change to 2D rotation.
+	 */
 
-        Direction direction;
+	Direction direction;
 
-        static int ddx, ddy;
+	static int ddx, ddy;
 
-        unsigned int dx = pointerX - lastPointerX;
-        unsigned int dy = pointerY - lastPointerY;
+	unsigned int dx = pointerX - lastPointerX;
+	unsigned int dy = pointerY - lastPointerY;
 
-        ddx += dx;
-        ddy += dy;
+	ddx += dx;
+	ddy += dy;
 
-        if (steps >= 10)
-        {
-            if (ddx > ddy)
-                direction = LeftRight;
-            else
-                direction = UpDown;
+	if (steps >= 10)
+	{
+	    if (ddx > ddy)
+		direction = LeftRight;
+	    else
+		direction = UpDown;
 
-            if (direction != direction)
-                directionChange = TRUE;
+	    if (direction != direction)
+		directionChange = TRUE;
 
-            direction = direction;
-        }
+	    direction = direction;
+	}
 
-        steps++;
+	steps++;
 
     }
     else
-        directionChange = TRUE;
+	directionChange = TRUE;
 
     if (directionChange)
     {
 
-        float clickRadiusFromCenter;
+	float clickRadiusFromCenter;
 
-        int x = (WIN_REAL_X(window) + WIN_REAL_W(window)/2.0);
-	    int y = (WIN_REAL_Y(window) + WIN_REAL_H(window)/2.0);
+	int x = (WIN_REAL_X(window) + WIN_REAL_W(window)/2.0);
+	int y = (WIN_REAL_Y(window) + WIN_REAL_H(window)/2.0);
 
-        clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
+	clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
 
-        if (clickRadiusFromCenter > mRadius * (FWScreen::get (screen)->optionGetTdPercent () / 100))
-        {
-            mCan2D = TRUE;
-            mCan3D = FALSE;
-        }
-        else
-        {
-            mCan2D = FALSE;
-            mCan3D = TRUE;
-        }
+	if (clickRadiusFromCenter > mRadius * (FWScreen::get (screen)->optionGetTdPercent () / 100))
+	{
+	    mCan2D = TRUE;
+	    mCan3D = FALSE;
+	}
+	else
+	{
+	    mCan2D = FALSE;
+	    mCan3D = TRUE;
+	}
     }
 }
 
@@ -491,13 +491,13 @@ FWWindow::canShape ()
     FREEWINS_SCREEN (screen);
 
     if (!fws->optionGetDoShapeInput ())
-    	return FALSE;
+	return FALSE;
     
     if (!screen->XShape ())
-    	return FALSE;
+	return FALSE;
     
     if (!fws->optionGetShapeWindowTypes ().evaluate (window))
-    	return FALSE;
+	return FALSE;
     
     return TRUE;
 }
@@ -525,13 +525,13 @@ FWWindow::handleSnap ()
     /* Handle Snapping */
     if (fws->optionGetSnap () || fws->mSnap)
     {
-        int snapFactor = fws->optionGetSnapThreshold ();
-        mAnimate.destAngX = ((int) (mTransform.unsnapAngX) / snapFactor) * snapFactor;
-        mAnimate.destAngY = ((int) (mTransform.unsnapAngY) / snapFactor) * snapFactor;
-        mAnimate.destAngZ = ((int) (mTransform.unsnapAngZ) / snapFactor) * snapFactor;
-        mTransform.scaleX =
-        ((float) ( (int) (mTransform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
-        mTransform.scaleY =
-        ((float) ( (int) (mTransform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+	int snapFactor = fws->optionGetSnapThreshold ();
+	mAnimate.destAngX = ((int) (mTransform.unsnapAngX) / snapFactor) * snapFactor;
+	mAnimate.destAngY = ((int) (mTransform.unsnapAngY) / snapFactor) * snapFactor;
+	mAnimate.destAngZ = ((int) (mTransform.unsnapAngZ) / snapFactor) * snapFactor;
+	mTransform.scaleX =
+		((float) ( (int) (mTransform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+	mTransform.scaleY =
+		((float) ( (int) (mTransform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
     }
 }

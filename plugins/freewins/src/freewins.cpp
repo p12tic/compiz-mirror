@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Author(s): 
+ * Author(s):
  * Rodolfo Granata <warlock.cc@gmail.com>
  * Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -33,11 +33,11 @@
  * whether that be rotation or scaling to make better use of screen space
  * or just as a toy.
  *
- * Todo: 
+ * Todo:
  *  - Modifier key to rotate on the Z Axis
  *  - Fully implement an input redirection system by
  *    finding an inverse matrix, multiplying by it,
- *    translating to the actual window co-ords and 
+ *    translating to the actual window co-ords and
  *    XSendEvent() the co-ords to the actual window.
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
@@ -130,9 +130,9 @@ FWScreen::optionChanged (CompOption *option,
     switch (num)
     {
 	case FreewinsOptions::SnapMods:
-        case FreewinsOptions::InvertMods:
+	case FreewinsOptions::InvertMods:
 	    reloadSnapKeys ();
-            break;
+	    break;
 	default:
 	    break;
     }

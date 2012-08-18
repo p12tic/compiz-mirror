@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Author(s): 
+ * Author(s):
  * Rodolfo Granata <warlock.cc@gmail.com>
  * Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -33,10 +33,10 @@
  * whether that be rotation or scaling to make better use of screen space
  * or just as a toy.
  *
- * Todo: 
+ * Todo:
  *  - Fully implement an input redirection system by
  *    finding an inverse matrix, multiplying by it,
- *    translating to the actual window co-ords and 
+ *    translating to the actual window co-ords and
  *    XSendEvent() the co-ords to the actual window.
  * -  X Input Redirection
  *  - Code could be cleaner
@@ -60,7 +60,7 @@ FWWindow::handleIPWResizeInitiate ()
 
     window->activate ();
     mGrab = grabResize;
-    fws->mRotateCursor = XCreateFontCursor (screen->dpy (), XC_plus);	
+    fws->mRotateCursor = XCreateFontCursor (screen->dpy (), XC_plus);
     if(!screen->otherGrabExist ("freewins", "resize", 0))
 	if(!fws->mGrabIndex)
 	{
@@ -68,7 +68,7 @@ FWWindow::handleIPWResizeInitiate ()
 	    mods &= CompNoMask;
 	    fws->mGrabIndex = screen->pushGrab (fws->mRotateCursor, "resize");
 	    window->grabNotify (window->x () + (window->width () / 2),
-		                window->y () + (window->height () / 2), mods,
+				window->y () + (window->height () / 2), mods,
 				CompWindowGrabMoveMask | CompWindowGrabButtonMask);
 	    fws->mGrabWindow = window;
 	}
@@ -81,7 +81,7 @@ FWWindow::handleIPWMoveInitiate ()
 
     window->activate ();
     mGrab = grabMove;
-    fws->mRotateCursor = XCreateFontCursor (screen->dpy (), XC_fleur);	
+    fws->mRotateCursor = XCreateFontCursor (screen->dpy (), XC_fleur);
     if(!screen->otherGrabExist ("freewins", "resize", 0))
 	if(!fws->mGrabIndex)
 	{
@@ -89,7 +89,7 @@ FWWindow::handleIPWMoveInitiate ()
 	    mods &= CompNoMask;
 	    fws->mGrabIndex = screen->pushGrab (fws->mRotateCursor, "resize");
 	    window->grabNotify (window->x () + (window->width () / 2),
-		                window->y () + (window->height () / 2), mods,
+				window->y () + (window->height () / 2), mods,
 				CompWindowGrabResizeMask | CompWindowGrabButtonMask);
 	    fws->mGrabWindow = window;
 	}
@@ -105,7 +105,7 @@ FWWindow::handleIPWMoveMotionEvent (unsigned int x,
     int dy = y - lastPointerY;
 
     if (!fws->mGrabIndex)
-        return;
+	return;
 
     window->move (dx, dy, fws->optionGetImmediateMoves ());
     window->syncPosition ();
@@ -125,29 +125,29 @@ FWWindow::handleIPWResizeMotionEvent (unsigned int x,
     /* In order to prevent a window redraw on resize
      * on every motion event we have a threshold
      */
-     
-     /* FIXME: cf-love: Instead of actually resizing the window, scale it up, then resize it */
+
+    /* FIXME: cf-love: Instead of actually resizing the window, scale it up, then resize it */
 
     if (mWinH - 10 > window->height () || mWinW - 10 > window->width ())
-    { 
-        XWindowChanges xwc;
-        unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
+    {
+	XWindowChanges xwc;
+	unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
 
-        xwc.x = window->serverX ();
-        xwc.y = window->serverY ();
-        xwc.width = mWinW;
-        xwc.height = mWinH;
+	xwc.x = window->serverX ();
+	xwc.y = window->serverY ();
+	xwc.width = mWinW;
+	xwc.height = mWinH;
 
-        if (xwc.width == window->serverWidth ())
+	if (xwc.width == window->serverWidth ())
 	    mask &= ~CWWidth;
 
-        if (xwc.height == window->serverHeight ())
+	if (xwc.height == window->serverHeight ())
 	    mask &= ~CWHeight;
 
-        if (window->mapNum () && (mask & (CWWidth | CWHeight)))
+	if (window->mapNum () && (mask & (CWWidth | CWHeight)))
 	    window->sendSyncRequest ();
 
-        window->configureXWindow (mask, &xwc);
+	window->configureXWindow (mask, &xwc);
     }
 
 }
@@ -170,23 +170,23 @@ FWWindow::handleRotateMotionEvent (float dx,
 
     float midX = WIN_REAL_X (window) + WIN_REAL_W (window)/2.0;
     float midY = WIN_REAL_Y (window) + WIN_REAL_H (window)/2.0;
-	
+
     float angX;
     float angY;
     float angZ;
-	
+
     /* Save the current angles so we can work with them */
     if (fws->optionGetSnap () || fws->mSnap)
     {
-         angX = mTransform.unsnapAngX;
-         angY = mTransform.unsnapAngY;
-         angZ = mTransform.unsnapAngZ;
+	angX = mTransform.unsnapAngX;
+	angY = mTransform.unsnapAngY;
+	angZ = mTransform.unsnapAngZ;
     }
     else
     {
-         angX = mAnimate.destAngX;
-         angY = mAnimate.destAngY;
-         angZ = mAnimate.destAngZ;
+	angX = mAnimate.destAngX;
+	angY = mAnimate.destAngY;
+	angZ = mAnimate.destAngZ;
     }
 
     /* Check for Y axis clicking (Top / Bottom) */
@@ -212,34 +212,34 @@ FWWindow::handleRotateMotionEvent (float dx,
     if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangable)
     {
 
-        /* Trackball rotation was too hard to implement. If anyone can implement it,
-         * please come forward so I can replace this hacky solution to the problem.
-         * Anyways, what happens here, is that we determine how far away we are from
-         * each axis (y and x). The further we are away from the y axis, the more
-         * up / down movements become Z axis movements and the further we are away from
-         * the x-axis, the more left / right movements become z rotations. */
+	/* Trackball rotation was too hard to implement. If anyone can implement it,
+	 * please come forward so I can replace this hacky solution to the problem.
+	 * Anyways, what happens here, is that we determine how far away we are from
+	 * each axis (y and x). The further we are away from the y axis, the more
+	 * up / down movements become Z axis movements and the further we are away from
+	 * the x-axis, the more left / right movements become z rotations. */
 
-        /* We determine this by taking a percentage of how far away the cursor is from
-         * each axis. We divide the 3D rotation by this percentage ( and divide by the
-         * percentage squared in order to ensure that rotation is not too violent when we
-         * are quite close to the origin. We multiply the 2D rotation by this percentage also
-         * so we are essentially rotating in 3D and 2D all the time, but this is only really
-         * noticeable when you move the cursor over to the extremes of a window. In every case
-         * percentage can be defined as decimal-percentage (i.e 0.036 == 3.6%). Like I mentioned
-         * earlier, if you can replace this with trackball rotation, please come forward! */
+	/* We determine this by taking a percentage of how far away the cursor is from
+	 * each axis. We divide the 3D rotation by this percentage ( and divide by the
+	 * percentage squared in order to ensure that rotation is not too violent when we
+	 * are quite close to the origin. We multiply the 2D rotation by this percentage also
+	 * so we are essentially rotating in 3D and 2D all the time, but this is only really
+	 * noticeable when you move the cursor over to the extremes of a window. In every case
+	 * percentage can be defined as decimal-percentage (i.e 0.036 == 3.6%). Like I mentioned
+	 * earlier, if you can replace this with trackball rotation, please come forward! */
 
-        float halfWidth = WIN_REAL_W (window) / 2.0f;
-        float halfHeight = WIN_REAL_H (window) / 2.0f;
+	float halfWidth = WIN_REAL_W (window) / 2.0f;
+	float halfHeight = WIN_REAL_H (window) / 2.0f;
 
-        float distFromXAxis = fabs (mIMidX - pointerX);
-        float distFromYAxis = fabs (mIMidY - pointerY);
+	float distFromXAxis = fabs (mIMidX - pointerX);
+	float distFromYAxis = fabs (mIMidY - pointerY);
 
-        percentFromXAxis = distFromXAxis / halfWidth;
-        percentFromYAxis = distFromYAxis / halfHeight;
+	percentFromXAxis = distFromXAxis / halfWidth;
+	percentFromYAxis = distFromYAxis / halfHeight;
 
     }
     else if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationSwitch)
-        determineZAxisClick (pointerX, pointerY, TRUE);
+	determineZAxisClick (pointerX, pointerY, TRUE);
 
     dx *= 360;
     dy *= 360;
@@ -250,114 +250,114 @@ FWWindow::handleRotateMotionEvent (float dx,
 
     if (fws->mInvert && fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangable)
     {
-        can2D = !mCan2D;
-        can3D = !mCan3D;
+	can2D = !mCan2D;
+	can3D = !mCan3D;
     }
 
     if(can2D)
     {
 
-       float zX = 1.0f;
-       float zY = 1.0f;
+	float zX = 1.0f;
+	float zY = 1.0f;
 
-       if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangable)
-       {
-            zX = percentFromXAxis;
-            zY = percentFromYAxis;
-       }
+	if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangable)
+	{
+	    zX = percentFromXAxis;
+	    zY = percentFromYAxis;
+	}
 
-       zX = zX > 1.0f ? 1.0f : zX;
-       zY = zY > 1.0f ? 1.0f : zY;
+	zX = zX > 1.0f ? 1.0f : zX;
+	zY = zY > 1.0f ? 1.0f : zY;
 
-       switch (mCorner)
-       {
-            case CornerTopRight:
+	switch (mCorner)
+	{
+	    case CornerTopRight:
 
-                if ((x) < oldX)
-                angZ -= dx * zX;
-                else if ((x) > oldX)
-                angZ += dx * zX;
-
-
-                if ((y) < oldY)
-                angZ -= dy * zY;
-                else if ((y) > oldY)
-                angZ += dy * zY;
-
-                break;
-
-            case CornerTopLeft:
-
-                if ((x) < oldX)
-                angZ -= dx * zX;
-                else if ((x) > oldX)
-                angZ += dx * zX;
+		if ((x) < oldX)
+		    angZ -= dx * zX;
+		else if ((x) > oldX)
+		    angZ += dx * zX;
 
 
-                if ((y) < oldY)
-                angZ += dy * zY;
-                else if ((y) > oldY)
-                angZ -= dy * zY;
+		if ((y) < oldY)
+		    angZ -= dy * zY;
+		else if ((y) > oldY)
+		    angZ += dy * zY;
 
-                break;
+		break;
 
-            case CornerBottomLeft:
+	    case CornerTopLeft:
 
-                if ((x) < oldX)
-                angZ += dx * zX;
-                else if ((x) > oldX)
-                angZ -= dx * zX;
-
-
-                if ((y) < oldY)
-                angZ += dy * zY;
-                else if ((y) > oldY)
-                angZ -= dy * zY;
-
-                break;
-
-            case CornerBottomRight:
-
-                if ((x) < oldX)
-                angZ += dx * zX;
-                else if ((x) > oldX)
-                angZ -= dx * zX;
+		if ((x) < oldX)
+		    angZ -= dx * zX;
+		else if ((x) > oldX)
+		    angZ += dx * zX;
 
 
-                if ((y) < oldY)
-                angZ -= dy * zY;
-                else if ((y) > oldY)
-                angZ += dy * zY;
-                break;
-        }
+		if ((y) < oldY)
+		    angZ += dy * zY;
+		else if ((y) > oldY)
+		    angZ -= dy * zY;
+
+		break;
+
+	    case CornerBottomLeft:
+
+		if ((x) < oldX)
+		    angZ += dx * zX;
+		else if ((x) > oldX)
+		    angZ -= dx * zX;
+
+
+		if ((y) < oldY)
+		    angZ += dy * zY;
+		else if ((y) > oldY)
+		    angZ -= dy * zY;
+
+		break;
+
+	    case CornerBottomRight:
+
+		if ((x) < oldX)
+		    angZ += dx * zX;
+		else if ((x) > oldX)
+		    angZ -= dx * zX;
+
+
+		if ((y) < oldY)
+		    angZ -= dy * zY;
+		else if ((y) > oldY)
+		    angZ += dy * zY;
+		break;
+	}
     }
 
     if (can3D)
     {
-        if (fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangable)
-        {
-            percentFromXAxis = 0.0f;
-            percentFromYAxis = 0.0f;
-        }
-    
-    
-    angX -= dy * (1 - percentFromXAxis);
-    angY += dx * (1 - percentFromYAxis);
+	if (fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangable)
+	{
+	    percentFromXAxis = 0.0f;
+	    percentFromYAxis = 0.0f;
+	}
+
+
+	angX -= dy * (1 - percentFromXAxis);
+	angY += dx * (1 - percentFromYAxis);
     }
     
     /* Restore angles */
     
     if (fws->optionGetSnap () || fws->mSnap)
     {
-         mTransform.unsnapAngX = angX;
-         mTransform.unsnapAngY = angY;
-         mTransform.unsnapAngZ = angZ;
+	mTransform.unsnapAngX = angX;
+	mTransform.unsnapAngY = angY;
+	mTransform.unsnapAngZ = angZ;
     }
     else
     {
-         mAnimate.destAngX = angX;
-         mAnimate.destAngY = angY;
-         mAnimate.destAngZ = angZ;
+	mAnimate.destAngX = angX;
+	mAnimate.destAngY = angY;
+	mAnimate.destAngZ = angZ;
     }
 
     handleSnap ();
@@ -382,13 +382,13 @@ FWWindow::handleScaleMotionEvent (float dx,
     
     if (fws->optionGetSnap () || fws->mSnap)
     {
-        scaleX = mTransform.unsnapScaleX;
-        scaleY = mTransform.unsnapScaleY;
+	scaleX = mTransform.unsnapScaleX;
+	scaleY = mTransform.unsnapScaleY;
     }
     else
     {
-        scaleX = mAnimate.destScaleX;
-        scaleY = mAnimate.destScaleY;
+	scaleX = mAnimate.destScaleX;
+	scaleY = mAnimate.destScaleY;
     }
 
     calculateInputRect ();
@@ -396,98 +396,98 @@ FWWindow::handleScaleMotionEvent (float dx,
     switch (mCorner)
     {
 
-        case CornerTopLeft:
-        
-        if ((x) < oldX)
-        scaleX -= dx;
-        else if ((x) > oldX)
-        scaleX -= dx;
+	case CornerTopLeft:
 
-        if ((y) < oldY)
-        scaleY -= dy;
-        else if ((y) > oldY)
-        scaleY -= dy;
-        break;            
-            
-        case CornerTopRight:
+	    if ((x) < oldX)
+		scaleX -= dx;
+	    else if ((x) > oldX)
+		scaleX -= dx;
 
-        if ((x) < oldX)
-        scaleX += dx;
-        else if ((y) > oldX)
-        scaleX += dx;
+	    if ((y) < oldY)
+		scaleY -= dy;
+	    else if ((y) > oldY)
+		scaleY -= dy;
+	    break;
+
+	case CornerTopRight:
+
+	    if ((x) < oldX)
+		scaleX += dx;
+	    else if ((y) > oldX)
+		scaleX += dx;
 
 
-        // Check Y Direction
-        if ((y) < oldY)
-        scaleY -= dy;
-        else if ((y) > oldY)
-        scaleY -= dy;
+	    // Check Y Direction
+	    if ((y) < oldY)
+		scaleY -= dy;
+	    else if ((y) > oldY)
+		scaleY -= dy;
 
-        break;
+	    break;
 
-        case CornerBottomLeft:
+	case CornerBottomLeft:
 
-        // Check X Direction
-        if ((x) < oldX)
-        scaleX -= dx;
-        else if ((y) > oldX)
-        scaleX -= dx;
+	    // Check X Direction
+	    if ((x) < oldX)
+		scaleX -= dx;
+	    else if ((y) > oldX)
+		scaleX -= dx;
 
-        // Check Y Direction
-        if ((y) < oldY)
-        scaleY += dy;
-        else if ((y) > oldY)
-        scaleY += dy;
+	    // Check Y Direction
+	    if ((y) < oldY)
+		scaleY += dy;
+	    else if ((y) > oldY)
+		scaleY += dy;
 
-        break;
+	    break;
 
-        case CornerBottomRight:
+	case CornerBottomRight:
 
-        // Check X Direction
-        if ((x) < oldX)
-        scaleX += dx;
-        else if ((x) > oldX)
-        scaleX += dx;
+	    // Check X Direction
+	    if ((x) < oldX)
+		scaleX += dx;
+	    else if ((x) > oldX)
+		scaleX += dx;
 
-        // Check Y Direction
-        if ((y) < oldY)
-        scaleY += dy;
-        else if ((y) > oldY)
-        scaleY += dy;
-        break;
+	    // Check Y Direction
+	    if ((y) < oldY)
+		scaleY += dy;
+	    else if ((y) > oldY)
+		scaleY += dy;
+	    break;
     }
     
     if (fws->optionGetSnap () || fws->mSnap)
     {
-        mTransform.unsnapScaleX = scaleX;
-        mTransform.unsnapScaleY = scaleY;
+	mTransform.unsnapScaleX = scaleX;
+	mTransform.unsnapScaleY = scaleY;
     }
     else
     {
-        mAnimate.destScaleX = scaleX;
-        mAnimate.destScaleY = scaleY;
+	mAnimate.destScaleX = scaleX;
+	mAnimate.destScaleY = scaleY;
     }
 
     /* Stop scale at threshold specified */
     if (!fws->optionGetAllowNegative ())
     {
-        float minScale = fws->optionGetMinScale ();
-        if (mAnimate.destScaleX < minScale)
-          mAnimate.destScaleX = minScale;
+	float minScale = fws->optionGetMinScale ();
+	if (mAnimate.destScaleX < minScale)
+	    mAnimate.destScaleX = minScale;
 
-        if (mAnimate.destScaleY < minScale)
-          mAnimate.destScaleY = minScale;
+	if (mAnimate.destScaleY < minScale)
+	    mAnimate.destScaleY = minScale;
     }
 
     /* Change scales for maintaining aspect ratio */
     if (fws->optionGetScaleUniform ())
     {
-        float tempscaleX = mAnimate.destScaleX;
-        float tempscaleY = mAnimate.destScaleY;
-        mAnimate.destScaleX = (tempscaleX + tempscaleY) / 2;
-        mAnimate.destScaleY = (tempscaleX + tempscaleY) / 2;
-        mTransform.unsnapScaleX = (tempscaleX + tempscaleY) / 2;
-        mTransform.unsnapScaleY = (tempscaleX + tempscaleY) / 2;
+	float tempscaleX = mAnimate.destScaleX;
+	float tempscaleY = mAnimate.destScaleY;
+	mAnimate.destScaleX = (tempscaleX + tempscaleY) / 2;
+	mAnimate.destScaleY = (tempscaleX + tempscaleY) / 2;
+	mTransform.unsnapScaleX = (tempscaleX + tempscaleY) / 2;
+	mTransform.unsnapScaleY = (tempscaleX + tempscaleY) / 2;
     }
 
     handleSnap ();
@@ -500,13 +500,13 @@ FWWindow::handleButtonReleaseEvent ()
 
     if (mGrab == grabMove || mGrab == grabResize)
     {
-        screen->removeGrab (fws->mGrabIndex, NULL);
-        window->ungrabNotify ();
-        window->moveInputFocusTo ();        
+	screen->removeGrab (fws->mGrabIndex, NULL);
+	window->ungrabNotify ();
+	window->moveInputFocusTo ();
 	adjustIPW ();
-        fws->mGrabIndex = 0;
-        fws->mGrabWindow = NULL;
-        mGrab = grabNone;
+	fws->mGrabIndex = 0;
+	fws->mGrabWindow = NULL;
+	mGrab = grabNone;
     }
 }
 
@@ -517,8 +517,8 @@ FWWindow::handleEnterNotify (XEvent *xev)
 
     memcpy (&EnterNotifyEvent.xcrossing, &xev->xcrossing,
 	    sizeof (XCrossingEvent));
-/*
-    if (window) 
+    /*
+    if (window)
     {
 	EnterNotifyEvent.xcrossing.window = window->id ();
 	XSendEvent (screen->dpy (), window->id (),
@@ -533,7 +533,7 @@ FWWindow::handleLeaveNotify (XEvent *xev)
     XEvent LeaveNotifyEvent;
 
     memcpy (&LeaveNotifyEvent.xcrossing, &xev->xcrossing,
-            sizeof (XCrossingEvent));
+	    sizeof (XCrossingEvent));
     LeaveNotifyEvent.xcrossing.window = window->id ();
 
     //XSendEvent (screen->dpy (), window->id (), FALSE,
@@ -598,7 +598,7 @@ FWScreen::handleEvent (XEvent *ev)
 		FREEWINS_WINDOW (btnW);
 		if (fww->canShape () && !mGrabWindow && !screen->otherGrabExist (0))
 		    mHoverWindow = btnW;
-	        btnW = getRealWindow (btnW);
+		btnW = getRealWindow (btnW);
 	    }
 	    
 	    if (btnW)
@@ -610,7 +610,7 @@ FWScreen::handleEvent (XEvent *ev)
 	    }
 	    
 	}
-	break;
+	    break;
 
 
 	case LeaveNotify:
@@ -625,34 +625,34 @@ FWScreen::handleEvent (XEvent *ev)
 	    /* We have established the CompWindow we clicked
 	     * on. Get the real window */
 	    if (btnW)
-	        btnW = getRealWindow (btnW);
+		btnW = getRealWindow (btnW);
 
 	    if (btnW)
 		FWWindow::get (btnW)->handleLeaveNotify (ev);
 	}
-	break;
+	    break;
 
 	case MotionNotify:
 	    
 	    if (mGrabWindow)
 	    {
 		FREEWINS_WINDOW (mGrabWindow);
-		    
+
 		dx = ((float)(pointerX - lastPointerX) / screen->width ()) * \
-		    optionGetMouseSensitivity ();
+		     optionGetMouseSensitivity ();
 		dy = ((float)(pointerY - lastPointerY) / screen->height ()) * \
-		    optionGetMouseSensitivity ();
+		     optionGetMouseSensitivity ();
 
 		if (optionGetShapeWindowTypes ().evaluate (mGrabWindow))
 		{
 		    if (fww->mGrab == grabMove || fww->mGrab == grabResize)
-	    	    {
+		    {
 			FWWindowInputInfo *info;
-            CompWindow *w = mGrabWindow;
+			CompWindow *w = mGrabWindow;
 			foreach (info, mTransformedWindows)
 			{
 			    if (mGrabWindow->id () == info->ipw)
-			    /* The window we just grabbed was actually
+				/* The window we just grabbed was actually
 			     * an IPW, get the real window instead
 			      */
 				w = getRealWindow (mGrabWindow);
@@ -662,29 +662,29 @@ FWScreen::handleEvent (XEvent *ev)
 		    {
 			case grabMove:
 			    fww->handleIPWMoveMotionEvent (pointerX, pointerY); break;
-		        case grabResize:
+			case grabResize:
 			    fww->handleIPWResizeMotionEvent (pointerX, pointerY); break;
-		        default:
+			default:
 			    break;
 		    }
 		}
 
 		if (fww->mGrab == grabRotate)
-		{        
+		{
 		    fww->handleRotateMotionEvent(dx, dy, ev->xmotion.x, ev->xmotion.y);
 		}
 
 		if (fww->mGrab == grabScale)
 		{
-		    fww->handleScaleMotionEvent(dx * 3, dy * 3, ev->xmotion.x, ev->xmotion.y);		      
+		    fww->handleScaleMotionEvent(dx * 3, dy * 3, ev->xmotion.x, ev->xmotion.y);
 		}
 
 		//if(dx != 0.0 || dy != 0.0)
 		//    fww->damageArea ();
 	    }
-	break;
+	    break;
 
-	/* Button Press and Release */
+	    /* Button Press and Release */
 	case ButtonPress:
 	{
 	    CompWindow *btnW;
@@ -721,23 +721,23 @@ FWScreen::handleEvent (XEvent *ev)
 	    mClick_root_y = ev->xbutton.y_root;
 
 	}
-	break;
+	    break;
 
 	case ButtonRelease:
 	{
 	    if (mGrabWindow)
-	    {        
+	    {
 		FREEWINS_WINDOW (mGrabWindow);
 
 		if (optionGetShapeWindowTypes ().evaluate (mGrabWindow))
-		if (fww->mGrab == grabMove || fww->mGrab == grabResize)
-		{
-		    fww->handleButtonReleaseEvent ();
-		    mGrabWindow = 0;
-		}
+		    if (fww->mGrab == grabMove || fww->mGrab == grabResize)
+		    {
+			fww->handleButtonReleaseEvent ();
+			mGrabWindow = 0;
+		    }
 	    }
 	}
-	break;
+	    break;
 	case ConfigureNotify:
 	    w = screen->findWindow (ev->xconfigure.window);
 	    if (w)
@@ -779,7 +779,7 @@ FWScreen::handleEvent (XEvent *ev)
 
 			ipw = screen->findWindow (fww->mInput->ipw);
 
-			if (ipw) 
+			if (ipw)
 			{
 			    dX = screen->vp ().x () - vX;
 			    dY = screen->vp ().y () - vY;
@@ -792,39 +792,39 @@ FWScreen::handleEvent (XEvent *ev)
 			    ipw->moveToViewportPosition (ipw->x () - dX * screen->width (),
 							 ipw->y () - dY * screen->height (),
 							 true); // ???
-		        }
+			}
 		    }
 		}
 	    }
-	break;
+	    break;
 #endif
 	default:
 	    break;
 #if 0
-	if (ev->type == screen->shapeEvent () + ShapeNotify)
-	{
-	    XShapeEvent *se = (XShapeEvent *) ev;
-	    if (se->kind == ShapeInput)
+	    if (ev->type == screen->shapeEvent () + ShapeNotify)
 	    {
-		CompWindow *w;
-		w = screen->findWindow (se->window);
-		if (w)
+		XShapeEvent *se = (XShapeEvent *) ev;
+		if (se->kind == ShapeInput)
 		{
-		    FREEWINS_WINDOW (w);
-
-		    if (fww->canShape () && (fww->mTransform.scaleX != 1.0f || fww->mTransform.scaleY != 1.0f))
+		    CompWindow *w;
+		    w = screen->findWindow (se->window);
+		    if (w)
 		    {
-		        // Reset the window back to normal
-		        fww->mTransform.scaleX = 1.0f;
-		        fww->mTransform.scaleY = 1.0f;
-			fww->mTransform.angX = 0.0f;
-			fww->mTransform.angY = 0.0f;
-			fww->mTransform.angZ = 0.0f;
-			    /*FWShapeInput (w); - Disabled due to problems it causes*/ 
+			FREEWINS_WINDOW (w);
+
+			if (fww->canShape () && (fww->mTransform.scaleX != 1.0f || fww->mTransform.scaleY != 1.0f))
+			{
+			    // Reset the window back to normal
+			    fww->mTransform.scaleX = 1.0f;
+			    fww->mTransform.scaleY = 1.0f;
+			    fww->mTransform.angX = 0.0f;
+			    fww->mTransform.angY = 0.0f;
+			    fww->mTransform.angZ = 0.0f;
+			    /*FWShapeInput (w); - Disabled due to problems it causes*/
+			}
 		    }
 		}
 	    }
-	}
 #endif
     }
     
@@ -834,11 +834,11 @@ FWScreen::handleEvent (XEvent *ev)
     switch (ev->type)
     {
 	case ConfigureNotify:
-        w = screen->findWindow (ev->xconfigure.window);
-        if (w)
-        {
-        oldPrev = w->prev;
-        oldNext = w->next;
+	    w = screen->findWindow (ev->xconfigure.window);
+	    if (w)
+	    {
+		oldPrev = w->prev;
+		oldNext = w->next;
 		if (w->prev != oldPrev || w->next != oldNext)
 		{
 		    /* restacking occured, ensure ipw stacking */
