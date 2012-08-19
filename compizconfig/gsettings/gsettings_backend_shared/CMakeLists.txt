@@ -35,6 +35,7 @@ if (GSETTINGS_UTIL_FOUND)
 
     target_link_libraries (gsettings_backend_shared
 			   ${GSETTINGS_UTIL_LIBRARIES}
+			   ${GSETTINGS_BACKEND_SHARED_ADDITIONAL_LIBRARIES}
 			   compizconfig)
 
     install (TARGETS gsettings_backend_shared
