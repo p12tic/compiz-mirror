@@ -116,6 +116,10 @@ if (USE_GTK)
 	DESTINATION ${exec_prefix}
     )
 
+    if (COMPIZ_BUILD_TESTING)
+	add_subdirectory (tests)
+    endif (COMPIZ_BUILD_TESTING)
+
 
 endif (USE_GTK)
 

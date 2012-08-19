@@ -1,10 +1,10 @@
 #include "gwd-settings-interface.h"
 
-static void gwd_settings_default_init (GWDSettingsInterface *settings_interface);
+static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_interface);
 
-G_DEFINE_INTERFACE (GWDSettings, gwd_settings, G_TYPE_OBJECT);
+G_DEFINE_INTERFACE (GWDSettings, gwd_settings_interface, G_TYPE_OBJECT);
 
-static void gwd_settings_default_init (GWDSettingsInterface *settings_interface)
+static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_interface)
 {
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_pointer ("active-shadow",
@@ -77,5 +77,11 @@ static void gwd_settings_default_init (GWDSettingsInterface *settings_interface)
 							      "Metacity Inactive Shade Opacity",
 							      "Metacity Inactive Shade Opacity",
 							      FALSE,
+							      G_PARAM_READABLE));
+    g_object_interface_install_property (settings_interface,
+					 g_param_spec_string ("metacity-button-layout",
+							      "Metacity Button Layout",
+							      "Metacity Button Layout",
+							      "",
 							      G_PARAM_READABLE));
 }

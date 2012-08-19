@@ -23,7 +23,9 @@
 
 G_BEGIN_DECLS
 
-#define GWD_SETTINGS_WRITABLE_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST (obj))
+#define GWD_SETTINGS_WRITABLE_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
+					      GWD_TYPE_WRITABLE_SETTINGS_INTERFACE, \
+					      GWDSettingsWritable))
 #define GWD_SETTINGS_WRITABLE_GET_INTERFACE(obj) (G_TYPE_INSTANCE_GET_INTERFACE(obj, \
 										GWD_TYPE_WRITABLE_SETTINGS_INTERFACE, \
 										GWDSettingsWritableInterface))
@@ -41,12 +43,12 @@ struct _GWDSettingsWritableInterface
 					 gdouble     active_shadow_opacity,
 					 gdouble     active_shadow_offset_x,
 					 gdouble     active_shadow_offset_y,
-					 gchar	     *active_shadow_color,
+					 const gchar *active_shadow_color,
 					 gdouble     inactive_shadow_radius,
 					 gdouble     inactive_shadow_opacity,
 					 gdouble     inactive_shadow_offset_x,
 					 gdouble     inactive_shadow_offset_y,
-					 gchar	     *inactive_shadow_color);
+					 const gchar *inactive_shadow_color);
     gboolean (*use_tooltips_changed) (GWDSettingsWritable *settings, gboolean new_value);
     gboolean (*draggable_border_width_changed) (GWDSettingsWritable *settings, gint new_value);
     gboolean (*attach_modal_dialogs_changed) (GWDSettingsWritable *settings, gboolean new_value);
@@ -61,49 +63,49 @@ struct _GWDSettingsWritableInterface
 };
 
 gboolean
-gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
-				      gdouble     active_shadow_radius,
-				      gdouble     active_shadow_opacity,
-				      gdouble     active_shadow_offset_x,
-				      gdouble     active_shadow_offset_y,
-				      gchar	     *active_shadow_color,
-				      gdouble     inactive_shadow_radius,
-				      gdouble     inactive_shadow_opacity,
-				      gdouble     inactive_shadow_offset_x,
-				      gdouble     inactive_shadow_offset_y,
-				      gchar	     *inactive_shadow_color);
+gwd_settings_writable_shadow_property_changed (GWDSettingsWritable *settings,
+					       gdouble     active_shadow_radius,
+					       gdouble     active_shadow_opacity,
+					       gdouble     active_shadow_offset_x,
+					       gdouble     active_shadow_offset_y,
+					       const gchar *active_shadow_color,
+					       gdouble     inactive_shadow_radius,
+					       gdouble     inactive_shadow_opacity,
+					       gdouble     inactive_shadow_offset_x,
+					       gdouble     inactive_shadow_offset_y,
+					       const gchar *inactive_shadow_color);
 
 gboolean
-gwd_settings_use_tooltips_changed (GWDSettingsWritable *settings,
-				   gboolean    use_tooltips);
+gwd_settings_writable_use_tooltips_changed (GWDSettingsWritable *settings,
+					    gboolean    use_tooltips);
 
 gboolean
-gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
-					     gint	 draggable_border_width);
+gwd_settings_writable_draggable_border_width_changed (GWDSettingsWritable *settings,
+						      gint	 draggable_border_width);
 
 gboolean
-gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
-					   gboolean    attach_modal_dialogs);
+gwd_settings_writable_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
+						    gboolean    attach_modal_dialogs);
 
 gboolean
-gwd_settings_blur_changed (GWDSettingsWritable *settings,
-			   const gchar *blur_type);
+gwd_settings_writable_blur_changed (GWDSettingsWritable *settings,
+				    const gchar *blur_type);
 
 gboolean
-gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
-				     gboolean	 use_metacity_theme,
-				     const gchar *metacity_theme);
+gwd_settings_writable_metacity_theme_changed (GWDSettingsWritable *settings,
+					      gboolean	 use_metacity_theme,
+					      const gchar *metacity_theme);
 
 gboolean
-gwd_settings_opacity_changed (GWDSettingsWritable *settings,
-			      gdouble inactive_opacity,
-			      gdouble active_opacity,
-			      gboolean inactive_shade_opacity,
-			      gboolean active_shade_opacity);
+gwd_settings_writable_opacity_changed (GWDSettingsWritable *settings,
+				       gdouble inactive_opacity,
+				       gdouble active_opacity,
+				       gboolean inactive_shade_opacity,
+				       gboolean active_shade_opacity);
 
 gboolean
-gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
-				    const gchar *button_layout);
+gwd_settings_writable_button_layout_changed (GWDSettingsWritable *settings,
+					     const gchar *button_layout);
 
 GType gwd_settings_writable_interface_get_type (void);
 
