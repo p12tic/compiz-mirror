@@ -32,6 +32,47 @@ if (USE_GTK)
 	compiz_install_gconf_schema (${CMAKE_CURRENT_BINARY_DIR}/gwd.schemas ${SCHEMADIR})
     endif (USE_GCONF)
 
+    add_library (gtk_window_decorator_settings_interface STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-interface.c)
+
+    add_library (gtk_window_decorator_settings STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings.c)
+
+    add_library (gtk_window_decorator_settings_storage_interface STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-storage-interface.c)
+
+    add_library (gtk_window_decorator_settings_storage_gconf STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-storage-gconf.c)
+
+    add_library (gtk_window_decorator_settings_storage_gsettings STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-storage-gsettings.c)
+
+    add_library (gtk_window_decorator_settings_storage_xproperty_interface STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-xproperty-interface.c)
+
+    add_library (gtk_window_decorator_settings_storage_xproperty STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-xproperty-storage.c)
+
+    add_library (gtk_window_decorator_settings_writable_interface STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-writable-interface.c)
+
+    set (GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
+	 gtk_window_decorator_settings_interface
+	 gtk_window_decorator_settings
+	 gtk_window_decorator_settings_storage_interface
+	 gtk_window_decorator_settings_storage_xproperty_interface
+	 gtk_window_decorator_settings_storage_xproperty)
+
+    if (USE_GCONF)
+	list (APPEND GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
+	      gtk_window_decorator_settings_storage_gconf)
+    endif (USE_GCONF)
+
+    if (USE_GSETTINGS)
+	list (APPEND GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
+	      gtk_window_decorator_settings_storage_gsettings)
+    endif (USE_GSETTINGS)
+
     add_executable (gtk-window-decorator
 	gtk-window-decorator.c
 	blurprops.c
@@ -67,6 +108,7 @@ if (USE_GTK)
 	${GCONF_LIBRARIES}
 	${DBUS_GLIB_LIBRARIES}
 	${metacitylibs}
+	${GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES}
     )
 
     install (
