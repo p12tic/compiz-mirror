@@ -135,7 +135,11 @@ gboolean
 gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
 					     gint	 draggable_border_width)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    priv->draggable_border_width = draggable_border_width;
+    return TRUE;
 }
 
 gboolean
