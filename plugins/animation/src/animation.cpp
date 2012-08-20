@@ -2465,8 +2465,36 @@ AnimEffectUsedFor AnimEffectUsedFor::none ()
   return usedFor;
 }
 
+AnimEffectUsedFor& AnimEffectUsedFor::exclude (AnimEvent event)
+{
+  switch (event) {
+    case AnimEventOpen: open = false; break;
+    case AnimEventClose: close = false; break;
+    case AnimEventMinimize: minimize = false; break;
+    case AnimEventShade: shade = false; break;
+    case AnimEventUnMinimize: unMinimize = false; break;
+    case AnimEventFocus: focus = false; break;
+    default: break;
+  }
+  return *this;
+}
+
+AnimEffectUsedFor& AnimEffectUsedFor::include (AnimEvent event)
+{
+  switch (event) {
+    case AnimEventOpen: open = true; break;
+    case AnimEventClose: close = true; break;
+    case AnimEventMinimize: minimize = true; break;
+    case AnimEventShade: shade = true; break;
+    case AnimEventUnMinimize: unMinimize = true; break;
+    case AnimEventFocus: focus = true; break;
+    default: break;
+  }
+  return *this;
+}
+
 AnimEffectInfo::AnimEffectInfo (const char *name,
-                               AnimEffectUsedFor& usedFor,
+                               AnimEffectUsedFor usedFor,
 				CreateAnimFunc create,
 				bool isRestackAnim) :
     name (name),
@@ -2598,109 +2626,87 @@ void
 PrivateAnimScreen::initAnimationList ()
 {
     int i = 0;
-    AnimEffectUsedFor usedFor;
-    
-    usedFor = AnimEffectUsedFor::all();
+
     animEffects[i++] = AnimEffectNone =
-	new AnimEffectInfo ("animation:None", usedFor, 0);
+	new AnimEffectInfo ("animation:None",
+                            AnimEffectUsedFor::all(),
+                            0);
 
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectRandom =
-	new AnimEffectInfo ("animation:Random", usedFor, 0);
+	new AnimEffectInfo ("animation:Random",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus),
+                           0);
 
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectCurvedFold =
-	new AnimEffectInfo ("animation:Curved Fold", usedFor,
+	new AnimEffectInfo ("animation:Curved Fold",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus),
 			    &createAnimation<CurvedFoldAnim>);
         
-    usedFor = AnimEffectUsedFor::none();
-    usedFor.focus = true;
     animEffects[i++] = AnimEffectDodge =
-	new AnimEffectInfo ("animation:Dodge", usedFor,
+	new AnimEffectInfo ("animation:Dodge", 
+                           AnimEffectUsedFor::none().include(AnimEventFocus),
 			    &createAnimation<DodgeAnim>,
 			    true);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectDream =
-	new AnimEffectInfo ("animation:Dream", usedFor,
+	new AnimEffectInfo ("animation:Dream", 
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<DreamAnim>);
 
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectFade =
-	new AnimEffectInfo ("animation:Fade", usedFor,
+	new AnimEffectInfo ("animation:Fade",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<FadeAnim>);
         
-    usedFor = AnimEffectUsedFor::none();
-    usedFor.focus = true;
     animEffects[i++] = AnimEffectFocusFade =
-	new AnimEffectInfo ("animation:Focus Fade", usedFor,
+	new AnimEffectInfo ("animation:Focus Fade", 
+                           AnimEffectUsedFor::none().include(AnimEventFocus),
 			    &createAnimation<FocusFadeAnim>,
 			    true);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectGlide1 =
-	new AnimEffectInfo ("animation:Glide 1", usedFor,
+	new AnimEffectInfo ("animation:Glide 1",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<GlideAnim>);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectGlide2 =
-	new AnimEffectInfo ("animation:Glide 2", usedFor,
+	new AnimEffectInfo ("animation:Glide 2",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<Glide2Anim>);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectHorizontalFolds =
-	new AnimEffectInfo ("animation:Horizontal Folds", usedFor,
+	new AnimEffectInfo ("animation:Horizontal Folds",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus),
 			    &createAnimation<HorizontalFoldsAnim>);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectMagicLamp =
-	new AnimEffectInfo ("animation:Magic Lamp", usedFor,
+	new AnimEffectInfo ("animation:Magic Lamp",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<MagicLampAnim>);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectMagicLampWavy =
-	new AnimEffectInfo ("animation:Magic Lamp Wavy", usedFor,
+	new AnimEffectInfo ("animation:Magic Lamp Wavy",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<MagicLampWavyAnim>);
         
-    usedFor = AnimEffectUsedFor::none();
-    usedFor.shade = true;
     animEffects[i++] = AnimEffectRollUp =
-	new AnimEffectInfo ("animation:Roll Up", usedFor,
+	new AnimEffectInfo ("animation:Roll Up",
+                           AnimEffectUsedFor::none().include(AnimEventShade),
 			    &createAnimation<RollUpAnim>);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectSidekick =
-	new AnimEffectInfo ("animation:Sidekick", usedFor,
+	new AnimEffectInfo ("animation:Sidekick",
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<SidekickAnim>);
         
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
     animEffects[i++] = AnimEffectWave =
-	new AnimEffectInfo ("animation:Wave", usedFor,
+	new AnimEffectInfo ("animation:Wave",
+                           AnimEffectUsedFor::all().exclude(AnimEventShade),
 			    &createAnimation<WaveAnim>);
     
-    usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
     animEffects[i++] = AnimEffectZoom =
-	new AnimEffectInfo ("animation:Zoom", usedFor,
+	new AnimEffectInfo ("animation:Zoom", 
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<ZoomAnim>);
 
     animExtensionPluginInfo.effectOptions = &getOptions ();

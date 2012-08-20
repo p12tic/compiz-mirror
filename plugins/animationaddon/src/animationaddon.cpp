@@ -136,9 +136,9 @@ void
 PrivateAnimAddonScreen::initAnimationList ()
 {
     int i = 0;
-    AnimEffectUsedFor usedFor = AnimEffectUsedFor::all();
-    usedFor.shade = false;
-    usedFor.focus = false;
+    AnimEffectUsedFor usedFor = AnimEffectUsedFor::all()
+                                .exclude(AnimEventFocus)
+                                .exclude(AnimEventShade);
 
     animEffects[i++] = AnimEffectAirplane =
 	new AnimEffectInfo ("animationaddon:Airplane", usedFor,

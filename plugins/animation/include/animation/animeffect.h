@@ -13,6 +13,8 @@ class AnimEffectUsedFor
 public:
   static AnimEffectUsedFor all();
   static AnimEffectUsedFor none();
+  AnimEffectUsedFor& exclude(AnimEvent event);
+  AnimEffectUsedFor& include(AnimEvent event);
  
   bool open;
   bool close;
@@ -30,7 +32,7 @@ class AnimEffectInfo
 {
 public:
      AnimEffectInfo (const char *name,
-		     AnimEffectUsedFor& usedFor, /* bool usedO, bool usedC, bool usedM, bool usedS, bool usedU, bool usedF, */
+		     AnimEffectUsedFor usedFor,
 		     CreateAnimFunc create, bool isRestackAnim = false);
      ~AnimEffectInfo () {}
      
