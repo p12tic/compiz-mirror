@@ -219,8 +219,12 @@ namespace testing_values
     const gboolean USE_TOOLTIPS_VALUE = TRUE;
     const guint DRAGGABLE_BORDER_WIDTH_VALUE = 1;
     const gboolean ATTACH_MODAL_DIALOGS_VALUE = TRUE;
-    const std::string BLUR_TYPE_VALUE ("titlebar");
-    const gint BLUR_TYPE_INT_VALUE = BLUR_TYPE_TITLEBAR;
+    const std::string BLUR_TYPE_TITLEBAR_VALUE ("titlebar");
+    const gint BLUR_TYPE_TITLEBAR_INT_VALUE = BLUR_TYPE_TITLEBAR;
+    const std::string BLUR_TYPE_ALL_VALUE ("all");
+    const gint BLUR_TYPE_ALL_INT_VALUE = BLUR_TYPE_ALL;
+    const std::string BLUR_TYPE_NONE_VALUE ("none");
+    const gint BLUR_TYPE_NONE_INT_VALUE = BLUR_TYPE_NONE;
     const gboolean USE_METACITY_THEME_VALUE  = TRUE;
     const std::string METACITY_THEME_VALUE ("metacity_theme");
     const gdouble ACTIVE_OPACITY_VALUE = 9.0;
@@ -318,7 +322,7 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
     EXPECT_CALL (writableGMock, useTooltipsChanged (testing_values::USE_TOOLTIPS_VALUE)).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, draggableBorderWidthChanged (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE)).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, attachModalDialogsChanged (testing_values::ATTACH_MODAL_DIALOGS_VALUE)).WillOnce (Return (TRUE));
-    EXPECT_CALL (writableGMock, blurChanged (Eq (testing_values::BLUR_TYPE_VALUE))).WillOnce (Return (TRUE));
+    EXPECT_CALL (writableGMock, blurChanged (Eq (testing_values::BLUR_TYPE_TITLEBAR_VALUE))).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, metacityThemeChanged (TRUE, Eq (testing_values::METACITY_THEME_VALUE))).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, opacityChanged (testing_values::ACTIVE_OPACITY_VALUE,
 						testing_values::INACTIVE_OPACITY_VALUE,
@@ -343,7 +347,7 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (writableMock.get (), testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (writableMock.get (), testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (writableMock.get (), testing_values::ATTACH_MODAL_DIALOGS_VALUE), GBooleanTrue ());
-    EXPECT_THAT (gwd_settings_writable_blur_changed (writableMock.get (), testing_values::BLUR_TYPE_VALUE.c_str ()), GBooleanTrue ());
+    EXPECT_THAT (gwd_settings_writable_blur_changed (writableMock.get (), testing_values::BLUR_TYPE_TITLEBAR_VALUE.c_str ()), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (writableMock.get (),
 							       testing_values::USE_METACITY_THEME_VALUE,
 							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanTrue ());
@@ -597,7 +601,7 @@ TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
 TEST_F(GWDSettingsTest, TestBlurChangedTitlebar)
 {
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						     testing_values::BLUR_TYPE_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::BLUR_TYPE_TITLEBAR_VALUE.c_str ()), GBooleanTrue ());
 
     AutoUnsetGValue blurValue (G_TYPE_INT);
     GValue &blurGValue = blurValue;
@@ -606,6 +610,38 @@ TEST_F(GWDSettingsTest, TestBlurChangedTitlebar)
 			   "blur",
 			   &blurGValue);
 
-    EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_INT_VALUE,
+    EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_TITLEBAR_INT_VALUE,
+						  g_value_get_int));
+}
+
+TEST_F(GWDSettingsTest, TestBlurChangedAll)
+{
+    EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::BLUR_TYPE_ALL_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue blurValue (G_TYPE_INT);
+    GValue &blurGValue = blurValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "blur",
+			   &blurGValue);
+
+    EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_ALL_INT_VALUE,
+						  g_value_get_int));
+}
+
+TEST_F(GWDSettingsTest, TestBlurChangedNone)
+{
+    EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue blurValue (G_TYPE_INT);
+    GValue &blurGValue = blurValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "blur",
+			   &blurGValue);
+
+    EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_NONE_INT_VALUE,
 						  g_value_get_int));
 }
