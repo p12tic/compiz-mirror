@@ -293,6 +293,12 @@ gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    if (!button_layout)
+	return FALSE;
+
+    if (g_strcmp0 (priv->metacity_button_layout, button_layout) == 0)
+	return FALSE;
+
     if (priv->metacity_button_layout)
 	g_free (priv->metacity_button_layout);
 
