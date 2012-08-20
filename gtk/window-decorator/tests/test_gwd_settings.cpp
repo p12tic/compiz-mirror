@@ -815,6 +815,40 @@ TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
 								 g_value_get_string));
 }
 
+TEST_F(GWDSettingsTest, TestTitlebarFontChanged)
+{
+    EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::NO_USE_SYSTEM_FONT_VALUE,
+						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue fontValue (G_TYPE_STRING);
+    GValue	    &fontGValue = fontValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "titlebar-font",
+			   &fontGValue);
+
+    EXPECT_THAT (&fontGValue, GValueMatch <std::string> (testing_values::TITLEBAR_FONT_VALUE.c_str (),
+							 g_value_get_string));
+}
+
+TEST_F(GWDSettingsTest, TestTitlebarFontChangedUseSystemFont)
+{
+    EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::USE_SYSTEM_FONT_VALUE,
+						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue fontValue (G_TYPE_STRING);
+    GValue	    &fontGValue = fontValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "titlebar-font",
+			   &fontGValue);
+
+    EXPECT_THAT (&fontGValue, GValueMatch <const gchar *> (NULL,
+							   g_value_get_string));
+}
+
 namespace
 {
     class GWDTitlebarActionInfo
