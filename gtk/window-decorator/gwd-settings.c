@@ -225,6 +225,19 @@ gwd_settings_blur_changed (GWDSettingsWritable *settings,
 	return FALSE;
 }
 
+static void
+free_and_set_metacity_theme (GWDSettingsWritable *settings,
+			     const gchar	 *metacity_theme)
+{
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    if (priv->metacity_theme)
+	g_free (priv->metacity_theme);
+
+    priv->metacity_theme = g_strdup (metacity_theme);
+}
+
 gboolean
 gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
 				     gboolean	 use_metacity_theme,
@@ -233,15 +246,18 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
-    if (priv->metacity_theme)
-	g_free (priv->metacity_theme);
+    if (!metacity_theme)
+	return FALSE;
 
     if (use_metacity_theme)
     {
-	priv->metacity_theme = g_strdup (metacity_theme);
+	if (g_strcmp0 (metacity_theme, priv->metacity_theme) == 0)
+	    return FALSE;
+
+	free_and_set_metacity_theme (settings, metacity_theme);
     }
     else
-	priv->metacity_theme = g_strdup ("");
+	free_and_set_metacity_theme (settings, "");
 
     return TRUE;
 }
