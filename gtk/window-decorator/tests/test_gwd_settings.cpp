@@ -791,6 +791,13 @@ TEST_F(GWDSettingsTest, TestMetacityThemeChangedNoUseMetacityTheme)
 								  g_value_get_string));
 }
 
+TEST_F(GWDSettingsTest, TestMetacityThemeChangedIsDefault)
+{
+    EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							       testing_values::USE_METACITY_THEME_VALUE,
+							       METACITY_THEME_DEFAULT), GBooleanFalse ());
+}
+
 TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
 {
     EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
