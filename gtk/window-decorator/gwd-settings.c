@@ -216,9 +216,17 @@ gwd_settings_opacity_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
-					     const gchar *button_layout)
+				    const gchar *button_layout)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    if (priv->metacity_button_layout)
+	g_free (priv->metacity_button_layout);
+
+    priv->metacity_button_layout = g_strdup (button_layout);
+
+    return TRUE;
 }
 
 static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
