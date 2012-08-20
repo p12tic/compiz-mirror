@@ -576,3 +576,19 @@ TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
     EXPECT_THAT (&draggableBorderWidthGValue, GValueMatch <gint> (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE,
 								  g_value_get_int));
 }
+
+TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
+{
+    EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+								     testing_values::ATTACH_MODAL_DIALOGS_VALUE), GBooleanTrue ());
+
+    AutoUnsetGValue attachModalDialogsValue (G_TYPE_BOOLEAN);
+    GValue &attachModalDialogsGValue = attachModalDialogsValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "attach-modal-dialogs",
+			   &attachModalDialogsGValue);
+
+    EXPECT_THAT (&attachModalDialogsGValue, GValueMatch <gboolean> (testing_values::ATTACH_MODAL_DIALOGS_VALUE,
+								    g_value_get_boolean));
+}
