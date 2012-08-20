@@ -63,6 +63,24 @@ class GValueCmp <decor_shadow_options_t>
 	}
 };
 
+template <>
+class GValueCmp <std::string>
+{
+    public:
+
+	typedef const gchar * (*GetFunc) (const GValue *value);
+
+	bool compare (const std::string &val,
+		      GValue	        *value,
+		      GetFunc		get)
+	{
+	    const gchar *valueForValue = (*get) (value);
+	    const std::string valueForValueStr (valueForValue);
+
+	    return val != valueForValueStr;
+	}
+};
+
 /*
 template <class ValueCType>
 class GValueCmpGetWrapper
@@ -644,4 +662,21 @@ TEST_F(GWDSettingsTest, TestBlurChangedNone)
 
     EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_NONE_INT_VALUE,
 						  g_value_get_int));
+}
+
+TEST_F(GWDSettingsTest, TestMetacityThemeChanged)
+{
+    EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							       testing_values::USE_METACITY_THEME_VALUE,
+							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue metacityThemeValue (G_TYPE_STRING);
+    GValue &metacityThemeGValue = metacityThemeValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-theme",
+			   &metacityThemeGValue);
+
+    EXPECT_THAT (&metacityThemeGValue, GValueMatch <std::string> (testing_values::METACITY_THEME_VALUE,
+								  g_value_get_string));
 }
