@@ -244,7 +244,19 @@ gwd_settings_font_changed (GWDSettingsWritable *settings,
 			   gboolean		titlebar_uses_system_font,
 			   const gchar		*titlebar_font)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    if (priv->titlebar_font)
+    {
+	g_free (priv->titlebar_font);
+	priv->titlebar_font = NULL;
+    }
+
+    if (!titlebar_uses_system_font)
+	priv->titlebar_font = g_strdup (titlebar_font);
+
+    return TRUE;
 }
 
 static gboolean
