@@ -29,6 +29,7 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 		           gtk_window_decorator_settings
 		           gtk_window_decorator_mock_settings
 			   gtk_window_decorator_mock_settings_writable
+			   decoration
 		           ${COMPIZ_TEST_GTK_WINDOW_DECORATOR_LIBRARIES}
 			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 		           ${GTEST_BOTH_LIBRARIES}

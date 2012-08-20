@@ -13,6 +13,8 @@
 #include "gwd-settings.h"
 #include "gwd-settings-writable-interface.h"
 
+#include "decoration.h"
+
 #include "compiz_gwd_mock_settings.h"
 #include "compiz_gwd_mock_settings_writable.h"
 
@@ -38,6 +40,26 @@ class GValueCmp
 	{
 	    const ValueCType &valForValue = (*get) (value);
 	    return valForValue == val;
+	}
+};
+
+template <>
+class GValueCmp <decor_shadow_options_t>
+{
+    public:
+
+	typedef gpointer (*GetFunc) (const GValue *value);
+
+	bool compare (const decor_shadow_options_t &val,
+		      GValue			   *value,
+		      GetFunc			   get)
+	{
+	    gpointer shadowOptionsPtr = (*get) (value);
+	    const decor_shadow_options_t &shadowOptions = *(reinterpret_cast <decor_shadow_options_t *> (shadowOptionsPtr));
+	    if (decor_shadow_options_cmp (&val, &shadowOptions))
+		return true;
+	    else
+		return false;
 	}
 };
 
@@ -110,6 +132,22 @@ class GValueCmpGetWrapper <std::string>
 };
 */
 
+namespace
+{
+    std::ostream &
+    operator<< (std::ostream &os, const decor_shadow_options_t &options)
+    {
+	os << " radius: " << options.shadow_radius <<
+	      " opacity: " << options.shadow_opacity <<
+	      " offset: (" << options.shadow_offset_x << ", " << options.shadow_offset_y << ")" <<
+	      " color: r: " << options.shadow_color[0] <<
+	      " g: " << options.shadow_color[1] <<
+	      " b: " << options.shadow_color[2];
+
+	return os;
+    }
+}
+
 template <class ValueCType>
 class GObjectPropertyMatcher :
     public ::testing::MatcherInterface <GValue *>
@@ -165,13 +203,19 @@ namespace testing_values
     const gdouble ACTIVE_SHADOW_OPACITY_VALUE = 1.0;
     const gdouble ACTIVE_SHADOW_RADIUS_VALUE = 2.0;
     const gdouble ACTIVE_SHADOW_OFFSET_X_VALUE = 3.0;
+    const gint    ACTIVE_SHADOW_OFFSET_X_INT_VALUE = ACTIVE_SHADOW_OFFSET_X_VALUE;
     const gdouble ACTIVE_SHADOW_OFFSET_Y_VALUE = 4.0;
-    const std::string ACTIVE_SHADOW_COLOR_VALUE ("active_shadow_color");
+    const gint    ACTIVE_SHADOW_OFFSET_Y_INT_VALUE = ACTIVE_SHADOW_OFFSET_Y_VALUE;
+    const std::string ACTIVE_SHADOW_COLOR_STR_VALUE ("#ffffff");
+    const gushort ACTIVE_SHADOW_COLOR_VALUE[] = { 255, 255, 255 };
     const gdouble INACTIVE_SHADOW_OPACITY_VALUE = 5.0;
     const gdouble INACTIVE_SHADOW_RADIUS_VALUE = 6.0;
     const gdouble INACTIVE_SHADOW_OFFSET_X_VALUE = 7.0;
+    const gint    INACTIVE_SHADOW_OFFSET_X_INT_VALUE = INACTIVE_SHADOW_OFFSET_X_VALUE;
     const gdouble INACTIVE_SHADOW_OFFSET_Y_VALUE = 8.0;
-    const std::string INACTIVE_SHADOW_COLOR_VALUE ("inactive_shadow_color");
+    const gint    INACTIVE_SHADOW_OFFSET_Y_INT_VALUE = INACTIVE_SHADOW_OFFSET_Y_VALUE;
+    const std::string INACTIVE_SHADOW_COLOR_STR_VALUE ("#000000");
+    const gushort INACTIVE_SHADOW_COLOR_VALUE[] = { 0, 0, 0 };
     const gboolean USE_TOOLTIPS_VALUE = TRUE;
     const guint DRAGGABLE_BORDER_WIDTH_VALUE = 1;
     const gboolean ATTACH_MODAL_DIALOGS_VALUE = TRUE;
@@ -264,12 +308,12 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 						       testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
 						       testing_values::ACTIVE_SHADOW_OFFSET_X_VALUE,
 						       testing_values::ACTIVE_SHADOW_OFFSET_Y_VALUE,
-						       Eq (testing_values::ACTIVE_SHADOW_COLOR_VALUE),
+						       Eq (testing_values::ACTIVE_SHADOW_COLOR_STR_VALUE),
 						       testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
 						       testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
 						       testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
 						       testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
-						       Eq (testing_values::INACTIVE_SHADOW_COLOR_VALUE))).WillOnce (Return (TRUE));
+						       Eq (testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE))).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, useTooltipsChanged (testing_values::USE_TOOLTIPS_VALUE)).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, draggableBorderWidthChanged (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE)).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, attachModalDialogsChanged (testing_values::ATTACH_MODAL_DIALOGS_VALUE)).WillOnce (Return (TRUE));
@@ -289,12 +333,12 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 								testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
 								testing_values::ACTIVE_SHADOW_OFFSET_X_VALUE,
 								testing_values::ACTIVE_SHADOW_OFFSET_Y_VALUE,
-								testing_values::ACTIVE_SHADOW_COLOR_VALUE.c_str (),
+								testing_values::ACTIVE_SHADOW_COLOR_STR_VALUE.c_str (),
 								testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
 								testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
 								testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
 								testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
-								testing_values::INACTIVE_SHADOW_COLOR_VALUE.c_str ()), GBooleanTrue ());
+								testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ()), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (writableMock.get (), testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (writableMock.get (), testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (writableMock.get (), testing_values::ATTACH_MODAL_DIALOGS_VALUE), GBooleanTrue ());
@@ -430,12 +474,79 @@ TEST_F(GWDMockSettingsTest, TestMock)
 class GWDSettingsTest :
     public GWDSettingsTestCommon
 {
+    public:
+
+	virtual void SetUp ()
+	{
+	    mSettings.reset (gwd_settings_impl_new (),
+			     boost::bind (gwd_settings_unref, _1));
+	}
+
+    protected:
+
+	boost::shared_ptr <GWDSettingsImpl> mSettings;
 };
 
 TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
 {
-    boost::shared_ptr <GWDSettingsImpl> settingsMock (gwd_settings_impl_new (),
-						  boost::bind (gwd_settings_unref, _1));
+}
 
+TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
+{
+    gwd_settings_writable_shadow_property_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						   testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
+						   testing_values::ACTIVE_SHADOW_RADIUS_VALUE,
+						   testing_values::ACTIVE_SHADOW_OFFSET_X_VALUE,
+						   testing_values::ACTIVE_SHADOW_OFFSET_Y_VALUE,
+						   testing_values::ACTIVE_SHADOW_COLOR_STR_VALUE.c_str (),
+						   testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
+						   testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
+						   testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
+						   testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
+						   testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ());
 
+    AutoUnsetGValue activeShadowValue (G_TYPE_POINTER);
+    AutoUnsetGValue inactiveShadowValue (G_TYPE_POINTER);
+
+    GValue &activeShadowGValue = activeShadowValue;
+    GValue &inactiveShadowGValue = inactiveShadowValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "active-shadow",
+			   &activeShadowGValue);
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "inactive-shadow",
+			   &inactiveShadowGValue);
+
+    decor_shadow_options_t activeShadow =
+    {
+	testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
+	testing_values::ACTIVE_SHADOW_RADIUS_VALUE,
+	{
+	    testing_values::ACTIVE_SHADOW_COLOR_VALUE[0],
+	    testing_values::ACTIVE_SHADOW_COLOR_VALUE[1],
+	    testing_values::ACTIVE_SHADOW_COLOR_VALUE[2]
+	},
+	testing_values::ACTIVE_SHADOW_OFFSET_X_INT_VALUE,
+	testing_values::ACTIVE_SHADOW_OFFSET_Y_INT_VALUE
+    };
+
+    decor_shadow_options_t inactiveShadow =
+    {
+	testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
+	testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
+	{
+	    testing_values::INACTIVE_SHADOW_COLOR_VALUE[0],
+	    testing_values::INACTIVE_SHADOW_COLOR_VALUE[1],
+	    testing_values::INACTIVE_SHADOW_COLOR_VALUE[2]
+	},
+	testing_values::INACTIVE_SHADOW_OFFSET_X_INT_VALUE,
+	testing_values::INACTIVE_SHADOW_OFFSET_Y_INT_VALUE
+    };
+
+    EXPECT_THAT (&activeShadowGValue, GValueMatch <decor_shadow_options_t> (activeShadow,
+									    g_value_get_pointer));
+    EXPECT_THAT (&inactiveShadowGValue, GValueMatch <decor_shadow_options_t> (inactiveShadow,
+									      g_value_get_pointer));
 }

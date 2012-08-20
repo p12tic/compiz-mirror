@@ -192,7 +192,6 @@ static void gwd_settings_set_property (GObject *object,
 					const GValue  *value,
 					GParamSpec *pspec)
 {
-    G_OBJECT_CLASS (gwd_settings_impl_parent_class)->set_property (object, property_id, value, pspec);
 }
 
 static void gwd_settings_get_property (GObject *object,
@@ -201,7 +200,6 @@ static void gwd_settings_get_property (GObject *object,
 					GParamSpec *pspec)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (object);
-    G_OBJECT_CLASS (gwd_settings_impl_parent_class)->get_property (object, property_id, value, pspec);
 
     switch (property_id)
     {
