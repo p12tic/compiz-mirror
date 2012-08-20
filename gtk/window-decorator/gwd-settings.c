@@ -172,8 +172,13 @@ gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
-    priv->draggable_border_width = draggable_border_width;
-    return TRUE;
+    if (priv->draggable_border_width != draggable_border_width)
+    {
+	priv->draggable_border_width = draggable_border_width;
+	return TRUE;
+    }
+    else
+	return FALSE;
 }
 
 gboolean
@@ -183,8 +188,13 @@ gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
-    priv->attach_modal_dialogs = attach_modal_dialogs;
-    return TRUE;
+    if (priv->attach_modal_dialogs != attach_modal_dialogs)
+    {
+	priv->attach_modal_dialogs = attach_modal_dialogs;
+	return TRUE;
+    }
+    else
+	return FALSE;
 }
 
 gboolean

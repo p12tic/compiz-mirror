@@ -703,6 +703,12 @@ TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
 								    g_value_get_boolean));
 }
 
+TEST_F(GWDSettingsTest, TestAttachModalDialogsChangedIsDefault)
+{
+    EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+								     ATTACH_MODAL_DIALOGS_DEFAULT), GBooleanFalse ());
+}
+
 TEST_F(GWDSettingsTest, TestBlurChangedTitlebar)
 {
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
