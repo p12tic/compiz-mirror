@@ -681,6 +681,12 @@ TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
 								  g_value_get_int));
 }
 
+TEST_F(GWDSettingsTest, TestDraggableBorderWidthChangedIsDefault)
+{
+    EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+								       DRAGGABLE_BORDER_WIDTH_DEFAULT), GBooleanFalse ());
+}
+
 TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
 {
     EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
