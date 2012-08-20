@@ -103,7 +103,6 @@ shadow_property_changed (WnckScreen *s)
 		settings->active_shadow_color[0] = c[0] << 8 | c[0];
 		settings->active_shadow_color[1] = c[1] << 8 | c[1];
 		settings->active_shadow_color[2] = c[2] << 8 | c[2];
-		changed = TRUE;
 	    }
 
 	    if (sscanf (t_data[1], "#%2x%2x%2x%2x",

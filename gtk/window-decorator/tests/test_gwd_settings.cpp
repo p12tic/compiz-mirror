@@ -519,31 +519,25 @@ TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
 			   "inactive-shadow",
 			   &inactiveShadowGValue);
 
-    decor_shadow_options_t activeShadow =
-    {
-	testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
-	testing_values::ACTIVE_SHADOW_RADIUS_VALUE,
-	{
-	    testing_values::ACTIVE_SHADOW_COLOR_VALUE[0],
-	    testing_values::ACTIVE_SHADOW_COLOR_VALUE[1],
-	    testing_values::ACTIVE_SHADOW_COLOR_VALUE[2]
-	},
-	testing_values::ACTIVE_SHADOW_OFFSET_X_INT_VALUE,
-	testing_values::ACTIVE_SHADOW_OFFSET_Y_INT_VALUE
-    };
+    decor_shadow_options_t activeShadow;
 
-    decor_shadow_options_t inactiveShadow =
-    {
-	testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
-	testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
-	{
-	    testing_values::INACTIVE_SHADOW_COLOR_VALUE[0],
-	    testing_values::INACTIVE_SHADOW_COLOR_VALUE[1],
-	    testing_values::INACTIVE_SHADOW_COLOR_VALUE[2]
-	},
-	testing_values::INACTIVE_SHADOW_OFFSET_X_INT_VALUE,
-	testing_values::INACTIVE_SHADOW_OFFSET_Y_INT_VALUE
-    };
+    activeShadow.shadow_opacity = testing_values::ACTIVE_SHADOW_OPACITY_VALUE;
+    activeShadow.shadow_radius = testing_values::ACTIVE_SHADOW_RADIUS_VALUE;
+    activeShadow.shadow_offset_x = testing_values::ACTIVE_SHADOW_OFFSET_X_INT_VALUE;
+    activeShadow.shadow_offset_y = testing_values::ACTIVE_SHADOW_OFFSET_Y_INT_VALUE;
+    activeShadow.shadow_color[0] = testing_values::ACTIVE_SHADOW_COLOR_VALUE[0];
+    activeShadow.shadow_color[1] = testing_values::ACTIVE_SHADOW_COLOR_VALUE[1];
+    activeShadow.shadow_color[2] = testing_values::ACTIVE_SHADOW_COLOR_VALUE[2];
+
+    decor_shadow_options_t inactiveShadow;
+
+    inactiveShadow.shadow_opacity = testing_values::INACTIVE_SHADOW_OPACITY_VALUE;
+    inactiveShadow.shadow_radius = testing_values::INACTIVE_SHADOW_RADIUS_VALUE;
+    inactiveShadow.shadow_offset_x = testing_values::INACTIVE_SHADOW_OFFSET_X_INT_VALUE;
+    inactiveShadow.shadow_offset_y = testing_values::INACTIVE_SHADOW_OFFSET_Y_INT_VALUE;
+    inactiveShadow.shadow_color[0] = testing_values::INACTIVE_SHADOW_COLOR_VALUE[0];
+    inactiveShadow.shadow_color[1] = testing_values::INACTIVE_SHADOW_COLOR_VALUE[1];
+    inactiveShadow.shadow_color[2] = testing_values::INACTIVE_SHADOW_COLOR_VALUE[2];
 
     EXPECT_THAT (&activeShadowGValue, GValueMatch <decor_shadow_options_t> (activeShadow,
 									    g_value_get_pointer));

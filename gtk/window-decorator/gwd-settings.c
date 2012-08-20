@@ -1,5 +1,8 @@
 #include <glib-object.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "gwd-settings.h"
 #include "gwd-settings-interface.h"
 #include "gwd-settings-writable-interface.h"
@@ -81,16 +84,35 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    unsigned int c[4];
+
     priv->active_shadow.shadow_radius = active_shadow_radius;
     priv->active_shadow.shadow_opacity = active_shadow_opacity;
     priv->active_shadow.shadow_offset_x = active_shadow_offset_x;
     priv->active_shadow.shadow_offset_y = active_shadow_offset_y;
-    memset (priv->active_shadow.shadow_color, 0, sizeof (unsigned short) * 3);
+
+    if (sscanf (active_shadow_color,
+		"#%2x%2x%2x%2x",
+		&c[0], &c[1], &c[2], &c[3]) == 4)
+    {
+	priv->active_shadow.shadow_color[0] = c[0] << 8 | c[0];
+	priv->active_shadow.shadow_color[1] = c[1] << 8 | c[1];
+	priv->active_shadow.shadow_color[2] = c[2] << 8 | c[2];
+    }
+
+    if (sscanf (inactive_shadow_color,
+		"#%2x%2x%2x%2x",
+		&c[0], &c[1], &c[2], &c[3]) == 4)
+    {
+	priv->inactive_shadow.shadow_color[0] = c[0] << 8 | c[0];
+	priv->inactive_shadow.shadow_color[1] = c[1] << 8 | c[1];
+	priv->inactive_shadow.shadow_color[2] = c[2] << 8 | c[2];
+    }
+
     priv->inactive_shadow.shadow_radius = inactive_shadow_radius;
     priv->inactive_shadow.shadow_opacity = inactive_shadow_opacity;
     priv->inactive_shadow.shadow_offset_x = inactive_shadow_offset_x;
     priv->inactive_shadow.shadow_offset_y = inactive_shadow_offset_y;
-    memset (priv->inactive_shadow.shadow_color, 0, sizeof (unsigned short) * 3);
     return FALSE;
 }
 
