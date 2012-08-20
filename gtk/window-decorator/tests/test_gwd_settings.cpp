@@ -560,3 +560,19 @@ TEST_F(GWDSettingsTest, TestUseTooltipsChanged)
     EXPECT_THAT (&useTooltipsGValue, GValueMatch <gboolean> (testing_values::USE_TOOLTIPS_VALUE,
 							     g_value_get_boolean));
 }
+
+TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
+{
+    EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+								       testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), GBooleanTrue ());
+
+    AutoUnsetGValue draggableBorderWidthValue (G_TYPE_INT);
+    GValue &draggableBorderWidthGValue = draggableBorderWidthValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "draggable-border-width",
+			   &draggableBorderWidthGValue);
+
+    EXPECT_THAT (&draggableBorderWidthGValue, GValueMatch <gint> (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE,
+								  g_value_get_int));
+}
