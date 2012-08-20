@@ -315,14 +315,27 @@ gwd_settings_font_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    if (!titlebar_font)
+	return FALSE;
+
+    const gchar *no_font = NULL;
+    const gchar *use_font = NULL;
+
+    if (titlebar_uses_system_font)
+	use_font = no_font;
+    else
+	use_font = titlebar_font;
+
+    if (g_strcmp0 (priv->titlebar_font, use_font) == 0)
+	return FALSE;
+
     if (priv->titlebar_font)
     {
 	g_free (priv->titlebar_font);
 	priv->titlebar_font = NULL;
     }
 
-    if (!titlebar_uses_system_font)
-	priv->titlebar_font = g_strdup (titlebar_font);
+    priv->titlebar_font = use_font ? g_strdup (use_font) : NULL;
 
     return TRUE;
 }
