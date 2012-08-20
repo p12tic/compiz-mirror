@@ -94,20 +94,22 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    decor_shadow_options_t active_shadow, inactive_shadow;
+
     unsigned int c[4];
 
-    priv->active_shadow.shadow_radius = active_shadow_radius;
-    priv->active_shadow.shadow_opacity = active_shadow_opacity;
-    priv->active_shadow.shadow_offset_x = active_shadow_offset_x;
-    priv->active_shadow.shadow_offset_y = active_shadow_offset_y;
+    active_shadow.shadow_radius = active_shadow_radius;
+    active_shadow.shadow_opacity = active_shadow_opacity;
+    active_shadow.shadow_offset_x = active_shadow_offset_x;
+    active_shadow.shadow_offset_y = active_shadow_offset_y;
 
     if (sscanf (active_shadow_color,
 		"#%2x%2x%2x%2x",
 		&c[0], &c[1], &c[2], &c[3]) == 4)
     {
-	priv->active_shadow.shadow_color[0] = c[0] << 8 | c[0];
-	priv->active_shadow.shadow_color[1] = c[1] << 8 | c[1];
-	priv->active_shadow.shadow_color[2] = c[2] << 8 | c[2];
+	active_shadow.shadow_color[0] = c[0] << 8 | c[0];
+	active_shadow.shadow_color[1] = c[1] << 8 | c[1];
+	active_shadow.shadow_color[2] = c[2] << 8 | c[2];
     }
     else
 	return FALSE;
@@ -116,18 +118,35 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
 		"#%2x%2x%2x%2x",
 		&c[0], &c[1], &c[2], &c[3]) == 4)
     {
-	priv->inactive_shadow.shadow_color[0] = c[0] << 8 | c[0];
-	priv->inactive_shadow.shadow_color[1] = c[1] << 8 | c[1];
-	priv->inactive_shadow.shadow_color[2] = c[2] << 8 | c[2];
+	inactive_shadow.shadow_color[0] = c[0] << 8 | c[0];
+	inactive_shadow.shadow_color[1] = c[1] << 8 | c[1];
+	inactive_shadow.shadow_color[2] = c[2] << 8 | c[2];
     }
     else
 	return FALSE;
 
-    priv->inactive_shadow.shadow_radius = inactive_shadow_radius;
-    priv->inactive_shadow.shadow_opacity = inactive_shadow_opacity;
-    priv->inactive_shadow.shadow_offset_x = inactive_shadow_offset_x;
-    priv->inactive_shadow.shadow_offset_y = inactive_shadow_offset_y;
-    return TRUE;
+    inactive_shadow.shadow_radius = inactive_shadow_radius;
+    inactive_shadow.shadow_opacity = inactive_shadow_opacity;
+    inactive_shadow.shadow_offset_x = inactive_shadow_offset_x;
+    inactive_shadow.shadow_offset_y = inactive_shadow_offset_y;
+
+    gboolean changed = FALSE;
+
+    if (decor_shadow_options_cmp (&priv->inactive_shadow,
+				  &inactive_shadow))
+    {
+	changed |= TRUE;
+	priv->inactive_shadow = inactive_shadow;
+    }
+
+    if (decor_shadow_options_cmp (&priv->active_shadow,
+				  &active_shadow))
+    {
+	changed |= TRUE;
+	priv->active_shadow = active_shadow;
+    }
+
+    return changed;
 }
 
 gboolean
