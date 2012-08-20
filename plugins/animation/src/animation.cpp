@@ -2449,21 +2449,36 @@ PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     return gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 }
 
+AnimEffectUsedFor AnimEffectUsedFor::all ()
+{
+  AnimEffectUsedFor usedFor;
+  usedFor.open = usedFor.close = usedFor.minimize = 
+  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  return usedFor;
+}
+
+AnimEffectUsedFor AnimEffectUsedFor::none ()
+{
+  AnimEffectUsedFor usedFor;  
+  usedFor.open = usedFor.close = usedFor.minimize = 
+  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  return usedFor;
+}
+
 AnimEffectInfo::AnimEffectInfo (const char *name,
-				bool usedO, bool usedC, bool usedM,
-				bool usedS, bool usedU, bool usedF,
+                               AnimEffectUsedFor& usedFor,
 				CreateAnimFunc create,
 				bool isRestackAnim) :
     name (name),
     create (create),
     isRestackAnim (isRestackAnim)
 {
-    usedForEvents[AnimEventOpen] = usedO;
-    usedForEvents[AnimEventClose] = usedC;
-    usedForEvents[AnimEventMinimize] = usedM;
-    usedForEvents[AnimEventShade] = usedS;
-    usedForEvents[AnimEventUnMinimize] = usedU;
-    usedForEvents[AnimEventFocus] = usedF;
+    usedForEvents[AnimEventOpen] = usedFor.open;
+    usedForEvents[AnimEventClose] = usedFor.close;
+    usedForEvents[AnimEventMinimize] = usedFor.minimize;
+    usedForEvents[AnimEventShade] = usedFor.shade;
+    usedForEvents[AnimEventUnMinimize] = usedFor.unMinimize;
+    usedForEvents[AnimEventFocus] = usedFor.focus;
 }
 
 bool
@@ -2583,69 +2598,109 @@ void
 PrivateAnimScreen::initAnimationList ()
 {
     int i = 0;
+    AnimEffectUsedFor usedFor;
+    
+    usedFor = AnimEffectUsedFor::all();
     animEffects[i++] = AnimEffectNone =
-	new AnimEffectInfo ("animation:None",
-			    true, true, true, true, true, true, 0);
+	new AnimEffectInfo ("animation:None", usedFor, 0);
+
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectRandom =
-	new AnimEffectInfo ("animation:Random",
-			    true, true, true, true, true, false, 0);
+	new AnimEffectInfo ("animation:Random", usedFor, 0);
+
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectCurvedFold =
-	new AnimEffectInfo ("animation:Curved Fold",
-			    true, true, true, true, true, false,
+	new AnimEffectInfo ("animation:Curved Fold", usedFor,
 			    &createAnimation<CurvedFoldAnim>);
+        
+    usedFor = AnimEffectUsedFor::none();
+    usedFor.focus = true;
     animEffects[i++] = AnimEffectDodge =
-	new AnimEffectInfo ("animation:Dodge",
-			    false, false, false, false, false, true,
+	new AnimEffectInfo ("animation:Dodge", usedFor,
 			    &createAnimation<DodgeAnim>,
 			    true);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectDream =
-	new AnimEffectInfo ("animation:Dream",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Dream", usedFor,
 			    &createAnimation<DreamAnim>);
+
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectFade =
-	new AnimEffectInfo ("animation:Fade",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Fade", usedFor,
 			    &createAnimation<FadeAnim>);
+        
+    usedFor = AnimEffectUsedFor::none();
+    usedFor.focus = true;
     animEffects[i++] = AnimEffectFocusFade =
-	new AnimEffectInfo ("animation:Focus Fade",
-			    false, false, false, false, false, true,
+	new AnimEffectInfo ("animation:Focus Fade", usedFor,
 			    &createAnimation<FocusFadeAnim>,
 			    true);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectGlide1 =
-	new AnimEffectInfo ("animation:Glide 1",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Glide 1", usedFor,
 			    &createAnimation<GlideAnim>);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectGlide2 =
-	new AnimEffectInfo ("animation:Glide 2",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Glide 2", usedFor,
 			    &createAnimation<Glide2Anim>);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectHorizontalFolds =
-	new AnimEffectInfo ("animation:Horizontal Folds",
-			    true, true, true, true, true, false,
+	new AnimEffectInfo ("animation:Horizontal Folds", usedFor,
 			    &createAnimation<HorizontalFoldsAnim>);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectMagicLamp =
-	new AnimEffectInfo ("animation:Magic Lamp",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Magic Lamp", usedFor,
 			    &createAnimation<MagicLampAnim>);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectMagicLampWavy =
-	new AnimEffectInfo ("animation:Magic Lamp Wavy",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Magic Lamp Wavy", usedFor,
 			    &createAnimation<MagicLampWavyAnim>);
+        
+    usedFor = AnimEffectUsedFor::none();
+    usedFor.shade = true;
     animEffects[i++] = AnimEffectRollUp =
-	new AnimEffectInfo ("animation:Roll Up",
-			    false, false, false, true, true, false,
+	new AnimEffectInfo ("animation:Roll Up", usedFor,
 			    &createAnimation<RollUpAnim>);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectSidekick =
-	new AnimEffectInfo ("animation:Sidekick",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Sidekick", usedFor,
 			    &createAnimation<SidekickAnim>);
+        
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
     animEffects[i++] = AnimEffectWave =
-	new AnimEffectInfo ("animation:Wave",
-			    true, true, true, false, true, true,
+	new AnimEffectInfo ("animation:Wave", usedFor,
 			    &createAnimation<WaveAnim>);
+    
+    usedFor = AnimEffectUsedFor::all();
+    usedFor.shade = false;
+    usedFor.focus = false;
     animEffects[i++] = AnimEffectZoom =
-	new AnimEffectInfo ("animation:Zoom",
-			    true, true, true, false, true, false,
+	new AnimEffectInfo ("animation:Zoom", usedFor,
 			    &createAnimation<ZoomAnim>);
 
     animExtensionPluginInfo.effectOptions = &getOptions ();

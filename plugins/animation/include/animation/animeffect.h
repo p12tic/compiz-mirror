@@ -8,6 +8,20 @@ typedef Animation *(*CreateAnimFunc) (CompWindow *w,
 				       const AnimEffect info,
 				       const CompRect &icon);
 
+class AnimEffectUsedFor
+{
+public:
+  static AnimEffectUsedFor all();
+  static AnimEffectUsedFor none();
+ 
+  bool open;
+  bool close;
+  bool minimize;
+  bool shade;
+  bool unMinimize;
+  bool focus;
+};
+
  /// Animation info class that holds the name, the list of supported events, and
  /// the creator function for a subclass of Animation.
  /// A pointer to this class is used as an identifier for each implemented
@@ -16,7 +30,7 @@ class AnimEffectInfo
 {
 public:
      AnimEffectInfo (const char *name,
-		     bool usedO, bool usedC, bool usedM, bool usedS, bool usedU, bool usedF,
+		     AnimEffectUsedFor& usedFor, /* bool usedO, bool usedC, bool usedM, bool usedS, bool usedU, bool usedF, */
 		     CreateAnimFunc create, bool isRestackAnim = false);
      ~AnimEffectInfo () {}
      
