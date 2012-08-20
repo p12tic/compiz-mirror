@@ -264,11 +264,6 @@ typedef struct _decor_settings {
     gboolean use_tooltips;
 } decor_settings_t;
 
-#define DOUBLE_CLICK_ACTION_DEFAULT CLICK_ACTION_MAXIMIZE
-#define MIDDLE_CLICK_ACTION_DEFAULT CLICK_ACTION_LOWER
-#define RIGHT_CLICK_ACTION_DEFAULT  CLICK_ACTION_MENU
-#define WHEEL_ACTION_DEFAULT        WHEEL_ACTION_NONE
-
 extern gboolean minimal;
 extern decor_settings_t *settings;
 

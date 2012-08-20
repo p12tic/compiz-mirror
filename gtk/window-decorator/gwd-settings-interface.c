@@ -1,5 +1,10 @@
 #include "gwd-settings-interface.h"
 
+const unsigned int DOUBLE_CLICK_ACTION_DEFAULT = CLICK_ACTION_MAXIMIZE;
+const unsigned int MIDDLE_CLICK_ACTION_DEFAULT = CLICK_ACTION_LOWER;
+const unsigned int RIGHT_CLICK_ACTION_DEFAULT = CLICK_ACTION_MENU;
+const unsigned int WHEEL_ACTION_DEFAULT = WHEEL_ACTION_NONE;
+
 static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_interface);
 
 G_DEFINE_INTERFACE (GWDSettings, gwd_settings_interface, G_TYPE_OBJECT);

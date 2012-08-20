@@ -62,6 +62,11 @@ enum {
     WHEEL_ACTION_SHADE
 };
 
+extern const unsigned int DOUBLE_CLICK_ACTION_DEFAULT;
+extern const unsigned int MIDDLE_CLICK_ACTION_DEFAULT;
+extern const unsigned int RIGHT_CLICK_ACTION_DEFAULT;
+extern const unsigned int WHEEL_ACTION_DEFAULT;
+
 GType gwd_settings_interface_get_type (void);
 
 G_END_DECLS

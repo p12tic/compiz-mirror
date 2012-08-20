@@ -247,6 +247,64 @@ gwd_settings_font_changed (GWDSettingsWritable *settings,
     return FALSE;
 }
 
+static gboolean
+get_click_action_value (const gchar *action,
+			gint	    *action_value,
+			gint	    default_value)
+{
+    if (!action_value)
+	return FALSE;
+
+    *action_value = -1;
+
+    if (strcmp (action, "toggle_shade") == 0)
+	*action_value = CLICK_ACTION_SHADE;
+    else if (strcmp (action, "toggle_maximize") == 0)
+	*action_value = CLICK_ACTION_MAXIMIZE;
+    else if (strcmp (action, "minimize") == 0)
+	*action_value = CLICK_ACTION_MINIMIZE;
+    else if (strcmp (action, "raise") == 0)
+	*action_value = CLICK_ACTION_RAISE;
+    else if (strcmp (action, "lower") == 0)
+	*action_value = CLICK_ACTION_LOWER;
+    else if (strcmp (action, "menu") == 0)
+	*action_value = CLICK_ACTION_MENU;
+    else if (strcmp (action, "none") == 0)
+	*action_value = CLICK_ACTION_NONE;
+
+    if (*action_value == -1)
+    {
+	*action_value = default_value;
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
+get_wheel_action_value (const gchar *action,
+			gint	    *action_value,
+			gint	    default_value)
+{
+    if (!action_value)
+	return FALSE;
+
+    *action_value = -1;
+
+    if (strcmp (action, "shade") == 0)
+	*action_value = WHEEL_ACTION_SHADE;
+    else if (strcmp (action, "none") == 0)
+	*action_value = WHEEL_ACTION_NONE;
+
+    if (*action_value == -1)
+    {
+	*action_value = default_value;
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
 gboolean
 gwd_settings_actions_changed (GWDSettingsWritable *settings,
 			      const gchar	   *action_double_click_titlebar,
@@ -254,7 +312,25 @@ gwd_settings_actions_changed (GWDSettingsWritable *settings,
 			      const gchar	   *action_right_click_titlebar,
 			      const gchar	   *mouse_wheel_action)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    gboolean ret = FALSE;
+
+    ret |= get_click_action_value (action_double_click_titlebar,
+				   &priv->titlebar_double_click_action,
+				   DOUBLE_CLICK_ACTION_DEFAULT);
+    ret |= get_click_action_value (action_middle_click_titlebar,
+				   &priv->titlebar_middle_click_action,
+				   MIDDLE_CLICK_ACTION_DEFAULT);
+    ret |= get_click_action_value (action_right_click_titlebar,
+				   &priv->titlebar_right_click_action,
+				   RIGHT_CLICK_ACTION_DEFAULT);
+    ret |= get_wheel_action_value (mouse_wheel_action,
+				   &priv->mouse_wheel_action,
+				   WHEEL_ACTION_DEFAULT);
+
+    return ret;
 }
 
 static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
