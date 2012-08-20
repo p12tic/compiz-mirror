@@ -603,6 +603,11 @@ cdef object DecodeValue (CCSSettingValue * value):
     return "Unhandled"
 
 cdef class Setting:
+    """A python representation of a CCSSetting.
+
+    You should not construct this object directly.
+    Use plugin.Screen['settingname'] instead
+    """
     cdef CCSSetting * ccsSetting
     cdef object info
     cdef Plugin plugin
@@ -723,6 +728,11 @@ cdef class SSGroup:
             self.screen = value
 
 cdef class Plugin:
+    """A python representation of a CCSPlugin.
+
+    You should not construct this object directly.
+    Use context['pluginname'] instead
+    """
     cdef CCSPlugin * ccsPlugin
     cdef Context context
     cdef object screen
@@ -1104,6 +1114,11 @@ cdef class Backend:
             return self.profileSupport
 
 cdef class Context:
+    """A python representation of a CCSContext.
+
+    You should not construct this object directly.
+    Use compizconfig.Context () instead
+    """
     cdef CCSContext * ccsContext
     cdef object plugins
     cdef object categories
