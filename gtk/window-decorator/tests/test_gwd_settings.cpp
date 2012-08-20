@@ -256,7 +256,7 @@ namespace testing_values
     const std::string BUTTON_LAYOUT_VALUE ("button_layout");
     const gboolean USE_SYSTEM_FONT_VALUE = TRUE;
     const gboolean NO_USE_SYSTEM_FONT_VALUE = FALSE;
-    const std::string TITLEBAR_FONT_VALUE ("Sans 12");
+    const std::string TITLEBAR_FONT_VALUE ("Ubuntu 12");
     const std::string TITLEBAR_ACTION_SHADE ("toggle_shade");
     const std::string TITLEBAR_ACTION_MAX_VERT ("toggle_maximize_vertically");
     const std::string TITLEBAR_ACTION_MAX_HORZ ("toggle_maximize_horizontally");
@@ -864,6 +864,12 @@ TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
 								 g_value_get_string));
 }
 
+TEST_F(GWDSettingsTest, TestButtonLayoutChangedIsDefault)
+{
+    EXPECT_THAT (gwd_settings_writable_button_layout_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							      METACITY_BUTTON_LAYOUT_DEFAULT), GBooleanFalse ());
+}
+
 TEST_F(GWDSettingsTest, TestTitlebarFontChanged)
 {
     EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -896,6 +902,14 @@ TEST_F(GWDSettingsTest, TestTitlebarFontChangedUseSystemFont)
 
     EXPECT_THAT (&fontGValue, GValueMatch <const gchar *> (NULL,
 							   g_value_get_string));
+}
+
+
+TEST_F(GWDSettingsTest, TestTitlebarFontChangedIsDefault)
+{
+    EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::NO_USE_SYSTEM_FONT_VALUE,
+						     TITLEBAR_FONT_DEFAULT), GBooleanFalse ());
 }
 
 namespace
@@ -947,11 +961,11 @@ class GWDSettingsTestClickActions :
 
 TEST_P(GWDSettingsTestClickActions, TestClickActionsAndMouseActions)
 {
-    EXPECT_THAT (gwd_settings_writable_titlebar_actions_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-								 GetParam ().titlebarAction ().c_str (),
-								 GetParam ().titlebarAction ().c_str (),
-								 GetParam ().titlebarAction ().c_str (),
-								 GetParam ().mouseWheelAction ().c_str ()), GBooleanTrue ());
+    gwd_settings_writable_titlebar_actions_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						    GetParam ().titlebarAction ().c_str (),
+						    GetParam ().titlebarAction ().c_str (),
+						    GetParam ().titlebarAction ().c_str (),
+						    GetParam ().mouseWheelAction ().c_str ());
 
     AutoUnsetGValue doubleClickActionValue (G_TYPE_INT);
     AutoUnsetGValue middleClickActionValue (G_TYPE_INT);
