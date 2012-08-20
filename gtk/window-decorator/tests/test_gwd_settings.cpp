@@ -257,14 +257,15 @@ namespace testing_values
     const gboolean USE_SYSTEM_FONT_VALUE = TRUE;
     const gboolean NO_USE_SYSTEM_FONT_VALUE = FALSE;
     const std::string TITLEBAR_FONT_VALUE ("Sans 12");
-    const std::string TITLEBAR_ACTION_SHADE ("toggle-shade");
-    const std::string TITLEBAR_ACTION_MAX_VERT ("toggle-maximize-vertically");
-    const std::string TITLEBAR_ACTION_MAX_HORZ ("toggle-maximize-horizontally");
-    const std::string TITLEBAR_ACTION_MAX ("toggle-maximize");
+    const std::string TITLEBAR_ACTION_SHADE ("toggle_shade");
+    const std::string TITLEBAR_ACTION_MAX_VERT ("toggle_maximize_vertically");
+    const std::string TITLEBAR_ACTION_MAX_HORZ ("toggle_maximize_horizontally");
+    const std::string TITLEBAR_ACTION_MAX ("toggle_maximize");
     const std::string TITLEBAR_ACTION_MINIMIZE ("minimize");
     const std::string TITLEBAR_ACTION_MENU ("menu");
     const std::string TITLEBAR_ACTION_LOWER ("lower");
     const std::string TITLEBAR_ACTION_NONE ("none");
+    const std::string MOUSE_WHEEL_ACTION_SHADE ("shade");
 }
 
 template <class ValueCType>
@@ -911,22 +912,22 @@ INSTANTIATE_TEST_CASE_P (MouseActions, GWDSettingsTestClickActions,
 								   CLICK_ACTION_NONE,
 								   WHEEL_ACTION_NONE),
 					    GWDTitlebarActionInfo (testing_values::TITLEBAR_ACTION_SHADE,
-								   testing_values::TITLEBAR_ACTION_SHADE,
+								   testing_values::MOUSE_WHEEL_ACTION_SHADE,
 								   CLICK_ACTION_SHADE,
 								   WHEEL_ACTION_SHADE),
 					    GWDTitlebarActionInfo (testing_values::TITLEBAR_ACTION_MAX,
-								   testing_values::TITLEBAR_ACTION_SHADE,
+								   testing_values::MOUSE_WHEEL_ACTION_SHADE,
 								   CLICK_ACTION_MAXIMIZE,
 								   WHEEL_ACTION_SHADE),
 					    GWDTitlebarActionInfo (testing_values::TITLEBAR_ACTION_MINIMIZE,
-								   testing_values::TITLEBAR_ACTION_SHADE,
+								   testing_values::MOUSE_WHEEL_ACTION_SHADE,
 								   CLICK_ACTION_MINIMIZE,
 								   WHEEL_ACTION_SHADE),
 					    GWDTitlebarActionInfo (testing_values::TITLEBAR_ACTION_LOWER,
-								   testing_values::TITLEBAR_ACTION_SHADE,
+								   testing_values::MOUSE_WHEEL_ACTION_SHADE,
 								   CLICK_ACTION_LOWER,
 								   WHEEL_ACTION_SHADE),
 					    GWDTitlebarActionInfo (testing_values::TITLEBAR_ACTION_MENU,
-								   testing_values::TITLEBAR_ACTION_SHADE,
+								   testing_values::MOUSE_WHEEL_ACTION_SHADE,
 								   CLICK_ACTION_MENU,
 								   WHEEL_ACTION_SHADE)));
