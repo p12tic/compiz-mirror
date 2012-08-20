@@ -740,3 +740,19 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
     EXPECT_THAT (&metacityActiveShadeOpacityGValue, GValueMatch <gboolean> (testing_values::ACTIVE_SHADE_OPACITY_VALUE,
 									g_value_get_boolean));
 }
+
+TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
+{
+    EXPECT_THAT (gwd_settings_writable_button_layout_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							      testing_values::BUTTON_LAYOUT_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue buttonLayoutValue (G_TYPE_STRING);
+    GValue &buttonLayoutGValue = buttonLayoutValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-button-layout",
+			   &buttonLayoutGValue);
+
+    EXPECT_THAT (&buttonLayoutGValue, GValueMatch <std::string> (testing_values::BUTTON_LAYOUT_VALUE,
+								 g_value_get_string));
+}
