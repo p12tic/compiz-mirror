@@ -582,6 +582,8 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
     priv->inactive_shadow.shadow_color[0] = 0;
     priv->inactive_shadow.shadow_color[1] = 0;
     priv->inactive_shadow.shadow_color[2] = 0;
+    priv->draggable_border_width  = DRAGGABLE_BORDER_WIDTH_DEFAULT;
+    priv->attach_modal_dialogs = ATTACH_MODAL_DIALOGS_DEFAULT;
     priv->blur_type = BLUR_TYPE_DEFAULT;
     priv->metacity_theme = g_strdup (METACITY_THEME_DEFAULT);
     priv->metacity_active_opacity = METACITY_ACTIVE_OPACITY_DEFAULT;
