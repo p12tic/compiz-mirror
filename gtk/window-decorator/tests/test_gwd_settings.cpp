@@ -842,10 +842,10 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
 TEST_F(GWDSettingsTest, TestMetacityOpacityChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							METACITY_ACTIVE_OPACITY_DEFAULT,
 							METACITY_INACTIVE_OPACITY_DEFAULT,
-							METACITY_ACTIVE_SHADE_OPACITY_DEFAULT,
-							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT), GBooleanFalse ());
+							METACITY_ACTIVE_OPACITY_DEFAULT,
+							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT,
+							METACITY_ACTIVE_SHADE_OPACITY_DEFAULT), GBooleanFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
