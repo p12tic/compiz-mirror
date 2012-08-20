@@ -180,7 +180,20 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
 				     gboolean	 use_metacity_theme,
 				     const gchar *metacity_theme)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    if (priv->metacity_theme)
+	g_free (priv->metacity_theme);
+
+    if (use_metacity_theme)
+    {
+	priv->metacity_theme = g_strdup (metacity_theme);
+    }
+    else
+	priv->metacity_theme = g_strdup ("");
+
+    return TRUE;
 }
 
 gboolean

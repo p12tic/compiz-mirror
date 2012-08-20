@@ -75,9 +75,9 @@ class GValueCmp <std::string>
 		      GetFunc		get)
 	{
 	    const gchar *valueForValue = (*get) (value);
-	    const std::string valueForValueStr (valueForValue);
+	    const std::string valueForValueStr (valueForValue);\
 
-	    return val != valueForValueStr;
+	    return val == valueForValueStr;
 	}
 };
 
@@ -245,6 +245,8 @@ namespace testing_values
     const gint BLUR_TYPE_NONE_INT_VALUE = BLUR_TYPE_NONE;
     const gboolean USE_METACITY_THEME_VALUE  = TRUE;
     const std::string METACITY_THEME_VALUE ("metacity_theme");
+    const gboolean NO_USE_METACITY_THEME_VALUE  = FALSE;
+    const std::string NO_METACITY_THEME_VALUE ("");
     const gdouble ACTIVE_OPACITY_VALUE = 9.0;
     const gdouble INACTIVE_OPACITY_VALUE = 10.0;
     const gboolean ACTIVE_SHADE_OPACITY_VALUE = TRUE;
@@ -679,4 +681,62 @@ TEST_F(GWDSettingsTest, TestMetacityThemeChanged)
 
     EXPECT_THAT (&metacityThemeGValue, GValueMatch <std::string> (testing_values::METACITY_THEME_VALUE,
 								  g_value_get_string));
+}
+
+TEST_F(GWDSettingsTest, TestMetacityThemeChangedNoUseMetacityTheme)
+{
+    EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							       testing_values::NO_USE_METACITY_THEME_VALUE,
+							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue metacityThemeValue (G_TYPE_STRING);
+    GValue &metacityThemeGValue = metacityThemeValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-theme",
+			   &metacityThemeGValue);
+
+    EXPECT_THAT (&metacityThemeGValue, GValueMatch <std::string> (testing_values::NO_METACITY_THEME_VALUE,
+								  g_value_get_string));
+}
+
+TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
+{
+    EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							testing_values::INACTIVE_OPACITY_VALUE,
+							testing_values::ACTIVE_OPACITY_VALUE,
+							testing_values::INACTIVE_SHADE_OPACITY_VALUE,
+							testing_values::ACTIVE_SHADE_OPACITY_VALUE), GBooleanTrue ());
+
+    AutoUnsetGValue metacityInactiveOpacityValue (G_TYPE_DOUBLE);
+    AutoUnsetGValue metacityActiveOpacityValue (G_TYPE_DOUBLE);
+    AutoUnsetGValue metacityInactiveShadeOpacityValue (G_TYPE_BOOLEAN);
+    AutoUnsetGValue metacityActiveShadeOpacityValue (G_TYPE_BOOLEAN);
+
+    GValue &metacityInactiveOpacityGValue = metacityInactiveOpacityValue;
+    GValue &metacityActiveOpacityGValue = metacityActiveOpacityValue;
+    GValue &metacityInactiveShadeOpacityGValue = metacityInactiveShadeOpacityValue;
+    GValue &metacityActiveShadeOpacityGValue = metacityActiveShadeOpacityValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-inactive-opacity",
+			   &metacityInactiveOpacityGValue);
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-active-opacity",
+			   &metacityActiveOpacityGValue);
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-inactive-shade-opacity",
+			   &metacityInactiveShadeOpacityGValue);
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-active-shade-opacity",
+			   &metacityActiveShadeOpacityGValue);
+
+    EXPECT_THAT (&metacityInactiveOpacityGValue, GValueMatch <gdouble> (testing_values::INACTIVE_OPACITY_VALUE,
+									g_value_get_double));
+    EXPECT_THAT (&metacityActiveOpacityGValue, GValueMatch <gdouble> (testing_values::ACTIVE_OPACITY_VALUE,
+									g_value_get_double));
+    EXPECT_THAT (&metacityInactiveShadeOpacityGValue, GValueMatch <gboolean> (testing_values::INACTIVE_SHADE_OPACITY_VALUE,
+									g_value_get_boolean));
+    EXPECT_THAT (&metacityActiveShadeOpacityGValue, GValueMatch <gboolean> (testing_values::ACTIVE_SHADE_OPACITY_VALUE,
+									g_value_get_boolean));
 }
