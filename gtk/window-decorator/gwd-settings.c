@@ -204,7 +204,7 @@ gwd_settings_blur_changed (GWDSettingsWritable *settings,
 {
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
-    gint new_type = 0;
+    gint new_type = -1;
 
     if (strcmp (type, "titlebar") == 0)
 	new_type = BLUR_TYPE_TITLEBAR;
@@ -213,10 +213,16 @@ gwd_settings_blur_changed (GWDSettingsWritable *settings,
     else if (strcmp (type, "none") == 0)
 	new_type = BLUR_TYPE_NONE;
 
+    if (new_type == -1)
+	return FALSE;
 
-    priv->blur_type = new_type;
-
-    return TRUE;
+    if (priv->blur_type != new_type)
+    {
+	priv->blur_type = new_type;
+	return TRUE;
+    }
+    else
+	return FALSE;
 }
 
 gboolean
