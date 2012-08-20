@@ -18,6 +18,7 @@
 #include "compiz_gwd_mock_settings.h"
 #include "compiz_gwd_mock_settings_writable.h"
 
+using ::testing::TestWithParam;
 using ::testing::Eq;
 using ::testing::Return;
 using ::testing::MatcherInterface;
@@ -25,6 +26,7 @@ using ::testing::MakeMatcher;
 using ::testing::MatchResultListener;
 using ::testing::Matcher;
 using ::testing::IsNull;
+using ::testing::Values;
 using ::testing::_;
 
 template <class ValueCType>
@@ -811,3 +813,100 @@ TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
     EXPECT_THAT (&buttonLayoutGValue, GValueMatch <std::string> (testing_values::BUTTON_LAYOUT_VALUE,
 								 g_value_get_string));
 }
+
+namespace
+{
+    class GWDTitlebarActionInfo
+    {
+	public:
+
+	    GWDTitlebarActionInfo (const std::string &titlebarAction,
+				   const std::string &mouseWheelAction,
+				   const gint	     titlebarActionId,
+				   const gint	     mouseWheelActionId) :
+		mTitlebarAction (titlebarAction),
+		mMouseWheelAction (mouseWheelAction),
+		mTitlebarActionId (titlebarActionId),
+		mMouseWheelActionId (mouseWheelActionId)
+	    {
+	    }
+
+	    const std::string & titlebarAction () const { return mTitlebarAction; }
+	    const std::string & mouseWheelAction () const { return mMouseWheelAction; }
+	    const gint	      & titlebarActionId () const { return mTitlebarActionId; }
+	    const gint	      & mouseWheelActionId () const { return mMouseWheelActionId; }
+
+	private:
+
+	    std::string mTitlebarAction;
+	    std::string mMouseWheelAction;
+	    gint	mTitlebarActionId;
+	    gint	mMouseWheelActionId;
+    };
+}
+
+class GWDSettingsTestClickActions :
+    public ::testing::TestWithParam <GWDTitlebarActionInfo>
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    mSettings.reset (gwd_settings_impl_new (),
+			     boost::bind (gwd_settings_unref, _1));
+	}
+
+    protected:
+
+	boost::shared_ptr <GWDSettingsImpl> mSettings;
+};
+
+TEST_P(GWDSettingsTestClickActions, TestClickActionsAndMouseActions)
+{
+    EXPECT_THAT (gwd_settings_writable_titlebar_actions_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+								 GetParam ().titlebarAction ().c_str (),
+								 GetParam ().titlebarAction ().c_str (),
+								 GetParam ().titlebarAction ().c_str (),
+								 GetParam ().mouseWheelAction ().c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue doubleClickActionValue (G_TYPE_INT);
+    AutoUnsetGValue middleClickActionValue (G_TYPE_INT);
+    AutoUnsetGValue rightClickActionValue (G_TYPE_INT);
+    AutoUnsetGValue mouseWheelActionValue (G_TYPE_INT);
+
+    GValue &doubleClickActionGValue = doubleClickActionValue;
+    GValue &middleClickActionGValue = middleClickActionValue;
+    GValue &rightClickActionGValue = rightClickActionValue;
+    GValue &mouseWheelActionGValue = mouseWheelActionValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "titlebar-double-click-action",
+			   &doubleClickActionGValue);
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "titlebar-middle-click-action",
+			   &middleClickActionGValue);
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "titlebar-right-click-action",
+			   &rightClickActionGValue);
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "mouse-wheel-action",
+			   &mouseWheelActionGValue);
+
+    EXPECT_THAT (&doubleClickActionGValue, GValueMatch <gint> (GetParam ().titlebarActionId (),
+							      g_value_get_int));
+    EXPECT_THAT (&middleClickActionGValue, GValueMatch <gint> (GetParam ().titlebarActionId (),
+							      g_value_get_int));
+    EXPECT_THAT (&rightClickActionGValue, GValueMatch <gint> (GetParam ().titlebarActionId (),
+							     g_value_get_int));
+    EXPECT_THAT (&mouseWheelActionGValue, GValueMatch <gint> (GetParam ().mouseWheelActionId (),
+							     g_value_get_int));
+}
+
+INSTANTIATE_TEST_CASE_P (MouseActions, GWDSettingsTestClickActions,
+			 ::testing::Values (GWDTitlebarActionInfo (testing_values::TITLEBAR_ACTION_NONE,
+								   testing_values::TITLEBAR_ACTION_NONE,
+								   CLICK_ACTION_NONE,
+								   WHEEL_ACTION_NONE)));
