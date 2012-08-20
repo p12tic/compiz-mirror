@@ -1,9 +1,37 @@
 #include "gwd-settings-interface.h"
 
-const unsigned int DOUBLE_CLICK_ACTION_DEFAULT = CLICK_ACTION_MAXIMIZE;
-const unsigned int MIDDLE_CLICK_ACTION_DEFAULT = CLICK_ACTION_LOWER;
-const unsigned int RIGHT_CLICK_ACTION_DEFAULT = CLICK_ACTION_MENU;
-const unsigned int WHEEL_ACTION_DEFAULT = WHEEL_ACTION_NONE;
+const gboolean USE_TOOLTIPS_DEFAULT = FALSE;
+
+const gdouble ACTIVE_SHADOW_RADIUS_DEFAULT = 8.0;
+const gdouble ACTIVE_SHADOW_OPACITY_DEFAULT = 0.5;
+const gint    ACTIVE_SHADOW_OFFSET_X_DEFAULT = 1;
+const gint    ACTIVE_SHADOW_OFFSET_Y_DEFAULT = 1;
+const gchar   *ACTIVE_SHADOW_COLOR_DEFAULT = "#00000000";
+
+const gdouble INACTIVE_SHADOW_RADIUS_DEFAULT = 8.0;
+const gdouble INACTIVE_SHADOW_OPACITY_DEFAULT = 0/5;
+const gint    INACTIVE_SHADOW_OFFSET_X_DEFAULT = 1;
+const gint    INACTIVE_SHADOW_OFFSET_Y_DEFAULT = 1;
+const gchar   *INACTIVE_SHADOW_COLOR_DEFAULT = "#00000000";
+
+const guint   DRAGGABLE_BORDER_WIDTH_DEFAULT = 7;
+const gboolean ATTACH_MODAL_DIALOGS_DEFAULT = FALSE;
+const gint    BLUR_TYPE_DEFAULT = BLUR_TYPE_NONE;
+
+const gchar   *METACITY_THEME_DEFAULT = "Adwaita";
+const gdouble METACITY_ACTIVE_OPACITY_DEFAULT = 1.0;
+const gdouble METACITY_INACTIVE_OPACITY_DEFAULT = 0.75;
+const gboolean METACITY_ACTIVE_SHADE_OPACITY_DEFAULT = TRUE;
+const gboolean METACITY_INACTIVE_SHADE_OPACITY_DEFAULT = TRUE;
+
+const gchar *  METACITY_BUTTON_LAYOUT_DEFAULT = ":minimize,maximize,close";
+
+const guint DOUBLE_CLICK_ACTION_DEFAULT = CLICK_ACTION_MAXIMIZE;
+const guint MIDDLE_CLICK_ACTION_DEFAULT = CLICK_ACTION_LOWER;
+const guint RIGHT_CLICK_ACTION_DEFAULT = CLICK_ACTION_MENU;
+const guint WHEEL_ACTION_DEFAULT = WHEEL_ACTION_NONE;
+
+const gchar * TITLEBAR_FONT_DEFAULT = "Sans 12";
 
 static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_interface);
 
@@ -25,7 +53,7 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 					 g_param_spec_boolean ("use-tooltips",
 							       "Use Tooltips",
 							       "Use Tooltips Setting",
-							       FALSE,
+							       USE_TOOLTIPS_DEFAULT,
 							       G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_int ("draggable-border-width",
@@ -33,27 +61,27 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 							   "Draggable Border Width Setting",
 							   0,
 							   64,
-							   7,
+							   DRAGGABLE_BORDER_WIDTH_DEFAULT,
 							   G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_boolean ("attach-modal-dialogs",
 							       "Attach modal dialogs",
 							       "Attach modal dialogs setting",
-							       FALSE,
+							       ATTACH_MODAL_DIALOGS_DEFAULT,
 							       G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_int ("blur",
 							   "Blur Type",
 							   "Blur type property",
-							   0,
-							   2,
-							   0,
+							   BLUR_TYPE_NONE,
+							   BLUR_TYPE_ALL,
+							   BLUR_TYPE_NONE,
 							   G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_string ("metacity-theme",
 							      "Metacity Theme",
 							      "Metacity Theme Setting",
-							      "",
+							      METACITY_THEME_DEFAULT,
 							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_double ("metacity-active-opacity",
@@ -61,7 +89,7 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 							      "Metacity Active Opacity",
 							      0.0,
 							      1.0,
-							      1.0,
+							      METACITY_ACTIVE_OPACITY_DEFAULT,
 							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_double ("metacity-inactive-opacity",
@@ -69,25 +97,25 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 							      "Metacity Inactive Opacity",
 							      0.0,
 							      1.0,
-							      1.0,
+							      METACITY_INACTIVE_OPACITY_DEFAULT,
 							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_boolean ("metacity-active-shade-opacity",
 							      "Metacity Active Shade Opacity",
 							      "Metacity Active Shade Opacity",
-							      FALSE,
+							      METACITY_ACTIVE_SHADE_OPACITY_DEFAULT,
 							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_boolean ("metacity-inactive-shade-opacity",
 							      "Metacity Inactive Shade Opacity",
 							      "Metacity Inactive Shade Opacity",
-							      FALSE,
+							      METACITY_INACTIVE_SHADE_OPACITY_DEFAULT,
 							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_string ("metacity-button-layout",
 							      "Metacity Button Layout",
 							      "Metacity Button Layout",
-							      "",
+							      METACITY_BUTTON_LAYOUT_DEFAULT,
 							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_int ("titlebar-double-click-action",
@@ -125,6 +153,6 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 					 g_param_spec_string ("titlebar-font",
 							      "Titlebar Font",
 							      "Titlebar Font",
-							      "Sans 12",
+							      TITLEBAR_FONT_DEFAULT,
 							      G_PARAM_READABLE));
 }

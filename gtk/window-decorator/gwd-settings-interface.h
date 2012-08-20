@@ -62,10 +62,38 @@ enum {
     WHEEL_ACTION_SHADE
 };
 
-extern const unsigned int DOUBLE_CLICK_ACTION_DEFAULT;
-extern const unsigned int MIDDLE_CLICK_ACTION_DEFAULT;
-extern const unsigned int RIGHT_CLICK_ACTION_DEFAULT;
-extern const unsigned int WHEEL_ACTION_DEFAULT;
+extern const gboolean USE_TOOLTIPS_DEFAULT;
+
+extern const gdouble ACTIVE_SHADOW_RADIUS_DEFAULT;
+extern const gdouble ACTIVE_SHADOW_OPACITY_DEFAULT;
+extern const gint    ACTIVE_SHADOW_OFFSET_X_DEFAULT;
+extern const gint    ACTIVE_SHADOW_OFFSET_Y_DEFAULT;
+extern const gchar   *ACTIVE_SHADOW_COLOR_DEFAULT;
+
+extern const gdouble INACTIVE_SHADOW_RADIUS_DEFAULT;
+extern const gdouble INACTIVE_SHADOW_OPACITY_DEFAULT;
+extern const gint    INACTIVE_SHADOW_OFFSET_X_DEFAULT;
+extern const gint    INACTIVE_SHADOW_OFFSET_Y_DEFAULT;
+extern const gchar   *INACTIVE_SHADOW_COLOR_DEFAULT;
+
+extern const guint   DRAGGABLE_BORDER_WIDTH_DEFAULT;
+extern const gboolean ATTACH_MODAL_DIALOGS_DEFAULT;
+extern const gint    BLUR_TYPE_DEFAULT;
+
+extern const gchar   *METACITY_THEME_DEFAULT;
+extern const gdouble METACITY_ACTIVE_OPACITY_DEFAULT;
+extern const gdouble METACITY_INACTIVE_OPACITY_DEFAULT;
+extern const gboolean METACITY_ACTIVE_SHADE_OPACITY_DEFAULT;
+extern const gboolean METACITY_INACTIVE_SHADE_OPACITY_DEFAULT;
+
+extern const gchar *  METACITY_BUTTON_LAYOUT_DEFAULT;
+
+extern const guint DOUBLE_CLICK_ACTION_DEFAULT;
+extern const guint MIDDLE_CLICK_ACTION_DEFAULT;
+extern const guint RIGHT_CLICK_ACTION_DEFAULT;
+extern const guint WHEEL_ACTION_DEFAULT;
+
+extern const gchar * TITLEBAR_FONT_DEFAULT;
 
 GType gwd_settings_interface_get_type (void);
 

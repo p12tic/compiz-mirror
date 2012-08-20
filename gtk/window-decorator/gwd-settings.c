@@ -531,6 +531,35 @@ static void gwd_settings_impl_class_init (GWDSettingsImplClass *klass)
 
 static void gwd_settings_impl_init (GWDSettingsImpl *self)
 {
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (self);
+
+    priv->use_tooltips = USE_TOOLTIPS_DEFAULT;
+    priv->active_shadow.shadow_radius = ACTIVE_SHADOW_RADIUS_DEFAULT;
+    priv->active_shadow.shadow_opacity = ACTIVE_SHADOW_OPACITY_DEFAULT;
+    priv->active_shadow.shadow_offset_x = ACTIVE_SHADOW_OFFSET_X_DEFAULT;
+    priv->active_shadow.shadow_offset_y = ACTIVE_SHADOW_OFFSET_Y_DEFAULT;
+    priv->active_shadow.shadow_color[0] = 0;
+    priv->active_shadow.shadow_color[1] = 0;
+    priv->active_shadow.shadow_color[2] = 0;
+    priv->inactive_shadow.shadow_radius = INACTIVE_SHADOW_RADIUS_DEFAULT;
+    priv->inactive_shadow.shadow_opacity = INACTIVE_SHADOW_OPACITY_DEFAULT;
+    priv->inactive_shadow.shadow_offset_x = INACTIVE_SHADOW_OFFSET_X_DEFAULT;
+    priv->inactive_shadow.shadow_offset_y = INACTIVE_SHADOW_OFFSET_Y_DEFAULT;
+    priv->inactive_shadow.shadow_color[0] = 0;
+    priv->inactive_shadow.shadow_color[1] = 0;
+    priv->inactive_shadow.shadow_color[2] = 0;
+    priv->blur_type = BLUR_TYPE_DEFAULT;
+    priv->metacity_theme = g_strdup (METACITY_THEME_DEFAULT);
+    priv->metacity_active_opacity = METACITY_ACTIVE_OPACITY_DEFAULT;
+    priv->metacity_inactive_opacity = METACITY_INACTIVE_OPACITY_DEFAULT;
+    priv->metacity_active_shade_opacity = METACITY_ACTIVE_SHADE_OPACITY_DEFAULT;
+    priv->metacity_inactive_shade_opacity = METACITY_INACTIVE_SHADE_OPACITY_DEFAULT;
+    priv->metacity_button_layout = g_strdup (METACITY_BUTTON_LAYOUT_DEFAULT);
+    priv->titlebar_double_click_action = DOUBLE_CLICK_ACTION_DEFAULT;
+    priv->titlebar_middle_click_action = MIDDLE_CLICK_ACTION_DEFAULT;
+    priv->titlebar_right_click_action = RIGHT_CLICK_ACTION_DEFAULT;
+    priv->mouse_wheel_action = WHEEL_ACTION_DEFAULT;
+    priv->titlebar_font = g_strdup (TITLEBAR_FONT_DEFAULT);
 }
 
 GWDSettings *
