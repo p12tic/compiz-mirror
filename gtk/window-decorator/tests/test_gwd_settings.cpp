@@ -206,7 +206,7 @@ namespace testing_values
     const gint    ACTIVE_SHADOW_OFFSET_X_INT_VALUE = ACTIVE_SHADOW_OFFSET_X_VALUE;
     const gdouble ACTIVE_SHADOW_OFFSET_Y_VALUE = 4.0;
     const gint    ACTIVE_SHADOW_OFFSET_Y_INT_VALUE = ACTIVE_SHADOW_OFFSET_Y_VALUE;
-    const std::string ACTIVE_SHADOW_COLOR_STR_VALUE ("#ffffff");
+    const std::string ACTIVE_SHADOW_COLOR_STR_VALUE ("#ffffffff");
     const gushort ACTIVE_SHADOW_COLOR_VALUE[] = { 255, 255, 255 };
     const gdouble INACTIVE_SHADOW_OPACITY_VALUE = 5.0;
     const gdouble INACTIVE_SHADOW_RADIUS_VALUE = 6.0;
@@ -214,7 +214,7 @@ namespace testing_values
     const gint    INACTIVE_SHADOW_OFFSET_X_INT_VALUE = INACTIVE_SHADOW_OFFSET_X_VALUE;
     const gdouble INACTIVE_SHADOW_OFFSET_Y_VALUE = 8.0;
     const gint    INACTIVE_SHADOW_OFFSET_Y_INT_VALUE = INACTIVE_SHADOW_OFFSET_Y_VALUE;
-    const std::string INACTIVE_SHADOW_COLOR_STR_VALUE ("#000000");
+    const std::string INACTIVE_SHADOW_COLOR_STR_VALUE ("#00000000");
     const gushort INACTIVE_SHADOW_COLOR_VALUE[] = { 0, 0, 0 };
     const gboolean USE_TOOLTIPS_VALUE = TRUE;
     const guint DRAGGABLE_BORDER_WIDTH_VALUE = 1;
@@ -493,17 +493,17 @@ TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
 
 TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
 {
-    gwd_settings_writable_shadow_property_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						   testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
-						   testing_values::ACTIVE_SHADOW_RADIUS_VALUE,
-						   testing_values::ACTIVE_SHADOW_OFFSET_X_VALUE,
-						   testing_values::ACTIVE_SHADOW_OFFSET_Y_VALUE,
-						   testing_values::ACTIVE_SHADOW_COLOR_STR_VALUE.c_str (),
-						   testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
-						   testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
-						   testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
-						   testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
-						   testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ());
+    EXPECT_THAT (gwd_settings_writable_shadow_property_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+								testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
+								testing_values::ACTIVE_SHADOW_RADIUS_VALUE,
+								testing_values::ACTIVE_SHADOW_OFFSET_X_VALUE,
+								testing_values::ACTIVE_SHADOW_OFFSET_Y_VALUE,
+								testing_values::ACTIVE_SHADOW_COLOR_STR_VALUE.c_str (),
+								testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
+								testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
+								testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
+								testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
+								testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ()), GBooleanTrue ());
 
     AutoUnsetGValue activeShadowValue (G_TYPE_POINTER);
     AutoUnsetGValue inactiveShadowValue (G_TYPE_POINTER);
@@ -543,4 +543,20 @@ TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
 									    g_value_get_pointer));
     EXPECT_THAT (&inactiveShadowGValue, GValueMatch <decor_shadow_options_t> (inactiveShadow,
 									      g_value_get_pointer));
+}
+
+TEST_F(GWDSettingsTest, TestUseTooltipsChanged)
+{
+    gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						testing_values::USE_TOOLTIPS_VALUE);
+
+    AutoUnsetGValue useTooltipsValue (G_TYPE_BOOLEAN);
+    GValue &useTooltipsGValue = useTooltipsValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "use-tooltips",
+			   &useTooltipsGValue);
+
+    EXPECT_THAT (&useTooltipsGValue, GValueMatch <gboolean> (testing_values::USE_TOOLTIPS_VALUE,
+							     g_value_get_boolean));
 }

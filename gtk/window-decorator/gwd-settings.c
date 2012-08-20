@@ -99,6 +99,8 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
 	priv->active_shadow.shadow_color[1] = c[1] << 8 | c[1];
 	priv->active_shadow.shadow_color[2] = c[2] << 8 | c[2];
     }
+    else
+	return FALSE;
 
     if (sscanf (inactive_shadow_color,
 		"#%2x%2x%2x%2x",
@@ -108,12 +110,14 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
 	priv->inactive_shadow.shadow_color[1] = c[1] << 8 | c[1];
 	priv->inactive_shadow.shadow_color[2] = c[2] << 8 | c[2];
     }
+    else
+	return FALSE;
 
     priv->inactive_shadow.shadow_radius = inactive_shadow_radius;
     priv->inactive_shadow.shadow_opacity = inactive_shadow_opacity;
     priv->inactive_shadow.shadow_offset_x = inactive_shadow_offset_x;
     priv->inactive_shadow.shadow_offset_y = inactive_shadow_offset_y;
-    return FALSE;
+    return TRUE;
 }
 
 gboolean
