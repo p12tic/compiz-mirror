@@ -236,7 +236,7 @@ namespace testing_values
     const gint    INACTIVE_SHADOW_OFFSET_Y_INT_VALUE = INACTIVE_SHADOW_OFFSET_Y_VALUE;
     const std::string INACTIVE_SHADOW_COLOR_STR_VALUE ("#00000000");
     const gushort INACTIVE_SHADOW_COLOR_VALUE[] = { 0, 0, 0 };
-    const gboolean USE_TOOLTIPS_VALUE = TRUE;
+    const gboolean USE_TOOLTIPS_VALUE = !USE_TOOLTIPS_DEFAULT;
     const guint DRAGGABLE_BORDER_WIDTH_VALUE = 1;
     const gboolean ATTACH_MODAL_DIALOGS_VALUE = TRUE;
     const std::string BLUR_TYPE_TITLEBAR_VALUE ("titlebar");
@@ -251,8 +251,8 @@ namespace testing_values
     const std::string NO_METACITY_THEME_VALUE ("");
     const gdouble ACTIVE_OPACITY_VALUE = 9.0;
     const gdouble INACTIVE_OPACITY_VALUE = 10.0;
-    const gboolean ACTIVE_SHADE_OPACITY_VALUE = TRUE;
-    const gboolean INACTIVE_SHADE_OPACITY_VALUE = TRUE;
+    const gboolean ACTIVE_SHADE_OPACITY_VALUE = !METACITY_ACTIVE_SHADE_OPACITY_DEFAULT;
+    const gboolean INACTIVE_SHADE_OPACITY_VALUE = !METACITY_INACTIVE_SHADE_OPACITY_DEFAULT;
     const std::string BUTTON_LAYOUT_VALUE ("button_layout");
     const gboolean USE_SYSTEM_FONT_VALUE = TRUE;
     const gboolean NO_USE_SYSTEM_FONT_VALUE = FALSE;
@@ -657,6 +657,12 @@ TEST_F(GWDSettingsTest, TestUseTooltipsChanged)
 
     EXPECT_THAT (&useTooltipsGValue, GValueMatch <gboolean> (testing_values::USE_TOOLTIPS_VALUE,
 							     g_value_get_boolean));
+}
+
+TEST_F(GWDSettingsTest, TestUseTooltipsChangedIsDefault)
+{
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     USE_TOOLTIPS_DEFAULT), GBooleanFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
