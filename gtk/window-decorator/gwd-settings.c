@@ -272,6 +272,12 @@ gwd_settings_opacity_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    if (priv->metacity_active_opacity == active_opacity &&
+	priv->metacity_inactive_opacity == inactive_opacity &&
+	priv->metacity_active_shade_opacity == active_shade_opacity &&
+	priv->metacity_inactive_shade_opacity == inactive_shade_opacity)
+	return FALSE;
+
     priv->metacity_active_opacity = active_opacity;
     priv->metacity_inactive_opacity = inactive_opacity;
     priv->metacity_active_shade_opacity = active_shade_opacity;
