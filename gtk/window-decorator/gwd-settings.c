@@ -146,7 +146,11 @@ gboolean
 gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
 					   gboolean    attach_modal_dialogs)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    priv->attach_modal_dialogs = attach_modal_dialogs;
+    return TRUE;
 }
 
 gboolean
