@@ -155,10 +155,24 @@ gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_blur_changed (GWDSettingsWritable *settings,
-				    const gchar *blur_type)
+			   const gchar *type)
 
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+    gint new_type = 0;
+
+    if (strcmp (type, "titlebar") == 0)
+	new_type = BLUR_TYPE_TITLEBAR;
+    else if (strcmp (type, "all") == 0)
+	new_type = BLUR_TYPE_ALL;
+    else if (strcmp (type, "none") == 0)
+	new_type = BLUR_TYPE_NONE;
+
+
+    priv->blur_type = new_type;
+
+    return TRUE;
 }
 
 gboolean

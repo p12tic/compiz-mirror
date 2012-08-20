@@ -219,7 +219,8 @@ namespace testing_values
     const gboolean USE_TOOLTIPS_VALUE = TRUE;
     const guint DRAGGABLE_BORDER_WIDTH_VALUE = 1;
     const gboolean ATTACH_MODAL_DIALOGS_VALUE = TRUE;
-    const std::string BLUR_TYPE_VALUE ("blur_type");
+    const std::string BLUR_TYPE_VALUE ("titlebar");
+    const gint BLUR_TYPE_INT_VALUE = BLUR_TYPE_TITLEBAR;
     const gboolean USE_METACITY_THEME_VALUE  = TRUE;
     const std::string METACITY_THEME_VALUE ("metacity_theme");
     const gdouble ACTIVE_OPACITY_VALUE = 9.0;
@@ -591,4 +592,20 @@ TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
 
     EXPECT_THAT (&attachModalDialogsGValue, GValueMatch <gboolean> (testing_values::ATTACH_MODAL_DIALOGS_VALUE,
 								    g_value_get_boolean));
+}
+
+TEST_F(GWDSettingsTest, TestBlurChangedTitlebar)
+{
+    EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::BLUR_TYPE_VALUE.c_str ()), GBooleanTrue ());
+
+    AutoUnsetGValue blurValue (G_TYPE_INT);
+    GValue &blurGValue = blurValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "blur",
+			   &blurGValue);
+
+    EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_INT_VALUE,
+						  g_value_get_int));
 }
