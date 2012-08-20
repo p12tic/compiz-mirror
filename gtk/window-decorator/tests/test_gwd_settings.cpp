@@ -728,7 +728,7 @@ TEST_F(GWDSettingsTest, TestBlurChangedTitlebar)
 TEST_F(GWDSettingsTest, TestBlurChangedAll)
 {
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						     testing_values::BLUR_TYPE_ALL_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::BLUR_TYPE_ALL_VALUE.c_str ()), GBooleanFalse ());
 
     AutoUnsetGValue blurValue (G_TYPE_INT);
     GValue &blurGValue = blurValue;
