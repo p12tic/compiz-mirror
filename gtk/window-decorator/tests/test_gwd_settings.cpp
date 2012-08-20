@@ -547,8 +547,8 @@ TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
 
 TEST_F(GWDSettingsTest, TestUseTooltipsChanged)
 {
-    gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						testing_values::USE_TOOLTIPS_VALUE);
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
 
     AutoUnsetGValue useTooltipsValue (G_TYPE_BOOLEAN);
     GValue &useTooltipsGValue = useTooltipsValue;

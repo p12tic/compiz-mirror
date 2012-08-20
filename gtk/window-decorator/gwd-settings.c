@@ -124,7 +124,11 @@ gboolean
 gwd_settings_use_tooltips_changed (GWDSettingsWritable *settings,
 				   gboolean    use_tooltips)
 {
-    return FALSE;
+    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
+
+    priv->use_tooltips = use_tooltips;
+    return TRUE;
 }
 
 gboolean
