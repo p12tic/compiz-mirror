@@ -46,6 +46,22 @@ enum
     BLUR_TYPE_ALL = 2
 };
 
+enum
+{
+    CLICK_ACTION_NONE,
+    CLICK_ACTION_SHADE,
+    CLICK_ACTION_MAXIMIZE,
+    CLICK_ACTION_MINIMIZE,
+    CLICK_ACTION_RAISE,
+    CLICK_ACTION_LOWER,
+    CLICK_ACTION_MENU
+};
+
+enum {
+    WHEEL_ACTION_NONE,
+    WHEEL_ACTION_SHADE
+};
+
 GType gwd_settings_interface_get_type (void);
 
 G_END_DECLS

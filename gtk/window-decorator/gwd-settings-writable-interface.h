@@ -60,6 +60,14 @@ struct _GWDSettingsWritableInterface
 				 gboolean inactive_shade_opacity,
 				 gboolean active_shade_opacity);
     gboolean (*button_layout_changed) (GWDSettingsWritable *settings, const gchar *button_layout);
+    gboolean (*font_changed) (GWDSettingsWritable *settings,
+			      gboolean		  titlebar_uses_system_font,
+			      const gchar	  *titlebar_font);
+    gboolean (*titlebar_actions_changed) (GWDSettingsWritable *settings,
+					  const gchar	      *action_double_click_titlebar,
+					  const gchar	      *action_middle_click_titlebar,
+					  const gchar	      *action_right_click_titlebar,
+					  const gchar	      *mouse_wheel_action);
 };
 
 gboolean
@@ -106,6 +114,18 @@ gwd_settings_writable_opacity_changed (GWDSettingsWritable *settings,
 gboolean
 gwd_settings_writable_button_layout_changed (GWDSettingsWritable *settings,
 					     const gchar *button_layout);
+
+gboolean
+gwd_settings_writable_font_changed (GWDSettingsWritable *settings,
+				    gboolean		titlebar_uses_system_font,
+				    const gchar		*titlebar_font);
+
+gboolean
+gwd_settings_writable_titlebar_actions_changed (GWDSettingsWritable *settings,
+						const gchar	   *action_double_click_titlebar,
+						const gchar	   *action_middle_click_titlebar,
+						const gchar	   *action_right_click_titlebar,
+						const gchar	   *mouse_wheel_action);
 
 GType gwd_settings_writable_interface_get_type (void);
 

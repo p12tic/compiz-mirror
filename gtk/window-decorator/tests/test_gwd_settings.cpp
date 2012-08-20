@@ -252,6 +252,17 @@ namespace testing_values
     const gboolean ACTIVE_SHADE_OPACITY_VALUE = TRUE;
     const gboolean INACTIVE_SHADE_OPACITY_VALUE = TRUE;
     const std::string BUTTON_LAYOUT_VALUE ("button_layout");
+    const gboolean USE_SYSTEM_FONT_VALUE = TRUE;
+    const gboolean NO_USE_SYSTEM_FONT_VALUE = FALSE;
+    const std::string TITLEBAR_FONT_VALUE ("Sans 12");
+    const std::string TITLEBAR_ACTION_SHADE ("toggle-shade");
+    const std::string TITLEBAR_ACTION_MAX_VERT ("toggle-maximize-vertically");
+    const std::string TITLEBAR_ACTION_MAX_HORZ ("toggle-maximize-horizontally");
+    const std::string TITLEBAR_ACTION_MAX ("toggle-maximize");
+    const std::string TITLEBAR_ACTION_MINIMIZE ("minimize");
+    const std::string TITLEBAR_ACTION_MENU ("menu");
+    const std::string TITLEBAR_ACTION_LOWER ("lower");
+    const std::string TITLEBAR_ACTION_NONE ("none");
 }
 
 template <class ValueCType>
@@ -349,6 +360,12 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 						testing_values::ACTIVE_SHADE_OPACITY_VALUE,
 						testing_values::INACTIVE_SHADE_OPACITY_VALUE)).WillOnce (Return (TRUE));
     EXPECT_CALL (writableGMock, buttonLayoutChanged (Eq (testing_values::BUTTON_LAYOUT_VALUE))).WillOnce (Return (TRUE));
+    EXPECT_CALL (writableGMock, fontChanged (testing_values::USE_SYSTEM_FONT_VALUE,
+					     testing_values::TITLEBAR_FONT_VALUE.c_str ())).WillOnce (Return (TRUE));
+    EXPECT_CALL (writableGMock, titlebarActionsChanged (Eq (testing_values::TITLEBAR_ACTION_MAX),
+							Eq (testing_values::TITLEBAR_ACTION_MENU),
+							Eq (testing_values::TITLEBAR_ACTION_LOWER),
+							Eq (testing_values::TITLEBAR_ACTION_SHADE))).WillOnce (Return (TRUE));
 
     EXPECT_CALL (writableGMock, dispose ());
     EXPECT_CALL (writableGMock, finalize ());
@@ -378,6 +395,14 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 							testing_values::INACTIVE_SHADE_OPACITY_VALUE), GBooleanTrue ());
     EXPECT_THAT (gwd_settings_writable_button_layout_changed (writableMock.get (),
 							      testing_values::BUTTON_LAYOUT_VALUE.c_str ()), GBooleanTrue ());
+    EXPECT_THAT (gwd_settings_writable_font_changed (writableMock.get (),
+						     testing_values::USE_SYSTEM_FONT_VALUE,
+						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), GBooleanTrue ());
+    EXPECT_THAT (gwd_settings_writable_titlebar_actions_changed (writableMock.get (),
+								 testing_values::TITLEBAR_ACTION_MAX.c_str (),
+								 testing_values::TITLEBAR_ACTION_MENU.c_str (),
+								 testing_values::TITLEBAR_ACTION_LOWER.c_str (),
+								 testing_values::TITLEBAR_ACTION_SHADE.c_str ()), GBooleanTrue ());
 }
 
 class GWDMockSettingsTest :
@@ -457,6 +482,21 @@ TEST_F(GWDMockSettingsTest, TestMock)
     EXPECT_CALL (settingsGMock, getProperty (GWD_MOCK_SETTINGS_PROPERTY_BUTTON_LAYOUT,
 					     GValueMatch <const gchar *> (NULL, g_value_get_string),
 					     _));
+    EXPECT_CALL (settingsGMock, getProperty (GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_ACTION_DOUBLE_CLICK,
+					     GValueMatch <gint> (0, g_value_get_int),
+					     _));
+    EXPECT_CALL (settingsGMock, getProperty (GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_ACTION_MIDDLE_CLICK,
+					     GValueMatch <gint> (0, g_value_get_int),
+					     _));
+    EXPECT_CALL (settingsGMock, getProperty (GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK,
+					     GValueMatch <gint> (0, g_value_get_int),
+					     _));
+    EXPECT_CALL (settingsGMock, getProperty (GWD_MOCK_SETTINGS_PROPERTY_MOUSE_WHEEL_ACTION,
+					     GValueMatch <gint> (0, g_value_get_int),
+					     _));
+    EXPECT_CALL (settingsGMock, getProperty (GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_FONT,
+					     GValueMatch <const gchar *> (NULL, g_value_get_string),
+					     _));
 
     g_object_get_property (G_OBJECT (settingsMock.get ()),
 			   "active-shadow",
@@ -493,6 +533,21 @@ TEST_F(GWDMockSettingsTest, TestMock)
 			   &booleanGValue);
     g_object_get_property (G_OBJECT (settingsMock.get ()),
 			   "metacity-button-layout",
+			   &stringGValue);
+    g_object_get_property (G_OBJECT (settingsMock.get ()),
+			   "titlebar-double-click-action",
+			   &integerGValue);
+    g_object_get_property (G_OBJECT (settingsMock.get ()),
+			   "titlebar-middle-click-action",
+			   &integerGValue);
+    g_object_get_property (G_OBJECT (settingsMock.get ()),
+			   "titlebar-right-click-action",
+			   &integerGValue);
+    g_object_get_property (G_OBJECT (settingsMock.get ()),
+			   "mouse-wheel-action",
+			   &integerGValue);
+    g_object_get_property (G_OBJECT (settingsMock.get ()),
+			   "titlebar-font",
 			   &stringGValue);
 }
 

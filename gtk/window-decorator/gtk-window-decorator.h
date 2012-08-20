@@ -109,6 +109,8 @@
 #include <metacity-private/theme.h>
 #endif
 
+#include "gwd-settings-interface.h"
+
 #define METACITY_GCONF_DIR "/apps/metacity/general"
 #define MUTTER_GCONF_DIR "/apps/mutter/general"
 
@@ -228,21 +230,6 @@ unsigned long flags;
 unsigned long functions;
 unsigned long decorations;
 } MwmHints;
-
-enum {
-    CLICK_ACTION_NONE,
-    CLICK_ACTION_SHADE,
-    CLICK_ACTION_MAXIMIZE,
-    CLICK_ACTION_MINIMIZE,
-    CLICK_ACTION_RAISE,
-    CLICK_ACTION_LOWER,
-    CLICK_ACTION_MENU
-};
-
-enum {
-    WHEEL_ACTION_NONE,
-    WHEEL_ACTION_SHADE
-};
 
 typedef struct _decor_settings {
     int double_click_action;
@@ -531,10 +518,6 @@ extern gint	     tooltip_timer_tag;
 
 extern GSList *draw_list;
 extern guint  draw_idle_id;
-
-#define BLUR_TYPE_NONE     0
-#define BLUR_TYPE_TITLEBAR 1
-#define BLUR_TYPE_ALL      2
 
 /* switcher */
 extern Window     switcher_selected_window;

@@ -149,6 +149,21 @@ static void gwd_mock_settings_class_init (GWDMockSettingsClass *klass)
     g_object_class_override_property (object_class,
 				      GWD_MOCK_SETTINGS_PROPERTY_BUTTON_LAYOUT,
 				      "metacity-button-layout");
+    g_object_class_override_property (object_class,
+				      GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_ACTION_DOUBLE_CLICK,
+				      "titlebar-double-click-action");
+    g_object_class_override_property (object_class,
+				      GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_ACTION_MIDDLE_CLICK,
+				      "titlebar-middle-click-action");
+    g_object_class_override_property (object_class,
+				      GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK,
+				      "titlebar-right-click-action");
+    g_object_class_override_property (object_class,
+				      GWD_MOCK_SETTINGS_PROPERTY_MOUSE_WHEEL_ACTION,
+				      "mouse-wheel-action");
+    g_object_class_override_property (object_class,
+				      GWD_MOCK_SETTINGS_PROPERTY_TITLEBAR_FONT,
+				      "titlebar-font");
     g_object_class_install_property (object_class,
 				     GWD_MOCK_SETTINGS_PROPERTY_GMOCK_INTERFACE,
 				     g_param_spec_pointer ("gmock-interface",

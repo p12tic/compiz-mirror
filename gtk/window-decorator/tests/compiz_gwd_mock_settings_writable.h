@@ -64,6 +64,13 @@ class GWDMockSettingsWritableGMockInterface
 					 gboolean inactiveShadeOpacity,
 					 gboolean activeShadeOpacity) = 0;
 	virtual gboolean buttonLayoutChanged (const gchar *buttonLayout) = 0;
+	virtual gboolean fontChanged (gboolean useSystemFont,
+				      const gchar *titlebarFont) = 0;
+	virtual gboolean titlebarActionsChanged (const gchar *doubleClickAction,
+						 const gchar *middleClickAction,
+						 const gchar *rightClickAction,
+						 const gchar *mouseWheelAction) = 0;
+
 
 	virtual void dispose () = 0;
 	virtual void finalize () = 0;
@@ -83,6 +90,11 @@ class GWDMockSettingsWritableGMock :
 	MOCK_METHOD2 (metacityThemeChanged, gboolean (gboolean, const gchar *));
 	MOCK_METHOD4 (opacityChanged, gboolean (gdouble, gdouble, gboolean, gboolean));
 	MOCK_METHOD1 (buttonLayoutChanged, gboolean (const gchar *));
+	MOCK_METHOD2 (fontChanged, gboolean (gboolean, const gchar *));
+	MOCK_METHOD4 (titlebarActionsChanged, gboolean (const gchar *,
+							const gchar *,
+							const gchar *,
+							const gchar *));
 
 	MOCK_METHOD0 (dispose, void ());
 	MOCK_METHOD0 (finalize, void ());

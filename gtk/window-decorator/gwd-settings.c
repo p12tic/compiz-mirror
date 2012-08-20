@@ -48,7 +48,12 @@ enum
     GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_OPACITY = 9,
     GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_SHADE_OPACITY = 10,
     GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_SHADE_OPACITY = 11,
-    GWD_SETTINGS_IMPL_PROPERTY_BUTTON_LAYOUT = 12
+    GWD_SETTINGS_IMPL_PROPERTY_BUTTON_LAYOUT = 12,
+    GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_DOUBLE_CLICK = 13,
+    GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_MIDDLE_CLICK = 14,
+    GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK = 15,
+    GWD_SETTINGS_IMPL_PROPERTY_MOUSE_WHEEL_ACTION = 16,
+    GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT = 17
 };
 
 
@@ -66,6 +71,11 @@ typedef struct _GWDSettingsImplPrivate
     gboolean		   metacity_active_shade_opacity;
     gboolean		   metacity_inactive_shade_opacity;
     gchar		   *metacity_button_layout;
+    gint		   titlebar_double_click_action;
+    gint		   titlebar_middle_click_action;
+    gint		   titlebar_right_click_action;
+    gint		   mouse_wheel_action;
+    gchar		   *titlebar_font;
 } GWDSettingsImplPrivate;
 
 gboolean
@@ -229,6 +239,24 @@ gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
     return TRUE;
 }
 
+gboolean
+gwd_settings_font_changed (GWDSettingsWritable *settings,
+			   gboolean		titlebar_uses_system_font,
+			   const gchar		*titlebar_font)
+{
+    return FALSE;
+}
+
+gboolean
+gwd_settings_actions_changed (GWDSettingsWritable *settings,
+			      const gchar	   *action_double_click_titlebar,
+			      const gchar	   *action_middle_click_titlebar,
+			      const gchar	   *action_right_click_titlebar,
+			      const gchar	   *mouse_wheel_action)
+{
+    return FALSE;
+}
+
 static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
 {
     interface->shadow_property_changed = gwd_settings_shadow_property_changed;
@@ -239,6 +267,8 @@ static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *
     interface->metacity_theme_changed = gwd_settings_metacity_theme_changed;
     interface->opacity_changed = gwd_settings_opacity_changed;
     interface->button_layout_changed = gwd_settings_button_layout_changed;
+    interface->font_changed = gwd_settings_font_changed;
+    interface->titlebar_actions_changed = gwd_settings_actions_changed;
 }
 
 static void gwd_settings_interface_init (GWDSettingsInterface *interface)
@@ -265,6 +295,12 @@ static void gwd_settings_finalize (GObject *object)
     {
 	g_free (priv->metacity_button_layout);
 	priv->metacity_button_layout = NULL;
+    }
+
+    if (priv->titlebar_font)
+    {
+	g_free (priv->titlebar_font);
+	priv->titlebar_font = NULL;
     }
 }
 
@@ -320,6 +356,21 @@ static void gwd_settings_get_property (GObject *object,
 	case GWD_SETTINGS_IMPL_PROPERTY_BUTTON_LAYOUT:
 	    g_value_set_string (value, priv->metacity_button_layout);
 	    break;
+	case GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_DOUBLE_CLICK:
+	    g_value_set_int (value, priv->titlebar_double_click_action);
+	    break;
+	case GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_MIDDLE_CLICK:
+	    g_value_set_int (value, priv->titlebar_middle_click_action);
+	    break;
+	case GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK:
+	    g_value_set_int (value, priv->titlebar_right_click_action);
+	    break;
+	case GWD_SETTINGS_IMPL_PROPERTY_MOUSE_WHEEL_ACTION:
+	    g_value_set_int (value, priv->mouse_wheel_action);
+	    break;
+	case GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT:
+	    g_value_set_string (value, priv->titlebar_font);
+	    break;
 	default:
 	    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 	    break;
@@ -372,7 +423,22 @@ static void gwd_settings_impl_class_init (GWDSettingsImplClass *klass)
 				      "metacity-inactive-shade-opacity");
     g_object_class_override_property (object_class,
 				      GWD_SETTINGS_IMPL_PROPERTY_BUTTON_LAYOUT,
-				      "metacity-button-layout");;
+				      "metacity-button-layout");
+    g_object_class_override_property (object_class,
+				      GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_DOUBLE_CLICK,
+				      "titlebar-double-click-action");
+    g_object_class_override_property (object_class,
+				      GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_MIDDLE_CLICK,
+				      "titlebar-middle-click-action");
+    g_object_class_override_property (object_class,
+				      GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK,
+				      "titlebar-right-click-action");
+    g_object_class_override_property (object_class,
+				      GWD_SETTINGS_IMPL_PROPERTY_MOUSE_WHEEL_ACTION,
+				      "mouse-wheel-action");
+    g_object_class_override_property (object_class,
+				      GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT,
+				      "titlebar-font");
 }
 
 static void gwd_settings_impl_init (GWDSettingsImpl *self)

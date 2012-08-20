@@ -94,3 +94,27 @@ gwd_settings_writable_button_layout_changed (GWDSettingsWritable *settings,
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->button_layout_changed) (settings, button_layout);
 }
+
+gboolean
+gwd_settings_writable_font_changed (GWDSettingsWritable *settings,
+				    gboolean		titlebar_uses_system_font,
+				    const gchar		*titlebar_font)
+{
+    GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
+    return (*iface->font_changed) (settings, titlebar_uses_system_font, titlebar_font);
+}
+
+gboolean
+gwd_settings_writable_titlebar_actions_changed (GWDSettingsWritable *settings,
+						const gchar	   *action_double_click_titlebar,
+						const gchar	   *action_middle_click_titlebar,
+						const gchar	   *action_right_click_titlebar,
+						const gchar	   *mouse_wheel_action)
+{
+    GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
+    return (*iface->titlebar_actions_changed) (settings,
+					       action_double_click_titlebar,
+					       action_middle_click_titlebar,
+					       action_right_click_titlebar,
+					       mouse_wheel_action);
+}

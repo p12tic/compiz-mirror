@@ -126,6 +126,29 @@ gwd_mock_settings_writable_button_layout_changed (GWDSettingsWritable *settings,
     return gmockSettingsWritable->buttonLayoutChanged (button_layout);
 }
 
+gboolean
+gwd_mock_settings_writable_font_changed (GWDSettingsWritable *settings,
+					 gboolean		titlebar_uses_system_font,
+					 const gchar		*titlebar_font)
+{
+    GWDMockSettingsWritableGMockInterface *gmockSettingsWritable = GET_PRIVATE (settings)->mock;
+    return gmockSettingsWritable->fontChanged (titlebar_uses_system_font, titlebar_font);
+}
+
+gboolean
+gwd_mock_settings_writable_titlebar_actions_changed (GWDSettingsWritable *settings,
+						     const gchar	   *action_double_click_titlebar,
+						     const gchar	   *action_middle_click_titlebar,
+						     const gchar	   *action_right_click_titlebar,
+						     const gchar	   *mouse_wheel_action)
+{
+    GWDMockSettingsWritableGMockInterface *gmockSettingsWritable = GET_PRIVATE (settings)->mock;
+    return gmockSettingsWritable->titlebarActionsChanged (action_double_click_titlebar,
+							  action_middle_click_titlebar,
+							  action_right_click_titlebar,
+							  mouse_wheel_action);
+}
+
 static void gwd_mock_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
 {
     interface->shadow_property_changed = gwd_mock_settings_writable_shadow_property_changed;
@@ -136,6 +159,8 @@ static void gwd_mock_settings_writable_interface_init (GWDSettingsWritableInterf
     interface->metacity_theme_changed = gwd_mock_settings_writable_metacity_theme_changed;
     interface->opacity_changed = gwd_mock_settings_writable_opacity_changed;
     interface->button_layout_changed = gwd_mock_settings_writable_button_layout_changed;
+    interface->font_changed = gwd_mock_settings_writable_font_changed;
+    interface->titlebar_actions_changed = gwd_mock_settings_writable_titlebar_actions_changed;
 }
 
 static GObject * gwd_mock_settings_writable_constructor (GType	type,

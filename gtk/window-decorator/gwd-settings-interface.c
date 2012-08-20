@@ -84,4 +84,42 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 							      "Metacity Button Layout",
 							      "",
 							      G_PARAM_READABLE));
+    g_object_interface_install_property (settings_interface,
+					 g_param_spec_int ("titlebar-double-click-action",
+							   "Titlebar Action Double Click",
+							   "Titlebar Action Double Click",
+							   CLICK_ACTION_NONE,
+							   CLICK_ACTION_MENU,
+							   CLICK_ACTION_MAXIMIZE,
+							   G_PARAM_READABLE));
+    g_object_interface_install_property (settings_interface,
+					 g_param_spec_int ("titlebar-middle-click-action",
+							   "Titlebar Action Middle Click",
+							   "Titlebar Action Middle Click",
+							   CLICK_ACTION_NONE,
+							   CLICK_ACTION_MENU,
+							   CLICK_ACTION_LOWER,
+							   G_PARAM_READABLE));
+    g_object_interface_install_property (settings_interface,
+					 g_param_spec_int ("titlebar-right-click-action",
+							   "Titlebar Action Right Click",
+							   "Titlebar Action Right Click",
+							   CLICK_ACTION_NONE,
+							   CLICK_ACTION_MENU,
+							   CLICK_ACTION_MENU,
+							   G_PARAM_READABLE));
+    g_object_interface_install_property (settings_interface,
+					 g_param_spec_int ("mouse-wheel-action",
+							   "Mouse Wheel Action",
+							   "Mouse Wheel Action",
+							   WHEEL_ACTION_NONE,
+							   WHEEL_ACTION_SHADE,
+							   WHEEL_ACTION_SHADE,
+							   G_PARAM_READABLE));
+    g_object_interface_install_property (settings_interface,
+					 g_param_spec_string ("titlebar-font",
+							      "Titlebar Font",
+							      "Titlebar Font",
+							      "Sans 12",
+							      G_PARAM_READABLE));
 }
