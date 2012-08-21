@@ -531,6 +531,9 @@ static void gwd_settings_set_property (GObject *object,
 	    priv->metacity_inactive_shade_opacity = g_value_get_boolean (value);
 	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_METACITY_THEME:
+	    if (priv->metacity_theme)
+		g_free (priv->metacity_theme);
+
 	    priv->metacity_theme = g_value_dup_string (value);
 	    break;
 	default:
