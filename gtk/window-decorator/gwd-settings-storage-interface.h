@@ -23,11 +23,13 @@
 
 G_BEGIN_DECLS
 
-#define GWD_SETTINGS_STORAGE_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST (obj))
+#define GWD_SETTINGS_STORAGE_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
+					     GWD_TYPE_SETTINGS_STORAGE_INTERFACE, \
+					     GWDSettingsStorage))
 #define GWD_SETTINGS_STORAGE_GET_INTERFACE(obj) (G_TYPE_INSTANCE_GET_INTERFACE(obj, \
-										GWD_TYPE_WRITABLE_SETTINGS_INTERFACE, \
+										GWD_TYPE_SETTINGS_STORAGE_INTERFACE, \
 										GWDSettingsStorageInterface))
-#define GWD_TYPE_WRITABLE_SETTINGS_INTERFACE (gwd_settings_storage_interface_get_type ())
+#define GWD_TYPE_SETTINGS_STORAGE_INTERFACE (gwd_settings_storage_interface_get_type ())
 
 typedef struct _GWDSettingsStorage GWDSettingsStorage;
 typedef struct _GWDSettingsStorageInterface GWDSettingsStorageInterface;
@@ -36,11 +38,28 @@ struct _GWDSettingsStorageInterface
 {
     GTypeInterface parent;
 
-    gboolean (*update_all) (GWDSettingsStorage *storage);
+    gboolean (*update_use_tooltips) (GWDSettingsStorage *settings);
+    gboolean (*update_draggable_border_width) (GWDSettingsStorage *settings);
+    gboolean (*update_attach_modal_dialogs) (GWDSettingsStorage *settings);
+    gboolean (*update_blur) (GWDSettingsStorage *settings);
+    gboolean (*update_metacity_theme) (GWDSettingsStorage *settings);
+    gboolean (*update_opacity) (GWDSettingsStorage *settings);
+    gboolean (*update_button_layout) (GWDSettingsStorage *settings);
+    gboolean (*update_font) (GWDSettingsStorage *settings);
+    gboolean (*update_titlebar_actions) (GWDSettingsStorage *settings);
 };
 
-gboolean
-gwd_settings_storage_update_all (GWDSettingsStorage *storage);
+gboolean gwd_settings_storage_update_use_tooltips (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_draggable_border_width (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_attach_modal_dialogs (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_blur (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_metacity_theme (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_opacity (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_button_layout (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_font (GWDSettingsStorage *settings);
+gboolean gwd_settings_storage_update_titlebar_actions (GWDSettingsStorage *settings);
+
+
 
 GType gwd_settings_storage_interface_get_type (void);
 
