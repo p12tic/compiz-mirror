@@ -53,7 +53,8 @@ enum
     GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_MIDDLE_CLICK = 14,
     GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK = 15,
     GWD_SETTINGS_IMPL_PROPERTY_MOUSE_WHEEL_ACTION = 16,
-    GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT = 17
+    GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT = 17,
+    GWD_SETTINGS_IMPL_PROPERTY_CMDLINE_OPTIONS
 };
 
 enum
@@ -85,6 +86,7 @@ typedef struct _GWDSettingsImplPrivate
     gint		   titlebar_right_click_action;
     gint		   mouse_wheel_action;
     gchar		   *titlebar_font;
+    guint		   cmdline_opts;
 } GWDSettingsImplPrivate;
 
 gboolean
@@ -487,6 +489,17 @@ static void gwd_settings_set_property (GObject *object,
 					const GValue  *value,
 					GParamSpec *pspec)
 {
+    switch (property_id)
+    {
+	case GWD_SETTINGS_IMPL_PROPERTY_BLUR_CHANGED:
+	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_OPACITY:
+	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_SHADE_OPACITY:
+	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_OPACITY:
+	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_SHADE_OPACITY:
+	case GWD_SETTINGS_IMPL_PROPERTY_METACITY_THEME:
+	default:
+	    break;
+    }
 }
 
 static void gwd_settings_get_property (GObject *object,
@@ -617,6 +630,17 @@ static void gwd_settings_impl_class_init (GWDSettingsImplClass *klass)
     g_object_class_override_property (object_class,
 				      GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT,
 				      "titlebar-font");
+    g_object_class_install_property (object_class,
+				     GWD_SETTINGS_IMPL_PROPERTY_CMDLINE_OPTIONS,
+				     g_param_spec_int ("cmdline-options",
+						       "Command line options",
+						       "Which options were specified on the command line",
+						       0,
+						       G_MAXINT32,
+						       0,
+						       G_PARAM_READABLE |
+						       G_PARAM_WRITABLE |
+						       G_PARAM_CONSTRUCT_ONLY));
 }
 
 static void gwd_settings_impl_init (GWDSettingsImpl *self)
@@ -652,6 +676,7 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
     priv->titlebar_right_click_action = RIGHT_CLICK_ACTION_DEFAULT;
     priv->mouse_wheel_action = WHEEL_ACTION_DEFAULT;
     priv->titlebar_font = g_strdup (TITLEBAR_FONT_DEFAULT);
+    priv->cmdline_opts = 0;
 }
 
 GWDSettings *
