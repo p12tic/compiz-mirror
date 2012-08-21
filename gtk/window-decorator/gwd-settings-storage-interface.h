@@ -59,8 +59,6 @@ gboolean gwd_settings_storage_update_button_layout (GWDSettingsStorage *settings
 gboolean gwd_settings_storage_update_font (GWDSettingsStorage *settings);
 gboolean gwd_settings_storage_update_titlebar_actions (GWDSettingsStorage *settings);
 
-
-
 GType gwd_settings_storage_interface_get_type (void);
 
 G_END_DECLS

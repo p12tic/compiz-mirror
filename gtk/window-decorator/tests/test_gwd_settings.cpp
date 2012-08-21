@@ -17,6 +17,7 @@
 
 #include "compiz_gwd_mock_settings.h"
 #include "compiz_gwd_mock_settings_writable.h"
+#include "compiz_gwd_mock_settings_storage.h"
 
 using ::testing::TestWithParam;
 using ::testing::Eq;
@@ -231,6 +232,11 @@ const GValue referenceGValue = G_VALUE_INIT;
 
 namespace
 {
+    void gwd_settings_storage_unref (GWDSettingsStorage *storage)
+    {
+	g_object_unref (G_OBJECT (storage));
+    }
+
     void gwd_settings_writable_unref (GWDSettingsWritable *writable)
     {
 	g_object_unref (G_OBJECT (writable));
@@ -1084,3 +1090,139 @@ INSTANTIATE_TEST_CASE_P (MouseActions, GWDSettingsTestClickActions,
 								   testing_values::MOUSE_WHEEL_ACTION_SHADE,
 								   CLICK_ACTION_MENU,
 								   WHEEL_ACTION_SHADE)));
+
+class GWDSettingsStorageFactoryWrapperInterface
+{
+    public:
+
+	typedef boost::shared_ptr <GWDSettingsStorageFactoryWrapperInterface> Ptr;
+	virtual ~GWDSettingsStorageFactoryWrapperInterface () {}
+
+	virtual void SetUp (GWDSettingsWritable *writable) = 0;
+	virtual GWDSettingsStorage * GetStorage () = 0;
+	virtual void SetUseTooltips (gboolean useTooltips) = 0;
+	virtual void SetDraggableBorderWidth (gint draggableBorderWidth) = 0;
+	virtual void SetAttachModalDialogs (gboolean attachModalDialogs) = 0;
+	virtual void SetBlur (const std::string &blurType) = 0;
+	virtual void SetOpacity (gdouble activeOpacity,
+				 gdouble inactiveOpacity,
+				 gboolean activeShadeOpacity,
+				 gboolean inactiveShadeOpacity) = 0;
+	virtual void SetUseMetacityTheme (gboolean useMetacityTheme,
+					  const std::string &metacityTheme) = 0;
+	virtual void ButtonLayout (const std::string &buttonLayout) = 0;
+	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont) = 0;
+	virtual void SetTitlebarActions (const std::string &doubleClickAction,
+					 const std::string &middleClickAction,
+					 const std::string &rightClickAction,
+					 const std::string &mouseWheelAction) = 0;
+	virtual void TearDown () = 0;
+};
+
+class GWDSettingsTestStorageUpdates :
+    public ::testing::TestWithParam <GWDSettingsStorageFactoryWrapperInterface::Ptr>
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    g_setenv ("G_SLICE", "always-malloc", TRUE);
+	    g_type_init ();
+	    mSettingsMock.reset (new GWDMockSettingsWritableGMock ());
+	    mSettings.reset (gwd_mock_settings_writable_new (mSettingsMock.get ()),
+			     boost::bind (gwd_settings_writable_unref, _1));
+
+	    GetParam ()->SetUp (mSettings.get ());
+	}
+
+	virtual void TearDown ()
+	{
+	    GetParam ()->TearDown ();
+	    g_unsetenv ("G_SLICE");
+	}
+
+    protected:
+
+	boost::shared_ptr <GWDMockSettingsWritableGMockInterface> mSettingsMock;
+	boost::shared_ptr <GWDSettingsWritable> mSettings;
+};
+
+class GWDMockSettingsStorageFactoryWrapper :
+    public GWDSettingsStorageFactoryWrapperInterface
+{
+    public:
+
+	virtual void SetUp (GWDSettingsWritable *writable)
+	{
+	    mWritable = writable;
+	    mStorageMock.reset (new GWDMockSettingsStorageGMock ());
+	    mStorage.reset (gwd_mock_settings_storage_new (mStorageMock.get ()),
+			    boost::bind (gwd_settings_storage_unref, _1));
+	}
+
+	virtual GWDSettingsStorage * GetStorage ()
+	{
+	    return mStorage.get ();
+	}
+
+	virtual void SetUseTooltips (gboolean useTooltips)
+	{
+	}
+
+	virtual void SetDraggableBorderWidth (gint draggableBorderWidth)
+	{
+	}
+
+	virtual void SetAttachModalDialogs (gboolean attachModalDialogs)
+	{
+	}
+
+	virtual void SetBlur (const std::string &blurType)
+	{
+	}
+
+	virtual void SetOpacity (gdouble activeOpacity,
+				 gdouble inactiveOpacity,
+				 gboolean activeShadeOpacity,
+				 gboolean inactiveShadeOpacity)
+	{
+	}
+
+	virtual void SetUseMetacityTheme (gboolean useMetacityTheme,
+					  const std::string &metacityTheme)
+	{
+	}
+
+	virtual void ButtonLayout (const std::string &buttonLayout)
+	{
+	}
+
+	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont)
+	{
+	}
+
+	virtual void SetTitlebarActions (const std::string &doubleClickAction,
+					 const std::string &middleClickAction,
+					 const std::string &rightClickAction,
+					 const std::string &mouseWheelAction)
+	{
+	}
+
+	virtual void TearDown ()
+	{
+	    if (mStorage)
+	    {
+		EXPECT_CALL (*mStorageMock, dispose ());
+		EXPECT_CALL (*mStorageMock, finalize ());
+	    }
+
+	    mStorage.reset ();
+	    mStorageMock.reset ();
+	}
+
+    private:
+
+	GWDSettingsWritable *mWritable;
+	boost::shared_ptr <GWDMockSettingsStorageGMock> mStorageMock;
+	boost::shared_ptr <GWDSettingsStorage> mStorage;
+};

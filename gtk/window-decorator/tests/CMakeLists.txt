@@ -10,6 +10,12 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
     link_directories (${CMAKE_CURRENT_BINARY_DIR}
 		      ${CMAKE_CURRENT_BINARY_DIR}/..)
 
+    add_library (gtk_window_decorator_mock_settings_storage STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/compiz_gwd_mock_settings_storage.cpp)
+
+    target_link_libraries (gtk_window_decorator_mock_settings_storage
+			   gtk_window_decorator_settings_storage_interface)
+
     add_library (gtk_window_decorator_mock_settings STATIC
 	         ${CMAKE_CURRENT_SOURCE_DIR}/compiz_gwd_mock_settings.cpp)
 
@@ -29,6 +35,7 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 		           gtk_window_decorator_settings
 		           gtk_window_decorator_mock_settings
 			   gtk_window_decorator_mock_settings_writable
+			   gtk_window_decorator_mock_settings_storage
 			   decoration
 		           ${COMPIZ_TEST_GTK_WINDOW_DECORATOR_LIBRARIES}
 			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
