@@ -13,6 +13,7 @@
 #include "gwd-settings-interface.h"
 #include "gwd-settings.h"
 #include "gwd-settings-writable-interface.h"
+#include "gwd-settings-storage-interface.h"
 
 #include "decoration.h"
 
@@ -1230,6 +1231,19 @@ class GWDMockSettingsStorageFactoryWrapper :
 
 TEST_P (GWDSettingsTestStorageUpdates, TestInstantiation)
 {
+    EXPECT_CALL (*mSettingsMock, dispose ());
+    EXPECT_CALL (*mSettingsMock, finalize ());
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetUseTooltips)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetUseTooltips (testing_values::USE_TOOLTIPS_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, useTooltipsChanged (testing_values::USE_TOOLTIPS_VALUE));
+
+    gwd_settings_storage_update_use_tooltips (storage);
+
     EXPECT_CALL (*mSettingsMock, dispose ());
     EXPECT_CALL (*mSettingsMock, finalize ());
 }
