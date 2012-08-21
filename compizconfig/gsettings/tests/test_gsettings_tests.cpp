@@ -1363,14 +1363,9 @@ TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueGoodAllocation)
 
     ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
 
-    CCSSettingInfo			    info =
-    {
-	.forList =
-	{
-	    GetParam ().type (),
-	    NULL
-	}
-    };
+    CCSSettingInfo			    info;
+
+    info.forList.listType = GetParam ().type ();
 
     boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
     GVariantIter			    iter;
@@ -1397,14 +1392,9 @@ TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueThroughListValueDispatch
 
     ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
 
-    CCSSettingInfo			    info =
-    {
-	.forList =
-	{
-	    GetParam ().type (),
-	    NULL
-	}
-    };
+    CCSSettingInfo			    info;
+
+    info.forList.listType = GetParam ().type ();
 
     boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
     GVariantIter			    iter;
@@ -1492,14 +1482,9 @@ TEST_P (CCSGSettingsBackendReadListValueBadTypesTest, TestGSettingsReadListValue
 
     ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
 
-    CCSSettingInfo			    info =
-    {
-	.forList =
-	{
-	    GetParam (),
-	    NULL
-	}
-    };
+    CCSSettingInfo			    info;
+
+    info.forList.listType = GetParam ();
 
     ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
 

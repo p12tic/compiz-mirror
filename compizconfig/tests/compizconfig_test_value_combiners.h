@@ -27,14 +27,27 @@ namespace compizconfig
 		static const unsigned short maxD4 = max / 4;
 		static const unsigned short maxD8 = max / 8;
 
-		static CCSSettingColorValue colorValues[NUM_COLOR_VALUES] = { { .color = { maxD2, maxD4, maxD8, max } },
-									      { .color = { maxD8, maxD4, maxD2, max } },
-									      { .color = { max, maxD4, maxD2, maxD8 } }
-									    };
 		static bool colorValueListInitialized = false;
+
+		static CCSSettingColorValue colorValues[NUM_COLOR_VALUES];
 
 		if (!colorValueListInitialized)
 		{
+		    colorValues[0].color.red = maxD2;
+		    colorValues[0].color.blue = maxD4;
+		    colorValues[0].color.green = maxD8;
+		    colorValues[0].color.alpha = max;
+
+		    colorValues[1].color.red = maxD8;
+		    colorValues[1].color.blue = maxD4;
+		    colorValues[1].color.green = maxD2;
+		    colorValues[1].color.alpha = max;
+
+		    colorValues[1].color.red = max;
+		    colorValues[1].color.blue = maxD4;
+		    colorValues[1].color.green = maxD2;
+		    colorValues[1].color.alpha = maxD8;
+
 		    for (unsigned int i = 0; i < NUM_COLOR_VALUES; i++)
 		    {
 			CharacterWrapper s (ccsColorToString (&colorValues[i]));
