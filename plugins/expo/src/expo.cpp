@@ -1392,9 +1392,16 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 	    v += stride;
 	}
 
+/* I am not entirely certain if these ifdefs are necessary
+ * since we should be doing normalization in the shader,
+ * however I have them here for now */
+#ifndef USE_GLES
 	glEnable (GL_NORMALIZE);
+#endif
 	gWindow->glDrawTexture (texture, transform, attrib, mask);
+#ifndef USE_GLES
 	glDisable (GL_NORMALIZE);
+#endif
     }
     else
     {
