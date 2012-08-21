@@ -136,54 +136,42 @@ void
 PrivateAnimAddonScreen::initAnimationList ()
 {
     int i = 0;
+    AnimEffectUsedFor usedFor = AnimEffectUsedFor::all()
+                                .exclude(AnimEventFocus)
+                                .exclude(AnimEventShade);
 
     animEffects[i++] = AnimEffectAirplane =
-	new AnimEffectInfo ("animationaddon:Airplane",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Airplane", usedFor,
 			    &createAnimation<AirplaneAnim>);
-
     animEffects[i++] = AnimEffectBeamUp =
-	new AnimEffectInfo ("animationaddon:Beam Up",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Beam Up", usedFor,
 			    &createAnimation<BeamUpAnim>);
     animEffects[i++] = AnimEffectBurn =
-	new AnimEffectInfo ("animationaddon:Burn",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Burn", usedFor,
 			    &createAnimation<BurnAnim>);
     animEffects[i++] = AnimEffectDissolve =
-	new AnimEffectInfo ("animationaddon:Dissolve",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Dissolve", usedFor,
 			    &createAnimation<DissolveAnim>);
     animEffects[i++] = AnimEffectDomino =
-	new AnimEffectInfo ("animationaddon:Domino",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Domino", usedFor,
 			    &createAnimation<DominoAnim>);
     animEffects[i++] = AnimEffectExplode =
-	new AnimEffectInfo ("animationaddon:Explode",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Explode", usedFor,
 			    &createAnimation<ExplodeAnim>);
-
     animEffects[i++] = AnimEffectFold =
-	new AnimEffectInfo ("animationaddon:Fold",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Fold", usedFor,
 			    &createAnimation<FoldAnim>);
-
     animEffects[i++] = AnimEffectGlide3 =
-	new AnimEffectInfo ("animationaddon:Glide 3",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Glide 3", usedFor,
 			    &createAnimation<Glide3Anim>);
-
     animEffects[i++] = AnimEffectLeafSpread =
-	new AnimEffectInfo ("animationaddon:Leaf Spread",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Leaf Spread", usedFor,
 			    &createAnimation<LeafSpreadAnim>);
     animEffects[i++] = AnimEffectRazr =
-	new AnimEffectInfo ("animationaddon:Razr",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Razr", usedFor,
 			    &createAnimation<RazrAnim>);
     animEffects[i++] = AnimEffectSkewer =
-	new AnimEffectInfo ("animationaddon:Skewer",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animationaddon:Skewer", usedFor,
 			    &createAnimation<SkewerAnim>);
 
     animAddonExtPluginInfo.effectOptions = &getOptions ();
