@@ -29,7 +29,14 @@ G_BEGIN_DECLS
 GType gwd_settings_impl_get_type ();
 
 GWDSettings *
-gwd_settings_impl_new ();
+gwd_settings_impl_new (gint *blur,
+		       gdouble *active_opacity,
+		       gdouble *inactive_opacity,
+		       gboolean *active_shade_opacity,
+		       gboolean *inactive_shade_opacity,
+		       const gchar **metacity_theme);
+
+extern const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS;
 
 G_END_DECLS
 

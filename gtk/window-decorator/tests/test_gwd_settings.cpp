@@ -562,7 +562,12 @@ class GWDSettingsTest :
 	virtual void SetUp ()
 	{
 	    GWDSettingsTestCommon::SetUp ();
-	    mSettings.reset (gwd_settings_impl_new (),
+	    mSettings.reset (gwd_settings_impl_new (NULL,
+						    NULL,
+						    NULL,
+						    NULL,
+						    NULL,
+						    NULL),
 			     boost::bind (gwd_settings_unref, _1));
 	}
 
@@ -953,7 +958,12 @@ class GWDSettingsTestClickActions :
 	{
 	    g_setenv ("G_SLICE", "always-malloc", TRUE);
 	    g_type_init ();
-	    mSettings.reset (gwd_settings_impl_new (),
+	    mSettings.reset (gwd_settings_impl_new (NULL,
+						    NULL,
+						    NULL,
+						    NULL,
+						    NULL,
+						    NULL),
 			     boost::bind (gwd_settings_unref, _1));
 	}
 

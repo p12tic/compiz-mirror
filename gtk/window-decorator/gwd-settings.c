@@ -67,6 +67,10 @@ enum
     CMDLINE_THEME = (1 << 5)
 };
 
+/* Always N command line parameters + 1 for command line
+ * options enum */
+const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS = 7;
+
 typedef struct _GWDSettingsImplPrivate
 {
     decor_shadow_options_t active_shadow;
@@ -489,8 +493,13 @@ static void gwd_settings_set_property (GObject *object,
 					const GValue  *value,
 					GParamSpec *pspec)
 {
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (object);
+
     switch (property_id)
     {
+	case GWD_SETTINGS_IMPL_PROPERTY_CMDLINE_OPTIONS:
+	    priv->cmdline_opts = g_value_get_int (value);
+	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_BLUR_CHANGED:
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_OPACITY:
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_SHADE_OPACITY:
@@ -679,10 +688,183 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
     priv->cmdline_opts = 0;
 }
 
-GWDSettings *
-gwd_settings_impl_new ()
+static gboolean
+set_blur_construction_value (gint	*blur,
+			     GParameter *params,
+			     GValue	*blur_value)
 {
-    GWDSettingsImpl *settings = GWD_SETTINGS_IMPL (g_object_newv (GWD_TYPE_SETTINGS_IMPL, 0, NULL));
+    if (blur)
+    {
+	g_value_set_int (blur_value, *blur);
+
+	params->name = "blur";
+	params->value = *blur_value;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+set_active_opacity_construction_value (gdouble	  *active_opacity,
+				       GParameter *params,
+				       GValue	  *active_opacity_value)
+{
+    if (active_opacity)
+    {
+	g_value_set_double (active_opacity_value, *active_opacity);
+
+	params->name = "metacity-active-opacity";
+	params->value = *active_opacity_value;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+set_inactive_opacity_construction_value (gdouble  *inactive_opacity,
+					 GParameter *params,
+					 GValue	  *inactive_opacity_value)
+{
+    if (inactive_opacity)
+    {
+	g_value_set_double (inactive_opacity_value, *inactive_opacity);
+
+	params->name = "metacity-inactive-opacity";
+	params->value = *inactive_opacity_value;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+set_active_shade_opacity_construction_value (gboolean	  *active_shade_opacity,
+					     GParameter   *params,
+					     GValue	  *active_shade_opacity_value)
+{
+    if (active_shade_opacity)
+    {
+	g_value_set_boolean (active_shade_opacity_value, *active_shade_opacity);
+
+	params->name = "metacity-active-shade-opacity";
+	params->value = *active_shade_opacity_value;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+set_inactive_shade_opacity_construction_value (gboolean	  *inactive_shade_opacity,
+					       GParameter *params,
+					       GValue	  *inactive_shade_opacity_value)
+{
+    if (inactive_shade_opacity)
+    {
+	g_value_set_boolean (inactive_shade_opacity_value, *inactive_shade_opacity);
+
+	params->name = "metacity-inactive-shade-opacity";
+	params->value = *inactive_shade_opacity_value;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+set_metacity_theme_construction_value (const gchar **metacity_theme,
+				       GParameter *params,
+				       GValue	  *metacity_theme_value)
+{
+    if (metacity_theme)
+    {
+	g_value_set_string (metacity_theme_value, *metacity_theme);
+
+	params->name = "metacity-theme";
+	params->value = *metacity_theme_value;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static guint
+set_flag_and_increment (guint n_param, guint *flags, guint flag)
+{
+    if (!flags)
+	return n_param;
+
+    *flags |= flag;
+    return n_param + 1;
+}
+
+GWDSettings *
+gwd_settings_impl_new (gint *blur,
+		       gdouble *active_opacity,
+		       gdouble *inactive_opacity,
+		       gboolean *active_shade_opacity,
+		       gboolean *inactive_shade_opacity,
+		       const gchar **metacity_theme)
+{
+    int    n_param = 0;
+    guint    cmdline_opts = 0;
+    GParameter param[GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS];
+    GValue blur_value = G_VALUE_INIT;
+    GValue active_opacity_value = G_VALUE_INIT;
+    GValue inactive_opacity_value = G_VALUE_INIT;
+    GValue active_shade_opacity_value = G_VALUE_INIT;
+    GValue inactive_shade_opacity_value = G_VALUE_INIT;
+    GValue metacity_theme_value = G_VALUE_INIT;
+    GValue cmdline_opts_value = G_VALUE_INIT;
+
+    g_value_init (&blur_value, G_TYPE_INT);
+    g_value_init (&active_opacity_value, G_TYPE_DOUBLE);
+    g_value_init (&inactive_opacity_value, G_TYPE_DOUBLE);
+    g_value_init (&active_shade_opacity_value, G_TYPE_BOOLEAN);
+    g_value_init (&inactive_shade_opacity_value, G_TYPE_BOOLEAN);
+    g_value_init (&metacity_theme_value, G_TYPE_STRING);
+    g_value_init (&cmdline_opts_value, G_TYPE_INT);
+
+    if (set_blur_construction_value (blur, &param[n_param], &blur_value))
+	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_BLUR);
+
+    if (set_active_opacity_construction_value (active_opacity, &param[n_param], &active_opacity_value))
+	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_ACTIVE_OPACITY);
+
+    if (set_inactive_opacity_construction_value (inactive_opacity, &param[n_param], &inactive_opacity_value))
+	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_OPACITY);
+
+    if (set_active_shade_opacity_construction_value (active_shade_opacity, &param[n_param], &active_shade_opacity_value))
+	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_ACTIVE_OPACITY_SHADE);
+
+    if (set_inactive_shade_opacity_construction_value (inactive_shade_opacity, &param[n_param], &inactive_shade_opacity_value))
+	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_OPACITY_SHADE);
+
+    if (set_metacity_theme_construction_value (metacity_theme, &param[n_param], &metacity_theme_value))
+	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_THEME);
+
+    g_value_set_int (&cmdline_opts_value, cmdline_opts);
+
+    param[n_param].name = "cmdline-options";
+    param[n_param].value = cmdline_opts_value;
+
+    GWDSettingsImpl *settings = GWD_SETTINGS_IMPL (g_object_newv (GWD_TYPE_SETTINGS_IMPL, n_param, param));
+
+    g_value_unset (&blur_value);
+    g_value_unset (&active_opacity_value);
+    g_value_unset (&inactive_opacity_value);
+    g_value_unset (&active_shade_opacity_value);
+    g_value_unset (&inactive_shade_opacity_value);
+    g_value_unset (&metacity_theme_value);
+    g_value_unset (&cmdline_opts_value);
 
     return GWD_SETTINGS_INTERFACE (settings);
 }
