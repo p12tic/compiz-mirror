@@ -134,7 +134,7 @@ static void gwd_settings_storage_gsettings_set_property (GObject *object,
 	    priv->gwd = g_value_dup_object (value);
 	    break;
 	case GWD_SETTINGS_STORAGE_GSETTINGS_PROPERTY_WRITABLE_SETTINGS:
-	    priv->writable = g_value_get_object (value);
+	    priv->writable = g_value_get_pointer (value);
 	    break;
 	default:
 	    g_assert_not_reached ();
@@ -153,8 +153,8 @@ static void gwd_settings_storage_gsettings_dispose (GObject *object)
     if (priv->mutter)
 	g_object_unref (priv->mutter);
 
-    if (priv->writable)
-	g_object_unref (priv->writable);
+    if (priv->gwd)
+	g_object_unref (priv->gwd);
 }
 
 static void gwd_settings_storage_gsettings_finalize (GObject *object)
@@ -190,11 +190,10 @@ static void gwd_settings_storage_gsettings_class_init (GWDSettingsStorageGSettin
 			     "GSettings Object for org.compiz.gwd",
 			     G_TYPE_SETTINGS,
 			     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY),
-	g_param_spec_object ("writable-settings",
-			     "GWDWritableSettings",
-			     "A GWDWritableSettings object",
-			     GWD_TYPE_WRITABLE_SETTINGS_INTERFACE,
-			     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)
+	g_param_spec_pointer ("writable-settings",
+			      "GWDWritableSettings",
+			      "A GWDWritableSettings object",
+			      G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)
     };
 
     g_object_class_install_properties (object_class,
@@ -222,12 +221,12 @@ gwd_settings_storage_gsettings_new (GSettings *desktop,
     g_value_init (&desktop_value, G_TYPE_OBJECT);
     g_value_init (&mutter_value, G_TYPE_OBJECT);
     g_value_init (&gwd_value, G_TYPE_OBJECT);
-    g_value_init (&writable_value, G_TYPE_OBJECT);
+    g_value_init (&writable_value, G_TYPE_POINTER);
 
     g_value_take_object (&desktop_value, desktop);
     g_value_take_object (&mutter_value, mutter);
     g_value_take_object (&gwd_value, gwd);
-    g_value_set_object (&writable_value, writable);
+    g_value_set_pointer (&writable_value, writable);
 
     GParameter param[] =
     {
