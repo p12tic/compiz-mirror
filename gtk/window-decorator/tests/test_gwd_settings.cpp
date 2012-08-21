@@ -15,6 +15,7 @@
 
 #include "gwd-settings-interface.h"
 #include "gwd-settings.h"
+#include "gwd-settings-storage-gsettings.h"
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings-storage-interface.h"
 
@@ -1162,6 +1163,116 @@ class GWDSettingsTestStorageUpdates :
 
 ACTION_P (InvokeFunctor, p) { return p (); }
 
+TEST_P (GWDSettingsTestStorageUpdates, TestInstantiation)
+{
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetUseTooltips)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetUseTooltips (testing_values::USE_TOOLTIPS_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, useTooltipsChanged (testing_values::USE_TOOLTIPS_VALUE));
+
+    gwd_settings_storage_update_use_tooltips (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetDraggableBorderWidth)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetDraggableBorderWidth (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, draggableBorderWidthChanged (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE));
+
+    gwd_settings_storage_update_draggable_border_width (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetAttachModalDialogs)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetAttachModalDialogs (testing_values::ATTACH_MODAL_DIALOGS_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, attachModalDialogsChanged (testing_values::ATTACH_MODAL_DIALOGS_VALUE));
+
+    gwd_settings_storage_update_attach_modal_dialogs (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetBlur)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetBlur (testing_values::BLUR_TYPE_ALL_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, blurChanged (Eq (testing_values::BLUR_TYPE_ALL_VALUE)));
+
+    gwd_settings_storage_update_blur (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetButtonLayout)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetButtonLayout (testing_values::BUTTON_LAYOUT_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, buttonLayoutChanged (Eq (testing_values::BUTTON_LAYOUT_VALUE)));
+
+    gwd_settings_storage_update_button_layout (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetOpacity)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetOpacity (testing_values::ACTIVE_OPACITY_VALUE,
+			     testing_values::INACTIVE_OPACITY_VALUE,
+			     testing_values::ACTIVE_SHADE_OPACITY_VALUE,
+			     testing_values::INACTIVE_SHADE_OPACITY_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, opacityChanged (testing_values::ACTIVE_OPACITY_VALUE,
+						 testing_values::INACTIVE_OPACITY_VALUE,
+						 testing_values::ACTIVE_SHADE_OPACITY_VALUE,
+						 testing_values::INACTIVE_SHADE_OPACITY_VALUE));
+
+    gwd_settings_storage_update_opacity (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetMetacityTheme)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetMetacityTheme (testing_values::USE_METACITY_THEME_VALUE,
+				   testing_values::METACITY_THEME_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, metacityThemeChanged (testing_values::USE_METACITY_THEME_VALUE,
+						       Eq (testing_values::METACITY_THEME_VALUE)));
+
+    gwd_settings_storage_update_metacity_theme (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetFont)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetFont (testing_values::USE_SYSTEM_FONT_VALUE,
+			  testing_values::TITLEBAR_FONT_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, fontChanged (testing_values::USE_SYSTEM_FONT_VALUE,
+					      Eq (testing_values::TITLEBAR_FONT_VALUE)));
+
+    gwd_settings_storage_update_font (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetTitlebarActions)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetTitlebarActions (testing_values::TITLEBAR_ACTION_LOWER,
+				     testing_values::TITLEBAR_ACTION_MAX,
+				     testing_values::TITLEBAR_ACTION_MENU,
+				     testing_values::TITLEBAR_ACTION_SHADE);
+
+    EXPECT_CALL (*mSettingsMock, titlebarActionsChanged (Eq (testing_values::TITLEBAR_ACTION_LOWER),
+							 Eq (testing_values::TITLEBAR_ACTION_MAX),
+							 Eq (testing_values::TITLEBAR_ACTION_MENU),
+							 Eq (testing_values::TITLEBAR_ACTION_SHADE)));
+
+    gwd_settings_storage_update_titlebar_actions (storage);
+}
+
 class GWDMockSettingsStorageFactoryWrapper :
     public GWDSettingsStorageFactoryWrapperInterface
 {
@@ -1303,115 +1414,80 @@ class GWDMockSettingsStorageFactoryWrapper :
 	boost::shared_ptr <GWDSettingsStorage> mStorage;
 };
 
-TEST_P (GWDSettingsTestStorageUpdates, TestInstantiation)
-{
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetUseTooltips)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetUseTooltips (testing_values::USE_TOOLTIPS_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, useTooltipsChanged (testing_values::USE_TOOLTIPS_VALUE));
-
-    gwd_settings_storage_update_use_tooltips (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetDraggableBorderWidth)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetDraggableBorderWidth (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, draggableBorderWidthChanged (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE));
-
-    gwd_settings_storage_update_draggable_border_width (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetAttachModalDialogs)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetAttachModalDialogs (testing_values::ATTACH_MODAL_DIALOGS_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, attachModalDialogsChanged (testing_values::ATTACH_MODAL_DIALOGS_VALUE));
-
-    gwd_settings_storage_update_attach_modal_dialogs (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetBlur)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetBlur (testing_values::BLUR_TYPE_ALL_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, blurChanged (Eq (testing_values::BLUR_TYPE_ALL_VALUE)));
-
-    gwd_settings_storage_update_blur (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetButtonLayout)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetButtonLayout (testing_values::BUTTON_LAYOUT_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, buttonLayoutChanged (Eq (testing_values::BUTTON_LAYOUT_VALUE)));
-
-    gwd_settings_storage_update_button_layout (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetOpacity)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetOpacity (testing_values::ACTIVE_OPACITY_VALUE,
-			     testing_values::INACTIVE_OPACITY_VALUE,
-			     testing_values::ACTIVE_SHADE_OPACITY_VALUE,
-			     testing_values::INACTIVE_SHADE_OPACITY_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, opacityChanged (testing_values::ACTIVE_OPACITY_VALUE,
-						 testing_values::INACTIVE_OPACITY_VALUE,
-						 testing_values::ACTIVE_SHADE_OPACITY_VALUE,
-						 testing_values::INACTIVE_SHADE_OPACITY_VALUE));
-
-    gwd_settings_storage_update_opacity (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetMetacityTheme)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetMetacityTheme (testing_values::USE_METACITY_THEME_VALUE,
-				   testing_values::METACITY_THEME_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, metacityThemeChanged (testing_values::USE_METACITY_THEME_VALUE,
-						       Eq (testing_values::METACITY_THEME_VALUE)));
-
-    gwd_settings_storage_update_metacity_theme (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetFont)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetFont (testing_values::USE_SYSTEM_FONT_VALUE,
-			  testing_values::TITLEBAR_FONT_VALUE);
-
-    EXPECT_CALL (*mSettingsMock, fontChanged (testing_values::USE_SYSTEM_FONT_VALUE,
-					      Eq (testing_values::TITLEBAR_FONT_VALUE)));
-
-    gwd_settings_storage_update_font (storage);
-}
-
-TEST_P (GWDSettingsTestStorageUpdates, TestSetTitlebarActions)
-{
-    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
-    GetParam ()->SetTitlebarActions (testing_values::TITLEBAR_ACTION_LOWER,
-				     testing_values::TITLEBAR_ACTION_MAX,
-				     testing_values::TITLEBAR_ACTION_MENU,
-				     testing_values::TITLEBAR_ACTION_SHADE);
-
-    EXPECT_CALL (*mSettingsMock, titlebarActionsChanged (Eq (testing_values::TITLEBAR_ACTION_LOWER),
-							 Eq (testing_values::TITLEBAR_ACTION_MAX),
-							 Eq (testing_values::TITLEBAR_ACTION_MENU),
-							 Eq (testing_values::TITLEBAR_ACTION_SHADE)));
-
-    gwd_settings_storage_update_titlebar_actions (storage);
-}
-
 INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
 			 ::testing::Values (boost::shared_static_cast <GWDSettingsStorageFactoryWrapperInterface> (boost::make_shared <GWDMockSettingsStorageFactoryWrapper> ())));
+
+class GWDSettingsStorageGSettingsFactoryWrapper :
+    public GWDSettingsStorageFactoryWrapperInterface
+{
+    public:
+
+	virtual void SetUp (GWDSettingsWritable *writable)
+	{
+	    mStorage.reset (gwd_settings_storage_gsettings_new (NULL,
+								NULL,
+								NULL,
+								writable),
+			    boost::bind (gwd_settings_storage_unref, _1));
+	}
+
+	virtual GWDSettingsStorage * GetStorage ()
+	{
+	    return mStorage.get ();
+	}
+
+	virtual void SetUseTooltips (gboolean useTooltips)
+	{
+	}
+
+	virtual void SetDraggableBorderWidth (gint draggableBorderWidth)
+	{
+	}
+
+	virtual void SetAttachModalDialogs (gboolean attachModalDialogs)
+	{
+	}
+
+	virtual void SetBlur (const std::string &blurType)
+	{
+	}
+
+	virtual void SetOpacity (gdouble activeOpacity,
+				 gdouble inactiveOpacity,
+				 gboolean activeShadeOpacity,
+				 gboolean inactiveShadeOpacity)
+	{
+	}
+
+	virtual void SetMetacityTheme (gboolean useMetacityTheme,
+				       const std::string &metacityTheme)
+	{
+	}
+
+	virtual void SetButtonLayout (const std::string &buttonLayout)
+	{
+	}
+
+	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont)
+	{
+	}
+
+	virtual void SetTitlebarActions (const std::string &doubleClickAction,
+					 const std::string &middleClickAction,
+					 const std::string &rightClickAction,
+					 const std::string &mouseWheelAction)
+	{
+	}
+
+	virtual void TearDown ()
+	{
+	    mStorage.reset ();
+	}
+
+    private:
+
+	boost::shared_ptr <GWDSettingsStorage> mStorage;
+};
+
+INSTANTIATE_TEST_CASE_P (GSettingsStorageUpdates, GWDSettingsTestStorageUpdates,
+			 ::testing::Values (boost::shared_static_cast <GWDSettingsStorageFactoryWrapperInterface> (boost::make_shared <GWDSettingsStorageGSettingsFactoryWrapper> ())));

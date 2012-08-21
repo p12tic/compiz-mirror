@@ -33,6 +33,7 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 
     target_link_libraries (compiz_test_gwd_settings
 		           gtk_window_decorator_settings
+			   gtk_window_decorator_settings_storage_gsettings
 		           gtk_window_decorator_mock_settings
 			   gtk_window_decorator_mock_settings_writable
 			   gtk_window_decorator_mock_settings_storage
