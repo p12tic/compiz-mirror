@@ -293,6 +293,15 @@ gwd_settings_opacity_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    if (priv->cmdline_opts & CMDLINE_ACTIVE_OPACITY)
+	active_opacity = priv->metacity_active_opacity;
+    if (priv->cmdline_opts & CMDLINE_OPACITY)
+	inactive_opacity = priv->metacity_inactive_opacity;
+    if (priv->cmdline_opts & CMDLINE_ACTIVE_OPACITY_SHADE)
+	active_shade_opacity = priv->metacity_active_shade_opacity;
+    if (priv->cmdline_opts & CMDLINE_OPACITY_SHADE)
+	inactive_shade_opacity = priv->metacity_inactive_shade_opacity;
+
     if (priv->metacity_active_opacity == active_opacity &&
 	priv->metacity_inactive_opacity == inactive_opacity &&
 	priv->metacity_active_shade_opacity == active_shade_opacity &&
@@ -510,9 +519,16 @@ static void gwd_settings_set_property (GObject *object,
 	    priv->blur_type = g_value_get_int (value);
 	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_OPACITY:
+	    priv->metacity_active_opacity = g_value_get_double (value);
+	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_SHADE_OPACITY:
+	    priv->metacity_active_shade_opacity = g_value_get_boolean (value);
+	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_OPACITY:
+	    priv->metacity_inactive_opacity = g_value_get_double (value);
+	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_SHADE_OPACITY:
+	    priv->metacity_inactive_shade_opacity = g_value_get_boolean (value);
 	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_METACITY_THEME:
 	    priv->metacity_theme = g_value_dup_string (value);
