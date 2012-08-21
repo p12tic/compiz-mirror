@@ -1191,14 +1191,29 @@ class GWDMockSettingsStorageFactoryWrapper :
 
 	virtual void SetDraggableBorderWidth (gint draggableBorderWidth)
 	{
+	    EXPECT_CALL (*mStorageMock, updateDraggableBorderWidth ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_draggable_border_width_changed, mWritable, draggableBorderWidth)));
 	}
 
 	virtual void SetAttachModalDialogs (gboolean attachModalDialogs)
 	{
+	    EXPECT_CALL (*mStorageMock, updateAttachModalDialogs ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_attach_modal_dialogs_changed, mWritable, attachModalDialogs)));
 	}
 
 	virtual void SetBlur (const std::string &blurType)
 	{
+	    EXPECT_CALL (*mStorageMock, updateBlur ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_blur_changed, mWritable, blurType.c_str ())));
 	}
 
 	virtual void SetOpacity (gdouble activeOpacity,
@@ -1215,6 +1230,11 @@ class GWDMockSettingsStorageFactoryWrapper :
 
 	virtual void SetButtonLayout (const std::string &buttonLayout)
 	{
+	    EXPECT_CALL (*mStorageMock, updateButtonLayout ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_button_layout_changed, mWritable, buttonLayout.c_str ())));
 	}
 
 	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont)
@@ -1298,7 +1318,7 @@ TEST_P (GWDSettingsTestStorageUpdates, TestSetButtonLayout)
 
     EXPECT_CALL (*mSettingsMock, buttonLayoutChanged (Eq (testing_values::BUTTON_LAYOUT_VALUE)));
 
-    gwd_settings_storage_update_blur (storage);
+    gwd_settings_storage_update_button_layout (storage);
 }
 
 INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
