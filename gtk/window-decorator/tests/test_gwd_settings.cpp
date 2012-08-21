@@ -763,6 +763,32 @@ TEST_F(GWDSettingsTest, TestBlurChangedNone)
 						  g_value_get_int));
 }
 
+TEST_F(GWDSettingsTest, TestBlurSetCommandLine)
+{
+    gint blur_type = BLUR_TYPE_ALL;
+
+    mSettings.reset (gwd_settings_impl_new (&blur_type,
+					    NULL,
+					    NULL,
+					    NULL,
+					    NULL,
+					    NULL),
+		     boost::bind (gwd_settings_unref, _1));
+
+    EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), GBooleanFalse ());
+
+    AutoUnsetGValue blurValue (G_TYPE_INT);
+    GValue &blurGValue = blurValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "blur",
+			   &blurGValue);
+
+    EXPECT_THAT (&blurGValue, GValueMatch <gint> (testing_values::BLUR_TYPE_ALL_INT_VALUE,
+						  g_value_get_int));
+}
+
 TEST_F(GWDSettingsTest, TestMetacityThemeChanged)
 {
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
