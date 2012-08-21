@@ -1221,11 +1221,29 @@ class GWDMockSettingsStorageFactoryWrapper :
 				 gboolean activeShadeOpacity,
 				 gboolean inactiveShadeOpacity)
 	{
+	    EXPECT_CALL (*mStorageMock, updateOpacity ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_opacity_changed,
+				mWritable,
+				activeOpacity,
+				inactiveOpacity,
+				activeShadeOpacity,
+				inactiveShadeOpacity)));
 	}
 
 	virtual void SetMetacityTheme (gboolean useMetacityTheme,
 				       const std::string &metacityTheme)
 	{
+	    EXPECT_CALL (*mStorageMock, updateMetacityTheme ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_metacity_theme_changed,
+				mWritable,
+				useMetacityTheme,
+				metacityTheme.c_str ())));
 	}
 
 	virtual void SetButtonLayout (const std::string &buttonLayout)
@@ -1239,6 +1257,14 @@ class GWDMockSettingsStorageFactoryWrapper :
 
 	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont)
 	{
+	    EXPECT_CALL (*mStorageMock, updateFont ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_font_changed,
+				mWritable,
+				useSystemFont,
+				titlebarFont.c_str ())));
 	}
 
 	virtual void SetTitlebarActions (const std::string &doubleClickAction,
@@ -1246,6 +1272,16 @@ class GWDMockSettingsStorageFactoryWrapper :
 					 const std::string &rightClickAction,
 					 const std::string &mouseWheelAction)
 	{
+	    EXPECT_CALL (*mStorageMock, updateTitlebarActions ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_titlebar_actions_changed,
+				mWritable,
+				doubleClickAction.c_str (),
+				middleClickAction.c_str (),
+				rightClickAction.c_str (),
+				mouseWheelAction.c_str ())));
 	}
 
 	virtual void TearDown ()
@@ -1355,8 +1391,8 @@ TEST_P (GWDSettingsTestStorageUpdates, TestSetFont)
     GetParam ()->SetFont (testing_values::USE_SYSTEM_FONT_VALUE,
 			  testing_values::TITLEBAR_FONT_VALUE);
 
-    EXPECT_CALL (*mSettingsMock, metacityThemeChanged (testing_values::USE_SYSTEM_FONT_VALUE,
-						       Eq (testing_values::TITLEBAR_FONT_VALUE)));
+    EXPECT_CALL (*mSettingsMock, fontChanged (testing_values::USE_SYSTEM_FONT_VALUE,
+					      Eq (testing_values::TITLEBAR_FONT_VALUE)));
 
     gwd_settings_storage_update_font (storage);
 }
