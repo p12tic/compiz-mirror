@@ -221,6 +221,9 @@ gwd_settings_blur_changed (GWDSettingsWritable *settings,
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
     gint new_type = -1;
 
+    if (priv->cmdline_opts & CMDLINE_BLUR)
+	return FALSE;
+
     if (strcmp (type, "titlebar") == 0)
 	new_type = BLUR_TYPE_TITLEBAR;
     else if (strcmp (type, "all") == 0)
@@ -501,6 +504,8 @@ static void gwd_settings_set_property (GObject *object,
 	    priv->cmdline_opts = g_value_get_int (value);
 	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_BLUR_CHANGED:
+	    priv->blur_type = g_value_get_int (value);
+	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_OPACITY:
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_SHADE_OPACITY:
 	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_OPACITY:
@@ -818,6 +823,7 @@ gwd_settings_impl_new (gint *blur,
     guint    cmdline_opts = 0;
     GParameter param[GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS];
     GValue blur_value = G_VALUE_INIT;
+
     GValue active_opacity_value = G_VALUE_INIT;
     GValue inactive_opacity_value = G_VALUE_INIT;
     GValue active_shade_opacity_value = G_VALUE_INIT;
@@ -855,6 +861,8 @@ gwd_settings_impl_new (gint *blur,
 
     param[n_param].name = "cmdline-options";
     param[n_param].value = cmdline_opts_value;
+
+    n_param++;
 
     GWDSettingsImpl *settings = GWD_SETTINGS_IMPL (g_object_newv (GWD_TYPE_SETTINGS_IMPL, n_param, param));
 
