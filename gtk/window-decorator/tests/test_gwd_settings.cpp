@@ -1,10 +1,13 @@
 #include <cstring>
 #include <cstdio>
 
+#include <tr1/tuple>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
@@ -24,10 +27,15 @@
 using ::testing::TestWithParam;
 using ::testing::Eq;
 using ::testing::Return;
+using ::testing::InvokeWithoutArgs;
+using ::testing::IgnoreResult;
 using ::testing::MatcherInterface;
 using ::testing::MakeMatcher;
 using ::testing::MatchResultListener;
 using ::testing::Matcher;
+using ::testing::Action;
+using ::testing::ActionInterface;
+using ::testing::MakeAction;
 using ::testing::IsNull;
 using ::testing::Values;
 using ::testing::_;
@@ -1149,6 +1157,8 @@ class GWDSettingsTestStorageUpdates :
 	boost::shared_ptr <GWDSettingsWritable> mSettings;
 };
 
+ACTION_P (InvokeFunctor, p) { return p (); }
+
 class GWDMockSettingsStorageFactoryWrapper :
     public GWDSettingsStorageFactoryWrapperInterface
 {
@@ -1169,6 +1179,11 @@ class GWDMockSettingsStorageFactoryWrapper :
 
 	virtual void SetUseTooltips (gboolean useTooltips)
 	{
+	    EXPECT_CALL (*mStorageMock, updateUseTooltips ())
+		    .WillOnce (
+			InvokeFunctor (
+			    boost::bind (
+				gwd_settings_writable_use_tooltips_changed, mWritable, useTooltips)));
 	}
 
 	virtual void SetDraggableBorderWidth (gint draggableBorderWidth)
