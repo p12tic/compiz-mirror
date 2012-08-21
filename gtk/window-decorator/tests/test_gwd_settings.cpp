@@ -765,9 +765,9 @@ TEST_F(GWDSettingsTest, TestBlurChangedNone)
 
 TEST_F(GWDSettingsTest, TestBlurSetCommandLine)
 {
-    gint blur_type = BLUR_TYPE_ALL;
+    gint blurType = testing_values::BLUR_TYPE_ALL_INT_VALUE;
 
-    mSettings.reset (gwd_settings_impl_new (&blur_type,
+    mSettings.reset (gwd_settings_impl_new (&blurType,
 					    NULL,
 					    NULL,
 					    NULL,
@@ -803,6 +803,33 @@ TEST_F(GWDSettingsTest, TestMetacityThemeChanged)
 			   &metacityThemeGValue);
 
     EXPECT_THAT (&metacityThemeGValue, GValueMatch <std::string> (testing_values::METACITY_THEME_VALUE,
+								  g_value_get_string));
+}
+
+TEST_F(GWDSettingsTest, TestMetacityThemeSetCommandLine)
+{
+    const gchar *metacityTheme = "Ambiance";
+
+    mSettings.reset (gwd_settings_impl_new (NULL,
+					    NULL,
+					    NULL,
+					    NULL,
+					    NULL,
+					    &metacityTheme),
+		     boost::bind (gwd_settings_unref, _1));
+
+    EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							       testing_values::USE_METACITY_THEME_VALUE,
+							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanFalse ());
+
+    AutoUnsetGValue metacityThemeValue (G_TYPE_STRING);
+    GValue &metacityThemeGValue = metacityThemeValue;
+
+    g_object_get_property (G_OBJECT (mSettings.get ()),
+			   "metacity-theme",
+			   &metacityThemeGValue);
+
+    EXPECT_THAT (&metacityThemeGValue, GValueMatch <std::string> (std::string (metacityTheme),
 								  g_value_get_string));
 }
 
