@@ -39,27 +39,6 @@ static void gwd_mock_settings_interface_init (GWDSettingsInterface *interface)
 {
 }
 
-static GObject * gwd_mock_settings_constructor (GType	type,
-						guint   n_construction_properties,
-						GObjectConstructParam *construction_properties)
-{
-    GObject *object = G_OBJECT_CLASS (gwd_mock_settings_parent_class)->constructor (type, n_construction_properties, construction_properties);
-    GWDMockSettingsPrivate *priv = GET_PRIVATE (object);
-    guint   i = 0;
-
-    for (; i < n_construction_properties; ++i)
-    {
-	if (g_strcmp0 (construction_properties[i].pspec->name, "gmock-interface") == 0)
-	{
-	    priv->mock = reinterpret_cast <GWDMockSettingsGMockInterface *> (g_value_get_pointer (construction_properties[i].value));
-	}
-	else
-	    g_assert_not_reached ();
-    }
-
-    return object;
-}
-
 static void gwd_mock_settings_dispose (GObject *object)
 {
     GWDMockSettingsGMockInterface *settingsGMock = GET_PRIVATE (object)->mock;
@@ -87,8 +66,16 @@ static void gwd_mock_settings_set_property (GObject *object,
 	    if (!priv->mock)
 		priv->mock = reinterpret_cast <GWDMockSettingsGMockInterface *> (g_value_get_pointer (value));
 	    break;
+	case GWD_MOCK_SETTINGS_PROPERTY_BLUR_CHANGED:
+	case GWD_MOCK_SETTINGS_PROPERTY_ACTIVE_OPACITY:
+	case GWD_MOCK_SETTINGS_PROPERTY_ACTIVE_SHADE_OPACITY:
+	case GWD_MOCK_SETTINGS_PROPERTY_INACTIVE_OPACITY:
+	case GWD_MOCK_SETTINGS_PROPERTY_INACTIVE_SHADE_OPACITY:
+	case GWD_MOCK_SETTINGS_PROPERTY_METACITY_THEME:
+	    break;
 	default:
 	    g_assert_not_reached ();
+	    break;
     }
 }
 
@@ -111,7 +98,6 @@ static void gwd_mock_settings_class_init (GWDMockSettingsClass *klass)
     object_class->finalize = gwd_mock_settings_finalize;
     object_class->get_property = gwd_mock_settings_get_property;
     object_class->set_property = gwd_mock_settings_set_property;
-    object_class->constructor = gwd_mock_settings_constructor;
 
     g_object_class_override_property (object_class,
 				      GWD_MOCK_SETTINGS_PROPERTY_ACTIVE_SHADOW,

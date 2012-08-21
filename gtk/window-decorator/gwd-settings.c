@@ -56,6 +56,15 @@ enum
     GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT = 17
 };
 
+enum
+{
+    CMDLINE_OPACITY = (1 << 0),
+    CMDLINE_OPACITY_SHADE = (1 << 1),
+    CMDLINE_ACTIVE_OPACITY = (1 << 2),
+    CMDLINE_ACTIVE_OPACITY_SHADE = (1 << 3),
+    CMDLINE_BLUR = (1 << 4),
+    CMDLINE_THEME = (1 << 5)
+};
 
 typedef struct _GWDSettingsImplPrivate
 {
