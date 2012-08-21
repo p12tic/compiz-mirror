@@ -1118,7 +1118,7 @@ class GWDSettingsStorageFactoryWrapperInterface
 				 gdouble inactiveOpacity,
 				 gboolean activeShadeOpacity,
 				 gboolean inactiveShadeOpacity) = 0;
-	virtual void SetUseMetacityTheme (gboolean useMetacityTheme,
+	virtual void SetMetacityTheme (gboolean useMetacityTheme,
 					  const std::string &metacityTheme) = 0;
 	virtual void SetButtonLayout (const std::string &buttonLayout) = 0;
 	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont) = 0;
@@ -1223,8 +1223,8 @@ class GWDMockSettingsStorageFactoryWrapper :
 	{
 	}
 
-	virtual void SetUseMetacityTheme (gboolean useMetacityTheme,
-					  const std::string &metacityTheme)
+	virtual void SetMetacityTheme (gboolean useMetacityTheme,
+				       const std::string &metacityTheme)
 	{
 	}
 
@@ -1319,6 +1319,62 @@ TEST_P (GWDSettingsTestStorageUpdates, TestSetButtonLayout)
     EXPECT_CALL (*mSettingsMock, buttonLayoutChanged (Eq (testing_values::BUTTON_LAYOUT_VALUE)));
 
     gwd_settings_storage_update_button_layout (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetOpacity)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetOpacity (testing_values::ACTIVE_OPACITY_VALUE,
+			     testing_values::INACTIVE_OPACITY_VALUE,
+			     testing_values::ACTIVE_SHADE_OPACITY_VALUE,
+			     testing_values::INACTIVE_SHADE_OPACITY_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, opacityChanged (testing_values::ACTIVE_OPACITY_VALUE,
+						 testing_values::INACTIVE_OPACITY_VALUE,
+						 testing_values::ACTIVE_SHADE_OPACITY_VALUE,
+						 testing_values::INACTIVE_SHADE_OPACITY_VALUE));
+
+    gwd_settings_storage_update_opacity (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetMetacityTheme)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetMetacityTheme (testing_values::USE_METACITY_THEME_VALUE,
+				   testing_values::METACITY_THEME_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, metacityThemeChanged (testing_values::USE_METACITY_THEME_VALUE,
+						       Eq (testing_values::METACITY_THEME_VALUE)));
+
+    gwd_settings_storage_update_metacity_theme (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetFont)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetFont (testing_values::USE_SYSTEM_FONT_VALUE,
+			  testing_values::TITLEBAR_FONT_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, metacityThemeChanged (testing_values::USE_SYSTEM_FONT_VALUE,
+						       Eq (testing_values::TITLEBAR_FONT_VALUE)));
+
+    gwd_settings_storage_update_font (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetTitlebarActions)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetTitlebarActions (testing_values::TITLEBAR_ACTION_LOWER,
+				     testing_values::TITLEBAR_ACTION_MAX,
+				     testing_values::TITLEBAR_ACTION_MENU,
+				     testing_values::TITLEBAR_ACTION_SHADE);
+
+    EXPECT_CALL (*mSettingsMock, titlebarActionsChanged (Eq (testing_values::TITLEBAR_ACTION_LOWER),
+							 Eq (testing_values::TITLEBAR_ACTION_MAX),
+							 Eq (testing_values::TITLEBAR_ACTION_MENU),
+							 Eq (testing_values::TITLEBAR_ACTION_SHADE)));
+
+    gwd_settings_storage_update_titlebar_actions (storage);
 }
 
 INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
