@@ -1120,7 +1120,7 @@ class GWDSettingsStorageFactoryWrapperInterface
 				 gboolean inactiveShadeOpacity) = 0;
 	virtual void SetUseMetacityTheme (gboolean useMetacityTheme,
 					  const std::string &metacityTheme) = 0;
-	virtual void ButtonLayout (const std::string &buttonLayout) = 0;
+	virtual void SetButtonLayout (const std::string &buttonLayout) = 0;
 	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont) = 0;
 	virtual void SetTitlebarActions (const std::string &doubleClickAction,
 					 const std::string &middleClickAction,
@@ -1147,6 +1147,9 @@ class GWDSettingsTestStorageUpdates :
 
 	virtual void TearDown ()
 	{
+	    EXPECT_CALL (*mSettingsMock, dispose ());
+	    EXPECT_CALL (*mSettingsMock, finalize ());
+
 	    GetParam ()->TearDown ();
 	    g_unsetenv ("G_SLICE");
 	}
@@ -1210,7 +1213,7 @@ class GWDMockSettingsStorageFactoryWrapper :
 	{
 	}
 
-	virtual void ButtonLayout (const std::string &buttonLayout)
+	virtual void SetButtonLayout (const std::string &buttonLayout)
 	{
 	}
 
@@ -1246,8 +1249,6 @@ class GWDMockSettingsStorageFactoryWrapper :
 
 TEST_P (GWDSettingsTestStorageUpdates, TestInstantiation)
 {
-    EXPECT_CALL (*mSettingsMock, dispose ());
-    EXPECT_CALL (*mSettingsMock, finalize ());
 }
 
 TEST_P (GWDSettingsTestStorageUpdates, TestSetUseTooltips)
@@ -1258,9 +1259,46 @@ TEST_P (GWDSettingsTestStorageUpdates, TestSetUseTooltips)
     EXPECT_CALL (*mSettingsMock, useTooltipsChanged (testing_values::USE_TOOLTIPS_VALUE));
 
     gwd_settings_storage_update_use_tooltips (storage);
+}
 
-    EXPECT_CALL (*mSettingsMock, dispose ());
-    EXPECT_CALL (*mSettingsMock, finalize ());
+TEST_P (GWDSettingsTestStorageUpdates, TestSetDraggableBorderWidth)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetDraggableBorderWidth (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, draggableBorderWidthChanged (testing_values::DRAGGABLE_BORDER_WIDTH_VALUE));
+
+    gwd_settings_storage_update_draggable_border_width (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetAttachModalDialogs)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetAttachModalDialogs (testing_values::ATTACH_MODAL_DIALOGS_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, attachModalDialogsChanged (testing_values::ATTACH_MODAL_DIALOGS_VALUE));
+
+    gwd_settings_storage_update_attach_modal_dialogs (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetBlur)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetBlur (testing_values::BLUR_TYPE_ALL_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, blurChanged (Eq (testing_values::BLUR_TYPE_ALL_VALUE)));
+
+    gwd_settings_storage_update_blur (storage);
+}
+
+TEST_P (GWDSettingsTestStorageUpdates, TestSetButtonLayout)
+{
+    GWDSettingsStorage *storage = GetParam ()->GetStorage ();
+    GetParam ()->SetButtonLayout (testing_values::BUTTON_LAYOUT_VALUE);
+
+    EXPECT_CALL (*mSettingsMock, buttonLayoutChanged (Eq (testing_values::BUTTON_LAYOUT_VALUE)));
+
+    gwd_settings_storage_update_blur (storage);
 }
 
 INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
