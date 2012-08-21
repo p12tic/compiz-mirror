@@ -6,6 +6,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 #include <glib-object.h>
 
@@ -1143,7 +1144,7 @@ class GWDSettingsTestStorageUpdates :
 
     protected:
 
-	boost::shared_ptr <GWDMockSettingsWritableGMockInterface> mSettingsMock;
+	boost::shared_ptr <GWDMockSettingsWritableGMock> mSettingsMock;
 	boost::shared_ptr <GWDSettingsWritable> mSettings;
 };
 
@@ -1226,3 +1227,12 @@ class GWDMockSettingsStorageFactoryWrapper :
 	boost::shared_ptr <GWDMockSettingsStorageGMock> mStorageMock;
 	boost::shared_ptr <GWDSettingsStorage> mStorage;
 };
+
+TEST_P (GWDSettingsTestStorageUpdates, TestInstantiation)
+{
+    EXPECT_CALL (*mSettingsMock, dispose ());
+    EXPECT_CALL (*mSettingsMock, finalize ());
+}
+
+INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
+			 ::testing::Values (boost::shared_static_cast <GWDSettingsStorageFactoryWrapperInterface> (boost::make_shared <GWDMockSettingsStorageFactoryWrapper> ())));
