@@ -264,6 +264,9 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
     GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
+    if (priv->cmdline_opts & CMDLINE_THEME)
+	return FALSE;
+
     if (!metacity_theme)
 	return FALSE;
 
@@ -510,7 +513,10 @@ static void gwd_settings_set_property (GObject *object,
 	case GWD_SETTINGS_IMPL_PROPERTY_ACTIVE_SHADE_OPACITY:
 	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_OPACITY:
 	case GWD_SETTINGS_IMPL_PROPERTY_INACTIVE_SHADE_OPACITY:
+	    break;
 	case GWD_SETTINGS_IMPL_PROPERTY_METACITY_THEME:
+	    priv->metacity_theme = g_value_dup_string (value);
+	    break;
 	default:
 	    break;
     }
