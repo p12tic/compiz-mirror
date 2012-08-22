@@ -39,3 +39,5 @@ TARGET_LINK_LIBRARIES(
   compiz_rect
   compiz_region
 )
+
+ADD_DEPENDENCIES (resize_logic resize-options)
