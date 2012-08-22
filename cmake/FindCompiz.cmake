@@ -15,6 +15,8 @@
 #                             is found
 #
 # Variables set by the FindPkgConfig macro for compiz
+#   COMPIZ_CMAKE_MODULE_PATH ... the path containing all other
+#				 compiz cmake modules
 #   COMPIZ_LIBRARY_DIRS   ... the paths of the libraries (w/o the '-L')
 #   COMPIZ_LDFLAGS        ... all required linker flags
 #   COMPIZ_LDFLAGS_OTHER  ... all other linker flags

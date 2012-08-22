@@ -343,12 +343,13 @@ initListValuePB (CCSSettingValue * v,
 		 CCSSettingInfo * i,
 		 const OptionMetadata & option)
 {
-    int num, j;
+    int num;
 
     num = option.default_value_size ();
 
     if (num)
     {
+	int j;
 	for (j = 0; j < num; j++)
 	{
 	    CCSSettingValue *val;
@@ -409,7 +410,6 @@ initListValuePB (CCSSettingValue * v,
 static void
 initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    int num, j;
     i->forInt.min = std::numeric_limits <short>::min ();
     i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
@@ -422,7 +422,7 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 
     if (!basicMetadata)
     {
-	num = option.int_desc_size ();
+	int j, num = option.int_desc_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::IntDescription & intDescMetadata =
@@ -468,7 +468,6 @@ initFloatInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 static void
 initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    int num, j;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
     i->forString.extensible = FALSE;
@@ -481,7 +480,7 @@ initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 	if (option.has_sort_start ())
 	    i->forString.sortStartsAt = option.sort_start ();
 
-	num = option.str_restriction_size ();
+	int j, num = option.str_restriction_size ();
 	for (j = 0; j < num; j++)
 	{
 	    const OptionMetadata::StringRestriction &
@@ -558,73 +557,91 @@ addOptionForPluginPB (CCSPlugin * plugin,
 
     if (ccsFindSetting (plugin, name))
     {
-	fprintf (stderr, "[ERROR]: Option \"%s\" already defined\n", name);
+	ccsError ("Option \"%s\" already defined", name);
 	return;
     }
 
+    CONTEXT_PRIV (ccsPluginGetContext (plugin));
+
     setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
+
     if (!setting)
 	return;
 
-    setting->parent = plugin;
-    setting->isDefault = TRUE;
-    setting->name = strdup (name);
-    setting->refCount = 1;
+    ccsObjectInit (setting, &ccsDefaultObjectAllocator);
+
+    CCSSettingPrivate *ccsPrivate = (CCSSettingPrivate *) calloc (1, sizeof (CCSSettingPrivate));
+
+    if (!ccsPrivate)
+    {
+	free (setting);
+	return;
+    }
+
+    ccsObjectSetPrivate (setting, (CCSPrivate *) ccsPrivate);
+    ccsObjectAddInterface (setting, (CCSInterface *) cPrivate->object_interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
+    ccsSettingRef (setting);
+
+    SETTING_PRIV (setting);
+
+    sPrivate->parent = plugin;
+    sPrivate->isDefault = TRUE;
+    sPrivate->name = strdup (name);
 
     if (!basicMetadata)
     {
-	setting->shortDesc =
+	sPrivate->shortDesc =
 	    strdup (option.has_short_desc () ?
 		    option.short_desc ().c_str () :
 		    name);
-	setting->longDesc =
+	sPrivate->longDesc =
 	    strdup (option.has_long_desc () ?
 		    option.long_desc ().c_str () :
 		    name);
-	setting->hints = strdup (option.has_hints () ?
+	sPrivate->hints = strdup (option.has_hints () ?
 				 option.hints ().c_str () :
 				 name);
-	setting->group =
+	sPrivate->group =
 	    strdup (option.group_id () >= 0 ?
 		    groups.Get (option.group_id ()).c_str () :
 		    "");
-	setting->subGroup =
+	sPrivate->subGroup =
 	    strdup (option.subgroup_id () >= 0 ?
 		    subgroups.Get (option.subgroup_id ()).c_str () :
 		    "");
     }
     else
     {
-	setting->shortDesc = strdup (name);
-	setting->longDesc  = strdup ("");
-	setting->hints     = strdup ("");
-	setting->group     = strdup ("");
-	setting->subGroup  = strdup ("");
+	sPrivate->shortDesc = strdup (name);
+	sPrivate->longDesc  = strdup ("");
+	sPrivate->hints     = strdup ("");
+	sPrivate->group     = strdup ("");
+	sPrivate->subGroup  = strdup ("");
     }
 
-    setting->type = (CCSSettingType) option.type ();
-    setting->value = &setting->defaultValue;
-    setting->defaultValue.parent = setting;
+    sPrivate->type = (CCSSettingType) option.type ();
+    sPrivate->value = &sPrivate->defaultValue;
+    sPrivate->defaultValue.parent = setting;
 
-    switch (setting->type)
+    switch (sPrivate->type)
     {
     case TypeInt:
-	initIntInfoPB (&setting->info, option);
+	initIntInfoPB (&sPrivate->info, option);
 	break;
     case TypeFloat:
-	initFloatInfoPB (&setting->info, option);
+	initFloatInfoPB (&sPrivate->info, option);
 	break;
     case TypeString:
-	initStringInfoPB (&setting->info, option);
+	initStringInfoPB (&sPrivate->info, option);
 	break;
     case TypeList:
-	initListInfoPB (&setting->info, option);
+	initListInfoPB (&sPrivate->info, option);
 	break;
     case TypeKey:
     case TypeButton:
     case TypeEdge:
     case TypeBell:
-	initActionInfoPB (&setting->info, option);
+	initActionInfoPB (&sPrivate->info, option);
 	break;
     case TypeAction: // do nothing and fall through
     default:
@@ -633,48 +650,48 @@ addOptionForPluginPB (CCSPlugin * plugin,
 
     if (option.default_value_size () > 0)
     {
-	switch (setting->type)
+	switch (sPrivate->type)
 	{
 	case TypeInt:
-	    initIntValuePB (&setting->defaultValue, &setting->info,
+	    initIntValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			    option.default_value (0));
 	    break;
 	case TypeBool:
-	    initBoolValuePB (&setting->defaultValue, option.default_value (0));
+	    initBoolValuePB (&sPrivate->defaultValue, option.default_value (0));
 	    break;
 	case TypeFloat:
-	    initFloatValuePB (&setting->defaultValue, &setting->info,
+	    initFloatValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			      option.default_value (0));
 	    break;
 	case TypeString:
-	    initStringValuePB (&setting->defaultValue, &setting->info,
+	    initStringValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			       option.default_value (0));
 	    break;
 	case TypeColor:
-	    initColorValuePB (&setting->defaultValue, option.default_value (0));
+	    initColorValuePB (&sPrivate->defaultValue, option.default_value (0));
 	    break;
 	case TypeKey:
-	    initKeyValuePB (&setting->defaultValue, &setting->info,
+	    initKeyValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			    option.default_value (0));
 	    break;
 	case TypeButton:
-	    initButtonValuePB (&setting->defaultValue, &setting->info,
+	    initButtonValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			       option.default_value (0));
 	    break;
 	case TypeEdge:
-	    initEdgeValuePB (&setting->defaultValue, &setting->info,
+	    initEdgeValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			     option.default_value (0));
 	    break;
 	case TypeBell:
-	    initBellValuePB (&setting->defaultValue, &setting->info,
+	    initBellValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			     option.default_value (0));
 	    break;
 	case TypeMatch:
-	    initMatchValuePB (&setting->defaultValue,
+	    initMatchValuePB (&sPrivate->defaultValue,
 			      option.default_value (0));
 	    break;
 	case TypeList:
-	    initListValuePB (&setting->defaultValue, &setting->info,
+	    initListValuePB (&sPrivate->defaultValue, &sPrivate->info,
 			     option);
 	    break;
 	case TypeAction: // do nothing and fall through
@@ -686,13 +703,13 @@ addOptionForPluginPB (CCSPlugin * plugin,
     {
 	/* if we have no set defaults, we have at least to set
 	   the string defaults to empty strings */
-	switch (setting->type)
+	switch (sPrivate->type)
 	{
 	case TypeString:
-	    setting->defaultValue.value.asString = strdup ("");
+	    sPrivate->defaultValue.value.asString = strdup ("");
 	    break;
 	case TypeMatch:
-	    setting->defaultValue.value.asMatch = strdup ("");
+	    sPrivate->defaultValue.value.asMatch = strdup ("");
 	    break;
 	default:
 	    break;
@@ -728,14 +745,12 @@ static void
 initOptionsFromPB (CCSPlugin * plugin,
 		   const PluginMetadata & pluginPB)
 {
-    int numOpt, i;
-
     if (pluginPB.has_screen ())
     {
 	const ScreenMetadata &screenPB = pluginPB.screen ();
 
 	// Screen options
-	numOpt = screenPB.option_size ();
+	int i, numOpt = screenPB.option_size ();
 	for (i = 0; i < numOpt; i++)
 	    addOptionFromPB (plugin,
 			     screenPB.group_desc (),
@@ -750,7 +765,7 @@ addStringsFromPB (CCSStringList * list,
 {
     StringList::const_iterator it;
 
-    for (it = strings.begin (); it != strings.end (); it++)
+    for (it = strings.begin (); it != strings.end (); ++it)
     {
 	const char *value = (*it).c_str ();
 
@@ -823,19 +838,21 @@ initStringExtensionsFromPB (CCSPlugin * plugin,
 static void
 initRulesFromPB (CCSPlugin * plugin, const PluginInfoMetadata & pluginInfoPB)
 {
-    addStringsFromPB (&plugin->providesFeature, pluginInfoPB.feature ());
+    PLUGIN_PRIV (plugin)
+
+    addStringsFromPB (&pPrivate->providesFeature, pluginInfoPB.feature ());
 
     if (!pluginInfoPB.has_deps ())
 	return;
 
     const DependenciesMetadata & deps = pluginInfoPB.deps ();
 
-    addStringsFromPB (&plugin->loadAfter, deps.after_plugin ());
-    addStringsFromPB (&plugin->loadBefore, deps.before_plugin ());
-    addStringsFromPB (&plugin->requiresPlugin, deps.require_plugin ());
-    addStringsFromPB (&plugin->requiresFeature, deps.require_feature ());
-    addStringsFromPB (&plugin->conflictPlugin, deps.conflict_plugin ());
-    addStringsFromPB (&plugin->conflictFeature, deps.conflict_feature ());
+    addStringsFromPB (&pPrivate->loadAfter, deps.after_plugin ());
+    addStringsFromPB (&pPrivate->loadBefore, deps.before_plugin ());
+    addStringsFromPB (&pPrivate->requiresPlugin, deps.require_plugin ());
+    addStringsFromPB (&pPrivate->requiresFeature, deps.require_feature ());
+    addStringsFromPB (&pPrivate->conflictPlugin, deps.conflict_plugin ());
+    addStringsFromPB (&pPrivate->conflictFeature, deps.conflict_feature ());
 }
 
 static void
@@ -847,6 +864,8 @@ addPluginFromPB (CCSContext * context,
     const char *name;
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
+
+    CONTEXT_PRIV (context);
 
     name = pluginInfoPB.name ().c_str ();
 
@@ -861,10 +880,12 @@ addPluginFromPB (CCSContext * context,
 	return;
 
     plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
+
     if (!plugin)
 	return;
 
-    plugin->refCount = 1;
+    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
+    ccsPluginRef (plugin);
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -874,7 +895,8 @@ addPluginFromPB (CCSContext * context,
     }
     pPrivate->loaded = FALSE;
 
-    plugin->ccsPrivate = (void *) pPrivate;
+    ccsObjectSetPrivate (plugin, (CCSPrivate *) pPrivate);
+    ccsObjectAddInterface (plugin, (CCSInterface *) cPrivate->object_interfaces->pluginInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
     if (file)
 	pPrivate->pbFilePath = strdup (file);
@@ -886,33 +908,33 @@ addPluginFromPB (CCSContext * context,
 	    pPrivate->xmlPath = NULL;
     }
 
-    plugin->context = context;
-    plugin->name = strdup (name);
+    pPrivate->context = context;
+    pPrivate->name = strdup (name);
 
     if (!basicMetadata)
     {
-	plugin->shortDesc =
+	pPrivate->shortDesc =
 	    strdup (pluginInfoPB.has_short_desc () ?
 		    pluginInfoPB.short_desc ().c_str () :
 		    name);
-	plugin->longDesc =
+	pPrivate->longDesc =
 	    strdup (pluginInfoPB.has_long_desc () ?
 		    pluginInfoPB.long_desc ().c_str () :
 		    name);
-	plugin->category = strdup (pluginInfoPB.has_category () ?
+	pPrivate->category = strdup (pluginInfoPB.has_category () ?
 				   pluginInfoPB.category ().c_str () :
 				   "");
     }
     else
     {
-	plugin->shortDesc = strdup (name);
-	plugin->longDesc  = strdup (name);
-	plugin->category  = strdup ("");
+	pPrivate->shortDesc = strdup (name);
+	pPrivate->longDesc  = strdup (name);
+	pPrivate->category  = strdup ("");
     }
 
     initRulesFromPB (plugin, pluginInfoPB);
 
-    context->plugins = ccsPluginListAppend (context->plugins, plugin);
+    cPrivate->plugins = ccsPluginListAppend (cPrivate->plugins, plugin);
 }
 
 static void
@@ -927,11 +949,15 @@ addCoreSettingsFromPB (CCSContext * context,
     if (ccsFindPlugin (context, "core"))
 	return;
 
+    CONTEXT_PRIV (context);
+
     plugin = (CCSPlugin*) calloc (1, sizeof (CCSPlugin));
+
     if (!plugin)
 	return;
 
-    plugin->refCount = 1;
+    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
+    ccsPluginRef (plugin);
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -940,7 +966,8 @@ addCoreSettingsFromPB (CCSContext * context,
 	return;
     }
 
-    plugin->ccsPrivate = (void *) pPrivate;
+    ccsObjectSetPrivate (plugin, (CCSPrivate *) pPrivate);
+    ccsObjectAddInterface (plugin, (CCSInterface *) cPrivate->object_interfaces->pluginInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
     if (file)
 	pPrivate->pbFilePath = strdup (file);
@@ -951,30 +978,30 @@ addCoreSettingsFromPB (CCSContext * context,
 	pPrivate->xmlPath = strdup ("/compiz/core");
     }
 
-    plugin->context = context;
-    plugin->name = strdup ("core");
-    plugin->category = strdup ("General");
+    pPrivate->context = context;
+    pPrivate->name = strdup ("core");
+    pPrivate->category = strdup ("General");
 
     if (!basicMetadata)
     {
-	plugin->shortDesc =
+	pPrivate->shortDesc =
 	    strdup (pluginInfoPB.has_short_desc () ?
 		    pluginInfoPB.short_desc ().c_str () :
 		    "General Options");
 
-	    plugin->longDesc =
+	    pPrivate->longDesc =
 	    strdup (pluginInfoPB.has_long_desc () ?
 		    pluginInfoPB.long_desc ().c_str () :
 		    "General Compiz Options");
     }
     else
     {
-	plugin->shortDesc = strdup ("General Options");
-	plugin->longDesc  = strdup ("General Compiz Options");
+	pPrivate->shortDesc = strdup ("General Options");
+	pPrivate->longDesc  = strdup ("General Compiz Options");
     }
 
     initRulesFromPB (plugin, pluginInfoPB);
-    context->plugins = ccsPluginListAppend (context->plugins, plugin);
+    cPrivate->plugins = ccsPluginListAppend (cPrivate->plugins, plugin);
 }
 
 #endif
@@ -1521,11 +1548,12 @@ initListValue (CCSSettingValue * v,
 	       void * optionPBv)
 {
     xmlNode **nodes;
-    int num, j;
+    int num;
 
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
+	int j;
 	for (j = 0; j < num; j++)
 	{
 	    void *valuePBv = NULL;
@@ -1586,9 +1614,8 @@ static void
 initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
-    char *name;
     char *value;
-    int num, j;
+    int num;
     i->forInt.min = std::numeric_limits <short>::min ();
     i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
@@ -1622,6 +1649,8 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "desc", &num);
 	if (num)
 	{
+	    char *name;
+	    int j;
 	    for (j = 0; j < num; j++)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
@@ -1721,9 +1750,7 @@ static void
 initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     xmlNode **nodes;
-    char *name;
-    char *value;
-    int num, j;
+    int num;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
     i->forString.extensible = FALSE;
@@ -1742,6 +1769,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "sort", &num);
 	if (num)
 	{
+	    char *value;
 	    int val = 0; /* Start sorting at 0 unless otherwise specified. */
 
 	    value = getStringFromXPath (node->doc, nodes[0], "@start");
@@ -1764,6 +1792,8 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
+	    int j;
+	    char *name, *value;
 	    for (j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
@@ -1952,7 +1982,7 @@ createProtoBufCacheDir ()
 	// Create cache dir
 	Bool success = ccsCreateDirFor (metadataCacheFileDummy.c_str ());
 	if (!success)
-	    fprintf (stderr, "[ERROR]: Error creating directory \"%s\"\n",
+	    ccsError ("Error creating directory \"%s\"",
 		     metadataCacheDir.c_str ());
 	free (cacheBaseDir);
 
@@ -1984,46 +2014,64 @@ addOptionForPlugin (CCSPlugin * plugin,
 
     if (ccsFindSetting (plugin, name))
     {
-	fprintf (stderr, "[ERROR]: Option \"%s\" already defined\n", name);
+	ccsError ("Option \"%s\" already defined", name);
 	return;
     }
 
     if (getOptionType (type) == TypeNum)
 	return;
 
+    CONTEXT_PRIV (ccsPluginGetContext (plugin));
+
     setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
+
     if (!setting)
 	return;
 
-    setting->parent = plugin;
-    setting->isDefault = TRUE;
-    setting->name = strdup (name);
-    setting->refCount = 1;
+    ccsObjectInit (setting, &ccsDefaultObjectAllocator);
+
+    CCSSettingPrivate *ccsPrivate = (CCSSettingPrivate *) calloc (1, sizeof (CCSSettingPrivate));
+
+    if (!ccsPrivate)
+    {
+	free (setting);
+	return;
+    }
+
+    ccsObjectSetPrivate (setting, (CCSPrivate *) ccsPrivate);
+    ccsObjectAddInterface (setting, (CCSInterface *) cPrivate->object_interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
+    ccsSettingRef (setting);
+
+    SETTING_PRIV (setting)
+
+    sPrivate->parent = plugin;
+    sPrivate->isDefault = TRUE;
+    sPrivate->name = strdup (name);
 
     if (!basicMetadata)
     {
-	setting->shortDesc =
+	sPrivate->shortDesc =
 	    stringFromNodeDefTrans (node, "short/child::text()", name);
-	setting->longDesc =
+	sPrivate->longDesc =
 	    stringFromNodeDefTrans (node, "long/child::text()", "");
-	setting->hints = stringFromNodeDef (node, "hints/child::text()", "");
-	setting->group =
+	sPrivate->hints = stringFromNodeDef (node, "hints/child::text()", "");
+	sPrivate->group =
 	    stringFromNodeDefTrans (node, "ancestor::group/short/child::text()",
 				    "");
-	setting->subGroup =
+	sPrivate->subGroup =
 	    stringFromNodeDefTrans (node,
 				    "ancestor::subgroup/short/child::text()",
 				    "");
     }
     else
     {
-	setting->shortDesc = strdup (name);
-	setting->longDesc  = strdup ("");
-	setting->hints     = strdup ("");
-	setting->group     = strdup ("");
-	setting->subGroup  = strdup ("");
+	sPrivate->shortDesc = strdup (name);
+	sPrivate->longDesc  = strdup ("");
+	sPrivate->hints     = strdup ("");
+	sPrivate->group     = strdup ("");
+	sPrivate->subGroup  = strdup ("");
     }
-    setting->type = getOptionType (type);
+    sPrivate->type = getOptionType (type);
 
 #ifdef USE_PROTOBUF
     OptionMetadata *optPB = NULL;
@@ -2033,46 +2081,46 @@ addOptionForPlugin (CCSPlugin * plugin,
 	optPB = (OptionMetadata *) optionPBv;
 
 	optPB->set_name (name);
-	optPB->set_type ((OptionMetadata::Type) setting->type);
+	optPB->set_type ((OptionMetadata::Type) sPrivate->type);
 	if (isReadonly)
 	    optPB->set_read_only (isReadonly);
 
-	optPB->set_short_desc (setting->shortDesc);
-	optPB->set_long_desc (setting->longDesc);
+	optPB->set_short_desc (sPrivate->shortDesc);
+	optPB->set_long_desc (sPrivate->longDesc);
 
-	if (strlen (setting->hints) > 0)
-	    optPB->set_hints (setting->hints);
+	if (strlen (sPrivate->hints) > 0)
+	    optPB->set_hints (sPrivate->hints);
 
-	if (groupListPBv && strlen (setting->group) > 0)
+	if (groupListPBv && strlen (sPrivate->group) > 0)
 	    checkAddGroupSubgroup (optPB, (StringList *) groupListPBv,
-				   setting->group, TRUE);
-	if (subgroupListPBv && strlen (setting->subGroup) > 0)
+				   sPrivate->group, TRUE);
+	if (subgroupListPBv && strlen (sPrivate->subGroup) > 0)
 	    checkAddGroupSubgroup (optPB, (StringList *) subgroupListPBv,
-				   setting->subGroup, FALSE);
+				   sPrivate->subGroup, FALSE);
     }
 #endif
-    setting->value = &setting->defaultValue;
-    setting->defaultValue.parent = setting;
+    sPrivate->value = &sPrivate->defaultValue;
+    sPrivate->defaultValue.parent = setting;
 
-    switch (setting->type)
+    switch (sPrivate->type)
     {
     case TypeInt:
-	initIntInfo (&setting->info, node, optionPBv);
+	initIntInfo (&sPrivate->info, node, optionPBv);
 	break;
     case TypeFloat:
-	initFloatInfo (&setting->info, node, optionPBv);
+	initFloatInfo (&sPrivate->info, node, optionPBv);
 	break;
     case TypeString:
-	initStringInfo (&setting->info, node, optionPBv);
+	initStringInfo (&sPrivate->info, node, optionPBv);
 	break;
     case TypeList:
-	initListInfo (&setting->info, node, optionPBv);
+	initListInfo (&sPrivate->info, node, optionPBv);
 	break;
     case TypeKey:
     case TypeButton:
     case TypeEdge:
     case TypeBell:
-	initActionInfo (&setting->info, node, optionPBv);
+	initActionInfo (&sPrivate->info, node, optionPBv);
 	break;
     default:
 	break;
@@ -2083,52 +2131,52 @@ addOptionForPlugin (CCSPlugin * plugin,
     {
 	void * valuePBv = NULL;
 #ifdef USE_PROTOBUF
-	if (optPB && setting->type != TypeList)
+	if (optPB && sPrivate->type != TypeList)
 	    valuePBv = optPB->add_default_value ();
 #endif
-	switch (setting->type)
+	switch (sPrivate->type)
 	{
 	case TypeInt:
-	    initIntValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initIntValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			  valuePBv);
 	    break;
 	case TypeBool:
-	    initBoolValue (&setting->defaultValue, nodes[0],
+	    initBoolValue (&sPrivate->defaultValue, nodes[0],
 			   valuePBv);
 	    break;
 	case TypeFloat:
-	    initFloatValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initFloatValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			    valuePBv);
 	    break;
 	case TypeString:
-	    initStringValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initStringValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			     valuePBv);
 	    break;
 	case TypeColor:
-	    initColorValue (&setting->defaultValue, nodes[0], valuePBv);
+	    initColorValue (&sPrivate->defaultValue, nodes[0], valuePBv);
 	    break;
 	case TypeKey:
-	    initKeyValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initKeyValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			  valuePBv);
 	    break;
 	case TypeButton:
-	    initButtonValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initButtonValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			     valuePBv);
 	    break;
 	case TypeEdge:
-	    initEdgeValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initEdgeValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			   valuePBv);
 	    break;
 	case TypeBell:
-	    initBellValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initBellValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			   valuePBv);
 	    break;
 	case TypeMatch:
-	    initMatchValue (&setting->defaultValue, nodes[0],
+	    initMatchValue (&sPrivate->defaultValue, nodes[0],
 			    valuePBv);
 	    break;
 	case TypeList:
-	    initListValue (&setting->defaultValue, &setting->info, nodes[0],
+	    initListValue (&sPrivate->defaultValue, &sPrivate->info, nodes[0],
 			   optionPBv);
 	    break;
 	default:
@@ -2139,13 +2187,13 @@ addOptionForPlugin (CCSPlugin * plugin,
     {
 	/* if we have no set defaults, we have at least to set
 	   the string defaults to empty strings */
-	switch (setting->type)
+	switch (sPrivate->type)
 	{
 	case TypeString:
-	    setting->defaultValue.value.asString = strdup ("");
+	    sPrivate->defaultValue.value.asString = strdup ("");
 	    break;
 	case TypeMatch:
-	    setting->defaultValue.value.asMatch = strdup ("");
+	    sPrivate->defaultValue.value.asMatch = strdup ("");
 	    break;
 	default:
 	    break;
@@ -2221,7 +2269,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 {
     xmlNode **nodes;
     xmlNode **optNodes;
-    int num, i;
+    int num;
     void *groupListPBv = NULL;
     void *subgroupListPBv = NULL;
 
@@ -2246,6 +2294,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
+	int i;
 	for (i = 0; i < num; i++)
 	{
 	    void *optionPBv = NULL;
@@ -2278,11 +2327,12 @@ addStringsFromPath (CCSStringList * list,
 		    void * stringListPBv)
 {
     xmlNode **nodes;
-    int num, i;
+    int num;
     nodes = getNodesFromXPath (node->doc, node, path, &num);
 
     if (num)
     {
+	int i;
 	for (i = 0; i < num; i++)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
@@ -2433,22 +2483,24 @@ initRulesFromRootNode (CCSPlugin * plugin, xmlNode * node, void * pluginInfoPBv)
     }
 #endif
 
-    addStringsFromPath (&plugin->providesFeature, "feature", node,
+    PLUGIN_PRIV (plugin);
+
+    addStringsFromPath (&pPrivate->providesFeature, "feature", node,
 			featureListPBv);
 
-    addStringsFromPath (&plugin->loadAfter,
+    addStringsFromPath (&pPrivate->loadAfter,
 			"deps/relation[@type = 'after']/plugin", node,
 			pluginAfterListPBv);
-    addStringsFromPath (&plugin->loadBefore,
+    addStringsFromPath (&pPrivate->loadBefore,
 			"deps/relation[@type = 'before']/plugin", node,
 			pluginBeforeListPBv);
-    addStringsFromPath (&plugin->requiresPlugin,
+    addStringsFromPath (&pPrivate->requiresPlugin,
 			"deps/requirement/plugin", node, requirePluginListPBv);
-    addStringsFromPath (&plugin->requiresFeature,
+    addStringsFromPath (&pPrivate->requiresFeature,
 			"deps/requirement/feature", node, requireFeatureListPBv);
-    addStringsFromPath (&plugin->conflictPlugin,
+    addStringsFromPath (&pPrivate->conflictPlugin,
 			"deps/conflict/plugin", node, conflictPluginListPBv);
-    addStringsFromPath (&plugin->conflictFeature,
+    addStringsFromPath (&pPrivate->conflictFeature,
 			"deps/conflict/feature", node, conflictFeatureListPBv);
 }
 
@@ -2459,10 +2511,10 @@ fillBasicInfoIntoPB (CCSPlugin *plugin, PluginInfoMetadata *pluginInfoPB)
     if (!pluginInfoPB)
 	return;
 
-    pluginInfoPB->set_name (plugin->name);
-    pluginInfoPB->set_short_desc (plugin->shortDesc);
-    pluginInfoPB->set_long_desc (plugin->longDesc);
-    pluginInfoPB->set_category (plugin->category);
+    pluginInfoPB->set_name (ccsPluginGetName (plugin));
+    pluginInfoPB->set_short_desc (ccsPluginGetShortDesc (plugin));
+    pluginInfoPB->set_long_desc (ccsPluginGetLongDesc (plugin));
+    pluginInfoPB->set_category (ccsPluginGetCategory (plugin));
 }
 #endif
 
@@ -2476,6 +2528,8 @@ addPluginFromXMLNode (CCSContext * context,
     char *name;
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
+
+    CONTEXT_PRIV (context);
 
     if (!node)
 	return FALSE;
@@ -2503,10 +2557,12 @@ addPluginFromXMLNode (CCSContext * context,
     }
 
     plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
+
     if (!plugin)
 	return FALSE;
 
-    plugin->refCount = 1;
+    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
+    ccsPluginRef (plugin);
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -2515,7 +2571,8 @@ addPluginFromXMLNode (CCSContext * context,
 	return FALSE;
     }
 
-    plugin->ccsPrivate = (void *) pPrivate;
+    ccsObjectSetPrivate (plugin, (CCSPrivate *) pPrivate);
+    ccsObjectAddInterface (plugin, (CCSInterface *) cPrivate->object_interfaces->pluginInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
     if (file)
 	pPrivate->xmlFile = strdup (file);
@@ -2523,23 +2580,23 @@ addPluginFromXMLNode (CCSContext * context,
     if (asprintf (&pPrivate->xmlPath, "/compiz/plugin[@name = '%s']", name) == -1)
 	pPrivate->xmlPath = NULL;
 
-    plugin->context = context;
-    plugin->name = strdup (name);
+    pPrivate->context = context;
+    pPrivate->name = strdup (name);
 
     if (!basicMetadata)
     {
-	plugin->shortDesc =
+	pPrivate->shortDesc =
 	    stringFromNodeDefTrans (node, "short/child::text()", name);
-	plugin->longDesc =
+	pPrivate->longDesc =
 	    stringFromNodeDefTrans (node, "long/child::text()",	name);
-	plugin->category =
+	pPrivate->category =
 	    stringFromNodeDef (node, "category/child::text()", "");
     }
     else
     {
-	plugin->shortDesc = strdup (name);
-	plugin->longDesc  = strdup (name);
-	plugin->category  = strdup ("");
+	pPrivate->shortDesc = strdup (name);
+	pPrivate->longDesc  = strdup (name);
+	pPrivate->category  = strdup ("");
     }
 #ifdef USE_PROTOBUF
     fillBasicInfoIntoPB (plugin, (PluginInfoMetadata *) pluginInfoPBv);
@@ -2547,7 +2604,7 @@ addPluginFromXMLNode (CCSContext * context,
 
     initRulesFromRootNode (plugin, node, pluginInfoPBv);
 
-    context->plugins = ccsPluginListAppend (context->plugins, plugin);
+    cPrivate->plugins = ccsPluginListAppend (cPrivate->plugins, plugin);
     free (name);
 
     return TRUE;
@@ -2563,6 +2620,8 @@ addCoreSettingsFromXMLNode (CCSContext * context,
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
 
+    CONTEXT_PRIV (context);
+
     if (!node)
 	return FALSE;
 
@@ -2570,10 +2629,12 @@ addCoreSettingsFromXMLNode (CCSContext * context,
 	return FALSE;
 
     plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
+
     if (!plugin)
 	return FALSE;
 
-    plugin->refCount = 1;
+    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
+    ccsPluginRef (plugin);
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -2582,36 +2643,37 @@ addCoreSettingsFromXMLNode (CCSContext * context,
 	return FALSE;
     }
 
-    plugin->ccsPrivate = (void *) pPrivate;
+    ccsObjectSetPrivate (plugin, (CCSPrivate *) pPrivate);
+    ccsObjectAddInterface (plugin, (CCSInterface *) cPrivate->object_interfaces->pluginInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
     if (file)
 	pPrivate->xmlFile = strdup (file);
 
     pPrivate->xmlPath = strdup ("/compiz/plugin[@name='core']");
-    plugin->context = context;
-    plugin->name = strdup ("core");
-    plugin->category = strdup ("General");
+    pPrivate->context = context;
+    pPrivate->name = strdup ("core");
+    pPrivate->category = strdup ("General");
 
     if (!basicMetadata)
     {
-	plugin->shortDesc =
+	pPrivate->shortDesc =
 	    stringFromNodeDefTrans (node, "short/child::text()",
 				    "General Options");
-	plugin->longDesc =
+	pPrivate->longDesc =
 	    stringFromNodeDefTrans (node, "long/child::text()",
 				    "General Compiz Options");
     }
     else
     {
-	plugin->shortDesc = strdup ("General Options");
-	plugin->longDesc  = strdup ("General Compiz Options");
+	pPrivate->shortDesc = strdup ("General Options");
+	pPrivate->longDesc  = strdup ("General Compiz Options");
     }
 #ifdef USE_PROTOBUF
     fillBasicInfoIntoPB (plugin, (PluginInfoMetadata *) pluginInfoPBv);
 #endif
 
     initRulesFromRootNode (plugin, node, pluginInfoPBv);
-    context->plugins = ccsPluginListAppend (context->plugins, plugin);
+    cPrivate->plugins = ccsPluginListAppend (cPrivate->plugins, plugin);
 
     return TRUE;
 }
@@ -2638,6 +2700,7 @@ loadPluginMetadataFromProtoBuf (char *pbPath,
 	     pluginMetadata->ParseFromZeroCopyStream (&inputStream)))
 	    success = TRUE;
 	inputStream.Close ();
+	fclose (pbFile);
     }
 
     return success;
@@ -2705,6 +2768,8 @@ writePBFile (char *pbFilePath,
 	else
 	    pluginBriefPB->SerializeToZeroCopyStream (&outputStream);
 	outputStream.Close ();
+
+	fclose (pbFile);
     }
 }
 #endif
@@ -2766,7 +2831,7 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 
     if (!xmlFilePath)
     {
-	fprintf (stderr, "[ERROR]: Can't allocate memory\n");
+	ccsError ("Can't allocate memory");
 	return;
     }
 
@@ -2791,7 +2856,7 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 	name = strndup (xmlName, strlen (xmlName) - 4);
 	if (!name)
 	{
-	    fprintf (stderr, "[ERROR]: Can't allocate memory\n");
+	    ccsError ("Can't allocate memory");
 	    free (xmlFilePath);
 	    return;
 	}
@@ -2804,7 +2869,7 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 
 	    if (!pbFilePath)
 	    {
-		fprintf (stderr, "[ERROR]: Can't allocate memory\n");
+		ccsError ("Can't allocate memory");
 		free (xmlFilePath);
 		free (name);
 		return;
@@ -2916,6 +2981,8 @@ addPluginNamed (CCSContext * context, char *name)
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
 
+    CONTEXT_PRIV (context);
+
     if (ccsFindPlugin (context, name))
 	return;
 
@@ -2924,10 +2991,12 @@ addPluginNamed (CCSContext * context, char *name)
 	return;
 
     plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
+
     if (!plugin)
 	return;
 
-    plugin->refCount = 1;
+    ccsObjectInit (plugin, &ccsDefaultObjectAllocator);
+    ccsPluginRef (plugin);
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -2936,21 +3005,22 @@ addPluginNamed (CCSContext * context, char *name)
 	return;
     }
 
-    plugin->ccsPrivate = (void *) pPrivate;
+    ccsObjectSetPrivate (plugin, (CCSPrivate *) pPrivate);
+    ccsObjectAddInterface (plugin, (CCSInterface *) cPrivate->object_interfaces->pluginInterface, GET_INTERFACE_TYPE (CCSPluginInterface));
 
-    plugin->context = context;
-    plugin->name = strdup (name);
+    pPrivate->context = context;
+    pPrivate->name = strdup (name);
 
-    if (!plugin->shortDesc)
-	plugin->shortDesc = strdup (name);
-    if (!plugin->longDesc)
-	plugin->longDesc = strdup (name);
-    if (!plugin->category)
-	plugin->category = strdup ("");
+    if (!pPrivate->shortDesc)
+	pPrivate->shortDesc = strdup (name);
+    if (!pPrivate->longDesc)
+	pPrivate->longDesc = strdup (name);
+    if (!pPrivate->category)
+	pPrivate->category = strdup ("");
 
     pPrivate->loaded = TRUE;
     collateGroups (pPrivate);
-    context->plugins = ccsPluginListAppend (context->plugins, plugin);
+    cPrivate->plugins = ccsPluginListAppend (cPrivate->plugins, plugin);
 }
 
 static void
@@ -2998,7 +3068,7 @@ initPBLoading ()
 #endif
 
 Bool
-ccsLoadPlugin (CCSContext * context, char *name)
+ccsLoadPluginDefault (CCSContext * context, char *name)
 {
 #ifdef USE_PROTOBUF
     initPBLoading ();
@@ -3031,10 +3101,16 @@ ccsLoadPlugin (CCSContext * context, char *name)
     return (ccsFindPlugin (context, name) != NULL);
 }
 
-void
-ccsLoadPlugins (CCSContext * context)
+Bool
+ccsLoadPlugin (CCSContext *context, char *name)
 {
-    D (D_FULL, "Adding plugins\n");
+    return (*(GET_INTERFACE (CCSContextInterface, context))->contextLoadPlugin) (context, name);
+}
+
+void
+ccsLoadPluginsDefault (CCSContext * context)
+{
+    ccsDebug ("Adding plugins");
 
 #ifdef USE_PROTOBUF
     initPBLoading ();
@@ -3083,6 +3159,12 @@ ccsLoadPlugins (CCSContext * context)
 	}
     }
     loadPluginsFromName (context, (char *)PLUGINDIR);
+}
+
+void
+ccsLoadPlugins (CCSContext *context)
+{
+    (*(GET_INTERFACE (CCSContextInterface, context))->contextLoadPlugins) (context);
 }
 
 static void
@@ -3135,7 +3217,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
 	return;
 
     pPrivate->loaded = TRUE;
-    D (D_FULL, "Initializing %s options...", plugin->name);
+    ccsDebug ("Initializing %s options...", pPrivate->name);
 
 #ifdef USE_PROTOBUF
     if (usingProtobuf && pPrivate->pbFilePath)
@@ -3173,7 +3255,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
 	writePBFile (pPrivate->pbFilePath, (PluginMetadata *) pluginPBToWrite,
 		     NULL, &xmlStat);
 #endif
-    D (D_FULL, "done\n");
+    ccsDebug ("done");
 
     collateGroups (pPrivate);
     ccsReadPluginSettings (plugin);

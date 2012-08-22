@@ -28,7 +28,12 @@
 const gchar *
 get_frame_type (WnckWindow *win)
 {
-    WnckWindowType wnck_type = wnck_window_get_window_type (win);
+    WnckWindowType wnck_type;
+
+    if (win == NULL)
+	return "bare";
+
+    wnck_type  = wnck_window_get_window_type (win);
 
     switch (wnck_type)
     {
@@ -40,11 +45,18 @@ get_frame_type (WnckWindow *win)
 	    int		  result, format;
 	    unsigned long n, left;
 	    unsigned char *data;
+	    Window        xid = wnck_window_get_xid (win);
 
-	    result = XGetWindowProperty (gdk_x11_get_default_xdisplay (), wnck_window_get_xid (win),
+	    if (xid == None)
+		return "bare";
+
+	    gdk_error_trap_push ();
+	    result = XGetWindowProperty (gdk_x11_get_default_xdisplay (), xid,
 					 net_wm_state_atom,
 					 0L, 1024L, FALSE, XA_ATOM, &actual, &format,
 					 &n, &left, &data);
+	    gdk_flush ();
+	    gdk_error_trap_pop ();
 
 	    if (result == Success && data)
 	    {

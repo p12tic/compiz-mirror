@@ -371,6 +371,11 @@ class CompositeWindow :
 	bool redirected ();
 	bool overlayWindow ();
 
+	/**
+	 * Returns true if pixmap updates are frozen
+	 */
+	bool frozen ();
+
 	void damageTransformedRect (float          xScale,
 				    float          yScale,
 				    float          xTranslate,

@@ -120,14 +120,14 @@ groupFindWindowsInRegion (CompRegion     reg)
 	     */
 	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, *ret))
 	    {
-		rit++;
+		++rit;
 		continue;
 	    }
 
 	    ret->push_back (w);
 	}
 
-	rit++;
+	++rit;
     }
 
     return ret;
@@ -186,7 +186,7 @@ Selection::deselect (GroupSelection *group)
 	}
 
 	(*it) = cw;
-	it++;
+	++it;
     }
 }
 
@@ -317,7 +317,7 @@ Selection::toGroup ()
 	    GroupScreen::get (screen)->mGroups.push_front (group);
 	}
 
-        for (; it != end (); it++)
+        for (; it != end (); ++it)
         {
 	    cw = *it;
 	    GROUP_WINDOW (cw);

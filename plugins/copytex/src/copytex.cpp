@@ -80,7 +80,7 @@ CopyPixmap::create (Pixmap pixmap,
 					   MIN (h, maxTS)));
 
 
-    cp->damage = XDamageCreate (screen->dpy (), cp->pixmap, XDamageReportRawRectangles);
+    cp->damage = XDamageCreate (screen->dpy (), cp->pixmap, XDamageReportBoundingBox);
     CopytexScreen::get (screen)->pixmaps[cp->damage] = cp;
 
     return cp;

@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <poll.h>
+#include <libgen.h>
 #include <algorithm>
 
 #include <boost/bind.hpp>
@@ -52,6 +53,7 @@
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
 
+#include <core/global.h>
 #include <core/screen.h>
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -224,7 +226,7 @@ cps::EventManager::removeFileWatch (CompFileWatchHandle handle)
 {
     std::list<CompFileWatch *>::iterator it;
 
-    for (it = fileWatch.begin (); it != fileWatch.end (); it++)
+    for (it = fileWatch.begin (); it != fileWatch.end (); ++it)
 	if ((*it)->handle == handle)
 	    break;
 
@@ -331,7 +333,7 @@ cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
     CompWatchFd *			w;
 
     for (it = watchFds.begin();
-	 it != watchFds.end (); it++)
+	 it != watchFds.end (); ++it)
     {
 	if ((*it)->mHandle == handle)
 	    break;
@@ -1024,7 +1026,7 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 	bool skip = false;
 
 	for (iterator it = initialPlugins.begin(); it != initialPlugins.end();
-		it++)
+		++it)
 	{
 	    if ((*it) == opt.s())
 	    {
@@ -1149,7 +1151,6 @@ convertProperty (Display *dpy,
 #define N_TARGETS 4
 
     Atom conversionTargets[N_TARGETS];
-    long icccmVersion[] = { 2, 0 };
 
     conversionTargets[0] = Atoms::targets;
     conversionTargets[1] = Atoms::multiple;
@@ -1165,9 +1166,12 @@ convertProperty (Display *dpy,
 			 XA_INTEGER, 32, PropModeReplace,
 			 (unsigned char *) &time, 1);
     else if (target == Atoms::version)
+    {
+	long icccmVersion[] = { 2, 0 };
 	XChangeProperty (dpy, w, property,
 			 XA_INTEGER, 32, PropModeReplace,
 			 (unsigned char *) icccmVersion, 2);
+    }
     else
 	return false;
 
@@ -2128,7 +2132,7 @@ PrivateScreen::detectOutputDevices (CoreOptions& coreOptions)
 	CompString	  name;
 	CompOption::Value value;
 
-	if (screenInfo.size ())
+	if (!screenInfo.empty ())
 	{
 	    CompOption::Value::Vector l;
 	    foreach (XineramaScreenInfo xi, screenInfo)
@@ -2226,7 +2230,7 @@ cps::StartupSequence::removeSequence (SnStartupSequence *sequence)
 
     std::list<CompStartupSequence *>::iterator it = startupSequences.begin ();
 
-    for (; it != startupSequences.end (); it++)
+    for (; it != startupSequences.end (); ++it)
     {
 	if ((*it)->sequence == sequence)
 	{
@@ -2936,7 +2940,7 @@ cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
 	{
 	    break;
 	}
-	it++;
+	++it;
     }
 
     if (it == windows.end ())
@@ -3000,7 +3004,7 @@ cps::WindowManager::insertServerWindow(CompWindow* w, Window aboveId)
 	{
 	    break;
 	}
-	it++;
+	++it;
     }
 
     if (it == serverWindows.end ())
@@ -3223,7 +3227,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 
     std::list<cps::Grab *>::iterator it;
 
-    for (it = privateScreen.eventManager.grabsBegin (); it != privateScreen.eventManager.grabsEnd (); it++)
+    for (it = privateScreen.eventManager.grabsBegin (); it != privateScreen.eventManager.grabsEnd (); ++it)
     {
 	va_start (ap, first);
 
@@ -3367,7 +3371,7 @@ cps::GrabManager::addPassiveKeyGrab (CompAction::KeyBinding &key)
 
     mask = modHandler->virtualToRealModMask (key.modifiers ());
 
-    for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
+    for (it = keyGrabs.begin (); it != keyGrabs.end (); ++it)
     {
 	if (key.keycode () == (*it).keycode &&
 	    mask           == (*it).modifiers)
@@ -3402,7 +3406,7 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 
     mask = modHandler->virtualToRealModMask (key.modifiers ());
 
-    for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
+    for (it = keyGrabs.begin (); it != keyGrabs.end (); ++it)
     {
 	if (key.keycode () == (*it).keycode &&
 	    mask           == (*it).modifiers)
@@ -3434,7 +3438,7 @@ cps::GrabManager::updatePassiveKeyGrabs ()
 
     XUngrabKey (screen->dpy(), AnyKey, AnyModifier, screen->root());
 
-    for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
+    for (it = keyGrabs.begin (); it != keyGrabs.end (); ++it)
     {
 	if (!((*it).modifiers & CompNoMask))
 	{
@@ -3450,7 +3454,7 @@ cps::GrabManager::addPassiveButtonGrab (CompAction::ButtonBinding &button)
     ButtonGrab                      newButtonGrab;
     std::list<ButtonGrab>::iterator it;
 
-    for (it = buttonGrabs.begin (); it != buttonGrabs.end (); it++)
+    for (it = buttonGrabs.begin (); it != buttonGrabs.end (); ++it)
     {
 	if (button.button ()    == (*it).button &&
 	    button.modifiers () == (*it).modifiers)
@@ -3508,7 +3512,7 @@ cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
 {
     std::list<ButtonGrab>::iterator it;
 
-    for (it = buttonGrabs.begin (); it != buttonGrabs.end (); it++)
+    for (it = buttonGrabs.begin (); it != buttonGrabs.end (); ++it)
     {
 	if (button.button ()    == (*it).button &&
 	    button.modifiers () == (*it).modifiers)
@@ -3893,7 +3897,7 @@ CompScreenImpl::runCommand (CompString command)
 
 	env.append (compPrintf (".%d", privateScreen.screenNum));
 
-	putenv (const_cast<char *> (env.c_str ()));
+	putenv (strdup (env.c_str ()));  // parameter needs to be leaked!
 
 	exit (execl ("/bin/sh", "/bin/sh", "-c", command.c_str (), NULL));
     }
@@ -4080,14 +4084,23 @@ PrivateScreen::disableEdge (int edge)
 	XUnmapWindow (dpy, screenEdge[edge].id);
 }
 
-Window
+CompWindow *
 cps::WindowManager::getTopWindow() const
 {
     /* return first window that has not been destroyed */
-    if (windows.size ())
-	return windows.back ()->id ();
+    if (!windows.empty ())
+	return windows.back ();
 
-    return None;
+    return NULL;
+}
+
+CompWindow *
+cps::WindowManager::getTopServerWindow () const
+{
+    if (!serverWindows.empty ())
+	return serverWindows.back ();
+
+    return NULL;
 }
 
 int
@@ -4841,10 +4854,16 @@ CompScreenImpl::updateClientList()
     privateScreen.updateClientList ();
 }
 
-Window
+CompWindow *
 CompScreenImpl::getTopWindow() const
 {
     return windowManager.getTopWindow();
+}
+
+CompWindow *
+CompScreenImpl::getTopServerWindow () const
+{
+    return windowManager.getTopServerWindow();
 }
 
 CoreOptions&
@@ -5275,7 +5294,9 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, attrib, children[i]);
+	Window topWindowInTree = i ? children[i - 1] : None;
+
+	PrivateWindow::createCompWindow (topWindowInTree, topWindowInTree, attrib, children[i]);
     }
 
     /* enforce restack on all windows

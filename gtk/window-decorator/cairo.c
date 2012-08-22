@@ -716,9 +716,7 @@ draw_window_decoration (decor_t *d)
 static void
 calc_button_size (decor_t *d)
 {
-    gint button_width;
-
-    button_width = 0;
+    gint button_width = 0;
 
     if (d->actions & WNCK_WINDOW_ACTION_CLOSE)
 	button_width += 17;
@@ -729,8 +727,7 @@ calc_button_size (decor_t *d)
 		      WNCK_WINDOW_ACTION_UNMAXIMIZE_VERTICALLY))
 	button_width += 17;
 
-    if (d->actions & (WNCK_WINDOW_ACTION_MINIMIZE |
-		      WNCK_WINDOW_ACTION_MINIMIZE))
+    if (d->actions & WNCK_WINDOW_ACTION_MINIMIZE)
 	button_width += 17;
 
     if (button_width)

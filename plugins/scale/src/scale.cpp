@@ -517,7 +517,7 @@ PrivateScaleScreen::layoutSlots ()
 	case ScaleOptions::MultioutputModeOnAllOutputDevices:
 	    {
 		SlotArea::vector slotAreas = getSlotAreas ();
-		if (slotAreas.size ())
+		if (!slotAreas.empty ())
 		{
 		    foreach (SlotArea &sa, slotAreas)
 			layoutSlotsForArea (sa.workArea, sa.nWindows);
@@ -684,6 +684,47 @@ ScaleScreen::getWindows () const
 bool
 PrivateScaleScreen::layoutThumbs ()
 {
+    switch (type) {
+	case ScaleTypeAll:
+	    return layoutThumbsAll ();
+	case ScaleTypeNormal:
+	default:
+	    return layoutThumbsSingle ();
+    }
+}
+
+bool
+PrivateScaleScreen::layoutThumbsAll ()
+{
+    windows.clear ();
+
+    /* add windows scale list, top most window first */
+    foreach (CompWindow *w, screen->windows ())
+    {
+	SCALE_WINDOW (w);
+
+	if (sw->priv->slot)
+	    sw->priv->adjust = true;
+
+	sw->priv->slot = NULL;
+
+	if (!sw->priv->isScaleWin ())
+            continue;
+
+	windows.push_back (sw);
+    }
+
+    if (windows.empty ())
+	return false;
+
+    slots.resize (windows.size ());
+
+    return ScaleScreen::get (screen)->layoutSlotsAndAssignWindows ();
+}
+
+bool
+PrivateScaleScreen::layoutThumbsSingle ()
+{
     bool ret = false;
     std::map <ScaleWindow *, ScaleSlot> slotWindows;
     CompWindowList          allWindows;
@@ -729,7 +770,7 @@ PrivateScaleScreen::layoutThumbs ()
     windows.clear ();
 
     for (std::map<ScaleWindow *, ScaleSlot>::iterator it = slotWindows.begin ();
-	 it != slotWindows.end (); it++)
+	 it != slotWindows.end (); ++it)
     {
 	slots.push_back (it->second);
 	windows.push_back (it->first);
@@ -908,7 +949,7 @@ PrivateScaleScreen::checkForWindowAt (int x, int y)
     int                              x1, y1, x2, y2;
     CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
 
-    for (; rit != screen->windows ().rend (); rit++)
+    for (; rit != screen->windows ().rend (); ++rit)
     {
 	CompWindow *w = *rit;
 	SCALE_WINDOW (w);

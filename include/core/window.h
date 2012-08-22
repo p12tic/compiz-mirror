@@ -569,6 +569,7 @@ class CompWindow :
     private:
 
 	CompWindow (Window	      aboveId,
+		    Window	      aboveServerId,
 		    XWindowAttributes &wa,
 		    PrivateWindow     *priv);
 

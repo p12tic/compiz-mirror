@@ -1043,7 +1043,6 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 
 	if (isConstrained)
 	{
-	    int minWidth  = 50;
 	    int minHeight = 50;
 
 	    /* rect. for a minimal height window + borders
@@ -1083,6 +1082,7 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 		int nx = x;
 		int nw = wi;
 		int nh = he;
+		int minWidth  = 50;
 
 		if (mask & (ResizeLeftMask | ResizeRightMask))
 		{
@@ -1304,20 +1304,19 @@ ResizeScreen::handleEvent (XEvent *event)
 			}
 			else
 			{
-			    static unsigned int mask[] = {
-				ResizeUpMask | ResizeLeftMask,
-				ResizeUpMask,
-				ResizeUpMask | ResizeRightMask,
-				ResizeRightMask,
-				ResizeDownMask | ResizeRightMask,
-				ResizeDownMask,
-				ResizeDownMask | ResizeLeftMask,
-				ResizeLeftMask,
-			    };
-
 			    /* TODO: not only button 1 */
 			    if (pointerMods & Button1Mask)
 			    {
+				static unsigned int mask[] = {
+				    ResizeUpMask | ResizeLeftMask,
+				    ResizeUpMask,
+				    ResizeUpMask | ResizeRightMask,
+				    ResizeRightMask,
+				    ResizeDownMask | ResizeRightMask,
+				    ResizeDownMask,
+				    ResizeDownMask | ResizeLeftMask,
+				    ResizeLeftMask,
+				};
 				o.push_back (CompOption ("modifiers",
 					     CompOption::TypeInt));
 				o.push_back (CompOption ("x",

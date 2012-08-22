@@ -959,7 +959,7 @@ PlaceWindow::cascadeFindNext (const Placeable::Vector &placeables,
     winHeight = window->serverHeight ();
 
     cascadeStage = 0;
-    for (iter = sorted.begin (); iter != sorted.end (); iter++)
+    for (iter = sorted.begin (); iter != sorted.end (); ++iter)
     {
 	Placeable  *p = *iter;
 	int        wx, wy;

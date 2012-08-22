@@ -382,7 +382,7 @@ ccsIniParseList (const char	     *str,
     }
 
     token = strsep (&valueString, ";");
-    switch (parent->info.forList.listType)
+    switch (ccsSettingGetInfo (parent)->forList.listType)
     {
     case TypeString:
     case TypeMatch:

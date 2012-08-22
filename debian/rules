@@ -34,9 +34,9 @@ override_dh_auto_configure:
 	# currently, segfault if CMAKE_BUILD_TYPE=Release
 	LDFLAGS=$(shell echo $$LDFLAGS | sed -e 's/\-Wl,-Bsymbolic-functions //')
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), $(gles2_architectures)))
-	dh_auto_configure -- -DCOMPIZ_BUILD_WITH_RPATH=FALSE -DCOMPIZ_DEFAULT_PLUGINS=\"$(DEFAULT_PLUGINS)\" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCOMPIZ_PACKAGING_ENABLED=TRUE -DUSE_GSETTINGS=OFF -DCOMPIZ_DISABLE_GS_SCHEMAS_INSTALL=ON -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DCOMPIZ_BUILD_TESTING=OFF -DUSE_KDE4=OFF -DBUILD_GLES=ON
+	dh_auto_configure -- -DCOMPIZ_BUILD_WITH_RPATH=FALSE -DCOMPIZ_DEFAULT_PLUGINS=\"$(DEFAULT_PLUGINS)\" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCOMPIZ_PACKAGING_ENABLED=TRUE -DUSE_GSETTINGS=ON -DCOMPIZ_DISABLE_GS_SCHEMAS_INSTALL=OFF -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DCOMPIZ_BUILD_TESTING=OFF -DUSE_KDE4=OFF -DBUILD_GLES=ON
 else
-	dh_auto_configure -- -DCOMPIZ_BUILD_WITH_RPATH=FALSE -DCOMPIZ_DEFAULT_PLUGINS=\"$(DEFAULT_PLUGINS)\" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCOMPIZ_PACKAGING_ENABLED=TRUE -DUSE_GSETTINGS=OFF -DCOMPIZ_DISABLE_GS_SCHEMAS_INSTALL=ON -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DCOMPIZ_BUILD_TESTING=OFF -DUSE_KDE4=OFF
+	dh_auto_configure -- -DCOMPIZ_BUILD_WITH_RPATH=FALSE -DCOMPIZ_DEFAULT_PLUGINS=\"$(DEFAULT_PLUGINS)\" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCOMPIZ_PACKAGING_ENABLED=TRUE -DUSE_GSETTINGS=ON -DCOMPIZ_DISABLE_GS_SCHEMAS_INSTALL=OFF -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DCOMPIZ_BUILD_TESTING=OFF -DUSE_KDE4=OFF
 endif
 
 override_dh_install:
@@ -45,15 +45,6 @@ override_dh_install:
 		sed -ri '/^(Name|GenericName|Comment|X-GNOME-FullName)\[/d' $$d; \
 		echo "X-Ubuntu-Gettext-Domain=compiz" >> $$d; \
 	done;
-
-	# create compiz keybindings file based on the metacity ones.
-	mkdir -p $(CURDIR)/debian/tmp/usr/share/gnome-control-center/keybindings/
-	# keep package=metacity to get the right translation :)
-	for i in launchers navigation screenshot system windows ; do \
-	    sed 's/wm_name=\"Metacity\"/wm_name=\"Compiz\"/' /usr/share/gnome-control-center/keybindings/50-metacity-$${i}.xml > $(CURDIR)/debian/tmp/usr/share/gnome-control-center/keybindings/50-compiz-$${i}.xml ; \
-    done
-	# add some selected keys
-	sed -i 's#key=\"/apps/metacity/general/num_workspaces\" comparison=\"gt\"##g' $(CURDIR)/debian/tmp/usr/share/gnome-control-center/keybindings/50-compiz-navigation.xml
 
 	# cmake findcompiz_install use COMPIZ_DESTDIR and using COMPIZ_DESTDIR and
 	# DESTDIR together is completely broken upstream
@@ -84,5 +75,5 @@ override_dh_auto_test:
 	#dh_auto_test
 
 %:
-	dh $@ --parallel --with quilt,python2
+	dh $@ --parallel --with quilt,python2,migrations
 

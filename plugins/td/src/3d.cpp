@@ -390,7 +390,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 	pl = cScreen->getWindowPaintList ();
 
 	/* paint all windows from bottom to top */
-	for (it = pl.begin (); it != pl.end (); it++)
+	for (it = pl.begin (); it != pl.end (); ++it)
 	{
 	    CompWindow *w = (*it);
 	    tdw = TdWindow::get (w);

@@ -24,6 +24,8 @@
  *
  **/
 
+#define CCS_LOG_DOMAIN "gconf"
+
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,15 +65,15 @@
                     snprintf (keyName, BUFSIZE, "screen%i", sn);
 
 #define PATHNAME    char pathName[BUFSIZE]; \
-                    if (!setting->parent->name || \
-			strcmp (setting->parent->name, "core") == 0) \
+		    if (!ccsPluginGetName (ccsSettingGetParent (setting)) || \
+			strcmp (ccsPluginGetName (ccsSettingGetParent (setting)), "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
 				 "%s/general/%s/options/%s", COMPIZ, \
-				 keyName, setting->name); \
+				 keyName, ccsSettingGetName (setting)); \
                     else \
 			snprintf(pathName, BUFSIZE, \
 				 "%s/plugins/%s/%s/options/%s", COMPIZ, \
-				 setting->parent->name, keyName, setting->name);
+				 ccsPluginGetName (ccsSettingGetParent (setting)), keyName, ccsSettingGetName (setting));
 
 static const char* watchedGnomeDirectories[] = {
     METACITY,
@@ -408,14 +410,14 @@ isIntegratedOption (CCSSetting *setting,
     {
 	const SpecialOption *opt = &specialOptions[i];
 
-	if (strcmp (setting->name, opt->settingName) != 0)
+	if (strcmp (ccsSettingGetName (setting), opt->settingName) != 0)
 	    continue;
 
-	if (setting->parent->name)
+	if (ccsPluginGetName (ccsSettingGetParent (setting)))
 	{
 	    if (!opt->pluginName)
 		continue;
-	    if (strcmp (setting->parent->name, opt->pluginName) != 0)
+	    if (strcmp (ccsPluginGetName (ccsSettingGetParent (setting)), opt->pluginName) != 0)
 		continue;
 	}
 	else
@@ -788,7 +790,7 @@ readListValue (CCSSetting *setting,
     CCSSettingValueList list = NULL;
     GSList              *valueList = NULL;
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeString:
     case TypeMatch:
@@ -824,7 +826,7 @@ readListValue (CCSSetting *setting,
 
     nItems = g_slist_length (valueList);
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeBool:
 	{
@@ -947,10 +949,10 @@ getButtonBindingForSetting (CCSContext   *context,
     if (!s)
 	return 0;
 
-    if (s->type != TypeButton)
+    if (ccsSettingGetType (s) != TypeButton)
 	return 0;
 
-    return s->value->value.asButton.button;
+    return ccsSettingGetValue (s)->value.asButton.button;
 }
 
 
@@ -1138,7 +1140,7 @@ readOption (CCSSetting * setting)
     Bool       ret = FALSE;
     Bool       valid = TRUE;
 
-    KEYNAME(setting->parent->context->screenNum);
+    KEYNAME (ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
     PATHNAME;
 
     /* first check if the key is set */
@@ -1153,7 +1155,7 @@ readOption (CCSSetting * setting)
 	return FALSE;
 
     /* setting type sanity check */
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
     case TypeMatch:
@@ -1181,14 +1183,14 @@ readOption (CCSSetting * setting)
     }
     if (!valid)
     {
-	printf ("GConf backend: There is an unsupported value at path %s. "
+	ccsWarning ("There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
-		"that value so that operation can continue properly.\n",
+		"that value so that operation can continue properly.",
 		pathName);
 	return FALSE;
     }
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
 	{
@@ -1305,8 +1307,8 @@ readOption (CCSSetting * setting)
 	ret = readListValue (setting, gconfValue);
 	break;
     default:
-	printf("GConf backend: attempt to read unsupported setting type %d from path %s!\n",
-	       setting->type, pathName);
+	ccsWarning ("Attempt to read unsupported setting type %d from path %s!",
+	       ccsSettingGetType (setting), pathName);
 	break;
     }
 
@@ -1329,7 +1331,7 @@ writeListValue (CCSSetting *setting,
     if (!ccsGetList (setting, &list))
 	return;
 
-    switch (setting->info.forList.listType)
+    switch (ccsSettingGetInfo (setting)->forList.listType)
     {
     case TypeBool:
 	{
@@ -1406,8 +1408,8 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported list type %d at path %s!\n",
-	       setting->info.forList.listType, pathName);
+	ccsWarning ("Attempt to write unsupported list type %d at path %s!",
+	       ccsSettingGetInfo (setting)->forList.listType, pathName);
 	valueType = GCONF_VALUE_INVALID;
 	break;
     }
@@ -1475,10 +1477,10 @@ setButtonBindingForSetting (CCSContext   *context,
     if (!s)
 	return;
 
-    if (s->type != TypeButton)
+    if (ccsSettingGetType (s) != TypeButton)
 	return;
 
-    value = s->value->value.asButton;
+    value = ccsSettingGetValue (s)->value.asButton;
 
     if ((value.button != button) || (value.buttonModMask != buttonModMask))
     {
@@ -1561,7 +1563,7 @@ writeIntegratedOption (CCSContext *context,
 	    char  *newValue;
 	    gchar *currentValue;
 
-	    newValue = ccsKeyBindingToString (&setting->value->value.asKey);
+	    newValue = ccsKeyBindingToString (&ccsSettingGetValue (setting)->value.asKey);
 	    if (newValue)
     	    {
 		if (strcmp (newValue, "Disabled") == 0)
@@ -1668,7 +1670,7 @@ writeIntegratedOption (CCSContext *context,
 					   resizeWithRightButton, NULL);
 		}
 
-		modMask = setting->value->value.asButton.buttonModMask;
+		modMask = ccsSettingGetValue (setting)->value.asButton.buttonModMask;
 		if (setGnomeMouseButtonModifier (modMask))
 		{
 		    setButtonBindingForSetting (context, "move",
@@ -1694,7 +1696,7 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
-    KEYNAME (setting->parent->context->screenNum);
+    KEYNAME (ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
     PATHNAME;
 
     gconf_client_recursive_unset (client, pathName, 0, NULL);
@@ -1704,10 +1706,10 @@ resetOptionToDefault (CCSSetting * setting)
 static void
 writeOption (CCSSetting * setting)
 {
-    KEYNAME (setting->parent->context->screenNum);
+    KEYNAME (ccsContextGetScreenNum (ccsPluginGetContext (ccsSettingGetParent (setting))));
     PATHNAME;
 
-    switch (setting->type)
+    switch (ccsSettingGetType (setting))
     {
     case TypeString:
 	{
@@ -1818,8 +1820,8 @@ writeOption (CCSSetting * setting)
 	writeListValue (setting, pathName);
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported setting type %d\n",
-	       setting->type);
+	ccsWarning ("Attempt to write unsupported setting type %d",
+	       ccsSettingGetType (setting));
 	break;
     }
 }
@@ -2021,7 +2023,7 @@ writeSetting (CCSContext *context,
     {
 	writeIntegratedOption (context, setting, index);
     }
-    else if (setting->isDefault)
+    else if (ccsSettingGetIsDefault (setting))
     {
 	resetOptionToDefault (setting);
     }
@@ -2033,7 +2035,7 @@ writeSetting (CCSContext *context,
 static Bool
 getSettingIsIntegrated (CCSSetting * setting)
 {
-    if (!ccsGetIntegrationEnabled (setting->parent->context))
+    if (!ccsGetIntegrationEnabled (ccsPluginGetContext (ccsSettingGetParent (setting))))
 	return FALSE;
 
     if (!isIntegratedOption (setting, NULL))

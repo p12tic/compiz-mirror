@@ -15,8 +15,6 @@ endif (INSTALL_ROOT)
 
 cmake_policy (SET CMP0012 NEW)
 
-message (${BUILD_DEB})
-
 if (BUILD_DEB)
     message ("Installing Debian Format")
     set (EXTRAARGS "--install-layout=deb")

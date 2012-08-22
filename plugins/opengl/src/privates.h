@@ -120,6 +120,7 @@ class PrivateGLScreen :
 
 	std::vector<GLTexture::BindPixmapProc> bindPixmap;
 	bool hasCompositing;
+	bool commonFrontbuffer;
 
 	GLIcon defaultIcon;
 

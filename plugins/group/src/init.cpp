@@ -118,7 +118,7 @@ GroupScreen::optionChanged (CompOption *opt,
 					      glowProperty->textureSize),
 				    GL_RGBA, GL_UNSIGNED_BYTE);
 
-		if (optionGetGlow () && mGroups.size ())
+		if (optionGetGlow () && !mGroups.empty ())
 		{
 		    foreach (CompWindow *w, screen->windows ())
 		    {
@@ -185,7 +185,7 @@ GroupScreen::applyInitialActions ()
 	    }
 	}
 
-	rit++;
+	++rit;
     }
 
     return false;
@@ -228,7 +228,7 @@ GroupScreen::checkFunctions ()
 	 mGrabState == GroupScreen::ScreenGrabTabDrag)
 	 functionsMask |= (GL_PAINT_OUTPUT |
 			   GL_PAINT_TRANSFORMED_OUTPUT);
-    else if (mGroups.size ())
+    else if (!mGroups.empty ())
     {
 	foreach (GroupSelection *group, mGroups)
 	{
@@ -298,7 +298,7 @@ GroupScreen::postLoad ()
 	bool topIdInGroup = false;
 	for (std::list <Window>::iterator it = group->mWindowIds.begin ();
 	     it != group->mWindowIds.end ();
-	     it++)
+	     ++it)
 	{
 	    CompWindow *w = screen->findWindow (*it);
 
@@ -493,7 +493,7 @@ GroupScreen::~GroupScreen ()
 		{
 		    GroupTabBarSlot *slot = *rit;
 		    delete slot;
-		    rit--;
+		    --rit;
 		}
 
 		group->mTabBar->mSlots.clear ();
@@ -502,7 +502,7 @@ GroupScreen::~GroupScreen ()
 	    }
 
 	    delete group;
-	    rit++;
+	    ++rit;
 	}
     }
 

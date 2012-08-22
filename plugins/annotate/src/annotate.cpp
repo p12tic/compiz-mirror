@@ -73,7 +73,7 @@ AnnoScreen::cairoContext ()
 	}
 
 	damage = XDamageCreate (screen->dpy (), pixmap,
-				XDamageReportRawRectangles);
+				XDamageReportBoundingBox);
 
 	surface =
 	    cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
@@ -779,12 +779,11 @@ void
 AnnoScreen::handleMotionEvent (int	  xRoot,
 		       	       int	  yRoot)
 {
-    static unsigned short clearColor[] = { 0, 0, 0, 0 };
-
     CompRect damageRect;
 
     if (grabIndex)
     {
+	static unsigned short clearColor[] = { 0, 0, 0, 0 };
 	switch (drawMode)
 	{
 	case EraseMode:

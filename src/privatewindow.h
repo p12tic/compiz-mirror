@@ -283,7 +283,7 @@ class PrivateWindow {
 
 	bool checkClear ();
 
-	static CompWindow* createCompWindow (Window aboveId, XWindowAttributes &wa, Window id);
+	static CompWindow* createCompWindow (Window aboveId, Window aboveServerId, XWindowAttributes &wa, Window id);
     public:
 
 	PrivateWindow *priv;

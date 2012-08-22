@@ -3137,7 +3137,6 @@ convert_property (Display *xdisplay,
 #define N_TARGETS 4
 
     Atom conversion_targets[N_TARGETS];
-    long icccm_version[] = { 2, 0 };
 
     conversion_targets[0] = XInternAtom (xdisplay, "TARGETS", 0);
     conversion_targets[1] = XInternAtom (xdisplay, "MULTIPLE", 0);
@@ -3153,9 +3152,12 @@ convert_property (Display *xdisplay,
 			 XA_INTEGER, 32, PropModeReplace,
 			 (unsigned char *) &dm_sn_timestamp, 1);
     else if (target == conversion_targets[3])
+    {
+	long icccm_version[] = { 2, 0 };
 	XChangeProperty (xdisplay, w, property,
 			 XA_INTEGER, 32, PropModeReplace,
 			 (unsigned char *) icccm_version, 2);
+    }
     else
 	return 0;
 

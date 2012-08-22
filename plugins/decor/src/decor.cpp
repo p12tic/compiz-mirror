@@ -170,11 +170,32 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 	{
 	    foreach (CompWindow *w, dScreen->cScreen->getWindowPaintList ())
 	    {
-		if ((w->type () & CompWindowTypeDockMask) &&
-		    !(w->destroyed () || w->invisible ()))
+		bool isDock = w->type () & CompWindowTypeDockMask;
+		bool drawShadow = !(w->invisible () || w->destroyed ());
+
+		if (isDock && drawShadow)
 		{
 		    DecorWindow *d = DecorWindow::get (w);
-		    d->glDecorate (transform, attrib, region, mask);
+
+		    /* If the last mask was an occlusion pass, glPaint
+		     * return value will mean something different, so
+		     * remove it */
+		    unsigned int pmask = d->gWindow->lastMask () &
+				~(PAINT_WINDOW_OCCLUSION_DETECTION_MASK);
+
+		    /* Check if the window would draw by seeing if glPaint
+		     * returns true when using PAINT_NO_CORE_INSTANCE_MASK
+		     */
+		    pmask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
+		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
+					     transform,
+					     region,
+					     pmask))
+		    {
+			GLFragment::Attrib fa (d->gWindow->paintAttrib ());
+			d->glDecorate (transform, fa, region, mask);
+		    }
 		}
 	    }
 	}
@@ -326,7 +347,7 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
 	textures[0]->setMipmap (false);
 
     damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (),
-			     XDamageReportRawRectangles);
+			     XDamageReportBoundingBox);
 }
 
 /*
@@ -588,7 +609,6 @@ Decoration::Decoration (int   type,
     updateState (0),
     mPixmapReceiver (requestor, this)
 {
-    int		    left, right, top, bottom;
     int		    x1, y1, x2, y2;
 
     if (!texture && type == WINDOW_DECORATION_TYPE_PIXMAP)
@@ -599,10 +619,7 @@ Decoration::Decoration (int   type,
 
     if (type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-	left   = 0;
-	right  = minWidth;
-	top    = 0;
-	bottom = minHeight;
+	int left = 0, right = minWidth, top = 0, bottom = minHeight;
 
 	for (unsigned int i = 0; i  < nQuad; i++)
 	{
@@ -814,7 +831,7 @@ DecorationList::updateDecoration (Window   id,
 	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i, requestor);
 
 	    /* Try to replace an existing decoration */
-	    for (; it != mList.end (); it++)
+	    for (; it != mList.end (); ++it)
 	    {
 		if ((*it)->frameType == d->frameType &&
 		    (*it)->frameState == d->frameState &&
@@ -863,7 +880,7 @@ DecorationList::updateDecoration (Window   id,
 		std::list <Decoration::Ptr>::iterator it = mList.begin ();
 
 		/* Use an existing decoration */
-		for (; it != mList.end (); it++)
+		for (; it != mList.end (); ++it)
 		{
 		    if ((*it)->frameType == frameType &&
 			(*it)->frameState == frameState &&
@@ -1306,7 +1323,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
     std::list <Decoration::Ptr>::iterator cit = mList.end ();
     DECOR_WINDOW (w);
 
-    if (mList.size ())
+    if (!mList.empty ())
     {
         const unsigned int typeMatch = (1 << 0);
         const unsigned int stateMatch = (1 << 1);
@@ -1319,7 +1336,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 		cit = mList.begin ();
 
 	for (std::list <Decoration::Ptr>::iterator it = mList.begin ();
-	     it != mList.end (); it++)
+	     it != mList.end (); ++it)
 	{
 	    const Decoration::Ptr &d = *it;
 
@@ -1965,7 +1982,7 @@ DecorWindow::updateOutputFrame ()
 	oldHeight = 0;
 
 	frameDamage = XDamageCreate (screen->dpy (), outputFrame,
-			             XDamageReportRawRectangles);
+			             XDamageReportBoundingBox);
 
 	dScreen->frames[outputFrame] = this;
     }
@@ -2820,9 +2837,6 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     updateReg = true;
 
     window->resizeNotify (dx, dy, dwidth, dheight);
-
-    /* FIXME: remove */
-    CompositeScreen::get (screen)->damageScreen ();
 }
 
 

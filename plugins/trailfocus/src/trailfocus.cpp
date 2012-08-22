@@ -121,7 +121,7 @@ TrailfocusScreen::pushWindow (Window id)
     if (!isTrailfocusWindow (w))
 	return false;
 
-    for (iter = windows.begin (); iter != windows.end (); iter++)
+    for (iter = windows.begin (); iter != windows.end (); ++iter)
 	if ((*iter)->window->id () == id)
 	    break;
 
@@ -152,7 +152,7 @@ TrailfocusScreen::popWindow (TrailfocusWindow *tw)
     int                    distance, bestDist = 1000000;
     unsigned int           i;
 
-    for (iter = windows.begin (); iter != windows.end (); iter++)
+    for (iter = windows.begin (); iter != windows.end (); ++iter)
 	if (*iter == tw)
 	    break;
 

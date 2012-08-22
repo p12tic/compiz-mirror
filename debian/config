@@ -3,7 +3,7 @@ backend = ini
 plugin_list_autosort = true
 
 [general_ubuntu]
-backend = gconf
+backend = gsettings
 integration = true
 plugin_list_autosort = true
 profile = unity

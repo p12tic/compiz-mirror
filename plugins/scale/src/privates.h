@@ -63,6 +63,8 @@ class PrivateScaleScreen :
 	void findBestSlots ();
 	bool fillInWindows ();
 	bool layoutThumbs ();
+	bool layoutThumbsAll ();
+	bool layoutThumbsSingle ();
 
 	SlotArea::vector getSlotAreas ();
 

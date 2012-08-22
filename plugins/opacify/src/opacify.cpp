@@ -235,7 +235,7 @@ OpacifyScreen::checkDelay ()
     {
 	return false;
     }
-    if (optionGetNoDelayChange () && passive.size ())
+    if (optionGetNoDelayChange () && !passive.empty ())
 	return true;
 
     return false;
