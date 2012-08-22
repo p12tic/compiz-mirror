@@ -7,4 +7,5 @@ debian/unity.ini /etc/compizconfig/
 debian/profile_upgrades/*.upgrade etc/compizconfig/upgrades
 debian/tmp/usr/lib/compizconfig/backends/libgconf.so
 debian/tmp/usr/lib/compizconfig/backends/libgsettings.so
+debian/tmp/usr/lib/libcompizconfig_gsettings_backend.so
 postinst/convert-files/*.convert usr/lib/compiz/migration/
