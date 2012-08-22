@@ -226,25 +226,19 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	    GLTexture::MatrixList ml (1);
 
 	    ml[0] = icon->matrix ();
-	    priv->gWindow->geometry ().reset ();
+	    priv->gWindow->vertexBuffer ()->begin ();
 
 	    if (width && height)
 		priv->gWindow->glAddGeometry (ml, iconReg, iconReg);
 
-	    if (priv->gWindow->geometry ().vCount)
+	    if (priv->gWindow->vertexBuffer ()->end ())
 	    {
-		GLFragment::Attrib fragment (sAttrib);
 		GLMatrix           wTransform (transform);
 
 		wTransform.scale (scale, scale, 1.0f);
 		wTransform.translate (x / scale, y / scale, 0.0f);
 
-		glPushMatrix ();
-		glLoadMatrixf (wTransform.getMatrix ());
-
-		priv->gWindow->glDrawTexture (icon, fragment, mask);
-
-		glPopMatrix ();
+		priv->gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
 	    }
 	}
     }
@@ -392,13 +386,13 @@ PrivateScaleWindow::glPaint (const GLWindowPaintAttrib& attrib,
 
 	if (scaled)
 	{
-	    GLFragment::Attrib fragment (gWindow->lastPaintAttrib ());
+	    GLWindowPaintAttrib lastAttrib (gWindow->lastPaintAttrib ());
 	    GLMatrix           wTransform (transform);
 
 	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 		return false;
 
-	    if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	    if (window->alpha () || lastAttrib.opacity != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	    wTransform.translate (window->x (), window->y (), 0.0f);
@@ -406,13 +400,8 @@ PrivateScaleWindow::glPaint (const GLWindowPaintAttrib& attrib,
 	    wTransform.translate (tx / scale - window->x (),
 				  ty / scale - window->y (), 0.0f);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
-
-	    gWindow->glDraw (wTransform, fragment, region,
+	    gWindow->glDraw (wTransform, lastAttrib, region,
 			     mask | PAINT_WINDOW_TRANSFORMED_MASK);
-
-	    glPopMatrix ();
 
 	    sWindow->scalePaintDecoration (sAttrib, transform, region, mask);
 	}
@@ -865,6 +854,10 @@ PrivateScaleScreen::glPaintOutput (const GLScreenPaintAttrib& sAttrib,
 void
 PrivateScaleScreen::preparePaint (int msSinceLastPaint)
 {
+#ifndef LP1026986_FIXED_PROPERLY
+    if (state != ScaleScreen::Idle)
+	cScreen->damageScreen ();
+#endif
     if (state != ScaleScreen::Idle && state != ScaleScreen::Wait)
     {
 	int   steps;

@@ -89,7 +89,7 @@ if (NOT _COMPIZ_INTERNAL)
 	if (COMPIZ_FOUND AND _compiz_def_macro)
             # everything found. Set module path and include defaults module
 	    set (COMPIZ_CMAKE_MODULE_PATH ${COMPIZ_PREFIX}/share/compiz/cmake)
-	    set (CMAKE_MODULE_PATH  ${COMPIZ_CMAKE_MODULE_PATH})
+	    set (CMAKE_MODULE_PATH ${COMPIZ_CMAKE_MODULE_PATH} ${CMAKE_MODULE_PATH})
 	    include (CompizDefaults)
 	else ()
 	    set (COMPIZ_FOUND 0)

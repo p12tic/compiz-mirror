@@ -141,10 +141,10 @@ class ScaleAddonWindow :
 	renderTitle ();
 
 	void
-	drawTitle ();
+	drawTitle (const GLMatrix &transform);
 
 	void
-	drawHighlight ();
+	drawHighlight (const GLMatrix &transform);
 };
 
 #define ADDON_WINDOW(w)				     \

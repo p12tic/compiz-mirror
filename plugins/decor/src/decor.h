@@ -276,9 +276,9 @@ class DecorWindow :
 
 	bool damageRect (bool, const CompRect &);
 
-	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
+	bool glDraw (const GLMatrix &, const GLWindowPaintAttrib &,
 		     const CompRegion &, unsigned int);
-	void glDecorate (const GLMatrix &, GLFragment::Attrib &,
+	void glDecorate (const GLMatrix &, const GLWindowPaintAttrib &,
 		         const CompRegion &, unsigned int);
 
 	void windowNotify (CompWindowNotify n);
