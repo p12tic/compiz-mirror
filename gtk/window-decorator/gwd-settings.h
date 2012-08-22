@@ -22,6 +22,7 @@
 #include <glib-object.h>
 
 typedef struct _GWDSettings GWDSettings;
+typedef struct _GWDSettingsNotified GWDSettingsNotified;
 
 G_BEGIN_DECLS
 
@@ -34,7 +35,8 @@ gwd_settings_impl_new (gint *blur,
 		       gdouble *inactive_opacity,
 		       gboolean *active_shade_opacity,
 		       gboolean *inactive_shade_opacity,
-		       const gchar **metacity_theme);
+		       const gchar **metacity_theme,
+		       GWDSettingsNotified *notified);
 
 extern const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS;
 

@@ -250,6 +250,11 @@ const GValue referenceGValue = G_VALUE_INIT;
 
 namespace
 {
+    void gwd_settings_notified_unref (GWDSettingsNotified *notified)
+    {
+	g_object_unref (G_OBJECT (notified));
+    }
+
     void gwd_settings_storage_unref (GWDSettingsStorage *storage)
     {
 	g_object_unref (G_OBJECT (storage));
@@ -517,18 +522,24 @@ class GWDSettingsTest :
 	virtual void SetUp ()
 	{
 	    GWDSettingsTestCommon::SetUp ();
+	    mGMockNotified.reset (new GWDMockSettingsNotifiedGMock ());
+	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
+				 boost::bind (gwd_settings_notified_unref, _1));
 	    mSettings.reset (gwd_settings_impl_new (NULL,
 						    NULL,
 						    NULL,
 						    NULL,
 						    NULL,
-						    NULL),
+						    NULL,
+						    mMockNotified.get ()),
 			     boost::bind (gwd_settings_unref, _1));
 	}
 
     protected:
 
 	boost::shared_ptr <GWDSettingsImpl> mSettings;
+	boost::shared_ptr <GWDMockSettingsNotifiedGMock> mGMockNotified;
+	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
 };
 
 TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
@@ -722,12 +733,16 @@ TEST_F(GWDSettingsTest, TestBlurSetCommandLine)
 {
     gint blurType = testing_values::BLUR_TYPE_ALL_INT_VALUE;
 
+    /* We need to increment the reference count so that it doesn't
+     * go away when we create a new GWDSettingsImpl */
+    g_object_ref (mMockNotified.get ());
     mSettings.reset (gwd_settings_impl_new (&blurType,
 					    NULL,
 					    NULL,
 					    NULL,
 					    NULL,
-					    NULL),
+					    NULL,
+					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -789,12 +804,14 @@ TEST_F(GWDSettingsTest, TestMetacityThemeSetCommandLine)
 {
     const gchar *metacityTheme = "Ambiance";
 
+    g_object_ref (mMockNotified.get ());
     mSettings.reset (gwd_settings_impl_new (NULL,
 					    NULL,
 					    NULL,
 					    NULL,
 					    NULL,
-					    &metacityTheme),
+					    &metacityTheme,
+					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -869,12 +886,14 @@ TEST_F(GWDSettingsTest, TestMetacityOpacitySetCommandLine)
     gboolean activeShadeOpacity = FALSE;
     gboolean inactiveShadeOpacity = FALSE;
 
+    g_object_ref (mMockNotified.get ());
     mSettings.reset (gwd_settings_impl_new (NULL,
 					    &activeOpacity,
 					    &inactiveOpacity,
 					    &activeShadeOpacity,
 					    &inactiveShadeOpacity,
-					    NULL),
+					    NULL,
+					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
     EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -1020,12 +1039,16 @@ class GWDSettingsTestClickActions :
 	{
 	    g_setenv ("G_SLICE", "always-malloc", TRUE);
 	    g_type_init ();
+	    mGMockNotified.reset (new GWDMockSettingsNotifiedGMock ());
+	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
+				 boost::bind (gwd_settings_notified_unref, _1));
 	    mSettings.reset (gwd_settings_impl_new (NULL,
 						    NULL,
 						    NULL,
 						    NULL,
 						    NULL,
-						    NULL),
+						    NULL,
+						    mMockNotified.get ()),
 			     boost::bind (gwd_settings_unref, _1));
 	}
 
@@ -1037,6 +1060,8 @@ class GWDSettingsTestClickActions :
     protected:
 
 	boost::shared_ptr <GWDSettingsImpl> mSettings;
+	boost::shared_ptr <GWDMockSettingsNotifiedGMock> mGMockNotified;
+	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
 };
 
 TEST_P(GWDSettingsTestClickActions, TestClickActionsAndMouseActions)

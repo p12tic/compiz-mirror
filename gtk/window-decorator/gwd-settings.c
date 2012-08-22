@@ -6,6 +6,7 @@
 #include "gwd-settings.h"
 #include "gwd-settings-interface.h"
 #include "gwd-settings-writable-interface.h"
+#include "gwd-settings-notified-interface.h"
 #include "decoration.h"
 
 #define GWD_SETTINGS_IMPL(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImpl));
@@ -54,7 +55,8 @@ enum
     GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_ACTION_RIGHT_CLICK = 15,
     GWD_SETTINGS_IMPL_PROPERTY_MOUSE_WHEEL_ACTION = 16,
     GWD_SETTINGS_IMPL_PROPERTY_TITLEBAR_FONT = 17,
-    GWD_SETTINGS_IMPL_PROPERTY_CMDLINE_OPTIONS
+    GWD_SETTINGS_IMPL_PROPERTY_CMDLINE_OPTIONS = 18,
+    GWD_SETTINGS_IMPL_PROPERTY_SETTINGS_NOTIFIED = 19
 };
 
 enum
@@ -67,9 +69,9 @@ enum
     CMDLINE_THEME = (1 << 5)
 };
 
-/* Always N command line parameters + 1 for command line
- * options enum */
-const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS = 7;
+/* Always N command line parameters + 2 for command line
+ * options enum & notified */
+const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS = 8;
 
 typedef struct _GWDSettingsImplPrivate
 {
@@ -680,6 +682,13 @@ static void gwd_settings_impl_class_init (GWDSettingsImplClass *klass)
 						       G_PARAM_READABLE |
 						       G_PARAM_WRITABLE |
 						       G_PARAM_CONSTRUCT_ONLY));
+    g_object_class_install_property (object_class,
+				     GWD_SETTINGS_IMPL_PROPERTY_SETTINGS_NOTIFIED,
+				     g_param_spec_pointer ("settings-notified",
+							   "GWDSettingsNotified",
+							   "A GWDSettingsNotified which will be updated",
+							   G_PARAM_WRITABLE |
+							   G_PARAM_CONSTRUCT_ONLY));
 }
 
 static void gwd_settings_impl_init (GWDSettingsImpl *self)
@@ -842,7 +851,8 @@ gwd_settings_impl_new (gint *blur,
 		       gdouble *inactive_opacity,
 		       gboolean *active_shade_opacity,
 		       gboolean *inactive_shade_opacity,
-		       const gchar **metacity_theme)
+		       const gchar **metacity_theme,
+		       GWDSettingsNotified *notified)
 {
     int    n_param = 0;
     guint    cmdline_opts = 0;
@@ -855,6 +865,7 @@ gwd_settings_impl_new (gint *blur,
     GValue inactive_shade_opacity_value = G_VALUE_INIT;
     GValue metacity_theme_value = G_VALUE_INIT;
     GValue cmdline_opts_value = G_VALUE_INIT;
+    GValue settings_notified_value = G_VALUE_INIT;
 
     g_value_init (&blur_value, G_TYPE_INT);
     g_value_init (&active_opacity_value, G_TYPE_DOUBLE);
@@ -863,6 +874,7 @@ gwd_settings_impl_new (gint *blur,
     g_value_init (&inactive_shade_opacity_value, G_TYPE_BOOLEAN);
     g_value_init (&metacity_theme_value, G_TYPE_STRING);
     g_value_init (&cmdline_opts_value, G_TYPE_INT);
+    g_value_init (&settings_notified_value, G_TYPE_POINTER);
 
     if (set_blur_construction_value (blur, &param[n_param], &blur_value))
 	n_param = set_flag_and_increment (n_param, &cmdline_opts, CMDLINE_BLUR);
@@ -886,6 +898,13 @@ gwd_settings_impl_new (gint *blur,
 
     param[n_param].name = "cmdline-options";
     param[n_param].value = cmdline_opts_value;
+
+    n_param++;
+
+    g_value_set_pointer (&settings_notified_value, notified);
+
+    param[n_param].name = "settings-notified";
+    param[n_param].value = settings_notified_value;
 
     n_param++;
 
