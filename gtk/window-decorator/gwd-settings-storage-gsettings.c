@@ -2,6 +2,8 @@
 
 #include <gio/gio.h>
 
+#include <string.h>
+
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings-storage-interface.h"
 #include "gwd-settings-storage-gsettings.h"
@@ -75,47 +77,165 @@ gboolean gwd_settings_storage_gsettings_update_use_tooltips (GWDSettingsStorage 
 	return FALSE;
 
     return gwd_settings_writable_use_tooltips_changed (priv->writable,
-						       g_settings_get_boolean (priv->gwd, "use-tooltips"));
+						       g_settings_get_boolean (priv->gwd,
+									       ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS));
 }
 
 gboolean gwd_settings_storage_gsettings_update_draggable_border_width (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->mutter)
+	return FALSE;
+
+    return gwd_settings_writable_draggable_border_width_changed (priv->writable,
+								 g_settings_get_int (priv->mutter,
+										     ORG_GNOME_MUTTER_DRAGGABLE_BORDER_WIDTH));
 }
 
 gboolean gwd_settings_storage_gsettings_update_attach_modal_dialogs (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->gwd)
+	return FALSE;
+
+    return gwd_settings_writable_attach_modal_dialogs_changed (priv->writable,
+							       g_settings_get_boolean (priv->mutter,
+										       ORG_GNOME_MUTTER_ATTACH_MODAL_DIALOGS));
 }
 
 gboolean gwd_settings_storage_gsettings_update_blur (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->gwd)
+	return FALSE;
+
+    return gwd_settings_writable_blur_changed (priv->writable,
+					       g_settings_get_string (priv->gwd,
+								      ORG_COMPIZ_GWD_KEY_BLUR_TYPE));
 }
 
 gboolean gwd_settings_storage_gsettings_update_metacity_theme (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->gwd)
+	return FALSE;
+
+    if (!priv->desktop)
+	return FALSE;
+
+    return gwd_settings_writable_metacity_theme_changed (priv->writable,
+							 g_settings_get_boolean (priv->gwd,
+										 ORG_COMPIZ_GWD_KEY_USE_METACITY_THEME),
+							 g_settings_get_string (priv->desktop,
+										ORG_GNOME_DESKTOP_WM_PREFERENCES_THEME));
 }
 
 gboolean gwd_settings_storage_gsettings_update_opacity (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->gwd)
+	return FALSE;
+
+    return gwd_settings_writable_opacity_changed (priv->writable,
+						  g_settings_get_double (priv->gwd,
+									 ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_OPACITY),
+						  g_settings_get_double (priv->gwd,
+									 ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_OPACITY),
+						  g_settings_get_boolean (priv->gwd,
+									  ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_SHADE_OPACITY),
+						  g_settings_get_boolean (priv->gwd,
+									  ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_SHADE_OPACITY));
 }
 
 gboolean gwd_settings_storage_gsettings_update_button_layout (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->desktop)
+	return FALSE;
+
+    return gwd_settings_writable_button_layout_changed (priv->writable,
+							g_settings_get_string (priv->desktop,
+									       ORG_GNOME_DESKTOP_WM_PREFERENCES_BUTTON_LAYOUT));
 }
 
 gboolean gwd_settings_storage_gsettings_update_font (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->desktop)
+	return FALSE;
+
+    return gwd_settings_writable_font_changed (priv->writable,
+					       g_settings_get_boolean (priv->desktop,
+								       ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_USES_SYSTEM_FONT),
+					       g_settings_get_string (priv->desktop,
+								      ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_FONT));
+}
+
+static gchar *
+translate_dashes_to_underscores (const gchar *original)
+{
+    gint i = 0;
+    gchar *copy = g_strdup (original);
+
+    if (!copy)
+	return NULL;
+
+    for (; i < strlen (copy); ++i)
+    {
+	if (copy[i] == '-')
+	    copy[i] = '_';
+    }
+
+    return copy;
 }
 
 gboolean gwd_settings_storage_gsettings_update_titlebar_actions (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->desktop)
+	return FALSE;
+
+    if (!priv->gwd)
+	return FALSE;
+
+    gchar *double_click_action = translate_dashes_to_underscores (g_settings_get_string (priv->desktop,
+											 ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_DOUBLE_CLICK_TITLEBAR));
+    gchar *middle_click_action = translate_dashes_to_underscores (g_settings_get_string (priv->desktop,
+											 ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_MIDDLE_CLICK_TITLEBAR));
+    gchar *right_click_action = translate_dashes_to_underscores (g_settings_get_string (priv->desktop,
+											 ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_RIGHT_CLICK_TITLEBAR));
+
+    return gwd_settings_writable_titlebar_actions_changed (priv->writable,
+							   double_click_action,
+							   middle_click_action,
+							   right_click_action,
+							   g_settings_get_string (priv->gwd,
+										  ORG_COMPIZ_GWD_KEY_MOUSE_WHEEL_ACTION));
+
+    if (double_click_action)
+	g_free (double_click_action);
+
+    if (middle_click_action)
+	g_free (middle_click_action);
+
+    if (right_click_action)
+	g_free (right_click_action);
 }
 
 static void gwd_settings_storage_gsettings_interface_init (GWDSettingsStorageInterface *interface)
