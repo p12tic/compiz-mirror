@@ -93,6 +93,7 @@ typedef struct _GWDSettingsImplPrivate
     gint		   mouse_wheel_action;
     gchar		   *titlebar_font;
     guint		   cmdline_opts;
+    GWDSettingsNotified    *notified;
 } GWDSettingsImplPrivate;
 
 gboolean
@@ -538,6 +539,9 @@ static void gwd_settings_set_property (GObject *object,
 
 	    priv->metacity_theme = g_value_dup_string (value);
 	    break;
+	case GWD_SETTINGS_IMPL_PROPERTY_SETTINGS_NOTIFIED:
+	    g_return_if_fail (!priv->notified);
+	    priv->notified = (GWDSettingsNotified *) g_value_get_pointer (value);
 	default:
 	    break;
     }
@@ -725,6 +729,7 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
     priv->mouse_wheel_action = WHEEL_ACTION_DEFAULT;
     priv->titlebar_font = g_strdup (TITLEBAR_FONT_DEFAULT);
     priv->cmdline_opts = 0;
+    priv->notified = NULL;
 }
 
 static gboolean
