@@ -33,12 +33,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <config.h>
+#include <imgsvg-config.h>
 
 #include <cairo/cairo-xlib.h>
 #include <librsvg/rsvg.h>
-
-#if !HAVE_RSVG_2_36_2
+ 
+#ifndef HAVE_RSVG_2_36_2
 #include <librsvg/rsvg-cairo.h>
 #endif
 
