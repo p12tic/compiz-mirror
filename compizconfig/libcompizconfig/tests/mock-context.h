@@ -3,6 +3,9 @@
 
 #include <ccs.h>
 
+CCSContext * ccsMockContextNew ();
+void ccsFreeMockContext (CCSContext *);
+
 class CCSContextGMockInterface
 {
     public:
@@ -23,12 +26,12 @@ class CCSContextGMockInterface
 	virtual Bool pluginIsActive (char *name) = 0;
 	virtual CCSPluginList getActivePluginList () = 0;
 	virtual CCSStringList getSortedPluginStringList () = 0;
-	virtual char * getBackend () = 0;
+	virtual const char * getBackend () = 0;
 	virtual Bool setBackend (char *name) = 0;
 	virtual void setIntegrationEnabled (Bool value) = 0;
 	virtual void setProfile (char *name) = 0;
 	virtual void setPluginListAutoSort (Bool value) = 0;
-	virtual char * getProfile () = 0;
+	virtual const char * getProfile () = 0;
 	virtual Bool getIntegrationEnabled () = 0;
 	virtual Bool getPluginListAutoSort () = 0;
 	virtual void processEvents (unsigned int flags) = 0;
@@ -50,6 +53,13 @@ class CCSContextGMock :
 {
     public:
 
+	CCSContextGMock (CCSContext *c) :
+	    mContext (c)
+	{
+	}
+
+	CCSContext * context () { return mContext; }
+
 	MOCK_METHOD0 (getPlugins, CCSPluginList ());
 	MOCK_METHOD0 (getCategories, CCSPluginCategory * ());
 	MOCK_METHOD0 (getChangedSettings, CCSSettingList ());
@@ -64,12 +74,12 @@ class CCSContextGMock :
 	MOCK_METHOD1 (pluginIsActive, Bool (char *));
 	MOCK_METHOD0 (getActivePluginList, CCSPluginList ());
 	MOCK_METHOD0 (getSortedPluginStringList, CCSStringList ());
-	MOCK_METHOD0 (getBackend, char * ());
+	MOCK_METHOD0 (getBackend, const char * ());
 	MOCK_METHOD1 (setBackend, Bool (char *));
 	MOCK_METHOD1 (setIntegrationEnabled, void (Bool));
 	MOCK_METHOD1 (setProfile, void (char *));
 	MOCK_METHOD1 (setPluginListAutoSort, void (Bool));
-	MOCK_METHOD0 (getProfile, char * ());
+	MOCK_METHOD0 (getProfile, const char * ());
 	MOCK_METHOD0 (getIntegrationEnabled, Bool ());
 	MOCK_METHOD0 (getPluginListAutoSort, Bool ());
 	MOCK_METHOD1 (processEvents, void (unsigned int));
@@ -84,6 +94,10 @@ class CCSContextGMock :
 	MOCK_METHOD0 (getExistingProfiles, CCSStringList ());
 	MOCK_METHOD0 (checkForSettingsUpgrade, Bool ());
 	MOCK_METHOD0 (loadPlugins, void ());
+
+    private:
+
+	CCSContext *mContext;
 
     public:
 
@@ -172,7 +186,7 @@ class CCSContextGMock :
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->getSortedPluginStringList ();
 	}
 
-	static char *
+	static const char *
 	ccsGetBackend (CCSContext *context)
 	{
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->getBackend ();
@@ -187,7 +201,7 @@ class CCSContextGMock :
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->getIntegrationEnabled ();
 	}
 
-	static char *
+	static const char *
 	ccsGetProfile (CCSContext *context)
 	{
 	    if (!context)
@@ -330,9 +344,15 @@ class CCSContextGMock :
 
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->loadPlugins ();
 	}
+
+	static void
+	ccsFreeContext (CCSContext *context)
+	{
+	    if (!context)
+		return;
+
+	    ccsFreeMockContext (context);
+	}
 };
 
 extern CCSContextInterface CCSContextGMockInterface;
-
-CCSContext * ccsMockContextNew ();
-void ccsFreeMockContext (CCSContext *);

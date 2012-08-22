@@ -212,6 +212,64 @@
 	</subgroup>
 
       </group>
+      
+      <group>
+        <_short>UnMinimize Animation</_short>
+
+        <subgroup>
+          <_short>Animation Selection</_short>
+          <option name="unminimize_effects" type="list">
+            <_short>UnMinimize Effect</_short>
+            <_long>The animation effect shown when unminimizing a window.</_long>
+            <type>string</type>
+            <extensible/>
+            <sort start="2"/>
+            <default>
+              <value>animation:Magic Lamp</value>
+            </default>
+          </option>
+          <option name="unminimize_durations" type="list">
+            <_short>Duration</_short>
+            <_long>Animation duration in milliseconds for unminimize effect.</_long>
+            <type>int</type>
+            <min>50</min>
+            <max>4000</max>
+            <default>
+              <value>300</value>
+            </default>
+          </option>
+          <option name="unminimize_matches" type="list">
+            <_short>Window Match</_short>
+            <_long>The windows that will be animated.</_long>
+            <type>match</type>
+            <default>
+              <value>(type=Normal | Dialog | ModalDialog | Unknown)</value>
+            </default>
+          </option>
+          <option name="unminimize_options" type="list">
+            <_short>Options</_short>
+            <_long>Comma separated list of option value assignments to override effect settings, e.g.: fire_color=#0080ffff, fire_particles=700, fire_smoke=1</_long>
+            <type>string</type>
+            <default>
+              <value></value>
+            </default>
+          </option>
+        </subgroup>
+
+        <subgroup>
+          <_short>Random Effects</_short>
+          <option name="unminimize_random_effects" type="list">
+            <_short>Pool</_short>
+            <_long>Pool of effects to be chosen from if Random effect is selected. Click reset to use all effects.</_long>
+            <type>string</type>
+            <extensible/>
+            <sort start="2"/>
+            <default>
+            </default>
+          </option>
+        </subgroup>
+
+      </group>
 
       <group>
 	<_short>Shade Animation</_short>
@@ -641,6 +699,7 @@
       <base_option>open_effects</base_option>
       <base_option>close_effects</base_option>
       <base_option>minimize_effects</base_option>
+      <base_option>unminimize_effects</base_option>
       <base_option>shade_effects</base_option>
       <restriction>
 	<value>animation:None</value>
@@ -659,6 +718,8 @@
       <base_option>close_random_effects</base_option>
       <base_option>minimize_effects</base_option>
       <base_option>minimize_random_effects</base_option>
+      <base_option>unminimize_effects</base_option>
+      <base_option>unminimize_random_effects</base_option>
       <base_option>shade_effects</base_option>
       <base_option>shade_random_effects</base_option>
       <restriction>
@@ -687,6 +748,8 @@
       <base_option>close_random_effects</base_option>
       <base_option>minimize_effects</base_option>
       <base_option>minimize_random_effects</base_option>
+      <base_option>unminimize_effects</base_option>
+      <base_option>unminimize_random_effects</base_option>
       <restriction>
 	<value>animation:Dream</value>
 	<_name>Dream</_name>

@@ -702,7 +702,16 @@ collateGroups (CCSPluginPrivate * p)
 }
 
 void
-ccsFreeContext (CCSContext * c)
+ccsFreeContext (CCSContext *c)
+{
+    if (!c)
+	return;
+
+    (*(GET_INTERFACE (CCSContextInterface, c))->contextDestructor) (c);
+}
+
+static void
+ccsFreeContextDefault (CCSContext * c)
 {
     if (!c)
 	return;
@@ -725,7 +734,16 @@ ccsFreeContext (CCSContext * c)
 }
 
 void
-ccsFreePlugin (CCSPlugin * p)
+ccsFreePlugin (CCSPlugin *p)
+{
+    if (!p)
+	return;
+
+    (*(GET_INTERFACE (CCSPluginInterface, p))->pluginDestructor) (p);
+}
+
+static void
+ccsFreePluginDefault (CCSPlugin * p)
 {
     if (!p)
 	return;
@@ -954,19 +972,6 @@ ccsFreeString (CCSString *str)
     free (str);
 }
 
-#define CCSREF(type,dtype) \
-	void ccs##type##Ref (dtype *d)  \
-	{ \
-	    d->refCount++; \
-	} \
-	void ccs##type##Unref (dtype *d) \
-	{ \
-	    d->refCount--; \
-	    if (d->refCount == 0) \
-		ccsFree##type (d); \
-	} \
-
-
 CCSREF (String, CCSString)
 CCSREF (Group, CCSGroup)
 CCSREF (SubGroup, CCSSubGroup)
@@ -976,17 +981,6 @@ CCSREF (BackendInfo, CCSBackendInfo)
 CCSREF (IntDesc, CCSIntDesc)
 CCSREF (StrRestriction, CCSStrRestriction)
 CCSREF (StrExtension, CCSStrExtension)
-
-#define CCSREF_OBJ(type,dtype) \
-    void ccs##type##Ref (dtype *d) \
-    { \
-	ccsObjectRef (d); \
-    } \
-    \
-    void ccs##type##Unref (dtype *d) \
-    { \
-	ccsObjectUnref (d, ccsFree##type); \
-    } \
 
 CCSREF_OBJ (Plugin, CCSPlugin)
 CCSREF_OBJ (Setting, CCSSetting)
@@ -1119,7 +1113,7 @@ ccsSetBackend (CCSContext *context, char *name)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextSetBackend) (context, name);
 }
 
-static Bool
+Bool
 ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 		 CCSSettingListInfo info)
 {
@@ -1132,8 +1126,14 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 		return FALSE;
 	    break;
 	case TypeBool:
-	    if (l1->data->value.asBool != l2->data->value.asBool)
-		return FALSE;
+	    {
+		Bool bothTrue = (l1->data->value.asBool && l2->data->value.asBool);
+		Bool bothFalse = (!l1->data->value.asBool && !l2->data->value.asBool);
+
+		/* Use the boolean operators as TRUE/FALSE can be redefined */
+		if (!bothTrue && !bothFalse)
+		    return FALSE;
+	    }
 	    break;
 	case TypeFloat:
 	    if (l1->data->value.asFloat != l2->data->value.asFloat)
@@ -1818,12 +1818,10 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
     return TRUE;
 }
 
-static CCSSettingValueList
+CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
     CCSSettingValueList l2 = NULL;
-
-    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     while (l1)
     {
@@ -1835,7 +1833,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 	value->parent = setting;
 	value->isListChild = TRUE;
 
-	switch (sPrivate->info.forList.listType)
+	switch (ccsSettingGetInfo (setting)->forList.listType)
 	{
 	case TypeInt:
 	    value->value.asInt = l1->data->value.asInt;
@@ -2523,7 +2521,7 @@ ccsGetSortedPluginStringList (CCSContext *context)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetSortedPluginStringList) (context);
 }
 
-char *
+const char *
 ccsGetBackendDefault (CCSContext * context)
 {
     if (!context)
@@ -2537,7 +2535,7 @@ ccsGetBackendDefault (CCSContext * context)
     return cPrivate->backend->vTable->name;
 }
 
-char *
+const char *
 ccsGetBackend (CCSContext *context)
 {
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetBackend) (context);
@@ -2563,7 +2561,7 @@ ccsGetIntegrationEnabled (CCSContext *context)
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextGetIntegrationEnabled) (context);
 }
 
-char *
+const char *
 ccsGetProfileDefault (CCSContext * context)
 {
     if (!context)
@@ -2574,7 +2572,7 @@ ccsGetProfileDefault (CCSContext * context)
     return cPrivate->profile;
 }
 
-char *
+const char *
 ccsGetProfile (CCSContext *context)
 {
     if (!context)
@@ -3479,10 +3477,21 @@ ccsGetExistingBackends ()
 	    free (backenddir);
 	}
     }
-
-    if (home && strlen (home))
+    else
     {
-	if (asprintf (&backenddir, "%s/.compizconfig/backends", home) == -1)
+	if (home && strlen (home))
+	{
+	    if (asprintf (&backenddir, "%s/.compizconfig/backends", home) == -1)
+		backenddir = NULL;
+
+	    if (backenddir)
+	    {
+		getBackendInfoFromDir (&rv, backenddir);
+		free (backenddir);
+	    }
+	}
+
+	if (asprintf (&backenddir, "%s/compizconfig/backends", LIBDIR) == -1)
 	    backenddir = NULL;
 
 	if (backenddir)
@@ -3492,14 +3501,6 @@ ccsGetExistingBackends ()
 	}
     }
 
-    if (asprintf (&backenddir, "%s/compizconfig/backends", LIBDIR) == -1)
-	backenddir = NULL;
-
-    if (backenddir)
-    {
-	getBackendInfoFromDir (&rv, backenddir);
-	free (backenddir);
-    }
     return rv;
 }
 
@@ -4963,7 +4964,8 @@ static  const CCSPluginInterface ccsDefaultPluginInterface =
     ccsGetPluginSettingsDefault,
     ccsGetPluginGroupsDefault,
     ccsReadPluginSettingsDefault,
-    ccsGetPluginStrExtensionsDefault
+    ccsGetPluginStrExtensionsDefault,
+    ccsFreePluginDefault
 };
 
 static const CCSContextInterface ccsDefaultContextInterface =
@@ -5001,7 +5003,8 @@ static const CCSContextInterface ccsDefaultContextInterface =
     ccsGetExistingProfilesDefault,
     ccsDeleteProfileDefault,
     ccsCheckForSettingsUpgradeDefault,
-    ccsLoadPluginsDefault
+    ccsLoadPluginsDefault,
+    ccsFreeContextDefault
 };
 
 static const CCSSettingInterface ccsDefaultSettingInterface =
