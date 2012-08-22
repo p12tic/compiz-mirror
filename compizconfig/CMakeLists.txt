@@ -15,7 +15,9 @@ if (USE_GCONF)
     add_subdirectory (gconf)
 endif (USE_GCONF)
 
-add_subdirectory (gsettings)
+if (USE_GSETTINGS)
+    add_subdirectory (gsettings)
+endif (USE_GSETTINGS)
 
 if (COMPIZ_BUILD_TESTING)
     add_subdirectory (mocks)
