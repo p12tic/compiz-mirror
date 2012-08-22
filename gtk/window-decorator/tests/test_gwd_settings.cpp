@@ -13,6 +13,10 @@
 
 #include <glib-object.h>
 
+#include <gio/gio.h>
+
+#include "compiz_gwd_tests.h"
+
 #include "gwd-settings-interface.h"
 #include "gwd-settings.h"
 #include "gwd-settings-storage-gsettings.h"
@@ -1424,9 +1428,17 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 
 	virtual void SetUp (GWDSettingsWritable *writable)
 	{
-	    mStorage.reset (gwd_settings_storage_gsettings_new (NULL,
-								NULL,
-								NULL,
+	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
+	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+
+	    /* We do not need to keep a reference to these */
+	    mGWDSettings = g_settings_new ("org.compiz.gwd");
+	    mMutterSettings = g_settings_new ("org.gnome.mutter");
+	    mDesktopSettings = g_settings_new ("org.gnome.desktop.wm.preferences");
+
+	    mStorage.reset (gwd_settings_storage_gsettings_new (mDesktopSettings,
+								mMutterSettings,
+								mGWDSettings,
 								writable),
 			    boost::bind (gwd_settings_storage_unref, _1));
 	}
@@ -1438,6 +1450,7 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 
 	virtual void SetUseTooltips (gboolean useTooltips)
 	{
+	    g_settings_set_boolean (mGWDSettings, "use-tooltips", useTooltips);
 	}
 
 	virtual void SetDraggableBorderWidth (gint draggableBorderWidth)
@@ -1482,10 +1495,18 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 	virtual void TearDown ()
 	{
 	    mStorage.reset ();
+	    mGWDSettings = NULL;
+	    mMutterSettings = NULL;
+	    mDesktopSettings = NULL;
+	    g_unsetenv ("GSETTINGS_BACKEND");
+	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
 	}
 
     private:
 
+	GSettings			       *mGWDSettings;
+	GSettings			       *mMutterSettings;
+	GSettings			       *mDesktopSettings;
 	boost::shared_ptr <GWDSettingsStorage> mStorage;
 };
 

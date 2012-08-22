@@ -1,7 +1,11 @@
 include (CompizGSettings)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
-                     ${CMAKE_CURRENT_SOURCE_DIR}/../)
+                     ${CMAKE_CURRENT_SOURCE_DIR}/../
+		     ${CMAKE_CURRENT_BINARY_DIR})
+
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/compiz_gwd_tests.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/compiz_gwd_tests.h)
 
 pkg_check_modules (COMPIZ_TEST_GTK_WINDOW_DECORATOR
 		   glib-2.0>=2.28

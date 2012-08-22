@@ -50,7 +50,11 @@ typedef struct _GWDSettingsStorageGSettingsPrivate
 
 gboolean gwd_settings_storage_gsettings_update_use_tooltips (GWDSettingsStorage *settings)
 {
-    return FALSE;
+    GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
+    GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    return gwd_settings_writable_use_tooltips_changed (priv->writable,
+						       g_settings_get_boolean (priv->gwd, "use-tooltips"));
 }
 
 gboolean gwd_settings_storage_gsettings_update_draggable_border_width (GWDSettingsStorage *settings)
