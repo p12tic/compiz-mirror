@@ -159,15 +159,16 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
+    glEnable (GL_BLEND);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     /* fill rectangle */
     if (fillColor)
     {
 	fc[3] = fillColor[3];
-	fc[0] = fillColor[0] * fc[3];
-	fc[1] = fillColor[1] * fc[3];
-	fc[2] = fillColor[2] * fc[3];
+	fc[0] = fillColor[0] * (unsigned long)fc[3] / 65535;
+	fc[1] = fillColor[1] * (unsigned long)fc[3] / 65535;
+	fc[2] = fillColor[2] * (unsigned long)fc[3] / 65535;
 
 	streamingBuffer->begin (GL_TRIANGLE_STRIP);
 	streamingBuffer->addColors (1, fc);
@@ -184,12 +185,17 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     streamingBuffer->end ();
     streamingBuffer->render (sTransform);
 
+    glDisable (GL_BLEND);
 #ifdef USE_GLES
     glBlendFuncSeparate (origSrc, origDst,
                          origSrcAlpha, origDstAlpha);
 #else
     glBlendFunc (origSrc, origDst);
 #endif
+
+    CompositeScreen *cScreen = CompositeScreen::get (screen);
+    CompRect damage (box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1);
+    cScreen->damageRegion (damage);
 }
 
 bool
