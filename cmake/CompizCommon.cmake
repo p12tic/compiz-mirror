@@ -469,14 +469,29 @@ function (compiz_translate_xml _src _dst)
     find_program (INTLTOOL_MERGE_EXECUTABLE intltool-merge)
     mark_as_advanced (FORCE INTLTOOL_MERGE_EXECUTABLE)
 
+    set (_additional_arg
+	 -x
+	 -u
+	 ${COMPIZ_I18N_DIR})
+
+    foreach (_arg ${ARGN})
+	if ("${_arg}" STREQUAL "NOTRANSLATIONS")
+	    set (_additional_arg
+		 --no-translations
+		 -x
+		 -u)
+	endif ("${_arg}" STREQUAL "NOTRANSLATIONS")
+    endforeach (_arg ${ARGN})
+
     if (INTLTOOL_MERGE_EXECUTABLE
 	AND COMPIZ_I18N_DIR
 	AND EXISTS ${COMPIZ_I18N_DIR})
 	add_custom_command (
 	    OUTPUT ${_dst}
-	    COMMAND ${INTLTOOL_MERGE_EXECUTABLE} -x -u -c
+	    COMMAND ${INTLTOOL_MERGE_EXECUTABLE}
+		    -c
 		    ${CMAKE_BINARY_DIR}/.intltool-merge-cache
-		    ${COMPIZ_I18N_DIR}
+		    ${_additional_arg}
 		    ${_src}
 		    ${_dst}
 	    DEPENDS ${_src}

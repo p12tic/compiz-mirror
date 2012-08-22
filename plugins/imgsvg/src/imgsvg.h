@@ -35,7 +35,6 @@
 
 #include <cairo/cairo-xlib.h>
 #include <librsvg/rsvg.h>
-#include <librsvg/rsvg-cairo.h>
 
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
