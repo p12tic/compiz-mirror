@@ -11,6 +11,11 @@
     <value nick='menu' value='7'/>
   </enum>
   <schema path="/org/gnome/desktop/wm/preferences/" id="org.gnome.desktop.wm.preferences" gettext-domain="gsettings-desktop-schemas">
+    <key type="s" name="button-layout">
+      <default>':minimize,maximize,close'</default>
+      <summary>Arrangement of buttons on the titlebar</summary>
+      <description>Arrangement of buttons on the titlebar. The value should be a string, such as "menu:minimize,maximize,spacer,close"; the colon separates the left corner of the window from the right corner, and the button names are comma-separated. Duplicate buttons are not allowed. Unknown button names are silently ignored so that buttons can be added in future metacity versions without breaking older versions. A special spacer tag can be used to insert some space between two adjacent buttons.</description>
+    </key>
     <key name="action-double-click-titlebar" enum="org.gnome.desktop.GDesktopTitlebarAction">
       <default>'toggle-maximize'</default>
       <summary>Action on title bar double-click</summary>

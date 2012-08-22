@@ -6,6 +6,24 @@
 #include "gwd-settings-storage-interface.h"
 #include "gwd-settings-storage-gsettings.h"
 
+const gchar * ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS = "use-tooltips";
+const gchar * ORG_COMPIZ_GWD_KEY_BLUR_TYPE = "blur-type";
+const gchar * ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_OPACITY = "metacity-theme-active-opacity";
+const gchar * ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_OPACITY = "metacity-theme-inactive-opacity";
+const gchar * ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_SHADE_OPACITY = "metacity-theme-active-shade-opacity";
+const gchar * ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_SHADE_OPACITY = "metacity-theme-inactive-shade-opacity";
+const gchar * ORG_COMPIZ_GWD_KEY_USE_METACITY_THEME = "use-metacity-theme";
+const gchar * ORG_COMPIZ_GWD_KEY_MOUSE_WHEEL_ACTION = "mouse-wheel-action";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_DOUBLE_CLICK_TITLEBAR = "action-double-click-titlebar";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_MIDDLE_CLICK_TITLEBAR = "action-middle-click-titlebar";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_RIGHT_CLICK_TITLEBAR = "action-right-click-titlebar";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_THEME = "theme";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_USES_SYSTEM_FONT = "titlebar-uses-system-font";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_FONT = "titlebar-font";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES_BUTTON_LAYOUT = "button-layout";
+const gchar * ORG_GNOME_MUTTER_ATTACH_MODAL_DIALOGS = "attach-modal-dialogs";
+const gchar * ORG_GNOME_MUTTER_DRAGGABLE_BORDER_WIDTH = "draggable-border-width";
+
 #define GWD_SETTINGS_STORAGE_GSETTINGS(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GWD_TYPE_SETTINGS_STORAGE_GSETTINGS, GWDSettingsStorageGSettings));
 #define GWD_SETTINGS_STORAGE_GSETTINGS_CLASS(obj) (G_TYPE_CHECK_CLASS_CAST ((obj), GWD_TYPE_SETTINGS_STORAGE_GSETTINGS, GWDSettingsStorageGSettingsClass));
 #define GWD_IS_MOCK_SETTINGS(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GWD_TYPE_SETTINGS_STORAGE_GSETTINGS));
@@ -52,6 +70,9 @@ gboolean gwd_settings_storage_gsettings_update_use_tooltips (GWDSettingsStorage 
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
+
+    if (!priv->gwd)
+	return FALSE;
 
     return gwd_settings_writable_use_tooltips_changed (priv->writable,
 						       g_settings_get_boolean (priv->gwd, "use-tooltips"));

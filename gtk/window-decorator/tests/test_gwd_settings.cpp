@@ -10,6 +10,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <glib-object.h>
 
@@ -196,8 +197,8 @@ namespace testing_values
     const std::string METACITY_THEME_VALUE ("metacity_theme");
     const gboolean NO_USE_METACITY_THEME_VALUE  = FALSE;
     const std::string NO_METACITY_THEME_VALUE ("");
-    const gdouble ACTIVE_OPACITY_VALUE = 9.0;
-    const gdouble INACTIVE_OPACITY_VALUE = 10.0;
+    const gdouble ACTIVE_OPACITY_VALUE = 0.9;
+    const gdouble INACTIVE_OPACITY_VALUE = 0.8;
     const gboolean ACTIVE_SHADE_OPACITY_VALUE = !METACITY_ACTIVE_SHADE_OPACITY_DEFAULT;
     const gboolean INACTIVE_SHADE_OPACITY_VALUE = !METACITY_INACTIVE_SHADE_OPACITY_DEFAULT;
     const std::string BUTTON_LAYOUT_VALUE ("button_layout");
@@ -1450,19 +1451,22 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 
 	virtual void SetUseTooltips (gboolean useTooltips)
 	{
-	    g_settings_set_boolean (mGWDSettings, "use-tooltips", useTooltips);
+	    g_settings_set_boolean (mGWDSettings, ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS, useTooltips);
 	}
 
 	virtual void SetDraggableBorderWidth (gint draggableBorderWidth)
 	{
+	    g_settings_set_int (mMutterSettings, ORG_GNOME_MUTTER_DRAGGABLE_BORDER_WIDTH, draggableBorderWidth);
 	}
 
 	virtual void SetAttachModalDialogs (gboolean attachModalDialogs)
 	{
+	    g_settings_set_boolean (mMutterSettings, ORG_GNOME_MUTTER_ATTACH_MODAL_DIALOGS, attachModalDialogs);
 	}
 
 	virtual void SetBlur (const std::string &blurType)
 	{
+	    g_settings_set_string (mGWDSettings, ORG_COMPIZ_GWD_KEY_BLUR_TYPE, blurType.c_str ());
 	}
 
 	virtual void SetOpacity (gdouble activeOpacity,
@@ -1470,19 +1474,34 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 				 gboolean activeShadeOpacity,
 				 gboolean inactiveShadeOpacity)
 	{
+	    g_settings_set_double (mGWDSettings, ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_OPACITY, activeOpacity);
+	    g_settings_set_double (mGWDSettings, ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_OPACITY, inactiveOpacity);
+	    g_settings_set_boolean (mGWDSettings, ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_SHADE_OPACITY, activeShadeOpacity);
+	    g_settings_set_boolean (mGWDSettings, ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_SHADE_OPACITY, inactiveShadeOpacity);
 	}
 
 	virtual void SetMetacityTheme (gboolean useMetacityTheme,
 				       const std::string &metacityTheme)
 	{
+	    g_settings_set_boolean (mGWDSettings, ORG_COMPIZ_GWD_KEY_USE_METACITY_THEME, useMetacityTheme);
+	    g_settings_set_string (mDesktopSettings, ORG_GNOME_DESKTOP_WM_PREFERENCES_THEME, metacityTheme.c_str ());
 	}
 
 	virtual void SetButtonLayout (const std::string &buttonLayout)
 	{
+	    g_settings_set_string (mDesktopSettings,
+				   ORG_GNOME_DESKTOP_WM_PREFERENCES_BUTTON_LAYOUT,
+				   buttonLayout.c_str ());
 	}
 
 	virtual void SetFont (gboolean useSystemFont, const std::string &titlebarFont)
 	{
+	    g_settings_set_boolean (mDesktopSettings,
+				    ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_USES_SYSTEM_FONT,
+				    useSystemFont);
+	    g_settings_set_string (mDesktopSettings,
+				   ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_FONT,
+				   titlebarFont.c_str ());
 	}
 
 	virtual void SetTitlebarActions (const std::string &doubleClickAction,
@@ -1490,6 +1509,26 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 					 const std::string &rightClickAction,
 					 const std::string &mouseWheelAction)
 	{
+	    std::string translatedDC (doubleClickAction);
+	    std::string translatedMC (middleClickAction);
+	    std::string translatedRC (rightClickAction);
+
+	    boost::replace_all (translatedDC, "_", "-");
+	    boost::replace_all (translatedMC, "_", "-");
+	    boost::replace_all (translatedRC, "_", "-");
+
+	    g_settings_set_string (mDesktopSettings,
+				   ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_DOUBLE_CLICK_TITLEBAR,
+				   translatedDC.c_str ());
+	    g_settings_set_string (mDesktopSettings,
+				   ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_MIDDLE_CLICK_TITLEBAR,
+				   translatedMC.c_str ());
+	    g_settings_set_string (mDesktopSettings,
+				   ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_RIGHT_CLICK_TITLEBAR,
+				   translatedRC.c_str ());
+	    g_settings_set_string (mGWDSettings,
+				   ORG_COMPIZ_GWD_KEY_MOUSE_WHEEL_ACTION,
+				   mouseWheelAction.c_str ());
 	}
 
 	virtual void TearDown ()
