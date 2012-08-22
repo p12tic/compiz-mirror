@@ -50,18 +50,17 @@ if (USE_GTK)
     add_library (gtk_window_decorator_settings_storage_xproperty_interface STATIC
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-xproperty-interface.c)
 
-    add_library (gtk_window_decorator_settings_storage_xproperty STATIC
-		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-xproperty-storage.c)
-
     add_library (gtk_window_decorator_settings_writable_interface STATIC
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-writable-interface.c)
+
+    add_library (gtk_window_decorator_settings_notified_interface
+		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-notified-interface.c) 
 
     set (GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
 	 gtk_window_decorator_settings_interface
 	 gtk_window_decorator_settings
 	 gtk_window_decorator_settings_storage_interface
-	 gtk_window_decorator_settings_storage_xproperty_interface
-	 gtk_window_decorator_settings_storage_xproperty)
+	 gtk_window_decorator_settings_storage_xproperty_interface)
 
     if (USE_GCONF)
 	list (APPEND GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
@@ -91,6 +90,8 @@ if (USE_GTK)
 	style.c
 	wnck.c
 	decorator.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-xproperty-storage.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-notified.c
 	${gwd_schema}
     )
 
