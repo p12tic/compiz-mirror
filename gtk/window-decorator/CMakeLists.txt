@@ -120,6 +120,24 @@ if (USE_GTK)
 	add_subdirectory (tests)
     endif (COMPIZ_BUILD_TESTING)
 
+    set (_gwd_gschema_name org.compiz.gwd)
+    set (_gwd_gschema_filename ${_gwd_gschema_name}.gschema.xml)
+    set (_gwd_gschema_filepath ${CMAKE_CURRENT_SOURCE_DIR}/${_gwd_gschema_filename})
+    set (_gwd_gschema_generated_location ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_gwd_gschema_filename})
+    set (_gwd_gschema_dest ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas/${_gwd_gschema_filename})
+
+    add_custom_command (OUTPUT ${_gwd_gschema_generated_location}
+		        COMMAND cp -r ${_gwd_gschema_filepath} ${_gwd_gschema_generated_location}
+		        DEPENDS ${_gwd_gschema_filepath}
+			VERBATIM)
+
+    add_custom_target (compiz_gwd_gsettings_org_compiz_gwd_schema ALL
+		       DEPENDS ${_gwd_gschema_generated_location})
+
+    add_gsettings_schema_to_recompilation_list (compiz_gwd_gsettings_org_compiz_gwd_schema)
+
+    compiz_install_gsettings_schema (${_gwd_gschema_dest}
+				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
 
 endif (USE_GTK)
 

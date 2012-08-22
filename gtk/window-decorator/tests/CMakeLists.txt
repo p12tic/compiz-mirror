@@ -1,3 +1,5 @@
+include (CompizGSettings)
+
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_CURRENT_SOURCE_DIR}/../)
 
@@ -48,5 +50,35 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 			   COVERAGE
 			   gtk_window_decorator_settings
 			   gtk_window_decorator_settings_interface)
+
+    set (_desktop_gschema_name org.gnome.desktop.wm.preferences)
+    set (_desktop_gschema_filename ${_desktop_gschema_name}.gschema.xml)
+    set (_desktop_gschema_filepath ${CMAKE_CURRENT_SOURCE_DIR}/${_desktop_gschema_filename})
+    set (_desktop_gschema_generated_location ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_desktop_gschema_filename})
+
+    add_custom_command (OUTPUT ${_desktop_gschema_generated_location}
+		        COMMAND cp -r ${_desktop_gschema_filepath} ${_desktop_gschema_generated_location}
+		        DEPENDS ${_desktop_gschema_filepath}
+			VERBATIM)
+
+    add_custom_target (compiz_gwd_gsettings_org_gnome_desktop_wm_preferences_schema ALL
+		       DEPENDS ${_desktop_gschema_generated_location})
+
+    add_gsettings_schema_to_recompilation_list (compiz_gwd_gsettings_org_gnome_desktop_wm_preferences_schema)
+
+    set (_mutter_gschema_name org.gnome.desktop.wm.preferences)
+    set (_mutter_gschema_filename ${_mutter_gschema_name}.gschema.xml)
+    set (_mutter_gschema_filepath ${CMAKE_CURRENT_SOURCE_DIR}/${_mutter_gschema_filename})
+    set (_mutter_gschema_generated_location ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_mutter_gschema_filename})
+
+    add_custom_command (OUTPUT ${_mutter_gschema_generated_location}
+		        COMMAND cp -r ${_mutter_gschema_filepath} ${_mutter_gschema_generated_location}
+		        DEPENDS ${_mutter_gschema_filepath}
+			VERBATIM)
+
+    add_custom_target (compiz_gwd_gsettings_org_gnome_mutter_schema ALL
+		       DEPENDS ${_mutter_gschema_generated_location})
+
+    add_gsettings_schema_to_recompilation_list (compiz_gwd_gsettings_org_gnome_mutter_schema)
 
 endif (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
