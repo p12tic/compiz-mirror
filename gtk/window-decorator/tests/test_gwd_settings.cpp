@@ -23,12 +23,14 @@
 #include "gwd-settings-storage-gsettings.h"
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings-storage-interface.h"
+#include "gwd-settings-notified-interface.h"
 
 #include "decoration.h"
 
 #include "compiz_gwd_mock_settings.h"
 #include "compiz_gwd_mock_settings_writable.h"
 #include "compiz_gwd_mock_settings_storage.h"
+#include "compiz_gwd_mock_settings_notified.h"
 
 using ::testing::TestWithParam;
 using ::testing::Eq;

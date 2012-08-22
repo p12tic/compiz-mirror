@@ -24,12 +24,12 @@
 G_BEGIN_DECLS
 
 #define GWD_SETTINGS_NOTIFIED_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-					      GWD_TYPE_WRITABLE_SETTINGS_INTERFACE, \
+					      GWD_TYPE_SETTINGS_NOTIFIED_INTERFACE, \
 					      GWDSettingsNotified))
 #define GWD_SETTINGS_NOTIFIED_GET_INTERFACE(obj) (G_TYPE_INSTANCE_GET_INTERFACE(obj, \
-										GWD_TYPE_WRITABLE_SETTINGS_INTERFACE, \
+										GWD_TYPE_SETTINGS_NOTIFIED_INTERFACE, \
 										GWDSettingsNotifiedInterface))
-#define GWD_TYPE_WRITABLE_SETTINGS_INTERFACE (gwd_settings_notified_interface_get_type ())
+#define GWD_TYPE_SETTINGS_NOTIFIED_INTERFACE (gwd_settings_notified_interface_get_type ())
 
 typedef struct _GWDSettingsNotified GWDSettingsNotified;
 typedef struct _GWDSettingsNotifiedInterface GWDSettingsNotifiedInterface;

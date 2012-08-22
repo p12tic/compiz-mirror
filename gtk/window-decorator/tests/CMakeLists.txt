@@ -34,6 +34,12 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
     target_link_libraries (gtk_window_decorator_mock_settings_writable
 		           gtk_window_decorator_settings_writable_interface)
 
+    add_library (gtk_window_decorator_mock_settings_notified STATIC
+		 ${CMAKE_CURRENT_SOURCE_DIR}/compiz_gwd_mock_settings_notified.cpp)
+
+    target_link_libraries (gtk_window_decorator_mock_settings_notified
+			   gtk_window_decorator_settings_notified_interface)
+
     add_executable (compiz_test_gwd_settings
 		    ${CMAKE_CURRENT_SOURCE_DIR}/test_gwd_settings.cpp)
 
@@ -43,6 +49,7 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 		           gtk_window_decorator_mock_settings
 			   gtk_window_decorator_mock_settings_writable
 			   gtk_window_decorator_mock_settings_storage
+			   gtk_window_decorator_mock_settings_notified
 			   decoration
 		           ${COMPIZ_TEST_GTK_WINDOW_DECORATOR_LIBRARIES}
 			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
