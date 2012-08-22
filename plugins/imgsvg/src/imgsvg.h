@@ -33,8 +33,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <imgsvg-config.h>
+
 #include <cairo/cairo-xlib.h>
 #include <librsvg/rsvg.h>
+ 
+#ifndef HAVE_RSVG_2_36_2
+#include <librsvg/rsvg-cairo.h>
+#endif
 
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
