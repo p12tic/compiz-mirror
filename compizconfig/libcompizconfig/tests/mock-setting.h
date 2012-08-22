@@ -1,3 +1,6 @@
+#ifndef _COMPIZCONFIG_CCS_SETTING_MOCK
+#define _COMPIZCONFIG_CCS_SETTING_MOCK
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -7,6 +10,7 @@ using ::testing::_;
 using ::testing::Return;
 
 CCSSetting * ccsMockSettingNew ();
+CCSSetting * ccsNiceMockSettingNew ();
 void ccsFreeMockSetting (CCSSetting *);
 
 class CCSSettingGMockInterface
@@ -64,6 +68,15 @@ class CCSSettingGMock :
 
 	/* Mock implementations */
 
+	CCSSettingGMock (CCSSetting *s) :
+	    mSetting (s)
+	{
+	    /* Teach GMock how to handle it */
+	    ON_CALL (*this, getType ()).WillByDefault (Return (TypeNum));
+	}
+
+	CCSSetting * setting () { return mSetting; }
+
 	MOCK_METHOD0 (getName, char * ());
 	MOCK_METHOD0 (getShortDesc, char * ());
 	MOCK_METHOD0 (getLongDesc, char * ());
@@ -105,11 +118,9 @@ class CCSSettingGMock :
 	MOCK_METHOD0 (isIntegrated, Bool ());
 	MOCK_METHOD0 (isReadOnly, Bool ());
 
-	CCSSettingGMock ()
-	{
-	    /* Teach GMock how to handle it */
-	    ON_CALL (*this, getType ()).WillByDefault (Return (TypeNum));
-	}
+    private:
+
+	CCSSetting *mSetting;
 
     public:
 
@@ -356,3 +367,5 @@ class CCSSettingGMock :
 };
 
 extern CCSSettingInterface CCSSettingGMockInterface;
+
+#endif

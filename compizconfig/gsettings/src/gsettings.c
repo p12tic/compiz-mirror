@@ -301,7 +301,7 @@ readListValue (CCSSetting *setting)
     case TypeMatch:
 	{
 	    gchar **array = g_malloc0 ((nItems + 1) * sizeof (gchar *));
-	    gchar **arrayCounter = array;
+	    gchar **arrayCounter = (gchar **) array;
 	    gchar *value;
 
 	    if (!array)
@@ -313,7 +313,7 @@ readListValue (CCSSetting *setting)
 	    while (g_variant_iter_next (&iter, "s", &value))
 		*arrayCounter++ = value;
 
-	    list = ccsGetValueListFromStringArray (array, nItems, setting);
+	    list = ccsGetValueListFromStringArray ((const gchar **) array, nItems, setting);
 	    g_strfreev (array);
 	}
 	break;

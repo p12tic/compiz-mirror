@@ -22,8 +22,14 @@
 #ifndef CCS_BACKEND_H
 #define CCS_BACKEND_H
 
-#include <ccs.h>
+#include <ccs-object.h>
+#include <ccs-string.h>
+#include <ccs-list.h>
 
+COMPIZCONFIG_BEGIN_DECLS
+
+typedef struct _CCSSetting	  CCSSetting;
+typedef struct _CCSContext	  CCSContext;
 typedef struct _CCSBackend	  CCSBackend;
 typedef struct _CCSBackendVTable  CCSBackendVTable;
 
@@ -89,5 +95,7 @@ struct _CCSBackendVTable
 };
 
 CCSBackendVTable* getBackendInfo (void);
+
+COMPIZCONFIG_END_DECLS
 
 #endif

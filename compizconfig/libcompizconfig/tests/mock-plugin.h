@@ -3,6 +3,9 @@
 
 #include <ccs.h>
 
+CCSPlugin * ccsMockPluginNew ();
+void ccsFreeMockPlugin (CCSPlugin *);
+
 class CCSPluginGMockInterface
 {
     public:
@@ -35,6 +38,14 @@ class CCSPluginGMock :
 {
     public:
 
+	CCSPluginGMock (CCSPlugin *p) :
+	    mPlugin (p)
+	{
+	}
+
+	CCSPlugin *
+	plugin () { return mPlugin; }
+
 	/* Mock implementations */
 	MOCK_METHOD0 (getName, char * ());
 	MOCK_METHOD0 (getShortDesc, char * ());
@@ -55,6 +66,10 @@ class CCSPluginGMock :
 	MOCK_METHOD0 (getPluginGroups, CCSGroupList ());
 	MOCK_METHOD0 (readPluginSettings, void ());
 	MOCK_METHOD0 (getPluginStrExtensions, CCSStrExtensionList ());
+
+    private:
+
+	CCSPlugin *mPlugin;
 
     public:
 
@@ -158,9 +173,12 @@ class CCSPluginGMock :
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getPluginStrExtensions ();
 	}
+
+	static void ccsFreePlugin (CCSPlugin *plugin)
+
+	{
+	    ccsFreeMockPlugin (plugin);
+	}
 };
 
 extern CCSPluginInterface CCSPluginGMockInterface;
-
-CCSPlugin * ccsMockPluginNew ();
-void ccsFreeMockPlugin (CCSPlugin *);

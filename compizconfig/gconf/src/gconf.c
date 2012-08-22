@@ -868,17 +868,17 @@ readListValue (CCSSetting *setting,
     case TypeString:
     case TypeMatch:
 	{
-	    char **array = malloc (nItems * sizeof (char*));
+	    gchar **array = malloc ((nItems + 1) * sizeof (char*));
 	    if (!array)
 		break;
 
 	    for (; valueList; valueList = valueList->next, i++)
 		array[i] = strdup (gconf_value_get_string (valueList->data));
-	    list = ccsGetValueListFromStringArray (array, nItems, setting);
-	    for (i = 0; i < nItems; i++)
-		if (array[i])
-		    free (array[i]);
-	    free (array);
+
+	    array[nItems] = NULL;
+
+	    list = ccsGetValueListFromStringArray ((const char **) array, nItems, setting);
+	    g_strfreev (array);
 	}
 	break;
     case TypeColor:
@@ -1885,15 +1885,16 @@ getCurrentProfileName (void)
 static Bool
 checkProfile (CCSContext *context)
 {
-    char *profile, *lastProfile;
+    const char *profileCCS;
+    char *lastProfile;
 
     lastProfile = currentProfile;
 
-    profile = ccsGetProfile (context);
-    if (!profile || !strlen (profile))
+    profileCCS = ccsGetProfile (context);
+    if (!profileCCS || !strlen (profileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (profile);
+	currentProfile = strdup (profileCCS);
 
     if (!lastProfile || strcmp (lastProfile, currentProfile) != 0)
     {
