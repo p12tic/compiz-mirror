@@ -78,13 +78,13 @@ gwd_settings_writable_metacity_theme_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_opacity_changed (GWDSettingsWritable *settings,
-				       gdouble inactive_opacity,
 				       gdouble active_opacity,
-				       gboolean inactive_shade_opacity,
-				       gboolean active_shade_opacity)
+				       gdouble inactive_opacity,
+				       gboolean active_shade_opacity,
+				       gboolean inactive_shade_opacity)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
-    return (*iface->opacity_changed) (settings, inactive_opacity, active_opacity, inactive_shade_opacity, active_shade_opacity);
+    return (*iface->opacity_changed) (settings, active_opacity, inactive_opacity, active_shade_opacity, inactive_shade_opacity);
 }
 
 gboolean

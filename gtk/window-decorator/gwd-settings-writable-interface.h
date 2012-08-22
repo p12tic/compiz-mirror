@@ -55,10 +55,10 @@ struct _GWDSettingsWritableInterface
     gboolean (*blur_changed) (GWDSettingsWritable *settings, const gchar *type);
     gboolean (*metacity_theme_changed) (GWDSettingsWritable *settings, gboolean use_metacity_theme, const gchar *metacity_theme);
     gboolean (*opacity_changed) (GWDSettingsWritable *settings,
-				 gdouble inactive_opacity,
 				 gdouble active_opacity,
-				 gboolean inactive_shade_opacity,
-				 gboolean active_shade_opacity);
+				 gdouble inactive_opacity,
+				 gboolean active_shade_opacity,
+				 gboolean inactive_shade_opacity);
     gboolean (*button_layout_changed) (GWDSettingsWritable *settings, const gchar *button_layout);
     gboolean (*font_changed) (GWDSettingsWritable *settings,
 			      gboolean		  titlebar_uses_system_font,
@@ -106,10 +106,10 @@ gwd_settings_writable_metacity_theme_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_opacity_changed (GWDSettingsWritable *settings,
-				       gdouble inactive_opacity,
 				       gdouble active_opacity,
-				       gboolean inactive_shade_opacity,
-				       gboolean active_shade_opacity);
+				       gdouble inactive_opacity,
+				       gboolean active_shade_opacity,
+				       gboolean inactive_shade_opacity);
 
 gboolean
 gwd_settings_writable_button_layout_changed (GWDSettingsWritable *settings,
