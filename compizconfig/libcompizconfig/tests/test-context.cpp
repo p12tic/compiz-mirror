@@ -90,5 +90,5 @@ TEST(CCSContextTest, TestMock)
     free (foo);
     free (bar);
 
-    ccsFreeMockContext (context);
+    ccsFreeContext (context);
 }

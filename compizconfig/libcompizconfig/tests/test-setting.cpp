@@ -105,5 +105,5 @@ TEST(CCSSettingTest, TestMock)
     ccsSettingIsIntegrated (setting);
     ccsSettingIsReadOnly (setting);
 
-    ccsFreeMockSetting (setting);
+    ccsSettingUnref (setting);
 }
