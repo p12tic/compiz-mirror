@@ -3,7 +3,7 @@
 
 #include <ccs.h>
 
-#include "mock-setting.h"
+#include "compizconfig_ccs_setting_mock.h"
 
 using ::testing::NiceMock;
 
@@ -49,6 +49,7 @@ CCSSettingInterface CCSSettingGMockInterface =
     CCSSettingGMock::ccsResetToDefault,
     CCSSettingGMock::ccsSettingIsIntegrated,
     CCSSettingGMock::ccsSettingIsReadOnly,
+    CCSSettingGMock::ccsSettingIsReadableByBackend,
     CCSSettingGMock::ccsSettingFree
 };
 

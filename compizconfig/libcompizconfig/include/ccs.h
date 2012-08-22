@@ -28,6 +28,7 @@
 #include <ccs-list.h>
 #include <ccs-string.h>
 #include <ccs-backend.h>
+#include <ccs-setting-types.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
@@ -95,6 +96,7 @@ CCSLIST_HDR (StrExtension, CCSStrExtension)
 CCSREF_HDR (Plugin, CCSPlugin)
 CCSREF_HDR (Setting, CCSSetting)
 CCSREF_HDR (String, CCSString)
+CCSREF_HDR (Backend, CCSBackend)
 CCSREF_HDR (Group, CCSGroup)
 CCSREF_HDR (SubGroup, CCSSubGroup)
 CCSREF_HDR (SettingValue, CCSSettingValue)
@@ -108,12 +110,15 @@ typedef struct _CCSInterfaceTable CCSInterfaceTable;
 typedef struct _CCSContextInterface CCSContextInterface;
 typedef struct _CCSPluginInterface CCSPluginInterface;
 typedef struct _CCSSettingInterface CCSSettingInterface;
+typedef struct _CCSDynamicBackendInterface CCSDynamicBackendInterface;
 
 struct _CCSInterfaceTable
 {
     const CCSContextInterface *contextInterface;
     const CCSPluginInterface *pluginInterface;
     const CCSSettingInterface *settingInterface;
+    const CCSBackendInterface *dynamicBackendWrapperInterface;
+    const CCSDynamicBackendInterface *dynamicBackendInterface;
 };
 
 extern const CCSInterfaceTable ccsDefaultInterfaceTable;
@@ -217,16 +222,6 @@ struct _CCSContext
     CCSObject object;
 };
 
-struct _CCSBackendInfo
-{
-    char *name;              /* name of the backend */
-    char *shortDesc;         /* backend's short description */
-    char *longDesc;          /* backend's long description */
-    Bool integrationSupport; /* does the backend support DE integration? */
-    Bool profileSupport;     /* does the backend support profiles? */
-    unsigned int refCount;   /* reference count */
-};
-
 /* CCSPluginInterface */
 typedef char * (*CCSPluginGetName) (CCSPlugin *plugin);
 typedef char * (*CCSPluginGetShortDesc) (CCSPlugin *plugin);
@@ -305,24 +300,6 @@ struct _CCSPlugin
 {
     CCSObject object;
 };
-
-typedef enum _CCSSettingType
-{
-    /* This needs to be in the same order as CompOptionType for consistency */
-    TypeBool,
-    TypeInt,
-    TypeFloat,
-    TypeString,
-    TypeColor,
-    TypeAction,
-    TypeKey,
-    TypeButton,
-    TypeEdge,
-    TypeBell,
-    TypeMatch,
-    TypeList,
-    TypeNum
-} CCSSettingType;
 
 struct _CCSSubGroup
 {
@@ -578,6 +555,9 @@ Bool ccsSettingIsIntegrated (CCSSetting *setting);
 /* Checks if a given setting is read-only. */
 Bool ccsSettingIsReadOnly (CCSSetting *setting);
 
+/* Checks if a setting is readable by backends */
+Bool ccsSettingIsReadableByBackend (CCSSetting *setting);
+
 typedef char * (*CCSSettingGetName) (CCSSetting *);
 typedef char * (*CCSSettingGetShortDesc) (CCSSetting *);
 typedef char * (*CCSSettingGetLongDesc) (CCSSetting *);
@@ -618,6 +598,7 @@ typedef Bool (*CCSSettingGetList) (CCSSetting *setting, CCSSettingValueList *dat
 typedef void (*CCSSettingResetToDefault) (CCSSetting *setting, Bool processChanged);
 typedef Bool (*CCSSettingIsIntegrated) (CCSSetting *setting);
 typedef Bool (*CCSSettingIsReadOnly) (CCSSetting *setting);
+typedef Bool (*CCSSettingIsReadableByBackend) (CCSSetting *setting);
 typedef void (*CCSSettingDestructor) (CCSSetting *setting);
 
 unsigned int ccsCCSSettingInterfaceGetType ();
@@ -664,6 +645,7 @@ struct _CCSSettingInterface
     CCSSettingResetToDefault settingResetToDefault;
     CCSSettingIsIntegrated settingIsIntegrated;
     CCSSettingIsReadOnly settingIsReadOnly;
+    CCSSettingIsReadableByBackend settingIsReadableByBackend;
     CCSSettingDestructor settingDestructor;
 };
 
@@ -724,6 +706,8 @@ void ccsFreeSetting (CCSSetting *setting);
 void ccsFreeGroup (CCSGroup *group);
 void ccsFreeSubGroup (CCSSubGroup *subGroup);
 void ccsFreeSettingValue (CCSSettingValue *value);
+void ccsFreeSettingValueWithType (CCSSettingValue *v,
+				  CCSSettingType  type);
 void ccsFreePluginConflict (CCSPluginConflict *value);
 void ccsFreeBackendInfo (CCSBackendInfo *value);
 void ccsFreeIntDesc (CCSIntDesc *value);
@@ -1086,8 +1070,13 @@ CCSStringList ccsGetExistingProfiles (CCSContext * context);
 void ccsDeleteProfile (CCSContext *context,
 		       char       *name);
 
+/* Copies backend info out from backend */
+CCSBackendInfo *
+ccsCopyBackendInfoFromBackend (CCSBackend	   *backend,
+			       const CCSBackendInterface *backendInterface);
+
 /* Enumerates the available backends. */
-CCSBackendInfoList ccsGetExistingBackends (void);
+CCSBackendInfoList ccsGetExistingBackends (CCSContext *);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
 

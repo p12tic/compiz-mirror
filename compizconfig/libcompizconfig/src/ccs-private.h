@@ -32,7 +32,7 @@ extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate
 {
-    CCSBackend        *backend;
+    CCSDynamicBackend  *backend;
     CCSPluginList     plugins;         /* list of plugins settings
                                           were loaded for */
     CCSPluginCategory *categories;     /* list of plugin categories */
@@ -115,6 +115,12 @@ typedef struct _CCSSettingPrivate
     CCSPlugin *parent;            /* plugin this setting belongs to */
     void      *privatePtr;        /* private pointer for usage by the caller */
 } CCSSettingPrivate;
+
+typedef struct _CCSDynamicBackendPrivate
+{
+    void            *dlhand;
+    CCSBackend	    *backend;
+} CCSDynamicBackendPrivate;
 
 typedef struct _CCSSettingsUpgrade
 {

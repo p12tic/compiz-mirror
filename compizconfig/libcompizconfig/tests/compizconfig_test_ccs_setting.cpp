@@ -3,7 +3,7 @@
 
 #include <ccs.h>
 
-#include "mock-setting.h"
+#include "compizconfig_ccs_setting_mock.h"
 
 using ::testing::_;
 using ::testing::Return;
@@ -58,6 +58,7 @@ TEST(CCSSettingTest, TestMock)
     EXPECT_CALL (*mock, resetToDefault (_));
     EXPECT_CALL (*mock, isIntegrated ());
     EXPECT_CALL (*mock, isReadOnly ());
+    EXPECT_CALL (*mock, isReadableByBackend ());
 
     CCSSettingColorValue cv;
     CCSSettingKeyValue kv;
@@ -104,6 +105,7 @@ TEST(CCSSettingTest, TestMock)
     ccsResetToDefault (setting, FALSE);
     ccsSettingIsIntegrated (setting);
     ccsSettingIsReadOnly (setting);
+    ccsSettingIsReadableByBackend (setting);
 
     ccsSettingUnref (setting);
 }
