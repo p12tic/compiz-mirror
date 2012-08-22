@@ -109,6 +109,7 @@ compiz (1:0.9.8+bzr3308-0ubuntu1) UNRELEASED; urgency=low
   * Update gsettings-override to new paths org.compiz.*
   * Disable gconf schemas installation
   * Add libcompizconfig_gsettings_backend.so
+  * Workaround to install xml files
 
   [ Łukasz 'sil2100' Zemczak ]
   * debian/control, debian/rules:
