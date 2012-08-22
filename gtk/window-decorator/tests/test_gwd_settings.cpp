@@ -535,6 +535,12 @@ class GWDSettingsTest :
 			     boost::bind (gwd_settings_unref, _1));
 	}
 
+	virtual void TearDown ()
+	{
+	    EXPECT_CALL (*mGMockNotified, dispose ());
+	    EXPECT_CALL (*mGMockNotified, finalize ());
+	}
+
     protected:
 
 	boost::shared_ptr <GWDSettingsImpl> mSettings;
@@ -1076,6 +1082,9 @@ class GWDSettingsTestClickActions :
 
 	virtual void TearDown ()
 	{
+	    EXPECT_CALL (*mGMockNotified, dispose ());
+	    EXPECT_CALL (*mGMockNotified, finalize ());
+
 	    g_unsetenv ("G_SLICE");
 	}
 
