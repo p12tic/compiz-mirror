@@ -339,6 +339,10 @@ ExpoScreen::handleEvent (XEvent *event)
 	if (expoMode && event->xbutton.button == Button1 &&
 	    event->xbutton.root == screen->root ())
 	{
+	    CompPoint pointer (event->xbutton.x_root, event->xbutton.y_root);
+	    if (!screen->workArea().contains (pointer))
+		break;
+
 	    anyClick = true;
 	    if (clickTime == 0)
 	    {
@@ -363,6 +367,10 @@ ExpoScreen::handleEvent (XEvent *event)
 	if (expoMode && event->xbutton.button == Button1 &&
 	    event->xbutton.root == screen->root ())
 	{
+	    CompPoint pointer (event->xbutton.x_root, event->xbutton.y_root);
+	    if (!screen->workArea().contains (pointer))
+		break;
+
 	    if (event->xbutton.time - clickTime >
 		(unsigned int) optionGetDoubleClickTime ())
 	    {

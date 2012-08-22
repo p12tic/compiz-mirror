@@ -11,9 +11,9 @@ typedef enum
     WindowEventOpen = 0,
     WindowEventClose,
     WindowEventMinimize,
-    WindowEventUnminimize,
     WindowEventShade,
     WindowEventUnshade,
+    WindowEventUnminimize,
     WindowEventFocus,
     WindowEventNum,
     WindowEventNone
@@ -25,6 +25,7 @@ typedef enum
     AnimEventClose,
     AnimEventMinimize,
     AnimEventShade,
+    AnimEventUnMinimize,
     AnimEventFocus,
     AnimEventNum
 } AnimEvent;

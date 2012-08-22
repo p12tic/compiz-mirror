@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KeyListEntries schema="org.compiz.integrated" wm_name="Compiz" group="system" _name="Launchers" package="compiz">
+
+	<KeyListEntry name="exec" _description="Launch Terminal"/>
+
+</KeyListEntries>
