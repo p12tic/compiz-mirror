@@ -21,9 +21,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author: David Reveman <davidr@novell.com>
- */
-
-/*
+ * Ported to GLVertexBuffer by Daniel van Vugt <daniel.van.vugt@canonical.com>
  * Spring model implemented by Kristian Hogsberg.
  */
 
@@ -1508,79 +1506,13 @@ WobblyScreen::donePaint ()
 }
 
 void
-WobblyWindow::glDrawGeometry ()
-{
-    GLWindow::Geometry &geom = gWindow->geometry ();
-    int     texUnit = geom.texUnits;
-    int     currentTexUnit = 0;
-    int     stride = geom.vertexStride;
-    GLfloat *vertices = geom.vertices + (stride - 3);
-
-    stride *= (int) sizeof (GLfloat);
-
-    glVertexPointer (3, GL_FLOAT, stride, vertices);
-
-    while (texUnit--)
-    {
-	if (texUnit != currentTexUnit)
-	{
-	    (*GL::clientActiveTexture) ((GLenum) (GL_TEXTURE0_ARB + texUnit));
-	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	    currentTexUnit = texUnit;
-	}
-	vertices -= geom.texCoordSize;
-	glTexCoordPointer (geom.texCoordSize, GL_FLOAT, stride,
-			   vertices);
-    }
-
-    glDrawElements (GL_QUADS, geom.indexCount,
-		    GL_UNSIGNED_SHORT, geom.indices);
-
-    /* disable all texture coordinate arrays except 0 */
-    texUnit = geom.texUnits;
-    if (texUnit > 1)
-    {
-	while (--texUnit)
-	{
-	    (*GL::clientActiveTexture) ((GLenum) (GL_TEXTURE0_ARB + texUnit));
-	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	}
-
-	(*GL::clientActiveTexture) (GL_TEXTURE0_ARB);
-    }
-}
-
-void
 WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 			     const CompRegion            &region,
 			     const CompRegion            &clip,
 			     unsigned int                maxGridWidth,
 			     unsigned int                maxGridHeight)
 {
-    GLWindow::Geometry &geom = gWindow->geometry ();
-
-    int      nVertices, nIndices;
-    GLushort *i;
-    GLfloat  *v;
-    int      x1, y1, x2, y2;
-    float    width, height;
-    float    deformedX, deformedY;
-    int      x, y, iw, ih, wx, wy;
-    int      vSize;
-    int      gridW, gridH;
-    bool     rect = true;
-
-    unsigned int nMatrix = matrix.size ();
-
-    for (unsigned int it = 0; it < nMatrix; it++)
-    {
-	if (matrix[it].xy != 0.0f ||
-	    matrix[it].yx != 0.0f)
-	{
-	    rect = false;
-	    break;
-	}
-    }
+    int wx, wy, width, height, gridW, gridH;
 
     CompRect outRect (window->outputRect ());
     wx     = outRect.x ();
@@ -1602,113 +1534,26 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     if (gridH > (int) maxGridHeight)
 	gridH = (int) maxGridHeight;
 
-    geom.texUnits = (int) nMatrix;
+    GLVertexBuffer *vb = gWindow->vertexBuffer ();
 
-    vSize = 3 + (int) nMatrix * 2;
+    int oldCount = vb->countVertices ();
+    gWindow->glAddGeometry (matrix, region, clip, gridW, gridH);
+    int newCount = vb->countVertices ();
 
-    nVertices = geom.vCount;
-    nIndices  = geom.indexCount;
+    int stride = vb->getVertexStride ();
+    GLfloat *v = vb->getVertices () + oldCount * stride;
+    GLfloat *vMax = vb->getVertices () + newCount * stride;
 
-    v = geom.vertices + (nVertices * vSize);
-    i = geom.indices  + nIndices;
-
-    foreach (const CompRect &pClip, region.rects ())
+    for (; v < vMax; v += stride)
     {
-	x1 = pClip.x1 ();
-	y1 = pClip.y1 ();
-	x2 = pClip.x2 ();
-	y2 = pClip.y2 ();
-
-	iw = ((x2 - x1 - 1) / gridW) + 1;
-	ih = ((y2 - y1 - 1) / gridH) + 1;
-
-	// Allocate indices
-	int newIndexSize = nIndices + (iw * ih * 4);
-	if (newIndexSize > geom.indexSize)
-	{
-	    if (!geom.moreIndices (newIndexSize))
-		return;
-
-	    i = geom.indices + nIndices;
-	}
-
-	iw++;
-	ih++;
-
-	for (y = 0; y < ih - 1; y++)
-	{
-	    for (x = 0; x < iw - 1; x++)
-	    {
-		*i++ = nVertices + iw * (y + 1) + x;
-		*i++ = nVertices + iw * (y + 1) + x + 1;
-		*i++ = nVertices + iw * y + x + 1;
-		*i++ = nVertices + iw * y + x;
-
-		nIndices += 4;
-	    }
-	}
-
-	// Allocate vertices
-	int newVertexSize = (nVertices + iw * ih) * vSize;
-	if (newVertexSize > geom.vertexSize)
-	{
-	    if (!geom.moreVertices (newVertexSize))
-		return;
-
-	    v = geom.vertices + (nVertices * vSize);
-	}
-
-	for (y = y1;; y += gridH)
-	{
-	    if (y > y2)
-		y = y2;
-
-	    for (x = x1;; x += gridW)
-	    {
-		if (x > x2)
-		    x = x2;
-
-		model->bezierPatchEvaluate ((x - wx) / width,
-						(y - wy) / height,
-						&deformedX,
-						&deformedY);
-
-		if (rect)
-		{
-		    for (unsigned int it = 0; it < nMatrix; it++)
-		    {
-			*v++ = COMP_TEX_COORD_X (matrix[it], x);
-			*v++ = COMP_TEX_COORD_Y (matrix[it], y);
-		    }
-		}
-		else
-		{
-		    for (unsigned int it = 0; it < nMatrix; it++)
-		    {
-			*v++ = COMP_TEX_COORD_XY (matrix[it], x, y);
-			*v++ = COMP_TEX_COORD_YX (matrix[it], x, y);
-		    }
-		}
-
-		*v++ = deformedX;
-		*v++ = deformedY;
-		*v++ = 0.0;
-
-		nVertices++;
-
-		if (x == x2)
-		    break;
-	    }
-
-	    if (y == y2)
-		break;
-	}
+	float deformedX, deformedY;
+	GLfloat normalizedX = (v[0] - wx) / width;
+	GLfloat normalizedY = (v[1] - wy) / height;
+	model->bezierPatchEvaluate (normalizedX, normalizedY,
+	                            &deformedX, &deformedY);
+	v[0] = deformedX;
+	v[1] = deformedY;
     }
-
-    geom.vCount	  = nVertices;
-    geom.vertexStride = vSize;
-    geom.texCoordSize = 2;
-    geom.indexCount   = nIndices;
 }
 
 bool
@@ -1927,7 +1772,6 @@ WobblyWindow::enableWobbling (bool enabling)
 {
     gWindow->glPaintSetEnabled (this, enabling);
     gWindow->glAddGeometrySetEnabled (this, enabling);
-    gWindow->glDrawGeometrySetEnabled (this, enabling);
     cWindow->damageRectSetEnabled (this, enabling);
 }
 
