@@ -139,6 +139,7 @@ struct _CCSGNOMEIntegratedSettingNames
     CCSSettingIntegratedSettingPair GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY;
     CCSSettingIntegratedSettingPair GNOMECOMPAT_MAIN_MENU_KEY;
     CCSSettingIntegratedSettingPair GNOMECOMPAT_RUN_KEY;
+    CCSSettingIntegratedSettingPair UNITYSHELL_SHOW_HUD;
 };
 
 extern const CCSGNOMEIntegratedSettingNames ccsGNOMEIntegratedSettingNames;
@@ -174,6 +175,7 @@ struct _CCSGNOMEIntegratedPluginNames
     const char *MOVE;
     const char *STATICSWITCHER;
     const char *FADE;
+    const char *UNITYSHELL;
     const char *SPECIAL;
 };
 
