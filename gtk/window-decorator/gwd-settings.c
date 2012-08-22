@@ -164,6 +164,9 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
 	priv->active_shadow = active_shadow;
     }
 
+    if (changed)
+	gwd_settings_notified_update_decorations (priv->notified);
+
     return changed;
 }
 
@@ -177,6 +180,7 @@ gwd_settings_use_tooltips_changed (GWDSettingsWritable *settings,
     if (priv->use_tooltips != use_tooltips)
     {
 	priv->use_tooltips = use_tooltips;
+	gwd_settings_notified_update_decorations (priv->notified);
 	return TRUE;
     }
 
@@ -193,6 +197,7 @@ gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
     if (priv->draggable_border_width != draggable_border_width)
     {
 	priv->draggable_border_width = draggable_border_width;
+	gwd_settings_notified_update_decorations (priv->notified);
 	return TRUE;
     }
     else
@@ -209,6 +214,7 @@ gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
     if (priv->attach_modal_dialogs != attach_modal_dialogs)
     {
 	priv->attach_modal_dialogs = attach_modal_dialogs;
+	gwd_settings_notified_update_decorations (priv->notified);
 	return TRUE;
     }
     else
@@ -240,6 +246,7 @@ gwd_settings_blur_changed (GWDSettingsWritable *settings,
     if (priv->blur_type != new_type)
     {
 	priv->blur_type = new_type;
+	gwd_settings_notified_update_decorations (priv->notified);
 	return TRUE;
     }
     else
@@ -283,6 +290,9 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
     else
 	free_and_set_metacity_theme (settings, "");
 
+    gwd_settings_notified_update_metacity_theme (priv->notified);
+    gwd_settings_notified_update_decorations (priv->notified);
+
     return TRUE;
 }
 
@@ -316,6 +326,8 @@ gwd_settings_opacity_changed (GWDSettingsWritable *settings,
     priv->metacity_active_shade_opacity = active_shade_opacity;
     priv->metacity_inactive_shade_opacity = inactive_shade_opacity;
 
+    gwd_settings_notified_update_decorations (priv->notified);
+
     return TRUE;
 }
 
@@ -336,6 +348,9 @@ gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
 	g_free (priv->metacity_button_layout);
 
     priv->metacity_button_layout = g_strdup (button_layout);
+
+    gwd_settings_notified_metacity_button_layout (priv->notified);
+    gwd_settings_notified_update_decorations (priv->notified);
 
     return TRUE;
 }
@@ -369,6 +384,9 @@ gwd_settings_font_changed (GWDSettingsWritable *settings,
     }
 
     priv->titlebar_font = use_font ? g_strdup (use_font) : NULL;
+
+    gwd_settings_notified_update_frames (priv->notified);
+    gwd_settings_notified_update_decorations (priv->notified);
 
     return TRUE;
 }

@@ -664,7 +664,6 @@ TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
 
 TEST_F(GWDSettingsTest, TestDraggableBorderWidthChangedIsDefault)
 {
-    EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 								       DRAGGABLE_BORDER_WIDTH_DEFAULT), GBooleanFalse ());
 }
@@ -758,7 +757,6 @@ TEST_F(GWDSettingsTest, TestBlurSetCommandLine)
 					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
-    EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), GBooleanFalse ());
 
@@ -832,8 +830,6 @@ TEST_F(GWDSettingsTest, TestMetacityThemeSetCommandLine)
 					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
-    EXPECT_CALL (*mGMockNotified, updateMetacityTheme ());
-    EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							       testing_values::USE_METACITY_THEME_VALUE,
 							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanFalse ());
@@ -917,7 +913,6 @@ TEST_F(GWDSettingsTest, TestMetacityOpacitySetCommandLine)
 					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
-    EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							testing_values::INACTIVE_OPACITY_VALUE,
 							testing_values::ACTIVE_OPACITY_VALUE,
