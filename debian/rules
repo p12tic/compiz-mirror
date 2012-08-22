@@ -67,8 +67,8 @@ endif
 	rm -rf debian/tmp/usr/share/gconf/schemas/
 
 	# ugly hack to install xml files
-	mkdir -p debian/tmp/usr/share/gnome-control-center
-	find */gtk/gnome -name *.xml | xargs cp -at debian/tmp/usr/share/gnome-control-center 
+	mkdir -p debian/tmp/usr/share/gnome-control-center/keybindings
+	find */gtk/gnome -name *.xml | xargs cp -at debian/tmp/usr/share/gnome-control-center/keybindings/
 
 	dh_install --fail-missing
 
