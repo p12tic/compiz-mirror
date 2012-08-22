@@ -3,17 +3,17 @@
 
 #define ANIMATION_ABI 20091205
 
+#include <core/core.h>
 #include <core/pluginclasshandler.h>
-#include <opengl/fragment.h>
 
 typedef enum
 {
     WindowEventOpen = 0,
     WindowEventClose,
     WindowEventMinimize,
-    WindowEventUnminimize,
     WindowEventShade,
     WindowEventUnshade,
+    WindowEventUnminimize,
     WindowEventFocus,
     WindowEventNum,
     WindowEventNone
@@ -25,6 +25,7 @@ typedef enum
     AnimEventClose,
     AnimEventMinimize,
     AnimEventShade,
+    AnimEventUnMinimize,
     AnimEventFocus,
     AnimEventNum
 } AnimEvent;

@@ -144,7 +144,7 @@ class RingScreen :
 	renderWindowTitle ();
 
 	void
-	drawWindowTitle ();
+	drawWindowTitle (const GLMatrix &transform);
 
 	bool
 	layoutThumbs ();

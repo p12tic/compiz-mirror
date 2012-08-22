@@ -39,9 +39,11 @@
 
 extern bool haveOpenGL;
 
+#ifndef USE_GLES
 typedef void (*GLProgramParameter4dvProc) (GLenum         target,
 					   GLuint         index,
 					   const GLdouble *data);
+#endif
 
 class WorkaroundsScreen :
     public PluginClassHandler <WorkaroundsScreen, CompScreen>,
@@ -65,6 +67,7 @@ class WorkaroundsScreen :
 
 	PropertyWriter	inputDisabledAtom;
 
+#ifndef USE_GLES
 	GL::GLProgramParameter4fProc origProgramEnvParameter4f;
 	GLProgramParameter4dvProc    programEnvParameter4dv;
 
@@ -72,6 +75,7 @@ class WorkaroundsScreen :
 	GL::GLXWaitVideoSyncProc     origWaitVideoSync;
 
 	GL::GLXCopySubBufferProc     origCopySubBuffer;
+#endif
 
 	void
 	handleEvent (XEvent *);

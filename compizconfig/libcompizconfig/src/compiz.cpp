@@ -561,7 +561,8 @@ addOptionForPluginPB (CCSPlugin * plugin,
 	return;
     }
 
-    CONTEXT_PRIV (ccsPluginGetContext (plugin));
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
 
@@ -582,7 +583,7 @@ addOptionForPluginPB (CCSPlugin * plugin,
     ccsObjectAddInterface (setting, (CCSInterface *) cPrivate->object_interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
     ccsSettingRef (setting);
 
-    SETTING_PRIV (setting);
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     sPrivate->parent = plugin;
     sPrivate->isDefault = TRUE;
@@ -716,7 +717,7 @@ addOptionForPluginPB (CCSPlugin * plugin,
 	}
     }
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     pPrivate->settings = ccsSettingListAppend (pPrivate->settings, setting);
 }
@@ -818,7 +819,7 @@ addStringExtensionFromPB (CCSPlugin * plugin,
 	ccsAddRestrictionToStringExtension (extension, name, value);
     }
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     pPrivate->stringExtensions =
 	ccsStrExtensionListAppend (pPrivate->stringExtensions, extension);
@@ -838,7 +839,7 @@ initStringExtensionsFromPB (CCSPlugin * plugin,
 static void
 initRulesFromPB (CCSPlugin * plugin, const PluginInfoMetadata & pluginInfoPB)
 {
-    PLUGIN_PRIV (plugin)
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin)
 
     addStringsFromPB (&pPrivate->providesFeature, pluginInfoPB.feature ());
 
@@ -865,7 +866,7 @@ addPluginFromPB (CCSContext * context,
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     name = pluginInfoPB.name ().c_str ();
 
@@ -949,7 +950,7 @@ addCoreSettingsFromPB (CCSContext * context,
     if (ccsFindPlugin (context, "core"))
 	return;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     plugin = (CCSPlugin*) calloc (1, sizeof (CCSPlugin));
 
@@ -2021,7 +2022,8 @@ addOptionForPlugin (CCSPlugin * plugin,
     if (getOptionType (type) == TypeNum)
 	return;
 
-    CONTEXT_PRIV (ccsPluginGetContext (plugin));
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
 
@@ -2042,7 +2044,7 @@ addOptionForPlugin (CCSPlugin * plugin,
     ccsObjectAddInterface (setting, (CCSInterface *) cPrivate->object_interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
     ccsSettingRef (setting);
 
-    SETTING_PRIV (setting)
+    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     sPrivate->parent = plugin;
     sPrivate->isDefault = TRUE;
@@ -2210,7 +2212,7 @@ addOptionForPlugin (CCSPlugin * plugin,
 	return;
     }
     //	printSetting (setting);
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
     pPrivate->settings = ccsSettingListAppend (pPrivate->settings, setting);
 }
 
@@ -2427,7 +2429,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
     }
     free (nodes);
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     pPrivate->stringExtensions =
 	ccsStrExtensionListAppend (pPrivate->stringExtensions, extension);
@@ -2483,7 +2485,7 @@ initRulesFromRootNode (CCSPlugin * plugin, xmlNode * node, void * pluginInfoPBv)
     }
 #endif
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     addStringsFromPath (&pPrivate->providesFeature, "feature", node,
 			featureListPBv);
@@ -2529,7 +2531,7 @@ addPluginFromXMLNode (CCSContext * context,
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!node)
 	return FALSE;
@@ -2620,7 +2622,7 @@ addCoreSettingsFromXMLNode (CCSContext * context,
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (!node)
 	return FALSE;
@@ -2811,7 +2813,7 @@ updatePBFilePath (CCSContext * context, char *name, char *pbFilePath)
     CCSPlugin *plugin = ccsFindPlugin (context, name);
     if (plugin)
     {
-	PLUGIN_PRIV (plugin);
+	CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
 	if (pPrivate->pbFilePath)
 	    free (pPrivate->pbFilePath);
@@ -2981,7 +2983,7 @@ addPluginNamed (CCSContext * context, char *name)
     CCSPlugin *plugin;
     CCSPluginPrivate *pPrivate;
 
-    CONTEXT_PRIV (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (ccsFindPlugin (context, name))
 	return;
@@ -3172,7 +3174,7 @@ loadOptionsStringExtensionsFromXML (CCSPlugin * plugin,
 				    void * pluginPBv,
 				    struct stat *xmlStat)
 {
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     xmlDoc *doc = NULL;
     xmlNode **nodes;
@@ -3211,7 +3213,7 @@ ccsLoadPluginSettings (CCSPlugin * plugin)
     initPBLoading ();
 #endif
 
-    PLUGIN_PRIV (plugin);
+    CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     if (pPrivate->loaded)
 	return;

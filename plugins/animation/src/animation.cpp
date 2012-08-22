@@ -26,6 +26,10 @@
  * Particle system added by : (C) 2006 Dennis Kasprzyk
  * E-mail                   : onestone@beryl-project.org
  *
+ * Ported to GLES by : Travis Watkins
+ *                     (C) 2011 Linaro Limited
+ * E-mail            : travis.watkins@linaro.org
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -80,8 +84,9 @@
  *
  */
 
-#include <GL/glu.h>
 #include <core/atoms.h>
+#include <core/core.h>
+#include <opengl/opengl.h>
 #include <sys/time.h>
 #include <assert.h>
 #include "private.h"
@@ -101,7 +106,7 @@ COMPIZ_PLUGIN_20090315 (animation, AnimPluginVTable);
 #define FAKE_ICON_SIZE 4
 
 const char *eventNames[AnimEventNum] =
-{"Open", "Close", "Minimize", "Shade", "Focus"};
+{"Open", "Close", "Minimize", "Shade", "UnMinimize", "Focus"};
 
 int chosenEffectOptionIds[AnimEventNum] =
 {
@@ -109,7 +114,8 @@ int chosenEffectOptionIds[AnimEventNum] =
     AnimationOptions::CloseEffects,
     AnimationOptions::MinimizeEffects,
     AnimationOptions::ShadeEffects,
-    AnimationOptions::FocusEffects
+    AnimationOptions::UnminimizeEffects,
+    AnimationOptions::FocusEffects,
 };
 
 int randomEffectOptionIds[AnimEventNum] =
@@ -118,6 +124,7 @@ int randomEffectOptionIds[AnimEventNum] =
     AnimationOptions::CloseRandomEffects,
     AnimationOptions::MinimizeRandomEffects,
     AnimationOptions::ShadeRandomEffects,
+    AnimationOptions::UnminimizeRandomEffects,
     -1
 };
 
@@ -127,6 +134,7 @@ int customOptionOptionIds[AnimEventNum] =
     AnimationOptions::CloseOptions,
     AnimationOptions::MinimizeOptions,
     AnimationOptions::ShadeOptions,
+    AnimationOptions::UnminimizeOptions,
     AnimationOptions::FocusOptions
 };
 
@@ -136,6 +144,7 @@ int matchOptionIds[AnimEventNum] =
     AnimationOptions::CloseMatches,
     AnimationOptions::MinimizeMatches,
     AnimationOptions::ShadeMatches,
+    AnimationOptions::UnminimizeMatches,
     AnimationOptions::FocusMatches
 };
 
@@ -145,6 +154,7 @@ int durationOptionIds[AnimEventNum] =
     AnimationOptions::CloseDurations,
     AnimationOptions::MinimizeDurations,
     AnimationOptions::ShadeDurations,
+    AnimationOptions::UnminimizeDurations,
     AnimationOptions::FocusDurations
 };
 
@@ -541,7 +551,7 @@ PrivateAnimWindow::updateSelectionRow (unsigned int r)
 }
 
 // Assumes events in the metadata are in
-// [Open, Close, Minimize, Focus, Shade] order
+// [Open, Close, Minimize, Shade, UnMinimize, Focus] order
 // and effects among those are in alphabetical order
 // but with "(Event) None" first and "(Event) Random" last.
 AnimEffect
@@ -802,6 +812,58 @@ AnimWindow::expandBBWithPoint2DTransform (GLVector &coords,
 		       coordsTransformed[GLVector::y]);
 }
 
+static bool
+project (float objx, float objy, float objz, 
+         const float modelview[16], const float projection[16],
+         const GLint viewport[4],
+         float *winx, float *winy, float *winz)
+{
+    unsigned int i;
+    float in[4];
+    float out[4];
+
+    in[0] = objx;
+    in[1] = objy;
+    in[2] = objz;
+    in[3] = 1.0;
+
+    for (i = 0; i < 4; i++) {
+	out[i] = 
+	    in[0] * modelview[i] +
+	    in[1] * modelview[4  + i] +
+	    in[2] * modelview[8  + i] +
+	    in[3] * modelview[12 + i];
+    }
+
+    for (i = 0; i < 4; i++) {
+	in[i] = 
+	    out[0] * projection[i] +
+	    out[1] * projection[4  + i] +
+	    out[2] * projection[8  + i] +
+	    out[3] * projection[12 + i];
+    }
+
+    if (in[3] == 0.0)
+	return false;
+
+    in[0] /= in[3];
+    in[1] /= in[3];
+    in[2] /= in[3];
+    /* Map x, y and z to range 0-1 */
+    in[0] = in[0] * 0.5 + 0.5;
+    in[1] = in[1] * 0.5 + 0.5;
+    in[2] = in[2] * 0.5 + 0.5;
+
+    /* Map x,y to viewport */
+    in[0] = in[0] * viewport[2] + viewport[0];
+    in[1] = in[1] * viewport[3] + viewport[1];
+
+    *winx = in[0];
+    *winy = in[1];
+    *winz = in[2];
+    return true;
+}
+
 /// Either points or objects should be non-0.
 bool
 AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
@@ -810,27 +872,24 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 					   GridAnim::GridModel::GridObject *objects,
 					   unsigned int   nPoints)
 {
-    GLdouble dModel[16];
-    GLdouble dProjection[16];
-    GLdouble x, y, z;
-    for (unsigned int i = 0; i < 16; i++)
-    {
-	dModel[i] = transform[i];
-	dProjection[i] = GLScreen::get (::screen)->projectionMatrix ()[i];
-    }
+    GLfloat x, y, z;
     GLint viewport[4] =
 	{output.region ()->extents.x1,
 	 output.region ()->extents.y1,
 	 output.width (),
 	 output.height ()};
 
+    const float *projection =
+        GLScreen::get (::screen)->projectionMatrix ()->getMatrix ();
+
     if (points) // use points
     {
 	for (; nPoints; nPoints--, points += 3)
 	{
-	    if (!gluProject (points[0], points[1], points[2],
-			     dModel, dProjection, viewport,
-			     &x, &y, &z))
+	    if (!project (points[0], points[1], points[2],
+	                  transform.getMatrix (), projection,
+	                  viewport,
+	                  &x, &y, &z))
 		return false;
 
 	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
@@ -841,11 +900,12 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 	GridAnim::GridModel::GridObject *object = objects;
 	for (; nPoints; nPoints--, object++)
 	{
-	    if (!gluProject (object->position ().x (),
-			     object->position ().y (),
-			     object->position ().z (),
-			     dModel, dProjection, viewport,
-			     &x, &y, &z))
+	    if (!project (object->position ().x (),
+	                  object->position ().y (),
+	                  object->position ().z (),
+	                  transform.getMatrix (), projection,
+	                  viewport,
+	                  &x, &y, &z))
 		return false;
 
 	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
@@ -901,15 +961,10 @@ AnimWindow::resetStepRegionWithBB ()
 void
 PrivateAnimWindow::damageThisAndLastStepRegion ()
 {
-#ifdef COMPIZ_OPENGL_SWAPBUFFERS_ALWAYS   // when LP: #901097 is fixed
     // Find union of the regions for this step and last step
     CompRegion totalRegionToDamage (mStepRegion + mLastStepRegion);
 
     mPAScreen->cScreen->damageRegion (totalRegionToDamage);
-#else
-    // Ugly fix for LP: #930192 while LP: #901097 is not resolved
-    mPAScreen->cScreen->damageScreen ();
-#endif
 }
 
 CompOutput &
@@ -1430,7 +1485,7 @@ PrivateAnimWindow::enablePainting (bool enabling)
 {
     gWindow->glPaintSetEnabled (this, enabling);
     gWindow->glAddGeometrySetEnabled (this, enabling);
-    gWindow->glDrawGeometrySetEnabled (this, enabling);
+    //gWindow->glDrawGeometrySetEnabled (this, enabling);
     gWindow->glDrawTextureSetEnabled (this, enabling);
 }
 
@@ -1504,7 +1559,8 @@ PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 void
 PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
-				  GLFragment::Attrib &attrib,
+                                  const GLMatrix     &transform,
+                                  const GLWindowPaintAttrib &attrib,
 				  unsigned int       mask)
 {
     if (mCurAnimation)
@@ -1512,9 +1568,10 @@ PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
 	mCurAnimation->setCurPaintAttrib (attrib);
     }
 
-    gWindow->glDrawTexture (texture, attrib, mask);
+    gWindow->glDrawTexture (texture, transform, attrib, mask);
 }
 
+#if 0 // Not ported yet
 void
 PrivateAnimWindow::glDrawGeometry ()
 {
@@ -1528,10 +1585,11 @@ PrivateAnimWindow::glDrawGeometry ()
 	gWindow->glDrawGeometry ();
     }
 }
+#endif
 
 void
 Animation::drawTexture (GLTexture          *texture,
-			GLFragment::Attrib &attrib,
+                        const GLWindowPaintAttrib &attrib,
 			unsigned int       mask)
 {
     mCurPaintAttrib = attrib;
@@ -1540,7 +1598,9 @@ Animation::drawTexture (GLTexture          *texture,
 void
 Animation::drawGeometry ()
 {
+#if 0 // Not ported yet
     mAWindow->priv->gWindow->glDrawGeometry ();
+#endif
 }
 
 bool
@@ -1609,13 +1669,16 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     if (mCurAnimation->postPaintWindowUsed ())
     {
+#if 0 // Not ported yet
 	// Transform to make post-paint coincide with the window
 	glPushMatrix ();
 	glLoadMatrixf (wTransform.getMatrix ());
-
+#endif
 	mCurAnimation->postPaintWindow ();
 
+#if 0 // Not ported yet
 	glPopMatrix ();
+#endif
     }
 
     return status;
@@ -2168,7 +2231,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 
     int duration = 200;
     AnimEffect chosenEffect =
-	getMatchingAnimSelection (w, AnimEventMinimize, &duration);
+	getMatchingAnimSelection (w, AnimEventUnMinimize, &duration);
 
     aw->mNewState = NormalState;
 
@@ -2202,7 +2265,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 	if (startingNew)
 	{
 	    AnimEffect effectToBePlayed =
-		getActualEffect (chosenEffect, AnimEventMinimize);
+		getActualEffect (chosenEffect, AnimEventUnMinimize);
 
 	    // handle empty random effect list
 	    if (effectToBePlayed == AnimEffectNone)
@@ -2444,20 +2507,64 @@ PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     return gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 }
 
+AnimEffectUsedFor AnimEffectUsedFor::all ()
+{
+  AnimEffectUsedFor usedFor;
+  usedFor.open = usedFor.close = usedFor.minimize = 
+  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  return usedFor;
+}
+
+AnimEffectUsedFor AnimEffectUsedFor::none ()
+{
+  AnimEffectUsedFor usedFor;  
+  usedFor.open = usedFor.close = usedFor.minimize = 
+  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  return usedFor;
+}
+
+AnimEffectUsedFor& AnimEffectUsedFor::exclude (AnimEvent event)
+{
+  switch (event) {
+    case AnimEventOpen: open = false; break;
+    case AnimEventClose: close = false; break;
+    case AnimEventMinimize: minimize = false; break;
+    case AnimEventShade: shade = false; break;
+    case AnimEventUnMinimize: unMinimize = false; break;
+    case AnimEventFocus: focus = false; break;
+    default: break;
+  }
+  return *this;
+}
+
+AnimEffectUsedFor& AnimEffectUsedFor::include (AnimEvent event)
+{
+  switch (event) {
+    case AnimEventOpen: open = true; break;
+    case AnimEventClose: close = true; break;
+    case AnimEventMinimize: minimize = true; break;
+    case AnimEventShade: shade = true; break;
+    case AnimEventUnMinimize: unMinimize = true; break;
+    case AnimEventFocus: focus = true; break;
+    default: break;
+  }
+  return *this;
+}
+
 AnimEffectInfo::AnimEffectInfo (const char *name,
-				bool usedO, bool usedC, bool usedM,
-				bool usedS, bool usedF,
+                               AnimEffectUsedFor usedFor,
 				CreateAnimFunc create,
 				bool isRestackAnim) :
     name (name),
     create (create),
     isRestackAnim (isRestackAnim)
 {
-    usedForEvents[AnimEventOpen] = usedO;
-    usedForEvents[AnimEventClose] = usedC;
-    usedForEvents[AnimEventMinimize] = usedM;
-    usedForEvents[AnimEventShade] = usedS;
-    usedForEvents[AnimEventFocus] = usedF;
+    usedForEvents[AnimEventOpen] = usedFor.open;
+    usedForEvents[AnimEventClose] = usedFor.close;
+    usedForEvents[AnimEventMinimize] = usedFor.minimize;
+    usedForEvents[AnimEventShade] = usedFor.shade;
+    usedForEvents[AnimEventUnMinimize] = usedFor.unMinimize;
+    usedForEvents[AnimEventFocus] = usedFor.focus;
 }
 
 bool
@@ -2577,69 +2684,87 @@ void
 PrivateAnimScreen::initAnimationList ()
 {
     int i = 0;
+
     animEffects[i++] = AnimEffectNone =
 	new AnimEffectInfo ("animation:None",
-			    true, true, true, true, true, 0);
+                            AnimEffectUsedFor::all(),
+                            0);
+
     animEffects[i++] = AnimEffectRandom =
 	new AnimEffectInfo ("animation:Random",
-			    true, true, true, true, false, 0);
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus),
+                           0);
+
     animEffects[i++] = AnimEffectCurvedFold =
 	new AnimEffectInfo ("animation:Curved Fold",
-			    true, true, true, true, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus),
 			    &createAnimation<CurvedFoldAnim>);
+        
     animEffects[i++] = AnimEffectDodge =
-	new AnimEffectInfo ("animation:Dodge",
-			    false, false, false, false, true,
+	new AnimEffectInfo ("animation:Dodge", 
+                           AnimEffectUsedFor::none().include(AnimEventFocus),
 			    &createAnimation<DodgeAnim>,
 			    true);
+        
     animEffects[i++] = AnimEffectDream =
-	new AnimEffectInfo ("animation:Dream",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animation:Dream", 
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<DreamAnim>);
+
     animEffects[i++] = AnimEffectFade =
 	new AnimEffectInfo ("animation:Fade",
-			    true, true, true, false, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<FadeAnim>);
+        
     animEffects[i++] = AnimEffectFocusFade =
-	new AnimEffectInfo ("animation:Focus Fade",
-			    false, false, false, false, true,
+	new AnimEffectInfo ("animation:Focus Fade", 
+                           AnimEffectUsedFor::none().include(AnimEventFocus),
 			    &createAnimation<FocusFadeAnim>,
 			    true);
+        
     animEffects[i++] = AnimEffectGlide1 =
 	new AnimEffectInfo ("animation:Glide 1",
-			    true, true, true, false, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<GlideAnim>);
+        
     animEffects[i++] = AnimEffectGlide2 =
 	new AnimEffectInfo ("animation:Glide 2",
-			    true, true, true, false, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<Glide2Anim>);
+        
     animEffects[i++] = AnimEffectHorizontalFolds =
 	new AnimEffectInfo ("animation:Horizontal Folds",
-			    true, true, true, true, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus),
 			    &createAnimation<HorizontalFoldsAnim>);
+        
     animEffects[i++] = AnimEffectMagicLamp =
 	new AnimEffectInfo ("animation:Magic Lamp",
-			    true, true, true, false, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<MagicLampAnim>);
+        
     animEffects[i++] = AnimEffectMagicLampWavy =
 	new AnimEffectInfo ("animation:Magic Lamp Wavy",
-			    true, true, true, false, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<MagicLampWavyAnim>);
+        
     animEffects[i++] = AnimEffectRollUp =
 	new AnimEffectInfo ("animation:Roll Up",
-			    false, false, false, true, false,
+                           AnimEffectUsedFor::none().include(AnimEventShade),
 			    &createAnimation<RollUpAnim>);
+        
     animEffects[i++] = AnimEffectSidekick =
 	new AnimEffectInfo ("animation:Sidekick",
-			    true, true, true, false, false,
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<SidekickAnim>);
+        
     animEffects[i++] = AnimEffectWave =
 	new AnimEffectInfo ("animation:Wave",
-			    true, true, true, false, true,
+                           AnimEffectUsedFor::all().exclude(AnimEventShade),
 			    &createAnimation<WaveAnim>);
+    
     animEffects[i++] = AnimEffectZoom =
-	new AnimEffectInfo ("animation:Zoom",
-			    true, true, true, false, false,
+	new AnimEffectInfo ("animation:Zoom", 
+                           AnimEffectUsedFor::all().exclude(AnimEventFocus).exclude(AnimEventShade),
 			    &createAnimation<ZoomAnim>);
 
     animExtensionPluginInfo.effectOptions = &getOptions ();
