@@ -270,6 +270,10 @@ namespace
 	g_object_unref (G_OBJECT (settings));
     }
 
+    void gwd_settings_notified_do_nothing (GWDSettingsNotified *notified)
+    {
+    }
+
     class AutoUnsetGValue
     {
 	public:
@@ -524,7 +528,7 @@ class GWDSettingsTest :
 	    GWDSettingsTestCommon::SetUp ();
 	    mGMockNotified.reset (new GWDMockSettingsNotifiedGMock ());
 	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
-				 boost::bind (gwd_settings_notified_unref, _1));
+				 boost::bind (gwd_settings_notified_do_nothing, _1));
 	    mSettings.reset (gwd_settings_impl_new (NULL,
 						    NULL,
 						    NULL,
@@ -543,9 +547,9 @@ class GWDSettingsTest :
 
     protected:
 
-	boost::shared_ptr <GWDSettingsImpl> mSettings;
 	boost::shared_ptr <GWDMockSettingsNotifiedGMock> mGMockNotified;
 	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
+	boost::shared_ptr <GWDSettingsImpl> mSettings;
 };
 
 TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
@@ -1064,7 +1068,7 @@ class GWDSettingsTestClickActions :
 	    g_type_init ();
 	    mGMockNotified.reset (new GWDMockSettingsNotifiedGMock ());
 	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
-				 boost::bind (gwd_settings_notified_unref, _1));
+				 boost::bind (gwd_settings_notified_do_nothing, _1));
 	    mSettings.reset (gwd_settings_impl_new (NULL,
 						    NULL,
 						    NULL,
@@ -1085,9 +1089,9 @@ class GWDSettingsTestClickActions :
 
     protected:
 
-	boost::shared_ptr <GWDSettingsImpl> mSettings;
 	boost::shared_ptr <GWDMockSettingsNotifiedGMock> mGMockNotified;
 	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
+	boost::shared_ptr <GWDSettingsImpl> mSettings;
 };
 
 TEST_P(GWDSettingsTestClickActions, TestClickActionsAndMouseActions)

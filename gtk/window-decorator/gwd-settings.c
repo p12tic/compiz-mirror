@@ -522,6 +522,12 @@ static void gwd_settings_finalize (GObject *object)
 	g_free (priv->titlebar_font);
 	priv->titlebar_font = NULL;
     }
+
+    if (priv->notified)
+    {
+	g_object_unref (priv->notified);
+	priv->notified = NULL;
+    }
 }
 
 static void gwd_settings_set_property (GObject *object,
