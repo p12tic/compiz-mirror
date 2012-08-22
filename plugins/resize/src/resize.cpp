@@ -184,8 +184,6 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     streamingBuffer->end ();
     streamingBuffer->render (sTransform);
 
-    cScreen->damageScreen ();
-
 #ifdef USE_GLES
     glBlendFuncSeparate (origSrc, origDst,
                          origSrcAlpha, origDstAlpha);
