@@ -150,6 +150,8 @@ Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.8.0)
              g_main_context_iteration() from ... from CcpScreen::timeout()
    1036542 - [regression] Clicking launcher icons in expo mode now exits expo
              mode
+   1036739 - Window management - decouple window minimise and restore/maximise
+             animation timings
    1037710 - Tearing at top of laptop screen
    1039482 - imgsvg build failure on quantal
    1039834 - paralell builds can fail on resize_logic
