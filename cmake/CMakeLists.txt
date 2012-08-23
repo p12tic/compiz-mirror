@@ -17,6 +17,8 @@ list (APPEND _PluginExtensionFiles
       plugin_extensions/CompizGenInstallData.cmake)
 list (APPEND _PluginExtensionFiles
       plugin_extensions/CompizGenInstallImages.cmake)
+list (APPEND _PluginExtensionFiles
+      plugin_extensions/CompizOpenGLFixups.cmake)
 
 if (USE_GCONF)
     list (APPEND _files CompizGconf.cmake)

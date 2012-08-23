@@ -52,6 +52,10 @@
    }                                                    \
    enum { func ## Index = num };
 
+// For compatability ignore num and forward
+#define WRAPABLE_HND_FUNC(num, func, ...)				\
+    WRAPABLE_HND_FUNCTN(func, __VA_ARGS__)
+
 // New macro that doesn't need magic number
 #define WRAPABLE_HND_FUNCTN(func, ...)				        \
 {									\
@@ -68,6 +72,10 @@
     }									\
     mCurrFunction[num] = curr;						\
 }
+
+// For compatability ignore num and forward
+#define WRAPABLE_HND_FUNC_RETURN(num, rtype, func, ...)			\
+    WRAPABLE_HND_FUNCTN_RETURN(rtype, func, __VA_ARGS__)
 
 // New macro that doesn't need magic number
 #define WRAPABLE_HND_FUNCTN_RETURN(rtype, func, ...)			\

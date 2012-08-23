@@ -153,13 +153,11 @@ DecorWindow::doUpdateGroupShadows ()
 
 bool
 DecorWindow::glDraw (const GLMatrix     &transform,
-		     GLFragment::Attrib &attrib,
+		     const GLWindowPaintAttrib &attrib,
 		     const CompRegion   &region,
 		     unsigned int       mask)
 {
     bool status;
-
-    status = gWindow->glDraw (transform, attrib, region, mask);
 
     /* Don't render dock decorations (shadows) on just any old window */
     if (!(window->type () & CompWindowTypeDockMask))
@@ -188,25 +186,26 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 		     */
 		    pmask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
+		    const GLWindowPaintAttrib &pAttrib (d->gWindow->paintAttrib ());
+
+		    if (d->gWindow->glPaint (pAttrib,
 					     transform,
 					     region,
 					     pmask))
-		    {
-			GLFragment::Attrib fa (d->gWindow->paintAttrib ());
-			d->glDecorate (transform, fa, region, mask);
-		    }
+			d->glDecorate (transform, pAttrib, region, mask);
 		}
 	    }
 	}
     }
+
+    status = gWindow->glDraw (transform, attrib, region, mask);
 
     return status;
 }
 
 void
 DecorWindow::glDecorate (const GLMatrix     &transform,
-		         GLFragment::Attrib &attrib,
+			 const GLWindowPaintAttrib &attrib,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
@@ -217,6 +216,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	GLTexture::MatrixList ml (1);
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
+	gWindow->vertexBuffer ()->begin ();
 	const CompRegion *preg = NULL;
 
 	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
@@ -228,11 +228,8 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	{
 	    tmpRegion = mOutputRegion;
 	    tmpRegion &= region;
-
-	    if (tmpRegion.isEmpty ())
-		preg = &region;
-	    else
-		preg = &shadowRegion;
+	    tmpRegion &= shadowRegion;
+	    preg = &tmpRegion;
 	}
 	else
 	    preg = &region;
@@ -242,8 +239,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    preg = &region;
 
 	const CompRegion &reg (*preg);
-
-	gWindow->geometry ().reset ();
 
 	if (updateMatrix)
 	    updateDecorationScale ();
@@ -263,9 +258,13 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    }
 	}
 
-	if (gWindow->geometry ().vCount)
-	    gWindow->glDrawTexture (wd->decor->texture->textures[0],
+	if (gWindow->vertexBuffer ()->end ())
+	{
+	    glEnable (GL_BLEND);
+	    gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
 				    attrib, mask);
+	    glDisable (GL_BLEND);
+	}
     }
     else if (wd && wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
     {
@@ -279,14 +278,16 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	if (updateMatrix)
 	    updateDecorationScale ();
 
+	glEnable (GL_BLEND);
+
 	if (gWindow->textures ().size () == 1)
 	{
 	    ml[0] = gWindow->matrices ()[0];
-	    gWindow->geometry ().reset ();
+	    gWindow->vertexBuffer ()->begin ();
 	    gWindow->glAddGeometry (ml, window->frameRegion (), region);
-
-	    if (gWindow->geometry ().vCount)
-		gWindow->glDrawTexture (gWindow->textures ()[0], attrib, mask);
+	    if (gWindow->vertexBuffer ()->end ())
+		gWindow->glDrawTexture (gWindow->textures ()[0], transform,
+		                        attrib, mask);
 	}
 	else
 	{
@@ -295,14 +296,15 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    for (unsigned int i = 0; i < gWindow->textures ().size (); i++)
 	    {
 		ml[0] = gWindow->matrices ()[i];
-		gWindow->geometry ().reset ();
+		gWindow->vertexBuffer ()->begin ();
 		gWindow->glAddGeometry (ml, regions[i], region);
-
-		if (gWindow->geometry ().vCount)
-		    gWindow->glDrawTexture (gWindow->textures ()[i], attrib,
-					    mask);
+		if (gWindow->vertexBuffer ()->end ())
+		    gWindow->glDrawTexture (gWindow->textures ()[i], transform,
+		                            attrib, mask);
 	    }
 	}
+
+	glDisable (GL_BLEND);
     }
 }
 

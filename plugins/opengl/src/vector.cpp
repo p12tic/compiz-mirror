@@ -79,13 +79,13 @@ GLVector::operator[] (VectorCoordsEnum coord)
     return v[item];
 }
 
-const float
+const float &
 GLVector::operator[] (int item) const
 {
     return v[item];
 }
 
-const float
+const float &
 GLVector::operator[] (VectorCoordsEnum coord) const
 {
     int item = (int) coord;

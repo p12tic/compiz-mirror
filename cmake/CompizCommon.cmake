@@ -18,6 +18,7 @@ cmake_policy (SET CMP0011 OLD)
 
 set (CMAKE_SKIP_RPATH FALSE)
 
+option (BUILD_GLES "Build against GLESv2 instead of GL" OFF)
 option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
@@ -69,6 +70,17 @@ if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
 elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
+
+set (USE_GLES ${BUILD_GLES})
+
+if (USE_GLES)
+    find_package(OpenGLES2)
+
+    if (NOT OPENGLES2_FOUND)
+	set (USE_GLES 0)
+	message (SEND_ERROR "OpenGLESv2 not found")
+    endif (NOT OPENGLES2_FOUND)
+endif (USE_GLES)
 
 # Parse arguments passed to a function into several lists separated by
 # upper-case identifiers and options that do not have an associated list e.g.:
@@ -457,14 +469,29 @@ function (compiz_translate_xml _src _dst)
     find_program (INTLTOOL_MERGE_EXECUTABLE intltool-merge)
     mark_as_advanced (FORCE INTLTOOL_MERGE_EXECUTABLE)
 
+    set (_additional_arg
+	 -x
+	 -u
+	 ${COMPIZ_I18N_DIR})
+
+    foreach (_arg ${ARGN})
+	if ("${_arg}" STREQUAL "NOTRANSLATIONS")
+	    set (_additional_arg
+		 --no-translations
+		 -x
+		 -u)
+	endif ("${_arg}" STREQUAL "NOTRANSLATIONS")
+    endforeach (_arg ${ARGN})
+
     if (INTLTOOL_MERGE_EXECUTABLE
 	AND COMPIZ_I18N_DIR
 	AND EXISTS ${COMPIZ_I18N_DIR})
 	add_custom_command (
 	    OUTPUT ${_dst}
-	    COMMAND ${INTLTOOL_MERGE_EXECUTABLE} -x -u -c
+	    COMMAND ${INTLTOOL_MERGE_EXECUTABLE}
+		    -c
 		    ${CMAKE_BINARY_DIR}/.intltool-merge-cache
-		    ${COMPIZ_I18N_DIR}
+		    ${_additional_arg}
 		    ${_src}
 		    ${_dst}
 	    DEPENDS ${_src}

@@ -204,7 +204,6 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     if (mSlideData && mSlideData->remaining)
     {
-	GLFragment::Attrib fragment (gWindow->paintAttrib ());
 	GLMatrix           wTransform = transform;
 	SlideData          *data = mSlideData;
 	float              xTranslate = 0, yTranslate = 0, remainder;
@@ -241,26 +240,20 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	status = gWindow->glPaint (attrib, transform, region, mask |
 				   PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
 
-	if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	if (window->alpha () || attrib.opacity != OPAQUE)
 	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	wTransform.translate (xTranslate, yTranslate, 0.0f);
 
-	glPushMatrix ();
-	glLoadMatrixf (wTransform.getMatrix ());
-
-	glPushAttrib (GL_SCISSOR_BIT);
 	glEnable (GL_SCISSOR_TEST);
 
 	glScissor (clipBox.x1 (), screen->height () - clipBox.y2 (),
 		   clipBox.width (), clipBox.height ());
 
-	status = gWindow->glDraw (wTransform, fragment, region,
+	status = gWindow->glDraw (wTransform, attrib, region,
 			 mask | PAINT_WINDOW_TRANSFORMED_MASK);
 
 	glDisable (GL_SCISSOR_TEST);
-	glPopAttrib ();
-	glPopMatrix ();
     }
 
     foreach (const Thumb& thumb, mPreviews)
@@ -329,20 +322,17 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		matrices[0].x0 -= (tw->x () * icon->matrix ().xx);
 		matrices[0].y0 -= (tw->y () * icon->matrix ().yy);
 
-		gtw->geometry ().reset ();
+		gtw->vertexBuffer ()->begin ();
 		gtw->glAddGeometry (matrices, tw->geometry (), infiniteRegion);
-
-		if (!gtw->geometry ().vertices)
-		    icon = NULL;
+		gtw->vertexBuffer ()->end ();
 	    }
 	}
 
 	if (!gtw->textures ().empty () || icon)
 	{
-	    GLFragment::Attrib fragment (attrib);
 	    GLMatrix           wTransform (transform);
 
-	    if (tw->alpha () || fragment.getOpacity () != OPAQUE)
+	    if (tw->alpha () || attrib.opacity != OPAQUE)
 		paintMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	    wTransform.translate (tw->x (), tw->y (), 0.0f);
@@ -351,16 +341,11 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 				  yTranslate / yScale - tw->y (),
 				  0.0f);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
-
 	    if (!gtw->textures ().empty ())
-		gtw->glDraw (wTransform, fragment,
+		gtw->glDraw (wTransform, attrib,
 				 infiniteRegion, paintMask);
 	    else if (icon)
-		gtw->glDrawTexture (icon, fragment, paintMask);
-
-	    glPopMatrix ();
+		gtw->glDrawTexture (icon, wTransform, attrib, paintMask);
 	}
     }
     
