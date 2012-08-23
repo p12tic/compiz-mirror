@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3319-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3319-0ubuntu1) quantal-proposed; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
