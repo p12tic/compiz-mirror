@@ -63,6 +63,13 @@ endif
 	# remove .a files
 	rm -f debian/tmp/usr/lib/*.a
 
+	# remove gconf schema files
+	#rm -rf debian/tmp/usr/share/gconf/schemas/
+
+	# ugly hack to install xml files
+	mkdir -p debian/tmp/usr/share/gnome-control-center/keybindings
+	find */gtk/gnome -name *.xml | xargs cp -at debian/tmp/usr/share/gnome-control-center/keybindings/
+
 	dh_install --fail-missing
 
 	# remove the compizconfig dev file from compiz-dev

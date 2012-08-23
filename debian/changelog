@@ -1,4 +1,4 @@
-compiz (1:0.9.8+bzr3307-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8+bzr3319-0ubuntu1) UNRELEASED; urgency=low
 
   [ Didier Roche ]
   * debian/patches/ubuntu-config.patch:
@@ -99,12 +99,36 @@ compiz (1:0.9.8+bzr3307-0ubuntu1) UNRELEASED; urgency=low
     - Make valgrind shut up about some known "leaks" in python and glib.
       Fix some leaks in the tests in the process.
     - Implemented single click exit from expo screen. (LP: #1033531)
+    - Restore the fix for avoiding re-entering the glib event loop and 
+      crashing. (LP: #1036490)
+    - Including rsvg-cairo.h is now deprecated. (LP: #1039482)
+    - Add keybinding integration for gnome-control-center
+    - Separate the configuration for the minimize and unminimize animations.
+      (LP: #1036739)
+    - Ignore mouse press and release if it does not happen inside of the expo
+      screen. (LP: #1036542). 
+    - Additional keys from metacity to convert to GSettings
+    - Maximize vertically if pointer reaches top or bottom edges.
+    - Explicitly depend on resize-options. (LP: #1039834)
+    - Add some docstring warnings about using those classes directly.
+    - Fix some memory management issues on the mock objects, namely:
+      Make destructor functions virtual where appropriate, so that we can add 
+      them to lists polymorphically. Support polymorphic ccs*Unref function.
+      Also make some other necessary changes to libcompizconfig.
+    - Detect if rsvg 2.36.2 is installed (LP: #1039843)
+    - GSettings integration backend, created a testsuite for it. Refactors a 
+      bunch of the backend code, adds appropriate testsuites and refactors 
+      the integration code to make it more flexible. (LP: #1035261)
   * Update compiz-core.lintian-overrides
   * Enable GSettings backend and install the schema files
   * Switch the default profile to use gsettings 
   * Add dependency on gsettings-desktop-schemas(-dev)
   * Add compiz-gnome.gsettings-override
   * Update gsettings-override to new paths org.compiz.*
+  * Add support for disabling gconf schemas installation
+    - However, not enabled because of gtk-window-decorator for now
+  * Add libcompizconfig_gsettings_backend.so
+  * Workaround to install xml files
 
   [ Łukasz 'sil2100' Zemczak ]
   * debian/control, debian/rules:
@@ -116,7 +140,7 @@ compiz (1:0.9.8+bzr3307-0ubuntu1) UNRELEASED; urgency=low
     - changed keybinding for initiate window picker, according to the design
       specification
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Tue, 14 Aug 2012 09:46:58 +0300
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Thu, 23 Aug 2012 09:56:05 +0300
 
 compiz (1:0.9.8+bzr3249-0ubuntu4) quantal; urgency=low
 

@@ -25,18 +25,14 @@
 #include <ccs.h>
 #include <ccs-backend.h>
 
-#define CONTEXT_PRIV(c) \
-    CCSContextPrivate *cPrivate = (CCSContextPrivate *) ccsObjectGetPrivate (c);
-#define PLUGIN_PRIV(p) \
-    CCSPluginPrivate *pPrivate = (CCSPluginPrivate *) ccsObjectGetPrivate (p);
-#define SETTING_PRIV(s) \
-    CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (s);
+#define GET_PRIVATE(Private, obj) \
+    (Private *) ccsObjectGetPrivate (obj);
 
 extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate
 {
-    CCSBackend        *backend;
+    CCSDynamicBackend  *backend;
     CCSPluginList     plugins;         /* list of plugins settings
                                           were loaded for */
     CCSPluginCategory *categories;     /* list of plugin categories */
@@ -119,6 +115,12 @@ typedef struct _CCSSettingPrivate
     CCSPlugin *parent;            /* plugin this setting belongs to */
     void      *privatePtr;        /* private pointer for usage by the caller */
 } CCSSettingPrivate;
+
+typedef struct _CCSDynamicBackendPrivate
+{
+    void            *dlhand;
+    CCSBackend	    *backend;
+} CCSDynamicBackendPrivate;
 
 typedef struct _CCSSettingsUpgrade
 {
