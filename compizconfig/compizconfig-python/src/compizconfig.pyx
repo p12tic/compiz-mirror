@@ -315,7 +315,7 @@ cdef extern void ccsSetProfile (CCSContext * context, char * name)
 cdef extern char* ccsGetProfile (CCSContext * context)
 
 '''Backends'''
-cdef extern CCSBackendInfoList * ccsGetExistingBackends ()
+cdef extern CCSBackendInfoList * ccsGetExistingBackends (CCSContext *)
 cdef extern void ccsBackendInfoListFree (CCSBackendInfoList *, Bool freeObj)
 cdef extern Bool ccsSetBackend (CCSContext * context, char * name)
 cdef extern char* ccsGetBackend (CCSContext * context)
@@ -603,6 +603,13 @@ cdef object DecodeValue (CCSSettingValue * value):
     return "Unhandled"
 
 cdef class Setting:
+    """A python representation of a CCSSetting.
+
+    You should not construct this object directly.
+    Use plugin.Screen['settingname'] instead
+
+    """
+
     cdef CCSSetting * ccsSetting
     cdef object info
     cdef Plugin plugin
@@ -723,6 +730,13 @@ cdef class SSGroup:
             self.screen = value
 
 cdef class Plugin:
+    """A python representation of a CCSPlugin.
+
+    You should not construct this object directly.
+    Use context.Plugins['pluginname'] instead
+
+    """
+
     cdef CCSPlugin * ccsPlugin
     cdef Context context
     cdef object screen
@@ -1104,6 +1118,19 @@ cdef class Backend:
             return self.profileSupport
 
 cdef class Context:
+    """A python representation of a CCSContext.
+
+    This is the main entry-point into the compizconfig module.
+    Typical usage:
+
+    >>> context = Context()
+    >>> plugin = context.Plugins['core']
+    >>> setting = plugin.Screen['number_of_desktops']
+    >>> print setting.Value
+    1
+
+    """
+
     cdef CCSContext * ccsContext
     cdef object plugins
     cdef object categories
@@ -1207,7 +1234,7 @@ cdef class Context:
         cdef CCSBackendInfoList * backendList
         cdef CCSBackendInfoList * origBackendList
         cdef CCSBackendInfo * backendInfo
-        origBackendList = backendList = ccsGetExistingBackends ()
+        origBackendList = backendList = ccsGetExistingBackends (self.ccsContext)
         while backendList != NULL:
             backendInfo = <CCSBackendInfo *> backendList.data
             info = (backendInfo.name, backendInfo.shortDesc,

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KeyListEntries schema="org.compiz.integrated" wm_name="Compiz" group="system" _name="Screenshots" package="compiz">
+
+	<KeyListEntry name="run-command-screenshot" _description="Take a screenshot" />
+
+	<KeyListEntry name="run-command-window-screenshot" _description="Take a screenshot of a window"/>
+
+</KeyListEntries>
