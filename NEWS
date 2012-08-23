@@ -1,3 +1,163 @@
+Release 0.9.8.0 (2012-08-23 Daniel van Vugt <daniel.van.vugt@canonical.com>)
+============================================================================
+
+Major New Features
+  
+  * Single source tree: All plugins/libraries are in lp:compiz now
+  * OpenGL|ES support (e.g. for ARM platforms)
+  * GSettings support, as a backend for storing compizconfig
+  * Buffer swapping on every frame: allowing compiz to take advantage of
+    driver features such as page flipping and triple/quad buffering. This
+    results in noticeably higher physical frame rates, and smoother graphics.
+
+Disabled Features
+
+  In order to complete support for OpenGL|ES, some plugins were not (yet)
+  ported and have been disabled for now. Those are: animationaddon, bicubic,
+  blur, colorfilter, cubeaddon, gears, group, loginout, reflex, thumbnail,
+  stackswitch, wallpaper, trip. However, those are only 13 out of 84 plugins.
+  We welcome patches to revive the disabled plugins.
+
+Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.8.0)
+
+    201342 - Tearing on secondary monitors even when "Sync To VBlank" is
+             turned on.
+    454218 - Loss of window border (white flash) when using compiz resize
+             plugin, option=normal
+    755842 - Non-maximized windows which sit on the border of a workspace move
+             when called
+    770283 - [fglrx] Title bar does not update on non-maximized windows
+    803296 - [regression] Compiz Resize plugin: When "Default Resize Mode" =
+             Normal, resizing is extremely slow and CPU intensive
+    862430 - window flicker for a short time after switching workspaces
+    886605 - Desktop, Launcher and menu bar still visible when screen locked
+    892012 - Window management - When a semi-maximised a window is maximised
+             and then restored, the window position jumps and window size
+             changes so the the window title bar is sometimes hidden
+             underneath the top bar
+    901097 - Add option to use glXSwapBuffers on every frame, not just
+             full-screen redraws.
+    904205 - Desktop wall: Bindings for next/previous don't wrap to the next
+             row
+    929989 - compiz (decor) - Warn: failed to bind pixmap to texture
+    930783 - mouse poll is jerky at the default setting of 40ms
+    932520 - Some windows on start up don't show full window
+    933776 - [regression] scale/spread: "Initiate Window Picker for All
+             Windows" does not show all windows. It shows only windows from
+             curent workspace.
+    946388 - Some apps (like Remmina) can't full-screen under Compiz (or Unity)
+    955035 - Super-W shows vanishing windows the first time you hit it. Windows
+             fly off the screen instead of spreading.
+    960652 - Switcher remains open after super+tab has been used.
+    963794 - gtk-window-decorator crashed with SIGFPE in
+             _decor_blend_horz_border_picture()
+    972519 - Compiz-core fails to compile with gcc-4.7 -
+             'cc1plus: all warnings being treated as errors'
+    976467 - [regression] Compiz 0.9.7.6: Menus often have no shadows at all
+    978900 - Menu shadow clipping flickers while switching menubar
+             items/indicators
+    980026 - Compiz should not move windows to workspace 0,0 when restarted
+    981703 - regression / unable to interact with window-titlebar (window
+             decoration) after minimizing/unminimizing gnome-terminal
+    987639 - [0.9.8 r3110 regression] Windows lose decorations during "scale"
+             (window spread)
+    987647 - Mouse pointer doesn't change when dragging windows in expo
+    988684 - [regression] Starting a second instance of compiz (without
+             --replace) causes the existing instance to shut down (gracefully)
+    989545 - [regression] compiz --replace fails to start
+    990690 - Get libcompizconfig under test
+    993608 - CMake Error at FindCompiz.cmake:84 (include): include could not
+             find load file: CompizDefaults
+    994841 - 'make test' fails lots of test cases if you don't have Xvfb
+             installed
+    996901 - regression / gtk-window-decorator crashes / doesn't start
+             properly -> rev3131 is culprit
+    999019 - [regression] Bug 994841 ('make test' fails lots of test cases)
+             regressed in lp:compiz-core r3133
+   1002602 - [nvidia] [0.9.8 r3110 regression] With bug fix 862430 unfocussed
+             windows are displayed white
+   1002606 - [0.9.8 r3110 regression] 2nd un-maxed window often opens
+             overlapping adjacent workspace
+   1002715 - [regression] Misspelled plugins are silently ignored
+   1002721 - [regression] compiz fails to load plugins from LD_LIBRARY_PATH
+   1004251 - Animations aren't smooth when sync to vblank is enabled
+   1004335 - wall.cpp:588: Conditional jump or move depends on uninitialised
+             value(s)
+   1004338 - screen.cpp:4364,4372: Conditional jump or move depends on
+             uninitialised value(s)
+   1004848 - CompizConfigPython.test_plugin test fails when opengl isn't
+             enabled
+   1005008 - Can't disable building ccp plugin
+   1005009 - Can't disable building grid plugin
+   1005176 - libcompizconfig headers still don't install in the right place
+   1005177 - Compizconfig-python still doesn't respect DESTDIR when not
+             exported
+   1005569 - [callgrind] compiz spends ~25% of its time
+             constructing/destructing strings in
+             PrivateScreen::handleActionEvent
+   1006335 - [callgrind] compiz spends ~7% of its time inserting into and
+             destructing the events list in PrivateScreen::processEvents()
+   1007299 - Compiz frame rate decreases if application frame rates are too
+             high (unthrottled)
+   1007754 - gtk-window-decorator crashed with SIGSEGV in
+             meta_get_decoration_geometry
+   1008020 - New windows can be stacked above panels if they are created just
+             after an override redirect window is created
+   1009320 - Benchmark key is not consumed by compiz. It gets passed to the
+             underlying window.
+   1009338 - composite refresh rate falls back to 50Hz, which is wrong in most
+             cases
+   1012205 - [needs-packaging] Wishlist: Missing plug-In: Stackswitch
+             (Stack Window Switcher)
+   1012956 - Unintended shadows are rendered for the Unity Launcher and Panel
+   1014461 - decor fails to start any window decorator by default (option
+             "command" is blank upstream)
+   1015151 - [BNR] Compiz crash in movementWindowOnScreen (caused by fix
+             755842)
+   1015422 - compiz is wasting memory leaving a shell running:
+             /bin/sh -c /usr/bin/compiz-decorator
+   1015593 - crash in gtk-windows-decorator meta_get_button_position
+   1015898 - No decorator is started if compiz is run without any path prefix
+   1016366 - Potential cases where textures can become invalid where plugins
+             need the image for animations
+   1016367 - Potential race condition where X commands haven't finished
+             processing when we bind a texture and generate mipmaps
+   1018302 - [regression] main.cpp:222,225: Conditional jump or move depends
+             on uninitialised value(s)
+   1018602 - [gsettings] Invalid write of size 4 in readOption
+   1018730 - [gsettings] Lots of warnings about key names >31 characters,
+             which also causes CCSM crashes.
+   1018916 - ccsm and compizconfig python files don't get installed
+   1019337 - gtk-window-decorator crashes with BadWindow (invalid Window
+             parameter), from XGetWindowProperty() from get_frame_type()
+   1021104 - Severe damage artefacts and flickering when using LLVMpipe
+   1021139 - make ExperimentalMemCheck; fails CompTimerTestCallback.TimerOrder
+   1023738 - make -j3 randomly fails with
+             sed: -e expression #1, char 6: unterminated `s' command
+   1023742 - make -j2 randomly fails with
+             /bin/sh: 1: _intltool_update-NOTFOUND: not found
+   1024179 - make install in unity fails to install
+             org.compiz.unity*.gschema.xml
+   1029383 - Make fails with:
+             /bin/sh: 1: cannot open g': No such file (when attempting to
+             build Unity)
+   1030473 - Error-reports cppcheck
+     (http://sourceforge.net/apps/mediawiki/cppcheck/index.php?title=Main_Page)
+   1033085 - Typo in "Commands" plugin description: "bundings" -> "bindings"
+   1033531 - Single click inside the Workspace Switcher should always return
+             to a workspace
+   1036490 - [regression] compiz crashed with SIGSEGV in
+             g_main_context_iteration() from ... from CcpScreen::timeout()
+   1036542 - [regression] Clicking launcher icons in expo mode now exits expo
+             mode
+   1036739 - Window management - decouple window minimise and restore/maximise
+             animation timings
+   1037710 - Tearing at top of laptop screen
+   1039482 - imgsvg build failure on quantal
+   1039834 - paralell builds can fail on resize_logic
+   1039843 - make fails if librsvg-2.0 < 2.36.2
+
+
 Release 0.9.7.6 (2012-04-06 Sam Spilsbury <sam.spilsbury@canonical.com>)
 ========================================================================
 
