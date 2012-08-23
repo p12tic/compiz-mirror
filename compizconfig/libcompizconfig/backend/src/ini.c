@@ -50,28 +50,8 @@ typedef struct _IniPrivData
 
 IniPrivData;
 
-static IniPrivData *privData = NULL;
-
-static int privDataSize = 0;
-
 /* forward declaration */
 static void setProfile (IniPrivData *data, char *profile);
-
-static IniPrivData*
-findPrivFromContext (CCSContext *context)
-{
-    int i;
-    IniPrivData *data;
-
-    for (i = 0, data = privData; i < privDataSize; i++, data++)
-	if (data->context == context)
-	    break;
-
-    if (i == privDataSize)
-	return NULL;
-
-    return data;
-}
 
 static char*
 getIniFileName (char *profile)
@@ -180,28 +160,26 @@ setProfile (IniPrivData *data,
 }
 
 static Bool
-initBackend (CCSContext * context)
+initBackend (CCSBackend *backend, CCSContext * context)
 {
     IniPrivData *newData;
 
-    privData = realloc (privData, (privDataSize + 1) * sizeof (IniPrivData));
-    newData = privData + privDataSize;
+    newData = calloc (1, sizeof (IniPrivData));
 
     /* initialize the newly allocated part */
-    memset (newData, 0, sizeof (IniPrivData));
     newData->context = context;
 
-    privDataSize++;
+    ccsObjectSetPrivate (backend, (CCSPrivate *) newData);
 
     return TRUE;
 }
 
 static Bool
-finiBackend (CCSContext * context)
+finiBackend (CCSBackend * backend)
 {
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
 
     if (!data)
 	return FALSE;
@@ -215,36 +193,31 @@ finiBackend (CCSContext * context)
     if (data->lastProfile)
 	free (data->lastProfile);
 
-    privDataSize--;
-
-    if (privDataSize)
-	privData = realloc (privData, privDataSize * sizeof (IniPrivData));
-    else
-    {
-	free (privData);
-	privData = NULL;
-    }
+    free (data);
+    ccsObjectSetPrivate (backend, NULL);
 
     return TRUE;
 }
 
 static Bool
-readInit (CCSContext * context)
+readInit (CCSBackend *backend,
+	  CCSContext * context)
 {
-    char *currentProfile;
+    const char *currentProfileCCS;
+    char       *currentProfile;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
 
     if (!data)
 	return FALSE;
 
-    currentProfile = ccsGetProfile (context);
+    currentProfileCCS = ccsGetProfile (context);
 
-    if (!currentProfile || !strlen (currentProfile))
+    if (!currentProfileCCS || !strlen (currentProfileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (currentProfile);
+	currentProfile = strdup (currentProfileCCS);
 
     if (!data->lastProfile || (strcmp (data->lastProfile, currentProfile) != 0))
 	setProfile (data, currentProfile);
@@ -258,14 +231,15 @@ readInit (CCSContext * context)
 }
 
 static void
-readSetting (CCSContext *context,
+readSetting (CCSBackend *backend,
+	     CCSContext *context,
 	     CCSSetting *setting)
 {
     Bool         status = FALSE;
     char        *keyName;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 
@@ -414,27 +388,28 @@ readSetting (CCSContext *context,
 }
 
 static void
-readDone (CCSContext * context)
+readDone (CCSBackend *backend, CCSContext * context)
 {
 }
 
 static Bool
-writeInit (CCSContext * context)
+writeInit (CCSBackend *backend, CCSContext * context)
 {
+    const char *currentProfileCCS;
     char *currentProfile;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
 
     if (!data)
 	return FALSE;
 
-    currentProfile = ccsGetProfile (context);
+    currentProfileCCS = ccsGetProfile (context);
 
-    if (!currentProfile || !strlen (currentProfile))
+    if (!currentProfileCCS || !strlen (currentProfileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (currentProfile);
+	currentProfile = strdup (currentProfileCCS);
 
     if (!data->lastProfile || (strcmp (data->lastProfile, currentProfile) != 0))
 	setProfile (data, currentProfile);
@@ -450,13 +425,14 @@ writeInit (CCSContext * context)
 }
 
 static void
-writeSetting (CCSContext *context,
+writeSetting (CCSBackend *backend,
+	      CCSContext *context,
 	      CCSSetting *setting)
 {
     char        *keyName;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 
@@ -569,23 +545,24 @@ writeSetting (CCSContext *context,
 }
 
 static void
-writeDone (CCSContext * context)
+writeDone (CCSBackend *backend, CCSContext * context)
 {
     /* export the data to ensure the changes are on disk */
     char        *fileName;
-    char        *currentProfile;
+    const char        *currentProfileCCS;
+    char	*currentProfile;
     IniPrivData *data;
 
-    data = findPrivFromContext (context);
+    data = (IniPrivData *) ccsObjectGetPrivate (backend);
     if (!data)
 	return;
 
-    currentProfile = ccsGetProfile (context);
+    currentProfileCCS = ccsGetProfile (context);
 
-    if (!currentProfile || !strlen (currentProfile))
+    if (!currentProfileCCS || !strlen (currentProfileCCS))
 	currentProfile = strdup (DEFAULTPROF);
     else
-	currentProfile = strdup (currentProfile);
+	currentProfile = strdup (currentProfileCCS);
 
     fileName = getIniFileName (currentProfile);
 
@@ -598,8 +575,18 @@ writeDone (CCSContext * context)
     free (fileName);
 }
 
+static void
+updateSetting (CCSBackend *backend, CCSContext *context, CCSPlugin *plugin, CCSSetting *setting)
+{
+    if (readInit (backend, context))
+    {
+	readSetting (backend, context, setting);
+	readDone (backend, context);
+    }
+}
+
 static Bool
-getSettingIsReadOnly (CCSSetting * setting)
+getSettingIsReadOnly (CCSBackend *backend, CCSSetting * setting)
 {
     /* FIXME */
     return FALSE;
@@ -652,7 +639,7 @@ scanConfigDir (char * filePath)
 }
 
 static CCSStringList
-getExistingProfiles (CCSContext * context)
+getExistingProfiles (CCSBackend *backend, CCSContext * context)
 {
     CCSStringList  ret = NULL;
     char	   *filePath = NULL;
@@ -689,7 +676,7 @@ getExistingProfiles (CCSContext * context)
 }
 
 static Bool
-deleteProfile (CCSContext * context, char * profile)
+deleteProfile (CCSBackend *backend, CCSContext * context, char * profile)
 {
     char *fileName;
 
@@ -704,13 +691,24 @@ deleteProfile (CCSContext * context, char * profile)
     return TRUE;
 }
 
-
-static CCSBackendVTable iniVTable = {
+const CCSBackendInfo iniBackendInfo =
+{
     "ini",
     "Flat-file Configuration Backend",
     "Flat file Configuration Backend for libccs",
     FALSE,
     TRUE,
+    1
+};
+
+static const CCSBackendInfo *
+getInfo (CCSBackend *backend)
+{
+    return &iniBackendInfo;
+}
+
+static CCSBackendInterface iniVTable = {
+    getInfo,
     NULL,
     initBackend,
     finiBackend,
@@ -720,13 +718,14 @@ static CCSBackendVTable iniVTable = {
     writeInit,
     writeSetting,
     writeDone,
+    updateSetting,
     NULL,
     getSettingIsReadOnly,
     getExistingProfiles,
     deleteProfile
 };
 
-CCSBackendVTable *
+CCSBackendInterface *
 getBackendInfo (void)
 {
     return &iniVTable;

@@ -124,6 +124,42 @@ shadow_property_changed (WnckScreen *s)
     return changed;
 }
 
+void
+set_frame_scale (decor_frame_t *frame,
+		 gchar	       *font_str)
+{
+    gfloat	  scale = 1.0f;
+
+    gwd_decor_frame_ref (frame);
+
+    if (frame->titlebar_font)
+	pango_font_description_free (frame->titlebar_font);
+
+    frame->titlebar_font = pango_font_description_from_string (font_str);
+
+    scale = (*theme_get_title_scale) (frame);
+
+    pango_font_description_set_size (frame->titlebar_font,
+				     MAX (pango_font_description_get_size (frame->titlebar_font) * scale, 1));
+
+    gwd_decor_frame_unref (frame);
+}
+
+void
+set_frames_scales (gpointer key,
+		   gpointer value,
+		   gpointer user_data)
+{
+    decor_frame_t *frame = (decor_frame_t *) value;
+    gchar	  *font_str = (gchar *) user_data;
+
+    gwd_decor_frame_ref (frame);
+
+    set_frame_scale (frame, font_str);
+
+    gwd_decor_frame_unref (frame);
+}
+
 #ifdef USE_GCONF
 static gboolean
 use_tooltips_changed (GConfClient *client)
@@ -398,42 +434,6 @@ button_layout_changed (GConfClient *client)
 #endif
 
     return FALSE;
-}
-
-void
-set_frame_scale (decor_frame_t *frame,
-		 gchar	       *font_str)
-{
-    gfloat	  scale = 1.0f;
-
-    gwd_decor_frame_ref (frame);
-
-    if (frame->titlebar_font)
-	pango_font_description_free (frame->titlebar_font);
-
-    frame->titlebar_font = pango_font_description_from_string (font_str);
-
-    scale = (*theme_get_title_scale) (frame);
-
-    pango_font_description_set_size (frame->titlebar_font,
-				     MAX (pango_font_description_get_size (frame->titlebar_font) * scale, 1));
-
-    gwd_decor_frame_unref (frame);
-}
-
-void
-set_frames_scales (gpointer key,
-		   gpointer value,
-		   gpointer user_data)
-{
-    decor_frame_t *frame = (decor_frame_t *) value;
-    gchar	  *font_str = (gchar *) user_data;
-
-    gwd_decor_frame_ref (frame);
-
-    set_frame_scale (frame, font_str);
-
-    gwd_decor_frame_unref (frame);
 }
 
 static void
