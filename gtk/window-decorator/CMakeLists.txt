@@ -57,6 +57,7 @@ if (USE_GTK)
 		 ${CMAKE_CURRENT_SOURCE_DIR}/gwd-settings-notified-interface.c) 
 
     set (GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
+         gtk_window_decorator_settings_notified_interface
 	 gtk_window_decorator_settings_interface
 	 gtk_window_decorator_settings
 	 gtk_window_decorator_settings_storage_interface
