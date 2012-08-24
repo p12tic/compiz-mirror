@@ -127,7 +127,8 @@ const CCSGNOMEIntegratedSettingNames ccsGNOMEIntegratedSettingNames =
     { "run_command_window_screenshot_key", "run_command_window_screenshot" },
     { "run_command_screenshot_key", "run_command_screenshot" },
     { "main_menu_key", "panel_main_menu" },
-    { "run_key", "panel_run_dialog" }
+    { "run_key", "panel_run_dialog" },
+    { "show_hud", "show_hud" }
 };
 
 const CCSGConfIntegrationCategories ccsGConfIntegrationCategories =
@@ -155,6 +156,7 @@ const CCSGNOMEIntegratedPluginNames ccsGNOMEIntegratedPluginNames =
     "move",
     "staticswitcher",
     "fade",
+    "unityshell",
     "__special"
 };
 
@@ -403,6 +405,8 @@ ccsGNOMEIntegrationInitializeIntegratedSettingsList (gpointer data)
     array[117].settingName = settings->GNOMECOMPAT_MAIN_MENU_KEY.compizName;
     array[118].pluginName = plugins->GNOMECOMPAT;
     array[118].settingName = settings->GNOMECOMPAT_RUN_KEY.compizName;
+    array[119].pluginName = plugins->UNITYSHELL;
+    array[119].settingName = settings->UNITYSHELL_SHOW_HUD.compizName;
 
 
     return NULL;
@@ -468,6 +472,7 @@ ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQuarksHashTabl
     GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *unityshellHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
 
     const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
@@ -487,6 +492,7 @@ ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQuarksHashTabl
     g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->UNITYSHELL, unityshellHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
 
     g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_WM_PREFERENCES));
@@ -608,6 +614,7 @@ ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQuarksHashTabl
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
+    g_hash_table_insert (unityshellHashTable, (gpointer) names->UNITYSHELL_SHOW_HUD.compizName, GINT_TO_POINTER (quarks->ORG_COMPIZ_INTEGRATED));
 
     return masterHashTable;
 }
@@ -629,6 +636,7 @@ ccsGNOMEIntegrationPopulateCategoriesHashTables ()
     GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *unityshellHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
 
     const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
@@ -648,6 +656,7 @@ ccsGNOMEIntegrationPopulateCategoriesHashTables ()
     g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->UNITYSHELL, unityshellHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
 
     g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, (gpointer) categories->GENERAL);
@@ -769,6 +778,7 @@ ccsGNOMEIntegrationPopulateCategoriesHashTables ()
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
+    g_hash_table_insert (unityshellHashTable, (gpointer) names->UNITYSHELL_SHOW_HUD.compizName, (gpointer) categories->GLOBAL_KEYBINDINGS);
 
     return masterHashTable;
 }
@@ -791,6 +801,7 @@ ccsGNOMEIntegrationPopulateSpecialTypesHashTables ()
     GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *unityshellHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
 
     const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
@@ -809,6 +820,7 @@ ccsGNOMEIntegrationPopulateSpecialTypesHashTables ()
     g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->UNITYSHELL, unityshellHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
 
     g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, GINT_TO_POINTER (OptionBool));
@@ -930,6 +942,7 @@ ccsGNOMEIntegrationPopulateSpecialTypesHashTables ()
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, GINT_TO_POINTER (OptionKey));
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, GINT_TO_POINTER (OptionKey));
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, GINT_TO_POINTER (OptionKey));
+    g_hash_table_insert (unityshellHashTable, (gpointer) names->UNITYSHELL_SHOW_HUD.compizName, GINT_TO_POINTER (OptionKey));
 
     return masterHashTable;
 }
@@ -951,6 +964,7 @@ ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ()
     GHashTable *moveHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *staticswitcherHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *fadeHashTable = g_hash_table_new (g_str_hash, g_str_equal);
+    GHashTable *unityshellHashTable = g_hash_table_new (g_str_hash, g_str_equal);
     GHashTable *specialHashTable = g_hash_table_new (g_str_hash, g_str_equal);
 
     const CCSGNOMEIntegratedSettingNames *names = &ccsGNOMEIntegratedSettingNames;
@@ -969,6 +983,7 @@ ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ()
     g_hash_table_insert (masterHashTable, (gpointer) plugins->FADE, fadeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->RESIZE, resizeHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->MOVE, moveHashTable);
+    g_hash_table_insert (masterHashTable, (gpointer) plugins->UNITYSHELL, unityshellHashTable);
     g_hash_table_insert (masterHashTable, (gpointer) plugins->SPECIAL, specialHashTable);
 
     g_hash_table_insert (coreHashTable, (gpointer) names->CORE_AUDIBLE_BELL.compizName, (gpointer) names->CORE_AUDIBLE_BELL.gnomeName);
@@ -1090,6 +1105,7 @@ ccsGNOMEIntegrationPopulateSettingNameToGNOMENameHashTables ()
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.compizName, (gpointer) names->GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY.gnomeName);
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.compizName, (gpointer) names->GNOMECOMPAT_MAIN_MENU_KEY.gnomeName);
     g_hash_table_insert (gnomecompatHashTable, (gpointer) names->GNOMECOMPAT_RUN_KEY.compizName, (gpointer) names->GNOMECOMPAT_RUN_KEY.gnomeName);
+    g_hash_table_insert (unityshellHashTable, (gpointer) names->UNITYSHELL_SHOW_HUD.compizName, (gpointer) names->UNITYSHELL_SHOW_HUD.gnomeName);
 
     return masterHashTable;
 }

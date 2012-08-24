@@ -103,6 +103,9 @@
 	<key type="as" name="panel-run-dialog">
 	    <default>["Disabled"]</default>
 	</key>
+	<key type="as" name="show-hud">
+	    <default>["Alt"]</default>
+	</key>
     </schema>
 </schemalist>
 
