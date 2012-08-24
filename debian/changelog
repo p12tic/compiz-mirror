@@ -1,12 +1,19 @@
-compiz (1:0.9.8+bzr3319-0ubuntu3) UNRELEASED; urgency=low
+compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
 
   [ Sam Spilsbury ]
-  * Enable OpenGL ES building
+  * Enable OpenGL ES building 
     - Refresh debian/patches/workaround_broken_drivers.patch
     - Remove non-ported plugins from compiz-plugins
     - Add FindOpenGLES2.cmake to compiz-dev
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 12:39:23 +0300
+  [ Timo Jyrinki ]
+  * New upstream release.
+    - Code to make compiz work on GLES. This includes several changes 
+      to the compiz API. (LP: #201342) (LP: #901097) (LP: #1004251)
+      (LP: #1037710)
+    - Draft first 0.9.8.0 NEWS and bump VERSION
+
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 15:12:35 +0300
 
 compiz (1:0.9.8+bzr3319-0ubuntu2) quantal-proposed; urgency=low
 

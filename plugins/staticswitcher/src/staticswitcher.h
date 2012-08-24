@@ -78,11 +78,13 @@ class StaticSwitchScreen :
 				  int y);
 	void handleEvent (XEvent *event);
 	bool adjustVelocity ();
-	void paintRect (CompRect &box,
+	void paintRect (const GLMatrix &transform,
+			CompRect &box,
 			int offset,
 			unsigned short *color,
-			int opacity);
-	void paintSelectionRect (int          x,
+			unsigned short opacity);
+	void paintSelectionRect (const GLMatrix &transform,
+	                         int             x,
 				 int          y,
 				 float        dx,
 				 float        dy,

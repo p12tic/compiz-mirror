@@ -288,7 +288,6 @@ public:
     void glAddGeometry (const GLTexture::MatrixList &,
 			const CompRegion &, const CompRegion &,
 			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
-    void glDrawGeometry ();
 
     WobblyScreen     *wScreen;
     CompWindow       *window;
