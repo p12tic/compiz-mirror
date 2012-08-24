@@ -1,3 +1,9 @@
+compiz (1:0.9.8+bzr3319-0ubuntu2) quantal-proposed; urgency=low
+
+  * No change rebuild against the latest metacity
+
+ -- Robert Ancell <robert.ancell@canonical.com>  Fri, 24 Aug 2012 16:36:28 +1200
+
 compiz (1:0.9.8+bzr3319-0ubuntu1) quantal-proposed; urgency=low
 
   [ Didier Roche ]
