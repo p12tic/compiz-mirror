@@ -1,3 +1,11 @@
+compiz (1:0.9.8+bzr3319-0ubuntu3) UNRELEASED; urgency=low
+
+  [ Sam Spilsbury ]
+  * Enable OpenGL ES building
+    - Refresh debian/patches/workaround_broken_drivers.patch
+
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 12:39:23 +0300
+
 compiz (1:0.9.8+bzr3319-0ubuntu2) quantal-proposed; urgency=low
 
   * No change rebuild against the latest metacity

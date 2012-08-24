@@ -1,22 +1,10 @@
-Index: compiz-0.9.7.0~bzr2995/plugins/opengl/src/screen.cpp
+Index: ubuntu_quantal_trunk/plugins/opengl/src/screen.cpp
 ===================================================================
---- compiz-0.9.7.0~bzr2995.orig/plugins/opengl/src/screen.cpp	2012-02-09 16:32:07.000000000 +0100
-+++ compiz-0.9.7.0~bzr2995/plugins/opengl/src/screen.cpp	2012-02-10 17:09:17.029015287 +0100
-@@ -25,6 +25,11 @@
-  *          David Reveman <davidr@novell.com>
-  */
- 
-+#ifndef _GNU_SOURCE
-+#define _GNU_SOURCE
-+#endif
-+#include <errno.h>
-+
- #include "privates.h"
- 
+--- ubuntu_quantal_trunk.orig/plugins/opengl/src/screen.cpp	2012-08-22 18:07:44.344116000 +0800
++++ ubuntu_quantal_trunk/plugins/opengl/src/screen.cpp	2012-08-22 18:09:37.269159461 +0800
+@@ -37,6 +37,21 @@
  #include <dlfcn.h>
-@@ -83,9 +88,24 @@
- 
- CompOutput *targetOutput = NULL;
+ #include <math.h>
  
 +class DetectionWorkaround
 +{
@@ -32,18 +20,25 @@ Index: compiz-0.9.7.0~bzr2995/plugins/opengl/src/screen.cpp
 +        }
 +};
 +
++
+ using namespace compiz::opengl;
+ 
+ namespace GL {
+@@ -274,6 +289,8 @@
  bool
  GLScreen::glInitContext (XVisualInfo *visinfo)
  {
 +    DetectionWorkaround workaround;
-     Display		 *dpy = screen->dpy ();
-     const char		 *glExtensions;
-     GLfloat		 globalAmbient[]  = { 0.1f, 0.1f,  0.1f, 0.1f };
-@@ -309,6 +329,7 @@
-     int			 defaultDepth, nvisinfo, nElements, value, i;
-     const char		 *glxExtensions;
-     XWindowAttributes    attr;
++
+     #ifdef USE_GLES
+     Display             *xdpy;
+     Window               overlay;
+@@ -814,6 +831,8 @@
+     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),
+     priv (new PrivateGLScreen (this))
+ {
 +    DetectionWorkaround workaround;
-     CompOption::Vector o (0);
- 
-     if (!XGetWindowAttributes (dpy, s->root (), &attr))
++
+     XVisualInfo		 *visinfo = NULL;
+ #ifndef USE_GLES
+     Display		 *dpy = s->dpy ();
