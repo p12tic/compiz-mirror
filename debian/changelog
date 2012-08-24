@@ -4,6 +4,7 @@ compiz (1:0.9.8+bzr3319-0ubuntu3) UNRELEASED; urgency=low
   * Enable OpenGL ES building
     - Refresh debian/patches/workaround_broken_drivers.patch
     - Remove non-ported plugins from compiz-plugins
+    - Add FindOpenGLES2.cmake to compiz-dev
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 12:39:23 +0300
 
