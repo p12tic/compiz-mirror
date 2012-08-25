@@ -270,38 +270,32 @@ theme_changed (GConfClient *client)
 {
 
 #ifdef USE_METACITY
-    gboolean use_meta_theme;
-
     if (cmdline_options & CMDLINE_THEME)
 	return FALSE;
 
-    use_meta_theme = gconf_client_get_bool (client,
-					    USE_META_THEME_KEY,
-					    NULL);
+    settings->use_meta_theme = gconf_client_get_bool (client,
+						      USE_META_THEME_KEY,
+						      NULL);
 
-    if (use_meta_theme)
+    if (settings->metacity_theme)
     {
-	gchar *theme;
-
-	theme = gconf_client_get_string (client,
-					 META_THEME_KEY,
-					 NULL);
-
-	if (theme)
-	{
-	    meta_theme_set_current (theme, TRUE);
-	    if (!meta_theme_get_current ())
-		use_meta_theme = FALSE;
-
-	    g_free (theme);
-	}
-	else
-	{
-	    use_meta_theme = FALSE;
-	}
+	g_free (settings->metacity_theme);
+	settings->metacity_theme = NULL;
     }
 
-    if (use_meta_theme)
+    if (settings->use_meta_theme)
+	settings->metacity_theme = gconf_client_get_string (client, META_THEME_KEY, NULL);
+
+    if (settings->metacity_theme)
+    {
+	meta_theme_set_current (settings->metacity_theme, TRUE);
+	if (!meta_theme_get_current ())
+	    settings->use_meta_theme = FALSE;
+    }
+    else
+	settings->use_meta_theme = FALSE;
+
+    if (settings->use_meta_theme)
     {
 	theme_draw_window_decoration	= meta_draw_window_decoration;
 	theme_calc_decoration_size	= meta_calc_decoration_size;
@@ -406,21 +400,22 @@ theme_opacity_changed (GConfClient *client)
 static gboolean
 button_layout_changed (GConfClient *client)
 {
-
 #ifdef USE_METACITY
-    gchar *button_layout;
 
-    button_layout = gconf_client_get_string (client,
-					     META_BUTTON_LAYOUT_KEY,
-					     NULL);
-
-    if (button_layout)
+    if (settings->metacity_button_layout)
     {
-	meta_update_button_layout (button_layout);
+	g_free (settings->metacity_button_layout);
+	settings->metacity_button_layout = NULL;
+    }
 
+    settings->metacity_button_layout = gconf_client_get_string (client,
+								META_BUTTON_LAYOUT_KEY,
+								NULL);
+
+    if (settings->metacity_button_layout)
+    {
+	meta_update_button_layout (settings->metacity_button_layout);
 	settings->meta_button_layout_set = TRUE;
-
-	g_free (button_layout);
 
 	return TRUE;
     }

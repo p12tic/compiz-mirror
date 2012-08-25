@@ -346,6 +346,12 @@ main (int argc, char *argv[])
 
     if (!init_settings (screen))
     {
+	if (settings->metacity_theme)
+	    free (settings->metacity_theme);
+
+	if (settings->metacity_button_layout)
+	    free (settings->metacity_button_layout);
+
 	free (settings);
 	fprintf (stderr, "%s: Failed to get necessary gtk settings\n", argv[0]);
 	return 1;
@@ -402,6 +408,12 @@ main (int argc, char *argv[])
 
     if (!create_tooltip_window ())
     {
+	if (settings->metacity_theme)
+	    free (settings->metacity_theme);
+
+	if (settings->metacity_button_layout)
+	    free (settings->metacity_button_layout);
+
 	free (settings);
 	fprintf (stderr, "%s, Couldn't create tooltip window\n", argv[0]);
 	return 1;
@@ -482,6 +494,12 @@ main (int argc, char *argv[])
     gwd_decor_frame_unref (switcher_p);
 
     g_free (settings->font);
+
+    if (settings->metacity_theme)
+	free (settings->metacity_theme);
+
+    if (settings->metacity_button_layout)
+	free (settings->metacity_button_layout);
 
     free (settings);
 

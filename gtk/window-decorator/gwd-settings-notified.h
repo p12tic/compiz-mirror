@@ -25,11 +25,11 @@ typedef struct _GWDSettingsNotified GWDSettingsNotified;
 
 G_BEGIN_DECLS
 
-#define GWD_TYPE_SETTINGS_NOTIFIED (gwd_settings_notified_get_type ())
-GType gwd_settings_notified_get_type ();
+#define GWD_TYPE_SETTINGS_NOTIFIED (gwd_settings_notified_impl_get_type ())
+GType gwd_settings_notified_impl_get_type ();
 
 GWDSettingsNotified *
-gwd_settings_notified_new ();
+gwd_settings_notified_impl_new ();
 
 G_END_DECLS
 

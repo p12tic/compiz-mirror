@@ -262,6 +262,9 @@ typedef struct _decor_settings {
     guint    mutter_draggable_border_width;
     gboolean mutter_attach_modal_dialogs;
     gboolean use_tooltips;
+    gboolean use_meta_theme;
+    char     *metacity_button_layout;
+    char     *metacity_theme;
 } decor_settings_t;
 
 extern gboolean minimal;
