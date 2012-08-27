@@ -38,6 +38,8 @@ struct _GWDSettingsWritableInterface
 {
     GTypeInterface parent;
 
+    void     (*freeze_updates) (GWDSettingsWritable *settings);
+    void     (*thaw_updates)   (GWDSettingsWritable *settings);
     gboolean (*shadow_property_changed) (GWDSettingsWritable *settings,
 					 gdouble     active_shadow_radius,
 					 gdouble     active_shadow_opacity,
@@ -69,6 +71,12 @@ struct _GWDSettingsWritableInterface
 					  const gchar	      *action_right_click_titlebar,
 					  const gchar	      *mouse_wheel_action);
 };
+
+void
+gwd_settings_writable_freeze_updates (GWDSettingsWritable *settings);
+
+void
+gwd_settings_writable_thaw_updates (GWDSettingsWritable *settings);
 
 gboolean
 gwd_settings_writable_shadow_property_changed (GWDSettingsWritable *settings,

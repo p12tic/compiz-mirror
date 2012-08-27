@@ -40,6 +40,20 @@ typedef struct _GWDMockSettingsWritablePrivate
     GWDMockSettingsWritableGMockInterface *mock;
 } GWDMockSettingsWritablePrivate;
 
+void
+gwd_mock_settings_writable_freeze_updates (GWDSettingsWritable *settings)
+{
+    GWDMockSettingsWritableGMockInterface *gmockSettingsWritable = GET_PRIVATE (settings)->mock;
+    return gmockSettingsWritable->freezeUpdates ();
+}
+
+void
+gwd_mock_settings_writable_thaw_updates (GWDSettingsWritable *settings)
+{
+    GWDMockSettingsWritableGMockInterface *gmockSettingsWritable = GET_PRIVATE (settings)->mock;
+    return gmockSettingsWritable->thawUpdates ();
+}
+
 gboolean
 gwd_mock_settings_writable_shadow_property_changed (GWDSettingsWritable *settings,
 						    gdouble     active_shadow_radius,
@@ -161,6 +175,8 @@ static void gwd_mock_settings_writable_interface_init (GWDSettingsWritableInterf
     interface->button_layout_changed = gwd_mock_settings_writable_button_layout_changed;
     interface->font_changed = gwd_mock_settings_writable_font_changed;
     interface->titlebar_actions_changed = gwd_mock_settings_writable_titlebar_actions_changed;
+    interface->freeze_updates = gwd_mock_settings_writable_freeze_updates;
+    interface->thaw_updates = gwd_mock_settings_writable_thaw_updates;
 }
 
 static GObject * gwd_mock_settings_writable_constructor (GType	type,

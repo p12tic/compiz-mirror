@@ -13,30 +13,30 @@
 #define GWD_IS_MOCK_SETTINGS_CLASS(obj) (G_TYPE_CHECK_CLASS_TYPE ((obj), GWD_TYPE_SETTINGS_STORAGE_GCONF));
 #define GWD_SETTINGS_STORAGE_GCONF_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GWD_TYPE_SETTINGS_STORAGE_GCONF, GWDSettingsStorageGConfClass));
 
-#define MUTTER_GCONF_DEF "/apps/mutter/general/"
-#define METACITY_GCONF_DEF "/apps/metacity/general/"
-#define COMPIZ_GCONF_DEF "/apps/gwd/"
+#define MUTTER_GCONF_DEF "/apps/mutter/general"
+#define METACITY_GCONF_DEF "/apps/metacity/general"
+#define COMPIZ_GCONF_DEF "/apps/gwd"
 
-const gchar * METACITY_GCONF_DIR = "/apps/metacity/general/";
-const gchar * MUTTER_GCONF_DIR = "/apps/mutter/general/";
-const gchar * COMPIZ_GCONF_DIR = "/apps/gwd/";
-const gchar * COMPIZ_USE_SYSTEM_FONT_KEY = METACITY_GCONF_DEF "titlebar_uses_system_font";
-const gchar * COMPIZ_TITLEBAR_FONT_KEY  = METACITY_GCONF_DEF "titlebar_font";
-const gchar * COMPIZ_DOUBLE_CLICK_TITLEBAR_KEY  = METACITY_GCONF_DEF "action_double_click_titlebar";
-const gchar * COMPIZ_MIDDLE_CLICK_TITLEBAR_KEY  = METACITY_GCONF_DEF "action_middle_click_titlebar";
-const gchar * COMPIZ_RIGHT_CLICK_TITLEBAR_KEY  = METACITY_GCONF_DEF "action_right_click_titlebar";
-const gchar * MUTTER_DRAGGABLE_BORDER_WIDTH_KEY = MUTTER_GCONF_DEF "draggable_border_width";
-const gchar * MUTTER_ATTACH_MODAL_DIALOGS_KEY = MUTTER_GCONF_DEF "attach_modal_dialogs";
-const gchar * META_THEME_KEY = METACITY_GCONF_DEF "theme";
-const gchar * META_BUTTON_LAYOUT_KEY = METACITY_GCONF_DEF "button_layout";
-const gchar * COMPIZ_USE_META_THEME_KEY = COMPIZ_GCONF_DEF "use_metacity_theme";
-const gchar * COMPIZ_META_THEME_OPACITY_KEY = COMPIZ_GCONF_DEF "metacity_theme_opacity";
-const gchar * COMPIZ_META_THEME_ACTIVE_OPACITY_KEY = COMPIZ_GCONF_DEF "metacity_theme_active_opacity";
-const gchar * COMPIZ_META_THEME_ACTIVE_OPACITY_SHADE_KEY = COMPIZ_GCONF_DEF "metacity_theme_active_shade_opacity";
-const gchar * COMPIZ_META_THEME_OPACITY_SHADE_KEY = COMPIZ_GCONF_DEF "metacity_theme_shade_opacity";
-const gchar * COMPIZ_BLUR_TYPE_KEY = COMPIZ_GCONF_DEF "blur_type";
-const gchar * COMPIZ_WHEEL_ACTION_KEY = COMPIZ_GCONF_DEF "mouse_wheel_action";
-const gchar * COMPIZ_USE_TOOLTIPS_KEY = COMPIZ_GCONF_DEF "use_tooltips";
+const gchar * METACITY_GCONF_DIR = METACITY_GCONF_DEF;
+const gchar * MUTTER_GCONF_DIR = MUTTER_GCONF_DEF;
+const gchar * COMPIZ_GCONF_DIR = COMPIZ_GCONF_DEF;
+const gchar * COMPIZ_USE_SYSTEM_FONT_KEY = METACITY_GCONF_DEF "/titlebar_uses_system_font";
+const gchar * COMPIZ_TITLEBAR_FONT_KEY  = METACITY_GCONF_DEF "/titlebar_font";
+const gchar * COMPIZ_DOUBLE_CLICK_TITLEBAR_KEY  = METACITY_GCONF_DEF "/action_double_click_titlebar";
+const gchar * COMPIZ_MIDDLE_CLICK_TITLEBAR_KEY  = METACITY_GCONF_DEF "/action_middle_click_titlebar";
+const gchar * COMPIZ_RIGHT_CLICK_TITLEBAR_KEY  = METACITY_GCONF_DEF "/action_right_click_titlebar";
+const gchar * MUTTER_DRAGGABLE_BORDER_WIDTH_KEY = MUTTER_GCONF_DEF "/draggable_border_width";
+const gchar * MUTTER_ATTACH_MODAL_DIALOGS_KEY = MUTTER_GCONF_DEF "/attach_modal_dialogs";
+const gchar * META_THEME_KEY = METACITY_GCONF_DEF "/theme";
+const gchar * META_BUTTON_LAYOUT_KEY = METACITY_GCONF_DEF "/button_layout";
+const gchar * COMPIZ_USE_META_THEME_KEY = COMPIZ_GCONF_DEF "/use_metacity_theme";
+const gchar * COMPIZ_META_THEME_OPACITY_KEY = COMPIZ_GCONF_DEF "/metacity_theme_opacity";
+const gchar * COMPIZ_META_THEME_ACTIVE_OPACITY_KEY = COMPIZ_GCONF_DEF "/metacity_theme_active_opacity";
+const gchar * COMPIZ_META_THEME_ACTIVE_OPACITY_SHADE_KEY = COMPIZ_GCONF_DEF "/metacity_theme_active_shade_opacity";
+const gchar * COMPIZ_META_THEME_OPACITY_SHADE_KEY = COMPIZ_GCONF_DEF "/metacity_theme_shade_opacity";
+const gchar * COMPIZ_BLUR_TYPE_KEY = COMPIZ_GCONF_DEF "/blur_type";
+const gchar * COMPIZ_WHEEL_ACTION_KEY = COMPIZ_GCONF_DEF "/mouse_wheel_action";
+const gchar * COMPIZ_USE_TOOLTIPS_KEY = COMPIZ_GCONF_DEF "/use_tooltips";
 
 typedef struct _GWDSettingsStorageGConf
 {
@@ -58,7 +58,7 @@ G_DEFINE_TYPE_WITH_CODE (GWDSettingsStorageGConf, gwd_settings_storage_gconf, G_
 
 enum
 {
-    GWD_SETTINGS_STORAGE_GCONF_PROPERTY_WRITABLE_SETTINGS = 4
+    GWD_SETTINGS_STORAGE_GCONF_PROPERTY_WRITABLE_SETTINGS = 1
 };
 
 typedef struct _GWDSettingsStorageGConfPrivate
@@ -374,6 +374,8 @@ gwd_settings_storage_gconf_new (GWDSettingsWritable *writable)
 {
     GValue writable_value = G_VALUE_INIT;
     g_value_init (&writable_value, G_TYPE_POINTER);
+
+    g_value_set_pointer (&writable_value, writable);
 
     GParameter param[] =
     {

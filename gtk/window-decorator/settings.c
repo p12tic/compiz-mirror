@@ -131,6 +131,8 @@ init_settings (GWDSettingsWritable *writable,
 {
 #ifdef USE_GCONF
     storage = gwd_settings_storage_gconf_new (writable);
+
+    shadow_property_changed (screen);
     gwd_settings_storage_update_metacity_theme (storage);
     gwd_settings_storage_update_opacity (storage);
     gwd_settings_storage_update_button_layout (storage);

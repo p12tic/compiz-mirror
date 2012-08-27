@@ -118,10 +118,11 @@ destroy_bare_frame (decor_frame_t *frame)
 static const PangoFontDescription *
 get_titlebar_font (decor_frame_t *frame)
 {
-    gboolean use_system_font;
-    g_object_get (settings, "use-system-font", &use_system_font, NULL);
+    const gchar *titlebar_font;
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
 
-    if (use_system_font)
+    /* Using system font */
+    if (!titlebar_font)
 	return NULL;
     else
 	return frame->titlebar_font;

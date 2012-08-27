@@ -44,6 +44,8 @@ class GWDMockSettingsWritableGMockInterface
 
 	virtual ~GWDMockSettingsWritableGMockInterface () {}
 
+	virtual void freezeUpdates() = 0;
+	virtual void thawUpdates () = 0;
 	virtual gboolean shadowPropertyChanged (gdouble active_shadow_radius,
 						gdouble active_shadow_opacity,
 						gdouble active_shadow_offset_x,
@@ -81,6 +83,8 @@ class GWDMockSettingsWritableGMock :
 {
     public:
 
+	MOCK_METHOD0 (freezeUpdates, void ());
+	MOCK_METHOD0 (thawUpdates, void ());
 	MOCK_METHOD10 (shadowPropertyChanged, gboolean (gdouble, gdouble, gdouble, gdouble, const gchar *,
 							gdouble, gdouble, gdouble, gdouble, const gchar *));
 	MOCK_METHOD1 (useTooltipsChanged, gboolean (gboolean));

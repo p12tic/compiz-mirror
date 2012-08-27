@@ -5,39 +5,39 @@
 
 #include "gtk-window-decorator.h"
 
-#define GWD_SETTINGS_NOTIFIED(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotified));
-#define GWD_SETTINGS_NOTIFIED_CLASS(obj) (G_TYPE_CHECK_CLASS_CAST ((obj), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedClass));
+#define GWD_SETTINGS_NOTIFIED(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedImpl));
+#define GWD_SETTINGS_NOTIFIED_CLASS(obj) (G_TYPE_CHECK_CLASS_CAST ((obj), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedImplClass));
 #define GWD_IS_MOCK_SETTINGS(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GWD_TYPE_SETTINGS_NOTIFIED));
 #define GWD_IS_MOCK_SETTINGS_CLASS(obj) (G_TYPE_CHECK_CLASS_TYPE ((obj), GWD_TYPE_SETTINGS_NOTIFIED));
-#define GWD_SETTINGS_NOTIFIED_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedClass));
+#define GWD_SETTINGS_NOTIFIED_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedImplClass));
 
-typedef struct _GWDSettingsNotified
+typedef struct _GWDSettingsNotifiedImpl
 {
     GObject parent;
-} GWDSettingsNotified;
+} GWDSettingsNotifiedImpl;
 
-typedef struct _GWDSettingsNotifiedClass
+typedef struct _GWDSettingsNotifiedImplClass
 {
     GObjectClass parent_class;
-} GWDSettingsNotifiedClass;
+} GWDSettingsNotifiedImplClass;
 
 static void gwd_settings_notified_impl_interface_init (GWDSettingsNotifiedInterface *interface);
 
-G_DEFINE_TYPE_WITH_CODE (GWDSettingsNotified, gwd_settings_notified_impl, G_TYPE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (GWDSettingsNotifiedImpl, gwd_settings_notified_impl, G_TYPE_OBJECT,
 			 G_IMPLEMENT_INTERFACE (GWD_TYPE_SETTINGS_NOTIFIED_INTERFACE,
 						gwd_settings_notified_impl_interface_init))
 
-#define GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedPrivate))
+#define GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), GWD_TYPE_SETTINGS_NOTIFIED, GWDSettingsNotifiedImplPrivate))
 
-typedef struct _GWDSettingsNotifiedPrivate
+typedef struct _GWDSettingsNotifiedImplPrivate
 {
     WnckScreen *screen;
-} GWDSettingsNotifiedPrivate;
+} GWDSettingsNotifiedImplPrivate;
 
 static gboolean
 gwd_settings_notified_impl_update_decorations (GWDSettingsNotified *notified)
 {
-    GWDSettingsNotifiedPrivate *priv = GET_PRIVATE (notified);
+    GWDSettingsNotifiedImplPrivate *priv = GET_PRIVATE (notified);
     decorations_changed (priv->screen);
     return TRUE;
 }
@@ -183,17 +183,17 @@ static void gwd_settings_notified_impl_finalize (GObject *object)
     G_OBJECT_CLASS (gwd_settings_notified_impl_parent_class)->finalize (object);
 }
 
-static void gwd_settings_notified_impl_class_init (GWDSettingsNotifiedClass *klass)
+static void gwd_settings_notified_impl_class_init (GWDSettingsNotifiedImplClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-    g_type_class_add_private (klass, sizeof (GWDSettingsNotifiedPrivate));
+    g_type_class_add_private (klass, sizeof (GWDSettingsNotifiedImplPrivate));
 
     object_class->dispose = gwd_settings_notified_impl_dispose;
     object_class->finalize = gwd_settings_notified_impl_finalize;
 }
 
-void gwd_settings_notified_impl_init (GWDSettingsNotified *self)
+void gwd_settings_notified_impl_init (GWDSettingsNotifiedImpl *self)
 {
 }
 

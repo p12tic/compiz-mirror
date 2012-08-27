@@ -307,6 +307,8 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 							  boost::bind (gwd_settings_writable_unref, _1));
 
 
+    EXPECT_CALL (writableGMock, freezeUpdates ());
+    EXPECT_CALL (writableGMock, thawUpdates ());
     EXPECT_CALL (writableGMock, shadowPropertyChanged (testing_values::ACTIVE_SHADOW_RADIUS_VALUE,
 						       testing_values::ACTIVE_SHADOW_OPACITY_VALUE,
 						       testing_values::ACTIVE_SHADOW_OFFSET_X_VALUE,
@@ -336,6 +338,9 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 
     EXPECT_CALL (writableGMock, dispose ());
     EXPECT_CALL (writableGMock, finalize ());
+
+    gwd_settings_writable_freeze_updates (writableMock.get ());
+    gwd_settings_writable_thaw_updates (writableMock.get ());
 
     EXPECT_THAT (gwd_settings_writable_shadow_property_changed (writableMock.get (),
 								testing_values::ACTIVE_SHADOW_RADIUS_VALUE,

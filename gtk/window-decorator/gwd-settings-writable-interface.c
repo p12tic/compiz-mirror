@@ -8,6 +8,20 @@ static void gwd_settings_writable_interface_default_init (GWDSettingsWritableInt
 {
 }
 
+void
+gwd_settings_writable_freeze_updates (GWDSettingsWritable *settings)
+{
+    GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
+    (*iface->freeze_updates) (settings);
+}
+
+void
+gwd_settings_writable_thaw_updates (GWDSettingsWritable *settings)
+{
+    GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
+    (*iface->thaw_updates) (settings);
+}
+
 gboolean
 gwd_settings_writable_shadow_property_changed (GWDSettingsWritable *settings,
 					       gdouble     active_shadow_radius,
