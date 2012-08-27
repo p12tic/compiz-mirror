@@ -47,6 +47,7 @@ using ::testing::MakeAction;
 using ::testing::IsNull;
 using ::testing::Values;
 using ::testing::_;
+using ::testing::StrictMock;
 
 template <class ValueCType>
 class GValueCmp
@@ -555,6 +556,53 @@ class GWDSettingsTest :
 
 TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
 {
+}
+
+class GWDSettingsTestStrict :
+    public GWDSettingsTestCommon
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    GWDSettingsTestCommon::SetUp ();
+	    mGMockNotified.reset (new StrictMock <GWDMockSettingsNotifiedGMock> ());
+	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
+				 boost::bind (gwd_settings_notified_do_nothing, _1));
+	    mSettings.reset (gwd_settings_impl_new (NULL,
+						    NULL,
+						    mMockNotified.get ()),
+			     boost::bind (gwd_settings_unref, _1));
+	}
+
+	virtual void TearDown ()
+	{
+	    EXPECT_CALL (*mGMockNotified, dispose ());
+	    EXPECT_CALL (*mGMockNotified, finalize ());
+	}
+
+    protected:
+
+	boost::shared_ptr <StrictMock <GWDMockSettingsNotifiedGMock> > mGMockNotified;
+	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
+	boost::shared_ptr <GWDSettingsImpl> mSettings;
+};
+
+/* We're just using use_tooltips here as an example */
+TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdates)
+{
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+}
+
+/* We're just using use_tooltips here as an example */
+TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
+{
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+
+    EXPECT_CALL (*mGMockNotified, updateDecorations ());
+    gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
 }
 
 TEST_F(GWDSettingsTest, TestShadowPropertyChanged)

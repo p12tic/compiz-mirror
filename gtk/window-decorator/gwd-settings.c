@@ -464,6 +464,14 @@ gwd_settings_actions_changed (GWDSettingsWritable *settings,
     return ret;
 }
 
+static void gwd_settings_freeze_updates (GWDSettingsWritable *writable)
+{
+}
+
+static void gwd_settings_thaw_updates (GWDSettingsWritable *writable)
+{
+}
+
 static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
 {
     interface->shadow_property_changed = gwd_settings_shadow_property_changed;
@@ -476,6 +484,8 @@ static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *
     interface->button_layout_changed = gwd_settings_button_layout_changed;
     interface->font_changed = gwd_settings_font_changed;
     interface->titlebar_actions_changed = gwd_settings_actions_changed;
+    interface->freeze_updates = gwd_settings_freeze_updates;
+    interface->thaw_updates = gwd_settings_thaw_updates;
 }
 
 static void gwd_settings_interface_init (GWDSettingsInterface *interface)
