@@ -22,7 +22,14 @@
 #include "gtk-window-decorator.h"
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings-storage-interface.h"
+
+#ifdef USE_GCONF
 #include "gwd-settings-storage-gconf.h"
+#else
+#ifdef USE_GSETTINGS
+#include "gwd-settings-storage-gsettings.h"
+#endif
+#endif
 
 GWDSettingsStorage *storage = NULL;
 
@@ -130,7 +137,16 @@ init_settings (GWDSettingsWritable *writable,
 	       WnckScreen	    *screen)
 {
 #ifdef USE_GCONF
+#define STORAGE_USED
     storage = gwd_settings_storage_gconf_new (writable);
+#else
+#ifdef USE_GSETTINGS
+#define STORAGE_USED
+    storage = gwd_settings_storage_gsettings_new (writable);
+#endif
+#endif
+
+#ifdef STORAGE_USED
     gwd_settings_storage_update_metacity_theme (storage);
     gwd_settings_storage_update_opacity (storage);
     gwd_settings_storage_update_button_layout (storage);
@@ -141,9 +157,11 @@ init_settings (GWDSettingsWritable *writable,
     gwd_settings_storage_update_attach_modal_dialogs (storage);
     gwd_settings_storage_update_use_tooltips (storage);
     shadow_property_changed (screen);
+#else
+    storage = NULL
 #endif
 
-    shadow_property_changed (screen);
+#undef STORAGE_USED
 
     return TRUE;
 }
