@@ -43,8 +43,6 @@ gboolean minimal = FALSE;
 
 #define SWITCHER_SPACE 40
 
-guint cmdline_options = 0;
-
 GdkPixmap *decor_normal_pixmap = NULL;
 GdkPixmap *decor_active_pixmap = NULL;
 
@@ -162,11 +160,6 @@ main (int argc, char *argv[])
     const char *option_meta_theme = NULL;
     gint       option_blur_type = 0;
 
-#ifdef USE_METACITY
-    char       *meta_theme = NULL;
-    MetaTheme  *theme = NULL;
-#endif
-
     program_name = argv[0];
 
     gtk_init (&argc, &argv);
@@ -200,8 +193,7 @@ main (int argc, char *argv[])
 	else if (strcmp (argv[i], "--metacity-theme") == 0)
 	{
 	    if (argc > ++i)
-		meta_theme = argv[i];
-	    cmdline_options |= CMDLINE_THEME;
+		option_meta_theme = argv[i];
 	}
 #endif
 
@@ -292,7 +284,7 @@ main (int argc, char *argv[])
 
     initialize_decorations ();
 
-    notified = gwd_settings_notified_impl_new ();
+    notified = gwd_settings_notified_impl_new (screen);
 
     if (!notified)
 	return 1;
@@ -309,6 +301,8 @@ main (int argc, char *argv[])
 
     settings = GWD_SETTINGS_INTERFACE (writable);
 
+    gwd_settings_writable_freeze_updates (writable);
+
     if (!init_settings (writable,
 			screen))
     {
@@ -316,39 +310,6 @@ main (int argc, char *argv[])
 	fprintf (stderr, "%s: Failed to get necessary gtk settings\n", argv[0]);
 	return 1;
     }
-
-    theme_draw_window_decoration    = draw_window_decoration;
-    theme_calc_decoration_size	    = calc_decoration_size;
-    theme_update_border_extents	    = update_border_extents;
-    theme_get_event_window_position = get_event_window_position;
-    theme_get_button_position       = get_button_position;
-    theme_get_title_scale	    = get_title_scale;
-    theme_get_shadow                = cairo_get_shadow;
-
-#ifdef USE_METACITY
-    if (meta_theme)
-    {
-	meta_theme_set_current (meta_theme, TRUE);
-
-	theme = meta_theme_get_current ();
-
-	if (!theme)
-	    g_warning ("specified a theme that does not exist! falling back to cairo decoration\n");
-    }
-    else
-	theme = meta_theme_get_current ();
-
-    if (theme)
-    {
-	theme_draw_window_decoration    = meta_draw_window_decoration;
-	theme_calc_decoration_size	    = meta_calc_decoration_size;
-	theme_update_border_extents	    = meta_update_border_extents;
-	theme_get_event_window_position = meta_get_event_window_position;
-	theme_get_button_position	    = meta_get_button_position;
-	theme_get_title_scale	    = meta_get_title_scale;
-	theme_get_shadow            = meta_get_shadow;
-    }
-#endif
 
     for (i = 0; i < 3; i++)
     {
@@ -413,15 +374,18 @@ main (int argc, char *argv[])
  	connect_screen (screen);
     }
 
+    decor_set_dm_check_hint (xdisplay, gdk_screen_get_number (gdkscreen),
+			     WINDOW_DECORATION_TYPE_PIXMAP |
+			     WINDOW_DECORATION_TYPE_WINDOW);
+
+    /* Update the decorations based on the settings */
+    gwd_settings_writable_thaw_updates (writable);
+
     /* Keep the default, bare and switcher decorations around
      * since otherwise they will be spuriously recreated */
 
     bare_p = gwd_get_decor_frame ("bare");
     switcher_p = gwd_get_decor_frame ("switcher");
-
-    decor_set_dm_check_hint (xdisplay, gdk_screen_get_number (gdkscreen),
-			     WINDOW_DECORATION_TYPE_PIXMAP |
-			     WINDOW_DECORATION_TYPE_WINDOW);
 
     update_default_decorations (gdkscreen);
 

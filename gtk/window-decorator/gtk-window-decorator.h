@@ -238,7 +238,6 @@ extern gboolean minimal;
 
 #define SWITCHER_SPACE 40
 
-extern guint cmdline_options;
 extern GWDSettingsNotified *notified;
 extern GWDSettings	   *settings;
 extern GWDSettingsWritable *writable;

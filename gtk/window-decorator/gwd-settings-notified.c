@@ -21,6 +21,11 @@ typedef struct _GWDSettingsNotifiedImplClass
     GObjectClass parent_class;
 } GWDSettingsNotifiedImplClass;
 
+enum
+{
+    GWD_SETTINGS_NOTIFIED_IMPL_PROPERTY_WNCK_SCREEN = 1
+};
+
 static void gwd_settings_notified_impl_interface_init (GWDSettingsNotifiedInterface *interface);
 
 G_DEFINE_TYPE_WITH_CODE (GWDSettingsNotifiedImpl, gwd_settings_notified_impl, G_TYPE_OBJECT,
@@ -103,7 +108,10 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
 	{
 	    meta_theme_set_current (theme, TRUE);
 	    if (!meta_theme_get_current ())
+	    {
+		g_warning ("specified a theme that does not exist! falling back to cairo decoration\n");
 		meta_theme = NULL;
+	    }
 	}
     }
 
@@ -176,11 +184,36 @@ static void gwd_settings_notified_impl_interface_init (GWDSettingsNotifiedInterf
 
 static void gwd_settings_notified_impl_dispose (GObject *object)
 {
+    GWDSettingsNotifiedImplPrivate *priv = GET_PRIVATE (object);
+
+    if (priv->screen)
+    {
+	g_object_unref (priv->screen);
+	priv->screen = NULL;
+    }
 }
 
 static void gwd_settings_notified_impl_finalize (GObject *object)
 {
     G_OBJECT_CLASS (gwd_settings_notified_impl_parent_class)->finalize (object);
+}
+
+static void gwd_settings_notified_impl_set_property (GObject *object,
+						     guint   property_id,
+						     const GValue *value,
+						     GParamSpec *pspec)
+{
+    GWDSettingsNotifiedImplPrivate *priv = GET_PRIVATE (object);
+
+    switch (property_id)
+    {
+	case GWD_SETTINGS_NOTIFIED_IMPL_PROPERTY_WNCK_SCREEN:
+	    g_return_if_fail (!priv->screen);
+	    priv->screen = g_value_get_object (value);
+	    break;
+	default:
+	    break;
+    }
 }
 
 static void gwd_settings_notified_impl_class_init (GWDSettingsNotifiedImplClass *klass)
@@ -191,6 +224,16 @@ static void gwd_settings_notified_impl_class_init (GWDSettingsNotifiedImplClass 
 
     object_class->dispose = gwd_settings_notified_impl_dispose;
     object_class->finalize = gwd_settings_notified_impl_finalize;
+    object_class->set_property = gwd_settings_notified_impl_set_property;
+
+    g_object_class_install_property (object_class,
+				     GWD_SETTINGS_NOTIFIED_IMPL_PROPERTY_WNCK_SCREEN,
+				     g_param_spec_object ("wnck-screen",
+							  "WnckScreen",
+							  "A WnckScreen",
+							  WNCK_TYPE_SCREEN,
+							  G_PARAM_WRITABLE |
+							  G_PARAM_CONSTRUCT_ONLY));
 }
 
 void gwd_settings_notified_impl_init (GWDSettingsNotifiedImpl *self)
@@ -198,9 +241,24 @@ void gwd_settings_notified_impl_init (GWDSettingsNotifiedImpl *self)
 }
 
 GWDSettingsNotified *
-gwd_settings_notified_impl_new ()
+gwd_settings_notified_impl_new (WnckScreen *screen)
 {
-    GWDSettingsNotified *storage = GWD_SETTINGS_NOTIFIED_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_NOTIFIED, 0, NULL));
+    static const guint GWD_SETTINGS_NOTIFIED_IMPL_N_CONSTRUCTION_PROPERTIES = 1;
+    GValue wnck_screen_value = G_VALUE_INIT;
+
+    g_value_init (&wnck_screen_value, G_TYPE_OBJECT);
+    g_value_set_object (&wnck_screen_value, G_OBJECT (screen));
+
+    GParameter params[] =
+    {
+	{ "wnck-screen", wnck_screen_value }
+    };
+
+    GWDSettingsNotified *storage = GWD_SETTINGS_NOTIFIED_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_NOTIFIED,
+										   GWD_SETTINGS_NOTIFIED_IMPL_N_CONSTRUCTION_PROPERTIES,
+										   params));
+
+    g_value_unset (&wnck_screen_value);
 
     return storage;
 }

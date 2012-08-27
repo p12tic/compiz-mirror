@@ -39,7 +39,7 @@ decor_update_blur_property (decor_t *d,
     int     size = 0;
     gint    blur_type;
 
-    g_object_get (settings, "blur-type", &blur_type, NULL);
+    g_object_get (settings, "blur", &blur_type, NULL);
     
     if (blur_type != BLUR_TYPE_ALL)
     {

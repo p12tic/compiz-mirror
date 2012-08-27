@@ -22,6 +22,7 @@
 #include <glib-object.h>
 
 typedef struct _GWDSettingsNotified GWDSettingsNotified;
+typedef struct _WnckScreen	    WnckScreen;
 
 G_BEGIN_DECLS
 
@@ -29,7 +30,7 @@ G_BEGIN_DECLS
 GType gwd_settings_notified_impl_get_type ();
 
 GWDSettingsNotified *
-gwd_settings_notified_impl_new ();
+gwd_settings_notified_impl_new (WnckScreen *screen);
 
 G_END_DECLS
 

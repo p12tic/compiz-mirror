@@ -1038,19 +1038,25 @@ void
 cairo_get_shadow (decor_frame_t *d, decor_shadow_options_t *opts, gboolean active)
 {
     if (active)
-	g_object_get (settings, "active-shadow", opts, NULL);
+	g_object_get (settings, "active-shadow", &opts, NULL);
     else
-	g_object_get (settings, "inactive-shadow", opts, NULL);
+	g_object_get (settings, "inactive-shadow", &opts, NULL);
 }
 
 void
 meta_get_shadow (decor_frame_t *frame, decor_shadow_options_t *opts, gboolean active)
 {
-    if (active)
-	g_object_get (settings, "active-shadow", opts, NULL);
-    else
-	g_object_get (settings, "inactive-shadow", opts, NULL);
+    decor_shadow_options_t *setting_opts = NULL;
 
+    if (active)
+	g_object_get (settings, "active-shadow", &setting_opts, NULL);
+    else
+	g_object_get (settings, "inactive-shadow", &setting_opts, NULL);
+
+    if (setting_opts)
+    {
+	memcpy (opts, setting_opts, sizeof (decor_shadow_options_t));
+    }
 }
 
 int
