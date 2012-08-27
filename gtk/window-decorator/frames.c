@@ -42,11 +42,13 @@ decor_frame_refresh (decor_frame_t *frame)
     update_style (frame->style_window_rgba);
     update_style (frame->style_window_rgb);
 
-    gchar *str = settings->font;
+    const gchar *titlebar_font = NULL;
 
-    set_frame_scale (frame, str);
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
 
-    str = NULL;
+    set_frame_scale (frame, titlebar_font);
+
+    titlebar_font = NULL;
 
     frame_update_titlebar_font (frame);
 

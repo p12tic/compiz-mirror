@@ -531,10 +531,6 @@ class GWDSettingsTest :
 				 boost::bind (gwd_settings_notified_do_nothing, _1));
 	    mSettings.reset (gwd_settings_impl_new (NULL,
 						    NULL,
-						    NULL,
-						    NULL,
-						    NULL,
-						    NULL,
 						    mMockNotified.get ()),
 			     boost::bind (gwd_settings_unref, _1));
 	}
@@ -754,10 +750,6 @@ TEST_F(GWDSettingsTest, TestBlurSetCommandLine)
     g_object_ref (mMockNotified.get ());
     mSettings.reset (gwd_settings_impl_new (&blurType,
 					    NULL,
-					    NULL,
-					    NULL,
-					    NULL,
-					    NULL,
 					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
 
@@ -826,10 +818,6 @@ TEST_F(GWDSettingsTest, TestMetacityThemeSetCommandLine)
 
     g_object_ref (mMockNotified.get ());
     mSettings.reset (gwd_settings_impl_new (NULL,
-					    NULL,
-					    NULL,
-					    NULL,
-					    NULL,
 					    &metacityTheme,
 					    mMockNotified.get ()),
 		     boost::bind (gwd_settings_unref, _1));
@@ -898,62 +886,6 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChangedIsDefault)
 							METACITY_ACTIVE_OPACITY_DEFAULT,
 							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT,
 							METACITY_ACTIVE_SHADE_OPACITY_DEFAULT), GBooleanFalse ());
-}
-
-TEST_F(GWDSettingsTest, TestMetacityOpacitySetCommandLine)
-{
-    gdouble activeOpacity = 0.5;
-    gdouble inactiveOpacity = 0.5;
-    gboolean activeShadeOpacity = FALSE;
-    gboolean inactiveShadeOpacity = FALSE;
-
-    g_object_ref (mMockNotified.get ());
-    mSettings.reset (gwd_settings_impl_new (NULL,
-					    &activeOpacity,
-					    &inactiveOpacity,
-					    &activeShadeOpacity,
-					    &inactiveShadeOpacity,
-					    NULL,
-					    mMockNotified.get ()),
-		     boost::bind (gwd_settings_unref, _1));
-
-    EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							testing_values::INACTIVE_OPACITY_VALUE,
-							testing_values::ACTIVE_OPACITY_VALUE,
-							testing_values::INACTIVE_SHADE_OPACITY_VALUE,
-							testing_values::ACTIVE_SHADE_OPACITY_VALUE), GBooleanFalse ());
-
-    AutoUnsetGValue metacityInactiveOpacityValue (G_TYPE_DOUBLE);
-    AutoUnsetGValue metacityActiveOpacityValue (G_TYPE_DOUBLE);
-    AutoUnsetGValue metacityInactiveShadeOpacityValue (G_TYPE_BOOLEAN);
-    AutoUnsetGValue metacityActiveShadeOpacityValue (G_TYPE_BOOLEAN);
-
-    GValue &metacityInactiveOpacityGValue = metacityInactiveOpacityValue;
-    GValue &metacityActiveOpacityGValue = metacityActiveOpacityValue;
-    GValue &metacityInactiveShadeOpacityGValue = metacityInactiveShadeOpacityValue;
-    GValue &metacityActiveShadeOpacityGValue = metacityActiveShadeOpacityValue;
-
-    g_object_get_property (G_OBJECT (mSettings.get ()),
-			   "metacity-inactive-opacity",
-			   &metacityInactiveOpacityGValue);
-    g_object_get_property (G_OBJECT (mSettings.get ()),
-			   "metacity-active-opacity",
-			   &metacityActiveOpacityGValue);
-    g_object_get_property (G_OBJECT (mSettings.get ()),
-			   "metacity-inactive-shade-opacity",
-			   &metacityInactiveShadeOpacityGValue);
-    g_object_get_property (G_OBJECT (mSettings.get ()),
-			   "metacity-active-shade-opacity",
-			   &metacityActiveShadeOpacityGValue);
-
-    EXPECT_THAT (&metacityInactiveOpacityGValue, GValueMatch <gdouble> (inactiveOpacity,
-									g_value_get_double));
-    EXPECT_THAT (&metacityActiveOpacityGValue, GValueMatch <gdouble> (activeOpacity,
-									g_value_get_double));
-    EXPECT_THAT (&metacityInactiveShadeOpacityGValue, GValueMatch <gboolean> (inactiveShadeOpacity,
-									g_value_get_boolean));
-    EXPECT_THAT (&metacityActiveShadeOpacityGValue, GValueMatch <gboolean> (activeShadeOpacity,
-									g_value_get_boolean));
 }
 
 TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
@@ -1070,10 +1002,6 @@ class GWDSettingsTestClickActions :
 	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
 				 boost::bind (gwd_settings_notified_do_nothing, _1));
 	    mSettings.reset (gwd_settings_impl_new (NULL,
-						    NULL,
-						    NULL,
-						    NULL,
-						    NULL,
 						    NULL,
 						    mMockNotified.get ()),
 			     boost::bind (gwd_settings_unref, _1));

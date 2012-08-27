@@ -24,6 +24,20 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "gwd-settings-writable-interface.h"
+#include "gwd-settings.h"
+#include "gwd-settings-notified-interface.h"
+#include "gwd-settings-notified.h"
+
+GWDSettingsNotified *notified;
+GWDSettingsWritable *writable;
+GWDSettings	    *settings;
+
+gdouble decoration_alpha = 0.5;
+#ifdef USE_METACITY
+MetaButtonLayout meta_button_layout;
+gboolean	 meta_button_layout_set = FALSE;
+#endif
 
 gboolean minimal = FALSE;
 
@@ -126,8 +140,6 @@ decor_t   *switcher_window = NULL;
 XRenderPictFormat *xformat_rgba;
 XRenderPictFormat *xformat_rgb;
 
-decor_settings_t *settings;
-
 const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM] = {
     "normal", "modal_dialog", "dialog", "menu", "utility"
 };
@@ -147,6 +159,9 @@ main (int argc, char *argv[])
     GList	  *windows, *win;
     decor_frame_t *bare_p, *switcher_p;
 
+    const char *option_meta_theme = NULL;
+    gint       option_blur_type = 0;
+
 #ifdef USE_METACITY
     char       *meta_theme = NULL;
     MetaTheme  *theme = NULL;
@@ -154,51 +169,11 @@ main (int argc, char *argv[])
 
     program_name = argv[0];
 
-    settings = malloc (sizeof (decor_settings_t));
-
-    if (!settings)
-	return 1;
-
     gtk_init (&argc, &argv);
 
     bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
     textdomain (GETTEXT_PACKAGE);
-
-    settings->blur_type = BLUR_TYPE_NONE;
-    settings->use_system_font = FALSE;
-
-    settings->active_shadow_radius   = SHADOW_RADIUS;
-    settings->active_shadow_opacity  = SHADOW_OPACITY;
-    settings->active_shadow_color[0] = SHADOW_COLOR_RED;
-    settings->active_shadow_color[1] = SHADOW_COLOR_GREEN;
-    settings->active_shadow_color[2] = SHADOW_COLOR_BLUE;
-    settings->active_shadow_offset_x = SHADOW_OFFSET_X;
-    settings->active_shadow_offset_y = SHADOW_OFFSET_Y;
-    settings->inactive_shadow_radius   = SHADOW_RADIUS;
-    settings->inactive_shadow_opacity  = SHADOW_OPACITY;
-    settings->inactive_shadow_color[0] = SHADOW_COLOR_RED;
-    settings->inactive_shadow_color[1] = SHADOW_COLOR_GREEN;
-    settings->inactive_shadow_color[2] = SHADOW_COLOR_BLUE;
-    settings->inactive_shadow_offset_x = SHADOW_OFFSET_X;
-    settings->inactive_shadow_offset_y = SHADOW_OFFSET_Y;
-    settings->decoration_alpha = 0.5;
-    settings->use_tooltips = TRUE;
-
-#ifdef USE_METACITY
-
-    settings->meta_opacity              = META_OPACITY;
-    settings->meta_shade_opacity        = META_SHADE_OPACITY;
-    settings->meta_active_opacity       = META_ACTIVE_OPACITY;
-    settings->meta_active_shade_opacity = META_ACTIVE_SHADE_OPACITY;
-
-    settings->meta_button_layout_set = FALSE;
-#endif
-
-    settings->font = strdup ("Sans Bold 12");
-
-    settings->mutter_draggable_border_width = 10;
-    settings->mutter_attach_modal_dialogs = FALSE;
 
     for (i = 0; i < argc; i++)
     {
@@ -215,36 +190,13 @@ main (int argc, char *argv[])
 	    if (argc > ++i)
 	    {
 		if (strcmp (argv[i], "titlebar") == 0)
-		    settings->blur_type = BLUR_TYPE_TITLEBAR;
+		    option_blur_type = BLUR_TYPE_TITLEBAR;
 		else if (strcmp (argv[i], "all") == 0)
-		    settings->blur_type = BLUR_TYPE_ALL;
+		    option_blur_type = BLUR_TYPE_ALL;
 	    }
-	    cmdline_options |= CMDLINE_BLUR;
 	}
 
 #ifdef USE_METACITY
-	else if (strcmp (argv[i], "--opacity") == 0)
-	{
-	    if (argc > ++i)
-		settings->meta_opacity = atof (argv[i]);
-	    cmdline_options |= CMDLINE_OPACITY;
-	}
-	else if (strcmp (argv[i], "--no-opacity-shade") == 0)
-	{
-	    settings->meta_shade_opacity = FALSE;
-	    cmdline_options |= CMDLINE_OPACITY_SHADE;
-	}
-	else if (strcmp (argv[i], "--active-opacity") == 0)
-	{
-	    if (argc > ++i)
-		settings->meta_active_opacity = atof (argv[i]);
-	    cmdline_options |= CMDLINE_ACTIVE_OPACITY;
-	}
-	else if (strcmp (argv[i], "--no-active-opacity-shade") == 0)
-	{
-	    settings->meta_active_shade_opacity = FALSE;
-	    cmdline_options |= CMDLINE_ACTIVE_OPACITY_SHADE;
-	}
 	else if (strcmp (argv[i], "--metacity-theme") == 0)
 	{
 	    if (argc > ++i)
@@ -261,10 +213,6 @@ main (int argc, char *argv[])
 		     "[--blur none|titlebar|all] "
 
 #ifdef USE_METACITY
-		     "[--opacity OPACITY] "
-		     "[--no-opacity-shade] "
-		     "[--active-opacity OPACITY] "
-		     "[--no-active-opacity-shade] "
 		     "[--metacity-theme THEME] "
 #endif
 
@@ -344,15 +292,27 @@ main (int argc, char *argv[])
 
     initialize_decorations ();
 
-    if (!init_settings (screen))
+    notified = gwd_settings_notified_impl_new ();
+
+    if (!notified)
+	return 1;
+
+    writable = GWD_SETTINGS_WRITABLE_INTERFACE (gwd_settings_impl_new (option_blur_type != BLUR_TYPE_NONE ? &option_blur_type : NULL,
+								       option_meta_theme ? &option_meta_theme : NULL,
+								       notified));
+
+    if (!writable)
     {
-	if (settings->metacity_theme)
-	    free (settings->metacity_theme);
+	g_object_unref (notified);
+	return 1;
+    }
 
-	if (settings->metacity_button_layout)
-	    free (settings->metacity_button_layout);
+    settings = GWD_SETTINGS_INTERFACE (writable);
 
-	free (settings);
+    if (!init_settings (writable,
+			screen))
+    {
+	g_object_unref (writable);
 	fprintf (stderr, "%s: Failed to get necessary gtk settings\n", argv[0]);
 	return 1;
     }
@@ -408,11 +368,7 @@ main (int argc, char *argv[])
 
     if (!create_tooltip_window ())
     {
-	if (settings->metacity_theme)
-	    free (settings->metacity_theme);
-
-	if (settings->metacity_button_layout)
-	    free (settings->metacity_button_layout);
+	g_object_unref (writable);
 
 	free (settings);
 	fprintf (stderr, "%s, Couldn't create tooltip window\n", argv[0]);
@@ -493,15 +449,7 @@ main (int argc, char *argv[])
     gwd_decor_frame_unref (bare_p);
     gwd_decor_frame_unref (switcher_p);
 
-    g_free (settings->font);
-
-    if (settings->metacity_theme)
-	free (settings->metacity_theme);
-
-    if (settings->metacity_button_layout)
-	free (settings->metacity_button_layout);
-
-    free (settings);
+    fini_settings ();
 
     return 0;
 }

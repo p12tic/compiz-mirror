@@ -225,55 +225,29 @@ WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY)
 
 #define PROP_MOTIF_WM_HINT_ELEMENTS 3
 
+typedef struct _GWDSettingsWritable GWDSettingsWritable;
+typedef struct _GWDSettingsNotified GWDSettingsNotified;
+
 typedef struct {
 unsigned long flags;
 unsigned long functions;
 unsigned long decorations;
 } MwmHints;
 
-typedef struct _decor_settings {
-    int double_click_action;
-    int middle_click_action;
-    int right_click_action;
-    int wheel_action;
-    gdouble active_shadow_radius;
-    gdouble active_shadow_opacity;
-    gushort active_shadow_color[3];
-    gint    active_shadow_offset_x;
-    gint    active_shadow_offset_y;
-    gdouble inactive_shadow_radius;
-    gdouble inactive_shadow_opacity;
-    gushort inactive_shadow_color[3];
-    gint    inactive_shadow_offset_x;
-    gint    inactive_shadow_offset_y;
-#ifdef USE_METACITY
-    double   meta_opacity;
-    gboolean meta_shade_opacity;
-    double   meta_active_opacity;
-    gboolean meta_active_shade_opacity;
-
-    gboolean         meta_button_layout_set;
-    MetaButtonLayout meta_button_layout;
-#endif
-    double		    decoration_alpha;
-    gboolean		    use_system_font;
-    gint		    blur_type;
-    gchar		    *font;
-    guint    mutter_draggable_border_width;
-    gboolean mutter_attach_modal_dialogs;
-    gboolean use_tooltips;
-    gboolean use_meta_theme;
-    char     *metacity_button_layout;
-    char     *metacity_theme;
-} decor_settings_t;
-
 extern gboolean minimal;
-extern decor_settings_t *settings;
-
 
 #define SWITCHER_SPACE 40
 
 extern guint cmdline_options;
+extern GWDSettingsNotified *notified;
+extern GWDSettings	   *settings;
+extern GWDSettingsWritable *writable;
+
+extern gdouble decoration_alpha;
+#ifdef USE_METACITY
+extern MetaButtonLayout   meta_button_layout;
+extern gboolean	          meta_button_layout_set;
+#endif
 
 extern Atom frame_input_window_atom;
 extern Atom frame_output_window_atom;
@@ -1162,7 +1136,7 @@ style_changed (GtkWidget *widget, void *user_data /* PangoContext */);
 
 void
 set_frame_scale (decor_frame_t *frame,
-		 gchar	       *font_str);
+		 const gchar *font_str);
 
 void
 set_frames_scales (gpointer key,
@@ -1170,6 +1144,9 @@ set_frames_scales (gpointer key,
 		   gpointer user_data);
 
 gboolean
-init_settings (WnckScreen *screen);
+init_settings (GWDSettingsWritable *writable, WnckScreen *screen);
+
+void
+fini_settings ();
 
 #endif

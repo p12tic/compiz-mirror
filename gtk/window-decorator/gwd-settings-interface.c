@@ -94,9 +94,7 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 							      0.0,
 							      1.0,
 							      METACITY_ACTIVE_OPACITY_DEFAULT,
-							      G_PARAM_READABLE |
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_double ("metacity-inactive-opacity",
 							      "Metacity Inactive Opacity",
@@ -104,25 +102,19 @@ static void gwd_settings_interface_default_init (GWDSettingsInterface *settings_
 							      0.0,
 							      1.0,
 							      METACITY_INACTIVE_OPACITY_DEFAULT,
-							      G_PARAM_READABLE |
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_boolean ("metacity-active-shade-opacity",
 							      "Metacity Active Shade Opacity",
 							      "Metacity Active Shade Opacity",
 							      METACITY_ACTIVE_SHADE_OPACITY_DEFAULT,
-							      G_PARAM_READABLE |
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_boolean ("metacity-inactive-shade-opacity",
 							      "Metacity Inactive Shade Opacity",
 							      "Metacity Inactive Shade Opacity",
 							      METACITY_INACTIVE_SHADE_OPACITY_DEFAULT,
-							      G_PARAM_READABLE |
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+							      G_PARAM_READABLE));
     g_object_interface_install_property (settings_interface,
 					 g_param_spec_string ("metacity-button-layout",
 							      "Metacity Button Layout",

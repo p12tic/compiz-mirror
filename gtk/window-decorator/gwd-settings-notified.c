@@ -42,10 +42,49 @@ gwd_settings_notified_impl_update_decorations (GWDSettingsNotified *notified)
     return TRUE;
 }
 
+void
+set_frame_scale (decor_frame_t *frame,
+		 const gchar   *font_str)
+{
+    gfloat	  scale = 1.0f;
+
+    gwd_decor_frame_ref (frame);
+
+    if (frame->titlebar_font)
+	pango_font_description_free (frame->titlebar_font);
+
+    frame->titlebar_font = pango_font_description_from_string (font_str);
+
+    scale = (*theme_get_title_scale) (frame);
+
+    pango_font_description_set_size (frame->titlebar_font,
+				     MAX (pango_font_description_get_size (frame->titlebar_font) * scale, 1));
+
+    gwd_decor_frame_unref (frame);
+}
+
+void
+set_frames_scales (gpointer key,
+		   gpointer value,
+		   gpointer user_data)
+{
+    decor_frame_t *frame = (decor_frame_t *) value;
+    gchar	  *font_str = (gchar *) user_data;
+
+    gwd_decor_frame_ref (frame);
+
+    set_frame_scale (frame, font_str);
+
+    gwd_decor_frame_unref (frame);
+}
+
 static gboolean
 gwd_settings_notified_impl_update_frames (GWDSettingsNotified *notified)
 {
-    gwd_frames_foreach (set_frames_scales, (gpointer) settings->font);
+    const gchar *titlebar_font = NULL;
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
+
+    gwd_frames_foreach (set_frames_scales, (gpointer) titlebar_font);
     return TRUE;
 }
 
@@ -53,25 +92,22 @@ static gboolean
 gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
 {
 #ifdef USE_METACITY
-    gboolean use_meta_theme = settings->use_meta_theme;
+    const gchar *meta_theme = NULL;
+    g_object_get (settings, "metacity-theme", &meta_theme, NULL);
 
-    if (use_meta_theme)
+    if (meta_theme)
     {
-	gchar *theme = settings->metacity_theme;
+	const gchar *theme = meta_theme;
 
 	if (theme)
 	{
 	    meta_theme_set_current (theme, TRUE);
 	    if (!meta_theme_get_current ())
-		use_meta_theme = FALSE;
-	}
-	else
-	{
-	    use_meta_theme = FALSE;
+		meta_theme = NULL;
 	}
     }
 
-    if (use_meta_theme)
+    if (meta_theme)
     {
 	theme_draw_window_decoration	= meta_draw_window_decoration;
 	theme_calc_decoration_size	= meta_calc_decoration_size;
@@ -109,20 +145,21 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
 static gboolean
 gwd_settings_notified_impl_update_metacity_button_layout (GWDSettingsNotified *notified)
 {
-    const gchar *button_layout = settings->metacity_button_layout;
+    const gchar *button_layout;
+    g_object_get (settings, "metacity-button-layout", &button_layout, NULL);
 
     if (button_layout)
     {
 	meta_update_button_layout (button_layout);
 
-	settings->meta_button_layout_set = TRUE;
+	meta_button_layout_set = TRUE;
 
 	return TRUE;
     }
 
-    if (settings->meta_button_layout_set)
+    if (meta_button_layout_set)
     {
-	settings->meta_button_layout_set = FALSE;
+	meta_button_layout_set = FALSE;
 	return TRUE;
     }
 

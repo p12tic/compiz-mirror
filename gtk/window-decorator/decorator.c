@@ -118,7 +118,10 @@ destroy_bare_frame (decor_frame_t *frame)
 static const PangoFontDescription *
 get_titlebar_font (decor_frame_t *frame)
 {
-    if (settings->use_system_font)
+    gboolean use_system_font;
+    g_object_get (settings, "use-system-font", &use_system_font, NULL);
+
+    if (use_system_font)
 	return NULL;
     else
 	return frame->titlebar_font;
@@ -773,12 +776,12 @@ draw_border_shape (Display	   *xdisplay,
     /* create shadow from opaque decoration
      * FIXME: Should not modify settings value
      * like this */
-    save_decoration_alpha = settings->decoration_alpha;
-    settings->decoration_alpha = 1.0;
+    save_decoration_alpha = decoration_alpha;
+    decoration_alpha = 1.0;
 
     (*d.draw) (&d);
 
-    settings->decoration_alpha = save_decoration_alpha;
+    decoration_alpha = save_decoration_alpha;
 
     XRenderFillRectangle (xdisplay, PictOpSrc, picture, &white,
 			  c->left_space,
@@ -1034,44 +1037,18 @@ void
 cairo_get_shadow (decor_frame_t *d, decor_shadow_options_t *opts, gboolean active)
 {
     if (active)
-    {
-	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
-	opts->shadow_radius = settings->active_shadow_radius;
-	opts->shadow_offset_x = settings->active_shadow_offset_x;
-	opts->shadow_offset_y = settings->active_shadow_offset_y;
-	opts->shadow_opacity = settings->active_shadow_opacity;
-    }
-    /* TODO: Inactive shadows */
+	g_object_get (settings, "active-shadow", opts, NULL);
     else
-    {
-	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
-	opts->shadow_radius = settings->inactive_shadow_radius;
-	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
-	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
-	opts->shadow_opacity = settings->inactive_shadow_opacity;
-    }
+	g_object_get (settings, "inactive-shadow", opts, NULL);
 }
 
 void
 meta_get_shadow (decor_frame_t *frame, decor_shadow_options_t *opts, gboolean active)
 {
     if (active)
-    {
-	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
-	opts->shadow_radius = settings->active_shadow_radius;
-	opts->shadow_offset_x = settings->active_shadow_offset_x;
-	opts->shadow_offset_y = settings->active_shadow_offset_y;
-	opts->shadow_opacity = settings->active_shadow_opacity;
-    }
-    /* TODO: Inactive shadows */
+	g_object_get (settings, "active-shadow", opts, NULL);
     else
-    {
-	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
-	opts->shadow_radius = settings->inactive_shadow_radius;
-	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
-	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
-	opts->shadow_opacity = settings->inactive_shadow_opacity;
-    }
+	g_object_get (settings, "inactive-shadow", opts, NULL);
 
 }
 

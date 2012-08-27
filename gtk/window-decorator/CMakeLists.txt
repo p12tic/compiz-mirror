@@ -59,6 +59,7 @@ if (USE_GTK)
     set (GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
          gtk_window_decorator_settings_notified_interface
 	 gtk_window_decorator_settings_interface
+         gtk_window_decorator_settings_writable_interface
 	 gtk_window_decorator_settings
 	 gtk_window_decorator_settings_storage_interface
 	 gtk_window_decorator_settings_storage_xproperty_interface)
@@ -105,7 +106,7 @@ if (USE_GTK)
 
     target_link_libraries (
 	gtk-window-decorator
-	decoration
+        decoration
 	${GTK_WINDOW_DECORATOR_LIBRARIES}
 	${GCONF_LIBRARIES}
 	${DBUS_GLIB_LIBRARIES}
