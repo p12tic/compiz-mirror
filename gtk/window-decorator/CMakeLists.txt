@@ -70,6 +70,7 @@ if (USE_GTK)
     endif (USE_GCONF)
 
     if (USE_GSETTINGS)
+        add_definitions (-DUSE_GSETTINGS)
 	list (APPEND GTK_WINDOW_DECORATOR_ADDITIONAL_LIBRARIES
 	      gtk_window_decorator_settings_storage_gsettings)
     endif (USE_GSETTINGS)
@@ -127,7 +128,7 @@ if (USE_GTK)
     set (_gwd_gschema_filename ${_gwd_gschema_name}.gschema.xml)
     set (_gwd_gschema_filepath ${CMAKE_CURRENT_SOURCE_DIR}/${_gwd_gschema_filename})
     set (_gwd_gschema_generated_location ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_gwd_gschema_filename})
-    set (_gwd_gschema_dest ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas/${_gwd_gschema_filename})
+    set (_gwd_gschema_dest ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas/)
 
     add_custom_command (OUTPUT ${_gwd_gschema_generated_location}
 		        COMMAND cp -r ${_gwd_gschema_filepath} ${_gwd_gschema_generated_location}
@@ -139,8 +140,8 @@ if (USE_GTK)
 
     add_gsettings_schema_to_recompilation_list (compiz_gwd_gsettings_org_compiz_gwd_schema)
 
-    compiz_install_gsettings_schema (${_gwd_gschema_dest}
-				     ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
+    compiz_install_gsettings_schema (${_gwd_gschema_generated_location}
+                                     ${_gwd_gschema_dest})
 
 endif (USE_GTK)
 

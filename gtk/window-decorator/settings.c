@@ -23,11 +23,11 @@
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings-storage-interface.h"
 
-#ifdef USE_GCONF
-#include "gwd-settings-storage-gconf.h"
-#else
 #ifdef USE_GSETTINGS
 #include "gwd-settings-storage-gsettings.h"
+#else
+#ifdef USE_GCONF
+#include "gwd-settings-storage-gconf.h"
 #endif
 #endif
 
@@ -136,13 +136,16 @@ gboolean
 init_settings (GWDSettingsWritable *writable,
 	       WnckScreen	    *screen)
 {
-#ifdef USE_GCONF
+#ifdef USE_GSETTINGS
 #define STORAGE_USED
-    storage = gwd_settings_storage_gconf_new (writable);
+    GSettings *compiz = g_settings_new ("org.compiz.gwd");
+    GSettings *mutter = g_settings_new ("org.gnome.mutter");
+    GSettings *gnome  = g_settings_new ("org.gnome.desktop.wm.preferences");
+    storage = gwd_settings_storage_gsettings_new (gnome, mutter, compiz, writable);
 #else
 #ifdef USE_GSETTINGS
 #define STORAGE_USED
-    storage = gwd_settings_storage_gsettings_new (writable);
+    storage = gwd_settings_storage_gconf_new (writable);
 #endif
 #endif
 
