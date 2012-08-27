@@ -102,6 +102,12 @@ append_to_notify_funcs (GWDSettingsImpl *settings,
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings);
 
+    /* Remove if found, the new one will replace the old one */
+    GList *link = g_list_find (priv->notify_funcs, func);
+
+    if (link)
+	priv->notify_funcs = g_list_remove_link (priv->notify_funcs, link);
+
     priv->notify_funcs = g_list_append (priv->notify_funcs, (gpointer) func);
 }
 
@@ -329,8 +335,8 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
     else
 	free_and_set_metacity_theme (settings, "");
 
-    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
     append_to_notify_funcs (settings_impl, gwd_settings_notified_update_metacity_theme);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
     release_notify_funcs (settings_impl);
 
     return TRUE;
@@ -381,8 +387,8 @@ gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
 
     priv->metacity_button_layout = g_strdup (button_layout);
 
-    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
     append_to_notify_funcs (settings_impl, gwd_settings_notified_metacity_button_layout);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
     release_notify_funcs (settings_impl);
 
     return TRUE;
@@ -418,8 +424,8 @@ gwd_settings_font_changed (GWDSettingsWritable *settings,
 
     priv->titlebar_font = use_font ? g_strdup (use_font) : NULL;
 
-    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_frames);
     append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_frames);
     release_notify_funcs (settings_impl);
 
     return TRUE;

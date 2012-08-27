@@ -132,7 +132,7 @@ init_settings (GWDSettingsWritable *writable,
 #ifdef USE_GCONF
     storage = gwd_settings_storage_gconf_new (writable);
 
-    shadow_property_changed (screen);
+    gwd_settings_writable_freeze_updates (writable);
     gwd_settings_storage_update_metacity_theme (storage);
     gwd_settings_storage_update_opacity (storage);
     gwd_settings_storage_update_button_layout (storage);
@@ -142,6 +142,8 @@ init_settings (GWDSettingsWritable *writable,
     gwd_settings_storage_update_draggable_border_width (storage);
     gwd_settings_storage_update_attach_modal_dialogs (storage);
     gwd_settings_storage_update_use_tooltips (storage);
+    shadow_property_changed (screen);
+    gwd_settings_writable_thaw_updates (writable);
 #endif
 
     shadow_property_changed (screen);

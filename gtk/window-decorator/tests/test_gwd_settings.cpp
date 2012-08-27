@@ -607,6 +607,21 @@ TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
     gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
 }
 
+/* We're just using use_tooltips here as an example */
+TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdatesNoDupes)
+{
+    gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     !testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
+							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+
+    EXPECT_CALL (*mGMockNotified, updateDecorations ()).Times (1);
+    gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
+}
+
 TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());

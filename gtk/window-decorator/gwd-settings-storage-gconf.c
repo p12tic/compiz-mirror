@@ -73,9 +73,9 @@ gboolean gwd_settings_storage_gconf_update_use_tooltips (GWDSettingsStorage *set
     GWDSettingsStorageGConfPrivate *priv = GET_PRIVATE (storage);
 
     return gwd_settings_writable_use_tooltips_changed (priv->writable,
-						       gconf_client_get_int (priv->client,
-									     COMPIZ_USE_TOOLTIPS_KEY,
-									     NULL));
+						       gconf_client_get_bool (priv->client,
+									      COMPIZ_USE_TOOLTIPS_KEY,
+									      NULL));
 }
 
 gboolean gwd_settings_storage_gconf_update_draggable_border_width (GWDSettingsStorage *settings)
