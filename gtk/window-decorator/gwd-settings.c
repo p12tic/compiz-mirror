@@ -9,11 +9,11 @@
 #include "gwd-settings-notified-interface.h"
 #include "decoration.h"
 
-#define GWD_SETTINGS_IMPL(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImpl));
-#define GWD_SETTINGS_IMPL_CLASS(obj) (G_TYPE_CHECK_CLASS_CAST ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImplClass));
-#define GWD_IS_SETTINGS_IMPL(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GWD_TYPE_SETTINGS_IMPL));
-#define GWD_IS_SETTINGS_IMPL_CLASS(obj) (G_TYPE_CHECK_CLASS_TYPE ((obj), GWD_TYPE_SETTINGS_IMPL));
-#define GWD_SETTINGS_IMPL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImplClass));
+#define GWD_SETTINGS_IMPL(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImpl))
+#define GWD_SETTINGS_IMPL_CLASS(obj) (G_TYPE_CHECK_CLASS_CAST ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImplClass))
+#define GWD_IS_SETTINGS_IMPL(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GWD_TYPE_SETTINGS_IMPL))
+#define GWD_IS_SETTINGS_IMPL_CLASS(obj) (G_TYPE_CHECK_CLASS_TYPE ((obj), GWD_TYPE_SETTINGS_IMPL))
+#define GWD_SETTINGS_IMPL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GWD_TYPE_SETTINGS_IMPL, GWDSettingsImplClass))
 
 typedef struct _GWDSettingsImpl
 {
@@ -69,6 +69,8 @@ enum
  * options enum & notified */
 const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS = 4;
 
+typedef gboolean (*NotifyFunc) (GWDSettingsNotified *);
+
 typedef struct _GWDSettingsImplPrivate
 {
     decor_shadow_options_t active_shadow;
@@ -90,7 +92,41 @@ typedef struct _GWDSettingsImplPrivate
     gchar		   *titlebar_font;
     guint		   cmdline_opts;
     GWDSettingsNotified    *notified;
+    guint		   freeze_count;
+    GList		   *notify_funcs;
 } GWDSettingsImplPrivate;
+
+static void
+append_to_notify_funcs (GWDSettingsImpl *settings,
+			NotifyFunc	func)
+{
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings);
+
+    priv->notify_funcs = g_list_append (priv->notify_funcs, (gpointer) func);
+}
+
+static void
+invoke_notify_func (gpointer data,
+		    gpointer user_data)
+{
+    GWDSettingsNotified *notified = (GWDSettingsNotified *) user_data;
+    NotifyFunc	        func = (NotifyFunc) data;
+
+    (*func) (notified);
+}
+
+static void
+release_notify_funcs (GWDSettingsImpl *settings)
+{
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (settings);
+
+    if (priv->freeze_count)
+	return;
+
+    g_list_foreach (priv->notify_funcs, invoke_notify_func, priv->notified);
+    g_list_free (priv->notify_funcs);
+    priv->notify_funcs = NULL;
+}
 
 gboolean
 gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
@@ -161,7 +197,10 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
     }
 
     if (changed)
-	gwd_settings_notified_update_decorations (priv->notified);
+    {
+	append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+	release_notify_funcs (settings_impl);
+    }
 
     return changed;
 }
@@ -176,7 +215,8 @@ gwd_settings_use_tooltips_changed (GWDSettingsWritable *settings,
     if (priv->use_tooltips != use_tooltips)
     {
 	priv->use_tooltips = use_tooltips;
-	gwd_settings_notified_update_decorations (priv->notified);
+	append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+	release_notify_funcs (settings_impl);
 	return TRUE;
     }
 
@@ -193,7 +233,8 @@ gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
     if (priv->draggable_border_width != draggable_border_width)
     {
 	priv->draggable_border_width = draggable_border_width;
-	gwd_settings_notified_update_decorations (priv->notified);
+	append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+	release_notify_funcs (settings_impl);
 	return TRUE;
     }
     else
@@ -210,7 +251,8 @@ gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
     if (priv->attach_modal_dialogs != attach_modal_dialogs)
     {
 	priv->attach_modal_dialogs = attach_modal_dialogs;
-	gwd_settings_notified_update_decorations (priv->notified);
+	append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+	release_notify_funcs (settings_impl);
 	return TRUE;
     }
     else
@@ -242,7 +284,8 @@ gwd_settings_blur_changed (GWDSettingsWritable *settings,
     if (priv->blur_type != new_type)
     {
 	priv->blur_type = new_type;
-	gwd_settings_notified_update_decorations (priv->notified);
+	append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+	release_notify_funcs (settings_impl);
 	return TRUE;
     }
     else
@@ -286,8 +329,9 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
     else
 	free_and_set_metacity_theme (settings, "");
 
-    gwd_settings_notified_update_metacity_theme (priv->notified);
-    gwd_settings_notified_update_decorations (priv->notified);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_metacity_theme);
+    release_notify_funcs (settings_impl);
 
     return TRUE;
 }
@@ -313,7 +357,8 @@ gwd_settings_opacity_changed (GWDSettingsWritable *settings,
     priv->metacity_active_shade_opacity = active_shade_opacity;
     priv->metacity_inactive_shade_opacity = inactive_shade_opacity;
 
-    gwd_settings_notified_update_decorations (priv->notified);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+    release_notify_funcs (settings_impl);
 
     return TRUE;
 }
@@ -336,8 +381,9 @@ gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
 
     priv->metacity_button_layout = g_strdup (button_layout);
 
-    gwd_settings_notified_metacity_button_layout (priv->notified);
-    gwd_settings_notified_update_decorations (priv->notified);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_metacity_button_layout);
+    release_notify_funcs (settings_impl);
 
     return TRUE;
 }
@@ -372,8 +418,9 @@ gwd_settings_font_changed (GWDSettingsWritable *settings,
 
     priv->titlebar_font = use_font ? g_strdup (use_font) : NULL;
 
-    gwd_settings_notified_update_frames (priv->notified);
-    gwd_settings_notified_update_decorations (priv->notified);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_frames);
+    append_to_notify_funcs (settings_impl, gwd_settings_notified_update_decorations);
+    release_notify_funcs (settings_impl);
 
     return TRUE;
 }
@@ -466,10 +513,18 @@ gwd_settings_actions_changed (GWDSettingsWritable *settings,
 
 static void gwd_settings_freeze_updates (GWDSettingsWritable *writable)
 {
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (writable);
+    priv->freeze_count++;
 }
 
 static void gwd_settings_thaw_updates (GWDSettingsWritable *writable)
 {
+    GWDSettingsImplPrivate *priv = GET_PRIVATE (writable);
+
+    if (priv->freeze_count)
+	priv->freeze_count--;
+
+    release_notify_funcs (GWD_SETTINGS_IMPL (writable));
 }
 
 static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
@@ -739,6 +794,7 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
     priv->titlebar_font = g_strdup (TITLEBAR_FONT_DEFAULT);
     priv->cmdline_opts = 0;
     priv->notified = NULL;
+    priv->freeze_count = 0;
 }
 
 static gboolean

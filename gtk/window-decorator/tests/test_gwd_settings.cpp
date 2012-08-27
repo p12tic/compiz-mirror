@@ -591,6 +591,7 @@ class GWDSettingsTestStrict :
 /* We're just using use_tooltips here as an example */
 TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdates)
 {
+    gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
 }
@@ -598,6 +599,7 @@ TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdates)
 /* We're just using use_tooltips here as an example */
 TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
 {
+    gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
 
