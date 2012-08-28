@@ -38,6 +38,7 @@
 
 #include "ccs-private.h"
 #include "iniparser.h"
+#include "ccs_settings_upgrade_internal.h"
 
 static void * wrapRealloc (void *o, void *a , size_t b)
 {
