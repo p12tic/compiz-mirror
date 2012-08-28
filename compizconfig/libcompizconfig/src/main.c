@@ -690,7 +690,7 @@ groupAdd (CCSSetting * setting, CCSPluginPrivate * p)
     if (group)
     {
 	group->refCount = 1;
-    	p->groups = ccsGroupListAppend (p->groups, group);
+	p->groups = ccsGroupListAppend (p->groups, group);
 	group->name = strdup (ccsSettingGetGroup (setting));
 	subGroupAdd (setting, group);
     }
@@ -1021,7 +1021,7 @@ ccsFreeString (CCSString *str)
 {
     if (str->value)
 	free (str->value);
-    
+
     free (str);
 }
 
@@ -1809,7 +1809,7 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 
 static void
 copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
-{	
+{
     memcpy (from, to, sizeof (CCSSettingInfo));
 
     switch (type)
@@ -1820,7 +1820,7 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 
 	    to->forInt = from->forInt;
 	    to->forInt.desc = NULL;
-	    
+
 	    while (idl)
 	    {
 		CCSIntDesc *id = malloc (sizeof (CCSIntDesc));
@@ -1833,15 +1833,15 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 		}
 
 		memcpy (id, idl->data, sizeof (CCSIntDesc));
-		
+
 		id->name = strdup (idl->data->name);
 		id->refCount = 1;
 
-	        to->forInt.desc = ccsIntDescListAppend (to->forInt.desc, id);
-		
+		to->forInt.desc = ccsIntDescListAppend (to->forInt.desc, id);
+
 		idl = idl->next;
 	    }
-	    
+
 	    break;
 	}
 	case TypeFloat:
@@ -1853,7 +1853,7 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 
 	    to->forString = from->forString;
 	    to->forString.restriction = NULL;
-	    
+
 	    while (srl)
 	    {
 		CCSStrRestriction *sr = malloc (sizeof (CCSStrRestriction));
@@ -1866,22 +1866,22 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 		}
 
 		memcpy (sr, srl->data, sizeof (CCSStrRestriction));
-		
+
 		sr->name = strdup (srl->data->name);
 		sr->value = strdup (srl->data->value);
 		sr->refCount = 1;
 
-	        to->forString.restriction = ccsStrRestrictionListAppend (to->forString.restriction, sr);
-		
+		to->forString.restriction = ccsStrRestrictionListAppend (to->forString.restriction, sr);
+
 		srl = srl->next;
 	    }
-	    
+
 	    break;
 	}
 	case TypeList:
 	{
 	    to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
-	    
+
 	    copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
 
 	    break;
@@ -1963,7 +1963,7 @@ copySetting (CCSSetting *from, CCSSetting *to)
     if (fromPrivate->value)
     {
 	toPrivate->value = malloc (sizeof (CCSSettingValue));
-	
+
 	if (!fromPrivate->value)
 	    return;
 
@@ -1978,7 +1978,7 @@ copySetting (CCSSetting *from, CCSSetting *to)
 
     toPrivate->defaultValue.parent = to;
     toPrivate->privatePtr = NULL;
-    
+
     (to)->object.refcnt = 1;
 }
 
@@ -1999,7 +1999,7 @@ copyFromDefault (CCSSetting * setting)
 	sPrivate->isDefault = TRUE;
 	return;
     }
-    
+
     value->refCount = 1;
 
     copyValue (&sPrivate->defaultValue, value);
@@ -2039,7 +2039,7 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 	type = ccsSettingGetInfo (rhs->parent)->forList.listType;
     else
 	type = ccsSettingGetType (rhs->parent);
-    
+
     switch (type)
     {
 	case TypeInt:
@@ -2069,12 +2069,12 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 	{
 	    return ccsCompareLists (lhs->value.asList, rhs->value.asList,
 				    ccsSettingGetInfo (lhs->parent)->forList);
-	
+
 	}
 	default:
 	    break;
     }
-    
+
     ccsWarning ("Failed to process type %i", ccsSettingGetType (lhs->parent));
     return FALSE;
 }
@@ -3045,7 +3045,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 		    found = TRUE;
 		l2 = l2->next;
 	    }
-	    
+
 	    if (p && !ccsPluginListFind (plugins[i].after, p) && !found)
 		plugins[i].after = ccsPluginListAppend (plugins[i].after, p);
 
@@ -3086,8 +3086,8 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 
 	for (i = 0; i < len; i++)
 	{
-	    CCSString *strPluginName;		
-		
+	    CCSString *strPluginName;
+
 	    if (!plugins[i].plugin)
 		continue;
 	    if (plugins[i].after)
@@ -3108,7 +3108,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 		    ccsPluginListRemove (plugins[j].after, p, FALSE);
 
 	    strPluginName = calloc (1, sizeof (CCSString));
-	    
+
 	    strPluginName->value = strdup (ccsPluginGetName (p));
 	    strPluginName->refCount = 1;
 
@@ -3355,9 +3355,9 @@ ccsReadSettingsDefault (CCSContext * context)
 {
     if (!context)
 	return;
-    
+
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
-    
+
     if (!cPrivate->backend)
 	return;
 
@@ -3484,7 +3484,7 @@ ccsWriteChangedSettingsDefault (CCSContext * context)
 	return;
 
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
-    
+
     if (!cPrivate->backend)
 	return;
 
@@ -3615,7 +3615,7 @@ ccsCanEnablePluginDefault (CCSContext * context, CCSPlugin * plugin)
 		conflict->type = ConflictRequiresPlugin;
 		conflict->plugins =
 		    ccsPluginListAppend (conflict->plugins,
-			    		 ccsFindPlugin (context, ((CCSString *)sl->data)->value));
+					 ccsFindPlugin (context, ((CCSString *)sl->data)->value));
 		list = ccsPluginConflictListAppend (list, conflict);
 	    }
 	}
@@ -3783,7 +3783,7 @@ ccsCanEnablePluginDefault (CCSContext * context, CCSPlugin * plugin)
 		conflict->type = ConflictPlugin;
 		conflict->plugins =
 		    ccsPluginListAppend (conflict->plugins,
-			    		 ccsFindPlugin (context, ((CCSString *)sl->data)->value));
+					 ccsFindPlugin (context, ((CCSString *)sl->data)->value));
 		list = ccsPluginConflictListAppend (list, conflict);
 	    }
 	}
@@ -3893,7 +3893,7 @@ ccsCanDisablePluginDefault (CCSContext * context, CCSPlugin * plugin)
 		}
 		pluginList = pluginList->next;
 	    }
-	    
+
 	}
 	if (conflict)
 	    list = ccsPluginConflictListAppend (list, conflict);
@@ -3915,9 +3915,9 @@ ccsGetExistingProfilesDefault (CCSContext * context)
 {
     if (!context)
 	return NULL;
-    
+
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
-    
+
     if (!cPrivate->backend)
 	return NULL;
 
@@ -3941,9 +3941,9 @@ ccsDeleteProfileDefault (CCSContext * context, char *name)
 {
     if (!context)
 	return;
-    
+
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
-    
+
     if (!cPrivate->backend)
 	return;
 
@@ -4169,54 +4169,54 @@ ccsExportToFileDefault (CCSContext *context,
 		return FALSE;
 
 	    switch (ccsSettingGetType (setting))
- 	    {
- 	    case TypeBool:
+	    {
+	    case TypeBool:
 		ccsIniSetBool (exportFile, ccsPluginGetName (plugin), keyName,
 			       ccsSettingGetValue (setting)->value.asBool);
- 		break;
- 	    case TypeInt:
+		break;
+	    case TypeInt:
 		ccsIniSetInt (exportFile, ccsPluginGetName (plugin), keyName,
 			      ccsSettingGetValue (setting)->value.asInt);
- 		break;
- 	    case TypeFloat:
+		break;
+	    case TypeFloat:
 		ccsIniSetFloat (exportFile, ccsPluginGetName (plugin), keyName,
 				ccsSettingGetValue (setting)->value.asFloat);
- 		break;
- 	    case TypeString:
+		break;
+	    case TypeString:
 		ccsIniSetString (exportFile, ccsPluginGetName (plugin), keyName,
 				 ccsSettingGetValue (setting)->value.asString);
- 		break;
- 	    case TypeKey:
+		break;
+	    case TypeKey:
 		ccsIniSetKey (exportFile, ccsPluginGetName (plugin), keyName,
 			      ccsSettingGetValue (setting)->value.asKey);
- 		break;
- 	    case TypeButton:
+		break;
+	    case TypeButton:
 		ccsIniSetButton (exportFile, ccsPluginGetName (plugin), keyName,
 				 ccsSettingGetValue (setting)->value.asButton);
- 		break;
- 	    case TypeEdge:
+		break;
+	    case TypeEdge:
 		ccsIniSetEdge (exportFile, ccsPluginGetName (plugin), keyName,
 			       ccsSettingGetValue (setting)->value.asEdge);
- 		break;
- 	    case TypeBell:
+		break;
+	    case TypeBell:
 		ccsIniSetBell (exportFile, ccsPluginGetName (plugin), keyName,
 			       ccsSettingGetValue (setting)->value.asBell);
- 		break;
- 	    case TypeColor:
+		break;
+	    case TypeColor:
 		ccsIniSetColor (exportFile, ccsPluginGetName (plugin), keyName,
 				ccsSettingGetValue (setting)->value.asColor);
- 		break;
- 	    case TypeMatch:
+		break;
+	    case TypeMatch:
 		ccsIniSetString (exportFile, ccsPluginGetName (plugin), keyName,
 				 ccsSettingGetValue (setting)->value.asMatch);
- 		break;
- 	    case TypeList:
+		break;
+	    case TypeList:
 		ccsIniSetList (exportFile, ccsPluginGetName (plugin), keyName,
 			       ccsSettingGetValue (setting)->value.asList,
 			       ccsSettingGetInfo (setting)->forList.listType);
- 		break;
- 	    default:
- 		break;
+		break;
+	    default:
+		break;
 	    }
 	    free (keyName);
 	}
@@ -4369,9 +4369,9 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 		return FALSE;
 	}
 
-        CCSSettingList listIter = upgrade->clearValueSettings;
+	CCSSettingList listIter = upgrade->clearValueSettings;
 
-        while (listIter)
+	while (listIter)
 	{
 	    CCSSetting *s = (CCSSetting *) listIter->data;
 
@@ -4388,17 +4388,17 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 
 	if (!listIter)
 	    upgrade->addValueSettings = ccsSettingListAppend (upgrade->addValueSettings, (void *) newSetting);
-	
+
 	free (keyName);
 	free (sectionName);
 	free (iniValue);
-	
+
 	return TRUE;
     }
-    
+
     free (keyName);
     free (sectionName);
-    
+
     return FALSE;
 }
 
@@ -4527,9 +4527,9 @@ ccsProcessSettingMinus (IniDictionary      *dict,
 		return FALSE;
 	}
 
-        CCSSettingList listIter = upgrade->addValueSettings;
+	CCSSettingList listIter = upgrade->addValueSettings;
 
-        while (listIter)
+	while (listIter)
 	{
 	    CCSSetting *s = (CCSSetting *) listIter->data;
 
@@ -4546,14 +4546,14 @@ ccsProcessSettingMinus (IniDictionary      *dict,
 
 	if (!listIter)
 	    upgrade->clearValueSettings = ccsSettingListAppend (upgrade->clearValueSettings, (void *) newSetting);
-	
+
 	free (keyName);
 	free (sectionName);
 	free (iniValue);
-	
+
 	return TRUE;
     }
-    
+
     free (keyName);
     free (sectionName);
 
@@ -4588,16 +4588,16 @@ ccsProcessUpgrade (CCSContext *context,
 
 	pl = pl->next;
     }
-    
+
     sl = upgrade->clearValueSettings;
-	
+
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
+
 	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
-	
+
 	if (setting)
 	{
 	    if (ccsSettingGetType (setting) != TypeList)
@@ -4633,7 +4633,7 @@ ccsProcessUpgrade (CCSContext *context,
 
 			olv = olv->next;
 		    }
-		    
+
 		    if (olv)
 		    {
 			count++;
@@ -4653,14 +4653,14 @@ ccsProcessUpgrade (CCSContext *context,
     }
 
     sl = upgrade->addValueSettings;
-    
+
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
+
 	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
-	
+
 	if (setting)
 	{
 	    ccsDebug ("Overriding value %s", ccsSettingGetName ((CCSSetting *) sl->data));
@@ -4672,7 +4672,7 @@ ccsProcessUpgrade (CCSContext *context,
 		/* Try and apppend any new items to the list */
 		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
 		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
-		
+
 		while (l)
 		{
 		    CCSSettingValueList olv = nl;
@@ -4687,7 +4687,7 @@ ccsProcessUpgrade (CCSContext *context,
 
 			olv = olv->next;
 		    }
-		    
+
 		    if (!olv)
 		    {
 			count++;
@@ -4710,31 +4710,31 @@ ccsProcessUpgrade (CCSContext *context,
     }
 
     sl = upgrade->replaceFromValueSettings;
-    
+
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
+
 	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
-	
+
 	if (setting)
 	{
 	    if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
 	    {
 		CCSSettingList rl = upgrade->replaceToValueSettings;
-		
+
 		while (rl)
 		{
 		    CCSSetting *rsetting = (CCSSetting *) rl->data;
-		    
+
 		    if (strcmp (ccsSettingGetName (rsetting), ccsSettingGetName (setting)) == 0)
 		    {
 			ccsDebug ("Matched and replaced %s", ccsSettingGetName (setting));
 			ccsSetValue (setting, ccsSettingGetValue (rsetting), TRUE);
 			break;
 		    }
-		    
+
 		    rl = rl->next;
 		}
 	    }
@@ -4746,7 +4746,7 @@ ccsProcessUpgrade (CCSContext *context,
 
 	sl = sl->next;
     }
-    
+
     upgrade->clearValueSettings = ccsSettingListFree (upgrade->clearValueSettings, TRUE);
     upgrade->addValueSettings = ccsSettingListFree (upgrade->addValueSettings, TRUE);
     upgrade->replaceFromValueSettings = ccsSettingListFree (upgrade->replaceFromValueSettings, TRUE);
@@ -4786,7 +4786,7 @@ upgradeNameFilter (const struct dirent *name)
 	    end != bit)
 	{
 	    free (bit);
-	    
+
 	    /* Check if the next token after the number
 	     * is .upgrade */
 
@@ -4796,32 +4796,32 @@ upgradeNameFilter (const struct dirent *name)
 	}
 	else if (errno)
 	    perror ("strtol");
-	
+
 	tok = nexttok;
-	
+
 	free (bit);
     }
 
     free (uname);
 
     return 1;
-}    
+}
 
 /*
  * Process a filename into the properties
  * for a settings upgrade
  * eg
- * 
+ *
  * org.freedesktop.compiz.Default.01.upgrade
- * 
+ *
  * gives us:
  * domain: org.freedesktop.compiz
  * number: 1
  * profile: Default
- * 
+ *
  */
 CCSSettingsUpgrade *
-ccsSettingsUpgradeNew (char *path, char *name)
+ccsSettingsUpgradeNew (char *path, const char *name)
 {
     CCSSettingsUpgrade *upgrade = calloc (1, sizeof (CCSSettingsUpgrade));
     int length = strlen (name);
@@ -4860,61 +4860,47 @@ ccsSettingsUpgradeNew (char *path, char *name)
 	}
 	else if (errno)
 	    perror ("strtol");
-	
+
 	tok = nexttok;
-	
+
 	free (bit);
     }
-    
+
     free (uname);
-    
+
     return upgrade;
 }
 
-Bool
-ccsCheckForSettingsUpgradeDefault (CCSContext *context)
+void
+ccsFreeUpgrade (CCSSettingsUpgrade *upgrade)
 {
-    struct dirent 	   **nameList;
-    int 	  	   nFile, i;
-    char	  	   *path = DATADIR "/compizconfig/upgrades/";
+    free (upgrade->profile);
+    free (upgrade->domain);
+    free (upgrade->file);
+    free (upgrade);
+}
+
+static FILE *
+ccsGetDoneSettingsUpgradeFile (const char *home)
+{
     char		   *dupath = NULL;
-    FILE		   *completedUpgrades;
+    FILE		   *completedUpgrades = NULL;
+
+    if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
+	return NULL;
+
+    completedUpgrades = fopen (dupath, "a+");
+    free (dupath);
+
+    return completedUpgrades;
+}
+
+static char *
+ccsReadCompletedUpgradesIntoString (FILE *completedUpgrades)
+{
     char		   *cuBuffer;
     unsigned int	   cuSize;
     size_t		   cuReadSize;
-    char		   *home = getenv ("HOME");
-
-    if (!home)
-	return FALSE;
-
-    if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
-	return FALSE;
-
-    completedUpgrades = fopen (dupath, "a+");
-
-    if (!path)
-    {
-	free (dupath);
-	fclose (completedUpgrades);
-	return FALSE;
-    }
-
-    nFile = scandir (path, &nameList, upgradeNameFilter, alphasort);
-    if (nFile <= 0)
-    {
-	free (dupath);
-	fclose (completedUpgrades);
-	return FALSE;
-    }
-
-    if (!completedUpgrades)
-    {
-	free (nameList);
-	free (dupath);
-	fclose (completedUpgrades);
-	ccsWarning ("Error opening done_upgrades");
-	return FALSE;
-    }
 
     fseek (completedUpgrades, 0, SEEK_END);
     cuSize = ftell (completedUpgrades);
@@ -4928,38 +4914,115 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     cuBuffer[cuSize] = '\0';
 
+    return cuBuffer;
+}
+
+static unsigned int
+ccsGetUpgradeFilesForProcessing (const char *upgradePath,
+				 struct dirent ***passedNameList)
+{
+    struct dirent **nameList;
+    unsigned int nFile = scandir (upgradePath, &nameList, upgradeNameFilter, alphasort);
+
+    if (nFile <= 0)
+	return 0;
+
+    *passedNameList = nameList;
+
+    return nFile;
+}
+
+static Bool
+ccsShouldSkipUpgrade (const char *upgrade,
+		      const char *skipBuffer)
+{
+    char		   *matched = strstr (skipBuffer, upgrade);
+
+    if (matched)
+    {
+	ccsDebug ("Skipping upgrade %s", upgrade);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void
+ccsProcessUpgradeOnce (CCSContext	  *context,
+		       CCSSettingsUpgrade *upgrade,
+		       const char	  *upgradeName,
+		       FILE		  *completedUpgrades)
+{
+    ccsDebug ("Processing upgrade profile: %s\nnumber: %i\ndomain: %s",
+	      upgradeName,
+	      upgrade->profile,
+	      upgrade->num,
+	      upgrade->domain);
+
+    ccsProcessUpgrade (context, upgrade);
+    ccsWriteChangedSettings (context);
+    ccsWriteAutoSortedPluginList (context);
+    ccsDebug ("Completed upgrade %s", upgradeName);
+
+    fprintf (completedUpgrades, "%s\n", upgradeName);
+    ccsFreeUpgrade (upgrade);
+}
+
+Bool
+ccsCheckForSettingsUpgradeDefault (CCSContext *context)
+{
+    struct dirent 	   **nameList = NULL;
+    int 	  	   nFile, i;
+    char	  	   *path = DATADIR "/compizconfig/upgrades/";
+    FILE		   *completedUpgrades;
+    char		   *cuBuffer = NULL;
+    char		   *home = getenv ("HOME");
+
+    if (!home)
+	return FALSE;
+
+    completedUpgrades = ccsGetDoneSettingsUpgradeFile (home);
+
+    if (!completedUpgrades)
+	return FALSE;
+
+    cuBuffer = ccsReadCompletedUpgradesIntoString (completedUpgrades);
+
+    if (!cuBuffer)
+    {
+	fclose (completedUpgrades);
+	ccsWarning ("Error opening done_upgrades");
+	return FALSE;
+    }
+
+    nFile = ccsGetUpgradeFilesForProcessing (path, &nameList);
+
+    if (!nFile || !nameList)
+    {
+	free (cuBuffer);
+	fclose (completedUpgrades);
+	return FALSE;
+    }
+
     for (i = 0; i < nFile; i++)
     {
-	char		   *matched = strstr (cuBuffer, nameList[i]->d_name);
-	CCSSettingsUpgrade *upgrade;
-	
-	if (matched)
-	{
-	    ccsDebug ("Skipping upgrade %s", nameList[i]->d_name);
+	const char *upgradeName = nameList[i]->d_name;
+
+	if (ccsShouldSkipUpgrade (upgradeName,
+				  cuBuffer))
 	    continue;
-	}
 
-	upgrade = ccsSettingsUpgradeNew (path, nameList[i]->d_name);
-	
-	ccsDebug ("Processing upgrade %s\nprofile: %s\nnumber: %i\ndomain: %s", nameList[i]->d_name, upgrade->profile, upgrade->num, upgrade->domain);
+	CCSSettingsUpgrade *upgrade = ccsSettingsUpgradeNew (path, upgradeName);
 
-	ccsProcessUpgrade (context, upgrade);
-	ccsWriteChangedSettings (context);
-	ccsWriteAutoSortedPluginList (context);
-	ccsDebug ("Completed upgrade %s", nameList[i]->d_name);
-	fprintf (completedUpgrades, "%s\n", nameList[i]->d_name);
-	free (upgrade->profile);
-	free (upgrade->domain);
-	free (upgrade->file);
-	free (upgrade);
+	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
+
 	free (nameList[i]);
     }
 
-    free (dupath);
     fclose (completedUpgrades);
     free (cuBuffer);
     free (nameList);
-    
+
     return TRUE;
 }
 
@@ -5013,7 +5076,7 @@ ccsImportFromFileDefault (CCSContext *context,
 		    Bool value;
 
 		    if (ccsIniGetBool (importFile, ccsPluginGetName (plugin),
- 				       keyName, &value))
+				       keyName, &value))
 		    {
 			ccsSetBool (setting, value, TRUE);
 		    }
@@ -5044,8 +5107,8 @@ ccsImportFromFileDefault (CCSContext *context,
 		    if (ccsIniGetString (importFile, ccsPluginGetName (plugin),
 					 keyName, &value))
 		    {
-		    	ccsSetString (setting, value, TRUE);
-		    	free (value);
+			ccsSetString (setting, value, TRUE);
+			free (value);
 		    }
 		}
 		break;
@@ -5100,8 +5163,8 @@ ccsImportFromFileDefault (CCSContext *context,
 		    if (ccsIniGetString (importFile, ccsPluginGetName (plugin),
 					 keyName, &value))
 		    {
-		    	ccsSetMatch (setting, value, TRUE);
-		    	free (value);
+			ccsSetMatch (setting, value, TRUE);
+			free (value);
 		    }
 		}
 		break;
