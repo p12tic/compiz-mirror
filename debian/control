@@ -135,6 +135,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends},
          compiz-plugins-default (= ${binary:Version}),
          gsettings-desktop-schemas,
+Recommends: python-gconf
 Replaces: compiz-plugins-main (<= 1:0.9.8),
           compiz-plugins-main-default (<= 1:0.9.8),
           compizconfig-backend-gconf (<= 1:0.9.8),
