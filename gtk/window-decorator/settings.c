@@ -132,15 +132,41 @@ shadow_property_changed (WnckScreen *s)
 							  inactive_shadow_color);
 }
 
+#ifdef USE_GSETTINGS
+
+static gpointer
+list_all_schemas (gpointer data)
+{
+    return (gpointer) g_settings_list_schemas ();
+}
+
+static inline GSettings *
+get_settings_no_abort (const gchar *schema)
+{
+    static GOnce get_settings_once = G_ONCE_INIT;
+
+    g_once (&get_settings_once, list_all_schemas, NULL);
+
+    const gchar * const * schemas = (const gchar * const *) get_settings_once.retval;
+    guint                        i = 0;
+
+    for (; schemas[i]; i++)
+	if (g_strcmp0 (schema, schemas[i]) == 0)
+	    return g_settings_new (schema);
+
+    return NULL;
+}
+#endif
+
 gboolean
 init_settings (GWDSettingsWritable *writable,
 	       WnckScreen	    *screen)
 {
 #ifdef USE_GSETTINGS
 #define STORAGE_USED
-    GSettings *compiz = g_settings_new (ORG_COMPIZ_GWD);
-    GSettings *mutter = g_settings_new (ORG_GNOME_MUTTER);
-    GSettings *gnome  = g_settings_new (ORG_GNOME_DESKTOP_WM_PREFERENCES);
+    GSettings *compiz = get_settings_no_abort (ORG_COMPIZ_GWD);
+    GSettings *mutter = get_settings_no_abort (ORG_GNOME_MUTTER);
+    GSettings *gnome  = get_settings_no_abort (ORG_GNOME_DESKTOP_WM_PREFERENCES);
     storage = gwd_settings_storage_gsettings_new (gnome, mutter, compiz, writable);
 #else
 #ifdef USE_GSETTINGS
