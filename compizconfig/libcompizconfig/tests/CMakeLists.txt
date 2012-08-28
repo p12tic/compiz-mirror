@@ -107,6 +107,7 @@ target_link_libraries (compizconfig_test_ccs_upgrade_internal
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT}
+           ccs_settings_upgrade_internal
 )
 
 compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
