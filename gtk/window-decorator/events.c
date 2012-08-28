@@ -995,7 +995,7 @@ event_filter_func (GdkXEvent *gdkxevent,
 	    
 	    if (screen)
 	    {
-		if (shadow_property_changed (screen))
+		if (gwd_process_decor_shadow_property_update ())
 		    decorations_changed (screen);
 	    }
 	}

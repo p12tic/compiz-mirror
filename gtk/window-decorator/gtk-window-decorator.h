@@ -626,9 +626,6 @@ update_event_windows (WnckWindow *win);
 int
 update_shadow (void);
 
-gboolean
-shadow_property_changed (WnckScreen *screen);
-
 void
 update_titlebar_font ();
 
@@ -1147,5 +1144,8 @@ init_settings (GWDSettingsWritable *writable, WnckScreen *screen);
 
 void
 fini_settings ();
+
+gboolean
+gwd_process_decor_shadow_property_update ();
 
 #endif

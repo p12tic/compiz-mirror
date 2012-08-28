@@ -1,10 +1,10 @@
 #include "gwd-settings-xproperty-interface.h"
 
-static void gwd_settings_xproperty_storage_default_init (GWDSettingsXPropertyStorageInterface *settings_interface);
+static void gwd_settings_xproperty_storage_interface_default_init (GWDSettingsXPropertyStorageInterface *settings_interface);
 
-G_DEFINE_INTERFACE (GWDSettingsXPropertyStorage, gwd_settings_xproperty_storage, G_TYPE_OBJECT);
+G_DEFINE_INTERFACE (GWDSettingsXPropertyStorage, gwd_settings_xproperty_storage_interface, G_TYPE_OBJECT);
 
-static void gwd_settings_xproperty_storage_default_init (GWDSettingsXPropertyStorageInterface *settings_interface)
+static void gwd_settings_xproperty_storage_interface_default_init (GWDSettingsXPropertyStorageInterface *settings_interface)
 {
 }
 

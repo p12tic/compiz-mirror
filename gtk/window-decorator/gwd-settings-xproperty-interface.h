@@ -23,11 +23,13 @@
 
 G_BEGIN_DECLS
 
-#define GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST (obj))
+#define GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE(obj) (G_TYPE_CHECK_INSTANCE_CAST (obj, \
+										   GWD_TYPE_XPROPERTY_SETTINGS_STORAGE_INTERFACE, \
+										   GWDSettingsXPropertyStorage))
 #define GWD_SETTINGS_XPROPERTY_STORAGE_GET_INTERFACE(obj) (G_TYPE_INSTANCE_GET_INTERFACE(obj, \
-										GWD_TYPE_WRITABLE_SETTINGS_INTERFACE, \
-										GWDSettingsXPropertyStorageInterface))
-#define GWD_TYPE_WRITABLE_SETTINGS_INTERFACE (gwd_settings_xproperty_storage_interface_get_type ())
+											 GWD_TYPE_XPROPERTY_SETTINGS_STORAGE_INTERFACE, \
+											 GWDSettingsXPropertyStorageInterface))
+#define GWD_TYPE_XPROPERTY_SETTINGS_STORAGE_INTERFACE (gwd_settings_xproperty_storage_interface_get_type ())
 
 typedef struct _GWDSettingsXPropertyStorage GWDSettingsXPropertyStorage;
 typedef struct _GWDSettingsXPropertyStorageInterface GWDSettingsXPropertyStorageInterface;
