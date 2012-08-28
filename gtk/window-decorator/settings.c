@@ -138,9 +138,9 @@ init_settings (GWDSettingsWritable *writable,
 {
 #ifdef USE_GSETTINGS
 #define STORAGE_USED
-    GSettings *compiz = g_settings_new ("org.compiz.gwd");
-    GSettings *mutter = g_settings_new ("org.gnome.mutter");
-    GSettings *gnome  = g_settings_new ("org.gnome.desktop.wm.preferences");
+    GSettings *compiz = g_settings_new (ORG_COMPIZ_GWD);
+    GSettings *mutter = g_settings_new (ORG_GNOME_MUTTER);
+    GSettings *gnome  = g_settings_new (ORG_GNOME_DESKTOP_WM_PREFERENCES);
     storage = gwd_settings_storage_gsettings_new (gnome, mutter, compiz, writable);
 #else
 #ifdef USE_GSETTINGS

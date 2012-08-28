@@ -38,6 +38,10 @@ gwd_settings_storage_gsettings_new (GSettings *orgGNOMEDesktopSettings,
 
 extern const guint GWD_SETTINGS_STORAGE_GSETTINGS_N_CONSTRUCTION_PARAMS;
 
+extern const gchar * ORG_COMPIZ_GWD;
+extern const gchar * ORG_GNOME_MUTTER;
+extern const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES;
+
 extern const gchar * ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS;
 extern const gchar * ORG_COMPIZ_GWD_KEY_BLUR_TYPE;
 extern const gchar * ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_OPACITY;

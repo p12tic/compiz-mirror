@@ -8,6 +8,10 @@
 #include "gwd-settings-storage-interface.h"
 #include "gwd-settings-storage-gsettings.h"
 
+const gchar * ORG_COMPIZ_GWD = "org.compiz.gwd";
+const gchar * ORG_GNOME_MUTTER = "org.gnome.mutter";
+const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES = "org.gnome.desktop.wm.preferences";
+
 const gchar * ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS = "use-tooltips";
 const gchar * ORG_COMPIZ_GWD_KEY_BLUR_TYPE = "blur-type";
 const gchar * ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_OPACITY = "metacity-theme-active-opacity";
@@ -321,17 +325,17 @@ static void gwd_settings_storage_gsettings_class_init (GWDSettingsStorageGSettin
     {
 	NULL,
 	g_param_spec_object ("desktop-gsettings",
-			     "org.gnome.desktop.wm.preferences",
+			     ORG_GNOME_DESKTOP_WM_PREFERENCES,
 			     "GSettings Object for org.gnome.desktop.wm.preferences",
 			     G_TYPE_SETTINGS,
 			     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY),
 	g_param_spec_object ("mutter-gsettings",
-			     "org.gnome.mutter",
+			     ORG_GNOME_MUTTER,
 			     "GSettings Object for org.gnome.mutter",
 			     G_TYPE_SETTINGS,
 			     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY),
 	g_param_spec_object ("gwd-gsettings",
-			     "org.compiz.gwd",
+			     ORG_COMPIZ_GWD,
 			     "GSettings Object for org.compiz.gwd",
 			     G_TYPE_SETTINGS,
 			     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY),
