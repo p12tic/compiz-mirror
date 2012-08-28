@@ -38,8 +38,11 @@
 #include <opengl/opengl.h>
 
 #include "privates.h"
+#include "./output.h"
 
 #define DEG2RAD (M_PI / 180.0f)
+
+using namespace compiz::opengl;
 
 GLScreenPaintAttrib defaultScreenPaintAttrib = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -DEFAULT_Z_CAMERA
@@ -272,7 +275,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
-	CompRegion untouched (*output);
+	Output fs (*output);
 
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
@@ -336,18 +339,12 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		    tmpRegion -= w->region ();
 
 		/* unredirect top most fullscreen windows. */
-		if (!fullscreenWindow &&
-		    unredirectFS &&
-		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-		    !(w->type () & NO_FOCUS_MASK) &&  // Skip desktop etc
-		    w->region () == untouched)
-		{
-		    fullscreenWindow = w;
-		}
-
-		untouched -= w->region ();
+		if (unredirectFS && !(mask & PAINT_SCREEN_TRANSFORMED_MASK))
+		    fs.occlude (w);
 	    }
 	}
+
+	fullscreenWindow = fs.fullscreenWindow ();
     }
 
     if (fullscreenWindow)
