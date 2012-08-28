@@ -61,7 +61,6 @@ class Output
 public:
     typedef OUTPUTWINDOW Window;
     Output (const CompRect &rect);
-    void reset ();
     void occlude (Window *win); // called FRONT TO BACK
     Window *fullscreenWindow () const;
 

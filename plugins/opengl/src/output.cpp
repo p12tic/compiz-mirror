@@ -36,13 +36,6 @@ Output::Output (const CompRect &rect) :
 }
 
 void
-Output::reset ()
-{
-    fullscreen = NULL;
-    untouched = rect;
-}
-
-void
 Output::occlude (Window *win)
 {
     const CompRegion &reg (win->region ());
