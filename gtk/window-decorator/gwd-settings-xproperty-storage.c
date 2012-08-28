@@ -61,13 +61,13 @@ static gboolean gwd_settings_storage_xprop_update_all (GWDSettingsXPropertyStora
     gdouble aopacity;
     gint ax_off;
     gint ay_off;
-    char *active_shadow_color;
+    char *active_shadow_color = NULL;
 
     gdouble iradius;
     gdouble iopacity;
     gint ix_off;
     gint iy_off;
-    char *inactive_shadow_color;
+    char *inactive_shadow_color = NULL;
 
     result = XGetWindowProperty (priv->xdpy, priv->root, compiz_shadow_info_atom,
 				 0, 32768, 0, XA_INTEGER, &actual,
