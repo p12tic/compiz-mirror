@@ -92,8 +92,20 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
     while (tok)
     {
 	long int numTmp = 0;
-	char *nexttok = strchr (tok, '.') + 1;
-	char *nextnexttok = strchr (nexttok, '.') + 1;
+	char *nexttok = strchr (tok, '.');
+
+	if (!nexttok)
+	    return FALSE;
+
+	nexttok++;
+
+	char *nextnexttok = strchr (nexttok, '.');
+
+	if (!nextnexttok)
+	    return FALSE;
+
+	nextnexttok++;
+
 	char *end;
 	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
 

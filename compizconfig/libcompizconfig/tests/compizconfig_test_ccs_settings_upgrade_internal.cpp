@@ -14,7 +14,7 @@ class CCSSettingsUpgradeInternalTest :
 namespace
 {
     static const std::string CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME = "org.compiz.general.1.upgrade";
-    static const std::string CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME = "org.general.1.upgrade";
+    static const std::string CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME = "1.upgrade";
     static const std::string CCS_SETTINGS_UPGRADE_TEST_CORRECT_DOMAIN = "org.compiz";
     static const std::string CCS_SETTINGS_UPGRADE_TEST_CORRECT_PROFILE = "general";
     static const unsigned int CCS_SETTINGS_UPGRADE_TEST_CORRECT_NUM = 1;
@@ -25,8 +25,8 @@ MATCHER(BoolFalse, "Bool False") { if (!arg) return true; else return false; }
 
 TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
 {
-    char *profileName;
-    char *domainName;
+    char *profileName = NULL;
+    char *domainName = NULL;
 
     unsigned int num;
 
@@ -45,8 +45,8 @@ TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
 
 TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfInvalid)
 {
-    char *profileName;
-    char *domainName;
+    char *profileName = NULL;
+    char *domainName = NULL;
 
     unsigned int num;
 
