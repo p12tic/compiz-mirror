@@ -38,6 +38,7 @@
 
 #include "ccs-private.h"
 #include "iniparser.h"
+#include "ccs_settings_upgrade_internal.h"
 
 static void * wrapRealloc (void *o, void *a , size_t b)
 {
@@ -4760,51 +4761,22 @@ ccsProcessUpgrade (CCSContext *context,
 static int
 upgradeNameFilter (const struct dirent *name)
 {
-    int length = strlen (name->d_name);
-    char *uname, *tok;
+    return ccsUpgradeNameFilter (name->d_name);
+}
 
-    if (length < 7)
-	return 0;
+void
+ccsFreeUpgrade (CCSSettingsUpgrade *upgrade)
+{
+    if (upgrade->profile)
+	free (upgrade->profile);
 
-    uname = tok = strdup (name->d_name);
+    if (upgrade->domain)
+	free (upgrade->domain);
 
-    /* Keep removing domains and other bits
-     * until we hit a number that we can parse */
-    while (tok)
-    {
-	long int num = 0;
-	char *nexttok = strchr (tok, '.') + 1;
-	char *nextnexttok = strchr (nexttok, '.') + 1;
-	char *end;
-	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
+    if (upgrade->file)
+	free (upgrade->file);
 
-	/* FIXME: That means that the number can't be a zero */
-	errno = 0;
-	num = strtol (bit, &end, 10);
-
-	if (!(errno != 0 && num == 0) &&
-	    end != bit)
-	{
-	    free (bit);
-
-	    /* Check if the next token after the number
-	     * is .upgrade */
-
-	    if (strncmp (nextnexttok, "upgrade", 7))
-		return 0;
-	    break;
-	}
-	else if (errno)
-	    perror ("strtol");
-
-	tok = nexttok;
-
-	free (bit);
-    }
-
-    free (uname);
-
-    return 1;
+    free (upgrade);
 }
 
 /*
@@ -4824,60 +4796,26 @@ CCSSettingsUpgrade *
 ccsSettingsUpgradeNew (char *path, const char *name)
 {
     CCSSettingsUpgrade *upgrade = calloc (1, sizeof (CCSSettingsUpgrade));
-    int length = strlen (name);
-    char *uname, *tok;
+    char *upgradeName = strdup (name);
     unsigned int fnlen = strlen (path) + strlen (name) + 1;
 
     upgrade->file = calloc (fnlen + 1, sizeof (char));
     sprintf (upgrade->file, "%s/%s", path, name);
 
-    uname = tok = strdup (name);
+    upgradeName = strdup (name);
 
-    /* Keep removing domains and other bits
-     * until we hit a number that we can parse */
-    while (tok)
+    if (!ccsUpgradeGetDomainNumAndProfile (upgradeName,
+				 &upgrade->domain,
+				 &upgrade->num,
+				 &upgrade->profile))
     {
-	long int num = 0;
-	char *nexttok = strchr (tok, '.') + 1;
-	char *nextnexttok = strchr (nexttok, '.') + 1;
-	char *end;
-	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
-
-	/* FIXME: That means that the number can't be a zero */
-	errno = 0;
-	num = strtol (bit, &end, 10);
-
-	if (!(errno != 0 && num == 0) &&
-	    end != bit)
-	{
-	    upgrade->domain = strndup (uname, length - (strlen (tok) + 1));
-	    upgrade->num = num;
-
-	    /* profile.n.upgrade */
-	    upgrade->profile = strndup (tok, strlen (tok) - (strlen (nexttok) + 1));
-	    free (bit);
-	    break;
-	}
-	else if (errno)
-	    perror ("strtol");
-
-	tok = nexttok;
-
-	free (bit);
+	ccsFreeUpgrade (upgrade);
+	upgrade = NULL;
     }
 
-    free (uname);
+    free (upgradeName);
 
     return upgrade;
-}
-
-void
-ccsFreeUpgrade (CCSSettingsUpgrade *upgrade)
-{
-    free (upgrade->profile);
-    free (upgrade->domain);
-    free (upgrade->file);
-    free (upgrade);
 }
 
 static FILE *
@@ -4921,7 +4859,7 @@ static unsigned int
 ccsGetUpgradeFilesForProcessing (const char *upgradePath,
 				 struct dirent ***passedNameList)
 {
-    struct dirent **nameList;
+    struct dirent **nameList = NULL;
     unsigned int nFile = scandir (upgradePath, &nameList, upgradeNameFilter, alphasort);
 
     if (nFile <= 0)
@@ -5021,7 +4959,9 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     fclose (completedUpgrades);
     free (cuBuffer);
-    free (nameList);
+
+    if (nameList)
+	free (nameList);
 
     return TRUE;
 }
