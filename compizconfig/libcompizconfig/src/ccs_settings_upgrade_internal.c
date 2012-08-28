@@ -25,61 +25,63 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int
-ccsUpgradeNameFilter (const char *name)
+typedef Bool (*CCSProcessTokenizedUpgradeFileFunc) (const char *name,
+						    int        length,
+						    const char *tokenOne,
+						    const char *tokenTwo,
+						    const char *tokenThree,
+						    int        foundNumber,
+						    void       *userData);
+
+static Bool
+isUpgrade (const char *name,
+	   int        length,
+	   const char *tokenOne,
+	   const char *tokenTwo,
+	   const char *tokenThree,
+	   int        foundNumber,
+	   void       *userData)
 {
-    int length = strlen (name);
-    char *uname, *tok;
+    static const char         *UPGRADE = "upgrade";
+    static const unsigned int UPGRADE_STR_LEN = 7;
 
-    if (length < 7)
-	return 0;
+    if (strncmp (tokenThree, UPGRADE, UPGRADE_STR_LEN))
+	return FALSE;
 
-    uname = tok = strdup (name);
+    return TRUE;
+}
 
-    /* Keep removing domains and other bits
-     * until we hit a number that we can parse */
-    while (tok)
-    {
-	long int num = 0;
-	char *nexttok = strchr (tok, '.') + 1;
-	char *nextnexttok = strchr (nexttok, '.') + 1;
-	char *end;
-	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
+typedef struct _FillDomainNumAndProfileData
+{
+    char **domain;
+    char **profile;
+    unsigned int  *num;
+} FillDomainNumAndProfileData;
 
-	/* FIXME: That means that the number can't be a zero */
-	errno = 0;
-	num = strtol (bit, &end, 10);
+static int
+fillDomainNumAndProfile (const char *name,
+			 int        length,
+			 const char *tokenOne,
+			 const char *tokenTwo,
+			 const char *tokenThree,
+			 int        foundNumber,
+			 void       *userData)
+{
+    FillDomainNumAndProfileData *data = (FillDomainNumAndProfileData *) userData;
 
-	if (!(errno != 0 && num == 0) &&
-	    end != bit)
-	{
-	    free (bit);
+    *data->domain = strndup (name, length - (strlen (tokenOne) + 1));
 
-	    /* Check if the next token after the number
-	     * is .upgrade */
-
-	    if (strncmp (nextnexttok, "upgrade", 7))
-		return 0;
-	    break;
-	}
-	else if (errno)
-	    perror ("strtol");
-
-	tok = nexttok;
-
-	free (bit);
-    }
-
-    free (uname);
+    /* profile.n.upgrade */
+    *data->profile = strndup (tokenOne, strlen (tokenOne) - (strlen (tokenTwo) + 1));
+    *data->num = foundNumber;
 
     return 1;
 }
 
-Bool
-ccsUpgradeGetDomainNumAndProfile (const char   *name,
-				  char         **domain,
-				  unsigned int *num,
-				  char         **profile)
+static Bool
+ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
+					      CCSProcessTokenizedUpgradeFileFunc func,
+					      void				 *userData)
 {
     int length = strlen (name);
     const char *tok = name;
@@ -102,13 +104,14 @@ ccsUpgradeGetDomainNumAndProfile (const char   *name,
 	if (!(errno != 0 && numTmp == 0) &&
 	    end != bit)
 	{
-	    *domain = strndup (name, length - (strlen (tok) + 1));
-	    *num = numTmp;
-
-	    /* profile.n.upgrade */
-	    *profile = strndup (tok, strlen (tok) - (strlen (nexttok) + 1));
-
-	    success = TRUE;
+	    if ((*func) (name,
+			 length,
+			 tok,
+			 nexttok,
+			 nextnexttok,
+			 numTmp,
+			 userData))
+		success = TRUE;
 	}
 	else if (errno)
 	    perror ("strtol");
@@ -121,4 +124,36 @@ ccsUpgradeGetDomainNumAndProfile (const char   *name,
     }
 
     return FALSE;
+}
+
+Bool
+ccsUpgradeGetDomainNumAndProfile (const char   *name,
+				  char         **domain,
+				  unsigned int *num,
+				  char         **profile)
+{
+    FillDomainNumAndProfileData data =
+    {
+	domain,
+	profile,
+	num
+    };
+
+    return ccsDetokenizeUpgradeDomainAndExecuteUserFunc (name, fillDomainNumAndProfile, (void *) &data);
+}
+
+int
+ccsUpgradeNameFilter (const char *name)
+{
+    int length = strlen (name);
+
+    if (length < 7)
+	return 0;
+
+    Bool result = ccsDetokenizeUpgradeDomainAndExecuteUserFunc (name, isUpgrade, NULL);
+
+    if (result)
+	return 1;
+
+    return 0;
 }
