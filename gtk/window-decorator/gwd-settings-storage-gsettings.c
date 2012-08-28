@@ -433,7 +433,7 @@ org_compiz_gwd_settings_changed (GSettings   *settings,
 	gwd_settings_storage_update_titlebar_actions (storage);
     else if (strcmp (key, ORG_COMPIZ_GWD_KEY_BLUR_TYPE) == 0)
 	gwd_settings_storage_update_blur (storage);
-    else if (strcmp (key, ORG_COMPIZ_GWD_KEY_USE_METACITY_THEME))
+    else if (strcmp (key, ORG_COMPIZ_GWD_KEY_USE_METACITY_THEME) == 0)
 	gwd_settings_storage_update_metacity_theme (storage);
     else if (strcmp (key, ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_OPACITY)	     == 0 ||
 	     strcmp (key, ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_SHADE_OPACITY)  == 0 ||
