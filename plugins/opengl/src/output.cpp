@@ -29,7 +29,6 @@ namespace compiz {
 namespace opengl {
 
 Output::Output (const CompRect &rect) :
-    rect (rect),
     fullscreen (NULL),
     untouched (rect)
 {

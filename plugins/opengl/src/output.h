@@ -65,7 +65,6 @@ public:
     Window *fullscreenWindow () const;
 
 private:
-    const CompRect &rect;
     Window *fullscreen;
     CompRegion untouched;
 };
