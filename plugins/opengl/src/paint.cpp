@@ -241,7 +241,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     CompRegion    tmpRegion (region);
     CompWindow    *w;
     GLWindow      *gw;
-    int		  count, windowMask, odMask;
+    int           windowMask, odMask;
     CompWindow	  *fullscreenWindow = NULL;
     bool          status, unredirectFS;
     bool          withOffset = false;
@@ -257,12 +257,10 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     if (mask & PAINT_SCREEN_TRANSFORMED_MASK)
     {
 	windowMask     = PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK;
-	count	       = 1;
     }
     else
     {
 	windowMask     = 0;
-	count	       = 0;
     }
 
     /*
@@ -274,6 +272,8 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
+	CompRegion untouched (*output);
+
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
 	{
@@ -336,23 +336,17 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		    tmpRegion -= w->region ();
 
 		/* unredirect top most fullscreen windows. */
-		if (count == 0 && unredirectFS)
+		if (!fullscreenWindow &&
+		    unredirectFS &&
+		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+		    !(w->type () & NO_FOCUS_MASK) &&  // Skip desktop etc
+		    w->region () == untouched)
 		{
-		    if (w->region () == screen->region () &&
-			tmpRegion.isEmpty ())
-		    {
-			fullscreenWindow = w;
-		    }
-		    else
-		    {
-			foreach (CompOutput &o, screen->outputDevs ())
-			    if (w->region () == CompRegion (o))
-				fullscreenWindow = w;
-		    }
+		    fullscreenWindow = w;
 		}
-	    }
 
-	    count++;
+		untouched -= w->region ();
+	    }
 	}
     }
 
