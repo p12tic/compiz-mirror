@@ -134,28 +134,7 @@ shadow_property_changed (WnckScreen *s)
 
 #ifdef USE_GSETTINGS
 
-static gpointer
-list_all_schemas (gpointer data)
-{
-    return (gpointer) g_settings_list_schemas ();
-}
 
-static inline GSettings *
-get_settings_no_abort (const gchar *schema)
-{
-    static GOnce get_settings_once = G_ONCE_INIT;
-
-    g_once (&get_settings_once, list_all_schemas, NULL);
-
-    const gchar * const * schemas = (const gchar * const *) get_settings_once.retval;
-    guint                        i = 0;
-
-    for (; schemas[i]; i++)
-	if (g_strcmp0 (schema, schemas[i]) == 0)
-	    return g_settings_new (schema);
-
-    return NULL;
-}
 #endif
 
 gboolean
@@ -164,10 +143,14 @@ init_settings (GWDSettingsWritable *writable,
 {
 #ifdef USE_GSETTINGS
 #define STORAGE_USED
-    GSettings *compiz = get_settings_no_abort (ORG_COMPIZ_GWD);
-    GSettings *mutter = get_settings_no_abort (ORG_GNOME_MUTTER);
-    GSettings *gnome  = get_settings_no_abort (ORG_GNOME_DESKTOP_WM_PREFERENCES);
+    GSettings *compiz = gwd_get_org_compiz_gwd_settings ();
+    GSettings *mutter = gwd_get_org_gnome_mutter_settings ();
+    GSettings *gnome  = gwd_get_org_gnome_desktop_wm_preferences_settings ();
     storage = gwd_settings_storage_gsettings_new (gnome, mutter, compiz, writable);
+
+    gwd_connect_org_compiz_gwd_settings (compiz, storage);
+    gwd_connect_org_gnome_mutter_settings (mutter, storage);
+    gwd_connect_org_gnome_desktop_wm_preferences_settings (gnome, storage);
 #else
 #ifdef USE_GSETTINGS
 #define STORAGE_USED

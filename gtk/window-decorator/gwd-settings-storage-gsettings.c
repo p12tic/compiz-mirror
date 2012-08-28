@@ -396,3 +396,125 @@ gwd_settings_storage_gsettings_new (GSettings *desktop,
 
     return storage;
 }
+
+/* Factory methods */
+
+static gpointer
+list_all_schemas (gpointer data)
+{
+    return (gpointer) g_settings_list_schemas ();
+}
+
+static inline GSettings *
+get_settings_no_abort (const gchar *schema)
+{
+    static GOnce get_settings_once = G_ONCE_INIT;
+
+    g_once (&get_settings_once, list_all_schemas, NULL);
+
+    const gchar * const * schemas = (const gchar * const *) get_settings_once.retval;
+    guint                        i = 0;
+
+    for (; schemas[i]; i++)
+	if (g_strcmp0 (schema, schemas[i]) == 0)
+	    return g_settings_new (schema);
+
+    return NULL;
+}
+
+static void
+org_compiz_gwd_settings_changed (GSettings   *settings,
+				 const gchar *key,
+				 gpointer    user_data)
+{
+    GWDSettingsStorage *storage = GWD_SETTINGS_STORAGE_INTERFACE (user_data);
+
+    if (strcmp (key, ORG_COMPIZ_GWD_KEY_MOUSE_WHEEL_ACTION) == 0)
+	gwd_settings_storage_update_titlebar_actions (storage);
+    else if (strcmp (key, ORG_COMPIZ_GWD_KEY_BLUR_TYPE) == 0)
+	gwd_settings_storage_update_blur (storage);
+    else if (strcmp (key, ORG_COMPIZ_GWD_KEY_USE_METACITY_THEME))
+	gwd_settings_storage_update_metacity_theme (storage);
+    else if (strcmp (key, ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_OPACITY)	     == 0 ||
+	     strcmp (key, ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_SHADE_OPACITY)  == 0 ||
+	     strcmp (key, ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_OPACITY)          == 0 ||
+	     strcmp (key, ORG_COMPIZ_GWD_KEY_METACITY_THEME_ACTIVE_SHADE_OPACITY)    == 0)
+	gwd_settings_storage_update_opacity (storage);
+    else if (strcmp (key, ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS) == 0)
+	gwd_settings_storage_update_use_tooltips (storage);
+}
+
+void
+gwd_connect_org_compiz_gwd_settings (GSettings		*settings,
+				     GWDSettingsStorage *storage)
+{
+    g_signal_connect (settings, "changed", (GCallback) org_compiz_gwd_settings_changed, storage);
+}
+
+GSettings *
+gwd_get_org_compiz_gwd_settings ()
+{
+    return get_settings_no_abort (ORG_COMPIZ_GWD);
+}
+
+static void
+org_gnome_mutter_settings_changed (GSettings   *settings,
+				   const gchar *key,
+				   gpointer    user_data)
+{
+    GWDSettingsStorage *storage = GWD_SETTINGS_STORAGE_INTERFACE (user_data);
+
+    if (strcmp (key, ORG_GNOME_MUTTER_DRAGGABLE_BORDER_WIDTH) == 0)
+	gwd_settings_storage_update_draggable_border_width (storage);
+    else if (strcmp (key, ORG_GNOME_MUTTER_ATTACH_MODAL_DIALOGS) == 0)
+	gwd_settings_storage_update_attach_modal_dialogs (storage);
+}
+
+void
+gwd_connect_org_gnome_mutter_settings (GSettings	  *settings,
+				       GWDSettingsStorage *storage)
+{
+    g_signal_connect (settings, "changed", (GCallback) org_gnome_mutter_settings_changed, storage);
+}
+
+GSettings *
+gwd_get_org_gnome_mutter_settings ()
+{
+    return get_settings_no_abort (ORG_GNOME_MUTTER);
+}
+
+static void
+org_gnome_desktop_wm_keybindings_settings_changed (GSettings   *settings,
+						   const gchar *key,
+						   gpointer    user_data)
+{
+    GWDSettingsStorage *storage = GWD_SETTINGS_STORAGE_INTERFACE (user_data);
+
+    if (strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_USES_SYSTEM_FONT) == 0 ||
+	strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_FONT) == 0)
+	gwd_settings_storage_update_font (storage);
+    else if (strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_FONT) == 0)
+	gwd_settings_storage_update_font (storage);
+    else if (strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_DOUBLE_CLICK_TITLEBAR) == 0 ||
+	     strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_MIDDLE_CLICK_TITLEBAR) == 0 ||
+	     strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_ACTION_RIGHT_CLICK_TITLEBAR) == 0)
+	gwd_settings_storage_update_titlebar_actions (storage);
+    else if (strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_THEME) == 0)
+	gwd_settings_storage_update_metacity_theme (storage);
+    else if (strcmp (key, ORG_GNOME_DESKTOP_WM_PREFERENCES_BUTTON_LAYOUT) == 0)
+	gwd_settings_storage_update_button_layout (storage);
+}
+
+void
+gwd_connect_org_gnome_desktop_wm_preferences_settings (GSettings	  *settings,
+						       GWDSettingsStorage *storage)
+{
+    g_signal_connect (settings, "changed",
+		      (GCallback) org_gnome_desktop_wm_keybindings_settings_changed, storage);
+}
+
+GSettings *
+gwd_get_org_gnome_desktop_wm_preferences_settings ()
+{
+    return get_settings_no_abort (ORG_GNOME_DESKTOP_WM_PREFERENCES);
+}

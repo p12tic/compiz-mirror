@@ -36,6 +36,28 @@ gwd_settings_storage_gsettings_new (GSettings *orgGNOMEDesktopSettings,
 				    GSettings *gwdSettings,
 				    GWDSettingsWritable *writableSettings);
 
+void
+gwd_connect_org_compiz_gwd_settings (GSettings		*settings,
+				     GWDSettingsStorage *storage);
+
+GSettings *
+gwd_get_org_compiz_gwd_settings ();
+
+void
+gwd_connect_org_gnome_mutter_settings (GSettings	  *settings,
+				       GWDSettingsStorage *storage);
+
+GSettings *
+gwd_get_org_gnome_mutter_settings ();
+
+void
+gwd_connect_org_gnome_desktop_wm_preferences_settings (GSettings	  *settings,
+						       GWDSettingsStorage *storage);
+
+GSettings *
+gwd_get_org_gnome_desktop_wm_preferences_settings ();
+
+
 extern const guint GWD_SETTINGS_STORAGE_GSETTINGS_N_CONSTRUCTION_PARAMS;
 
 extern const gchar * ORG_COMPIZ_GWD;

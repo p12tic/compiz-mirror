@@ -1488,9 +1488,9 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
 
 	    /* We do not need to keep a reference to these */
-	    mGWDSettings = g_settings_new (ORG_COMPIZ_GWD);
-	    mMutterSettings = g_settings_new (ORG_GNOME_MUTTER);
-	    mDesktopSettings = g_settings_new (ORG_GNOME_DESKTOP_WM_PREFERENCES);
+	    mGWDSettings = gwd_get_org_compiz_gwd_settings ();
+	    mMutterSettings = gwd_get_org_gnome_mutter_settings ();
+	    mDesktopSettings = gwd_get_org_gnome_desktop_wm_preferences_settings ();
 
 	    mStorage.reset (gwd_settings_storage_gsettings_new (mDesktopSettings,
 								mMutterSettings,
