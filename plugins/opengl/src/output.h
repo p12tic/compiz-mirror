@@ -33,29 +33,15 @@
 namespace compiz {
 namespace opengl {
 
-// TODO: Make CompWindow a true abstract base class so we don't need this...
-class Stackable
-{
-public:
-    virtual ~Stackable () {}
-    virtual unsigned int type () = 0;  // should be const if not for CompWindow
-    virtual const CompRegion &region () const = 0;
-};
-
 class Output
 {
 public:
-#ifdef MOCK_COMPWINDOW
-    typedef Stackable Window;
-#else
-    typedef CompWindow Window;
-#endif
     Output (const CompRect &rect);
-    void addWindowToBottom (Window *win); // called FRONT TO BACK
-    Window *fullscreenWindow () const;
+    void addToBottom (WindowRegion *win); // called FRONT TO BACK
+    WindowRegion *fullscreenWindow () const;
 
 private:
-    Window *fullscreen;
+    WindowRegion *fullscreen;
     CompRegion untouched;
 };
 
