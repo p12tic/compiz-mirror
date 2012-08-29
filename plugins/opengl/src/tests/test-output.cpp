@@ -24,7 +24,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "../output.h"
+#include "output.h"
 
 using namespace compiz::opengl;
 

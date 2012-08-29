@@ -38,7 +38,7 @@
 #include <opengl/opengl.h>
 
 #include "privates.h"
-#include "./output.h"
+#include "output.h"
 
 #define DEG2RAD (M_PI / 180.0f)
 

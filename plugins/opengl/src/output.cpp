@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "./output.h"
+#include "output.h"
 
 namespace compiz {
 namespace opengl {
