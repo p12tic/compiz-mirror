@@ -26,6 +26,7 @@
 #define CCS_TEXT_FILE_INTERFACE_H
 
 #include <ccs-defs.h>
+#include <ccs-object.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 

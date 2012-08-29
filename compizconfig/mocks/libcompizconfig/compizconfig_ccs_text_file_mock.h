@@ -41,19 +41,19 @@ class CCSTextFileGMock :
 	static char *
 	ccsTextFileReadFromStart (CCSTextFile *file)
 	{
-	    return reinterpret_cast <CCSTextFileGMockInterface *> (ccsObjectGetPrivate (file))->readFromStart ();
+	    return reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (file))->readFromStart ();
 	}
 
 	static Bool
 	ccsTextFileAppendString (CCSTextFile *file, const char *str)
 	{
-	    return reinterpret_cast <CCSTextFileGMockInterface *> (ccsObjectGetPrivate (file))->appendString (str);
+	    return reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (file))->appendString (str);
 	}
 
 	static void
 	ccsFreeTextFile (CCSTextFile *file)
 	{
-	    return reinterpret_cast <CCSTextFileGMockInterface *> (ccsObjectGetPrivate (file))->free ();
+	    return reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (file))->free ();
 	    ccsFreeMockTextFile (file);
 	}
 

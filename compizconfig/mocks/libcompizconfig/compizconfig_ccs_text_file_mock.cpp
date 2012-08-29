@@ -24,17 +24,17 @@ finalizeAndFreeTextFile (CCSTextFile *textFile)
 void
 ccsFreeMockTextFile (CCSTextFile *textFile)
 {
-    CCSTextFileGMockInterface *gmockInterface = reinterpret_cast <CCSTextFileGMockInterface *> (ccsObjectGetPrivate (textFile));
-    delete gmockInterface;
+    CCSTextFileGMock *gmock = reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (textFile));
+    delete gmock;
 
     finalizeAndFreeTextFile (textFile);
 
 }
 
-static CCSTextFileGMockInterface *
+static CCSTextFileGMock *
 newCCSTextFileGMockInterface (CCSTextFile *textFile)
 {
-    CCSTextFileGMockInterface *gmock = new CCSTextFileGMock ();
+    CCSTextFileGMock *gmock = new CCSTextFileGMock ();
 
     if (!gmock)
     {
@@ -66,12 +66,12 @@ ccsMockTextFileNew (CCSObjectAllocationInterface *ai)
     if (!textFile)
 	return NULL;
 
-    CCSTextFileGMockInterface *gmockInterface = newCCSTextFileGMockInterface (textFile);
+    CCSTextFileGMock *gmock = newCCSTextFileGMockInterface (textFile);
 
-    if (!gmockInterface)
+    if (!gmock)
 	return NULL;
 
-    ccsObjectSetPrivate (textFile, (CCSPrivate *) gmockInterface);
+    ccsObjectSetPrivate (textFile, (CCSPrivate *) gmock);
     ccsObjectAddInterface (textFile,
 			   (const CCSInterface *) &ccsMockTextFileInterface,
 			   GET_INTERFACE_TYPE (CCSTextFileInterface));
