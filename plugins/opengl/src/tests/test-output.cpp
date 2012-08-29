@@ -32,7 +32,7 @@ TEST (OutputTest, no_windows)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
@@ -40,11 +40,11 @@ TEST (OutputTest, normal_windows)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    monitor.occlude (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    monitor.occlude (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
@@ -52,15 +52,15 @@ TEST (OutputTest, two_fullscreen)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    monitor.occlude (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    monitor.occlude (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
@@ -68,19 +68,19 @@ TEST (OutputTest, offscreen)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (CompWindowTypeNormalMask, -100, -100, 1, 1);
-    monitor.occlude (&x);
+    monitor.addWindowToBottom (&x);
     MockCompWindow y (CompWindowTypeNormalMask, 2000, 2000, 123, 456);
-    monitor.occlude (&y);
+    monitor.addWindowToBottom (&y);
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    monitor.occlude (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    monitor.occlude (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
@@ -88,17 +88,17 @@ TEST (OutputTest, cancel_fullscreen1)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow z (CompWindowTypeNormalMask, 500, 500, 345, 234);
-    monitor.occlude (&z);
+    monitor.addWindowToBottom (&z);
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    monitor.occlude (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    monitor.occlude (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
@@ -106,21 +106,21 @@ TEST (OutputTest, cancel_fullscreen2)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (CompWindowTypeNormalMask, -100, -100, 1, 1);
-    monitor.occlude (&x);
+    monitor.addWindowToBottom (&x);
     MockCompWindow y (CompWindowTypeNormalMask, 2000, 2000, 123, 456);
-    monitor.occlude (&y);
+    monitor.addWindowToBottom (&y);
     MockCompWindow z (CompWindowTypeNormalMask, 500, 500, 345, 234);
-    monitor.occlude (&z);
+    monitor.addWindowToBottom (&z);
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    monitor.occlude (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    monitor.occlude (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    monitor.occlude (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
@@ -128,11 +128,11 @@ TEST (OutputTest, overflow)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    monitor.occlude (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, -10, -10, 1044, 788);
-    monitor.occlude (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    monitor.occlude (&desktop);
+    monitor.addWindowToBottom (&desktop);
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 

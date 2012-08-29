@@ -35,7 +35,7 @@ Output::Output (const CompRect &rect) :
 }
 
 void
-Output::occlude (Window *win)
+Output::addWindowToBottom (Window *win)
 {
     const CompRegion &reg (win->region ());
 
