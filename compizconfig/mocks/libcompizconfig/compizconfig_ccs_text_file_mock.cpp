@@ -27,6 +27,7 @@ ccsFreeMockTextFile (CCSTextFile *textFile)
     CCSTextFileGMock *gmock = reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (textFile));
     delete gmock;
 
+    ccsObjectSetPrivate (textFile, NULL);
     finalizeAndFreeTextFile (textFile);
 
 }

@@ -53,7 +53,7 @@ class CCSTextFileGMock :
 	static void
 	ccsFreeTextFile (CCSTextFile *file)
 	{
-	    return reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (file))->free ();
+	    reinterpret_cast <CCSTextFileGMock *> (ccsObjectGetPrivate (file))->free ();
 	    ccsFreeMockTextFile (file);
 	}
 
