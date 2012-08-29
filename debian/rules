@@ -53,7 +53,8 @@ override_dh_install:
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), $(gles2_architectures)))
 	cmake_dir=`cmake --system-information 2> /dev/null | grep "^CMAKE_ROOT " | sed -e 's/.*"\(.*\)"/\1/'` && \
 	mkdir -p debian/tmp$${cmake_dir}/Modules && \
-	cp cmake/FindCompiz.cmake debian/tmp$${cmake_dir}/Modules && cp cmake/FindOpenGLES2.cmake debian/tmp$${cmake_dir}/Modules
+	mkdir -p debian/compiz-dev$${cmake_dir}/Modules \
+	cp cmake/FindCompiz.cmake debian/tmp$${cmake_dir}/Modules && cp cmake/FindOpenGLES2.cmake debian/compiz-dev$${cmake_dir}/Modules
 else
 	cmake_dir=`cmake --system-information 2> /dev/null | grep "^CMAKE_ROOT " | sed -e 's/.*"\(.*\)"/\1/'` && \
 	mkdir -p debian/tmp$${cmake_dir}/Modules && \
