@@ -33,33 +33,23 @@
 namespace compiz {
 namespace opengl {
 
-/*
- * Why mock locally? Because...
- * 1. Code is cleaner without typecasts, so we need to ensure that
- *    Output::Window is-a CompWindow when not mocking.
- * 2. No polymorphism is required = fewer classes, less code, easier to follow.
- */
-#ifdef OUTPUTWINDOW
-class MockCompWindow
+// TODO: Make CompWindow a true abstract base class so we don't need this...
+class Stackable
 {
 public:
-    MockCompWindow (unsigned int type, int x, int y, int width, int height) :
-	flags (type), reg (x, y, width, height) {}
-    unsigned int type () const { return flags; }
-    const CompRegion &region () const { return reg; }
-
-private:
-    unsigned int flags;
-    CompRegion reg;
+    virtual ~Stackable () {}
+    virtual unsigned int type () = 0;  // should be const if not for CompWindow
+    virtual const CompRegion &region () const = 0;
 };
-#else
-#define OUTPUTWINDOW CompWindow
-#endif
 
 class Output
 {
 public:
-    typedef OUTPUTWINDOW Window;
+#ifdef MOCK_COMPWINDOW
+    typedef Stackable Window;
+#else
+    typedef CompWindow Window;
+#endif
     Output (const CompRect &rect);
     void addWindowToBottom (Window *win); // called FRONT TO BACK
     Window *fullscreenWindow () const;

@@ -28,6 +28,24 @@
 
 using namespace compiz::opengl;
 
+namespace
+{
+
+class MockCompWindow : public Stackable
+{
+public:
+    MockCompWindow (unsigned int type, int x, int y, int width, int height) :
+	flags (type), reg (x, y, width, height) {}
+    unsigned int type () { return flags; }
+    const CompRegion &region () const { return reg; }
+
+private:
+    unsigned int flags;
+    CompRegion reg;
+};
+
+} // namespace
+
 TEST (OutputTest, no_windows)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
