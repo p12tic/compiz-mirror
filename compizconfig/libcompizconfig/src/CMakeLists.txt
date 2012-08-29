@@ -65,7 +65,7 @@ link_directories (
 )
 
 target_link_libraries (
-    compizconfig ${LIBCOMPIZCONFIG_LIBRARIES} m
+    compizconfig ${LIBCOMPIZCONFIG_LIBRARIES} m dl
 )
 
 #
