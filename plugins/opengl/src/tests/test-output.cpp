@@ -46,7 +46,7 @@ private:
 
 } // namespace
 
-TEST (OutputTest, no_windows)
+TEST (OpenGLOutput, NoWindows)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
@@ -54,7 +54,7 @@ TEST (OutputTest, no_windows)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OutputTest, normal_windows)
+TEST (OpenGLOutput, NormalWindows)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
@@ -66,7 +66,7 @@ TEST (OutputTest, normal_windows)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OutputTest, two_fullscreen)
+TEST (OpenGLOutput, TwoFullscreen)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
@@ -82,7 +82,7 @@ TEST (OutputTest, two_fullscreen)
     EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
-TEST (OutputTest, offscreen)
+TEST (OpenGLOutput, Offscreen)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (CompWindowTypeNormalMask, -100, -100, 1, 1);
@@ -102,7 +102,7 @@ TEST (OutputTest, offscreen)
     EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
-TEST (OutputTest, cancel_fullscreen1)
+TEST (OpenGLOutput, CancelFullscreen1)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow z (CompWindowTypeNormalMask, 500, 500, 345, 234);
@@ -120,7 +120,7 @@ TEST (OutputTest, cancel_fullscreen1)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OutputTest, cancel_fullscreen2)
+TEST (OpenGLOutput, CancelFullscreen2)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (CompWindowTypeNormalMask, -100, -100, 1, 1);
@@ -142,7 +142,7 @@ TEST (OutputTest, cancel_fullscreen2)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OutputTest, overflow)
+TEST (OpenGLOutput, Overflow)
 {
     Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
