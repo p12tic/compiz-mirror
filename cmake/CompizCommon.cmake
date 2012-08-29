@@ -40,7 +40,7 @@ set (
 )
 
 # Almost everything is a shared library now, so almost everything needs -fPIC
-set (COMMON_FLAGS "-fPIC -Wall")
+set (COMMON_FLAGS "-fPIC -Wall -Wl,-zdefs")
 
 option (COMPIZ_DEPRECATED_WARNINGS "Warn about declarations marked deprecated" OFF)
 if (NOT COMPIZ_DEPRECATED_WARNINGS)
