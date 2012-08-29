@@ -50,13 +50,46 @@ freeAndFinalizeCCSTextFile (CCSTextFile			 *file,
 static char *
 ccsUnixTextFileReadFromStart (CCSTextFile *textFile)
 {
-    return NULL;
+    CCSUnixTextFilePrivate *priv = GET_PRIVATE (CCSUnixTextFilePrivate, textFile);
+    FILE		   *completedUpgrades = priv->unixFile;
+
+    char		   *cuBuffer;
+    unsigned int	   cuSize;
+    size_t		   cuReadSize;
+
+    fseek (completedUpgrades, 0, SEEK_END);
+    cuSize = ftell (completedUpgrades);
+    rewind (completedUpgrades);
+
+    cuBuffer = calloc (cuSize + 1, sizeof (char));
+
+    if (!cuBuffer)
+	return NULL;
+
+    cuReadSize = fread (cuBuffer, 1, cuSize, completedUpgrades);
+
+    /*
+	ccsWarning ("Couldn't read completed upgrades file!");
+	*/
+    if (cuReadSize != cuSize)
+    {
+	free (cuBuffer);
+	return NULL;
+    }
+
+    cuBuffer[cuSize] = '\0';
+
+    return cuBuffer;
 }
 
 static Bool
 ccsUnixTextFileAppendString (CCSTextFile *textFile, const char *str)
 {
-    return FALSE;
+    CCSUnixTextFilePrivate *priv = GET_PRIVATE (CCSUnixTextFilePrivate, textFile);
+    FILE		   *completedUpgrades = priv->unixFile;
+
+    fprintf (completedUpgrades, "%s\n", str);
+    return TRUE;
 }
 
 static void
