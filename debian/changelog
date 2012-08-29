@@ -1,4 +1,4 @@
-compiz (1:0.9.8.0-0ubuntu1~test4) quantal; urgency=low
+compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
 
   [ Sam Spilsbury ]
   * Enable OpenGL ES building 
