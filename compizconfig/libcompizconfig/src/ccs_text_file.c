@@ -62,6 +62,11 @@ ccsUnixTextFileAppendString (CCSTextFile *textFile, const char *str)
 static void
 ccsUnixFreeTextFile (CCSTextFile *textFile)
 {
+    CCSUnixTextFilePrivate *priv = GET_PRIVATE (CCSUnixTextFilePrivate, textFile);
+
+    fclose (priv->unixFile);
+    priv->unixFile = NULL;
+
     freeAndFinalizeCCSTextFile (textFile,
 				textFile->object.object_allocation);
 }
