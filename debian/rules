@@ -40,12 +40,6 @@ else
 endif
 
 override_dh_install:
-	# Language packs
-	for d in $$(find debian/tmp -type f \( -name "*.desktop" -o -name "*.directory" \) ); do \
-		sed -ri '/^(Name|GenericName|Comment|X-GNOME-FullName)\[/d' $$d; \
-		echo "X-Ubuntu-Gettext-Domain=compiz" >> $$d; \
-	done;
-
 	# cmake findcompiz_install use COMPIZ_DESTDIR and using COMPIZ_DESTDIR and
 	# DESTDIR together is completely broken upstream
 	# So, doing the same in debian/rules to find a way to install things in the
@@ -83,5 +77,5 @@ override_dh_auto_test:
 	#dh_auto_test
 
 %:
-	dh $@ --parallel --with quilt,python2,migrations
+	dh $@ --parallel --with quilt,python2,migrations,translations
 

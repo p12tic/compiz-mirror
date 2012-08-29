@@ -7,6 +7,7 @@ Uploaders: David Nusinow <dnusinow@debian.org>, Sean Finney <seanius@debian.org>
 Build-Depends: cmake (>= 2.6),
                debhelper (>= 9~),
                dh-migrations,
+               dh-translations,
                intltool,
                libtool,
                pkg-config,

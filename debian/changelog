@@ -18,7 +18,9 @@ compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
     - bench, firepaint, mblur, showmouse, splash, showrepaint, td, widget
   
   [ Sebastien Bacher ]
-  * debian/control, debian/rules: enable gles on armel and armhf
+  * debian/control, debian/rules: 
+    - enable gles on armel and armhf
+    - use dh-translations rather than custom code
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 15:12:35 +0300
 
