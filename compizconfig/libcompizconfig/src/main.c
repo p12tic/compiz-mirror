@@ -1881,9 +1881,12 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 	}
 	case TypeList:
 	{
-	    to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
-	    
-	    copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+	    if (from->forList.listInfo)
+	    {
+		to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
+
+		copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+	    }
 
 	    break;
 	}
@@ -1937,17 +1940,25 @@ copyValue (CCSSettingValue * from, CCSSettingValue * to)
 static void
 copySetting (CCSSetting *from, CCSSetting *to)
 {
-    memcpy (to, from, sizeof (CCSSetting));
-
-    ccsObjectInit (from, &ccsDefaultObjectAllocator);
-
     /* Allocate a new private ptr for the new setting */
     CCSSettingPrivate *ccsPrivate = calloc (1, sizeof (CCSSettingPrivate));
 
     ccsObjectSetPrivate (to, (CCSPrivate *) ccsPrivate);
 
+    unsigned int i = 0;
+
+    /* copy interfaces */
+    for (; i < from->object.n_interfaces; ++i)
+	ccsObjectAddInterface (to,
+			       from->object.interfaces[i],
+			       from->object.interface_types[i]);
+
     CCSSettingPrivate *fromPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (from);
     CCSSettingPrivate *toPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (to);
+
+    /* copy from fromPrivate to toPrivate for now, and replace all
+     * fields that should be replaced */
+    memcpy (toPrivate, fromPrivate, sizeof (CCSSettingPrivate));
 
     if (fromPrivate->name)
 	toPrivate->name = strdup (fromPrivate->name);
@@ -1980,7 +1991,7 @@ copySetting (CCSSetting *from, CCSSetting *to)
     toPrivate->defaultValue.parent = to;
     toPrivate->privatePtr = NULL;
     
-    (to)->object.refcnt = 1;
+    ccsSettingRef (to);
 }
 
 static void
@@ -4596,9 +4607,11 @@ ccsProcessUpgrade (CCSContext *context,
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
-	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
-	
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
+
 	if (setting)
 	{
 	    if (ccsSettingGetType (setting) != TypeList)
@@ -4659,8 +4672,10 @@ ccsProcessUpgrade (CCSContext *context,
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
 	
-	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
+	setting = ccsFindSetting (plugin, name);
 	
 	if (setting)
 	{
@@ -4716,8 +4731,10 @@ ccsProcessUpgrade (CCSContext *context,
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
-	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
 	
 	if (setting)
 	{
@@ -4891,7 +4908,7 @@ ccsProcessUpgradeOnce (CCSContext	  *context,
 		       const char	  *upgradeName,
 		       FILE		  *completedUpgrades)
 {
-    ccsDebug ("Processing upgrade profile: %s\nnumber: %i\ndomain: %s",
+    ccsDebug ("Processing upgrade %s\n profile: %s\n number: %i\n domain: %s",
 	      upgradeName,
 	      upgrade->profile,
 	      upgrade->num,
