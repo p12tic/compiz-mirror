@@ -1,8 +1,8 @@
 
 include_directories(${GTEST_INCLUDE_DIRS} ..)
 add_definitions(-DMOCK_COMPWINDOW)
-set(exe "compiz_opengl_test_windowstack")
-add_executable(${exe} test-windowstack.cpp ../windowstack.cpp)
+set(exe "compiz_opengl_test_output")
+add_executable(${exe} test-output.cpp ../output.cpp)
 target_link_libraries(${exe} compiz_core ${GTEST_BOTH_LIBRARIES})
-add_test(OpenGLWindowStackTests ${exe})
+add_test(OpenGLOutputTests ${exe})
 

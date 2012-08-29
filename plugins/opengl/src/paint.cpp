@@ -38,7 +38,7 @@
 #include <opengl/opengl.h>
 
 #include "privates.h"
-#include "windowstack.h"
+#include "output.h"
 
 #define DEG2RAD (M_PI / 180.0f)
 
@@ -275,7 +275,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
-	WindowStack stack (*output);
+	Output fs (*output);
 
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
@@ -340,11 +340,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
 		/* unredirect top most fullscreen windows. */
 		if (unredirectFS && !(mask & PAINT_SCREEN_TRANSFORMED_MASK))
-		    stack.addWindowToBottom (w);
+		    fs.addWindowToBottom (w);
 	    }
 	}
 
-	fullscreenWindow = stack.fullscreenWindow ();
+	fullscreenWindow = fs.fullscreenWindow ();
     }
 
     if (fullscreenWindow)

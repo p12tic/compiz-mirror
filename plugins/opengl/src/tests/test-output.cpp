@@ -1,5 +1,5 @@
 /*
- * Compiz opengl plugin, WindowStack class
+ * Compiz opengl plugin, Output class
  *
  * Copyright (c) 2012 Canonical Ltd.
  * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
@@ -24,7 +24,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "windowstack.h"
+#include "output.h"
 
 using namespace compiz::opengl;
 
@@ -46,112 +46,112 @@ private:
 
 } // namespace
 
-TEST (OpenGLWindowStack, NoWindows)
+TEST (OpenGLOutput, NoWindows)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (NULL, s.fullscreenWindow());
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLWindowStack, NormalWindows)
+TEST (OpenGLOutput, NormalWindows)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    s.addWindowToBottom (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    s.addWindowToBottom (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (NULL, s.fullscreenWindow());
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLWindowStack, TwoFullscreen)
+TEST (OpenGLOutput, TwoFullscreen)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    s.addWindowToBottom (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    s.addWindowToBottom (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (s.fullscreenWindow(), &f1);
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
-TEST (OpenGLWindowStack, Offscreen)
+TEST (OpenGLOutput, Offscreen)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (CompWindowTypeNormalMask, -100, -100, 1, 1);
-    s.addWindowToBottom (&x);
+    monitor.addWindowToBottom (&x);
     MockCompWindow y (CompWindowTypeNormalMask, 2000, 2000, 123, 456);
-    s.addWindowToBottom (&y);
+    monitor.addWindowToBottom (&y);
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    s.addWindowToBottom (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    s.addWindowToBottom (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (s.fullscreenWindow(), &f1);
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
-TEST (OpenGLWindowStack, CancelFullscreen1)
+TEST (OpenGLOutput, CancelFullscreen1)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow z (CompWindowTypeNormalMask, 500, 500, 345, 234);
-    s.addWindowToBottom (&z);
+    monitor.addWindowToBottom (&z);
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    s.addWindowToBottom (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    s.addWindowToBottom (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (NULL, s.fullscreenWindow());
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLWindowStack, CancelFullscreen2)
+TEST (OpenGLOutput, CancelFullscreen2)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (CompWindowTypeNormalMask, -100, -100, 1, 1);
-    s.addWindowToBottom (&x);
+    monitor.addWindowToBottom (&x);
     MockCompWindow y (CompWindowTypeNormalMask, 2000, 2000, 123, 456);
-    s.addWindowToBottom (&y);
+    monitor.addWindowToBottom (&y);
     MockCompWindow z (CompWindowTypeNormalMask, 500, 500, 345, 234);
-    s.addWindowToBottom (&z);
+    monitor.addWindowToBottom (&z);
     MockCompWindow f1 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f1);
+    monitor.addWindowToBottom (&f1);
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    s.addWindowToBottom (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, 20, 20, 50, 20);
-    s.addWindowToBottom (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow f2 (CompWindowTypeNormalMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&f2);
+    monitor.addWindowToBottom (&f2);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (NULL, s.fullscreenWindow());
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLWindowStack, Overflow)
+TEST (OpenGLOutput, Overflow)
 {
-    WindowStack s (CompRect (0, 0, 1024, 768));
+    Output monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (CompWindowTypeNormalMask, 10, 10, 40, 30);
-    s.addWindowToBottom (&a);
+    monitor.addWindowToBottom (&a);
     MockCompWindow b (CompWindowTypeNormalMask, -10, -10, 1044, 788);
-    s.addWindowToBottom (&b);
+    monitor.addWindowToBottom (&b);
     MockCompWindow desktop (CompWindowTypeDesktopMask, 0, 0, 1024, 768);
-    s.addWindowToBottom (&desktop);
-    EXPECT_EQ (NULL, s.fullscreenWindow());
+    monitor.addWindowToBottom (&desktop);
+    EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
 

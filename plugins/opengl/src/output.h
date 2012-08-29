@@ -1,5 +1,5 @@
 /*
- * Compiz opengl plugin, WindowStack class
+ * Compiz opengl plugin, Output class
  *
  * Copyright (c) 2012 Canonical Ltd.
  * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
@@ -23,36 +23,42 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "windowstack.h"
+#ifndef __COMPIZ_OPENGL_OUTPUT_H
+#define __COMPIZ_OPENGL_OUTPUT_H
+#include "core/match.h"
+#include "core/window.h"
+#include "core/rect.h"
+#include "core/region.h"
 
 namespace compiz {
 namespace opengl {
 
-WindowStack::WindowStack (const CompRect &rect) :
-    fullscreen (NULL),
-    untouched (rect)
+// TODO: Make CompWindow a true abstract base class so we don't need this...
+class Stackable
 {
-}
+public:
+    virtual ~Stackable () {}
+    virtual unsigned int type () = 0;  // should be const if not for CompWindow
+    virtual const CompRegion &region () const = 0;
+};
 
-void
-WindowStack::addWindowToBottom (Window *win)
+class Output
 {
-    const CompRegion &reg (win->region ());
+public:
+#ifdef MOCK_COMPWINDOW
+    typedef Stackable Window;
+#else
+    typedef CompWindow Window;
+#endif
+    Output (const CompRect &rect);
+    void addWindowToBottom (Window *win); // called FRONT TO BACK
+    Window *fullscreenWindow () const;
 
-    if (!fullscreen &&
-        !(win->type () & NO_FOCUS_MASK) &&  // Skip desktop etc
-        reg == untouched)
-    {
-	fullscreen = win;
-    }
-    untouched -= reg;
-}
-
-WindowStack::Window *
-WindowStack::fullscreenWindow () const
-{
-    return fullscreen;
-}
+private:
+    Window *fullscreen;
+    CompRegion untouched;
+};
 
 } // namespace opengl
 } // namespace compiz
+#endif
