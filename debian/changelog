@@ -12,6 +12,8 @@ compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
       to the compiz API. (LP: #201342) (LP: #901097) (LP: #1004251)
       (LP: #1037710)
     - Draft first 0.9.8.0 NEWS and bump VERSION
+  * debian/patches/compiz-package-gles2.patch:
+    - Remove, obsoleted by the upstream GLES work 
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 15:12:35 +0300
 
