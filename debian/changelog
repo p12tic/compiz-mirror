@@ -1,4 +1,4 @@
-compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8.0-0ubuntu1~test4) quantal; urgency=low
 
   [ Sam Spilsbury ]
   * Enable OpenGL ES building 
@@ -14,6 +14,8 @@ compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
     - Draft first 0.9.8.0 NEWS and bump VERSION
   * debian/patches/compiz-package-gles2.patch:
     - Remove, obsoleted by the upstream GLES work 
+  * Disable plugins that don't work on pure GLES on armhf/armel:
+    - bench, firepaint, mblur, showmouse, splash, showrepaint, td, widget
   
   [ Sebastien Bacher ]
   * debian/control, debian/rules: enable gles on armel and armhf
