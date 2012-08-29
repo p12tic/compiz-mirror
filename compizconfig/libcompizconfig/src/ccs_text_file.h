@@ -29,6 +29,21 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
+typedef struct _CCSTextFile CCSTextFile;
+typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
+
+typedef enum _CCSTextFileOpenMode
+{
+    ReadOnly = 1,
+    ReadWrite = 2,
+    ReadWriteCreate = 3
+} CCSTextFileOpenMode;
+
+CCSTextFile *
+ccsUnixTextFileNew (const char		*path,
+		    CCSTextFileOpenMode openMode,
+		    CCSObjectAllocationInterface *ai);
+
 COMPIZCONFIG_END_DECLS
 
 #endif

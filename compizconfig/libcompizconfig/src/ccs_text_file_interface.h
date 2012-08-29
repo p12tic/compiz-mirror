@@ -29,6 +29,38 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
+typedef struct _CCSTextFile CCSTextFile;
+typedef struct _CCSTextFileInterface CCSTextFileInterface;
+
+typedef char * (*CCSReadTextFileFromStart) (CCSTextFile *file);
+typedef Bool   (*CCSAppendStringToTextFile) (CCSTextFile *file, const char *str);
+typedef void   (*CCSFreeTextFile) (CCSTextFile *file);
+
+struct _CCSTextFileInterface
+{
+    CCSReadTextFileFromStart  readFromStart;
+    CCSAppendStringToTextFile appendString;
+    CCSFreeTextFile	      free;
+};
+
+struct _CCSTextFile
+{
+    CCSObject object;
+};
+
+CCSREF_HDR (TextFile, CCSTextFile);
+
+char *
+ccsTextFileReadFromStart (CCSTextFile *);
+
+Bool
+ccsTextFileAppendString (CCSTextFile *, const char *);
+
+void
+ccsFreeTextFile (CCSTextFile *);
+
+unsigned int ccsCCSTextFileInterfaceGetType ();
+
 COMPIZCONFIG_END_DECLS
 
 #endif

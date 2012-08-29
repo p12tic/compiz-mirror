@@ -31,3 +31,144 @@
 #include <ccs-object.h>
 #include <ccs_text_file_interface.h>
 #include <ccs_text_file.h>
+
+typedef struct _CCSUnixTextFilePrivate CCSUnixTextFilePrivate;
+
+struct _CCSUnixTextFilePrivate
+{
+    FILE *unixFile;
+};
+
+static void
+freeAndFinalizeCCSTextFile (CCSTextFile			 *file,
+			    CCSObjectAllocationInterface *ai)
+{
+    ccsObjectFinalize (file);
+    (*ai->free_) (ai->allocator, file);
+}
+
+static char *
+ccsUnixTextFileReadFromStart (CCSTextFile *textFile)
+{
+    return NULL;
+}
+
+static Bool
+ccsUnixTextFileAppendString (CCSTextFile *textFile, const char *str)
+{
+    return FALSE;
+}
+
+static void
+ccsUnixFreeTextFile (CCSTextFile *textFile)
+{
+    freeAndFinalizeCCSTextFile (textFile,
+				textFile->object.object_allocation);
+}
+
+CCSTextFileInterface ccsUnixTextFileInterface =
+{
+    ccsUnixTextFileReadFromStart,
+    ccsUnixTextFileAppendString,
+    ccsUnixFreeTextFile
+};
+
+const char * CCS_UNIX_TEXT_FILE_OPEN_MODE_READONLY = "r";
+const char * CCS_UNIX_TEXT_FILE_OPEN_MODE_READWRITE = "r+";
+const char * CCS_UNIX_TEXT_FILE_OPEN_MODE_READWRITECREATE = "a+";
+
+static FILE *
+openUnixFile (CCSTextFile		   *textFile,
+	      CCSObjectAllocationInterface *ai,
+	      const char		   *path,
+	      const char		   *openMode)
+{
+    FILE *file = fopen (path, openMode);
+
+    if (!file)
+    {
+	ccsObjectFinalize (textFile);
+	(*ai->free_) (ai->allocator, textFile);
+	return NULL;
+    }
+
+    return file;
+}
+
+
+static CCSUnixTextFilePrivate *
+allocateCCSUnixTextFilePrivate (CCSTextFile			 *file,
+				CCSObjectAllocationInterface	 *ai)
+{
+    CCSUnixTextFilePrivate *priv = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSUnixTextFilePrivate));
+
+    if (!priv)
+    {
+	freeAndFinalizeCCSTextFile (file, ai);
+	return NULL;
+    }
+
+    return priv;
+}
+
+static CCSTextFile *
+allocateCCSTextFile (CCSObjectAllocationInterface *ai)
+{
+    CCSTextFile *textFile = (*ai->calloc_) (ai->allocator, 1, sizeof (CCSTextFile));
+
+    if (!textFile)
+	return NULL;
+
+    ccsObjectInit (textFile, ai);
+
+    return textFile;
+}
+
+CCSTextFile *
+ccsUnixTextFileNew (const char		*path,
+		    CCSTextFileOpenMode openMode,
+		    CCSObjectAllocationInterface *ai)
+{
+    const char *fopenMode = NULL;
+
+    switch (openMode)
+    {
+	case ReadOnly:
+	    fopenMode = CCS_UNIX_TEXT_FILE_OPEN_MODE_READONLY;
+	    break;
+	case ReadWrite:
+	    fopenMode = CCS_UNIX_TEXT_FILE_OPEN_MODE_READWRITE;
+	    break;
+	case ReadWriteCreate:
+	    fopenMode = CCS_UNIX_TEXT_FILE_OPEN_MODE_READWRITECREATE;
+	    break;
+    }
+
+    CCSTextFile *textFile = allocateCCSTextFile (ai);
+
+    if (!textFile)
+	return NULL;
+
+    CCSUnixTextFilePrivate *priv = allocateCCSUnixTextFilePrivate (textFile, ai);
+
+    if (!priv)
+	return NULL;
+
+    ccsObjectSetPrivate (textFile, (CCSPrivate *) priv);
+
+    FILE *unixFile = openUnixFile (textFile,
+				   ai,
+				   path,
+				   fopenMode);
+
+    if (!unixFile)
+	return NULL;
+
+    priv->unixFile = unixFile;
+
+    ccsObjectAddInterface (textFile, (const CCSInterface *) &ccsUnixTextFileInterface,
+			   GET_INTERFACE_TYPE (CCSTextFileInterface));
+    ccsObjectRef (textFile);
+
+    return textFile;
+}

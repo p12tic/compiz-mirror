@@ -27,3 +27,24 @@
 #include <ccs-object.h>
 #include <ccs_text_file_interface.h>
 #include <ccs_text_file.h>
+
+INTERFACE_TYPE (CCSTextFileInterface);
+CCSREF_OBJ (TextFile, CCSTextFile);
+
+char *
+ccsTextFileReadFromStart (CCSTextFile *file)
+{
+    return (*(GET_INTERFACE (CCSTextFileInterface, file))->readFromStart) (file);
+}
+
+Bool
+ccsTextFileAppendString (CCSTextFile *file, const char *str)
+{
+    return (*(GET_INTERFACE (CCSTextFileInterface, file))->appendString) (file, str);
+}
+
+void
+ccsFreeTextFile (CCSTextFile *file)
+{
+    return (*(GET_INTERFACE (CCSTextFileInterface, file))->free) (file);
+}
