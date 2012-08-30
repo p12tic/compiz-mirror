@@ -39,6 +39,8 @@
 #include "ccs-private.h"
 #include "iniparser.h"
 #include "ccs_settings_upgrade_internal.h"
+#include "ccs_text_file_interface.h"
+#include "ccs_text_file.h"
 
 static void * wrapRealloc (void *o, void *a , size_t b)
 {
@@ -4810,7 +4812,7 @@ ccsFreeUpgrade (CCSSettingsUpgrade *upgrade)
  *
  */
 CCSSettingsUpgrade *
-ccsSettingsUpgradeNew (char *path, const char *name)
+ccsSettingsUpgradeNew (const char *path, const char *name)
 {
     CCSSettingsUpgrade *upgrade = calloc (1, sizeof (CCSSettingsUpgrade));
     char *upgradeName = strdup (name);
@@ -4822,9 +4824,9 @@ ccsSettingsUpgradeNew (char *path, const char *name)
     upgradeName = strdup (name);
 
     if (!ccsUpgradeGetDomainNumAndProfile (upgradeName,
-				 &upgrade->domain,
-				 &upgrade->num,
-				 &upgrade->profile))
+					   &upgrade->domain,
+					   &upgrade->num,
+					   &upgrade->profile))
     {
 	ccsFreeUpgrade (upgrade);
 	upgrade = NULL;
@@ -4835,41 +4837,35 @@ ccsSettingsUpgradeNew (char *path, const char *name)
     return upgrade;
 }
 
-static FILE *
+static CCSTextFile *
+ccsUnixOpenDoneSettingsUpgradeFile (const char *path)
+{
+    return ccsUnixTextFileNew (path,
+			       ReadWriteCreate,
+			       &ccsDefaultObjectAllocator);
+}
+
+
+
+static CCSTextFile *
 ccsGetDoneSettingsUpgradeFile (const char *home)
 {
     char		   *dupath = NULL;
-    FILE		   *completedUpgrades = NULL;
+    CCSTextFile		   *completedUpgrades = NULL;
 
     if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
 	return NULL;
 
-    completedUpgrades = fopen (dupath, "a+");
+    completedUpgrades = ccsUnixOpenDoneSettingsUpgradeFile (dupath);
     free (dupath);
 
     return completedUpgrades;
 }
 
 static char *
-ccsReadCompletedUpgradesIntoString (FILE *completedUpgrades)
+ccsReadCompletedUpgradesIntoString (CCSTextFile *completedUpgrades)
 {
-    char		   *cuBuffer;
-    unsigned int	   cuSize;
-    size_t		   cuReadSize;
-
-    fseek (completedUpgrades, 0, SEEK_END);
-    cuSize = ftell (completedUpgrades);
-    rewind (completedUpgrades);
-
-    cuBuffer = calloc (cuSize + 1, sizeof (char));
-    cuReadSize = fread (cuBuffer, 1, cuSize, completedUpgrades);
-
-    if (cuReadSize != cuSize)
-	ccsWarning ("Couldn't read completed upgrades file!");
-
-    cuBuffer[cuSize] = '\0';
-
-    return cuBuffer;
+    return ccsTextFileReadFromStart (completedUpgrades);
 }
 
 static unsigned int
@@ -4906,7 +4902,7 @@ static void
 ccsProcessUpgradeOnce (CCSContext	  *context,
 		       CCSSettingsUpgrade *upgrade,
 		       const char	  *upgradeName,
-		       FILE		  *completedUpgrades)
+		       CCSTextFile	  *completedUpgrades)
 {
     ccsDebug ("Processing upgrade %s\n profile: %s\n number: %i\n domain: %s",
 	      upgradeName,
@@ -4919,17 +4915,45 @@ ccsProcessUpgradeOnce (CCSContext	  *context,
     ccsWriteAutoSortedPluginList (context);
     ccsDebug ("Completed upgrade %s", upgradeName);
 
-    fprintf (completedUpgrades, "%s\n", upgradeName);
+    ccsTextFileAppendString (completedUpgrades, upgradeName);
     ccsFreeUpgrade (upgrade);
+}
+
+static const char * CCS_UPGRADE_PATH = DATADIR "/compizconfig/upgrades";
+
+static void
+ccsApplyUnappliedUpgrades (CCSContext    *context,
+			   struct dirent **nameList,
+			   unsigned int  nFile,
+			   const char	 *completedUpradesContents,
+			   CCSTextFile   *completedUpgrades)
+{
+    int			   i = 0;
+    const char	  	   *path = CCS_UPGRADE_PATH;
+
+    for (i = 0; i < nFile; i++)
+    {
+	const char *upgradeName = nameList[i]->d_name;
+
+	if (ccsShouldSkipUpgrade (upgradeName,
+				  completedUpradesContents))
+	    continue;
+
+	CCSSettingsUpgrade *upgrade = ccsSettingsUpgradeNew (path, upgradeName);
+
+	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
+
+	free (nameList[i]);
+    }
 }
 
 Bool
 ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 {
     struct dirent 	   **nameList = NULL;
-    int 	  	   nFile, i;
-    char	  	   *path = DATADIR "/compizconfig/upgrades/";
-    FILE		   *completedUpgrades;
+    int 	  	   nFile;
+    const char	  	   *path = CCS_UPGRADE_PATH;
+    CCSTextFile		   *completedUpgrades;
     char		   *cuBuffer = NULL;
     char		   *home = getenv ("HOME");
 
@@ -4945,7 +4969,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     if (!cuBuffer)
     {
-	fclose (completedUpgrades);
+	ccsTextFileUnref (completedUpgrades);
 	ccsWarning ("Error opening done_upgrades");
 	return FALSE;
     }
@@ -4955,26 +4979,13 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     if (!nFile || !nameList)
     {
 	free (cuBuffer);
-	fclose (completedUpgrades);
+	ccsTextFileUnref (completedUpgrades);
 	return FALSE;
     }
 
-    for (i = 0; i < nFile; i++)
-    {
-	const char *upgradeName = nameList[i]->d_name;
+    ccsApplyUnappliedUpgrades (context, nameList, nFile, cuBuffer, completedUpgrades);
 
-	if (ccsShouldSkipUpgrade (upgradeName,
-				  cuBuffer))
-	    continue;
-
-	CCSSettingsUpgrade *upgrade = ccsSettingsUpgradeNew (path, upgradeName);
-
-	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
-
-	free (nameList[i]);
-    }
-
-    fclose (completedUpgrades);
+    ccsTextFileUnref (completedUpgrades);
     free (cuBuffer);
 
     if (nameList)
