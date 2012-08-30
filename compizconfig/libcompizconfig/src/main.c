@@ -4893,7 +4893,7 @@ ccsShouldSkipUpgrade (const char *upgrade,
 {
     char		   *matched = strstr (skipBuffer, upgrade);
 
-    if (matched)
+    if (matched != NULL)
     {
 	ccsDebug ("Skipping upgrade %s", upgrade);
 	return TRUE;
@@ -4961,13 +4961,14 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     for (i = 0; i < nFile; i++)
     {
+	CCSSettingsUpgrade *upgrade = NULL;
 	const char *upgradeName = nameList[i]->d_name;
 
 	if (ccsShouldSkipUpgrade (upgradeName,
 				  cuBuffer))
 	    continue;
 
-	CCSSettingsUpgrade *upgrade = ccsSettingsUpgradeNew (path, upgradeName);
+	upgrade = ccsSettingsUpgradeNew (path, upgradeName);
 
 	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
 
@@ -4977,7 +4978,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     fclose (completedUpgrades);
     free (cuBuffer);
 
-    if (nameList)
+    if (nameList != NULL)
 	free (nameList);
 
     return TRUE;
