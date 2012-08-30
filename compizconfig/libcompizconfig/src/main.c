@@ -5034,7 +5034,7 @@ ccsImportFromFileDefault (CCSContext *context,
 		    Bool value;
 
 		    if (ccsIniGetBool (importFile, ccsPluginGetName (plugin),
-				       keyName, &value))
+ 				       keyName, &value))
 		    {
 			ccsSetBool (setting, value, TRUE);
 		    }
@@ -5065,8 +5065,8 @@ ccsImportFromFileDefault (CCSContext *context,
 		    if (ccsIniGetString (importFile, ccsPluginGetName (plugin),
 					 keyName, &value))
 		    {
-			ccsSetString (setting, value, TRUE);
-			free (value);
+		    	ccsSetString (setting, value, TRUE);
+		    	free (value);
 		    }
 		}
 		break;
@@ -5121,8 +5121,8 @@ ccsImportFromFileDefault (CCSContext *context,
 		    if (ccsIniGetString (importFile, ccsPluginGetName (plugin),
 					 keyName, &value))
 		    {
-			ccsSetMatch (setting, value, TRUE);
-			free (value);
+		    	ccsSetMatch (setting, value, TRUE);
+		    	free (value);
 		    }
 		}
 		break;
