@@ -4574,21 +4574,17 @@ ccsProcessSettingMinus (IniDictionary      *dict,
     return FALSE;
 }
 
-Bool
-ccsProcessUpgrade (CCSContext *context,
-		   CCSSettingsUpgrade *upgrade)
+void
+ccsCollectSettingsToUpgrade (CCSContext         *context,
+			     IniDictionary      *dict,
+			     CCSSettingsUpgrade *upgrade)
 {
-    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
-
-    IniDictionary      *dict = ccsIniOpen (upgrade->file);
-    CCSPluginList      pl = cPrivate->plugins;
-    CCSSettingList     sl;
-
-    ccsSetProfile (context, upgrade->profile);
+    CCSPluginList      pl = ccsContextGetPlugins (context);
 
     while (pl)
     {
-	sl = ccsGetPluginSettings ((CCSPlugin *) pl->data);
+	CCSPlugin	   *plugin = (CCSPlugin *) pl->data;
+	CCSSettingList     sl = ccsGetPluginSettings (plugin);
 
 	while (sl)
 	{
@@ -4602,9 +4598,13 @@ ccsProcessUpgrade (CCSContext *context,
 
 	pl = pl->next;
     }
-    
-    sl = upgrade->clearValueSettings;
-	
+}
+
+void
+ccsUpgradeClearValues (CCSSettingsUpgrade *upgrade)
+{
+    CCSSettingList sl = upgrade->clearValueSettings;
+
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
@@ -4649,7 +4649,7 @@ ccsProcessUpgrade (CCSContext *context,
 
 			olv = olv->next;
 		    }
-		    
+
 		    if (olv)
 		    {
 			count++;
@@ -4667,18 +4667,22 @@ ccsProcessUpgrade (CCSContext *context,
 
 	sl = sl->next;
     }
+}
 
-    sl = upgrade->addValueSettings;
-    
+void
+ccsUpgradeAddValues (CCSSettingsUpgrade *upgrade)
+{
+    CCSSettingList sl = upgrade->addValueSettings;
+
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
 	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
 	const char *name = ccsSettingGetName (tempSetting);
-	
+
 	setting = ccsFindSetting (plugin, name);
-	
+
 	if (setting)
 	{
 	    ccsDebug ("Overriding value %s", ccsSettingGetName ((CCSSetting *) sl->data));
@@ -4690,7 +4694,7 @@ ccsProcessUpgrade (CCSContext *context,
 		/* Try and apppend any new items to the list */
 		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
 		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
-		
+
 		while (l)
 		{
 		    CCSSettingValueList olv = nl;
@@ -4705,7 +4709,7 @@ ccsProcessUpgrade (CCSContext *context,
 
 			olv = olv->next;
 		    }
-		    
+
 		    if (!olv)
 		    {
 			count++;
@@ -4726,9 +4730,13 @@ ccsProcessUpgrade (CCSContext *context,
 
 	sl = sl->next;
     }
+}
 
-    sl = upgrade->replaceFromValueSettings;
-    
+static void
+ccsUpgradeReplaceValues (CCSSettingsUpgrade *upgrade)
+{
+    CCSSettingList sl = upgrade->replaceFromValueSettings;
+
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
@@ -4737,24 +4745,24 @@ ccsProcessUpgrade (CCSContext *context,
 	const char *name = ccsSettingGetName (tempSetting);
 
 	setting = ccsFindSetting (plugin, name);
-	
+
 	if (setting)
 	{
 	    if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
 	    {
 		CCSSettingList rl = upgrade->replaceToValueSettings;
-		
+
 		while (rl)
 		{
 		    CCSSetting *rsetting = (CCSSetting *) rl->data;
-		    
+
 		    if (strcmp (ccsSettingGetName (rsetting), ccsSettingGetName (setting)) == 0)
 		    {
 			ccsDebug ("Matched and replaced %s", ccsSettingGetName (setting));
 			ccsSetValue (setting, ccsSettingGetValue (rsetting), TRUE);
 			break;
 		    }
-		    
+
 		    rl = rl->next;
 		}
 	    }
@@ -4766,6 +4774,20 @@ ccsProcessUpgrade (CCSContext *context,
 
 	sl = sl->next;
     }
+}
+
+Bool
+ccsProcessUpgrade (CCSContext *context,
+		   CCSSettingsUpgrade *upgrade)
+{
+    IniDictionary      *dict = ccsIniOpen (upgrade->file);
+
+    ccsSetProfile (context, upgrade->profile);
+
+    ccsCollectSettingsToUpgrade (context, dict, upgrade);
+    ccsUpgradeClearValues (upgrade);
+    ccsUpgradeAddValues (upgrade);
+    ccsUpgradeReplaceValues (upgrade);
     
     upgrade->clearValueSettings = ccsSettingListFree (upgrade->clearValueSettings, TRUE);
     upgrade->addValueSettings = ccsSettingListFree (upgrade->addValueSettings, TRUE);
