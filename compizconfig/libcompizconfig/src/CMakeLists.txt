@@ -73,6 +73,7 @@ target_link_libraries (
     compizconfig
     ${LIBCOMPIZCONFIG_LIBRARIES}
     m
+    dl
     ccs_settings_upgrade_internal
 )
 
