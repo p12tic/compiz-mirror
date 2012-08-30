@@ -1080,6 +1080,9 @@ CCSBackendInfoList ccsGetExistingBackends (CCSContext *);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
 
+Bool
+ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs);
+
 COMPIZCONFIG_END_DECLS
 
 #endif

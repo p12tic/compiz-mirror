@@ -22,6 +22,7 @@
  */
 
 #include "ccs_settings_upgrade_internal.h"
+#include <ccs.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -94,7 +95,7 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
     while (tok)
     {
 	long int numTmp = 0;
-	char *nexttok = strchr (tok, '.');'
+	char *nexttok = strchr (tok, '.');
 	char *nextnexttok = NULL;
 	char *end = NULL;
 	char *bit = NULL;
@@ -171,4 +172,181 @@ ccsUpgradeNameFilter (const char *name)
 	return 1;
 
     return 0;
+}
+
+void
+ccsUpgradeClearValues (CCSSettingList clearSettings)
+{
+    CCSSettingList sl = clearSettings;
+
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
+
+	if (setting)
+	{
+	    if (ccsSettingGetType (setting) != TypeList)
+	    {
+		if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
+		{
+		    ccsDebug ("Resetting %s to default", ccsSettingGetName ((CCSSetting *) sl->data));
+		    ccsResetToDefault (setting, TRUE);
+		}
+		else
+		{
+		    ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
+		}
+	    }
+	    else
+	    {
+		unsigned int count = 0;
+		/* Try and remove any specified items from the list */
+		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
+		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
+
+		while (l)
+		{
+		    CCSSettingValueList olv = nl;
+
+		    while (olv)
+		    {
+			CCSSettingValue *lv = (CCSSettingValue *) l->data;
+			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
+
+			if (ccsCheckValueEq (lv, olvv))
+			    break;
+
+			olv = olv->next;
+		    }
+
+		    if (olv)
+		    {
+			count++;
+			nl = ccsSettingValueListRemove (nl, olv->data, TRUE);
+		    }
+
+		    l = l->next;
+		}
+
+		ccsDebug ("Removed %i items from %s", count, ccsSettingGetName (setting));
+		ccsSetList (setting, nl, TRUE);
+
+	    }
+	}
+
+	sl = sl->next;
+    }
+}
+
+void
+ccsUpgradeAddValues (CCSSettingList addSettings)
+{
+    CCSSettingList sl = addSettings;
+
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
+
+	if (setting)
+	{
+	    ccsDebug ("Overriding value %s", ccsSettingGetName ((CCSSetting *) sl->data));
+	    if (ccsSettingGetType (setting) != TypeList)
+		ccsSetValue (setting, ccsSettingGetValue (tempSetting), TRUE);
+	    else
+	    {
+		unsigned int count = 0;
+		/* Try and apppend any new items to the list */
+		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
+		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
+
+		while (l)
+		{
+		    CCSSettingValueList olv = nl;
+
+		    while (olv)
+		    {
+			CCSSettingValue *lv = (CCSSettingValue *) l->data;
+			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
+
+			if (ccsCheckValueEq (lv, olvv))
+			    break;
+
+			olv = olv->next;
+		    }
+
+		    if (!olv)
+		    {
+			count++;
+			nl = ccsSettingValueListAppend (nl, l->data);
+		    }
+
+		    l = l->next;
+		}
+
+		ccsDebug ("Appending %i items to %s", count, ccsSettingGetName (setting));
+		ccsSetList (setting, nl, TRUE);
+	    }
+	}
+	else
+	{
+	    ccsDebug ("Value %s not found!", ccsSettingGetName ((CCSSetting *) sl->data));
+	}
+
+	sl = sl->next;
+    }
+}
+
+void
+ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
+			 CCSSettingList replaceToValueSettings)
+{
+    CCSSettingList sl = replaceFromValueSettings;
+
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
+
+	if (setting)
+	{
+	    if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
+	    {
+		CCSSettingList rl = replaceToValueSettings;
+
+		while (rl)
+		{
+		    CCSSetting *rsetting = (CCSSetting *) rl->data;
+
+		    if (strcmp (ccsSettingGetName (rsetting), ccsSettingGetName (setting)) == 0)
+		    {
+			ccsDebug ("Matched and replaced %s", ccsSettingGetName (setting));
+			ccsSetValue (setting, ccsSettingGetValue (rsetting), TRUE);
+			break;
+		    }
+
+		    rl = rl->next;
+		}
+	    }
+	    else
+	    {
+		ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
+	    }
+	}
+
+	sl = sl->next;
+    }
 }
