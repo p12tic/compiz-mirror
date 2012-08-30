@@ -35,7 +35,7 @@ Output::Output (const CompRect &rect) :
 }
 
 void
-Output::addToBottom (WindowRegion *win)
+Output::addWindowToBottom (Window *win)
 {
     const CompRegion &reg (win->region ());
 
@@ -48,7 +48,7 @@ Output::addToBottom (WindowRegion *win)
     untouched -= reg;
 }
 
-WindowRegion *
+Output::Window *
 Output::fullscreenWindow () const
 {
     return fullscreen;

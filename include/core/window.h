@@ -274,26 +274,13 @@ class WindowInterface : public WrapableInterface<CompWindow, WindowInterface>
 	virtual bool focused ();
 };
 
-namespace compiz {
-
-class WindowRegion
-{
-public:
-    virtual ~WindowRegion () {}
-    virtual unsigned int type () const = 0;
-    virtual const CompRegion &region () const = 0;
-};
-
-} // namespace compiz
-
 /**
  * An Window object that wraps an X window. This handles snychronization of
  * window state, geometry, etc. between Compiz and the X server.
  */
 class CompWindow :
     public WrapableHandler<WindowInterface, 20>,
-    public PluginClassStorage,
-    public compiz::WindowRegion
+    public PluginClassStorage
 {
     public:
 
@@ -367,7 +354,7 @@ class CompWindow :
 
 	unsigned int & wmType ();
 
-	unsigned int type () const;
+	unsigned int type ();
 
 	unsigned int & state ();
 

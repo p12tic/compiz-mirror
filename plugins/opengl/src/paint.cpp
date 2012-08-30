@@ -340,11 +340,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
 		/* unredirect top most fullscreen windows. */
 		if (unredirectFS && !(mask & PAINT_SCREEN_TRANSFORMED_MASK))
-		    fs.addToBottom (w);
+		    fs.addWindowToBottom (w);
 	    }
 	}
 
-	fullscreenWindow = static_cast<CompWindow*>(fs.fullscreenWindow ());
+	fullscreenWindow = fs.fullscreenWindow ();
     }
 
     if (fullscreenWindow)

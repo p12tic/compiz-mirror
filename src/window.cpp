@@ -5331,7 +5331,7 @@ CompWindow::id ()
 }
 
 unsigned int
-CompWindow::type () const
+CompWindow::type ()
 {
     return priv->type;
 }
