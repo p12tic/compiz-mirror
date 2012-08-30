@@ -4913,7 +4913,7 @@ ccsShouldSkipUpgrade (const char *upgrade,
 {
     char		   *matched = strstr (skipBuffer, upgrade);
 
-    if (matched)
+    if (matched != NULL)
     {
 	ccsDebug ("Skipping upgrade %s", upgrade);
 	return TRUE;
@@ -4957,6 +4957,7 @@ ccsApplyUnappliedUpgrades (CCSContext    *context,
 
     for (i = 0; i < nFile; i++)
     {
+        CCSSettingsUpgrade *upgrade = NULL;
 	const char *upgradeName = nameList[i]->d_name;
 
 	if (ccsShouldSkipUpgrade (upgradeName,
@@ -5012,7 +5013,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     ccsTextFileUnref (completedUpgrades);
     free (cuBuffer);
 
-    if (nameList)
+    if (nameList != NULL)
 	free (nameList);
 
     return TRUE;
@@ -5068,7 +5069,7 @@ ccsImportFromFileDefault (CCSContext *context,
 		    Bool value;
 
 		    if (ccsIniGetBool (importFile, ccsPluginGetName (plugin),
-				       keyName, &value))
+ 				       keyName, &value))
 		    {
 			ccsSetBool (setting, value, TRUE);
 		    }
@@ -5099,8 +5100,8 @@ ccsImportFromFileDefault (CCSContext *context,
 		    if (ccsIniGetString (importFile, ccsPluginGetName (plugin),
 					 keyName, &value))
 		    {
-			ccsSetString (setting, value, TRUE);
-			free (value);
+		    	ccsSetString (setting, value, TRUE);
+		    	free (value);
 		    }
 		}
 		break;
@@ -5155,8 +5156,8 @@ ccsImportFromFileDefault (CCSContext *context,
 		    if (ccsIniGetString (importFile, ccsPluginGetName (plugin),
 					 keyName, &value))
 		    {
-			ccsSetMatch (setting, value, TRUE);
-			free (value);
+		    	ccsSetMatch (setting, value, TRUE);
+		    	free (value);
 		    }
 		}
 		break;

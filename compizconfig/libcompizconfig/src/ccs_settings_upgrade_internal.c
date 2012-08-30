@@ -1,8 +1,7 @@
 /*
  * Compiz configuration system library
  *
- * Copyright (C) 2007  Dennis Kasprzyk <onestone@opencompositing.org>
- * Copyright (C) 2007  Danny Baumann <maniac@opencompositing.org>
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Authored By:
+ * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
 #include "ccs_settings_upgrade_internal.h"
@@ -92,22 +94,22 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
     while (tok)
     {
 	long int numTmp = 0;
-	char *nexttok = strchr (tok, '.');
+	char *nexttok = strchr (tok, '.');'
+	char *nextnexttok = NULL;
+	char *end = NULL;
+	char *bit = NULL;
 
 	if (!nexttok)
 	    return FALSE;
 
 	nexttok++;
-
-	char *nextnexttok = strchr (nexttok, '.');
+	nextnexttok = strchr (nexttok, '.');
 
 	if (!nextnexttok)
 	    return FALSE;
 
 	nextnexttok++;
-
-	char *end;
-	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
+	bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
 
 	/* FIXME: That means that the number can't be a zero */
 	errno = 0;
@@ -157,12 +159,13 @@ ccsUpgradeGetDomainNumAndProfile (const char   *name,
 int
 ccsUpgradeNameFilter (const char *name)
 {
+    Bool result = FALSE;
     int length = strlen (name);
 
     if (length < 7)
 	return 0;
 
-    Bool result = ccsDetokenizeUpgradeDomainAndExecuteUserFunc (name, isUpgrade, NULL);
+    result = ccsDetokenizeUpgradeDomainAndExecuteUserFunc (name, isUpgrade, NULL);
 
     if (result)
 	return 1;
