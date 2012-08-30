@@ -4600,10 +4600,10 @@ ccsCollectSettingsToUpgrade (CCSContext         *context,
     }
 }
 
-void
-ccsUpgradeClearValues (CCSSettingsUpgrade *upgrade)
+static void
+ccsUpgradeClearValues (CCSSettingList clearSettings)
 {
-    CCSSettingList sl = upgrade->clearValueSettings;
+    CCSSettingList sl = clearSettings;
 
     while (sl)
     {
@@ -4669,10 +4669,10 @@ ccsUpgradeClearValues (CCSSettingsUpgrade *upgrade)
     }
 }
 
-void
-ccsUpgradeAddValues (CCSSettingsUpgrade *upgrade)
+static void
+ccsUpgradeAddValues (CCSSettingList addSettings)
 {
-    CCSSettingList sl = upgrade->addValueSettings;
+    CCSSettingList sl = addSettings;
 
     while (sl)
     {
@@ -4733,9 +4733,10 @@ ccsUpgradeAddValues (CCSSettingsUpgrade *upgrade)
 }
 
 static void
-ccsUpgradeReplaceValues (CCSSettingsUpgrade *upgrade)
+ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
+			 CCSSettingList replaceToValueSettings)
 {
-    CCSSettingList sl = upgrade->replaceFromValueSettings;
+    CCSSettingList sl = replaceFromValueSettings;
 
     while (sl)
     {
@@ -4750,7 +4751,7 @@ ccsUpgradeReplaceValues (CCSSettingsUpgrade *upgrade)
 	{
 	    if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
 	    {
-		CCSSettingList rl = upgrade->replaceToValueSettings;
+		CCSSettingList rl = replaceToValueSettings;
 
 		while (rl)
 		{
@@ -4785,9 +4786,10 @@ ccsProcessUpgrade (CCSContext *context,
     ccsSetProfile (context, upgrade->profile);
 
     ccsCollectSettingsToUpgrade (context, dict, upgrade);
-    ccsUpgradeClearValues (upgrade);
-    ccsUpgradeAddValues (upgrade);
-    ccsUpgradeReplaceValues (upgrade);
+    ccsUpgradeClearValues (upgrade->clearValueSettings);
+    ccsUpgradeAddValues (upgrade->addValueSettings);
+    ccsUpgradeReplaceValues (upgrade->replaceFromValueSettings,
+			     upgrade->replaceToValueSettings);
     
     upgrade->clearValueSettings = ccsSettingListFree (upgrade->clearValueSettings, TRUE);
     upgrade->addValueSettings = ccsSettingListFree (upgrade->addValueSettings, TRUE);
