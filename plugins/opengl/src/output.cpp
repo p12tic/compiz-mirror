@@ -35,20 +35,15 @@ Output::Output (const CompRect &rect) :
 }
 
 void
-Output::addWindowToBottom (Window *win)
+Output::addToBottom (const CompRegion &region, bool allowedOnTop, WindowId id)
 {
-    const CompRegion &reg (win->region ());
+    if (!fullscreen && allowedOnTop && region == untouched)
+	fullscreen = id;
 
-    if (!fullscreen &&
-        !(win->type () & NO_FOCUS_MASK) &&  // Skip desktop etc
-        reg == untouched)
-    {
-	fullscreen = win;
-    }
-    untouched -= reg;
+    untouched -= region;
 }
 
-Output::Window *
+Output::WindowId
 Output::fullscreenWindow () const
 {
     return fullscreen;
