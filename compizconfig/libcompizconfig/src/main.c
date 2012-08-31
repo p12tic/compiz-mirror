@@ -624,7 +624,7 @@ ccsFindSetting (CCSPlugin *plugin, const char *name)
 }
 
 Bool
-ccsPluginIsActiveDefault (CCSContext * context, char *name)
+ccsPluginIsActiveDefault (CCSContext * context, const char *name)
 {
     CCSPlugin *plugin;
 
@@ -638,7 +638,7 @@ ccsPluginIsActiveDefault (CCSContext * context, char *name)
 }
 
 Bool
-ccsPluginIsActive (CCSContext *context, char *name)
+ccsPluginIsActive (CCSContext *context, const char *name)
 {
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextPluginIsActive) (context, name);
 }
@@ -5023,7 +5023,7 @@ ccsImportFromFile (CCSContext *context, const char *fileName, Bool overwriteNonD
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextImportFromFile) (context, fileName, overwriteNonDefault);
 }
 
-char *
+const char *
 ccsPluginGetNameDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
@@ -5031,28 +5031,28 @@ ccsPluginGetNameDefault (CCSPlugin *plugin)
     return pPrivate->name;
 }
 
-char * ccsPluginGetShortDescDefault (CCSPlugin *plugin)
+const char * ccsPluginGetShortDescDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->shortDesc;
 }
 
-char * ccsPluginGetLongDescDefault (CCSPlugin *plugin)
+const char * ccsPluginGetLongDescDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->longDesc;
 }
 
-char * ccsPluginGetHintsDefault (CCSPlugin *plugin)
+const char * ccsPluginGetHintsDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->hints;
 }
 
-char * ccsPluginGetCategoryDefault (CCSPlugin *plugin)
+const char * ccsPluginGetCategoryDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
@@ -5128,27 +5128,27 @@ CCSContext * ccsPluginGetContextDefault (CCSPlugin *plugin)
 }
 
 /* CCSPlugin accessor functions */
-char * ccsPluginGetName (CCSPlugin *plugin)
+const char * ccsPluginGetName (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetName) (plugin);
 }
 
-char * ccsPluginGetShortDesc (CCSPlugin *plugin)
+const char * ccsPluginGetShortDesc (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetShortDesc) (plugin);
 }
 
-char * ccsPluginGetLongDesc (CCSPlugin *plugin)
+const char * ccsPluginGetLongDesc (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetLongDesc) (plugin);
 }
 
-char * ccsPluginGetHints (CCSPlugin *plugin)
+const char * ccsPluginGetHints (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetHints) (plugin);
 }
 
-char * ccsPluginGetCategory (CCSPlugin *plugin)
+const char * ccsPluginGetCategory (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetCategory) (plugin);
 }
@@ -5228,18 +5228,18 @@ CCSGroupList ccsGetPluginGroups (CCSPlugin *plugin)
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetPluginGroups) (plugin);
 }
 
-char * ccsSettingGetName (CCSSetting *setting)
+const char * ccsSettingGetName (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetName) (setting);
 }
 
-char * ccsSettingGetShortDesc (CCSSetting *setting)
+const char * ccsSettingGetShortDesc (CCSSetting *setting)
 
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetShortDesc) (setting);
 }
 
-char * ccsSettingGetLongDesc (CCSSetting *setting)
+const char * ccsSettingGetLongDesc (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetLongDesc) (setting);
 }
@@ -5254,17 +5254,17 @@ CCSSettingInfo * ccsSettingGetInfo (CCSSetting *setting)
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetInfo) (setting);
 }
 
-char * ccsSettingGetGroup (CCSSetting *setting)
+const char * ccsSettingGetGroup (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetGroup) (setting);
 }
 
-char * ccsSettingGetSubGroup (CCSSetting *setting)
+const char * ccsSettingGetSubGroup (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetSubGroup) (setting);
 }
 
-char * ccsSettingGetHints (CCSSetting *setting)
+const char * ccsSettingGetHints (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetHints) (setting);
 }
@@ -5385,7 +5385,7 @@ Bool ccsSettingGetIsReadableByBackendDefault (CCSSetting *setting)
 }
 
 /* Interface for CCSSetting */
-char *
+const char *
 ccsSettingGetNameDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
@@ -5393,14 +5393,14 @@ ccsSettingGetNameDefault (CCSSetting *setting)
     return sPrivate->name;
 }
 
-char * ccsSettingGetShortDescDefault (CCSSetting *setting)
+const char * ccsSettingGetShortDescDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->shortDesc;
 }
 
-char * ccsSettingGetLongDescDefault (CCSSetting *setting)
+const char * ccsSettingGetLongDescDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
@@ -5421,21 +5421,21 @@ CCSSettingInfo * ccsSettingGetInfoDefault (CCSSetting *setting)
     return &sPrivate->info;
 }
 
-char * ccsSettingGetGroupDefault (CCSSetting *setting)
+const char * ccsSettingGetGroupDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->group;
 }
 
-char * ccsSettingGetSubGroupDefault (CCSSetting *setting)
+const char * ccsSettingGetSubGroupDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->subGroup;
 }
 
-char * ccsSettingGetHintsDefault (CCSSetting *setting)
+const char * ccsSettingGetHintsDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 

@@ -123,6 +123,9 @@ target_link_libraries (compizconfig_test_ccs_upgrade_internal
 		       ${CMAKE_THREAD_LIBS_INIT}
                        ccs_settings_upgrade_internal
                        compizconfig
+                       compizconfig_ccs_context_mock
+                       compizconfig_ccs_plugin_mock
+                       compizconfig_ccs_setting_mock
 )
 
 compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
