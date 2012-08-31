@@ -116,7 +116,8 @@ function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
 		  PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		  SET)
 
-    if (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+    if (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET AND
+	GLIB_COMPILE_SCHEMAS)
 
 	add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
 			   COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
@@ -131,7 +132,8 @@ function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
 		      PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		      TRUE)
 
-    endif (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+    endif (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET AND
+	   GLIB_COMPILE_SCHEMAS)
 
     add_dependencies (compiz_gsettings_compile_local
 		      ${_target_name_for_schema})
