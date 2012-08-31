@@ -243,7 +243,7 @@ void gwd_settings_notified_impl_init (GWDSettingsNotifiedImpl *self)
 GWDSettingsNotified *
 gwd_settings_notified_impl_new (WnckScreen *screen)
 {
-    static const guint GWD_SETTINGS_NOTIFIED_IMPL_N_CONSTRUCTION_PROPERTIES = 1;
+    static const guint gwd_settings_notified_impl_n_construction_properties = 1;
     GValue wnck_screen_value = G_VALUE_INIT;
 
     g_value_init (&wnck_screen_value, G_TYPE_OBJECT);
@@ -255,7 +255,7 @@ gwd_settings_notified_impl_new (WnckScreen *screen)
     };
 
     GWDSettingsNotified *storage = GWD_SETTINGS_NOTIFIED_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_NOTIFIED,
-										   GWD_SETTINGS_NOTIFIED_IMPL_N_CONSTRUCTION_PROPERTIES,
+										   gwd_settings_notified_impl_n_construction_properties,
 										   params));
 
     g_value_unset (&wnck_screen_value);

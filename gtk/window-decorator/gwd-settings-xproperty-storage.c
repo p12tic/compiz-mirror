@@ -245,7 +245,7 @@ gwd_settings_storage_xprop_new (Display *dpy,
     g_value_set_int (&root_window_value, root);
     g_value_set_pointer (&writable_value, writable);
 
-    static const guint GWD_SETTINGS_XPROP_STORAGE_N_CONSTRUCTION_PARAMS = 3;
+    static const guint gwd_settings_xprop_storage_n_construction_params = 3;
 
     GParameter param[] =
     {
@@ -255,7 +255,7 @@ gwd_settings_storage_xprop_new (Display *dpy,
     };
 
     GWDSettingsXPropertyStorage *storage = GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_XPROP,
-												    GWD_SETTINGS_XPROP_STORAGE_N_CONSTRUCTION_PARAMS,
+												    gwd_settings_xprop_storage_n_construction_params,
 												    param));
     return storage;
 }

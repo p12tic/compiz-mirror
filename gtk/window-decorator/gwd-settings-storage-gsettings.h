@@ -57,9 +57,6 @@ gwd_connect_org_gnome_desktop_wm_preferences_settings (GSettings	  *settings,
 GSettings *
 gwd_get_org_gnome_desktop_wm_preferences_settings ();
 
-
-extern const guint GWD_SETTINGS_STORAGE_GSETTINGS_N_CONSTRUCTION_PARAMS;
-
 extern const gchar * ORG_COMPIZ_GWD;
 extern const gchar * ORG_GNOME_MUTTER;
 extern const gchar * ORG_GNOME_DESKTOP_WM_PREFERENCES;

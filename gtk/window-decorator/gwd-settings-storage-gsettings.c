@@ -360,6 +360,8 @@ gwd_settings_storage_gsettings_new (GSettings *desktop,
 				    GSettings *gwd,
 				    GWDSettingsWritable *writable)
 {
+    static const guint gwd_settings_storage_gsettings_n_construction_params;
+
     GValue desktop_value = G_VALUE_INIT;
     GValue mutter_value = G_VALUE_INIT;
     GValue gwd_value = G_VALUE_INIT;
@@ -386,7 +388,7 @@ gwd_settings_storage_gsettings_new (GSettings *desktop,
     };
 
     GWDSettingsStorage *storage = GWD_SETTINGS_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_GSETTINGS,
-										 GWD_SETTINGS_STORAGE_GSETTINGS_N_CONSTRUCTION_PARAMS,
+										 gwd_settings_storage_gsettings_n_construction_params,
 										 param));
 
     g_value_unset (&desktop_value);
