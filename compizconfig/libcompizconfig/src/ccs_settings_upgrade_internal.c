@@ -97,7 +97,6 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
 	long int numTmp = 0;
 	char *nexttok = strchr (tok, '.');
 	char *nextnexttok = NULL;
-	char *end = NULL;
 	char *bit = NULL;
 
 	if (!nexttok)
@@ -113,11 +112,7 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
 	bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
 
 	/* FIXME: That means that the number can't be a zero */
-	errno = 0;
-	numTmp = strtol (bit, &end, 10);
-
-	if (!(errno != 0 && numTmp == 0) &&
-	    end != bit)
+	if (sscanf (bit, "%ld", &numTmp) == 1)
 	{
 	    if ((*func) (name,
 			 length,
@@ -129,7 +124,7 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
 		success = TRUE;
 	}
 	else if (errno)
-	    perror ("strtol");
+	    perror ("sscanf");
 
 	tok = nexttok;
 	free (bit);
