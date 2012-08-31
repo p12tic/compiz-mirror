@@ -113,6 +113,7 @@ function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
 		  SET)
 
     if (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+	find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
 
 	add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
 			   COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
