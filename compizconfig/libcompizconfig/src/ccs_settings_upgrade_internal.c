@@ -45,13 +45,10 @@ isUpgrade (const char *name,
 	   int        foundNumber,
 	   void       *userData)
 {
-    static const char         *UPGRADE = "upgrade";
-    static const unsigned int UPGRADE_STR_LEN = 7;
+    static const char         *upgrade = "upgrade";
+    static const unsigned int upgrade_str_len = 7;
 
-    if (strncmp (tokenThree, UPGRADE, UPGRADE_STR_LEN))
-	return FALSE;
-
-    return TRUE;
+    return strncmp (tokenThree, upgrade, upgrade_str_len);
 }
 
 typedef struct _FillDomainNumAndProfileData
@@ -122,8 +119,6 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
 			 userData))
 		success = TRUE;
 	}
-	else if (errno)
-	    perror ("sscanf");
 
 	tok = nexttok;
 	free (bit);

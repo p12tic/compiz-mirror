@@ -34,7 +34,7 @@ namespace
 MATCHER(BoolTrue, "Bool True") { if (arg) return true; else return false; }
 MATCHER(BoolFalse, "Bool False") { if (!arg) return true; else return false; }
 
-TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
+TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
 {
     char *profileName = NULL;
     char *domainName = NULL;
@@ -54,7 +54,7 @@ TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
     EXPECT_EQ (num, CCS_SETTINGS_UPGRADE_TEST_CORRECT_NUM);
 }
 
-TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfInvalid)
+TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfInvalid)
 {
     char *profileName = NULL;
     char *domainName = NULL;
@@ -70,12 +70,12 @@ TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIf
     EXPECT_THAT (domainName, IsNull ());
 }
 
-TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnTrueForUpgradeFileName)
+TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnTrueForUpgradeFileName)
 {
     EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME.c_str ()), BoolTrue ());
 }
 
-TEST_F (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnFalseForNoUpgradeFileName)
+TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnFalseForNoUpgradeFileName)
 {
     EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME.c_str ()), BoolTrue ());
 }
