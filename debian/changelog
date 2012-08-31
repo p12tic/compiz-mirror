@@ -1,4 +1,8 @@
-compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8.0-0ubuntu1) quantal-proposed; urgency=low
+
+  * debian/control, debian/rules: 
+    - enable gles on armel and armhf
+    - use dh-translations rather than custom code
 
   [ Sam Spilsbury ]
   * Enable OpenGL ES building 
@@ -16,13 +20,8 @@ compiz (1:0.9.8.0-0ubuntu1) UNRELEASED; urgency=low
     - Remove, obsoleted by the upstream GLES work 
   * Disable plugins that don't work on pure GLES on armhf/armel:
     - bench, firepaint, mblur, showmouse, splash, showrepaint, td, widget
-  
-  [ Sebastien Bacher ]
-  * debian/control, debian/rules: 
-    - enable gles on armel and armhf
-    - use dh-translations rather than custom code
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 24 Aug 2012 15:12:35 +0300
+ -- Sebastien Bacher <seb128@ubuntu.com>  Fri, 31 Aug 2012 22:59:50 +0200
 
 compiz (1:0.9.8+bzr3319-0ubuntu3) quantal; urgency=low
 
