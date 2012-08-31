@@ -15,6 +15,7 @@
 #include "gtest_shared_autodestroy.h"
 
 using ::testing::IsNull;
+using ::testing::_;
 
 class CCSSettingsUpgradeInternalTest :
     public ::testing::Test
@@ -146,5 +147,16 @@ class CCSSettingsUpgradeTestWithMockContext :
 
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
 {
+    MockedSetting settingOne (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+					    TypeInt));
+    MockedSetting settingTwo (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+					    TypeInt));
 
+    EXPECT_CALL (Mock (settingOne), resetToDefault (BoolTrue ()));
+    EXPECT_CALL (Mock (settingOne), resetToDefault (_)).Times (0);
+
+    CCSSettingList list = ccsSettingListAppend (NULL, Real (settingOne));
+    list = ccsSettingListAppend (list, Real (settingTwo));
+
+    ccsUpgradeClearValues (list);
 }
