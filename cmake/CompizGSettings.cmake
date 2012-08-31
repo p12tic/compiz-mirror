@@ -63,6 +63,7 @@ function (compiz_install_gsettings_schema _src _dst)
     find_program (PKG_CONFIG_TOOL pkg-config)
     find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
     mark_as_advanced (FORCE PKG_CONFIG_TOOL)
+    mark_as_advanced (GLIB_COMPILE_SCHEMAS)
 
     # find out where schemas need to go if we are installing them systemwide
     execute_process (COMMAND ${PKG_CONFIG_TOOL} glib-2.0 --variable prefix  OUTPUT_VARIABLE GSETTINGS_GLIB_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -106,6 +107,9 @@ function (compiz_install_gsettings_schema _src _dst)
 endfunction ()
 
 function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
+
+    find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
+    mark_as_advanced (GLIB_COMPILE_SCHEMAS)
 
     get_property (GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		  GLOBAL
