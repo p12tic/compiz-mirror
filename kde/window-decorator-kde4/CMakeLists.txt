@@ -13,6 +13,8 @@ if (USE_KDE4)
 	include(FindPkgConfig)
 	include(MacroLibrary)
 
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+
         add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 
 	qt4_add_dbus_adaptor (kwd4_SRCS org.kde.KWin.xml decorator.h KWD::Decorator kwinadaptor)
