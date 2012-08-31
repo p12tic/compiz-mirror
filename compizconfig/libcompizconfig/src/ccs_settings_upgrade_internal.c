@@ -110,7 +110,6 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
 	nextnexttok++;
 	bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
 
-	/* FIXME: That means that the number can't be a zero */
 	if (sscanf (bit, "%ld", &numTmp) == 1)
 	{
 	    if ((*func) (name,
