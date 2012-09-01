@@ -2457,6 +2457,7 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
 CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
+    CCSSettingInfo      *info = ccsSettingGetInfo (setting);
     CCSSettingValueList l2 = NULL;
 
     while (l1)
@@ -2469,7 +2470,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 	value->parent = setting;
 	value->isListChild = TRUE;
 
-	switch (ccsSettingGetInfo (setting)->forList.listType)
+	switch (info->forList.listType)
 	{
 	case TypeInt:
 	    value->value.asInt = l1->data->value.asInt;

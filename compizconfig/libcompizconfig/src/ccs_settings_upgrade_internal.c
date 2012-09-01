@@ -48,7 +48,7 @@ isUpgrade (const char *name,
     static const char         *upgrade = "upgrade";
     static const unsigned int upgrade_str_len = 7;
 
-    return strncmp (tokenThree, upgrade, upgrade_str_len);
+    return strncmp (tokenThree, upgrade, upgrade_str_len) == 0;
 }
 
 typedef struct _FillDomainNumAndProfileData

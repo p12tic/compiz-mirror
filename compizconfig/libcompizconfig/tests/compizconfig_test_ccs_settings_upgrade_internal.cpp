@@ -6,6 +6,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
+#include <ccs.h>
+
 #include "compizconfig_ccs_context_mock.h"
 #include "compizconfig_ccs_plugin_mock.h"
 #include "compizconfig_ccs_setting_mock.h"
@@ -15,6 +17,7 @@
 #include "gtest_shared_autodestroy.h"
 
 using ::testing::IsNull;
+using ::testing::Eq;
 using ::testing::_;
 
 class CCSSettingsUpgradeInternalTest :
@@ -77,7 +80,7 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnTrueForUpgradeFileN
 
 TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnFalseForNoUpgradeFileName)
 {
-    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME.c_str ()), BoolTrue ());
+    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME.c_str ()), BoolFalse ());
 }
 
 namespace
@@ -98,6 +101,12 @@ class CCSSettingsUpgradeTestWithMockContext :
 {
     public:
 
+	typedef enum _AddMode
+	{
+	    DoNotAddSettingToPlugin,
+	    AddSettingToPlugin
+	} AddMode;
+
 	virtual void SetUp ()
 	{
 	    context = AutoDestroy <CCSContext> (ccsMockContextNew (),
@@ -105,22 +114,47 @@ class CCSSettingsUpgradeTestWithMockContext :
 	    plugin = AutoDestroy <CCSPlugin> (ccsMockPluginNew (),
 					      ccsFreeMockPlugin);
 
-	    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin.get ()));
-
-	    ON_CALL (*gmockPlugin, getName ())
+	    ON_CALL (MockPlugin (), getName ())
 		    .WillByDefault (
 			Return (
+
 			    CCS_SETTINGS_UPGRADE_TEST_MOCK_PLUGIN_NAME.c_str ()));
 
-	    ON_CALL (*gmockPlugin, getContext ())
+	    ON_CALL (MockPlugin (), getContext ())
 		    .WillByDefault (
 			Return (
 			    context.get ()));
 	}
 
+	CCSPluginGMock & MockPlugin ()
+	{
+	    return *(reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin.get ())));
+	}
+
+	CCSContextGMock & MockContext ()
+	{
+	    return *(reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context.get ())));
+	}
+
+	void InitializeValueCommon (CCSSettingValue &value,
+				    CCSSetting      *setting)
+	{
+	    value.parent = setting;
+	    value.refCount = 1;
+	}
+
+	void InitializeValueForSetting (CCSSettingValue &value,
+					CCSSetting      *setting)
+	{
+	    InitializeValueCommon (value, setting);
+	    value.isListChild = FALSE;
+	}
+
+
 	MockedSetting
 	SpawnSetting (const std::string &name,
-		      CCSSettingType    type)
+		      CCSSettingType    type,
+		      AddMode		addMode = AddSettingToPlugin)
 	{
 	    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
 						    ccsSettingUnref);
@@ -136,6 +170,19 @@ class CCSSettingsUpgradeTestWithMockContext :
 			Return (
 			    type));
 
+	    ON_CALL (*gmockSetting, getParent ())
+		    .WillByDefault (
+			Return (
+			    plugin.get ()));
+
+	    if (addMode == AddSettingToPlugin)
+	    {
+		ON_CALL (MockPlugin (), findSetting (Eq (name.c_str ())))
+			.WillByDefault (
+			    Return (
+				setting.get ()));
+	    }
+
 	    return MockedSetting (setting, gmockSetting);
 	}
 
@@ -145,18 +192,127 @@ class CCSSettingsUpgradeTestWithMockContext :
 	boost::shared_ptr <CCSPlugin>  plugin;
 };
 
-TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoClearValuesSettingNotFound)
 {
     MockedSetting settingOne (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
 					    TypeInt));
-    MockedSetting settingTwo (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
-					    TypeInt));
 
-    EXPECT_CALL (Mock (settingOne), resetToDefault (BoolTrue ()));
-    EXPECT_CALL (Mock (settingOne), resetToDefault (_)).Times (0);
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)));
+    EXPECT_CALL (Mock (settingOne), getParent ());
+    EXPECT_CALL (Mock (settingOne), getName ());
 
     CCSSettingList list = ccsSettingListAppend (NULL, Real (settingOne));
-    list = ccsSettingListAppend (list, Real (settingTwo));
+
+    ccsUpgradeClearValues (list);
+}
+
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
+{
+    MockedSetting resetSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+							TypeInt));
+    MockedSetting settingToReset (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						TypeInt));
+    CCSSettingValue valueToReset;
+    CCSSettingValue valueResetIdentifier;
+
+    InitializeValueForSetting (valueToReset, Real (settingToReset));
+    InitializeValueForSetting (valueResetIdentifier, Real (resetSettingIdentifier));
+
+    valueToReset.value.asInt = 7;
+    valueResetIdentifier.value.asInt = 7;
+
+    CCSSettingList list = ccsSettingListAppend (NULL, Real (resetSettingIdentifier));
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
+	    .WillOnce (Return (Real (settingToReset)));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (resetSettingIdentifier), getName ());
+    EXPECT_CALL (Mock (settingToReset), getType ());
+    EXPECT_CALL (Mock (resetSettingIdentifier), getValue ()).WillOnce (Return (&valueResetIdentifier));
+    EXPECT_CALL (Mock (settingToReset), getValue ()).WillOnce (Return (&valueToReset));
+
+    EXPECT_CALL (Mock (settingToReset), resetToDefault (BoolTrue ()));
+
+    ccsUpgradeClearValues (list);
+}
+
+namespace
+{
+    boost::shared_ptr <CCSString>
+    newOwnedCCSStringFromStaticCharArray (const char *cStr)
+    {
+	CCSString		      *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+	boost::shared_ptr <CCSString> str (string,
+					   ccsStringUnref);
+
+	str->value = strdup (cStr);
+	ccsStringRef (str.get ());
+	return str;
+    }
+
+    void
+    ccsStringValueListShallowFree (CCSSettingValueList list)
+    {
+	ccsSettingValueListFree (list, FALSE);
+    }
+
+}
+
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValuesFromList)
+{
+    const std::string valueOne ("value_one");
+    const std::string valueTwo ("value_two");
+    const std::string valueThree ("value_three");
+    MockedSetting resetSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+					    TypeList));
+    MockedSetting settingToRemoveValuesFrom (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+					    TypeList));
+
+    boost::shared_ptr <CCSString> stringForRemovalOne (newOwnedCCSStringFromStaticCharArray (valueOne.c_str ()));
+    boost::shared_ptr <CCSString> stringForRemovalTwo (newOwnedCCSStringFromStaticCharArray (valueTwo.c_str ()));
+    boost::shared_ptr <CCSString> stringNotRemoved (newOwnedCCSStringFromStaticCharArray (valueThree.c_str ()));
+
+    CCSStringList settingStrList = ccsStringListAppend (NULL, stringForRemovalOne.get ());
+    settingStrList = ccsStringListAppend (settingStrList, stringForRemovalTwo.get ());
+    settingStrList = ccsStringListAppend (settingStrList, stringNotRemoved.get ());
+
+    boost::shared_ptr <_CCSSettingValueList> settingStrValueList (AutoDestroy (ccsGetValueListFromStringList (settingStrList,
+													      Real (settingToRemoveValuesFrom)),
+									       ccsStringValueListShallowFree));
+
+    CCSStringList removeStrList = ccsStringListAppend (NULL, stringForRemovalOne.get ());
+    settingStrList = ccsStringListAppend (removeStrList, stringForRemovalTwo.get ());
+
+    boost::shared_ptr <_CCSSettingValueList> removeStrValueList (AutoDestroy (ccsGetValueListFromStringList (removeStrList,
+													     Real (resetSettingIdentifier)),
+									      ccsStringValueListShallowFree));
+
+    CCSSettingList list = ccsSettingListAppend (NULL, Real (resetSettingIdentifier));
+
+    CCSSettingValue valueToHaveSubValuesRemoved;
+    CCSSettingValue valueSubValuesResetIdentifiers;
+
+    InitializeValueForSetting (valueToHaveSubValuesRemoved, Real (settingToRemoveValuesFrom));
+    InitializeValueForSetting (valueSubValuesResetIdentifiers, Real (resetSettingIdentifier));
+
+    valueToHaveSubValuesRemoved.value.asList = settingStrValueList.get ();
+    valueSubValuesResetIdentifiers.value.asList = removeStrValueList.get ();
+
+    CCSSettingInfo info;
+
+    info.forList.listType = TypeString;
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
+	    .WillOnce (Return (Real (settingToRemoveValuesFrom)));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (resetSettingIdentifier), getName ());
+    EXPECT_CALL (Mock (settingToRemoveValuesFrom), getType ());
+    EXPECT_CALL (Mock (resetSettingIdentifier), getValue ()).WillOnce (Return (&valueSubValuesResetIdentifiers));
+    EXPECT_CALL (Mock (settingToRemoveValuesFrom), getValue ()).WillOnce (Return (&valueToHaveSubValuesRemoved));
+    EXPECT_CALL (Mock (settingToRemoveValuesFrom), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+
+    EXPECT_CALL (Mock (settingToRemoveValuesFrom), setList (_, BoolTrue ()));
 
     ccsUpgradeClearValues (list);
 }
