@@ -181,14 +181,15 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 	{
 	    if (ccsSettingGetType (setting) != TypeList)
 	    {
-		if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
+		if (ccsCheckValueEq (ccsSettingGetValue (setting),
+				     ccsSettingGetValue (tempSetting)))
 		{
-		    ccsDebug ("Resetting %s to default", ccsSettingGetName ((CCSSetting *) sl->data));
+		    ccsDebug ("Resetting %s to default", name);
 		    ccsResetToDefault (setting, TRUE);
 		}
 		else
 		{
-		    ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
+		    ccsDebug ("Skipping processing of %s", name);
 		}
 	    }
 	    else
@@ -222,7 +223,7 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 		    l = l->next;
 		}
 
-		ccsDebug ("Removed %i items from %s", count, ccsSettingGetName (setting));
+		ccsDebug ("Removed %i items from %s", count, name);
 		ccsSetList (setting, nl, TRUE);
 
 	    }

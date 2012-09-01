@@ -18,6 +18,8 @@
 
 using ::testing::IsNull;
 using ::testing::Eq;
+using ::testing::Return;
+using ::testing::AtLeast;
 using ::testing::_;
 
 class CCSSettingsUpgradeInternalTest :
@@ -195,7 +197,8 @@ class CCSSettingsUpgradeTestWithMockContext :
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoClearValuesSettingNotFound)
 {
     MockedSetting settingOne (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
-					    TypeInt));
+					    TypeInt,
+					    DoNotAddSettingToPlugin));
 
     EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)));
     EXPECT_CALL (Mock (settingOne), getParent ());
@@ -209,7 +212,8 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoClearValuesSettingNotFound)
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
 {
     MockedSetting resetSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
-							TypeInt));
+							TypeInt,
+							DoNotAddSettingToPlugin));
     MockedSetting settingToReset (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
 						TypeInt));
     CCSSettingValue valueToReset;
@@ -227,7 +231,19 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
 	    .WillOnce (Return (Real (settingToReset)));
     EXPECT_CALL (Mock (resetSettingIdentifier), getParent ());
     EXPECT_CALL (Mock (resetSettingIdentifier), getName ());
-    EXPECT_CALL (Mock (settingToReset), getType ());
+
+    CCSSettingInfo info;
+
+    info.forInt.max = 0;
+    info.forInt.min = 10;
+
+    /* ccsCheckValueEq needs to know the type and info about this type */
+    EXPECT_CALL (Mock (settingToReset), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getType ()).Times (AtLeast (1));
+
+    EXPECT_CALL (Mock (settingToReset), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+
     EXPECT_CALL (Mock (resetSettingIdentifier), getValue ()).WillOnce (Return (&valueResetIdentifier));
     EXPECT_CALL (Mock (settingToReset), getValue ()).WillOnce (Return (&valueToReset));
 
@@ -264,9 +280,10 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
     const std::string valueTwo ("value_two");
     const std::string valueThree ("value_three");
     MockedSetting resetSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
-					    TypeList));
+							TypeList,
+							DoNotAddSettingToPlugin));
     MockedSetting settingToRemoveValuesFrom (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
-					    TypeList));
+							   TypeList));
 
     boost::shared_ptr <CCSString> stringForRemovalOne (newOwnedCCSStringFromStaticCharArray (valueOne.c_str ()));
     boost::shared_ptr <CCSString> stringForRemovalTwo (newOwnedCCSStringFromStaticCharArray (valueTwo.c_str ()));
