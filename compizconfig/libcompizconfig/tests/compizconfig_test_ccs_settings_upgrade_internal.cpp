@@ -277,7 +277,6 @@ namespace
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValuesFromList)
 {
     const std::string valueOne ("value_one");
-    const std::string valueTwo ("value_two");
     const std::string valueThree ("value_three");
     MockedSetting resetSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
 							TypeList,
@@ -286,11 +285,9 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
 							   TypeList));
 
     boost::shared_ptr <CCSString> stringForRemovalOne (newOwnedCCSStringFromStaticCharArray (valueOne.c_str ()));
-    boost::shared_ptr <CCSString> stringForRemovalTwo (newOwnedCCSStringFromStaticCharArray (valueTwo.c_str ()));
     boost::shared_ptr <CCSString> stringNotRemoved (newOwnedCCSStringFromStaticCharArray (valueThree.c_str ()));
 
     CCSStringList settingStrList = ccsStringListAppend (NULL, stringForRemovalOne.get ());
-    settingStrList = ccsStringListAppend (settingStrList, stringForRemovalTwo.get ());
     settingStrList = ccsStringListAppend (settingStrList, stringNotRemoved.get ());
 
     boost::shared_ptr <_CCSSettingValueList> settingStrValueList (AutoDestroy (ccsGetValueListFromStringList (settingStrList,
@@ -298,7 +295,6 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
 									       ccsStringValueListShallowFree));
 
     CCSStringList removeStrList = ccsStringListAppend (NULL, stringForRemovalOne.get ());
-    settingStrList = ccsStringListAppend (removeStrList, stringForRemovalTwo.get ());
 
     boost::shared_ptr <_CCSSettingValueList> removeStrValueList (AutoDestroy (ccsGetValueListFromStringList (removeStrList,
 													     Real (resetSettingIdentifier)),

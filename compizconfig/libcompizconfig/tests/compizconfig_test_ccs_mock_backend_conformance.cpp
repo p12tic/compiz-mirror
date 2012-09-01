@@ -373,15 +373,14 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*gmockSetting, getName ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
 
+	    testing::Cardinality cardinality;
+
 	    if (type == TypeList)
-	    {
-		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
-		EXPECT_CALL (*gmockSetting, getDefaultValue ()).Times (AtLeast (1));
-	    }
+		cardinality = ::testing::AtLeast (1);
 	    else
-	    {
-		EXPECT_CALL (*gmockSetting, getType ());
-	    }
+		cardinality = ::testing::AtMost (1);
+
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (cardinality);
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
