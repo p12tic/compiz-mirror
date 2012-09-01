@@ -323,7 +323,8 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
 	    .WillOnce (Return (Real (settingToRemoveValuesFrom)));
     EXPECT_CALL (Mock (resetSettingIdentifier), getParent ());
     EXPECT_CALL (Mock (resetSettingIdentifier), getName ());
-    EXPECT_CALL (Mock (settingToRemoveValuesFrom), getType ());
+    EXPECT_CALL (Mock (resetSettingIdentifier), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (settingToRemoveValuesFrom), getType ()).Times (AtLeast (1));
     EXPECT_CALL (Mock (resetSettingIdentifier), getValue ()).WillOnce (Return (&valueSubValuesResetIdentifiers));
     EXPECT_CALL (Mock (settingToRemoveValuesFrom), getValue ()).WillOnce (Return (&valueToHaveSubValuesRemoved));
     EXPECT_CALL (Mock (settingToRemoveValuesFrom), getInfo ()).WillRepeatedly (Return (&info));

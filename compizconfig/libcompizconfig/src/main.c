@@ -906,7 +906,9 @@ ccsFreeSettingValue (CCSSettingValue * v)
 
     ccsFreeSettingValueCommon (v, type);
 
-    if (v != ccsSettingGetDefaultValue (v->parent))
+    /* List children cannot be a default value */
+    if (v->isListChild ||
+	v != ccsSettingGetDefaultValue (v->parent))
 	free (v);
 }
 
