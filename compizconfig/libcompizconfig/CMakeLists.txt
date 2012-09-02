@@ -17,7 +17,8 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # libcompizconfig package version number
 # An odd micro number indicates in-progress development.
 # An even micro number indicates a released version.
-file (READ ${CMAKE_CURRENT_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+# We read the VERSION file from the root directory.
+file (READ ${CMAKE_CURRENT_SOURCE_DIR}/../../VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
 string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
 
 set (VERSION ${COMPIZ_RELEASE_VERSION})
