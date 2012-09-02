@@ -8,6 +8,7 @@
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::MakeMatcher;
+using ::testing::Matcher;
 
 class ListEqualityMatcher :
     public MatcherInterface <CCSSettingValueList>

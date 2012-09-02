@@ -212,7 +212,7 @@ class MockCCSSettingsTestEnvironment :
 						   const std::string &key,
 						   CCSSetting	     *setting)
 	{
-	    CCSListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	    CCSSettingValueListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSSettingValueListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
 
 	    return ccsCopyList (*lw, lw->setting ().get ());
 	}
@@ -687,7 +687,7 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
-		    ccsSetList (setting, CCSListWrapper (ReadListAtKey (plugin, key, setting),
+		    ccsSetList (setting, CCSSettingValueListWrapper (ReadListAtKey (plugin, key, setting),
 							 true,
 							 ccsSettingGetInfo (setting)->forList.listType,
 							 boost::shared_ptr <CCSSettingInfo> (),
@@ -784,7 +784,7 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsGetList (setting, &vList);
 		    listCopy = ccsCopyList (vList, setting);
 
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true,
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSSettingValueListWrapper> (listCopy, true,
 												    ccsSettingGetInfo (setting)->forList.listType,
 												    boost::shared_ptr <CCSSettingInfo> (),
 												    boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1)))));

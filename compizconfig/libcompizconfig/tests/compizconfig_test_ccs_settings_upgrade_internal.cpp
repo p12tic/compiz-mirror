@@ -15,12 +15,16 @@
 #include "ccs_settings_upgrade_internal.h"
 #include "gtest_shared_characterwrapper.h"
 #include "gtest_shared_autodestroy.h"
+#include "compizconfig_ccs_list_equality.h"
+#include "compizconfig_ccs_item_in_list_matcher.h"
 
 using ::testing::IsNull;
 using ::testing::Eq;
 using ::testing::Return;
 using ::testing::AtLeast;
 using ::testing::_;
+using ::testing::AllOf;
+using ::testing::Not;
 
 class CCSSettingsUpgradeInternalTest :
     public ::testing::Test
@@ -264,6 +268,12 @@ namespace
 	str->value = strdup (cStr);
 	ccsStringRef (str.get ());
 	return str;
+    }
+
+    void
+    ccsStringListDeepFree (CCSStringList list)
+    {
+	ccsStringListFree (list, TRUE);
     }
 
     void

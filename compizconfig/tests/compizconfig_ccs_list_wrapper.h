@@ -11,14 +11,14 @@ typedef struct _CCSSettingValueList * CCSSettingValueList;
 typedef struct _CCSSetting CCSSetting;
 typedef union _CCSSettingInfo CCSSettingInfo;
 
-class CCSListWrapper :
+class CCSSettingValueListWrapper :
     boost::noncopyable
 {
     public:
 
-	typedef boost::shared_ptr <CCSListWrapper> Ptr;
+	typedef boost::shared_ptr <CCSSettingValueListWrapper> Ptr;
 
-	CCSListWrapper (CCSSettingValueList list,
+	CCSSettingValueListWrapper (CCSSettingValueList list,
 			bool freeItems,
 			CCSSettingType type,
 			const boost::shared_ptr <CCSSettingInfo> &listInfo,
@@ -43,7 +43,7 @@ class CCSListWrapper :
 	    return mList;
 	}
 
-	~CCSListWrapper ()
+	~CCSSettingValueListWrapper ()
 	{
 	    ccsSettingValueListFree (mList, mFreeItems ? TRUE : FALSE);
 	}
