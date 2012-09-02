@@ -53,6 +53,9 @@ namespace
     }
 }
 
+namespace cci = compiz::config::impl;
+namespace cc  = compiz::config;
+
 typedef boost::variant <bool,
 			int,
 			float,
@@ -61,7 +64,7 @@ typedef boost::variant <bool,
 			CCSSettingKeyValue,
 			CCSSettingButtonValue,
 			unsigned int,
-			CCSSettingValueListWrapper::Ptr> VariantTypes;
+			cci::CCSSettingValueListWrapper::Ptr> VariantTypes;
 
 class CCSSettingsConceptTestEnvironmentInterface
 {
@@ -406,13 +409,13 @@ void SetListWriteExpectation (const std::string &plugin,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
-    CCSSettingValueList list = *(boost::get <boost::shared_ptr <CCSSettingValueListWrapper> > (value));
+    CCSSettingValueList list = *(boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value));
 
     EXPECT_CALL (*gmock, getInfo ());
 
     CCSSettingInfo      *info = ccsSettingGetInfo (setting.get ());
 
-    info->forList.listType = (boost::get <boost::shared_ptr <CCSSettingValueListWrapper> > (value))->type ();
+    info->forList.listType = (boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))->type ();
 
     EXPECT_CALL (*gmock, getInfo ()).Times (AtLeast (1));
     EXPECT_CALL (*gmock, getList (_)).WillRepeatedly (DoAll (
@@ -421,11 +424,11 @@ void SetListWriteExpectation (const std::string &plugin,
 							 Return (TRUE)));
     write ();
 
-    EXPECT_THAT (CCSSettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
-				 true,
-				 info->forList.listType,
-				 boost::shared_ptr <CCSSettingInfo> (),
-				 setting),
+    EXPECT_THAT (cci::CCSSettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
+						  cci::Deep,
+						  info->forList.listType,
+						  boost::shared_ptr <CCSSettingInfo> (),
+						  setting),
 		 ListEqual (info->forList, list));
 }
 
@@ -493,11 +496,11 @@ CCSSettingInfo globalListInfo;
 
 void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <CCSSettingValueListWrapper> > (value))->type ();
+    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))->type ();
     globalListInfo.forList.listInfo = NULL;
 
     ON_CALL (*gmock, getInfo ()).WillByDefault (Return (&globalListInfo));
-    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <CCSSettingValueListWrapper> > (value))), _));
+    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))), _));
 }
 
 }
@@ -749,12 +752,12 @@ namespace list_populators = impl::populators::list;
 
 typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
 
-CCSSettingValueListWrapper::Ptr
+cci::CCSSettingValueListWrapper::Ptr
 CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 				       CCSSettingType        type,
-				       bool                  freeItems)
+				       cci::ListStorageType  storageType)
 {
-    boost::function <void (CCSSetting *)> f (boost::bind (ccsFreeMockSetting, _1));
+    boost::function <void (CCSSetting *)> f (boost::bind (ccsSettingUnref, _1));
     boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), f);
     NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
 
@@ -766,7 +769,7 @@ CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 
     ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (listInfo.get ()));
     ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
-    return boost::make_shared <CCSSettingValueListWrapper> (c (mockSetting.get ()), freeItems, type, listInfo, mockSetting);
+    return boost::make_shared <cci::CCSSettingValueListWrapper> (c (mockSetting.get ()), storageType, type, listInfo, mockSetting);
 }
 
 template <typename I>
@@ -862,7 +865,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestEdge"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::integer, _1),
-												TypeInt, true)),
+												TypeInt, cci::Deep)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "int_list_setting",
@@ -871,7 +874,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListInt"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::doubleprecision, _1),
-												TypeFloat, true)),
+												TypeFloat, cci::Deep)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "float_list_setting",
@@ -880,7 +883,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListFloat"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::boolean, _1),
-												TypeBool, true)),
+												TypeBool, cci::Deep)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "bool_list_setting",
@@ -889,7 +892,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListBool"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::string, _1),
-												TypeString, true)),
+												TypeString, cci::Deep)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "string_list_setting",
@@ -898,7 +901,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListString"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::match, _1),
-												TypeMatch, true)),
+												TypeMatch, cci::Deep)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "match_list_setting",
@@ -907,7 +910,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListMatch"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::color, _1),
-											        TypeColor, true)),
+												TypeColor, cci::Deep)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "color_list_setting",

@@ -10,57 +10,168 @@
 typedef struct _CCSSettingValueList * CCSSettingValueList;
 typedef struct _CCSSetting CCSSetting;
 typedef union _CCSSettingInfo CCSSettingInfo;
+typedef struct _CCSSettingValue CCSSettingValue;
 
-class CCSSettingValueListWrapper :
-    boost::noncopyable
+CCSSettingValueList ccsSettingValueListFree (CCSSettingValueList, Bool);
+CCSSettingValueList ccsSettingValueListAppend (CCSSettingValueList, CCSSettingValue *);
+CCSSettingValueList ccsSettingValueListRemove (CCSSettingValueList, CCSSettingValue *);
+
+namespace compiz
 {
-    public:
-
-	typedef boost::shared_ptr <CCSSettingValueListWrapper> Ptr;
-
-	CCSSettingValueListWrapper (CCSSettingValueList list,
-			bool freeItems,
-			CCSSettingType type,
-			const boost::shared_ptr <CCSSettingInfo> &listInfo,
-			const boost::shared_ptr <CCSSetting> &settingReference) :
-	    mList (list),
-	    mFreeItems (freeItems),
-	    mType (type),
-	    mListInfo (listInfo),
-	    mSettingReference (settingReference)
+    namespace config
+    {
+	template <typename ListType, typename DataType>
+	class CCSListWrapper :
+	    boost::noncopyable
 	{
-	}
+	    public:
 
-	CCSSettingType type () { return mType; }
+		virtual ~CCSListWrapper () {}
 
-	operator CCSSettingValueList ()
+		virtual CCSListWrapper<ListType, DataType> & append (const DataType &) = 0;
+		virtual CCSListWrapper<ListType, DataType> & remove (const DataType &) = 0;
+
+		virtual operator const ListType & () const = 0;
+		virtual operator ListType & () = 0;
+	};
+
+	namespace impl
 	{
-	    return mList;
+	    namespace cc = compiz::config;
+	    namespace cci = compiz::config::impl;
+
+	    typedef enum _ListStorageType
+	    {
+		Shallow = 0,
+		Deep = 1
+	    } ListStorageType;
+
+	    template <typename ListType, typename DataType>
+	    class CCSListWrapper :
+		public cc::CCSListWrapper <ListType, DataType>
+	    {
+		public:
+
+		    typedef ListType (*ListTypeFreeFunc) (ListType, Bool);
+		    typedef ListType (*ListTypeAppendFunc) (ListType, DataType);
+		    typedef ListType (*ListTypeRemoveFunc) (ListType, DataType, Bool);
+
+		    CCSListWrapper (const ListType &list,
+				    ListTypeFreeFunc freeFunc,
+				    ListTypeAppendFunc appendFunc,
+				    ListTypeRemoveFunc removeFunc,
+				    ListStorageType  storageType) :
+			mList (list),
+			mFree (freeFunc),
+			mAppend (appendFunc),
+			mRemove (removeFunc),
+			mStorageType (storageType)
+		    {
+		    };
+
+		    cc::CCSListWrapper<ListType, DataType> & append (DataType const &data)
+		    {
+			mList = (*mAppend) (mList, data);
+			return *this;
+		    }
+
+		    cc::CCSListWrapper<ListType, DataType> & remove (DataType const &data)
+		    {
+			Bool freeObj = (mStorageType == Deep);
+			mList = (*mRemove) (mList, data, freeObj);
+			return *this;
+		    }
+
+		    operator const ListType & () const
+		    {
+			return mList;
+		    }
+
+		    operator ListType & ()
+		    {
+			return mList;
+		    }
+
+		    ~CCSListWrapper ()
+		    {
+			Bool freeObj = (mStorageType == Deep);
+
+			(*mFree) (mList, freeObj);
+		    }
+
+		private:
+
+		    ListType           mList;
+		    ListTypeFreeFunc   mFree;
+		    ListTypeAppendFunc mAppend;
+		    ListTypeRemoveFunc mRemove;
+		    ListStorageType    mStorageType;
+	    };
+
+	    class CCSSettingValueListWrapper :
+		public compiz::config::CCSListWrapper <CCSSettingValueList, CCSSettingValue *>
+	    {
+		public:
+
+		    typedef boost::shared_ptr <CCSSettingValueListWrapper> Ptr;
+
+		    CCSSettingValueListWrapper (CCSSettingValueList list,
+						ListStorageType     storageType,
+						CCSSettingType	    type,
+						const boost::shared_ptr <CCSSettingInfo> &listInfo,
+						const boost::shared_ptr <CCSSetting> &settingReference) :
+			mType (type),
+			mListInfo (listInfo),
+			mSettingReference (settingReference),
+			mListWrapper (list,
+				      ccsSettingValueListFree,
+				      ccsSettingValueListAppend,
+				      ccsSettingValueListRemove,
+				      storageType)
+		    {
+		    }
+
+		    CCSSettingType type ()
+		    {
+			return mType;
+		    }
+
+		    cc::CCSListWrapper <CCSSettingValueList, CCSSettingValue *> & append (CCSSettingValue * const &value)
+		    {
+			return mListWrapper.append (value);
+		    }
+
+		    cc::CCSListWrapper <CCSSettingValueList, CCSSettingValue *> & remove (CCSSettingValue * const &value)
+		    {
+			return mListWrapper.remove (value);
+		    }
+
+		    operator const CCSSettingValueList & () const
+		    {
+			return mListWrapper;
+		    }
+
+		    operator CCSSettingValueList & ()
+		    {
+			return mListWrapper;
+		    }
+
+		    const boost::shared_ptr <CCSSetting> & setting ()
+		    {
+			return mSettingReference;
+		    }
+
+		private:
+
+		    CCSSettingType					         mType;
+		    boost::shared_ptr <CCSSettingInfo>			         mListInfo;
+		    boost::shared_ptr <CCSSetting>			         mSettingReference;
+		    cci::CCSListWrapper <CCSSettingValueList, CCSSettingValue *> mListWrapper;
+	    };
 	}
+    }
+}
 
-	operator CCSSettingValueList () const
-	{
-	    return mList;
-	}
 
-	~CCSSettingValueListWrapper ()
-	{
-	    ccsSettingValueListFree (mList, mFreeItems ? TRUE : FALSE);
-	}
-
-	const boost::shared_ptr <CCSSetting> &
-	setting ()
-	{
-	    return mSettingReference;
-	}
-
-    private:
-
-	CCSSettingValueList mList;
-	bool		    mFreeItems;
-	CCSSettingType      mType;
-	boost::shared_ptr <CCSSettingInfo> mListInfo;
-	boost::shared_ptr <CCSSetting> mSettingReference;
-};
 
 #endif
