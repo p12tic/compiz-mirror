@@ -687,12 +687,15 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
-		    ccsSetList (setting, cci::CCSSettingValueListWrapper (ReadListAtKey (plugin, key, setting),
-							 cci::Deep,
-							 ccsSettingGetInfo (setting)->forList.listType,
-							 boost::shared_ptr <CCSSettingInfo> (),
-							 boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1))), FALSE);
-		break;
+		    ccsSetList (setting,
+				cci::CCSSettingValueListWrapper (ReadListAtKey (plugin, key, setting),
+								 cci::Deep,
+								 ccsSettingGetInfo (setting)->forList.listType,
+								 boost::shared_ptr <CCSSettingInfo> (),
+								 boost::shared_ptr <CCSSetting> (setting,
+												 boost::bind (doNothingWithCCSSetting, _1))),
+				FALSE);
+		    break;
 
 		default:
 
