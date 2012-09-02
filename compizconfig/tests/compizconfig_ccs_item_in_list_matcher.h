@@ -23,7 +23,9 @@ class ItemInCCSListMatcher :
 
 	    while (iter)
 	    {
-		if (mMatcher.MatchAndExplain ((*(reinterpret_cast <I *> (iter->data))), listener))
+		const I &i = *(reinterpret_cast <I *> (iter->data));
+
+		if (mMatcher.MatchAndExplain (i, listener))
 		    return true;
 
 		iter = iter->next;
@@ -48,13 +50,35 @@ class ItemInCCSListMatcher :
 
     private:
 
-	const Matcher<I> & mMatcher;
+	Matcher<I> mMatcher;
 };
 
 template <typename I, typename L>
 Matcher<L> IsItemInCCSList (const Matcher<I> &matcher)
 {
     return MakeMatcher (new ItemInCCSListMatcher <I, L> (matcher));
+}
+
+typedef struct _CCSString	      CCSString;
+typedef struct _CCSStringList *	      CCSStringList;
+typedef struct _CCSSettingValue	      CCSSettingValue;
+typedef struct _CCSSettingValueList * CCSSettingValueList;
+
+/* A workaround for templates inside of macros not
+ * expanding correctly */
+namespace
+{
+    Matcher <CCSStringList>
+    IsStringItemInStringCCSList (const Matcher <CCSString> &matcher)
+    {
+	return IsItemInCCSList <CCSString, CCSStringList> (matcher);
+    }
+
+    Matcher <CCSSettingValueList>
+    IsSettingValueInSettingValueCCSList (const Matcher <CCSSettingValue> &matcher)
+    {
+	return IsItemInCCSList <CCSSettingValue, CCSSettingValueList> (matcher);
+    }
 }
 
 #endif

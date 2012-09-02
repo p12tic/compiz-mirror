@@ -63,10 +63,14 @@ bool
 operator== (const std::string &lhs,
 	    const CCSString &rhs)
 {
-    if (lhs == rhs.value)
-	return true;
+    return rhs == lhs;
+}
 
-    return false;
+bool
+operator== (const std::string &rhs,
+	    CCSString	      *lhs)
+{
+    return *lhs == rhs;
 }
 
 ::std::ostream &

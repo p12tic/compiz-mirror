@@ -179,10 +179,19 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 
 	if (setting)
 	{
+	    CCSSettingInfo *tempInfo = ccsSettingGetInfo (tempSetting);
+	    CCSSettingType tType = ccsSettingGetType (tempSetting);
+	    CCSSettingType sType = ccsSettingGetType (setting);
+	    CCSSettingInfo *info = ccsSettingGetInfo (setting);
+
 	    if (ccsSettingGetType (setting) != TypeList)
 	    {
 		if (ccsCheckValueEq (ccsSettingGetValue (setting),
-				     ccsSettingGetValue (tempSetting)))
+				     sType,
+				     info,
+				     ccsSettingGetValue (tempSetting),
+				     tType,
+				     tempInfo))
 		{
 		    ccsDebug ("Resetting %s to default", name);
 		    ccsResetToDefault (setting, TRUE);
@@ -198,6 +207,7 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 		/* Try and remove any specified items from the list */
 		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
 		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
+		CCSSettingInfo      *info = ccsSettingGetInfo (setting);
 
 		while (l)
 		{
@@ -208,7 +218,12 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 			CCSSettingValue *lv = (CCSSettingValue *) l->data;
 			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
 
-			if (ccsCheckValueEq (lv, olvv))
+			if (ccsCheckValueEq (lv,
+					     info->forList.listType,
+					     info,
+					     olvv,
+					     info->forList.listType,
+					     info))
 			    break;
 
 			olv = olv->next;
@@ -225,7 +240,7 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 
 		ccsDebug ("Removed %i items from %s", count, name);
 		ccsSetList (setting, nl, TRUE);
-
+		ccsSettingValueListFree (nl, TRUE);
 	    }
 	}
 
@@ -258,6 +273,7 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 		/* Try and apppend any new items to the list */
 		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
 		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
+		CCSSettingInfo      *info = ccsSettingGetInfo (setting);
 
 		while (l)
 		{
@@ -268,7 +284,12 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 			CCSSettingValue *lv = (CCSSettingValue *) l->data;
 			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
 
-			if (ccsCheckValueEq (lv, olvv))
+			if (ccsCheckValueEq (lv,
+					     info->forList.listType,
+					     info,
+					     olvv,
+					     info->forList.listType,
+					     info))
 			    break;
 
 			olv = olv->next;

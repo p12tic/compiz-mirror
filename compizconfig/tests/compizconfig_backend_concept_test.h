@@ -1128,17 +1128,6 @@ const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAZ ("baz");
 
-/* A workaround for templates inside of macros not
- * expanding correctly */
-namespace
-{
-    Matcher <CCSStringList>
-    IsStringItemInStringCCSList (const Matcher <CCSString> &matcher)
-    {
-	return IsItemInCCSList <CCSString, CCSStringList> (matcher);
-    }
-}
-
 TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 {
     CCSBackend *backend = GetBackend ();

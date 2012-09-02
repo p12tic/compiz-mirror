@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
@@ -17,6 +18,8 @@
 #include "gtest_shared_autodestroy.h"
 #include "compizconfig_ccs_list_equality.h"
 #include "compizconfig_ccs_item_in_list_matcher.h"
+#include "compizconfig_ccs_list_wrapper.h"
+#include "compizconfig_ccs_setting_value_operators.h"
 
 using ::testing::IsNull;
 using ::testing::Eq;
@@ -25,6 +28,12 @@ using ::testing::AtLeast;
 using ::testing::_;
 using ::testing::AllOf;
 using ::testing::Not;
+using ::testing::Matcher;
+using ::testing::MakeMatcher;
+using ::testing::MatcherInterface;
+
+namespace cc = compiz::config;
+namespace cci = compiz::config::impl;
 
 class CCSSettingsUpgradeInternalTest :
     public ::testing::Test
@@ -198,6 +207,60 @@ class CCSSettingsUpgradeTestWithMockContext :
 	boost::shared_ptr <CCSPlugin>  plugin;
 };
 
+namespace
+{
+    class CCSSettingValueMatcher :
+	public ::testing::MatcherInterface <CCSSettingValue>
+    {
+	public:
+
+	    CCSSettingValueMatcher (const CCSSettingValue &match,
+				    CCSSettingType        type,
+				    CCSSettingInfo        *info) :
+		mMatch (match),
+		mType  (type),
+		mInfo  (info)
+	    {
+	    }
+
+	    virtual bool MatchAndExplain (CCSSettingValue x, MatchResultListener *listener) const
+	    {
+		if (ccsCheckValueEq (&x,
+				     mType,
+				     mInfo,
+				     &mMatch,
+				     mType,
+				     mInfo))
+		    return true;
+		return false;
+	    }
+
+	    virtual void DescribeTo (std::ostream *os) const
+	    {
+		*os << "Value Matches";
+	    }
+
+	    virtual void DescribeNegationTo (std::ostream *os) const
+	    {
+		*os << "Value does not Match";
+	    }
+
+	private:
+
+	    const CCSSettingValue &mMatch;
+	    CCSSettingType	  mType;
+	    CCSSettingInfo	  *mInfo;
+    };
+
+    Matcher <CCSSettingValue>
+    SettingValueMatch (const CCSSettingValue &match,
+		       CCSSettingType	     type,
+		       CCSSettingInfo	     *info)
+    {
+	return MakeMatcher (new CCSSettingValueMatcher (match, type, info));
+    }
+}
+
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoClearValuesSettingNotFound)
 {
     MockedSetting settingOne (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
@@ -208,7 +271,11 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoClearValuesSettingNotFound)
     EXPECT_CALL (Mock (settingOne), getParent ());
     EXPECT_CALL (Mock (settingOne), getName ());
 
-    CCSSettingList list = ccsSettingListAppend (NULL, Real (settingOne));
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> list (ccsSettingListAppend (NULL, Real (settingOne)),
+							     ccsSettingListFree,
+							     ccsSettingListAppend,
+							     ccsSettingListRemove,
+							     cci::Shallow);
 
     ccsUpgradeClearValues (list);
 }
@@ -229,7 +296,11 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
     valueToReset.value.asInt = 7;
     valueResetIdentifier.value.asInt = 7;
 
-    CCSSettingList list = ccsSettingListAppend (NULL, Real (resetSettingIdentifier));
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> list (ccsSettingListAppend (NULL, Real (resetSettingIdentifier)),
+							     ccsSettingListFree,
+							     ccsSettingListAppend,
+							     ccsSettingListRemove,
+							     cci::Shallow);
 
     EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
 	    .WillOnce (Return (Real (settingToReset)));
@@ -277,11 +348,29 @@ namespace
     }
 
     void
-    ccsStringValueListShallowFree (CCSSettingValueList list)
+    ccsSettingValueListDeepFree (CCSSettingValueList list)
+    {
+	ccsSettingValueListFree (list, TRUE);
+    }
+
+    void
+    ccsSettingValueListShallowFree (CCSSettingValueList list)
     {
 	ccsSettingValueListFree (list, FALSE);
     }
 
+    typedef boost::shared_ptr <cc::CCSListWrapper <CCSStringList, CCSString *> > CCSStringListWrapperPtr;
+
+    CCSStringListWrapperPtr
+    constructStrListWrapper (CCSStringList        list,
+			     cci::ListStorageType storageType)
+    {
+	return boost::make_shared <cci::CCSListWrapper <CCSStringList, CCSString *> > (list,
+										       ccsStringListFree,
+										       ccsStringListAppend,
+										       ccsStringListRemove,
+										       storageType);
+    }
 }
 
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValuesFromList)
@@ -297,20 +386,26 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
     boost::shared_ptr <CCSString> stringForRemovalOne (newOwnedCCSStringFromStaticCharArray (valueOne.c_str ()));
     boost::shared_ptr <CCSString> stringNotRemoved (newOwnedCCSStringFromStaticCharArray (valueThree.c_str ()));
 
-    CCSStringList settingStrList = ccsStringListAppend (NULL, stringForRemovalOne.get ());
-    settingStrList = ccsStringListAppend (settingStrList, stringNotRemoved.get ());
+    CCSStringListWrapperPtr settingsStrList (constructStrListWrapper (ccsStringListAppend (NULL, stringForRemovalOne.get ()),
+								      cci::Shallow));
+    settingsStrList->append (stringNotRemoved.get ());
 
-    boost::shared_ptr <_CCSSettingValueList> settingStrValueList (AutoDestroy (ccsGetValueListFromStringList (settingStrList,
+    boost::shared_ptr <_CCSSettingValueList> settingStrValueList (AutoDestroy (ccsGetValueListFromStringList (*settingsStrList,
 													      Real (settingToRemoveValuesFrom)),
-									       ccsStringValueListShallowFree));
+									       ccsSettingValueListDeepFree));
 
-    CCSStringList removeStrList = ccsStringListAppend (NULL, stringForRemovalOne.get ());
+    CCSStringListWrapperPtr removeStrList (constructStrListWrapper (ccsStringListAppend (NULL, stringForRemovalOne.get ()),
+								    cci::Shallow));
 
-    boost::shared_ptr <_CCSSettingValueList> removeStrValueList (AutoDestroy (ccsGetValueListFromStringList (removeStrList,
+    boost::shared_ptr <_CCSSettingValueList> removeStrValueList (AutoDestroy (ccsGetValueListFromStringList (*removeStrList,
 													     Real (resetSettingIdentifier)),
-									      ccsStringValueListShallowFree));
+									      ccsSettingValueListDeepFree));
 
-    CCSSettingList list = ccsSettingListAppend (NULL, Real (resetSettingIdentifier));
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> list (ccsSettingListAppend (NULL, Real (resetSettingIdentifier)),
+							     ccsSettingListFree,
+							     ccsSettingListAppend,
+							     ccsSettingListRemove,
+							     cci::Shallow);
 
     CCSSettingValue valueToHaveSubValuesRemoved;
     CCSSettingValue valueSubValuesResetIdentifiers;
@@ -336,7 +431,12 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
     EXPECT_CALL (Mock (settingToRemoveValuesFrom), getInfo ()).WillRepeatedly (Return (&info));
     EXPECT_CALL (Mock (resetSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
 
-    EXPECT_CALL (Mock (settingToRemoveValuesFrom), setList (_, BoolTrue ()));
+    const CCSSettingValue &removedStringInListValue = *removeStrValueList->data;
+
+    EXPECT_CALL (Mock (settingToRemoveValuesFrom), setList (
+		     Not (
+			 IsSettingValueInSettingValueCCSList (
+			    SettingValueMatch (removedStringInListValue, TypeString, &info))), BoolTrue ()));
 
     ccsUpgradeClearValues (list);
 }

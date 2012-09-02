@@ -2041,20 +2041,25 @@ ccsSettingResetToDefaultDefault (CCSSetting * setting, Bool processChanged)
 }
 
 Bool
-ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
+ccsCheckValueEq (const CCSSettingValue *rhs,
+		 CCSSettingType	       rhsType,
+		 CCSSettingInfo	       *rhsInfo,
+		 const CCSSettingValue *lhs,
+		 CCSSettingType	       lhsType,
+		 CCSSettingInfo	       *lhsInfo)
 {
     CCSSettingType type;
 
-    if (ccsSettingGetType (rhs->parent) != ccsSettingGetType (lhs->parent))
+    if (rhsType != lhsType)
     {
 	ccsWarning ("Attempted to check equality between mismatched types!");
 	return FALSE;
     }
 
     if (rhs->isListChild)
-	type = ccsSettingGetInfo (rhs->parent)->forList.listType;
+	type = rhsInfo->forList.listType;
     else
-	type = ccsSettingGetType (rhs->parent);
+	type = rhsType;
     
     switch (type)
     {
@@ -2084,14 +2089,14 @@ ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 	case TypeList:
 	{
 	    return ccsCompareLists (lhs->value.asList, rhs->value.asList,
-				    ccsSettingGetInfo (lhs->parent)->forList);
+				    lhsInfo->forList);
 	
 	}
 	default:
 	    break;
     }
     
-    ccsWarning ("Failed to process type %i", ccsSettingGetType (lhs->parent));
+    ccsWarning ("Failed to check equality for value with type %i", lhsType);
     return FALSE;
 }
 
