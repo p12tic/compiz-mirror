@@ -97,16 +97,10 @@ if not prefix or not len (prefix):
 if sys.argv[1] in ("install", "uninstall") and len (prefix):
     sys.argv += ["--prefix", prefix]
 
-version_file = open ("VERSION", "r")
-version = version_file.read ().strip ()
-if "=" in version:
-    version = version.split ("=")[1]
-
 f = open (os.path.join ("ccm/Constants.py.in"), "rt")
 data = f.read ()
 f.close ()
 data = data.replace ("@prefix@", prefix)
-data = data.replace ("@version@", version)
 f = open (os.path.join ("ccm/Constants.py"), "wt")
 f.write (data)
 f.close ()
@@ -168,7 +162,6 @@ if os.path.isdir (podir):
 
 setup (
         name             = "ccsm",
-        version          = version,
         description      = "CompizConfig Settings Manager",
         author           = "Patrick Niklaus",
         author_email     = "marex@opencompositing.org",
