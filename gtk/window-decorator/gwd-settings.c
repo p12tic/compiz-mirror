@@ -801,6 +801,14 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
     priv->cmdline_opts = 0;
     priv->notified = NULL;
     priv->freeze_count = 0;
+
+    /* Append all notify funcs so that external state can be updated in case
+     * the settings backend can't do it itself */
+
+    append_to_notify_funcs (self, gwd_settings_notified_update_metacity_theme);
+    append_to_notify_funcs (self, gwd_settings_notified_metacity_button_layout);
+    append_to_notify_funcs (self, gwd_settings_notified_update_frames);
+    append_to_notify_funcs (self, gwd_settings_notified_update_decorations);
 }
 
 static gboolean

@@ -48,6 +48,7 @@ using ::testing::IsNull;
 using ::testing::Values;
 using ::testing::_;
 using ::testing::StrictMock;
+using ::testing::InSequence;
 
 template <class ValueCType>
 class GValueCmp
@@ -573,6 +574,7 @@ class GWDSettingsTestStrict :
 						    NULL,
 						    mMockNotified.get ()),
 			     boost::bind (gwd_settings_unref, _1));
+	    ExpectAllNotificationsOnce ();
 	}
 
 	virtual void TearDown ()
@@ -581,12 +583,29 @@ class GWDSettingsTestStrict :
 	    EXPECT_CALL (*mGMockNotified, finalize ());
 	}
 
+	void ExpectAllNotificationsOnce ()
+	{
+	    InSequence s;
+
+	    EXPECT_CALL (*mGMockNotified, updateMetacityTheme ()).Times (1);
+	    EXPECT_CALL (*mGMockNotified, updateMetacityButtonLayout ()).Times (1);
+	    EXPECT_CALL (*mGMockNotified, updateFrames ()).Times (1);
+	    EXPECT_CALL (*mGMockNotified, updateDecorations ()).Times (1);
+
+	    gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
+	}
+
     protected:
 
 	boost::shared_ptr <StrictMock <GWDMockSettingsNotifiedGMock> > mGMockNotified;
 	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
 	boost::shared_ptr <GWDSettingsImpl> mSettings;
 };
+
+/* Won't fail if the code in SetUp succeeds */
+TEST_F(GWDSettingsTestStrict, TestUpdateAllOnInstantiation)
+{
+}
 
 /* We're just using use_tooltips here as an example */
 TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdates)
@@ -1478,6 +1497,34 @@ INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
 			 ::testing::Values (boost::shared_static_cast <GWDSettingsStorageFactoryWrapperInterface> (boost::make_shared <GWDMockSettingsStorageFactoryWrapper> ())));
 
 #ifdef USE_GSETTINGS
+class GWDSettingsStorageGSettingsTest :
+    public ::testing::Test
+{
+    public:
+
+	void SetUp ()
+	{
+	    g_setenv ("G_SLICE", "always-malloc", TRUE);
+	    g_type_init ();
+	}
+
+	void TearDown ()
+	{
+	    g_unsetenv ("G_SLICE");
+	}
+};
+
+TEST_F (GWDSettingsStorageGSettingsTest, TestNoDeathOnConnectingSignalToNULLObject)
+{
+    boost::shared_ptr <GWDMockSettingsStorageGMock> mStorageMock (new GWDMockSettingsStorageGMock ());
+    boost::shared_ptr <GWDSettingsStorage>          mStorage (gwd_mock_settings_storage_new  (mStorageMock.get ()),
+							      boost::bind (gwd_settings_storage_unref, _1));
+
+    gwd_connect_org_compiz_gwd_settings (NULL, mStorage.get ());
+    gwd_connect_org_gnome_mutter_settings (NULL, mStorage.get ());
+    gwd_connect_org_gnome_desktop_wm_preferences_settings (NULL, mStorage.get ());
+}
+
 class GWDSettingsStorageGSettingsFactoryWrapper :
     public GWDSettingsStorageFactoryWrapperInterface
 {

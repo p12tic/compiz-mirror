@@ -450,6 +450,9 @@ void
 gwd_connect_org_compiz_gwd_settings (GSettings		*settings,
 				     GWDSettingsStorage *storage)
 {
+    if (!settings)
+	return;
+
     g_signal_connect (settings, "changed", (GCallback) org_compiz_gwd_settings_changed, storage);
 }
 
@@ -476,6 +479,9 @@ void
 gwd_connect_org_gnome_mutter_settings (GSettings	  *settings,
 				       GWDSettingsStorage *storage)
 {
+    if (!settings)
+	return;
+
     g_signal_connect (settings, "changed", (GCallback) org_gnome_mutter_settings_changed, storage);
 }
 
@@ -511,6 +517,9 @@ void
 gwd_connect_org_gnome_desktop_wm_preferences_settings (GSettings	  *settings,
 						       GWDSettingsStorage *storage)
 {
+    if (!settings)
+	return;
+
     g_signal_connect (settings, "changed",
 		      (GCallback) org_gnome_desktop_wm_keybindings_settings_changed, storage);
 }
