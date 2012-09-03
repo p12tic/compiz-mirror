@@ -1099,6 +1099,9 @@ ResizeLogic::enableOrDisableVerticalMaximization (int yRoot)
     if (!options->optionGetMaximizeVertically())
 	return;
 
+    if (!offWorkAreaConstrained)
+	return;
+
     if (centered || options->optionGetResizeFromCenter ())
     {
 	if (maximized_vertically)
