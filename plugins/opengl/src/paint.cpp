@@ -583,7 +583,8 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	priv->paintOutputRegion (sTransform, region, output, mask);
+	if (!region.isEmpty ())
+	    priv->paintOutputRegion (sTransform, region, output, mask);
 
 	return true;
     }

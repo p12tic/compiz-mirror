@@ -228,12 +228,15 @@ PlaceScreen::handleEvent (XEvent *event)
 	        w = screen->findWindow (event->xproperty.window);
 	        if (w)
 	        {
-		    mStrutWindows.remove (w);
-		    /* Only do when handling screen size change.
-		       ps->strutWindowCount is 0 at any other time */
-		    if (mStrutWindows.empty ())
-			doHandleScreenSizeChange (screen->width (),
-						  screen->height ()); /* 2nd pass */
+		    if (!mStrutWindows.empty ())
+		    {
+			mStrutWindows.remove (w);
+			/* Only do when handling screen size change.
+			   ps->strutWindowCount is 0 at any other time */
+			if (mStrutWindows.empty ())
+			    doHandleScreenSizeChange (screen->width (),
+						      screen->height ()); /* 2nd pass */
+		    }
 	        }
 	    }
     }
