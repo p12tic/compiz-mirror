@@ -34,15 +34,11 @@ namespace opengl {
 class FullscreenRegion
 {
 public:
-    typedef void *WindowId;
-
     FullscreenRegion (const CompRect &rect);
-    void addToBottom (const CompRegion &region, bool allowedOnTop,
-                      WindowId id);
-    WindowId fullscreenWindow () const;
+    bool occlude (const CompRegion &region, bool focusable = true);
 
 private:
-    WindowId fullscreen;
+    bool covered;
     CompRegion untouched;
 };
 

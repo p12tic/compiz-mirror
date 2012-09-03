@@ -28,130 +28,73 @@
 
 using namespace compiz::opengl;
 
-namespace
-{
-
-class MockCompWindow
-{
-public:
-    MockCompWindow (bool canBeOnTop, int x, int y, int width, int height) :
-	raisable (canBeOnTop), reg (x, y, width, height) {}
-    bool allowedOnTop () const { return raisable; }
-    const CompRegion &region () const { return reg; }
-
-private:
-    bool raisable;
-    CompRegion reg;
-};
-
-} // namespace
-
 TEST (OpenGLFullscreenRegion, NoWindows)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (NULL, monitor.fullscreenWindow());
+    CompRegion desktop (0, 0, 1024, 768);
+    EXPECT_FALSE (monitor.occlude (desktop, false));
 }
 
 TEST (OpenGLFullscreenRegion, NormalWindows)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow a (true, 10, 10, 40, 30);
-    monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
-    MockCompWindow b (true, 20, 20, 50, 20);
-    monitor.addToBottom (b.region (), b.allowedOnTop (), &b);
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (NULL, monitor.fullscreenWindow());
+    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, TwoFullscreen)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow f1 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f1.region (), f1.allowedOnTop (), &f1);
-    MockCompWindow a (true, 10, 10, 40, 30);
-    monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
-    MockCompWindow b (true, 20, 20, 50, 20);
-    monitor.addToBottom (b.region (), b.allowedOnTop (), &b);
-    MockCompWindow f2 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f2.region (), f2.allowedOnTop (), &f2);
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (monitor.fullscreenWindow(), &f1);
+    EXPECT_TRUE  (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, Offscreen)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow x (true, -100, -100, 1, 1);
-    monitor.addToBottom (x.region (), x.allowedOnTop (), &x);
-    MockCompWindow y (true, 2000, 2000, 123, 456);
-    monitor.addToBottom (y.region (), y.allowedOnTop (), &y);
-    MockCompWindow f1 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f1.region (), f1.allowedOnTop (), &f1);
-    MockCompWindow a (true, 10, 10, 40, 30);
-    monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
-    MockCompWindow b (true, 20, 20, 50, 20);
-    monitor.addToBottom (b.region (), b.allowedOnTop (), &b);
-    MockCompWindow f2 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f2.region (), f2.allowedOnTop (), &f2);
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (monitor.fullscreenWindow(), &f1);
+    EXPECT_FALSE (monitor.occlude (CompRegion (-100, -100, 1, 1)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (2000, 2000, 123, 456)));
+    EXPECT_TRUE  (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, CancelFullscreen1)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow z (true, 500, 500, 345, 234);
-    monitor.addToBottom (z.region (), z.allowedOnTop (), &z);
-    MockCompWindow f1 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f1.region (), f1.allowedOnTop (), &f1);
-    MockCompWindow a (true, 10, 10, 40, 30);
-    monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
-    MockCompWindow b (true, 20, 20, 50, 20);
-    monitor.addToBottom (b.region (), b.allowedOnTop (), &b);
-    MockCompWindow f2 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f2.region (), f2.allowedOnTop (), &f2);
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (NULL, monitor.fullscreenWindow());
+    EXPECT_FALSE (monitor.occlude (CompRegion (500, 500, 345, 234)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, CancelFullscreen2)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow x (true, -100, -100, 1, 1);
-    monitor.addToBottom (x.region (), x.allowedOnTop (), &x);
-    MockCompWindow y (true, 2000, 2000, 123, 456);
-    monitor.addToBottom (y.region (), y.allowedOnTop (), &y);
-    MockCompWindow z (true, 500, 500, 345, 234);
-    monitor.addToBottom (z.region (), z.allowedOnTop (), &z);
-    MockCompWindow f1 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f1.region (), f1.allowedOnTop (), &f1);
-    MockCompWindow a (true, 10, 10, 40, 30);
-    monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
-    MockCompWindow b (true, 20, 20, 50, 20);
-    monitor.addToBottom (b.region (), b.allowedOnTop (), &b);
-    MockCompWindow f2 (true, 0, 0, 1024, 768);
-    monitor.addToBottom (f2.region (), f2.allowedOnTop (), &f2);
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (NULL, monitor.fullscreenWindow());
+    EXPECT_FALSE (monitor.occlude (CompRegion (-100, -100, 1, 1)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (2000, 2000, 123, 456)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (500, 500, 345, 234)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, Overflow)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    MockCompWindow a (true, 10, 10, 40, 30);
-    monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
-    MockCompWindow b (true, -10, -10, 1044, 788);
-    monitor.addToBottom (b.region (), b.allowedOnTop (), &b);
-    MockCompWindow desktop (false, 0, 0, 1024, 768);
-    monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
-    EXPECT_EQ (NULL, monitor.fullscreenWindow());
+    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (-10, -10, 1044, 788)));
+    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
 }
 
 

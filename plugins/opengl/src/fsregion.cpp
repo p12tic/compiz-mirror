@@ -29,23 +29,24 @@ namespace compiz {
 namespace opengl {
 
 FullscreenRegion::FullscreenRegion (const CompRect &rect) :
-    fullscreen (NULL),
+    covered (false),
     untouched (rect)
 {
 }
 
-void
-FullscreenRegion::addToBottom (const CompRegion &region, bool allowedOnTop, WindowId id)
+bool
+FullscreenRegion::occlude (const CompRegion &region, bool focusable)
 {
-    if (!fullscreen && allowedOnTop && region == untouched)
-	fullscreen = id;
+    bool fullscreen = false;
+
+    if (!covered && focusable && region == untouched)
+    {
+	covered = true;
+	fullscreen = true;
+    }
 
     untouched -= region;
-}
 
-FullscreenRegion::WindowId
-FullscreenRegion::fullscreenWindow () const
-{
     return fullscreen;
 }
 
