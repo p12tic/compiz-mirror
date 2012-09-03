@@ -35,7 +35,9 @@ class FullscreenRegion
 {
 public:
     FullscreenRegion (const CompRect &rect);
-    bool occlude (const CompRegion &region, bool focusable = true);
+
+    // isCoveredBy is called for windows from TOP to BOTTOM
+    bool isCoveredBy (const CompRegion &region, bool focusable = true);
 
 private:
     bool covered;

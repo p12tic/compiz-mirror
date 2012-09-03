@@ -341,7 +341,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		/* unredirect top most fullscreen windows. */
 		if (unredirectFS &&
 		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-		    fs.occlude (w->region (), !(w->type () & NO_FOCUS_MASK)))
+		    fs.isCoveredBy (w->region (), !(w->type () & NO_FOCUS_MASK)))
 		{
 		    fullscreenWindow = w;
 		}

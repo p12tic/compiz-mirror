@@ -32,69 +32,69 @@ TEST (OpenGLFullscreenRegion, NoWindows)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     CompRegion desktop (0, 0, 1024, 768);
-    EXPECT_FALSE (monitor.occlude (desktop, false));
+    EXPECT_FALSE (monitor.isCoveredBy (desktop, false));
 }
 
 TEST (OpenGLFullscreenRegion, NormalWindows)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, TwoFullscreen)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_TRUE  (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_TRUE  (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, Offscreen)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_FALSE (monitor.occlude (CompRegion (-100, -100, 1, 1)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (2000, 2000, 123, 456)));
-    EXPECT_TRUE  (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (-100, -100, 1, 1)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (2000, 2000, 123, 456)));
+    EXPECT_TRUE  (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, CancelFullscreen1)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_FALSE (monitor.occlude (CompRegion (500, 500, 345, 234)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (500, 500, 345, 234)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, CancelFullscreen2)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_FALSE (monitor.occlude (CompRegion (-100, -100, 1, 1)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (2000, 2000, 123, 456)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (500, 500, 345, 234)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (20, 20, 50, 20)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (-100, -100, 1, 1)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (2000, 2000, 123, 456)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (500, 500, 345, 234)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
 }
 
 TEST (OpenGLFullscreenRegion, Overflow)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_FALSE (monitor.occlude (CompRegion (10, 10, 40, 30)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (-10, -10, 1044, 788)));
-    EXPECT_FALSE (monitor.occlude (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (-10, -10, 1044, 788)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
 }
 
 

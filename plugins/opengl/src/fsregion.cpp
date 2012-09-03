@@ -35,7 +35,7 @@ FullscreenRegion::FullscreenRegion (const CompRect &rect) :
 }
 
 bool
-FullscreenRegion::occlude (const CompRegion &region, bool focusable)
+FullscreenRegion::isCoveredBy (const CompRegion &region, bool focusable)
 {
     bool fullscreen = false;
 
