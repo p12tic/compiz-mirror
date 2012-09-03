@@ -525,41 +525,23 @@ TEST_F(GWDMockSettingsTest, TestMock)
 			   &stringGValue);
 }
 
-class GWDSettingsTest :
-    public GWDSettingsTestCommon
+namespace
 {
-    public:
+    void ExpectAllNotificationsOnce (boost::shared_ptr <StrictMock <GWDMockSettingsNotifiedGMock> > &gmockNotified,
+				     boost::shared_ptr <GWDSettingsImpl>	      &settings)
+    {
+	InSequence s;
 
-	virtual void SetUp ()
-	{
-	    GWDSettingsTestCommon::SetUp ();
-	    mGMockNotified.reset (new GWDMockSettingsNotifiedGMock ());
-	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
-				 boost::bind (gwd_settings_notified_do_nothing, _1));
-	    mSettings.reset (gwd_settings_impl_new (NULL,
-						    NULL,
-						    mMockNotified.get ()),
-			     boost::bind (gwd_settings_unref, _1));
-	}
+	EXPECT_CALL (*gmockNotified, updateMetacityTheme ()).Times (1);
+	EXPECT_CALL (*gmockNotified, updateMetacityButtonLayout ()).Times (1);
+	EXPECT_CALL (*gmockNotified, updateFrames ()).Times (1);
+	EXPECT_CALL (*gmockNotified, updateDecorations ()).Times (1);
 
-	virtual void TearDown ()
-	{
-	    EXPECT_CALL (*mGMockNotified, dispose ());
-	    EXPECT_CALL (*mGMockNotified, finalize ());
-	}
-
-    protected:
-
-	boost::shared_ptr <GWDMockSettingsNotifiedGMock> mGMockNotified;
-	boost::shared_ptr <GWDSettingsNotified> mMockNotified;
-	boost::shared_ptr <GWDSettingsImpl> mSettings;
-};
-
-TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
-{
+	gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (settings.get ()));
+    }
 }
 
-class GWDSettingsTestStrict :
+class GWDSettingsTest :
     public GWDSettingsTestCommon
 {
     public:
@@ -574,25 +556,13 @@ class GWDSettingsTestStrict :
 						    NULL,
 						    mMockNotified.get ()),
 			     boost::bind (gwd_settings_unref, _1));
-	    ExpectAllNotificationsOnce ();
+	    ExpectAllNotificationsOnce (mGMockNotified, mSettings);
 	}
 
 	virtual void TearDown ()
 	{
 	    EXPECT_CALL (*mGMockNotified, dispose ());
 	    EXPECT_CALL (*mGMockNotified, finalize ());
-	}
-
-	void ExpectAllNotificationsOnce ()
-	{
-	    InSequence s;
-
-	    EXPECT_CALL (*mGMockNotified, updateMetacityTheme ()).Times (1);
-	    EXPECT_CALL (*mGMockNotified, updateMetacityButtonLayout ()).Times (1);
-	    EXPECT_CALL (*mGMockNotified, updateFrames ()).Times (1);
-	    EXPECT_CALL (*mGMockNotified, updateDecorations ()).Times (1);
-
-	    gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
 	}
 
     protected:
@@ -602,13 +572,17 @@ class GWDSettingsTestStrict :
 	boost::shared_ptr <GWDSettingsImpl> mSettings;
 };
 
+TEST_F(GWDSettingsTest, TestGWDSettingsInstantiation)
+{
+}
+
 /* Won't fail if the code in SetUp succeeds */
-TEST_F(GWDSettingsTestStrict, TestUpdateAllOnInstantiation)
+TEST_F(GWDSettingsTest, TestUpdateAllOnInstantiation)
 {
 }
 
 /* We're just using use_tooltips here as an example */
-TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdates)
+TEST_F(GWDSettingsTest, TestFreezeUpdatesNoUpdates)
 {
     gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -616,7 +590,7 @@ TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdates)
 }
 
 /* We're just using use_tooltips here as an example */
-TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
+TEST_F(GWDSettingsTest, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
 {
     gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -627,7 +601,7 @@ TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
 }
 
 /* We're just using use_tooltips here as an example */
-TEST_F(GWDSettingsTestStrict, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdatesNoDupes)
+TEST_F(GWDSettingsTest, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdatesNoDupes)
 {
     gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
@@ -1523,6 +1497,9 @@ TEST_F (GWDSettingsStorageGSettingsTest, TestNoDeathOnConnectingSignalToNULLObje
     gwd_connect_org_compiz_gwd_settings (NULL, mStorage.get ());
     gwd_connect_org_gnome_mutter_settings (NULL, mStorage.get ());
     gwd_connect_org_gnome_desktop_wm_preferences_settings (NULL, mStorage.get ());
+
+    EXPECT_CALL (*mStorageMock, dispose ());
+    EXPECT_CALL (*mStorageMock, finalize ());
 }
 
 class GWDSettingsStorageGSettingsFactoryWrapper :
