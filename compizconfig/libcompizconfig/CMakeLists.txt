@@ -14,6 +14,18 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LIBCOMPIZCONFIG_CMAKE_MODULE_PATH}
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# libcompizconfig package version number
+# An odd micro number indicates in-progress development.
+# An even micro number indicates a released version.
+# We read the VERSION file from the root directory.
+file (READ ${CMAKE_CURRENT_SOURCE_DIR}/../../VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
+
+set (VERSION ${COMPIZ_RELEASE_VERSION})
+
+set (_libcompizconfig_package_string "LibCompizConfig ${VERSION}")
+set (_libcompizconfig_package "LibCompizCompiz")
+
 set (ALL_LINGUAS af ar bg bn bn_IN bs ca cs cy da de el en_GB en_US es eu et fi fr gl gu he hi hr hu id it ja ka km ko lo lt mk mr nb nl or pa pl pt pt_BR ro ru sk sl sr sv ta tr uk vi xh zh_CN zh_TW zu)
 set (GETTEXT_PACKAGE libcompizconfig)
 
