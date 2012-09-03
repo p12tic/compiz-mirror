@@ -38,7 +38,7 @@
 #include <opengl/opengl.h>
 
 #include "privates.h"
-#include "output.h"
+#include "fsregion.h"
 
 #define DEG2RAD (M_PI / 180.0f)
 
@@ -275,7 +275,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
-	Output fs (*output);
+	FullscreenRegion fs (*output);
 
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)

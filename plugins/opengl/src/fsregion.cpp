@@ -1,5 +1,5 @@
 /*
- * Compiz opengl plugin, Output class
+ * Compiz opengl plugin, FullscreenRegion class
  *
  * Copyright (c) 2012 Canonical Ltd.
  * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
@@ -23,29 +23,31 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __COMPIZ_OPENGL_OUTPUT_H
-#define __COMPIZ_OPENGL_OUTPUT_H
-#include "core/rect.h"
-#include "core/region.h"
+#include "fsregion.h"
 
 namespace compiz {
 namespace opengl {
 
-class Output
+FullscreenRegion::FullscreenRegion (const CompRect &rect) :
+    fullscreen (NULL),
+    untouched (rect)
 {
-public:
-    typedef void *WindowId;
+}
 
-    Output (const CompRect &rect);
-    void addToBottom (const CompRegion &region, bool allowedOnTop,
-                      WindowId id);
-    WindowId fullscreenWindow () const;
+void
+FullscreenRegion::addToBottom (const CompRegion &region, bool allowedOnTop, WindowId id)
+{
+    if (!fullscreen && allowedOnTop && region == untouched)
+	fullscreen = id;
 
-private:
-    WindowId fullscreen;
-    CompRegion untouched;
-};
+    untouched -= region;
+}
+
+FullscreenRegion::WindowId
+FullscreenRegion::fullscreenWindow () const
+{
+    return fullscreen;
+}
 
 } // namespace opengl
 } // namespace compiz
-#endif

@@ -1,5 +1,5 @@
 /*
- * Compiz opengl plugin, Output class
+ * Compiz opengl plugin, FullscreenRegion class
  *
  * Copyright (c) 2012 Canonical Ltd.
  * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
@@ -24,7 +24,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "output.h"
+#include "fsregion.h"
 
 using namespace compiz::opengl;
 
@@ -46,17 +46,17 @@ private:
 
 } // namespace
 
-TEST (OpenGLOutput, NoWindows)
+TEST (OpenGLFullscreenRegion, NoWindows)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow desktop (false, 0, 0, 1024, 768);
     monitor.addToBottom (desktop.region (), desktop.allowedOnTop (), &desktop);
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLOutput, NormalWindows)
+TEST (OpenGLFullscreenRegion, NormalWindows)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (true, 10, 10, 40, 30);
     monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
     MockCompWindow b (true, 20, 20, 50, 20);
@@ -66,9 +66,9 @@ TEST (OpenGLOutput, NormalWindows)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLOutput, TwoFullscreen)
+TEST (OpenGLFullscreenRegion, TwoFullscreen)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow f1 (true, 0, 0, 1024, 768);
     monitor.addToBottom (f1.region (), f1.allowedOnTop (), &f1);
     MockCompWindow a (true, 10, 10, 40, 30);
@@ -82,9 +82,9 @@ TEST (OpenGLOutput, TwoFullscreen)
     EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
-TEST (OpenGLOutput, Offscreen)
+TEST (OpenGLFullscreenRegion, Offscreen)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (true, -100, -100, 1, 1);
     monitor.addToBottom (x.region (), x.allowedOnTop (), &x);
     MockCompWindow y (true, 2000, 2000, 123, 456);
@@ -102,9 +102,9 @@ TEST (OpenGLOutput, Offscreen)
     EXPECT_EQ (monitor.fullscreenWindow(), &f1);
 }
 
-TEST (OpenGLOutput, CancelFullscreen1)
+TEST (OpenGLFullscreenRegion, CancelFullscreen1)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow z (true, 500, 500, 345, 234);
     monitor.addToBottom (z.region (), z.allowedOnTop (), &z);
     MockCompWindow f1 (true, 0, 0, 1024, 768);
@@ -120,9 +120,9 @@ TEST (OpenGLOutput, CancelFullscreen1)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLOutput, CancelFullscreen2)
+TEST (OpenGLFullscreenRegion, CancelFullscreen2)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow x (true, -100, -100, 1, 1);
     monitor.addToBottom (x.region (), x.allowedOnTop (), &x);
     MockCompWindow y (true, 2000, 2000, 123, 456);
@@ -142,9 +142,9 @@ TEST (OpenGLOutput, CancelFullscreen2)
     EXPECT_EQ (NULL, monitor.fullscreenWindow());
 }
 
-TEST (OpenGLOutput, Overflow)
+TEST (OpenGLFullscreenRegion, Overflow)
 {
-    Output monitor (CompRect (0, 0, 1024, 768));
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     MockCompWindow a (true, 10, 10, 40, 30);
     monitor.addToBottom (a.region (), a.allowedOnTop (), &a);
     MockCompWindow b (true, -10, -10, 1044, 788);
