@@ -4,12 +4,6 @@ include (LibCompizConfigCommon)
 # Hack
 set (CMAKE_PROJECT_NAME ccsm)
 
-# We read the VERSION file from the root directory.
-file (READ ${CMAKE_CURRENT_SOURCE_DIR}/../../VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
-string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
-
-set (VERSION ${COMPIZ_RELEASE_VERSION})
-
 add_custom_command (OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/compizconfig_wrapper.c
 		    COMMAND echo \"int main (void) { return 0\; }\" >> ${CMAKE_CURRENT_BINARY_DIR}/compizconfig_wrapper.c
 		    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
