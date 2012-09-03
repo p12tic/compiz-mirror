@@ -25,8 +25,6 @@
 
 #ifndef __COMPIZ_OPENGL_OUTPUT_H
 #define __COMPIZ_OPENGL_OUTPUT_H
-#include "core/match.h"
-#include "core/window.h"
 #include "core/rect.h"
 #include "core/region.h"
 
