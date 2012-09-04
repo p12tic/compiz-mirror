@@ -35,11 +35,11 @@ FullscreenRegion::FullscreenRegion (const CompRect &rect) :
 }
 
 bool
-FullscreenRegion::isCoveredBy (const CompRegion &region, bool focusable)
+FullscreenRegion::isCoveredBy (const CompRegion &region, WinType type)
 {
     bool fullscreen = false;
 
-    if (!covered && focusable && region == untouched)
+    if (!covered && type == Normal && region == untouched)
     {
 	covered = true;
 	fullscreen = true;

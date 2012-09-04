@@ -34,10 +34,16 @@ namespace opengl {
 class FullscreenRegion
 {
 public:
+    typedef enum
+    {
+	Normal,
+	Desktop
+    } WinType;
+
     FullscreenRegion (const CompRect &rect);
 
     // isCoveredBy is called for windows from TOP to BOTTOM
-    bool isCoveredBy (const CompRegion &region, bool focusable = true);
+    bool isCoveredBy (const CompRegion &region, WinType type = Normal);
 
 private:
     bool covered;

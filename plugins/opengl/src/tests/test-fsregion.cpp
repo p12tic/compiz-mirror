@@ -31,14 +31,16 @@ using namespace compiz::opengl;
 TEST (OpenGLFullscreenRegion, NoWindows)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, OneFullscreen)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     EXPECT_TRUE  (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, FullscreenNoDesktop)
@@ -52,7 +54,8 @@ TEST (OpenGLFullscreenRegion, NormalWindows)
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, TwoFullscreen)
@@ -62,7 +65,8 @@ TEST (OpenGLFullscreenRegion, TwoFullscreen)
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, Offscreen)
@@ -74,7 +78,8 @@ TEST (OpenGLFullscreenRegion, Offscreen)
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, CancelFullscreen1)
@@ -85,7 +90,8 @@ TEST (OpenGLFullscreenRegion, CancelFullscreen1)
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, CancelFullscreen2)
@@ -98,7 +104,8 @@ TEST (OpenGLFullscreenRegion, CancelFullscreen2)
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (20, 20, 50, 20)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 TEST (OpenGLFullscreenRegion, Overflow)
@@ -107,7 +114,8 @@ TEST (OpenGLFullscreenRegion, Overflow)
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (10, 10, 40, 30)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (-10, -10, 1044, 788)));
     EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
-    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768), false));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
 }
 
 

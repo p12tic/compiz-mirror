@@ -339,9 +339,14 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		    tmpRegion -= w->region ();
 
 		/* unredirect top most fullscreen windows. */
+		FullscreenRegion::WinType type =
+		    w->type () & CompWindowTypeDesktopMask ?
+		    FullscreenRegion::Desktop :
+		    FullscreenRegion::Normal;
+		
 		if (unredirectFS &&
 		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-		    fs.isCoveredBy (w->region (), !(w->type () & NO_FOCUS_MASK)))
+		    fs.isCoveredBy (w->region (), type))
 		{
 		    fullscreenWindow = w;
 		}
