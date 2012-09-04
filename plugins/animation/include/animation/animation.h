@@ -24,7 +24,7 @@ typedef enum
     AnimEventOpen = 0,
     AnimEventClose,
     AnimEventMinimize,
-    AnimEventUnMinimize,
+    AnimEventUnminimize,
     AnimEventShade,
     AnimEventFocus,
     AnimEventNum
