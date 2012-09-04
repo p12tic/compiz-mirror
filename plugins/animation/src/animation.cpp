@@ -106,7 +106,7 @@ COMPIZ_PLUGIN_20090315 (animation, AnimPluginVTable);
 #define FAKE_ICON_SIZE 4
 
 const char *eventNames[AnimEventNum] =
-{"Open", "Close", "Minimize", "Shade", "UnMinimize", "Focus"};
+{"Open", "Close", "Minimize", "Shade", "Unminimize", "Focus"};
 
 int chosenEffectOptionIds[AnimEventNum] =
 {
@@ -551,7 +551,7 @@ PrivateAnimWindow::updateSelectionRow (unsigned int r)
 }
 
 // Assumes events in the metadata are in
-// [Open, Close, Minimize, Shade, UnMinimize, Focus] order
+// [Open, Close, Minimize, Shade, Unminimize, Focus] order
 // and effects among those are in alphabetical order
 // but with "(Event) None" first and "(Event) Random" last.
 AnimEffect
@@ -2231,7 +2231,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 
     int duration = 200;
     AnimEffect chosenEffect =
-	getMatchingAnimSelection (w, AnimEventUnMinimize, &duration);
+	getMatchingAnimSelection (w, AnimEventUnminimize, &duration);
 
     aw->mNewState = NormalState;
 
@@ -2265,7 +2265,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 	if (startingNew)
 	{
 	    AnimEffect effectToBePlayed =
-		getActualEffect (chosenEffect, AnimEventUnMinimize);
+		getActualEffect (chosenEffect, AnimEventUnminimize);
 
 	    // handle empty random effect list
 	    if (effectToBePlayed == AnimEffectNone)
@@ -2511,7 +2511,7 @@ AnimEffectUsedFor AnimEffectUsedFor::all ()
 {
   AnimEffectUsedFor usedFor;
   usedFor.open = usedFor.close = usedFor.minimize = 
-  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  usedFor.shade = usedFor.unminimize = usedFor.focus = true;
   return usedFor;
 }
 
@@ -2519,7 +2519,7 @@ AnimEffectUsedFor AnimEffectUsedFor::none ()
 {
   AnimEffectUsedFor usedFor;  
   usedFor.open = usedFor.close = usedFor.minimize = 
-  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  usedFor.shade = usedFor.unminimize = usedFor.focus = true;
   return usedFor;
 }
 
@@ -2530,7 +2530,7 @@ AnimEffectUsedFor& AnimEffectUsedFor::exclude (AnimEvent event)
     case AnimEventClose: close = false; break;
     case AnimEventMinimize: minimize = false; break;
     case AnimEventShade: shade = false; break;
-    case AnimEventUnMinimize: unMinimize = false; break;
+    case AnimEventUnminimize: unminimize = false; break;
     case AnimEventFocus: focus = false; break;
     default: break;
   }
@@ -2544,7 +2544,7 @@ AnimEffectUsedFor& AnimEffectUsedFor::include (AnimEvent event)
     case AnimEventClose: close = true; break;
     case AnimEventMinimize: minimize = true; break;
     case AnimEventShade: shade = true; break;
-    case AnimEventUnMinimize: unMinimize = true; break;
+    case AnimEventUnminimize: unminimize = true; break;
     case AnimEventFocus: focus = true; break;
     default: break;
   }
@@ -2563,7 +2563,7 @@ AnimEffectInfo::AnimEffectInfo (const char *name,
     usedForEvents[AnimEventClose] = usedFor.close;
     usedForEvents[AnimEventMinimize] = usedFor.minimize;
     usedForEvents[AnimEventShade] = usedFor.shade;
-    usedForEvents[AnimEventUnMinimize] = usedFor.unMinimize;
+    usedForEvents[AnimEventUnminimize] = usedFor.unminimize;
     usedForEvents[AnimEventFocus] = usedFor.focus;
 }
 
