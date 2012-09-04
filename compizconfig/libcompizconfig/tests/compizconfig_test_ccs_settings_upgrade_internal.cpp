@@ -376,6 +376,70 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListNonListType)
     ccsUpgradeAddValues (list);
 }
 
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestReplaceValuesInListNonListType)
+{
+    MockedSetting fromSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						      TypeInt,
+						      DoNotAddSettingToPlugin));
+    MockedSetting toSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						      TypeInt,
+						      DoNotAddSettingToPlugin));
+    MockedSetting settingToBeChanged (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						    TypeInt));
+    CCSSettingValue settingToBeChangedValue;
+    CCSSettingValue fromSettingIdentifierValue;
+    CCSSettingValue toSettingIdentifierValue;
+
+    InitializeValueForSetting (settingToBeChangedValue, Real (settingToBeChanged));
+    InitializeValueForSetting (fromSettingIdentifierValue, Real (fromSettingIdentifier));
+    InitializeValueForSetting (toSettingIdentifierValue, Real (toSettingIdentifier));
+
+    settingToBeChangedValue.value.asInt = 7;
+    fromSettingIdentifierValue.value.asInt = 7;
+    toSettingIdentifierValue.value.asInt = 8;
+
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> replaceFromValueSettings (ccsSettingListAppend (NULL, Real (fromSettingIdentifier)),
+										 ccsSettingListFree,
+										 ccsSettingListAppend,
+										 ccsSettingListRemove,
+										 cci::Shallow);
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> replaceToValueSettings (ccsSettingListAppend (NULL, Real (toSettingIdentifier)),
+									       ccsSettingListFree,
+									       ccsSettingListAppend,
+									       ccsSettingListRemove,
+									       cci::Shallow);
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
+	    .WillOnce (Return (Real (settingToBeChanged)));
+    EXPECT_CALL (Mock (fromSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (fromSettingIdentifier), getName ());
+    EXPECT_CALL (Mock (toSettingIdentifier), getName ());
+
+    CCSSettingInfo info;
+
+    info.forInt.max = 0;
+    info.forInt.min = 10;
+
+    /* ccsCheckValueEq needs to know the type and info about this type */
+    EXPECT_CALL (Mock (settingToBeChanged), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (fromSettingIdentifier), getType ()).Times (AtLeast (1));
+
+    EXPECT_CALL (Mock (settingToBeChanged), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (fromSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (toSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+
+    EXPECT_CALL (Mock (settingToBeChanged), getValue ()).WillOnce (Return (&settingToBeChangedValue));
+    EXPECT_CALL (Mock (fromSettingIdentifier), getValue ()).WillOnce (Return (&fromSettingIdentifierValue));
+    EXPECT_CALL (Mock (toSettingIdentifier), getValue ()).WillOnce (Return (&toSettingIdentifierValue));
+
+
+    EXPECT_CALL (Mock (settingToBeChanged), setValue (Pointee (SettingValueMatch (toSettingIdentifierValue,
+										  TypeInt,
+										  &info)), BoolTrue ()));
+
+    ccsUpgradeReplaceValues (replaceFromValueSettings, replaceToValueSettings);
+}
+
 namespace
 {
     boost::shared_ptr <CCSString>

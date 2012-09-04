@@ -351,17 +351,30 @@ ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
 
 	if (setting)
 	{
-	    if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
+	    CCSSettingValue *value = ccsSettingGetValue (setting);
+	    CCSSettingType  realType = ccsSettingGetType (setting);
+	    CCSSettingInfo  *realInfo = ccsSettingGetInfo (setting);
+	    CCSSettingValue *tempValue = ccsSettingGetValue (tempSetting);
+	    CCSSettingType  tempType = ccsSettingGetType (tempSetting);
+	    CCSSettingInfo  *tempInfo = ccsSettingGetInfo (tempSetting);
+
+	    if (ccsCheckValueEq (value,
+				 realType,
+				 realInfo,
+				 tempValue,
+				 tempType,
+				 tempInfo))
 	    {
 		CCSSettingList rl = replaceToValueSettings;
 
 		while (rl)
 		{
 		    CCSSetting *rsetting = (CCSSetting *) rl->data;
+		    const char *replaceToSettingName = ccsSettingGetName (rsetting);
 
-		    if (strcmp (ccsSettingGetName (rsetting), ccsSettingGetName (setting)) == 0)
+		    if (strcmp (replaceToSettingName, name) == 0)
 		    {
-			ccsDebug ("Matched and replaced %s", ccsSettingGetName (setting));
+			ccsDebug ("Matched and replaced %s", name);
 			ccsSetValue (setting, ccsSettingGetValue (rsetting), TRUE);
 			break;
 		    }
@@ -371,7 +384,7 @@ ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
 	    }
 	    else
 	    {
-		ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
+		ccsDebug ("Skipping processing of %s", name);
 	    }
 	}
 
