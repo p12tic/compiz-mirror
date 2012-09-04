@@ -437,7 +437,7 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
     top    += window->border ().top;
     bottom -= window->border ().bottom + 2 * window->serverGeometry ().border ();
 
-    /* always validate position if the applicaiton changed only its size,
+    /* always validate position if the application changed only its size,
      * as it might become partially offscreen because of that */
     if (!(mask) & (CWX | CWY) && (mask & (CWWidth | CWHeight)))
 	sizeOnly = false;

@@ -17,11 +17,6 @@ pkg_config_environ["PKG_CONFIG_PATH"] = os.getcwd () + "/../libcompizconfig:" + 
 from distutils.command.build_ext import build_ext
 ext_module_src = os.getcwd () + "/compizconfig.c"
 
-version_file = open ("VERSION", "r")
-version = version_file.read ().strip ()
-if "=" in version:
-    version = version.split ("=")[1]
-
 def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
     cmd = ['pkg-config', '--libs', '--cflags']
@@ -132,7 +127,6 @@ class test (Command):
 
 setup (
   name = "compizconfig-python",
-  version = version,
   description      = "CompizConfig Python",
   url              = "http://www.compiz.org/",
   license          = "GPL",
