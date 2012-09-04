@@ -184,7 +184,14 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 	    CCSSettingType sType = ccsSettingGetType (setting);
 	    CCSSettingInfo *info = ccsSettingGetInfo (setting);
 
-	    if (ccsSettingGetType (setting) != TypeList)
+	    if (sType != tType)
+	    {
+		ccsWarning ("Attempted to upgrade setting %s with wrong type", name);
+		sl = sl->next;
+		continue;
+	    }
+
+	    if (sType != TypeList)
 	    {
 		if (ccsCheckValueEq (ccsSettingGetValue (setting),
 				     sType,
@@ -264,8 +271,18 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 
 	if (setting)
 	{
-	    ccsDebug ("Overriding value %s", ccsSettingGetName ((CCSSetting *) sl->data));
-	    if (ccsSettingGetType (setting) != TypeList)
+	    const CCSSettingType tempSettingType = ccsSettingGetType (tempSetting);
+	    const CCSSettingType actualSettingType = ccsSettingGetType (setting);
+
+	    if (tempSettingType != actualSettingType)
+	    {
+		ccsWarning ("Attempted to upgrade setting %s with wrong type", name);
+		sl = sl->next;
+		continue;
+	    }
+
+	    ccsDebug ("Overriding value %s", name);
+	    if (tempSettingType != TypeList)
 		ccsSetValue (setting, ccsSettingGetValue (tempSetting), TRUE);
 	    else
 	    {

@@ -31,6 +31,7 @@ using ::testing::Not;
 using ::testing::Matcher;
 using ::testing::MakeMatcher;
 using ::testing::MatcherInterface;
+using ::testing::Pointee;
 
 namespace cc = compiz::config;
 namespace cci = compiz::config::impl;
@@ -325,6 +326,54 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
     EXPECT_CALL (Mock (settingToReset), resetToDefault (BoolTrue ()));
 
     ccsUpgradeClearValues (list);
+}
+
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListNonListType)
+{
+    MockedSetting addSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						      TypeInt,
+						      DoNotAddSettingToPlugin));
+    MockedSetting settingToBeChanged (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						    TypeInt));
+    CCSSettingValue valueToReset;
+    CCSSettingValue valueResetIdentifier;
+
+    InitializeValueForSetting (valueToReset, Real (settingToBeChanged));
+    InitializeValueForSetting (valueResetIdentifier, Real (addSettingIdentifier));
+
+    valueToReset.value.asInt = 7;
+    valueResetIdentifier.value.asInt = 7;
+
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> list (ccsSettingListAppend (NULL, Real (addSettingIdentifier)),
+							     ccsSettingListFree,
+							     ccsSettingListAppend,
+							     ccsSettingListRemove,
+							     cci::Shallow);
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
+	    .WillOnce (Return (Real (settingToBeChanged)));
+    EXPECT_CALL (Mock (addSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (addSettingIdentifier), getName ());
+
+    CCSSettingInfo info;
+
+    info.forInt.max = 0;
+    info.forInt.min = 10;
+
+    /* ccsCheckValueEq needs to know the type and info about this type */
+    EXPECT_CALL (Mock (settingToBeChanged), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (addSettingIdentifier), getType ()).Times (AtLeast (1));
+
+    EXPECT_CALL (Mock (settingToBeChanged), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (addSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+
+    EXPECT_CALL (Mock (addSettingIdentifier), getValue ()).WillOnce (Return (&valueResetIdentifier));
+
+    EXPECT_CALL (Mock (settingToBeChanged), setValue (Pointee (SettingValueMatch (valueResetIdentifier,
+										  TypeInt,
+										  &info)), BoolTrue ()));
+
+    ccsUpgradeAddValues (list);
 }
 
 namespace
