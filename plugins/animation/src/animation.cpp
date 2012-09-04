@@ -2511,7 +2511,7 @@ AnimEffectUsedFor AnimEffectUsedFor::all ()
 {
   AnimEffectUsedFor usedFor;
   usedFor.open = usedFor.close = usedFor.minimize = 
-  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  usedFor.shade = usedFor.unminimize = usedFor.focus = true;
   return usedFor;
 }
 
@@ -2519,7 +2519,7 @@ AnimEffectUsedFor AnimEffectUsedFor::none ()
 {
   AnimEffectUsedFor usedFor;  
   usedFor.open = usedFor.close = usedFor.minimize = 
-  usedFor.shade = usedFor.unMinimize = usedFor.focus = true;
+  usedFor.shade = usedFor.unminimize = usedFor.focus = true;
   return usedFor;
 }
 
@@ -2529,8 +2529,8 @@ AnimEffectUsedFor& AnimEffectUsedFor::exclude (AnimEvent event)
     case AnimEventOpen: open = false; break;
     case AnimEventClose: close = false; break;
     case AnimEventMinimize: minimize = false; break;
+    case AnimEventUnminimize: unminimize = false; break;
     case AnimEventShade: shade = false; break;
-    case AnimEventUnminimize: unMinimize = false; break;
     case AnimEventFocus: focus = false; break;
     default: break;
   }
@@ -2543,8 +2543,8 @@ AnimEffectUsedFor& AnimEffectUsedFor::include (AnimEvent event)
     case AnimEventOpen: open = true; break;
     case AnimEventClose: close = true; break;
     case AnimEventMinimize: minimize = true; break;
+    case AnimEventUnminimize: unminimize = true; break;
     case AnimEventShade: shade = true; break;
-    case AnimEventUnminimize: unMinimize = true; break;
     case AnimEventFocus: focus = true; break;
     default: break;
   }
@@ -2562,8 +2562,8 @@ AnimEffectInfo::AnimEffectInfo (const char *name,
     usedForEvents[AnimEventOpen] = usedFor.open;
     usedForEvents[AnimEventClose] = usedFor.close;
     usedForEvents[AnimEventMinimize] = usedFor.minimize;
+    usedForEvents[AnimEventUnminimize] = usedFor.unminimize;
     usedForEvents[AnimEventShade] = usedFor.shade;
-    usedForEvents[AnimEventUnminimize] = usedFor.unMinimize;
     usedForEvents[AnimEventFocus] = usedFor.focus;
 }
 
