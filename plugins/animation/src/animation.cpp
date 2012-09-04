@@ -2646,24 +2646,28 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     optionSetOpenMatchesNotify (MATCHES_BIND);
     optionSetCloseMatchesNotify (MATCHES_BIND);
     optionSetMinimizeMatchesNotify (MATCHES_BIND);
+    optionSetUnminimizeMatchesNotify (MATCHES_BIND);
     optionSetFocusMatchesNotify (MATCHES_BIND);
     optionSetShadeMatchesNotify (MATCHES_BIND);
 
     optionSetOpenOptionsNotify (OPTIONS_BIND);
     optionSetCloseOptionsNotify (OPTIONS_BIND);
     optionSetMinimizeOptionsNotify (OPTIONS_BIND);
+    optionSetUnminimizeOptionsNotify (OPTIONS_BIND);
     optionSetFocusOptionsNotify (OPTIONS_BIND);
     optionSetShadeOptionsNotify (OPTIONS_BIND);
 
     optionSetOpenEffectsNotify (EFFECTS_BIND);
     optionSetCloseEffectsNotify (EFFECTS_BIND);
     optionSetMinimizeEffectsNotify (EFFECTS_BIND);
+    optionSetUnminimizeEffectsNotify (EFFECTS_BIND);
     optionSetFocusEffectsNotify (EFFECTS_BIND);
     optionSetShadeEffectsNotify (EFFECTS_BIND);
 
     optionSetOpenRandomEffectsNotify (RANDOM_EFFECTS_BIND);
     optionSetCloseRandomEffectsNotify (RANDOM_EFFECTS_BIND);
     optionSetMinimizeRandomEffectsNotify (RANDOM_EFFECTS_BIND);
+    optionSetUnminimizeRandomEffectsNotify (RANDOM_EFFECTS_BIND);
     optionSetShadeRandomEffectsNotify (RANDOM_EFFECTS_BIND);
 
     ScreenInterface::setHandler (::screen);
