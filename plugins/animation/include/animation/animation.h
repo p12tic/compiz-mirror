@@ -25,7 +25,7 @@ typedef enum
     AnimEventClose,
     AnimEventMinimize,
     AnimEventShade,
-    AnimEventUnMinimize,
+    AnimEventUnminimize,
     AnimEventFocus,
     AnimEventNum
 } AnimEvent;
