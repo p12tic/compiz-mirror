@@ -279,19 +279,8 @@ ObsScreen::setOption (const CompString  &name,
     return true;
 }
 
-void
-ObsWindow::postLoad ()
-{
-    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
-    {
-	if (customFactor[i] != 100)
-	    modifierChanged (i);
-    }
-}
-
 ObsWindow::ObsWindow (CompWindow *w) :
     PluginClassHandler<ObsWindow, CompWindow> (w),
-    PluginStateWriter <ObsWindow> (this, w->id ()),
     window (w),
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
@@ -314,8 +303,6 @@ ObsWindow::ObsWindow (CompWindow *w) :
 
 ObsWindow::~ObsWindow ()
 {
-    writeSerializedData ();
-
     updateHandle.stop ();
 }
 

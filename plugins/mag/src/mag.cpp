@@ -932,22 +932,8 @@ MagScreen::zoomOut (CompAction	  *action,
     return true;
 }
 
-void
-MagScreen::postLoad ()
-{
-    if (zTarget != 1.0f || zVelocity != 0.0f || zoom != 1.0f)
-    {
-	cScreen->preparePaintSetEnabled (this, true);
-	cScreen->donePaintSetEnabled (this, true);
-	gScreen->glPaintOutputSetEnabled (this, true);
-	
-	cScreen->damageScreen ();
-    }
-}
-
 MagScreen::MagScreen (CompScreen *screen) :
     PluginClassHandler <MagScreen, CompScreen> (screen),
-    PluginStateWriter <MagScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     posX (0),
@@ -1041,8 +1027,6 @@ MagScreen::MagScreen (CompScreen *screen) :
 
 MagScreen::~MagScreen ()
 {
-    writeSerializedData ();
-
     poller.stop ();
 
     if (zoom)

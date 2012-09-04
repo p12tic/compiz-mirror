@@ -1862,35 +1862,8 @@ EZoomScreen::CursorTexture::CursorTexture () :
 {
 }
 
-void
-EZoomScreen::postLoad ()
-{
-    const CompPoint &m = pollHandle.getCurrentPosition ();
-    int         out = screen->outputDeviceForPoint (m.x (), m.y ());
-
-    if (!grabbed)
-	return;
-
-    toggleFunctions (true);
-
-    if (!pollHandle.active ())
-	enableMousePolling ();
-
-    foreach (ZoomArea &za, zooms)
-    {
-	grabbed |= (1 << za.output);
-    }
-
-    cursorZoomActive (out);
-    updateCursor (&cursor);
-
-    cScreen->damageScreen ();
-
-}
-
 EZoomScreen::EZoomScreen (CompScreen *screen) :
     PluginClassHandler <EZoomScreen, CompScreen> (screen),
-    PluginStateWriter <EZoomScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     grabbed (0),
@@ -1986,8 +1959,6 @@ EZoomScreen::EZoomScreen (CompScreen *screen) :
 
 EZoomScreen::~EZoomScreen ()
 {
-    writeSerializedData ();
-
     if (pollHandle.active ())
 	pollHandle.stop ();
 
