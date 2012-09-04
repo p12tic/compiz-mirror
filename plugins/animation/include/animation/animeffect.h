@@ -20,7 +20,7 @@ public:
   bool close;
   bool minimize;
   bool shade;
-  bool unMinimize;
+  bool unminimize;
   bool focus;
 };
 

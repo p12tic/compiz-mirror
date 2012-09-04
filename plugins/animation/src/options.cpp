@@ -36,7 +36,7 @@ AnimEvent win2AnimEventMap[WindowEventNum] =
     AnimEventMinimize,
     AnimEventShade,
     AnimEventShade,
-    AnimEventUnMinimize,
+    AnimEventUnminimize,
     AnimEventFocus
 };
 
@@ -63,7 +63,7 @@ PrivateAnimScreen::getCorrespondingAnimEvent (AnimationOptions::Options optionId
     case AnimationOptions::UnminimizeOptions:
     case AnimationOptions::UnminimizeEffects:
     case AnimationOptions::UnminimizeRandomEffects:
-	return AnimEventUnMinimize;
+	return AnimEventUnminimize;
 
     case AnimationOptions::FocusOptions:
     case AnimationOptions::FocusEffects:
