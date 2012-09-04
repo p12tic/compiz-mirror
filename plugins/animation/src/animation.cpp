@@ -113,8 +113,8 @@ int chosenEffectOptionIds[AnimEventNum] =
     AnimationOptions::OpenEffects,
     AnimationOptions::CloseEffects,
     AnimationOptions::MinimizeEffects,
-    AnimationOptions::ShadeEffects,
     AnimationOptions::UnminimizeEffects,
+    AnimationOptions::ShadeEffects,
     AnimationOptions::FocusEffects,
 };
 
@@ -123,8 +123,8 @@ int randomEffectOptionIds[AnimEventNum] =
     AnimationOptions::OpenRandomEffects,
     AnimationOptions::CloseRandomEffects,
     AnimationOptions::MinimizeRandomEffects,
-    AnimationOptions::ShadeRandomEffects,
     AnimationOptions::UnminimizeRandomEffects,
+    AnimationOptions::ShadeRandomEffects,
     -1
 };
 
@@ -143,8 +143,8 @@ int matchOptionIds[AnimEventNum] =
     AnimationOptions::OpenMatches,
     AnimationOptions::CloseMatches,
     AnimationOptions::MinimizeMatches,
-    AnimationOptions::ShadeMatches,
     AnimationOptions::UnminimizeMatches,
+    AnimationOptions::ShadeMatches,
     AnimationOptions::FocusMatches
 };
 
@@ -153,8 +153,8 @@ int durationOptionIds[AnimEventNum] =
     AnimationOptions::OpenDurations,
     AnimationOptions::CloseDurations,
     AnimationOptions::MinimizeDurations,
-    AnimationOptions::ShadeDurations,
     AnimationOptions::UnminimizeDurations,
+    AnimationOptions::ShadeDurations,
     AnimationOptions::FocusDurations
 };
 
@@ -2841,13 +2841,13 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	    mPAScreen->initiateMinimizeAnim (this);
 	    mEventNotOpenClose = true;
 	    break;
-	case CompWindowNotifyShade:
-	    mPAScreen->initiateShadeAnim (this);
-	    mEventNotOpenClose = true;
-	    break;
 	case CompWindowNotifyLeaveShowDesktopMode:
 	case CompWindowNotifyUnminimize:
 	    mPAScreen->initiateUnminimizeAnim (this);
+	    mEventNotOpenClose = true;
+	    break;
+	case CompWindowNotifyShade:
+	    mPAScreen->initiateShadeAnim (this);
 	    mEventNotOpenClose = true;
 	    break;
 	case CompWindowNotifyUnshade:
