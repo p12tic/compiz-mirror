@@ -7,10 +7,8 @@ from distutils.command.sdist import sdist as _sdist
 from distutils.extension import Extension
 import os
 import subprocess
-
+import sys
 import unittest
-import os
-
 pkg_config_environ = os.environ
 pkg_config_environ["PKG_CONFIG_PATH"] = os.getcwd () + "/../libcompizconfig:" + os.environ.get ("PKG_CONFIG_PATH", '')
 
@@ -33,7 +31,9 @@ def pkgconfig(*packages, **kw):
     
     return kw
 
-VERSION_FILE = os.path.join (os.path.dirname (__file__), "VERSION")
+for arg in sys.argv:
+    if "--version" in arg:
+        VERSION = arg.split ("=")[1]
 
 pkgconfig_libs = subprocess.Popen (["pkg-config", "--libs", "libcompizconfig_internal"], stdout=subprocess.PIPE, env=pkg_config_environ, stderr=open(os.devnull, 'w')).communicate ()[0]
 
@@ -44,6 +44,18 @@ if len (pkgconfig_libs) is 0:
 libs = pkgconfig_libs[2:].split (" ")[0]
 
 INSTALLED_FILES = "installed_files"
+
+class build (_build):
+
+    user_options = _build.user_options[:]
+    user_options.extend ([('version=', None, "Version of the package")])
+
+    def initialize_options(self):
+        self.version = None
+        _build.initialize_options (self)
+
+    def finalize_options(self):
+        _build.finalize_options (self)
 
 class install (_install):
 
@@ -127,6 +139,7 @@ class test (Command):
 
 setup (
   name = "compizconfig-python",
+  version = VERSION,
   description      = "CompizConfig Python",
   url              = "http://www.compiz.org/",
   license          = "GPL",
@@ -135,6 +148,7 @@ setup (
   cmdclass         = {"uninstall" : uninstall,
                       "install" : install,
                       "install_data" : install_data,
+                      "build"     : build,
                       "build_ext" : build_ext,
 		      "test"  : test},
   ext_modules=[ 

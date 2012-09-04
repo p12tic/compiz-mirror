@@ -5,9 +5,22 @@ import subprocess
 from stat import *
 from distutils.core import setup
 from distutils.command.install import install as _install
+from distutils.command.build import build as _build
 from distutils.command.install_data import install_data as _install_data
 
 INSTALLED_FILES = "installed_files"
+
+class build (_build):
+
+    user_options = _build.user_options[:]
+    user_options.extend ([('version=', None, "Version of the package")])
+
+    def initialize_options(self):
+        self.version = None
+        _build.initialize_options (self)
+
+    def finalize_options(self):
+        _build.finalize_options (self)
 
 class install (_install):
 
@@ -97,10 +110,15 @@ if not prefix or not len (prefix):
 if sys.argv[1] in ("install", "uninstall") and len (prefix):
     sys.argv += ["--prefix", prefix]
 
+for arg in sys.argv:
+    if "--version" in arg:
+        VERSION = arg.split ("=")[1]
+
 f = open (os.path.join ("ccm/Constants.py.in"), "rt")
 data = f.read ()
 f.close ()
 data = data.replace ("@prefix@", prefix)
+data = data.replace ("@version@", VERSION)
 f = open (os.path.join ("ccm/Constants.py"), "wt")
 f.write (data)
 f.close ()
@@ -162,6 +180,7 @@ if os.path.isdir (podir):
 
 setup (
         name             = "ccsm",
+        version          = VERSION,
         description      = "CompizConfig Settings Manager",
         author           = "Patrick Niklaus",
         author_email     = "marex@opencompositing.org",
@@ -170,7 +189,8 @@ setup (
         data_files       = data_files,
         packages         = ["ccm"],
         scripts          = ["ccsm"],
-        cmdclass         = {"uninstall" : uninstall,
+        cmdclass         = {"build"     : build,
+                            "uninstall" : uninstall,
                             "install" : install,
                             "install_data" : install_data}
      )
