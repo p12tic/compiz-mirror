@@ -3,10 +3,12 @@ find_package (Compiz REQUIRED)
 include (CompizPlugin)
 
 set (INTERNAL_LIBRARIES
-     compiz_opengl_double_buffer)
+    compiz_opengl_double_buffer
+    compiz_opengl_fsregion
+)
 
 add_subdirectory (src/doublebuffer)
-add_subdirectory (src/tests)
+add_subdirectory (src/fsregion)
 
 if (USE_GLES)
     compiz_plugin(opengl PLUGINDEPS composite CFLAGSADD "-DUSE_GLES -std=c++0x" LIBRARIES ${OPENGLES2_LIBRARIES} ${INTERNAL_LIBRARIES} dl INCDIRS ${OPENGLES2_INCLUDE_DIR})
