@@ -29,27 +29,35 @@ add_custom_command (OUTPUT ${PY_COMPIZCONFIG_SRC}
 
 set (PY_COMPIZCONFIG_LIB  ${CMAKE_CURRENT_BINARY_DIR}/build/${PY_BUILD_DIR}/compizconfig.so)
 
+file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
+set (VERSION ${COMPIZ_RELEASE_VERSION})
+
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/compizconfig-python.pc.in
+                ${CMAKE_CURRENT_BINARY_DIR}/compizconfig-python.pc)
+
 add_custom_command (OUTPUT ${PY_COMPIZCONFIG_LIB}
-		    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py build --build-base=${CMAKE_CURRENT_BINARY_DIR}/build
+		    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py build --build-base=${CMAKE_CURRENT_BINARY_DIR}/build --version=${VERSION}
 		    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		    DEPENDS ${PY_COMPIZCONFIG_SRC} ${PY_COMPIZCONFIG_VERSION}
 		    COMMENT "Generating Python Bytecode")
 
-add_library (compizconfig_wrapper
-	     ${CMAKE_CURRENT_BINARY_DIR}/compizconfig_wrapper.c
-	     ${PY_COMPIZCONFIG_LIB})
+add_custom_target (compizconfig_python_module ALL DEPENDS
+                   ${PY_COMPIZCONFIG_LIB})
 
 add_custom_target (uninstall
 		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall --prefix=${CMAKE_INSTALL_PREFIX}
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		   COMMENT "Uninstalling Python Files")
 
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/compizconfig-python.pc
+         DESTINATION ${libdir}/pkgconfig)
 
 install (CODE
 	 "message (\"Installing python files\")
 	  execute_process (COMMAND cmake -DSETUP=${CMAKE_CURRENT_SOURCE_DIR}/setup.py -DPREFIX=${CMAKE_INSTALL_PREFIX} -DWDIR=${CMAKE_CURRENT_BINARY_DIR} -P ${compiz_SOURCE_DIR}/compizconfig/cmake/exec_setup_py_with_destdir.cmake)")
 
-add_dependencies (compizconfig_wrapper compizconfig)
+add_dependencies (compizconfig_python_module compizconfig)
 
 if (COMPIZ_BUILD_TESTING)
 
