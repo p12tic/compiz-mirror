@@ -34,8 +34,8 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 
-#define MAX_SUB_TEX 2048
-#define SHM_SIZE MAX_SUB_TEX * MAX_SUB_TEX * 4
+static const int MAX_SUB_TEX = 2048;
+static const unsigned int SHM_SIZE = MAX_SUB_TEX * MAX_SUB_TEX * 4;
 
 class CopyTexture;
 

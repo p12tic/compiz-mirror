@@ -38,7 +38,7 @@
 #include <GL/glu.h>
 
 
-#define BLUR_GAUSSIAN_RADIUS_MAX 15
+static const unsigned short BLUR_GAUSSIAN_RADIUS_MAX = 15;
 
 struct BlurFunction {
 
@@ -56,9 +56,9 @@ struct BlurBox {
     decor_point_t p2;
 };
 
-#define BLUR_STATE_CLIENT 0
-#define BLUR_STATE_DECOR  1
-#define BLUR_STATE_NUM    2
+static const unsigned short BLUR_STATE_CLIENT = 0;
+static const unsigned short BLUR_STATE_DECOR  = 1;
+static const unsigned short BLUR_STATE_NUM    = 2;
 
 struct BlurState {
     int                  threshold;

@@ -39,15 +39,15 @@
 
 #include "cubeaddon_options.h"
 
-#define CUBEADDON_GRID_SIZE    100
-#define CAP_ELEMENTS 15
-#define CAP_NVERTEX (((CAP_ELEMENTS * (CAP_ELEMENTS + 1)) + 2) * 3)
-#define CAP_NIDX (CAP_ELEMENTS * (CAP_ELEMENTS - 1) * 4)
+static const unsigned short CUBEADDON_GRID_SIZE = 100;
+static const unsigned short CAP_ELEMENTS    = 15;
+static const unsigned int   CAP_NVERTEX	    = (((CAP_ELEMENTS * (CAP_ELEMENTS + 1)) + 2) * 3);
+static const unsigned int   CAP_NIDX	    = (CAP_ELEMENTS * (CAP_ELEMENTS - 1) * 4)
 
-#define CAP_NIMGVERTEX (((CAP_ELEMENTS + 1) * (CAP_ELEMENTS + 1)) * 5)
-#define CAP_NIMGIDX (CAP_ELEMENTS * CAP_ELEMENTS * 4)
+static const unsigned int   CAP_NIMGVERTEX  = (((CAP_ELEMENTS + 1) * (CAP_ELEMENTS + 1)) * 5)
+static const unsigned int   CAP_NIMGIDX	    = (CAP_ELEMENTS * CAP_ELEMENTS * 4)
 
-#define RAD2I1024 162.9746617
+static const float RAD2I1024 = 162.9746617f;
 
 class CubeaddonScreen :
     public CompositeScreenInterface,
