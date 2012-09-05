@@ -14,7 +14,5 @@
       <summary>Draggable border width</summary>
       <description>The amount of total draggable borders. If the theme's visible borders are not enough, invisible borders will be added to meet this value.</description>
     </key>
-
-    <child schema="org.gnome.mutter.keybindings" name="keybindings"/>
-
+  </schema>
 </schemalist>
