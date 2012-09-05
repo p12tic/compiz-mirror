@@ -34,9 +34,9 @@ AnimEvent win2AnimEventMap[WindowEventNum] =
     AnimEventOpen,
     AnimEventClose,
     AnimEventMinimize,
-    AnimEventShade,
-    AnimEventShade,
     AnimEventUnminimize,
+    AnimEventShade,
+    AnimEventShade,
     AnimEventFocus
 };
 
@@ -116,9 +116,11 @@ OptionSet *
 PrivateAnimScreen::getOptionSetForSelectedRow (PrivateAnimWindow *aw,
 					       Animation *anim)
 {
-    return (&mEventOptionSets[win2AnimEventMap
-	    [anim->curWindowEvent ()]].
-	    sets[(unsigned) aw->curAnimSelectionRow ()]);
+    const AnimEvent  event = win2AnimEventMap[anim->curWindowEvent ()];
+    OptionSets &eventOptionSets = mEventOptionSets[event];
+    OptionSet  *setSelectedForRow = &eventOptionSets.sets[(unsigned int) aw->curAnimSelectionRow ()];
+
+    return setSelectedForRow;
 }
 
 void
