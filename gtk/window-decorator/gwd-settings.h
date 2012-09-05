@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012 Canonical Ltd
+ * Copyright © 2010 Canonical Ltd
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
 #ifndef _COMPIZ_GWD_SETTINGS_H
@@ -30,11 +32,9 @@ G_BEGIN_DECLS
 GType gwd_settings_impl_get_type ();
 
 GWDSettings *
-gwd_settings_impl_new (gint *blur,
-		       const gchar **metacity_theme,
+gwd_settings_impl_new (gint                *blur,
+		       const gchar         **metacity_theme,
 		       GWDSettingsNotified *notified);
-
-extern const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS;
 
 G_END_DECLS
 

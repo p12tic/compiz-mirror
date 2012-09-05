@@ -52,10 +52,10 @@ decor_update_meta_window_property (decor_t	  *d,
     gint	    bottom_stretch_offset;
     gint	    left_stretch_offset;
     gint	    right_stretch_offset;
+    gint	    mutter_draggable_border_width = 0;
+
     win_extents = frame_win_extents = d->frame->win_extents;
     max_win_extents = frame_max_win_extents = d->frame->max_win_extents;
-
-    gint	    mutter_draggable_border_width = 0;
 
     g_object_get (settings, "draggable-border-width", &mutter_draggable_border_width, NULL);
 

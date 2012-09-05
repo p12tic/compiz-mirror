@@ -1,3 +1,23 @@
+/*
+ * Copyright © 2010 Canonical Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
+
 #include <glib-object.h>
 
 #include "gwd-settings-notified-interface.h"
@@ -244,21 +264,21 @@ GWDSettingsNotified *
 gwd_settings_notified_impl_new (WnckScreen *screen)
 {
     static const guint gwd_settings_notified_impl_n_construction_properties = 1;
-    GValue wnck_screen_value = G_VALUE_INIT;
+    GValue	       wnck_screen_value = G_VALUE_INIT;
+    GParameter	       params[gwd_settings_notified_impl_n_construction_properties];
+    GWDSettingsNotified *notified = NULL;
 
     g_value_init (&wnck_screen_value, G_TYPE_OBJECT);
     g_value_set_object (&wnck_screen_value, G_OBJECT (screen));
 
-    GParameter params[] =
-    {
-	{ "wnck-screen", wnck_screen_value }
-    };
+    params[0].name = "wnck-screen";
+    params[0].value = wnck_screen_value;
 
-    GWDSettingsNotified *storage = GWD_SETTINGS_NOTIFIED_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_NOTIFIED,
-										   gwd_settings_notified_impl_n_construction_properties,
-										   params));
+    notified = GWD_SETTINGS_NOTIFIED_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_NOTIFIED,
+							       gwd_settings_notified_impl_n_construction_properties,
+							       params));
 
     g_value_unset (&wnck_screen_value);
 
-    return storage;
+    return notified;
 }
