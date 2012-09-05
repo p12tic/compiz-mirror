@@ -282,7 +282,7 @@ gwd_settings_storage_xprop_new (Display *dpy,
     param[0].value = writable_value;
     param[1].name = "display";
     param[1].value = display_value;
-    param[2].name = "window";
+    param[2].name = "root-window";
     param[2].value = root_window_value;
 
     storage = GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_XPROP,
