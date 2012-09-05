@@ -78,11 +78,11 @@
 /**
  * camera distance from screen, 0.5 * tan (FOV)
  */
-#define DEFAULT_Z_CAMERA 0.866025404f
+static const float DEFAULT_Z_CAMERA = 0.866025404f;
 
-#define RED_SATURATION_WEIGHT   0.30f
-#define GREEN_SATURATION_WEIGHT 0.59f
-#define BLUE_SATURATION_WEIGHT  0.11f
+static const float RED_SATURATION_WEIGHT   = 0.30f;
+static const float GREEN_SATURATION_WEIGHT = 0.59f;
+static const float BLUE_SATURATION_WEIGHT  = 0.11f;
 
 class PrivateGLScreen;
 class PrivateGLWindow;
@@ -571,9 +571,9 @@ struct GLFBConfig {
 };
 #endif
 
-#define NOTHING_TRANS_FILTER 0
-#define SCREEN_TRANS_FILTER  1
-#define WINDOW_TRANS_FILTER  2
+static const unsigned short NOTHING_TRANS_FILTER = 0;
+static const unsigned short SCREEN_TRANS_FILTER  = 1;
+static const unsigned short WINDOW_TRANS_FILTER  = 2;
 
 
 extern GLScreenPaintAttrib defaultScreenPaintAttrib;
