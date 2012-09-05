@@ -37,14 +37,14 @@
 
 class PrivateAction;
 
-#define CompModAlt        0
-#define CompModMeta       1
-#define CompModSuper      2
-#define CompModHyper      3
-#define CompModModeSwitch 4
-#define CompModNumLock    5
-#define CompModScrollLock 6
-#define CompModNum        7
+static const unsigned short CompModAlt        = 0;
+static const unsigned short CompModMeta       = 1;
+static const unsigned short CompModSuper      = 2;
+static const unsigned short CompModHyper      = 3;
+static const unsigned short CompModModeSwitch = 4;
+static const unsigned short CompModNumLock    = 5;
+static const unsigned short CompModScrollLock = 6;
+static const unsigned short CompModNum        = 7;
 
 #define CompAltMask        (1 << 16)
 #define CompMetaMask       (1 << 17)

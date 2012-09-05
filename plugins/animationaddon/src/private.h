@@ -29,7 +29,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 11)
-#define NUM_EFFECTS 11
+static const unsigned short NUM_EFFECTS = 11;
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions

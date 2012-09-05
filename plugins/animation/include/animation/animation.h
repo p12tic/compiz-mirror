@@ -39,7 +39,7 @@ typedef enum
     AnimDirectionRandom,
     AnimDirectionAuto
 } AnimDirection;
-#define LAST_ANIM_DIRECTION 5
+static const unsigned short LAST_ANIM_DIRECTION = 5;
 
 class PrivateAnimScreen;
 class PrivateAnimWindow;

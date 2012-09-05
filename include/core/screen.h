@@ -69,15 +69,15 @@ extern unsigned int pointerMods;
 #define NOTIFY_MOVE_MASK   (1 << 2)
 #define NOTIFY_MODIFY_MASK (1 << 3)
 
-#define SCREEN_EDGE_LEFT	0
-#define SCREEN_EDGE_RIGHT	1
-#define SCREEN_EDGE_TOP		2
-#define SCREEN_EDGE_BOTTOM	3
-#define SCREEN_EDGE_TOPLEFT	4
-#define SCREEN_EDGE_TOPRIGHT	5
-#define SCREEN_EDGE_BOTTOMLEFT	6
-#define SCREEN_EDGE_BOTTOMRIGHT 7
-#define SCREEN_EDGE_NUM		8
+static const unsigned short SCREEN_EDGE_LEFT	    = 0;
+static const unsigned short SCREEN_EDGE_RIGHT	    = 1;
+static const unsigned short SCREEN_EDGE_TOP	    = 2;
+static const unsigned short SCREEN_EDGE_BOTTOM	    = 3;
+static const unsigned short SCREEN_EDGE_TOPLEFT	    = 4;
+static const unsigned short SCREEN_EDGE_TOPRIGHT    = 5;
+static const unsigned short SCREEN_EDGE_BOTTOMLEFT  = 6;
+static const unsigned short SCREEN_EDGE_BOTTOMRIGHT = 7;
+static const unsigned short SCREEN_EDGE_NUM	    = 8;
 
 typedef boost::function<void (short int)> FdWatchCallBack;
 typedef boost::function<void (const char *)> FileWatchCallBack;
@@ -96,8 +96,8 @@ struct CompFileWatch {
 };
 typedef std::list<CompFileWatch *> CompFileWatchList;
 
-#define ACTIVE_WINDOW_HISTORY_SIZE 64
-#define ACTIVE_WINDOW_HISTORY_NUM  32
+static const unsigned short ACTIVE_WINDOW_HISTORY_SIZE = 64;
+static const unsigned short ACTIVE_WINDOW_HISTORY_NUM  = 32;
 
 /**
  * Information about the last activity with a window.

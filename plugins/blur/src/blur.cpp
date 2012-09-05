@@ -1210,7 +1210,7 @@ BlurScreen::fboUpdate (BoxPtr pBox,
     return true;
 }
 
-#define MAX_VERTEX_PROJECT_COUNT 20
+static const unsigned short MAX_VERTEX_PROJECT_COUNT = 20;
 
 void
 BlurWindow::projectRegion (CompOutput     *output,

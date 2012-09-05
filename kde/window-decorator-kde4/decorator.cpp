@@ -46,10 +46,10 @@
 
 #include <stdio.h>
 
-#define SHADOW_RADIUS      8.0
-#define SHADOW_OPACITY     0.5
-#define SHADOW_OFFSET_X    1
-#define SHADOW_OFFSET_Y    1
+static const float SHADOW_RADIUS    = 8.0f;
+static const float SHADOW_OPACITY   = 0.5f;
+static const unsigned short  SHADOW_OFFSET_X = 1;
+static const unsigned short  SHADOW_OFFSET_Y = 1;
 #define SHADOW_COLOR_RED   0x0000
 #define SHADOW_COLOR_GREEN 0x0000
 #define SHADOW_COLOR_BLUE  0x0000

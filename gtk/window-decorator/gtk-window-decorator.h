@@ -170,11 +170,11 @@ GCONF_DIR "/use_tooltips"
 #define DBUS_INTERFACE  "org.freedesktop.compiz"
 #define DBUS_METHOD_GET "get"
 
-#define STROKE_ALPHA 0.6
+static const float STROKE_ALPHA = 0.6f;
 
-#define ICON_SPACE 20
+static const unsigned short ICON_SPACE = 20;
 
-#define DOUBLE_CLICK_DISTANCE 8.0
+static const float DOUBLE_CLICK_DISTANCE = 8.0f;
 
 #define WM_MOVERESIZE_SIZE_TOPLEFT      0
 #define WM_MOVERESIZE_SIZE_TOP          1
@@ -188,17 +188,17 @@ GCONF_DIR "/use_tooltips"
 #define WM_MOVERESIZE_SIZE_KEYBOARD     9
 #define WM_MOVERESIZE_MOVE_KEYBOARD    10
 
-#define SHADOW_RADIUS      8.0
-#define SHADOW_OPACITY     0.5
-#define SHADOW_OFFSET_X    1
-#define SHADOW_OFFSET_Y    1
+static const float	    SHADOW_RADIUS      = 8.0f;
+static const float	    SHADOW_OPACITY     = 0.5f;
+static const unsigned short SHADOW_OFFSET_X    = 1;
+static const unsigned short SHADOW_OFFSET_Y    = 1;
 #define SHADOW_COLOR_RED   0x0000
 #define SHADOW_COLOR_GREEN 0x0000
 #define SHADOW_COLOR_BLUE  0x0000
 
-#define META_OPACITY              0.75
+static const float META_OPACITY              = 0.75f;
 #define META_SHADE_OPACITY        TRUE
-#define META_ACTIVE_OPACITY       1.0
+static const float META_ACTIVE_OPACITY       = 1.0f;
 #define META_ACTIVE_SHADE_OPACITY TRUE
 
 #define META_MAXIMIZED (WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY | \

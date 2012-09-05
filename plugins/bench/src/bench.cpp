@@ -29,8 +29,8 @@ using namespace compiz::core;
 
 COMPIZ_PLUGIN_20090315 (bench, BenchPluginVTable)
 
-#define TEX_WIDTH  512
-#define TEX_HEIGHT 256
+static const unsigned int TEX_WIDTH = 512;
+static const unsigned short TEX_HEIGHT = 256;
 
 void
 BenchScreen::preparePaint (int msSinceLastPaint)
