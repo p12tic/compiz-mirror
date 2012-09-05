@@ -124,7 +124,12 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
     {
 	const gchar *theme = meta_theme;
 
-	if (theme)
+	/* meta_theme_get_current seems to return the last
+	 * good theme now, so if one was already set this function
+	 * will be ineffectual, so we need to check if the theme
+	 * is obviously bad as the user intended to disable metacity
+	 * themes */
+	if (theme && strlen (theme))
 	{
 	    meta_theme_set_current (theme, TRUE);
 	    if (!meta_theme_get_current ())
@@ -133,6 +138,9 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
 		meta_theme = NULL;
 	    }
 	}
+	else
+	    meta_theme = NULL;
+	
     }
 
     if (meta_theme)
