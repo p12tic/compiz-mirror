@@ -106,7 +106,7 @@ COMPIZ_PLUGIN_20090315 (animation, AnimPluginVTable);
 #define FAKE_ICON_SIZE 4
 
 const char *eventNames[AnimEventNum] =
-{"Open", "Close", "Minimize", "Shade", "Unminimize", "Focus"};
+{"Open", "Close", "Minimize", "Unminimize", "Shade", "Focus"};
 
 int chosenEffectOptionIds[AnimEventNum] =
 {
@@ -133,8 +133,8 @@ int customOptionOptionIds[AnimEventNum] =
     AnimationOptions::OpenOptions,
     AnimationOptions::CloseOptions,
     AnimationOptions::MinimizeOptions,
-    AnimationOptions::ShadeOptions,
     AnimationOptions::UnminimizeOptions,
+    AnimationOptions::ShadeOptions,
     AnimationOptions::FocusOptions
 };
 
