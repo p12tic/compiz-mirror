@@ -293,3 +293,55 @@ TEST_F (ResizeLogicTest, DontMaximizeVerticallyIfFarFromTopEdge)
     logic.terminateResize(&action, state, options);
 
 }
+
+/* Simulate a resize that is initiated by the "resize" compiz plugin himself
+ * instead of externally. E.g.: user presses Alt + middle mouse button (the
+ * default button assignment for resizing)
+ *
+ * Regression test for bug lp1045191
+ * https://bugs.launchpad.net/ubuntu/+source/compiz/+bug/1045191
+ * This bug would cause a crash in this situation.
+ */
+TEST_F (ResizeLogicTest, DontCrashIfSourceNotExternalApp)
+{
+    CompAction		action;
+    CompAction::State	state = 0;
+    CompOption::Vector	options;
+
+    options.push_back (CompOption ("window", CompOption::TypeInt));
+    options[0].value ().set ((int) 123);
+
+    options.push_back (CompOption ("external", CompOption::TypeBool));
+    options[1].value ().set (false); /* source is not an external app */
+
+    EXPECT_CALL (mockScreen, otherGrabExist (StrEq ("resize"), _))
+	.WillOnce (Return (false));
+
+    EXPECT_CALL (mockScreen, pushGrab (_, StrEq ("resize")))
+	.WillOnce (Return ((CompScreen::GrabHandle)1));
+
+    /* hit a point near but not directly over the top window edge.
+     * You don't have to hit the window border if the resize is
+     * initiated by the initiate_button compiz action */
+    pointerX = mockWindowServerGeometry.centerX ();
+    pointerY = mockWindowServerGeometry.top() +
+	(mockWindowServerGeometry.height() / 4);
+
+    logic.initiateResizeDefaultMode(&action, state, options);
+
+    /* move the pointer to the top of the screen */
+    pointerY = 1;
+
+    XEvent event;
+    event.type = MotionNotify;
+    event.xmotion.root = 345;
+
+    EXPECT_CALL (mockScreen, root ())
+	.WillRepeatedly (Return (event.xmotion.root));
+
+    logic.handleEvent(&event);
+
+    EXPECT_CALL (mockScreen, removeGrab (_, _));
+
+    logic.terminateResize(&action, state, options);
+}
