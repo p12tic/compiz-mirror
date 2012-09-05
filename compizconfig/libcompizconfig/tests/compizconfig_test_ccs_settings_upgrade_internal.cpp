@@ -486,6 +486,73 @@ namespace
     }
 }
 
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListAppendssValuesToListFromList)
+{
+    const std::string valueOne ("value_one");
+    const std::string valueThree ("value_three");
+    MockedSetting appendSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+							TypeList,
+							DoNotAddSettingToPlugin));
+    MockedSetting settingToAppendValuesTo (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+							   TypeList));
+
+    boost::shared_ptr <CCSString> stringToAppendOne (newOwnedCCSStringFromStaticCharArray (valueOne.c_str ()));
+    boost::shared_ptr <CCSString> stringNotRemoved (newOwnedCCSStringFromStaticCharArray (valueThree.c_str ()));
+
+    CCSStringListWrapperPtr settingsStrList (constructStrListWrapper (ccsStringListAppend (NULL, stringToAppendOne.get ()),
+								      cci::Shallow));
+    settingsStrList->append (stringNotRemoved.get ());
+
+    boost::shared_ptr <_CCSSettingValueList> settingStrValueList (AutoDestroy (ccsGetValueListFromStringList (*settingsStrList,
+													      Real (settingToAppendValuesTo)),
+									       ccsSettingValueListDeepFree));
+
+    CCSStringListWrapperPtr removeStrList (constructStrListWrapper (ccsStringListAppend (NULL, stringToAppendOne.get ()),
+								    cci::Shallow));
+
+    boost::shared_ptr <_CCSSettingValueList> appendStrValueList (AutoDestroy (ccsGetValueListFromStringList (*removeStrList,
+													     Real (appendSettingIdentifier)),
+									      ccsSettingValueListDeepFree));
+
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> list (ccsSettingListAppend (NULL, Real (appendSettingIdentifier)),
+							     ccsSettingListFree,
+							     ccsSettingListAppend,
+							     ccsSettingListRemove,
+							     cci::Shallow);
+
+    CCSSettingValue valueToHaveSubValuesRemoved;
+    CCSSettingValue valueSubValuesResetIdentifiers;
+
+    InitializeValueForSetting (valueToHaveSubValuesRemoved, Real (settingToAppendValuesTo));
+    InitializeValueForSetting (valueSubValuesResetIdentifiers, Real (appendSettingIdentifier));
+
+    valueToHaveSubValuesRemoved.value.asList = settingStrValueList.get ();
+    valueSubValuesResetIdentifiers.value.asList = appendStrValueList.get ();
+
+    CCSSettingInfo info;
+
+    info.forList.listType = TypeString;
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
+	    .WillOnce (Return (Real (settingToAppendValuesTo)));
+    EXPECT_CALL (Mock (appendSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (appendSettingIdentifier), getName ());
+    EXPECT_CALL (Mock (appendSettingIdentifier), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (settingToAppendValuesTo), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (appendSettingIdentifier), getValue ()).WillOnce (Return (&valueSubValuesResetIdentifiers));
+    EXPECT_CALL (Mock (settingToAppendValuesTo), getValue ()).WillOnce (Return (&valueToHaveSubValuesRemoved));
+    EXPECT_CALL (Mock (settingToAppendValuesTo), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (appendSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+
+    const CCSSettingValue &appendedStringInListValue = *appendStrValueList->data;
+
+    EXPECT_CALL (Mock (settingToAppendValuesTo), setList (
+		     IsSettingValueInSettingValueCCSList (
+			    SettingValueMatch (appendedStringInListValue, TypeString, &info)), BoolTrue ()));
+
+    ccsUpgradeAddValues (list);
+}
+
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValuesFromList)
 {
     const std::string valueOne ("value_one");

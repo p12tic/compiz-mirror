@@ -321,7 +321,7 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 		    l = l->next;
 		}
 
-		ccsDebug ("Appending %i items to %s", count, ccsSettingGetName (setting));
+		ccsDebug ("Appending %i items to %s", count, name);
 		ccsSetList (setting, nl, TRUE);
 	    }
 	}
