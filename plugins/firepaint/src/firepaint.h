@@ -24,7 +24,6 @@
  */
 
 #include <core/core.h>
-#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
@@ -62,32 +61,6 @@ class Particle
 	float xo;		/* orginal X position */
 	float yo;		/* orginal Y position */
 	float zo;		/* orginal Z position */
-
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & life;
-	    ar & fade;
-	    ar & width;
-	    ar & w_mod;
-	    ar & h_mod;
-	    ar & r;
-	    ar & g;
-	    ar & b;
-	    ar & a;
-	    ar & x;
-	    ar & y;
-	    ar & z;
-	    ar & xi;
-	    ar & yi;
-	    ar & zi;
-	    ar & xg;
-	    ar & yg;
-	    ar & zg;
-	    ar & xo;
-	    ar & yo;
-	    ar & zo;
-	};
 };
 
 class ParticleCache
@@ -121,19 +94,6 @@ class ParticleSystem
 	ParticleCache colors_cache;
 	ParticleCache dcolors_cache;
 
-	template <class Archive>
-	void serialize (Archive &ar,
-			const unsigned int version)
-	{
-	    ar & particles;
-	    ar & slowdown;
-	    ar & active;
-	    ar & x;
-	    ar & y;
-	    ar & darken;
-	    ar & blendMode;
-	}
-
 	void
 	initParticles (int            f_numParticles);
 
@@ -149,22 +109,8 @@ class ParticleSystem
 
 #define NUM_ADD_POINTS 1000
 
-namespace boost
-{
-    namespace serialization
-    {
-	template <class Archive>
-	void serialize (Archive &ar, XPoint &p, const unsigned int version)
-	{
-	    ar & p.x;
-	    ar & p.y;
-	}
-    }
-}
-
 class FireScreen:
     public PluginClassHandler <FireScreen, CompScreen>,
-    public PluginStateWriter <FireScreen>,
     public FirepaintOptions,
     public ScreenInterface,
     public GLScreenInterface,
@@ -186,18 +132,6 @@ class FireScreen:
 	float		brightness;
 
 	CompScreen::GrabHandle grabIndex;
-
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & init;
-	    ar & points;
-	    ar & brightness;
-	    ar & ps;
-	}
-	
-	void
-	postLoad ();
 
 	void
 	handleEvent (XEvent *);

@@ -38,8 +38,11 @@
 #include <opengl/opengl.h>
 
 #include "privates.h"
+#include "fsregion/fsregion.h"
 
 #define DEG2RAD (M_PI / 180.0f)
+
+using namespace compiz::opengl;
 
 GLScreenPaintAttrib defaultScreenPaintAttrib = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -DEFAULT_Z_CAMERA
@@ -241,7 +244,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     CompRegion    tmpRegion (region);
     CompWindow    *w;
     GLWindow      *gw;
-    int		  count, windowMask, odMask;
+    int           windowMask, odMask;
     CompWindow	  *fullscreenWindow = NULL;
     bool          status, unredirectFS;
     bool          withOffset = false;
@@ -257,12 +260,10 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     if (mask & PAINT_SCREEN_TRANSFORMED_MASK)
     {
 	windowMask     = PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK;
-	count	       = 1;
     }
     else
     {
 	windowMask     = 0;
-	count	       = 0;
     }
 
     /*
@@ -274,6 +275,8 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
+	FullscreenRegion fs (*output);
+
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
 	{
@@ -336,23 +339,18 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		    tmpRegion -= w->region ();
 
 		/* unredirect top most fullscreen windows. */
-		if (count == 0 && unredirectFS)
+		FullscreenRegion::WinType type =
+		    w->type () & CompWindowTypeDesktopMask ?
+		    FullscreenRegion::Desktop :
+		    FullscreenRegion::Normal;
+		
+		if (unredirectFS &&
+		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+		    fs.isCoveredBy (w->region (), type))
 		{
-		    if (w->region () == screen->region () &&
-			tmpRegion.isEmpty ())
-		    {
-			fullscreenWindow = w;
-		    }
-		    else
-		    {
-			foreach (CompOutput &o, screen->outputDevs ())
-			    if (w->region () == CompRegion (o))
-				fullscreenWindow = w;
-		    }
+		    fullscreenWindow = w;
 		}
 	    }
-
-	    count++;
 	}
     }
 
@@ -834,6 +832,9 @@ addQuads (GLVertexBuffer *vertexBuffer,
 	  unsigned int maxGridWidth,
 	  unsigned int maxGridHeight)
 {
+    if (maxGridWidth == 0 || maxGridHeight == 0)
+	return;
+
     int nQuadsX = (maxGridWidth == MAXSHORT) ? 1 :
 	1 + (x2 - x1 - 1) / (int) maxGridWidth;  // ceil. division
     int nQuadsY = (maxGridHeight == MAXSHORT) ? 1 :

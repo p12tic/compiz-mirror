@@ -214,12 +214,12 @@
       </group>
       
       <group>
-        <_short>UnMinimize Animation</_short>
+        <_short>Unminimize Animation</_short>
 
         <subgroup>
           <_short>Animation Selection</_short>
           <option name="unminimize_effects" type="list">
-            <_short>UnMinimize Effect</_short>
+            <_short>Unminimize Effect</_short>
             <_long>The animation effect shown when unminimizing a window.</_long>
             <type>string</type>
             <extensible/>
