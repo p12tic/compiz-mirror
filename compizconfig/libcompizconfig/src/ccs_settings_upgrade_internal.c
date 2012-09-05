@@ -225,6 +225,8 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 			CCSSettingValue *lv = (CCSSettingValue *) l->data;
 			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
 
+			/* Break if we found a matching value, so that we can
+			 * remove it from the list */
 			if (ccsCheckValueEq (lv,
 					     info->forList.listType,
 					     info,
@@ -236,6 +238,7 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 			olv = olv->next;
 		    }
 
+		    /* We found a matching value, remove it */
 		    if (olv)
 		    {
 			count++;
@@ -301,6 +304,8 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 			CCSSettingValue *lv = (CCSSettingValue *) l->data;
 			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
 
+			/* Break if we find the same value, as it was in the list
+			 * already */
 			if (ccsCheckValueEq (lv,
 					     info->forList.listType,
 					     info,
@@ -312,6 +317,8 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 			olv = olv->next;
 		    }
 
+		    /* If olv is NULL then the value was not in the original
+		     * list and we should append the value to nl */
 		    if (!olv)
 		    {
 			count++;
