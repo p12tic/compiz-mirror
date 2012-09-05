@@ -104,7 +104,7 @@
 	    <default>["Disabled"]</default>
 	</key>
 	<key type="as" name="show-hud">
-	    <default>["Alt"]</default>
+	    <default>["&lt;Alt&gt;"]</default>
 	</key>
     </schema>
 </schemalist>
