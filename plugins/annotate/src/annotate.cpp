@@ -980,20 +980,8 @@ AnnoScreen::handleEvent (XEvent      *event)
     screen->handleEvent (event);
 }
 
-void
-AnnoScreen::postLoad ()
-{
-    if (content)
-    {
-	cairoContext ();
-	
-	gScreen->glPaintOutputSetEnabled (this, true);
-    }
-}
-
 AnnoScreen::AnnoScreen (CompScreen *screen) :
     PluginClassHandler <AnnoScreen, CompScreen> (screen),
-    PluginStateWriter <AnnoScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     grabIndex (0),
@@ -1034,9 +1022,7 @@ AnnoScreen::AnnoScreen (CompScreen *screen) :
 }
 
 AnnoScreen::~AnnoScreen ()
-{    
-    writeSerializedData ();
-
+{
     if (cairo)
 	cairo_destroy (cairo);
     if (surface)

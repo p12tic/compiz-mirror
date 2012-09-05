@@ -386,12 +386,6 @@ OpacifyWindow::OpacifyWindow (CompWindow *window) :
     GLWindowInterface::setHandler (gWindow, false);
 }
 
-void
-OpacifyScreen::postLoad ()
-{
-    setFunctions (isToggle);
-}
-
 /** Constructor for OpacifyScreen. This is called whenever a new screen
  *  is created and we set our custom variables to it and also register to
  *  handle X.org events when they come through
@@ -399,7 +393,6 @@ OpacifyScreen::postLoad ()
 
 OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     PluginClassHandler <OpacifyScreen, CompScreen> (screen),
-    PluginStateWriter <OpacifyScreen> (this, screen->root ()),
     isToggle (true),
     newActive (NULL),
     active (screen->activeWindow ()),
@@ -420,11 +413,6 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
 								 this, _1, _2));
 
     screen->handleEventSetEnabled (this, optionGetInitToggle ());
-}
-
-OpacifyScreen::~OpacifyScreen ()
-{
-    writeSerializedData ();
 }
 
 bool
