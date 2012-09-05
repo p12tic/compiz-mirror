@@ -551,7 +551,7 @@ PrivateAnimWindow::updateSelectionRow (unsigned int r)
 }
 
 // Assumes events in the metadata are in
-// [Open, Close, Minimize, Shade, Unminimize, Focus] order
+// [Open, Close, Minimize, Unminimize, Shade, Focus] order
 // and effects among those are in alphabetical order
 // but with "(Event) None" first and "(Event) Random" last.
 AnimEffect
