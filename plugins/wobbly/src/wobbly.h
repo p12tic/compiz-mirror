@@ -41,20 +41,20 @@
 			  CompWindowTypeMenuMask    | \
 			  CompWindowTypeUtilMask)
 
-#define GRID_WIDTH  4
-#define GRID_HEIGHT 4
+static const unsigned short GRID_WIDTH = 4;
+static const unsigned short GRID_HEIGHT = 4;
 
-#define MODEL_MAX_SPRINGS (GRID_WIDTH * GRID_HEIGHT * 2)
+static const unsigned short MODEL_MAX_SPRINGS = (GRID_WIDTH * GRID_HEIGHT * 2);
 
-#define MASS 15.0f
+static const float MASS = 15.0f;
 
 #define NorthEdgeMask (1L << 0)
 #define SouthEdgeMask (1L << 1)
 #define WestEdgeMask  (1L << 2)
 #define EastEdgeMask  (1L << 3)
 
-#define EDGE_DISTANCE 25.0f
-#define EDGE_VELOCITY 13.0f
+static const float EDGE_DISTANCE = 25.0f;
+static const float EDGE_VELOCITY = 13.0f;
 
 typedef enum
 {

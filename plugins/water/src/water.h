@@ -37,12 +37,12 @@
 #define WATER_SCREEN(s) \
     WaterScreen *ws = WaterScreen::get (s)
 
-#define TEXTURE_SIZE 256
+static const unsigned int TEXTURE_SIZE = 256;
 
-#define K 0.1964f
+static const float K = 0.1964f;
 
-#define TEXTURE_NUM 3
-#define PROG_NUM 3
+static const unsigned short TEXTURE_NUM = 3;
+static const unsigned short PROG_NUM = 3;
 
 #define INDEX(ws, i) (((ws)->fboIndex + (i)) % TEXTURE_NUM)
 

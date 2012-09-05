@@ -385,7 +385,7 @@ WallScreen::computeTranslation (float &x,
 }
 
 /* movement remainder that gets ignored for direction calculation */
-#define IGNORE_REMAINDER 0.05
+static const float IGNORE_REMAINDER = 0.05f;
 
 void
 WallScreen::determineMovementAngle ()
