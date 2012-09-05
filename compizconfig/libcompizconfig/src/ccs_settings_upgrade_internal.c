@@ -327,7 +327,7 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 	}
 	else
 	{
-	    ccsDebug ("Value %s not found!", ccsSettingGetName ((CCSSetting *) sl->data));
+	    ccsDebug ("Value %s not found!", name);
 	}
 
 	sl = sl->next;

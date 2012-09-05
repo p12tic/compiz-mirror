@@ -45,6 +45,7 @@ namespace
 {
     static const std::string CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME = "org.compiz.general.1.upgrade";
     static const std::string CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME = "1.upgra";
+    static const std::string CCS_SETTINGS_UPGRADE_TEST_VERY_INCORRECT_FILENAME = "1";
     static const std::string CCS_SETTINGS_UPGRADE_TEST_CORRECT_DOMAIN = "org.compiz";
     static const std::string CCS_SETTINGS_UPGRADE_TEST_CORRECT_PROFILE = "general";
     static const unsigned int CCS_SETTINGS_UPGRADE_TEST_CORRECT_NUM = 1;
@@ -87,6 +88,14 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfIn
 
     EXPECT_THAT (profileName, IsNull ());
     EXPECT_THAT (domainName, IsNull ());
+
+    EXPECT_THAT (ccsUpgradeGetDomainNumAndProfile (CCS_SETTINGS_UPGRADE_TEST_VERY_INCORRECT_FILENAME.c_str (),
+						   &domainName,
+						   &num,
+						   &profileName), BoolFalse ());
+
+    EXPECT_THAT (profileName, IsNull ());
+    EXPECT_THAT (domainName, IsNull ());
 }
 
 TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnTrueForUpgradeFileName)
@@ -97,6 +106,7 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnTrueForUpgradeFileN
 TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnFalseForNoUpgradeFileName)
 {
     EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME.c_str ()), BoolFalse ());
+    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_VERY_INCORRECT_FILENAME.c_str ()), BoolFalse ());
 }
 
 namespace
@@ -328,6 +338,25 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
     ccsUpgradeClearValues (list);
 }
 
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoAddValuesSettingNotFound)
+{
+    MockedSetting settingOne (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+					    TypeInt,
+					    DoNotAddSettingToPlugin));
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)));
+    EXPECT_CALL (Mock (settingOne), getParent ());
+    EXPECT_CALL (Mock (settingOne), getName ());
+
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> list (ccsSettingListAppend (NULL, Real (settingOne)),
+							     ccsSettingListFree,
+							     ccsSettingListAppend,
+							     ccsSettingListRemove,
+							     cci::Shallow);
+
+    ccsUpgradeAddValues (list);
+}
+
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListNonListType)
 {
     MockedSetting addSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
@@ -374,6 +403,34 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListNonListType)
 										  &info)), BoolTrue ()));
 
     ccsUpgradeAddValues (list);
+}
+
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoReplaceValuesSettingNotFound)
+{
+    MockedSetting fromSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						      TypeInt,
+						      DoNotAddSettingToPlugin));
+    MockedSetting toSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						      TypeInt,
+						      DoNotAddSettingToPlugin));
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)));
+    EXPECT_CALL (Mock (fromSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (fromSettingIdentifier), getName ());
+
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> replaceFromValueSettings (ccsSettingListAppend (NULL, Real (fromSettingIdentifier)),
+										 ccsSettingListFree,
+										 ccsSettingListAppend,
+										 ccsSettingListRemove,
+										 cci::Shallow);
+    cci::CCSListWrapper <CCSSettingList, CCSSetting *> replaceToValueSettings (ccsSettingListAppend (NULL, Real (toSettingIdentifier)),
+									       ccsSettingListFree,
+									       ccsSettingListAppend,
+									       ccsSettingListRemove,
+									       cci::Shallow);
+
+    ccsUpgradeReplaceValues (replaceFromValueSettings,
+			     replaceToValueSettings);
 }
 
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestReplaceValuesInListNonListType)
