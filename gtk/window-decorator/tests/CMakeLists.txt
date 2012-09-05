@@ -138,7 +138,7 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 		       	   ${GMOCK_MAIN_LIBRARY}
 			   decoration)
 
-    compiz_discover_tests (compiz_test_gwd_cairo_decorations COVERAGE
+    compiz_discover_tests (compiz_test_gwd_metacity_decorations COVERAGE
 			   gtk_window_decorator_metacity_window_decoration_util)
 
 
