@@ -191,16 +191,8 @@ AddScreen::optionChanged (CompOption                *options,
     }
 }
 
-void
-AddWindow::postLoad ()
-{
-    if (dim)
-	gWindow->glPaintSetEnabled (this, true);
-}
-
 AddWindow::AddWindow (CompWindow *window) :
     PluginClassHandler <AddWindow, CompWindow> (window),
-    PluginStateWriter <AddWindow> (this, window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
@@ -218,22 +210,12 @@ AddWindow::AddWindow (CompWindow *window) :
 
 AddWindow::~AddWindow ()
 {
-    writeSerializedData ();
-
     if (dim)
 	cWindow->addDamage ();
 }
 
-void
-AddScreen::postLoad ()
-{
-    if (isToggle)
-	screen->handleEventSetEnabled (this, true);
-}
-
 AddScreen::AddScreen (CompScreen *screen) :
     PluginClassHandler <AddScreen, CompScreen> (screen),
-    PluginStateWriter <AddScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     opacity ((optionGetOpacity () * 0xffff) / 100),
     brightness ((optionGetBrightness () * 0xffff) / 100),
@@ -253,11 +235,6 @@ AddScreen::AddScreen (CompScreen *screen) :
 					    _2));
     optionSetOnoninitNotify (boost::bind (&AddScreen::optionChanged, this, _1,
 					    _2));
-}
-
-AddScreen::~AddScreen ()
-{
-    writeSerializedData ();
 }
     
 bool
