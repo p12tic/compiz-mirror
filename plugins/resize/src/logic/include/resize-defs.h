@@ -34,9 +34,9 @@
 #define ResizeLeftMask  (1L << 2)
 #define ResizeRightMask (1L << 3)
 
-#define NUM_KEYS 4
+static const unsigned short NUM_KEYS = 4;
 
-#define MIN_KEY_WIDTH_INC  24
-#define MIN_KEY_HEIGHT_INC 24
+static const unsigned short MIN_KEY_WIDTH_INC = 24;
+static const unsigned short MIN_KEY_HEIGHT_INC = 24;
 
 #endif /* RESIZEDEFS_H */

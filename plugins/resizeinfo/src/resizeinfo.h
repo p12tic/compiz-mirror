@@ -34,10 +34,10 @@
 
 #include "resizeinfo_options.h"
 
-#define RESIZE_POPUP_WIDTH 85
-#define RESIZE_POPUP_HEIGHT 50
+static const unsigned short RESIZE_POPUP_WIDTH = 85;
+static const unsigned short RESIZE_POPUP_HEIGHT = 50;
 
-#define PI 3.1415926
+static const double PI = 3.14159265359f;
 
 /* Cairo helper class */
 

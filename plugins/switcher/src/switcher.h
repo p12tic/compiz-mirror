@@ -154,11 +154,11 @@ typedef struct {
     unsigned long decorations;
 } MwmHints;
 
-#define WIDTH  212
-#define HEIGHT 192
-#define SPACE  10
+static const unsigned short WIDTH = 212;
+static const unsigned short HEIGHT = 192;
+static const unsigned short SPACE = 10;
 
-#define BOX_WIDTH 3
+static const unsigned short BOX_WIDTH = 3;
 
 #define WINDOW_WIDTH(count) (WIDTH * (count) + (SPACE << 1))
 #define WINDOW_HEIGHT (HEIGHT + (SPACE << 1))

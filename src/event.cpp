@@ -1619,9 +1619,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    if (state & ~CompWindowStateHiddenMask)
 		    {
 
-#define _NET_WM_STATE_REMOVE 0
-#define _NET_WM_STATE_ADD    1
-#define _NET_WM_STATE_TOGGLE 2
+static const unsigned short _NET_WM_STATE_REMOVE = 0;
+static const unsigned short _NET_WM_STATE_ADD = 1;
+static const unsigned short _NET_WM_STATE_TOGGLE = 2;
 
 			switch (event->xclient.data.l[0]) {
 			case _NET_WM_STATE_REMOVE:

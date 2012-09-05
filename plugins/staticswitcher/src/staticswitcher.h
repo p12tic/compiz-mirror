@@ -158,9 +158,8 @@ class StaticSwitchWindow :
 };
 
 #define MAX_ICON_SIZE 256
-
-#define PREVIEWSIZE 150
-#define BORDER 10
+const unsigned short PREVIEWSIZE = 150;
+const unsigned short BORDER = 10;
 
 #define SWITCH_SCREEN(s) \
     StaticSwitchScreen *ss = StaticSwitchScreen::get (s)

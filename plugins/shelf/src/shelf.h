@@ -221,7 +221,7 @@ class ShelfScreen :
 #define SHELF_SCREEN(w)							       \
 	ShelfScreen *ss = ShelfScreen::get (w)
 
-#define SHELF_MIN_SIZE 50.0f // Minimum pixelsize a window can be scaled to
+static const float SHELF_MIN_SIZE = 50.0f; // Minimum pixelsize a window can be scaled to
 
 
 class ShelfPluginVTable :
