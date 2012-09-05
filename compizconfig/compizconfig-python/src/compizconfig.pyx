@@ -383,36 +383,6 @@ cdef CCSSettingType GetType (CCSSettingValue * value):
         return ccsSettingGetInfo ((<CCSSetting *> value.parent)).forList.listType
     else:
         return ccsSettingGetType ((<CCSSetting *> value.parent))
-
-cdef CCSStringList * ListToStringList (object list):
-    if len (list) <= 0:
-        return NULL
-
-    cdef CCSStringList * listStart
-    cdef CCSStringList * stringList
-    cdef CCSStringList * prev
-    cdef CCSString     * stringStart
-
-    stringStart = <CCSString *> malloc (sizeof (CCSString))
-    
-    stringStart.value = strdup (list[0])
-    listStart = <CCSStringList *> malloc (sizeof (CCSStringList))
-    listStart.data = <CCSString *> stringStart
-    listStart.next = NULL
-    prev = listStart
-    
-    for l in list[1:]:
-        stringStart = <CCSString *> malloc (sizeof (CCSString))
-
-        stringStart.value = <char *> strdup (l)
-
-        stringList = <CCSStringList *> malloc (sizeof (CCSStringList))
-        stringList.data = stringStart
-        stringList.next = NULL
-        prev.next = stringList
-        prev = stringList
-    
-    return listStart
     
 cdef object StringListToList (CCSList * stringList):
     cdef CCSString * string
