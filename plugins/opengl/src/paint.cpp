@@ -350,6 +350,23 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		{
 		    fullscreenWindow = w;
 		}
+		else
+		{
+		    CompositeWindow *cw = CompositeWindow::get (w);
+		    if (!cw->redirected ())
+		    {
+			// 1. GLWindow::release to force gw->priv->needsRebind
+			gw->release ();
+
+			// 2. GLWindow::bind, which redirects the window,
+			//    rebinds the pixmap, and then rebinds the pixmap
+			//    to a texture.
+			gw->bind ();
+
+			// 3. Your window is now redirected again with the
+			//    latest pixmap contents.
+		    }
+		}
 	    }
 	}
     }
