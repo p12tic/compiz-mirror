@@ -2,19 +2,19 @@
 <schemalist>
     <schema path="/org/compiz/integrated/" id="org.compiz.integrated">
 	<key type="b" name="display-all-workspaces">
-	    <default>false</default>
+	    <default>true</default>
 	</key>
 	<key type="s" name="exec">
-	    <default>""</default>
+	    <default>"gnome-terminal"</default>
 	</key>
 	<key type="s" name="command-window-screenshot">
-	    <default>""</default>
+	    <default>"gnome-screenshot -w"</default>
 	</key>
 	<key type="s" name="command-screenshot">
-	    <default>""</default>
+	    <default>"gnome-screenshot"</default>
 	</key>
 	<key type="s" name="command-terminal">
-	    <default>""</default>
+	    <default>"gnome-terminal"</default>
 	</key>
 	<key type="as" name="run-command-12">
 	    <default>["Disabled"]</default>
@@ -89,19 +89,19 @@
 	    <default>""</default>
 	</key>
 	<key type="as" name="run-command-terminal">
-	    <default>["Disabled"]</default>
+	    <default>["&lt;Control&gt;&lt;Alt&gt;t"]</default>
 	</key>
 	<key type="as" name="run-command-window-screenshot">
-	    <default>["Disabled"]</default>
+	    <default>["&lt;Alt&gt;Print"]</default>
 	</key>
 	<key type="as" name="run-command-screenshot">
-	    <default>["Disabled"]</default>
+	    <default>["Print"]</default>
 	</key>
 	<key type="as" name="panel-main-menu">
-	    <default>["Disabled"]</default>
+	    <default>["&lt;Alt&gt;F1"]</default>
 	</key>
 	<key type="as" name="panel-run-dialog">
-	    <default>["Disabled"]</default>
+	    <default>["&lt;Alt&gt;F2"]</default>
 	</key>
 	<key type="as" name="show-hud">
 	    <default>["Alt"]</default>
