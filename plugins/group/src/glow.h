@@ -29,15 +29,15 @@
 
 #include "group.h"
  
-#define GLOWQUAD_TOPLEFT	 0
-#define GLOWQUAD_TOPRIGHT	 1
-#define GLOWQUAD_BOTTOMLEFT	 2
-#define GLOWQUAD_BOTTOMRIGHT     3
-#define GLOWQUAD_TOP		 4
-#define GLOWQUAD_BOTTOM		 5
-#define GLOWQUAD_LEFT		 6
-#define GLOWQUAD_RIGHT		 7
-#define NUM_GLOWQUADS		 8
+static const unsigned short GLOWQUAD_TOPLEFT	    = 0;
+static const unsigned short GLOWQUAD_TOPRIGHT	    = 1;
+static const unsigned short GLOWQUAD_BOTTOMLEFT	    = 2;
+static const unsigned short GLOWQUAD_BOTTOMRIGHT    = 3;
+static const unsigned short GLOWQUAD_TOP	    = 4;
+static const unsigned short GLOWQUAD_BOTTOM	    = 5;
+static const unsigned short GLOWQUAD_LEFT	    = 6;
+static const unsigned short GLOWQUAD_RIGHT	    = 7;
+static const unsigned short NUM_GLOWQUADS	    = 8;
 
 /* Represents a particular glow texture, so here
  * we have hardcoded in the texture data, the offset

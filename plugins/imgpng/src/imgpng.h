@@ -34,7 +34,7 @@
 
 #include <iosfwd>
 
-#define PNG_SIG_SIZE 8
+static const unsigned short PNG_SIG_SIZE = 8;
 
 class PngScreen :
     public ScreenInterface,

@@ -31,9 +31,9 @@
 
 #include "maximumize_options.h"
 
-/* Convenience macros to make the code more readable (hopefully) */
-#define REDUCE -1
-#define INCREASE 1
+/* Convenience constants to make the code more readable (hopefully) */
+static const short	    REDUCE  = -1;
+static const unsigned short INCREASE = 1;
 
 typedef struct
 {

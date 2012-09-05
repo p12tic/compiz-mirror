@@ -1559,7 +1559,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
  */
 
 /* the radius to determine if it was a click or a drag */
-#define RADIUS 5
+static const unsigned short RADIUS = 5;
 
 void
 GroupScreen::handleMotionEvent (int xRoot, int yRoot)
