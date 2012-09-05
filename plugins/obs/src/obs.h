@@ -31,10 +31,10 @@
 
 #include "obs_options.h"
 
-#define MODIFIER_OPACITY    0
-#define MODIFIER_SATURATION 1
-#define MODIFIER_BRIGHTNESS 2
-#define MODIFIER_COUNT      3
+static const unsigned short MODIFIER_OPACITY    = 0;
+static const unsigned short MODIFIER_SATURATION = 1;
+static const unsigned short MODIFIER_BRIGHTNESS = 2;
+static const unsigned short MODIFIER_COUNT      = 3;
 
 class ObsScreen :
     public ScreenInterface,

@@ -1620,7 +1620,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    {
 
 static const unsigned short _NET_WM_STATE_REMOVE = 0;
-static const unsigned short _NET_WM_STATE_ADD = 1;
+static const unsigned short _NET_WM_STATE_ADD    = 1;
 static const unsigned short _NET_WM_STATE_TOGGLE = 2;
 
 			switch (event->xclient.data.l[0]) {

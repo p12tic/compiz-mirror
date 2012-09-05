@@ -559,7 +559,7 @@ struct GLScreenPaintAttrib {
     GLfloat zCamera;
 };
 
-#define MAX_DEPTH 32
+static const unsigned short MAX_DEPTH = 32;
 
 #ifndef USE_GLES
 struct GLFBConfig {

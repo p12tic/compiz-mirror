@@ -58,7 +58,7 @@ NotificationScreen::logMessage (const char   *component,
               in $PREFIX/share/compiz, not in the home dir */
     iconUri   = "file://";
     iconUri += homeDir;
-    iconUri += "/" IMAGE_DIR "/compiz.png";
+    iconUri += "/" + IMAGE_DIR + "/compiz.png";
     logLevel = (char *) logLevelToString (level);
 
     n = notify_notification_new (logLevel, message,

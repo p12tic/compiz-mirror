@@ -154,9 +154,9 @@ typedef struct {
     unsigned long decorations;
 } MwmHints;
 
-static const unsigned short WIDTH = 212;
+static const unsigned short WIDTH  = 212;
 static const unsigned short HEIGHT = 192;
-static const unsigned short SPACE = 10;
+static const unsigned short SPACE  = 10;
 
 static const unsigned short BOX_WIDTH = 3;
 
