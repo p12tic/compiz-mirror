@@ -221,12 +221,8 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 {
    
     GLfloat *v, *vMax;
-    int y1, x2, y2;
     float winContentsY, winContentsHeight;
-    float deformedX, deformedY;
-    float deformedZ = 0;
     int vSize;
-    float gridW, gridH;
     bool notUsing3dCoords = !using3D ();
 
     if (region.isEmpty ()) // nothing to do
@@ -255,11 +251,12 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
     // Indentation kept to provide a clean diff with the old code, for now...
     {
-	y1 = outRect.y1 ();
-	x2 = outRect.x2 ();
-	y2 = outRect.y2 ();
+	int y1 = outRect.y1 ();
+	int x2 = outRect.x2 ();
+	int y2 = outRect.y2 ();
 
-	gridW = (float)owidth / (mGridWidth - 1);
+	float gridW = (float)owidth / (mGridWidth - 1);
+	float gridH;
 
 	if (mCurWindowEvent == WindowEventShade ||
 	    mCurWindowEvent == WindowEventUnshade)
@@ -384,9 +381,9 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 			       inxRest * objToBottomLeftPos.z () +
 			       inx * objToBottomRightPos.z ());
 
-		deformedX = inyRest * hor1x + iny * hor2x;
-		deformedY = inyRest * hor1y + iny * hor2y;
-		deformedZ = inyRest * hor1z + iny * hor2z;
+		float deformedX = inyRest * hor1x + iny * hor2x;
+		float deformedY = inyRest * hor1y + iny * hor2y;
+		float deformedZ = inyRest * hor1z + iny * hor2z;
 
 		v[0] = deformedX;
 		v[1] = deformedY;
