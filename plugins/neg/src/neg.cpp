@@ -455,21 +455,10 @@ NegScreen::NegScreen (CompScreen *screen) :
 					  _1, _2));
 
 }
-
-void
-NegWindow::postLoad ()
-{
-    if (isNeg)
-    {
-	cWindow->addDamage ();
-	gWindow->glDrawTextureSetEnabled (this, true);
-    }
-}
 	
 
 NegWindow::NegWindow (CompWindow *window) :
     PluginClassHandler <NegWindow, CompWindow> (window),
-    PluginStateWriter <NegWindow> (this, window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
@@ -484,11 +473,6 @@ NegWindow::NegWindow (CompWindow *window) :
 
     if (ns->isNeg && ns->optionGetNegMatch ().evaluate (window))
 	toggle ();
-}
-
-NegWindow::~NegWindow ()
-{
-    writeSerializedData ();
 }
 
 bool

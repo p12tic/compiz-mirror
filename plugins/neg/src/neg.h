@@ -23,7 +23,6 @@
 
 #include <core/core.h>
 #include <core/pluginclasshandler.h>
-#include <core/serialization.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -62,21 +61,11 @@ class NegScreen :
 
 class NegWindow :
     public PluginClassHandler <NegWindow, CompWindow>,
-    public PluginStateWriter <NegWindow>,
     public GLWindowInterface
 {
     public:
     
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & isNeg;
-	}
-	
-	void postLoad ();
-
 	NegWindow (CompWindow *);
-	~NegWindow ();
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;

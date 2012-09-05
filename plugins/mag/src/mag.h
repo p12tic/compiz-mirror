@@ -26,7 +26,6 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <mousepoll/mousepoll.h>
-#include <core/serialization.h>
 
 #include "mag_options.h"
 
@@ -35,7 +34,6 @@
 
 class MagScreen :
     public PluginClassHandler <MagScreen, CompScreen>,
-    public PluginStateWriter <MagScreen>,
     public MagOptions,
     public ScreenInterface,
     public CompositeScreenInterface,
@@ -72,18 +70,6 @@ class MagScreen :
 	GLuint program;
 
 	MousePoller poller;
-	
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & zVelocity;
-	    ar & zTarget;
-	    ar & zoom;
-	    ar & adjust;
-	}
-	
-	void
-	postLoad ();
 	
 	bool
 	checkStateTimeout ();
