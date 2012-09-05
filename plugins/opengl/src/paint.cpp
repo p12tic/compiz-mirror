@@ -834,6 +834,9 @@ addQuads (GLVertexBuffer *vertexBuffer,
 	  unsigned int maxGridWidth,
 	  unsigned int maxGridHeight)
 {
+    if (maxGridWidth == 0 || maxGridHeight == 0)
+	return;
+
     int nQuadsX = (maxGridWidth == MAXSHORT) ? 1 :
 	1 + (x2 - x1 - 1) / (int) maxGridWidth;  // ceil. division
     int nQuadsY = (maxGridHeight == MAXSHORT) ? 1 :
