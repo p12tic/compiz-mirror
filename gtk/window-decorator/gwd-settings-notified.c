@@ -173,6 +173,7 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
 static gboolean
 gwd_settings_notified_impl_update_metacity_button_layout (GWDSettingsNotified *notified)
 {
+#ifdef USE_METACITY
     const gchar *button_layout;
     g_object_get (settings, "metacity-button-layout", &button_layout, NULL);
 
@@ -191,6 +192,7 @@ gwd_settings_notified_impl_update_metacity_button_layout (GWDSettingsNotified *n
 	return TRUE;
     }
 
+#endif
     return FALSE;
 }
 
