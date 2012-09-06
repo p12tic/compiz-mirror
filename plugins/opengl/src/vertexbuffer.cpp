@@ -469,7 +469,7 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
     (*GL::bindBuffer) (GL::ARRAY_BUFFER, 0);
 
     //use default normal
-    if (normalData.size () == 0)
+    if (normalData.empty ())
     {
 	tmpProgram->setUniform3f ("singleNormal", 0.0f, 0.0f, -1.0f);
     }
@@ -575,7 +575,7 @@ int PrivateVertexBuffer::legacyRender (const GLMatrix            &projection,
     glVertexPointer (3, GL_FLOAT, 0, &vertexData[0]);
 
     //use default normal
-    if (normalData.size () == 0)
+    if (normalData.empty ())
     {
 	glNormal3f (0.0f, 0.0f, -1.0f);
     }

@@ -110,11 +110,7 @@ set (DECORATION_REQUIRES xrender)
 compiz_pkg_check_modules (COMPIZ REQUIRED ${COMPIZ_REQUIRES})
 compiz_pkg_check_modules (LIBDECORATION REQUIRED ${DECORATION_REQUIRES})
 
-list (APPEND COMPIZ_LIBRARIES ${Boost_LIBRARIES})
-
 include (CompizDefaults)
-
-set (COMPIZ_CFLAGS "${COMPIZ_CFLAGS} -I${Boost_INCLUDE_DIR}")
 
 set (_compiz_package_string "Compiz ${VERSION}")
 set (_compiz_package "Compiz")
