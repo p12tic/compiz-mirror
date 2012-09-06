@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 Canonical Ltd
+ * Copyright © 2012 Canonical Ltd
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
  *
  * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-
 #include "gwd-settings-writable-interface.h"
 
 static void gwd_settings_writable_interface_default_init (GWDSettingsWritableInterface *settings_interface);
