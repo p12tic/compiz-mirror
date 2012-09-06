@@ -933,9 +933,7 @@ PrivateScaleScreen::donePaint ()
 		state = ScaleScreen::Wait;
 
 		// When the animation is completed, select the window under mouse
-		CompOption *o = screen->getOption ("click_to_focus");
-		bool focus = (o && !o->value ().b ());
-		selectWindowAt (pointerX, pointerY, focus);
+		selectWindowAt (pointerX, pointerY);
 	    }
 	}
     }
@@ -1392,6 +1390,16 @@ PrivateScaleScreen::selectWindowAt (int  x,
     return false;
 }
 
+bool
+PrivateScaleScreen::selectWindowAt (int  x,
+				    int  y)
+{
+    CompOption *o = screen->getOption ("click_to_focus");
+    bool focus = (o && !o->value ().b ());
+
+    return selectWindowAt (x, y, focus);
+}
+
 void
 PrivateScaleScreen::moveFocusWindow (int dx,
 				     int dy)
@@ -1611,15 +1619,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		grabIndex                              &&
 		state != ScaleScreen::In)
 	    {
-		bool       focus = false;
-		CompOption *o = screen->getOption ("click_to_focus");
-
-		if (o && !o->value ().b ())
-		    focus = true;
-
-		selectWindowAt (event->xmotion.x_root,
-				event->xmotion.y_root,
-				focus);
+		selectWindowAt (event->xmotion.x_root, event->xmotion.y_root);
 	    }
 	    break;
 	case DestroyNotify:
@@ -1642,12 +1642,6 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    bool       focus = false;
-		    CompOption *o = screen->getOption ("click_to_focus");
-
-		    if (o && !o->value ().b ())
-			focus = true;
-
 		    if (w->id () == dndTarget)
 			sendDndStatusMessage (event->xclient.data.l[0]);
 
@@ -1675,7 +1669,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 				hover.start (time, (float) time * 1.2);
 			    }
 
-			    selectWindowAt (pointerX, pointerY, focus);
+			    selectWindowAt (pointerX, pointerY);
 			}
 			else
 			{
