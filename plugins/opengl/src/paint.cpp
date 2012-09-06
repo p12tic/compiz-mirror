@@ -339,11 +339,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		    tmpRegion -= w->region ();
 	    }
 
-	    /* unredirect top most fullscreen windows. */
-	    FullscreenRegion::WinType type =
-	        w->type () & CompWindowTypeDesktopMask ?
-	        FullscreenRegion::Desktop :
-	        FullscreenRegion::Normal;
+	    FullscreenRegion::WinFlags flags = 0;
+	    if (w->type () & CompWindowTypeDesktopMask)
+	        flags |= FullscreenRegion::Desktop;
+	    if (w->alpha ())
+		flags |= FullscreenRegion::Alpha;
 	    
 	    /*
 	     * Alpha windows (status == false) can cover/cancel fullscreen
@@ -354,8 +354,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	     */
 	    if (unredirectFS &&
 	        !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-	        fs.isCoveredBy (w->region (), type) &&
-	        status)
+	        fs.isCoveredBy (w->region (), flags))
 	    {
 	        fullscreenWindow = w;
 	    }

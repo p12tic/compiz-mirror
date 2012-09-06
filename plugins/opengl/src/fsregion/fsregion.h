@@ -36,14 +36,16 @@ class FullscreenRegion
 public:
     typedef enum
     {
-	Normal,
-	Desktop
-    } WinType;
+	Desktop = 1,
+	Alpha = 2
+    } WinFlag;
+
+    typedef unsigned int WinFlags;
 
     FullscreenRegion (const CompRect &rect);
 
     // isCoveredBy is called for windows from TOP to BOTTOM
-    bool isCoveredBy (const CompRegion &region, WinType type = Normal);
+    bool isCoveredBy (const CompRegion &region, WinFlags flags = 0);
 
 private:
     bool covered;
