@@ -1349,9 +1349,15 @@ ScaleWindow::setCurrentPosition (const ScalePosition &newPos)
 }
 
 const Window &
-ScaleScreen::getHoveredWindow ()
+ScaleScreen::getHoveredWindow () const
 {
     return priv->hoveredWindow;
+}
+
+const Window &
+ScaleScreen::getSelectedWindow () const
+{
+    return priv->selectedWindow;
 }
 
 bool

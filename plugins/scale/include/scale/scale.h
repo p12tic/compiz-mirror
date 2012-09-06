@@ -93,7 +93,8 @@ class ScaleScreen :
 	State getState () const;
 	ScaleType getType () const;
 
-	const Window & getHoveredWindow ();
+	const Window & getHoveredWindow () const;
+	const Window & getSelectedWindow () const;
 
 	const CompMatch & getCustomMatch () const;
 	const WindowList& getWindows () const;
