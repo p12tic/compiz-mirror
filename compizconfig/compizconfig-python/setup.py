@@ -134,7 +134,7 @@ setup (
   name = "compizconfig-python",
   version = version,
   description      = "CompizConfig Python",
-  url              = "http://www.compiz.org/",
+  url              = "https://launchpad.net/compiz",
   license          = "GPL",
   maintainer	   = "Guillaume Seguin",
   maintainer_email = "guillaume@segu.in",
