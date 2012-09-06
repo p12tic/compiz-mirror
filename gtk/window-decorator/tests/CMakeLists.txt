@@ -141,5 +141,4 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
     compiz_discover_tests (compiz_test_gwd_metacity_decorations COVERAGE
 			   gtk_window_decorator_metacity_window_decoration_util)
 
-
 endif (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)

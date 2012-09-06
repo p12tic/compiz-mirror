@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 Canonical Ltd
+ * Copyright © 2012 Canonical Ltd
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
  *
  * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-
 #include <cstring>
-#include <cstdio>
 
 #include <tr1/tuple>
 
