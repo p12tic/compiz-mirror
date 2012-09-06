@@ -24,6 +24,16 @@ class build (_build):
 
 class install (_install):
 
+    user_options = _install.user_options[:]
+    user_options.extend ([('version=', None, "Version of the package")])
+
+    def initialize_options(self):
+        self.version = None
+        _install.initialize_options (self)
+
+    def finalize_options(self):
+        _install.finalize_options (self)
+
     def run (self):
         _install.run (self)
         outputs = self.get_outputs ()
