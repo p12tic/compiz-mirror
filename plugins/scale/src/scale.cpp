@@ -929,7 +929,10 @@ PrivateScaleScreen::donePaint ()
 		}
 	    }
 	    else if (state == ScaleScreen::Out)
+	    {
 		state = ScaleScreen::Wait;
+		selectWindowAt(pointerX, pointerY, true);
+	    }
 	}
     }
 
