@@ -73,7 +73,7 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 
 	add_gsettings_schema_to_recompilation_list (compiz_gwd_gsettings_org_gnome_desktop_wm_preferences_schema)
 
-	set (_mutter_gschema_name org.gnome.desktop.wm.preferences)
+	set (_mutter_gschema_name org.gnome.mutter)
 	set (_mutter_gschema_filename ${_mutter_gschema_name}.gschema.xml)
 	set (_mutter_gschema_filepath ${CMAKE_CURRENT_SOURCE_DIR}/${_mutter_gschema_filename})
 	set (_mutter_gschema_generated_location ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/${_mutter_gschema_filename})

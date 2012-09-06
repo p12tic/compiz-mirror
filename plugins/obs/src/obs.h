@@ -25,7 +25,6 @@
 
 #include <core/screen.h>
 #include <core/pluginclasshandler.h>
-#include <core/serialization.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -57,8 +56,7 @@ class ObsScreen :
 
 class ObsWindow :
     public GLWindowInterface,
-    public PluginClassHandler<ObsWindow, CompWindow>,
-    public PluginStateWriter <ObsWindow>
+    public PluginClassHandler<ObsWindow, CompWindow>
 {
     public:
 	ObsWindow (CompWindow *);
@@ -73,14 +71,6 @@ class ObsWindow :
 	void updatePaintModifier (unsigned int);
 	void modifierChanged (unsigned int);
 	bool updateTimeout ();
-	
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & customFactor;
-	}
-	
-	void postLoad ();
 
     private:
 	CompWindow      *window;

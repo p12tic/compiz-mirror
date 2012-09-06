@@ -285,16 +285,8 @@ BenchScreen::limiterModeChanged (CompOption *opt)
 				    opt->value ().i ());
 }
 
-void
-BenchScreen::postLoad ()
-{
-    cScreen->preparePaintSetEnabled (this, mActive);
-    gScreen->glPaintOutputSetEnabled (this, mActive);
-}
-
 BenchScreen::BenchScreen (CompScreen *screen) :
     PluginClassHandler<BenchScreen, CompScreen> (screen),
-    PluginStateWriter <BenchScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mAlpha (0),
@@ -404,8 +396,6 @@ BenchScreen::BenchScreen (CompScreen *screen) :
 
 BenchScreen::~BenchScreen ()
 {
-    writeSerializedData ();
-
     if (mActive)
     {
     	// Restore FPS limiter mode
