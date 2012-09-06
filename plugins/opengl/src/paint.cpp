@@ -337,36 +337,44 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		}
 		else
 		    tmpRegion -= w->region ();
+	    }
 
-		/* unredirect top most fullscreen windows. */
-		FullscreenRegion::WinType type =
-		    w->type () & CompWindowTypeDesktopMask ?
-		    FullscreenRegion::Desktop :
-		    FullscreenRegion::Normal;
-		
-		if (unredirectFS &&
-		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-		    fs.isCoveredBy (w->region (), type))
-		{
-		    fullscreenWindow = w;
-		}
-		else
-		{
-		    CompositeWindow *cw = CompositeWindow::get (w);
-		    if (!cw->redirected ())
-		    {
-			// 1. GLWindow::release to force gw->priv->needsRebind
-			gw->release ();
+	    /* unredirect top most fullscreen windows. */
+	    FullscreenRegion::WinType type =
+	        w->type () & CompWindowTypeDesktopMask ?
+	        FullscreenRegion::Desktop :
+	        FullscreenRegion::Normal;
+	    
+	    /*
+	     * Alpha windows (status == false) can cover/cancel fullscreen
+	     * unredirected windows. But they can't be unredirected themselves.
+	     * I wonder if this is sensible as some games may use full-screen
+	     * RGBA windows that are fully opaque. So maybe we shouldn't even
+	     * check status at all here?
+	     */
+	    if (unredirectFS &&
+	        !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+	        fs.isCoveredBy (w->region (), type) &&
+	        status)
+	    {
+	        fullscreenWindow = w;
+	    }
+	    else
+	    {
+	        CompositeWindow *cw = CompositeWindow::get (w);
+	        if (!cw->redirected ())
+	        {
+		    // 1. GLWindow::release to force gw->priv->needsRebind
+		    gw->release ();
 
-			// 2. GLWindow::bind, which redirects the window,
-			//    rebinds the pixmap, and then rebinds the pixmap
-			//    to a texture.
-			gw->bind ();
+		    // 2. GLWindow::bind, which redirects the window,
+		    //    rebinds the pixmap, and then rebinds the pixmap
+		    //    to a texture.
+		    gw->bind ();
 
-			// 3. Your window is now redirected again with the
-			//    latest pixmap contents.
-		    }
-		}
+		    // 3. Your window is now redirected again with the
+		    //    latest pixmap contents.
+	        }
 	    }
 	}
     }
