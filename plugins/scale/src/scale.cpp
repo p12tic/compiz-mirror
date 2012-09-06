@@ -931,7 +931,11 @@ PrivateScaleScreen::donePaint ()
 	    else if (state == ScaleScreen::Out)
 	    {
 		state = ScaleScreen::Wait;
-		selectWindowAt(pointerX, pointerY, true);
+
+		// When the animation is completed, select the window under mouse
+		CompOption *o = screen->getOption ("click_to_focus");
+		bool focus = (o && !o->value ().b ());
+		selectWindowAt (pointerX, pointerY, focus);
 	    }
 	}
     }
