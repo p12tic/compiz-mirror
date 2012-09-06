@@ -346,10 +346,8 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		flags |= FullscreenRegion::Alpha;
 	    
 	    /*
-	     * Alpha windows (status == false) can cover/cancel fullscreen
-	     * unredirected windows. But they can't be unredirected themselves.
-	     * I wonder if this is sensible as some games may use fullscreen
-	     * RGBA (alpha) windows that are fully opaque and need unredirect.
+	     * Windows with alpha channels can partially occlude windows
+	     * beneath them and so neither should be unredirected in that case.
 	     */
 	    if (unredirectFS &&
 	        !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
