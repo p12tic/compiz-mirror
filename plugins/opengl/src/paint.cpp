@@ -38,8 +38,11 @@
 #include <opengl/opengl.h>
 
 #include "privates.h"
+#include "fsregion/fsregion.h"
 
 #define DEG2RAD (M_PI / 180.0f)
+
+using namespace compiz::opengl;
 
 GLScreenPaintAttrib defaultScreenPaintAttrib = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -DEFAULT_Z_CAMERA
@@ -241,7 +244,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     CompRegion    tmpRegion (region);
     CompWindow    *w;
     GLWindow      *gw;
-    int		  count, windowMask, odMask;
+    int           windowMask, odMask;
     CompWindow	  *fullscreenWindow = NULL;
     bool          status, unredirectFS;
     bool          withOffset = false;
@@ -257,12 +260,10 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     if (mask & PAINT_SCREEN_TRANSFORMED_MASK)
     {
 	windowMask     = PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK;
-	count	       = 1;
     }
     else
     {
 	windowMask     = 0;
-	count	       = 0;
     }
 
     /*
@@ -274,6 +275,8 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
+	FullscreenRegion fs (*output);
+
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
 	{
@@ -334,25 +337,41 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		}
 		else
 		    tmpRegion -= w->region ();
-
-		/* unredirect top most fullscreen windows. */
-		if (count == 0 && unredirectFS)
-		{
-		    if (w->region () == screen->region () &&
-			tmpRegion.isEmpty ())
-		    {
-			fullscreenWindow = w;
-		    }
-		    else
-		    {
-			foreach (CompOutput &o, screen->outputDevs ())
-			    if (w->region () == CompRegion (o))
-				fullscreenWindow = w;
-		    }
-		}
 	    }
 
-	    count++;
+	    FullscreenRegion::WinFlags flags = 0;
+	    if (w->type () & CompWindowTypeDesktopMask)
+	        flags |= FullscreenRegion::Desktop;
+	    if (w->alpha ())
+		flags |= FullscreenRegion::Alpha;
+	    
+	    /*
+	     * Windows with alpha channels can partially occlude windows
+	     * beneath them and so neither should be unredirected in that case.
+	     */
+	    if (unredirectFS &&
+	        !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+	        fs.isCoveredBy (w->region (), flags))
+	    {
+	        fullscreenWindow = w;
+	    }
+	    else
+	    {
+	        CompositeWindow *cw = CompositeWindow::get (w);
+	        if (!cw->redirected ())
+	        {
+		    // 1. GLWindow::release to force gw->priv->needsRebind
+		    gw->release ();
+
+		    // 2. GLWindow::bind, which redirects the window,
+		    //    rebinds the pixmap, and then rebinds the pixmap
+		    //    to a texture.
+		    gw->bind ();
+
+		    // 3. Your window is now redirected again with the
+		    //    latest pixmap contents.
+	        }
+	    }
 	}
     }
 
@@ -834,6 +853,9 @@ addQuads (GLVertexBuffer *vertexBuffer,
 	  unsigned int maxGridWidth,
 	  unsigned int maxGridHeight)
 {
+    if (maxGridWidth == 0 || maxGridHeight == 0)
+	return;
+
     int nQuadsX = (maxGridWidth == MAXSHORT) ? 1 :
 	1 + (x2 - x1 - 1) / (int) maxGridWidth;  // ceil. division
     int nQuadsY = (maxGridHeight == MAXSHORT) ? 1 :

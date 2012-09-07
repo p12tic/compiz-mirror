@@ -25,7 +25,6 @@
 
 #include <core/core.h>
 #include <core/timer.h>
-#include <core/serialization.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
@@ -56,7 +55,6 @@ class BenchScreen :
     public CompositeScreenInterface,
     public GLScreenInterface,
     public PluginClassHandler<BenchScreen, CompScreen>,
-    public PluginStateWriter <BenchScreen>,
     public BenchOptions
 {
     public:

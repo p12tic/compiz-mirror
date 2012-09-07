@@ -75,8 +75,6 @@ endif (COMPIZ_PACKAGING_ENABLED)
 
 ### Set up core lib dependences so this in correctly imported into plugins
 
-find_package (Boost 1.34.0 REQUIRED serialization)
-
 set (COMPIZ_REQUIRES
     x11
     xext
@@ -94,7 +92,6 @@ set (COMPIZ_REQUIRES
 )
 
 compiz_pkg_check_modules (COMPIZ REQUIRED ${COMPIZ_REQUIRES})
-
 list (APPEND COMPIZ_LIBRARIES ${Boost_LIBRARIES})
 
 # determinate installation directories

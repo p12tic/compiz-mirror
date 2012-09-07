@@ -13,7 +13,6 @@ set (_headers
     propertywriter.h
     privateunion.h
     screen.h
-    serialization.h
     session.h
     size.h
     string.h
