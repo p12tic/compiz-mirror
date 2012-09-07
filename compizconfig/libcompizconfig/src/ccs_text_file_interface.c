@@ -1,6 +1,8 @@
 /*
  * Compiz configuration system library
  *
+ * ccs_text_file_interface.c
+ *
  * Copyright (C) 2012 Canonical Ltd.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,34 +22,29 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
-#define _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
 
-#include "ccs-defs.h"
+#include <ccs-defs.h>
+#include <ccs-object.h>
+#include <ccs_text_file_interface.h>
+#include <ccs_text_file.h>
 
-COMPIZCONFIG_BEGIN_DECLS
+INTERFACE_TYPE (CCSTextFileInterface);
+CCSREF_OBJ (TextFile, CCSTextFile);
 
-typedef struct _CCSSettingList * CCSSettingList;
+char *
+ccsTextFileReadFromStart (CCSTextFile *file)
+{
+    return (*(GET_INTERFACE (CCSTextFileInterface, file))->readFromStart) (file);
+}
 
 Bool
-ccsUpgradeGetDomainNumAndProfile (const char   *name,
-				  char         **domain,
-				  unsigned int *num,
-				  char         **profile);
-
-int
-ccsUpgradeNameFilter (const char *name);
+ccsTextFileAppendString (CCSTextFile *file, const char *str)
+{
+    return (*(GET_INTERFACE (CCSTextFileInterface, file))->appendString) (file, str);
+}
 
 void
-ccsUpgradeClearValues (CCSSettingList clearSettings);
-
-void
-ccsUpgradeAddValues (CCSSettingList addSettings);
-
-void
-ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
-			 CCSSettingList replaceToValueSettings);
-
-COMPIZCONFIG_END_DECLS
-
-#endif
+ccsFreeTextFile (CCSTextFile *file)
+{
+    return (*(GET_INTERFACE (CCSTextFileInterface, file))->free) (file);
+}
