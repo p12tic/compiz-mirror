@@ -39,7 +39,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/compizconfig-python.pc.in
 add_custom_command (OUTPUT ${PY_COMPIZCONFIG_LIB}
 		    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py build --build-base=${CMAKE_CURRENT_BINARY_DIR}/build --version=${VERSION}
 		    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		    DEPENDS ${PY_COMPIZCONFIG_SRC} ${PY_COMPIZCONFIG_VERSION}
+		    DEPENDS ${PY_COMPIZCONFIG_SRC} ${PY_COMPIZCONFIG_VERSION} compizconfig
 		    COMMENT "Generating Python Bytecode")
 
 add_custom_target (compizconfig_python_module ALL DEPENDS
@@ -56,8 +56,6 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/compizconfig-python.pc
 install (CODE
 	 "message (\"Installing python files\")
 	  execute_process (COMMAND cmake -DSETUP=${CMAKE_CURRENT_SOURCE_DIR}/setup.py -DPREFIX=${CMAKE_INSTALL_PREFIX} -DWDIR=${CMAKE_CURRENT_BINARY_DIR} -DVERSION=${VERSION} -P ${compiz_SOURCE_DIR}/compizconfig/cmake/exec_setup_py_with_destdir.cmake)")
-
-add_dependencies (compizconfig_python_module compizconfig)
 
 if (COMPIZ_BUILD_TESTING)
 
