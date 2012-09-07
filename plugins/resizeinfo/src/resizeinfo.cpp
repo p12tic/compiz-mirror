@@ -25,6 +25,11 @@
 
 COMPIZ_PLUGIN_20090315 (resizeinfo, InfoPluginVTable);
 
+const unsigned short RESIZE_POPUP_WIDTH = 85;
+const unsigned short RESIZE_POPUP_HEIGHT = 50;
+
+const double PI = 3.14159265359f;
+
 /* Set up an InfoLayer to build a cairo->opengl texture pipeline */
 InfoLayer::~InfoLayer ()
 {

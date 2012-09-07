@@ -29,7 +29,7 @@
 
 #include "notification_options.h"
 
-static const std::string IMAGE_DIR(".compiz/images");
+extern const std::string IMAGE_DIR;
 
 class NotificationScreen :
     public PluginClassHandler <NotificationScreen, CompScreen>,

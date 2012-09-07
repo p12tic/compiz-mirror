@@ -305,7 +305,7 @@ class ShiftWindow :
 
 };
 
-static const double PI = 3.14159265359f;
+extern const double PI;
 
 #define SHIFT_WINDOW(w)							      \
     ShiftWindow *sw = ShiftWindow::get (w)

@@ -31,7 +31,7 @@
 #include "opacify_options.h"
 
 /* Size of the Window array storing passive windows. */
-static const unsigned short MAX_WINDOWS = 64;
+extern const unsigned short MAX_WINDOWS;
 
 class OpacifyScreen :
     public PluginClassHandler <OpacifyScreen, CompScreen>,

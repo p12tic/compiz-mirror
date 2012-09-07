@@ -31,11 +31,11 @@
 
 #include "splash_options.h"
 
-static const unsigned short MESH_W = 16;
-static const unsigned short MESH_H = 16;
+#define MESH_W 16
+#define MESH_H 16
 
-static const std::string SPLASH_BACKGROUND_DEFAULT("");
-static const std::string SPLASH_LOGO_DEFAULT("");
+extern const std::string SPLASH_BACKGROUND_DEFAULT;
+extern const std::string SPLASH_LOGO_DEFAULT;
 
 class SplashScreen :
     public PluginClassHandler <SplashScreen, CompScreen>,
