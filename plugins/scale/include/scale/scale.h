@@ -31,7 +31,7 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
-#define COMPIZ_SCALE_ABI 2
+#define COMPIZ_SCALE_ABI 3
 
 class ScaleScreen;
 class PrivateScaleScreen;
