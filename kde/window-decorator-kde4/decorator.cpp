@@ -46,6 +46,13 @@
 
 #include <stdio.h>
 
+const unsigned int ROOT_OFF_X = 8192;
+const unsigned int ROOT_OFF_Y = 8192;
+
+const unsigned short BLUR_TYPE_NONE     = 0;
+const unsigned short BLUR_TYPE_TITLEBAR = 1;
+const unsigned short BLUR_TYPE_ALL      = 2;
+
 static const float SHADOW_RADIUS    = 8.0f;
 static const float SHADOW_OPACITY   = 0.5f;
 static const unsigned short  SHADOW_OFFSET_X = 1;

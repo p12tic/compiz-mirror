@@ -161,7 +161,7 @@ class BaseSwitchWindow
 	CompWindow       *window;
 };
 
-static const unsigned short ICON_SIZE = 48;
-static const unsigned int MAX_ICON_SIZE = 256;
+extern const unsigned short ICON_SIZE;
+extern const unsigned int MAX_ICON_SIZE;
 
 #endif

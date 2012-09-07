@@ -105,6 +105,10 @@ COMPIZ_PLUGIN_20090315 (animation, AnimPluginVTable);
 
 static const unsigned short FAKE_ICON_SIZE = 4;
 
+const unsigned short LAST_ANIM_DIRECTION = 5;
+
+const unsigned short NUM_EFFECTS = 16;
+
 const char *eventNames[AnimEventNum] =
 {"Open", "Close", "Minimize", "Shade", "Unminimize", "Focus"};
 

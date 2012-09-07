@@ -142,23 +142,23 @@ namespace compiz { namespace private_screen {
 #define MwmDecorMinimize (1L << 5)
 #define MwmDecorMaximize (1L << 6)
 
-static const unsigned short WmMoveResizeSizeTopLeft      = 0;
-static const unsigned short WmMoveResizeSizeTop          = 1;
-static const unsigned short WmMoveResizeSizeTopRight     = 2;
-static const unsigned short WmMoveResizeSizeRight        = 3;
-static const unsigned short WmMoveResizeSizeBottomRight  = 4;
-static const unsigned short WmMoveResizeSizeBottom       = 5;
-static const unsigned short WmMoveResizeSizeBottomLeft   = 6;
-static const unsigned short WmMoveResizeSizeLeft         = 7;
-static const unsigned short WmMoveResizeMove             = 8;
-static const unsigned short WmMoveResizeSizeKeyboard     = 9;
-static const unsigned short WmMoveResizeMoveKeyboard    = 10;
-static const unsigned short WmMoveResizeCancel          = 11;
+#define WmMoveResizeSizeTopLeft      0
+#define WmMoveResizeSizeTop          1
+#define WmMoveResizeSizeTopRight     2
+#define WmMoveResizeSizeRight        3
+#define WmMoveResizeSizeBottomRight  4
+#define WmMoveResizeSizeBottom       5
+#define WmMoveResizeSizeBottomLeft   6
+#define WmMoveResizeSizeLeft         7
+#define WmMoveResizeMove             8
+#define WmMoveResizeSizeKeyboard     9
+#define WmMoveResizeMoveKeyboard    10
+#define WmMoveResizeCancel          11
 
 /* EWMH source indication client types */
-static const unsigned short ClientTypeUnknown      = 0;
-static const unsigned short ClientTypeApplication  = 1;
-static const unsigned short ClientTypePager        = 2;
+#define ClientTypeUnknown      0
+#define ClientTypeApplication  1
+#define ClientTypePager        2
 
 #define CompWindowGrabKeyMask         (1 << 0)
 #define CompWindowGrabButtonMask      (1 << 1)

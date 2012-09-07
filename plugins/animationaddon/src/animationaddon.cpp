@@ -90,6 +90,9 @@ public:
 
 COMPIZ_PLUGIN_20090315 (animationaddon, AnimAddonPluginVTable);
 
+// TODO Update this for each added animation effect! (total: 11)
+const unsigned short NUM_EFFECTS = 11;
+
 AnimEffect animEffects[NUM_EFFECTS];
 
 ExtensionPluginAnimAddon animAddonExtPluginInfo (CompString ("animationaddon"),

@@ -50,9 +50,9 @@ struct Vector {
 };
 
 /* FIXME: Remove */
-static const unsigned short DECOR_BARE	 = 0;
-static const unsigned short DECOR_ACTIVE = 1;
-static const unsigned short DECOR_NUM	 = 2;
+#define DECOR_BARE	0
+#define DECOR_ACTIVE	1
+#define DECOR_NUM	2
 
 using namespace compiz::decor;
 
