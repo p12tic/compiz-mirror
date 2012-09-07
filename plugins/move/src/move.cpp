@@ -34,6 +34,11 @@
 
 COMPIZ_PLUGIN_20090315 (move, MovePluginVTable)
 
+const unsigned short KEY_MOVE_INC = 24;
+
+const unsigned short SNAP_BACK = 20;
+const unsigned short SNAP_OFF  = 100;
+
 static bool
 moveInitiate (CompAction      *action,
 	      CompAction::State state,

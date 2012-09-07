@@ -85,7 +85,7 @@ extern bool gTextAvailable;
  * Constants
  *
  */
-static const double PI = 3.14159265359f;
+extern const double PI;
 
 /*
  * Helpers
