@@ -337,36 +337,40 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		}
 		else
 		    tmpRegion -= w->region ();
+	    }
 
-		/* unredirect top most fullscreen windows. */
-		FullscreenRegion::WinType type =
-		    w->type () & CompWindowTypeDesktopMask ?
-		    FullscreenRegion::Desktop :
-		    FullscreenRegion::Normal;
-		
-		if (unredirectFS &&
-		    !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-		    fs.isCoveredBy (w->region (), type))
-		{
-		    fullscreenWindow = w;
-		}
-		else
-		{
-		    CompositeWindow *cw = CompositeWindow::get (w);
-		    if (!cw->redirected ())
-		    {
-			// 1. GLWindow::release to force gw->priv->needsRebind
-			gw->release ();
+	    FullscreenRegion::WinFlags flags = 0;
+	    if (w->type () & CompWindowTypeDesktopMask)
+	        flags |= FullscreenRegion::Desktop;
+	    if (w->alpha ())
+		flags |= FullscreenRegion::Alpha;
+	    
+	    /*
+	     * Windows with alpha channels can partially occlude windows
+	     * beneath them and so neither should be unredirected in that case.
+	     */
+	    if (unredirectFS &&
+	        !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+	        fs.isCoveredBy (w->region (), flags))
+	    {
+	        fullscreenWindow = w;
+	    }
+	    else
+	    {
+	        CompositeWindow *cw = CompositeWindow::get (w);
+	        if (!cw->redirected ())
+	        {
+		    // 1. GLWindow::release to force gw->priv->needsRebind
+		    gw->release ();
 
-			// 2. GLWindow::bind, which redirects the window,
-			//    rebinds the pixmap, and then rebinds the pixmap
-			//    to a texture.
-			gw->bind ();
+		    // 2. GLWindow::bind, which redirects the window,
+		    //    rebinds the pixmap, and then rebinds the pixmap
+		    //    to a texture.
+		    gw->bind ();
 
-			// 3. Your window is now redirected again with the
-			//    latest pixmap contents.
-		    }
-		}
+		    // 3. Your window is now redirected again with the
+		    //    latest pixmap contents.
+	        }
 	    }
 	}
     }
