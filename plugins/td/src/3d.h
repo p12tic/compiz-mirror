@@ -43,7 +43,7 @@
 
 #include "td_options.h"
 
-static const double PI = 3.14159265359f;
+extern const double PI;
 
 class TdScreen :
     public PluginClassHandler <TdScreen, CompScreen>,

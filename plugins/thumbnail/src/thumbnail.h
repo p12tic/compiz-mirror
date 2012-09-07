@@ -58,7 +58,7 @@
 #define WIN_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
 #define WIN_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
 
-static const unsigned short TEXT_DISTANCE = 10;
+extern const unsigned short TEXT_DISTANCE;
 
 bool textPluginLoaded;
 
