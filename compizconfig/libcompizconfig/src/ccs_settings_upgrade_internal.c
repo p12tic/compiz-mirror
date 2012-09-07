@@ -20,7 +20,6 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-
 #include "ccs_settings_upgrade_internal.h"
 #include <ccs.h>
 #include <string.h>

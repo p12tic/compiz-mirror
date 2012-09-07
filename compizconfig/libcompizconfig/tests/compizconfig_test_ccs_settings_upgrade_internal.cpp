@@ -1,3 +1,25 @@
+/*
+ * Compiz configuration system library
+ *
+ * Copyright (C) 2012 Canonical Ltd.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Authored By:
+ * Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
 #include <tr1/tuple>
 
 #include <gtest/gtest.h>
@@ -341,6 +363,48 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
     EXPECT_CALL (Mock (settingToReset), getValue ()).WillOnce (Return (&valueToReset));
 
     EXPECT_CALL (Mock (settingToReset), resetToDefault (BoolTrue ()));
+
+    ccsUpgradeClearValues (*list);
+}
+
+TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListTypeNotMatched)
+{
+    MockedSetting resetSettingIdentifier (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+							TypeInt,
+							DoNotAddSettingToPlugin));
+    MockedSetting settingToReset (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
+						TypeInt));
+    CCSSettingValue valueToReset;
+    CCSSettingValue valueResetIdentifier;
+
+    InitializeValueForSetting (valueToReset, Real (settingToReset));
+    InitializeValueForSetting (valueResetIdentifier, Real (resetSettingIdentifier));
+
+    valueToReset.value.asInt = 2;
+    valueResetIdentifier.value.asInt = 7;
+
+    CCSSettingListWrapperPtr list (constructSettingListWrapper (ccsSettingListAppend (NULL, Real (resetSettingIdentifier)),
+								cci::Shallow));
+
+    EXPECT_CALL (MockPlugin (), findSetting (Eq (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE)))
+	    .WillOnce (Return (Real (settingToReset)));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getParent ());
+    EXPECT_CALL (Mock (resetSettingIdentifier), getName ());
+
+    CCSSettingInfo info;
+
+    info.forInt.max = 0;
+    info.forInt.min = 10;
+
+    /* ccsCheckValueEq needs to know the type and info about this type */
+    EXPECT_CALL (Mock (settingToReset), getType ()).Times (AtLeast (1));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getType ()).Times (AtLeast (1));
+
+    EXPECT_CALL (Mock (settingToReset), getInfo ()).WillRepeatedly (Return (&info));
+    EXPECT_CALL (Mock (resetSettingIdentifier), getInfo ()).WillRepeatedly (Return (&info));
+
+    EXPECT_CALL (Mock (resetSettingIdentifier), getValue ()).WillOnce (Return (&valueResetIdentifier));
+    EXPECT_CALL (Mock (settingToReset), getValue ()).WillOnce (Return (&valueToReset));
 
     ccsUpgradeClearValues (*list);
 }
