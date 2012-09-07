@@ -109,6 +109,8 @@
 #include <metacity-private/theme.h>
 #endif
 
+#include "gwd-settings-interface.h"
+
 #define METACITY_GCONF_DIR "/apps/metacity/general"
 #define MUTTER_GCONF_DIR "/apps/mutter/general"
 
@@ -223,72 +225,28 @@ WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY)
 
 #define PROP_MOTIF_WM_HINT_ELEMENTS 3
 
+typedef struct _GWDSettingsWritable GWDSettingsWritable;
+typedef struct _GWDSettingsNotified GWDSettingsNotified;
+
 typedef struct {
 unsigned long flags;
 unsigned long functions;
 unsigned long decorations;
 } MwmHints;
 
-enum {
-    CLICK_ACTION_NONE,
-    CLICK_ACTION_SHADE,
-    CLICK_ACTION_MAXIMIZE,
-    CLICK_ACTION_MINIMIZE,
-    CLICK_ACTION_RAISE,
-    CLICK_ACTION_LOWER,
-    CLICK_ACTION_MENU
-};
-
-enum {
-    WHEEL_ACTION_NONE,
-    WHEEL_ACTION_SHADE
-};
-
-typedef struct _decor_settings {
-    int double_click_action;
-    int middle_click_action;
-    int right_click_action;
-    int wheel_action;
-    gdouble active_shadow_radius;
-    gdouble active_shadow_opacity;
-    gushort active_shadow_color[3];
-    gint    active_shadow_offset_x;
-    gint    active_shadow_offset_y;
-    gdouble inactive_shadow_radius;
-    gdouble inactive_shadow_opacity;
-    gushort inactive_shadow_color[3];
-    gint    inactive_shadow_offset_x;
-    gint    inactive_shadow_offset_y;
-#ifdef USE_METACITY
-    double   meta_opacity;
-    gboolean meta_shade_opacity;
-    double   meta_active_opacity;
-    gboolean meta_active_shade_opacity;
-
-    gboolean         meta_button_layout_set;
-    MetaButtonLayout meta_button_layout;
-#endif
-    double		    decoration_alpha;
-    gboolean		    use_system_font;
-    gint		    blur_type;
-    gchar		    *font;
-    guint    mutter_draggable_border_width;
-    gboolean mutter_attach_modal_dialogs;
-    gboolean use_tooltips;
-} decor_settings_t;
-
-#define DOUBLE_CLICK_ACTION_DEFAULT CLICK_ACTION_MAXIMIZE
-#define MIDDLE_CLICK_ACTION_DEFAULT CLICK_ACTION_LOWER
-#define RIGHT_CLICK_ACTION_DEFAULT  CLICK_ACTION_MENU
-#define WHEEL_ACTION_DEFAULT        WHEEL_ACTION_NONE
-
 extern gboolean minimal;
-extern decor_settings_t *settings;
-
 
 #define SWITCHER_SPACE 40
 
-extern guint cmdline_options;
+extern GWDSettingsNotified *notified;
+extern GWDSettings	   *settings;
+extern GWDSettingsWritable *writable;
+
+extern gdouble decoration_alpha;
+#ifdef USE_METACITY
+extern MetaButtonLayout   meta_button_layout;
+extern gboolean	          meta_button_layout_set;
+#endif
 
 extern Atom frame_input_window_atom;
 extern Atom frame_output_window_atom;
@@ -532,10 +490,6 @@ extern gint	     tooltip_timer_tag;
 extern GSList *draw_list;
 extern guint  draw_idle_id;
 
-#define BLUR_TYPE_NONE     0
-#define BLUR_TYPE_TITLEBAR 1
-#define BLUR_TYPE_ALL      2
-
 /* switcher */
 extern Window     switcher_selected_window;
 extern GtkWidget  *switcher_label;
@@ -671,9 +625,6 @@ update_event_windows (WnckWindow *win);
 
 int
 update_shadow (void);
-
-gboolean
-shadow_property_changed (WnckScreen *screen);
 
 void
 update_titlebar_font ();
@@ -1181,7 +1132,7 @@ style_changed (GtkWidget *widget, void *user_data /* PangoContext */);
 
 void
 set_frame_scale (decor_frame_t *frame,
-		 gchar	       *font_str);
+		 const gchar *font_str);
 
 void
 set_frames_scales (gpointer key,
@@ -1189,6 +1140,12 @@ set_frames_scales (gpointer key,
 		   gpointer user_data);
 
 gboolean
-init_settings (WnckScreen *screen);
+init_settings (GWDSettingsWritable *writable, WnckScreen *screen);
+
+void
+fini_settings ();
+
+gboolean
+gwd_process_decor_shadow_property_update ();
 
 #endif

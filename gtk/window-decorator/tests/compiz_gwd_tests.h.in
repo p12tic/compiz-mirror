@@ -1,0 +1,12 @@
+#ifndef _COMPIZ_GWD_TESTS_CONFIG_H
+#define _COMPIZ_GWD_TESTS_CONFIG_H
+
+#define MOCK_SCHEMA_PATH "@CMAKE_BINARY_DIR@/generated/glib-2.0/schemas"
+
+namespace
+{
+const std::string MOCK_PATH (MOCK_SCHEMA_PATH);
+}
+
+#endif
+
