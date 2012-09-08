@@ -110,15 +110,15 @@ const unsigned short LAST_ANIM_DIRECTION = 5;
 const unsigned short NUM_EFFECTS = 16;
 
 const char *eventNames[AnimEventNum] =
-{"Open", "Close", "Minimize", "Shade", "Unminimize", "Focus"};
+{"Open", "Close", "Minimize", "Unminimize", "Shade", "Focus"};
 
 int chosenEffectOptionIds[AnimEventNum] =
 {
     AnimationOptions::OpenEffects,
     AnimationOptions::CloseEffects,
     AnimationOptions::MinimizeEffects,
-    AnimationOptions::ShadeEffects,
     AnimationOptions::UnminimizeEffects,
+    AnimationOptions::ShadeEffects,
     AnimationOptions::FocusEffects,
 };
 
@@ -127,8 +127,8 @@ int randomEffectOptionIds[AnimEventNum] =
     AnimationOptions::OpenRandomEffects,
     AnimationOptions::CloseRandomEffects,
     AnimationOptions::MinimizeRandomEffects,
-    AnimationOptions::ShadeRandomEffects,
     AnimationOptions::UnminimizeRandomEffects,
+    AnimationOptions::ShadeRandomEffects,
     -1
 };
 
@@ -137,8 +137,8 @@ int customOptionOptionIds[AnimEventNum] =
     AnimationOptions::OpenOptions,
     AnimationOptions::CloseOptions,
     AnimationOptions::MinimizeOptions,
-    AnimationOptions::ShadeOptions,
     AnimationOptions::UnminimizeOptions,
+    AnimationOptions::ShadeOptions,
     AnimationOptions::FocusOptions
 };
 
@@ -147,8 +147,8 @@ int matchOptionIds[AnimEventNum] =
     AnimationOptions::OpenMatches,
     AnimationOptions::CloseMatches,
     AnimationOptions::MinimizeMatches,
-    AnimationOptions::ShadeMatches,
     AnimationOptions::UnminimizeMatches,
+    AnimationOptions::ShadeMatches,
     AnimationOptions::FocusMatches
 };
 
@@ -157,8 +157,8 @@ int durationOptionIds[AnimEventNum] =
     AnimationOptions::OpenDurations,
     AnimationOptions::CloseDurations,
     AnimationOptions::MinimizeDurations,
-    AnimationOptions::ShadeDurations,
     AnimationOptions::UnminimizeDurations,
+    AnimationOptions::ShadeDurations,
     AnimationOptions::FocusDurations
 };
 
@@ -555,7 +555,7 @@ PrivateAnimWindow::updateSelectionRow (unsigned int r)
 }
 
 // Assumes events in the metadata are in
-// [Open, Close, Minimize, Shade, Unminimize, Focus] order
+// [Open, Close, Minimize, Unminimize, Shade, Focus] order
 // and effects among those are in alphabetical order
 // but with "(Event) None" first and "(Event) Random" last.
 AnimEffect
@@ -2533,8 +2533,8 @@ AnimEffectUsedFor& AnimEffectUsedFor::exclude (AnimEvent event)
     case AnimEventOpen: open = false; break;
     case AnimEventClose: close = false; break;
     case AnimEventMinimize: minimize = false; break;
-    case AnimEventShade: shade = false; break;
     case AnimEventUnminimize: unminimize = false; break;
+    case AnimEventShade: shade = false; break;
     case AnimEventFocus: focus = false; break;
     default: break;
   }
@@ -2547,8 +2547,8 @@ AnimEffectUsedFor& AnimEffectUsedFor::include (AnimEvent event)
     case AnimEventOpen: open = true; break;
     case AnimEventClose: close = true; break;
     case AnimEventMinimize: minimize = true; break;
-    case AnimEventShade: shade = true; break;
     case AnimEventUnminimize: unminimize = true; break;
+    case AnimEventShade: shade = true; break;
     case AnimEventFocus: focus = true; break;
     default: break;
   }
@@ -2566,8 +2566,8 @@ AnimEffectInfo::AnimEffectInfo (const char *name,
     usedForEvents[AnimEventOpen] = usedFor.open;
     usedForEvents[AnimEventClose] = usedFor.close;
     usedForEvents[AnimEventMinimize] = usedFor.minimize;
-    usedForEvents[AnimEventShade] = usedFor.shade;
     usedForEvents[AnimEventUnminimize] = usedFor.unminimize;
+    usedForEvents[AnimEventShade] = usedFor.shade;
     usedForEvents[AnimEventFocus] = usedFor.focus;
 }
 
@@ -2845,13 +2845,13 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	    mPAScreen->initiateMinimizeAnim (this);
 	    mEventNotOpenClose = true;
 	    break;
-	case CompWindowNotifyShade:
-	    mPAScreen->initiateShadeAnim (this);
-	    mEventNotOpenClose = true;
-	    break;
 	case CompWindowNotifyLeaveShowDesktopMode:
 	case CompWindowNotifyUnminimize:
 	    mPAScreen->initiateUnminimizeAnim (this);
+	    mEventNotOpenClose = true;
+	    break;
+	case CompWindowNotifyShade:
+	    mPAScreen->initiateShadeAnim (this);
 	    mEventNotOpenClose = true;
 	    break;
 	case CompWindowNotifyUnshade:

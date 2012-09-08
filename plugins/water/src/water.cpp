@@ -223,7 +223,6 @@ void
 WaterScreen::waterSetup ()
 {
     int size;
-    char buf[8192];
     std::string buffer;
 
     texHeight = TEXTURE_SIZE;
@@ -260,6 +259,7 @@ WaterScreen::waterSetup ()
 
     if (GL::vboEnabled && GL::shaders)
     {
+	char buf[8192];
 	program[SET] = new GLProgram (set_water_vertices_vertex_shader,
 	                              set_water_vertices_fragment_shader);
 

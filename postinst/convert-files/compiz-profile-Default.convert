@@ -110,7 +110,7 @@ top-right-corner-action = /apps/compizconfig-1/profiles/Default/plugins/grid/scr
 
 
 [org.compiz.integrated]
-exec = /apps/metacity/global_keybindings/run_command_terminal
+run-command-terminal = /apps/metacity/global_keybindings/run_command_terminal
 run-command-screenshot = /apps/metacity/global_keybindings/run_command_screenshot
 run-command-window-screenshot = /apps/metacity/global_keybindings/run_command_window_screenshot
 panel-run-dialog = /apps/metacity/global_keybindings/panel_run_dialog

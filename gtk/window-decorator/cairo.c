@@ -354,7 +354,7 @@ draw_window_decoration (decor_t *d)
     {
 	decor_color_t *title_color = _title_color;
 
-	alpha = settings->decoration_alpha + 0.3;
+	alpha = decoration_alpha + 0.3;
 
 	fill_rounded_rectangle (cr,
 				x1 + 0.5,
@@ -386,7 +386,7 @@ draw_window_decoration (decor_t *d)
     }
     else
     {
-	alpha = settings->decoration_alpha;
+	alpha = decoration_alpha;
 
 	fill_rounded_rectangle (cr,
 				x1 + 0.5,
