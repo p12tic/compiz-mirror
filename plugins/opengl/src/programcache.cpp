@@ -41,7 +41,7 @@ compileProgram (std::string name, std::list<const GLShaderData*> shaders)
     std::string fragment_function_calls = "";
     int vpos, vcallpos, fpos, fcallpos;
 
-    for (it = shaders.begin (); it != shaders.end (); it++)
+    for (it = shaders.begin (); it != shaders.end (); ++it)
     {
 	//find the special shaders to put the rest in
 	if ((*it)->vertexShader.find ("@VERTEX_FUNCTIONS@") != std::string::npos)
@@ -116,7 +116,7 @@ GLProgram* GLProgramCache::operator () (std::list<const GLShaderData*> shaders)
     std::list<const GLShaderData*>::const_iterator name_it;
     std::string name;
 
-    for (name_it = shaders.begin(); name_it != shaders.end(); name_it++)
+    for (name_it = shaders.begin(); name_it != shaders.end(); ++name_it)
     {
 	if (name.length () == 0)
 	    name += (*name_it)->name;

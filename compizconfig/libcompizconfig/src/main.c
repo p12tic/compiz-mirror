@@ -38,6 +38,7 @@
 
 #include "ccs-private.h"
 #include "iniparser.h"
+#include "ccs_settings_upgrade_internal.h"
 
 static void * wrapRealloc (void *o, void *a , size_t b)
 {
@@ -1880,9 +1881,12 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 	}
 	case TypeList:
 	{
-	    to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
-	    
-	    copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+	    if (from->forList.listInfo)
+	    {
+		to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
+
+		copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+	    }
 
 	    break;
 	}
@@ -1936,17 +1940,25 @@ copyValue (CCSSettingValue * from, CCSSettingValue * to)
 static void
 copySetting (CCSSetting *from, CCSSetting *to)
 {
-    memcpy (to, from, sizeof (CCSSetting));
-
-    ccsObjectInit (from, &ccsDefaultObjectAllocator);
-
     /* Allocate a new private ptr for the new setting */
     CCSSettingPrivate *ccsPrivate = calloc (1, sizeof (CCSSettingPrivate));
 
     ccsObjectSetPrivate (to, (CCSPrivate *) ccsPrivate);
 
+    unsigned int i = 0;
+
+    /* copy interfaces */
+    for (; i < from->object.n_interfaces; ++i)
+	ccsObjectAddInterface (to,
+			       from->object.interfaces[i],
+			       from->object.interface_types[i]);
+
     CCSSettingPrivate *fromPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (from);
     CCSSettingPrivate *toPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (to);
+
+    /* copy from fromPrivate to toPrivate for now, and replace all
+     * fields that should be replaced */
+    memcpy (toPrivate, fromPrivate, sizeof (CCSSettingPrivate));
 
     if (fromPrivate->name)
 	toPrivate->name = strdup (fromPrivate->name);
@@ -1979,7 +1991,7 @@ copySetting (CCSSetting *from, CCSSetting *to)
     toPrivate->defaultValue.parent = to;
     toPrivate->privatePtr = NULL;
     
-    (to)->object.refcnt = 1;
+    ccsSettingRef (to);
 }
 
 static void
@@ -4595,9 +4607,11 @@ ccsProcessUpgrade (CCSContext *context,
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
-	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
-	
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
+
 	if (setting)
 	{
 	    if (ccsSettingGetType (setting) != TypeList)
@@ -4658,8 +4672,10 @@ ccsProcessUpgrade (CCSContext *context,
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
 	
-	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
+	setting = ccsFindSetting (plugin, name);
 	
 	if (setting)
 	{
@@ -4715,8 +4731,10 @@ ccsProcessUpgrade (CCSContext *context,
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
 	CCSSetting *setting;
-	
-	setting = ccsFindSetting (ccsSettingGetParent (tempSetting), ccsSettingGetName (tempSetting));
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
 	
 	if (setting)
 	{
@@ -4760,161 +4778,84 @@ ccsProcessUpgrade (CCSContext *context,
 static int
 upgradeNameFilter (const struct dirent *name)
 {
-    int length = strlen (name->d_name);
-    char *uname, *tok;
+    return ccsUpgradeNameFilter (name->d_name);
+}
 
-    if (length < 7)
-	return 0;
+void
+ccsFreeUpgrade (CCSSettingsUpgrade *upgrade)
+{
+    if (upgrade->profile)
+	free (upgrade->profile);
 
-    uname = tok = strdup (name->d_name);
+    if (upgrade->domain)
+	free (upgrade->domain);
 
-    /* Keep removing domains and other bits
-     * until we hit a number that we can parse */
-    while (tok)
-    {
-	long int num = 0;
-	char *nexttok = strchr (tok, '.') + 1;
-	char *nextnexttok = strchr (nexttok, '.') + 1;
-	char *end;
-	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
+    if (upgrade->file)
+	free (upgrade->file);
 
-	/* FIXME: That means that the number can't be a zero */
-	errno = 0;
-	num = strtol (bit, &end, 10);
-
-	if (!(errno != 0 && num == 0) &&
-	    end != bit)
-	{
-	    free (bit);
-	    
-	    /* Check if the next token after the number
-	     * is .upgrade */
-
-	    if (strncmp (nextnexttok, "upgrade", 7))
-		return 0;
-	    break;
-	}
-	else if (errno)
-	    perror ("strtol");
-	
-	tok = nexttok;
-	
-	free (bit);
-    }
-
-    free (uname);
-
-    return 1;
-}    
+    free (upgrade);
+}
 
 /*
  * Process a filename into the properties
  * for a settings upgrade
  * eg
- * 
+ *
  * org.freedesktop.compiz.Default.01.upgrade
- * 
+ *
  * gives us:
  * domain: org.freedesktop.compiz
  * number: 1
  * profile: Default
- * 
+ *
  */
 CCSSettingsUpgrade *
-ccsSettingsUpgradeNew (char *path, char *name)
+ccsSettingsUpgradeNew (char *path, const char *name)
 {
     CCSSettingsUpgrade *upgrade = calloc (1, sizeof (CCSSettingsUpgrade));
-    int length = strlen (name);
-    char *uname, *tok;
+    char *upgradeName = strdup (name);
     unsigned int fnlen = strlen (path) + strlen (name) + 1;
 
     upgrade->file = calloc (fnlen + 1, sizeof (char));
     sprintf (upgrade->file, "%s/%s", path, name);
 
-    uname = tok = strdup (name);
+    upgradeName = strdup (name);
 
-    /* Keep removing domains and other bits
-     * until we hit a number that we can parse */
-    while (tok)
+    if (!ccsUpgradeGetDomainNumAndProfile (upgradeName,
+				 &upgrade->domain,
+				 &upgrade->num,
+				 &upgrade->profile))
     {
-	long int num = 0;
-	char *nexttok = strchr (tok, '.') + 1;
-	char *nextnexttok = strchr (nexttok, '.') + 1;
-	char *end;
-	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
-
-	/* FIXME: That means that the number can't be a zero */
-	errno = 0;
-	num = strtol (bit, &end, 10);
-
-	if (!(errno != 0 && num == 0) &&
-	    end != bit)
-	{
-	    upgrade->domain = strndup (uname, length - (strlen (tok) + 1));
-	    upgrade->num = num;
-
-	    /* profile.n.upgrade */
-	    upgrade->profile = strndup (tok, strlen (tok) - (strlen (nexttok) + 1));
-	    free (bit);
-	    break;
-	}
-	else if (errno)
-	    perror ("strtol");
-	
-	tok = nexttok;
-	
-	free (bit);
+	ccsFreeUpgrade (upgrade);
+	upgrade = NULL;
     }
-    
-    free (uname);
-    
+
+    free (upgradeName);
+
     return upgrade;
 }
 
-Bool
-ccsCheckForSettingsUpgradeDefault (CCSContext *context)
+static FILE *
+ccsGetDoneSettingsUpgradeFile (const char *home)
 {
-    struct dirent 	   **nameList;
-    int 	  	   nFile, i;
-    char	  	   *path = DATADIR "/compizconfig/upgrades/";
     char		   *dupath = NULL;
-    FILE		   *completedUpgrades;
+    FILE		   *completedUpgrades = NULL;
+
+    if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
+	return NULL;
+
+    completedUpgrades = fopen (dupath, "a+");
+    free (dupath);
+
+    return completedUpgrades;
+}
+
+static char *
+ccsReadCompletedUpgradesIntoString (FILE *completedUpgrades)
+{
     char		   *cuBuffer;
     unsigned int	   cuSize;
     size_t		   cuReadSize;
-    char		   *home = getenv ("HOME");
-
-    if (!home)
-	return FALSE;
-
-    if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
-	return FALSE;
-
-    completedUpgrades = fopen (dupath, "a+");
-
-    if (!path)
-    {
-	free (dupath);
-	fclose (completedUpgrades);
-	return FALSE;
-    }
-
-    nFile = scandir (path, &nameList, upgradeNameFilter, alphasort);
-    if (nFile <= 0)
-    {
-	free (dupath);
-	fclose (completedUpgrades);
-	return FALSE;
-    }
-
-    if (!completedUpgrades)
-    {
-	free (nameList);
-	free (dupath);
-	fclose (completedUpgrades);
-	ccsWarning ("Error opening done_upgrades");
-	return FALSE;
-    }
 
     fseek (completedUpgrades, 0, SEEK_END);
     cuSize = ftell (completedUpgrades);
@@ -4928,38 +4869,118 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     cuBuffer[cuSize] = '\0';
 
+    return cuBuffer;
+}
+
+static unsigned int
+ccsGetUpgradeFilesForProcessing (const char *upgradePath,
+				 struct dirent ***passedNameList)
+{
+    struct dirent **nameList = NULL;
+    unsigned int nFile = scandir (upgradePath, &nameList, upgradeNameFilter, alphasort);
+
+    if (nFile <= 0)
+	return 0;
+
+    *passedNameList = nameList;
+
+    return nFile;
+}
+
+static Bool
+ccsShouldSkipUpgrade (const char *upgrade,
+		      const char *skipBuffer)
+{
+    char		   *matched = strstr (skipBuffer, upgrade);
+
+    if (matched != NULL)
+    {
+	ccsDebug ("Skipping upgrade %s", upgrade);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void
+ccsProcessUpgradeOnce (CCSContext	  *context,
+		       CCSSettingsUpgrade *upgrade,
+		       const char	  *upgradeName,
+		       FILE		  *completedUpgrades)
+{
+    ccsDebug ("Processing upgrade %s\n profile: %s\n number: %i\n domain: %s",
+	      upgradeName,
+	      upgrade->profile,
+	      upgrade->num,
+	      upgrade->domain);
+
+    ccsProcessUpgrade (context, upgrade);
+    ccsWriteChangedSettings (context);
+    ccsWriteAutoSortedPluginList (context);
+    ccsDebug ("Completed upgrade %s", upgradeName);
+
+    fprintf (completedUpgrades, "%s\n", upgradeName);
+    ccsFreeUpgrade (upgrade);
+}
+
+Bool
+ccsCheckForSettingsUpgradeDefault (CCSContext *context)
+{
+    struct dirent 	   **nameList = NULL;
+    int 	  	   nFile, i;
+    char	  	   *path = DATADIR "/compizconfig/upgrades/";
+    FILE		   *completedUpgrades;
+    char		   *cuBuffer = NULL;
+    char		   *home = getenv ("HOME");
+
+    if (!home)
+	return FALSE;
+
+    completedUpgrades = ccsGetDoneSettingsUpgradeFile (home);
+
+    if (!completedUpgrades)
+	return FALSE;
+
+    cuBuffer = ccsReadCompletedUpgradesIntoString (completedUpgrades);
+
+    if (!cuBuffer)
+    {
+	fclose (completedUpgrades);
+	ccsWarning ("Error opening done_upgrades");
+	return FALSE;
+    }
+
+    nFile = ccsGetUpgradeFilesForProcessing (path, &nameList);
+
+    if (!nFile || !nameList)
+    {
+	free (cuBuffer);
+	fclose (completedUpgrades);
+	return FALSE;
+    }
+
     for (i = 0; i < nFile; i++)
     {
-	char		   *matched = strstr (cuBuffer, nameList[i]->d_name);
-	CCSSettingsUpgrade *upgrade;
-	
-	if (matched)
-	{
-	    ccsDebug ("Skipping upgrade %s", nameList[i]->d_name);
+	CCSSettingsUpgrade *upgrade = NULL;
+	const char *upgradeName = nameList[i]->d_name;
+
+	if (ccsShouldSkipUpgrade (upgradeName,
+				  cuBuffer))
 	    continue;
-	}
 
-	upgrade = ccsSettingsUpgradeNew (path, nameList[i]->d_name);
-	
-	ccsDebug ("Processing upgrade %s\nprofile: %s\nnumber: %i\ndomain: %s", nameList[i]->d_name, upgrade->profile, upgrade->num, upgrade->domain);
+	upgrade = ccsSettingsUpgradeNew (path, upgradeName);
 
-	ccsProcessUpgrade (context, upgrade);
-	ccsWriteChangedSettings (context);
-	ccsWriteAutoSortedPluginList (context);
-	ccsDebug ("Completed upgrade %s", nameList[i]->d_name);
-	fprintf (completedUpgrades, "%s\n", nameList[i]->d_name);
-	free (upgrade->profile);
-	free (upgrade->domain);
-	free (upgrade->file);
-	free (upgrade);
+	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
+
 	free (nameList[i]);
     }
 
-    free (dupath);
     fclose (completedUpgrades);
     free (cuBuffer);
-    free (nameList);
-    
+
+    if (nameList != NULL)
+	free (nameList);
+
     return TRUE;
 }
 

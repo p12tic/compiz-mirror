@@ -36,6 +36,8 @@
 
 COMPIZ_PLUGIN_20090315 (imgpng, PngPluginVTable)
 
+const unsigned short PNG_SIG_SIZE = 8;
+
 PngScreen::PngScreen (CompScreen *screen) :
     PluginClassHandler<PngScreen, CompScreen> (screen)
 {

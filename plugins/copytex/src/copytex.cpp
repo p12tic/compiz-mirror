@@ -27,6 +27,9 @@
 
 COMPIZ_PLUGIN_20090315 (copytex, CopytexPluginVTable)
 
+const int MAX_SUB_TEX = 2048;
+const unsigned int SHM_SIZE = MAX_SUB_TEX * MAX_SUB_TEX * 4;
+
 static GLTexture::Matrix _identity_matrix = {
     1.0f, 0.0f,
     0.0f, 1.0f,

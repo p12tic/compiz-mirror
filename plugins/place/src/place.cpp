@@ -228,12 +228,15 @@ PlaceScreen::handleEvent (XEvent *event)
 	        w = screen->findWindow (event->xproperty.window);
 	        if (w)
 	        {
-		    mStrutWindows.remove (w);
-		    /* Only do when handling screen size change.
-		       ps->strutWindowCount is 0 at any other time */
-		    if (mStrutWindows.empty ())
-			doHandleScreenSizeChange (screen->width (),
-						  screen->height ()); /* 2nd pass */
+		    if (!mStrutWindows.empty ())
+		    {
+			mStrutWindows.remove (w);
+			/* Only do when handling screen size change.
+			   ps->strutWindowCount is 0 at any other time */
+			if (mStrutWindows.empty ())
+			    doHandleScreenSizeChange (screen->width (),
+						      screen->height ()); /* 2nd pass */
+		    }
 	        }
 	    }
     }
@@ -434,7 +437,7 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
     top    += window->border ().top;
     bottom -= window->border ().bottom + 2 * window->serverGeometry ().border ();
 
-    /* always validate position if the applicaiton changed only its size,
+    /* always validate position if the application changed only its size,
      * as it might become partially offscreen because of that */
     if (!(mask) & (CWX | CWY) && (mask & (CWWidth | CWHeight)))
 	sizeOnly = false;
@@ -940,7 +943,7 @@ PlaceWindow::cascadeFindNext (const Placeable::Vector &placeables,
     /* arbitrary-ish threshold, honors user attempts to
      * manually cascade.
      */
-#define CASCADE_FUZZ 15
+static const unsigned short CASCADE_FUZZ = 15;
 
     xThreshold = MAX (this->extents ().left, CASCADE_FUZZ);
     yThreshold = MAX (this->extents ().top, CASCADE_FUZZ);
@@ -985,7 +988,7 @@ PlaceWindow::cascadeFindNext (const Placeable::Vector &placeables,
 		cascadeX = MAX (0, workArea.x ());
 		cascadeY = MAX (0, workArea.y ());
 
-#define CASCADE_INTERVAL 50 /* space between top-left corners of cascades */
+static const unsigned short CASCADE_INTERVAL = 50; /* space between top-left corners of cascades */
 
 		cascadeStage += 1;
 		cascadeX += CASCADE_INTERVAL * cascadeStage;

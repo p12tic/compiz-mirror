@@ -26,6 +26,8 @@
 
 #include "group.h"
 
+const double PI = 3.14159265359f;
+
 /*
  * GroupExp class
  *
@@ -1559,7 +1561,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
  */
 
 /* the radius to determine if it was a click or a drag */
-#define RADIUS 5
+static const unsigned short RADIUS = 5;
 
 void
 GroupScreen::handleMotionEvent (int xRoot, int yRoot)

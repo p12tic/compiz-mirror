@@ -7,20 +7,13 @@ from distutils.command.sdist import sdist as _sdist
 from distutils.extension import Extension
 import os
 import subprocess
-
+import sys
 import unittest
-import os
-
 pkg_config_environ = os.environ
 pkg_config_environ["PKG_CONFIG_PATH"] = os.getcwd () + "/../libcompizconfig:" + os.environ.get ("PKG_CONFIG_PATH", '')
 
 from distutils.command.build_ext import build_ext
 ext_module_src = os.getcwd () + "/compizconfig.c"
-
-version_file = open ("VERSION", "r")
-version = version_file.read ().strip ()
-if "=" in version:
-    version = version.split ("=")[1]
 
 def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
@@ -38,7 +31,9 @@ def pkgconfig(*packages, **kw):
     
     return kw
 
-VERSION_FILE = os.path.join (os.path.dirname (__file__), "VERSION")
+for arg in sys.argv:
+    if "--version" in arg:
+        VERSION = arg.split ("=")[1]
 
 pkgconfig_libs = subprocess.Popen (["pkg-config", "--libs", "libcompizconfig_internal"], stdout=subprocess.PIPE, env=pkg_config_environ, stderr=open(os.devnull, 'w')).communicate ()[0]
 
@@ -50,7 +45,29 @@ libs = pkgconfig_libs[2:].split (" ")[0]
 
 INSTALLED_FILES = "installed_files"
 
+class build (_build):
+
+    user_options = _build.user_options[:]
+    user_options.extend ([('version=', None, "Version of the package")])
+
+    def initialize_options(self):
+        self.version = None
+        _build.initialize_options (self)
+
+    def finalize_options(self):
+        _build.finalize_options (self)
+
 class install (_install):
+
+    user_options = _install.user_options[:]
+    user_options.extend ([('version=', None, "Version of the package")])
+
+    def initialize_options(self):
+        self.version = None
+        _install.initialize_options (self)
+
+    def finalize_options(self):
+        _install.finalize_options (self)
 
     def run (self):
         _install.run (self)
@@ -132,15 +149,16 @@ class test (Command):
 
 setup (
   name = "compizconfig-python",
-  version = version,
+  version = VERSION,
   description      = "CompizConfig Python",
-  url              = "http://www.compiz.org/",
+  url              = "https://launchpad.net/compiz",
   license          = "GPL",
   maintainer	   = "Guillaume Seguin",
   maintainer_email = "guillaume@segu.in",
   cmdclass         = {"uninstall" : uninstall,
                       "install" : install,
                       "install_data" : install_data,
+                      "build"     : build,
                       "build_ext" : build_ext,
 		      "test"  : test},
   ext_modules=[ 

@@ -5,8 +5,8 @@ includedir=@includedir@
 pyexecdir=@pyexecdir@
 
 Name: compizconfig-python
-Description: Compiz configuration system bindings
 Version: @VERSION@
+Description: Compiz configuration system bindings
 
 Requires: @CCS_REQUIRES@
 Libs: @CCS_LIBS@ -L@libdir@ -lcompizconfig

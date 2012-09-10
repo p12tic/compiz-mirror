@@ -34,8 +34,8 @@
 #define MESH_W 16
 #define MESH_H 16
 
-#define SPLASH_BACKGROUND_DEFAULT ""
-#define SPLASH_LOGO_DEFAULT ""
+extern const std::string SPLASH_BACKGROUND_DEFAULT;
+extern const std::string SPLASH_LOGO_DEFAULT;
 
 class SplashScreen :
     public PluginClassHandler <SplashScreen, CompScreen>,

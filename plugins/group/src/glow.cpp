@@ -27,6 +27,16 @@
 #include "group.h"
 #include "group_glow.h"
 
+const unsigned short GLOWQUAD_TOPLEFT	    = 0;
+const unsigned short GLOWQUAD_TOPRIGHT	    = 1;
+const unsigned short GLOWQUAD_BOTTOMLEFT    = 2;
+const unsigned short GLOWQUAD_BOTTOMRIGHT   = 3;
+const unsigned short GLOWQUAD_TOP	    = 4;
+const unsigned short GLOWQUAD_BOTTOM	    = 5;
+const unsigned short GLOWQUAD_LEFT	    = 6;
+const unsigned short GLOWQUAD_RIGHT	    = 7;
+const unsigned short NUM_GLOWQUADS	    = 8;
+
 const GlowTextureProperties glowTextureProperties[2] = {
     /* GlowTextureRectangular */
     {glowTexRect, 32, 21},

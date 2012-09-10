@@ -4,6 +4,7 @@ set (_headers
     ccs-list.h
     ccs-object.h
     ccs-string.h
+    ccs-setting-types.h
     ccs.h
     )
 

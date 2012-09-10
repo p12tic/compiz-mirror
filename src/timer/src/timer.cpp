@@ -79,7 +79,7 @@ CompTimeoutSource::create (Glib::RefPtr <Glib::MainContext> &ctx)
     return new CompTimeoutSource (ctx);
 }
 
-#define COMPIZ_TIMEOUT_WAIT 15
+static const unsigned short COMPIZ_TIMEOUT_WAIT = 15;
 
 bool
 CompTimeoutSource::prepare (int &timeout)

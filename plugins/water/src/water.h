@@ -37,9 +37,9 @@
 #define WATER_SCREEN(s) \
     WaterScreen *ws = WaterScreen::get (s)
 
-#define TEXTURE_SIZE 256
+extern const unsigned int TEXTURE_SIZE;
 
-#define K 0.1964f
+extern const float K;
 
 #define TEXTURE_NUM 3
 #define PROG_NUM 3

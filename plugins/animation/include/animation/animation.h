@@ -11,9 +11,9 @@ typedef enum
     WindowEventOpen = 0,
     WindowEventClose,
     WindowEventMinimize,
+    WindowEventUnminimize,
     WindowEventShade,
     WindowEventUnshade,
-    WindowEventUnminimize,
     WindowEventFocus,
     WindowEventNum,
     WindowEventNone
@@ -24,8 +24,8 @@ typedef enum
     AnimEventOpen = 0,
     AnimEventClose,
     AnimEventMinimize,
+    AnimEventUnminimize,
     AnimEventShade,
-    AnimEventUnMinimize,
     AnimEventFocus,
     AnimEventNum
 } AnimEvent;
@@ -39,7 +39,8 @@ typedef enum
     AnimDirectionRandom,
     AnimDirectionAuto
 } AnimDirection;
-#define LAST_ANIM_DIRECTION 5
+
+extern const unsigned short LAST_ANIM_DIRECTION;
 
 class PrivateAnimScreen;
 class PrivateAnimWindow;

@@ -25,17 +25,16 @@
 
 #include <core/screen.h>
 #include <core/pluginclasshandler.h>
-#include <core/serialization.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
 #include "obs_options.h"
 
-#define MODIFIER_OPACITY    0
-#define MODIFIER_SATURATION 1
-#define MODIFIER_BRIGHTNESS 2
-#define MODIFIER_COUNT      3
+extern const unsigned short MODIFIER_OPACITY;
+extern const unsigned short MODIFIER_SATURATION;
+extern const unsigned short MODIFIER_BRIGHTNESS;
+#define MODIFIER_COUNT 3
 
 class ObsScreen :
     public ScreenInterface,
@@ -57,8 +56,7 @@ class ObsScreen :
 
 class ObsWindow :
     public GLWindowInterface,
-    public PluginClassHandler<ObsWindow, CompWindow>,
-    public PluginStateWriter <ObsWindow>
+    public PluginClassHandler<ObsWindow, CompWindow>
 {
     public:
 	ObsWindow (CompWindow *);
@@ -73,14 +71,6 @@ class ObsWindow :
 	void updatePaintModifier (unsigned int);
 	void modifierChanged (unsigned int);
 	bool updateTimeout ();
-	
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & customFactor;
-	}
-	
-	void postLoad ();
 
     private:
 	CompWindow      *window;

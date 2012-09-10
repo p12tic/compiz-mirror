@@ -1,9 +1,60 @@
-compiz (1:0.9.8.0-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
 
+  [ Sam Spilsbury ]
   * debian/python-compizconfig.install
     - Install compizconfig-python.pc
 
- -- Sam Spilsbury <sam.spilsbury@canonical.com>  Fri, 07 Sep 2012 17:08:53 +0800
+  [ Timo Jyrinki ]
+  * New upstream release.
+    - Fix multiple window placement bugs (LP: #974242) (LP: #976032)
+    - Don't waste CPU looping through and looking at all the windows if you're
+      rendering an output that has no damage on it. (LP: #1014986)
+    - Updated convert files to fix some typos in the key names. (LP: #1041631)
+    - Fix crash when imgsvg is loaded, due to missing symbol
+      (decor_apply_gravity from libdecoration). (LP: #956986)
+    - Treat unresolved symbols at link time as an error, rather than letting
+      them through and cause strange crashes later. (LP: #1043143)
+    - Refactors a little bit of the upgrade code and gets it under test to
+      prepare to fix (LP: #1042537)
+    - Updated AUTHORS from the full bzr log, and re-sort the list.
+      (LP: #1042095)
+    - Fixes FTBFS for kde4-window-decorator (LP: #1041310)
+    - Fix obvious omissions from the introduction of unminimize_*,
+      which were causing the unminimize animation settings to be ignored
+      (LP: #1040455)
+    - resize plugin: don't crash if resize wasn't initiated externally
+      (LP: #1045191)
+    - Clean up capitalization (LP: #1045652)
+    - Avoid division by zero, if plugins try to deform a window down to size
+      zero. (LP: #1045235)
+    - Make "Unredirect Fullscreen Windows" more reliable. This fixes the
+      problem with unredirection failing to engage at all (LP: #1041066) when
+      gtk-window-decorator creates offscreen windows that are stacked on top.
+      This also fixes the problem with unredirect hiding all windows,
+      because it thinks the desktop window should be stacked on top
+      (LP: #980663).
+    - Ensure unredirected windows don't stay unredirected if they're no longer
+      on top. (LP: #1041047)
+    - Fix launching terminal functionality and make show-hud default key 
+      visible. Update the defaults to org.compiz.integrated to reflect the
+      actual gnome values pre-gnome-3. (LP: #1040081) (LP: #1046199) 
+      (LP: #1046190)
+    - Fix show-hud, bump COMPIZ_GNOME_INTEGRATED_SETTINGS_LIST_SIZE.
+      (LP: #1046212)
+    - Fixed: Windows with an alpha-channel, like gnome-terminal, were not
+      being considered as possibly covering fullscreen windows. But they most
+      certainly can. This ensures such RGBA windows are visible if they're 
+      stacked above a fullscreen window. (LP: #1046661)
+    - Remove ListToStringList (LP: #1046184)
+    - Fix typo causing CMake Error (LP: #1045665)
+    - Transitions gtk-window-decorator over to use GSettings. Add a testing 
+      framework for the options code. (LP: #1042323)
+    - Also need kdeworkspace since kdecorationbridge.h is there
+      (LP: #1046770)
+    - Implements some cleanup that was suggested on the merge for the original
+      port to gsettings (LP: #1042323)
+
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 10 Sep 2012 15:27:32 +0300
 
 compiz (1:0.9.8.0-0ubuntu1) quantal-proposed; urgency=low
 

@@ -30,7 +30,7 @@
 
 #include "grid_options.h"
 
-#define SNAPOFF_THRESHOLD 50
+static const unsigned short SNAPOFF_THRESHOLD = 50;
 
 namespace GridWindowType
 {
