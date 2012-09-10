@@ -25,6 +25,9 @@
 #include <ccs.h>
 #include <ccs-backend.h>
 
+#define GET_PRIVATE(Private, obj) \
+    (Private *) ccsObjectGetPrivate (obj);
+
 extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate

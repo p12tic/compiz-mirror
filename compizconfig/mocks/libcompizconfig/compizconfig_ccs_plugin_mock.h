@@ -12,11 +12,11 @@ class CCSPluginGMockInterface
 
 	virtual ~CCSPluginGMockInterface () {};
 
-	virtual const char * getName () = 0;
-	virtual const char * getShortDesc () = 0;
-	virtual const char * getLongDesc () = 0;
-	virtual const char * getHints () = 0;
-	virtual const char * getCategory () = 0;
+	virtual char * getName () = 0;
+	virtual char * getShortDesc () = 0;
+	virtual char * getLongDesc () = 0;
+	virtual char * getHints () = 0;
+	virtual char * getCategory () = 0;
 	virtual CCSStringList getLoadAfter () = 0;
 	virtual CCSStringList getLoadBefore () = 0;
 	virtual CCSStringList getRequiresPlugins () = 0;
@@ -47,11 +47,11 @@ class CCSPluginGMock :
 	plugin () { return mPlugin; }
 
 	/* Mock implementations */
-	MOCK_METHOD0 (getName, const char * ());
-	MOCK_METHOD0 (getShortDesc, const char * ());
-	MOCK_METHOD0 (getLongDesc, const char * ());
-	MOCK_METHOD0 (getHints, const char * ());
-	MOCK_METHOD0 (getCategory, const char * ());
+	MOCK_METHOD0 (getName, char * ());
+	MOCK_METHOD0 (getShortDesc, char * ());
+	MOCK_METHOD0 (getLongDesc, char * ());
+	MOCK_METHOD0 (getHints, char * ());
+	MOCK_METHOD0 (getCategory, char * ());
 	MOCK_METHOD0 (getLoadAfter, CCSStringList ());
 	MOCK_METHOD0 (getLoadBefore, CCSStringList ());
 	MOCK_METHOD0 (getRequiresPlugins, CCSStringList ());
@@ -74,27 +74,27 @@ class CCSPluginGMock :
     public:
 
 	/* Thunking C to C++ */
-	static const char * ccsPluginGetName (CCSPlugin *plugin)
+	static char * ccsPluginGetName (CCSPlugin *plugin)
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getName ();
 	}
 
-	static const char * ccsPluginGetShortDesc (CCSPlugin *plugin)
+	static char * ccsPluginGetShortDesc (CCSPlugin *plugin)
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getShortDesc ();
 	}
 
-	static const char * ccsPluginGetLongDesc (CCSPlugin *plugin)
+	static char * ccsPluginGetLongDesc (CCSPlugin *plugin)
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getLongDesc ();
 	}
 
-	static const char * ccsPluginGetHints (CCSPlugin *plugin)
+	static char * ccsPluginGetHints (CCSPlugin *plugin)
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getHints ();
 	}
 
-	static const char * ccsPluginGetCategory (CCSPlugin *plugin)
+	static char * ccsPluginGetCategory (CCSPlugin *plugin)
 	{
 	    return ((CCSPluginGMock *) ccsObjectGetPrivate (plugin))->getCategory ();
 	}

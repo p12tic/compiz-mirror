@@ -343,7 +343,7 @@ filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase (const gch
     {
 	CCSSetting *s = (CCSSetting *) iter->data;
 
-	const char *name = ccsSettingGetName (s);
+	char *name = ccsSettingGetName (s);
 	char *underscores_as_dashes = translateUnderscoresToDashesForGSettings (name);
 
 	if (g_ascii_strncasecmp (underscores_as_dashes, keyName, strlen (keyName)) == 0)

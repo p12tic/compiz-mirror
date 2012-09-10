@@ -19,14 +19,14 @@ class CCSSettingGMockInterface
 
 	virtual ~CCSSettingGMockInterface () {};
 
-	virtual const char * getName () = 0;
-	virtual const char * getShortDesc () = 0;
-	virtual const char * getLongDesc () = 0;
+	virtual char * getName () = 0;
+	virtual char * getShortDesc () = 0;
+	virtual char * getLongDesc () = 0;
 	virtual CCSSettingType getType () = 0;
 	virtual CCSSettingInfo * getInfo () = 0;
-	virtual const char * getGroup () = 0;
-	virtual const char * getSubGroup () = 0;
-	virtual const char * getHints () = 0;
+	virtual char * getGroup () = 0;
+	virtual char * getSubGroup () = 0;
+	virtual char * getHints () = 0;
 	virtual CCSSettingValue * getDefaultValue () = 0;
 	virtual CCSSettingValue * getValue () = 0;
 	virtual Bool getIsDefault () = 0;
@@ -78,14 +78,14 @@ class CCSSettingGMock :
 
 	CCSSetting * setting () { return mSetting; }
 
-	MOCK_METHOD0 (getName, const char * ());
-	MOCK_METHOD0 (getShortDesc, const char * ());
-	MOCK_METHOD0 (getLongDesc, const char * ());
+	MOCK_METHOD0 (getName, char * ());
+	MOCK_METHOD0 (getShortDesc, char * ());
+	MOCK_METHOD0 (getLongDesc, char * ());
 	MOCK_METHOD0 (getType, CCSSettingType ());
 	MOCK_METHOD0 (getInfo, CCSSettingInfo * ());
-	MOCK_METHOD0 (getGroup, const char * ());
-	MOCK_METHOD0 (getSubGroup, const char * ());
-	MOCK_METHOD0 (getHints, const char * ());
+	MOCK_METHOD0 (getGroup, char * ());
+	MOCK_METHOD0 (getSubGroup, char * ());
+	MOCK_METHOD0 (getHints, char * ());
 	MOCK_METHOD0 (getDefaultValue, CCSSettingValue * ());
 	MOCK_METHOD0 (getValue, CCSSettingValue * ());
 	MOCK_METHOD0 (getIsDefault, Bool ());
@@ -291,18 +291,18 @@ class CCSSettingGMock :
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->isReadOnly ();
 	}
 
-	static const char * ccsSettingGetName (CCSSetting *setting)
+	static char * ccsSettingGetName (CCSSetting *setting)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getName ();
 	}
 
-	static const char * ccsSettingGetShortDesc (CCSSetting *setting)
+	static char * ccsSettingGetShortDesc (CCSSetting *setting)
 
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getShortDesc ();
 	}
 
-	static const char * ccsSettingGetLongDesc (CCSSetting *setting)
+	static char * ccsSettingGetLongDesc (CCSSetting *setting)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getLongDesc ();
 	}
@@ -317,17 +317,17 @@ class CCSSettingGMock :
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getInfo ();
 	}
 
-	static const char * ccsSettingGetGroup (CCSSetting *setting)
+	static char * ccsSettingGetGroup (CCSSetting *setting)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getGroup ();
 	}
 
-	static const char * ccsSettingGetSubGroup (CCSSetting *setting)
+	static char * ccsSettingGetSubGroup (CCSSetting *setting)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getSubGroup ();
 	}
 
-	static const char * ccsSettingGetHints (CCSSetting *setting)
+	static char * ccsSettingGetHints (CCSSetting *setting)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getHints ();
 	}
