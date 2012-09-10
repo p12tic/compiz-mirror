@@ -39,8 +39,6 @@
 #include "ccs-private.h"
 #include "iniparser.h"
 #include "ccs_settings_upgrade_internal.h"
-#include "ccs_text_file_interface.h"
-#include "ccs_text_file.h"
 
 static void * wrapRealloc (void *o, void *a , size_t b)
 {
@@ -624,7 +622,7 @@ ccsFindSetting (CCSPlugin *plugin, const char *name)
 }
 
 Bool
-ccsPluginIsActiveDefault (CCSContext * context, const char *name)
+ccsPluginIsActiveDefault (CCSContext * context, char *name)
 {
     CCSPlugin *plugin;
 
@@ -638,7 +636,7 @@ ccsPluginIsActiveDefault (CCSContext * context, const char *name)
 }
 
 Bool
-ccsPluginIsActive (CCSContext *context, const char *name)
+ccsPluginIsActive (CCSContext *context, char *name)
 {
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextPluginIsActive) (context, name);
 }
@@ -906,9 +904,7 @@ ccsFreeSettingValue (CCSSettingValue * v)
 
     ccsFreeSettingValueCommon (v, type);
 
-    /* List children cannot be a default value */
-    if (v->isListChild ||
-	v != ccsSettingGetDefaultValue (v->parent))
+    if (v != ccsSettingGetDefaultValue (v->parent))
 	free (v);
 }
 
@@ -2041,25 +2037,20 @@ ccsSettingResetToDefaultDefault (CCSSetting * setting, Bool processChanged)
 }
 
 Bool
-ccsCheckValueEq (const CCSSettingValue *rhs,
-		 CCSSettingType	       rhsType,
-		 CCSSettingInfo	       *rhsInfo,
-		 const CCSSettingValue *lhs,
-		 CCSSettingType	       lhsType,
-		 CCSSettingInfo	       *lhsInfo)
+ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
 {
     CCSSettingType type;
 
-    if (rhsType != lhsType)
+    if (ccsSettingGetType (rhs->parent) != ccsSettingGetType (lhs->parent))
     {
 	ccsWarning ("Attempted to check equality between mismatched types!");
 	return FALSE;
     }
 
     if (rhs->isListChild)
-	type = rhsInfo->forList.listType;
+	type = ccsSettingGetInfo (rhs->parent)->forList.listType;
     else
-	type = rhsType;
+	type = ccsSettingGetType (rhs->parent);
     
     switch (type)
     {
@@ -2089,14 +2080,14 @@ ccsCheckValueEq (const CCSSettingValue *rhs,
 	case TypeList:
 	{
 	    return ccsCompareLists (lhs->value.asList, rhs->value.asList,
-				    lhsInfo->forList);
+				    ccsSettingGetInfo (lhs->parent)->forList);
 	
 	}
 	default:
 	    break;
     }
     
-    ccsWarning ("Failed to check equality for value with type %i", lhsType);
+    ccsWarning ("Failed to process type %i", ccsSettingGetType (lhs->parent));
     return FALSE;
 }
 
@@ -2464,7 +2455,6 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
 CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
-    CCSSettingInfo      *info = ccsSettingGetInfo (setting);
     CCSSettingValueList l2 = NULL;
 
     while (l1)
@@ -2477,7 +2467,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 	value->parent = setting;
 	value->isListChild = TRUE;
 
-	switch (info->forList.listType)
+	switch (ccsSettingGetInfo (setting)->forList.listType)
 	{
 	case TypeInt:
 	    value->value.asInt = l1->data->value.asInt;
@@ -4582,17 +4572,21 @@ ccsProcessSettingMinus (IniDictionary      *dict,
     return FALSE;
 }
 
-void
-ccsCollectSettingsToUpgrade (CCSContext         *context,
-			     IniDictionary      *dict,
-			     CCSSettingsUpgrade *upgrade)
+Bool
+ccsProcessUpgrade (CCSContext *context,
+		   CCSSettingsUpgrade *upgrade)
 {
-    CCSPluginList      pl = ccsContextGetPlugins (context);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
+
+    IniDictionary      *dict = ccsIniOpen (upgrade->file);
+    CCSPluginList      pl = cPrivate->plugins;
+    CCSSettingList     sl;
+
+    ccsSetProfile (context, upgrade->profile);
 
     while (pl)
     {
-	CCSPlugin	   *plugin = (CCSPlugin *) pl->data;
-	CCSSettingList     sl = ccsGetPluginSettings (plugin);
+	sl = ccsGetPluginSettings ((CCSPlugin *) pl->data);
 
 	while (sl)
 	{
@@ -4606,21 +4600,170 @@ ccsCollectSettingsToUpgrade (CCSContext         *context,
 
 	pl = pl->next;
     }
-}
+    
+    sl = upgrade->clearValueSettings;
+	
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
 
-Bool
-ccsProcessUpgrade (CCSContext *context,
-		   CCSSettingsUpgrade *upgrade)
-{
-    IniDictionary      *dict = ccsIniOpen (upgrade->file);
+	setting = ccsFindSetting (plugin, name);
 
-    ccsSetProfile (context, upgrade->profile);
+	if (setting)
+	{
+	    if (ccsSettingGetType (setting) != TypeList)
+	    {
+		if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
+		{
+		    ccsDebug ("Resetting %s to default", ccsSettingGetName ((CCSSetting *) sl->data));
+		    ccsResetToDefault (setting, TRUE);
+		}
+		else
+		{
+		    ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
+		}
+	    }
+	    else
+	    {
+		unsigned int count = 0;
+		/* Try and remove any specified items from the list */
+		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
+		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
 
-    ccsCollectSettingsToUpgrade (context, dict, upgrade);
-    ccsUpgradeClearValues (upgrade->clearValueSettings);
-    ccsUpgradeAddValues (upgrade->addValueSettings);
-    ccsUpgradeReplaceValues (upgrade->replaceFromValueSettings,
-			     upgrade->replaceToValueSettings);
+		while (l)
+		{
+		    CCSSettingValueList olv = nl;
+
+		    while (olv)
+		    {
+			CCSSettingValue *lv = (CCSSettingValue *) l->data;
+			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
+
+			if (ccsCheckValueEq (lv, olvv))
+			    break;
+
+			olv = olv->next;
+		    }
+		    
+		    if (olv)
+		    {
+			count++;
+			nl = ccsSettingValueListRemove (nl, olv->data, TRUE);
+		    }
+
+		    l = l->next;
+		}
+
+		ccsDebug ("Removed %i items from %s", count, ccsSettingGetName (setting));
+		ccsSetList (setting, nl, TRUE);
+
+	    }
+	}
+
+	sl = sl->next;
+    }
+
+    sl = upgrade->addValueSettings;
+    
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+	
+	setting = ccsFindSetting (plugin, name);
+	
+	if (setting)
+	{
+	    ccsDebug ("Overriding value %s", ccsSettingGetName ((CCSSetting *) sl->data));
+	    if (ccsSettingGetType (setting) != TypeList)
+		ccsSetValue (setting, ccsSettingGetValue (tempSetting), TRUE);
+	    else
+	    {
+		unsigned int count = 0;
+		/* Try and apppend any new items to the list */
+		CCSSettingValueList l = ccsSettingGetValue (tempSetting)->value.asList;
+		CCSSettingValueList nl = ccsCopyList (ccsSettingGetValue (setting)->value.asList, setting);
+		
+		while (l)
+		{
+		    CCSSettingValueList olv = nl;
+
+		    while (olv)
+		    {
+			CCSSettingValue *lv = (CCSSettingValue *) l->data;
+			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
+
+			if (ccsCheckValueEq (lv, olvv))
+			    break;
+
+			olv = olv->next;
+		    }
+		    
+		    if (!olv)
+		    {
+			count++;
+			nl = ccsSettingValueListAppend (nl, l->data);
+		    }
+
+		    l = l->next;
+		}
+
+		ccsDebug ("Appending %i items to %s", count, ccsSettingGetName (setting));
+		ccsSetList (setting, nl, TRUE);
+	    }
+	}
+	else
+	{
+	    ccsDebug ("Value %s not found!", ccsSettingGetName ((CCSSetting *) sl->data));
+	}
+
+	sl = sl->next;
+    }
+
+    sl = upgrade->replaceFromValueSettings;
+    
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	CCSPlugin  *plugin = ccsSettingGetParent (tempSetting);
+	const char *name = ccsSettingGetName (tempSetting);
+
+	setting = ccsFindSetting (plugin, name);
+	
+	if (setting)
+	{
+	    if (ccsSettingGetValue (setting) == ccsSettingGetValue (tempSetting))
+	    {
+		CCSSettingList rl = upgrade->replaceToValueSettings;
+		
+		while (rl)
+		{
+		    CCSSetting *rsetting = (CCSSetting *) rl->data;
+		    
+		    if (strcmp (ccsSettingGetName (rsetting), ccsSettingGetName (setting)) == 0)
+		    {
+			ccsDebug ("Matched and replaced %s", ccsSettingGetName (setting));
+			ccsSetValue (setting, ccsSettingGetValue (rsetting), TRUE);
+			break;
+		    }
+		    
+		    rl = rl->next;
+		}
+	    }
+	    else
+	    {
+		ccsDebug ("Skipping processing of %s", ccsSettingGetName ((CCSSetting *) sl->data));
+	    }
+	}
+
+	sl = sl->next;
+    }
     
     upgrade->clearValueSettings = ccsSettingListFree (upgrade->clearValueSettings, TRUE);
     upgrade->addValueSettings = ccsSettingListFree (upgrade->addValueSettings, TRUE);
@@ -4667,7 +4810,7 @@ ccsFreeUpgrade (CCSSettingsUpgrade *upgrade)
  *
  */
 CCSSettingsUpgrade *
-ccsSettingsUpgradeNew (const char *path, const char *name)
+ccsSettingsUpgradeNew (char *path, const char *name)
 {
     CCSSettingsUpgrade *upgrade = calloc (1, sizeof (CCSSettingsUpgrade));
     char *upgradeName = strdup (name);
@@ -4679,9 +4822,9 @@ ccsSettingsUpgradeNew (const char *path, const char *name)
     upgradeName = strdup (name);
 
     if (!ccsUpgradeGetDomainNumAndProfile (upgradeName,
-					   &upgrade->domain,
-					   &upgrade->num,
-					   &upgrade->profile))
+				 &upgrade->domain,
+				 &upgrade->num,
+				 &upgrade->profile))
     {
 	ccsFreeUpgrade (upgrade);
 	upgrade = NULL;
@@ -4692,35 +4835,41 @@ ccsSettingsUpgradeNew (const char *path, const char *name)
     return upgrade;
 }
 
-static CCSTextFile *
-ccsUnixOpenDoneSettingsUpgradeFile (const char *path)
-{
-    return ccsUnixTextFileNew (path,
-			       ReadWriteCreate,
-			       &ccsDefaultObjectAllocator);
-}
-
-
-
-static CCSTextFile *
+static FILE *
 ccsGetDoneSettingsUpgradeFile (const char *home)
 {
     char		   *dupath = NULL;
-    CCSTextFile		   *completedUpgrades = NULL;
+    FILE		   *completedUpgrades = NULL;
 
     if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
 	return NULL;
 
-    completedUpgrades = ccsUnixOpenDoneSettingsUpgradeFile (dupath);
+    completedUpgrades = fopen (dupath, "a+");
     free (dupath);
 
     return completedUpgrades;
 }
 
 static char *
-ccsReadCompletedUpgradesIntoString (CCSTextFile *completedUpgrades)
+ccsReadCompletedUpgradesIntoString (FILE *completedUpgrades)
 {
-    return ccsTextFileReadFromStart (completedUpgrades);
+    char		   *cuBuffer;
+    unsigned int	   cuSize;
+    size_t		   cuReadSize;
+
+    fseek (completedUpgrades, 0, SEEK_END);
+    cuSize = ftell (completedUpgrades);
+    rewind (completedUpgrades);
+
+    cuBuffer = calloc (cuSize + 1, sizeof (char));
+    cuReadSize = fread (cuBuffer, 1, cuSize, completedUpgrades);
+
+    if (cuReadSize != cuSize)
+	ccsWarning ("Couldn't read completed upgrades file!");
+
+    cuBuffer[cuSize] = '\0';
+
+    return cuBuffer;
 }
 
 static unsigned int
@@ -4757,7 +4906,7 @@ static void
 ccsProcessUpgradeOnce (CCSContext	  *context,
 		       CCSSettingsUpgrade *upgrade,
 		       const char	  *upgradeName,
-		       CCSTextFile	  *completedUpgrades)
+		       FILE		  *completedUpgrades)
 {
     ccsDebug ("Processing upgrade %s\n profile: %s\n number: %i\n domain: %s",
 	      upgradeName,
@@ -4770,46 +4919,17 @@ ccsProcessUpgradeOnce (CCSContext	  *context,
     ccsWriteAutoSortedPluginList (context);
     ccsDebug ("Completed upgrade %s", upgradeName);
 
-    ccsTextFileAppendString (completedUpgrades, upgradeName);
+    fprintf (completedUpgrades, "%s\n", upgradeName);
     ccsFreeUpgrade (upgrade);
-}
-
-static const char * CCS_UPGRADE_PATH = DATADIR "/compizconfig/upgrades";
-
-static void
-ccsApplyUnappliedUpgrades (CCSContext    *context,
-			   struct dirent **nameList,
-			   unsigned int  nFile,
-			   const char	 *completedUpradesContents,
-			   CCSTextFile   *completedUpgrades)
-{
-    int			   i = 0;
-    const char	  	   *path = CCS_UPGRADE_PATH;
-
-    for (i = 0; i < nFile; i++)
-    {
-        CCSSettingsUpgrade *upgrade = NULL;
-	const char *upgradeName = nameList[i]->d_name;
-
-	if (ccsShouldSkipUpgrade (upgradeName,
-				  completedUpradesContents))
-	    continue;
-
-	upgrade = ccsSettingsUpgradeNew (path, upgradeName);
-
-	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
-
-	free (nameList[i]);
-    }
 }
 
 Bool
 ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 {
     struct dirent 	   **nameList = NULL;
-    int 	  	   nFile;
-    const char	  	   *path = CCS_UPGRADE_PATH;
-    CCSTextFile		   *completedUpgrades;
+    int 	  	   nFile, i;
+    char	  	   *path = DATADIR "/compizconfig/upgrades/";
+    FILE		   *completedUpgrades;
     char		   *cuBuffer = NULL;
     char		   *home = getenv ("HOME");
 
@@ -4825,7 +4945,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
 
     if (!cuBuffer)
     {
-	ccsTextFileUnref (completedUpgrades);
+	fclose (completedUpgrades);
 	ccsWarning ("Error opening done_upgrades");
 	return FALSE;
     }
@@ -4835,13 +4955,27 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     if (!nFile || !nameList)
     {
 	free (cuBuffer);
-	ccsTextFileUnref (completedUpgrades);
+	fclose (completedUpgrades);
 	return FALSE;
     }
 
-    ccsApplyUnappliedUpgrades (context, nameList, nFile, cuBuffer, completedUpgrades);
+    for (i = 0; i < nFile; i++)
+    {
+	CCSSettingsUpgrade *upgrade = NULL;
+	const char *upgradeName = nameList[i]->d_name;
 
-    ccsTextFileUnref (completedUpgrades);
+	if (ccsShouldSkipUpgrade (upgradeName,
+				  cuBuffer))
+	    continue;
+
+	upgrade = ccsSettingsUpgradeNew (path, upgradeName);
+
+	ccsProcessUpgradeOnce (context, upgrade, upgradeName, completedUpgrades);
+
+	free (nameList[i]);
+    }
+
+    fclose (completedUpgrades);
     free (cuBuffer);
 
     if (nameList != NULL)
@@ -5031,7 +5165,7 @@ ccsImportFromFile (CCSContext *context, const char *fileName, Bool overwriteNonD
     return (*(GET_INTERFACE (CCSContextInterface, context))->contextImportFromFile) (context, fileName, overwriteNonDefault);
 }
 
-const char *
+char *
 ccsPluginGetNameDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
@@ -5039,28 +5173,28 @@ ccsPluginGetNameDefault (CCSPlugin *plugin)
     return pPrivate->name;
 }
 
-const char * ccsPluginGetShortDescDefault (CCSPlugin *plugin)
+char * ccsPluginGetShortDescDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->shortDesc;
 }
 
-const char * ccsPluginGetLongDescDefault (CCSPlugin *plugin)
+char * ccsPluginGetLongDescDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->longDesc;
 }
 
-const char * ccsPluginGetHintsDefault (CCSPlugin *plugin)
+char * ccsPluginGetHintsDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
     return pPrivate->hints;
 }
 
-const char * ccsPluginGetCategoryDefault (CCSPlugin *plugin)
+char * ccsPluginGetCategoryDefault (CCSPlugin *plugin)
 {
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
 
@@ -5136,27 +5270,27 @@ CCSContext * ccsPluginGetContextDefault (CCSPlugin *plugin)
 }
 
 /* CCSPlugin accessor functions */
-const char * ccsPluginGetName (CCSPlugin *plugin)
+char * ccsPluginGetName (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetName) (plugin);
 }
 
-const char * ccsPluginGetShortDesc (CCSPlugin *plugin)
+char * ccsPluginGetShortDesc (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetShortDesc) (plugin);
 }
 
-const char * ccsPluginGetLongDesc (CCSPlugin *plugin)
+char * ccsPluginGetLongDesc (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetLongDesc) (plugin);
 }
 
-const char * ccsPluginGetHints (CCSPlugin *plugin)
+char * ccsPluginGetHints (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetHints) (plugin);
 }
 
-const char * ccsPluginGetCategory (CCSPlugin *plugin)
+char * ccsPluginGetCategory (CCSPlugin *plugin)
 {
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetCategory) (plugin);
 }
@@ -5236,18 +5370,18 @@ CCSGroupList ccsGetPluginGroups (CCSPlugin *plugin)
     return (*(GET_INTERFACE (CCSPluginInterface, plugin))->pluginGetPluginGroups) (plugin);
 }
 
-const char * ccsSettingGetName (CCSSetting *setting)
+char * ccsSettingGetName (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetName) (setting);
 }
 
-const char * ccsSettingGetShortDesc (CCSSetting *setting)
+char * ccsSettingGetShortDesc (CCSSetting *setting)
 
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetShortDesc) (setting);
 }
 
-const char * ccsSettingGetLongDesc (CCSSetting *setting)
+char * ccsSettingGetLongDesc (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetLongDesc) (setting);
 }
@@ -5262,17 +5396,17 @@ CCSSettingInfo * ccsSettingGetInfo (CCSSetting *setting)
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetInfo) (setting);
 }
 
-const char * ccsSettingGetGroup (CCSSetting *setting)
+char * ccsSettingGetGroup (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetGroup) (setting);
 }
 
-const char * ccsSettingGetSubGroup (CCSSetting *setting)
+char * ccsSettingGetSubGroup (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetSubGroup) (setting);
 }
 
-const char * ccsSettingGetHints (CCSSetting *setting)
+char * ccsSettingGetHints (CCSSetting *setting)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetHints) (setting);
 }
@@ -5393,7 +5527,7 @@ Bool ccsSettingGetIsReadableByBackendDefault (CCSSetting *setting)
 }
 
 /* Interface for CCSSetting */
-const char *
+char *
 ccsSettingGetNameDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
@@ -5401,14 +5535,14 @@ ccsSettingGetNameDefault (CCSSetting *setting)
     return sPrivate->name;
 }
 
-const char * ccsSettingGetShortDescDefault (CCSSetting *setting)
+char * ccsSettingGetShortDescDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->shortDesc;
 }
 
-const char * ccsSettingGetLongDescDefault (CCSSetting *setting)
+char * ccsSettingGetLongDescDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
@@ -5429,21 +5563,21 @@ CCSSettingInfo * ccsSettingGetInfoDefault (CCSSetting *setting)
     return &sPrivate->info;
 }
 
-const char * ccsSettingGetGroupDefault (CCSSetting *setting)
+char * ccsSettingGetGroupDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->group;
 }
 
-const char * ccsSettingGetSubGroupDefault (CCSSetting *setting)
+char * ccsSettingGetSubGroupDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
     return sPrivate->subGroup;
 }
 
-const char * ccsSettingGetHintsDefault (CCSSetting *setting)
+char * ccsSettingGetHintsDefault (CCSSetting *setting)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 

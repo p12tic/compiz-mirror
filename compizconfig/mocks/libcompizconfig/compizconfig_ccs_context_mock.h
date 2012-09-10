@@ -23,7 +23,7 @@ class CCSContextGMockInterface
 	virtual void setPrivatePtr (void *) = 0;
 	virtual Bool loadPlugin (char *name) = 0;
 	virtual CCSPlugin * findPlugin (const char *name) = 0;
-	virtual Bool pluginIsActive (const char *name) = 0;
+	virtual Bool pluginIsActive (char *name) = 0;
 	virtual CCSPluginList getActivePluginList () = 0;
 	virtual CCSStringList getSortedPluginStringList () = 0;
 	virtual const char * getBackend () = 0;
@@ -71,7 +71,7 @@ class CCSContextGMock :
 	MOCK_METHOD1 (setPrivatePtr, void (void *));
 	MOCK_METHOD1 (loadPlugin, Bool (char *));
 	MOCK_METHOD1 (findPlugin, CCSPlugin * (const char *));
-	MOCK_METHOD1 (pluginIsActive, Bool (const char *));
+	MOCK_METHOD1 (pluginIsActive, Bool (char *));
 	MOCK_METHOD0 (getActivePluginList, CCSPluginList ());
 	MOCK_METHOD0 (getSortedPluginStringList, CCSStringList ());
 	MOCK_METHOD0 (getBackend, const char * ());
@@ -163,7 +163,7 @@ class CCSContextGMock :
 	}
 
 	static Bool
-	ccsPluginIsActive (CCSContext *context, const char *name)
+	ccsPluginIsActive (CCSContext *context, char *name)
 	{
 	    return ((CCSContextGMock *) ccsObjectGetPrivate (context))->pluginIsActive (name);
 	}

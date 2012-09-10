@@ -27,8 +27,6 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSSettingList * CCSSettingList;
-
 Bool
 ccsUpgradeGetDomainNumAndProfile (const char   *name,
 				  char         **domain,
@@ -37,16 +35,6 @@ ccsUpgradeGetDomainNumAndProfile (const char   *name,
 
 int
 ccsUpgradeNameFilter (const char *name);
-
-void
-ccsUpgradeClearValues (CCSSettingList clearSettings);
-
-void
-ccsUpgradeAddValues (CCSSettingList addSettings);
-
-void
-ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
-			 CCSSettingList replaceToValueSettings);
 
 COMPIZCONFIG_END_DECLS
 

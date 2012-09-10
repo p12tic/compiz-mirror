@@ -19,8 +19,6 @@ using ::testing::AtLeast;
 using ::testing::Pointee;
 using ::testing::ReturnNull;
 
-namespace cci = compiz::config::impl;
-
 CCSIntegration *
 ccsMockIntegrationBackendNew (CCSObjectAllocationInterface *ai);
 
@@ -304,7 +302,7 @@ class CCSGSettingsStorageEnv :
 	{
 	    GVariant *variant = NULL;
 
-	    const cci::CCSSettingValueListWrapper::Ptr &lw (boost::get <cci::CCSSettingValueListWrapper::Ptr> (value));
+	    const CCSListWrapper::Ptr &lw (boost::get <CCSListWrapper::Ptr> (value));
 
 	    if (writeListValue (*lw, lw->type (), &variant))
 		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);

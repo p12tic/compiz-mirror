@@ -1,25 +1,3 @@
-/*
- * Compiz configuration system library
- *
- * Copyright (C) 2012 Canonical Ltd.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
-
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
-
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * Authored By:
- * Sam Spilsbury <sam.spilsbury@canonical.com>
- */
 #ifndef _COMPIZCONFIG_CCS_BACKEND_CONCEPT_TEST
 #define _COMPIZCONFIG_CCS_BACKEND_CONCEPT_TEST
 
@@ -46,10 +24,6 @@
 
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
-#include "compizconfig_ccs_setting_value_operators.h"
-#include "compizconfig_ccs_item_in_list_matcher.h"
-#include "compizconfig_ccs_list_equality.h"
-#include "compizconfig_ccs_list_wrapper.h"
 
 using ::testing::Eq;
 using ::testing::IsNull;
@@ -67,6 +41,221 @@ using ::testing::NiceMock;
 MATCHER(IsTrue, "Is True") { if (arg) return true; else return false; }
 MATCHER(IsFalse, "Is False") { if (!arg) return true; else return false; }
 
+class ListEqualityMatcher :
+    public MatcherInterface <CCSSettingValueList>
+{
+    public:
+
+	ListEqualityMatcher (CCSSettingListInfo info,
+			     CCSSettingValueList cmp) :
+	    mInfo (info),
+	    mCmp (cmp)
+	{
+	}
+
+	virtual bool MatchAndExplain (CCSSettingValueList x, MatchResultListener *listener) const
+	{
+	    return ccsCompareLists (x, mCmp, mInfo);
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "lists are equal";
+	}
+
+	virtual void DescribeNegationTo (std::ostream *os) const
+	{
+	    *os << "lists are not equal";
+	}
+
+    private:
+
+	CCSSettingListInfo mInfo;
+	CCSSettingValueList mCmp;
+};
+
+Matcher<CCSSettingValueList> ListEqual (CCSSettingListInfo info,
+					CCSSettingValueList cmp)
+{
+    return MakeMatcher (new ListEqualityMatcher (info, cmp));
+}
+
+bool
+operator== (const CCSSettingColorValue &lhs,
+	    const CCSSettingColorValue &rhs)
+{
+    if (ccsIsEqualColor (lhs, rhs))
+	return true;
+    return false;
+}
+
+::std::ostream &
+operator<< (::std::ostream &os, const CCSSettingColorValue &v)
+{
+    return os << "Red: " << std::hex << v.color.red << "Blue: " << std::hex << v.color.blue << "Green: " << v.color.green << "Alpha: " << v.color.alpha
+       << std::dec << std::endl;
+}
+
+bool
+operator== (const CCSSettingKeyValue &lhs,
+	    const CCSSettingKeyValue &rhs)
+{
+    if (ccsIsEqualKey (lhs, rhs))
+	return true;
+    return false;
+}
+
+::std::ostream &
+operator<< (::std::ostream &os, const CCSSettingKeyValue &v)
+{
+    return os << "Keysym: " << v.keysym << " KeyModMask " << std::hex << v.keyModMask << std::dec << std::endl;
+}
+
+bool
+operator== (const CCSSettingButtonValue &lhs,
+	    const CCSSettingButtonValue &rhs)
+{
+    if (ccsIsEqualButton (lhs, rhs))
+	return true;
+    return false;
+}
+
+::std::ostream &
+operator<< (::std::ostream &os, const CCSSettingButtonValue &v)
+{
+    return os << "Button " << v.button << "Button Key Mask: " << std::hex << v.buttonModMask << "Edge Mask: " << v.edgeMask << std::dec << std::endl;
+}
+
+bool
+operator== (const CCSString &lhs,
+	    const std::string &rhs)
+{
+    if (rhs == lhs.value)
+	return true;
+
+    return false;
+}
+
+bool
+operator== (const std::string &lhs,
+	    const CCSString &rhs)
+{
+    if (lhs == rhs.value)
+	return true;
+
+    return false;
+}
+
+::std::ostream &
+operator<< (::std::ostream &os, CCSString &string)
+{
+    os << string.value << std::endl;
+    return os;
+}
+
+class CCSListWrapper :
+    boost::noncopyable
+{
+    public:
+
+	typedef boost::shared_ptr <CCSListWrapper> Ptr;
+
+	CCSListWrapper (CCSSettingValueList list,
+			bool freeItems,
+			CCSSettingType type,
+			const boost::shared_ptr <CCSSettingInfo> &listInfo,
+			const boost::shared_ptr <CCSSetting> &settingReference) :
+	    mList (list),
+	    mFreeItems (freeItems),
+	    mType (type),
+	    mListInfo (listInfo),
+	    mSettingReference (settingReference)
+	{
+	}
+
+	CCSSettingType type () { return mType; }
+
+	operator CCSSettingValueList ()
+	{
+	    return mList;
+	}
+
+	operator CCSSettingValueList () const
+	{
+	    return mList;
+	}
+
+	~CCSListWrapper ()
+	{
+	    ccsSettingValueListFree (mList, mFreeItems ? TRUE : FALSE);
+	}
+
+	const boost::shared_ptr <CCSSetting> &
+	setting ()
+	{
+	    return mSettingReference;
+	}
+
+    private:
+
+	CCSSettingValueList mList;
+	bool		    mFreeItems;
+	CCSSettingType      mType;
+	boost::shared_ptr <CCSSettingInfo> mListInfo;
+	boost::shared_ptr <CCSSetting> mSettingReference;
+};
+
+template <typename I, typename L>
+class ItemInCCSListMatcher :
+    public ::testing::MatcherInterface <L>
+{
+    public:
+
+	ItemInCCSListMatcher (const Matcher<I> &matcher) :
+	    mMatcher (matcher)
+	{
+	}
+
+	virtual bool MatchAndExplain (L list, MatchResultListener *listener) const
+	{
+	    L iter = list;
+
+	    while (iter)
+	    {
+		if (mMatcher.MatchAndExplain ((*(reinterpret_cast <I *> (iter->data))), listener))
+		    return true;
+
+		iter = iter->next;
+	    }
+
+	    return false;
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "found in list (";
+	    mMatcher.DescribeTo (os);
+	    *os << ")";
+	}
+
+	virtual void DescribeNegationTo (std::ostream *os) const
+	{
+	    *os << "not found in list (";
+	    mMatcher.DescribeNegationTo (os);
+	    *os << ")";
+	}
+
+    private:
+
+	const Matcher<I> & mMatcher;
+};
+
+template <typename I, typename L>
+Matcher<L> IsItemInCCSList (const Matcher<I> &matcher)
+{
+    return MakeMatcher (new ItemInCCSListMatcher <I, L> (matcher));
+}
+
 namespace
 {
     bool ccsStringCmp (const CCSString &a, const CCSString &b)
@@ -74,9 +263,6 @@ namespace
 	return std::string (a.value) == b.value;
     }
 }
-
-namespace cci = compiz::config::impl;
-namespace cc  = compiz::config;
 
 typedef boost::variant <bool,
 			int,
@@ -86,7 +272,7 @@ typedef boost::variant <bool,
 			CCSSettingKeyValue,
 			CCSSettingButtonValue,
 			unsigned int,
-			cci::CCSSettingValueListWrapper::Ptr> VariantTypes;
+			CCSListWrapper::Ptr> VariantTypes;
 
 class CCSSettingsConceptTestEnvironmentInterface
 {
@@ -431,13 +617,13 @@ void SetListWriteExpectation (const std::string &plugin,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
-    CCSSettingValueList list = *(boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value));
+    CCSSettingValueList list = *(boost::get <boost::shared_ptr <CCSListWrapper> > (value));
 
     EXPECT_CALL (*gmock, getInfo ());
 
     CCSSettingInfo      *info = ccsSettingGetInfo (setting.get ());
 
-    info->forList.listType = (boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))->type ();
+    info->forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
 
     EXPECT_CALL (*gmock, getInfo ()).Times (AtLeast (1));
     EXPECT_CALL (*gmock, getList (_)).WillRepeatedly (DoAll (
@@ -446,11 +632,11 @@ void SetListWriteExpectation (const std::string &plugin,
 							 Return (TRUE)));
     write ();
 
-    EXPECT_THAT (cci::CCSSettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
-						  cci::Deep,
-						  info->forList.listType,
-						  boost::shared_ptr <CCSSettingInfo> (),
-						  setting),
+    EXPECT_THAT (CCSListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
+				 true,
+				 info->forList.listType,
+				 boost::shared_ptr <CCSSettingInfo> (),
+				 setting),
 		 ListEqual (info->forList, list));
 }
 
@@ -518,11 +704,11 @@ CCSSettingInfo globalListInfo;
 
 void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))->type ();
+    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <CCSListWrapper> > (value))->type ();
     globalListInfo.forList.listInfo = NULL;
 
     ON_CALL (*gmock, getInfo ()).WillByDefault (Return (&globalListInfo));
-    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))), _));
+    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <CCSListWrapper> > (value))), _));
 }
 
 }
@@ -774,12 +960,12 @@ namespace list_populators = impl::populators::list;
 
 typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
 
-cci::CCSSettingValueListWrapper::Ptr
+CCSListWrapper::Ptr
 CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 				       CCSSettingType        type,
-				       cci::ListStorageType  storageType)
+				       bool                  freeItems)
 {
-    boost::function <void (CCSSetting *)> f (boost::bind (ccsSettingUnref, _1));
+    boost::function <void (CCSSetting *)> f (boost::bind (ccsFreeMockSetting, _1));
     boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), f);
     NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
 
@@ -791,7 +977,7 @@ CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 
     ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (listInfo.get ()));
     ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
-    return boost::make_shared <cci::CCSSettingValueListWrapper> (c (mockSetting.get ()), storageType, type, listInfo, mockSetting);
+    return boost::make_shared <CCSListWrapper> (c (mockSetting.get ()), freeItems, type, listInfo, mockSetting);
 }
 
 template <typename I>
@@ -887,7 +1073,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestEdge"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::integer, _1),
-												TypeInt, cci::Deep)),
+												TypeInt, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "int_list_setting",
@@ -896,7 +1082,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListInt"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::doubleprecision, _1),
-												TypeFloat, cci::Deep)),
+												TypeFloat, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "float_list_setting",
@@ -905,7 +1091,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListFloat"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::boolean, _1),
-												TypeBool, cci::Deep)),
+												TypeBool, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "bool_list_setting",
@@ -914,7 +1100,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListBool"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::string, _1),
-												TypeString, cci::Deep)),
+												TypeString, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "string_list_setting",
@@ -923,7 +1109,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListString"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::match, _1),
-												TypeMatch, cci::Deep)),
+												TypeMatch, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "match_list_setting",
@@ -932,7 +1118,7 @@ GenerateTestingParametersForBackendInterface ()
 					   "TestListMatch"),
 	boost::make_shared <ConceptParam> (backendEnvFactory,
 					   VariantTypes (CCSListConstructionExpectationsSetter (boost::bind (list_populators::color, _1),
-												TypeColor, cci::Deep)),
+											        TypeColor, true)),
 					   &CCSBackendConceptTestEnvironmentInterface::WriteListAtKey,
 					   TypeList,
 					   "color_list_setting",
@@ -1149,6 +1335,17 @@ const std::string CCSBackendConformanceTestProfileHandling::PROFILE_DEFAULT ("De
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_FOO ("foo");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAR ("bar");
 const std::string CCSBackendConformanceTestProfileHandling::PROFILE_BAZ ("baz");
+
+/* A workaround for templates inside of macros not
+ * expanding correctly */
+namespace
+{
+    Matcher <CCSStringList>
+    IsStringItemInStringCCSList (const Matcher <CCSString> &matcher)
+    {
+	return IsItemInCCSList <CCSString, CCSStringList> (matcher);
+    }
+}
 
 TEST_P (CCSBackendConformanceTestProfileHandling, TestGetExistingProfiles)
 {
