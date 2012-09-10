@@ -1,3 +1,22 @@
+/*
+ * Copyright © 2012 Canonical Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
 #include <glib-object.h>
 
 #include <gio/gio.h>
@@ -72,7 +91,8 @@ typedef struct _GWDSettingsStorageGSettingsPrivate
     GWDSettingsWritable *writable;
 } GWDSettingsStorageGSettingsPrivate;
 
-gboolean gwd_settings_storage_gsettings_update_use_tooltips (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_use_tooltips (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -85,7 +105,8 @@ gboolean gwd_settings_storage_gsettings_update_use_tooltips (GWDSettingsStorage 
 									       ORG_COMPIZ_GWD_KEY_USE_TOOLTIPS));
 }
 
-gboolean gwd_settings_storage_gsettings_update_draggable_border_width (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_draggable_border_width (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -98,7 +119,8 @@ gboolean gwd_settings_storage_gsettings_update_draggable_border_width (GWDSettin
 										     ORG_GNOME_MUTTER_DRAGGABLE_BORDER_WIDTH));
 }
 
-gboolean gwd_settings_storage_gsettings_update_attach_modal_dialogs (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_attach_modal_dialogs (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -111,7 +133,8 @@ gboolean gwd_settings_storage_gsettings_update_attach_modal_dialogs (GWDSettings
 										       ORG_GNOME_MUTTER_ATTACH_MODAL_DIALOGS));
 }
 
-gboolean gwd_settings_storage_gsettings_update_blur (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_blur (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -124,7 +147,8 @@ gboolean gwd_settings_storage_gsettings_update_blur (GWDSettingsStorage *setting
 								      ORG_COMPIZ_GWD_KEY_BLUR_TYPE));
 }
 
-gboolean gwd_settings_storage_gsettings_update_metacity_theme (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_metacity_theme (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -142,7 +166,8 @@ gboolean gwd_settings_storage_gsettings_update_metacity_theme (GWDSettingsStorag
 										ORG_GNOME_DESKTOP_WM_PREFERENCES_THEME));
 }
 
-gboolean gwd_settings_storage_gsettings_update_opacity (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_opacity (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -161,7 +186,8 @@ gboolean gwd_settings_storage_gsettings_update_opacity (GWDSettingsStorage *sett
 									  ORG_COMPIZ_GWD_KEY_METACITY_THEME_INACTIVE_SHADE_OPACITY));
 }
 
-gboolean gwd_settings_storage_gsettings_update_button_layout (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_button_layout (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -174,7 +200,8 @@ gboolean gwd_settings_storage_gsettings_update_button_layout (GWDSettingsStorage
 									       ORG_GNOME_DESKTOP_WM_PREFERENCES_BUTTON_LAYOUT));
 }
 
-gboolean gwd_settings_storage_gsettings_update_font (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_font (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -189,7 +216,7 @@ gboolean gwd_settings_storage_gsettings_update_font (GWDSettingsStorage *setting
 								      ORG_GNOME_DESKTOP_WM_PREFERENCES_TITLEBAR_FONT));
 }
 
-static gchar *
+static inline gchar *
 translate_dashes_to_underscores (const gchar *original)
 {
     gint i = 0;
@@ -207,7 +234,8 @@ translate_dashes_to_underscores (const gchar *original)
     return copy;
 }
 
-gboolean gwd_settings_storage_gsettings_update_titlebar_actions (GWDSettingsStorage *settings)
+static gboolean
+gwd_settings_storage_gsettings_update_titlebar_actions (GWDSettingsStorage *settings)
 {
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
@@ -242,7 +270,8 @@ gboolean gwd_settings_storage_gsettings_update_titlebar_actions (GWDSettingsStor
 	g_free (right_click_action);
 }
 
-static void gwd_settings_storage_gsettings_interface_init (GWDSettingsStorageInterface *interface)
+static void
+gwd_settings_storage_gsettings_interface_init (GWDSettingsStorageInterface *interface)
 {
     interface->update_use_tooltips = gwd_settings_storage_gsettings_update_use_tooltips;
     interface->update_draggable_border_width = gwd_settings_storage_gsettings_update_draggable_border_width;
@@ -255,10 +284,11 @@ static void gwd_settings_storage_gsettings_interface_init (GWDSettingsStorageInt
     interface->update_titlebar_actions = gwd_settings_storage_gsettings_update_titlebar_actions;
 }
 
-static void gwd_settings_storage_gsettings_set_property (GObject *object,
-						     guint   property_id,
-						     const GValue  *value,
-						     GParamSpec *pspec)
+static void
+gwd_settings_storage_gsettings_set_property (GObject *object,
+					     guint   property_id,
+					     const GValue  *value,
+					     GParamSpec *pspec)
 {
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (object);
 
@@ -290,7 +320,8 @@ static void gwd_settings_storage_gsettings_set_property (GObject *object,
     }
 }
 
-static void gwd_settings_storage_gsettings_dispose (GObject *object)
+static void
+gwd_settings_storage_gsettings_dispose (GObject *object)
 {
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (object);
 
@@ -306,22 +337,17 @@ static void gwd_settings_storage_gsettings_dispose (GObject *object)
 	g_object_unref (priv->gwd);
 }
 
-static void gwd_settings_storage_gsettings_finalize (GObject *object)
+static void
+gwd_settings_storage_gsettings_finalize (GObject *object)
 {
     G_OBJECT_CLASS (gwd_settings_storage_gsettings_parent_class)->finalize (object);
 }
 
-static void gwd_settings_storage_gsettings_class_init (GWDSettingsStorageGSettingsClass *klass)
+static void
+gwd_settings_storage_gsettings_class_init (GWDSettingsStorageGSettingsClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-    g_type_class_add_private (klass, sizeof (GWDSettingsStorageGSettingsPrivate));
-
-    object_class->dispose = gwd_settings_storage_gsettings_dispose;
-    object_class->finalize = gwd_settings_storage_gsettings_finalize;
-    object_class->set_property = gwd_settings_storage_gsettings_set_property;
-
-    GParamSpec * properties[] =
+    GParamSpec   *properties[] =
     {
 	NULL,
 	g_param_spec_object ("desktop-gsettings",
@@ -345,6 +371,12 @@ static void gwd_settings_storage_gsettings_class_init (GWDSettingsStorageGSettin
 			      G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)
     };
 
+    g_type_class_add_private (klass, sizeof (GWDSettingsStorageGSettingsPrivate));
+
+    object_class->dispose = gwd_settings_storage_gsettings_dispose;
+    object_class->finalize = gwd_settings_storage_gsettings_finalize;
+    object_class->set_property = gwd_settings_storage_gsettings_set_property;
+
     g_object_class_install_properties (object_class,
 				       sizeof (properties) / sizeof (properties[0]),
 				       properties);
@@ -361,11 +393,14 @@ gwd_settings_storage_gsettings_new (GSettings *desktop,
 				    GWDSettingsWritable *writable)
 {
     static const guint gwd_settings_storage_gsettings_n_construction_params = 4;
+    GParameter         param[gwd_settings_storage_gsettings_n_construction_params];
 
     GValue desktop_value = G_VALUE_INIT;
     GValue mutter_value = G_VALUE_INIT;
     GValue gwd_value = G_VALUE_INIT;
     GValue writable_value = G_VALUE_INIT;
+
+    GWDSettingsStorage *storage = NULL;
 
     g_return_val_if_fail (writable != NULL, NULL);
 
@@ -379,17 +414,18 @@ gwd_settings_storage_gsettings_new (GSettings *desktop,
     g_value_take_object (&gwd_value, gwd);
     g_value_set_pointer (&writable_value, writable);
 
-    GParameter param[] =
-    {
-	{ "desktop-gsettings", desktop_value },
-	{ "mutter-gsettings", mutter_value },
-	{ "gwd-gsettings", gwd_value },
-	{ "writable-settings", writable_value }
-    };
+    param[0].name = "desktop-gsettings";
+    param[0].value = desktop_value;
+    param[1].name = "mutter-gsettings";
+    param[1].value = mutter_value;
+    param[2].name = "gwd-gsettings";
+    param[2].value = gwd_value;
+    param[3].name = "writable-settings";
+    param[3].value = writable_value;
 
-    GWDSettingsStorage *storage = GWD_SETTINGS_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_GSETTINGS,
-										 gwd_settings_storage_gsettings_n_construction_params,
-										 param));
+    storage = GWD_SETTINGS_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_GSETTINGS,
+							     gwd_settings_storage_gsettings_n_construction_params,
+							     param));
 
     g_value_unset (&desktop_value);
     g_value_unset (&mutter_value);
@@ -410,12 +446,12 @@ list_all_schemas (gpointer data)
 static inline GSettings *
 get_settings_no_abort (const gchar *schema)
 {
-    static GOnce get_settings_once = G_ONCE_INIT;
+    static GOnce	   get_settings_once = G_ONCE_INIT;
+    const  gchar * const * schemas;
+    guint                  i = 0;
 
     g_once (&get_settings_once, list_all_schemas, NULL);
-
-    const gchar * const * schemas = (const gchar * const *) get_settings_once.retval;
-    guint                        i = 0;
+    schemas = (const gchar * const *) get_settings_once.retval;
 
     for (; schemas[i]; i++)
 	if (g_strcmp0 (schema, schemas[i]) == 0)

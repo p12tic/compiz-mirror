@@ -1,3 +1,22 @@
+/*
+ * Copyright © 2012 Canonical Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
 #include <glib-object.h>
 
 #include <stdlib.h>
@@ -64,10 +83,6 @@ enum
     CMDLINE_BLUR = (1 << 0),
     CMDLINE_THEME = (1 << 1)
 };
-
-/* Always N command line parameters + 2 for command line
- * options enum & notified */
-const guint GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS = 4;
 
 typedef gboolean (*NotifyFunc) (GWDSettingsNotified *);
 
@@ -147,12 +162,12 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
 				      gdouble     inactive_shadow_offset_y,
 				      const gchar *inactive_shadow_color)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     decor_shadow_options_t active_shadow, inactive_shadow;
-
-    unsigned int c[4];
+    unsigned int           c[4];
+    gboolean               changed = FALSE;
 
     active_shadow.shadow_radius = active_shadow_radius;
     active_shadow.shadow_opacity = active_shadow_opacity;
@@ -186,8 +201,6 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
     inactive_shadow.shadow_offset_x = inactive_shadow_offset_x;
     inactive_shadow.shadow_offset_y = inactive_shadow_offset_y;
 
-    gboolean changed = FALSE;
-
     if (decor_shadow_options_cmp (&priv->inactive_shadow,
 				  &inactive_shadow))
     {
@@ -211,11 +224,11 @@ gwd_settings_shadow_property_changed (GWDSettingsWritable *settings,
     return changed;
 }
 
-gboolean
+static gboolean
 gwd_settings_use_tooltips_changed (GWDSettingsWritable *settings,
-				   gboolean    use_tooltips)
+				   gboolean            use_tooltips)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (priv->use_tooltips != use_tooltips)
@@ -229,11 +242,11 @@ gwd_settings_use_tooltips_changed (GWDSettingsWritable *settings,
     return FALSE;
 }
 
-gboolean
+static gboolean
 gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
-					     gint	 draggable_border_width)
+					     gint	         draggable_border_width)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (priv->draggable_border_width != draggable_border_width)
@@ -247,11 +260,11 @@ gwd_settings_draggable_border_width_changed (GWDSettingsWritable *settings,
 	return FALSE;
 }
 
-gboolean
+static gboolean
 gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
-					   gboolean    attach_modal_dialogs)
+					   gboolean            attach_modal_dialogs)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (priv->attach_modal_dialogs != attach_modal_dialogs)
@@ -265,12 +278,12 @@ gwd_settings_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
 	return FALSE;
 }
 
-gboolean
+static gboolean
 gwd_settings_blur_changed (GWDSettingsWritable *settings,
-			   const gchar *type)
+			   const gchar         *type)
 
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
     gint new_type = -1;
 
@@ -302,7 +315,7 @@ static void
 free_and_set_metacity_theme (GWDSettingsWritable *settings,
 			     const gchar	 *metacity_theme)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (priv->metacity_theme)
@@ -311,12 +324,12 @@ free_and_set_metacity_theme (GWDSettingsWritable *settings,
     priv->metacity_theme = g_strdup (metacity_theme);
 }
 
-gboolean
+static gboolean
 gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
-				     gboolean	 use_metacity_theme,
-				     const gchar *metacity_theme)
+				     gboolean	         use_metacity_theme,
+				     const gchar         *metacity_theme)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (priv->cmdline_opts & CMDLINE_THEME)
@@ -342,14 +355,14 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
     return TRUE;
 }
 
-gboolean
+static gboolean
 gwd_settings_opacity_changed (GWDSettingsWritable *settings,
-			      gdouble inactive_opacity,
-			      gdouble active_opacity,
-			      gboolean inactive_shade_opacity,
-			      gboolean active_shade_opacity)
+			      gdouble             inactive_opacity,
+			      gdouble             active_opacity,
+			      gboolean            inactive_shade_opacity,
+			      gboolean            active_shade_opacity)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (priv->metacity_active_opacity == active_opacity &&
@@ -369,11 +382,11 @@ gwd_settings_opacity_changed (GWDSettingsWritable *settings,
     return TRUE;
 }
 
-gboolean
+static gboolean
 gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
-				    const gchar *button_layout)
+				    const gchar         *button_layout)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     if (!button_layout)
@@ -394,19 +407,19 @@ gwd_settings_button_layout_changed (GWDSettingsWritable *settings,
     return TRUE;
 }
 
-gboolean
+static gboolean
 gwd_settings_font_changed (GWDSettingsWritable *settings,
-			   gboolean		titlebar_uses_system_font,
-			   const gchar		*titlebar_font)
+			   gboolean            titlebar_uses_system_font,
+			   const gchar         *titlebar_font)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
-
-    if (!titlebar_font)
-	return FALSE;
 
     const gchar *no_font = NULL;
     const gchar *use_font = NULL;
+
+    if (!titlebar_font)
+	return FALSE;
 
     if (titlebar_uses_system_font)
 	use_font = no_font;
@@ -489,14 +502,14 @@ get_wheel_action_value (const gchar *action,
     return TRUE;
 }
 
-gboolean
+static gboolean
 gwd_settings_actions_changed (GWDSettingsWritable *settings,
-			      const gchar	   *action_double_click_titlebar,
-			      const gchar	   *action_middle_click_titlebar,
-			      const gchar	   *action_right_click_titlebar,
-			      const gchar	   *mouse_wheel_action)
+			      const gchar	  *action_double_click_titlebar,
+			      const gchar	  *action_middle_click_titlebar,
+			      const gchar	  *action_right_click_titlebar,
+			      const gchar	  *mouse_wheel_action)
 {
-    GWDSettingsImpl *settings_impl = GWD_SETTINGS_IMPL (settings);
+    GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);
 
     gboolean ret = FALSE;
@@ -517,13 +530,15 @@ gwd_settings_actions_changed (GWDSettingsWritable *settings,
     return ret;
 }
 
-static void gwd_settings_freeze_updates (GWDSettingsWritable *writable)
+static void
+gwd_settings_freeze_updates (GWDSettingsWritable *writable)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (writable);
     priv->freeze_count++;
 }
 
-static void gwd_settings_thaw_updates (GWDSettingsWritable *writable)
+static void
+gwd_settings_thaw_updates (GWDSettingsWritable *writable)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (writable);
 
@@ -533,7 +548,8 @@ static void gwd_settings_thaw_updates (GWDSettingsWritable *writable)
     release_notify_funcs (GWD_SETTINGS_IMPL (writable));
 }
 
-static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
+static void
+gwd_settings_writable_interface_init (GWDSettingsWritableInterface *interface)
 {
     interface->shadow_property_changed = gwd_settings_shadow_property_changed;
     interface->use_tooltips_changed = gwd_settings_use_tooltips_changed;
@@ -549,16 +565,19 @@ static void gwd_settings_writable_interface_init (GWDSettingsWritableInterface *
     interface->thaw_updates = gwd_settings_thaw_updates;
 }
 
-static void gwd_settings_interface_init (GWDSettingsInterface *interface)
+static void
+gwd_settings_interface_init (GWDSettingsInterface *interface)
 {
 }
 
-static void gwd_settings_dispose (GObject *object)
+static void
+gwd_settings_dispose (GObject *object)
 {
     G_OBJECT_CLASS (gwd_settings_impl_parent_class)->dispose (object);
 }
 
-static void gwd_settings_finalize (GObject *object)
+static void
+gwd_settings_finalize (GObject *object)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (object);
     G_OBJECT_CLASS (gwd_settings_impl_parent_class)->finalize (object);
@@ -588,10 +607,11 @@ static void gwd_settings_finalize (GObject *object)
     }
 }
 
-static void gwd_settings_set_property (GObject *object,
-					guint   property_id,
-					const GValue  *value,
-					GParamSpec *pspec)
+static void
+gwd_settings_set_property (GObject      *object,
+			   guint        property_id,
+			   const GValue *value,
+			   GParamSpec   *pspec)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (object);
 
@@ -617,10 +637,11 @@ static void gwd_settings_set_property (GObject *object,
     }
 }
 
-static void gwd_settings_get_property (GObject *object,
-					guint   property_id,
-					GValue  *value,
-					GParamSpec *pspec)
+static void
+gwd_settings_get_property (GObject    *object,
+			   guint      property_id,
+			   GValue     *value,
+			   GParamSpec *pspec)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (object);
 
@@ -683,7 +704,8 @@ static void gwd_settings_get_property (GObject *object,
     }
 }
 
-static void gwd_settings_impl_class_init (GWDSettingsImplClass *klass)
+static void
+gwd_settings_impl_class_init (GWDSettingsImplClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
@@ -804,7 +826,6 @@ static void gwd_settings_impl_init (GWDSettingsImpl *self)
 
     /* Append all notify funcs so that external state can be updated in case
      * the settings backend can't do it itself */
-
     append_to_notify_funcs (self, gwd_settings_notified_update_metacity_theme);
     append_to_notify_funcs (self, gwd_settings_notified_metacity_button_layout);
     append_to_notify_funcs (self, gwd_settings_notified_update_frames);
@@ -831,8 +852,8 @@ set_blur_construction_value (gint	*blur,
 
 static gboolean
 set_metacity_theme_construction_value (const gchar **metacity_theme,
-				       GParameter *params,
-				       GValue	  *metacity_theme_value)
+				       GParameter  *params,
+				       GValue	   *metacity_theme_value)
 {
     if (metacity_theme)
     {
@@ -848,7 +869,9 @@ set_metacity_theme_construction_value (const gchar **metacity_theme,
 }
 
 static guint
-set_flag_and_increment (guint n_param, guint *flags, guint flag)
+set_flag_and_increment (guint n_param,
+			guint *flags,
+			guint flag)
 {
     if (!flags)
 	return n_param;
@@ -858,13 +881,18 @@ set_flag_and_increment (guint n_param, guint *flags, guint flag)
 }
 
 GWDSettings *
-gwd_settings_impl_new (gint *blur,
-		       const gchar **metacity_theme,
+gwd_settings_impl_new (gint                *blur,
+		       const gchar         **metacity_theme,
 		       GWDSettingsNotified *notified)
 {
-    int    n_param = 0;
+    /* Always N command line parameters + 2 for command line
+     * options enum & notified */
+    const guint     gwd_settings_impl_n_construction_params = 4;
+    GParameter      param[gwd_settings_impl_n_construction_params];
+    GWDSettings     *settings = NULL;
+
+    int      n_param = 0;
     guint    cmdline_opts = 0;
-    GParameter param[GWD_SETTINGS_IMPL_N_CONSTRUCTION_PARAMS];
 
     GValue blur_value = G_VALUE_INIT;
     GValue metacity_theme_value = G_VALUE_INIT;
@@ -896,16 +924,11 @@ gwd_settings_impl_new (gint *blur,
 
     n_param++;
 
-    GWDSettingsImpl *settings = GWD_SETTINGS_IMPL (g_object_newv (GWD_TYPE_SETTINGS_IMPL, n_param, param));
+    settings = GWD_SETTINGS_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_IMPL, n_param, param));
 
     g_value_unset (&blur_value);
     g_value_unset (&metacity_theme_value);
     g_value_unset (&cmdline_opts_value);
 
-    return GWD_SETTINGS_INTERFACE (settings);
+    return settings;
 }
-
-
-
-
-

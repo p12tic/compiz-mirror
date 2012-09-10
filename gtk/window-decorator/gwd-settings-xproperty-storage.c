@@ -1,3 +1,22 @@
+/*
+ * Copyright © 2012 Canonical Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
 #include <glib-object.h>
 #include <string.h>
 
@@ -40,34 +59,35 @@ enum
 
 typedef struct _GWDSettingsStorageXPropPrivate
 {
-    Display *xdpy;
-    Window  root;
+    Display             *xdpy;
+    Window              root;
     GWDSettingsWritable *writable;
 
 } GWDSettingsStorageXPropPrivate;
 
-static gboolean gwd_settings_storage_xprop_update_all (GWDSettingsXPropertyStorage *storage)
+static gboolean
+gwd_settings_storage_xprop_update_all (GWDSettingsXPropertyStorage *storage)
 {
-    GWDSettingsStorageXProp *xprop = GWD_SETTINGS_STORAGE_XPROP (storage);
+    GWDSettingsStorageXProp        *xprop = GWD_SETTINGS_STORAGE_XPROP (storage);
     GWDSettingsStorageXPropPrivate *priv = GET_PRIVATE (xprop);
 
-    Atom actual;
-    int  result, format;
+    Atom          actual;
+    int           result, format;
     unsigned long n, left;
     unsigned char *prop_data;
     XTextProperty shadow_color_xtp;
 
     gdouble aradius;
     gdouble aopacity;
-    gint ax_off;
-    gint ay_off;
-    char *active_shadow_color = NULL;
+    gint    ax_off;
+    gint    ay_off;
+    char    *active_shadow_color = NULL;
 
     gdouble iradius;
     gdouble iopacity;
-    gint ix_off;
-    gint iy_off;
-    char *inactive_shadow_color = NULL;
+    gint    ix_off;
+    gint    iy_off;
+    char    *inactive_shadow_color = NULL;
 
     result = XGetWindowProperty (priv->xdpy, priv->root, compiz_shadow_info_atom,
 				 0, 32768, 0, XA_INTEGER, &actual,
@@ -143,12 +163,14 @@ static gboolean gwd_settings_storage_xprop_update_all (GWDSettingsXPropertyStora
 							  inactive_shadow_color);
 }
 
-static void gwd_settings_storage_xprop_interface_init (GWDSettingsXPropertyStorageInterface *interface)
+static void
+gwd_settings_storage_xprop_interface_init (GWDSettingsXPropertyStorageInterface *interface)
 {
     interface->update_all = gwd_settings_storage_xprop_update_all;
 }
 
-static void gwd_settings_storage_xprop_dispose (GObject *object)
+static void
+gwd_settings_storage_xprop_dispose (GObject *object)
 {
     GWDSettingsStorageXPropPrivate *priv = GET_PRIVATE (object);
 
@@ -158,15 +180,17 @@ static void gwd_settings_storage_xprop_dispose (GObject *object)
 	g_object_unref (priv->writable);
 }
 
-static void gwd_settings_storage_xprop_finalize (GObject *object)
+static void
+gwd_settings_storage_xprop_finalize (GObject *object)
 {
     G_OBJECT_CLASS (gwd_settings_storage_xprop_parent_class)->finalize (object);
 }
 
-static void gwd_settings_storage_xprop_set_property (GObject *object,
-						     guint   property_id,
-						     const GValue *value,
-						     GParamSpec *pspec)
+static void
+gwd_settings_storage_xprop_set_property (GObject *object,
+					 guint   property_id,
+					 const GValue *value,
+					 GParamSpec *pspec)
 {
     GWDSettingsStorageXPropPrivate *priv = GET_PRIVATE (object);
 
@@ -189,7 +213,8 @@ static void gwd_settings_storage_xprop_set_property (GObject *object,
     }
 }
 
-static void gwd_settings_storage_xprop_class_init (GWDSettingsStorageXPropClass *klass)
+static void
+gwd_settings_storage_xprop_class_init (GWDSettingsStorageXPropClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
@@ -225,7 +250,8 @@ static void gwd_settings_storage_xprop_class_init (GWDSettingsStorageXPropClass 
 						       G_PARAM_CONSTRUCT_ONLY));
 }
 
-void gwd_settings_storage_xprop_init (GWDSettingsStorageXProp *self)
+static void
+gwd_settings_storage_xprop_init (GWDSettingsStorageXProp *self)
 {
 }
 
@@ -234,9 +260,15 @@ gwd_settings_storage_xprop_new (Display *dpy,
 				Window  root,
 				GWDSettingsWritable *writable)
 {
+    static const guint          gwd_settings_xprop_storage_n_construction_params = 3;
+    GParameter                  param[gwd_settings_xprop_storage_n_construction_params];
+    GWDSettingsXPropertyStorage *storage = NULL;
+
     GValue display_value = G_VALUE_INIT;
     GValue root_window_value = G_VALUE_INIT;
     GValue writable_value = G_VALUE_INIT;
+
+
     g_value_init (&display_value, G_TYPE_POINTER);
     g_value_init (&root_window_value, G_TYPE_INT);
     g_value_init (&writable_value, G_TYPE_POINTER);
@@ -245,17 +277,20 @@ gwd_settings_storage_xprop_new (Display *dpy,
     g_value_set_int (&root_window_value, root);
     g_value_set_pointer (&writable_value, writable);
 
-    static const guint gwd_settings_xprop_storage_n_construction_params = 3;
+    param[0].name = "writable-settings";
+    param[0].value = writable_value;
+    param[1].name = "display";
+    param[1].value = display_value;
+    param[2].name = "root-window";
+    param[2].value = root_window_value;
 
-    GParameter param[] =
-    {
-	{ "writable-settings", writable_value },
-	{ "display", display_value },
-	{ "root-window", root_window_value }
-    };
+    storage = GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_XPROP,
+								       gwd_settings_xprop_storage_n_construction_params,
+								       param));
 
-    GWDSettingsXPropertyStorage *storage = GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_STORAGE_XPROP,
-												    gwd_settings_xprop_storage_n_construction_params,
-												    param));
+    g_value_unset (&display_value);
+    g_value_unset (&root_window_value);
+    g_value_unset (&writable_value);
+
     return storage;
 }

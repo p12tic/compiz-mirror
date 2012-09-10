@@ -1,3 +1,22 @@
+/*
+ * Copyright © 2012 Canonical Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
 #include "gwd-settings-writable-interface.h"
 
 static void gwd_settings_writable_interface_default_init (GWDSettingsWritableInterface *settings_interface);
@@ -24,16 +43,16 @@ gwd_settings_writable_thaw_updates (GWDSettingsWritable *settings)
 
 gboolean
 gwd_settings_writable_shadow_property_changed (GWDSettingsWritable *settings,
-					       gdouble     active_shadow_radius,
-					       gdouble     active_shadow_opacity,
-					       gdouble     active_shadow_offset_x,
-					       gdouble     active_shadow_offset_y,
-					       const gchar *active_shadow_color,
-					       gdouble     inactive_shadow_radius,
-					       gdouble     inactive_shadow_opacity,
-					       gdouble     inactive_shadow_offset_x,
-					       gdouble     inactive_shadow_offset_y,
-					       const gchar *inactive_shadow_color)
+					       gdouble             active_shadow_radius,
+					       gdouble             active_shadow_opacity,
+					       gdouble             active_shadow_offset_x,
+					       gdouble             active_shadow_offset_y,
+					       const gchar         *active_shadow_color,
+					       gdouble             inactive_shadow_radius,
+					       gdouble             inactive_shadow_opacity,
+					       gdouble             inactive_shadow_offset_x,
+					       gdouble             inactive_shadow_offset_y,
+					       const gchar         *inactive_shadow_color)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->shadow_property_changed) (settings,
@@ -51,7 +70,7 @@ gwd_settings_writable_shadow_property_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_use_tooltips_changed (GWDSettingsWritable *settings,
-					    gboolean    use_tooltips)
+					    gboolean            use_tooltips)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->use_tooltips_changed) (settings, use_tooltips);
@@ -59,7 +78,7 @@ gwd_settings_writable_use_tooltips_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_draggable_border_width_changed (GWDSettingsWritable *settings,
-						      gint	 draggable_border_width)
+						      gint	         draggable_border_width)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->draggable_border_width_changed) (settings, draggable_border_width);
@@ -67,7 +86,7 @@ gwd_settings_writable_draggable_border_width_changed (GWDSettingsWritable *setti
 
 gboolean
 gwd_settings_writable_attach_modal_dialogs_changed (GWDSettingsWritable *settings,
-						    gboolean    attach_modal_dialogs)
+						    gboolean            attach_modal_dialogs)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->attach_modal_dialogs_changed) (settings, attach_modal_dialogs);
@@ -83,8 +102,8 @@ gwd_settings_writable_blur_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_metacity_theme_changed (GWDSettingsWritable *settings,
-					      gboolean	 use_metacity_theme,
-					      const gchar *metacity_theme)
+					      gboolean	          use_metacity_theme,
+					      const gchar         *metacity_theme)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->metacity_theme_changed) (settings, use_metacity_theme, metacity_theme);
@@ -92,10 +111,10 @@ gwd_settings_writable_metacity_theme_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_opacity_changed (GWDSettingsWritable *settings,
-				       gdouble active_opacity,
-				       gdouble inactive_opacity,
-				       gboolean active_shade_opacity,
-				       gboolean inactive_shade_opacity)
+				       gdouble             active_opacity,
+				       gdouble             inactive_opacity,
+				       gboolean            active_shade_opacity,
+				       gboolean            inactive_shade_opacity)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->opacity_changed) (settings, active_opacity, inactive_opacity, active_shade_opacity, inactive_shade_opacity);
@@ -103,7 +122,7 @@ gwd_settings_writable_opacity_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_button_layout_changed (GWDSettingsWritable *settings,
-					     const gchar *button_layout)
+					     const gchar         *button_layout)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->button_layout_changed) (settings, button_layout);
@@ -120,10 +139,10 @@ gwd_settings_writable_font_changed (GWDSettingsWritable *settings,
 
 gboolean
 gwd_settings_writable_titlebar_actions_changed (GWDSettingsWritable *settings,
-						const gchar	   *action_double_click_titlebar,
-						const gchar	   *action_middle_click_titlebar,
-						const gchar	   *action_right_click_titlebar,
-						const gchar	   *mouse_wheel_action)
+						const gchar	    *action_double_click_titlebar,
+						const gchar	    *action_middle_click_titlebar,
+						const gchar	    *action_right_click_titlebar,
+						const gchar	    *mouse_wheel_action)
 {
     GWDSettingsWritableInterface *iface = GWD_SETTINGS_WRITABLE_GET_INTERFACE (settings);
     return (*iface->titlebar_actions_changed) (settings,
