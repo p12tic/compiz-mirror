@@ -53,6 +53,8 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
       (LP: #1046770)
     - Implements some cleanup that was suggested on the merge for the original
       port to gsettings (LP: #1042323)
+  * debian/compiz-dev.install
+    - Remove compizconfig-python.pc, now in python-compizconfig.install
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 10 Sep 2012 15:27:32 +0300
 
