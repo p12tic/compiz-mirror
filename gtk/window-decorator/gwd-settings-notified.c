@@ -21,6 +21,7 @@
 
 #include "gwd-settings-notified-interface.h"
 #include "gwd-settings-notified.h"
+#include "gwd-metacity-window-decoration-util.h"
 
 #include "gtk-window-decorator.h"
 
@@ -119,22 +120,9 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
     const gchar *meta_theme = NULL;
     g_object_get (settings, "metacity-theme", &meta_theme, NULL);
 
-    if (meta_theme)
-    {
-	const gchar *theme = meta_theme;
-
-	if (theme)
-	{
-	    meta_theme_set_current (theme, TRUE);
-	    if (!meta_theme_get_current ())
-	    {
-		g_warning ("specified a theme that does not exist! falling back to cairo decoration\n");
-		meta_theme = NULL;
-	    }
-	}
-    }
-
-    if (meta_theme)
+    if (gwd_metacity_window_decoration_update_meta_theme (meta_theme,
+							  meta_theme_get_current,
+							  meta_theme_set_current))
     {
 	theme_draw_window_decoration	= meta_draw_window_decoration;
 	theme_calc_decoration_size	= meta_calc_decoration_size;
@@ -146,6 +134,7 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
     }
     else
     {
+	g_log ("gtk-window-decorator", G_LOG_LEVEL_INFO, "using cairo decoration");
 	theme_draw_window_decoration	= draw_window_decoration;
 	theme_calc_decoration_size	= calc_decoration_size;
 	theme_update_border_extents	= update_border_extents;
@@ -172,6 +161,7 @@ gwd_settings_notified_impl_update_metacity_theme (GWDSettingsNotified *notified)
 static gboolean
 gwd_settings_notified_impl_update_metacity_button_layout (GWDSettingsNotified *notified)
 {
+#ifdef USE_METACITY
     const gchar *button_layout;
     g_object_get (settings, "metacity-button-layout", &button_layout, NULL);
 
@@ -190,6 +180,7 @@ gwd_settings_notified_impl_update_metacity_button_layout (GWDSettingsNotified *n
 	return TRUE;
     }
 
+#endif
     return FALSE;
 }
 
