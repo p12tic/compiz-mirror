@@ -37,9 +37,9 @@
 
 #include "wall.h"
 
-#define PI 3.14159265359f
-#define VIEWPORT_SWITCHER_SIZE 100
-#define ARROW_SIZE 33
+static const double PI = 3.14159265359f;
+static const unsigned short VIEWPORT_SWITCHER_SIZE = 100;
+static const unsigned short ARROW_SIZE = 33;
 
 #define getColorRGBA(name) \
     r = optionGet##name##Red() / 65535.0f;\
@@ -385,7 +385,7 @@ WallScreen::computeTranslation (float &x,
 }
 
 /* movement remainder that gets ignored for direction calculation */
-#define IGNORE_REMAINDER 0.05
+static const float IGNORE_REMAINDER = 0.05f;
 
 void
 WallScreen::determineMovementAngle ()

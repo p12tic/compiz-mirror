@@ -376,6 +376,17 @@ decor_point_cmp (const decor_point_t *a, const decor_point_t *b)
     return (a->x - b->x) | (a->y - b->y) | (a->gravity - b->gravity);
 }
 
+int
+decor_shadow_options_cmp (const decor_shadow_options_t *a,
+			  const decor_shadow_options_t *b)
+{
+    return (a->shadow_radius != b->shadow_radius) ||
+	   (a->shadow_opacity != b->shadow_opacity) ||
+	   (a->shadow_offset_x != b->shadow_offset_x) ||
+	   (a->shadow_offset_y != b->shadow_offset_y) ||
+	   memcmp (a->shadow_color, b->shadow_color, sizeof (unsigned short) * 3);
+}
+
 static int
 decor_matrix_cmp (const decor_matrix_t *a, const decor_matrix_t *b)
 {
@@ -3134,7 +3145,7 @@ convert_property (Display *xdisplay,
 		  Time    dm_sn_timestamp)
 {
 
-#define N_TARGETS 4
+static const unsigned short N_TARGETS = 4;
 
     Atom conversion_targets[N_TARGETS];
 

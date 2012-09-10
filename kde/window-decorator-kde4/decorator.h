@@ -43,8 +43,8 @@
 #include "kdecoration_plugins.h"
 #include "utils.h"
 
-#define ROOT_OFF_X 8192
-#define ROOT_OFF_Y 8192
+extern const unsigned int ROOT_OFF_X;
+extern const unsigned int ROOT_OFF_Y;
 
 #define C(name) { 0, XC_ ## name }
 
@@ -55,9 +55,9 @@ struct _cursor {
 
 extern struct _cursor cursors[3][3];
 
-#define BLUR_TYPE_NONE     0
-#define BLUR_TYPE_TITLEBAR 1
-#define BLUR_TYPE_ALL      2
+extern const unsigned short BLUR_TYPE_NONE;
+extern const unsigned short BLUR_TYPE_TITLEBAR;
+extern const unsigned short BLUR_TYPE_ALL;
 
 extern int blurType;
 

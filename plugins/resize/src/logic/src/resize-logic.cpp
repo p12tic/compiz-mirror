@@ -43,10 +43,10 @@
 
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
-#define TOUCH_LEFT 1
-#define TOUCH_RIGHT 2
-#define TOUCH_TOP 3
-#define TOUCH_BOTTOM 4
+static const unsigned short TOUCH_LEFT = 1;
+static const unsigned short TOUCH_RIGHT = 2;
+static const unsigned short TOUCH_TOP = 3;
+static const unsigned short TOUCH_BOTTOM = 4;
 
 using namespace resize;
 
@@ -1097,6 +1097,9 @@ ResizeLogic::enableOrDisableVerticalMaximization (int yRoot)
     const int max_edge_distance = 5;
 
     if (!options->optionGetMaximizeVertically())
+	return;
+
+    if (!offWorkAreaConstrained)
 	return;
 
     if (centered || options->optionGetResizeFromCenter ())

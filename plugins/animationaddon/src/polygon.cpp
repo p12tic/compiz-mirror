@@ -37,7 +37,7 @@
 #include <GL/glu.h>
 #include "private.h"
 
-#define MIN_WINDOW_GRID_SIZE 10
+static const unsigned short MIN_WINDOW_GRID_SIZE = 10;
 
 PolygonAnim::PolygonAnim (CompWindow *w,
 			  WindowEvent curWindowEvent,
@@ -1902,7 +1902,7 @@ PolygonAnim::updateBB (CompOutput &output)
 
 	float zradius = radius / ::screen->width ();
 
-#define N_POINTS 8
+static const unsigned short N_POINTS = 8;
 	// Corners of bounding cube
 	Point3d cubeCorners[N_POINTS];
 	cubeCorners[0].set (center.x () - radius, center.y () - radius,

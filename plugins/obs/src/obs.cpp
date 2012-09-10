@@ -27,6 +27,10 @@
 
 COMPIZ_PLUGIN_20090315 (obs, ObsPluginVTable);
 
+const unsigned short MODIFIER_OPACITY    = 0;
+const unsigned short MODIFIER_SATURATION = 1;
+const unsigned short MODIFIER_BRIGHTNESS = 2;
+
 void
 ObsWindow::changePaintModifier (unsigned int modifier,
 				int          direction)
@@ -279,19 +283,8 @@ ObsScreen::setOption (const CompString  &name,
     return true;
 }
 
-void
-ObsWindow::postLoad ()
-{
-    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
-    {
-	if (customFactor[i] != 100)
-	    modifierChanged (i);
-    }
-}
-
 ObsWindow::ObsWindow (CompWindow *w) :
     PluginClassHandler<ObsWindow, CompWindow> (w),
-    PluginStateWriter <ObsWindow> (this, w->id ()),
     window (w),
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
@@ -314,8 +307,6 @@ ObsWindow::ObsWindow (CompWindow *w) :
 
 ObsWindow::~ObsWindow ()
 {
-    writeSerializedData ();
-
     updateHandle.stop ();
 }
 

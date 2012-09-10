@@ -23,6 +23,8 @@
 
 COMPIZ_PLUGIN_20090315 (firepaint, FirePluginVTable);
 
+const unsigned int NUM_ADD_POINTS = 1000;
+
 Particle::Particle () :
     life (0),
     fade (0),
@@ -673,49 +675,8 @@ FireScreen::handleEvent (XEvent *event)
     screen->handleEvent (event);
 }
 
-void
-FireScreen::postLoad ()
-{
-    if (ps.particles.empty () || points.empty ())
-    {
-	return;
-    }
-
-    init = false;
-
-    toggleFunctions (true);
-
-    // Initialize cache
-    ps.vertices_cache.cache = NULL;
-    ps.colors_cache.cache   = NULL;
-    ps.coords_cache.cache   = NULL;
-    ps.dcolors_cache.cache  = NULL;
-
-    ps.vertices_cache.count  = 0;
-    ps.colors_cache.count   = 0;
-    ps.coords_cache.count  = 0;
-    ps.dcolors_cache.count = 0;
-
-    ps.vertices_cache.size  = 0;
-    ps.colors_cache.size   = 0;
-    ps.coords_cache.size  = 0;
-    ps.dcolors_cache.size = 0;
-
-    glGenTextures (1, &ps.tex);
-    glBindTexture (GL_TEXTURE_2D, ps.tex);
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
-	          GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
-    glBindTexture (GL_TEXTURE_2D, 0);
-
-}
-
 FireScreen::FireScreen (CompScreen *screen) :
     PluginClassHandler <FireScreen, CompScreen> (screen),
-    PluginStateWriter <FireScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     init (true),
@@ -746,8 +707,6 @@ FireScreen::FireScreen (CompScreen *screen) :
 
 FireScreen::~FireScreen ()
 {
-    writeSerializedData ();
-
     if (!init)
 	ps.finiParticles ();
 }

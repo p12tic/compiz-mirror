@@ -201,7 +201,7 @@ GHashTable * ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQ
  * C doesn't have a concept of "constants" setting
  * the array size ...
  */
-#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 119
+#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 120
 
 typedef struct _CCSGNOMEIntegratedSettingsList
 {

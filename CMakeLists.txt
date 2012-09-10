@@ -86,8 +86,6 @@ set_property (GLOBAL
 set (ALL_LINGUAS af ar bg bn bn_IN bs ca cs cy da de el en_GB en_US es eu et fi fr gl gu he hi hr hu id it ja ka km ko lo lt mk mr nb nl or pa pl pt pt_BR ro ru sk sl sr sv ta tr uk vi xh zh_CN zh_TW zu)
 set (GETTEXT_PACKAGE compiz)
 
-find_package (Boost 1.34.0 REQUIRED serialization)
-
 set (COMPIZ_REQUIRES
     x11
     xext
@@ -112,11 +110,7 @@ set (DECORATION_REQUIRES xrender)
 compiz_pkg_check_modules (COMPIZ REQUIRED ${COMPIZ_REQUIRES})
 compiz_pkg_check_modules (LIBDECORATION REQUIRED ${DECORATION_REQUIRES})
 
-list (APPEND COMPIZ_LIBRARIES ${Boost_LIBRARIES})
-
 include (CompizDefaults)
-
-set (COMPIZ_CFLAGS "${COMPIZ_CFLAGS} -I${Boost_INCLUDE_DIR}")
 
 set (_compiz_package_string "Compiz ${VERSION}")
 set (_compiz_package "Compiz")

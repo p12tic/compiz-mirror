@@ -85,10 +85,13 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	virtual NET::WindowType
 	    windowType (unsigned long supported_types) const;
 	virtual QIcon icon (void) const;
+	virtual QIcon icon (int idx) const;
 	virtual QString caption (void) const;
+	virtual QString caption (int idx) const;
 	virtual void processMousePressEvent (QMouseEvent *);
 	virtual void showWindowMenu (const QRect &);
 	virtual void showWindowMenu (const QPoint &);
+	virtual void showWindowMenu (const QPoint &, long int id);
 	virtual void performWindowOperation (WindowOperation);
 	virtual void setMask (const QRegion &, int);
 	virtual bool isPreview (void) const;
@@ -132,6 +135,16 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	virtual WindowOperation
 	    buttonToWindowOperation(Qt::MouseButtons button);
 #endif
+
+	long tabId (int idx) const;
+	long currentTabId () const;
+	void setCurrentTab (long id);
+	void tab_A_before_B (long A, long B);
+	void tab_A_behind_B (long A, long B);
+	void untab (long id, const QRect& newGeom);
+	void closeTab (long id);
+	void closeTabGroup ();
+	int tabCount () const;
 
 	void handleActiveChange (void);
 	void updateFrame (WId frame);

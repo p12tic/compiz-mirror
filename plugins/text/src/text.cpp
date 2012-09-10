@@ -27,7 +27,7 @@
 
 #include "private.h"
 
-#define PI 3.14159265359f
+static const double PI = 3.14159265359f;
 
 COMPIZ_PLUGIN_20090315 (text, TextPluginVTable);
 

@@ -1290,7 +1290,7 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
     return gWindow->glDraw (transform, eAttrib, region, mask);
 }
 
-#define EXPO_GRID_SIZE 100
+static const unsigned short EXPO_GRID_SIZE = 100;
 
 void
 ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,

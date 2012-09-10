@@ -2,6 +2,7 @@ include_directories (${GTEST_INCLUDE_DIRS})
 include_directories (${CMAKE_SOURCE_DIR}/include)
 include_directories (${CMAKE_SOURCE_DIR}/tests/shared)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../src)
 include_directories (${CMAKE_SOURCE_DIR}/compizconfig/tests)
 link_directories (${CMAKE_INSTALL_PREFIX}/lib)
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../mocks/libcompizconfig)
@@ -26,6 +27,9 @@ add_executable (compizconfig_test_ccs_backend
 
 add_executable (compizconfig_test_ccs_mock_backend_conformance
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_mock_backend_conformance.cpp)
+
+add_executable (compizconfig_test_ccs_upgrade_internal
+    ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_settings_upgrade_internal.cpp)
 
 if (HAVE_PROTOBUF)
     set (LIBCOMPIZCONFIG_LIBRARIES
@@ -98,8 +102,17 @@ target_link_libraries (compizconfig_test_ccs_setting
 		       compizconfig_ccs_plugin_mock
 		       compizconfig_ccs_setting_mock)
 
+target_link_libraries (compizconfig_test_ccs_upgrade_internal
+		       ${GTEST_BOTH_LIBRARIES}
+		       ${GMOCK_LIBRARY}
+		       ${GMOCK_MAIN_LIBRARY}
+		       ${CMAKE_THREAD_LIBS_INIT}
+           ccs_settings_upgrade_internal
+)
+
 compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
 compiz_discover_tests (compizconfig_test_ccs_context COVERAGE compizconfig_ccs_context_mock)
 compiz_discover_tests (compizconfig_test_ccs_plugin COVERAGE compizconfig_ccs_plugin_mock)
 compiz_discover_tests (compizconfig_test_ccs_setting COVERAGE compizconfig_ccs_setting_mock)
 compiz_discover_tests (compizconfig_test_ccs_mock_backend_conformance COVERAGE compizconfig_ccs_backend_mock)
+compiz_discover_tests (compizconfig_test_ccs_upgrade_internal COVERAGE ccs_settings_upgrade_internal)

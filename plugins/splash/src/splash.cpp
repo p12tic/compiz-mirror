@@ -23,6 +23,9 @@
 
 COMPIZ_PLUGIN_20090315 (splash, SplashPluginVTable);
 
+const std::string SPLASH_BACKGROUND_DEFAULT("");
+const std::string SPLASH_LOGO_DEFAULT("");
+
 void
 SplashScreen::preparePaint (int ms)
 {

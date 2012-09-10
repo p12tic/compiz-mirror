@@ -27,6 +27,12 @@
 
 COMPIZ_PLUGIN_20090315 (switcher, SwitchPluginVTable)
 
+const unsigned short WIDTH  = 212;
+const unsigned short HEIGHT = 192;
+const unsigned short SPACE  = 10;
+
+const unsigned short BOX_WIDTH = 3;
+
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 static float _boxVertices[] =

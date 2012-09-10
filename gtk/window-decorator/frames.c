@@ -36,17 +36,18 @@ decor_frame_refresh (decor_frame_t *frame)
 {
     decor_shadow_options_t active_o, inactive_o;
     decor_shadow_info_t *info;
+    const gchar *titlebar_font = NULL;
 
     gwd_decor_frame_ref (frame);
 
     update_style (frame->style_window_rgba);
     update_style (frame->style_window_rgb);
 
-    gchar *str = settings->font;
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
 
-    set_frame_scale (frame, str);
+    set_frame_scale (frame, titlebar_font);
 
-    str = NULL;
+    titlebar_font = NULL;
 
     frame_update_titlebar_font (frame);
 

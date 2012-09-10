@@ -37,6 +37,8 @@
 
 COMPIZ_PLUGIN_20090315 (shift, ShiftPluginVTable);
 
+const double PI = 3.14159265359f;
+
 bool textAvailable = false;
 
 void

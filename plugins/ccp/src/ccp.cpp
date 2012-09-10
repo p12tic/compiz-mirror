@@ -22,8 +22,8 @@
 
 COMPIZ_PLUGIN_20090315 (ccp, CcpPluginVTable)
 
-#define CCP_UPDATE_MIN_TIMEOUT 250
-#define CCP_UPDATE_MAX_TIMEOUT 4000
+static const unsigned short CCP_UPDATE_MIN_TIMEOUT = 250;
+static const unsigned short CCP_UPDATE_MAX_TIMEOUT = 4000;
 #define CORE_VTABLE_NAME  "core"
 
 

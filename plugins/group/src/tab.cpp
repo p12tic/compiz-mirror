@@ -2187,7 +2187,7 @@ GroupTabBar::damageRegion ()
        properly - however the best way would be if slot->mRegion was
        sized including the border */
 
-#define DAMAGE_BUFFER 20
+static const unsigned short DAMAGE_BUFFER = 20;
 
     /* If there is a front slot in this bar, then we need to damage
      * areas just outside where the slot might be sitting */

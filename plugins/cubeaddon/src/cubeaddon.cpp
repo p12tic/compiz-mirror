@@ -27,6 +27,16 @@
 
 COMPIZ_PLUGIN_20090315 (cubeaddon, CubeaddonPluginVTable);
 
+const unsigned short CUBEADDON_GRID_SIZE = 100;
+const unsigned short CAP_ELEMENTS    = 15;
+const unsigned int   CAP_NVERTEX	    = (((CAP_ELEMENTS * (CAP_ELEMENTS + 1)) + 2) * 3);
+const unsigned int   CAP_NIDX	    = (CAP_ELEMENTS * (CAP_ELEMENTS - 1) * 4);
+
+const unsigned int   CAP_NIMGVERTEX  = (((CAP_ELEMENTS + 1) * (CAP_ELEMENTS + 1)) * 5);
+const unsigned int   CAP_NIMGIDX	    = (CAP_ELEMENTS * CAP_ELEMENTS * 4);
+
+const float RAD2I1024 = 162.9746617f;
+
 /*
  * Initiate a CubeCap
  */

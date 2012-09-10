@@ -89,7 +89,7 @@ extern AnimEffect AnimEffectSidekick;
 extern AnimEffect AnimEffectWave;
 extern AnimEffect AnimEffectZoom;
 
-#define NUM_EFFECTS 16
+extern const unsigned short NUM_EFFECTS;
 
 extern int customOptionOptionIds[AnimEventNum];
 
