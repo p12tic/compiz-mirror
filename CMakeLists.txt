@@ -79,6 +79,9 @@ set (COMPIZ_I18N_DIR ${CMAKE_SOURCE_DIR}/po)
 
 # Don't allow subdirectories to add schema recompile rule
 set_property (GLOBAL
+	      PROPERTY GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE
+	      TRUE)
+set_property (GLOBAL
 	      PROPERTY COMPIZ_INHIBIT_ADD_INSTALL_RECOMPILE_RULE
 	      TRUE)
 
