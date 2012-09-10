@@ -1,3 +1,60 @@
+Release 0.9.8.2 (2012-09-10 Daniel van Vugt <daniel.van.vugt@canonical.com>)
+============================================================================
+
+Highlights
+
+  * gtk-window-decorator has been fully ported from GConf to GSettings.
+  * Gamers rejoice! CCSM > Composite > "Unredirect Fullscreen Windows" now
+    works more reliably, with a few bugs remaining. If you turn it on then
+    fullscreen windows like games will get direct rendering access and won't
+    be slowed by Compiz (or Unity) any more.
+
+Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.8.2)
+
+     956986 - compiz crashed with SIGSEGV when imgsvg is loaded, in
+              getCompPluginVTable20090315_imgsvg() from dlloaderLoadPlugin()
+              from CompPlugin::load()
+     974242 - Compiz is moving windows against my will
+     976032 - Place plugin problem with panel in fullscreen and gnome classic
+     980663 - Compiz won't start if "unredirect fullscreen windows" is enabled
+    1014986 - [performance] compiz is wasting CPU responding to repaint
+              requests for offscreen windows
+    1024214 - Tests can disappear from make test when CMake regenerates
+              CTestTestfile.cmake
+    1040081 - [regression] Week 34: Ctrl+Alt+T shortcut (open terminal) fails
+              to work
+    1040455 - Setting the UnMinimize animation is ignored (default animation
+              still used)
+    1041047 - Unredirect Fullscreen Windows stay on top (unredirected) even
+              when they're not on top any more (or the output is transformed)
+    1041066 - Unredirect Fullscreen Windows sometimes fails to unredirect
+              fullscreen windows at all
+    1041310 - compiz 0.9.8.0 rev3321 fails to build on kde4-window-decorator
+    1042095 - AUTHORS is out of date in compiz-0.9.8.0. Needs to be updated
+              from the bzr log.
+    1043143 - Unresolved symbols in plugins are not detected at build time,
+              instead cause cryptic crashes in COMPIZ_PLUGIN_20090315()
+    1045191 - compiz crashed with SIGABRT in assert from
+              boost::shared_ptr<CompRect>::operator-> from
+              ResizeLogic::enableOrDisableVerticalMaximization() from
+              ResizeLogic::handleMotionEvent()
+    1045235 - Compiz crashed with SIGFPE in addQuads()
+              [plugins/opengl/src/paint.cpp:839]
+    1045652 - UnMinimize should be spelled "Unminimize"
+    1045665 - CMake Error at cmake/EnableCoverageReport.cmake:69
+              (SET_TARGET_PROPERTIES): set_target_properties Can not find
+              target to add properties to:
+              compizconfig_ccs_settings_upgrade_internal
+    1046184 - __pyx_f_12compizconfing_ListToStringList defined but not used
+    1046190 - Migration to gsettings doesn't migrate compiz/unity configurable
+              keys to g-c-c and those keys doesn't work
+    1046199 - Changing a key to org.compiz.integrated schema doesn't impact
+              the current profile
+    1046212 - show-hud integration does not work
+    1046661 - Unredirect Fullscreen Windows stay on top (unredirected) even
+              when an RGBA window is stacked above it
+
+
 Release 0.9.8.0 (2012-08-23 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 ============================================================================
 
