@@ -80,7 +80,7 @@ bool screenInitalized = false;
 
 #define MwmHintsFunctions   (1L << 0)
 #define MwmHintsDecorations (1L << 1)
-#define PropMotifWmHintElements 3
+static const unsigned short PropMotifWmHintElements = 3;
 
 typedef struct {
     unsigned long flags;
@@ -1148,7 +1148,7 @@ convertProperty (Display *dpy,
 		 Atom    property)
 {
 
-#define N_TARGETS 4
+static const unsigned short N_TARGETS = 4;
 
     Atom conversionTargets[N_TARGETS];
 
@@ -1272,8 +1272,8 @@ PrivateScreen::handleSelectionClear (XEvent *event)
     eventManager.quit ();
 }
 
-#define IMAGEDIR "images"
-#define HOMECOMPIZDIR ".compiz-1"
+static const std::string IMAGEDIR("images");
+static const std::string HOMECOMPIZDIR(".compiz-1");
 
 bool
 CompScreenImpl::readImageFromFile (CompString &name,
@@ -2174,7 +2174,7 @@ cps::StartupSequenceImpl::updateStartupFeedback ()
     }
 }
 
-#define STARTUP_TIMEOUT_DELAY 15000
+static const unsigned int STARTUP_TIMEOUT_DELAY = 15000;
 
 bool
 cps::StartupSequence::handleStartupSequenceTimeout ()

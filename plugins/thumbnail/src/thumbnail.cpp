@@ -32,6 +32,8 @@
 
 COMPIZ_PLUGIN_20090315 (thumbnail, ThumbPluginVTable);
 
+const unsigned short TEXT_DISTANCE = 10;
+
 void
 ThumbScreen::freeThumbText (Thumbnail  *t)
 {

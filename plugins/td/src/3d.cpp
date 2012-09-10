@@ -2,6 +2,8 @@
 
 COMPIZ_PLUGIN_20090315 (td, TdPluginVTable);
 
+const double PI = 3.14159265359f;
+
 void
 setFunctions (bool enabled)
 {

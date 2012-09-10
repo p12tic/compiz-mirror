@@ -46,10 +46,17 @@
 
 #include <stdio.h>
 
-#define SHADOW_RADIUS      8.0
-#define SHADOW_OPACITY     0.5
-#define SHADOW_OFFSET_X    1
-#define SHADOW_OFFSET_Y    1
+const unsigned int ROOT_OFF_X = 8192;
+const unsigned int ROOT_OFF_Y = 8192;
+
+const unsigned short BLUR_TYPE_NONE     = 0;
+const unsigned short BLUR_TYPE_TITLEBAR = 1;
+const unsigned short BLUR_TYPE_ALL      = 2;
+
+static const float SHADOW_RADIUS    = 8.0f;
+static const float SHADOW_OPACITY   = 0.5f;
+static const unsigned short  SHADOW_OFFSET_X = 1;
+static const unsigned short  SHADOW_OFFSET_Y = 1;
 #define SHADOW_COLOR_RED   0x0000
 #define SHADOW_COLOR_GREEN 0x0000
 #define SHADOW_COLOR_BLUE  0x0000

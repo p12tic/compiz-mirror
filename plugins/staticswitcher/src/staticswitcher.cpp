@@ -27,6 +27,9 @@
 
 COMPIZ_PLUGIN_20090315 (staticswitcher, StaticSwitchPluginVTable)
 
+const unsigned short PREVIEWSIZE = 150;
+const unsigned short BORDER = 10;
+
 void
 StaticSwitchScreen::updatePopupWindow ()
 {

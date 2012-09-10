@@ -53,10 +53,10 @@
 #define COMPIZ_DBUS_CHANGED_SIGNAL_NAME		    "changed"
 #define COMPIZ_DBUS_PLUGINS_CHANGED_SIGNAL_NAME	    "pluginsChanged"
 
-#define DBUS_FILE_WATCH_CURRENT 0
-#define DBUS_FILE_WATCH_PLUGIN  1
-#define DBUS_FILE_WATCH_HOME    2
-#define DBUS_FILE_WATCH_NUM     3
+#define DBUS_FILE_WATCH_CURRENT	0
+#define DBUS_FILE_WATCH_PLUGIN	1
+#define DBUS_FILE_WATCH_HOME	2
+#define DBUS_FILE_WATCH_NUM	3
 
 class DbusScreen :
     public PluginClassHandler <DbusScreen, CompScreen>,

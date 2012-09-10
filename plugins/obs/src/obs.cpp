@@ -27,6 +27,10 @@
 
 COMPIZ_PLUGIN_20090315 (obs, ObsPluginVTable);
 
+const unsigned short MODIFIER_OPACITY    = 0;
+const unsigned short MODIFIER_SATURATION = 1;
+const unsigned short MODIFIER_BRIGHTNESS = 2;
+
 void
 ObsWindow::changePaintModifier (unsigned int modifier,
 				int          direction)

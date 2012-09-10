@@ -31,6 +31,10 @@
 
 COMPIZ_PLUGIN_20090315 (water, WaterPluginVTable)
 
+const unsigned int TEXTURE_SIZE = 256;
+
+const float K = 0.1964f;
+
 static int waterLastPointerX = 0;
 static int waterLastPointerY = 0;
 

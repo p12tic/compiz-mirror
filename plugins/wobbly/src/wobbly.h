@@ -41,7 +41,7 @@
 			  CompWindowTypeMenuMask    | \
 			  CompWindowTypeUtilMask)
 
-#define GRID_WIDTH  4
+#define GRID_WIDTH 4
 #define GRID_HEIGHT 4
 
 #define MODEL_MAX_SPRINGS (GRID_WIDTH * GRID_HEIGHT * 2)

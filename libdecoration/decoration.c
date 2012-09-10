@@ -3145,7 +3145,7 @@ convert_property (Display *xdisplay,
 		  Time    dm_sn_timestamp)
 {
 
-#define N_TARGETS 4
+static const unsigned short N_TARGETS = 4;
 
     Atom conversion_targets[N_TARGETS];
 

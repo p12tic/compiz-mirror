@@ -28,6 +28,8 @@
 
 COMPIZ_PLUGIN_20090315 (opacify, OpacifyPluginVTable);
 
+const unsigned short MAX_WINDOWS = 64;
+
 void
 setFunctions (bool enabled)
 {

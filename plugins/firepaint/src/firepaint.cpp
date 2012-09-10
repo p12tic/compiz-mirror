@@ -23,6 +23,8 @@
 
 COMPIZ_PLUGIN_20090315 (firepaint, FirePluginVTable);
 
+const unsigned int NUM_ADD_POINTS = 1000;
+
 Particle::Particle () :
     life (0),
     fade (0),

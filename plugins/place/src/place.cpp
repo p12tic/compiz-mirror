@@ -943,7 +943,7 @@ PlaceWindow::cascadeFindNext (const Placeable::Vector &placeables,
     /* arbitrary-ish threshold, honors user attempts to
      * manually cascade.
      */
-#define CASCADE_FUZZ 15
+static const unsigned short CASCADE_FUZZ = 15;
 
     xThreshold = MAX (this->extents ().left, CASCADE_FUZZ);
     yThreshold = MAX (this->extents ().top, CASCADE_FUZZ);
@@ -988,7 +988,7 @@ PlaceWindow::cascadeFindNext (const Placeable::Vector &placeables,
 		cascadeX = MAX (0, workArea.x ());
 		cascadeY = MAX (0, workArea.y ());
 
-#define CASCADE_INTERVAL 50 /* space between top-left corners of cascades */
+static const unsigned short CASCADE_INTERVAL = 50; /* space between top-left corners of cascades */
 
 		cascadeStage += 1;
 		cascadeX += CASCADE_INTERVAL * cascadeStage;

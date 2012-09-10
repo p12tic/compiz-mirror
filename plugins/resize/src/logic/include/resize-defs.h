@@ -36,7 +36,7 @@
 
 #define NUM_KEYS 4
 
-#define MIN_KEY_WIDTH_INC  24
-#define MIN_KEY_HEIGHT_INC 24
+#define MIN_KEY_WIDTH_INC   24
+#define MIN_KEY_HEIGHT_INC  24
 
 #endif /* RESIZEDEFS_H */

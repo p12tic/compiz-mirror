@@ -545,8 +545,8 @@ ScaleAddonScreen::handleCompizEvent (const char         *pluginName,
  * inspired by smallwindows (smallwindows.sf.net) by Jens Egeblad
  * FIXME: broken.
  * */
-#define ORGANIC_STEP 0.05
 #if 0
+static const double ORGANIC_STEP = 0.05f;
 static int
 organicCompareWindows (const void *elem1,
 		       const void *elem2)
