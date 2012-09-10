@@ -3,6 +3,9 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
   [ Sam Spilsbury ]
   * debian/python-compizconfig.install
     - Install compizconfig-python.pc
+  * debian/patches/100_expo_layout.patch
+    - re-add the expo layout that used to be in precise (LP: #1047067)
+    - add some testcases
 
   [ Timo Jyrinki ]
   * New upstream release.
