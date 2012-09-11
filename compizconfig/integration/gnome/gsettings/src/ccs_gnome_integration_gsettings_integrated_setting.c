@@ -55,7 +55,11 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
     GVariant *variant = ccsGSettingsWrapperGetValue (priv->wrapper, gsettingsTranslatedName);
 
     if (!variant)
+    {
 	free (gsettingsTranslatedName);
+	free (v);
+	return NULL;
+    }
 
     const GVariantType *variantType = G_VARIANT_TYPE (g_variant_get_type_string (variant));
 
@@ -65,6 +69,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_INT32))
 	    {
 		ccsError ("Expected integer value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -74,6 +80,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_BOOLEAN))
 	    {
 		ccsError ("Expected boolean value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -84,6 +92,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_STRING))
 	    {
 		ccsError ("Expected string value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -96,6 +106,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE ("as")))
 	    {
 		ccsError ("Expected array-of-string value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
