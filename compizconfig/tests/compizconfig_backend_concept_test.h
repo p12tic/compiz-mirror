@@ -67,14 +67,6 @@ using ::testing::NiceMock;
 MATCHER(IsTrue, "Is True") { if (arg) return true; else return false; }
 MATCHER(IsFalse, "Is False") { if (!arg) return true; else return false; }
 
-namespace
-{
-    bool ccsStringCmp (const CCSString &a, const CCSString &b)
-    {
-	return std::string (a.value) == b.value;
-    }
-}
-
 namespace cci = compiz::config::impl;
 namespace cc  = compiz::config;
 
