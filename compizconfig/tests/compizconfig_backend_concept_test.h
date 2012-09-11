@@ -50,6 +50,7 @@
 #include "compizconfig_ccs_item_in_list_matcher.h"
 #include "compizconfig_ccs_list_equality.h"
 #include "compizconfig_ccs_list_wrapper.h"
+#include "compizconfig_ccs_variant_types.h"
 
 using ::testing::Eq;
 using ::testing::IsNull;
@@ -69,16 +70,6 @@ MATCHER(IsFalse, "Is False") { if (!arg) return true; else return false; }
 
 namespace cci = compiz::config::impl;
 namespace cc  = compiz::config;
-
-typedef boost::variant <bool,
-			int,
-			float,
-			const char *,
-			CCSSettingColorValue,
-			CCSSettingKeyValue,
-			CCSSettingButtonValue,
-			unsigned int,
-			cci::CCSSettingValueListWrapper::Ptr> VariantTypes;
 
 class CCSSettingsConceptTestEnvironmentInterface
 {
