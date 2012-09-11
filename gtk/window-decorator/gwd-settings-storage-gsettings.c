@@ -125,7 +125,7 @@ gwd_settings_storage_gsettings_update_attach_modal_dialogs (GWDSettingsStorage *
     GWDSettingsStorageGSettings	       *storage = GWD_SETTINGS_STORAGE_GSETTINGS (settings);
     GWDSettingsStorageGSettingsPrivate *priv = GET_PRIVATE (storage);
 
-    if (!priv->gwd)
+    if (!priv->mutter)
 	return FALSE;
 
     return gwd_settings_writable_attach_modal_dialogs_changed (priv->writable,
