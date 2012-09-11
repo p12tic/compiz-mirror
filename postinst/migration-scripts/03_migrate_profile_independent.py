@@ -35,7 +35,7 @@ def migrate_gconf_to_gsettings():
 
     if not client:
         print "WARNING: no gconf client found. No transitionning will be done"
-        return
+        sys.exit(1)
 
     print "Will migrate profile independent keys"
     migrate_file('compiz-profile-independent-keys.convert')
