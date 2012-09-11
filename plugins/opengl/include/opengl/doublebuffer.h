@@ -23,7 +23,8 @@ class DoubleBuffer
 	typedef enum
 	{
 	    VSYNC,
-	    PERSISTENT_BACK_BUFFER,
+	    HAVE_PERSISTENT_BACK_BUFFER,
+	    NEED_PERSISTENT_BACK_BUFFER,
 	    _NSETTINGS
 	} Setting;
 

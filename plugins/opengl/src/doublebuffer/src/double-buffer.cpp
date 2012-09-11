@@ -41,7 +41,8 @@ namespace opengl
 DoubleBuffer::DoubleBuffer ()
 {
     setting[VSYNC] = true;
-    setting[PERSISTENT_BACK_BUFFER] = false;
+    setting[HAVE_PERSISTENT_BACK_BUFFER] = false;
+    setting[NEED_PERSISTENT_BACK_BUFFER] = false;
 }
 
 DoubleBuffer::~DoubleBuffer ()

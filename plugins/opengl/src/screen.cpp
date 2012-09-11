@@ -1762,7 +1762,8 @@ GLXDoubleBuffer::swap () const
 
     glXSwapBuffers (mDpy, mOutput);
 
-    if (!setting[PERSISTENT_BACK_BUFFER])
+    if (setting[NEED_PERSISTENT_BACK_BUFFER] &&
+        !setting[HAVE_PERSISTENT_BACK_BUFFER])
 	copyFrontToBack ();
 }
 
@@ -2023,13 +2024,15 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
+    bool alwaysSwap = optionGetAlwaysSwapBuffers ();
     bool fullscreen = useFbo ||
-                      optionGetAlwaysSwapBuffers () ||
+                      alwaysSwap ||
                       ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                        commonFrontbuffer);
 
     doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
-    doubleBuffer.set (DoubleBuffer::PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
     doubleBuffer.render (tmpRegion, fullscreen);
 
     lastMask = mask;
