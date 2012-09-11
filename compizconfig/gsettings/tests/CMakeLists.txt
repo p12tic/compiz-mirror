@@ -2,6 +2,8 @@ include (CompizGSettings)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 		     ${CMAKE_CURRENT_BINARY_DIR}
+		     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+		     ${CMAKE_CURRENT_SOURCE_DIR}/../testenvironments
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../src
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/tests
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig
@@ -9,19 +11,13 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_SOURCE_DIR}/tests/shared
                      ${CMAKE_SOURCE_DIR}/tests/shared/glib)
 
-pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig)
+pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig_internal)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../libcompizconfig/tests)
-
-add_library (compizconfig_ccs_gsettings_wrapper_mock STATIC
-	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.cpp
-	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_mock.h)
-
-add_library (compizconfig_ccs_gsettings_backend_mock STATIC
-	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.cpp
-	     ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_mock.h)
+link_directories (${CMAKE_CURRENT_BINARY_DIR}/../testenvironments)
+link_directories (${CMAKE_CURRENT_BINARY_DIR}/../mocks)
 
 add_executable (compizconfig_test_gsettings
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_tests.cpp
