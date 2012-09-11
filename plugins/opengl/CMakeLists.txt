@@ -7,8 +7,10 @@ set (INTERNAL_LIBRARIES
     compiz_opengl_fsregion
 )
 
-add_subdirectory (src/doublebuffer)
-add_subdirectory (src/fsregion)
+if (NOT COMPIZ_DISABLE_PLUGIN_OPENGL)
+    add_subdirectory (src/doublebuffer)
+    add_subdirectory (src/fsregion)
+endif (NOT COMPIZ_DISABLE_PLUGIN_OPENGL)
 
 if (USE_GLES)
     compiz_plugin(opengl PLUGINDEPS composite CFLAGSADD "-DUSE_GLES -std=c++0x" LIBRARIES ${OPENGLES2_LIBRARIES} ${INTERNAL_LIBRARIES} dl INCDIRS ${OPENGLES2_INCLUDE_DIR})
