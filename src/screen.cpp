@@ -3929,7 +3929,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
     {
 	CompWindow* const w(*i);
 	unsigned int valueMask = CWX | CWY;
-	XWindowChanges xwc;
+	XWindowChanges xwc= XWINDOWCHANGES_INIT;
 
 	if (w->onAllViewports ())
 	    continue;
