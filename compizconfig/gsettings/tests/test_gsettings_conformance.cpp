@@ -684,7 +684,6 @@ class CCSGSettingsBackendEnv :
 
 	    ccsFreeDynamicBackend (mBackend);
 
-	    ccsGSettingsWrapperUnref (mSettings);
 	    mStorage.reset ();
 
 	    g_variant_unref (pluginKeys);

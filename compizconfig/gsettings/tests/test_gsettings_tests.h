@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include <glib.h>
 #include <glib-object.h>
+#include <glib_gslice_off_env.h>
+#include <glib_gsettings_memory_backend_env.h>
 #include <gsettings-mock-schemas-config.h>
 
 using ::testing::TestWithParam;
@@ -52,9 +54,29 @@ class CCSGSettingsMemoryBackendTestingEnv :
 	}
 };
 
+class CCSGSettingsTestCommon :
+    public ::testing::Test
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    env.SetUpEnv ();
+	}
+
+	virtual void TearDown ()
+	{
+	    env.TearDownEnv ();
+	}
+
+    private:
+
+	CompizGLibGSliceOffEnv env;
+};
+
 class CCSGSettingsTest :
-    public CCSGSettingsTestingEnv,
-    public ::testing::TestWithParam <CCSGSettingsTeardownSetupInterface *>
+    public CCSGSettingsTestCommon,
+    public ::testing::WithParamInterface <CCSGSettingsTeardownSetupInterface *>
 {
     public:
 
@@ -65,13 +87,13 @@ class CCSGSettingsTest :
 
 	virtual void SetUp ()
 	{
-	    CCSGSettingsTestingEnv::SetUpEnv ();
+	    CCSGSettingsTestCommon::SetUp ();
 	    mFuncs->SetUp ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestingEnv::TearDownEnv ();
+	    CCSGSettingsTestCommon::TearDown ();
 	    mFuncs->TearDown ();
 	}
 
@@ -81,41 +103,40 @@ class CCSGSettingsTest :
 };
 
 class CCSGSettingsTestIndependent :
-    public CCSGSettingsTestingEnv,
-    public ::testing::Test
+    public CCSGSettingsTestCommon
 {
     public:
 
 	virtual void SetUp ()
 	{
+	    CCSGSettingsTestCommon::SetUp ();
 	    g_type_init ();
-
-	    CCSGSettingsTestingEnv::SetUpEnv ();
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsTestingEnv::TearDownEnv ();
+	    CCSGSettingsTestCommon::TearDown ();
 	}
 };
 
 class CCSGSettingsTestWithMemoryBackend :
-    public CCSGSettingsTestIndependent,
-    public CCSGSettingsMemoryBackendTestingEnv
+    public CCSGSettingsTestIndependent
 {
     public:
 
 	virtual void SetUp ()
 	{
 	    CCSGSettingsTestIndependent::SetUp ();
-	    CCSGSettingsMemoryBackendTestingEnv::SetUpEnv ();
+	    env.SetUpEnv (MOCK_PATH);
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSGSettingsMemoryBackendTestingEnv::TearDownEnv ();
-	    CCSGSettingsTestIndependent::TearDown ();
+	    env.TearDownEnv ();
 	}
+    private:
+
+	CompizGLibGSettingsMemoryBackendTestingEnv env;
 };
 
 #endif

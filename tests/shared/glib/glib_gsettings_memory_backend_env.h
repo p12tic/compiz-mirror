@@ -20,10 +20,26 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZCONFIG_GSETTINGS_SETTINGS_TEST_FIXTURE_H
-#define _COMPIZCONFIG_GSETTINGS_SETTINGS_TEST_FIXTURE_H
+#ifndef _COMPIZ_GLIB_GSETTINGS_MEMORY_BACKEND_TEST_ENV_H
+#define _COMPIZ_GLIB_GSETTINGS_MEMORY_BACKEND_TEST_ENV_H
 
-#include <gtest/gtest.h>
-#include <glib_gsettings_memory_backend_env.h>
+#include <glib.h>
+
+class CompizGLibGSettingsMemoryBackendTestingEnv
+{
+    public:
+
+	virtual void SetUpEnv (const std::string &MOCK_PATH)
+	{
+	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
+	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+	}
+
+	virtual void TearDownEnv ()
+	{
+	    g_unsetenv ("GSETTINGS_BACKEND");
+	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
+	}
+};
 
 #endif

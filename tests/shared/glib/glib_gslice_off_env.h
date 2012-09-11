@@ -20,10 +20,24 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZCONFIG_GSETTINGS_SETTINGS_TEST_FIXTURE_H
-#define _COMPIZCONFIG_GSETTINGS_SETTINGS_TEST_FIXTURE_H
+#ifndef _COMPIZ_GLIB_GLSICE_OFF_ENV_H
+#define _COMPIZ_GLIB_GSLICE_OFF_ENV_H
 
-#include <gtest/gtest.h>
-#include <glib_gsettings_memory_backend_env.h>
+#include <glib.h>
+
+class CompizGLibGSliceOffEnv
+{
+    public:
+
+	virtual void SetUpEnv ()
+	{
+	    g_setenv ("G_SLICE", "always-malloc", 1);
+	}
+
+	virtual void TearDownEnv ()
+	{
+	    g_unsetenv ("G_SLICE");
+	}
+};
 
 #endif

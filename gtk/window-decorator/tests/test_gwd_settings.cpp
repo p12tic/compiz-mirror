@@ -34,6 +34,9 @@
 
 #include <gio/gio.h>
 
+#include <glib_gslice_off_env.h>
+#include <glib_gsettings_memory_backend_env.h>
+
 #include "compiz_gwd_tests.h"
 
 #include "gwd-settings-interface.h"
@@ -252,13 +255,16 @@ class GWDSettingsTestCommon :
     public:
 	virtual void SetUp ()
 	{
-	    g_setenv ("G_SLICE", "always-malloc", TRUE);
+	    env.SetUpEnv ();
 	    g_type_init ();
 	}
 	virtual void TearDown ()
 	{
-	    g_unsetenv ("G_SLICE");
+	    env.TearDownEnv ();
 	}
+    private:
+
+	CompizGLibGSliceOffEnv env;
 };
 
 class GWDMockSettingsWritableTest :
@@ -1071,14 +1077,14 @@ namespace
 }
 
 class GWDSettingsTestClickActions :
-    public ::testing::TestWithParam <GWDTitlebarActionInfo>
+    public GWDSettingsTestCommon,
+    public ::testing::WithParamInterface <GWDTitlebarActionInfo>
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    g_setenv ("G_SLICE", "always-malloc", TRUE);
-	    g_type_init ();
+	    GWDSettingsTestCommon::SetUp ();
 	    mGMockNotified.reset (new GWDMockSettingsNotifiedGMock ());
 	    mMockNotified.reset (gwd_mock_settings_notified_new (mGMockNotified.get ()),
 				 boost::bind (gwd_settings_notified_do_nothing, _1));
@@ -1093,7 +1099,7 @@ class GWDSettingsTestClickActions :
 	    EXPECT_CALL (*mGMockNotified, dispose ());
 	    EXPECT_CALL (*mGMockNotified, finalize ());
 
-	    g_unsetenv ("G_SLICE");
+	    GWDSettingsTestCommon::TearDown ();
 	}
 
     protected:
@@ -1202,14 +1208,14 @@ class GWDSettingsStorageFactoryWrapperInterface
 };
 
 class GWDSettingsTestStorageUpdates :
-    public ::testing::TestWithParam <GWDSettingsStorageFactoryWrapperInterface::Ptr>
+    public GWDSettingsTestCommon,
+    public ::testing::WithParamInterface <GWDSettingsStorageFactoryWrapperInterface::Ptr>
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    g_setenv ("G_SLICE", "always-malloc", TRUE);
-	    g_type_init ();
+	    GWDSettingsTestCommon::SetUp ();
 	    mSettingsMock.reset (new GWDMockSettingsWritableGMock ());
 	    mSettings.reset (gwd_mock_settings_writable_new (mSettingsMock.get ()),
 			     boost::bind (gwd_settings_writable_unref, _1));
@@ -1223,7 +1229,7 @@ class GWDSettingsTestStorageUpdates :
 	    EXPECT_CALL (*mSettingsMock, finalize ());
 
 	    GetParam ()->TearDown ();
-	    g_unsetenv ("G_SLICE");
+	    GWDSettingsTestCommon::TearDown ();
 	}
 
     protected:
@@ -1490,20 +1496,8 @@ INSTANTIATE_TEST_CASE_P (MockStorageUpdates, GWDSettingsTestStorageUpdates,
 
 #ifdef USE_GSETTINGS
 class GWDSettingsStorageGSettingsTest :
-    public ::testing::Test
+    public GWDSettingsTestCommon
 {
-    public:
-
-	void SetUp ()
-	{
-	    g_setenv ("G_SLICE", "always-malloc", TRUE);
-	    g_type_init ();
-	}
-
-	void TearDown ()
-	{
-	    g_unsetenv ("G_SLICE");
-	}
 };
 
 TEST_F (GWDSettingsStorageGSettingsTest, TestNoDeathOnConnectingSignalToNULLObject)
@@ -1527,8 +1521,8 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 
 	virtual void SetUp (GWDSettingsWritable *writable)
 	{
-	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+	    gsliceEnv.SetUpEnv ();
+	    gsettingsEnv.SetUpEnv (MOCK_PATH);
 
 	    /* We do not need to keep a reference to these */
 	    mGWDSettings = gwd_get_org_compiz_gwd_settings ();
@@ -1635,8 +1629,8 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 	    mGWDSettings = NULL;
 	    mMutterSettings = NULL;
 	    mDesktopSettings = NULL;
-	    g_unsetenv ("GSETTINGS_BACKEND");
-	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
+	    gsettingsEnv.TearDownEnv ();
+	    gsliceEnv.TearDownEnv ();
 	}
 
     private:
@@ -1645,6 +1639,8 @@ class GWDSettingsStorageGSettingsFactoryWrapper :
 	GSettings			       *mMutterSettings;
 	GSettings			       *mDesktopSettings;
 	boost::shared_ptr <GWDSettingsStorage> mStorage;
+	CompizGLibGSliceOffEnv                 gsliceEnv;
+	CompizGLibGSettingsMemoryBackendTestingEnv gsettingsEnv;
 };
 
 INSTANTIATE_TEST_CASE_P (GSettingsStorageUpdates, GWDSettingsTestStorageUpdates,
