@@ -185,292 +185,403 @@ ccsMockIntegrationBackendFree (CCSIntegration *integration)
     (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
 }
 
+typedef boost::shared_ptr <GVariant> GVariantShared;
+
 class CCSGSettingsStorageEnv :
     public CCSSettingsConceptTestEnvironmentInterface,
     public CCSGSettingsMemoryBackendTestingEnv
 {
     public:
 
-	typedef boost::shared_ptr <GVariant> GVariantShared;
-
-	virtual void SetUp ()
-	{
-	    SetUpEnv ();
-	}
-
-	virtual void TearDown ()
-	{
-	    TearDownEnv ();
-	}
+	virtual void SetUp ();
+	virtual void TearDown ();
 
 	CCSGSettingsStorageEnv (CCSGSettingsWrapper *settings,
-				const std::string   &profileName) :
-	    mSettings (settings),
-	    profileName (profileName)
-	{
-	}
+				const std::string   &profileName);
 
-	void WriteBoolAtKey (const std::string &plugin,
-			     const std::string &key,
-			     const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteIntegerAtKey (const std::string &plugin,
-				const std::string &key,
-				const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeIntToVariant (boost::get <int> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteBoolAtKey (const std::string  &plugin,
+			     const std::string  &key,
+			     const VariantTypes &value);
+	void WriteIntegerAtKey (const std::string  &plugin,
+				const std::string  &key,
+				const VariantTypes &value);
 
 	void WriteFloatAtKey (const std::string &plugin,
-				      const std::string &key,
-				      const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeFloatToVariant (boost::get <float> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+			      const std::string  &key,
+			      const VariantTypes  &value);
 
 	void WriteStringAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeStringToVariant (boost::get <const char *> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+			       const std::string  &key,
+			       const VariantTypes  &value);
 
-	void WriteColorAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeColorToVariant (boost::get <CCSSettingColorValue> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteColorAtKey (const std::string  &plugin,
+			      const std::string  &key,
+			      const VariantTypes &value);
 
-	void WriteKeyAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeKeyToVariant (boost::get <CCSSettingKeyValue> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteKeyAtKey (const std::string  &plugin,
+			    const std::string  &key,
+			    const VariantTypes &value);
 
 	void WriteButtonAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeButtonToVariant (boost::get <CCSSettingButtonValue> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+			       const std::string &key,
+			       const VariantTypes &value);
 
-	void WriteEdgeAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeEdgeToVariant (boost::get <unsigned int> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteEdgeAtKey (const std::string  &plugin,
+			     const std::string  &key,
+			     const VariantTypes &value);
 
-	void WriteMatchAtKey (const std::string &plugin,
-				      const std::string &key,
-				      const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeStringToVariant (boost::get <const char *> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteMatchAtKey (const std::string  &plugin,
+			      const std::string  &key,
+			      const VariantTypes &value);
 
-	void WriteBellAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteBellAtKey (const std::string  &plugin,
+			     const std::string  &key,
+			     const VariantTypes &value);
 
-	void WriteListAtKey (const std::string &plugin,
-				     const std::string &key,
-				     const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-
-	    const cci::CCSSettingValueListWrapper::Ptr &lw (boost::get <cci::CCSSettingValueListWrapper::Ptr> (value));
-
-	    if (writeListValue (*lw, lw->type (), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
+	void WriteListAtKey (const std::string  &plugin,
+			     const std::string  &key,
+			     const VariantTypes &value);
 
 	Bool ReadBoolAtKey (const std::string &plugin,
-			    const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeBool));
-	    return readBoolFromVariant (variant.get ());
-	}
+			    const std::string &key);
 
 	int ReadIntegerAtKey (const std::string &plugin,
-					const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeInt));
-	    return readIntFromVariant (variant.get ());
-	}
+			      const std::string &key);
 
 	float ReadFloatAtKey (const std::string &plugin,
-				      const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeFloat));
-	    return readFloatFromVariant (variant.get ());
-	}
+			      const std::string &key);
 
 	const char * ReadStringAtKey (const std::string &plugin,
-				      const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeString));
-	    return readStringFromVariant (variant.get ());
-	}
+				      const std::string &key);
 
 	CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    Bool success = FALSE;
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeColor));
-	    CCSSettingColorValue value = readColorFromVariant (variant.get (), &success);
-	    EXPECT_TRUE (success);
-	    return value;
-	}
+					     const std::string &key);
 
 	CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    Bool success = FALSE;
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeKey));
-	    CCSSettingKeyValue value = readKeyFromVariant (variant.get (), &success);
-	    EXPECT_TRUE (success);
-	    return value;
-	}
-
+					 const std::string &key);
 	CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    Bool success = FALSE;
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeButton));
-	    CCSSettingButtonValue value = readButtonFromVariant (variant.get (), &success);
-	    EXPECT_TRUE (success);
-	    return value;
-	}
+					       const std::string &key);
 
 	unsigned int ReadEdgeAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeEdge));
-	    return readEdgeFromVariant (variant.get ());
-	}
+				    const std::string &key);
 
 	const char * ReadMatchAtKey (const std::string &plugin,
-				     const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeMatch));
-	    return readStringFromVariant (variant.get ());
-	}
-
+				     const std::string &key);
 	Bool ReadBellAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeBell));
-	    return readBoolFromVariant (variant.get ());
-	}
+			    const std::string &key);
 
 	CCSSettingValueList ReadListAtKey (const std::string &plugin,
 					   const std::string &key,
-					   CCSSetting        *setting)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeList));
-	    return readListValue (variant.get (), setting, &ccsDefaultObjectAllocator);
-	}
+					   CCSSetting        *setting);
 
     private:
 
 	GVariantShared
-	ReadVariantAtKeyToShared (const std::string   &plugin,
-				  const std::string   &key,
-				  CCSSettingType	  type)
-	{
-	    CharacterWrapper translatedKey (translateKeyForGSettings (key.c_str ()));
-	    CharacterWrapper pluginPath (makeCompizPluginPath (profileName.c_str (),
-							       plugin.c_str ()));
-
-	    GVariant *rawVariant = getVariantAtKey (mSettings,
-						    translatedKey,
-						    pluginPath,
-						    type);
-
-	    GVariantShared shared (AutoDestroy (rawVariant, g_variant_unref));
-
-
-
-	    return shared;
-	}
+	ReadVariantAtKeyToShared (const std::string &plugin,
+				  const std::string &key,
+				  CCSSettingType    type);
 
 	CCSGSettingsWrapper  *mSettings;
 	std::string	     profileName;
 
 
 };
+
+void
+CCSGSettingsStorageEnv::WriteBoolAtKey (const std::string  &plugin,
+					const std::string  &key,
+					const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteIntegerAtKey (const std::string  &plugin,
+					   const std::string  &key,
+					   const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeIntToVariant (boost::get <int> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteFloatAtKey (const std::string  &plugin,
+					 const std::string  &key,
+					 const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeFloatToVariant (boost::get <float> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteStringAtKey (const std::string  &plugin,
+					  const std::string  &key,
+					  const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeStringToVariant (boost::get <const char *> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteColorAtKey (const std::string  &plugin,
+					 const std::string  &key,
+					 const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeColorToVariant (boost::get <CCSSettingColorValue> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteKeyAtKey (const std::string  &plugin,
+				       const std::string  &key,
+				       const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeKeyToVariant (boost::get <CCSSettingKeyValue> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteButtonAtKey (const std::string  &plugin,
+					  const std::string  &key,
+					  const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeButtonToVariant (boost::get <CCSSettingButtonValue> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteEdgeAtKey (const std::string  &plugin,
+					const std::string  &key,
+					const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeEdgeToVariant (boost::get <unsigned int> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteMatchAtKey (const std::string  &plugin,
+					const std::string  &key,
+					const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeStringToVariant (boost::get <const char *> (value), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteBellAtKey (const std::string  &plugin,
+					const std::string  &key,
+					const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+void
+CCSGSettingsStorageEnv::WriteListAtKey (const std::string  &plugin,
+					const std::string  &key,
+					const VariantTypes &value)
+{
+    GVariant *variant = NULL;
+
+    const cci::CCSSettingValueListWrapper::Ptr &lw (boost::get <cci::CCSSettingValueListWrapper::Ptr> (value));
+
+    if (writeListValue (*lw, lw->type (), &variant))
+	writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
+    else
+	throw std::exception ();
+}
+
+Bool
+CCSGSettingsStorageEnv::ReadBoolAtKey (const std::string &plugin,
+				       const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeBool));
+    return readBoolFromVariant (variant.get ());
+}
+
+
+int
+CCSGSettingsStorageEnv::ReadIntegerAtKey (const std::string &plugin,
+					  const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeInt));
+    return readIntFromVariant (variant.get ());
+}
+
+float
+CCSGSettingsStorageEnv::ReadFloatAtKey (const std::string &plugin,
+					const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeFloat));
+    return readFloatFromVariant (variant.get ());
+}
+
+const char *
+CCSGSettingsStorageEnv::ReadStringAtKey (const std::string &plugin,
+					 const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeString));
+    return readStringFromVariant (variant.get ());
+}
+
+CCSSettingColorValue
+CCSGSettingsStorageEnv::ReadColorAtKey (const std::string &plugin,
+					const std::string &key)
+{
+    Bool success = FALSE;
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeColor));
+    CCSSettingColorValue value = readColorFromVariant (variant.get (), &success);
+    EXPECT_TRUE (success);
+    return value;
+}
+
+CCSSettingKeyValue
+CCSGSettingsStorageEnv::ReadKeyAtKey (const std::string &plugin,
+				      const std::string &key)
+{
+    Bool success = FALSE;
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeKey));
+    CCSSettingKeyValue value = readKeyFromVariant (variant.get (), &success);
+    EXPECT_TRUE (success);
+    return value;
+}
+
+CCSSettingButtonValue
+CCSGSettingsStorageEnv::ReadButtonAtKey (const std::string &plugin,
+					  const std::string &key)
+{
+    Bool success = FALSE;
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeButton));
+    CCSSettingButtonValue value = readButtonFromVariant (variant.get (), &success);
+    EXPECT_TRUE (success);
+    return value;
+}
+
+unsigned int
+CCSGSettingsStorageEnv::ReadEdgeAtKey (const std::string &plugin,
+					  const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeEdge));
+    return readEdgeFromVariant (variant.get ());
+}
+
+const char *
+CCSGSettingsStorageEnv::ReadMatchAtKey (const std::string &plugin,
+					const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeMatch));
+    return readStringFromVariant (variant.get ());
+}
+
+Bool
+CCSGSettingsStorageEnv::ReadBellAtKey (const std::string &plugin,
+				       const std::string &key)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeBell));
+    return readBoolFromVariant (variant.get ());
+}
+
+CCSSettingValueList
+CCSGSettingsStorageEnv::ReadListAtKey (const std::string &plugin,
+				       const std::string &key,
+				       CCSSetting        *setting)
+{
+    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
+						      key,
+						      TypeList));
+    return readListValue (variant.get (), setting, &ccsDefaultObjectAllocator);
+}
+
+GVariantShared
+CCSGSettingsStorageEnv::ReadVariantAtKeyToShared (const std::string &plugin,
+						  const std::string &key,
+						  CCSSettingType    type)
+{
+    CharacterWrapper translatedKey (translateKeyForGSettings (key.c_str ()));
+    CharacterWrapper pluginPath (makeCompizPluginPath (profileName.c_str (),
+						       plugin.c_str ()));
+
+    GVariant *rawVariant = getVariantAtKey (mSettings,
+					    translatedKey,
+					    pluginPath,
+					    type);
+
+    GVariantShared shared (AutoDestroy (rawVariant, g_variant_unref));
+
+
+
+    return shared;
+}
+
+void
+CCSGSettingsStorageEnv::SetUp ()
+{
+    SetUpEnv ();
+}
+
+void
+CCSGSettingsStorageEnv::TearDown ()
+{
+    TearDownEnv ();
+}
+
+CCSGSettingsStorageEnv::CCSGSettingsStorageEnv (CCSGSettingsWrapper *settings,
+						const std::string   &profileName) :
+    mSettings (settings),
+    profileName (profileName)
+{
+}
 
 class CCSGSettingsBackendEnv :
     public CCSBackendConceptTestEnvironmentInterface,
