@@ -1,6 +1,8 @@
 /*
  * Compiz configuration system library
  *
+ * ccs_text_file.h
+ *
  * Copyright (C) 2012 Canonical Ltd.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,33 +22,27 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
-#define _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
+#ifndef CCS_TEXT_FILE_H
+#define CCS_TEXT_FILE_H
 
-#include "ccs-defs.h"
+#include <ccs-defs.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSSettingList * CCSSettingList;
+typedef struct _CCSTextFile CCSTextFile;
+typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
 
-Bool
-ccsUpgradeGetDomainNumAndProfile (const char   *name,
-				  char         **domain,
-				  unsigned int *num,
-				  char         **profile);
+typedef enum _CCSTextFileOpenMode
+{
+    ReadOnly = 1,
+    ReadWrite = 2,
+    ReadWriteCreate = 3
+} CCSTextFileOpenMode;
 
-int
-ccsUpgradeNameFilter (const char *name);
-
-void
-ccsUpgradeClearValues (CCSSettingList clearSettings);
-
-void
-ccsUpgradeAddValues (CCSSettingList addSettings);
-
-void
-ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
-			 CCSSettingList replaceToValueSettings);
+CCSTextFile *
+ccsUnixTextFileNew (const char		*path,
+		    CCSTextFileOpenMode openMode,
+		    CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS
 
