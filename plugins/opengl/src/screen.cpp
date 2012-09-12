@@ -1888,6 +1888,11 @@ EGLDoubleBuffer::fallbackBlit (const CompRegion &region) const
 {
 }
 
+void
+EGLDoubleBuffer::copyFrontToBack() const
+{
+}
+
 #endif
 
 void

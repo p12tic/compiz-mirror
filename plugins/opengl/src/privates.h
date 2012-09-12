@@ -97,6 +97,7 @@ class EGLDoubleBuffer :
 	void blit (const CompRegion &region) const;
 	bool fallbackBlitAvailable () const;
 	void fallbackBlit (const CompRegion &region) const;
+	void copyFrontToBack () const;
 
     private:
 
