@@ -62,7 +62,6 @@ TEST_F(DoubleBufferTest, SwapWithoutFBO)
     EXPECT_CALL (db, copyFrontToBack ()).Times (1);
 
     db.render (blitRegion, true);
-    db.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, false);
 }
 
 TEST_F(DoubleBufferTest, BlitWithoutFBO)
