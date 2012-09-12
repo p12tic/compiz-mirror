@@ -64,6 +64,8 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
   * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
     transitional package for migrations
   * Add -DUSE_GCONF=OFF to debian/rules
+  * debian/patches/100_expo_layout.patch
+    - Disable temporarily until it really works
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 10 Sep 2012 15:27:32 +0300
 
