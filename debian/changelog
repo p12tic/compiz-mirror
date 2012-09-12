@@ -66,6 +66,8 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
   * Add -DUSE_GCONF=OFF to debian/rules
   * debian/patches/100_expo_layout.patch
     - Disable temporarily until it really works
+  * debian/libdecoration0.symbols
+    - Add decor_shadow_options_cmp
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 10 Sep 2012 15:27:32 +0300
 
