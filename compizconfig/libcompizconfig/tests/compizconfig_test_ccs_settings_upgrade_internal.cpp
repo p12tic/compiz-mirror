@@ -38,6 +38,7 @@
 #include "ccs_settings_upgrade_internal.h"
 #include "gtest_shared_characterwrapper.h"
 #include "gtest_shared_autodestroy.h"
+#include "gtest_unspecified_bool_type_matcher.h"
 #include "compizconfig_ccs_list_equality.h"
 #include "compizconfig_ccs_item_in_list_matcher.h"
 #include "compizconfig_ccs_list_wrapper.h"
@@ -73,9 +74,6 @@ namespace
     static const unsigned int CCS_SETTINGS_UPGRADE_TEST_CORRECT_NUM = 1;
 }
 
-MATCHER(BoolTrue, "Bool True") { if (arg) return true; else return false; }
-MATCHER(BoolFalse, "Bool False") { if (!arg) return true; else return false; }
-
 TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
 {
     char *profileName = NULL;
@@ -86,7 +84,7 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValues)
     EXPECT_THAT (ccsUpgradeGetDomainNumAndProfile (CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME.c_str (),
 						   &domainName,
 						   &num,
-						   &profileName), BoolTrue ());
+						   &profileName), IsTrue ());
 
     CharacterWrapper profileNameC (profileName);
     CharacterWrapper domainNameC (domainName);
@@ -106,7 +104,7 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfIn
     EXPECT_THAT (ccsUpgradeGetDomainNumAndProfile (CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME.c_str (),
 						   &domainName,
 						   &num,
-						   &profileName), BoolFalse ());
+						   &profileName), IsFalse ());
 
     EXPECT_THAT (profileName, IsNull ());
     EXPECT_THAT (domainName, IsNull ());
@@ -114,7 +112,7 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfIn
     EXPECT_THAT (ccsUpgradeGetDomainNumAndProfile (CCS_SETTINGS_UPGRADE_TEST_VERY_INCORRECT_FILENAME.c_str (),
 						   &domainName,
 						   &num,
-						   &profileName), BoolFalse ());
+						   &profileName), IsFalse ());
 
     EXPECT_THAT (profileName, IsNull ());
     EXPECT_THAT (domainName, IsNull ());
@@ -122,13 +120,13 @@ TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndSetValuesReturnsFalseIfIn
 
 TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnTrueForUpgradeFileName)
 {
-    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME.c_str ()), BoolTrue ());
+    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_CORRECT_FILENAME.c_str ()), IsTrue ());
 }
 
 TEST (CCSSettingsUpgradeInternalTest, TestDetokenizeAndReturnFalseForNoUpgradeFileName)
 {
-    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME.c_str ()), BoolFalse ());
-    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_VERY_INCORRECT_FILENAME.c_str ()), BoolFalse ());
+    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_INCORRECT_FILENAME.c_str ()), IsFalse ());
+    EXPECT_THAT (ccsUpgradeNameFilter (CCS_SETTINGS_UPGRADE_TEST_VERY_INCORRECT_FILENAME.c_str ()), IsFalse ());
 }
 
 namespace
@@ -362,7 +360,7 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListType)
     EXPECT_CALL (Mock (resetSettingIdentifier), getValue ()).WillOnce (Return (&valueResetIdentifier));
     EXPECT_CALL (Mock (settingToReset), getValue ()).WillOnce (Return (&valueToReset));
 
-    EXPECT_CALL (Mock (settingToReset), resetToDefault (BoolTrue ()));
+    EXPECT_CALL (Mock (settingToReset), resetToDefault (IsTrue ()));
 
     ccsUpgradeClearValues (*list);
 }
@@ -465,7 +463,7 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListNonListType)
 
     EXPECT_CALL (Mock (settingToBeChanged), setValue (Pointee (SettingValueMatch (valueResetIdentifier,
 										  TypeInt,
-										  &info)), BoolTrue ()));
+										  &info)), IsTrue ()));
 
     ccsUpgradeAddValues (*list);
 }
@@ -547,7 +545,7 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestReplaceValuesInListNonListTyp
 
     EXPECT_CALL (Mock (settingToBeChanged), setValue (Pointee (SettingValueMatch (toSettingIdentifierValue,
 										  TypeInt,
-										  &info)), BoolTrue ()));
+										  &info)), IsTrue ()));
 
     ccsUpgradeReplaceValues (*replaceFromValueSettings,
 			     *replaceToValueSettings);
@@ -712,7 +710,7 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListAppendsValuesT
 
     EXPECT_CALL (Mock (settingToAppendValuesTo), setList (
 		     IsSettingValueInSettingValueCCSList (
-			    SettingValueMatch (appendedStringInListValue, TypeString, &info)), BoolTrue ()));
+			    SettingValueMatch (appendedStringInListValue, TypeString, &info)), IsTrue ()));
 
     ccsUpgradeAddValues (*list);
 }
@@ -777,7 +775,7 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListRemovesValue
     EXPECT_CALL (Mock (settingToRemoveValuesFrom), setList (
 		     Not (
 			 IsSettingValueInSettingValueCCSList (
-			    SettingValueMatch (removedStringInListValue, TypeString, &info))), BoolTrue ()));
+			    SettingValueMatch (removedStringInListValue, TypeString, &info))), IsTrue ()));
 
     ccsUpgradeClearValues (*list);
 }

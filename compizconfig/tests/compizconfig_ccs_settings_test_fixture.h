@@ -22,9 +22,20 @@
  */
 #ifndef _COMPIZCONFIG_CCS_SETTINGS_TEST_FIXTURE_H
 #define _COMPIZCONFIG_CCS_SETTINGS_TEST_FIXTURE_H
-
-#include <ccs.h>
+#include <string>
+#include <ccs-defs.h>
 #include "compizconfig_ccs_variant_types.h"
+
+typedef enum _CCSSettingType CCSSettingType;
+typedef struct _CCSSetting   CCSSetting;
+
+namespace compizconfig
+{
+    namespace test
+    {
+	Bool boolToBool (bool v);
+    }
+}
 
 class CCSSettingsConceptTestEnvironmentInterface
 {

@@ -1,6 +1,4 @@
 /*
- * Compiz configuration system library
- *
  * Copyright (C) 2012 Canonical Ltd.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,24 +18,13 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZ_GLIB_GSLICE_OFF_ENV_H
-#define _COMPIZ_GLIB_GSLICE_OFF_ENV_H
+#ifndef _COMPIZ_GTEST_UNSPECIFIED_BOOL_TYPE_MATCHER_H
+#define _COMPIZ_GTEST_UNSPECIFIED_BOOL_TYPE_MATCHER_H
 
-#include <glib.h>
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
-class CompizGLibGSliceOffEnv
-{
-    public:
-
-	virtual void SetUpEnv ()
-	{
-	    g_setenv ("G_SLICE", "always-malloc", 1);
-	}
-
-	virtual void TearDownEnv ()
-	{
-	    g_unsetenv ("G_SLICE");
-	}
-};
+MATCHER (IsTrue, "Is True") { if (arg) return true; else return false; }
+MATCHER (IsFalse, "Is False") { if (!arg) return true; else return false; }
 
 #endif

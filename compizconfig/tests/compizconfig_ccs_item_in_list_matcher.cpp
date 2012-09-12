@@ -20,24 +20,17 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZ_GLIB_GSLICE_OFF_ENV_H
-#define _COMPIZ_GLIB_GSLICE_OFF_ENV_H
 
-#include <glib.h>
+#include <compizconfig_ccs_item_in_list_matcher.h>
 
-class CompizGLibGSliceOffEnv
+Matcher <CCSStringList>
+IsStringItemInStringCCSList (const Matcher <CCSString> &matcher)
 {
-    public:
+    return IsItemInCCSList <CCSString, CCSStringList> (matcher);
+}
 
-	virtual void SetUpEnv ()
-	{
-	    g_setenv ("G_SLICE", "always-malloc", 1);
-	}
-
-	virtual void TearDownEnv ()
-	{
-	    g_unsetenv ("G_SLICE");
-	}
-};
-
-#endif
+Matcher <CCSSettingValueList>
+IsSettingValueInSettingValueCCSList (const Matcher <CCSSettingValue> &matcher)
+{
+    return IsItemInCCSList <CCSSettingValue, CCSSettingValueList> (matcher);
+}

@@ -37,6 +37,8 @@
 #include <glib_gslice_off_env.h>
 #include <glib_gsettings_memory_backend_env.h>
 
+#include <gtest_unspecified_bool_type_matcher.h>
+
 #include "compiz_gwd_tests.h"
 
 #include "gwd-settings-interface.h"
@@ -174,22 +176,6 @@ class GObjectPropertyMatcher :
 	const ValueCType &mValue;
 	typename GValueCmp<ValueCType>::GetFunc mGetFunc;
 };
-
-MATCHER (GBooleanTrue, "gboolean TRUE")
-{
-    if (arg)
-	return true;
-    else
-	return false;
-}
-
-MATCHER (GBooleanFalse, "gboolean FALSE")
-{
-    if (!arg)
-	return true;
-    else
-	return false;
-}
 
 namespace testing_values
 {
@@ -378,29 +364,29 @@ TEST_F(GWDMockSettingsWritableTest, TestMock)
 								testing_values::INACTIVE_SHADOW_OPACITY_VALUE,
 								testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
 								testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
-								testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ()), GBooleanTrue ());
-    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (writableMock.get (), testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
-    EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (writableMock.get (), testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), GBooleanTrue ());
-    EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (writableMock.get (), testing_values::ATTACH_MODAL_DIALOGS_VALUE), GBooleanTrue ());
-    EXPECT_THAT (gwd_settings_writable_blur_changed (writableMock.get (), testing_values::BLUR_TYPE_TITLEBAR_VALUE.c_str ()), GBooleanTrue ());
+								testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ()), IsTrue ());
+    EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (writableMock.get (), testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
+    EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (writableMock.get (), testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), IsTrue ());
+    EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (writableMock.get (), testing_values::ATTACH_MODAL_DIALOGS_VALUE), IsTrue ());
+    EXPECT_THAT (gwd_settings_writable_blur_changed (writableMock.get (), testing_values::BLUR_TYPE_TITLEBAR_VALUE.c_str ()), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (writableMock.get (),
 							       testing_values::USE_METACITY_THEME_VALUE,
-							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanTrue ());
+							       testing_values::METACITY_THEME_VALUE.c_str ()), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_opacity_changed (writableMock.get (),
 							testing_values::ACTIVE_OPACITY_VALUE,
 							testing_values::INACTIVE_OPACITY_VALUE,
 							testing_values::ACTIVE_SHADE_OPACITY_VALUE,
-							testing_values::INACTIVE_SHADE_OPACITY_VALUE), GBooleanTrue ());
+							testing_values::INACTIVE_SHADE_OPACITY_VALUE), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_button_layout_changed (writableMock.get (),
-							      testing_values::BUTTON_LAYOUT_VALUE.c_str ()), GBooleanTrue ());
+							      testing_values::BUTTON_LAYOUT_VALUE.c_str ()), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_font_changed (writableMock.get (),
 						     testing_values::USE_SYSTEM_FONT_VALUE,
-						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_titlebar_actions_changed (writableMock.get (),
 								 testing_values::TITLEBAR_ACTION_MAX.c_str (),
 								 testing_values::TITLEBAR_ACTION_MENU.c_str (),
 								 testing_values::TITLEBAR_ACTION_LOWER.c_str (),
-								 testing_values::TITLEBAR_ACTION_SHADE.c_str ()), GBooleanTrue ());
+								 testing_values::TITLEBAR_ACTION_SHADE.c_str ()), IsTrue ());
 }
 
 class GWDMockSettingsTest :
@@ -610,7 +596,7 @@ TEST_F(GWDSettingsTest, TestFreezeUpdatesNoUpdates)
 {
     gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+							     testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
 }
 
 /* We're just using use_tooltips here as an example */
@@ -618,7 +604,7 @@ TEST_F(GWDSettingsTest, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdates)
 {
     gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+							     testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
 
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
@@ -629,11 +615,11 @@ TEST_F(GWDSettingsTest, TestFreezeUpdatesNoUpdatesThawUpdatesAllUpdatesNoDupes)
 {
     gwd_settings_writable_freeze_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+							     testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     !testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+							     !testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+							     testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
 
     EXPECT_CALL (*mGMockNotified, updateDecorations ()).Times (1);
     gwd_settings_writable_thaw_updates (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()));
@@ -652,7 +638,7 @@ TEST_F(GWDSettingsTest, TestShadowPropertyChanged)
 								testing_values::INACTIVE_SHADOW_RADIUS_VALUE,
 								testing_values::INACTIVE_SHADOW_OFFSET_X_VALUE,
 								testing_values::INACTIVE_SHADOW_OFFSET_Y_VALUE,
-								testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ()), GBooleanTrue ());
+								testing_values::INACTIVE_SHADOW_COLOR_STR_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue activeShadowValue (G_TYPE_POINTER);
     AutoUnsetGValue inactiveShadowValue (G_TYPE_POINTER);
@@ -706,14 +692,14 @@ TEST_F(GWDSettingsTest, TestShadowPropertyChangedIsDefault)
 								INACTIVE_SHADOW_OPACITY_DEFAULT,
 								INACTIVE_SHADOW_OFFSET_X_DEFAULT,
 								INACTIVE_SHADOW_OFFSET_Y_DEFAULT,
-								INACTIVE_SHADOW_COLOR_DEFAULT), GBooleanFalse ());
+								INACTIVE_SHADOW_COLOR_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestUseTooltipsChanged)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     testing_values::USE_TOOLTIPS_VALUE), GBooleanTrue ());
+							     testing_values::USE_TOOLTIPS_VALUE), IsTrue ());
 
     AutoUnsetGValue useTooltipsValue (G_TYPE_BOOLEAN);
     GValue &useTooltipsGValue = useTooltipsValue;
@@ -729,14 +715,14 @@ TEST_F(GWDSettingsTest, TestUseTooltipsChanged)
 TEST_F(GWDSettingsTest, TestUseTooltipsChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_use_tooltips_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							     USE_TOOLTIPS_DEFAULT), GBooleanFalse ());
+							     USE_TOOLTIPS_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-								       testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), GBooleanTrue ());
+								       testing_values::DRAGGABLE_BORDER_WIDTH_VALUE), IsTrue ());
 
     AutoUnsetGValue draggableBorderWidthValue (G_TYPE_INT);
     GValue &draggableBorderWidthGValue = draggableBorderWidthValue;
@@ -752,14 +738,14 @@ TEST_F(GWDSettingsTest, TestDraggableBorderWidthChanged)
 TEST_F(GWDSettingsTest, TestDraggableBorderWidthChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_draggable_border_width_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-								       DRAGGABLE_BORDER_WIDTH_DEFAULT), GBooleanFalse ());
+								       DRAGGABLE_BORDER_WIDTH_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-								     testing_values::ATTACH_MODAL_DIALOGS_VALUE), GBooleanTrue ());
+								     testing_values::ATTACH_MODAL_DIALOGS_VALUE), IsTrue ());
 
     AutoUnsetGValue attachModalDialogsValue (G_TYPE_BOOLEAN);
     GValue &attachModalDialogsGValue = attachModalDialogsValue;
@@ -775,14 +761,14 @@ TEST_F(GWDSettingsTest, TestAttachModalDialogsChanged)
 TEST_F(GWDSettingsTest, TestAttachModalDialogsChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_attach_modal_dialogs_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-								     ATTACH_MODAL_DIALOGS_DEFAULT), GBooleanFalse ());
+								     ATTACH_MODAL_DIALOGS_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestBlurChangedTitlebar)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						     testing_values::BLUR_TYPE_TITLEBAR_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::BLUR_TYPE_TITLEBAR_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue blurValue (G_TYPE_INT);
     GValue &blurGValue = blurValue;
@@ -799,7 +785,7 @@ TEST_F(GWDSettingsTest, TestBlurChangedAll)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						     testing_values::BLUR_TYPE_ALL_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::BLUR_TYPE_ALL_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue blurValue (G_TYPE_INT);
     GValue &blurGValue = blurValue;
@@ -815,7 +801,7 @@ TEST_F(GWDSettingsTest, TestBlurChangedAll)
 TEST_F(GWDSettingsTest, TestBlurChangedNone)
 {
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), GBooleanFalse ());
+						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), IsFalse ());
 
     AutoUnsetGValue blurValue (G_TYPE_INT);
     GValue &blurGValue = blurValue;
@@ -841,7 +827,7 @@ TEST_F(GWDSettingsTest, TestBlurSetCommandLine)
 		     boost::bind (gwd_settings_unref, _1));
 
     EXPECT_THAT (gwd_settings_writable_blur_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), GBooleanFalse ());
+						     testing_values::BLUR_TYPE_NONE_VALUE.c_str ()), IsFalse ());
 
     AutoUnsetGValue blurValue (G_TYPE_INT);
     GValue &blurGValue = blurValue;
@@ -860,7 +846,7 @@ TEST_F(GWDSettingsTest, TestMetacityThemeChanged)
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							       testing_values::USE_METACITY_THEME_VALUE,
-							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanTrue ());
+							       testing_values::METACITY_THEME_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue metacityThemeValue (G_TYPE_STRING);
     GValue &metacityThemeGValue = metacityThemeValue;
@@ -879,7 +865,7 @@ TEST_F(GWDSettingsTest, TestMetacityThemeChangedNoUseMetacityTheme)
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							       testing_values::NO_USE_METACITY_THEME_VALUE,
-							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanTrue ());
+							       testing_values::METACITY_THEME_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue metacityThemeValue (G_TYPE_STRING);
     GValue &metacityThemeGValue = metacityThemeValue;
@@ -896,7 +882,7 @@ TEST_F(GWDSettingsTest, TestMetacityThemeChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							       testing_values::USE_METACITY_THEME_VALUE,
-							       METACITY_THEME_DEFAULT), GBooleanFalse ());
+							       METACITY_THEME_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestMetacityThemeSetCommandLine)
@@ -911,7 +897,7 @@ TEST_F(GWDSettingsTest, TestMetacityThemeSetCommandLine)
 
     EXPECT_THAT (gwd_settings_writable_metacity_theme_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 							       testing_values::USE_METACITY_THEME_VALUE,
-							       testing_values::METACITY_THEME_VALUE.c_str ()), GBooleanFalse ());
+							       testing_values::METACITY_THEME_VALUE.c_str ()), IsFalse ());
 
     AutoUnsetGValue metacityThemeValue (G_TYPE_STRING);
     GValue &metacityThemeGValue = metacityThemeValue;
@@ -931,7 +917,7 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
 							testing_values::ACTIVE_OPACITY_VALUE,
 							testing_values::INACTIVE_OPACITY_VALUE,
 							testing_values::ACTIVE_SHADE_OPACITY_VALUE,
-							testing_values::INACTIVE_SHADE_OPACITY_VALUE), GBooleanTrue ());
+							testing_values::INACTIVE_SHADE_OPACITY_VALUE), IsTrue ());
 
     AutoUnsetGValue metacityInactiveOpacityValue (G_TYPE_DOUBLE);
     AutoUnsetGValue metacityActiveOpacityValue (G_TYPE_DOUBLE);
@@ -972,7 +958,7 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChangedIsDefault)
 							METACITY_ACTIVE_OPACITY_DEFAULT,
 							METACITY_INACTIVE_OPACITY_DEFAULT,
 							METACITY_ACTIVE_SHADE_OPACITY_DEFAULT,
-							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT), GBooleanFalse ());
+							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
@@ -980,7 +966,7 @@ TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
     EXPECT_CALL (*mGMockNotified, updateMetacityButtonLayout ());
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_button_layout_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							      testing_values::BUTTON_LAYOUT_VALUE.c_str ()), GBooleanTrue ());
+							      testing_values::BUTTON_LAYOUT_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue buttonLayoutValue (G_TYPE_STRING);
     GValue &buttonLayoutGValue = buttonLayoutValue;
@@ -996,7 +982,7 @@ TEST_F(GWDSettingsTest, TestButtonLayoutChanged)
 TEST_F(GWDSettingsTest, TestButtonLayoutChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_button_layout_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							      METACITY_BUTTON_LAYOUT_DEFAULT), GBooleanFalse ());
+							      METACITY_BUTTON_LAYOUT_DEFAULT), IsFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestTitlebarFontChanged)
@@ -1005,7 +991,7 @@ TEST_F(GWDSettingsTest, TestTitlebarFontChanged)
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 						     testing_values::NO_USE_SYSTEM_FONT_VALUE,
-						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue fontValue (G_TYPE_STRING);
     GValue	    &fontGValue = fontValue;
@@ -1024,7 +1010,7 @@ TEST_F(GWDSettingsTest, TestTitlebarFontChangedUseSystemFont)
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 						     testing_values::USE_SYSTEM_FONT_VALUE,
-						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), GBooleanTrue ());
+						     testing_values::TITLEBAR_FONT_VALUE.c_str ()), IsTrue ());
 
     AutoUnsetGValue fontValue (G_TYPE_STRING);
     GValue	    &fontGValue = fontValue;
@@ -1042,7 +1028,7 @@ TEST_F(GWDSettingsTest, TestTitlebarFontChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_font_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
 						     testing_values::NO_USE_SYSTEM_FONT_VALUE,
-						     TITLEBAR_FONT_DEFAULT), GBooleanFalse ());
+						     TITLEBAR_FONT_DEFAULT), IsFalse ());
 }
 
 namespace

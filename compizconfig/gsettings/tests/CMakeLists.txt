@@ -19,6 +19,9 @@ link_directories (${CMAKE_CURRENT_BINARY_DIR}/../../libcompizconfig/tests)
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../testenvironments)
 link_directories (${CMAKE_CURRENT_BINARY_DIR}/../mocks)
 
+add_library (compizconfig_gsettings_settings_test_env STATIC
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_gsettings_settings_env_test.cpp)
+
 add_executable (compizconfig_test_gsettings
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_tests.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/test_gsettings_wrapper.cpp
@@ -35,6 +38,7 @@ target_link_libraries (compizconfig_test_gsettings
                        compizconfig_ccs_context_mock
 		       compizconfig_ccs_gsettings_backend_mock
 		       compizconfig_ccs_gsettings_wrapper_mock
+                       compizconfig_ccs_test_value_combinations
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})
@@ -56,10 +60,17 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/backend-conformance-config.h.in
 		${CMAKE_CURRENT_BINARY_DIR}/backend-conformance-config.h)
 
 target_link_libraries (compizconfig_test_gsettings_conformance
+		       compizconfig_gsettings_settings_test_env
                        compizconfig_gsettings_backend
 		       compizconfig_ccs_setting_mock
 		       compizconfig_ccs_plugin_mock
 		       compizconfig_ccs_context_mock
+                       compizconfig_ccs_item_in_list_matcher
+                       compizconfig_ccs_list_equality
+                       compizconfig_ccs_list_wrapper
+                       compizconfig_ccs_backend_conformance_test
+                       compizconfig_ccs_setting_value_operators
+                       compizconfig_ccs_test_value_combinations
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})

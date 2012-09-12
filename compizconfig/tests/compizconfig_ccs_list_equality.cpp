@@ -20,41 +20,55 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZCONFIG_CCS_LIST_EQUALITY_H
-#define _COMPIZCONFIG_CCS_LIST_EQUALITY_H
-
-#include <iosfwd>
-#include <memory>
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
+#include <ccs.h>
+#include <compizconfig_ccs_list_equality.h>
 
-using ::testing::MatcherInterface;
-using ::testing::MatchResultListener;
-using ::testing::Matcher;
+using ::testing::MakeMatcher;
 
-typedef struct _CCSSettingValueList * CCSSettingValueList;
-typedef struct _CCSSettingListInfo    CCSSettingListInfo;
-
-class PrivateListEqualityMatcher;
-
-class ListEqualityMatcher :
-    public MatcherInterface <CCSSettingValueList>
+class PrivateListEqualityMatcher
 {
     public:
 
-	ListEqualityMatcher (CCSSettingListInfo  *info,
-			     CCSSettingValueList cmp);
+	PrivateListEqualityMatcher (CCSSettingListInfo *info,
+				    CCSSettingValueList cmp) :
+	    mInfo (info),
+	    mCmp (cmp)
+	{
+	}
 
-	virtual bool MatchAndExplain (CCSSettingValueList x, MatchResultListener *listener) const;
-	virtual void DescribeTo (std::ostream *os) const;
-	virtual void DescribeNegationTo (std::ostream *os) const;
-
-    private:
-
-	std::auto_ptr <PrivateListEqualityMatcher> priv;
+	CCSSettingListInfo  *mInfo;
+	CCSSettingValueList mCmp;
 };
 
-Matcher<CCSSettingValueList> ListEqual (CCSSettingListInfo *info,
-					CCSSettingValueList cmp);
+ListEqualityMatcher::ListEqualityMatcher (CCSSettingListInfo *info,
+					  CCSSettingValueList cmp) :
+    priv (new PrivateListEqualityMatcher (info, cmp))
+{
+}
 
-#endif
+bool
+ListEqualityMatcher::MatchAndExplain (CCSSettingValueList x,
+				      MatchResultListener *listener) const
+{
+    return ccsCompareLists (x, priv->mCmp, *priv->mInfo);
+}
+
+void
+ListEqualityMatcher::DescribeTo (std::ostream *os) const
+{
+    *os << "lists are equal";
+}
+
+void
+ListEqualityMatcher::DescribeNegationTo (std::ostream *os) const
+{
+    *os << "lists are not equal";
+}
+
+Matcher<CCSSettingValueList> ListEqual (CCSSettingListInfo *info,
+					CCSSettingValueList cmp)
+{
+    return MakeMatcher (new ListEqualityMatcher (info, cmp));
+}
+

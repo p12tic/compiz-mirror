@@ -3,6 +3,7 @@ include (CompizGSettings)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../
                      ${CMAKE_CURRENT_BINARY_DIR}
+                     ${CMAKE_SOURCE_DIR}/tests/shared
                      ${CMAKE_SOURCE_DIR}/tests/shared/glib)
 
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/compiz_gwd_tests.h.in
