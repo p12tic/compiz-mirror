@@ -18,6 +18,7 @@ class MockDoubleBuffer :
 	MOCK_CONST_METHOD1 (blit, void (const CompRegion &));
 	MOCK_CONST_METHOD0 (fallbackBlitAvailable, bool ());
 	MOCK_CONST_METHOD1 (fallbackBlit, void (const CompRegion &));
+	MOCK_CONST_METHOD0 (copyFrontToBack, void ());
 };
 
 class DoubleBufferTest :
@@ -38,6 +39,7 @@ class CompizOpenGLDoubleBufferDeathTest :
 TEST_F(DoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
     EXPECT_CALL (db, swap ());
+    EXPECT_CALL (db, copyFrontToBack ()).Times (0);
 
     db.render (blitRegion, true);
 }
@@ -46,6 +48,32 @@ TEST_F(DoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
 {
     EXPECT_CALL (db, blitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (db, blit (_));
+    EXPECT_CALL (db, copyFrontToBack ()).Times (0);
+
+    db.render (blitRegion, false);
+}
+
+TEST_F(DoubleBufferTest, SwapWithoutFBO)
+{
+    db.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, false);
+    db.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, true);
+
+    EXPECT_CALL (db, swap ());
+    EXPECT_CALL (db, copyFrontToBack ()).Times (1);
+
+    db.render (blitRegion, true);
+    db.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, false);
+}
+
+TEST_F(DoubleBufferTest, BlitWithoutFBO)
+{
+    db.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, false);
+    db.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, false);
+
+    EXPECT_CALL (db, blitAvailable ()).WillRepeatedly (Return (true));
+    EXPECT_CALL (db, blit (_));
+    EXPECT_CALL (db, swap ()).Times (0);
+    EXPECT_CALL (db, copyFrontToBack ()).Times (0);
 
     db.render (blitRegion, false);
 }

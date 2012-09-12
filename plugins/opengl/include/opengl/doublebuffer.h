@@ -19,6 +19,7 @@ class DoubleBuffer
 	virtual void blit (const CompRegion &region) const = 0;
 	virtual bool fallbackBlitAvailable () const = 0;
 	virtual void fallbackBlit (const CompRegion &region) const = 0;
+	virtual void copyFrontToBack () const = 0;
 
 	typedef enum
 	{

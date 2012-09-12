@@ -1722,8 +1722,8 @@ GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s) :
 
 #ifndef USE_GLES
 
-static void
-copyFrontToBack()
+void
+GLXDoubleBuffer::copyFrontToBack() const
 {
     int w = screen->width ();
     int h = screen->height ();
@@ -1761,10 +1761,6 @@ GLXDoubleBuffer::swap () const
     GL::controlSwapVideoSync (setting[VSYNC]);
 
     glXSwapBuffers (mDpy, mOutput);
-
-    if (setting[NEED_PERSISTENT_BACK_BUFFER] &&
-        !setting[HAVE_PERSISTENT_BACK_BUFFER])
-	copyFrontToBack ();
 }
 
 bool

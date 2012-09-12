@@ -60,7 +60,14 @@ DoubleBuffer::render (const CompRegion &region,
                       bool fullscreen)
 {
     if (fullscreen)
+    {
 	swap ();
+	if (setting[NEED_PERSISTENT_BACK_BUFFER] &&
+	    !setting[HAVE_PERSISTENT_BACK_BUFFER])
+	{
+	    copyFrontToBack ();
+	}
+    }
     else if (blitAvailable ())
 	blit (region);
     else if (fallbackBlitAvailable ())
