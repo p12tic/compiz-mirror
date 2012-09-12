@@ -14,7 +14,6 @@ Build-Depends: cmake (>= 2.6),
                quilt (>= 0.40),
                libcairo2-dev,
                libdbus-glib-1-dev,
-               libgconf2-dev, 
                libgl1-mesa-dev (>= 6.5.1) [!armhf !armel] | libgl-dev [!armhf !armel],
                libegl1-mesa-dev [armhf armel], libgles2-mesa-dev [armhf armel],
                libboost-dev,
@@ -304,7 +303,7 @@ Description: transitional dummy package.
  after the upgrade.
 
 Package: compizconfig-backend-gconf
-Depends: compiz-gnome, ${misc:Depends}
+Depends: compiz-gnome, gconf2, ${misc:Depends}
 Architecture: all
 Section: oldlibs
 Description: transitional dummy package.

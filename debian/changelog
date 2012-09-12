@@ -61,6 +61,9 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
   * Cherry-pick fix from upstream:
     - Migrate profile independent keys separately from the profile 
       dependent keys (LP: #1046190)
+  * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
+    transitional package for migrations
+  * Add -DUSE_GCONF=OFF to debian/rules
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 10 Sep 2012 15:27:32 +0300
 
