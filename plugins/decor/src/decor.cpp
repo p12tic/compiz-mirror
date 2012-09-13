@@ -159,6 +159,8 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 {
     bool status;
 
+    status = gWindow->glDraw (transform, attrib, region, mask);
+
     /* Don't render dock decorations (shadows) on just any old window */
     if (!(window->type () & CompWindowTypeDockMask))
     {
@@ -197,8 +199,6 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 	    }
 	}
     }
-
-    status = gWindow->glDraw (transform, attrib, region, mask);
 
     return status;
 }
