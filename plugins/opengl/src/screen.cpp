@@ -869,6 +869,16 @@ GLScreen::GLScreen (CompScreen *s) :
 
     glxExtensions = glXQueryExtensionsString (dpy, s->screenNum ());
 
+    if (glxExtensions == NULL)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+	                "glXQueryExtensionsString is NULL for screen %d",
+	                s->screenNum ());
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
     if (!strstr (glxExtensions, "GLX_SGIX_fbconfig"))
     {
 	compLogMessage ("opengl", CompLogLevelFatal,
