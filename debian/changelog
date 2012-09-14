@@ -58,9 +58,10 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
       port to gsettings (LP: #1042323)
   * debian/compiz-dev.install
     - Remove compizconfig-python.pc, now in python-compizconfig.install
-  * Cherry-pick fix from upstream:
+  * Cherry-pick fixes from upstream:
     - Migrate profile independent keys separately from the profile 
       dependent keys (LP: #1046190)
+    - Fix CMakeLists.txt to bring an xslt file back to compiz-dev
   * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
     transitional package for migrations
   * Add -DUSE_GCONF=OFF to debian/rules
