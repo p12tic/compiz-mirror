@@ -414,7 +414,7 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     optionSetTimeoutNotify (boost::bind (&OpacifyScreen::optionChanged,
 								 this, _1, _2));
 
-    screen->handleEventSetEnabled (this, optionGetInitToggle ());
+    setFunctions (optionGetInitToggle ());
 }
 
 bool
