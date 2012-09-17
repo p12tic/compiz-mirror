@@ -64,6 +64,7 @@ TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestTakesServerGrab)
     InSequence     s;
 
     EXPECT_CALL (mockServerGrab, grabServer ());
+    EXPECT_CALL (mockServerGrab, syncServer ());
     EXPECT_CALL (mockServerGrab, ungrabServer ());
     EXPECT_CALL (mockServerGrab, syncServer ());
 
@@ -82,6 +83,9 @@ TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestCallsWaitGLX)
     MockWaitGLX               mockWaitGLX;
 
     cgl::WaitGLXFunc          waitGLXFuncMock (boost::bind (&MockWaitGLX::waitGLX, &mockWaitGLX));
+
+    EXPECT_CALL (mockWaitGLX, waitGLX ());
+
     cgl::bindTexImageGLX (&mockServerGrab,
 			  pixmap,
 			  glxPixmap,
