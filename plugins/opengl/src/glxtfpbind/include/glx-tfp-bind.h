@@ -25,6 +25,7 @@
 #ifndef _COMPIZ_OPENGL_GLX_TFP_BIND_H
 #define _COMPIZ_OPENGL_GLX_TFP_BIND_H
 
+#include <opengl/pixmapsource.h>
 #include <boost/function.hpp>
 
 class ServerGrabInterface;
@@ -38,12 +39,6 @@ namespace compiz
 	typedef boost::function <bool (Pixmap)> PixmapCheckValidityFunc;
 	typedef boost::function <void (GLXPixmap)> BindTexImageEXTFunc;
 	typedef boost::function <void ()> WaitGLXFunc;
-
-	typedef enum _PixmapSource
-	{
-	    InternallyManaged = 0,
-	    ExternallyManaged = 1
-	} PixmapSource;
 
 	bool bindTexImageGLX (ServerGrabInterface           *,
 			      Pixmap,

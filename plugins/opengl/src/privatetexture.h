@@ -79,10 +79,11 @@ class EglTexture : public GLTexture {
 
 	void enable (Filter filter);
 
-	static List bindPixmapToTexture (Pixmap pixmap,
-					 int width,
-					 int height,
-					 int depth);
+	static List bindPixmapToTexture (Pixmap                       pixmap,
+					 int                          width,
+					 int                          height,
+					 int                          depth,
+					 compiz::opengl::PixmapSource source);
 
     public:
 	bool        damaged;
@@ -102,16 +103,19 @@ class TfpTexture : public GLTexture {
 	bool bindTexImage (const GLXPixmap &);
 	void releaseTexImage ();
 
-	static List bindPixmapToTexture (Pixmap pixmap,
-					 int width,
-					 int height,
-					 int depth);
+	static List bindPixmapToTexture (Pixmap                       pixmap,
+					 int                          width,
+					 int                          height,
+					 int                          depth,
+					 compiz::opengl::PixmapSource source);
 
     public:
-	GLXPixmap pixmap;
-	bool      damaged;
-	Damage    damage;
-	bool      updateMipMap;
+	Pixmap                       x11Pixmap;
+	GLXPixmap                    pixmap;
+	bool                         damaged;
+	Damage                       damage;
+	bool                         updateMipMap;
+	compiz::opengl::PixmapSource source;
 };
 
 extern std::map<Damage, TfpTexture*> boundPixmapTex;

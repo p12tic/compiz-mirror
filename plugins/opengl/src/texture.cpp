@@ -31,10 +31,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <core/servergrab.h>
 #include <opengl/texture.h>
 #include <privatetexture.h>
 #include "privates.h"
+
+#include "glx-tfp-bind.h"
+
+namespace cgl = compiz::opengl;
 
 #ifdef USE_GLES
 std::map<Damage, EglTexture*> boundPixmapTex;
@@ -421,21 +427,56 @@ GLTexture::incRef (GLTexture *tex)
 }
 
 GLTexture::List
-GLTexture::bindPixmapToTexture (Pixmap pixmap,
-				int    width,
-				int    height,
-				int    depth)
+GLTexture::bindPixmapToTexture (Pixmap                       pixmap,
+				int                          width,
+				int                          height,
+				int                          depth,
+				compiz::opengl::PixmapSource source)
 {
     GLTexture::List rv;
 
     foreach (BindPixmapProc &proc, GLScreen::get (screen)->priv->bindPixmap)
     {
 	if (!proc.empty ())
-	    rv = proc (pixmap, width, height, depth);
+	    rv = proc (pixmap, width, height, depth, source);
 	if (rv.size ())
 	    return rv;
     }
     return GLTexture::List ();
+}
+
+namespace
+{
+    bool checkPixmapValidityGLX (Pixmap pixmap)
+    {
+	Window       windowReturn;
+	unsigned int uiReturn;
+	int          iReturn;
+
+	if (!XGetGeometry (screen->dpy (),
+			   pixmap,
+			   &windowReturn,
+			   &iReturn,
+			   &iReturn,
+			   &uiReturn,
+			   &uiReturn,
+			   &uiReturn,
+			   &uiReturn))
+	    return false;
+	return true;
+    }
+
+    const cgl::WaitGLXFunc & waitGLXFunc ()
+    {
+	static const cgl::WaitGLXFunc f (boost::bind (glXWaitX));
+	return f;
+    }
+
+    const cgl::PixmapCheckValidityFunc & checkPixmapValidityFunc ()
+    {
+	static const cgl::PixmapCheckValidityFunc f (boost::bind (checkPixmapValidityGLX, _1));
+	return f;
+    }
 }
 
 #ifdef USE_GLES
@@ -538,6 +579,20 @@ EglTexture::enable (GLTexture::Filter filter)
 }
 #else
 
+namespace
+{
+    const cgl::BindTexImageEXTFunc & bindTexImageEXT ()
+    {
+	static int                            *attrib_list = NULL;
+	static const cgl::BindTexImageEXTFunc f (boost::bind (GL::bindTexImage,
+							      screen->dpy (),
+							      _1,
+							      GLX_FRONT_LEFT_EXT,
+							      attrib_list));
+	return f;
+    }
+}
+
 TfpTexture::TfpTexture () :
     pixmap (0),
     damaged (true),
@@ -569,10 +624,13 @@ TfpTexture::~TfpTexture ()
 bool
 TfpTexture::bindTexImage (const GLXPixmap &glxPixmap)
 {
-    ServerLock sg (screen->serverGrabInterface ());
-    glXWaitX ();
-    (*GL::bindTexImage) (screen->dpy (), glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
-    return true;
+    return compiz::opengl::bindTexImageGLX (screen->serverGrabInterface (),
+					    x11Pixmap,
+					    glxPixmap,
+					    checkPixmapValidityFunc (),
+					    bindTexImageEXT (),
+					    waitGLXFunc (),
+					    source);
 }
 
 void
@@ -582,10 +640,11 @@ TfpTexture::releaseTexImage ()
 }
 
 GLTexture::List
-TfpTexture::bindPixmapToTexture (Pixmap pixmap,
-				 int    width,
-				 int    height,
-				 int    depth)
+TfpTexture::bindPixmapToTexture (Pixmap            pixmap,
+				 int               width,
+				 int               height,
+				 int               depth,
+				 cgl::PixmapSource source)
 {
     if ((int) width > GL::maxTextureSize || (int) height > GL::maxTextureSize ||
         !GL::textureFromPixmap)
@@ -650,6 +709,19 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
 
     attribs[i++] = None;
 
+    /* We need to take a server grab here if the pixmap is
+     * externally managed as we need to be able to query
+     * if it actually exists */
+    boost::scoped_ptr <ServerLock> lock;
+
+    if (source == cgl::ExternallyManaged)
+    {
+	lock.reset (new ServerLock (screen->serverGrabInterface ()));
+
+	if (!checkPixmapValidityGLX (pixmap))
+	    return false;
+    }
+
     glxPixmap = (*GL::createPixmap) (screen->dpy (), config->fbConfig,
 				     pixmap, attribs);
 
@@ -711,6 +783,8 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
     tex->setData (texTarget, matrix, mipmap);
     tex->setGeometry (0, 0, width, height);
     tex->pixmap = glxPixmap;
+    tex->x11Pixmap = pixmap;
+    tex->source = source;
 
     rv[0] = tex;
 

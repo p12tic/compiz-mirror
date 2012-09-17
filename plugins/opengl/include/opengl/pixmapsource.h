@@ -1,5 +1,4 @@
 /*
- * Compiz, opengl plugin, GLX_EXT_texture_from_pixmap rebind logic
  *
  * Copyright (c) 2012 Canonical Ltd.
  * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
@@ -22,32 +21,20 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <opengl/pixmapsource.h>
-#include <core/servergrab.h>
-#include "glx-tfp-bind.h"
 
-namespace cgl = compiz::opengl;
+#ifndef _COMPIZ_OPENGL_PIXMAP_SOURCE_H
+#define _COMPIZ_OPENGL_PIXMAP_SOURCE_H
 
-bool
-cgl::bindTexImageGLX (ServerGrabInterface                *serverGrabInterface,
-		      Pixmap                             x11Pixmap,
-		      GLXPixmap                          glxPixmap,
-		      const cgl::PixmapCheckValidityFunc &checkPixmapValidity,
-		      const cgl::BindTexImageEXTFunc     &bindTexImageEXT,
-		      const cgl::WaitGLXFunc             &waitGLX,
-		      cgl::PixmapSource                  source)
+namespace compiz
 {
-    ServerLock lock (serverGrabInterface);
-
-    waitGLX ();
-
-    /* External pixmaps can disappear on us, but not
-     * while we have a server grab at least */
-    if (source == cgl::ExternallyManaged)
-	if (!checkPixmapValidity (x11Pixmap))
-	    return false;
-
-    bindTexImageEXT (glxPixmap);
-
-    return true;
+    namespace opengl
+    {
+	typedef enum _PixmapSource
+	{
+	    InternallyManaged = 0,
+	    ExternallyManaged = 1
+	} PixmapSource;
+    }
 }
+
+#endif
