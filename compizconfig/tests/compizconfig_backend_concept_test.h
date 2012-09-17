@@ -86,7 +86,7 @@ typedef boost::variant <bool,
 			CCSSettingKeyValue,
 			CCSSettingButtonValue,
 			unsigned int,
-			cci::CCSSettingValueListWrapper::Ptr> VariantTypes;
+			cci::SettingValueListWrapper::Ptr> VariantTypes;
 
 class CCSSettingsConceptTestEnvironmentInterface
 {
@@ -431,13 +431,13 @@ void SetListWriteExpectation (const std::string &plugin,
 			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
 {
     CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
-    CCSSettingValueList list = *(boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value));
+    CCSSettingValueList list = *(boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value));
 
     EXPECT_CALL (*gmock, getInfo ());
 
     CCSSettingInfo      *info = ccsSettingGetInfo (setting.get ());
 
-    info->forList.listType = (boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))->type ();
+    info->forList.listType = (boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))->type ();
 
     EXPECT_CALL (*gmock, getInfo ()).Times (AtLeast (1));
     EXPECT_CALL (*gmock, getList (_)).WillRepeatedly (DoAll (
@@ -446,7 +446,7 @@ void SetListWriteExpectation (const std::string &plugin,
 							 Return (TRUE)));
     write ();
 
-    EXPECT_THAT (cci::CCSSettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
+    EXPECT_THAT (cci::SettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
 						  cci::Deep,
 						  info->forList.listType,
 						  boost::shared_ptr <CCSSettingInfo> (),
@@ -518,11 +518,11 @@ CCSSettingInfo globalListInfo;
 
 void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
-    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))->type ();
+    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))->type ();
     globalListInfo.forList.listInfo = NULL;
 
     ON_CALL (*gmock, getInfo ()).WillByDefault (Return (&globalListInfo));
-    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <cci::CCSSettingValueListWrapper> > (value))), _));
+    EXPECT_CALL (*gmock, setList (ListEqual (globalListInfo.forList, *(boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))), _));
 }
 
 }
@@ -774,7 +774,7 @@ namespace list_populators = impl::populators::list;
 
 typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
 
-cci::CCSSettingValueListWrapper::Ptr
+cci::SettingValueListWrapper::Ptr
 CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 				       CCSSettingType        type,
 				       cci::ListStorageType  storageType)
@@ -791,7 +791,7 @@ CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 
     ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (listInfo.get ()));
     ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
-    return boost::make_shared <cci::CCSSettingValueListWrapper> (c (mockSetting.get ()), storageType, type, listInfo, mockSetting);
+    return boost::make_shared <cci::SettingValueListWrapper> (c (mockSetting.get ()), storageType, type, listInfo, mockSetting);
 }
 
 template <typename I>

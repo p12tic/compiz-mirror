@@ -304,7 +304,7 @@ class CCSGSettingsStorageEnv :
 	{
 	    GVariant *variant = NULL;
 
-	    const cci::CCSSettingValueListWrapper::Ptr &lw (boost::get <cci::CCSSettingValueListWrapper::Ptr> (value));
+	    const cci::SettingValueListWrapper::Ptr &lw (boost::get <cci::SettingValueListWrapper::Ptr> (value));
 
 	    if (writeListValue (*lw, lw->type (), &variant))
 		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);

@@ -43,15 +43,15 @@ namespace compiz
     namespace config
     {
 	template <typename ListType, typename DataType>
-	class CCSListWrapper :
+	class ListWrapper :
 	    boost::noncopyable
 	{
 	    public:
 
-		virtual ~CCSListWrapper () {}
+		virtual ~ListWrapper () {}
 
-		virtual CCSListWrapper<ListType, DataType> & append (const DataType &) = 0;
-		virtual CCSListWrapper<ListType, DataType> & remove (const DataType &) = 0;
+		virtual ListWrapper<ListType, DataType> & append (const DataType &) = 0;
+		virtual ListWrapper<ListType, DataType> & remove (const DataType &) = 0;
 
 		virtual operator const ListType & () const = 0;
 		virtual operator ListType & () = 0;
@@ -69,8 +69,8 @@ namespace compiz
 	    } ListStorageType;
 
 	    template <typename ListType, typename DataType>
-	    class CCSListWrapper :
-		public cc::CCSListWrapper <ListType, DataType>
+	    class ListWrapper :
+		public cc::ListWrapper <ListType, DataType>
 	    {
 		public:
 
@@ -78,7 +78,7 @@ namespace compiz
 		    typedef ListType (*ListTypeAppendFunc) (ListType, DataType);
 		    typedef ListType (*ListTypeRemoveFunc) (ListType, DataType, Bool);
 
-		    CCSListWrapper (const ListType &list,
+		    ListWrapper (const ListType &list,
 				    ListTypeFreeFunc freeFunc,
 				    ListTypeAppendFunc appendFunc,
 				    ListTypeRemoveFunc removeFunc,
@@ -91,13 +91,13 @@ namespace compiz
 		    {
 		    };
 
-		    cc::CCSListWrapper<ListType, DataType> & append (DataType const &data)
+		    cc::ListWrapper<ListType, DataType> & append (DataType const &data)
 		    {
 			mList = (*mAppend) (mList, data);
 			return *this;
 		    }
 
-		    cc::CCSListWrapper<ListType, DataType> & remove (DataType const &data)
+		    cc::ListWrapper<ListType, DataType> & remove (DataType const &data)
 		    {
 			Bool freeObj = (mStorageType == Deep);
 			mList = (*mRemove) (mList, data, freeObj);
@@ -114,7 +114,7 @@ namespace compiz
 			return mList;
 		    }
 
-		    ~CCSListWrapper ()
+		    ~ListWrapper ()
 		    {
 			Bool freeObj = (mStorageType == Deep);
 
@@ -130,14 +130,14 @@ namespace compiz
 		    ListStorageType    mStorageType;
 	    };
 
-	    class CCSSettingValueListWrapper :
-		public compiz::config::CCSListWrapper <CCSSettingValueList, CCSSettingValue *>
+	    class SettingValueListWrapper :
+		public compiz::config::ListWrapper <CCSSettingValueList, CCSSettingValue *>
 	    {
 		public:
 
-		    typedef boost::shared_ptr <CCSSettingValueListWrapper> Ptr;
+		    typedef boost::shared_ptr <SettingValueListWrapper> Ptr;
 
-		    CCSSettingValueListWrapper (CCSSettingValueList list,
+		    SettingValueListWrapper (CCSSettingValueList list,
 						ListStorageType     storageType,
 						CCSSettingType	    type,
 						const boost::shared_ptr <CCSSettingInfo> &listInfo,
@@ -158,12 +158,12 @@ namespace compiz
 			return mType;
 		    }
 
-		    cc::CCSListWrapper <CCSSettingValueList, CCSSettingValue *> & append (CCSSettingValue * const &value)
+		    cc::ListWrapper <CCSSettingValueList, CCSSettingValue *> & append (CCSSettingValue * const &value)
 		    {
 			return mListWrapper.append (value);
 		    }
 
-		    cc::CCSListWrapper <CCSSettingValueList, CCSSettingValue *> & remove (CCSSettingValue * const &value)
+		    cc::ListWrapper <CCSSettingValueList, CCSSettingValue *> & remove (CCSSettingValue * const &value)
 		    {
 			return mListWrapper.remove (value);
 		    }
@@ -188,7 +188,7 @@ namespace compiz
 		    CCSSettingType					         mType;
 		    boost::shared_ptr <CCSSettingInfo>			         mListInfo;
 		    boost::shared_ptr <CCSSetting>			         mSettingReference;
-		    cci::CCSListWrapper <CCSSettingValueList, CCSSettingValue *> mListWrapper;
+		    cci::ListWrapper <CCSSettingValueList, CCSSettingValue *> mListWrapper;
 	    };
 	}
     }
