@@ -55,7 +55,7 @@ namespace compizconfig
 	typedef boost::function <void ()> WriteFunc;
 	typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
 
-	cci::CCSSettingValueListWrapper::Ptr
+	cci::SettingValueListWrapper::Ptr
 	CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 					       CCSSettingType        type,
 					       cci::ListStorageType  storageType);

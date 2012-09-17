@@ -32,11 +32,11 @@ namespace compiz
     {
 	namespace impl
 	{
-	    class PrivateCCSSettingValueListWrapper
+	    class PrivateSettingValueListWrapper
 	    {
 		public:
 
-		    PrivateCCSSettingValueListWrapper (CCSSettingValueList                      list,
+		    PrivateSettingValueListWrapper (CCSSettingValueList                      list,
 						       cci::ListStorageType                     storageType,
 						       CCSSettingType                           type,
 						       const boost::shared_ptr <CCSSettingInfo> &listInfo,
@@ -55,18 +55,18 @@ namespace compiz
 		    CCSSettingType                                  mType;
 		    boost::shared_ptr <CCSSettingInfo>              mListInfo;
 		    boost::shared_ptr <CCSSetting>                  mSettingReference;
-		    CCSSettingValueListWrapper::InternalWrapperImpl mListWrapper;
+		    SettingValueListWrapper::InternalWrapperImpl mListWrapper;
 	    };
 	}
     }
 }
 
-cci::CCSSettingValueListWrapper::CCSSettingValueListWrapper (CCSSettingValueList                      list,
+cci::SettingValueListWrapper::SettingValueListWrapper (CCSSettingValueList                      list,
 							     cci::ListStorageType                     storageType,
 							     CCSSettingType                           type,
 							     const boost::shared_ptr <CCSSettingInfo> &listInfo,
 							     const boost::shared_ptr <CCSSetting>     &settingReference) :
-    priv (new cci::PrivateCCSSettingValueListWrapper (list,
+    priv (new cci::PrivateSettingValueListWrapper (list,
 						      storageType,
 						      type,
 						      listInfo,
@@ -75,35 +75,35 @@ cci::CCSSettingValueListWrapper::CCSSettingValueListWrapper (CCSSettingValueList
 }
 
 CCSSettingType
-cci::CCSSettingValueListWrapper::type ()
+cci::SettingValueListWrapper::type ()
 {
     return priv->mType;
 }
 
-cci::CCSSettingValueListWrapper::InternalWrapper &
-cci::CCSSettingValueListWrapper::append (CCSSettingValue * const &value)
+cci::SettingValueListWrapper::InternalWrapper &
+cci::SettingValueListWrapper::append (CCSSettingValue * const &value)
 {
     return priv->mListWrapper.append (value);
 }
 
-cci::CCSSettingValueListWrapper::InternalWrapper &
-cci::CCSSettingValueListWrapper::remove (CCSSettingValue * const &value)
+cci::SettingValueListWrapper::InternalWrapper &
+cci::SettingValueListWrapper::remove (CCSSettingValue * const &value)
 {
     return priv->mListWrapper.remove (value);
 }
 
-cci::CCSSettingValueListWrapper::operator const CCSSettingValueList & () const
+cci::SettingValueListWrapper::operator const CCSSettingValueList & () const
 {
     return priv->mListWrapper;
 }
 
-cci::CCSSettingValueListWrapper::operator CCSSettingValueList & ()
+cci::SettingValueListWrapper::operator CCSSettingValueList & ()
 {
     return priv->mListWrapper;
 }
 
 const boost::shared_ptr <CCSSetting> &
-cci::CCSSettingValueListWrapper::setting ()
+cci::SettingValueListWrapper::setting ()
 {
     return priv->mSettingReference;
 }

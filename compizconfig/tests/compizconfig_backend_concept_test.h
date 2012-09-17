@@ -89,7 +89,7 @@ namespace compizconfig
 	typedef boost::function <void ()> WriteFunc;
 	typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
 
-	cci::CCSSettingValueListWrapper::Ptr
+	cci::SettingValueListWrapper::Ptr
 	CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
 					       CCSSettingType        type,
 					       cci::ListStorageType  storageType);
@@ -187,6 +187,315 @@ using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AtLeast;
 using ::testing::NiceMock;
+
+namespace
+{
+    bool ccsStringCmp (const CCSString &a, const CCSString &b)
+    {
+	return std::string (a.value) == b.value;
+    }
+}
+
+namespace cci = compiz::config::impl;
+namespace cc  = compiz::config;
+
+typedef boost::variant <bool,
+			int,
+			float,
+			const char *,
+			CCSSettingColorValue,
+			CCSSettingKeyValue,
+			CCSSettingButtonValue,
+			unsigned int,
+			cci::SettingValueListWrapper::Ptr> VariantTypes;
+
+namespace
+{
+
+typedef boost::function <void ()> WriteFunc;
+
+Bool boolToBool (bool v) { return v ? TRUE : FALSE; }
+
+CCSSettingGMock * getSettingGMockFromSetting (const boost::shared_ptr <CCSSetting> &setting) { return (CCSSettingGMock *) ccsObjectGetPrivate (setting.get ()); }
+
+void SetIntWriteExpectation (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value,
+			     const boost::shared_ptr <CCSSetting> &setting,
+			     const WriteFunc &write,
+			     const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getInt (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boost::get <int> (value)),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (env->ReadIntegerAtKey (plugin, key), boost::get <int> (value));
+}
+
+void SetBoolWriteExpectation (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value,
+			      const boost::shared_ptr <CCSSetting> &setting,
+			      const WriteFunc &write,
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getBool (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boolToBool (boost::get <bool> (value))),
+							 Return (TRUE)));
+    write ();
+
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_THAT (env->ReadBoolAtKey (plugin, key), IsTrue ());
+    else
+	EXPECT_THAT (env->ReadBoolAtKey (plugin, key), IsFalse ());
+}
+
+void SetFloatWriteExpectation (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value,
+			       const boost::shared_ptr <CCSSetting> &setting,
+			       const WriteFunc &write,
+			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getFloat (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boost::get <float> (value)),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (env->ReadFloatAtKey (plugin, key), boost::get <float> (value));
+}
+
+void SetStringWriteExpectation (const std::string &plugin,
+				const std::string &key,
+				const VariantTypes &value,
+				const boost::shared_ptr <CCSSetting> &setting,
+				const WriteFunc &write,
+				const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getString (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     const_cast <char *> (boost::get <const char *> (value))),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (std::string (env->ReadStringAtKey (plugin, key)), std::string (boost::get <const char *> (value)));
+}
+
+void SetColorWriteExpectation (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value,
+			       const boost::shared_ptr <CCSSetting> &setting,
+			       const WriteFunc &write,
+			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getColor (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boost::get <CCSSettingColorValue> (value)),
+							 Return (TRUE)));
+    write ();
+
+    EXPECT_EQ (env->ReadColorAtKey (plugin, key), boost::get <CCSSettingColorValue> (value));
+}
+
+void SetKeyWriteExpectation (const std::string &plugin,
+			     const std::string &key,
+			     const VariantTypes &value,
+			     const boost::shared_ptr <CCSSetting> &setting,
+			     const WriteFunc &write,
+			     const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getKey (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boost::get <CCSSettingKeyValue> (value)),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (env->ReadKeyAtKey (plugin, key), boost::get <CCSSettingKeyValue> (value));
+}
+
+void SetButtonWriteExpectation (const std::string &plugin,
+				const std::string &key,
+				const VariantTypes &value,
+				const boost::shared_ptr <CCSSetting> &setting,
+				const WriteFunc &write,
+				const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getButton (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boost::get <CCSSettingButtonValue> (value)),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (env->ReadButtonAtKey (plugin, key), boost::get <CCSSettingButtonValue> (value));
+}
+
+void SetEdgeWriteExpectation (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value,
+			      const boost::shared_ptr <CCSSetting> &setting,
+			      const WriteFunc &write,
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getEdge (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boost::get <unsigned int> (value)),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (env->ReadEdgeAtKey (plugin, key), boost::get <unsigned int> (value));
+}
+
+void SetBellWriteExpectation (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value,
+			      const boost::shared_ptr <CCSSetting> &setting,
+			      const WriteFunc &write,
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getBell (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     boolToBool (boost::get <bool> (value))),
+							 Return (TRUE)));
+    write ();
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_THAT (env->ReadBellAtKey (plugin, key), IsTrue ());
+    else
+	EXPECT_THAT (env->ReadBellAtKey (plugin, key), IsFalse ());
+}
+
+void SetMatchWriteExpectation (const std::string &plugin,
+			       const std::string &key,
+			       const VariantTypes &value,
+			       const boost::shared_ptr <CCSSetting> &setting,
+			       const WriteFunc &write,
+			       const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    EXPECT_CALL (*gmock, getMatch (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     const_cast <char *> (boost::get <const char *> (value))),
+							 Return (TRUE)));
+    write ();
+    EXPECT_EQ (std::string (env->ReadMatchAtKey (plugin, key)), std::string (boost::get <const char *> (value)));
+}
+
+void SetListWriteExpectation (const std::string &plugin,
+			      const std::string &key,
+			      const VariantTypes &value,
+			      const boost::shared_ptr <CCSSetting> &setting,
+			      const WriteFunc &write,
+			      const CCSBackendConceptTestEnvironmentInterface::Ptr &env)
+{
+    CCSSettingGMock *gmock (getSettingGMockFromSetting (setting));
+    CCSSettingValueList list = *(boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value));
+
+    EXPECT_CALL (*gmock, getInfo ());
+
+    CCSSettingInfo      *info = ccsSettingGetInfo (setting.get ());
+
+    info->forList.listType = (boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))->type ();
+
+    EXPECT_CALL (*gmock, getInfo ()).Times (AtLeast (1));
+    EXPECT_CALL (*gmock, getList (_)).WillRepeatedly (DoAll (
+							 SetArgPointee <0> (
+							     list),
+							 Return (TRUE)));
+    write ();
+
+    EXPECT_THAT (cci::SettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
+								   cci::Deep,
+								   info->forList.listType,
+								   boost::shared_ptr <CCSSettingInfo> (),
+								   setting),
+		 ListEqual (&info->forList, list));
+}
+
+void SetIntReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setInt (boost::get <int> (value), _));
+}
+
+void SetBoolReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_CALL (*gmock, setBool (IsTrue (), _));
+    else
+	EXPECT_CALL (*gmock, setBool (IsFalse (), _));
+}
+
+void SetBellReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    bool v (boost::get <bool> (value));
+
+    if (v)
+	EXPECT_CALL (*gmock, setBell (IsTrue (), _));
+    else
+	EXPECT_CALL (*gmock, setBell (IsFalse (), _));
+}
+
+void SetFloatReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setFloat (boost::get <float> (value), _));
+}
+
+void SetStringReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setString (Eq (std::string (boost::get <const char *> (value))), _));
+}
+
+void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setMatch (Eq (std::string (boost::get <const char *> (value))), _));
+}
+
+void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _));
+}
+
+void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setKey (boost::get <CCSSettingKeyValue> (value), _));
+}
+
+void SetButtonReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setButton (boost::get <CCSSettingButtonValue> (value), _));
+}
+
+void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    EXPECT_CALL (*gmock, setEdge (boost::get <unsigned int> (value), _));
+}
+
+CCSSettingInfo globalListInfo;
+
+void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
+{
+    globalListInfo.forList.listType = (boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))->type ();
+    globalListInfo.forList.listInfo = NULL;
+
+    ON_CALL (*gmock, getInfo ()).WillByDefault (Return (&globalListInfo));
+    EXPECT_CALL (*gmock, setList (
+			    ListEqual (
+				&globalListInfo.forList,
+				*(boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))), _));
+}
+
+}
 
 class CCSBackendConceptTestParamInterface
 {
@@ -432,6 +741,13 @@ namespace test
 {
 
 namespace list_populators = impl::populators::list;
+
+typedef boost::function <CCSSettingValueList (CCSSetting *)> ConstructorFunc;
+
+cci::SettingValueListWrapper::Ptr
+CCSListConstructionExpectationsSetter (const ConstructorFunc &c,
+				       CCSSettingType        type,
+				       cci::ListStorageType  storageType);
 
 template <typename I>
 ::testing::internal::ParamGenerator<typename CCSBackendConceptTestParamInterface::Ptr>

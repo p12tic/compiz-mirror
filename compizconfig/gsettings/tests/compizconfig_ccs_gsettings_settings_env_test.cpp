@@ -183,7 +183,7 @@ CCSGSettingsStorageEnv::WriteListAtKey (const std::string  &plugin,
 {
     GVariant *variant = NULL;
 
-    const cci::CCSSettingValueListWrapper::Ptr &lw (boost::get <cci::CCSSettingValueListWrapper::Ptr> (value));
+    const cci::SettingValueListWrapper::Ptr &lw (boost::get <cci::SettingValueListWrapper::Ptr> (value));
 
     if (writeListValue (*lw, lw->type (), &variant))
 	writeVariantToKey (priv->mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);

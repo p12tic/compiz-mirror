@@ -35,6 +35,6 @@ typedef boost::variant <bool,
 			CCSSettingKeyValue,
 			CCSSettingButtonValue,
 			unsigned int,
-			compiz::config::impl::CCSSettingValueListWrapper::Ptr> VariantTypes;
+			compiz::config::impl::SettingValueListWrapper::Ptr> VariantTypes;
 
 #endif

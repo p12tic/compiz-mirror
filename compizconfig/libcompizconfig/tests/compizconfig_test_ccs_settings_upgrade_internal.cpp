@@ -291,13 +291,13 @@ namespace
 	return MakeMatcher (new CCSSettingValueMatcher (match, type, info));
     }
 
-    typedef boost::shared_ptr <cc::CCSListWrapper <CCSSettingList, CCSSetting *> > CCSSettingListWrapperPtr;
+    typedef boost::shared_ptr <cc::ListWrapper <CCSSettingList, CCSSetting *> > CCSSettingListWrapperPtr;
 
     CCSSettingListWrapperPtr
     constructSettingListWrapper (CCSSettingList       list,
 				 cci::ListStorageType storageType)
     {
-	return boost::make_shared <cci::CCSListWrapper <CCSSettingList, CCSSetting *> > (list,
+	return boost::make_shared <cci::ListWrapper <CCSSettingList, CCSSetting *> > (list,
 											 ccsSettingListFree,
 											 ccsSettingListAppend,
 											 ccsSettingListRemove,
@@ -635,13 +635,13 @@ namespace
 	ccsSettingValueListFree (list, FALSE);
     }
 
-    typedef boost::shared_ptr <cc::CCSListWrapper <CCSStringList, CCSString *> > CCSStringListWrapperPtr;
+    typedef boost::shared_ptr <cc::ListWrapper <CCSStringList, CCSString *> > CCSStringListWrapperPtr;
 
     CCSStringListWrapperPtr
     constructStrListWrapper (CCSStringList        list,
 			     cci::ListStorageType storageType)
     {
-	return boost::make_shared <cci::CCSListWrapper <CCSStringList, CCSString *> > (list,
+	return boost::make_shared <cci::ListWrapper <CCSStringList, CCSString *> > (list,
 										       ccsStringListFree,
 										       ccsStringListAppend,
 										       ccsStringListRemove,
