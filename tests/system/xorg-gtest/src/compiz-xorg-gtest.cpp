@@ -20,14 +20,46 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
+#include <list>
 #include <gtest/gtest.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 #include "compiz-xorg-gtest-config.h"
 
 namespace ct = compiz::testing;
+
+std::list <Window>
+ct::NET_CLIENT_LIST_STACKING (Display *dpy)
+{
+    Atom property = XInternAtom (dpy, "_NET_CLIENT_LIST_STACKING", false);
+    Atom actual_type;
+    int actual_fmt;
+    unsigned long nitems, nleft;
+    unsigned char *prop;
+    std::list <Window> stackingOrder;
+
+    /* _NET_CLIENT_LIST_STACKING */
+    if (XGetWindowProperty (dpy, DefaultRootWindow (dpy), property, 0L, 512L, false, XA_WINDOW,
+			    &actual_type, &actual_fmt, &nitems, &nleft, &prop) == Success)
+    {
+	if (nitems && !nleft && actual_fmt == 32 && actual_type == XA_WINDOW)
+	{
+	    Window *window = reinterpret_cast <Window *> (prop);
+
+	    while (nitems--)
+		stackingOrder.push_back (*window++);
+
+	}
+
+	if (prop)
+	    XFree (prop);
+    }
+
+    return stackingOrder;
+}
 
 void
 ct::XorgSystemTest::SetUp ()

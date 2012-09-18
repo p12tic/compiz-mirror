@@ -29,6 +29,8 @@ namespace compiz
 {
     namespace testing
     {
+	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
+
 	class XorgSystemTest :
 	    public xorg::testing::Test
 	{
