@@ -36,8 +36,8 @@ class FullscreenRegion
 public:
     typedef enum
     {
-	Desktop = 1 << 0,
-	Alpha = 1 << 1,
+	Desktop = 1,
+	Alpha = 2
     } WinFlag;
 
     typedef unsigned int WinFlags;
