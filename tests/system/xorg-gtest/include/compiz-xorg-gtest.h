@@ -1,5 +1,5 @@
 /*
- * Compiz XOrg GTest, window stacking
+ * Compiz XOrg GTest
  *
  * Copyright (C) 2012 Canonical Ltd.
  *
@@ -20,17 +20,28 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
+#ifndef _COMPIZ_XORG_GTEST_H
+#define _COMPIZ_XORG_GTEST_H
 #include <gtest/gtest.h>
 #include <xorg/gtest/xorg-gtest.h>
-#include <compiz-xorg-gtest.h>
 
-#include <X11/Xlib.h>
-
-class CompizXorgSystemStackingTest :
-    public compiz::testing::XorgSystemTest
+namespace compiz
 {
-};
+    namespace testing
+    {
+	class XorgSystemTest :
+	    public xorg::testing::Test
+	{
+	    public:
 
-TEST_F (CompizXorgSystemStackingTest, TestSetup)
-{
+		virtual void SetUp ();
+		virtual void TearDown ();
+
+	    private:
+
+		xorg::testing::Process mCompizProcess;
+	};
+    }
 }
+
+#endif

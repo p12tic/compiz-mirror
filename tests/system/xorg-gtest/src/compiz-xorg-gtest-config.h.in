@@ -1,5 +1,5 @@
 /*
- * Compiz XOrg GTest, window stacking
+ * Compiz XOrg GTest
  *
  * Copyright (C) 2012 Canonical Ltd.
  *
@@ -20,17 +20,13 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#include <gtest/gtest.h>
-#include <xorg/gtest/xorg-gtest.h>
-#include <compiz-xorg-gtest.h>
+#ifndef _COMPIZ_XORG_GTEST_CONFIG_H
+#define _COMPIZ_XORG_GTEST_CONFIG_H
 
-#include <X11/Xlib.h>
-
-class CompizXorgSystemStackingTest :
-    public compiz::testing::XorgSystemTest
+namespace
 {
-};
-
-TEST_F (CompizXorgSystemStackingTest, TestSetup)
-{
+    const std::string compizLDLibraryPath ("@COMPIZ_LD_LIBRARY_PATH@");//("/home/smspillaz/Source/Compiz/dev/dev/merges/compiz/proposed/compiz/build/src/");
+    const std::string compizBinaryPath ("@COMPIZ_BINARY@");//("/home/smspillaz/Source/Compiz/dev/dev/merges/compiz/proposed/compiz/build/src/compiz");
 }
+
+#endif

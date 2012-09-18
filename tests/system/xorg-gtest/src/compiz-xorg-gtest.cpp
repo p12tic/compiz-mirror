@@ -1,5 +1,5 @@
 /*
- * Compiz XOrg GTest, window stacking
+ * Compiz XOrg GTest
  *
  * Copyright (C) 2012 Canonical Ltd.
  *
@@ -23,14 +23,32 @@
 #include <gtest/gtest.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
-
 #include <X11/Xlib.h>
 
-class CompizXorgSystemStackingTest :
-    public compiz::testing::XorgSystemTest
-{
-};
+#include "compiz-xorg-gtest-config.h"
 
-TEST_F (CompizXorgSystemStackingTest, TestSetup)
+namespace ct = compiz::testing;
+
+void
+ct::XorgSystemTest::SetUp ()
 {
+    xorg::testing::Test::SetUp ();
+
+    const std::string dispString (":998");
+
+    xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
+    xorg::testing::Process::SetEnv ("DISPLAY", dispString, true);
+
+    xorg::testing::XServer::WaitForEventOfType (Display (), ClientMessage, -1, -1);
+
+    mCompizProcess.Start (compizBinaryPath, "--replace", NULL);
+
+    ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
+}
+
+void
+ct::XorgSystemTest::TearDown ()
+{
+    mCompizProcess.Kill ();
+    xorg::testing::Test::TearDown ();
 }
