@@ -67,6 +67,8 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
       to resolve unity panel shadow (LP: #1050704)
     - Check that pixmaps which aren't managed by us actually exist before
       binding. (LP: #927168)
+    - Avoid a NULL dereference and give a useful error message instead
+      (LP: #944653)
   * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
     transitional package for migrations
   * Add -DUSE_GCONF=OFF to debian/rules
