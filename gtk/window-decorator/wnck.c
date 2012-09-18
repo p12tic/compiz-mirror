@@ -183,7 +183,10 @@ decorations_changed (WnckScreen *screen)
     gdkdisplay = gdk_display_get_default ();
     gdkscreen  = gdk_display_get_default_screen (gdkdisplay);
 
-    gwd_frames_foreach (set_frames_scales, (gpointer) settings->font);
+    const gchar *titlebar_font = NULL;
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
+
+    gwd_frames_foreach (set_frames_scales, (gpointer) titlebar_font);
 
     update_titlebar_font ();
     gwd_process_frames (update_frames_border_extents,

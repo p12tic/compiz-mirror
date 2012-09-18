@@ -63,6 +63,7 @@ function (compiz_install_gsettings_schema _src _dst)
     find_program (PKG_CONFIG_TOOL pkg-config)
     find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
     mark_as_advanced (FORCE PKG_CONFIG_TOOL)
+    mark_as_advanced (GLIB_COMPILE_SCHEMAS)
 
     # find out where schemas need to go if we are installing them systemwide
     execute_process (COMMAND ${PKG_CONFIG_TOOL} glib-2.0 --variable prefix  OUTPUT_VARIABLE GSETTINGS_GLIB_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -107,12 +108,16 @@ endfunction ()
 
 function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
 
+    find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
+    mark_as_advanced (GLIB_COMPILE_SCHEMAS)
+
     get_property (GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		  GLOBAL
 		  PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		  SET)
 
-    if (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+    if (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET AND
+	GLIB_COMPILE_SCHEMAS)
 
 	add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
 			   COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
@@ -127,7 +132,8 @@ function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
 		      PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		      TRUE)
 
-    endif (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+    endif (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET AND
+	   GLIB_COMPILE_SCHEMAS)
 
     add_dependencies (compiz_gsettings_compile_local
 		      ${_target_name_for_schema})
