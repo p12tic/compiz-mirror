@@ -30,7 +30,8 @@ namespace opengl {
 
 FullscreenRegion::FullscreenRegion (const CompRect &rect) :
     covered (false),
-    untouched (rect)
+    untouched (rect),
+    orig (untouched)
 {
 }
 
@@ -48,6 +49,15 @@ FullscreenRegion::isCoveredBy (const CompRegion &region, WinFlags flags)
     untouched -= region;
 
     return fullscreen;
+}
+
+bool
+FullscreenRegion::allowRedirection (const CompRegion &region)
+{
+    /* Don't allow existing unredirected windows that cover this
+     * region to be redirected again as they were probably unredirected
+     * on another monitor */
+    return region.intersects (orig);
 }
 
 } // namespace opengl
