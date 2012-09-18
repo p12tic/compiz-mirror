@@ -62,6 +62,9 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
     - Migrate profile independent keys separately from the profile 
       dependent keys (LP: #1046190)
     - Fix CMakeLists.txt to bring an xslt file back to compiz-dev
+    - Ensure window decorations always get rendered after the window, not
+      before. This is how it was in compiz 0.9.7, and is required in order 
+      to resolve unity panel shadow (LP: #1050704)
   * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
     transitional package for migrations
   * Add -DUSE_GCONF=OFF to debian/rules
