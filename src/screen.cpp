@@ -2887,7 +2887,7 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
     for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
     {
 	CompWindow* const w(*i);
-	if (w->priv->frame == id)
+	if (w->priv->serverFrame == id)
 	{
 	    if (w->overrideRedirect () && !override_redirect)
 		return NULL;
