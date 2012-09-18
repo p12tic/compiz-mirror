@@ -206,7 +206,7 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 
     clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
 
-    /* Check the client list to see that w2 > w1 */
+    /* Check the client list to see that dock > w2 > w1 */
     ASSERT_EQ (clientList.size (), 3);
 
     std::list <Window>::iterator it = clientList.begin ();
