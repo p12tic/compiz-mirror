@@ -36,8 +36,8 @@ class FullscreenRegion
 public:
     typedef enum
     {
-	Desktop = 1,
-	Alpha = 2
+	Desktop = 1 << 0,
+	Alpha = 1 << 1,
     } WinFlag;
 
     typedef unsigned int WinFlags;
@@ -46,10 +46,12 @@ public:
 
     // isCoveredBy is called for windows from TOP to BOTTOM
     bool isCoveredBy (const CompRegion &region, WinFlags flags = 0);
+    bool allowRedirection (const CompRegion &region);
 
 private:
     bool covered;
     CompRegion untouched;
+    CompRegion orig;
 };
 
 } // namespace opengl

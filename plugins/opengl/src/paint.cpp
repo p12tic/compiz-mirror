@@ -245,7 +245,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     CompWindow    *w;
     GLWindow      *gw;
     int           windowMask, odMask;
-    CompWindow	  *fullscreenWindow = NULL;
+    CompWindowList unredirectedFullscreenWindows;
     bool          status, unredirectFS;
     bool          withOffset = false;
     GLMatrix      vTransform;
@@ -350,32 +350,38 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	     * beneath them and so neither should be unredirected in that case.
 	     */
 	    if (unredirectFS &&
-	        !(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
-	        fs.isCoveredBy (w->region (), flags))
+		!(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+		fs.isCoveredBy (w->region (), flags))
 	    {
-	        fullscreenWindow = w;
+		unredirectedFullscreenWindows.push_back (w);
 	    }
 	    else
 	    {
-	        CompositeWindow *cw = CompositeWindow::get (w);
-	        if (!cw->redirected ())
-	        {
-		    // 1. GLWindow::release to force gw->priv->needsRebind
-		    gw->release ();
+		CompositeWindow *cw = CompositeWindow::get (w);
+		if (!cw->redirected ())
+		{
+		    if (fs.allowRedirection (w->region ()))
+		    {
+			// 1. GLWindow::release to force gw->priv->needsRebind
+			gw->release ();
 
-		    // 2. GLWindow::bind, which redirects the window,
-		    //    rebinds the pixmap, and then rebinds the pixmap
-		    //    to a texture.
-		    gw->bind ();
+			// 2. GLWindow::bind, which redirects the window,
+			//    rebinds the pixmap, and then rebinds the pixmap
+			//    to a texture.
+			gw->bind ();
 
-		    // 3. Your window is now redirected again with the
-		    //    latest pixmap contents.
-	        }
+			// 3. Your window is now redirected again with the
+			//    latest pixmap contents.
+		    }
+		    else
+			unredirectedFullscreenWindows.push_back (w);
+		}
 	    }
 	}
     }
 
-    if (fullscreenWindow)
+    /* Unredirect any redirected fullscreen windows */
+    foreach (CompWindow *fullscreenWindow, unredirectedFullscreenWindows)
 	CompositeWindow::get (fullscreenWindow)->unredirect ();
 
     if (!(mask & PAINT_SCREEN_NO_BACKGROUND_MASK))
@@ -389,8 +395,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	if (w->destroyed ())
 	    continue;
 
-	if (w == fullscreenWindow)
-	    continue;
+	if (!unredirectedFullscreenWindows.empty ())
+	    if (std::find (unredirectedFullscreenWindows.begin (),
+			   unredirectedFullscreenWindows.end (),
+			   w) != unredirectedFullscreenWindows.end ())
+		continue;
 
 	if (!w->shaded ())
 	{

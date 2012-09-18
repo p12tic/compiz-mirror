@@ -137,4 +137,15 @@ TEST (OpenGLFullscreenRegion, Overflow)
                                        FullscreenRegion::Desktop));
 }
 
+TEST (OpenGLFullscreenRegion, KeepUnredirectedStateIfNotOnMonitor)
+{
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
+    CompRegion       window (1025, 0, 1024, 768);
+    /* Eg, not covering the monitor, should be redirected */
+    EXPECT_FALSE (monitor.isCoveredBy (window));
+    /* Don't allow the redirection however, because we weren't
+     * covering the monitor at all. */
+    EXPECT_FALSE (monitor.allowRedirection (window));
+}
+
 
