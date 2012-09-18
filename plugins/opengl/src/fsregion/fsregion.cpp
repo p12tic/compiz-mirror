@@ -39,19 +39,8 @@ bool
 FullscreenRegion::isCoveredBy (const CompRegion &region, WinFlags flags)
 {
     bool fullscreen = false;
-    /* We don't want to unredirect desktop or alpha windows, or consider them
-     * as not-occluding other fullscreen windows */
-    const bool canBeConsideredAsCovering = !(flags & (Desktop | Alpha));
-    /* The region of this fullscreen window covers the existing untouched area
-     * of this monitor */
-    const bool coversUntouchedRegion = region == untouched;
 
-    /* This window covers the fullscreen area of this monitor, consider
-     * the monitor covered and don't allow any further windows on this
-     * monitor to be considered fullscreen */
-    if (!covered &&
-	canBeConsideredAsCovering &&
-	coversUntouchedRegion)
+    if (!covered && !(flags & (Desktop | Alpha)) && region == untouched)
     {
 	covered = true;
 	fullscreen = true;
