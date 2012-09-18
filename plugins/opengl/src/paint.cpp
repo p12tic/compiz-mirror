@@ -27,6 +27,7 @@
 
 #include "privates.h"
 
+#include <set>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -245,11 +246,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     CompWindow    *w;
     GLWindow      *gw;
     int           windowMask, odMask;
-    CompWindowList unredirectedFullscreenWindows;
     bool          status, unredirectFS;
     bool          withOffset = false;
     GLMatrix      vTransform;
     CompPoint     offXY;
+    std::set<CompWindow*> unredirected;
 
     CompWindowList                   pl;
     CompWindowList::reverse_iterator rit;
@@ -353,7 +354,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 		!(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
 		fs.isCoveredBy (w->region (), flags))
 	    {
-		unredirectedFullscreenWindows.push_back (w);
+		unredirected.insert (w);
 	    }
 	    else
 	    {
@@ -374,14 +375,16 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 			//    latest pixmap contents.
 		    }
 		    else
-			unredirectedFullscreenWindows.push_back (w);
+		    {
+			unredirected.insert (w);
+		    }
 		}
 	    }
 	}
     }
 
     /* Unredirect any redirected fullscreen windows */
-    foreach (CompWindow *fullscreenWindow, unredirectedFullscreenWindows)
+    foreach (CompWindow *fullscreenWindow, unredirected)
 	CompositeWindow::get (fullscreenWindow)->unredirect ();
 
     if (!(mask & PAINT_SCREEN_NO_BACKGROUND_MASK))
@@ -395,11 +398,8 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	if (w->destroyed ())
 	    continue;
 
-	if (!unredirectedFullscreenWindows.empty ())
-	    if (std::find (unredirectedFullscreenWindows.begin (),
-			   unredirectedFullscreenWindows.end (),
-			   w) != unredirectedFullscreenWindows.end ())
-		continue;
+	if (unredirected.find (w) != unredirected.end ())
+	    continue;
 
 	if (!w->shaded ())
 	{
