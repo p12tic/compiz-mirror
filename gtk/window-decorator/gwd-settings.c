@@ -357,10 +357,10 @@ gwd_settings_metacity_theme_changed (GWDSettingsWritable *settings,
 
 static gboolean
 gwd_settings_opacity_changed (GWDSettingsWritable *settings,
-			      gdouble             inactive_opacity,
 			      gdouble             active_opacity,
-			      gboolean            inactive_shade_opacity,
-			      gboolean            active_shade_opacity)
+			      gdouble             inactive_opacity,
+			      gboolean            active_shade_opacity,
+			      gboolean            inactive_shade_opacity)
 {
     GWDSettingsImpl        *settings_impl = GWD_SETTINGS_IMPL (settings);
     GWDSettingsImplPrivate *priv = GET_PRIVATE (settings_impl);

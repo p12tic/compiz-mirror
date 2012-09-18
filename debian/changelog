@@ -1,4 +1,4 @@
-compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8.2+bzr3377-0ubuntu1) UNRELEASED; urgency=low
 
   [ Sam Spilsbury ]
   * debian/python-compizconfig.install
@@ -8,7 +8,7 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
     - add some testcases
 
   [ Timo Jyrinki ]
-  * New upstream release.
+  * New upstream snapshot.
     - Fix multiple window placement bugs (LP: #974242) (LP: #976032)
     - Don't waste CPU looping through and looking at all the windows if you're
       rendering an output that has no damage on it. (LP: #1014986)
@@ -55,27 +55,42 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
     - Also need kdeworkspace since kdecorationbridge.h is there
       (LP: #1046770)
     - Implements some cleanup that was suggested on the merge for the original
-      port to gsettings (LP: #1042323)
-  * debian/compiz-dev.install
-    - Remove compizconfig-python.pc, now in python-compizconfig.install
-  * Cherry-pick fixes from upstream:
+      port to gsettings. Other issues fixed as well. (LP: #1042323)
+    - Fix the case where a new gsettings schema got added for building but
+      it wasn't recompiled locally (LP: #1046701)
+    - Scale: select the window under the pointer, when the scale animation 
+      is over. (LP: #1045127)
+    - Fixes the some "Use of uninitialised value" warnings reported by
+      valgrind (LP: #1004336))
+    - Check if org.gnome.mutter is available before using it (LP: #1048551)
+    - We don't need to map our style windows, prevent them from cluttering 
+      up the paint queue (LP: #1042552)
     - Migrate profile independent keys separately from the profile 
       dependent keys (LP: #1046190)
-    - Fix CMakeLists.txt to bring an xslt file back to compiz-dev
+    - Don't ever enter the subdir of a plugin that is disabled. (LP: #1049100)
+    - Workaround SubBuffer performance regression (LP: #1037411)
+    - Changed the default placement of the benchmark window from 0,0 to
+      100,50. (LP: #1039406)
     - Ensure window decorations always get rendered after the window, not
       before. This is how it was in compiz 0.9.7, and is required in order 
       to resolve unity panel shadow (LP: #1050704)
-    - Check that pixmaps which aren't managed by us actually exist before
-      binding. (LP: #927168)
+    - Fix CMakeLists.txt to bring an xslt file back to compiz-dev
     - Avoid a NULL dereference and give a useful error message instead
       (LP: #944653)
+    - Fix (LP: #1050752)
+    - Check that pixmaps which aren't managed by us actually exist before
+      binding. (LP: #927168)
+    - Fix flickering and performance problems with using Unredirect Fullscreen 
+      Windows with multiple monitors. (LP: #1050749) (LP: #1051885)
+  * debian/compiz-dev.install
+    - Remove compizconfig-python.pc, now in python-compizconfig.install
   * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
     transitional package for migrations
   * Add -DUSE_GCONF=OFF to debian/rules
   * debian/libdecoration0.symbols
     - Add decor_shadow_options_cmp
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Mon, 10 Sep 2012 15:27:32 +0300
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Tue, 18 Sep 2012 14:25:59 +0300
 
 compiz (1:0.9.8.0-0ubuntu1) quantal-proposed; urgency=low
 

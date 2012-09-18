@@ -46,10 +46,12 @@ public:
 
     // isCoveredBy is called for windows from TOP to BOTTOM
     bool isCoveredBy (const CompRegion &region, WinFlags flags = 0);
+    bool allowRedirection (const CompRegion &region);
 
 private:
     bool covered;
     CompRegion untouched;
+    CompRegion orig;
 };
 
 } // namespace opengl

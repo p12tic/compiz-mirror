@@ -922,10 +922,10 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
 {
     EXPECT_CALL (*mGMockNotified, updateDecorations ());
     EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							testing_values::INACTIVE_OPACITY_VALUE,
 							testing_values::ACTIVE_OPACITY_VALUE,
-							testing_values::INACTIVE_SHADE_OPACITY_VALUE,
-							testing_values::ACTIVE_SHADE_OPACITY_VALUE), GBooleanTrue ());
+							testing_values::INACTIVE_OPACITY_VALUE,
+							testing_values::ACTIVE_SHADE_OPACITY_VALUE,
+							testing_values::INACTIVE_SHADE_OPACITY_VALUE), GBooleanTrue ());
 
     AutoUnsetGValue metacityInactiveOpacityValue (G_TYPE_DOUBLE);
     AutoUnsetGValue metacityActiveOpacityValue (G_TYPE_DOUBLE);
@@ -963,10 +963,10 @@ TEST_F(GWDSettingsTest, TestMetacityOpacityChanged)
 TEST_F(GWDSettingsTest, TestMetacityOpacityChangedIsDefault)
 {
     EXPECT_THAT (gwd_settings_writable_opacity_changed (GWD_SETTINGS_WRITABLE_INTERFACE (mSettings.get ()),
-							METACITY_INACTIVE_OPACITY_DEFAULT,
 							METACITY_ACTIVE_OPACITY_DEFAULT,
-							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT,
-							METACITY_ACTIVE_SHADE_OPACITY_DEFAULT), GBooleanFalse ());
+							METACITY_INACTIVE_OPACITY_DEFAULT,
+							METACITY_ACTIVE_SHADE_OPACITY_DEFAULT,
+							METACITY_INACTIVE_SHADE_OPACITY_DEFAULT), GBooleanFalse ());
 }
 
 TEST_F(GWDSettingsTest, TestButtonLayoutChanged)

@@ -31,7 +31,7 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
-#define COMPIZ_SCALE_ABI 2
+#define COMPIZ_SCALE_ABI 3
 
 class ScaleScreen;
 class PrivateScaleScreen;
@@ -93,7 +93,8 @@ class ScaleScreen :
 	State getState () const;
 	ScaleType getType () const;
 
-	const Window & getHoveredWindow ();
+	const Window & getHoveredWindow () const;
+	const Window & getSelectedWindow () const;
 
 	const CompMatch & getCustomMatch () const;
 	const WindowList& getWindows () const;
