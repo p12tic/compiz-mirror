@@ -1,8 +1,8 @@
 /*
- * Compiz opengl plugin, FullscreenRegion class
+ * Compiz, opengl plugin, GLX_EXT_texture_from_pixmap rebind logic
  *
  * Copyright (c) 2012 Canonical Ltd.
- * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
+ * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,38 +22,32 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#ifndef _COMPIZ_OPENGL_GLX_TFP_BIND_H
+#define _COMPIZ_OPENGL_GLX_TFP_BIND_H
 
-#ifndef __COMPIZ_OPENGL_FSREGION_H
-#define __COMPIZ_OPENGL_FSREGION_H
-#include "core/rect.h"
-#include "core/region.h"
+#include <opengl/pixmapsource.h>
+#include <boost/function.hpp>
 
-namespace compiz {
-namespace opengl {
+class ServerGrabInterface;
+typedef unsigned long Pixmap;
+typedef unsigned long GLXPixmap;
 
-class FullscreenRegion
+namespace compiz
 {
-public:
-    typedef enum
+    namespace opengl
     {
-	Desktop = 1,
-	Alpha = 2
-    } WinFlag;
+	typedef boost::function <bool (Pixmap)> PixmapCheckValidityFunc;
+	typedef boost::function <void (GLXPixmap)> BindTexImageEXTFunc;
+	typedef boost::function <void ()> WaitGLXFunc;
 
-    typedef unsigned int WinFlags;
-
-    FullscreenRegion (const CompRect &rect);
-
-    // isCoveredBy is called for windows from TOP to BOTTOM
-    bool isCoveredBy (const CompRegion &region, WinFlags flags = 0);
-    bool allowRedirection (const CompRegion &region);
-
-private:
-    bool covered;
-    CompRegion untouched;
-    CompRegion orig;
-};
-
-} // namespace opengl
+	bool bindTexImageGLX (ServerGrabInterface           *,
+			      Pixmap,
+			      GLXPixmap,
+			      const PixmapCheckValidityFunc &,
+			      const BindTexImageEXTFunc     &,
+			      const WaitGLXFunc             &,
+			      PixmapSource);
+			      
+    } // namespace opengl
 } // namespace compiz
 #endif

@@ -4879,7 +4879,7 @@ ccsGetUpgradeFilesForProcessing (const char *upgradePath,
     struct dirent **nameList = NULL;
     unsigned int nFile = scandir (upgradePath, &nameList, upgradeNameFilter, alphasort);
 
-    if (nFile <= 0)
+    if (!nFile)
 	return 0;
 
     *passedNameList = nameList;

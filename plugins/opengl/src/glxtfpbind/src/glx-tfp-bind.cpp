@@ -1,8 +1,8 @@
 /*
- * Compiz opengl plugin, FullscreenRegion class
+ * Compiz, opengl plugin, GLX_EXT_texture_from_pixmap rebind logic
  *
  * Copyright (c) 2012 Canonical Ltd.
- * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
+ * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,38 +22,32 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <opengl/pixmapsource.h>
+#include <core/servergrab.h>
+#include "glx-tfp-bind.h"
 
-#ifndef __COMPIZ_OPENGL_FSREGION_H
-#define __COMPIZ_OPENGL_FSREGION_H
-#include "core/rect.h"
-#include "core/region.h"
+namespace cgl = compiz::opengl;
 
-namespace compiz {
-namespace opengl {
-
-class FullscreenRegion
+bool
+cgl::bindTexImageGLX (ServerGrabInterface                *serverGrabInterface,
+		      Pixmap                             x11Pixmap,
+		      GLXPixmap                          glxPixmap,
+		      const cgl::PixmapCheckValidityFunc &checkPixmapValidity,
+		      const cgl::BindTexImageEXTFunc     &bindTexImageEXT,
+		      const cgl::WaitGLXFunc             &waitGLX,
+		      cgl::PixmapSource                  source)
 {
-public:
-    typedef enum
-    {
-	Desktop = 1,
-	Alpha = 2
-    } WinFlag;
+    ServerLock lock (serverGrabInterface);
 
-    typedef unsigned int WinFlags;
+    waitGLX ();
 
-    FullscreenRegion (const CompRect &rect);
+    /* External pixmaps can disappear on us, but not
+     * while we have a server grab at least */
+    if (source == cgl::ExternallyManaged)
+	if (!checkPixmapValidity (x11Pixmap))
+	    return false;
 
-    // isCoveredBy is called for windows from TOP to BOTTOM
-    bool isCoveredBy (const CompRegion &region, WinFlags flags = 0);
-    bool allowRedirection (const CompRegion &region);
+    bindTexImageEXT (glxPixmap);
 
-private:
-    bool covered;
-    CompRegion untouched;
-    CompRegion orig;
-};
-
-} // namespace opengl
-} // namespace compiz
-#endif
+    return true;
+}

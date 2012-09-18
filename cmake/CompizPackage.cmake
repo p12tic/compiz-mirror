@@ -67,7 +67,7 @@ function (compiz_print_plugin_stats _folder)
 	string (TOUPPER ${_plugin_name} _PLUGIN)
 	compiz_format_string (${_plugin_name} 14 _plugin_name)
 
-	if (COMPIZ_DISABLE_PLUGIN_${_PLUGIN})
+	if (NOT COMPIZ_ENABLED_PLUGIN_${_PLUGIN})
 	    compiz_color_message ("  ${_plugin_name}: ${_escape}[1;34mDisabled${_escape}[0m")
 	else ()
 	    if (COMPIZ_${_PLUGIN}_BUILD)

@@ -24,6 +24,7 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "gwd-cairo-window-decoration-util.h"
 
 void
 rounded_rectangle (cairo_t *cr,
@@ -922,8 +923,9 @@ update_border_extents (decor_frame_t *frame)
 {
     frame = gwd_decor_frame_ref (frame);
 
-    frame->win_extents = frame->win_extents;
-    frame->max_win_extents = frame->win_extents;
+    gwd_cairo_window_decoration_get_extents (&frame->win_extents,
+					     &frame->max_win_extents);
+
     frame->titlebar_height = frame->max_titlebar_height =
 	    (frame->text_height < 17) ? 17 : frame->text_height;
 

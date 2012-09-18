@@ -869,6 +869,16 @@ GLScreen::GLScreen (CompScreen *s) :
 
     glxExtensions = glXQueryExtensionsString (dpy, s->screenNum ());
 
+    if (glxExtensions == NULL)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+	                "glXQueryExtensionsString is NULL for screen %d",
+	                s->screenNum ());
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
     if (!strstr (glxExtensions, "GLX_SGIX_fbconfig"))
     {
 	compLogMessage ("opengl", CompLogLevelFatal,
@@ -1722,8 +1732,8 @@ GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s) :
 
 #ifndef USE_GLES
 
-static void
-copyFrontToBack()
+void
+GLXDoubleBuffer::copyFrontToBack() const
 {
     int w = screen->width ();
     int h = screen->height ();
@@ -1761,9 +1771,6 @@ GLXDoubleBuffer::swap () const
     GL::controlSwapVideoSync (setting[VSYNC]);
 
     glXSwapBuffers (mDpy, mOutput);
-
-    if (!setting[PERSISTENT_BACK_BUFFER])
-	copyFrontToBack ();
 }
 
 bool
@@ -1888,6 +1895,11 @@ EGLDoubleBuffer::fallbackBlitAvailable () const
 
 void
 EGLDoubleBuffer::fallbackBlit (const CompRegion &region) const
+{
+}
+
+void
+EGLDoubleBuffer::copyFrontToBack() const
 {
 }
 
@@ -2023,13 +2035,15 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
+    bool alwaysSwap = optionGetAlwaysSwapBuffers ();
     bool fullscreen = useFbo ||
-                      optionGetAlwaysSwapBuffers () ||
+                      alwaysSwap ||
                       ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                        commonFrontbuffer);
 
     doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
-    doubleBuffer.set (DoubleBuffer::PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
     doubleBuffer.render (tmpRegion, fullscreen);
 
     lastMask = mask;

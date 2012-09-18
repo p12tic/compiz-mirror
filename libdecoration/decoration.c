@@ -413,7 +413,7 @@ decor_quad_cmp (const decor_quad_t *a, const decor_quad_t *b)
            );
 }
 
-static int
+int
 decor_extents_cmp (const decor_extents_t *a, const decor_extents_t *b)
 {
     /* Use binary | to avoid branch prediction slow-downs */

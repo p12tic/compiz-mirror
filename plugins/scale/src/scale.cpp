@@ -929,7 +929,12 @@ PrivateScaleScreen::donePaint ()
 		}
 	    }
 	    else if (state == ScaleScreen::Out)
+	    {
 		state = ScaleScreen::Wait;
+
+		// When the animation is completed, select the window under mouse
+		selectWindowAt (pointerX, pointerY);
+	    }
 	}
     }
 
@@ -1346,9 +1351,15 @@ ScaleWindow::setCurrentPosition (const ScalePosition &newPos)
 }
 
 const Window &
-ScaleScreen::getHoveredWindow ()
+ScaleScreen::getHoveredWindow () const
 {
     return priv->hoveredWindow;
+}
+
+const Window &
+ScaleScreen::getSelectedWindow () const
+{
+    return priv->selectedWindow;
 }
 
 bool
@@ -1377,6 +1388,16 @@ PrivateScaleScreen::selectWindowAt (int  x,
     hoveredWindow = None;
 
     return false;
+}
+
+bool
+PrivateScaleScreen::selectWindowAt (int  x,
+				    int  y)
+{
+    CompOption *o = screen->getOption ("click_to_focus");
+    bool focus = (o && !o->value ().b ());
+
+    return selectWindowAt (x, y, focus);
 }
 
 void
@@ -1598,15 +1619,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		grabIndex                              &&
 		state != ScaleScreen::In)
 	    {
-		bool       focus = false;
-		CompOption *o = screen->getOption ("click_to_focus");
-
-		if (o && !o->value ().b ())
-		    focus = true;
-
-		selectWindowAt (event->xmotion.x_root,
-				event->xmotion.y_root,
-				focus);
+		selectWindowAt (event->xmotion.x_root, event->xmotion.y_root);
 	    }
 	    break;
 	case DestroyNotify:
@@ -1629,12 +1642,6 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    bool       focus = false;
-		    CompOption *o = screen->getOption ("click_to_focus");
-
-		    if (o && !o->value ().b ())
-			focus = true;
-
 		    if (w->id () == dndTarget)
 			sendDndStatusMessage (event->xclient.data.l[0]);
 
@@ -1662,7 +1669,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 				hover.start (time, (float) time * 1.2);
 			    }
 
-			    selectWindowAt (pointerX, pointerY, focus);
+			    selectWindowAt (pointerX, pointerY);
 			}
 			else
 			{
