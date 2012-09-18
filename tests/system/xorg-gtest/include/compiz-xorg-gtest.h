@@ -23,13 +23,31 @@
 #ifndef _COMPIZ_XORG_GTEST_H
 #define _COMPIZ_XORG_GTEST_H
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
+
+using ::testing::MatcherInterface;
 
 namespace compiz
 {
     namespace testing
     {
+	typedef  ::testing::MatcherInterface <const XEvent &> XEventMatcher;
+
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
+	bool WaitForEventOfTypeOnWindow (Display *dpy,
+					 Window  w,
+					 int     type,
+					 int     ext,
+					 int     extType,
+					 int     timeout = 1000);
+	bool WaitForEventOfTypeOnWindowMatching (Display             *dpy,
+						 Window              w,
+						 int                 type,
+						 int                 ext,
+						 int                 extType,
+						 const XEventMatcher &matcher,
+						 int                 timeout = 1000);
 
 	class XorgSystemTest :
 	    public xorg::testing::Test

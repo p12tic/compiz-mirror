@@ -21,11 +21,17 @@
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 #include <list>
+#include <string>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 
 #include <X11/Xlib.h>
+
+using ::testing::MatchResultListener;
+using ::testing::MakeMatcher;
+using ::testing::Matcher;
 
 namespace ct = compiz::testing;
 
@@ -47,6 +53,44 @@ namespace
 
 
     const long                 WINDOW_ATTRIB_VALUE_MASK= 0;
+
+    class PropertyNotifyXEventMatcher :
+	public ct::XEventMatcher
+    {
+	public:
+
+	    PropertyNotifyXEventMatcher (Display *dpy,
+					 const std::string &propertyName) :
+		mPropertyName (propertyName),
+		mProperty (XInternAtom (dpy, propertyName.c_str (), false))
+	    {
+	    }
+
+	    virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+	    {
+		const XPropertyEvent *propertyEvent = reinterpret_cast <const XPropertyEvent *> (&event);
+
+		if (mProperty == propertyEvent->atom)
+		    return true;
+		else
+		    return false;
+	    }
+
+	    virtual void DescribeTo (std::ostream *os) const
+	    {
+		*os << "Is property identified by " << mPropertyName;
+	    }
+
+	    virtual void DescribeNegationTo (std::ostream *os) const
+	    {
+		*os << "Is not a property identified by" << mPropertyName;
+	    }
+
+	private:
+
+	    std::string mPropertyName;
+	    Atom	mProperty;
+    };
 }
 
 TEST_F (CompizXorgSystemStackingTest, TestSetup)
@@ -71,6 +115,8 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 			       WINDOW_ATTRIB_VALUE_MASK,
 			       &WINDOW_ATTRIB);
 
+    XSelectInput (dpy, w1, StructureNotifyMask);
+
     Window w2 = XCreateWindow (dpy,
 			       DefaultRootWindow (dpy),
 			       WINDOW_X,
@@ -84,9 +130,22 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 			       WINDOW_ATTRIB_VALUE_MASK,
 			       &WINDOW_ATTRIB);
 
-    /* Both reparented */
-    xorg::testing::XServer::WaitForEventOfType (dpy, ReparentNotify, -1, -1);
-    xorg::testing::XServer::WaitForEventOfType (dpy, ReparentNotify, -1, -1);
+    XSelectInput (dpy, w2, StructureNotifyMask);
+
+    XMapRaised (dpy, w1);
+    XMapRaised (dpy, w2);
+
+    /* Both reparented and both mapped */
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, ReparentNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1));
+
+    PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+
+    /* Wait for property change notify on the root window to happen twice */
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
 
     /* Check the client list to see that w2 > w1 */
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);

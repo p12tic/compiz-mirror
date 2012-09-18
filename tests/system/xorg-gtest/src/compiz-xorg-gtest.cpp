@@ -21,7 +21,9 @@
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 #include <list>
+#include <stdexcept>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 #include <X11/Xlib.h>
@@ -30,6 +32,70 @@
 #include "compiz-xorg-gtest-config.h"
 
 namespace ct = compiz::testing;
+namespace
+{
+    void RemoveEventFromQueue (Display *dpy)
+    {
+	XEvent event;
+
+	if (XNextEvent (dpy, &event) != Success)
+	    throw std::runtime_error("Failed to remove X event");
+    }
+}
+
+bool
+ct::WaitForEventOfTypeOnWindow (Display *dpy,
+				Window  w,
+				int     type,
+				int     ext,
+				int     extType,
+				int     timeout)
+{
+    while (xorg::testing::XServer::WaitForEventOfType (dpy, type, ext, extType, timeout))
+    {
+	XEvent event;
+	if (!XPeekEvent (dpy, &event))
+	    throw std::runtime_error ("Failed to peek event");
+
+
+	if (event.xany.window != w)
+	{
+	    RemoveEventFromQueue (dpy);
+	    continue;
+	}
+
+	return true;
+    }
+
+    return false;
+}
+
+bool
+ct::WaitForEventOfTypeOnWindowMatching (Display             *dpy,
+					Window              w,
+					int                 type,
+					int                 ext,
+					int                 extType,
+					const XEventMatcher &matcher,
+					int                 timeout)
+{
+    while (ct::WaitForEventOfTypeOnWindow (dpy, w, type, ext, extType, timeout))
+    {
+	XEvent event;
+	if (!XPeekEvent (dpy, &event))
+	    throw std::runtime_error ("Failed to peek event");
+
+	if (!matcher.MatchAndExplain (event, NULL))
+	{
+	    RemoveEventFromQueue (dpy);
+	    continue;
+	}
+
+	return true;
+    }
+
+    return false;
+}
 
 std::list <Window>
 ct::NET_CLIENT_LIST_STACKING (Display *dpy)
@@ -66,14 +132,15 @@ ct::XorgSystemTest::SetUp ()
 {
     xorg::testing::Test::SetUp ();
 
-    const std::string dispString (":998");
+    ::Display *dpy = Display ();
+    XSelectInput (dpy, DefaultRootWindow (dpy), SubstructureNotifyMask | PropertyChangeMask);
 
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
-    xorg::testing::Process::SetEnv ("DISPLAY", dispString, true);
-
-    xorg::testing::XServer::WaitForEventOfType (Display (), ClientMessage, -1, -1);
-
     mCompizProcess.Start (compizBinaryPath, "--replace", NULL);
+
+    /* Output buffer is flushed by this point, compiz has a server grab,
+     * so we will only get this once the relevant initialization is complete */
+    ASSERT_TRUE (xorg::testing::XServer::WaitForEventOfType (Display (), PropertyNotify, -1, -1, 3000));
 
     ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
 }

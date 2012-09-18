@@ -4570,6 +4570,8 @@ PrivateWindow::show ()
 	XMapWindow (screen->dpy (), wrapper);
     }
 
+    printf ("called XMapWindow\n");
+
     XMapWindow (screen->dpy (), id);
 
     window->changeState (state & ~CompWindowStateHiddenMask);
@@ -5523,7 +5525,10 @@ PrivateWindow::processMap ()
 	    screen->setCurrentDesktop (priv->desktop);
 
 	if (!(priv->state & CompWindowStateHiddenMask))
+	{
+	    printf ("showing unhidden window\n");
 	    show ();
+	}
 
 	if (allowFocus)
 	{
