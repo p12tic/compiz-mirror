@@ -65,6 +65,8 @@ compiz (1:0.9.8.2-0ubuntu1) UNRELEASED; urgency=low
     - Ensure window decorations always get rendered after the window, not
       before. This is how it was in compiz 0.9.7, and is required in order 
       to resolve unity panel shadow (LP: #1050704)
+    - Check that pixmaps which aren't managed by us actually exist before
+      binding. (LP: #927168)
   * Drop dependency on libgconf2-dev, add gconf2 dependency to the 
     transitional package for migrations
   * Add -DUSE_GCONF=OFF to debian/rules

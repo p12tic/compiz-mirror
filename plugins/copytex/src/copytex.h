@@ -52,10 +52,11 @@ class CopyPixmap {
 
 	~CopyPixmap ();
 
-	static GLTexture::List bindPixmapToTexture (Pixmap pixmap,
-						    int width,
-						    int height,
-						    int depth);
+	static GLTexture::List bindPixmapToTexture (Pixmap                       pixmap,
+						    int                          width,
+						    int                          height,
+						    int                          depth,
+						    compiz::opengl::PixmapSource source);
 
     public:
 	Textures textures;
