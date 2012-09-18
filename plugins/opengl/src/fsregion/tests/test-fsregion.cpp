@@ -148,4 +148,3 @@ TEST (OpenGLFullscreenRegion, KeepUnredirectedStateIfNotOnMonitor)
     EXPECT_FALSE (monitor.allowRedirection (window));
 }
 
-
