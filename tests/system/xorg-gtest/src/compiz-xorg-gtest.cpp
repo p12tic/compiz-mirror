@@ -57,12 +57,10 @@ ct::WaitForEventOfTypeOnWindow (Display *dpy,
 	if (!XPeekEvent (dpy, &event))
 	    throw std::runtime_error ("Failed to peek event");
 
+	RemoveEventFromQueue (dpy);
 
 	if (event.xany.window != w)
-	{
-	    RemoveEventFromQueue (dpy);
 	    continue;
-	}
 
 	return true;
     }
@@ -86,10 +84,9 @@ ct::WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 	    throw std::runtime_error ("Failed to peek event");
 
 	if (!matcher.MatchAndExplain (event, NULL))
-	{
-	    RemoveEventFromQueue (dpy);
 	    continue;
-	}
+
+	RemoveEventFromQueue (dpy);
 
 	return true;
     }

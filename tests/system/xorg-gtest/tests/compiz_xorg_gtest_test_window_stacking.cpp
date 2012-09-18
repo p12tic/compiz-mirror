@@ -22,12 +22,14 @@
  */
 #include <list>
 #include <string>
+#include <stdexcept>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 using ::testing::MatchResultListener;
 using ::testing::MakeMatcher;
@@ -153,4 +155,105 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     ASSERT_EQ (clientList.size (), 2);
     EXPECT_EQ (clientList.front (), w1);
     EXPECT_EQ (clientList.back (), w2);
+}
+
+TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachOtherDockAlwaysOnTop)
+{
+    XSetWindowAttributes WINDOW_ATTRIB;
+    ::Display *dpy = Display ();
+    PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+
+    Window dock = XCreateWindow (dpy,
+				 DefaultRootWindow (dpy),
+				 WINDOW_X,
+				 WINDOW_Y,
+				 WINDOW_WIDTH,
+				 WINDOW_HEIGHT,
+				 WINDOW_BORDER,
+				 WINDOW_DEPTH,
+				 WINDOW_CLASS,
+				 WINDOW_VISUAL,
+				 WINDOW_ATTRIB_VALUE_MASK,
+				 &WINDOW_ATTRIB);
+
+    XSelectInput (dpy, dock, StructureNotifyMask);
+
+    Atom _NET_WM_WINDOW_TYPE = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", false);
+    Atom _NET_WM_WINDOW_TYPE_DOCK = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_DOCK", false);
+
+    XChangeProperty (dpy,
+		     dock,
+		     _NET_WM_WINDOW_TYPE,
+		     XA_ATOM,
+		     32,
+		     PropModeReplace,
+		     reinterpret_cast <const unsigned char *> (&_NET_WM_WINDOW_TYPE_DOCK),
+		     1);
+
+    /* Immediately map the dock window and clear the event queue for it */
+    XMapRaised (dpy, dock);
+
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, dock, ReparentNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, dock, MapNotify, -1, -1));
+
+    /* Dock window needs to be in the client list */
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+
+    std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
+
+    ASSERT_EQ (clientList.size (), 1);
+
+    Window w1 = XCreateWindow (dpy,
+			       DefaultRootWindow (dpy),
+			       WINDOW_X,
+			       WINDOW_Y,
+			       WINDOW_WIDTH,
+			       WINDOW_HEIGHT,
+			       WINDOW_BORDER,
+			       WINDOW_DEPTH,
+			       WINDOW_CLASS,
+			       WINDOW_VISUAL,
+			       WINDOW_ATTRIB_VALUE_MASK,
+			       &WINDOW_ATTRIB);
+
+    XSelectInput (dpy, w1, StructureNotifyMask);
+
+    Window w2 = XCreateWindow (dpy,
+			       DefaultRootWindow (dpy),
+			       WINDOW_X,
+			       WINDOW_Y,
+			       WINDOW_WIDTH,
+			       WINDOW_HEIGHT,
+			       WINDOW_BORDER,
+			       WINDOW_DEPTH,
+			       WINDOW_CLASS,
+			       WINDOW_VISUAL,
+			       WINDOW_ATTRIB_VALUE_MASK,
+			       &WINDOW_ATTRIB);
+
+    XSelectInput (dpy, w2, StructureNotifyMask);
+
+    XMapRaised (dpy, w1);
+    XMapRaised (dpy, w2);
+
+    /* Both reparented and both mapped */
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, ReparentNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1));
+
+    /* Wait for property change notify on the root window to happen twice */
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+
+    clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
+
+    /* Check the client list to see that w2 > w1 */
+    ASSERT_EQ (clientList.size (), 3);
+
+    std::list <Window>::iterator it = clientList.begin ();
+
+    EXPECT_EQ (*it++, w1); /* first should be the bottom normal window */
+    EXPECT_EQ (*it++, w2); /* second should be the top normal window */
+    EXPECT_EQ (*it++, dock); /* dock must always be on top */
 }
