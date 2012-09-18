@@ -54,7 +54,42 @@ namespace
     Visual             *WINDOW_VISUAL = CopyFromParent;
 
 
-    const long                 WINDOW_ATTRIB_VALUE_MASK= 0;
+    const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
+
+    void MakeDock (Display *dpy, Window w)
+    {
+	Atom _NET_WM_WINDOW_TYPE = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", false);
+	Atom _NET_WM_WINDOW_TYPE_DOCK = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_DOCK", false);
+
+	XChangeProperty (dpy,
+			 w,
+			 _NET_WM_WINDOW_TYPE,
+			 XA_ATOM,
+			 32,
+			 PropModeReplace,
+			 reinterpret_cast <const unsigned char *> (&_NET_WM_WINDOW_TYPE_DOCK),
+			 1);
+    }
+
+    Window CreateNormalWindow (Display *dpy)
+    {
+	XSetWindowAttributes WINDOW_ATTRIB;
+	Window w = XCreateWindow (dpy,
+				  DefaultRootWindow (dpy),
+				  WINDOW_X,
+				  WINDOW_Y,
+				  WINDOW_WIDTH,
+				  WINDOW_HEIGHT,
+				  WINDOW_BORDER,
+				  WINDOW_DEPTH,
+				  WINDOW_CLASS,
+				  WINDOW_VISUAL,
+				  WINDOW_ATTRIB_VALUE_MASK,
+				  &WINDOW_ATTRIB);
+
+	XSelectInput (dpy, w, StructureNotifyMask);
+	return w;
+    }
 
     class PropertyNotifyXEventMatcher :
 	public ct::XEventMatcher
@@ -101,38 +136,10 @@ TEST_F (CompizXorgSystemStackingTest, TestSetup)
 
 TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachOther)
 {
-    XSetWindowAttributes WINDOW_ATTRIB;
     ::Display *dpy = Display ();
 
-    Window w1 = XCreateWindow (dpy,
-			       DefaultRootWindow (dpy),
-			       WINDOW_X,
-			       WINDOW_Y,
-			       WINDOW_WIDTH,
-			       WINDOW_HEIGHT,
-			       WINDOW_BORDER,
-			       WINDOW_DEPTH,
-			       WINDOW_CLASS,
-			       WINDOW_VISUAL,
-			       WINDOW_ATTRIB_VALUE_MASK,
-			       &WINDOW_ATTRIB);
-
-    XSelectInput (dpy, w1, StructureNotifyMask);
-
-    Window w2 = XCreateWindow (dpy,
-			       DefaultRootWindow (dpy),
-			       WINDOW_X,
-			       WINDOW_Y,
-			       WINDOW_WIDTH,
-			       WINDOW_HEIGHT,
-			       WINDOW_BORDER,
-			       WINDOW_DEPTH,
-			       WINDOW_CLASS,
-			       WINDOW_VISUAL,
-			       WINDOW_ATTRIB_VALUE_MASK,
-			       &WINDOW_ATTRIB);
-
-    XSelectInput (dpy, w2, StructureNotifyMask);
+    Window w1 = CreateNormalWindow (dpy);
+    Window w2 = CreateNormalWindow (dpy);
 
     XMapRaised (dpy, w1);
     XMapRaised (dpy, w2);
@@ -159,36 +166,13 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 
 TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachOtherDockAlwaysOnTop)
 {
-    XSetWindowAttributes WINDOW_ATTRIB;
     ::Display *dpy = Display ();
     PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
 
-    Window dock = XCreateWindow (dpy,
-				 DefaultRootWindow (dpy),
-				 WINDOW_X,
-				 WINDOW_Y,
-				 WINDOW_WIDTH,
-				 WINDOW_HEIGHT,
-				 WINDOW_BORDER,
-				 WINDOW_DEPTH,
-				 WINDOW_CLASS,
-				 WINDOW_VISUAL,
-				 WINDOW_ATTRIB_VALUE_MASK,
-				 &WINDOW_ATTRIB);
+    Window dock = CreateNormalWindow (dpy);
 
-    XSelectInput (dpy, dock, StructureNotifyMask);
-
-    Atom _NET_WM_WINDOW_TYPE = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", false);
-    Atom _NET_WM_WINDOW_TYPE_DOCK = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE_DOCK", false);
-
-    XChangeProperty (dpy,
-		     dock,
-		     _NET_WM_WINDOW_TYPE,
-		     XA_ATOM,
-		     32,
-		     PropModeReplace,
-		     reinterpret_cast <const unsigned char *> (&_NET_WM_WINDOW_TYPE_DOCK),
-		     1);
+    /* Make it a dock */
+    MakeDock (dpy, dock);
 
     /* Immediately map the dock window and clear the event queue for it */
     XMapRaised (dpy, dock);
@@ -200,36 +184,10 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
 
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
-
     ASSERT_EQ (clientList.size (), 1);
 
-    Window w1 = XCreateWindow (dpy,
-			       DefaultRootWindow (dpy),
-			       WINDOW_X,
-			       WINDOW_Y,
-			       WINDOW_WIDTH,
-			       WINDOW_HEIGHT,
-			       WINDOW_BORDER,
-			       WINDOW_DEPTH,
-			       WINDOW_CLASS,
-			       WINDOW_VISUAL,
-			       WINDOW_ATTRIB_VALUE_MASK,
-			       &WINDOW_ATTRIB);
-
-    XSelectInput (dpy, w1, StructureNotifyMask);
-
-    Window w2 = XCreateWindow (dpy,
-			       DefaultRootWindow (dpy),
-			       WINDOW_X,
-			       WINDOW_Y,
-			       WINDOW_WIDTH,
-			       WINDOW_HEIGHT,
-			       WINDOW_BORDER,
-			       WINDOW_DEPTH,
-			       WINDOW_CLASS,
-			       WINDOW_VISUAL,
-			       WINDOW_ATTRIB_VALUE_MASK,
-			       &WINDOW_ATTRIB);
+    Window w1 = CreateNormalWindow (dpy);
+    Window w2 = CreateNormalWindow (dpy);
 
     XSelectInput (dpy, w2, StructureNotifyMask);
 
