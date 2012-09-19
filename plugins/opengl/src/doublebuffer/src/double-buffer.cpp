@@ -96,7 +96,14 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 	/* Try and use this method, check if this method
 	 * throttled us too */
 	if (method->enableForBufferSwapType (swapType, throttled))
+	{
+	    if (lastSuccessfulVSyncMethod &&
+		lastSuccessfulVSyncMethod != method)
+		lastSuccessfulVSyncMethod->disable ();
+
+	    lastSuccessfulVSyncMethod = method;
 	    break;
+	}
 	else
 	{
 	    throttled = false;
@@ -113,7 +120,7 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 bool
 DoubleBuffer::hardwareVSyncFunctional ()
 {
-    return unthrottledFrames > 5;
+    return unthrottledFrames < 5;
 }
 
 } // namespace opengl

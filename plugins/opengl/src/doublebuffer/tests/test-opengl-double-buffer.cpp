@@ -26,7 +26,6 @@ class MockDoubleBuffer :
 	MOCK_CONST_METHOD0 (fallbackBlitAvailable, bool ());
 	MOCK_CONST_METHOD1 (fallbackBlit, void (const CompRegion &));
 	MOCK_CONST_METHOD0 (copyFrontToBack, void ());
-	MOCK_METHOD1 (vsync, void (compiz::opengl::BufferSwapType));
 };
 
 class MockVSyncMethod :
@@ -160,6 +159,8 @@ TEST (DoubleBufferVSyncTest, TestCallWorkingStrategy)
 
     EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (Flip, _))
 	    .WillOnce (Return (true));
+
+    doubleBuffer.vsync (Flip);
 }
 
 TEST (DoubleBufferVSyncTest, TestCallNextWorkingStrategy)
@@ -211,7 +212,7 @@ TEST (DoubleBufferVSyncTest, TestCallPrevCallNextPrevDeactivated)
     EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
 	    .WillOnce (Return (true));
     /* Previous one must be deactivated */
-    EXPECT_CALL (*mockVSyncMethod, disable ());
+    EXPECT_CALL (*mockVSyncMethodSafer, disable ());
 
     doubleBuffer.vsync (PartialCopy);
 }

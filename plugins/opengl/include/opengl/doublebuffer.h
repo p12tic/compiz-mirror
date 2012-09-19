@@ -42,6 +42,7 @@ class DoubleBuffer
     private:
 	unsigned int                 unthrottledFrames;
 	std::list <VSyncMethod::Ptr> vsyncMethods;
+	VSyncMethod::Ptr	     lastSuccessfulVSyncMethod;
 };
 
 }
