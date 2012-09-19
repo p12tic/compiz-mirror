@@ -38,8 +38,9 @@ namespace compiz
 namespace opengl
 {
 
-DoubleBuffer::DoubleBuffer () :
-    unthrottledFrames (0)
+DoubleBuffer::DoubleBuffer (const std::list <VSyncMethod::Ptr> &vsyncMethods) :
+    unthrottledFrames (0),
+    vsyncMethods (vsyncMethods)
 {
     setting[VSYNC] = true;
     setting[HAVE_PERSISTENT_BACK_BUFFER] = false;
@@ -84,6 +85,29 @@ DoubleBuffer::render (const CompRegion &region,
 void
 DoubleBuffer::vsync (BufferSwapType swapType)
 {
+    bool throttled = true;
+
+    for (std::list <VSyncMethod::Ptr>::iterator it = vsyncMethods.begin ();
+	 it != vsyncMethods.end ();
+	 ++it)
+    {
+	VSyncMethod::Ptr &method (*it);
+
+	/* Try and use this method, check if this method
+	 * throttled us too */
+	if (method->enableForBufferSwapType (swapType, throttled))
+	    break;
+	else
+	{
+	    throttled = false;
+	    method->disable ();
+	}
+    }
+
+    if (!throttled)
+	unthrottledFrames++;
+    else
+	unthrottledFrames = 0;
 }
 
 bool

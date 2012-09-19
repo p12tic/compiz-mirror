@@ -28,6 +28,8 @@
 #ifndef _OPENGL_PRIVATES_H
 #define _OPENGL_PRIVATES_H
 
+#include <memory>
+
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <core/atoms.h>
@@ -44,13 +46,23 @@
 
 extern CompOutput *targetOutput;
 
+namespace compiz
+{
+    namespace opengl
+    {
+	class VSyncMethod;
+	typedef boost::shared_ptr <VSyncMethod> VSyncMethodPtr;
+    }
+}
+
 class GLDoubleBuffer :
     public compiz::opengl::DoubleBuffer
 {
     public:
 
-	GLDoubleBuffer (Display *,
-			const CompSize &);
+	GLDoubleBuffer (Display                                          *,
+			const CompSize                                   &,
+			const std::list <compiz::opengl::VSyncMethodPtr> &vsyncMethods);
 
     protected:
 
@@ -65,9 +77,10 @@ class GLXDoubleBuffer :
 {
     public:
 
-	GLXDoubleBuffer (Display *,
-		       const CompSize &,
-		       Window);
+	GLXDoubleBuffer (Display                                          *,
+			 const CompSize                                   &,
+			 Window                                            ,
+			 const std::list <compiz::opengl::VSyncMethodPtr> &vsyncMethods);
 
 	void swap () const;
 	bool blitAvailable () const;
@@ -88,9 +101,10 @@ class EGLDoubleBuffer :
 {
     public:
 
-	EGLDoubleBuffer (Display *,
-		       const CompSize &,
-		       EGLSurface const &);
+	EGLDoubleBuffer (Display                                          *,
+			 const CompSize                                   &,
+			 EGLSurface const                                 &,
+			 const std::list <compiz::opengl::VSyncMethodPtr> &vsyncMethods);
 
 	void swap () const;
 	bool blitAvailable () const;
@@ -181,12 +195,12 @@ class PrivateGLScreen :
 	#ifdef USE_GLES
 	EGLContext ctx;
 	EGLSurface surface;
-	EGLDoubleBuffer doubleBuffer;
+	std::auto_ptr <EGLDoubleBuffer> doubleBuffer;
 	#else
 	GLXContext ctx;
 
 	GL::GLXGetProcAddressProc getProcAddress;
-	GLXDoubleBuffer doubleBuffer;
+	std::auto_ptr <GLXDoubleBuffer> doubleBuffer;
 	#endif
 
 	GLFramebufferObject *scratchFbo;

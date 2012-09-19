@@ -32,6 +32,8 @@
 #ifndef _COMPIZ_OPENGL_VSYNC_METHOD_H
 #define _COMPIZ_OPENGL_VSYNC_METHOD_H
 
+#include <boost/shared_ptr.hpp>
+
 namespace compiz
 {
     namespace opengl
@@ -45,6 +47,8 @@ namespace compiz
 	class VSyncMethod
 	{
 	    public:
+
+		typedef boost::shared_ptr <VSyncMethod> Ptr;
 
 		virtual bool enableForBufferSwapType (BufferSwapType type,
 						      bool           &throttledFrame) = 0;

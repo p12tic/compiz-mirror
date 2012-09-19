@@ -8,11 +8,17 @@ using namespace compiz::opengl;
 using testing::_;
 using testing::StrictMock;
 using testing::Return;
+using testing::SetArgReferee;
 
 class MockDoubleBuffer :
     public DoubleBuffer
 {
     public:
+
+	MockDoubleBuffer (const std::list <VSyncMethod::Ptr> &vsyncMethods) :
+	    DoubleBuffer (vsyncMethods)
+	{
+	}
 
 	MOCK_CONST_METHOD0 (swap, void ());
 	MOCK_CONST_METHOD0 (blitAvailable, bool ());
@@ -20,6 +26,7 @@ class MockDoubleBuffer :
 	MOCK_CONST_METHOD0 (fallbackBlitAvailable, bool ());
 	MOCK_CONST_METHOD1 (fallbackBlit, void (const CompRegion &));
 	MOCK_CONST_METHOD0 (copyFrontToBack, void ());
+	MOCK_METHOD1 (vsync, void (compiz::opengl::BufferSwapType));
 };
 
 class MockVSyncMethod :
@@ -36,8 +43,14 @@ class DoubleBufferTest :
 {
     public:
 
-	MockDoubleBuffer db;
-	CompRegion	 blitRegion;
+	DoubleBufferTest () :
+	    db (vsyncMethods)
+	{
+	}
+
+	std::list <VSyncMethod::Ptr> vsyncMethods;
+	MockDoubleBuffer             db;
+	CompRegion	             blitRegion;
 
 };
 
@@ -112,7 +125,8 @@ TEST_F(DoubleBufferTest, TestBlitExactlyWithRegionSpecified)
 
 TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBlitOrCopyIfNotSupportedAndDies)
 {
-    StrictMock <MockDoubleBuffer> dbStrict;
+    std::list <VSyncMethod::Ptr> vsyncMethods;
+    StrictMock <MockDoubleBuffer> dbStrict (vsyncMethods);
 
     ON_CALL (dbStrict, blitAvailable ()).WillByDefault (Return (false));
     ON_CALL (dbStrict, fallbackBlitAvailable ()).WillByDefault (Return (false));
@@ -125,11 +139,148 @@ TEST_F(CompizOpenGLDoubleBufferDeathTest, TestNoPaintedFullscreenOrFBODoesNotBli
 
 TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
 {
-    StrictMock <MockDoubleBuffer> dbStrict;
+    std::list <VSyncMethod::Ptr> vsyncMethods;
+    StrictMock <MockDoubleBuffer> dbStrict (vsyncMethods);
 
     EXPECT_CALL (dbStrict, blitAvailable ()).WillOnce (Return (false));
     EXPECT_CALL (dbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (dbStrict, fallbackBlit (blitRegion));
 
     dbStrict.render (blitRegion, false);
+}
+
+TEST (DoubleBufferVSyncTest, TestCallWorkingStrategy)
+{
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethod (new MockVSyncMethod ());
+    std::list <VSyncMethod::Ptr>        vsyncMethods;
+
+    vsyncMethods.push_back (mockVSyncMethod);
+
+    MockDoubleBuffer doubleBuffer (vsyncMethods);
+
+    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (Flip, _))
+	    .WillOnce (Return (true));
+}
+
+TEST (DoubleBufferVSyncTest, TestCallNextWorkingStrategy)
+{
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethod (new MockVSyncMethod ());
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethodSafer (new MockVSyncMethod ());
+    std::list <VSyncMethod::Ptr>        vsyncMethods;
+
+    vsyncMethods.push_back (mockVSyncMethod);
+    vsyncMethods.push_back (mockVSyncMethodSafer);
+
+    MockDoubleBuffer doubleBuffer (vsyncMethods);
+
+    /* This one fails */
+    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+	    .WillOnce (Return (false));
+    /* It needs to be deactivated */
+    EXPECT_CALL (*mockVSyncMethod, disable ());
+    /* Try the next one */
+    EXPECT_CALL (*mockVSyncMethodSafer, enableForBufferSwapType (PartialCopy, _))
+	    .WillOnce (Return (true));
+
+    doubleBuffer.vsync (PartialCopy);
+}
+
+TEST (DoubleBufferVSyncTest, TestCallPrevCallNextPrevDeactivated)
+{
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethod (new MockVSyncMethod ());
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethodSafer (new MockVSyncMethod ());
+    std::list <VSyncMethod::Ptr>        vsyncMethods;
+
+    vsyncMethods.push_back (mockVSyncMethod);
+    vsyncMethods.push_back (mockVSyncMethodSafer);
+
+    MockDoubleBuffer doubleBuffer (vsyncMethods);
+
+    /* This one fails */
+    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+	    .WillOnce (Return (false));
+    /* It needs to be deactivated */
+    EXPECT_CALL (*mockVSyncMethod, disable ());
+    /* Try the next one */
+    EXPECT_CALL (*mockVSyncMethodSafer, enableForBufferSwapType (PartialCopy, _))
+	    .WillOnce (Return (true));
+
+    doubleBuffer.vsync (PartialCopy);
+
+    /* Now the previous one works */
+    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+	    .WillOnce (Return (true));
+    /* Previous one must be deactivated */
+    EXPECT_CALL (*mockVSyncMethod, disable ());
+
+    doubleBuffer.vsync (PartialCopy);
+}
+
+TEST (DoubleBufferVSyncTest, TestReportNoHardwareVSyncIfMoreThan5UnthrottledFrames)
+{
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethod (new MockVSyncMethod ());
+    std::list <VSyncMethod::Ptr>        vsyncMethods;
+
+    vsyncMethods.push_back (mockVSyncMethod);
+
+    /* Always succeed */
+    ON_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _)).WillByDefault (Return (true));
+
+    MockDoubleBuffer doubleBuffer (vsyncMethods);
+
+    /* This one succeeds but fails to throttle */
+    for (unsigned int i = 0; i < 5; ++i)
+    {
+	EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+		.WillOnce (SetArgReferee <1> (false));
+
+	doubleBuffer.vsync (PartialCopy);
+    }
+
+    EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
+}
+
+TEST (DoubleBufferVSyncTest, TestRestoreReportHardwareVSync)
+{
+    boost::shared_ptr <MockVSyncMethod> mockVSyncMethod (new MockVSyncMethod ());
+    std::list <VSyncMethod::Ptr>        vsyncMethods;
+
+    vsyncMethods.push_back (mockVSyncMethod);
+
+    MockDoubleBuffer doubleBuffer (vsyncMethods);
+
+    /* Always succeed */
+    ON_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _)).WillByDefault (Return (true));
+
+    /* This one succeeds but fails to throttle */
+    for (unsigned int i = 0; i < 5; ++i)
+    {
+	EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+		.WillOnce (SetArgReferee <1> (false));
+
+	EXPECT_TRUE (doubleBuffer.hardwareVSyncFunctional ());
+
+	doubleBuffer.vsync (PartialCopy);
+    }
+
+    EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
+
+    /* It works again */
+    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+	    .WillOnce (SetArgReferee <1> (true));
+
+    doubleBuffer.vsync (PartialCopy);
+
+    /* And should report to work for another 5 bad frames */
+    for (unsigned int i = 0; i < 5; ++i)
+    {
+	EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+		.WillOnce (SetArgReferee <1> (false));
+
+	EXPECT_TRUE (doubleBuffer.hardwareVSyncFunctional ());
+
+	doubleBuffer.vsync (PartialCopy);
+    }
+
+    EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
 }

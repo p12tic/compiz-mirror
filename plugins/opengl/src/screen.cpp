@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include "privates.h"
+#include "vsyncmethod.h"
 
 #include <dlfcn.h>
 #include <math.h>
@@ -274,6 +275,8 @@ public:
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
 {
+    std::list <compiz::opengl::VSyncMethod::Ptr> availableVSyncMethods;
+
     #ifdef USE_GLES
     Display             *xdpy;
     Window               overlay;
@@ -499,6 +502,11 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::textureFromPixmap)
 	registerBindPixmap (EglTexture::bindPixmapToTexture);
+
+    priv->doubleBuffer.reset (new EGLDoubleBuffer (screen->dpy (),
+						   *screen,
+						   priv->surface,
+						   availableVSyncMethods));
 
     #else
 
@@ -796,6 +804,11 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::textureFromPixmap)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
+
+    priv->doubleBuffer.reset (new GLXDoubleBuffer (screen->dpy (),
+						   *screen,
+						   priv->cScreen->output (),
+						   availableVSyncMethods));
 #endif
 
     if (GL::fboSupported)
@@ -1120,9 +1133,6 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     lighting (false),
     #ifndef USE_GLES
     getProcAddress (0),
-    doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
-    #else
-    doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
     outputRegion (),
@@ -1724,7 +1734,10 @@ controlSwapVideoSync (bool sync)
 
 } // namespace GL
 
-GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s) :
+GLDoubleBuffer::GLDoubleBuffer (Display                            *d,
+				const CompSize                     &s,
+				const std::list <VSyncMethod::Ptr> &vsyncMethods) :
+    compiz::opengl::DoubleBuffer (vsyncMethods),
     mDpy (d),
     mSize (s)
 {
@@ -1757,10 +1770,11 @@ GLXDoubleBuffer::copyFrontToBack() const
     glMatrixMode (GL_MODELVIEW);
 }
 
-GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
-			      const CompSize &s,
-			      Window output) :
-    GLDoubleBuffer (d, s),
+GLXDoubleBuffer::GLXDoubleBuffer (Display                          *d,
+				  const CompSize                   &s,
+				  Window                           output,
+				  const std::list <VSyncMethodPtr> &vsyncMethods) :
+    GLDoubleBuffer (d, s, vsyncMethods),
     mOutput (output)
 {
 }
@@ -1840,10 +1854,11 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 
 #else
 
-EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
-			      const CompSize &s,
-			      EGLSurface const & surface) :
-    GLDoubleBuffer (d, s),
+EGLDoubleBuffer::EGLDoubleBuffer (Display                          *d,
+				  const CompSize                   &s,
+				  EGLSurface const                 &surface,
+				  const std::list <VSyncMethodPtr> &vsyncMethods)
+    GLDoubleBuffer (d, s, vsyncMethods),
     mSurface (surface)
 {
 }
@@ -2041,10 +2056,10 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
                       ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                        commonFrontbuffer);
 
-    doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
-    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
-    doubleBuffer.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
-    doubleBuffer.render (tmpRegion, fullscreen);
+    doubleBuffer->set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
+    doubleBuffer->set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer->set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
+    doubleBuffer->render (tmpRegion, fullscreen);
 
     lastMask = mask;
 }

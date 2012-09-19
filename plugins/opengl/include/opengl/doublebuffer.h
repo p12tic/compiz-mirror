@@ -12,7 +12,7 @@ namespace opengl
 class DoubleBuffer
 {
     public:
-	DoubleBuffer ();
+	DoubleBuffer (const std::list <VSyncMethod::Ptr> &vsyncMethods);
 	virtual ~DoubleBuffer ();
 
 	virtual void swap () const = 0;
@@ -40,7 +40,8 @@ class DoubleBuffer
 	bool setting[_NSETTINGS];
 
     private:
-	unsigned int unthrottledFrames;
+	unsigned int                 unthrottledFrames;
+	std::list <VSyncMethod::Ptr> vsyncMethods;
 };
 
 }
