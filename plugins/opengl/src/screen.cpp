@@ -563,9 +563,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    if (GL::textureFromPixmap)
-	registerBindPixmap (EglTexture::bindPixmapToTexture);
-
     availableVSyncMethods.push_back (boost::make_shared <impl::SwapIntervalVSyncMethod> (
 					 boost::bind (swapIntervalEGL, screen->dpy (), _1)));
 
@@ -573,6 +570,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 						   *screen,
 						   priv->surface,
 						   availableVSyncMethods));
+
+    if (GL::textureFromPixmap)
+	registerBindPixmap (EglTexture::bindPixmapToTexture);
 
     #else
 
@@ -868,9 +868,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    if (GL::textureFromPixmap)
-	registerBindPixmap (TfpTexture::bindPixmapToTexture);
-
     availableVSyncMethods.push_back (boost::make_shared <impl::SwapIntervalVSyncMethod> (
 					 boost::bind (swapIntervalGLX, _1)));
     availableVSyncMethods.push_back (boost::make_shared <impl::WaitVSyncMethod> (
@@ -880,6 +877,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 						   *screen,
 						   priv->cScreen->output (),
 						   availableVSyncMethods));
+
+    if (GL::textureFromPixmap)
+	registerBindPixmap (TfpTexture::bindPixmapToTexture);
 #endif
 
     if (GL::fboSupported)
