@@ -45,7 +45,7 @@ namespace compiz
 		    PrivateWaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
 
 		    GLXWaitVideoSyncSGIFunc waitVideoSync;
-		    int                     lastVSyncCounter;
+		    unsigned int            lastVSyncCounter;
 	    };
 	}
     }
@@ -69,7 +69,7 @@ bool
 cgli::WaitVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType,
 						bool		    &throttledFrame)
 {
-    int oldVideoSyncCounter = priv->lastVSyncCounter;
+    unsigned int oldVideoSyncCounter = priv->lastVSyncCounter;
     priv->waitVideoSync (1, 0, &priv->lastVSyncCounter);
 
     /* Check if this frame was actually throttled */

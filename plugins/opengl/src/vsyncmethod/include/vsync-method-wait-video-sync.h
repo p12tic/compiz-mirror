@@ -43,7 +43,7 @@ namespace compiz
 	namespace impl
 	{
 	    namespace cgl = compiz::opengl;
-	    typedef boost::function <int (int, int, int *)> GLXWaitVideoSyncSGIFunc;
+	    typedef boost::function <int (int, int, unsigned int *)> GLXWaitVideoSyncSGIFunc;
 
 	    class PrivateWaitVSyncMethod;
 	    class WaitVSyncMethod :

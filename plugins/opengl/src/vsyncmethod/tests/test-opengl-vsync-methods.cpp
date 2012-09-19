@@ -46,7 +46,7 @@ namespace
     {
 	public:
 
-	    MOCK_METHOD3 (waitVideoSyncSGI, int (int, int, int *));
+	    MOCK_METHOD3 (waitVideoSyncSGI, int (int, int, unsigned int *));
 	    MOCK_METHOD1 (swapIntervalEXT, void (int));
     };
 
