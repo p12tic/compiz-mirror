@@ -445,40 +445,6 @@ GLTexture::bindPixmapToTexture (Pixmap                       pixmap,
     return GLTexture::List ();
 }
 
-namespace
-{
-    bool checkPixmapValidityGLX (Pixmap pixmap)
-    {
-	Window       windowReturn;
-	unsigned int uiReturn;
-	int          iReturn;
-
-	if (!XGetGeometry (screen->dpy (),
-			   pixmap,
-			   &windowReturn,
-			   &iReturn,
-			   &iReturn,
-			   &uiReturn,
-			   &uiReturn,
-			   &uiReturn,
-			   &uiReturn))
-	    return false;
-	return true;
-    }
-
-    const cgl::WaitGLXFunc & waitGLXFunc ()
-    {
-	static const cgl::WaitGLXFunc f (boost::bind (glXWaitX));
-	return f;
-    }
-
-    const cgl::PixmapCheckValidityFunc & checkPixmapValidityFunc ()
-    {
-	static const cgl::PixmapCheckValidityFunc f (boost::bind (checkPixmapValidityGLX, _1));
-	return f;
-    }
-}
-
 #ifdef USE_GLES
 EglTexture::EglTexture () :
     damaged (true),
@@ -501,10 +467,11 @@ EglTexture::~EglTexture ()
 }
 
 GLTexture::List
-EglTexture::bindPixmapToTexture (Pixmap pixmap,
-				 int    width,
-				 int    height,
-				 int    depth)
+EglTexture::bindPixmapToTexture (Pixmap                       pixmap,
+				 int                          width,
+				 int                          height,
+				 int                          depth,
+				 compiz::opengl::PixmapSource source)
 {
     if ((int) width > GL::maxTextureSize || (int) height > GL::maxTextureSize ||
         !GL::textureFromPixmap)
@@ -581,6 +548,37 @@ EglTexture::enable (GLTexture::Filter filter)
 
 namespace
 {
+    bool checkPixmapValidityGLX (Pixmap pixmap)
+    {
+	Window       windowReturn;
+	unsigned int uiReturn;
+	int          iReturn;
+
+	if (!XGetGeometry (screen->dpy (),
+			   pixmap,
+			   &windowReturn,
+			   &iReturn,
+			   &iReturn,
+			   &uiReturn,
+			   &uiReturn,
+			   &uiReturn,
+			   &uiReturn))
+	    return false;
+	return true;
+    }
+
+    const cgl::WaitGLXFunc & waitGLXFunc ()
+    {
+	static const cgl::WaitGLXFunc f (boost::bind (glXWaitX));
+	return f;
+    }
+
+    const cgl::PixmapCheckValidityFunc & checkPixmapValidityFunc ()
+    {
+	static const cgl::PixmapCheckValidityFunc f (boost::bind (checkPixmapValidityGLX, _1));
+	return f;
+    }
+
     const cgl::BindTexImageEXTFunc & bindTexImageEXT ()
     {
 	static int                            *attrib_list = NULL;
