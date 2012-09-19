@@ -6,13 +6,16 @@ set (INTERNAL_LIBRARIES
     compiz_opengl_double_buffer
     compiz_opengl_fsregion
     compiz_opengl_glx_tfp_bind
+    compiz_opengl_vsync_methods
 )
 
 add_subdirectory (src/doublebuffer)
 add_subdirectory (src/fsregion)
 add_subdirectory (src/glxtfpbind)
+add_subdirectory (src/vsyncmethod)
 
 include_directories (src/glxtfpbind/include)
+include_directories (src/vsyncmethod/include)
 
 if (USE_GLES)
     compiz_plugin(opengl PLUGINDEPS composite CFLAGSADD "-DUSE_GLES -std=c++0x" LIBRARIES ${OPENGLES2_LIBRARIES} ${INTERNAL_LIBRARIES} dl INCDIRS ${OPENGLES2_INCLUDE_DIR})
