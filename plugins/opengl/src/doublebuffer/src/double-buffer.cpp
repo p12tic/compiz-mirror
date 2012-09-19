@@ -63,22 +63,32 @@ DoubleBuffer::render (const CompRegion &region,
 {
     if (fullscreen)
     {
+	if (setting[VSYNC])
+	    vsync (Flip);
+
 	swap ();
+
 	if (setting[NEED_PERSISTENT_BACK_BUFFER] &&
 	    !setting[HAVE_PERSISTENT_BACK_BUFFER])
 	{
 	    copyFrontToBack ();
 	}
     }
-    else if (blitAvailable ())
-	blit (region);
-    else if (fallbackBlitAvailable ())
-	fallbackBlit (region);
     else
     {
-	// This will never happen unless you make a porting mistake...
-	assert (false);
-	abort ();
+	if (setting[VSYNC])
+	    vsync (PartialCopy);
+
+	if (blitAvailable ())
+	    blit (region);
+	else if (fallbackBlitAvailable ())
+	    fallbackBlit (region);
+	else
+	{
+	    // This will never happen unless you make a porting mistake...
+	    assert (false);
+	    abort ();
+	}
     }
 }
 
