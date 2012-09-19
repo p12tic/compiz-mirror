@@ -2,6 +2,7 @@
 #define _COMPIZ_OPENGL_BUFFERBLIT_H
 
 #include <core/region.h>
+#include <vsyncmethod.h>
 
 namespace compiz
 {
@@ -31,9 +32,15 @@ class DoubleBuffer
 
 	void set (Setting name, bool value);
 	void render (const CompRegion &region, bool fullscreen);
+	void vsync (BufferSwapType swapType);
+
+	bool hardwareVSyncFunctional ();
 
     protected:
 	bool setting[_NSETTINGS];
+
+    private:
+	unsigned int unthrottledFrames;
 };
 
 }

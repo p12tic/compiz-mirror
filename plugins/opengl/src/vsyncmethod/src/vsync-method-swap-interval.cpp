@@ -63,15 +63,38 @@ cgli::PrivateSwapIntervalVSyncMethod::PrivateSwapIntervalVSyncMethod (const GLXS
 cgli::SwapIntervalVSyncMethod::SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapInterval) :
     priv (new cgli::PrivateSwapIntervalVSyncMethod (swapInterval))
 {
+
 }
 
 bool
-cgli::SwapIntervalVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType)
+cgli::SwapIntervalVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType,
+							bool		    &throttledFrame)
 {
-    return false;
+    /* Always consider these frames as un-throttled as the buffer
+     * swaps are done asynchronously */
+    throttledFrame = false;
+
+    /* Can't use swapInterval unless using SwapBuffers */
+    if (swapType != cgl::Flip)
+	return false;
+
+    /* Enable if not enabled */
+    if (!priv->enabled)
+    {
+	priv->swapInterval (1);
+	priv->enabled = true;
+    }
+
+    return true;
 }
 
 void
 cgli::SwapIntervalVSyncMethod::disable ()
 {
+    /* Disable if enabled */
+    if (priv->enabled)
+    {
+	priv->swapInterval (0);
+	priv->enabled = false;
+    }
 }

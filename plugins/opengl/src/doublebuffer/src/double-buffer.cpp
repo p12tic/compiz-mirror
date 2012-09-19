@@ -38,7 +38,8 @@ namespace compiz
 namespace opengl
 {
 
-DoubleBuffer::DoubleBuffer ()
+DoubleBuffer::DoubleBuffer () :
+    unthrottledFrames (0)
 {
     setting[VSYNC] = true;
     setting[HAVE_PERSISTENT_BACK_BUFFER] = false;
@@ -78,6 +79,17 @@ DoubleBuffer::render (const CompRegion &region,
 	assert (false);
 	abort ();
     }
+}
+
+void
+DoubleBuffer::vsync (BufferSwapType swapType)
+{
+}
+
+bool
+DoubleBuffer::hardwareVSyncFunctional ()
+{
+    return unthrottledFrames > 5;
 }
 
 } // namespace opengl

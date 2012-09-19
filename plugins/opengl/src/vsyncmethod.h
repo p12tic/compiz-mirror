@@ -46,7 +46,8 @@ namespace compiz
 	{
 	    public:
 
-		virtual bool enableForBufferSwapType (BufferSwapType type) = 0;
+		virtual bool enableForBufferSwapType (BufferSwapType type,
+						      bool           &throttledFrame) = 0;
 		virtual void disable () = 0;
 	};
     }

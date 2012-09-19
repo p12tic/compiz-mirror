@@ -51,10 +51,11 @@ namespace compiz
 	    {
 		public:
 
-            SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapIntervalEXT);
+		    SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapIntervalEXT);
 
-		    virtual bool enableForBufferSwapType (cgl::BufferSwapType type) = 0;
-		    virtual void disable () = 0;
+		    bool enableForBufferSwapType (cgl::BufferSwapType type,
+						  bool		      &throttledFrame);
+		    void disable ();
 
 		private:
 

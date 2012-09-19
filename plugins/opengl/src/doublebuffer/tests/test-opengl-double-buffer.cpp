@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 
 #include <opengl/doublebuffer.h>
+#include <vsyncmethod.h>
 
 using namespace compiz::opengl;
 using testing::_;
@@ -19,6 +20,15 @@ class MockDoubleBuffer :
 	MOCK_CONST_METHOD0 (fallbackBlitAvailable, bool ());
 	MOCK_CONST_METHOD1 (fallbackBlit, void (const CompRegion &));
 	MOCK_CONST_METHOD0 (copyFrontToBack, void ());
+};
+
+class MockVSyncMethod :
+    public VSyncMethod
+{
+    public:
+
+	MOCK_METHOD2 (enableForBufferSwapType, bool (BufferSwapType, bool &));
+	MOCK_METHOD0 (disable, void ());
 };
 
 class DoubleBufferTest :

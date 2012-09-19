@@ -42,11 +42,10 @@ namespace compiz
 	    {
 		public:
 
-		    PrivateWaitVSyncMethod (const GLXGetVideoSyncSGIFunc  &,
-					    const GLXWaitVideoSyncSGIFunc &);
+		    PrivateWaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
 
-		    GLXGetVideoSyncSGIFunc  getVideoSync;
 		    GLXWaitVideoSyncSGIFunc waitVideoSync;
+		    int                     lastVSyncCounter;
 	    };
 	}
     }
@@ -55,23 +54,31 @@ namespace compiz
 namespace cgl = compiz::opengl;
 namespace cgli = compiz::opengl::impl;
 
-cgli::PrivateWaitVSyncMethod::PrivateWaitVSyncMethod (const cgli::GLXGetVideoSyncSGIFunc  &getVideoSync,
-						      const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
-    getVideoSync (getVideoSync),
-    waitVideoSync (waitVideoSync)
+cgli::PrivateWaitVSyncMethod::PrivateWaitVSyncMethod (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
+    waitVideoSync (waitVideoSync),
+    lastVSyncCounter (0)
 {
 }
 
-cgli::WaitVSyncMethod::WaitVSyncMethod (const cgli::GLXGetVideoSyncSGIFunc  &getVideoSync,
-					const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
-    priv (new cgli::PrivateWaitVSyncMethod (getVideoSync, waitVideoSync))
+cgli::WaitVSyncMethod::WaitVSyncMethod (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
+    priv (new cgli::PrivateWaitVSyncMethod (waitVideoSync))
 {
 }
 
 bool
-cgli::WaitVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType)
+cgli::WaitVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType,
+						bool		    &throttledFrame)
 {
-    return false;
+    int oldVideoSyncCounter = priv->lastVSyncCounter;
+    priv->waitVideoSync (1, 0, &priv->lastVSyncCounter);
+
+    /* Check if this frame was actually throttled */
+    if (priv->lastVSyncCounter == oldVideoSyncCounter)
+	throttledFrame = false;
+    else
+	throttledFrame = true;
+
+    return true;
 }
 
 void
