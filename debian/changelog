@@ -96,6 +96,7 @@ compiz (1:0.9.8.2+bzr3377-0ubuntu1) UNRELEASED; urgency=low
   [ Didier Roche ]
   * debian/libdecoration0.symbols:
     - update the symbols file
+  * add and cherry-pick missing ABI breakage bump
 
  -- Didier Roche <didrocks@ubuntu.com>  Thu, 20 Sep 2012 15:43:04 +0200
 
