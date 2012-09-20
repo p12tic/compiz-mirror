@@ -1134,7 +1134,8 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     shaderCache (),
     autoProgram (new GLScreenAutoProgram(gs)),
     rootPixmapCopy (None),
-    rootPixmapSize ()
+    rootPixmapSize (),
+    prevOverlayCount (0)
 {
     ScreenInterface::setHandler (screen);
 }
@@ -2034,6 +2035,20 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	//        We should try to use glBlitFramebuffer instead.
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
+
+    int overlayCount = cScreen->overlayWindowCount ();
+    if (overlayCount != prevOverlayCount)
+    {
+	/*
+	 * Changes to the composite output window shape seem to be delayed by
+	 * a single frame. So to avoid flicker when changes occur, skip
+	 * this frame and do a full redraw on the next.
+	 */
+	prevOverlayCount = overlayCount;
+	cScreen->damageScreen ();
+	return;
+    }
+    prevOverlayCount = overlayCount;
 
     bool alwaysSwap = optionGetAlwaysSwapBuffers ();
     bool fullscreen = useFbo ||

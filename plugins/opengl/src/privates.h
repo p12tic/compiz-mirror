@@ -211,6 +211,8 @@ class PrivateGLScreen :
 
 	Pixmap rootPixmapCopy;
 	CompSize rootPixmapSize;
+
+	int prevOverlayCount;
 };
 
 class PrivateGLWindow :
