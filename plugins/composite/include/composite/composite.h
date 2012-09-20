@@ -205,6 +205,7 @@ class CompositeScreen :
 	void showOutputWindow ();
 	void hideOutputWindow ();
 	void updateOutputWindow ();
+	bool outputWindowChanged () const;
 
 	Window overlay ();
 	Window output ();
