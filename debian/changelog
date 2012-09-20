@@ -93,7 +93,11 @@ compiz (1:0.9.8.2+bzr3377-0ubuntu1) UNRELEASED; urgency=low
     - Fix FTBFS with BUILD_GLES
   * Restore 'Glide 2' unminimize animation via override
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Tue, 18 Sep 2012 14:25:59 +0300
+  [ Didier Roche ]
+  * debian/libdecoration0.symbols:
+    - update the symbols file
+
+ -- Didier Roche <didrocks@ubuntu.com>  Thu, 20 Sep 2012 15:43:04 +0200
 
 compiz (1:0.9.8.0-0ubuntu1) quantal-proposed; urgency=low
 
