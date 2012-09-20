@@ -1,4 +1,4 @@
-compiz (1:0.9.8.2+bzr3377-0ubuntu1) quantal; urgency=low
+compiz (1:0.9.8.2+bzr3377-0ubuntu1) quantal-proposed; urgency=low
 
   [ Sam Spilsbury ]
   * debian/python-compizconfig.install
