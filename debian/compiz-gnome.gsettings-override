@@ -10,3 +10,6 @@ run-key=""
 [org.compiz.move]
 constrain-y=true
 
+[org.compiz.animation]
+unminimize-effects=['animation:Glide 2']
+
