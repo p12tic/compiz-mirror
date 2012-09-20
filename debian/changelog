@@ -1,4 +1,4 @@
-compiz (1:0.9.8.2+bzr3377-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8.2+bzr3377-0ubuntu1) quantal; urgency=low
 
   [ Sam Spilsbury ]
   * debian/python-compizconfig.install
@@ -98,7 +98,7 @@ compiz (1:0.9.8.2+bzr3377-0ubuntu1) UNRELEASED; urgency=low
     - update the symbols file
   * add and cherry-pick missing ABI breakage bump
 
- -- Didier Roche <didrocks@ubuntu.com>  Thu, 20 Sep 2012 15:43:04 +0200
+ -- Didier Roche <didrocks@ubuntu.com>  Thu, 20 Sep 2012 17:39:05 +0200
 
 compiz (1:0.9.8.0-0ubuntu1) quantal-proposed; urgency=low
 
