@@ -41,8 +41,10 @@
 #include "privatescreen.h"
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
+#include "eventmanagement.h"
 
 namespace cps = compiz::private_screen;
+namespace ce = compiz::events;
 
 namespace
 {
@@ -189,6 +191,45 @@ cps::EventManager::triggerRelease (CompAction         *action,
     return false;
 }
 
+int
+ce::processButtonPressOnEdgeWindow (Window               edgeWindow,
+				    Window               root,
+				    Window               eventWindow,
+				    Window               eventRoot,
+				    cps::GrabList        &grabList,
+				    const CompScreenEdge *screenEdge)
+{
+    int edge = -1;
+
+    if (eventRoot != root)
+	return edge;
+
+    if (eventWindow != edgeWindow)
+    {
+	if (grabList.grabsEmpty () ||
+	    eventRoot != root)
+	    return edge;
+    }
+
+    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
+    {
+	if (edgeWindow == screenEdge[i].id)
+	{
+	    edge = 1 << i;
+	    break;
+	}
+    }
+
+    return edge;
+}
+
+void
+ce::setEventWindowInButtonPressArguments (ce::EventArguments &arguments,
+					  Window             eventWindow)
+{
+    arguments[1].value ().set ((int) eventWindow);
+}
+
 bool
 PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 					   XButtonEvent       *event,
@@ -199,31 +240,19 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     unsigned int      ignored = modHandler->ignoredModMask ();
     unsigned int      modMask = REAL_MOD_MASK & ~ignored;
     unsigned int      bindMods;
-    unsigned int      edge = 0;
+    int               edge = -1;
 
     if (edgeWindow)
-    {
-	unsigned int i;
+	edge = ce::processButtonPressOnEdgeWindow (edgeWindow,
+						   screen->root (),
+						   event->window,
+						   event->root,
+						   eventManager,
+						   screenEdge);
 
-	if (event->root != screen->root())
-	    return false;
-
-	if (event->window != edgeWindow)
-	{
-	    if (eventManager.grabsEmpty () || event->window != screen->root())
-		return false;
-	}
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
-	{
-	    if (edgeWindow == screenEdge[i].id)
-	    {
-		edge = 1 << i;
-		arguments[1].value ().set ((int) orphanData.activeWindow);
-		break;
-	    }
-	}
-    }
+    if (edge != -1)
+	ce::setEventWindowInButtonPressArguments (arguments,
+						  orphanData.activeWindow);
 
     foreach (CompOption &option, options)
     {

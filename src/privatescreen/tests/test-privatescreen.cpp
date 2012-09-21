@@ -1,5 +1,5 @@
 #include "privatescreen.h"
-
+#include "eventmanagement.h"
 
 // Get rid of stupid macro from X.h
 // Why, oh why, are we including X.h?
@@ -15,6 +15,8 @@ using ::testing::ReturnRef;
 using ::testing::_;
 
 namespace {
+
+const unsigned long None = 0;
 
 class MockCompScreen : public CompScreen
 {
@@ -355,6 +357,7 @@ PluginFilesystem const* PluginFilesystem::instance = 0;
 } // (abstract) namespace
 
 namespace cps = compiz::private_screen;
+namespace ce = compiz::events;
 
 TEST(privatescreen_PluginManagerTest, create_and_destroy)
 {
@@ -908,4 +911,90 @@ TEST(privatescreen_ViewportGeometryTest, PickBottomWhenJustBelow)
     compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
 
     EXPECT_EQ (vp, CompPoint (0, 1));
+}
+
+namespace
+{
+    const Window topLeftScreenEdge = 1;
+    const Window topScreenEdge = 2;
+    const Window topRightScreenEdge = 3;
+    const Window rightScreenEdge = 4;
+    const Window bottomRightScreenEdge = 5;
+    const Window bottomScreenEdge = 6;
+    const Window bottomLeftScreenEdge = 7;
+    const Window leftScreenEdge = 8;
+
+    const CompScreenEdge screenEdges[SCREEN_EDGE_NUM] =
+    {
+	{ leftScreenEdge, SCREEN_EDGE_LEFT },
+	{ rightScreenEdge, SCREEN_EDGE_RIGHT },
+	{ topScreenEdge, SCREEN_EDGE_TOP },
+	{ bottomScreenEdge , SCREEN_EDGE_BOTTOM },
+	{ topLeftScreenEdge, SCREEN_EDGE_TOPLEFT },
+	{ topRightScreenEdge, SCREEN_EDGE_TOPRIGHT },
+	{ bottomLeftScreenEdge, SCREEN_EDGE_BOTTOMLEFT },
+	{ bottomRightScreenEdge, SCREEN_EDGE_BOTTOMRIGHT}
+    };
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, IgnoreWhenEventAndRootWindowMismatch)
+{
+    const Window rootWindow = 1;
+    const Window edgeWindow = topScreenEdge;
+
+    cps::OrphanData orphanData;
+    cps::GrabList grabList;
+
+    EXPECT_EQ (ce::processButtonPressOnEdgeWindow (edgeWindow,
+						   rootWindow,
+						   0,
+						   0,
+						   grabList,
+						   screenEdges), -1);
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, IgnoreWhenEventMismatchAndNoGrabs)
+{
+    const Window rootWindow = 1;
+    const Window edgeWindow = topScreenEdge;
+
+    cps::OrphanData orphanData;
+    cps::GrabList grabList;
+
+    EXPECT_EQ (ce::processButtonPressOnEdgeWindow (edgeWindow,
+						   rootWindow,
+						   0,
+						   rootWindow,
+						   grabList,
+						   screenEdges), -1);
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, AllowWhenEventButNotRootWindowMismatchWhileGrabbed)
+{
+    const Window rootWindow = 1;
+    const Window edgeWindow = topScreenEdge;
+    unsigned int topEdgeMask = 1 << SCREEN_EDGE_TOP;
+
+    cps::OrphanData orphanData;
+    cps::GrabList grabList;
+
+    grabList.grabsPush (new cps::Grab (None, "Nil"));
+
+    EXPECT_EQ (ce::processButtonPressOnEdgeWindow (edgeWindow,
+						   rootWindow,
+						   0,
+						   rootWindow,
+						   grabList,
+						   screenEdges), topEdgeMask);
+
+    grabList.grabsRemove (grabList.grabsBack ());
+}
+
+TEST (privatescreen_ButtonPressEventManagementTest, SetEventWindowArgument)
+{
+    const Window activeWindow = 1;
+
+    ce::EventArguments arguments (2);
+    ce::setEventWindowInButtonPressArguments (arguments, activeWindow);
+    EXPECT_EQ (arguments[1].value ().i (), activeWindow);
 }
