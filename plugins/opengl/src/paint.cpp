@@ -352,6 +352,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	     */
 	    if (unredirectFS &&
 		!(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
+		!(mask & PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK) &&
 		fs.isCoveredBy (w->region (), flags))
 	    {
 		unredirected.insert (w);
