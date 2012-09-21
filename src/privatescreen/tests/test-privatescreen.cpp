@@ -1,4 +1,5 @@
 #include "privatescreen.h"
+#include "privateaction.h"
 #include "eventmanagement.h"
 
 // Get rid of stupid macro from X.h
@@ -1366,4 +1367,15 @@ TEST (privatescreen_ButtonPressEdgeEventManagementTest, TriggerWhenStateButtonAn
 							     eventManager,
 							     matchEventState,
 							     arguments));
+}
+
+TEST (privatescreen_ActionActiveTest, TestMakeActionActive)
+{
+    CompAction action;
+
+    ASSERT_EQ (action.active (), false);
+    compiz::actions::setActionActiveState (action, true);
+    ASSERT_EQ (action.active (), true);
+    compiz::actions::setActionActiveState (action, false);
+    ASSERT_EQ (action.active (), false);
 }

@@ -34,6 +34,14 @@
 
 #include <X11/Xlib-xcb.h>
 
+namespace compiz
+{
+    namespace actions
+    {
+	void setActionActiveState (const CompAction  &action,
+				   bool              active);
+    }
+}
 
 class PrivateAction;
 
@@ -171,7 +179,10 @@ class CompAction {
 
 	bool active ();
 
-	friend class CompScreenImpl;
+	/* BCI: Not optimal, CompAction should implement
+	 * BoundAction instead or be a PV class */
+	friend void compiz::actions::setActionActiveState (const CompAction  &action,
+							   bool              active);
 
     private:
 	PrivateAction *priv;
