@@ -230,6 +230,19 @@ ce::setEventWindowInButtonPressArguments (ce::EventArguments &arguments,
     arguments[1].value ().set ((int) eventWindow);
 }
 
+namespace
+{
+    bool buttonActionModifiersMatchEventState (unsigned int actionModifiers,
+					       unsigned int eventState)
+    {
+	const unsigned int ignored = modHandler->ignoredModMask ();
+	const unsigned int modMask = REAL_MOD_MASK & ~ignored;
+	const unsigned int bindMods = modHandler->virtualToRealModMask (actionModifiers);
+
+	return (bindMods & modMask) == (eventState & modMask);
+    }
+}
+
 bool
 PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 					   XButtonEvent       *event,
@@ -237,9 +250,6 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 {
     CompAction::State state = CompAction::StateInitButton;
     CompAction        *action;
-    unsigned int      ignored = modHandler->ignoredModMask ();
-    unsigned int      modMask = REAL_MOD_MASK & ~ignored;
-    unsigned int      bindMods;
     int               edge = -1;
 
     if (edgeWindow)
@@ -260,10 +270,8 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 	{
 	    if (action->button ().button () == (int) event->button)
 	    {
-		bindMods = modHandler->virtualToRealModMask (
-		    action->button ().modifiers ());
-
-		if ((bindMods & modMask) == (event->state & modMask))
+		if (buttonActionModifiersMatchEventState (action->button ().modifiers (),
+							  event->state))
 		{
 		    if (eventManager.triggerPress (action, state, arguments))
 			return true;
@@ -279,10 +287,8 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 		if ((action->button ().button () == (int) event->button) &&
 		    (action->edgeMask () & edge))
 		{
-		    bindMods = modHandler->virtualToRealModMask (
-			action->button ().modifiers ());
-
-		    if ((bindMods & modMask) == (event->state & modMask))
+		    if (buttonActionModifiersMatchEventState (action->button ().modifiers (),
+							      event->state))
 			if (action->initiate () (action, state |
 						 CompAction::StateInitEdge,
 						 arguments))
