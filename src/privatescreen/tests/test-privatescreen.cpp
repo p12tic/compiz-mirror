@@ -998,3 +998,177 @@ TEST (privatescreen_ButtonPressEventManagementTest, SetEventWindowArgument)
     ce::setEventWindowInButtonPressArguments (arguments, activeWindow);
     EXPECT_EQ (arguments[1].value ().i (), activeWindow);
 }
+
+namespace
+{
+    class MockTriggerableAction
+    {
+	public:
+
+	    MOCK_METHOD2 (matchEventState, bool (unsigned int,
+						 unsigned int));
+	    MOCK_METHOD3 (initiate, bool (CompAction         *,
+					  CompAction::State   ,
+					  CompOption::Vector &));
+	    MOCK_METHOD3 (terminate, bool (CompAction         *,
+					   CompAction::State   ,
+					   CompOption::Vector &));
+    };
+
+    const unsigned int testingButtonNumber = 1;
+    const unsigned int testingButtonState = (1 << 1);
+
+    ce::ActionModsMatchesEventStateFunc
+    GetMatchEventStateFuncForMock (MockTriggerableAction &triggerableAction)
+    {
+	return boost::bind (&MockTriggerableAction::matchEventState,
+			    &triggerableAction,
+			    _1, _2);
+    }
+
+    CompAction::CallBack
+    GetInitiateForMock (MockTriggerableAction &triggerableAction)
+    {
+	return boost::bind (&MockTriggerableAction::initiate,
+			    &triggerableAction,
+			    _1, _2, _3);
+    }
+
+    CompAction::CallBack
+    GetTerminateForMock (MockTriggerableAction &triggerableAction)
+    {
+	return boost::bind (&MockTriggerableAction::terminate,
+			    &triggerableAction,
+			    _1, _2, _3);
+    }
+}
+
+bool operator== (const CompOption &lhs,
+		 const CompOption &rhs)
+{
+    if (lhs.type () != rhs.type ())
+	return false;
+
+    return lhs.value () == rhs.value ();
+}
+
+TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnUnboundAction)
+{
+    CompAction            action;
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    MockTriggerableAction triggerableAction;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+
+    EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
+								testingButtonNumber,
+								testingButtonState,
+								eventManager,
+								matchEventState,
+								arguments));
+}
+
+TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonNumber)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setInitiate (initiate);
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setState (CompAction::StateInitButton);
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+
+    EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
+    EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
+								0,
+								testingButtonState,
+								eventManager,
+								matchEventState,
+								arguments));
+}
+
+TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonState)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setInitiate (initiate);
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setState (CompAction::StateInitButton);
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+
+    EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, 0))
+	    .WillOnce (Return (false));
+    EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
+    EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
+								testingButtonNumber,
+								0,
+								eventManager,
+								matchEventState,
+								arguments));
+}
+
+TEST (privatescreen_ButtonPressEventManagementTest, TriggerWhenStateAndButtonMatch)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setInitiate (initiate);
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setState (CompAction::StateInitButton);
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+
+    EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, testingButtonState))
+	    .WillOnce (Return (true));
+    EXPECT_CALL (triggerableAction, initiate (&option.value ().action (),
+					      CompAction::StateInitButton,
+					      arguments)).Times (1);
+    EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
+								testingButtonNumber,
+								testingButtonState,
+								eventManager,
+								matchEventState,
+								arguments));
+}

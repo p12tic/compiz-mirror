@@ -244,8 +244,10 @@ class CompOption
 
 	CompString name ();
 
-	Type type ();
-	Value & value ();
+	Type type () const;
+	Type type (); // BCI: drop this in 0.9.9
+	Value & value () const;
+	Value & value (); // BCI: drop this in 0.9.9
 	Restriction & rest ();
 
 	bool set (Value &val);

@@ -244,12 +244,39 @@ namespace
 }
 
 bool
+ce::activateButtonPressOnWindowBindingOption (CompOption                            &option,
+					      unsigned int                          eventButton,
+					      unsigned int                          eventState,
+					      cps::EventManager                     &eventManager,
+					      const ActionModsMatchesEventStateFunc &matchEventState,
+					      ce::EventArguments                    &arguments)
+{
+    CompAction              *action;
+    const CompAction::State state = CompAction::StateInitButton;
+
+    if (isBound (option, CompAction::BindingTypeButton, state, &action))
+    {
+	if (action->button ().button () == (int) eventButton)
+	{
+	    if (matchEventState (action->button ().modifiers (),
+				 eventState))
+	    {
+		if (eventManager.triggerPress (action, state, arguments))
+		    return true;
+	    }
+	}
+    }
+
+    return false;
+}
+
+bool
 PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 					   XButtonEvent       *event,
 					   CompOption::Vector &arguments)
 {
-    CompAction::State state = CompAction::StateInitButton;
     CompAction        *action;
+    CompAction::State state = CompAction::StateInitButton;
     int               edge = -1;
 
     static const ce::ActionModsMatchesEventStateFunc matchEventState (
@@ -270,18 +297,13 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
     foreach (CompOption &option, options)
     {
-	if (isBound (option, CompAction::BindingTypeButton, state, &action))
-	{
-	    if (action->button ().button () == (int) event->button)
-	    {
-		if (matchEventState (action->button ().modifiers (),
-				     event->state))
-		{
-		    if (eventManager.triggerPress (action, state, arguments))
-			return true;
-		}
-	    }
-	}
+	if (ce::activateButtonPressOnWindowBindingOption (option,
+							  event->button,
+							  event->state,
+							  eventManager,
+							  matchEventState,
+							  arguments))
+	    return true;
 
 	if (edge)
 	{

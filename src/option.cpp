@@ -462,8 +462,20 @@ CompOption::type ()
     return priv->type;
 }
 
+CompOption::Type
+CompOption::type () const
+{
+    return priv->type;
+}
+
 CompOption::Value &
 CompOption::value ()
+{
+    return priv->value;
+}
+
+CompOption::Value &
+CompOption::value () const
 {
     return priv->value;
 }
