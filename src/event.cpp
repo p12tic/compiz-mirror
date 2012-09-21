@@ -271,12 +271,43 @@ ce::activateButtonPressOnWindowBindingOption (CompOption                        
 }
 
 bool
+ce::activateButtonPressOnEdgeBindingOption (CompOption                            &option,
+					    unsigned int                          eventButton,
+					    unsigned int                          eventState,
+					    int                                   edge,
+					    cps::EventManager                     &eventManager,
+					    const ActionModsMatchesEventStateFunc &matchEventState,
+					    ce::EventArguments                    &arguments)
+{
+    CompAction              *action;
+    const CompAction::State state = CompAction::StateInitButton |
+				    CompAction::StateInitEdge;
+
+    if (edge != -1)
+    {
+	if (isInitiateBinding (option, CompAction::BindingTypeEdgeButton,
+			       state, &action))
+	{
+	    if ((action->button ().button () == (int) eventButton) &&
+		(action->edgeMask () & edge))
+	    {
+		if (matchEventState (action->button ().modifiers (),
+				     eventState))
+		    if (action->initiate () (action, state,
+					     arguments))
+			return true;
+	    }
+	}
+    }
+
+    return false;
+}
+
+bool
 PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 					   XButtonEvent       *event,
 					   CompOption::Vector &arguments)
 {
-    CompAction        *action;
-    CompAction::State state = CompAction::StateInitButton;
     int               edge = -1;
 
     static const ce::ActionModsMatchesEventStateFunc matchEventState (
@@ -305,23 +336,15 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 							  arguments))
 	    return true;
 
-	if (edge)
-	{
-	    if (isInitiateBinding (option, CompAction::BindingTypeEdgeButton,
-				   state | CompAction::StateInitEdge, &action))
-	    {
-		if ((action->button ().button () == (int) event->button) &&
-		    (action->edgeMask () & edge))
-		{
-		    if (matchEventState (action->button ().modifiers (),
-					 event->state))
-			if (action->initiate () (action, state |
-						 CompAction::StateInitEdge,
-						 arguments))
-			    return true;
-		}
-	    }
-	}
+	if (ce::activateButtonPressOnEdgeBindingOption (option,
+							event->button,
+							event->state,
+							edge,
+							eventManager,
+							matchEventState,
+							arguments))
+	    return true;
+
     }
 
     return false;

@@ -1164,11 +1164,206 @@ TEST (privatescreen_ButtonPressEventManagementTest, TriggerWhenStateAndButtonMat
 	    .WillOnce (Return (true));
     EXPECT_CALL (triggerableAction, initiate (&option.value ().action (),
 					      CompAction::StateInitButton,
-					      arguments)).Times (1);
-    EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
-								testingButtonNumber,
-								testingButtonState,
-								eventManager,
-								matchEventState,
-								arguments));
+					      arguments)).WillOnce (Return (true));
+    EXPECT_TRUE (ce::activateButtonPressOnWindowBindingOption (option,
+							       testingButtonNumber,
+							       testingButtonState,
+							       eventManager,
+							       matchEventState,
+							       arguments));
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnInvalidEdge)
+{
+    CompAction            action;
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    MockTriggerableAction triggerableAction;
+    ce::EventArguments    arguments;
+    int                   edgeMask = -1;
+
+    option.set (value);
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+
+    EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
+							      testingButtonNumber,
+							      testingButtonState,
+							      edgeMask,
+							      eventManager,
+							      matchEventState,
+							      arguments));
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnUnboundAction)
+{
+    CompAction            action;
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    MockTriggerableAction triggerableAction;
+    ce::EventArguments    arguments;
+    int                   edgeMask = 1 << SCREEN_EDGE_TOP;
+
+    option.set (value);
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+
+    EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
+							      testingButtonNumber,
+							      testingButtonState,
+							      edgeMask,
+							      eventManager,
+							      matchEventState,
+							      arguments));
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnMismatchedEdgeMask)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+    int                   edgeMask = 1 << SCREEN_EDGE_TOP;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setEdgeMask (edgeMask);
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+
+    option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
+
+    EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
+    EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
+							      testingButtonNumber,
+							      testingButtonState,
+							      0,
+							      eventManager,
+							      matchEventState,
+							      arguments));
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnMismatchedButtonNumber)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+    int                   edgeMask = 1 << SCREEN_EDGE_TOP;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setEdgeMask (edgeMask);
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+
+    option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
+
+    EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
+    EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
+							      0,
+							      testingButtonState,
+							      edgeMask,
+							      eventManager,
+							      matchEventState,
+							      arguments));
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnMismatchedButtonState)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+    int                   edgeMask = 1 << SCREEN_EDGE_TOP;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setEdgeMask (edgeMask);
+
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
+
+    EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, 0))
+	    .WillOnce (Return (false));
+    EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
+    EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
+							      testingButtonNumber,
+							      0,
+							      edgeMask,
+							      eventManager,
+							      matchEventState,
+							      arguments));
+}
+
+TEST (privatescreen_ButtonPressEdgeEventManagementTest, TriggerWhenStateButtonAndEdgeMaskMatch)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+    int                   edgeMask = 1 << SCREEN_EDGE_TOP;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setEdgeMask (edgeMask);
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton |
+					CompAction::StateInitEdge);
+
+    EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, testingButtonState))
+	    .WillOnce (Return (true));
+    EXPECT_CALL (triggerableAction, initiate (&option.value ().action (),
+					      CompAction::StateInitButton |
+					      CompAction::StateInitEdge,
+					      arguments)).WillOnce (Return (true));
+    EXPECT_TRUE (ce::activateButtonPressOnEdgeBindingOption (option,
+							     testingButtonNumber,
+							     testingButtonState,
+							     edgeMask,
+							     eventManager,
+							     matchEventState,
+							     arguments));
 }
