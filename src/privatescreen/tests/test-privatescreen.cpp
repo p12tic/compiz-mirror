@@ -1075,6 +1075,41 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnUnboundAction)
 								arguments));
 }
 
+TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnUnboundInactiveAction)
+{
+    CompAction            action;
+    MockTriggerableAction triggerableAction;
+    int                   edgeMask = 1 << SCREEN_EDGE_TOP;
+
+    const ce::ActionModsMatchesEventStateFunc &matchEventState =
+	    GetMatchEventStateFuncForMock (triggerableAction);
+    const CompAction::CallBack                &initiate =
+	    GetInitiateForMock (triggerableAction);
+
+    action.setButton (CompAction::ButtonBinding (testingButtonNumber,
+						 testingButtonState));
+    action.setEdgeMask (edgeMask);
+
+
+    CompOption            option ("button", CompOption::TypeButton);
+    CompOption::Value     value (action);
+    cps::EventManager     eventManager;
+    ce::EventArguments    arguments;
+
+    option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), false);
+
+    EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
+							      testingButtonNumber,
+							      testingButtonState,
+							      edgeMask,
+							      eventManager,
+							      matchEventState,
+							      arguments));
+}
+
 TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonNumber)
 {
     CompAction            action;
@@ -1096,6 +1131,7 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonN
     option.set (value);
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
     EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
@@ -1127,6 +1163,7 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonS
     option.set (value);
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, 0))
 	    .WillOnce (Return (false));
@@ -1160,6 +1197,7 @@ TEST (privatescreen_ButtonPressEventManagementTest, TriggerWhenStateAndButtonMat
     option.set (value);
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, testingButtonState))
 	    .WillOnce (Return (true));
@@ -1246,6 +1284,7 @@ TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnMismatchedEdg
     option.set (value);
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
     EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
@@ -1281,6 +1320,7 @@ TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnMismatchedBut
     option.set (value);
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
     EXPECT_FALSE (ce::activateButtonPressOnEdgeBindingOption (option,
@@ -1316,6 +1356,7 @@ TEST (privatescreen_ButtonPressEdgeEventManagementTest, NoTriggerOnMismatchedBut
     option.set (value);
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, 0))
 	    .WillOnce (Return (false));
@@ -1353,6 +1394,7 @@ TEST (privatescreen_ButtonPressEdgeEventManagementTest, TriggerWhenStateButtonAn
     option.value ().action ().setInitiate (initiate);
     option.value ().action ().setState (CompAction::StateInitButton |
 					CompAction::StateInitEdge);
+    compiz::actions::setActionActiveState (option.value ().action (), true);
 
     EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, testingButtonState))
 	    .WillOnce (Return (true));

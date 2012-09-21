@@ -126,6 +126,9 @@ isInitiateBinding (CompOption	           &option,
     if (option.value ().action ().initiate ().empty ())
 	return false;
 
+    if (!option.value ().action ().active ())
+	return false;
+
     *action = &option.value ().action ();
 
     return true;
