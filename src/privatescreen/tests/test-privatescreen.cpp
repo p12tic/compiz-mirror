@@ -1084,10 +1084,8 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonN
     const CompAction::CallBack                &initiate =
 	    GetInitiateForMock (triggerableAction);
 
-    action.setInitiate (initiate);
     action.setButton (CompAction::ButtonBinding (testingButtonNumber,
 						 testingButtonState));
-    action.setState (CompAction::StateInitButton);
 
     CompOption            option ("button", CompOption::TypeButton);
     CompOption::Value     value (action);
@@ -1095,6 +1093,8 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonN
     ce::EventArguments    arguments;
 
     option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
 
     EXPECT_CALL (triggerableAction, initiate (_, _, _)).Times (0);
     EXPECT_FALSE (ce::activateButtonPressOnWindowBindingOption (option,
@@ -1115,10 +1115,8 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonS
     const CompAction::CallBack                &initiate =
 	    GetInitiateForMock (triggerableAction);
 
-    action.setInitiate (initiate);
     action.setButton (CompAction::ButtonBinding (testingButtonNumber,
 						 testingButtonState));
-    action.setState (CompAction::StateInitButton);
 
     CompOption            option ("button", CompOption::TypeButton);
     CompOption::Value     value (action);
@@ -1126,6 +1124,8 @@ TEST (privatescreen_ButtonPressEventManagementTest, NoTriggerOnMismatchedButtonS
     ce::EventArguments    arguments;
 
     option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
 
     EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, 0))
 	    .WillOnce (Return (false));
@@ -1148,10 +1148,8 @@ TEST (privatescreen_ButtonPressEventManagementTest, TriggerWhenStateAndButtonMat
     const CompAction::CallBack                &initiate =
 	    GetInitiateForMock (triggerableAction);
 
-    action.setInitiate (initiate);
     action.setButton (CompAction::ButtonBinding (testingButtonNumber,
 						 testingButtonState));
-    action.setState (CompAction::StateInitButton);
 
     CompOption            option ("button", CompOption::TypeButton);
     CompOption::Value     value (action);
@@ -1159,6 +1157,8 @@ TEST (privatescreen_ButtonPressEventManagementTest, TriggerWhenStateAndButtonMat
     ce::EventArguments    arguments;
 
     option.set (value);
+    option.value ().action ().setInitiate (initiate);
+    option.value ().action ().setState (CompAction::StateInitButton);
 
     EXPECT_CALL (triggerableAction, matchEventState (testingButtonState, testingButtonState))
 	    .WillOnce (Return (true));

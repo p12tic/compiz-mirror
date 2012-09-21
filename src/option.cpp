@@ -489,6 +489,12 @@ CompOption::rest ()
 bool
 CompOption::set (CompOption::Value &val)
 {
+    /* XXX: It is uncertain as to why this is done. The only
+     * logical reason would be that actions are stateful and
+     * we don't want to care about the old state from the
+     * action that we're setting this value to, so we're just
+     * clearing that state and starting over, however copyState
+     * does a lot more than that */
     if (isAction () && priv->type != CompOption::TypeAction)
 	val.action ().copyState (priv->value.action ());
 

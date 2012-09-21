@@ -207,7 +207,7 @@ TEST(CompOption, Const)
     }
 }
 
-TEST (CompOption, AssignDefaultActionValueToUnsetType)
+TEST (CompOption, AssignDefaultActionValueToUnsetTypeClearsOldStateKeepsInfo)
 {
     /* Value is unset at this point */
     CompOption        option ("testing", CompOption::TypeKey);
@@ -217,6 +217,8 @@ TEST (CompOption, AssignDefaultActionValueToUnsetType)
      * the CompOption::Value constructor makes
      * a copy of the action */
     action.setState (CompAction::StateInitKey);
+    action.setButton (CompAction::ButtonBinding (1,
+						 1 << 1));
 
     CompOption::Value value (action);
 
@@ -226,5 +228,12 @@ TEST (CompOption, AssignDefaultActionValueToUnsetType)
      * overwrite the internal value */
     option.set (value);
 
-    ASSERT_EQ (option.value ().action ().state (), CompAction::StateInitKey);
+    /* We don't care about the old action's state, so get
+     * rid of it */
+    ASSERT_EQ (option.value ().action ().state (), 0);
+
+    /* We do want to keep the non-stateful data which is
+     * pure info */
+    ASSERT_EQ (option.value ().action ().button ().button (), 1);
+    ASSERT_EQ (option.value ().action ().button ().modifiers (), 1 << 1);
 }
