@@ -619,7 +619,19 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	if (!region.isEmpty ())
+	/*
+	 * Sometimes region might be empty but we still need to force the
+	 * repaint. This can happen when a fullscreen window is unredirected,
+	 * and damageScreen is called. CompositeScreen::handlePaintTimeout
+	 * then subtracts the whole screen of damage because it's an overlay
+	 * and we're left with an empty damage region.
+	 * Even when this happens we may want to force the repaint if
+	 * windows are getting transformed (and so the unredirected window
+	 * needs to be redirected again).
+	 */
+	if (!region.isEmpty () ||
+	    (mask & PAINT_SCREEN_FULL_MASK) ||
+	    (mask & PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK))
 	    priv->paintOutputRegion (sTransform, region, output, mask);
 
 	return true;
