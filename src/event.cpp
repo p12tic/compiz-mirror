@@ -252,6 +252,10 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     CompAction        *action;
     int               edge = -1;
 
+    static const ce::ActionModsMatchesEventStateFunc matchEventState (
+		boost::bind (buttonActionModifiersMatchEventState,
+			     _1, _2));
+
     if (edgeWindow)
 	edge = ce::processButtonPressOnEdgeWindow (edgeWindow,
 						   screen->root (),
@@ -270,8 +274,8 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 	{
 	    if (action->button ().button () == (int) event->button)
 	    {
-		if (buttonActionModifiersMatchEventState (action->button ().modifiers (),
-							  event->state))
+		if (matchEventState (action->button ().modifiers (),
+				     event->state))
 		{
 		    if (eventManager.triggerPress (action, state, arguments))
 			return true;
@@ -287,8 +291,8 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 		if ((action->button ().button () == (int) event->button) &&
 		    (action->edgeMask () & edge))
 		{
-		    if (buttonActionModifiersMatchEventState (action->button ().modifiers (),
-							      event->state))
+		    if (matchEventState (action->button ().modifiers (),
+					 event->state))
 			if (action->initiate () (action, state |
 						 CompAction::StateInitEdge,
 						 arguments))
