@@ -127,7 +127,6 @@ namespace compiz
 	    };
 
 	    class PrivateSettingValueListWrapper;
-
 	    class SettingValueListWrapper :
 		public compiz::config::ListWrapper <CCSSettingValueList, CCSSettingValue *>
 	    {
