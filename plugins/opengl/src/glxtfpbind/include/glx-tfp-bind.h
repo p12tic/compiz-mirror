@@ -1,8 +1,8 @@
 /*
- * Compiz opengl plugin, FullscreenRegion class
+ * Compiz, opengl plugin, GLX_EXT_texture_from_pixmap rebind logic
  *
  * Copyright (c) 2012 Canonical Ltd.
- * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
+ * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,43 +22,32 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#ifndef _COMPIZ_OPENGL_GLX_TFP_BIND_H
+#define _COMPIZ_OPENGL_GLX_TFP_BIND_H
 
-#include "fsregion.h"
+#include <opengl/pixmapsource.h>
+#include <boost/function.hpp>
 
-namespace compiz {
-namespace opengl {
+class ServerGrabInterface;
+typedef unsigned long Pixmap;
+typedef unsigned long GLXPixmap;
 
-FullscreenRegion::FullscreenRegion (const CompRect &rect) :
-    untouched (rect),
-    orig (untouched)
+namespace compiz
 {
-}
-
-bool
-FullscreenRegion::isCoveredBy (const CompRegion &region, WinFlags flags)
-{
-    bool fullscreen = false;
-
-    if (!(flags & (Desktop | Alpha)) &&
-        region == untouched &&
-        region == orig)
+    namespace opengl
     {
-	fullscreen = true;
-    }
+	typedef boost::function <bool (Pixmap)> PixmapCheckValidityFunc;
+	typedef boost::function <void (GLXPixmap)> BindTexImageEXTFunc;
+	typedef boost::function <void ()> WaitGLXFunc;
 
-    untouched -= region;
-
-    return fullscreen;
-}
-
-bool
-FullscreenRegion::allowRedirection (const CompRegion &region)
-{
-    /* Don't allow existing unredirected windows that cover this
-     * region to be redirected again as they were probably unredirected
-     * on another monitor */
-    return region.intersects (orig);
-}
-
-} // namespace opengl
+	bool bindTexImageGLX (ServerGrabInterface           *,
+			      Pixmap,
+			      GLXPixmap,
+			      const PixmapCheckValidityFunc &,
+			      const BindTexImageEXTFunc     &,
+			      const WaitGLXFunc             &,
+			      PixmapSource);
+			      
+    } // namespace opengl
 } // namespace compiz
+#endif

@@ -2035,6 +2035,17 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
+    if (cScreen->outputWindowChanged ())
+    {
+	/*
+	 * Changes to the composite output window seem to take a whole frame
+	 * to take effect. So to avoid a visible flicker, we skip this frame
+	 * and do a full redraw next time.
+	 */
+	cScreen->damageScreen ();
+	return;
+    }
+
     bool alwaysSwap = optionGetAlwaysSwapBuffers ();
     bool fullscreen = useFbo ||
                       alwaysSwap ||

@@ -1,8 +1,7 @@
 /*
- * Compiz opengl plugin, FullscreenRegion class
  *
  * Copyright (c) 2012 Canonical Ltd.
- * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
+ * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,42 +22,19 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "fsregion.h"
+#ifndef _COMPIZ_OPENGL_PIXMAP_SOURCE_H
+#define _COMPIZ_OPENGL_PIXMAP_SOURCE_H
 
-namespace compiz {
-namespace opengl {
-
-FullscreenRegion::FullscreenRegion (const CompRect &rect) :
-    untouched (rect),
-    orig (untouched)
+namespace compiz
 {
-}
-
-bool
-FullscreenRegion::isCoveredBy (const CompRegion &region, WinFlags flags)
-{
-    bool fullscreen = false;
-
-    if (!(flags & (Desktop | Alpha)) &&
-        region == untouched &&
-        region == orig)
+    namespace opengl
     {
-	fullscreen = true;
+	typedef enum _PixmapSource
+	{
+	    InternallyManaged = 0,
+	    ExternallyManaged = 1
+	} PixmapSource;
     }
-
-    untouched -= region;
-
-    return fullscreen;
 }
 
-bool
-FullscreenRegion::allowRedirection (const CompRegion &region)
-{
-    /* Don't allow existing unredirected windows that cover this
-     * region to be redirected again as they were probably unredirected
-     * on another monitor */
-    return region.intersects (orig);
-}
-
-} // namespace opengl
-} // namespace compiz
+#endif

@@ -337,7 +337,9 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
     }
 
     bindFailed = false;
-    textures = GLTexture::bindPixmapToTexture (pixmap->getPixmap (), width, height, depth);
+    textures = GLTexture::bindPixmapToTexture (pixmap->getPixmap (),
+					       width, height, depth,
+					       compiz::opengl::ExternallyManaged);
     if (textures.size () != 1)
     {
 	bindFailed = true;

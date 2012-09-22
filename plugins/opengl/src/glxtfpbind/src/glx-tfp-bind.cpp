@@ -1,8 +1,8 @@
 /*
- * Compiz opengl plugin, FullscreenRegion class
+ * Compiz, opengl plugin, GLX_EXT_texture_from_pixmap rebind logic
  *
  * Copyright (c) 2012 Canonical Ltd.
- * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
+ * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,43 +22,32 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <opengl/pixmapsource.h>
+#include <core/servergrab.h>
+#include "glx-tfp-bind.h"
 
-#include "fsregion.h"
-
-namespace compiz {
-namespace opengl {
-
-FullscreenRegion::FullscreenRegion (const CompRect &rect) :
-    untouched (rect),
-    orig (untouched)
-{
-}
+namespace cgl = compiz::opengl;
 
 bool
-FullscreenRegion::isCoveredBy (const CompRegion &region, WinFlags flags)
+cgl::bindTexImageGLX (ServerGrabInterface                *serverGrabInterface,
+		      Pixmap                             x11Pixmap,
+		      GLXPixmap                          glxPixmap,
+		      const cgl::PixmapCheckValidityFunc &checkPixmapValidity,
+		      const cgl::BindTexImageEXTFunc     &bindTexImageEXT,
+		      const cgl::WaitGLXFunc             &waitGLX,
+		      cgl::PixmapSource                  source)
 {
-    bool fullscreen = false;
+    ServerLock lock (serverGrabInterface);
 
-    if (!(flags & (Desktop | Alpha)) &&
-        region == untouched &&
-        region == orig)
-    {
-	fullscreen = true;
-    }
+    waitGLX ();
 
-    untouched -= region;
+    /* External pixmaps can disappear on us, but not
+     * while we have a server grab at least */
+    if (source == cgl::ExternallyManaged)
+	if (!checkPixmapValidity (x11Pixmap))
+	    return false;
 
-    return fullscreen;
+    bindTexImageEXT (glxPixmap);
+
+    return true;
 }
-
-bool
-FullscreenRegion::allowRedirection (const CompRegion &region)
-{
-    /* Don't allow existing unredirected windows that cover this
-     * region to be redirected again as they were probably unredirected
-     * on another monitor */
-    return region.intersects (orig);
-}
-
-} // namespace opengl
-} // namespace compiz

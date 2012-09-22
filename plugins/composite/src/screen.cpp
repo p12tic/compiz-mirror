@@ -281,6 +281,7 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     exposeRects (),
     windowPaintOffset (0, 0),
     overlayWindowCount (0),
+    outputShapeChanged (false),
     redrawTime (1000 / FALLBACK_REFRESH_RATE),
     optimalRedrawTime (1000 / FALLBACK_REFRESH_RATE),
     scheduled (false),
@@ -543,6 +544,8 @@ CompositeScreen::showOutputWindow ()
 	XFixesDestroyRegion (dpy, region);
 
 	damageScreen ();
+
+	priv->outputShapeChanged = true;
     }
 }
 
@@ -591,8 +594,16 @@ CompositeScreen::updateOutputWindow ()
 				    0, 0, region);
 
 	XFixesDestroyRegion (dpy, region);
+
+	priv->outputShapeChanged = true;
     }
 
+}
+
+bool
+CompositeScreen::outputWindowChanged () const
+{
+    return priv->outputShapeChanged;
 }
 
 void
@@ -832,6 +843,8 @@ CompositeScreen::handlePaintTimeout ()
 
 
 	donePaint ();
+
+	priv->outputShapeChanged = false;
 
 	foreach (CompWindow *w, screen->windows ())
 	{

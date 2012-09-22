@@ -37,10 +37,11 @@ static GLTexture::Matrix _identity_matrix = {
 };
 
 GLTexture::List
-CopyPixmap::bindPixmapToTexture (Pixmap pixmap,
-				 int width,
-				 int height,
-				 int depth)
+CopyPixmap::bindPixmapToTexture (Pixmap                       pixmap,
+				 int                          width,
+				 int                          height,
+				 int                          depth,
+				 compiz::opengl::PixmapSource source)
 {
     if (depth != 32 && depth != 24)
 	return GLTexture::List ();
