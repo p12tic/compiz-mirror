@@ -71,6 +71,7 @@ target_link_libraries (compizconfig_test_gsettings_conformance
                        compizconfig_ccs_backend_conformance_test
                        compizconfig_ccs_setting_value_operators
                        compizconfig_ccs_test_value_combinations
+		       compizconfig_ccs_integration_mock
 		       ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_MAIN_LIBRARY})

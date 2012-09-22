@@ -25,6 +25,9 @@ add_library (compizconfig_ccs_backend_mock
 add_library (compizconfig_ccs_text_file_mock
              ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_text_file_mock.cpp)
 
+add_library (compizconfig_ccs_integration_mock
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integration_mock.cpp)
+
 target_link_libraries (compizconfig_ccs_context_mock
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
@@ -62,3 +65,10 @@ target_link_libraries (compizconfig_ccs_text_file_mock
                        ${GMOCK_LIBRARY}
                        ${GMOCK_MAIN_LIBRARY}
                        ${CMAKE_THREAD_LIBS_INIT})
+
+target_link_libraries (compizconfig_ccs_integration_mock
+                       ${GTEST_BOTH_LIBRARIES}
+                       ${GMOCK_LIBRARY}
+                       ${GMOCK_MAIN_LIBRARY}
+                       ${CMAKE_THREAD_LIBS_INIT}
+		       compizconfig)
