@@ -30,6 +30,7 @@
 
 typedef boost::shared_ptr <GVariant> GVariantShared;
 typedef struct _CCSSetting CCSSetting;
+typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
 typedef enum   _CCSSettingType CCSSettingType;
 
 class PrivateCCSGSettingsStorageEnv;
