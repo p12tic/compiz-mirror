@@ -82,6 +82,80 @@ namespace
 	return IntegratedSettingWithMock (mock, composition);
     }
 
+    typedef std::tr1::tuple <const CCSContextGMock                            &,
+			     const CCSBackendGMock                            &,
+			     const CCSIntegratedSettingsStorageGMock          &,
+			     const CCSIntegratedSettingFactoryGMock           &,
+			     boost::shared_ptr <CCSContext>                    ,
+			     boost::shared_ptr <CCSBackend>                    ,
+			     boost::shared_ptr <CCSIntegratedSettingsStorage>  ,
+			     boost::shared_ptr <CCSIntegratedSettingFactory>   ,
+			     boost::shared_ptr <CCSIntegration>                 > CCSGNOMEIntegrationWithMocks;
+
+    CCSGNOMEIntegrationWithMocks
+    createIntegrationWithMocks (CCSObjectAllocationInterface *ai)
+    {
+	boost::shared_ptr <CCSContext>                   context (AutoDestroy (ccsMockContextNew (),
+									       ccsFreeContext));
+	boost::shared_ptr <CCSBackend>                   backend (AutoDestroy (ccsMockBackendNew (),
+									       ccsBackendUnref));
+	boost::shared_ptr <CCSIntegratedSettingsStorage> storage (AutoDestroy (ccsMockIntegratedSettingsStorageNew (ai),
+									       ccsIntegratedSettingsStorageUnref));
+	boost::shared_ptr <CCSIntegratedSettingFactory>  factory (AutoDestroy (ccsMockIntegratedSettingFactoryNew (ai),
+									       ccsIntegratedSettingFactoryUnref));
+	boost::shared_ptr <CCSIntegration>               integration (AutoDestroy (ccsGNOMEIntegrationBackendNew (backend.get (),
+														  context.get (),
+														  factory.get (),
+														  storage.get (),
+														  ai),
+										   ccsIntegrationUnref));
+
+	const CCSContextGMock                   &gmockContext = *(reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context.get ())));
+	const CCSBackendGMock                   &gmockBackend = *(reinterpret_cast <CCSBackendGMock *> (ccsObjectGetPrivate (backend.get ())));
+	const CCSIntegratedSettingsStorageGMock &gmockStorage = *(reinterpret_cast <CCSIntegratedSettingsStorageGMock *> (ccsObjectGetPrivate (storage.get ())));
+	const CCSIntegratedSettingFactoryGMock  &gmockFactory = *(reinterpret_cast <CCSIntegratedSettingFactoryGMock *> (ccsObjectGetPrivate (factory.get ())));
+
+	return CCSGNOMEIntegrationWithMocks (gmockContext,
+					     gmockBackend,
+					     gmockStorage,
+					     gmockFactory,
+					     context,
+					     backend,
+					     storage,
+					     factory,
+					     integration);
+    }
+
+    CCSIntegration *
+    Real (const CCSGNOMEIntegrationWithMocks &integrationWithMocks)
+    {
+	return std::tr1::get <8> (integrationWithMocks).get ();
+    }
+
+    const CCSContextGMock &
+    MockContext (const CCSGNOMEIntegrationWithMocks &integrationWithMocks)
+    {
+	return std::tr1::get <0> (integrationWithMocks);
+    }
+
+    const CCSBackendGMock &
+    MockBackend (const CCSGNOMEIntegrationWithMocks &integrationWithMocks)
+    {
+	return std::tr1::get <1> (integrationWithMocks);
+    }
+
+    const CCSIntegratedSettingsStorageGMock &
+    MockStorage (const CCSGNOMEIntegrationWithMocks &integrationWithMocks)
+    {
+	return std::tr1::get <2> (integrationWithMocks);
+    }
+
+    const CCSIntegratedSettingFactoryGMock &
+    MockFactory (const CCSGNOMEIntegrationWithMocks &integrationWithMocks)
+    {
+	return std::tr1::get <3> (integrationWithMocks);
+    }
+
     const std::string MOCK_PLUGIN ("mock");
     const std::string MOCK_SETTING ("mock");
     const std::string MOCK_GNOME_NAME ("mock");
@@ -102,20 +176,6 @@ TEST (CCSGNOMEIntegrationTest, TestConstructComposition)
 
 TEST (CCSGNOMEIntegrationTest, TestConstructGNOMEIntegration)
 {
-    CCSObjectAllocationInterface                     *ai = &ccsDefaultObjectAllocator;
-    boost::shared_ptr <CCSContext>                   context (AutoDestroy (ccsMockContextNew (),
-									   ccsFreeContext));
-    boost::shared_ptr <CCSBackend>                   backend (AutoDestroy (ccsMockBackendNew (),
-									   ccsBackendUnref));
-    boost::shared_ptr <CCSIntegratedSettingsStorage> storage (AutoDestroy (ccsMockIntegratedSettingsStorageNew (ai),
-									   ccsIntegratedSettingsStorageUnref));
-    boost::shared_ptr <CCSIntegratedSettingFactory>  factory (AutoDestroy (ccsMockIntegratedSettingFactoryNew (ai),
-									   ccsIntegratedSettingFactoryUnref));
-    boost::shared_ptr <CCSIntegration>               integration (AutoDestroy (ccsGNOMEIntegrationBackendNew (backend.get (),
-													      context.get (),
-													      factory.get (),
-													      storage.get (),
-													      ai),
-									       ccsIntegrationUnref));
+    CCSGNOMEIntegrationWithMocks integration (createIntegrationWithMocks (&ccsDefaultObjectAllocator));
 }
 
