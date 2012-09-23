@@ -220,10 +220,17 @@ ccsGConfIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
     ccsGConfIntegratedSettingFree ((CCSIntegratedSetting *) info);
 }
 
+void
+ccsGConfGNOMEIntegratedSettingInfoFree (CCSGNOMEIntegratedSettingInfo *info)
+{
+    ccsGConfIntegratedSettingFree ((CCSIntegratedSetting *) info);
+}
+
 const CCSGNOMEIntegratedSettingInfoInterface ccsGConfGNOMEIntegratedSettingInfoInterface =
 {
     ccsGConfIntegratedSettingGetSpecialOptionType,
-    ccsGConfIntegratedSettingGetGNOMEName
+    ccsGConfIntegratedSettingGetGNOMEName,
+    ccsGConfGNOMEIntegratedSettingInfoFree
 };
 
 const CCSIntegratedSettingInterface ccsGConfIntegratedSettingInterface =

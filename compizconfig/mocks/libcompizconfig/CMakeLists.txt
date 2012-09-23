@@ -29,7 +29,7 @@ add_library (compizconfig_ccs_integration_mock
 	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integration_mock.cpp)
 
 add_library (compizconfig_ccs_integrated_setting_mock
-	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integration_mock.cpp)
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integrated_setting_mock.cpp)
 
 target_link_libraries (compizconfig_ccs_context_mock
 		       ${GTEST_BOTH_LIBRARIES}

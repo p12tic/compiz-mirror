@@ -33,16 +33,16 @@ CCSIntegratedSetting *
 ccsMockIntegratedSettingNew (CCSObjectAllocationInterface *ai);
 
 void
-ccsMockIntegratedSettingFree (CCSIntegratedSetting *integration);
+ccsMockIntegratedSettingFree (CCSIntegratedSetting *);
 
 class CCSIntegratedSettingGMockInterface
 {
     public:
 
-	virtual ~CCSIntegrationGMockInterface () {}
+	virtual ~CCSIntegratedSettingGMockInterface () {}
 
-	virtual CCSSettingValue * readValue (CCSSettingType);
-	virtual void writeValue (CCSSettingValue *, CCSSettingType);
+	virtual CCSSettingValue * readValue (CCSSettingType) = 0;
+	virtual void writeValue (CCSSettingValue *, CCSSettingType) = 0;
 };
 
 class CCSIntegratedSettingGMock :
@@ -70,7 +70,7 @@ class CCSIntegratedSettingGMock :
 	ccsIntegratedSettingReadValue (CCSIntegratedSetting *integratedSetting,
 				       CCSSettingType       type)
 	{
-	    return reinterpret_cast <CCSIntegratedSettingGMockInterface *> (ccsObjectGetPrivate (integration))->readValue (type);
+	    return reinterpret_cast <CCSIntegratedSettingGMockInterface *> (ccsObjectGetPrivate (integratedSetting))->readValue (type);
 	}
 
 	static void
@@ -78,7 +78,7 @@ class CCSIntegratedSettingGMock :
 					CCSSettingValue      *value,
 					CCSSettingType       type)
 	{
-	    reinterpret_cast <CCSIntegratedSettingGMockInterface *> (ccsObjectGetPrivate (integration))->writeValue (value, type);
+	    reinterpret_cast <CCSIntegratedSettingGMockInterface *> (ccsObjectGetPrivate (integratedSetting))->writeValue (value, type);
 	}
 
 	static void

@@ -271,10 +271,17 @@ ccsGSettingsIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
     return ccsGSettingsIntegratedSettingFree ((CCSIntegratedSetting *) info);
 }
 
+void
+ccsGSettingsGNOMEIntegratedSettingInfoFree (CCSGNOMEIntegratedSettingInfo *info)
+{
+    return ccsGSettingsIntegratedSettingFree ((CCSIntegratedSetting *) info);
+}
+
 const CCSGNOMEIntegratedSettingInfoInterface ccsGSettingsGNOMEIntegratedSettingInterface =
 {
     ccsGSettingsIntegratedSettingGetSpecialOptionType,
-    ccsGSettingsIntegratedSettingGetGNOMEName
+    ccsGSettingsIntegratedSettingGetGNOMEName,
+    ccsGSettingsGNOMEIntegratedSettingInfoFree
 };
 
 const CCSIntegratedSettingInterface ccsGSettingsIntegratedSettingInterface =
