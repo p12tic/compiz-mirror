@@ -215,6 +215,8 @@ ccsMockCompositionIntegratedSettingNew (CCSIntegratedSetting          *integrate
 			   gnomeSettingImpl,
 			   GET_INTERFACE_TYPE (CCSGNOMEIntegratedSettingInfoInterface));
 
+    ccsObjectRef (composition);
+
     return composition;
 }
 

@@ -31,6 +31,10 @@ target_link_libraries (compizconfig_test_ccs_gnome_integration
 		       compizconfig_ccs_context_mock
 		       compizconfig_ccs_backend_mock
 		       compizconfig_ccs_setting_mock
+		       compizconfig_ccs_plugin_mock
+		       compizconfig_ccs_list_wrapper
+		       compizconfig_ccs_setting_value_operators
+		       compizconfig_ccs_setting_value_matcher
 		       compizconfig_ccs_integrated_setting_mock
 		       compizconfig_ccs_integrated_setting_factory_mock
 		       compizconfig_ccs_integrated_setting_storage_mock

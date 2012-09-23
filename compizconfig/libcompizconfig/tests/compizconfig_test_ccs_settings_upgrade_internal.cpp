@@ -43,6 +43,7 @@
 #include "compizconfig_ccs_item_in_list_matcher.h"
 #include "compizconfig_ccs_list_wrapper.h"
 #include "compizconfig_ccs_setting_value_operators.h"
+#include "compizconfig_ccs_setting_value_matcher.h"
 
 using ::testing::IsNull;
 using ::testing::Eq;
@@ -240,57 +241,6 @@ class CCSSettingsUpgradeTestWithMockContext :
 
 namespace
 {
-    class CCSSettingValueMatcher :
-	public ::testing::MatcherInterface <CCSSettingValue>
-    {
-	public:
-
-	    CCSSettingValueMatcher (const CCSSettingValue &match,
-				    CCSSettingType        type,
-				    CCSSettingInfo        *info) :
-		mMatch (match),
-		mType  (type),
-		mInfo  (info)
-	    {
-	    }
-
-	    virtual bool MatchAndExplain (CCSSettingValue x, MatchResultListener *listener) const
-	    {
-		if (ccsCheckValueEq (&x,
-				     mType,
-				     mInfo,
-				     &mMatch,
-				     mType,
-				     mInfo))
-		    return true;
-		return false;
-	    }
-
-	    virtual void DescribeTo (std::ostream *os) const
-	    {
-		*os << "Value Matches";
-	    }
-
-	    virtual void DescribeNegationTo (std::ostream *os) const
-	    {
-		*os << "Value does not Match";
-	    }
-
-	private:
-
-	    const CCSSettingValue &mMatch;
-	    CCSSettingType	  mType;
-	    CCSSettingInfo	  *mInfo;
-    };
-
-    Matcher <CCSSettingValue>
-    SettingValueMatch (const CCSSettingValue &match,
-		       CCSSettingType	     type,
-		       CCSSettingInfo	     *info)
-    {
-	return MakeMatcher (new CCSSettingValueMatcher (match, type, info));
-    }
-
     typedef boost::shared_ptr <cc::ListWrapper <CCSSettingList, CCSSetting *> > CCSSettingListWrapperPtr;
 
     CCSSettingListWrapperPtr

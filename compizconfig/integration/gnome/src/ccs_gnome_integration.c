@@ -445,7 +445,7 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		const char *newValueString = v->value.asString ? "fullscreen" : "frame_flash";
+		const char *newValueString = v->value.asBool ? "fullscreen" : "frame_flash";
 		newValue->value.asString = strdup (newValueString);
 		type = TypeString;
 
@@ -453,7 +453,7 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
-		const char *newValueString = v->value.asString ? "click" : "sloppy";
+		const char *newValueString = v->value.asBool ? "click" : "sloppy";
 		newValue->value.asString = strdup (newValueString);
 		type = TypeString;
 
@@ -468,9 +468,9 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		unsigned int modMask;
 		Bool         resizeWithRightButton = FALSE;
 
-		if ((getButtonBindingForSetting (context, "resize",
+		if ((getButtonBindingForSetting (priv->context, "resize",
 						 "initiate_button") == 3) ||
-		    (getButtonBindingForSetting (context, "core",
+		    (getButtonBindingForSetting (priv->context, "core",
 						 "window_menu_button") == 2))
 		{
 		     resizeWithRightButton = TRUE;
@@ -489,16 +489,16 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 														ccsGNOMEIntegratedPluginNames.SPECIAL,
 														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
 
-		modMask = ccsSettingGetValue (setting)->value.asButton.buttonModMask;
+		modMask = v->value.asButton.buttonModMask;
 		if (setGnomeMouseButtonModifier (integratedSettingsMBM->data, modMask))
 		{
-		    setButtonBindingForSetting (context, "move",
+		    setButtonBindingForSetting (priv->context, "move",
 						"initiate_button", 1, modMask);
-		    setButtonBindingForSetting (context, "resize",
+		    setButtonBindingForSetting (priv->context, "resize",
 						"initiate_button", 
 						resizeWithRightButton ? 3 : 2,
 						modMask);
-		    setButtonBindingForSetting (context, "core",
+		    setButtonBindingForSetting (priv->context, "core",
 						"window_menu_button",
 						resizeWithRightButton ? 2 : 3,
 						modMask);

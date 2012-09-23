@@ -133,6 +133,7 @@ target_link_libraries (compizconfig_test_ccs_upgrade_internal
                        compizconfig_ccs_plugin_mock
                        compizconfig_ccs_setting_mock
                        compizconfig_ccs_item_in_list_matcher
+		       compizconfig_ccs_setting_value_matcher
 )
 
 compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
