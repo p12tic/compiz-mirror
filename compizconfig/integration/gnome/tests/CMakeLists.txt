@@ -28,9 +28,14 @@ target_link_libraries (compizconfig_test_ccs_gnome_integration
 		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
+		       compizconfig_ccs_context_mock
+		       compizconfig_ccs_backend_mock
 		       compizconfig_ccs_setting_mock
 		       compizconfig_ccs_integrated_setting_mock
-		       compizconfig_ccs_mock_gnome_integrated_setting_composition)
+		       compizconfig_ccs_integrated_setting_factory_mock
+		       compizconfig_ccs_integrated_setting_storage_mock
+		       compizconfig_ccs_mock_gnome_integrated_setting_composition
+		       compizconfig_gnome_integration)
 
 compiz_discover_tests (compizconfig_test_ccs_gnome_integration
 		       COVERAGE

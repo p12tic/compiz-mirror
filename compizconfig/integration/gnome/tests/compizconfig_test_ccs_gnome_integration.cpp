@@ -25,10 +25,19 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <boost/shared_ptr.hpp>
+
+#include <gtest_shared_autodestroy.h>
+
 #include <ccs.h>
 #include <ccs-backend.h>
 #include <ccs_gnome_integrated_setting.h>
+#include <ccs_gnome_integration.h>
+#include <compizconfig_ccs_context_mock.h>
 #include <compizconfig_ccs_setting_mock.h>
+#include <compizconfig_ccs_backend_mock.h>
+#include <compizconfig_ccs_integrated_setting_factory_mock.h>
+#include <compizconfig_ccs_integrated_setting_storage_mock.h>
 #include <compizconfig_ccs_integrated_setting_mock.h>
 #include "compizconfig_ccs_mock_gnome_integrated_setting_composition.h"
 
@@ -90,3 +99,23 @@ TEST (CCSGNOMEIntegrationTest, TestConstructComposition)
 						    MOCK_GNOME_NAME,
 						    &ccsDefaultObjectAllocator));
 }
+
+TEST (CCSGNOMEIntegrationTest, TestConstructGNOMEIntegration)
+{
+    CCSObjectAllocationInterface                     *ai = &ccsDefaultObjectAllocator;
+    boost::shared_ptr <CCSContext>                   context (AutoDestroy (ccsMockContextNew (),
+									   ccsFreeContext));
+    boost::shared_ptr <CCSBackend>                   backend (AutoDestroy (ccsMockBackendNew (),
+									   ccsBackendUnref));
+    boost::shared_ptr <CCSIntegratedSettingsStorage> storage (AutoDestroy (ccsMockIntegratedSettingsStorageNew (ai),
+									   ccsIntegratedSettingsStorageUnref));
+    boost::shared_ptr <CCSIntegratedSettingFactory>  factory (AutoDestroy (ccsMockIntegratedSettingFactoryNew (ai),
+									   ccsIntegratedSettingFactoryUnref));
+    boost::shared_ptr <CCSIntegration>               integration (AutoDestroy (ccsGNOMEIntegrationBackendNew (backend.get (),
+													      context.get (),
+													      factory.get (),
+													      storage.get (),
+													      ai),
+									       ccsIntegrationUnref));
+}
+

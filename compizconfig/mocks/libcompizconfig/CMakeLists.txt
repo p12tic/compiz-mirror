@@ -31,6 +31,12 @@ add_library (compizconfig_ccs_integration_mock
 add_library (compizconfig_ccs_integrated_setting_mock
 	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integrated_setting_mock.cpp)
 
+add_library (compizconfig_ccs_integrated_setting_storage_mock
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integrated_setting_storage_mock.cpp)
+
+add_library (compizconfig_ccs_integrated_setting_factory_mock
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_integrated_setting_factory_mock.cpp)
+
 target_link_libraries (compizconfig_ccs_context_mock
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
@@ -77,6 +83,20 @@ target_link_libraries (compizconfig_ccs_integration_mock
 		       compizconfig)
 
 target_link_libraries (compizconfig_ccs_integrated_setting_mock
+                       ${GTEST_BOTH_LIBRARIES}
+                       ${GMOCK_LIBRARY}
+                       ${GMOCK_MAIN_LIBRARY}
+                       ${CMAKE_THREAD_LIBS_INIT}
+		       compizconfig)
+
+target_link_libraries (compizconfig_ccs_integrated_setting_factory_mock
+                       ${GTEST_BOTH_LIBRARIES}
+                       ${GMOCK_LIBRARY}
+                       ${GMOCK_MAIN_LIBRARY}
+                       ${CMAKE_THREAD_LIBS_INIT}
+		       compizconfig)
+
+target_link_libraries (compizconfig_ccs_integrated_setting_storage_mock
                        ${GTEST_BOTH_LIBRARIES}
                        ${GMOCK_LIBRARY}
                        ${GMOCK_MAIN_LIBRARY}

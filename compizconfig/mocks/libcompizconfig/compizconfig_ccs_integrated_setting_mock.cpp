@@ -47,7 +47,9 @@ ccsMockIntegratedSettingNew (CCSObjectAllocationInterface *ai)
 
     ccsObjectInit (integratedSetting, ai);
     ccsObjectSetPrivate (integratedSetting, (CCSPrivate *) gmockBackend);
-    ccsObjectAddInterface (integratedSetting, (const CCSInterface *) &mockIntegratedSettingInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
+    ccsObjectAddInterface (integratedSetting,
+			   reinterpret_cast <const CCSInterface *> (&mockIntegratedSettingInterface),
+			   GET_INTERFACE_TYPE (CCSIntegratedSettingInterface));
 
     ccsObjectRef (integratedSetting);
 
@@ -57,11 +59,13 @@ ccsMockIntegratedSettingNew (CCSObjectAllocationInterface *ai)
 void
 ccsMockIntegratedSettingFree (CCSIntegratedSetting *integration)
 {
-    CCSIntegratedSettingGMock *gmockIntegration = reinterpret_cast <CCSIntegratedSettingGMock *> (ccsObjectGetPrivate (integration));
+    CCSIntegratedSettingGMock *gmockIntegration =
+	    GET_PRIVATE (CCSIntegratedSettingGMock, integration);
 
     delete gmockIntegration;
 
     ccsObjectSetPrivate (integration, NULL);
     ccsObjectFinalize (integration);
-    (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
+    (*integration->object.object_allocation->free_)
+	    (integration->object.object_allocation->allocator, integration);
 }
