@@ -192,7 +192,7 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
 		    if (currentValue)
 		    {
 			if (strcmp (currentValue, newValue) != 0)
-			    writeStringToVariant (currentValue, &newVariant);
+			    writeStringToVariant (newValue, &newVariant);
 		    }
 		}
 	    }

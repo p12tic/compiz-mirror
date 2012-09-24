@@ -30,7 +30,6 @@
 
 #include <glib_gslice_off_env.h>
 #include <gtest_shared_autodestroy.h>
-#include <gtest_shared_characterwrapper.h>
 
 #include <ccs.h>
 #include <ccs-backend.h>
@@ -195,13 +194,12 @@ ccvg::fromValue (CCSSettingValue *v,
 	    GVariantBuilder builder;
 	    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
 
-	    CharacterWrapper kb (ccsKeyBindingToString (&v->value.asKey));
-	    if (std::string (kb) == "Disabled")
+	    /* Represented internally as strings */
+	    std::string kb (v->value.asString);
+	    if (kb == "Disabled")
 		kb[0] = 'd';
 
-	    const char *kb_cstr = kb;
-
-	    g_variant_builder_add (&builder, "s", kb_cstr);
+	    g_variant_builder_add (&builder, "s", kb.c_str ());
 	    return g_variant_builder_end (&builder);
 	}
 	default:
