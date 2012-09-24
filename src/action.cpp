@@ -33,6 +33,8 @@
 #include <core/screen.h>
 #include "privateaction.h"
 
+namespace ca = compiz::actions;
+
 struct _Modifier {
     const char *name;
     int        modifier;
@@ -624,6 +626,28 @@ bool
 CompAction::active ()
 {
     return priv->active;
+}
+
+void
+PrivateAction::makeActive ()
+{
+    active = true;
+}
+
+void
+PrivateAction::makeInactive ()
+{
+    active = false;
+}
+
+void
+ca::setActionActiveState (const CompAction &action,
+			  bool                  active)
+{
+    if (active)
+	action.priv->makeActive ();
+    else
+	action.priv->makeInactive ();
 }
 
 PrivateAction::PrivateAction () :
