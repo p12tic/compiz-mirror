@@ -132,9 +132,12 @@ getGnomeMouseButtonModifier (CCSIntegratedSetting *mouseButtonModifierSetting)
     CCSSettingType type = TypeString;
     CCSSettingValue *v = ccsIntegratedSettingReadValue (mouseButtonModifierSetting, type);
 
-    modMask = ccsStringToModifiers (v->value.asString);
+    if (v)
+    {
+	modMask = ccsStringToModifiers (v->value.asString);
 
-    ccsFreeSettingValueWithType (v, type);
+	ccsFreeSettingValueWithType (v, type);
+    }
 
     return modMask;
 }
