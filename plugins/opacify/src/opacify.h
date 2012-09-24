@@ -61,7 +61,10 @@ class OpacifyScreen :
 	handleEvent (XEvent *);
 
 	void
-	resetOpacity (Window  id);
+	resetWindowOpacity (Window  id);
+
+	void
+	resetScreenOpacity ();
 
 	void
 	clearPassive ();
