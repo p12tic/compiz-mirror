@@ -55,6 +55,7 @@ namespace cci = compiz::config::impl;
 using ::testing::Pointee;
 using ::testing::Eq;
 using ::testing::Return;
+using ::testing::ReturnNull;
 using ::testing::SetArgPointee;
 using ::testing::DoAll;
 using ::testing::_;
@@ -591,6 +592,39 @@ TEST_F (CCSGNOMEIntegrationTestWithMocksReadIntegratedMouseButtonModifiers, Test
     CCSSettingButtonValue newButtonValue = mButtonValue;
     newButtonValue.button = RIGHT_BUTTON;
     newButtonValue.buttonModMask = GNOME_MOUSE_BUTTON_MODIFIERS;
+
+    mIntegratedSetting = createIntegratedSettingCompositionFromMock (pluginName,
+								     settingName,
+								     TypeBool,
+								     OptionSpecial,
+								     MOCK_GNOME_NAME,
+								     &ccsDefaultObjectAllocator);
+    SetNames (mSettingMock, mPluginMock, settingName, pluginName);
+
+    /* Set the new mouse button modifier */
+    EXPECT_CALL (mSettingMock, setButton (Eq (newButtonValue),
+					  IsTrue ()));
+
+    EXPECT_THAT (ccsIntegrationReadOptionIntoSetting (Real (mIntegration),
+						      NULL,
+						      mSetting.get (),
+						      Real (*mIntegratedSetting)), IsTrue ());
+}
+
+TEST_F (CCSGNOMEIntegrationTestWithMocksReadIntegratedMouseButtonModifiers, TestReadInSpecialOptionWhereIntegratedOptionReturnsNull)
+{
+    const std::string settingName ("initiate_button");
+    const std::string pluginName ("move");
+
+    CCSSettingButtonValue newButtonValue = mButtonValue;
+    newButtonValue.button = LEFT_BUTTON;
+    /* Reading the gnome mouse button modifiers failed, so default to zero */
+    newButtonValue.buttonModMask = 0;
+
+    /* Clear the old expectation */
+    ccsIntegratedSettingReadValue (mIntegratedSettingMBM.get (), TypeString);
+    /* Now return null */
+    EXPECT_CALL (mIntegratedSettingMBMMock, readValue (TypeString)).WillOnce (ReturnNull ());
 
     mIntegratedSetting = createIntegratedSettingCompositionFromMock (pluginName,
 								     settingName,
