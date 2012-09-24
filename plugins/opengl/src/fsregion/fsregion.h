@@ -49,7 +49,6 @@ public:
     bool allowRedirection (const CompRegion &region);
 
 private:
-    bool covered;
     CompRegion untouched;
     CompRegion orig;
 };
