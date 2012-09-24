@@ -111,6 +111,9 @@ isCallBackBinding (CompOption	           &option,
     if (!(option.value ().action ().state () & state))
 	return false;
 
+    if (!option.value ().action ().active ())
+	return false;
+
     return true;
 }
 
@@ -124,9 +127,6 @@ isInitiateBinding (CompOption	           &option,
 	return false;
 
     if (option.value ().action ().initiate ().empty ())
-	return false;
-
-    if (!option.value ().action ().active ())
 	return false;
 
     *action = &option.value ().action ();
