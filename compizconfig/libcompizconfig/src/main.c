@@ -2525,12 +2525,11 @@ CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
     CCSSettingInfo      *info = ccsSettingGetInfo (setting);
+    CCSSettingType      type   = ccsSettingGetType (setting);
     CCSSettingValueList l2 = NULL;
 
     while (l1)
     {
-	CCSSettingType  type   = ccsSettingGetType (setting);
-	CCSSettingInfo  *info  = ccsSettingGetInfo (setting);
 	CCSSettingValue *value = ccsCopyValue (l1->data,
 					       type,
 					       info);

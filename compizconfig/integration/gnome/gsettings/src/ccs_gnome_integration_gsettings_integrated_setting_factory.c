@@ -22,30 +22,6 @@
 INTERFACE_TYPE (CCSGNOMEIntegrationGSettingsWrapperFactoryInterface);
 
 char *
-ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings (const char *key)
-{
-    char *newKey = translateKeyForGSettings (key);
-
-    if (g_strcmp0 (newKey, "run-command-screenshot") == 0)
-    {
-	free (newKey);
-	newKey = strdup ("screenshot");
-    }
-    else if (g_strcmp0 (newKey, "run-command-window-screenshot") == 0)
-    {
-	free (newKey);
-	newKey = strdup ("window-screenshot");
-    }
-    else if (g_strcmp0 (newKey, "run-command-terminal") == 0)
-    {
-	free (newKey);
-	newKey = strdup ("terminal");
-    }
-
-    return newKey;
-}
-
-char *
 ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (const char *key)
 {
     char *newKey = translateKeyForCCS (key);

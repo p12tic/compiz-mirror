@@ -131,7 +131,6 @@ ccsMockCompositionIntegratedSettingFree (CCSIntegratedSetting        *integrated
 
     ccsIntegratedSettingUnref (priv->integratedSetting);
     ccsGNOMEIntegratedSettingInfoUnref (priv->gnomeIntegratedSettingInfo);
-    ccsIntegratedSettingInfoUnref (priv->integratedSettingInfo);
 
     ccsObjectFinalize (integratedSetting);
     (*integratedSetting->object.object_allocation->free_)
@@ -202,7 +201,6 @@ ccsMockCompositionIntegratedSettingNew (CCSIntegratedSetting          *integrate
 
     ccsIntegratedSettingRef (priv->integratedSetting);
     ccsGNOMEIntegratedSettingInfoRef (priv->gnomeIntegratedSettingInfo);
-    ccsIntegratedSettingInfoRef (priv->integratedSettingInfo);
 
     ccsObjectSetPrivate (composition, (CCSPrivate *) (priv));
     ccsObjectAddInterface (composition,
