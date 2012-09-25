@@ -1674,6 +1674,17 @@ namespace GL
 {
 
 void
+fastSwapInterval (int interval)
+{
+    static int prev = -1;
+    if (GL::swapInterval && interval != prev)
+    {
+	(*GL::swapInterval) (interval);
+	prev = interval;
+    }
+}
+
+void
 waitForVideoSync ()
 {
 #ifndef USE_GLES
@@ -1681,8 +1692,7 @@ waitForVideoSync ()
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
-	if (GL::swapInterval)
-	    (*GL::swapInterval) (0);
+	fastSwapInterval (0);
 
 	/*
 	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
@@ -1711,7 +1721,7 @@ controlSwapVideoSync (bool sync)
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
     {
-	(*GL::swapInterval) (sync ? 1 : 0);
+	fastSwapInterval (sync ? 1 : 0);
 	GL::unthrottledFrames++;
     }
     else if (sync)
