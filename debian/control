@@ -138,6 +138,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends},
          compiz-plugins-default (= ${binary:Version}),
          gsettings-desktop-schemas,
+         gnome-settings-daemon (>= 1:3.4.2-0ubuntu9),
 Recommends: python-gconf
 Replaces: compiz-plugins-main (<= 1:0.9.8),
           compiz-plugins-main-default (<= 1:0.9.8),
