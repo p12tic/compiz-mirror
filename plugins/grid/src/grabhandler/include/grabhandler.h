@@ -57,7 +57,7 @@ class GrabWindowHandler
     private:
 
 	unsigned int         mMask;
-	const GrabActiveFunc &mGrabActive;
+	GrabActiveFunc       mGrabActive;
 
 };
 }
