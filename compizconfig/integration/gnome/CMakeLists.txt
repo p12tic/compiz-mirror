@@ -38,6 +38,8 @@ if (COMPIZCONFIG_GNOME_INTEGRATION_FOUND)
 			   compizconfig
 			${COMPIZCONFIG_GNOME_INTEGRATION_LIBRARIES})
 
-    add_subdirectory (tests)
+    if (COMPIZ_BUILD_TESTING)
+	add_subdirectory (tests)
+    endif (COMPIZ_BUILD_TESTING)
 
 endif (COMPIZCONFIG_GNOME_INTEGRATION_FOUND)
