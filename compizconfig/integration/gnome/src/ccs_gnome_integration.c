@@ -474,7 +474,7 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		/* Really this is a lie - the writer expects a string
 		 * but it needs to know if its a key or a string */
 		type = TypeKey;
-		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
+		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
 	    }
 
 	    if (newValue)
