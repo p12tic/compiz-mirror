@@ -2,6 +2,7 @@
 #define _CCS_GNOME_INTEGRATION_CONSTANTS_H
 
 #include <ccs-defs.h>
+#include <glib.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 

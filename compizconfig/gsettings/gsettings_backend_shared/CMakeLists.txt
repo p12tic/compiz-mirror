@@ -41,7 +41,6 @@ if (GSETTINGS_UTIL_FOUND)
                            compizconfig_gsettings_backend_interface
                            compizconfig_gsettings_wrapper_interface
                            compizconfig
-                           compizconfig
                            ${GSETTINGS_UTIL_LIBRARIES})
 
     add_library (compizconfig_gsettings_backend SHARED

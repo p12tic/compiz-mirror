@@ -55,7 +55,11 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
     GVariant *variant = ccsGSettingsWrapperGetValue (priv->wrapper, gsettingsTranslatedName);
 
     if (!variant)
+    {
 	free (gsettingsTranslatedName);
+	free (v);
+	return NULL;
+    }
 
     const GVariantType *variantType = G_VARIANT_TYPE (g_variant_get_type_string (variant));
 
@@ -65,6 +69,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_INT32))
 	    {
 		ccsError ("Expected integer value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -74,6 +80,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_BOOLEAN))
 	    {
 		ccsError ("Expected boolean value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -84,6 +92,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_STRING))
 	    {
 		ccsError ("Expected string value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -96,6 +106,8 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
 	    if (!g_variant_type_equal (variantType, G_VARIANT_TYPE ("as")))
 	    {
 		ccsError ("Expected array-of-string value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -127,8 +139,9 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
     const char			     *gnomeKeyName = ccsGNOMEIntegratedSettingInfoGetGNOMEName ((CCSGNOMEIntegratedSettingInfo *) setting);
     char			     *gsettingsTranslatedName = ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings (gnomeKeyName);
 
-    GVariant *variant = ccsGSettingsWrapperGetValue (priv->wrapper, gsettingsTranslatedName);
-    GVariant *newVariant = NULL;
+    GVariant           *variant = ccsGSettingsWrapperGetValue (priv->wrapper, gsettingsTranslatedName);
+    const GVariantType *variantType = g_variant_get_type (variant);
+    GVariant           *newVariant = NULL;
 
     if (!variant)
     {
@@ -141,42 +154,62 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
     {
 	case TypeInt:
 	    {
-		int currentValue = readIntFromVariant (variant);
+		if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_INT32))
+		    ccsError ("Expected integer value");
+		else
+		{
+		    int currentValue = readIntFromVariant (variant);
 
-		if ((currentValue != v->value.asInt))
-		    writeIntToVariant (v->value.asInt, &newVariant);
+		    if ((currentValue != v->value.asInt))
+			writeIntToVariant (v->value.asInt, &newVariant);
+		}
 	    }
 	    break;
 	case TypeBool:
 	    {
-		gboolean currentValue = readBoolFromVariant (variant);
+		if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_BOOLEAN))
+		    ccsError ("Expected boolean value");
+		else
+		{
+		    gboolean currentValue = readBoolFromVariant (variant);
 
-		if ((currentValue != v->value.asBool))
-		    writeBoolToVariant (v->value.asBool, &newVariant);
+		    if ((currentValue != v->value.asBool))
+			writeBoolToVariant (v->value.asBool, &newVariant);
+		}
 	    }
 	    break;
 	case TypeString:
 	    {
-		const char  *defaultValue = "";
-		const char  *newValue = v->value.asString ? v->value.asString : defaultValue;
-		gsize len = 0;
-		const gchar *currentValue = g_variant_get_string (variant, &len);
-
-		if (currentValue)
+		if (!g_variant_type_equal (variantType, G_VARIANT_TYPE_STRING))
+		    ccsError ("Expected string value");
+		else
 		{
-		    if (strcmp (currentValue, newValue) != 0)
-			writeStringToVariant (currentValue, &newVariant);
+		    const char  *defaultValue = "";
+		    const char  *newValue = v->value.asString ? v->value.asString : defaultValue;
+		    gsize len = 0;
+		    const gchar *currentValue = g_variant_get_string (variant, &len);
+
+		    if (currentValue)
+		    {
+			if (strcmp (currentValue, newValue) != 0)
+			    writeStringToVariant (newValue, &newVariant);
+		    }
 		}
 	    }
 	    break;
 	case TypeKey:
 	    {
-		const char  *defaultValue = "";
-		GVariantBuilder strvBuilder;
+		if (!g_variant_type_equal (variantType, G_VARIANT_TYPE ("as")))
+		    ccsError ("Expected array-of-string value");
+		else
+		{
+		    const char  *defaultValue = "";
+		    GVariantBuilder strvBuilder;
 
-		g_variant_builder_init (&strvBuilder, G_VARIANT_TYPE ("as"));
-		g_variant_builder_add (&strvBuilder, "s", v->value.asString ? v->value.asString :  defaultValue);
-		newVariant = g_variant_builder_end (&strvBuilder);
+		    g_variant_builder_init (&strvBuilder, G_VARIANT_TYPE ("as"));
+		    g_variant_builder_add (&strvBuilder, "s", v->value.asString ? v->value.asString :  defaultValue);
+		    newVariant = g_variant_builder_end (&strvBuilder);
+		}
 	    }
 	    break;
 	default:
@@ -238,10 +271,17 @@ ccsGSettingsIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
     return ccsGSettingsIntegratedSettingFree ((CCSIntegratedSetting *) info);
 }
 
+void
+ccsGSettingsGNOMEIntegratedSettingInfoFree (CCSGNOMEIntegratedSettingInfo *info)
+{
+    return ccsGSettingsIntegratedSettingFree ((CCSIntegratedSetting *) info);
+}
+
 const CCSGNOMEIntegratedSettingInfoInterface ccsGSettingsGNOMEIntegratedSettingInterface =
 {
     ccsGSettingsIntegratedSettingGetSpecialOptionType,
-    ccsGSettingsIntegratedSettingGetGNOMEName
+    ccsGSettingsIntegratedSettingGetGNOMEName,
+    ccsGSettingsGNOMEIntegratedSettingInfoFree
 };
 
 const CCSIntegratedSettingInterface ccsGSettingsIntegratedSettingInterface =

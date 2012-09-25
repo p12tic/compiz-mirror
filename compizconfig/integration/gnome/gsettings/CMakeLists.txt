@@ -71,6 +71,8 @@ if (USE_GSETTINGS)
 
 	endif (GLIB_COMPILE_SCHEMAS)
 
+	add_subdirectory (tests)
+
     endif (COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_FOUND)
 
 endif (USE_GSETTINGS)

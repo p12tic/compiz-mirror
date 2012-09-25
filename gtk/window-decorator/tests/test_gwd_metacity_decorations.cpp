@@ -21,15 +21,14 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include "gtest_unspecified_bool_type_matcher.h"
 #include "gwd-metacity-window-decoration-util.h"
 
 class GWDMetacityDecorationUtilTest :
     public ::testing::Test
 {
 };
-
-MATCHER(IsTrue, "Is TRUE") { if (arg) return true; else return false; }
-MATCHER(IsFalse, "Is FALSE") { if (!arg) return true; else return false; }
 
 namespace
 {

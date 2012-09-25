@@ -14,6 +14,8 @@ if (USE_GCONF)
     add_definitions (-DUSE_GCONF)
 endif (USE_GCONF)
 
+add_subdirectory (mocks)
+add_subdirectory (testenvironments)
 add_subdirectory (gsettings_backend_shared)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared
