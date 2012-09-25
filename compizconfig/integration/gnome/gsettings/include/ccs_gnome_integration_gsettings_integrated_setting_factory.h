@@ -39,6 +39,17 @@ struct _CCSGNOMEIntegrationGSettingsWrapperFactory
 
 unsigned int ccsCCSGNOMEIntegrationGSettingsWrapperFactoryInterfaceGetType ();
 
+/**
+ * @brief ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS
+ * @param key the old style gnome key to translate
+ * @return new-style key. Caller should free
+ *
+ * This translates new style keys (eg foo-bar) to old style keys
+ * foo_bar and special cases a few keys
+ */
+char *
+ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (const char *key);
+
 CCSGSettingsWrapper *
 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGNOMEIntegrationGSettingsWrapperFactory *factory,
 							       const gchar				  *schemaName,
