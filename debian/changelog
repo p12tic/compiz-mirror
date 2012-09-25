@@ -1,7 +1,8 @@
 compiz (1:0.9.8.2+bzr3377-0ubuntu2) UNRELEASED; urgency=low
 
   * debian/control:
-    - Add dependency on gnome-settings-daemon for compiz-gnome
+    - Add dependency on gnome-settings-daemon for compiz-gnome, since some
+      tests need the g-s-d gsetting schemas
 
  -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Tue, 25 Sep 2012 10:58:54 +0200
 
