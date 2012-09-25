@@ -1093,13 +1093,15 @@ GLScreen::~GLScreen ()
     EGLDisplay dpy = eglGetDisplay (xdpy);
 
     eglMakeCurrent (dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext (dpy, priv->ctx);
+    if (priv->ctx != EGL_NO_CONTEXT)
+	eglDestroyContext (dpy, priv->ctx);
     eglDestroySurface (dpy, priv->surface);
     eglTerminate (dpy);
     eglReleaseThread ();
     #else
 
-    glXDestroyContext (screen->dpy (), priv->ctx);
+    if (priv->ctx)
+	glXDestroyContext (screen->dpy (), priv->ctx);
     #endif
 
     if (priv->scratchFbo)
@@ -1119,9 +1121,11 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     clearBuffers (true),
     lighting (false),
     #ifndef USE_GLES
+    ctx (NULL),
     getProcAddress (0),
     doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
     #else
+    ctx (EGL_NO_CONTEXT),
     doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
