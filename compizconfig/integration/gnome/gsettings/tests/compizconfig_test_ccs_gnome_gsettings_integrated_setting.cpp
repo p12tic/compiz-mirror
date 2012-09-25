@@ -69,6 +69,7 @@ namespace compiz
 		    GVariant * s ();
 		    GVariant * b ();
 		    GVariant * as ();
+		    GVariant * fromValue (CCSSettingValue *v, CCSSettingType type);
 		}
 
 		namespace value_generators
@@ -124,6 +125,11 @@ namespace compiz
     }
 }
 
+MATCHER_P (VariantEqual, lhs, "Variants Equal")
+{
+    return g_variant_equal (lhs, arg);
+}
+
 namespace
 {
     std::map <CCSSettingType, SpecialOptionType> &
@@ -167,6 +173,41 @@ class CCSGSettingsIntegratedSettingTest :
 	boost::shared_ptr <CCSGSettingsWrapper> mWrapper;
 	CCSGSettingsWrapperGMock                *mWrapperMock;
 };
+
+GVariant *
+ccvg::fromValue (CCSSettingValue *v,
+		 CCSSettingType  type)
+{
+    switch (type)
+    {
+	case TypeInt:
+	    return g_variant_new ("i", v->value.asInt);
+	    break;
+	case TypeBool:
+	    return g_variant_new ("b", v->value.asBool);
+	    break;
+	case TypeString:
+	    return g_variant_new ("s", v->value.asString);
+	    break;
+	case TypeKey:
+	{
+	    GVariantBuilder builder;
+	    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
+
+	    /* Represented internally as strings */
+	    std::string kb (v->value.asString);
+	    if (kb == "Disabled")
+		kb[0] = 'd';
+
+	    g_variant_builder_add (&builder, "s", kb.c_str ());
+	    return g_variant_builder_end (&builder);
+	}
+	default:
+	    break;
+    }
+
+    return NULL;
+}
 
 GVariant *
 ccvg::as ()
@@ -368,19 +409,23 @@ TEST_P (CCSGSettingsIntegratedSettingTest, MatchedTypesReturnValueMismatchedType
 										   mWrapper.get (),
 										   &ccsDefaultObjectAllocator);
 
-    CCSSettingValue *value = (*integratedSettingInfo.valueGenerator) ();
-    GVariant        *variant = (*integratedSettingInfo.variantGenerator) ();
-    EXPECT_CALL (*mWrapperMock, getValue (Eq (keyName))).WillOnce (Return (variant));
+    boost::shared_ptr <CCSSettingValue> value ((*integratedSettingInfo.valueGenerator) (),
+					       boost::bind (ccsFreeSettingValueWithType,
+							    _1,
+							    integratedSettingInfo.settingType));
+    boost::shared_ptr <GVariant>        variant = AutoDestroy (g_variant_ref ((*integratedSettingInfo.variantGenerator) ()),
+							       g_variant_unref);
+    boost::shared_ptr <GVariant>        newVariant = AutoDestroy (ccvg::fromValue (value.get (),
+										   integratedSettingInfo.settingType),
+								  g_variant_unref);
+    EXPECT_CALL (*mWrapperMock, getValue (Eq (keyName))).WillOnce (Return (variant.get ()));
 
     if (createSettingType == integratedSettingInfo.settingType)
-	EXPECT_CALL (*mWrapperMock, setValue (Eq (keyName), _)); // can't verify this right yet
+	EXPECT_CALL (*mWrapperMock, setValue (Eq (keyName), VariantEqual (newVariant.get ())));
     else
 	EXPECT_CALL (*mWrapperMock, resetKey (Eq (keyName)));
 
-    ccsIntegratedSettingWriteValue (gsettingsIntegrated, value, createSettingType);
-
-    if (value)
-	ccsFreeSettingValueWithType (value, integratedSettingInfo.settingType);
+    ccsIntegratedSettingWriteValue (gsettingsIntegrated, value.get (), createSettingType);
 }
 
 INSTANTIATE_TEST_CASE_P (CCSGSettingsIntegratedSettingTestMismatchedValues, CCSGSettingsIntegratedSettingTest,
