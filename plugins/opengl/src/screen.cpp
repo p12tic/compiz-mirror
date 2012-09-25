@@ -1093,13 +1093,15 @@ GLScreen::~GLScreen ()
     EGLDisplay dpy = eglGetDisplay (xdpy);
 
     eglMakeCurrent (dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext (dpy, priv->ctx);
+    if (priv->ctx != EGL_NO_CONTEXT)
+	eglDestroyContext (dpy, priv->ctx);
     eglDestroySurface (dpy, priv->surface);
     eglTerminate (dpy);
     eglReleaseThread ();
     #else
 
-    glXDestroyContext (screen->dpy (), priv->ctx);
+    if (priv->ctx)
+	glXDestroyContext (screen->dpy (), priv->ctx);
     #endif
 
     if (priv->scratchFbo)
@@ -1119,9 +1121,11 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     clearBuffers (true),
     lighting (false),
     #ifndef USE_GLES
+    ctx (NULL),
     getProcAddress (0),
     doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
     #else
+    ctx (EGL_NO_CONTEXT),
     doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
@@ -1674,6 +1678,17 @@ namespace GL
 {
 
 void
+fastSwapInterval (int interval)
+{
+    static int prev = -1;
+    if (GL::swapInterval && interval != prev)
+    {
+	(*GL::swapInterval) (interval);
+	prev = interval;
+    }
+}
+
+void
 waitForVideoSync ()
 {
 #ifndef USE_GLES
@@ -1681,8 +1696,7 @@ waitForVideoSync ()
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
-	if (GL::swapInterval)
-	    (*GL::swapInterval) (0);
+	fastSwapInterval (0);
 
 	/*
 	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
@@ -1711,7 +1725,7 @@ controlSwapVideoSync (bool sync)
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
     {
-	(*GL::swapInterval) (sync ? 1 : 0);
+	fastSwapInterval (sync ? 1 : 0);
 	GL::unthrottledFrames++;
     }
     else if (sync)
