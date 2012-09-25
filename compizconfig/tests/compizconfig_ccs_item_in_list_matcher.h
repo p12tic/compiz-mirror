@@ -23,6 +23,10 @@
 #ifndef _COMPIZCONFIG_CCS_ITEM_IN_LIST_MATCHER_H
 #define _COMPIZCONFIG_CCS_ITEM_IN_LIST_MATCHER_H
 
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include <ccs.h>
+
 using ::testing::Matcher;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
@@ -88,19 +92,10 @@ typedef struct _CCSSettingValueList * CCSSettingValueList;
 
 /* A workaround for templates inside of macros not
  * expanding correctly */
-namespace
-{
-    Matcher <CCSStringList>
-    IsStringItemInStringCCSList (const Matcher <CCSString> &matcher)
-    {
-	return IsItemInCCSList <CCSString, CCSStringList> (matcher);
-    }
+Matcher <CCSStringList>
+IsStringItemInStringCCSList (const Matcher <CCSString> &matcher);
 
-    Matcher <CCSSettingValueList>
-    IsSettingValueInSettingValueCCSList (const Matcher <CCSSettingValue> &matcher)
-    {
-	return IsItemInCCSList <CCSSettingValue, CCSSettingValueList> (matcher);
-    }
-}
+Matcher <CCSSettingValueList>
+IsSettingValueInSettingValueCCSList (const Matcher <CCSSettingValue> &matcher);
 
 #endif

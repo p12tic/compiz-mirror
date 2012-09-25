@@ -23,83 +23,48 @@
 #ifndef _COMPIZCONFIG_CCS_SETTING_VALUE_OPERATORS_H
 #define _COMPIZCONFIG_CCS_SETTING_VALUE_OPERATORS_H
 
-#include <ccs.h>
+#include <iosfwd>
+#include <string>
+
+typedef union _CCSSettingColorValue CCSSettingColorValue;
+typedef struct _CCSSettingKeyValue CCSSettingKeyValue;
+typedef struct _CCSSettingButtonValue CCSSettingButtonValue;
+typedef struct _CCSString CCSString;
 
 bool
 operator== (const CCSSettingColorValue &lhs,
-	    const CCSSettingColorValue &rhs)
-{
-    if (ccsIsEqualColor (lhs, rhs))
-	return true;
-    return false;
-}
+	    const CCSSettingColorValue &rhs);
 
 std::ostream &
-operator<< (std::ostream &os, const CCSSettingColorValue &v)
-{
-    return os << "Red: " << std::hex << v.color.red << "Blue: " << std::hex << v.color.blue << "Green: " << v.color.green << "Alpha: " << v.color.alpha
-       << std::dec << std::endl;
-}
+operator<< (std::ostream &os, const CCSSettingColorValue &v);
 
 bool
 operator== (const CCSSettingKeyValue &lhs,
-	    const CCSSettingKeyValue &rhs)
-{
-    if (ccsIsEqualKey (lhs, rhs))
-	return true;
-    return false;
-}
+	    const CCSSettingKeyValue &rhs);
 
 std::ostream &
-operator<< (std::ostream &os, const CCSSettingKeyValue &v)
-{
-    return os << "Keysym: " << v.keysym << " KeyModMask " << std::hex << v.keyModMask << std::dec << std::endl;
-}
+operator<< (std::ostream &os, const CCSSettingKeyValue &v);
 
 bool
 operator== (const CCSSettingButtonValue &lhs,
-	    const CCSSettingButtonValue &rhs)
-{
-    if (ccsIsEqualButton (lhs, rhs))
-	return true;
-    return false;
-}
+	    const CCSSettingButtonValue &rhs);
 
 std::ostream &
-operator<< (std::ostream &os, const CCSSettingButtonValue &v)
-{
-    return os << "Button " << v.button << "Button Key Mask: " << std::hex << v.buttonModMask << "Edge Mask: " << v.edgeMask << std::dec << std::endl;
-}
+operator<< (std::ostream &os, const CCSSettingButtonValue &v);
 
 bool
 operator== (const CCSString &lhs,
-	    const std::string &rhs)
-{
-    if (rhs == lhs.value)
-	return true;
-
-    return false;
-}
+	    const std::string &rhs);
 
 bool
 operator== (const std::string &lhs,
-	    const CCSString &rhs)
-{
-    return rhs == lhs;
-}
+	    const CCSString &rhs);
 
 bool
 operator== (const std::string &rhs,
-	    CCSString	      *lhs)
-{
-    return *lhs == rhs;
-}
+	    CCSString	      *lhs);
 
 std::ostream &
-operator<< (std::ostream &os, CCSString &string)
-{
-    os << string.value << std::endl;
-    return os;
-}
+operator<< (std::ostream &os, CCSString &string);
 
 #endif

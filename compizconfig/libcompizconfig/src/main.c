@@ -1109,7 +1109,6 @@ openBackend (const char *backend)
 void
 ccsFreeBackend (CCSBackend *backend)
 {
-    ccsBackendFini (backend);
     ccsObjectFinalize (backend);
     free (backend);
 }
@@ -1119,6 +1118,7 @@ ccsFreeDynamicBackend (CCSDynamicBackend *backend)
 {
     CCSDynamicBackendPrivate *dbPrivate = GET_PRIVATE (CCSDynamicBackendPrivate, backend);
 
+    ccsBackendFini (dbPrivate->backend);
     ccsBackendUnref (dbPrivate->backend);
 
     if (dbPrivate->dlhand)
@@ -5655,7 +5655,7 @@ ccsIntegratedSettingsStorageEmpty (CCSIntegratedSettingsStorage *storage)
 void
 ccsFreeIntegratedSettingsStorage (CCSIntegratedSettingsStorage *storage)
 {
-    (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->empty) (storage);
+    (*(GET_INTERFACE (CCSIntegratedSettingsStorageInterface, storage))->free) (storage);
 }
 
 /* CCSIntegratedSettingsStorageDefault implementation */

@@ -24,51 +24,37 @@
 #define _COMPIZCONFIG_CCS_LIST_EQUALITY_H
 
 #include <iosfwd>
+#include <memory>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
-using ::testing::MakeMatcher;
 using ::testing::Matcher;
+
+typedef struct _CCSSettingValueList * CCSSettingValueList;
+typedef struct _CCSSettingListInfo    CCSSettingListInfo;
+
+class PrivateListEqualityMatcher;
 
 class ListEqualityMatcher :
     public MatcherInterface <CCSSettingValueList>
 {
     public:
 
-	ListEqualityMatcher (CCSSettingListInfo info,
-			     CCSSettingValueList cmp) :
-	    mInfo (info),
-	    mCmp (cmp)
-	{
-	}
+	ListEqualityMatcher (CCSSettingListInfo  *info,
+			     CCSSettingValueList cmp);
 
-	virtual bool MatchAndExplain (CCSSettingValueList x, MatchResultListener *listener) const
-	{
-	    return ccsCompareLists (x, mCmp, mInfo);
-	}
-
-	virtual void DescribeTo (std::ostream *os) const
-	{
-	    *os << "lists are equal";
-	}
-
-	virtual void DescribeNegationTo (std::ostream *os) const
-	{
-	    *os << "lists are not equal";
-	}
+	virtual bool MatchAndExplain (CCSSettingValueList x, MatchResultListener *listener) const;
+	virtual void DescribeTo (std::ostream *os) const;
+	virtual void DescribeNegationTo (std::ostream *os) const;
 
     private:
 
-	CCSSettingListInfo mInfo;
-	CCSSettingValueList mCmp;
+	std::auto_ptr <PrivateListEqualityMatcher> priv;
 };
 
-Matcher<CCSSettingValueList> ListEqual (CCSSettingListInfo info,
-					CCSSettingValueList cmp)
-{
-    return MakeMatcher (new ListEqualityMatcher (info, cmp));
-}
+Matcher<CCSSettingValueList> ListEqual (CCSSettingListInfo *info,
+					CCSSettingValueList cmp);
 
 #endif
