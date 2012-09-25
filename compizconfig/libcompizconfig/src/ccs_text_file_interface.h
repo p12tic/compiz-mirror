@@ -1,6 +1,8 @@
 /*
  * Compiz configuration system library
  *
+ * ccs_text_file_interface.h
+ *
  * Copyright (C) 2012 Canonical Ltd.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,33 +22,45 @@
  * Authored By:
  * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
-#define _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
+#ifndef CCS_TEXT_FILE_INTERFACE_H
+#define CCS_TEXT_FILE_INTERFACE_H
 
-#include "ccs-defs.h"
+#include <ccs-defs.h>
+#include <ccs-object.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSSettingList * CCSSettingList;
+typedef struct _CCSTextFile CCSTextFile;
+typedef struct _CCSTextFileInterface CCSTextFileInterface;
+
+typedef char * (*CCSReadTextFileFromStart) (CCSTextFile *file);
+typedef Bool   (*CCSAppendStringToTextFile) (CCSTextFile *file, const char *str);
+typedef void   (*CCSFreeTextFile) (CCSTextFile *file);
+
+struct _CCSTextFileInterface
+{
+    CCSReadTextFileFromStart  readFromStart;
+    CCSAppendStringToTextFile appendString;
+    CCSFreeTextFile	      free;
+};
+
+struct _CCSTextFile
+{
+    CCSObject object;
+};
+
+CCSREF_HDR (TextFile, CCSTextFile);
+
+char *
+ccsTextFileReadFromStart (CCSTextFile *);
 
 Bool
-ccsUpgradeGetDomainNumAndProfile (const char   *name,
-				  char         **domain,
-				  unsigned int *num,
-				  char         **profile);
-
-int
-ccsUpgradeNameFilter (const char *name);
+ccsTextFileAppendString (CCSTextFile *, const char *);
 
 void
-ccsUpgradeClearValues (CCSSettingList clearSettings);
+ccsFreeTextFile (CCSTextFile *);
 
-void
-ccsUpgradeAddValues (CCSSettingList addSettings);
-
-void
-ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
-			 CCSSettingList replaceToValueSettings);
+unsigned int ccsCCSTextFileInterfaceGetType ();
 
 COMPIZCONFIG_END_DECLS
 
