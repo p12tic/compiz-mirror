@@ -45,13 +45,18 @@ class CCSGSettingsTestingEnv
 
 	virtual void SetUpEnv ()
 	{
-	    setenv ("G_SLICE", "always-malloc", 1);
+	    gsliceEnv.SetUpEnv ();
+	    g_type_init ();
 	}
 
 	virtual void TearDownEnv ()
 	{
-	    unsetenv ("G_SLICE");
+	    gsliceEnv.TearDownEnv ();
 	}
+
+    private:
+
+	CompizGLibGSliceOffEnv gsliceEnv;
 };
 
 class CCSGSettingsMemoryBackendTestingEnv :
@@ -62,18 +67,18 @@ class CCSGSettingsMemoryBackendTestingEnv :
 	virtual void SetUpEnv ()
 	{
 	    CCSGSettingsTestingEnv::SetUpEnv ();
-
-	    g_setenv ("GSETTINGS_SCHEMA_DIR", MOCK_PATH.c_str (), true);
-	    g_setenv ("GSETTINGS_BACKEND", "memory", 1);
+	    gsettingsEnv.SetUpEnv (MOCK_PATH);
 	}
 
 	virtual void TearDownEnv ()
 	{
-	    g_unsetenv ("GSETTINGS_BACKEND");
-	    g_unsetenv ("GSETTINGS_SCHEMA_DIR");
-
+	    gsettingsEnv.TearDownEnv ();
 	    CCSGSettingsTestingEnv::TearDownEnv ();
 	}
+
+    private:
+
+	CompizGLibGSettingsMemoryBackendTestingEnv gsettingsEnv;
 };
 
 class CCSGSettingsTestCommon :

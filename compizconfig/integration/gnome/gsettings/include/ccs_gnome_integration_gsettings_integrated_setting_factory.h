@@ -60,6 +60,9 @@ ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGNOMEIntegrati
 CCSGNOMEIntegrationGSettingsWrapperFactory *
 ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (CCSObjectAllocationInterface *ai);
 
+void
+ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (CCSGNOMEIntegrationGSettingsWrapperFactory *wrapperFactory);
+
 CCSIntegratedSettingFactory *
 ccsGSettingsIntegratedSettingFactoryNew (CCSGNOMEIntegrationGSettingsWrapperFactory	   *wrapperFactory,
 					 CCSGNOMEValueChangeData	  *data,

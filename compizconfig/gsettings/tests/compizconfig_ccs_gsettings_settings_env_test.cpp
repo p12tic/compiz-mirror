@@ -52,8 +52,6 @@ class PrivateCCSGSettingsStorageEnv
 
 	CCSGSettingsWrapper                        *mSettings;
 	std::string	                           profileName;
-	CompizGLibGSettingsMemoryBackendTestingEnv gsettingsEnv;
-	CompizGLibGSliceOffEnv			   gsliceEnv;
 };
 
 void
@@ -331,21 +329,6 @@ CCSGSettingsStorageEnv::ReadVariantAtKeyToShared (const std::string &plugin,
 
 
     return shared;
-}
-
-void
-CCSGSettingsStorageEnv::SetUp ()
-{
-    g_type_init ();
-    priv->gsliceEnv.SetUpEnv ();
-    priv->gsettingsEnv.SetUpEnv (MOCK_PATH);
-}
-
-void
-CCSGSettingsStorageEnv::TearDown ()
-{
-    priv->gsettingsEnv.TearDownEnv ();
-    priv->gsliceEnv.TearDownEnv ();
 }
 
 PrivateCCSGSettingsStorageEnv::PrivateCCSGSettingsStorageEnv (CCSGSettingsWrapper *settings,
