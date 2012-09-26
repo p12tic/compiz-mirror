@@ -1719,7 +1719,7 @@ waitForVideoSync ()
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
-	fastSwapInterval (0);
+	fastSwapInterval (screen->dpy (), 0);
 
 	/*
 	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
