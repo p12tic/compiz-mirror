@@ -30,7 +30,7 @@
 
 #include <X11/extensions/Xcomposite.h>
 
-#define COMPIZ_COMPOSITE_ABI 4
+#define COMPIZ_COMPOSITE_ABI 5
 
 #include "core/pluginclasshandler.h"
 #include "core/timer.h"
@@ -106,6 +106,7 @@ public:
 			       const CompRegion    &region) = 0;
 
     virtual bool hasVSync () { return false; };
+    virtual bool requiredForcedRefreshRate () { return false; };
 
     virtual void prepareDrawing () {};
     virtual bool compositingActive () { return false; };
