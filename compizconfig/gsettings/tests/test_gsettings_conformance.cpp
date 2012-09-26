@@ -65,7 +65,6 @@ class CCSGSettingsBackendEnv :
 	CCSGSettingsBackendEnv () :
 	    pluginToMatch ("mock")
 	{
-	    g_type_init ();
 	}
 
 	/* A wrapper to prevent signals from being added */

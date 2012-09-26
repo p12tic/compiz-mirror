@@ -219,9 +219,9 @@ ccsButtonBindingToString (CCSSettingButtonValue *button)
 
     if (button->button)
     {
-        char buttonStr[256];
+	char buttonStr[256];
         snprintf (buttonStr, 256, "Button%d", button->button);
-        binding = stringAppend (binding, buttonStr);
+	binding = stringAppend (binding, buttonStr);
     }
 
     if (!binding)

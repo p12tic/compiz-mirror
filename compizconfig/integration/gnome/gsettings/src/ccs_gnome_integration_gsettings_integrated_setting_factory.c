@@ -79,6 +79,14 @@ const CCSGNOMEIntegrationGSettingsWrapperFactoryInterface ccsGNOMEIntegrationGSe
     ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapperDefault
 };
 
+void
+ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (CCSGNOMEIntegrationGSettingsWrapperFactory *wrapperFactory)
+{
+    ccsObjectFinalize (wrapperFactory);
+    (*wrapperFactory->object.object_allocation->free_) (wrapperFactory->object.object_allocation->allocator,
+							wrapperFactory);
+}
+
 CCSGNOMEIntegrationGSettingsWrapperFactory *
 ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (CCSObjectAllocationInterface *ai)
 {
@@ -279,6 +287,8 @@ ccsGSettingsIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
     if (priv->pluginsToSettingNameGNOMENameHashTable)
 	g_hash_table_unref (priv->pluginsToSettingNameGNOMENameHashTable);
 
+    ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (priv->wrapperFactory);
+
     ccsObjectFinalize (factory);
     (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
 }
@@ -317,6 +327,8 @@ ccsGSettingsIntegratedSettingFactoryNew (CCSGNOMEIntegrationGSettingsWrapperFact
     ccsObjectInit (factory, ai);
     ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
     ccsObjectAddInterface (factory, (const CCSInterface *) &ccsGSettingsIntegratedSettingFactoryInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingFactoryInterface));
+
+    ccsObjectRef (factory);
 
     return factory;
 }

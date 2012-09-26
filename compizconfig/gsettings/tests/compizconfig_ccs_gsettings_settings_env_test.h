@@ -40,8 +40,8 @@ class CCSGSettingsStorageEnv :
 {
     public:
 
-	virtual void SetUp ();
-	virtual void TearDown ();
+	virtual void SetUp () {}
+	virtual void TearDown () {}
 
 	CCSGSettingsStorageEnv (CCSGSettingsWrapper *settings,
 				const std::string   &profileName);

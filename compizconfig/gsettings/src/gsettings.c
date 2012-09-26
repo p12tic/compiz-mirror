@@ -50,7 +50,8 @@ getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 						cleanSettingName,
 						pathName,
 						ccsSettingGetType (setting));
-
+    free (cleanSettingName);
+    g_free (pathName);
     return gsettingsValue;
 }
 
