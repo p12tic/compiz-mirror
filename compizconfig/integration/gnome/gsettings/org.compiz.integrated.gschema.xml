@@ -4,17 +4,11 @@
 	<key type="b" name="display-all-workspaces">
 	    <default>true</default>
 	</key>
-	<key type="s" name="exec">
-	    <default>"gnome-terminal"</default>
-	</key>
 	<key type="s" name="command-window-screenshot">
 	    <default>"gnome-screenshot -w"</default>
 	</key>
 	<key type="s" name="command-screenshot">
 	    <default>"gnome-screenshot"</default>
-	</key>
-	<key type="s" name="command-terminal">
-	    <default>"gnome-terminal"</default>
 	</key>
 	<key type="as" name="run-command-12">
 	    <default>["Disabled"]</default>
@@ -87,21 +81,6 @@
 	</key>
 	<key type="s" name="command-1">
 	    <default>""</default>
-	</key>
-	<key type="as" name="run-command-terminal">
-	    <default>["&lt;Control&gt;&lt;Alt&gt;t"]</default>
-	</key>
-	<key type="as" name="run-command-window-screenshot">
-	    <default>["&lt;Alt&gt;Print"]</default>
-	</key>
-	<key type="as" name="run-command-screenshot">
-	    <default>["Print"]</default>
-	</key>
-	<key type="as" name="panel-main-menu">
-	    <default>["&lt;Alt&gt;F1"]</default>
-	</key>
-	<key type="as" name="panel-run-dialog">
-	    <default>["&lt;Alt&gt;F2"]</default>
 	</key>
 	<key type="as" name="show-hud">
 	    <default>["&lt;Alt&gt;"]</default>

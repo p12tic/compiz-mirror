@@ -160,6 +160,29 @@ getButtonBindingForSetting (CCSContext   *context,
 }
 
 static Bool
+ccsGNOMEIntegrationBackendReadISAndSetSettingForType (CCSIntegratedSetting *integratedSetting,
+						      CCSSetting           *setting,
+						      CCSSettingValue      **v,
+						      CCSSettingType       type)
+{
+    *v = ccsIntegratedSettingReadValue (integratedSetting, type);
+
+    if ((*v)->value.asString)
+    {
+	CCSSettingKeyValue key;
+
+	memset (&key, 0, sizeof (CCSSettingKeyValue));
+	if (ccsStringToKeyBinding ((*v)->value.asString, &key))
+	{
+	    ccsSetKey (setting, key, TRUE);
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+static Bool
 ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 						 CCSContext	       *context,
 						 CCSSetting	       *setting,
@@ -209,20 +232,11 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
     case OptionKey:
 	{
 	    type = TypeKey;
-	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
-
-	    if (v->value.asString)
-	    {
-		CCSSettingKeyValue key;
-
-		memset (&key, 0, sizeof (CCSSettingKeyValue));
-		ccsGetKey (setting, &key);
-		if (ccsStringToKeyBinding (v->value.asString, &key))
-		{
-		    ccsSetKey (setting, key, TRUE);
-		    ret = TRUE;
-		}
-	    }
+	    if (ccsGNOMEIntegrationBackendReadISAndSetSettingForType (integratedSetting,
+								      setting,
+								      &v,
+								      type))
+		ret = TRUE;
 	}
 	break;
     case OptionSpecial:
@@ -267,6 +281,17 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		    ccsSetBool (setting, clickToFocus, TRUE);
 		    ret = TRUE;
 		}
+	    }
+	    else if ((strcmp (settingName, "run_command_screenshot_key") == 0 ||
+		      strcmp (settingName, "run_command_window_screenshot_key") == 0 ||
+		      strcmp (settingName, "run_command_terminal_key") == 0))
+	    {
+		type = TypeString;
+		if (ccsGNOMEIntegrationBackendReadISAndSetSettingForType (integratedSetting,
+									  setting,
+									  &v,
+									  type))
+		    ret = TRUE;
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
@@ -373,6 +398,29 @@ setButtonBindingForSetting (CCSContext   *context,
     }
 }
 
+static Bool
+ccsGNOMEIntegrationBackendKeyValueToStringValue (CCSSettingValue *keyValue,
+						 CCSSettingValue *stringValue)
+{
+    char  *newValue;
+
+    newValue = ccsKeyBindingToString (&keyValue->value.asKey);
+    if (newValue)
+    {
+	if (strcmp (newValue, "Disabled") == 0)
+	{
+	    /* Metacity doesn't like "Disabled", it wants "disabled" */
+	    newValue[0] = 'd';
+	}
+
+	stringValue->value.asString = newValue;
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void
 ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						  CCSContext		 *context,
@@ -393,7 +441,14 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
     /* Do not allow recursing back into writeIntegratedSetting */
     ccsIntegrationDisallowIntegratedWrites (integration);
 
-    CCSSettingValue *v = ccsSettingGetValue (setting);
+    CCSSettingType sType = ccsSettingGetType (setting);
+    CCSSettingInfo *sInfo = ccsSettingGetInfo (setting);
+
+    CCSSettingValue *vSetting = ccsSettingGetValue (setting);
+    CCSSettingValue *v = ccsCopyValue (vSetting, sType, sInfo);
+
+    if (!v)
+	return;
 
     switch (ccsGNOMEIntegratedSettingInfoGetSpecialOptionType ((CCSGNOMEIntegratedSettingInfo *) integratedSetting))
     {
@@ -408,25 +463,22 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	break;
     case OptionKey:
 	{   
-	    char  *newValue;
+	    CCSSettingValue *newValue = calloc (1, sizeof (CCSSettingValue));
 
-	    newValue = ccsKeyBindingToString (&(ccsSettingGetValue (setting)->value.asKey));
-	    if (newValue)
-    	    {
-		if (strcmp (newValue, "Disabled") == 0)
-		{
-		    /* Metacity doesn't like "Disabled", it wants "disabled" */
-		    newValue[0] = 'd';
-		}
+	    newValue->isListChild = FALSE;
+	    newValue->parent = NULL;
+	    newValue->refCount = 1;
 
+	    if (ccsGNOMEIntegrationBackendKeyValueToStringValue (v, newValue))
+	    {
 		/* Really this is a lie - the writer expects a string
 		 * but it needs to know if its a key or a string */
 		type = TypeKey;
-		v->value.asString = newValue;
-
-		ccsIntegratedSettingWriteValue (integratedSetting, v, type);
-		free (newValue);
+		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
 	    }
+
+	    if (newValue)
+		ccsFreeSettingValueWithType (newValue, TypeString);
 	}
 	break;
     case OptionSpecial:
@@ -461,6 +513,18 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		type = TypeString;
 
 		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
+	    }
+	    else if ((strcmp (settingName, "run_command_screenshot_key") == 0 ||
+		      strcmp (settingName, "run_command_window_screenshot_key") == 0 ||
+		      strcmp (settingName, "run_command_terminal_key") == 0))
+	    {
+		if (ccsGNOMEIntegrationBackendKeyValueToStringValue (v, newValue))
+		{
+		    /* These are actually stored as strings in the schemas */
+		    type = TypeString;
+		    ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
+		}
+
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
@@ -519,6 +583,9 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 	ccsError ("%s", err->message);
 	g_error_free (err);
     }
+
+    if (v)
+	ccsFreeSettingValueWithType (v, sType);
 
     /* we should immediately write changed settings */
     ccsWriteChangedSettings (priv->context);

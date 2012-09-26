@@ -772,6 +772,12 @@ CCSSettingColorValue* ccsGetColorArrayFromValueList (CCSSettingValueList list,
 CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
 
+/* Deep copy setting value */
+CCSSettingValue *
+ccsCopyValue (CCSSettingValue *orig,
+	      CCSSettingType  type,
+	      CCSSettingInfo  *info);
+
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
 CCSSettingValueList ccsGetValueListFromStringArray (const char **array,

@@ -2461,63 +2461,82 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
     return TRUE;
 }
 
+CCSSettingValue *
+ccsCopyValue (CCSSettingValue *orig,
+	      CCSSettingType  type,
+	      CCSSettingInfo  *info)
+{
+    CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
+
+    if (!value)
+	return NULL;
+
+    value->refCount = 1;
+    value->parent = orig->parent;
+    value->isListChild = orig->isListChild;
+
+    CCSSettingType vType = value->isListChild ? info->forList.listType : type;
+
+    switch (vType)
+    {
+	case TypeInt:
+	    value->value.asInt = orig->value.asInt;
+	    break;
+	case TypeBool:
+	    value->value.asBool = orig->value.asBool;
+	    break;
+	case TypeFloat:
+	    value->value.asFloat = orig->value.asFloat;
+	    break;
+	case TypeString:
+	    value->value.asString = strdup (orig->value.asString);
+	    break;
+	case TypeMatch:
+	    value->value.asMatch = strdup (orig->value.asMatch);
+	    break;
+	case TypeKey:
+	    memcpy (&value->value.asKey, &orig->value.asKey,
+		    sizeof (CCSSettingKeyValue));
+	    break;
+	case TypeButton:
+	    memcpy (&value->value.asButton, &orig->value.asButton,
+		    sizeof (CCSSettingButtonValue));
+	    break;
+	case TypeEdge:
+	    value->value.asEdge = orig->value.asEdge;
+	    break;
+	case TypeBell:
+	    value->value.asBell = orig->value.asBell;
+	    break;
+	case TypeColor:
+	    memcpy (&value->value.asColor, &orig->value.asColor,
+		    sizeof (CCSSettingColorValue));
+	    break;
+	default:
+	    free (value);
+	    return NULL;
+	    break;
+    }
+
+    return value;
+}
+
 CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
     CCSSettingInfo      *info = ccsSettingGetInfo (setting);
+    CCSSettingType      type   = ccsSettingGetType (setting);
     CCSSettingValueList l2 = NULL;
 
     while (l1)
     {
-	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
+	CCSSettingValue *value = ccsCopyValue (l1->data,
+					       type,
+					       info);
+
+	/* FIXME If l2 != NULL, we leak l2 */
 	if (!value)
 	    return l2;
-
-	value->refCount = 1;
-	value->parent = setting;
-	value->isListChild = TRUE;
-
-	switch (info->forList.listType)
-	{
-	case TypeInt:
-	    value->value.asInt = l1->data->value.asInt;
-	    break;
-	case TypeBool:
-	    value->value.asBool = l1->data->value.asBool;
-	    break;
-	case TypeFloat:
-	    value->value.asFloat = l1->data->value.asFloat;
-	    break;
-	case TypeString:
-	    value->value.asString = strdup (l1->data->value.asString);
-	    break;
-	case TypeMatch:
-	    value->value.asMatch = strdup (l1->data->value.asMatch);
-	    break;
-	case TypeKey:
-	    memcpy (&value->value.asKey, &l1->data->value.asKey,
-		    sizeof (CCSSettingKeyValue));
-	    break;
-	case TypeButton:
-	    memcpy (&value->value.asButton, &l1->data->value.asButton,
-		    sizeof (CCSSettingButtonValue));
-	    break;
-	case TypeEdge:
-	    value->value.asEdge = l1->data->value.asEdge;
-	    break;
-	case TypeBell:
-	    value->value.asBell = l1->data->value.asBell;
-	    break;
-	case TypeColor:
-	    memcpy (&value->value.asColor, &l1->data->value.asColor,
-		    sizeof (CCSSettingColorValue));
-	    break;
-	default:
-	  /* FIXME If l2 != NULL, we leak l2 */
-	    free (value);
-	    return NULL;
-	    break;
-	}
 
 	l2 = ccsSettingValueListAppend (l2, value);
 	l1 = l1->next;
