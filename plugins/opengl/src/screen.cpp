@@ -1691,12 +1691,22 @@ namespace GL
 {
 
 void
-fastSwapInterval (int interval)
+fastSwapInterval (Display *dpy, int interval)
 {
     static int prev = -1;
-    if (GL::swapInterval && interval != prev)
+#ifndef USE_GLES
+    bool       hasSwapInterval = GL::swapInterval ? true : false;
+#else
+    bool       hasSwapInterval = true;
+#endif
+
+    if (hasSwapInterval && interval != prev)
     {
+#ifndef USE_GLES
 	(*GL::swapInterval) (interval);
+#else
+	eglSwapInterval (eglGetDisplay (dpy), interval);
+#endif
 	prev = interval;
     }
 }
@@ -1738,13 +1748,13 @@ controlSwapVideoSync (bool sync)
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
     {
-	fastSwapInterval (sync ? 1 : 0);
+	fastSwapInterval (screen->dpy (), sync ? 1 : 0);
 	GL::unthrottledFrames++;
     }
     else if (sync)
 	waitForVideoSync ();
 #else
-    eglSwapInterval (eglGetDisplay (screen->dpy ()), sync ? 1 : 0);
+    fastSwapInterval (screen->dpy (), sync ? 1 : 0);
     GL::unthrottledFrames++;
 #endif
 }
