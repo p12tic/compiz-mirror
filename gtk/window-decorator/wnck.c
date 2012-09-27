@@ -497,6 +497,12 @@ remove_frame_window (WnckWindow *win)
 	d->buffer_pixmap = NULL;
     }
 
+    if (d->old_pixmaps)
+    {
+	g_hash_table_destroy (d->old_pixmaps);
+	d->old_pixmaps = NULL;
+    }
+
     if (d->cr)
     {
 	cairo_destroy (d->cr);
