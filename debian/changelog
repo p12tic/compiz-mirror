@@ -1,10 +1,45 @@
-compiz (1:0.9.8.2+bzr3377-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.8.4-0ubuntu1) UNRELEASED; urgency=low
 
   * debian/control:
     - Add dependency on gnome-settings-daemon for compiz-gnome, since some
       tests need the g-s-d gsetting schemas
+  * New upstream release.
+    - FTBFS with -DCOMPIZ_BUILD_TESTING=OFF if libgtest-dev is not installed 
+      (LP: #1057421)
+    - [performance] glXSwapIntervalEXT called every frame, which is very slow 
+      on Nvidia. (LP: #1051286)
+    - opacify plugin: opacity isn't reset after switching window (LP: #1050757)
+    - cmake fails on python 2.6 as sys.version_info does not contain 
+      major_version or minor_version (LP: #1048964)
+    - scale mode is not visible if a fullscreen window is unredirected 
+      (LP: #1047168)
+    - Unredirected fullscreen windows flicker briefly when another window 
+      (like a menu) opens above them (LP: #1046664)
+    - Week33 - Grid highlight window appears while switching between workspaces
+      (LP: #1037142)
+    - gtk-window-decorator leaks large numbers of pixmaps and pixmap memory 
+      (LP: #1057263)
+    - [fglrx] compiz crashed with SIGSEGV in glXDestroyContext() 
+      [/usr/lib/fglrx/libGL.so.1] from GLScreen::~GLScreen() (LP: #1054724)
+    - Maximized window gets unredirected when it's not fullscreen 
+      (LP: #1053902)
+    - Double shortcuts conflict with gnome-control-center ones (LP: #1050796)
+    - gtk-window-decorator leaking window handles. Window operations become 
+      sluggish after a few days of usage (LP: #1050610)
+    - [valgrind] Up to 520,000 bytes lost when running 
+      CCSGSettingsBackendConceptTest (LP: #1049169)
+    - 1:0.9.8+bzr3319-0ubuntu1 regression: keeps setting gsettings keys to 
+      wrong values (LP: #1042041)
+    - Compiz r3275 breaks VirtualBox Guest Additions: black screen or just 
+      wallpaper (LP: #1030891)
+    - Incorrect (low/stuttering) refresh rate with NVIDIA driver (LP: #92599)
+    - ARM build broken with 'swapInterval' is not a member of 'GL' 
+      (LP: #1056645)
+    - compiz.fix_927168 broke ARM building (LP: #1052838)
+    - compiz crashed with SIGSEGV in __strcasestr_ia32() from 
+      ccsStringToModifiers(binding=NULL) (LP: #1041535)
 
- -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Tue, 25 Sep 2012 10:58:54 +0200
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Thu, 27 Sep 2012 15:43:59 +0200
 
 compiz (1:0.9.8.2+bzr3377-0ubuntu1) quantal-proposed; urgency=low
 

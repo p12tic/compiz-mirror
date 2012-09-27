@@ -22,10 +22,12 @@
  * Press the tiling keys several times to cycle through some tiling options.
  */
 
+#include <boost/bind.hpp>
 #include "grid.h"
 #include "grabhandler.h"
 
 using namespace GridWindowType;
+namespace cgw = compiz::grid::window;
 
 static std::map <unsigned int, GridProps> gridProps;
 
@@ -834,7 +836,9 @@ GridWindow::grabNotify (int          x,
 			unsigned int state,
 			unsigned int mask)
 {
-    compiz::grid::window::GrabWindowHandler gwHandler (mask);
+    static cgw::GrabActiveFunc grabActive (boost::bind (&CompScreen::grabExist,
+							screen, _1));
+    cgw::GrabWindowHandler gwHandler (mask, grabActive);
 
     if (gwHandler.track ())
     {

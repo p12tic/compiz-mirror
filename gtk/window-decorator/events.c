@@ -1094,7 +1094,14 @@ event_filter_func (GdkXEvent *gdkxevent,
 	}
 	else if (xevent->xclient.message_type == decor_delete_pixmap_atom)
 	{
-	    g_hash_table_remove (destroyed_pixmaps_table, GINT_TO_POINTER (xevent->xclient.data.l[0]));
+	    gconstpointer key = GINT_TO_POINTER (xevent->xclient.data.l[0]);
+	    decor_t *d = g_hash_table_lookup (destroyed_pixmaps_table, key);
+
+	    if (d != NULL)
+	    {
+		g_hash_table_remove (d->old_pixmaps, key);
+		g_hash_table_remove (destroyed_pixmaps_table, key);
+	    }
 	}
     default:
 	break;
