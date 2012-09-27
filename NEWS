@@ -74,6 +74,10 @@ Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.8.4)
     1050610 - gtk-window-decorator leaking window handles. Window operations
               become sluggish after a few days of usage
     1056645 - ARM build broken with 'swapInterval' is not a member of 'GL'
+    1057263 - gtk-window-decorator leaks large numbers of pixmaps and pixmap
+              memory
+    1057421 - FTBFS with -DCOMPIZ_BUILD_TESTING=OFF if libgtest-dev is not
+              installed
 
 
 Release 0.9.8.2 (2012-09-10 Daniel van Vugt <daniel.van.vugt@canonical.com>)
