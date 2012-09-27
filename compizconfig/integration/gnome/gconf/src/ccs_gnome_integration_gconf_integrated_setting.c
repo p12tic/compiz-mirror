@@ -63,7 +63,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
     {
 	ccsError ("NULL encountered while reading GConf setting");
 	free (gnomeKeyPath);
-	return v;
+	free (v);
+	return NULL;
     }
 
     if (err)
@@ -71,7 +72,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	ccsError ("%s", err->message);
 	g_error_free (err);
 	free (gnomeKeyPath);
-	return v;
+	free (v);
+	return NULL;
     }
 
     switch (type)
@@ -80,6 +82,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	    if (gconfValue->type != GCONF_VALUE_INT)
 	    {
 		ccsError ("Expected integer value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -89,6 +93,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	    if (gconfValue->type != GCONF_VALUE_BOOL)
 	    {
 		ccsError ("Expected boolean value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -99,6 +105,8 @@ ccsGConfIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettingTyp
 	    if (gconfValue->type != GCONF_VALUE_STRING)
 	    {
 		ccsError ("Expected string value");
+		free (v);
+		v = NULL;
 		break;
 	    }
 
@@ -220,10 +228,17 @@ ccsGConfIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
     ccsGConfIntegratedSettingFree ((CCSIntegratedSetting *) info);
 }
 
+void
+ccsGConfGNOMEIntegratedSettingInfoFree (CCSGNOMEIntegratedSettingInfo *info)
+{
+    ccsGConfIntegratedSettingFree ((CCSIntegratedSetting *) info);
+}
+
 const CCSGNOMEIntegratedSettingInfoInterface ccsGConfGNOMEIntegratedSettingInfoInterface =
 {
     ccsGConfIntegratedSettingGetSpecialOptionType,
-    ccsGConfIntegratedSettingGetGNOMEName
+    ccsGConfIntegratedSettingGetGNOMEName,
+    ccsGConfGNOMEIntegratedSettingInfoFree
 };
 
 const CCSIntegratedSettingInterface ccsGConfIntegratedSettingInterface =

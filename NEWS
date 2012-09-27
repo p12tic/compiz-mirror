@@ -1,3 +1,85 @@
+Release 0.9.8.4 (2012-09-27 Daniel van Vugt <daniel.van.vugt@canonical.com>)
+============================================================================
+
+Highlights
+
+  * Fixed a few crashes affecting a lot of people. Especially users of VMs and
+    LLVMpipe.
+  * Significant improvements to "Unredirect Fullscreen Windows" mode, which
+    is particularly useful for fullscreen gaming performance.
+    - Flickering is mostly fixed.
+    - Multi-monitor unredirect is dramatically faster than previous versions.
+    - Fixed automatic redirect/unredirect entry/exit bugs.
+    To try it out, enable: CCSM > Composite > Unredirect Fullscreen Windows.
+    The option is not enabled by default yet because there are some issues
+    with driver stability, particularly with nouveau and intel.
+  * Major gsettings/compizconfig bug fixes and refactoring with lots more
+    test cases.
+
+Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.8.4)
+
+      92599 - Incorrect (low/stuttering) refresh rate with NVIDIA driver
+              (regressed in compiz 0.9.8 series)
+     927168 - compiz crashed with SIGSEGV in memmove() from
+              drisw_update_tex_buffer() from dri_set_tex_buffer2() from
+              drisw_bind_tex_image() from __glXBindTexImageEXT() from
+              TfpTexture::enable() from
+              enableFragmentOperationsAndDrawGeometry()
+     944653 - compiz crashed on startup with SIGSEGV in strstr() from
+              GLScreen::GLScreen()
+    1004336 - _itoa_word() from window.cpp:1989: Use of uninitialised value of
+              size 8
+    1030891 - Compiz r3275 breaks VirtualBox Guest Additions: black screen or
+              just wallpaper
+    1035261 - Port compiz to gsettings and consequently remove unity-2d
+    1037142 - Week33 - Grid highlight window appears while switching between
+              workspaces
+    1037411 - [regression][DRI] SubBuffer rendering is much slower in compiz
+              0.9.8.0 than it was in 0.9.7
+    1039406 - Benchmark default placement overlaps (damages) Unity launcher
+              and panel, resulting in artificially low benchmark results
+    1041535 - compiz crashed with SIGSEGV in __strcasestr_ia32() from
+              ccsStringToModifiers(binding=NULL)
+    1042041 - 1:0.9.8+bzr3319-0ubuntu1 regression: keeps setting gsettings
+              keys to wrong values
+    1042537 - ccsm crashed with SIGSEGV in ccsContextNew
+    1042552 - Paint List is often full of 1x1 offscreen windows from
+              gtk-window-decorator
+    1045127 - Close from spread is unreliable
+    1046664 - Unredirected fullscreen windows flicker briefly when another
+              window (like a menu) opens above them
+    1046701 - Random test failures in CCSGSettingsBackendConcept
+    1047168 - scale mode is not visible if a fullscreen window is unredirected
+    1048551 - multiple GObject warnings if gtk-window-decorator is started
+              without org.gnome.mutter being installed
+    1048964 - cmake fails on python 2.6 as sys.version_info does not contain
+              major_version or minor_version
+    1049100 - Build failure if COMPIZ_DISABLE_PLUGIN_RESIZE=ON
+    1049169 - [valgrind] Up to 520,000 bytes lost when runningi
+              CCSGSettingsBackendConceptTest
+    1050704 - Unity 6.6: panel shadow is always on top of the active window
+    1050749 - Unredirecting a fullscreen window on a secondary monitor causes
+              that monitor to flicker
+    1050752 - opacify plugin toggling by default doesn't work
+    1050757 - opacify plugin: opacity isn't reset after switching window
+    1050796 - Double shortcuts conflict with gnome-control-center ones
+    1051286 - [performance] glXSwapIntervalEXT called every frame, which is
+              very slow on Nvidia.
+    1051885 - Unredirect Fullscreen Windows makes multi-monitor rendering much
+              slower
+    1052838 - compiz.fix_927168 broke ARM building
+    1053902 - Maximized window gets unredirected when it's not fullscreen
+    1054724 - [fglrx] compiz crashed with SIGSEGV in glXDestroyContext()
+              [/usr/lib/fglrx/libGL.so.1] from GLScreen::~GLScreen()
+    1050610 - gtk-window-decorator leaking window handles. Window operations
+              become sluggish after a few days of usage
+    1056645 - ARM build broken with 'swapInterval' is not a member of 'GL'
+    1057263 - gtk-window-decorator leaks large numbers of pixmaps and pixmap
+              memory
+    1057421 - FTBFS with -DCOMPIZ_BUILD_TESTING=OFF if libgtest-dev is not
+              installed
+
+
 Release 0.9.8.2 (2012-09-10 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 ============================================================================
 

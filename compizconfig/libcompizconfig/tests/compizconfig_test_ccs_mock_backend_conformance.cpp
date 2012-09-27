@@ -151,68 +151,80 @@ class MockCCSSettingsTestEnvironment :
 	virtual Bool ReadBoolAtKey (const std::string &plugin,
 				    const std::string &key)
 	{
-	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+            return compizconfig::test::boolToBool (
+                ValueForKeyRetreival <bool> ().GetValueForKey (
+                    keynameFromPluginKey (plugin, key), mValues));
 	}
 
 	virtual int ReadIntegerAtKey (const std::string &plugin,
 				      const std::string &key)
 	{
-	    return ValueForKeyRetreival <int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <int> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual float ReadFloatAtKey (const std::string &plugin,
 				      const std::string &key)
 	{
-	    return ValueForKeyRetreival <float> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <float> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual const char * ReadStringAtKey (const std::string &plugin,
 					      const std::string &key)
 	{
-	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <const char *> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
 						     const std::string &key)
 	{
-	    return ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <CCSSettingColorValue> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
 						 const std::string &key)
 	{
-	    return ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <CCSSettingKeyValue> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
 						       const std::string &key)
 	{
-	    return ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <CCSSettingButtonValue> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual unsigned int ReadEdgeAtKey (const std::string &plugin,
 				       const std::string &key)
 	{
-	    return ValueForKeyRetreival <unsigned int> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <unsigned int> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual const char * ReadMatchAtKey (const std::string &plugin,
 					     const std::string &key)
 	{
-	    return ValueForKeyRetreival <const char *> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues);
+            return ValueForKeyRetreival <const char *> ().GetValueForKey (
+                keynameFromPluginKey (plugin, key), mValues);
 	}
 
 	virtual Bool ReadBellAtKey (const std::string &plugin,
 				       const std::string &key)
 	{
-	    return boolToBool (ValueForKeyRetreival <bool> ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+            return compizconfig::test::boolToBool (
+                ValueForKeyRetreival <bool> ().GetValueForKey (
+                    keynameFromPluginKey (plugin, key), mValues));
 	}
 
 	virtual CCSSettingValueList ReadListAtKey (const std::string &plugin,
 						   const std::string &key,
 						   CCSSetting	     *setting)
 	{
-	    CCSListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <CCSListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
+	    cci::SettingValueListWrapper::Ptr lw (ValueForKeyRetreival <boost::shared_ptr <cci::SettingValueListWrapper> > ().GetValueForKey (keynameFromPluginKey (plugin, key), mValues));
 
 	    return ccsCopyList (*lw, lw->setting ().get ());
 	}
@@ -373,15 +385,14 @@ class MockCCSBackendConceptTestEnvironment :
 	    EXPECT_CALL (*gmockSetting, getName ());
 	    EXPECT_CALL (*gmockSetting, getParent ());
 
+	    testing::Cardinality cardinality;
+
 	    if (type == TypeList)
-	    {
-		EXPECT_CALL (*gmockSetting, getType ()).Times (AtLeast (1));
-		EXPECT_CALL (*gmockSetting, getDefaultValue ()).Times (AtLeast (1));
-	    }
+		cardinality = ::testing::AtLeast (1);
 	    else
-	    {
-		EXPECT_CALL (*gmockSetting, getType ());
-	    }
+		cardinality = ::testing::AtMost (1);
+
+	    EXPECT_CALL (*gmockSetting, getType ()).Times (cardinality);
 	}
 
 	void PostWrite (CCSContextGMock *gmockContext,
@@ -688,12 +699,15 @@ class MockCCSBackendConceptTestEnvironment :
 		    break;
 
 		case TypeList:
-		    ccsSetList (setting, CCSListWrapper (ReadListAtKey (plugin, key, setting),
-							 true,
-							 ccsSettingGetInfo (setting)->forList.listType,
-							 boost::shared_ptr <CCSSettingInfo> (),
-							 boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1))), FALSE);
-		break;
+		    ccsSetList (setting,
+				cci::SettingValueListWrapper (ReadListAtKey (plugin, key, setting),
+								 cci::Deep,
+								 ccsSettingGetInfo (setting)->forList.listType,
+								 boost::shared_ptr <CCSSettingInfo> (),
+								 boost::shared_ptr <CCSSetting> (setting,
+												 boost::bind (doNothingWithCCSSetting, _1))),
+				FALSE);
+		    break;
 
 		default:
 
@@ -785,10 +799,11 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsGetList (setting, &vList);
 		    listCopy = ccsCopyList (vList, setting);
 
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <CCSListWrapper> (listCopy, true,
-												    ccsSettingGetInfo (setting)->forList.listType,
-												    boost::shared_ptr <CCSSettingInfo> (),
-												    boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1)))));
+		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <cci::SettingValueListWrapper> (listCopy,
+														     cci::Deep,
+														     ccsSettingGetInfo (setting)->forList.listType,
+														     boost::shared_ptr <CCSSettingInfo> (),
+														     boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1)))));
 		    break;
 		}
 		default:

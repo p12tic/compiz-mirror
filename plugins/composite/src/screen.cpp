@@ -281,6 +281,7 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     exposeRects (),
     windowPaintOffset (0, 0),
     overlayWindowCount (0),
+    outputShapeChanged (false),
     redrawTime (1000 / FALLBACK_REFRESH_RATE),
     optimalRedrawTime (1000 / FALLBACK_REFRESH_RATE),
     scheduled (false),
@@ -426,6 +427,8 @@ CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
 
     priv->pHnd = pHnd;
 
+    priv->detectRefreshRate ();
+
     showOutputWindow ();
 
     return true;
@@ -455,6 +458,8 @@ CompositeScreen::unregisterPaintHandler ()
 
     priv->pHnd = NULL;
     priv->paintTimer.stop ();
+
+    priv->detectRefreshRate ();
 
     hideOutputWindow ();
 }
@@ -543,6 +548,8 @@ CompositeScreen::showOutputWindow ()
 	XFixesDestroyRegion (dpy, region);
 
 	damageScreen ();
+
+	priv->outputShapeChanged = true;
     }
 }
 
@@ -591,8 +598,16 @@ CompositeScreen::updateOutputWindow ()
 				    0, 0, region);
 
 	XFixesDestroyRegion (dpy, region);
+
+	priv->outputShapeChanged = true;
     }
 
+}
+
+bool
+CompositeScreen::outputWindowChanged () const
+{
+    return priv->outputShapeChanged;
 }
 
 void
@@ -639,7 +654,10 @@ CompositeScreen::windowPaintOffset ()
 void
 PrivateCompositeScreen::detectRefreshRate ()
 {
-    if (optionGetDetectRefreshRate ())
+    const bool forceRefreshRate = (pHnd ? pHnd->requiredForcedRefreshRate () : false);
+    const bool detect = optionGetDetectRefreshRate () && !forceRefreshRate;
+
+    if (detect)
     {
 	CompString        name;
 	CompOption::Value value;
@@ -832,6 +850,8 @@ CompositeScreen::handlePaintTimeout ()
 
 
 	donePaint ();
+
+	priv->outputShapeChanged = false;
 
 	foreach (CompWindow *w, screen->windows ())
 	{

@@ -26,6 +26,17 @@ ccsGSettingsIntegratedSettingNew (CCSGNOMEIntegratedSettingInfo *base,
 				  CCSGSettingsWrapper       *wrapper,
 				  CCSObjectAllocationInterface *ai);
 
+/**
+ * @brief ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings
+ * @param key the old style gnome key to translate
+ * @return new-style key. Caller should free
+ *
+ * This translates old style keys (eg foo_bar) to new style keys
+ * foo-bar and special cases a few keys
+ */
+char *
+ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings (const char *key);
+
 COMPIZCONFIG_END_DECLS
 
 #endif

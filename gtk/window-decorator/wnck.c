@@ -463,6 +463,28 @@ remove_frame_window (WnckWindow *win)
 
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
+    if (!d->frame_window)
+    {
+	int i, j;
+
+	for (i = 0; i < 3; i++)
+	{
+	    for (j = 0; j < 3; j++)
+	    {
+		XDestroyWindow (xdisplay, d->event_windows[i][j].window);
+		d->event_windows[i][j].window = None;
+	    }
+	}
+
+	for (i = 0; i < BUTTON_NUM; i++)
+	{
+	    XDestroyWindow (xdisplay, d->button_windows[i].window);
+	    d->button_windows[i].window = None;
+
+	    d->button_states[i] = 0;
+	}
+    }
+
     if (d->pixmap)
     {
 	g_object_unref (G_OBJECT (d->pixmap));
@@ -473,6 +495,12 @@ remove_frame_window (WnckWindow *win)
     {
 	g_object_unref (G_OBJECT (d->buffer_pixmap));
 	d->buffer_pixmap = NULL;
+    }
+
+    if (d->old_pixmaps)
+    {
+	g_hash_table_destroy (d->old_pixmaps);
+	d->old_pixmaps = NULL;
     }
 
     if (d->cr)

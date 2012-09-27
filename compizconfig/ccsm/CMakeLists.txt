@@ -12,7 +12,7 @@ add_custom_command (OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/compizconfig_wrapper.c
 execute_process (COMMAND uname -p OUTPUT_VARIABLE PROC_ARCH)
 
 # Get Python Version
-execute_process (COMMAND python -c "import sys; print str (sys.version_info.major) + '.' + str (sys.version_info.minor)"
+execute_process (COMMAND python -c "import sys; print str (sys.version_info[0]) + '.' + str (sys.version_info[1])"
 		 OUTPUT_VARIABLE PY_VERSION)
 
 string (REPLACE "\n" "" PROC_ARCH ${PROC_ARCH})

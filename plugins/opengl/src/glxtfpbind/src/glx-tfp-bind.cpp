@@ -37,15 +37,22 @@ cgl::bindTexImageGLX (ServerGrabInterface                *serverGrabInterface,
 		      const cgl::WaitGLXFunc             &waitGLX,
 		      cgl::PixmapSource                  source)
 {
+#ifndef LP_1030891_NOT_FIXED
     ServerLock lock (serverGrabInterface);
 
     waitGLX ();
+#endif
 
     /* External pixmaps can disappear on us, but not
      * while we have a server grab at least */
     if (source == cgl::ExternallyManaged)
+    {
+#ifdef LP_1030891_NOT_FIXED
+	ServerLock lock (serverGrabInterface);
+#endif
 	if (!checkPixmapValidity (x11Pixmap))
 	    return false;
+    }
 
     bindTexImageEXT (glxPixmap);
 
