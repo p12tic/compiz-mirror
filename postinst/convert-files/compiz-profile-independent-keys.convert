@@ -1,11 +1,3 @@
-[org.compiz.integrated]
-run-command-terminal = /apps/metacity/global_keybindings/run_command_terminal
-run-command-screenshot = /apps/metacity/global_keybindings/run_command_screenshot
-run-command-window-screenshot = /apps/metacity/global_keybindings/run_command_window_screenshot
-panel-run-dialog = /apps/metacity/global_keybindings/panel_run_dialog
-panel-main-menu = /apps/metacity/global_keybindings/panel_main_menu
-
-
 [org.gnome.desktop.wm.keybindings]
 move-to-workspace-1 = /apps/metacity/window_keybindings/move_to_workspace_1
 move-to-workspace-2 = /apps/metacity/window_keybindings/move_to_workspace_2
