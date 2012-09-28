@@ -40,6 +40,8 @@ compiz (1:0.9.8.4-0ubuntu1) UNRELEASED; urgency=low
       ccsStringToModifiers(binding=NULL) (LP: #1041535)
   * Cherry-picked from upstream:
     - ABI bump due to an ABI change in the composite plugin
+    - Removed schema keys still used in keybindings and automated tests 
+      (LP: #1057955)
 
  -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Thu, 27 Sep 2012 15:43:59 +0200
 
