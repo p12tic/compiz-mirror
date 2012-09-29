@@ -26,6 +26,7 @@
 #include <iosfwd>
 #include <string>
 
+typedef struct _CCSSettingValueList * CCSSettingValueList;
 typedef union _CCSSettingColorValue CCSSettingColorValue;
 typedef struct _CCSSettingKeyValue CCSSettingKeyValue;
 typedef struct _CCSSettingButtonValue CCSSettingButtonValue;
@@ -66,5 +67,27 @@ operator== (const std::string &rhs,
 
 std::ostream &
 operator<< (std::ostream &os, CCSString &string);
+
+namespace compiz
+{
+    namespace config
+    {
+	namespace test
+	{
+	    std::ostream & DescribeSettingValueTo (std::ostream          &os,
+						   CCSSettingType        type,
+						   const CCSSettingValue &value);
+	    std::ostream & DescribeSettingListTo (std::ostream          &os,
+						  CCSSettingType        type,
+						  CCSSettingValueList   list);
+	}
+    }
+}
+
+std::ostream &
+operator<< (std::ostream &os, const CCSSettingValue &v);
+
+std::ostream &
+operator<< (std::ostream &os, CCSSettingValueList l);
 
 #endif
