@@ -43,6 +43,7 @@ TEST (CCSUtilTest, TestAddKeybindingMaskToStringInitial)
     unsigned int addedBindingMask = 0;
 
     ccsAddKeybindingMaskToString (&bindingStringChar,
+				  firstBindingMask,
 				  &addedBindingMask,
 				  firstBindingMask,
 				  firstBindingString.c_str ());
@@ -59,11 +60,13 @@ TEST (CCSUtilTest, TestAddKeybindingMaskToStringNoDuplicates)
     unsigned int addedBindingMask = 0;
 
     ccsAddKeybindingMaskToString (&bindingStringChar,
+				  firstBindingMask,
 				  &addedBindingMask,
 				  firstBindingMask,
 				  firstBindingString.c_str ());
 
     ccsAddKeybindingMaskToString (&bindingStringChar,
+				  firstBindingMask,
 				  &addedBindingMask,
 				  firstBindingMask,
 				  secondBindingString.c_str ());
@@ -115,6 +118,9 @@ namespace
 
 	for (unsigned int i = 0; i < ccsInternalUtilNumModifiers (); ++i)
 	{
+	    if (modifierList[i].name == std::string ("<Primary>"))
+		continue;
+
 	    for (unsigned int j = 0; j < ccsInternalUtilNumModifiers (); ++j)
 	    {
 		const bool modifierMatch = modifierList[i].modifier ==
@@ -152,13 +158,19 @@ class CCSUtilModifiersTest :
 
 TEST_P (CCSUtilModifiersTest, TestModifiersToString)
 {
-    CharacterWrapper modifierString (ccsModifiersToString (GetParam ().mModifierMask));
-    char             *modifierStringChar = modifierString;
+    CharacterWrapper  modifierString (ccsModifiersToString (GetParam ().mModifierMask));
+    char              *modifierStringChar = modifierString;
+    /* Force "<Primary>" to test as "<Control>" as "<Primary>"
+     * should never be reachable */
+    const std::string expectedModifierString (GetParam ().mModifierString !=
+						  std::string ("<Primary>") ?
+					      GetParam ().mModifierString :
+					      "<Control>");
 
     if (GetParam ().mMatch)
-	EXPECT_EQ (GetParam ().mModifierString, modifierStringChar);
+	EXPECT_EQ (expectedModifierString, modifierStringChar);
     else
-	EXPECT_NE (GetParam ().mModifierString, modifierStringChar);
+	EXPECT_NE (expectedModifierString, modifierStringChar);
 }
 
 TEST_P (CCSUtilModifiersTest, TestStringToModifiers)

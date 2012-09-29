@@ -127,11 +127,12 @@ stringAppend (char       *s,
 
 void
 ccsAddKeybindingMaskToString (char         **bindingString,
+			      unsigned int matchBindingMask,
 			      unsigned int *addedBindingMask,
 			      unsigned int addBindingMask,
 			      const char   *addBindingString)
 {
-    if (addBindingMask & addBindingMask &&
+    if (addBindingMask & matchBindingMask &&
 	!(*addedBindingMask & addBindingMask))
     {
 	*bindingString = stringAppend (*bindingString, addBindingString);
@@ -155,13 +156,17 @@ ccsAddStringToKeybindingMask (unsigned int *bindingMask,
 char *
 ccsModifiersToString (unsigned int modMask)
 {
-    char *binding = NULL;
+    char         *binding = NULL;
+    unsigned int addedBindings = 0;
     int  i;
 
     for (i = 0; i < ccsInternalUtilNumModifiers (); i++)
     {
-	if (modMask & modifierList[i].modifier)
-	    binding = stringAppend (binding, modifierList[i].name);
+	ccsAddKeybindingMaskToString (&binding,
+				      modMask,
+				      &addedBindings,
+				      modifierList[i].modifier,
+				      modifierList[i].name);
     }
 
     return binding;
@@ -256,8 +261,10 @@ ccsStringToModifiers (const char *binding)
 
     for (i = 0; i < ccsInternalUtilNumModifiers (); i++)
     {
-	if (strcasestr (binding, modifierList[i].name))
-	    mods |= modifierList[i].modifier;
+	ccsAddStringToKeybindingMask (&mods,
+				      binding,
+				      modifierList[i].modifier,
+				      modifierList[i].name);
     }
 
     return mods;

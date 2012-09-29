@@ -164,6 +164,7 @@ unsigned int ccsAddConfigWatch (CCSContext            *context,
 
 void
 ccsAddKeybindingMaskToString (char         **bindingString,
+			      unsigned int matchBindingMask,
 			      unsigned int *addedBindingMask,
 			      unsigned int addBindingMask,
 			      const char   *addBindingString);
