@@ -3539,7 +3539,8 @@ CompScreenImpl::addAction (CompAction *action)
     if (action->active ())
 	return false;
 
-    if (action->type () & CompAction::BindingTypeKey)
+    if (action->type () & CompAction::BindingTypeKey &&
+       !(action->state() & CompAction::DisableTapDetection))
     {
 	if (!grabManager.addPassiveKeyGrab (action->key ()))
 	    return false;
