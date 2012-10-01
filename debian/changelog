@@ -1,4 +1,4 @@
-compiz (1:0.9.8.4-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8.4-0ubuntu1) quantal-proposed; urgency=low
 
   * debian/control:
     - Add dependency on gnome-settings-daemon for compiz-gnome, since some
