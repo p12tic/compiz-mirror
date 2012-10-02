@@ -475,7 +475,7 @@ inline void
 </xsl:text>
         <xsl:text>    action.setState (state | CompAction::StateInitKey);
 </xsl:text>
-        <xsl:call-template name="initDisableTapDetection"/>
+        <xsl:call-template name="initTapDetection"/>
         <xsl:if test="default/text() and default/text() != 'disabled'">
             <xsl:text>    action.keyFromString ("</xsl:text>
             <xsl:value-of select="default/text()"/>
@@ -736,10 +736,10 @@ inline void
         </xsl:if>
     </xsl:template>
 
-    <xsl:template name="initDisableTapDetection">
+    <xsl:template name="initTapDetection">
         <xsl:choose>
-            <xsl:when test="./disable_tap_detection/text() = 'true'">
-                <xsl:text>    action.setState (action.state() | CompAction::DisableTapDetection);
+            <xsl:when test="./tap_detection/text() = 'false'">
+                <xsl:text>    action.setState (action.state() | CompAction::StateIgnoreTap);
 </xsl:text>
             </xsl:when>
         </xsl:choose>

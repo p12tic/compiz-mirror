@@ -76,7 +76,7 @@ class CompAction {
 	    StateAutoGrab    = 1 << 11,
 	    StateNoEdgeDelay = 1 << 12,
 	    StateTermTapped  = 1 << 13,
-	    DisableTapDetection = 1 << 14
+	    StateIgnoreTap   = 1 << 14
 	} StateEnum;
 
 	/**

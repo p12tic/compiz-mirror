@@ -3349,7 +3349,7 @@ cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 	     * This is so that we can detect taps on individual modifier
 	     * keys, and know to cancel the tap if <modifier>+k is pressed.
 	     */
-	    if (!(currentState & CompAction::DisableTapDetection))
+	    if (!(currentState & CompAction::StateIgnoreTap))
             {
  		int minCode, maxCode;
  		XDisplayKeycodes (screen->dpy(), &minCode, &maxCode);
