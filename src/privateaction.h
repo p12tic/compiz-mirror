@@ -30,21 +30,20 @@
 
 namespace compiz
 {
-    namespace actions
-    {
-	class BoundAction
-	{
-	    public:
+namespace actions
+{
+class BoundAction
+{
+    public:
 
-		virtual ~BoundAction () {}
+	virtual ~BoundAction () {}
 
-		virtual void makeActive () = 0;
-		virtual void makeInactive () = 0;
-	};
+	virtual void setActive (bool) = 0;
+};
 
-	void setActionActiveState (const CompAction  &action,
-				   bool              active);
-    }
+void setActionActiveState (const CompAction  &action,
+			   bool              active);
+}
 }
 
 class PrivateAction :
@@ -54,8 +53,7 @@ class PrivateAction :
 	PrivateAction ();
 	PrivateAction (const PrivateAction&);
 
-	void makeActive ();
-	void makeInactive ();
+	void setActive (bool);
 
 	CompAction::CallBack initiate;
 	CompAction::CallBack terminate;

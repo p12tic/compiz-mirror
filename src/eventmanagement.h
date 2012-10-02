@@ -32,47 +32,47 @@ class CompOption;
 
 namespace compiz
 {
-    namespace private_screen
-    {
-	struct GrabList;
-	class EventManager;
-    }
+namespace private_screen
+{
+struct GrabList;
+class EventManager;
+}
 
-    namespace events
-    {
-	namespace cps = compiz::private_screen;
-	typedef std::vector <CompOption> EventArguments;
-	typedef boost::function <bool (unsigned int, unsigned int)> ActionModsMatchesEventStateFunc;
+namespace events
+{
+namespace cps = compiz::private_screen;
+typedef std::vector <CompOption> EventArguments;
+typedef boost::function <bool (unsigned int, unsigned int)> ActionModsMatchesEventStateFunc;
 
-	int
-	processButtonPressOnEdgeWindow (Window               edgeWindow,
-				        Window               root,
-				        Window               eventWindow,
-				        Window               eventRoot,
-				        cps::GrabList        &grabList,
-				        const CompScreenEdge *screenEdge);
+int
+processButtonPressOnEdgeWindow (Window               edgeWindow,
+				Window               root,
+				Window               eventWindow,
+				Window               eventRoot,
+				cps::GrabList        &grabList,
+				const CompScreenEdge *screenEdge);
 
-	void
-	setEventWindowInButtonPressArguments (EventArguments &arguments,
-					      Window         eventWindow);
+void
+setEventWindowInButtonPressArguments (EventArguments &arguments,
+				      Window         eventWindow);
 
-	bool
-	activateButtonPressOnWindowBindingOption (CompOption                            &option,
-						  unsigned int                          eventButton,
-						  unsigned int                          eventState,
-						  cps::EventManager                     &eventManager,
-						  const ActionModsMatchesEventStateFunc &matchEventState,
-						  EventArguments                        &arguments);
+bool
+activateButtonPressOnWindowBindingOption (CompOption                            &option,
+					  unsigned int                          eventButton,
+					  unsigned int                          eventState,
+					  cps::EventManager                     &eventManager,
+					  const ActionModsMatchesEventStateFunc &matchEventState,
+					  EventArguments                        &arguments);
 
-	bool
-	activateButtonPressOnEdgeBindingOption (CompOption                            &option,
-					        unsigned int                          eventButton,
-					        unsigned int                          eventState,
-					        int                                   edge,
-					        cps::EventManager                     &eventManager,
-					        const ActionModsMatchesEventStateFunc &matchEventState,
-					        EventArguments                        &arguments);
-    }
+bool
+activateButtonPressOnEdgeBindingOption (CompOption                            &option,
+					unsigned int                          eventButton,
+					unsigned int                          eventState,
+					int                                   edge,
+					cps::EventManager                     &eventManager,
+					const ActionModsMatchesEventStateFunc &matchEventState,
+					EventArguments                        &arguments);
+}
 }
 
 	

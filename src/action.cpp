@@ -629,25 +629,16 @@ CompAction::active ()
 }
 
 void
-PrivateAction::makeActive ()
+PrivateAction::setActive (bool a)
 {
-    active = true;
-}
-
-void
-PrivateAction::makeInactive ()
-{
-    active = false;
+    active = a;
 }
 
 void
 ca::setActionActiveState (const CompAction &action,
 			  bool                  active)
 {
-    if (active)
-	action.priv->makeActive ();
-    else
-	action.priv->makeInactive ();
+    action.priv->setActive (active);
 }
 
 PrivateAction::PrivateAction () :

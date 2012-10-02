@@ -36,11 +36,11 @@
 
 namespace compiz
 {
-    namespace actions
-    {
-	void setActionActiveState (const CompAction  &action,
-				   bool              active);
-    }
+namespace actions
+{
+void setActionActiveState (const CompAction  &action,
+			   bool              active);
+}
 }
 
 class PrivateAction;
@@ -179,8 +179,10 @@ class CompAction {
 
 	bool active ();
 
-	/* BCI: Not optimal, CompAction should implement
-	 * BoundAction instead or be a PV class */
+	/* CompAction should be a pure virtual class so
+	 * that we can pass the interface required to for setActionActiveState
+	 * directly rather than using friends
+	 */
 	friend void compiz::actions::setActionActiveState (const CompAction  &action,
 							   bool              active);
 
