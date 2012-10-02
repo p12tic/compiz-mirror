@@ -450,8 +450,8 @@ CompOption::setName (const char *name, CompOption::Type type)
     priv->type = type;
 }
 
-CompString
-CompOption::name ()
+const CompString &
+CompOption::name () const
 {
     return priv->name;
 }
@@ -464,6 +464,12 @@ CompOption::type () const
 
 CompOption::Value &
 CompOption::value ()
+{
+    return priv->value;
+}
+
+const CompOption::Value &
+CompOption::value () const
 {
     return priv->value;
 }
@@ -556,7 +562,7 @@ CompOption::set (CompOption::Value &val)
 }
 
 bool
-CompOption::isAction ()
+CompOption::isAction () const
 {
     return checkIsAction (priv->type);
 }

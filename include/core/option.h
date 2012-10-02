@@ -242,14 +242,15 @@ class CompOption
 
 	void reset ();
 
-	CompString name ();
+	const CompString & name () const;
 
 	Type type () const;
 	Value & value ();
+	const Value & value () const;
 	Restriction & rest ();
 
 	bool set (Value &val);
-	bool isAction ();
+	bool isAction () const;
 
 	CompOption & operator= (const CompOption &option);
 
