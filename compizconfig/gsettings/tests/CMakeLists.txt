@@ -11,7 +11,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_SOURCE_DIR}/tests/shared
                      ${CMAKE_SOURCE_DIR}/tests/shared/glib)
 
-pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig_internal)
+pkg_check_modules (COMPIZCONFIG_TEST_GSETTINGS libcompizconfig_internal gio-2.0 glib-2.0)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
