@@ -149,6 +149,7 @@ class PrivateGLScreen :
 			   const CompRegion    &region);
 
 	bool hasVSync ();
+	bool requiredForcedRefreshRate ();
 
 	void updateRenderMode ();
 
@@ -213,6 +214,8 @@ class PrivateGLScreen :
 	std::vector<GLTexture::BindPixmapProc> bindPixmap;
 	bool hasCompositing;
 	bool commonFrontbuffer;
+	bool incorrectRefreshRate; // hack for NVIDIA specifying an incorrect
+				   // refresh rate, causing us to miss vblanks
 
 	GLIcon defaultIcon;
 

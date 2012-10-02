@@ -3,6 +3,8 @@
 
 #define MOCK_SCHEMA_PATH "@CMAKE_BINARY_DIR@/generated/glib-2.0/schemas"
 
+#include <string>
+
 namespace
 {
 const std::string MOCK_SCHEMA ("org.compiz.mock");

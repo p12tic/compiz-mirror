@@ -62,11 +62,12 @@ TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestTakesServerGrab)
 {
     MockServerGrab mockServerGrab;
     InSequence     s;
-
+#ifndef LP_1030891_NOT_FIXED
     EXPECT_CALL (mockServerGrab, grabServer ());
     EXPECT_CALL (mockServerGrab, syncServer ());
     EXPECT_CALL (mockServerGrab, ungrabServer ());
     EXPECT_CALL (mockServerGrab, syncServer ());
+#endif
 
     cgl::bindTexImageGLX (&mockServerGrab,
 			  pixmap,
@@ -77,6 +78,31 @@ TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestTakesServerGrab)
 			  cgl::InternallyManaged);
 }
 
+#ifdef LP_1030891_NOT_FIXED
+TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestTakesServerGrabLP1030891SpecialCase)
+{
+    MockServerGrab mockServerGrab;
+    StrictMock <MockPixmapCheckValidity> mockPixmapCheck;
+    StrictMock <MockBindTexImageEXT>     mockBindTexImage;
+
+    cgl::PixmapCheckValidityFunc         pixmapCheckFunc (boost::bind (&MockPixmapCheckValidity::checkValidity, &mockPixmapCheck, _1));
+    cgl::BindTexImageEXTFunc             bindTexImageEXTFunc (boost::bind (&MockBindTexImageEXT::bindTexImageEXT, &mockBindTexImage, _1));
+
+    EXPECT_CALL (mockServerGrab, grabServer ());
+    EXPECT_CALL (mockServerGrab, syncServer ()).Times (2);
+    EXPECT_CALL (mockServerGrab, ungrabServer ());
+    EXPECT_CALL (mockPixmapCheck, checkValidity (pixmap)).WillOnce (Return (true));
+    EXPECT_CALL (mockBindTexImage, bindTexImageEXT (glxPixmap));
+    cgl::bindTexImageGLX (&mockServerGrab,
+			  pixmap,
+			  glxPixmap,
+			  pixmapCheckFunc,
+			  bindTexImageEXTFunc,
+			  waitGLX (),
+			  cgl::ExternallyManaged);
+}
+#endif
+
 TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestCallsWaitGLX)
 {
     NiceMock <MockServerGrab> mockServerGrab;
@@ -84,7 +110,9 @@ TEST (CompizOpenGLGLXTextureFromPixmapBindTest, TestCallsWaitGLX)
 
     cgl::WaitGLXFunc          waitGLXFuncMock (boost::bind (&MockWaitGLX::waitGLX, &mockWaitGLX));
 
+#ifndef LP_1030891_NOT_FIXED
     EXPECT_CALL (mockWaitGLX, waitGLX ());
+#endif
 
     cgl::bindTexImageGLX (&mockServerGrab,
 			  pixmap,

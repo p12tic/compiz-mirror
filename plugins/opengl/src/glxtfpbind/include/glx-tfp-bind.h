@@ -25,6 +25,10 @@
 #ifndef _COMPIZ_OPENGL_GLX_TFP_BIND_H
 #define _COMPIZ_OPENGL_GLX_TFP_BIND_H
 
+#ifndef LP_1030891_NOT_FIXED
+#define LP_1030891_NOT_FIXED
+#endif
+
 #include <opengl/pixmapsource.h>
 #include <boost/function.hpp>
 

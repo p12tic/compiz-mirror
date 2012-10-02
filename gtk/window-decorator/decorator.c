@@ -686,7 +686,16 @@ update_window_decoration_size (WnckWindow *win)
 
     /* Destroy the old pixmaps and pictures */
     if (d->pixmap)
-	g_hash_table_insert (destroyed_pixmaps_table, GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap)), d->pixmap);
+    {
+	gpointer key = GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap));
+
+	if (d->old_pixmaps == NULL)
+	    d->old_pixmaps = g_hash_table_new_full (NULL, NULL, NULL,
+	                                            g_object_unref);
+
+	g_hash_table_insert (destroyed_pixmaps_table, key, d);
+	g_hash_table_insert (d->old_pixmaps, key, d->pixmap);
+    }
 
     if (d->buffer_pixmap)
 	g_object_unref (G_OBJECT (d->buffer_pixmap));

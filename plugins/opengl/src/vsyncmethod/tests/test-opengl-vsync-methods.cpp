@@ -146,6 +146,7 @@ TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalUnthrottledWhereFailure)
 TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalUnthrottledWhereSuccess)
 {
     bool throttled;
+    EXPECT_CALL (functions, swapIntervalEXT (1));
     EXPECT_TRUE (swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled));
     EXPECT_FALSE (throttled);
 }

@@ -148,3 +148,13 @@ TEST (OpenGLFullscreenRegion, KeepUnredirectedStateIfNotOnMonitor)
     EXPECT_FALSE (monitor.allowRedirection (window));
 }
 
+TEST (OpenGLFullscreenRegion, MaximizedWithDocks)  // LP: #1053902
+{
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 24)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 24, 64, 744)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (64, 24, 960, 744)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
+}
+

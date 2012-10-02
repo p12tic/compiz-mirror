@@ -3,6 +3,29 @@
 
 INTERFACE_TYPE (CCSGSettingsBackendInterface);
 
+CCSContext *
+ccsGSettingsBackendGetContext (CCSBackend *backend)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetContext) (backend);
+}
+
+
+void
+ccsGSettingsBackendConnectToChangedSignal (CCSBackend *backend,
+					   CCSGSettingsWrapper *object)
+{
+     (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendConnectToChangedSignal) (backend, object);
+}
+
+CCSGSettingsWrapper *
+ccsGSettingsGetSettingsObjectForPluginWithPath (CCSBackend *backend,
+						const char *plugin,
+						const char *path,
+						CCSContext *context)
+{
+    return (*(GET_INTERFACE (CCSGSettingsBackendInterface, backend))->gsettingsBackendGetSettingsObjectForPluginWithPath) (backend, plugin, path, context);
+}
+
 const char *
 ccsGSettingsBackendGetCurrentProfile (CCSBackend *backend)
 {
