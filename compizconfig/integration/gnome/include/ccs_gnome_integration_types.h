@@ -22,5 +22,7 @@ typedef enum {
     OptionSpecial,
 } SpecialOptionType;
 
+COMPIZCONFIG_END_DECLS
+
 #endif
 

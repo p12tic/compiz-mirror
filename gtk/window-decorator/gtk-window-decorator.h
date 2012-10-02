@@ -401,6 +401,7 @@ typedef struct _decor {
     GtkWidget         *decor_window;
     GtkWidget	      *decor_event_box;
     GtkWidget         *decor_image;
+    GHashTable        *old_pixmaps;
     cairo_t	      *cr;
     decor_layout_t    border_layout;
     decor_context_t   *context;

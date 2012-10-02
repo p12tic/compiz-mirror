@@ -427,6 +427,8 @@ CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
 
     priv->pHnd = pHnd;
 
+    priv->detectRefreshRate ();
+
     showOutputWindow ();
 
     return true;
@@ -456,6 +458,8 @@ CompositeScreen::unregisterPaintHandler ()
 
     priv->pHnd = NULL;
     priv->paintTimer.stop ();
+
+    priv->detectRefreshRate ();
 
     hideOutputWindow ();
 }
@@ -650,7 +654,10 @@ CompositeScreen::windowPaintOffset ()
 void
 PrivateCompositeScreen::detectRefreshRate ()
 {
-    if (optionGetDetectRefreshRate ())
+    const bool forceRefreshRate = (pHnd ? pHnd->requiredForcedRefreshRate () : false);
+    const bool detect = optionGetDetectRefreshRate () && !forceRefreshRate;
+
+    if (detect)
     {
 	CompString        name;
 	CompOption::Value value;

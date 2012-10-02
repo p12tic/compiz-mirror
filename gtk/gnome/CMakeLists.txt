@@ -10,10 +10,7 @@ if (BUILD_GNOME)
     )
 
     set (_keybindings_files
-	 50-compiz-launchers.xml.in
 	 50-compiz-navigation.xml.in
-	 50-compiz-screenshot.xml.in
-	 50-compiz-system.xml.in
 	 50-compiz-windows.xml.in)
 
     set (_keybindings_files_translated "")

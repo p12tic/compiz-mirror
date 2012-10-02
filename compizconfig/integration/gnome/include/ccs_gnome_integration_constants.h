@@ -2,6 +2,7 @@
 #define _CCS_GNOME_INTEGRATION_CONSTANTS_H
 
 #include <ccs-defs.h>
+#include <glib.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
@@ -187,6 +188,8 @@ typedef struct _CCSGSettingsWrapperIntegratedSchemasQuarks
 {
     GQuark ORG_GNOME_DESKTOP_WM_PREFERENCES;
     GQuark ORG_GNOME_DESKTOP_WM_KEYBINDINGS;
+    GQuark ORG_GNOME_SETTINGS_DAEMON_PLUGINS_MEDIA_KEYS;
+    GQuark ORG_GNOME_DESKTOP_DEFAULT_APPLICATIONS_TERMINAL;
     GQuark ORG_COMPIZ_INTEGRATED;
 } CCSGSettingsWrapperIntegratedSchemasQuarks;
 

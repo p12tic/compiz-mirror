@@ -52,3 +52,13 @@ llvmpipe
 
  RESOLVED. WORKAROUND: detect when llvmpipe is active and force the usage
  of glXSwapBuffers on every frame
+
+virtualbox
+==========
+
+ 1. vboxdrv may open a new X Server connection on the first call to
+    glXBindTexImageEXT. If compiz has a server grab during this time
+    (see the GLX_EXT_texture_from_pixmap spec s. 5) then compiz
+    will deadlock
+
+ RESOLVED. WORKAROUND: don't implement this part of the spec for now

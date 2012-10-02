@@ -457,12 +457,6 @@ CompOption::name ()
 }
 
 CompOption::Type
-CompOption::type ()
-{
-    return priv->type;
-}
-
-CompOption::Type
 CompOption::type () const
 {
     return priv->type;
@@ -470,12 +464,6 @@ CompOption::type () const
 
 CompOption::Value &
 CompOption::value ()
-{
-    return priv->value;
-}
-
-CompOption::Value &
-CompOption::value () const
 {
     return priv->value;
 }

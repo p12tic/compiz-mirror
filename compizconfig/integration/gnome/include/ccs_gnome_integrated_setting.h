@@ -15,11 +15,13 @@ typedef struct _CCSGNOMEIntegratedSettingInfoInterface CCSGNOMEIntegratedSetting
 
 typedef SpecialOptionType (*CCSGNOMEIntegratedSettingInfoGetSpecialOptionType) (CCSGNOMEIntegratedSettingInfo *);
 typedef const char * (*CCSGNOMEIntegratedSettingInfoGetGNOMEName) (CCSGNOMEIntegratedSettingInfo *);
+typedef void (*CCSGNOMEIntegratedSettingInfoFree) (CCSGNOMEIntegratedSettingInfo *);
 
 struct _CCSGNOMEIntegratedSettingInfoInterface
 {
     CCSGNOMEIntegratedSettingInfoGetSpecialOptionType getSpecialOptionType;
-    CCSGNOMEIntegratedSettingInfoGetGNOMEName getGNOMEName;
+    CCSGNOMEIntegratedSettingInfoGetGNOMEName         getGNOMEName;
+    CCSGNOMEIntegratedSettingInfoFree                 free;
 };
 
 /**
@@ -52,6 +54,12 @@ ccsGNOMEIntegratedSettingInfoNew (CCSIntegratedSettingInfo *base,
 				  SpecialOptionType    type,
 				  const char	   *gnomeName,
 				  CCSObjectAllocationInterface *ai);
+
+void
+ccsFreeGNOMEIntegratedSettingInfo (CCSGNOMEIntegratedSettingInfo *);
+
+CCSREF_HDR (GNOMEIntegratedSettingInfo, CCSGNOMEIntegratedSettingInfo);
+CCSLIST_HDR (GNOMEIntegratedSettingInfo, CCSGNOMEIntegratedSettingInfo);
 
 COMPIZCONFIG_END_DECLS
 
