@@ -38,30 +38,30 @@
 
 namespace compiz
 {
-    namespace opengl
-    {
-	namespace impl
-	{
-	    namespace cgl = compiz::opengl;
-	    typedef boost::function <int (int, int, unsigned int *)> GLXWaitVideoSyncSGIFunc;
+namespace opengl
+{
+namespace impl
+{
+namespace cgl = compiz::opengl;
+typedef boost::function <int (int, int, unsigned int *)> GLXWaitVideoSyncSGIFunc;
 
-	    class PrivateWaitVSyncMethod;
-	    class WaitVSyncMethod :
-		public cgl::VSyncMethod
-	    {
-		public:
+class PrivateWaitVSyncMethod;
+class WaitVSyncMethod :
+    public cgl::VSyncMethod
+{
+    public:
 
-		    WaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
+	WaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
 
-		    bool enableForBufferSwapType (cgl::BufferSwapType type,
-						  bool		      &throttledFrame);
-		    void disable ();
+	bool enableForBufferSwapType (cgl::BufferSwapType type,
+				      bool		      &throttledFrame);
+	void disable ();
 
-		private:
+    private:
 
-		    std::auto_ptr <PrivateWaitVSyncMethod> priv;
-	    };
-	}
-    } // namespace opengl
+	std::auto_ptr <PrivateWaitVSyncMethod> priv;
+};
+}
+} // namespace opengl
 } // namespace compiz
 #endif

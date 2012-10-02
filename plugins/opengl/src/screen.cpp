@@ -280,57 +280,57 @@ public:
 
 namespace compiz
 {
-    namespace opengl
-    {
-	void swapIntervalGLX (int interval)
-	{
-	    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
-	    if (GL::swapInterval)
-		(*GL::swapInterval) (interval);
-	}
+namespace opengl
+{
+void swapIntervalGLX (int interval)
+{
+    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
+    if (GL::swapInterval)
+	(*GL::swapInterval) (interval);
+}
 
-	int waitVSyncGLX (int          wait,
-			  int          remainder,
-			  unsigned int *count)
-	{
-	    /*
-	     * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
-	     * flush before they blit, it is best to not let that happen.
-	     * Because that flush would occur after GL::waitVideoSync, causing
-	     * a delay and the final blit to be slightly out of sync resulting
-	     * in tearing. So we need to do a glFinish before we wait for
-	     * vsync, to absolutely minimize tearing.
-	     */
-	    glFinish ();
+int waitVSyncGLX (int          wait,
+		  int          remainder,
+		  unsigned int *count)
+{
+    /*
+     * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
+     * flush before they blit, it is best to not let that happen.
+     * Because that flush would occur after GL::waitVideoSync, causing
+     * a delay and the final blit to be slightly out of sync resulting
+     * in tearing. So we need to do a glFinish before we wait for
+     * vsync, to absolutely minimize tearing.
+     */
+    glFinish ();
 
-	    // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
-	    if (GL::waitVideoSync)
-		return (*GL::waitVideoSync) (wait, remainder, count);
+    // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
+    if (GL::waitVideoSync)
+	return (*GL::waitVideoSync) (wait, remainder, count);
 
-	    return 0;
-	}
-    }
+    return 0;
+}
+}
 }
 
 #else
 
 namespace compiz
 {
-    namespace opengl
-    {
-	void swapIntervalEGL (Display *display, int interval)
-	{
-	    eglSwapInterval (eglGetDisplay (display), interval);
-	}
+namespace opengl
+{
+void swapIntervalEGL (Display *display, int interval)
+{
+    eglSwapInterval (eglGetDisplay (display), interval);
+}
 
-	int waitVSyncEGL (int wait,
-			  int remainder,
-			  int *count)
-	{
-	    /* not supported */
-	    return 0;
-	}
-    }
+int waitVSyncEGL (int wait,
+		  int remainder,
+		  int *count)
+{
+    /* not supported */
+    return 0;
+}
+}
 }
 
 #endif

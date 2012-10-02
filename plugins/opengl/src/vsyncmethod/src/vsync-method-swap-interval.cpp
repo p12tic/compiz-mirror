@@ -26,29 +26,29 @@
  *
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  *          David Reveman <davidr@novell.com>
- *	    Daniel van Vugt <daniel.van.vugt@canonical.com>
- *	    Sam Spilsbury <sam.spilsbury@canonical.com>
+ *          Daniel van Vugt <daniel.van.vugt@canonical.com>
+ *          Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 #include <vsyncmethod.h>
 #include <vsync-method-swap-interval.h>
 
 namespace compiz
 {
-    namespace opengl
-    {
-	namespace impl
-	{
-	    class PrivateSwapIntervalVSyncMethod
-	    {
-		public:
+namespace opengl
+{
+namespace impl
+{
+class PrivateSwapIntervalVSyncMethod
+{
+    public:
 
-		    PrivateSwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &);
+	PrivateSwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &);
 
-		    GLXSwapIntervalEXTFunc swapInterval;
-		    bool		   enabled;
-	    };
-	}
-    }
+	GLXSwapIntervalEXTFunc swapInterval;
+	bool		   enabled;
+};
+}
+}
 }
 
 namespace cgl = compiz::opengl;

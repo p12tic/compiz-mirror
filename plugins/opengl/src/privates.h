@@ -48,11 +48,11 @@ extern CompOutput *targetOutput;
 
 namespace compiz
 {
-    namespace opengl
-    {
-	class VSyncMethod;
-	typedef boost::shared_ptr <VSyncMethod> VSyncMethodPtr;
-    }
+namespace opengl
+{
+class VSyncMethod;
+typedef boost::shared_ptr <VSyncMethod> VSyncMethodPtr;
+}
 }
 
 class GLDoubleBuffer :

@@ -26,29 +26,29 @@
  *
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  *          David Reveman <davidr@novell.com>
- *	    Daniel van Vugt <daniel.van.vugt@canonical.com>
- *	    Sam Spilsbury <sam.spilsbury@canonical.com>
+ *          Daniel van Vugt <daniel.van.vugt@canonical.com>
+ *          Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 #include <vsyncmethod.h>
 #include <vsync-method-wait-video-sync.h>
 
 namespace compiz
 {
-    namespace opengl
-    {
-	namespace impl
-	{
-	    class PrivateWaitVSyncMethod
-	    {
-		public:
+namespace opengl
+{
+namespace impl
+{
+class PrivateWaitVSyncMethod
+{
+    public:
 
-		    PrivateWaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
+	PrivateWaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
 
-		    GLXWaitVideoSyncSGIFunc waitVideoSync;
-		    unsigned int            lastVSyncCounter;
-	    };
-	}
-    }
+	GLXWaitVideoSyncSGIFunc waitVideoSync;
+	unsigned int            lastVSyncCounter;
+};
+}
+}
 }
 
 namespace cgl = compiz::opengl;

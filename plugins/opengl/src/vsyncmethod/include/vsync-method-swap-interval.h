@@ -38,30 +38,30 @@
 
 namespace compiz
 {
-    namespace opengl
-    {
-	namespace impl
-	{
-	    namespace cgl = compiz::opengl;
-	    typedef boost::function <void (int)> GLXSwapIntervalEXTFunc;
+namespace opengl
+{
+namespace impl
+{
+namespace cgl = compiz::opengl;
+typedef boost::function <void (int)> GLXSwapIntervalEXTFunc;
 
-	    class PrivateSwapIntervalVSyncMethod;
-	    class SwapIntervalVSyncMethod :
-		public cgl::VSyncMethod
-	    {
-		public:
+class PrivateSwapIntervalVSyncMethod;
+class SwapIntervalVSyncMethod :
+    public cgl::VSyncMethod
+{
+    public:
 
-		    SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapIntervalEXT);
+	SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapIntervalEXT);
 
-		    bool enableForBufferSwapType (cgl::BufferSwapType type,
-						  bool		      &throttledFrame);
-		    void disable ();
+	bool enableForBufferSwapType (cgl::BufferSwapType type,
+				      bool		      &throttledFrame);
+	void disable ();
 
-		private:
+    private:
 
-		    std::auto_ptr <PrivateSwapIntervalVSyncMethod> priv;
-	    };
-	}
-    } // namespace opengl
+	std::auto_ptr <PrivateSwapIntervalVSyncMethod> priv;
+};
+}
+} // namespace opengl
 } // namespace compiz
 #endif

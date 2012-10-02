@@ -36,25 +36,25 @@
 
 namespace compiz
 {
-    namespace opengl
-    {
-	typedef enum _BufferSwapType
-	{
-	    Flip,
-	    PartialCopy
-	} BufferSwapType;
+namespace opengl
+{
+typedef enum _BufferSwapType
+{
+    Flip,
+    PartialCopy
+} BufferSwapType;
 
-	class VSyncMethod
-	{
-	    public:
+class VSyncMethod
+{
+    public:
 
-		typedef boost::shared_ptr <VSyncMethod> Ptr;
+	typedef boost::shared_ptr <VSyncMethod> Ptr;
 
-		virtual bool enableForBufferSwapType (BufferSwapType type,
-						      bool           &throttledFrame) = 0;
-		virtual void disable () = 0;
-	};
-    }
+	virtual bool enableForBufferSwapType (BufferSwapType type,
+					      bool           &throttledFrame) = 0;
+	virtual void disable () = 0;
+};
+}
 }
 
 #endif

@@ -42,25 +42,25 @@ using ::testing::_;
 
 namespace
 {
-    class MockOpenGLFunctionsTable
-    {
-	public:
+class MockOpenGLFunctionsTable
+{
+    public:
 
-	    MOCK_METHOD3 (waitVideoSyncSGI, int (int, int, unsigned int *));
-	    MOCK_METHOD1 (swapIntervalEXT, void (int));
-    };
+	MOCK_METHOD3 (waitVideoSyncSGI, int (int, int, unsigned int *));
+	MOCK_METHOD1 (swapIntervalEXT, void (int));
+};
 
-    cgli::GLXWaitVideoSyncSGIFunc
-    GetWaitVideoSyncFuncFromMock (MockOpenGLFunctionsTable &mock)
-    {
-	return boost::bind (&MockOpenGLFunctionsTable::waitVideoSyncSGI, &mock, _1, _2, _3);
-    }
+cgli::GLXWaitVideoSyncSGIFunc
+GetWaitVideoSyncFuncFromMock (MockOpenGLFunctionsTable &mock)
+{
+    return boost::bind (&MockOpenGLFunctionsTable::waitVideoSyncSGI, &mock, _1, _2, _3);
+}
 
-    cgli::GLXSwapIntervalEXTFunc
-    GetSwapIntervalFuncFromMock (MockOpenGLFunctionsTable &mock)
-    {
-	return boost::bind (&MockOpenGLFunctionsTable::swapIntervalEXT, &mock, _1);
-    }
+cgli::GLXSwapIntervalEXTFunc
+GetSwapIntervalFuncFromMock (MockOpenGLFunctionsTable &mock)
+{
+    return boost::bind (&MockOpenGLFunctionsTable::swapIntervalEXT, &mock, _1);
+}
 }
 
 class OpenGLSwapIntervalTest :
