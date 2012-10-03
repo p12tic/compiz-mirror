@@ -45,13 +45,13 @@ namespace impl
 namespace cgl = compiz::opengl;
 typedef boost::function <int (int, int, unsigned int *)> GLXWaitVideoSyncSGIFunc;
 
-class PrivateWaitVSyncMethod;
-class WaitVSyncMethod :
+class PrivateBlockingVSync;
+class BlockingVSync :
     public cgl::VSyncMethod
 {
     public:
 
-	WaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
+	BlockingVSync (const GLXWaitVideoSyncSGIFunc &);
 
 	bool enable (cgl::BufferSwapType type,
 		     bool                &throttledFrame);
@@ -59,7 +59,7 @@ class WaitVSyncMethod :
 
     private:
 
-	std::auto_ptr <PrivateWaitVSyncMethod> priv;
+	std::auto_ptr <PrivateBlockingVSync> priv;
 };
 }
 } // namespace opengl

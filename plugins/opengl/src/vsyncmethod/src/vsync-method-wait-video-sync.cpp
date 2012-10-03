@@ -38,11 +38,11 @@ namespace opengl
 {
 namespace impl
 {
-class PrivateWaitVSyncMethod
+class PrivateBlockingVSync
 {
     public:
 
-	PrivateWaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
+	PrivateBlockingVSync (const GLXWaitVideoSyncSGIFunc &);
 
 	GLXWaitVideoSyncSGIFunc waitVideoSync;
 	unsigned int            lastVSyncCounter;
@@ -54,20 +54,20 @@ class PrivateWaitVSyncMethod
 namespace cgl = compiz::opengl;
 namespace cgli = compiz::opengl::impl;
 
-cgli::PrivateWaitVSyncMethod::PrivateWaitVSyncMethod (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
+cgli::PrivateBlockingVSync::PrivateBlockingVSync (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
     waitVideoSync (waitVideoSync),
     lastVSyncCounter (0)
 {
 }
 
-cgli::WaitVSyncMethod::WaitVSyncMethod (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
-    priv (new cgli::PrivateWaitVSyncMethod (waitVideoSync))
+cgli::BlockingVSync::BlockingVSync (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
+    priv (new cgli::PrivateBlockingVSync (waitVideoSync))
 {
 }
 
 bool
-cgli::WaitVSyncMethod::enable (cgl::BufferSwapType swapType,
-			       bool                &throttledFrame)
+cgli::BlockingVSync::enable (cgl::BufferSwapType swapType,
+			     bool                &throttledFrame)
 {
     unsigned int oldVideoSyncCounter = priv->lastVSyncCounter;
     priv->waitVideoSync (1, 0, &priv->lastVSyncCounter);
@@ -82,6 +82,6 @@ cgli::WaitVSyncMethod::enable (cgl::BufferSwapType swapType,
 }
 
 void
-cgli::WaitVSyncMethod::disable ()
+cgli::BlockingVSync::disable ()
 {
 }

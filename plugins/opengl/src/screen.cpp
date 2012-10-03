@@ -563,7 +563,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    availableVSyncMethods.push_back (boost::make_shared <impl::SwapIntervalVSyncMethod> (
+    availableVSyncMethods.push_back (boost::make_shared <impl::AsynchronousVSync> (
 					 boost::bind (swapIntervalEGL, screen->dpy (), _1)));
 
     priv->doubleBuffer.reset (new EGLDoubleBuffer (screen->dpy (),
@@ -881,9 +881,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    availableVSyncMethods.push_back (boost::make_shared <impl::SwapIntervalVSyncMethod> (
+    availableVSyncMethods.push_back (boost::make_shared <impl::AsynchronousVSync> (
 					 boost::bind (swapIntervalGLX, _1)));
-    availableVSyncMethods.push_back (boost::make_shared <impl::WaitVSyncMethod> (
+    availableVSyncMethods.push_back (boost::make_shared <impl::BlockingVSync> (
 					 boost::bind (waitVSyncGLX, _1, _2, _3)));
 
     priv->doubleBuffer.reset (new GLXDoubleBuffer (screen->dpy (),
@@ -1220,10 +1220,8 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     #ifndef USE_GLES
     ctx (NULL),
     getProcAddress (0),
-    doubleBuffer (new EGLDoubleBuffer (screen->dpy (), *screen, cScreen->output ())),
     #else
     ctx (EGL_NO_CONTEXT),
-    doubleBuffer (new GLXDoubleBuffer (screen->dpy (), *screen, surface)),
     #endif
     scratchFbo (NULL),
     outputRegion (),

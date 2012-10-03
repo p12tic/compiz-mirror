@@ -38,11 +38,11 @@ namespace opengl
 {
 namespace impl
 {
-class PrivateSwapIntervalVSyncMethod
+class PrivateAsynchronousVSync
 {
     public:
 
-	PrivateSwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &);
+	PrivateAsynchronousVSync (const GLXSwapIntervalEXTFunc &);
 
 	GLXSwapIntervalEXTFunc swapInterval;
 	bool		   enabled;
@@ -54,21 +54,21 @@ class PrivateSwapIntervalVSyncMethod
 namespace cgl = compiz::opengl;
 namespace cgli = compiz::opengl::impl;
 
-cgli::PrivateSwapIntervalVSyncMethod::PrivateSwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapInterval) :
+cgli::PrivateAsynchronousVSync::PrivateAsynchronousVSync (const GLXSwapIntervalEXTFunc &swapInterval) :
     swapInterval (swapInterval),
     enabled (false)
 {
 }
 
-cgli::SwapIntervalVSyncMethod::SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapInterval) :
-    priv (new cgli::PrivateSwapIntervalVSyncMethod (swapInterval))
+cgli::AsynchronousVSync::AsynchronousVSync (const GLXSwapIntervalEXTFunc &swapInterval) :
+    priv (new cgli::PrivateAsynchronousVSync (swapInterval))
 {
 
 }
 
 bool
-cgli::SwapIntervalVSyncMethod::enable (cgl::BufferSwapType swapType,
-				       bool                &throttledFrame)
+cgli::AsynchronousVSync::enable (cgl::BufferSwapType swapType,
+				 bool                &throttledFrame)
 {
     /* Always consider these frames as un-throttled as the buffer
      * swaps are done asynchronously */
@@ -89,7 +89,7 @@ cgli::SwapIntervalVSyncMethod::enable (cgl::BufferSwapType swapType,
 }
 
 void
-cgli::SwapIntervalVSyncMethod::disable ()
+cgli::AsynchronousVSync::disable ()
 {
     /* Disable if enabled */
     if (priv->enabled)

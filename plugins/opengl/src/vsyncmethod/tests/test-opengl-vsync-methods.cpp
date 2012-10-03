@@ -63,66 +63,66 @@ GetSwapIntervalFuncFromMock (MockOpenGLFunctionsTable &mock)
 }
 }
 
-class OpenGLSwapIntervalTest :
+class OpenGLAsynchronousVSync :
     public ::testing::Test
 {
     public:
 
-	OpenGLSwapIntervalTest () :
+	OpenGLAsynchronousVSync () :
 	    swapIntervalMethod (GetSwapIntervalFuncFromMock (functions))
 	{
 	}
 
 	MockOpenGLFunctionsTable      functions;
-	cgli::SwapIntervalVSyncMethod swapIntervalMethod;
+	cgli::AsynchronousVSync swapIntervalMethod;
 };
 
-class OpenGLWaitVideoSyncTest :
+class OpenGLBlockingVSyncTest :
     public ::testing::Test
 {
     public:
 
-	OpenGLWaitVideoSyncTest () :
+	OpenGLBlockingVSyncTest () :
 	    waitVideoSyncMethod (GetWaitVideoSyncFuncFromMock (functions))
 	{
 	}
 
 	MockOpenGLFunctionsTable      functions;
-	cgli::WaitVSyncMethod         waitVideoSyncMethod;
+	cgli::BlockingVSync         waitVideoSyncMethod;
 };
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalOnEnableForFlip)
+TEST_F (OpenGLAsynchronousVSync, TestCallSwapIntervalOnEnableForFlip)
 {
     bool throttled;
     EXPECT_CALL (functions, swapIntervalEXT (1));
-    EXPECT_TRUE (swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled));
+    EXPECT_TRUE (swapIntervalMethod.enable (cgl::Flip, throttled));
 }
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalOnEnableForFlipOnlyOnce)
+TEST_F (OpenGLAsynchronousVSync, TestCallSwapIntervalOnEnableForFlipOnlyOnce)
 {
     bool throttled;
     EXPECT_CALL (functions, swapIntervalEXT (1)).Times (1);
-    EXPECT_TRUE (swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled));
+    EXPECT_TRUE (swapIntervalMethod.enable (cgl::Flip, throttled));
     /* This is still meant to return true even though it does
      * nothing it just means the operation succeeded */
-    EXPECT_TRUE (swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled));
+    EXPECT_TRUE (swapIntervalMethod.enable (cgl::Flip, throttled));
 }
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalOnEnableForFlipAndZeroForDisable)
+TEST_F (OpenGLAsynchronousVSync, TestCallSwapIntervalOnEnableForFlipAndZeroForDisable)
 {
     bool throttled;
     EXPECT_CALL (functions, swapIntervalEXT (1));
-    EXPECT_TRUE (swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled));
+    EXPECT_TRUE (swapIntervalMethod.enable (cgl::Flip, throttled));
     EXPECT_CALL (functions, swapIntervalEXT (0));
     swapIntervalMethod.disable ();
 }
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalZeroForDisableOnce)
+TEST_F (OpenGLAsynchronousVSync, TestCallSwapIntervalZeroForDisableOnce)
 {
     bool throttled;
     /* Enable it */
     EXPECT_CALL (functions, swapIntervalEXT (1)).Times (1);
-    swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled);
+    swapIntervalMethod.enable (cgl::Flip, throttled);
 
     /* Disable it twice */
     EXPECT_CALL (functions, swapIntervalEXT (0)).Times (1);
@@ -130,42 +130,42 @@ TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalZeroForDisableOnce)
     swapIntervalMethod.disable ();
 }
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalFailsToEnableForCopy)
+TEST_F (OpenGLAsynchronousVSync, TestCallSwapIntervalFailsToEnableForCopy)
 {
     bool throttled;
-    EXPECT_FALSE (swapIntervalMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_FALSE (swapIntervalMethod.enable (cgl::PartialCopy, throttled));
 }
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalUnthrottledWhereFailure)
+TEST_F (OpenGLAsynchronousVSync, TestUnthrottledWhereFailure)
 {
     bool throttled;
-    EXPECT_FALSE (swapIntervalMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_FALSE (swapIntervalMethod.enable (cgl::PartialCopy, throttled));
     EXPECT_FALSE (throttled);
 }
 
-TEST_F (OpenGLSwapIntervalTest, TestSwapIntervalUnthrottledWhereSuccess)
+TEST_F (OpenGLAsynchronousVSync, TestCallSwapIntervalUnthrottledWhereSuccess)
 {
     bool throttled;
     EXPECT_CALL (functions, swapIntervalEXT (1));
-    EXPECT_TRUE (swapIntervalMethod.enableForBufferSwapType (cgl::Flip, throttled));
+    EXPECT_TRUE (swapIntervalMethod.enable (cgl::Flip, throttled));
     EXPECT_FALSE (throttled);
 }
 
-TEST_F (OpenGLWaitVideoSyncTest, TestCallsGetVideoSyncAndWaitVideoSyncForCopy)
+TEST_F (OpenGLBlockingVSyncTest, TestCallsGetVideoSyncAndWaitVideoSyncForCopy)
 {
     bool throttled;
     EXPECT_CALL (functions, waitVideoSyncSGI (_, _, _));
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::PartialCopy, throttled));
 }
 
-TEST_F (OpenGLWaitVideoSyncTest, TestCallsGetVideoSyncAndWaitVideoSyncForFlip)
+TEST_F (OpenGLBlockingVSyncTest, TestCallsGetVideoSyncAndWaitVideoSyncForFlip)
 {
     bool throttled;
     EXPECT_CALL (functions, waitVideoSyncSGI (_, _, _));
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::Flip, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::Flip, throttled));
 }
 
-TEST_F (OpenGLWaitVideoSyncTest, TestCallsWaitVideoSyncAndThrottled)
+TEST_F (OpenGLBlockingVSyncTest, TestCallsWaitVideoSyncAndThrottled)
 {
     bool throttled = false;
 
@@ -173,11 +173,11 @@ TEST_F (OpenGLWaitVideoSyncTest, TestCallsWaitVideoSyncAndThrottled)
     EXPECT_CALL (functions, waitVideoSyncSGI (1, _, _)).WillOnce (DoAll (SetArgPointee<2> (1),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::PartialCopy, throttled));
     EXPECT_TRUE (throttled);
 }
 
-TEST_F (OpenGLWaitVideoSyncTest, TestCallsWaitVideoSyncAndThrottledEveryFrame)
+TEST_F (OpenGLBlockingVSyncTest, TestCallsWaitVideoSyncAndThrottledEveryFrame)
 {
     bool throttled = false;
 
@@ -185,18 +185,18 @@ TEST_F (OpenGLWaitVideoSyncTest, TestCallsWaitVideoSyncAndThrottledEveryFrame)
     EXPECT_CALL (functions, waitVideoSyncSGI (1, 0, _)).WillOnce (DoAll (SetArgPointee<2> (1),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::PartialCopy, throttled));
     EXPECT_TRUE (throttled);
 
     /* Frame 1 to frame 2 */
     EXPECT_CALL (functions, waitVideoSyncSGI (1, 0, _)).WillOnce (DoAll (SetArgPointee<2> (2),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::PartialCopy, throttled));
     EXPECT_TRUE (throttled);
 }
 
-TEST_F (OpenGLWaitVideoSyncTest, TestCallsWaitVideoSyncAndUnthrottledDueToBrokenWaitVSync)
+TEST_F (OpenGLBlockingVSyncTest, TestCallsWaitVideoSyncAndUnthrottledDueToBrokenWaitVSync)
 {
     bool throttled = false;
 
@@ -204,13 +204,13 @@ TEST_F (OpenGLWaitVideoSyncTest, TestCallsWaitVideoSyncAndUnthrottledDueToBroken
     EXPECT_CALL (functions, waitVideoSyncSGI (1, 0, _)).WillOnce (DoAll (SetArgPointee<2> (1),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::PartialCopy, throttled));
     EXPECT_TRUE (throttled);
 
     /* Frame 1 to frame 1 (eg, broken waitVideoSyncSGI */
     EXPECT_CALL (functions, waitVideoSyncSGI (1, 0, _)).WillOnce (DoAll (SetArgPointee<2> (1),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    EXPECT_TRUE (waitVideoSyncMethod.enableForBufferSwapType (cgl::PartialCopy, throttled));
+    EXPECT_TRUE (waitVideoSyncMethod.enable (cgl::PartialCopy, throttled));
     EXPECT_FALSE (throttled);
 }

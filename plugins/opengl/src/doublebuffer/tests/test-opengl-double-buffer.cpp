@@ -8,6 +8,7 @@ using namespace compiz::opengl;
 using testing::_;
 using testing::StrictMock;
 using testing::Return;
+using testing::DoAll;
 using testing::SetArgReferee;
 
 class MockDoubleBuffer :
@@ -157,7 +158,7 @@ TEST (DoubleBufferVSyncTest, TestCallWorkingStrategy)
 
     MockDoubleBuffer doubleBuffer (vsyncMethods);
 
-    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (Flip, _))
+    EXPECT_CALL (*mockVSyncMethod, enable (Flip, _))
 	    .WillOnce (Return (true));
 
     doubleBuffer.vsync (Flip);
@@ -175,12 +176,12 @@ TEST (DoubleBufferVSyncTest, TestCallNextWorkingStrategy)
     MockDoubleBuffer doubleBuffer (vsyncMethods);
 
     /* This one fails */
-    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+    EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
 	    .WillOnce (Return (false));
     /* It needs to be deactivated */
     EXPECT_CALL (*mockVSyncMethod, disable ());
     /* Try the next one */
-    EXPECT_CALL (*mockVSyncMethodSafer, enableForBufferSwapType (PartialCopy, _))
+    EXPECT_CALL (*mockVSyncMethodSafer, enable (PartialCopy, _))
 	    .WillOnce (Return (true));
 
     doubleBuffer.vsync (PartialCopy);
@@ -198,18 +199,18 @@ TEST (DoubleBufferVSyncTest, TestCallPrevCallNextPrevDeactivated)
     MockDoubleBuffer doubleBuffer (vsyncMethods);
 
     /* This one fails */
-    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+    EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
 	    .WillOnce (Return (false));
     /* It needs to be deactivated */
     EXPECT_CALL (*mockVSyncMethod, disable ());
     /* Try the next one */
-    EXPECT_CALL (*mockVSyncMethodSafer, enableForBufferSwapType (PartialCopy, _))
+    EXPECT_CALL (*mockVSyncMethodSafer, enable (PartialCopy, _))
 	    .WillOnce (Return (true));
 
     doubleBuffer.vsync (PartialCopy);
 
     /* Now the previous one works */
-    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
+    EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
 	    .WillOnce (Return (true));
     /* Previous one must be deactivated */
     EXPECT_CALL (*mockVSyncMethodSafer, disable ());
@@ -224,16 +225,14 @@ TEST (DoubleBufferVSyncTest, TestReportNoHardwareVSyncIfMoreThan5UnthrottledFram
 
     vsyncMethods.push_back (mockVSyncMethod);
 
-    /* Always succeed */
-    ON_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _)).WillByDefault (Return (true));
-
     MockDoubleBuffer doubleBuffer (vsyncMethods);
 
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-	EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
-		.WillOnce (SetArgReferee <1> (false));
+	EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
+		.WillOnce (DoAll (SetArgReferee <1> (false),
+				  Return (true)));
 
 	doubleBuffer.vsync (PartialCopy);
     }
@@ -250,14 +249,12 @@ TEST (DoubleBufferVSyncTest, TestRestoreReportHardwareVSync)
 
     MockDoubleBuffer doubleBuffer (vsyncMethods);
 
-    /* Always succeed */
-    ON_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _)).WillByDefault (Return (true));
-
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-	EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
-		.WillOnce (SetArgReferee <1> (false));
+	EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
+		.WillOnce (DoAll (SetArgReferee <1> (false),
+				  Return (true)));
 
 	EXPECT_TRUE (doubleBuffer.hardwareVSyncFunctional ());
 
@@ -267,16 +264,18 @@ TEST (DoubleBufferVSyncTest, TestRestoreReportHardwareVSync)
     EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
 
     /* It works again */
-    EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
-	    .WillOnce (SetArgReferee <1> (true));
+    EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
+	    .WillOnce (DoAll (SetArgReferee <1> (true),
+			      Return (true)));
 
     doubleBuffer.vsync (PartialCopy);
 
     /* And should report to work for another 5 bad frames */
     for (unsigned int i = 0; i < 5; ++i)
     {
-	EXPECT_CALL (*mockVSyncMethod, enableForBufferSwapType (PartialCopy, _))
-		.WillOnce (SetArgReferee <1> (false));
+	EXPECT_CALL (*mockVSyncMethod, enable (PartialCopy, _))
+		.WillOnce (DoAll (SetArgReferee <1> (false),
+				  Return (true)));
 
 	EXPECT_TRUE (doubleBuffer.hardwareVSyncFunctional ());
 
