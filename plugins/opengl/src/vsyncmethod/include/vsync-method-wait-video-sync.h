@@ -53,8 +53,8 @@ class WaitVSyncMethod :
 
 	WaitVSyncMethod (const GLXWaitVideoSyncSGIFunc &);
 
-	bool enableForBufferSwapType (cgl::BufferSwapType type,
-				      bool		      &throttledFrame);
+	bool enable (cgl::BufferSwapType type,
+		     bool                &throttledFrame);
 	void disable ();
 
     private:

@@ -53,8 +53,8 @@ class SwapIntervalVSyncMethod :
 
 	SwapIntervalVSyncMethod (const GLXSwapIntervalEXTFunc &swapIntervalEXT);
 
-	bool enableForBufferSwapType (cgl::BufferSwapType type,
-				      bool		      &throttledFrame);
+	bool enable (cgl::BufferSwapType type,
+		     bool                &throttledFrame);
 	void disable ();
 
     private:

@@ -50,8 +50,8 @@ class VSyncMethod
 
 	typedef boost::shared_ptr <VSyncMethod> Ptr;
 
-	virtual bool enableForBufferSwapType (BufferSwapType type,
-					      bool           &throttledFrame) = 0;
+	virtual bool enable (BufferSwapType type,
+			     bool           &throttledFrame) = 0;
 	virtual void disable () = 0;
 };
 }

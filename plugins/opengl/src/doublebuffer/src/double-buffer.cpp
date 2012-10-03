@@ -105,7 +105,7 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 
 	/* Try and use this method, check if this method
 	 * throttled us too */
-	if (method->enableForBufferSwapType (swapType, throttled))
+	if (method->enable (swapType, throttled))
 	{
 	    if (lastSuccessfulVSyncMethod &&
 		lastSuccessfulVSyncMethod != method)

@@ -67,8 +67,8 @@ cgli::SwapIntervalVSyncMethod::SwapIntervalVSyncMethod (const GLXSwapIntervalEXT
 }
 
 bool
-cgli::SwapIntervalVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType,
-							bool		    &throttledFrame)
+cgli::SwapIntervalVSyncMethod::enable (cgl::BufferSwapType swapType,
+				       bool                &throttledFrame)
 {
     /* Always consider these frames as un-throttled as the buffer
      * swaps are done asynchronously */

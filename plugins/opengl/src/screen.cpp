@@ -1220,10 +1220,10 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     #ifndef USE_GLES
     ctx (NULL),
     getProcAddress (0),
-    doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
+    doubleBuffer (new EGLDoubleBuffer (screen->dpy (), *screen, cScreen->output ())),
     #else
     ctx (EGL_NO_CONTEXT),
-    doubleBuffer (screen->dpy (), *screen, surface),
+    doubleBuffer (new GLXDoubleBuffer (screen->dpy (), *screen, surface)),
     #endif
     scratchFbo (NULL),
     outputRegion (),

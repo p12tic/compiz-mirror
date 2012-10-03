@@ -33,7 +33,7 @@ class MockVSyncMethod :
 {
     public:
 
-	MOCK_METHOD2 (enableForBufferSwapType, bool (BufferSwapType, bool &));
+	MOCK_METHOD2 (enable, bool (BufferSwapType, bool &));
 	MOCK_METHOD0 (disable, void ());
 };
 

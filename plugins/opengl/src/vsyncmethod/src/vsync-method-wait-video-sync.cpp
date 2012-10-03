@@ -66,8 +66,8 @@ cgli::WaitVSyncMethod::WaitVSyncMethod (const cgli::GLXWaitVideoSyncSGIFunc &wai
 }
 
 bool
-cgli::WaitVSyncMethod::enableForBufferSwapType (cgl::BufferSwapType swapType,
-						bool		    &throttledFrame)
+cgli::WaitVSyncMethod::enable (cgl::BufferSwapType swapType,
+			       bool                &throttledFrame)
 {
     unsigned int oldVideoSyncCounter = priv->lastVSyncCounter;
     priv->waitVideoSync (1, 0, &priv->lastVSyncCounter);
