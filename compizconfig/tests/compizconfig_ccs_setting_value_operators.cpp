@@ -25,6 +25,8 @@
 #include <compizconfig_ccs_setting_value_operators.h>
 #include <iostream>
 
+namespace cct = compiz::config::test;
+
 bool
 operator== (const CCSSettingColorValue &lhs,
 	    const CCSSettingColorValue &rhs)
@@ -99,5 +101,111 @@ std::ostream &
 operator<< (std::ostream &os, CCSString &string)
 {
     os << string.value << std::endl;
+    return os;
+}
+
+std::ostream & 
+cct::DescribeSettingValueTo (std::ostream          &os,
+			     CCSSettingType        type,
+			     const CCSSettingValue &value)
+{
+    switch (type)
+    {
+	case TypeBool:
+	    return os << value.value.asBool;
+	    break;
+	case TypeInt:
+	    return os << value.value.asInt;
+	    break;
+	case TypeFloat:
+	    return os << value.value.asFloat;
+	    break;
+	case TypeString:
+	    return os << value.value.asString;
+	    break;
+	case TypeColor:
+	    return os << value.value.asColor;
+	    break;
+	case TypeAction:
+	    return os << "An action value";
+	    break;
+	case TypeKey:
+	    return os << value.value.asKey;
+	    break;
+	case TypeButton:
+	    return os << value.value.asButton;
+	    break;
+	case TypeEdge:
+	    return os << value.value.asEdge;
+	    break;
+	case TypeBell:
+	    return os << value.value.asBell;
+	    break;
+	case TypeMatch:
+	    return os << value.value.asMatch;
+	    break;
+	case TypeList:
+	    return os << value.value.asList;
+	    break;
+	default:
+	    return os << "No available descriptor, type not known";
+	    break;
+    }
+
+    return os;
+}
+
+std::ostream & 
+cct::DescribeSettingListTo (std::ostream          &os,
+			    CCSSettingType        type,
+			    CCSSettingValueList   list)
+{
+    unsigned int count = 0;
+    while (list)
+    {
+	os << "Item " << count << " ";
+	cct::DescribeSettingValueTo (os, type, *list->data);
+	list = list->next;
+	count++;
+    }
+
+    return os;
+}
+
+std::ostream &
+operator<< (std::ostream &os, const CCSSettingValue &v)
+{
+    os << "Possible values in CCSSetting :" << std::endl;
+    const unsigned int finalType = static_cast <unsigned int> (TypeNum);
+
+    for (unsigned int i = 0; i < finalType; ++i)
+    {
+	/* We cannot print list values as there's no guaruntee
+	 * this is actually a list */
+	if (static_cast <CCSSettingType> (i) == TypeList)
+	    os << "A list value" << std::endl;
+	else
+	    cct::DescribeSettingValueTo (os, static_cast <CCSSettingType> (i), v) << std::endl;
+    }
+
+    return os;
+}
+
+std::ostream &
+operator<< (std::ostream &os, CCSSettingValueList l)
+{
+    os << "Possible list values :" << std::endl;
+    const unsigned int finalType = static_cast <unsigned int> (TypeNum);
+
+    for (unsigned int i = 0; i < finalType; ++i)
+    {
+	/* We cannot print list values as there's no guaruntee
+	 * this is actually a list */
+	if (static_cast <CCSSettingType> (i) == TypeList)
+	    os << "A list value" << std::endl;
+	else
+	    cct::DescribeSettingListTo (os, static_cast <CCSSettingType> (i), l) << std::endl;
+    }
+
     return os;
 }

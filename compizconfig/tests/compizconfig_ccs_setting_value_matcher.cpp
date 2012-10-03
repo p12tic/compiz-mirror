@@ -25,6 +25,9 @@
 
 #include <ccs.h>
 #include "compizconfig_ccs_setting_value_matcher.h"
+#include "compizconfig_ccs_setting_value_operators.h"
+
+namespace cct = compiz::config::test;
 
 CCSSettingValueMatcher::CCSSettingValueMatcher (const CCSSettingValue &match,
 						CCSSettingType        type,
@@ -51,13 +54,15 @@ CCSSettingValueMatcher::MatchAndExplain (CCSSettingValue x, MatchResultListener 
 void
 CCSSettingValueMatcher::DescribeTo (std::ostream *os) const
 {
-    *os << "Value Matches";
+    *os << "Value Matches ";
+    cct::DescribeSettingValueTo (*os, mType, mMatch);
 }
 
 void
 CCSSettingValueMatcher::DescribeNegationTo (std::ostream *os) const
 {
-    *os << "Value does not Match";
+    *os << "Value does not Match ";
+    cct::DescribeSettingValueTo (*os, mType, mMatch);
 }
 
 Matcher <CCSSettingValue>
