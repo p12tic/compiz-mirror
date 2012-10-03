@@ -21,9 +21,9 @@
 #define _COMPIZ_GWD_SETTINGS_NOTIFIED_H
 
 #include <glib-object.h>
+#include <libwnck/screen.h>
 
 typedef struct _GWDSettingsNotified GWDSettingsNotified;
-typedef struct _WnckScreen	    WnckScreen;
 
 G_BEGIN_DECLS
 

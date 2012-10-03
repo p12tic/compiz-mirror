@@ -516,7 +516,7 @@ class CCSBackendConceptTestParamInterface
 				       const compizconfig::test::WriteFunc                  &,
 				       const CCSBackendConceptTestEnvironmentInterface::Ptr &)> SetWriteExpectation;
 
-	virtual void TearDown (CCSBackend *) = 0;
+	virtual void BackendTearDown (CCSBackend *) = 0;
 
 	virtual CCSBackendConceptTestEnvironmentInterface::Ptr testEnv () = 0;
 	virtual VariantTypes & value () = 0;
@@ -559,10 +559,10 @@ class CCSBackendConceptTestParam :
 	{
 	}
 
-	void TearDown (CCSBackend *b)
+	void BackendTearDown (CCSBackend *b)
 	{
 	    if (mTestEnv)
-		mTestEnv->TearDown (b);
+		mTestEnv->BackendTearDown (b);
 
 	    mTestEnv.reset ();
 	}
@@ -699,13 +699,13 @@ class CCSBackendConformanceTestParameterizedByBackendFixture :
 	virtual void SetUp ()
 	{
 	    SetupContext ();
-	    mBackend = mTestEnv->SetUp (context.get (), gmockContext);
+	    mBackend = mTestEnv->BackendSetUp (context.get (), gmockContext);
 	}
 
 	virtual void TearDown ()
 	{
 	    if (mTestEnv)
-		mTestEnv->TearDown (mBackend);
+		mTestEnv->BackendTearDown (mBackend);
 
 	    mTestEnv.reset ();
 	}
@@ -726,12 +726,12 @@ class CCSBackendConformanceTestParameterized :
 	virtual void SetUp ()
 	{
 	    SetupContext ();
-	    mBackend = GetParam ()->testEnv ()->SetUp (context.get (), gmockContext);
+	    mBackend = GetParam ()->testEnv ()->BackendSetUp (context.get (), gmockContext);
 	}
 
 	virtual void TearDown ()
 	{
-	    CCSBackendConformanceTestParameterized::GetParam ()->TearDown (mBackend);
+	    CCSBackendConformanceTestParameterized::GetParam ()->BackendTearDown (mBackend);
 	}
 };
 

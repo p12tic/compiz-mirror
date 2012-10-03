@@ -39,7 +39,6 @@ typedef struct _CCSBackendInterface  CCSBackendInterface;
 typedef struct _CCSIntegration    CCSIntegration;
 
 typedef struct _CCSSettingValue CCSSettingValue;
-typedef enum _CCSSettingType CCSSettingType;
 
 typedef struct _CCSIntegratedSettingInfo CCSIntegratedSettingInfo;
 typedef struct _CCSIntegratedSettingInfoInterface CCSIntegratedSettingInfoInterface;
@@ -265,7 +264,6 @@ ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (CCSI
 void
 ccsFreeIntegratedSettingFactory (CCSIntegratedSettingFactory *factory);
 
-typedef struct _CCSIntegration CCSIntegration;
 typedef struct _CCSIntegrationInterface CCSIntegrationInterface;
 
 typedef CCSIntegratedSetting * (*CCSIntegrationGetIntegratedSetting) (CCSIntegration *integration,
@@ -498,7 +496,6 @@ void ccsBackendSetIntegration (CCSBackend *backend, CCSIntegration *integration)
 void ccsFreeBackend (CCSBackend *backend);
 
 typedef struct _CCSDynamicBackend	  CCSDynamicBackend;
-typedef struct _CCSDynamicBackendPrivate CCSDynamicBackendPrivate;
 typedef struct _CCSDynamicBackendInterface  CCSDynamicBackendInterface;
 typedef struct _CCSInterfaceTable         CCSInterfaceTable;
 

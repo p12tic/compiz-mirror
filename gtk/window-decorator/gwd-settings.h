@@ -21,9 +21,9 @@
 #define _COMPIZ_GWD_SETTINGS_H
 
 #include <glib-object.h>
+#include "gwd-settings-notified.h"
 
 typedef struct _GWDSettings GWDSettings;
-typedef struct _GWDSettingsNotified GWDSettingsNotified;
 
 G_BEGIN_DECLS
 

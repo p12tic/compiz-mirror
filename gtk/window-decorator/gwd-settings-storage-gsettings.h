@@ -21,10 +21,9 @@
 #define _COMPIZ_GWD_SETTINGS_STORAGE_GSETTINGS_H
 
 #include <glib-object.h>
-
-typedef struct _GWDSettingsWritable GWDSettingsWritable;
-typedef struct _GWDSettingsStorage  GWDSettingsStorage;
-typedef struct _GSettings	    GSettings;
+#include "gwd-settings.h"
+#include "gwd-settings-writable-interface.h"
+#include "gwd-settings-storage-interface.h"
 
 G_BEGIN_DECLS
 

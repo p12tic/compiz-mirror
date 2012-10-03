@@ -21,6 +21,7 @@
 #define _COMPIZ_GWD_SETTINGS_NOTIFIED_INTERFACE_H
 
 #include <glib-object.h>
+#include "gwd-settings-notified.h"
 
 G_BEGIN_DECLS
 
@@ -32,7 +33,6 @@ G_BEGIN_DECLS
 										GWDSettingsNotifiedInterface))
 #define GWD_TYPE_SETTINGS_NOTIFIED_INTERFACE (gwd_settings_notified_interface_get_type ())
 
-typedef struct _GWDSettingsNotified GWDSettingsNotified;
 typedef struct _GWDSettingsNotifiedInterface GWDSettingsNotifiedInterface;
 
 struct _GWDSettingsNotifiedInterface

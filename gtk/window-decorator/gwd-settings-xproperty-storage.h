@@ -21,9 +21,9 @@
 #define _COMPIZ_GWD_SETTINGS_STORAGE_XPROP_H
 
 #include <glib-object.h>
+#include "gwd-settings-writable-interface.h"
+#include "gwd-settings-xproperty-interface.h"
 
-typedef struct _GWDSettingsWritable GWDSettingsWritable;
-typedef struct _GWDSettingsXPropertyStorage GWDSettingsXPropertyStorage;
 typedef struct _XDisplay Display;
 typedef unsigned long Window;
 
