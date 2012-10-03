@@ -37,8 +37,8 @@
 
 #include "privates.h"
 #include "vsyncmethod.h"
-#include "vsync-method-swap-interval.h"
-#include "vsync-method-wait-video-sync.h"
+#include "asynchronous-vsync.h"
+#include "blocking-vsync.h"
 
 #include <dlfcn.h>
 #include <math.h>

@@ -29,8 +29,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <vsync-method-wait-video-sync.h>
-#include <vsync-method-swap-interval.h>
+#include <blocking-vsync.h>
+#include <asynchronous-vsync.h>
 
 namespace cgl = compiz::opengl;
 namespace cgli = compiz::opengl::impl;

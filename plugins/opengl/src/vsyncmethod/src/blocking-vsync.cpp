@@ -30,7 +30,7 @@
  *          Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 #include <vsyncmethod.h>
-#include <vsync-method-swap-interval.h>
+#include <blocking-vsync.h>
 
 namespace compiz
 {
@@ -38,14 +38,14 @@ namespace opengl
 {
 namespace impl
 {
-class PrivateAsynchronousVSync
+class PrivateBlockingVSync
 {
     public:
 
-	PrivateAsynchronousVSync (const GLXSwapIntervalEXTFunc &);
+	PrivateBlockingVSync (const GLXWaitVideoSyncSGIFunc &);
 
-	GLXSwapIntervalEXTFunc swapInterval;
-	bool		   enabled;
+	GLXWaitVideoSyncSGIFunc waitVideoSync;
+	unsigned int            lastVSyncCounter;
 };
 }
 }
@@ -54,47 +54,34 @@ class PrivateAsynchronousVSync
 namespace cgl = compiz::opengl;
 namespace cgli = compiz::opengl::impl;
 
-cgli::PrivateAsynchronousVSync::PrivateAsynchronousVSync (const GLXSwapIntervalEXTFunc &swapInterval) :
-    swapInterval (swapInterval),
-    enabled (false)
+cgli::PrivateBlockingVSync::PrivateBlockingVSync (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
+    waitVideoSync (waitVideoSync),
+    lastVSyncCounter (0)
 {
 }
 
-cgli::AsynchronousVSync::AsynchronousVSync (const GLXSwapIntervalEXTFunc &swapInterval) :
-    priv (new cgli::PrivateAsynchronousVSync (swapInterval))
+cgli::BlockingVSync::BlockingVSync (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
+    priv (new cgli::PrivateBlockingVSync (waitVideoSync))
 {
-
 }
 
 bool
-cgli::AsynchronousVSync::enable (cgl::BufferSwapType swapType,
-				 bool                &throttledFrame)
+cgli::BlockingVSync::enable (cgl::BufferSwapType swapType,
+			     bool                &throttledFrame)
 {
-    /* Always consider these frames as un-throttled as the buffer
-     * swaps are done asynchronously */
-    throttledFrame = false;
+    unsigned int oldVideoSyncCounter = priv->lastVSyncCounter;
+    priv->waitVideoSync (1, 0, &priv->lastVSyncCounter);
 
-    /* Can't use swapInterval unless using SwapBuffers */
-    if (swapType != cgl::Flip)
-	return false;
-
-    /* Enable if not enabled */
-    if (!priv->enabled)
-    {
-	priv->swapInterval (1);
-	priv->enabled = true;
-    }
+    /* Check if this frame was actually throttled */
+    if (priv->lastVSyncCounter == oldVideoSyncCounter)
+	throttledFrame = false;
+    else
+	throttledFrame = true;
 
     return true;
 }
 
 void
-cgli::AsynchronousVSync::disable ()
+cgli::BlockingVSync::disable ()
 {
-    /* Disable if enabled */
-    if (priv->enabled)
-    {
-	priv->swapInterval (0);
-	priv->enabled = false;
-    }
 }

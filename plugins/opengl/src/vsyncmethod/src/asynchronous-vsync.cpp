@@ -30,7 +30,7 @@
  *          Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 #include <vsyncmethod.h>
-#include <vsync-method-wait-video-sync.h>
+#include <asynchronous-vsync.h>
 
 namespace compiz
 {
@@ -38,14 +38,14 @@ namespace opengl
 {
 namespace impl
 {
-class PrivateBlockingVSync
+class PrivateAsynchronousVSync
 {
     public:
 
-	PrivateBlockingVSync (const GLXWaitVideoSyncSGIFunc &);
+	PrivateAsynchronousVSync (const GLXSwapIntervalEXTFunc &);
 
-	GLXWaitVideoSyncSGIFunc waitVideoSync;
-	unsigned int            lastVSyncCounter;
+	GLXSwapIntervalEXTFunc swapInterval;
+	bool		   enabled;
 };
 }
 }
@@ -54,34 +54,47 @@ class PrivateBlockingVSync
 namespace cgl = compiz::opengl;
 namespace cgli = compiz::opengl::impl;
 
-cgli::PrivateBlockingVSync::PrivateBlockingVSync (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
-    waitVideoSync (waitVideoSync),
-    lastVSyncCounter (0)
+cgli::PrivateAsynchronousVSync::PrivateAsynchronousVSync (const GLXSwapIntervalEXTFunc &swapInterval) :
+    swapInterval (swapInterval),
+    enabled (false)
 {
 }
 
-cgli::BlockingVSync::BlockingVSync (const cgli::GLXWaitVideoSyncSGIFunc &waitVideoSync) :
-    priv (new cgli::PrivateBlockingVSync (waitVideoSync))
+cgli::AsynchronousVSync::AsynchronousVSync (const GLXSwapIntervalEXTFunc &swapInterval) :
+    priv (new cgli::PrivateAsynchronousVSync (swapInterval))
 {
+
 }
 
 bool
-cgli::BlockingVSync::enable (cgl::BufferSwapType swapType,
-			     bool                &throttledFrame)
+cgli::AsynchronousVSync::enable (cgl::BufferSwapType swapType,
+				 bool                &throttledFrame)
 {
-    unsigned int oldVideoSyncCounter = priv->lastVSyncCounter;
-    priv->waitVideoSync (1, 0, &priv->lastVSyncCounter);
+    /* Always consider these frames as un-throttled as the buffer
+     * swaps are done asynchronously */
+    throttledFrame = false;
 
-    /* Check if this frame was actually throttled */
-    if (priv->lastVSyncCounter == oldVideoSyncCounter)
-	throttledFrame = false;
-    else
-	throttledFrame = true;
+    /* Can't use swapInterval unless using SwapBuffers */
+    if (swapType != cgl::Flip)
+	return false;
+
+    /* Enable if not enabled */
+    if (!priv->enabled)
+    {
+	priv->swapInterval (1);
+	priv->enabled = true;
+    }
 
     return true;
 }
 
 void
-cgli::BlockingVSync::disable ()
+cgli::AsynchronousVSync::disable ()
 {
+    /* Disable if enabled */
+    if (priv->enabled)
+    {
+	priv->swapInterval (0);
+	priv->enabled = false;
+    }
 }

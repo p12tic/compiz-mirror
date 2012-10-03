@@ -10,8 +10,8 @@ LINK_DIRECTORIES (${COMPIZ_LIBRARY_DIRS})
 
 SET( 
   SRCS 
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/vsync-method-swap-interval.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/vsync-method-wait-video-sync.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/blocking-vsync.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/asynchronous-vsync.cpp
 )
 
 ADD_LIBRARY( 
