@@ -79,7 +79,7 @@ TEST (CCSUtilTest, TestAddKeybindingMaskToStringNoDuplicates)
 
 TEST (CCSUtilTest, TestAddStringToKeybindingMask)
 {
-    unsigned int bindingMask;
+    unsigned int bindingMask = 0;
 
     ccsAddStringToKeybindingMask (&bindingMask,
 				  firstBindingString.c_str (),
@@ -104,7 +104,31 @@ namespace
 	    {
 	    }
 
-	    const std::string mModifierString;
+	    ModifierParam (const ModifierParam &param) :
+		mModifierString (param.mModifierString),
+		mModifierMask (param.mModifierMask),
+		mMatch (param.mMatch)
+	    {
+	    }
+
+	    friend void swap (ModifierParam &lhs, ModifierParam &rhs)
+	    {
+		using std::swap;
+
+		swap (lhs.mMatch, rhs.mMatch);
+		swap (lhs.mModifierMask, rhs.mModifierMask);
+		swap (lhs.mModifierString, rhs.mModifierString);
+	    }
+
+	    ModifierParam &
+	    operator= (const ModifierParam &other)
+	    {
+		ModifierParam to (other);
+		swap (*this, to);
+		return *this;
+	    }
+
+	    std::string       mModifierString;
 	    unsigned int      mModifierMask;
 	    bool              mMatch;
     };
