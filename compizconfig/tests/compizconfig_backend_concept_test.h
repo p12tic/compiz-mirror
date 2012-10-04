@@ -32,6 +32,11 @@
 #include <boost/bind.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <boost/version.hpp>
+#if BOOST_VERSION < 104700
+#error "Boost 1.47 or later is required (http://clang.llvm.org/compatibility.html#deleted-special-func)"
+#endif
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
