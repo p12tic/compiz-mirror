@@ -195,6 +195,7 @@ using ::testing::NiceMock;
 
 namespace
 {
+    __attribute__((unused))
     bool ccsStringCmp (const CCSString &a, const CCSString &b)
     {
 	return std::string (a.value) == b.value;
@@ -223,6 +224,7 @@ Bool boolToBool (bool v) { return v ? TRUE : FALSE; }
 
 CCSSettingGMock * getSettingGMockFromSetting (const boost::shared_ptr <CCSSetting> &setting) { return (CCSSettingGMock *) ccsObjectGetPrivate (setting.get ()); }
 
+__attribute__((unused))
 void SetIntWriteExpectation (const std::string &plugin,
 			     const std::string &key,
 			     const VariantTypes &value,
@@ -239,6 +241,7 @@ void SetIntWriteExpectation (const std::string &plugin,
     EXPECT_EQ (env->ReadIntegerAtKey (plugin, key), boost::get <int> (value));
 }
 
+__attribute__((unused))
 void SetBoolWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
@@ -261,6 +264,7 @@ void SetBoolWriteExpectation (const std::string &plugin,
 	EXPECT_THAT (env->ReadBoolAtKey (plugin, key), IsFalse ());
 }
 
+__attribute__((unused))
 void SetFloatWriteExpectation (const std::string &plugin,
 			       const std::string &key,
 			       const VariantTypes &value,
@@ -277,6 +281,7 @@ void SetFloatWriteExpectation (const std::string &plugin,
     EXPECT_EQ (env->ReadFloatAtKey (plugin, key), boost::get <float> (value));
 }
 
+__attribute__((unused))
 void SetStringWriteExpectation (const std::string &plugin,
 				const std::string &key,
 				const VariantTypes &value,
@@ -293,6 +298,7 @@ void SetStringWriteExpectation (const std::string &plugin,
     EXPECT_EQ (std::string (env->ReadStringAtKey (plugin, key)), std::string (boost::get <const char *> (value)));
 }
 
+__attribute__((unused))
 void SetColorWriteExpectation (const std::string &plugin,
 			       const std::string &key,
 			       const VariantTypes &value,
@@ -310,6 +316,7 @@ void SetColorWriteExpectation (const std::string &plugin,
     EXPECT_EQ (env->ReadColorAtKey (plugin, key), boost::get <CCSSettingColorValue> (value));
 }
 
+__attribute__((unused))
 void SetKeyWriteExpectation (const std::string &plugin,
 			     const std::string &key,
 			     const VariantTypes &value,
@@ -326,6 +333,7 @@ void SetKeyWriteExpectation (const std::string &plugin,
     EXPECT_EQ (env->ReadKeyAtKey (plugin, key), boost::get <CCSSettingKeyValue> (value));
 }
 
+__attribute__((unused))
 void SetButtonWriteExpectation (const std::string &plugin,
 				const std::string &key,
 				const VariantTypes &value,
@@ -342,6 +350,7 @@ void SetButtonWriteExpectation (const std::string &plugin,
     EXPECT_EQ (env->ReadButtonAtKey (plugin, key), boost::get <CCSSettingButtonValue> (value));
 }
 
+__attribute__((unused))
 void SetEdgeWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
@@ -358,6 +367,7 @@ void SetEdgeWriteExpectation (const std::string &plugin,
     EXPECT_EQ (env->ReadEdgeAtKey (plugin, key), boost::get <unsigned int> (value));
 }
 
+__attribute__((unused))
 void SetBellWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
@@ -379,6 +389,7 @@ void SetBellWriteExpectation (const std::string &plugin,
 	EXPECT_THAT (env->ReadBellAtKey (plugin, key), IsFalse ());
 }
 
+__attribute__((unused))
 void SetMatchWriteExpectation (const std::string &plugin,
 			       const std::string &key,
 			       const VariantTypes &value,
@@ -395,6 +406,7 @@ void SetMatchWriteExpectation (const std::string &plugin,
     EXPECT_EQ (std::string (env->ReadMatchAtKey (plugin, key)), std::string (boost::get <const char *> (value)));
 }
 
+__attribute__((unused))
 void SetListWriteExpectation (const std::string &plugin,
 			      const std::string &key,
 			      const VariantTypes &value,
@@ -426,11 +438,13 @@ void SetListWriteExpectation (const std::string &plugin,
 		 ListEqual (&info->forList, list));
 }
 
+__attribute__((unused))
 void SetIntReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setInt (boost::get <int> (value), _));
 }
 
+__attribute__((unused))
 void SetBoolReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     bool v (boost::get <bool> (value));
@@ -441,6 +455,7 @@ void SetBoolReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 	EXPECT_CALL (*gmock, setBool (IsFalse (), _));
 }
 
+__attribute__((unused))
 void SetBellReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     bool v (boost::get <bool> (value));
@@ -451,36 +466,43 @@ void SetBellReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 	EXPECT_CALL (*gmock, setBell (IsFalse (), _));
 }
 
+__attribute__((unused))
 void SetFloatReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setFloat (boost::get <float> (value), _));
 }
 
+__attribute__((unused))
 void SetStringReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setString (Eq (std::string (boost::get <const char *> (value))), _));
 }
 
+__attribute__((unused))
 void SetMatchReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setMatch (Eq (std::string (boost::get <const char *> (value))), _));
 }
 
+__attribute__((unused))
 void SetColorReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setColor (boost::get <CCSSettingColorValue> (value), _));
 }
 
+__attribute__((unused))
 void SetKeyReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setKey (boost::get <CCSSettingKeyValue> (value), _));
 }
 
+__attribute__((unused))
 void SetButtonReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setButton (boost::get <CCSSettingButtonValue> (value), _));
 }
 
+__attribute__((unused))
 void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     EXPECT_CALL (*gmock, setEdge (boost::get <unsigned int> (value), _));
@@ -488,6 +510,7 @@ void SetEdgeReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 
 CCSSettingInfo globalListInfo;
 
+__attribute__((unused))
 void SetListReadExpectation (CCSSettingGMock *gmock, const VariantTypes &value)
 {
     globalListInfo.forList.listType = (boost::get <boost::shared_ptr <cci::SettingValueListWrapper> > (value))->type ();

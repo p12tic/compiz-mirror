@@ -568,21 +568,9 @@ namespace
     }
 
     void
-    ccsStringListDeepFree (CCSStringList list)
-    {
-	ccsStringListFree (list, TRUE);
-    }
-
-    void
     ccsSettingValueListDeepFree (CCSSettingValueList list)
     {
 	ccsSettingValueListFree (list, TRUE);
-    }
-
-    void
-    ccsSettingValueListShallowFree (CCSSettingValueList list)
-    {
-	ccsSettingValueListFree (list, FALSE);
     }
 
     typedef boost::shared_ptr <cc::ListWrapper <CCSStringList, CCSString *> > CCSStringListWrapperPtr;
