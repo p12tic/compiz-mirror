@@ -3,13 +3,11 @@
 
 #include <ccs-defs.h>
 #include <ccs-object.h>
+#include <ccs-backend.h>
+#include "ccs_gnome_integration.h"
+#include <gio/gio.h>
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
-typedef struct _CCSGNOMEValueChangeData CCSGNOMEValueChangeData;
-typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
-typedef struct _GSettings	    GSettings;
 
 typedef void (*CCSGNOMEIntegrationGSettingsChangedCallback) (GSettings *, gchar *, gpointer);
 

@@ -43,6 +43,9 @@ typedef struct _CCSSettingValue CCSSettingValue;
 typedef struct _CCSIntegratedSettingInfo CCSIntegratedSettingInfo;
 typedef struct _CCSIntegratedSettingInfoInterface CCSIntegratedSettingInfoInterface;
 
+typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
+typedef struct _CCSGNOMEIntegratedSettingInfoInterface CCSGNOMEIntegratedSettingInfoInterface;
+
 typedef const char * (*CCSIntegratedSettingInfoPluginName) (CCSIntegratedSettingInfo *);
 typedef const char * (*CCSIntegratedSettingInfoSettingName) (CCSIntegratedSettingInfo *);
 typedef CCSSettingType (*CCSIntegratedSettingInfoGetType) (CCSIntegratedSettingInfo *);

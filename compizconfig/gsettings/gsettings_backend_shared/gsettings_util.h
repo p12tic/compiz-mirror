@@ -11,6 +11,7 @@ COMPIZCONFIG_BEGIN_DECLS
 #include <gio/gio.h>
 
 #include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_backend_interface.h"
 
 /* some forward declarations */
 void
@@ -30,11 +31,8 @@ void
 ccsGSettingsSetIntegration (CCSBackend *backend, CCSIntegration *integration);
 
 typedef struct _CCSGSettingsBackendPrivate CCSGSettingsBackendPrivate;
-typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
 
 extern const CCSBackendInfo gsettingsBackendInfo;
-
-typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
 
 gchar *
 getSchemaNameForPlugin (const char *plugin);

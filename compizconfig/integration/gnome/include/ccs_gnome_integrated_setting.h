@@ -3,15 +3,11 @@
 
 #include <ccs-defs.h>
 #include <ccs-object.h>
+#include <ccs-backend.h>
 
 #include "ccs_gnome_integration_types.h"
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSIntegratedSettingInfo      CCSIntegratedSettingInfo;
-
-typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
-typedef struct _CCSGNOMEIntegratedSettingInfoInterface CCSGNOMEIntegratedSettingInfoInterface;
 
 typedef SpecialOptionType (*CCSGNOMEIntegratedSettingInfoGetSpecialOptionType) (CCSGNOMEIntegratedSettingInfo *);
 typedef const char * (*CCSGNOMEIntegratedSettingInfoGetGNOMEName) (CCSGNOMEIntegratedSettingInfo *);

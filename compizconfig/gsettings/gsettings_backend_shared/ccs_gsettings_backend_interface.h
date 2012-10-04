@@ -3,17 +3,14 @@
 
 #include <ccs-defs.h>
 #include <ccs-object.h>
+#include <ccs-backend.h>
 #include <glib.h>
+#include "ccs_gsettings_interface.h"
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSBackend		     CCSBackend;
 typedef struct _CCSGSettingsBackend          CCSGSettingsBackend;
-typedef struct _CCSGSettingsWrapper	     CCSGSettingsWrapper;
 typedef struct _CCSGSettingsBackendInterface CCSGSettingsBackendInterface;
-typedef struct _CCSSetting		     CCSSetting;
-typedef struct _CCSIntegratedSetting	     CCSIntegratedSetting;
-typedef struct _CCSContext		     CCSContext;
 
 typedef CCSContext * (*CCSGSettingsBackendGetContext) (CCSBackend *);
 typedef void (*CCSGSettingsBackendConnectToChangedSignal) (CCSBackend *, CCSGSettingsWrapper *);

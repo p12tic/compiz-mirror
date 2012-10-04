@@ -3,12 +3,10 @@
 
 #include <ccs-defs.h>
 #include <ccs-object.h>
+#include <ccs-backend.h>
+#include "ccs_gsettings_interface.h"
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
-typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
-typedef struct _CCSGSettingsWrapper       CCSGSettingsWrapper;
 
 /**
  * @brief ccsGSettingsIntegratedSettingNew
