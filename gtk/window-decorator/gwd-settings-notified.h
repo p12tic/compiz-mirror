@@ -22,8 +22,7 @@
 
 #include <glib-object.h>
 #include <libwnck/screen.h>
-
-typedef struct _GWDSettingsNotified GWDSettingsNotified;
+#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 

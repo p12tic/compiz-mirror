@@ -3,8 +3,8 @@
 
 #include <ccs-defs.h>
 #include <ccs-backend.h>
+#include <ccs_gsettings_backend_fwd.h>
 #include <glib.h>
-#include "ccs_gsettings_interface.h"
 
 COMPIZCONFIG_BEGIN_DECLS
 

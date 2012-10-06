@@ -109,10 +109,7 @@
 #include <metacity-private/theme.h>
 #endif
 
-#include "gwd-settings.h"
-#include "gwd-settings-interface.h"
-#include "gwd-settings-notified.h"
-#include "gwd-settings-writable-interface.h"
+#include <gwd-fwd.h>
 
 #define METACITY_GCONF_DIR "/apps/metacity/general"
 #define MUTTER_GCONF_DIR "/apps/mutter/general"

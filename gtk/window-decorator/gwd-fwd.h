@@ -17,21 +17,18 @@
  *
  * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _COMPIZ_GWD_SETTINGS_H
-#define _COMPIZ_GWD_SETTINGS_H
+#ifndef _COMPIZ_GWD_FWD_H
+#define _COMPIZ_GWD_FWD_H
 
 #include <glib-object.h>
-#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 
-#define GWD_TYPE_SETTINGS_IMPL (gwd_settings_impl_get_type ())
-GType gwd_settings_impl_get_type ();
-
-GWDSettings *
-gwd_settings_impl_new (gint                *blur,
-		       const gchar         **metacity_theme,
-		       GWDSettingsNotified *notified);
+typedef struct _GWDSettings                 GWDSettings;
+typedef struct _GWDSettingsWritable         GWDSettingsWritable;
+typedef struct _GWDSettingsNotified         GWDSettingsNotified;
+typedef struct _GWDSettingsStorage          GWDSettingsStorage;
+typedef struct _GWDSettingsXPropertyStorage GWDSettingsXPropertyStorage;
 
 G_END_DECLS
 

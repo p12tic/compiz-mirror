@@ -3,8 +3,8 @@
 
 #include <ccs-defs.h>
 #include <ccs-object.h>
-#include <ccs-backend.h>
-#include "ccs_gnome_integration.h"
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
 #include <gconf/gconf-client.h>
 
 COMPIZCONFIG_BEGIN_DECLS

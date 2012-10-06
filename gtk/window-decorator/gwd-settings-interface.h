@@ -21,7 +21,7 @@
 #define _COMPIZ_GWD_SETTINGS_INTERFACE_H
 
 #include <glib-object.h>
-#include "gwd-settings.h"
+#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 

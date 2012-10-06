@@ -23,7 +23,9 @@
 #ifndef _COMPIZCONFIG_CCS_MOCK_GNOME_INTEGRATED_SETTING_COMPOSITION_H
 #define _COMPIZCONFIG_CCS_MOCK_GNOME_INTEGRATED_SETTING_COMPOSITION_H
 
-#include <ccs-backend.h>
+#include <ccs-defs.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 

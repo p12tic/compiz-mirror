@@ -2,12 +2,14 @@
 #define _CCS_GNOME_INTEGRATED_SETTING_H
 
 #include <ccs-defs.h>
-#include <ccs-object.h>
-#include <ccs-backend.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
 
 #include "ccs_gnome_integration_types.h"
 
 COMPIZCONFIG_BEGIN_DECLS
+
+typedef struct _CCSGNOMEIntegratedSettingInfoInterface CCSGNOMEIntegratedSettingInfoInterface;
 
 typedef SpecialOptionType (*CCSGNOMEIntegratedSettingInfoGetSpecialOptionType) (CCSGNOMEIntegratedSettingInfo *);
 typedef const char * (*CCSGNOMEIntegratedSettingInfoGetGNOMEName) (CCSGNOMEIntegratedSettingInfo *);

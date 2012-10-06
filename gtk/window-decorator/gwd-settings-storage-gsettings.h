@@ -21,9 +21,7 @@
 #define _COMPIZ_GWD_SETTINGS_STORAGE_GSETTINGS_H
 
 #include <glib-object.h>
-#include "gwd-settings.h"
-#include "gwd-settings-writable-interface.h"
-#include "gwd-settings-storage-interface.h"
+#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 

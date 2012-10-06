@@ -2,9 +2,9 @@
 #define _CCS_GNOME_GSETTINGS_INTEGRATED_SETTING_H
 
 #include <ccs-defs.h>
-#include <ccs-object.h>
-#include <ccs-backend.h>
-#include "ccs_gsettings_interface.h"
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
+#include <ccs_gsettings_backend_fwd.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
