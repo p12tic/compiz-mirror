@@ -21,7 +21,7 @@
 #define _GWD_CAIRO_WINDOW_DECORATION_UTIL_H
 
 #include <glib.h>
-#include <compiz/decoration.h>
+#include <decoration.h>
 
 G_BEGIN_DECLS
 
