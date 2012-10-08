@@ -26,6 +26,7 @@
 #include "gtk-window-decorator.h"
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings.h"
+#include "gwd-settings-interface.h"
 #include "gwd-settings-notified-interface.h"
 #include "gwd-settings-notified.h"
 

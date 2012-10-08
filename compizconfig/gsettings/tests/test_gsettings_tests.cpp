@@ -7,6 +7,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
+#include "gtest_shared_autodestroy.h"
+
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
 #include "ccs_gsettings_backend.h"
@@ -14,6 +16,7 @@
 #include "compizconfig_ccs_context_mock.h"
 #include "compizconfig_ccs_plugin_mock.h"
 #include "compizconfig_ccs_setting_mock.h"
+#include "compizconfig_ccs_integration_mock.h"
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
 #include "compizconfig_ccs_mocked_allocator.h"
@@ -996,22 +999,7 @@ namespace
 	    {
 		return !(*this == l);
 	    }
-
-	    friend bool operator== (GList *lhs, const GListContainerEqualityInterface &rhs);
-	    friend bool operator!= (GList *lhs, const GListContainerEqualityInterface &rhs);
     };
-
-    bool
-    operator== (GList *lhs, const GListContainerEqualityInterface &rhs)
-    {
-	return rhs == lhs;
-    }
-
-    bool
-    operator!= (GList *lhs, const GListContainerEqualityInterface &rhs)
-    {
-	return !(rhs == lhs);
-    }
 
     class GListContainerEqualityBase :
 	public GListContainerEqualityInterface
@@ -2032,3 +2020,100 @@ TEST_F (CCSGSettingsTestIndependent, TestUnsetAllChangedPluginKeysInProfileDefau
 								  pluginsWithChangedKeys.get (),
 								  "mock");
 }
+
+namespace
+{
+    const CCSBackendInfo stubBackendInfo =
+    {
+	"stub",
+	"stub",
+	"stub",
+	FALSE,
+	FALSE
+    };
+
+    const CCSBackendInfo *
+    stubBackendGetInfo (CCSBackend *backend)
+    {
+	return &stubBackendInfo;
+    }
+
+    Bool
+    stubBackendInit (CCSBackend *backend, CCSContext *context)
+    {
+	return TRUE;
+    }
+
+    Bool
+    stubBackendFini (CCSBackend *backend)
+    {
+	return TRUE;
+    }
+/*
+    CCSBackendInterface stubBackendInterface =
+    {
+	stubBackendGetInfo,
+	NULL,
+	stubBackendInit,
+	stubBackendFini,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    };
+    */
+}
+
+/*
+TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
+{
+    boost::shared_ptr <CCSContext> mockContext (AutoDestroy (ccsMockContextNew (),
+							     ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> stubBackend (AutoDestroy (ccsBackendNewWithDynamicInterface (mockContext.get (), &stubBackendInterface),
+							     ccsBackendUnref));
+    boost::shared_ptr <CCSGSettingsWrapper> mockCompizconfigSettings (AutoDestroy (ccsMockGSettingsWrapperNew (),
+										   ccsGSettingsWrapperUnref));
+    boost::shared_ptr <CCSGSettingsWrapper> mockCurrentProfileSettings (AutoDestroy (ccsMockGSettingsWrapperNew (),
+										     ccsGSettingsWrapperUnref));
+    boost::shared_ptr <CCSGSettingsWrapperFactory> mockWrapperFactory (AutoDestroy (ccsMockGSettingsWrapperFactoryNew (),
+										    ccsGSettingsWrapperFactoryUnref));
+    boost::shared_ptr <CCSIntegration> mockIntegration (AutoDestroy (ccsMockIntegrationBackendNew (),
+								     ccsIntegrationUnref));
+    boost::shared_ptr <CCSGNOMEValueChangeData> valueChangeData = (new CCSGNOMEValueChangeData);
+    CharacterWrapper                            currentProfile (strdup ("mock"));
+
+    valueChangeData->integration = mockIntegration.get ();
+    valueChangeData->factory = NULL;
+    valueChangeData->storage = NULL;
+    valueChangeData->context = mockContext.get ();
+
+    ASSERT_TRUE (ccsGSettingsBackendAttachNewToBackend (mockBackend.get (),
+							mockContext.get (),
+							mockCompizconfigSettings.get (),
+							mockCurrentProfileSettings.get (),
+							mockIntegration.get (),
+							mockWrapperFactory.get (),
+							valueChangeData,
+							currentProfile));
+
+    EXPECT_CALL (
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsBackendGetSettingsObjectForPluginWithPath (backend,
+											  "mock",
+											  "mock",
+											  mockContext.get ());
+
+    wrapper = ccsGSettingsBackendGetSettingsObjectForPluginWithPath (backend,
+								     "mock",
+								     "mock",
+								     mockContext.get ());
+}
+*/

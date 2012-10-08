@@ -447,7 +447,7 @@ const CCSGSettingsWrapperIntegratedSchemasQuarks *
 ccsGNOMEGSettingsWrapperQuarks ()
 {
     static GOnce initIntegratedSchemaQuarks = G_ONCE_INIT;
-    static const CCSGSettingsWrapperIntegratedSchemasQuarks quarks;
+    static CCSGSettingsWrapperIntegratedSchemasQuarks quarks;
 
     g_once (&initIntegratedSchemaQuarks, ccsGNOMEGSettingsIntegrationInitializeIntegratedSchemasQuarks, (gpointer) &quarks);
 

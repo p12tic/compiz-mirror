@@ -251,7 +251,7 @@ class MockCCSBackendConceptTestEnvironment :
 
     public:
 
-	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
+	CCSBackend * BackendSetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    mContext = context;
 	    mBackend = ccsMockBackendNew ();
@@ -295,7 +295,7 @@ class MockCCSBackendConceptTestEnvironment :
 	    return &mockBackendInfo;
 	}
 
-	void TearDown (CCSBackend *backend)
+	void BackendTearDown (CCSBackend *backend)
 	{
 	    ccsFreeMockBackend (backend);
 	}

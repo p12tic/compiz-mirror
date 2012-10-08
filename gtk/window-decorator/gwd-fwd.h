@@ -17,21 +17,19 @@
  *
  * Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef _GWD_CAIRO_WINDOW_DECORATION_UTIL_H
-#define _GWD_CAIRO_WINDOW_DECORATION_UTIL_H
+#ifndef _COMPIZ_GWD_FWD_H
+#define _COMPIZ_GWD_FWD_H
 
-#include <glib.h>
-#include <decoration.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
-const decor_extents_t * gwd_cairo_window_decoration_get_default_max_win_extents ();
-const decor_extents_t * gwd_cairo_window_decoration_get_default_win_extents ();
+typedef struct _GWDSettings                 GWDSettings;
+typedef struct _GWDSettingsWritable         GWDSettingsWritable;
+typedef struct _GWDSettingsNotified         GWDSettingsNotified;
+typedef struct _GWDSettingsStorage          GWDSettingsStorage;
+typedef struct _GWDSettingsXPropertyStorage GWDSettingsXPropertyStorage;
 
-void
-gwd_cairo_window_decoration_get_extents (decor_extents_t *win_extents,
-					 decor_extents_t *max_win_extents);
-
-G_END_DECLS;
+G_END_DECLS
 
 #endif

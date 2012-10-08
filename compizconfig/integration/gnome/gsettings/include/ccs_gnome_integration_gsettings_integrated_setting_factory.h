@@ -1,43 +1,13 @@
-#ifndef _CCS_GNOME_GCONF_INTEGRATED_SETTING_FACTORY_H
-#define _CCS_GNOME_GCONF_INTEGRATED_SETTING_FACTORY_H
+#ifndef _CCS_GNOME_GSETTINGS_INTEGRATED_SETTING_FACTORY_H
+#define _CCS_GNOME_GSETTINGS_INTEGRATED_SETTING_FACTORY_H
 
 #include <ccs-defs.h>
-#include <ccs-object.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
+#include <ccs_gsettings_backend_fwd.h>
+#include <gio/gio.h>
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
-typedef struct _CCSGNOMEValueChangeData CCSGNOMEValueChangeData;
-typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
-typedef struct _GSettings	    GSettings;
-
-typedef void (*CCSGNOMEIntegrationGSettingsChangedCallback) (GSettings *, gchar *, gpointer);
-
-typedef struct _CCSGNOMEIntegrationGSettingsWrapperFactory CCSGNOMEIntegrationGSettingsWrapperFactory;
-typedef struct _CCSGNOMEIntegrationGSettingsWrapperFactoryInterface CCSGNOMEIntegrationGSettingsWrapperFactoryInterface;
-
-typedef CCSGSettingsWrapper * (*CCSGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper) (CCSGNOMEIntegrationGSettingsWrapperFactory *,
-												const gchar				   *schema,
-												CCSGNOMEIntegrationGSettingsChangedCallback callback,
-												CCSGNOMEValueChangeData			  *data,
-												CCSObjectAllocationInterface		   *ai);
-
-struct _CCSGNOMEIntegrationGSettingsWrapperFactoryInterface
-{
-    CCSGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper newGSettingsWrapper;
-};
-
-/**
- * @brief The _CCSGNOMEIntegrationGSettingsWrapperFactory struct
- *
- * Will create new CCSGSettingsIntegratedSetting objects on demand
- */
-struct _CCSGNOMEIntegrationGSettingsWrapperFactory
-{
-    CCSObject object;
-};
-
-unsigned int ccsCCSGNOMEIntegrationGSettingsWrapperFactoryInterfaceGetType ();
 
 /**
  * @brief ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS
@@ -50,22 +20,25 @@ unsigned int ccsCCSGNOMEIntegrationGSettingsWrapperFactoryInterfaceGetType ();
 char *
 ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (const char *key);
 
-CCSGSettingsWrapper *
-ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGNOMEIntegrationGSettingsWrapperFactory *factory,
-							       const gchar				  *schemaName,
-							       CCSGNOMEIntegrationGSettingsChangedCallback callback,
-							       CCSGNOMEValueChangeData			  *data,
-							       CCSObjectAllocationInterface		  *ai);
-
-CCSGNOMEIntegrationGSettingsWrapperFactory *
-ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (CCSObjectAllocationInterface *ai);
-
-void
-ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (CCSGNOMEIntegrationGSettingsWrapperFactory *wrapperFactory);
+/**
+ * @brief ccsGSettingsIntegratedSettingsChangeCallback
+ * @return callback for settings change data
+ *
+ * This returns the default callback used for settings changes
+ *
+ * TODO: This API doesn't make a whole lot of sense, but we need
+ * it if we want to inject CCSGSettingsWrapperFactory into
+ * ccsGSettingsIntegratedSettingFactoryNew.
+ *
+ * The return type is GCallback to hide the details of this function
+ * from callers
+ */
+GCallback
+ccsGSettingsIntegratedSettingsChangeCallback ();
 
 CCSIntegratedSettingFactory *
-ccsGSettingsIntegratedSettingFactoryNew (CCSGNOMEIntegrationGSettingsWrapperFactory	   *wrapperFactory,
-					 CCSGNOMEValueChangeData	  *data,
+ccsGSettingsIntegratedSettingFactoryNew (CCSGSettingsWrapperFactory   *wrapperFactory,
+					 CCSGNOMEValueChangeData      *data,
 					 CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS

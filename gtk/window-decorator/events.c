@@ -23,7 +23,8 @@
  *        Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "gtk-window-decorator.h" 
+#include "gtk-window-decorator.h"
+#include "gwd-settings-interface.h"
 
 void
 move_resize_window (WnckWindow *win,

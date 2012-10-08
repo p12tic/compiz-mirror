@@ -41,6 +41,7 @@ if (COMPIZCONFIG_TEST_GSETTINGS_FOUND)
 			   compizconfig_ccs_context_mock
 			   compizconfig_ccs_gsettings_backend_mock
 			   compizconfig_ccs_gsettings_wrapper_mock
+			   compizconfig_ccs_gsettings_wrapper_factory_mock
 			   compizconfig_ccs_test_value_combinations
 			   ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 			   ${GTEST_BOTH_LIBRARIES}
