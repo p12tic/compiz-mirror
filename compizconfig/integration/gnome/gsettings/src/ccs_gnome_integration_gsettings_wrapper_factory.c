@@ -39,7 +39,7 @@ struct _CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate
     CCSGNOMEValueChangeData    *data;
 };
 
-void
+static void
 ccsGNOMEIntegrationGSettingsWrapperFree (CCSGSettingsWrapperFactory *wrapperFactory)
 {
     CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate *priv =
@@ -52,7 +52,14 @@ ccsGNOMEIntegrationGSettingsWrapperFree (CCSGSettingsWrapperFactory *wrapperFact
 							wrapperFactory);
 }
 
-CCSGSettingsWrapper *
+static void
+connectWrapperToChangedSignal (CCSGSettingsWrapper                               *wrapper,
+			       CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate *priv)
+{
+    ccsGSettingsWrapperConnectToChangedSignal (wrapper, priv->callback, priv->data);
+}
+
+static CCSGSettingsWrapper *
 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapperFactory   *factory,
 							       const gchar                  *schemaName,
 							       CCSObjectAllocationInterface *ai)
@@ -63,7 +70,25 @@ ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapp
 										  schemaName,
 										  factory->object.object_allocation);
 
-    ccsGSettingsWrapperConnectToChangedSignal (wrapper, priv->callback, priv->data);
+    connectWrapperToChangedSignal (wrapper, priv);
+
+    return wrapper;
+}
+
+static CCSGSettingsWrapper *
+ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapperWithPath (CCSGSettingsWrapperFactory   *factory,
+								       const gchar                  *schemaName,
+								       const gchar                  *path,
+								       CCSObjectAllocationInterface *ai)
+{
+    CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate *priv =
+	    GET_PRIVATE (CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate, factory);
+    CCSGSettingsWrapper *wrapper = ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPath (priv->wrapperFactory,
+											  schemaName,
+											  path,
+											  factory->object.object_allocation);
+
+    connectWrapperToChangedSignal (wrapper, priv);
 
     return wrapper;
 }
@@ -71,6 +96,7 @@ ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapp
 const CCSGSettingsWrapperFactoryInterface ccsGNOMEIntegrationGSettingsWrapperFactoryInterface =
 {
     ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper,
+    ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapperWithPath,
     ccsGNOMEIntegrationGSettingsWrapperFree
 };
 

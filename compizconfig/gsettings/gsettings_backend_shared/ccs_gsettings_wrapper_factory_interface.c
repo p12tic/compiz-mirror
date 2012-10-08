@@ -33,6 +33,15 @@ ccsGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapperFactory   *fac
     return (*(GET_INTERFACE (CCSGSettingsWrapperFactoryInterface, factory))->newGSettingsWrapper) (factory, schemaName, ai);
 }
 
+CCSGSettingsWrapper *
+ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPath (CCSGSettingsWrapperFactory   *factory,
+						       const gchar                  *schemaName,
+						       const gchar                  *path,
+						       CCSObjectAllocationInterface *ai)
+{
+    return (*(GET_INTERFACE (CCSGSettingsWrapperFactoryInterface, factory))->newGSettingsWrapperWithPath) (factory, schemaName, path, ai);
+}
+
 void
 ccsFreeGSettingsWrapperFactory (CCSGSettingsWrapperFactory *factory)
 {

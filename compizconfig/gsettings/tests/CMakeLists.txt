@@ -39,6 +39,7 @@ if (COMPIZCONFIG_TEST_GSETTINGS_FOUND)
 			   compizconfig_ccs_setting_mock
 			   compizconfig_ccs_plugin_mock
 			   compizconfig_ccs_context_mock
+			   compizconfig_ccs_integration_mock
 			   compizconfig_ccs_gsettings_backend_mock
 			   compizconfig_ccs_gsettings_wrapper_mock
 			   compizconfig_ccs_gsettings_wrapper_factory_mock

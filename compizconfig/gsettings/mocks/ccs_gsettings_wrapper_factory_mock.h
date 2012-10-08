@@ -38,6 +38,9 @@ class CCSGSettingsWrapperFactoryMockInterface
 	virtual ~CCSGSettingsWrapperFactoryMockInterface () {}
 	virtual CCSGSettingsWrapper * newGSettingsWrapper (const gchar                  *schema,
 							   CCSObjectAllocationInterface *ai) = 0;
+	virtual CCSGSettingsWrapper * newGSettingsWrapperWithPath (const gchar                  *schema,
+								   const gchar                  *path,
+								   CCSObjectAllocationInterface *ai) = 0;
 };
 
 class CCSGSettingsWrapperFactoryGMock :
@@ -52,6 +55,9 @@ class CCSGSettingsWrapperFactoryGMock :
 
 	MOCK_METHOD2 (newGSettingsWrapper, CCSGSettingsWrapper * (const gchar                  *schema,
 								  CCSObjectAllocationInterface *ai));
+	MOCK_METHOD3 (newGSettingsWrapperWithPath, CCSGSettingsWrapper * (const gchar                  *schema,
+									  const gchar                  *path,
+									  CCSObjectAllocationInterface *ai));
 
     private:
 
@@ -65,6 +71,15 @@ class CCSGSettingsWrapperFactoryGMock :
 						       CCSObjectAllocationInterface *ai)
 	{
 	    return reinterpret_cast <CCSGSettingsWrapperFactoryMockInterface *> (ccsObjectGetPrivate (wrapperFactory))->newGSettingsWrapper (schema, ai);
+	}
+
+	static CCSGSettingsWrapper *
+	ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPath (CCSGSettingsWrapperFactory   *wrapperFactory,
+							       const gchar                  *schema,
+							       const gchar                  *path,
+							       CCSObjectAllocationInterface *ai)
+	{
+	    return reinterpret_cast <CCSGSettingsWrapperFactoryMockInterface *> (ccsObjectGetPrivate (wrapperFactory))->newGSettingsWrapperWithPath (schema, path, ai);
 	}
 
 	static void

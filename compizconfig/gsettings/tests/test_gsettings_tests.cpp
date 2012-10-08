@@ -17,6 +17,10 @@
 #include "compizconfig_ccs_plugin_mock.h"
 #include "compizconfig_ccs_setting_mock.h"
 #include "compizconfig_ccs_integration_mock.h"
+#include "ccs_gsettings_wrapper_mock.h"
+#include "ccs_gsettings_wrapper_factory_mock.h"
+#include "ccs_gsettings_wrapper_factory_interface.h"
+#include "ccs_gnome_integration.h"
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
 #include "compizconfig_ccs_mocked_allocator.h"
@@ -2049,7 +2053,7 @@ namespace
     {
 	return TRUE;
     }
-/*
+
     CCSBackendInterface stubBackendInterface =
     {
 	stubBackendGetInfo,
@@ -2069,14 +2073,13 @@ namespace
 	NULL,
 	NULL
     };
-    */
 }
 
-/*
+
 TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
 {
     boost::shared_ptr <CCSContext> mockContext (AutoDestroy (ccsMockContextNew (),
-							     ccsFreeMockContext, _1));
+							     ccsFreeMockContext));
     boost::shared_ptr <CCSBackend> stubBackend (AutoDestroy (ccsBackendNewWithDynamicInterface (mockContext.get (), &stubBackendInterface),
 							     ccsBackendUnref));
     boost::shared_ptr <CCSGSettingsWrapper> mockCompizconfigSettings (AutoDestroy (ccsMockGSettingsWrapperNew (),
@@ -2085,9 +2088,9 @@ TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
 										     ccsGSettingsWrapperUnref));
     boost::shared_ptr <CCSGSettingsWrapperFactory> mockWrapperFactory (AutoDestroy (ccsMockGSettingsWrapperFactoryNew (),
 										    ccsGSettingsWrapperFactoryUnref));
-    boost::shared_ptr <CCSIntegration> mockIntegration (AutoDestroy (ccsMockIntegrationBackendNew (),
+    boost::shared_ptr <CCSIntegration> mockIntegration (AutoDestroy (ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator),
 								     ccsIntegrationUnref));
-    boost::shared_ptr <CCSGNOMEValueChangeData> valueChangeData = (new CCSGNOMEValueChangeData);
+    boost::shared_ptr <CCSGNOMEValueChangeData> valueChangeData (new CCSGNOMEValueChangeData);
     CharacterWrapper                            currentProfile (strdup ("mock"));
 
     valueChangeData->integration = mockIntegration.get ();
@@ -2095,17 +2098,15 @@ TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
     valueChangeData->storage = NULL;
     valueChangeData->context = mockContext.get ();
 
-    ASSERT_TRUE (ccsGSettingsBackendAttachNewToBackend (mockBackend.get (),
+    ASSERT_TRUE (ccsGSettingsBackendAttachNewToBackend (stubBackend.get (),
 							mockContext.get (),
 							mockCompizconfigSettings.get (),
 							mockCurrentProfileSettings.get (),
-							mockIntegration.get (),
 							mockWrapperFactory.get (),
-							valueChangeData,
+							mockIntegration.get (),
+							valueChangeData.get (),
 							currentProfile));
-
-    EXPECT_CALL (
-
+/*
     CCSGSettingsWrapper *wrapper = ccsGSettingsBackendGetSettingsObjectForPluginWithPath (backend,
 											  "mock",
 											  "mock",
@@ -2115,5 +2116,5 @@ TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
 								     "mock",
 								     "mock",
 								     mockContext.get ());
+								     */
 }
-*/

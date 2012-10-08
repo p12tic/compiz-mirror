@@ -38,11 +38,17 @@ typedef struct _CCSGSettingsWrapperFactoryInterface CCSGSettingsWrapperFactoryIn
 typedef CCSGSettingsWrapper * (*CCSGSettingsWrapperFactoryNewGSettingsWrapper) (CCSGSettingsWrapperFactory   *wrapperFactory,
 										const gchar                  *schema,
 										CCSObjectAllocationInterface *ai);
+typedef CCSGSettingsWrapper * (*CCSGSettingsWrapperFactoryNewGSettingsWrapperWithPath) (CCSGSettingsWrapperFactory   *wrapperFactory,
+											const gchar                  *schema,
+											const gchar                  *path,
+											CCSObjectAllocationInterface *ai);
+
 typedef void (*CCSGSettingsWrapperFactoryFree) (CCSGSettingsWrapperFactory *wrapperFactory);
 
 struct _CCSGSettingsWrapperFactoryInterface
 {
     CCSGSettingsWrapperFactoryNewGSettingsWrapper newGSettingsWrapper;
+    CCSGSettingsWrapperFactoryNewGSettingsWrapperWithPath newGSettingsWrapperWithPath;
     CCSGSettingsWrapperFactoryFree free;
 };
 
@@ -64,6 +70,12 @@ CCSGSettingsWrapper *
 ccsGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapperFactory   *wrapperFactory,
 					       const gchar                  *schema,
 					       CCSObjectAllocationInterface *ai);
+
+CCSGSettingsWrapper *
+ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPath (CCSGSettingsWrapperFactory   *factory,
+						       const gchar                  *schemaName,
+						       const gchar                  *path,
+						       CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS
 

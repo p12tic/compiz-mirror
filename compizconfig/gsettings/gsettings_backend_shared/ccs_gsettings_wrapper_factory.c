@@ -32,7 +32,7 @@ struct _CCSGSettingsWrapperFactoryPrivate
 {
 };
 
-void
+static void
 ccsGSettingsWrapperDefaultImplFree (CCSGSettingsWrapperFactory *wrapperFactory)
 {
     ccsObjectFinalize (wrapperFactory);
@@ -40,7 +40,7 @@ ccsGSettingsWrapperDefaultImplFree (CCSGSettingsWrapperFactory *wrapperFactory)
 							wrapperFactory);
 }
 
-CCSGSettingsWrapper *
+static CCSGSettingsWrapper *
 ccsGSettingsWrapperFactoryNewGSettingsWrapperDefault (CCSGSettingsWrapperFactory   *factory,
 						      const gchar                  *schemaName,
 						      CCSObjectAllocationInterface *ai)
@@ -50,9 +50,23 @@ ccsGSettingsWrapperFactoryNewGSettingsWrapperDefault (CCSGSettingsWrapperFactory
     return wrapper;
 }
 
+CCSGSettingsWrapper *
+ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPathDefault (CCSGSettingsWrapperFactory   *wrapperFactory,
+							      const gchar                  *schemaName,
+							      const gchar                  *path,
+							      CCSObjectAllocationInterface *ai)
+{
+    CCSGSettingsWrapper *wrapper = ccsGSettingsWrapperNewForSchemaWithPath (schemaName,
+									    path,
+									    ai);
+
+    return wrapper;
+}
+
 const CCSGSettingsWrapperFactoryInterface ccsGSettingsWrapperFactoryInterface =
 {
     ccsGSettingsWrapperFactoryNewGSettingsWrapperDefault,
+    ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPathDefault,
     ccsGSettingsWrapperDefaultImplFree
 };
 

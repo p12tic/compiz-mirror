@@ -4,6 +4,7 @@
 const CCSGSettingsWrapperFactoryInterface mockInterface =
 {
     CCSGSettingsWrapperFactoryGMock::ccsGSettingsWrapperFactoryNewGSettingsWrapper,
+    CCSGSettingsWrapperFactoryGMock::ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPath,
     CCSGSettingsWrapperFactoryGMock::ccsFreeGSettingsWrapperFactory
 };
 
