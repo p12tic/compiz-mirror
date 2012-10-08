@@ -12,6 +12,7 @@
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
 #include "ccs_gsettings_backend.h"
+#include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend_mock.h"
 #include "compizconfig_ccs_context_mock.h"
 #include "compizconfig_ccs_plugin_mock.h"
@@ -2078,6 +2079,10 @@ namespace
 
 TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
 {
+    const std::string MOCK_PLUGIN_NAME ("mock");
+    const std::string MOCK_PROFILE_NAME ("mock");
+    const std::string MOCK_PATH ("/org/compiz/profiles/mock/plugins/mock");
+
     boost::shared_ptr <CCSContext> mockContext (AutoDestroy (ccsMockContextNew (),
 							     ccsFreeMockContext));
     boost::shared_ptr <CCSBackend> stubBackend (AutoDestroy (ccsBackendNewWithDynamicInterface (mockContext.get (), &stubBackendInterface),
@@ -2091,7 +2096,7 @@ TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
     boost::shared_ptr <CCSIntegration> mockIntegration (AutoDestroy (ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator),
 								     ccsIntegrationUnref));
     boost::shared_ptr <CCSGNOMEValueChangeData> valueChangeData (new CCSGNOMEValueChangeData);
-    CharacterWrapper                            currentProfile (strdup ("mock"));
+    CharacterWrapper                            currentProfile (strdup (MOCK_PROFILE_NAME.c_str ()));
 
     valueChangeData->integration = mockIntegration.get ();
     valueChangeData->factory = NULL;
@@ -2106,15 +2111,33 @@ TEST_F (CCSGSettingsTestIndependent, TestWriteOutSetKeysOnGetSettingsObject)
 							mockIntegration.get (),
 							valueChangeData.get (),
 							currentProfile));
-/*
-    CCSGSettingsWrapper *wrapper = ccsGSettingsBackendGetSettingsObjectForPluginWithPath (backend,
-											  "mock",
-											  "mock",
-											  mockContext.get ());
 
-    wrapper = ccsGSettingsBackendGetSettingsObjectForPluginWithPath (backend,
-								     "mock",
-								     "mock",
-								     mockContext.get ());
-								     */
+    boost::shared_ptr <CCSGSettingsWrapper> mockMockPluginWrapper (AutoDestroy (ccsMockGSettingsWrapperNew (),
+										ccsGSettingsWrapperUnref));
+
+    CCSGSettingsWrapperFactoryGMock *gmockWrapperFactory =
+	    reinterpret_cast <CCSGSettingsWrapperFactoryGMock *> (ccsObjectGetPrivate (mockWrapperFactory.get ()));
+
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_PLUGIN_NAME),
+								    Eq (MOCK_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper.get ()));
+
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_PATH.c_str (),
+										   mockContext.get ());
+
+    /* Shouldn't be called again */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_PLUGIN_NAME),
+								    Eq (MOCK_PATH),
+								    _)).Times (0);
+
+    wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+							      MOCK_PLUGIN_NAME.c_str (),
+							      MOCK_PATH.c_str (),
+							      mockContext.get ());
+
+    /* It should return the cached one */
+    EXPECT_EQ (mockMockPluginWrapper.get (), wrapper);
 }
