@@ -2186,6 +2186,38 @@ TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestWriteOutSetKeysOnGetSettingsObj
     EXPECT_EQ (wrapper, mockMockPluginWrapper);
 }
 
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestNoWriteOutSetKeysOnGetSettingsObjectIfAlreadyWritten)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    GVariantBuilder pluginsWithChangedKeysBuilder;
+
+    g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", MOCK_PLUGIN_NAME.c_str ());
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantNonEmpty (AutoDestroy (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+										 g_variant_unref));
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantNonEmpty.get ())));
+
+    /* No acknowledgement */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (_, _)).Times (0);
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_EQ (wrapper, mockMockPluginWrapper);
+}
+
 TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestReturnExistingWrapper)
 {
     /* Should create a new wrapper for this "plugin" */
