@@ -26,11 +26,10 @@
 #define CCS_TEXT_FILE_H
 
 #include <ccs-defs.h>
+#include <ccs-object.h>
+#include "ccs_text_file_interface.h"
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSTextFile CCSTextFile;
-typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
 
 typedef enum _CCSTextFileOpenMode
 {

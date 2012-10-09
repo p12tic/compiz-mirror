@@ -23,11 +23,10 @@
 #ifndef _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
 #define _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
 
-#include "ccs-defs.h"
+#include <ccs-defs.h>
+#include <ccs.h>
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSSettingList * CCSSettingList;
 
 Bool
 ccsUpgradeGetDomainNumAndProfile (const char   *name,

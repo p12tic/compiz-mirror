@@ -21,6 +21,7 @@
 #define _COMPIZ_GWD_SETTINGS_XPROPERTY_STORAGE_INTERFACE_H
 
 #include <glib-object.h>
+#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 
@@ -32,7 +33,6 @@ G_BEGIN_DECLS
 											 GWDSettingsXPropertyStorageInterface))
 #define GWD_TYPE_XPROPERTY_SETTINGS_STORAGE_INTERFACE (gwd_settings_xproperty_storage_interface_get_type ())
 
-typedef struct _GWDSettingsXPropertyStorage GWDSettingsXPropertyStorage;
 typedef struct _GWDSettingsXPropertyStorageInterface GWDSettingsXPropertyStorageInterface;
 
 struct _GWDSettingsXPropertyStorageInterface

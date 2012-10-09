@@ -5,6 +5,7 @@ if (USE_GTK)
     endif (COMPIZ_BUILD_WITH_RPATH)
 
     include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}
 	${compiz_SOURCE_DIR}/include
 	${CMAKE_BINARY_DIR}/gtk
 	${GTK_WINDOW_DECORATOR_INCLUDE_DIRS}

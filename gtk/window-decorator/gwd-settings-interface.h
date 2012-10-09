@@ -21,6 +21,7 @@
 #define _COMPIZ_GWD_SETTINGS_INTERFACE_H
 
 #include <glib-object.h>
+#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 
@@ -32,7 +33,6 @@ G_BEGIN_DECLS
 								       GWDSettingsInterface))
 #define GWD_TYPE_SETTINGS_INTERFACE (gwd_settings_interface_get_type ())
 
-typedef struct _GWDSettings GWDSettings;
 typedef struct _GWDSettingsInterface GWDSettingsInterface;
 
 struct _GWDSettingsInterface

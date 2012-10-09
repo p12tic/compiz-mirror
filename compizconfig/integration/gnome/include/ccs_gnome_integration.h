@@ -2,17 +2,19 @@
 #define _CCS_COMPIZCONFIG_GNOME_GCONF_INTEGRATION
 
 #include <ccs-defs.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
 #include "ccs_gnome_integration_types.h"
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSGNOMEValueChangeData
+struct _CCSGNOMEValueChangeData
 {
     CCSIntegration *integration;
     CCSIntegratedSettingsStorage *storage;
     CCSIntegratedSettingFactory *factory;
     CCSContext     *context;
-} CCSGNOMEValueChangeData;
+};
 
 /**
  * @brief ccsGNOMEIntegrationBackendNew

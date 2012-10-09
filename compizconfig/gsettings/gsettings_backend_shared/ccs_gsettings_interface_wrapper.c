@@ -1,5 +1,7 @@
 #include <gio/gio.h>
+#include <ccs-object.h>
 #include "ccs_gsettings_interface_wrapper.h"
+#include "ccs_gsettings_interface.h"
 
 typedef struct _CCSGSettingsWrapperPrivate CCSGSettingsWrapperPrivate;
 

@@ -1,0 +1,12 @@
+#ifndef _CCS_GNOME_INTEGRATION_GSETTINGS_FWD_H
+#define _CCS_GNOME_INTEGRATION_GSETTINGS_FWD_H
+
+#include <ccs-defs.h>
+
+COMPIZCONFIG_BEGIN_DECLS
+
+typedef struct _CCSGNOMEIntegrationGSettingsWrapperFactory CCSGNOMEIntegrationGSettingsWrapperFactory;
+
+COMPIZCONFIG_END_DECLS
+
+#endif
