@@ -114,7 +114,7 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 
     /* No existing settings object found for this schema, create one */
     
-    settingsObj = ccsGSettingsWrapperNewForSchemaWithPath (schemaName, path, &ccsDefaultObjectAllocator);
+    settingsObj = ccsGSettingsWrapperFactoryNewGSettingsWrapperWithPath (priv->wrapperFactory, schemaName, path, &ccsDefaultObjectAllocator);
     ccsGSettingsBackendConnectToChangedSignal (backend, settingsObj);
     priv->settingsList = g_list_append (priv->settingsList, (void *) settingsObj);
 
