@@ -130,7 +130,10 @@ ccsGSettingsBackendGetSettingsObjectForPluginWithPathDefault (CCSBackend *backen
 
     GVariant *newWrittenPluginsVariant = g_variant_new_strv ((const gchar * const *) newWrittenPlugins, newWrittenPluginsSize);
 
-    ccsGSettingsWrapperSetValue (priv->currentProfileSettings, "plugins-with-set-keys", newWrittenPluginsVariant);
+    if (!g_variant_equal (writtenPlugins, newWrittenPluginsVariant))
+	ccsGSettingsWrapperSetValue (priv->currentProfileSettings, "plugins-with-set-keys", newWrittenPluginsVariant);
+    else
+	g_variant_unref (newWrittenPluginsVariant);
 
     g_variant_unref (writtenPlugins);
     g_free (schemaName);
