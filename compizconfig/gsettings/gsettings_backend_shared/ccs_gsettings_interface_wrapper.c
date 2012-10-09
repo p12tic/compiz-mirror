@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <gio/gio.h>
 #include <ccs-object.h>
 #include "ccs_gsettings_interface_wrapper.h"
@@ -27,16 +26,12 @@ static void ccsGSettingsWrapperSetValueDefault (CCSGSettingsWrapper *wrapper, co
 {
     GSETTINGS_WRAPPER_PRIVATE (wrapper);
 
-    printf ("set value of %s\n", key);
-
     g_settings_set_value (gswPrivate->settings, key, variant);
 }
 
 static void ccsGSettingsWrapperResetKeyDefault (CCSGSettingsWrapper *wrapper, const char *key)
 {
     GSETTINGS_WRAPPER_PRIVATE (wrapper);
-
-    printf ("reset %s to default\n", key);
 
     g_settings_reset (gswPrivate->settings, key);
 }
