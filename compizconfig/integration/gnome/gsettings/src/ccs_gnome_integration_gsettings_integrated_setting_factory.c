@@ -21,6 +21,30 @@
 
 INTERFACE_TYPE (CCSGNOMEIntegrationGSettingsWrapperFactoryInterface);
 
+char *
+ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (const char *key)
+{
+    char *newKey = translateKeyForCCS (key);
+
+    if (g_strcmp0 (newKey, "screenshot") == 0)
+    {
+	free (newKey);
+	newKey = strdup ("run_command_screenshot");
+    }
+    else if (g_strcmp0 (newKey, "window_screenshot") == 0)
+    {
+	free (newKey);
+	newKey = strdup ("run_command_window_screenshot");
+    }
+    else if (g_strcmp0 (newKey, "terminal") == 0)
+    {
+	free (newKey);
+	newKey = strdup ("run_command_terminal");
+    }
+
+    return newKey;
+}
+
 CCSGSettingsWrapper *
 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGNOMEIntegrationGSettingsWrapperFactory *factory,
 							       const gchar				  *schemaName,
@@ -54,6 +78,14 @@ const CCSGNOMEIntegrationGSettingsWrapperFactoryInterface ccsGNOMEIntegrationGSe
 {
     ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapperDefault
 };
+
+void
+ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (CCSGNOMEIntegrationGSettingsWrapperFactory *wrapperFactory)
+{
+    ccsObjectFinalize (wrapperFactory);
+    (*wrapperFactory->object.object_allocation->free_) (wrapperFactory->object.object_allocation->allocator,
+							wrapperFactory);
+}
 
 CCSGNOMEIntegrationGSettingsWrapperFactory *
 ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (CCSObjectAllocationInterface *ai)
@@ -103,7 +135,7 @@ gnomeGSettingsValueChanged (GSettings *settings,
 			    gpointer  user_data)
 {
     CCSGNOMEValueChangeData *data = (CCSGNOMEValueChangeData *) user_data;
-    char *baseName = translateKeyForCCS (key);
+    char *baseName = ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (key);
 
     /* We don't care if integration is not enabled */
     if (!ccsGetIntegrationEnabled (data->context))
@@ -185,6 +217,18 @@ initializeGSettingsWrappers (CCSGNOMEIntegrationGSettingsWrapperFactory *factory
 											gnomeGSettingsValueChanged,
 											data,
 											factory->object.object_allocation));
+    g_hash_table_insert (quarksToGSettingsWrappers, GINT_TO_POINTER (quarks->ORG_GNOME_DESKTOP_DEFAULT_APPLICATIONS_TERMINAL),
+			 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (factory,
+											g_quark_to_string (quarks->ORG_GNOME_DESKTOP_DEFAULT_APPLICATIONS_TERMINAL),
+											gnomeGSettingsValueChanged,
+											data,
+											factory->object.object_allocation));
+    g_hash_table_insert (quarksToGSettingsWrappers, GINT_TO_POINTER (quarks->ORG_GNOME_SETTINGS_DAEMON_PLUGINS_MEDIA_KEYS),
+			 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (factory,
+											g_quark_to_string (quarks->ORG_GNOME_SETTINGS_DAEMON_PLUGINS_MEDIA_KEYS),
+											gnomeGSettingsValueChanged,
+											data,
+											factory->object.object_allocation));
 
     return quarksToGSettingsWrappers;
 }
@@ -243,6 +287,8 @@ ccsGSettingsIntegratedSettingFactoryFree (CCSIntegratedSettingFactory *factory)
     if (priv->pluginsToSettingNameGNOMENameHashTable)
 	g_hash_table_unref (priv->pluginsToSettingNameGNOMENameHashTable);
 
+    ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (priv->wrapperFactory);
+
     ccsObjectFinalize (factory);
     (*factory->object.object_allocation->free_) (factory->object.object_allocation->allocator, factory);
 }
@@ -281,6 +327,8 @@ ccsGSettingsIntegratedSettingFactoryNew (CCSGNOMEIntegrationGSettingsWrapperFact
     ccsObjectInit (factory, ai);
     ccsObjectSetPrivate (factory, (CCSPrivate *) priv);
     ccsObjectAddInterface (factory, (const CCSInterface *) &ccsGSettingsIntegratedSettingFactoryInterface, GET_INTERFACE_TYPE (CCSIntegratedSettingFactoryInterface));
+
+    ccsObjectRef (factory);
 
     return factory;
 }

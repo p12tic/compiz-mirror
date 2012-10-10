@@ -35,6 +35,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 namespace compiz {namespace X11
 {

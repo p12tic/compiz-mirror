@@ -47,8 +47,6 @@
 
 #include <boost/scoped_array.hpp>
 
-#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
-
 PluginClassStorage::Indices windowPluginClassIndices (0);
 
 unsigned int

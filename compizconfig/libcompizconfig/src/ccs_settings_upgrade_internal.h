@@ -23,7 +23,8 @@
 #ifndef _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
 #define _COMPIZCONFIG_CCS_SETTINGS_UPGRADE_INTERNAL_H
 
-#include "ccs-defs.h"
+#include <ccs-defs.h>
+#include <ccs.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
@@ -35,6 +36,16 @@ ccsUpgradeGetDomainNumAndProfile (const char   *name,
 
 int
 ccsUpgradeNameFilter (const char *name);
+
+void
+ccsUpgradeClearValues (CCSSettingList clearSettings);
+
+void
+ccsUpgradeAddValues (CCSSettingList addSettings);
+
+void
+ccsUpgradeReplaceValues (CCSSettingList replaceFromValueSettings,
+			 CCSSettingList replaceToValueSettings);
 
 COMPIZCONFIG_END_DECLS
 

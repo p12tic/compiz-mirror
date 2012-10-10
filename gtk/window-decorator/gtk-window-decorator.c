@@ -26,6 +26,7 @@
 #include "gtk-window-decorator.h"
 #include "gwd-settings-writable-interface.h"
 #include "gwd-settings.h"
+#include "gwd-settings-interface.h"
 #include "gwd-settings-notified-interface.h"
 #include "gwd-settings-notified.h"
 
@@ -342,7 +343,7 @@ main (int argc, char *argv[])
     xformat_rgb  = XRenderFindStandardFormat (xdisplay, PictStandardRGB24);
 
     frame_table = g_hash_table_new (NULL, NULL);
-    destroyed_pixmaps_table = g_hash_table_new_full (NULL, NULL, NULL, g_object_unref);
+    destroyed_pixmaps_table = g_hash_table_new (NULL, NULL);
 
     if (!create_tooltip_window ())
     {

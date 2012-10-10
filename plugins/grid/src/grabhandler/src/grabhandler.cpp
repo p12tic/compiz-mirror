@@ -24,8 +24,10 @@
 
 #include "grabhandler.h"
 
-compiz::grid::window::GrabWindowHandler::GrabWindowHandler (unsigned int mask) :
-    mMask (mask)
+compiz::grid::window::GrabWindowHandler::GrabWindowHandler (unsigned int         mask,
+							    const GrabActiveFunc &grabActive) :
+    mMask (mask),
+    mGrabActive (grabActive)
 {
 }
 
@@ -36,6 +38,9 @@ compiz::grid::window::GrabWindowHandler::~GrabWindowHandler ()
 bool
 compiz::grid::window::GrabWindowHandler::track ()
 {
+    if (mGrabActive ("expo"))
+	return false;
+
     return ((mMask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask)) &&
 	    !(mMask & CompWindowGrabResizeMask));
 }

@@ -2,19 +2,16 @@
 #define _CCS_GNOME_GCONF_INTEGRATED_SETTING_FACTORY_H
 
 #include <ccs-defs.h>
-#include <ccs-object.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
+#include <ccs_gnome_gsettings_fwd.h>
+#include <gio/gio.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
-typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
-typedef struct _CCSGNOMEValueChangeData CCSGNOMEValueChangeData;
-typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
-typedef struct _GSettings	    GSettings;
+typedef struct _CCSGNOMEIntegrationGSettingsWrapperFactoryInterface CCSGNOMEIntegrationGSettingsWrapperFactoryInterface;
 
 typedef void (*CCSGNOMEIntegrationGSettingsChangedCallback) (GSettings *, gchar *, gpointer);
-
-typedef struct _CCSGNOMEIntegrationGSettingsWrapperFactory CCSGNOMEIntegrationGSettingsWrapperFactory;
-typedef struct _CCSGNOMEIntegrationGSettingsWrapperFactoryInterface CCSGNOMEIntegrationGSettingsWrapperFactoryInterface;
 
 typedef CCSGSettingsWrapper * (*CCSGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper) (CCSGNOMEIntegrationGSettingsWrapperFactory *,
 												const gchar				   *schema,
@@ -39,6 +36,17 @@ struct _CCSGNOMEIntegrationGSettingsWrapperFactory
 
 unsigned int ccsCCSGNOMEIntegrationGSettingsWrapperFactoryInterfaceGetType ();
 
+/**
+ * @brief ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS
+ * @param key the old style gnome key to translate
+ * @return new-style key. Caller should free
+ *
+ * This translates new style keys (eg foo-bar) to old style keys
+ * foo_bar and special cases a few keys
+ */
+char *
+ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (const char *key);
+
 CCSGSettingsWrapper *
 ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGNOMEIntegrationGSettingsWrapperFactory *factory,
 							       const gchar				  *schemaName,
@@ -48,6 +56,9 @@ ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGNOMEIntegrati
 
 CCSGNOMEIntegrationGSettingsWrapperFactory *
 ccsGNOMEIntegrationGSettingsWrapperDefaultImplNew (CCSObjectAllocationInterface *ai);
+
+void
+ccsGNOMEIntegrationGSettingsWrapperDefaultImplFree (CCSGNOMEIntegrationGSettingsWrapperFactory *wrapperFactory);
 
 CCSIntegratedSettingFactory *
 ccsGSettingsIntegratedSettingFactoryNew (CCSGNOMEIntegrationGSettingsWrapperFactory	   *wrapperFactory,

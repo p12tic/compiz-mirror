@@ -19,11 +19,13 @@ class DoubleBuffer
 	virtual void blit (const CompRegion &region) const = 0;
 	virtual bool fallbackBlitAvailable () const = 0;
 	virtual void fallbackBlit (const CompRegion &region) const = 0;
+	virtual void copyFrontToBack () const = 0;
 
 	typedef enum
 	{
 	    VSYNC,
-	    PERSISTENT_BACK_BUFFER,
+	    HAVE_PERSISTENT_BACK_BUFFER,
+	    NEED_PERSISTENT_BACK_BUFFER,
 	    _NSETTINGS
 	} Setting;
 

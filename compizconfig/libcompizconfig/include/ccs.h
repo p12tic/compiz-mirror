@@ -69,15 +69,10 @@ typedef enum
 
 void ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...);
 
-typedef struct _CCSContext	  CCSContext;
-typedef struct _CCSPlugin	  CCSPlugin;
-typedef struct _CCSSetting	  CCSSetting;
 typedef struct _CCSGroup	  CCSGroup;
 typedef struct _CCSSubGroup	  CCSSubGroup;
 typedef struct _CCSPluginCategory CCSPluginCategory;
-typedef struct _CCSSettingValue	  CCSSettingValue;
 typedef struct _CCSPluginConflict CCSPluginConflict;
-typedef struct _CCSBackendInfo	  CCSBackendInfo;
 typedef struct _CCSIntDesc	  CCSIntDesc;
 typedef struct _CCSStrRestriction CCSStrRestriction;
 typedef struct _CCSStrExtension   CCSStrExtension;
@@ -106,11 +101,9 @@ CCSREF_HDR (IntDesc, CCSIntDesc)
 CCSREF_HDR (StrRestriction, CCSStrRestriction)
 CCSREF_HDR (StrExtension, CCSStrExtension)
 
-typedef struct _CCSInterfaceTable CCSInterfaceTable;
 typedef struct _CCSContextInterface CCSContextInterface;
 typedef struct _CCSPluginInterface CCSPluginInterface;
 typedef struct _CCSSettingInterface CCSSettingInterface;
-typedef struct _CCSDynamicBackendInterface CCSDynamicBackendInterface;
 
 struct _CCSInterfaceTable
 {
@@ -135,7 +128,7 @@ typedef void * (*CCSContextGetPrivatePtr) (CCSContext *context);
 typedef void (*CCSContextSetPrivatePtr) (CCSContext *context, void *ptr);
 typedef Bool (*CCSContextLoadPlugin) (CCSContext *context, char *name);
 typedef CCSPlugin * (*CCSContextFindPlugin) (CCSContext *context, const char *name);
-typedef Bool (*CCSContextPluginIsActive) (CCSContext *context, char *name);
+typedef Bool (*CCSContextPluginIsActive) (CCSContext *context, const char *name);
 typedef CCSPluginList (*CCSContextGetActivePluginList) (CCSContext *context);
 typedef CCSStringList (*CCSContextGetSortedPluginStringList) (CCSContext *context);
 typedef Bool (*CCSContextSetBackend) (CCSContext *context, char *name);
@@ -223,11 +216,11 @@ struct _CCSContext
 };
 
 /* CCSPluginInterface */
-typedef char * (*CCSPluginGetName) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetShortDesc) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetLongDesc) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetHints) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetCategory) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetName) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetShortDesc) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetLongDesc) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetHints) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetCategory) (CCSPlugin *plugin);
 
 typedef CCSStringList (*CCSPluginGetLoadAfter) (CCSPlugin *plugin);
 typedef CCSStringList (*CCSPluginGetLoadBefore) (CCSPlugin *plugin);
@@ -276,11 +269,11 @@ struct _CCSPluginInterface
 };
 
 /* CCSPlugin accessor functions */
-char * ccsPluginGetName (CCSPlugin *plugin);
-char * ccsPluginGetShortDesc (CCSPlugin *plugin);
-char * ccsPluginGetLongDesc (CCSPlugin *plugin);
-char * ccsPluginGetHints (CCSPlugin *plugin);
-char * ccsPluginGetCategory (CCSPlugin *plugin);
+const char * ccsPluginGetName (CCSPlugin *plugin);
+const char * ccsPluginGetShortDesc (CCSPlugin *plugin);
+const char * ccsPluginGetLongDesc (CCSPlugin *plugin);
+const char * ccsPluginGetHints (CCSPlugin *plugin);
+const char * ccsPluginGetCategory (CCSPlugin *plugin);
 
 CCSStringList ccsPluginGetLoadAfter (CCSPlugin *plugin);
 CCSStringList ccsPluginGetLoadBefore (CCSPlugin *plugin);
@@ -465,14 +458,14 @@ struct _CCSSettingValue
 };
 
 /* Interface for CCSSetting */
-char * ccsSettingGetName (CCSSetting *setting);
-char * ccsSettingGetShortDesc (CCSSetting *setting);
-char * ccsSettingGetLongDesc (CCSSetting *setting);
+const char * ccsSettingGetName (CCSSetting *setting);
+const char * ccsSettingGetShortDesc (CCSSetting *setting);
+const char * ccsSettingGetLongDesc (CCSSetting *setting);
 CCSSettingType ccsSettingGetType (CCSSetting *setting);
 CCSSettingInfo * ccsSettingGetInfo (CCSSetting *setting);
-char * ccsSettingGetGroup (CCSSetting *setting);
-char * ccsSettingGetSubGroup (CCSSetting *setting);
-char * ccsSettingGetHints (CCSSetting *setting);
+const char * ccsSettingGetGroup (CCSSetting *setting);
+const char * ccsSettingGetSubGroup (CCSSetting *setting);
+const char * ccsSettingGetHints (CCSSetting *setting);
 CCSSettingValue * ccsSettingGetDefaultValue (CCSSetting *setting);
 CCSSettingValue *ccsSettingGetValue (CCSSetting *setting);
 Bool ccsSettingGetIsDefault (CCSSetting *setting);
@@ -558,14 +551,14 @@ Bool ccsSettingIsReadOnly (CCSSetting *setting);
 /* Checks if a setting is readable by backends */
 Bool ccsSettingIsReadableByBackend (CCSSetting *setting);
 
-typedef char * (*CCSSettingGetName) (CCSSetting *);
-typedef char * (*CCSSettingGetShortDesc) (CCSSetting *);
-typedef char * (*CCSSettingGetLongDesc) (CCSSetting *);
+typedef const char * (*CCSSettingGetName) (CCSSetting *);
+typedef const char * (*CCSSettingGetShortDesc) (CCSSetting *);
+typedef const char * (*CCSSettingGetLongDesc) (CCSSetting *);
 typedef CCSSettingType (*CCSSettingGetType) (CCSSetting *);
 typedef CCSSettingInfo * (*CCSSettingGetInfo) (CCSSetting *);
-typedef char * (*CCSSettingGetGroup) (CCSSetting *);
-typedef char * (*CCSSettingGetSubGroup) (CCSSetting *);
-typedef char * (*CCSSettingGetHints) (CCSSetting *);
+typedef const char * (*CCSSettingGetGroup) (CCSSetting *);
+typedef const char * (*CCSSettingGetSubGroup) (CCSSetting *);
+typedef const char * (*CCSSettingGetHints) (CCSSetting *);
 typedef CCSSettingValue * (*CCSSettingGetDefaultValue) (CCSSetting *setting);
 typedef CCSSettingValue * (*CCSSettingGetValue) (CCSSetting *setting);
 typedef Bool (*CCSSettingGetIsDefault) (CCSSetting *);
@@ -697,8 +690,7 @@ CCSSetting* ccsFindSetting (CCSPlugin    *plugin,
 
 /* Returns TRUE if the named plugin is in the context and marked as currently
    active in Compiz, FALSE otherwise. */
-Bool ccsPluginIsActive (CCSContext *context,
-			char       *name);
+Bool ccsPluginIsActive(CCSContext *context, const char *name);
 
 void ccsFreeContext (CCSContext *context);
 void ccsFreePlugin (CCSPlugin *plugin);
@@ -772,6 +764,12 @@ CCSSettingColorValue* ccsGetColorArrayFromValueList (CCSSettingValueList list,
 /* Deep copies value lists */
 CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
+
+/* Deep copy setting value */
+CCSSettingValue *
+ccsCopyValue (CCSSettingValue *orig,
+	      CCSSettingType  type,
+	      CCSSettingInfo  *info);
 
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
@@ -1079,6 +1077,14 @@ ccsCopyBackendInfoFromBackend (CCSBackend	   *backend,
 CCSBackendInfoList ccsGetExistingBackends (CCSContext *);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
+
+Bool
+ccsCheckValueEq (const CCSSettingValue *rhs,
+		 CCSSettingType	       rhsType,
+		 CCSSettingInfo	       *rhsInfo,
+		 const CCSSettingValue *lhs,
+		 CCSSettingType	       lhsType,
+		 CCSSettingInfo	       *lhsInfo);
 
 COMPIZCONFIG_END_DECLS
 

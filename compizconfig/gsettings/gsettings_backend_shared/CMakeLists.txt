@@ -5,6 +5,7 @@ compiz_pkg_check_modules (GSETTINGS_UTIL ${_deps})
 if (GSETTINGS_UTIL_FOUND)
 
     set (GSETTINGS_UTIL_LIB_INCLUDES
+         ${CMAKE_CURRENT_SOURCE_DIR}
          ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/include
          ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/gconf/include
          ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/gsettings/include
@@ -40,7 +41,6 @@ if (GSETTINGS_UTIL_FOUND)
     target_link_libraries (compizconfig_gsettings_util
                            compizconfig_gsettings_backend_interface
                            compizconfig_gsettings_wrapper_interface
-                           compizconfig
                            compizconfig
                            ${GSETTINGS_UTIL_LIBRARIES})
 

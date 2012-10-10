@@ -500,6 +500,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     if (GL::textureFromPixmap)
 	registerBindPixmap (EglTexture::bindPixmapToTexture);
 
+    priv->incorrectRefreshRate = false;
+
     #else
 
     Display		 *dpy = screen->dpy ();
@@ -509,6 +511,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GLfloat		 diffuseLight[]   = { 0.9f, 0.9f,  0.9f, 0.9f };
     GLfloat		 light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
     const char           *glRenderer;
+    const char           *glVendor;
     CompOption::Vector o (0);
 
     priv->ctx = glXCreateContext (dpy, visinfo, NULL, True);
@@ -548,6 +551,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     }
 
     glRenderer = (const char *) glGetString (GL_RENDERER);
+    glVendor = (const char *) glGetString (GL_VENDOR);
     if (glRenderer != NULL &&
 	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
 	 strcmp (glRenderer, "Mesa X11") == 0))
@@ -560,6 +564,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     }
 
     priv->commonFrontbuffer = true;
+    priv->incorrectRefreshRate = false;
     if (glRenderer != NULL && strstr (glRenderer, "on llvmpipe"))
     {
 	/*
@@ -570,6 +575,14 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	 * copying in those cases.
 	 */
 	priv->commonFrontbuffer = false;
+    }
+
+    if (glVendor != NULL && strstr (glVendor, "NVIDIA"))
+    {
+	/*
+	 * NVIDIA provides an incorrect refresh rate, we need to
+	 * force 60Hz */
+	priv->incorrectRefreshRate = true;
     }
 
     if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
@@ -869,6 +882,16 @@ GLScreen::GLScreen (CompScreen *s) :
 
     glxExtensions = glXQueryExtensionsString (dpy, s->screenNum ());
 
+    if (glxExtensions == NULL)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+	                "glXQueryExtensionsString is NULL for screen %d",
+	                s->screenNum ());
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
     if (!strstr (glxExtensions, "GLX_SGIX_fbconfig"))
     {
 	compLogMessage ("opengl", CompLogLevelFatal,
@@ -1083,13 +1106,15 @@ GLScreen::~GLScreen ()
     EGLDisplay dpy = eglGetDisplay (xdpy);
 
     eglMakeCurrent (dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroyContext (dpy, priv->ctx);
+    if (priv->ctx != EGL_NO_CONTEXT)
+	eglDestroyContext (dpy, priv->ctx);
     eglDestroySurface (dpy, priv->surface);
     eglTerminate (dpy);
     eglReleaseThread ();
     #else
 
-    glXDestroyContext (screen->dpy (), priv->ctx);
+    if (priv->ctx)
+	glXDestroyContext (screen->dpy (), priv->ctx);
     #endif
 
     if (priv->scratchFbo)
@@ -1109,9 +1134,11 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     clearBuffers (true),
     lighting (false),
     #ifndef USE_GLES
+    ctx (NULL),
     getProcAddress (0),
     doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
     #else
+    ctx (EGL_NO_CONTEXT),
     doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
@@ -1664,6 +1691,27 @@ namespace GL
 {
 
 void
+fastSwapInterval (Display *dpy, int interval)
+{
+    static int prev = -1;
+#ifndef USE_GLES
+    bool       hasSwapInterval = GL::swapInterval ? true : false;
+#else
+    bool       hasSwapInterval = true;
+#endif
+
+    if (hasSwapInterval && interval != prev)
+    {
+#ifndef USE_GLES
+	(*GL::swapInterval) (interval);
+#else
+	eglSwapInterval (eglGetDisplay (dpy), interval);
+#endif
+	prev = interval;
+    }
+}
+
+void
 waitForVideoSync ()
 {
 #ifndef USE_GLES
@@ -1671,8 +1719,7 @@ waitForVideoSync ()
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
-	if (GL::swapInterval)
-	    (*GL::swapInterval) (0);
+	fastSwapInterval (screen->dpy (), 0);
 
 	/*
 	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
@@ -1701,13 +1748,13 @@ controlSwapVideoSync (bool sync)
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
     {
-	(*GL::swapInterval) (sync ? 1 : 0);
+	fastSwapInterval (screen->dpy (), sync ? 1 : 0);
 	GL::unthrottledFrames++;
     }
     else if (sync)
 	waitForVideoSync ();
 #else
-    eglSwapInterval (eglGetDisplay (screen->dpy ()), sync ? 1 : 0);
+    fastSwapInterval (screen->dpy (), sync ? 1 : 0);
     GL::unthrottledFrames++;
 #endif
 }
@@ -1722,8 +1769,8 @@ GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s) :
 
 #ifndef USE_GLES
 
-static void
-copyFrontToBack()
+void
+GLXDoubleBuffer::copyFrontToBack() const
 {
     int w = screen->width ();
     int h = screen->height ();
@@ -1761,9 +1808,6 @@ GLXDoubleBuffer::swap () const
     GL::controlSwapVideoSync (setting[VSYNC]);
 
     glXSwapBuffers (mDpy, mOutput);
-
-    if (!setting[PERSISTENT_BACK_BUFFER])
-	copyFrontToBack ();
 }
 
 bool
@@ -1888,6 +1932,11 @@ EGLDoubleBuffer::fallbackBlitAvailable () const
 
 void
 EGLDoubleBuffer::fallbackBlit (const CompRegion &region) const
+{
+}
+
+void
+EGLDoubleBuffer::copyFrontToBack() const
 {
 }
 
@@ -2023,13 +2072,26 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
     }
 
+    if (cScreen->outputWindowChanged ())
+    {
+	/*
+	 * Changes to the composite output window seem to take a whole frame
+	 * to take effect. So to avoid a visible flicker, we skip this frame
+	 * and do a full redraw next time.
+	 */
+	cScreen->damageScreen ();
+	return;
+    }
+
+    bool alwaysSwap = optionGetAlwaysSwapBuffers ();
     bool fullscreen = useFbo ||
-                      optionGetAlwaysSwapBuffers () ||
+                      alwaysSwap ||
                       ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                        commonFrontbuffer);
 
     doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
-    doubleBuffer.set (DoubleBuffer::PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
     doubleBuffer.render (tmpRegion, fullscreen);
 
     lastMask = mask;
@@ -2044,6 +2106,12 @@ PrivateGLScreen::hasVSync ()
     return GL::waitVideoSync && optionGetSyncToVblank () && 
            GL::unthrottledFrames < 5;
    #endif
+}
+
+bool
+PrivateGLScreen::requiredForcedRefreshRate ()
+{
+    return incorrectRefreshRate;
 }
 
 bool

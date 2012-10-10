@@ -40,7 +40,7 @@ set (
 )
 
 # Almost everything is a shared library now, so almost everything needs -fPIC
-set (COMMON_FLAGS "-fPIC -Wall -Wl,-zdefs")
+set (COMMON_FLAGS "-fPIC -Wall")
 
 option (COMPIZ_DEPRECATED_WARNINGS "Warn about declarations marked deprecated" OFF)
 if (NOT COMPIZ_DEPRECATED_WARNINGS)
@@ -64,6 +64,11 @@ endif ()
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
+
+set (COMMON_LINKER_FLAGS "-Wl,-zdefs")
+set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
 
 if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 1)
@@ -443,8 +448,12 @@ macro (compiz_add_plugins_in_folder folder)
     )
 
     foreach (_plugin ${_plugins_in})
-        get_filename_component (_plugin_dir ${_plugin} PATH)
-        add_subdirectory (${folder}/${_plugin_dir})
+	get_filename_component (_plugin_dir ${_plugin} PATH)
+	string (TOUPPER ${_plugin_dir} _plugin_upper)
+	if (NOT COMPIZ_DISABLE_PLUGIN_${_plugin_upper})
+	    add_subdirectory (${folder}/${_plugin_dir})
+	    set (COMPIZ_ENABLED_PLUGIN_${_plugin_upper} Y CACHE INTERNAL "")
+	endif ()
     endforeach ()
 endmacro ()
 

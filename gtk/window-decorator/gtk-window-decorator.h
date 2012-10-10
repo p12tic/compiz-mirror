@@ -109,7 +109,7 @@
 #include <metacity-private/theme.h>
 #endif
 
-#include "gwd-settings-interface.h"
+#include <gwd-fwd.h>
 
 #define METACITY_GCONF_DIR "/apps/metacity/general"
 #define MUTTER_GCONF_DIR "/apps/mutter/general"
@@ -224,9 +224,6 @@ WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY)
 #define MWM_DECOR_MAXIMIZE (1L << 6)
 
 #define PROP_MOTIF_WM_HINT_ELEMENTS 3
-
-typedef struct _GWDSettingsWritable GWDSettingsWritable;
-typedef struct _GWDSettingsNotified GWDSettingsNotified;
 
 typedef struct {
 unsigned long flags;
@@ -401,6 +398,7 @@ typedef struct _decor {
     GtkWidget         *decor_window;
     GtkWidget	      *decor_event_box;
     GtkWidget         *decor_image;
+    GHashTable        *old_pixmaps;
     cairo_t	      *cr;
     decor_layout_t    border_layout;
     decor_context_t   *context;

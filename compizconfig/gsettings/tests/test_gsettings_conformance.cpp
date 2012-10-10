@@ -1,3 +1,25 @@
+/*
+ * Compiz configuration system library
+ *
+ * Copyright (C) 2012 Canonical Ltd.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Authored By:
+ * Sam Spilsbury <sam.spilsbury@canonical.com>
+ */
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -15,438 +37,14 @@
 #include "gtest_shared_autodestroy.h"
 #include "test_gsettings_tests.h"
 
+#include "compizconfig_ccs_gsettings_settings_env_test.h"
+#include "compizconfig_ccs_integration_mock.h"
+
 using ::testing::AtLeast;
 using ::testing::Pointee;
 using ::testing::ReturnNull;
 
-CCSIntegration *
-ccsMockIntegrationBackendNew (CCSObjectAllocationInterface *ai);
-
-void
-ccsMockIntegrationBackendFree (CCSIntegration *integration);
-
-class CCSIntegrationGMockInterface
-{
-    public:
-
-	virtual ~CCSIntegrationGMockInterface () {}
-
-	virtual CCSIntegratedSetting * getIntegratedOptionIndex (const char *pluginName, const char *settingName) = 0;
-	virtual Bool readOptionIntoSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *) = 0;
-	virtual void writeOptionFromSetting (CCSContext *context, CCSSetting *setting, CCSIntegratedSetting *) = 0;
-	virtual void updateIntegratedSettings (CCSContext *context, CCSIntegratedSettingList settingList) = 0;
-	virtual void disallowIntegratedWrites () = 0;
-	virtual void allowIntegratedWrites () = 0;
-};
-
-class CCSIntegrationGMock :
-    public CCSIntegrationGMockInterface
-{
-    public:
-
-	MOCK_METHOD2 (getIntegratedOptionIndex, CCSIntegratedSetting * (const char *, const char *));
-	MOCK_METHOD3 (readOptionIntoSetting, Bool (CCSContext *, CCSSetting *, CCSIntegratedSetting *));
-	MOCK_METHOD3 (writeOptionFromSetting, void (CCSContext *, CCSSetting *, CCSIntegratedSetting *));
-	MOCK_METHOD2 (updateIntegratedSettings, void (CCSContext *, CCSIntegratedSettingList));
-	MOCK_METHOD0 (disallowIntegratedWrites, void ());
-	MOCK_METHOD0 (allowIntegratedWrites, void ());
-
-
-	CCSIntegrationGMock (CCSIntegration *integration) :
-	    mIntegration (integration)
-	{
-	}
-
-	CCSIntegration *
-	getIntegrationBackend ()
-	{
-	    return mIntegration;
-	}
-
-    public:
-
-	static
-	CCSIntegratedSetting * CCSIntegrationGetIntegratedOptionIndex (CCSIntegration *integration,
-								       const char *pluginName,
-								       const char *settingName)
-	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->getIntegratedOptionIndex (pluginName, settingName);
-	}
-
-	static
-	Bool CCSIntegrationReadOptionIntoSetting (CCSIntegration *integration,
-						  CCSContext		  *context,
-						  CCSSetting		  *setting,
-						  CCSIntegratedSetting *integrated)
-	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->readOptionIntoSetting (context, setting, integrated);
-	}
-
-	static
-	void CCSIntegrationWriteSettingIntoOption  (CCSIntegration *integration,
-						    CCSContext		   *context,
-						    CCSSetting		   *setting,
-						    CCSIntegratedSetting *integrated)
-	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->writeOptionFromSetting (context, setting, integrated);
-	}
-
-	static void CCSIntegrationUpdateIntegratedSettings (CCSIntegration *integration,
-							    CCSContext	   *context,
-							    CCSIntegratedSettingList settingList)
-	{
-	    return reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->updateIntegratedSettings (context, settingList);
-	}
-
-	static
-	void ccsFreeIntegration (CCSIntegration *integration)
-	{
-	    ccsMockIntegrationBackendFree (integration);
-	}
-
-	static void ccsIntegrationDisallowIntegratedWrites (CCSIntegration *integration)
-	{
-	    reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->disallowIntegratedWrites ();
-	}
-
-	static void ccsIntegrationAllowIntegratedWrites (CCSIntegration *integration)
-	{
-	    reinterpret_cast <CCSIntegrationGMockInterface *> (ccsObjectGetPrivate (integration))->allowIntegratedWrites ();
-	}
-
-    private:
-
-	CCSIntegration *mIntegration;
-};
-
-const CCSIntegrationInterface mockIntegrationBackendInterface =
-{
-    CCSIntegrationGMock::CCSIntegrationGetIntegratedOptionIndex,
-    CCSIntegrationGMock::CCSIntegrationReadOptionIntoSetting,
-    CCSIntegrationGMock::CCSIntegrationWriteSettingIntoOption,
-    CCSIntegrationGMock::CCSIntegrationUpdateIntegratedSettings,
-    CCSIntegrationGMock::ccsIntegrationDisallowIntegratedWrites,
-    CCSIntegrationGMock::ccsIntegrationAllowIntegratedWrites,
-    CCSIntegrationGMock::ccsFreeIntegration
-};
-
-CCSIntegration *
-ccsMockIntegrationBackendNew (CCSObjectAllocationInterface *ai)
-{
-    CCSIntegration *integration = reinterpret_cast <CCSIntegration *> ((*ai->calloc_) (ai->allocator, 1, sizeof (CCSIntegration)));
-
-    if (!integration)
-	return NULL;
-
-    CCSIntegrationGMock *gmockBackend = new CCSIntegrationGMock (integration);
-
-    ccsObjectInit (integration, ai);
-    ccsObjectSetPrivate (integration, (CCSPrivate *) gmockBackend);
-    ccsObjectAddInterface (integration, (const CCSInterface *) &mockIntegrationBackendInterface, GET_INTERFACE_TYPE (CCSIntegrationInterface));
-
-    ccsObjectRef (integration);
-
-    return integration;
-}
-
-void
-ccsMockIntegrationBackendFree (CCSIntegration *integration)
-{
-    CCSIntegrationGMock *gmockBackend = reinterpret_cast <CCSIntegrationGMock *> (ccsObjectGetPrivate (integration));
-
-    delete gmockBackend;
-
-    ccsObjectSetPrivate (integration, NULL);
-    ccsObjectFinalize (integration);
-    (*integration->object.object_allocation->free_) (integration->object.object_allocation->allocator, integration);
-}
-
-class CCSGSettingsStorageEnv :
-    public CCSSettingsConceptTestEnvironmentInterface,
-    public CCSGSettingsMemoryBackendTestingEnv
-{
-    public:
-
-	typedef boost::shared_ptr <GVariant> GVariantShared;
-
-	virtual void SetUp ()
-	{
-	    SetUpEnv ();
-	}
-
-	virtual void TearDown ()
-	{
-	    TearDownEnv ();
-	}
-
-	CCSGSettingsStorageEnv (CCSGSettingsWrapper *settings,
-				const std::string   &profileName) :
-	    mSettings (settings),
-	    profileName (profileName)
-	{
-	}
-
-	void WriteBoolAtKey (const std::string &plugin,
-			     const std::string &key,
-			     const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteIntegerAtKey (const std::string &plugin,
-				const std::string &key,
-				const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeIntToVariant (boost::get <int> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteFloatAtKey (const std::string &plugin,
-				      const std::string &key,
-				      const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeFloatToVariant (boost::get <float> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteStringAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeStringToVariant (boost::get <const char *> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteColorAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeColorToVariant (boost::get <CCSSettingColorValue> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteKeyAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeKeyToVariant (boost::get <CCSSettingKeyValue> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteButtonAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeButtonToVariant (boost::get <CCSSettingButtonValue> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteEdgeAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeEdgeToVariant (boost::get <unsigned int> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteMatchAtKey (const std::string &plugin,
-				      const std::string &key,
-				      const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeStringToVariant (boost::get <const char *> (value), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteBellAtKey (const std::string &plugin,
-				       const std::string &key,
-				       const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-	    if (writeBoolToVariant (boolToBool (boost::get <bool> (value)), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	void WriteListAtKey (const std::string &plugin,
-				     const std::string &key,
-				     const VariantTypes &value)
-	{
-	    GVariant *variant = NULL;
-
-	    const CCSListWrapper::Ptr &lw (boost::get <CCSListWrapper::Ptr> (value));
-
-	    if (writeListValue (*lw, lw->type (), &variant))
-		writeVariantToKey (mSettings, CharacterWrapper (translateKeyForGSettings (key.c_str ())), variant);
-	    else
-		throw std::exception ();
-	}
-
-	Bool ReadBoolAtKey (const std::string &plugin,
-			    const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeBool));
-	    return readBoolFromVariant (variant.get ());
-	}
-
-	int ReadIntegerAtKey (const std::string &plugin,
-					const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeInt));
-	    return readIntFromVariant (variant.get ());
-	}
-
-	float ReadFloatAtKey (const std::string &plugin,
-				      const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeFloat));
-	    return readFloatFromVariant (variant.get ());
-	}
-
-	const char * ReadStringAtKey (const std::string &plugin,
-				      const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeString));
-	    return readStringFromVariant (variant.get ());
-	}
-
-	CCSSettingColorValue ReadColorAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    Bool success = FALSE;
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeColor));
-	    CCSSettingColorValue value = readColorFromVariant (variant.get (), &success);
-	    EXPECT_TRUE (success);
-	    return value;
-	}
-
-	CCSSettingKeyValue ReadKeyAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    Bool success = FALSE;
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeKey));
-	    CCSSettingKeyValue value = readKeyFromVariant (variant.get (), &success);
-	    EXPECT_TRUE (success);
-	    return value;
-	}
-
-	CCSSettingButtonValue ReadButtonAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    Bool success = FALSE;
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeButton));
-	    CCSSettingButtonValue value = readButtonFromVariant (variant.get (), &success);
-	    EXPECT_TRUE (success);
-	    return value;
-	}
-
-	unsigned int ReadEdgeAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeEdge));
-	    return readEdgeFromVariant (variant.get ());
-	}
-
-	const char * ReadMatchAtKey (const std::string &plugin,
-				     const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeMatch));
-	    return readStringFromVariant (variant.get ());
-	}
-
-	Bool ReadBellAtKey (const std::string &plugin,
-				       const std::string &key)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeBell));
-	    return readBoolFromVariant (variant.get ());
-	}
-
-	CCSSettingValueList ReadListAtKey (const std::string &plugin,
-					   const std::string &key,
-					   CCSSetting        *setting)
-	{
-	    GVariantShared variant (ReadVariantAtKeyToShared (plugin,
-							      key,
-							      TypeList));
-	    return readListValue (variant.get (), setting, &ccsDefaultObjectAllocator);
-	}
-
-    private:
-
-	GVariantShared
-	ReadVariantAtKeyToShared (const std::string   &plugin,
-				  const std::string   &key,
-				  CCSSettingType	  type)
-	{
-	    CharacterWrapper translatedKey (translateKeyForGSettings (key.c_str ()));
-	    CharacterWrapper pluginPath (makeCompizPluginPath (profileName.c_str (),
-							       plugin.c_str ()));
-
-	    GVariant *rawVariant = getVariantAtKey (mSettings,
-						    translatedKey,
-						    pluginPath,
-						    type);
-
-	    GVariantShared shared (AutoDestroy (rawVariant, g_variant_unref));
-
-
-
-	    return shared;
-	}
-
-	CCSGSettingsWrapper  *mSettings;
-	std::string	     profileName;
-
-
-};
+namespace cci = compiz::config::impl;
 
 class CCSGSettingsBackendEnv :
     public CCSBackendConceptTestEnvironmentInterface,
@@ -467,7 +65,6 @@ class CCSGSettingsBackendEnv :
 	CCSGSettingsBackendEnv () :
 	    pluginToMatch ("mock")
 	{
-	    g_type_init ();
 	}
 
 	/* A wrapper to prevent signals from being added */
@@ -480,7 +77,7 @@ class CCSGSettingsBackendEnv :
 	    return &gsettingsBackendInfo;
 	}
 
-	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
+	CCSBackend * BackendSetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
 
@@ -526,7 +123,7 @@ class CCSGSettingsBackendEnv :
 	    return (CCSBackend *) mBackend;
 	}
 
-	void TearDown (CCSBackend *)
+	void BackendTearDown (CCSBackend *)
 	{
 	    GVariantBuilder noProfilesBuilder;
 	    g_variant_builder_init (&noProfilesBuilder, G_VARIANT_TYPE ("as"));
@@ -549,7 +146,6 @@ class CCSGSettingsBackendEnv :
 
 	    ccsFreeDynamicBackend (mBackend);
 
-	    ccsGSettingsWrapperUnref (mSettings);
 	    mStorage.reset ();
 
 	    g_variant_unref (pluginKeys);

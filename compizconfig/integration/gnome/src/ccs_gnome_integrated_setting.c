@@ -12,6 +12,8 @@
 
 INTERFACE_TYPE (CCSGNOMEIntegratedSettingInfoInterface);
 
+CCSREF_OBJ (GNOMEIntegratedSettingInfo, CCSGNOMEIntegratedSettingInfo);
+
 SpecialOptionType
 ccsGNOMEIntegratedSettingInfoGetSpecialOptionType (CCSGNOMEIntegratedSettingInfo *info)
 {
@@ -89,7 +91,7 @@ ccsGNOMEIntegratedSettingInfoGetType (CCSIntegratedSettingInfo *info)
 }
 
 void
-ccsGNOMEIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
+ccsGNOMESharedIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
 {
     CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *priv = (CCSGNOMEIntegratedSettingInfoDefaultImplPrivate *) ccsObjectGetPrivate (info);
 
@@ -99,10 +101,17 @@ ccsGNOMEIntegratedSettingInfoFree (CCSIntegratedSettingInfo *info)
     (*info->object.object_allocation->free_) (info->object.object_allocation->allocator, info);
 }
 
+static void
+ccsGNOMEIntegratedSettingInfoFree (CCSGNOMEIntegratedSettingInfo *info)
+{
+    ccsGNOMESharedIntegratedSettingInfoFree ((CCSIntegratedSettingInfo *) info);
+}
+
 CCSGNOMEIntegratedSettingInfoInterface ccsGNOMEIntegratedSettingInfoDefaultImplInterface =
 {
     ccsGNOMEIntegratedSettingGetSpecialOptionDefault,
-    ccsGNOMEIntegratedSettingGetGNOMENameDefault
+    ccsGNOMEIntegratedSettingGetGNOMENameDefault,
+    ccsGNOMEIntegratedSettingInfoFree
 };
 
 const CCSIntegratedSettingInfoInterface ccsGNOMEIntegratedSettingInfoInterface =
@@ -110,8 +119,14 @@ const CCSIntegratedSettingInfoInterface ccsGNOMEIntegratedSettingInfoInterface =
     ccsGNOMEIntegratedSettingInfoPluginName,
     ccsGNOMEIntegratedSettingInfoSettingName,
     ccsGNOMEIntegratedSettingInfoGetType,
-    ccsGNOMEIntegratedSettingInfoFree
+    ccsGNOMESharedIntegratedSettingInfoFree
 };
+
+void
+ccsFreeGNOMEIntegratedSettingInfo (CCSGNOMEIntegratedSettingInfo *info)
+{
+    (*(GET_INTERFACE (CCSGNOMEIntegratedSettingInfoInterface, info))->free) (info);
+}
 
 CCSGNOMEIntegratedSettingInfo *
 ccsGNOMEIntegratedSettingInfoNew (CCSIntegratedSettingInfo *base,

@@ -88,6 +88,9 @@ COMPIZCONFIG_BEGIN_DECLS
 		ccsFree##type (d); \
 	} \
 
+#define GET_PRIVATE(Private, obj) \
+    (Private *) ccsObjectGetPrivate (obj);
+
 COMPIZCONFIG_END_DECLS
 
 #endif
