@@ -27,14 +27,14 @@
 
 #include <boost/function.hpp>
 
-class CompScreenEdge;
+struct CompScreenEdge;
 class CompOption;
 
 namespace compiz
 {
 namespace private_screen
 {
-struct GrabList;
+class GrabList;
 class EventManager;
 }
 
