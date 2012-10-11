@@ -5,11 +5,12 @@
 
 COMPIZCONFIG_BEGIN_DECLS
 
+#include <ccs-object.h>
+#include <ccs_gsettings_backend_fwd.h>
+
 #include <glib.h>
 #include <gio/gio.h>
-#include <ccs-object.h>
 
-typedef struct _CCSGSettingsWrapper	      CCSGSettingsWrapper;
 typedef struct _CCSGSettingsWrapperInterface  CCSGSettingsWrapperInterface;
 
 typedef void (*CCSGSettingsWrapperSetValue) (CCSGSettingsWrapper *, const char *, GVariant *);

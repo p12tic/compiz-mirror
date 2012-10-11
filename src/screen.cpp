@@ -3350,10 +3350,13 @@ cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 	     * This is so that we can detect taps on individual modifier
 	     * keys, and know to cancel the tap if <modifier>+k is pressed.
 	     */
-	    int minCode, maxCode;
-	    XDisplayKeycodes (screen->dpy(), &minCode, &maxCode);
-	    for (k = minCode; k <= maxCode; k++)
-	        grabUngrabOneKey (modifiers | ignore, k, grab);
+	    if (!(currentState & CompAction::StateIgnoreTap))
+            {
+ 		int minCode, maxCode;
+ 		XDisplayKeycodes (screen->dpy(), &minCode, &maxCode);
+ 		for (k = minCode; k <= maxCode; k++)
+ 		    grabUngrabOneKey (modifiers | ignore, k, grab);
+            }
 	}
 
 	if (CompScreen::checkForError (screen->dpy()))
@@ -3530,6 +3533,12 @@ cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
     }
 }
 
+void
+cps::GrabManager::setCurrentState (CompAction::State state)
+{
+    currentState = state;
+}
+
 bool
 CompScreenImpl::addAction (CompAction *action)
 {
@@ -3539,6 +3548,8 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->active ())
 	return false;
+
+    grabManager.setCurrentState(action->state());
 
     if (action->type () & CompAction::BindingTypeKey)
     {
@@ -3579,6 +3590,8 @@ CompScreenImpl::removeAction (CompAction *action)
 
     if (!action->active ())
 	return;
+
+    grabManager.setCurrentState(action->state());
 
     if (action->type () & CompAction::BindingTypeKey)
 	grabManager.removePassiveKeyGrab (action->key ());
@@ -5386,6 +5399,7 @@ CompScreenImpl::~CompScreenImpl ()
 
 cps::GrabManager::GrabManager (CompScreen *screen) :
     screen(screen),
+    currentState(0),
     buttonGrabs (),
     keyGrabs ()
 {

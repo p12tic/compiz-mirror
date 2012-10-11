@@ -23,12 +23,11 @@
 #ifndef _COMPIZCONFIG_CCS_MOCK_GNOME_INTEGRATED_SETTING_COMPOSITION_H
 #define _COMPIZCONFIG_CCS_MOCK_GNOME_INTEGRATED_SETTING_COMPOSITION_H
 
-COMPIZCONFIG_BEGIN_DECLS
+#include <ccs-defs.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
 
-typedef struct _CCSIntegratedSetting CCSIntegratedSetting;
-typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
-typedef struct _CCSIntegratedSettingInfo CCSIntegratedSettingInfo;
-typedef struct _CCSObjectAllocationInterface CCSObjectAllocationInterface;
+COMPIZCONFIG_BEGIN_DECLS
 
 CCSIntegratedSetting *
 ccsMockCompositionIntegratedSettingNew (CCSIntegratedSetting          *integratedSetting,

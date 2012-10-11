@@ -42,9 +42,9 @@ class CCSBackendConceptTestEnvironmentInterface :
 	typedef boost::shared_ptr <CCSBackendConceptTestEnvironmentInterface> Ptr;
 
 	virtual ~CCSBackendConceptTestEnvironmentInterface () {};
-	virtual CCSBackend * SetUp (CCSContext *context,
+	virtual CCSBackend * BackendSetUp (CCSContext *context,
 				    CCSContextGMock *gmockContext) = 0;
-	virtual void TearDown (CCSBackend *) = 0;
+	virtual void BackendTearDown (CCSBackend *) = 0;
 
 	virtual void AddProfile (const std::string &profile) = 0;
 	virtual void SetGetExistingProfilesExpectation (CCSContext *,

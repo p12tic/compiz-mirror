@@ -69,15 +69,10 @@ typedef enum
 
 void ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...);
 
-typedef struct _CCSContext	  CCSContext;
-typedef struct _CCSPlugin	  CCSPlugin;
-typedef struct _CCSSetting	  CCSSetting;
 typedef struct _CCSGroup	  CCSGroup;
 typedef struct _CCSSubGroup	  CCSSubGroup;
 typedef struct _CCSPluginCategory CCSPluginCategory;
-typedef struct _CCSSettingValue	  CCSSettingValue;
 typedef struct _CCSPluginConflict CCSPluginConflict;
-typedef struct _CCSBackendInfo	  CCSBackendInfo;
 typedef struct _CCSIntDesc	  CCSIntDesc;
 typedef struct _CCSStrRestriction CCSStrRestriction;
 typedef struct _CCSStrExtension   CCSStrExtension;
@@ -106,11 +101,9 @@ CCSREF_HDR (IntDesc, CCSIntDesc)
 CCSREF_HDR (StrRestriction, CCSStrRestriction)
 CCSREF_HDR (StrExtension, CCSStrExtension)
 
-typedef struct _CCSInterfaceTable CCSInterfaceTable;
 typedef struct _CCSContextInterface CCSContextInterface;
 typedef struct _CCSPluginInterface CCSPluginInterface;
 typedef struct _CCSSettingInterface CCSSettingInterface;
-typedef struct _CCSDynamicBackendInterface CCSDynamicBackendInterface;
 
 struct _CCSInterfaceTable
 {

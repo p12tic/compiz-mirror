@@ -427,8 +427,12 @@ public:
     void updatePassiveKeyGrabs ();
     void updatePassiveButtonGrabs(Window serverFrame);
 
+    void setCurrentState(CompAction::State state);
+
 private:
     CompScreen  * const screen;
+    CompAction::State currentState;
+
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
 };

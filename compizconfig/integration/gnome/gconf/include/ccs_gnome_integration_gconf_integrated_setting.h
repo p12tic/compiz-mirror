@@ -2,14 +2,11 @@
 #define _CCS_GNOME_GCONF_INTEGRATED_SETTING_H
 
 #include <ccs-defs.h>
-#include <ccs-object.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
+#include <gconf/gconf-client.h>
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSIntegratedSetting      CCSIntegratedSetting;
-typedef struct _CCSIntegratedSettingInfo      CCSIntegratedSettingInfo;
-typedef struct _CCSGNOMEIntegratedSettingInfo CCSGNOMEIntegratedSettingInfo;
-typedef struct _GConfClient		   GConfClient;
 
 /**
  * @brief ccsGConfIntegratedSettingNew

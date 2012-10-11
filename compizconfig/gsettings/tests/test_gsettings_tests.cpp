@@ -996,22 +996,7 @@ namespace
 	    {
 		return !(*this == l);
 	    }
-
-	    friend bool operator== (GList *lhs, const GListContainerEqualityInterface &rhs);
-	    friend bool operator!= (GList *lhs, const GListContainerEqualityInterface &rhs);
     };
-
-    bool
-    operator== (GList *lhs, const GListContainerEqualityInterface &rhs)
-    {
-	return rhs == lhs;
-    }
-
-    bool
-    operator!= (GList *lhs, const GListContainerEqualityInterface &rhs)
-    {
-	return !(rhs == lhs);
-    }
 
     class GListContainerEqualityBase :
 	public GListContainerEqualityInterface

@@ -21,15 +21,6 @@ target_link_libraries (compizconfig_ccs_list_equality
 		       ${GMOCK_LIBRARY}
 		       compizconfig)
 
-add_library (compizconfig_ccs_setting_value_matcher STATIC
-	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_setting_value_matcher.cpp)
-
-target_link_libraries (compizconfig_ccs_setting_value_matcher
-		       ${GTEST_BOTH_LIBRARIES}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${GMOCK_LIBRARY}
-		       compizconfig)
-
 add_library (compizconfig_ccs_list_wrapper STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_list_wrapper.cpp)
 
@@ -47,6 +38,16 @@ target_link_libraries (compizconfig_ccs_setting_value_operators
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${GMOCK_LIBRARY}
 		       compizconfig)
+
+add_library (compizconfig_ccs_setting_value_matcher STATIC
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_ccs_setting_value_matcher.cpp)
+
+target_link_libraries (compizconfig_ccs_setting_value_matcher
+		       ${GTEST_BOTH_LIBRARIES}
+		       ${GMOCK_MAIN_LIBRARY}
+		       ${GMOCK_LIBRARY}
+		       compizconfig
+		       compizconfig_ccs_setting_value_operators)
 
 add_library (compizconfig_ccs_test_value_combinations STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_value_combiners.cpp)

@@ -22,6 +22,10 @@
 #ifndef CCS_PRIVATE_H
 #define CSS_PRIVATE_H
 
+#include <ccs-defs.h>
+
+COMPIZCONFIG_BEGIN_DECLS
+
 #include <ccs.h>
 #include <ccs-backend.h>
 
@@ -157,5 +161,20 @@ Bool ccsWriteConfig (ConfigOption option,
 		     char         *value);
 unsigned int ccsAddConfigWatch (CCSContext            *context,
 				FileWatchCallbackProc callback);
+
+void
+ccsAddKeybindingMaskToString (char         **bindingString,
+			      unsigned int matchBindingMask,
+			      unsigned int *addedBindingMask,
+			      unsigned int addBindingMask,
+			      const char   *addBindingString);
+
+void
+ccsAddStringToKeybindingMask (unsigned int *bindingMask,
+			      const char   *bindingString,
+			      unsigned int addBindingMask,
+			      const char   *addBindingString);
+
+COMPIZCONFIG_END_DECLS
 
 #endif

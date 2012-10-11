@@ -657,8 +657,6 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
     WRAPABLE_HND_FUNCTN (glPaintCompositedOutput, region, fbo, mask)
 
     GLMatrix sTransform;
-    std::vector<GLfloat> vertexData;
-    std::vector<GLfloat> textureData;
     const GLTexture::Matrix & texmatrix = fbo->tex ()->matrix ();
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
@@ -671,7 +669,7 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 	GLfloat ty1 = 1.0 - COMP_TEX_COORD_Y (texmatrix, 0.0f);
 	GLfloat ty2 = 1.0 - COMP_TEX_COORD_Y (texmatrix, screen->height ());
 
-	vertexData = {
+	const GLfloat vertexData[] = {
 	    0.0f,                    0.0f,                     0.0f,
 	    0.0f,                    (float)screen->height (), 0.0f,
 	    (float)screen->width (), 0.0f,                     0.0f,
@@ -681,7 +679,7 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 	    (float)screen->width (), 0.0f,                     0.0f,
 	};
 
-	textureData = {
+	const GLfloat textureData[] = {
 	    tx1, ty1,
 	    tx1, ty2,
 	    tx2, ty1,
@@ -705,7 +703,7 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 	    GLfloat ty1 = 1.0 - COMP_TEX_COORD_Y (texmatrix, pBox->y1);
 	    GLfloat ty2 = 1.0 - COMP_TEX_COORD_Y (texmatrix, pBox->y2);
 
-	    vertexData = {
+	    const GLfloat vertexData[] = {
 		(float)pBox->x1, (float)pBox->y1, 0.0f,
 		(float)pBox->x1, (float)pBox->y2, 0.0f,
 		(float)pBox->x2, (float)pBox->y1, 0.0f,
@@ -715,7 +713,7 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
 		(float)pBox->x2, (float)pBox->y1, 0.0f,
 	    };
 
-	    textureData = {
+	    const GLfloat textureData[] = {
 		tx1, ty1,
 		tx1, ty2,
 		tx2, ty1,

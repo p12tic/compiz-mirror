@@ -455,11 +455,21 @@ add_frame_window (WnckWindow *win,
     d->created = TRUE;
 }
 
+gboolean
+clean_destroyed_pixmaps (gpointer key, gpointer value, gpointer d)
+{
+    return value == d;
+}
+
 void
 remove_frame_window (WnckWindow *win)
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     Display *xdisplay;
+
+    g_hash_table_foreach_remove (destroyed_pixmaps_table,
+                                 clean_destroyed_pixmaps,
+                                 d);
 
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 

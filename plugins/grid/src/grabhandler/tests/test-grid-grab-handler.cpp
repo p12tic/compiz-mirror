@@ -77,6 +77,7 @@ TEST(GridGrabHandlerTest, TestResizeHandler)
 
 TEST(GridGrabHandlerTest, TestNoTrackOnExpoGrab)
 {
+    const std::string                       expoPlugin ("expo");
     MockGrabExist                           mge;
     compiz::grid::window::GrabActiveFunc    grabExist (boost::bind (&MockGrabExist::grabExist,
 								    &mge, _1));
@@ -84,6 +85,6 @@ TEST(GridGrabHandlerTest, TestNoTrackOnExpoGrab)
 							 CompWindowGrabButtonMask,
 							 grabExist);
 
-    EXPECT_CALL (mge, grabExist (Eq ("expo"))).WillOnce (Return (true));
+    EXPECT_CALL (mge, grabExist (Eq (expoPlugin))).WillOnce (Return (true));
     EXPECT_FALSE (moveHandler.track ());
 }
