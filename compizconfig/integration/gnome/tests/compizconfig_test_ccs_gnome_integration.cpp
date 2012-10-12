@@ -827,7 +827,7 @@ class CCSGNOMEIntegrationTestWriteIntegratedMediaKeys :
 {
 };
 
-TEST_P (CCSGNOMEIntegrationTestWriteIntegratedMediaKeys, TestWriteIntegratedMediaKey)
+TEST_P (CCSGNOMEIntegrationTestWriteIntegratedMediaKeys, DISABLED_TestWriteIntegratedMediaKey)
 {
     const std::string                   settingName (GetParam ().settingName);
     boost::shared_ptr <CCSSettingValue> compizValue (MakeAutoDestroySettingValue (TypeKey));
