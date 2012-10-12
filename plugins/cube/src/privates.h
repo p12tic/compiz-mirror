@@ -161,6 +161,9 @@ class PrivateCubeScreen :
 	CompWindowList mReversedWindowList;
 };
 
+class PrivateCubeWindow;
+extern template class PluginClassHandler<PrivateCubeWindow, CompWindow, COMPIZ_CUBE_ABI>;
+
 class PrivateCubeWindow :
     public PluginClassHandler<PrivateCubeWindow, CompWindow, COMPIZ_CUBE_ABI>,
     public GLWindowInterface

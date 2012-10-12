@@ -581,6 +581,8 @@ CompText::~CompText ()
 	XFreePixmap (screen->dpy (), pixmap);
 }
 
+template class PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>;
+
 PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),
     gScreen (GLScreen::get (screen))

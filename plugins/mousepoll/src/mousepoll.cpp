@@ -227,6 +227,8 @@ MousepollScreen::updateTimer ()
 
 }
 
+template class PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>;
+
 MousepollScreen::MousepollScreen (CompScreen *screen) :
     PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen)
 {

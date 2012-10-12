@@ -172,6 +172,8 @@ class CompositeScreenInterface :
 	virtual void damageRegion (const CompRegion &r);
 };
 
+extern template class PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>;
+
 class CompositeScreen :
     public WrapableHandler<CompositeScreenInterface, 7>,
     public PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>,
@@ -321,6 +323,8 @@ class CompositeWindowInterface :
 	 */
 	virtual bool damageRect (bool initial, const CompRect &rect);
 };
+
+extern template class PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI>;
 
 class CompositeWindow :
     public WrapableHandler<CompositeWindowInterface, 1>,
