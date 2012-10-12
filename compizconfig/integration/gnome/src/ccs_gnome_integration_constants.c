@@ -416,7 +416,7 @@ const CCSGNOMEIntegratedSettingsList *
 ccsGNOMEIntegratedSettingsList ()
 {
     static GOnce initIntegratedSettings = G_ONCE_INIT;
-    static const CCSGNOMEIntegratedSettingsList settings[CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE];
+    static CCSGNOMEIntegratedSettingsList settings[CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE];
 
     g_once (&initIntegratedSettings, ccsGNOMEIntegrationInitializeIntegratedSettingsList, (gpointer) settings);
 
