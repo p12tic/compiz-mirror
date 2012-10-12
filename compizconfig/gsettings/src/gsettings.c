@@ -497,6 +497,9 @@ initBackend (CCSBackend *backend, CCSContext * context)
 
     g_free (currentProfilePath);
 
+    /* Drop our reference to the wrapper factory */
+    ccsGSettingsWrapperFactoryUnref (gnomeWrapperFactory);
+
     return ccsGSettingsBackendAttachNewToBackend (backend,
 						  context,
 						  compizconfigSettings,
