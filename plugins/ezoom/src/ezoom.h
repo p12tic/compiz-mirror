@@ -49,6 +49,12 @@
 
 #include <cmath>
 
+enum SpecificZoomTarget {
+    ZoomTargetFirst = 0,
+    ZoomTargetSecond,
+    ZoomTargetThird
+};
+
 class EZoomScreen :
     public PluginClassHandler <EZoomScreen, CompScreen>,
     public EzoomOptions,
@@ -314,7 +320,7 @@ class EZoomScreen :
 	zoomSpecific (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector options,
-		      float		     target);
+		      SpecificZoomTarget target);
 
 	bool
 	zoomToWindow (CompAction         *action,
