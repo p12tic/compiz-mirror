@@ -1036,13 +1036,6 @@ GetInitiateForMock (MockTriggerableAction &triggerableAction)
 			_1, _2, _3);
 }
 
-CompAction::CallBack
-GetTerminateForMock (MockTriggerableAction &triggerableAction)
-{
-    return boost::bind (&MockTriggerableAction::terminate,
-			&triggerableAction,
-			_1, _2, _3);
-}
 }
 
 bool operator== (const CompOption &lhs,
