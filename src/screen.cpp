@@ -89,6 +89,7 @@ typedef struct {
 } MwmHints;
 
 namespace cps = compiz::private_screen;
+namespace ca = compiz::actions;
 
 
 
@@ -3576,7 +3577,7 @@ CompScreenImpl::addAction (CompAction *action)
 		privateScreen.enableEdge (i);
     }
 
-    action->priv->active = true;
+    ca::setActionActiveState (*action, true);
 
     return true;
 }
@@ -3607,7 +3608,7 @@ CompScreenImpl::removeAction (CompAction *action)
 		privateScreen.disableEdge (i);
     }
 
-    action->priv->active = false;
+    ca::setActionActiveState (*action, false);
 }
 
 CompRect
