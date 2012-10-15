@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="showrepaint" useBcop="true">
 	<_short>Show Repaint</_short>

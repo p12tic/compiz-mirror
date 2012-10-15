@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
   <plugin name="showdesktop" useBcop="true">
     <_short>Show desktop</_short>
