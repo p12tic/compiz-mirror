@@ -823,6 +823,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 }
 
 
+template class PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI>;
+
 GLScreen::GLScreen (CompScreen *s) :
     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),
     priv (new PrivateGLScreen (this))

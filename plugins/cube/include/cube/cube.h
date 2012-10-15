@@ -91,6 +91,8 @@ class CubeScreenInterface :
 
 };
 
+extern template class PluginClassHandler<CubeScreen, CompScreen, COMPIZ_CUBE_ABI>;
+
 class CubeScreen :
     public WrapableHandler<CubeScreenInterface, 9>,
     public PluginClassHandler<CubeScreen, CompScreen, COMPIZ_CUBE_ABI>,

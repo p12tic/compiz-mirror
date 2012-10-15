@@ -1,6 +1,9 @@
 #ifndef ANIMATION_WINDOW_H
 #define ANIMATION_WINDOW_H
 #include "animation.h"
+
+extern template class PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI>;
+
 class AnimWindow :
     public PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI>
 {

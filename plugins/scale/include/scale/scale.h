@@ -72,6 +72,8 @@ class ScaleScreenInterface :
 
 };
 
+extern template class PluginClassHandler<ScaleScreen, CompScreen, COMPIZ_SCALE_ABI>;
+
 class ScaleScreen :
     public WrapableHandler<ScaleScreenInterface, 1>,
     public PluginClassHandler<ScaleScreen, CompScreen, COMPIZ_SCALE_ABI>,
@@ -126,6 +128,8 @@ class ScaleWindowInterface :
 	virtual bool setScaledPaintAttributes (GLWindowPaintAttrib &);
 	virtual void scaleSelectWindow ();
 };
+
+extern template class PluginClassHandler<ScaleWindow, CompWindow, COMPIZ_SCALE_ABI>;
 
 class ScaleWindow :
     public WrapableHandler<ScaleWindowInterface, 3>,

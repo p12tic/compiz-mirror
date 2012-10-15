@@ -27,6 +27,9 @@
 
 #include "privates.h"
 
+
+template class PluginClassHandler<GLWindow, CompWindow, COMPIZ_OPENGL_ABI>;
+
 GLWindow::GLWindow (CompWindow *w) :
     PluginClassHandler<GLWindow, CompWindow, COMPIZ_OPENGL_ABI> (w),
     priv (new PrivateGLWindow (w, this))

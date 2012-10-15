@@ -669,6 +669,7 @@ class GLScreenInterface :
 
 };
 
+extern template class PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI>;
 
 class GLScreen :
     public WrapableHandler<GLScreenInterface, 8>,
@@ -870,6 +871,8 @@ class GLWindowInterface :
 	virtual void glDrawTexture (GLTexture *texture, const GLMatrix &,
 	                            const GLWindowPaintAttrib &, unsigned int);
 };
+
+extern template class PluginClassHandler<GLWindow, CompWindow, COMPIZ_OPENGL_ABI>;
 
 class GLWindow :
     public WrapableHandler<GLWindowInterface, 4>,

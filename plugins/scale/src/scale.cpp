@@ -1752,6 +1752,8 @@ PrivateScaleWindow::damageRect (bool            initial,
     return status;
 }
 
+template class PluginClassHandler<ScaleScreen, CompScreen, COMPIZ_SCALE_ABI>;
+
 ScaleScreen::ScaleScreen (CompScreen *s) :
     PluginClassHandler<ScaleScreen, CompScreen, COMPIZ_SCALE_ABI> (s),
     priv (new PrivateScaleScreen (s))
@@ -1762,6 +1764,8 @@ ScaleScreen::~ScaleScreen ()
 {
     delete priv;
 }
+
+template class PluginClassHandler<ScaleWindow, CompWindow, COMPIZ_SCALE_ABI>;
 
 ScaleWindow::ScaleWindow (CompWindow *w) :
     PluginClassHandler<ScaleWindow, CompWindow, COMPIZ_SCALE_ABI> (w),

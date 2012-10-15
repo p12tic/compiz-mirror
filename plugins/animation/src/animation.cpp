@@ -3036,6 +3036,8 @@ PrivateAnimWindow::createFocusAnimation (AnimEffect effect, int duration)
     enablePainting (true);
 }
 
+template class PluginClassHandler<AnimScreen, CompScreen, ANIMATION_ABI>;
+
 AnimScreen::AnimScreen (CompScreen *s) :
     PluginClassHandler<AnimScreen, CompScreen, ANIMATION_ABI> (s),
     priv (new PrivateAnimScreen (s, this))
@@ -3047,6 +3049,8 @@ AnimScreen::~AnimScreen ()
 {
     delete priv;
 }
+
+template class PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI>;
 
 AnimWindow::AnimWindow (CompWindow *w) :
     PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI> (w),
