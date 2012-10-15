@@ -1550,7 +1550,8 @@ EZoomScreen::zoomSpecific (CompAction         *action,
     float        zoom_level;
     CompWindow   *w;
 
-    switch (target) {
+    switch (target)
+    {
 	case ZoomTargetFirst:
 	    zoom_level = optionGetZoomSpec1 ();
 	    break;

@@ -49,7 +49,8 @@
 
 #include <cmath>
 
-enum SpecificZoomTarget {
+enum SpecificZoomTarget
+{
     ZoomTargetFirst = 0,
     ZoomTargetSecond,
     ZoomTargetThird
