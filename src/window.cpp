@@ -3495,14 +3495,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 {
     CompRect  workArea;
     int	      mask = 0;
-    int	      x, y;
     CompOutput *output;
     CompPoint viewport;
-
-    screen->viewportForGeometry (old, viewport);
-
-    x = (viewport.x () - screen->vp ().x ()) * screen->width ();
-    y = (viewport.y () - screen->vp ().y ()) * screen->height ();
 
     /* Try to select and output device that the window is on first
      * and make sure if we are fullscreening or maximizing that the
@@ -3585,15 +3579,15 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	if (fullscreenMonitorsSet)
 	{
-	    xwc->x      = x + fullscreenMonitorRect.x ();
-	    xwc->y      = y + fullscreenMonitorRect.y ();
+	    xwc->x      = fullscreenMonitorRect.x ();
+	    xwc->y      = fullscreenMonitorRect.y ();
 	    xwc->width  = fullscreenMonitorRect.width ();
 	    xwc->height = fullscreenMonitorRect.height ();
 	}
 	else
 	{
-	    xwc->x      = x + output->x ();
-	    xwc->y      = y + output->y ();
+	    xwc->x      = output->x ();
+	    xwc->y      = output->y ();
 	    xwc->width  = output->width ();
 	    xwc->height = output->height ();
 	}
@@ -3695,7 +3689,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		 * by the gravity value (so that the corner that the gravity specifies
 		 * is 'anchored' to that edge of the workarea) */
 
-		xwc->y = y + workArea.y () + border.top;
+		xwc->y = workArea.y () + border.top;
 		mask |= CWY;
 
 		switch (priv->sizeHints.win_gravity)
@@ -3706,7 +3700,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			/* Shift the window so that the bottom meets the top of the bottom */
 			height = xwc->height + old.border () * 2;
 
-			max = y + workArea.bottom ();
+			max = workArea.bottom ();
 			if (xwc->y + xwc->height + border.bottom > max)
 			{
 			    xwc->y = max - height - border.bottom;
@@ -3732,7 +3726,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	    if (state & CompWindowStateMaximizedHorzMask)
 	    {
-		xwc->x = x + workArea.x () + border.left;
+		xwc->x = workArea.x () + border.left;
 		mask |= CWX;
 
 		switch (priv->sizeHints.win_gravity)
@@ -3742,7 +3736,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		    case EastGravity:
 			width = xwc->width + old.border () * 2;
 
-			max = x + workArea.right ();
+			max = workArea.right ();
 
 			if (old.x () + (int) old.width () + border.right > max)
 			{
@@ -3751,7 +3745,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			}
 			else if (old.x () + width + border.right > max)
 			{
-			    xwc->x = x + workArea.x () +
+			    xwc->x = workArea.x () +
 				     (workArea.width () - border.left - width -
 				      border.right) / 2 + border.left;
 			    mask |= CWX;
