@@ -62,6 +62,8 @@
 #include "privateaction.h"
 #include "privatestackdebugger.h"
 
+template class WrapableInterface<CompScreen, ScreenInterface>;
+
 CompOutput *targetOutput;
 
 int lastPointerX = 0;

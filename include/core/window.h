@@ -230,6 +230,9 @@ struct CompStruts {
     XRectangle bottom;
 };
 
+class WindowInterface;
+extern template class WrapableInterface<CompWindow, WindowInterface>;
+
 /**
  * Wrappable core window functions. Derive from this class
  * and overload these functions in order to have your function called

@@ -47,6 +47,8 @@
 
 #include <boost/scoped_array.hpp>
 
+template class WrapableInterface<CompWindow, WindowInterface>;
+
 PluginClassStorage::Indices windowPluginClassIndices (0);
 
 unsigned int
