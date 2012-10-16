@@ -29,7 +29,6 @@
 #include <core/point.h>
 #include <core/size.h>
 #include <vector>
-#include <list>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xregion.h>
