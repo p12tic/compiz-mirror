@@ -42,10 +42,7 @@ extern template class std::vector<CompRegion>;
  */
 class CompRegion {
     public:
-	typedef std::vector<CompRegion> List;
-	typedef std::vector<CompRegion *> PtrList;
 	typedef std::vector<CompRegion> Vector;
-	typedef std::vector<CompRegion *> PtrVector;
 
     public:
 	CompRegion ();

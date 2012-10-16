@@ -29,7 +29,6 @@
 #include <core/point.h>
 #include <core/size.h>
 #include <vector>
-#include <list>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xregion.h>
@@ -131,8 +130,6 @@ class CompRect {
 	CompRect& operator= (const CompRect &);
 
 	typedef std::vector<CompRect> vector;
-	typedef std::vector<CompRect *> ptrVector;
-	typedef std::list<CompRect *> ptrList;
 
     private:
 	REGION       mRegion;
