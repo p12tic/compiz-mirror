@@ -109,6 +109,9 @@ struct CompActiveWindowHistory {
     int    activeNum;
 };
 
+class ScreenInterface;
+extern template class WrapableInterface<CompScreen, ScreenInterface>;
+
 /**
  * Interface to an abstract screen.
  */
