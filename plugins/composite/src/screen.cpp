@@ -45,6 +45,8 @@
 
 #include <core/timer.h>
 
+template class WrapableInterface<CompositeScreen, CompositeScreenInterface>;
+
 static const int FALLBACK_REFRESH_RATE = 60;   /* if all else fails */
 
 CompWindow *lastDamagedWindow = 0;
