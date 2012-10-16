@@ -302,6 +302,10 @@ class CompOption
 	PrivateOption *priv;
 };
 
+extern template class std::vector<unsigned short>;
+extern template class std::vector<CompOption::Value>;
+extern template class std::vector<CompOption>;
+
 namespace compiz {
 namespace detail {
 
