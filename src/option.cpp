@@ -38,6 +38,10 @@
 #include <boost/variant/static_visitor.hpp>
 #include <boost/type_traits/remove_const.hpp>
 
+template class std::vector<unsigned short>;
+template class std::vector<CompOption::Value>;
+template class std::vector<CompOption>;
+
 namespace
 {
     CompOption::Value::Vector & emptyList ()
