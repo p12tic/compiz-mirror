@@ -77,6 +77,9 @@ set (compiz_sharedir ${datadir}/compiz/)
 set (compiz_metadatadir ${datadir}/compiz)
 set (COMPIZ_I18N_DIR ${CMAKE_SOURCE_DIR}/po)
 
+# Force re-generation of uninstall script
+compiz_set (_compiz_uninstall_rule_created FALSE)
+
 # Don't allow subdirectories to add schema recompile rule
 set_property (GLOBAL
 	      PROPERTY GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE

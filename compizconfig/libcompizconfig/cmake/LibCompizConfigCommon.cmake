@@ -124,12 +124,4 @@ function (compizconfig_backend bname)
 	TARGETS ${bname}
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/compizconfig/backends
     )
-
-    if (NOT _COMPIZCONFIG_INTERNAL)
-	compiz_add_git_dist ()
-	compiz_add_distcheck ()
-	compiz_add_release ()
-	compiz_add_release_signoff ()
-	compiz_add_uninstall ()
-    endif (NOT _COMPIZCONFIG_INTERNAL)
 endfunction (compizconfig_backend bname)

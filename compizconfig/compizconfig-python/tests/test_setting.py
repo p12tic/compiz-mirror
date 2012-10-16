@@ -5,19 +5,19 @@ class CompizConfigTestSetting (compiz_config_test.CompizConfigTest):
 
     def runTest (self):
 
-	plugin = self.context.Plugins['core']
-	setting = self.ccs.Setting (plugin, 'active_plugins')
+	plugin = self.context.Plugins["mock"]
+	setting = self.ccs.Setting (plugin, "mock")
 
 	self.assertEqual (setting.Plugin, plugin)
-	self.assertEqual (setting.Name, 'active_plugins')
-	self.assertEqual (setting.ShortDesc, 'Active Plugins')
-	self.assertEqual (setting.LongDesc, 'List of currently active plugins')
-	self.assertTrue (setting.Group is not None)
-	self.assertTrue (setting.SubGroup is not None)
-	self.assertEqual (setting.Type, "List")
-	self.assertTrue (setting.Hints is not None)
-	self.assertTrue (setting.DefaultValue is not None)
-	self.assertTrue (setting.Value is not None)
+	self.assertEqual (setting.Name, "mock")
+	self.assertEqual (setting.ShortDesc, "Mock Setting")
+	self.assertEqual (setting.LongDesc, "A Mock Setting")
+	self.assertEqual (setting.Group, "A Mock Group")
+	self.assertEqual (setting.SubGroup, "A Mock Subgroup")
+	self.assertEqual (setting.Type, "String")
+	self.assertEqual (setting.Hints, [])
+	self.assertEqual (setting.DefaultValue, "Mock Value")
+	self.assertEqual (setting.Value, "Mock Value")
 	self.assertEqual (setting.Integrated, False)
 	self.assertEqual (setting.ReadOnly, False)
 
