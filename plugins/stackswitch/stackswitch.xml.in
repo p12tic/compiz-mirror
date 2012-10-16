@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
 	<plugin name="stackswitch" useBcop="true">
 		<_short>Stack Window Switcher</_short>
