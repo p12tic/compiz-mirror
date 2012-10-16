@@ -37,6 +37,8 @@
 #include <dlfcn.h>
 #include <math.h>
 
+template class WrapableInterface<GLScreen, GLScreenInterface>;
+
 using namespace compiz::opengl;
 
 namespace GL {
