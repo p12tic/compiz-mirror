@@ -32,6 +32,9 @@
 #include <core/rect.h>
 #include <core/point.h>
 
+class CompRegion;
+extern template class std::vector<CompRegion>;
+
 /**
  * A 2D region with an (x,y) position and arbitrary dimensions similar to
  * an XRegion. It's data membmers are private and  must be manipulated with
