@@ -24,6 +24,12 @@ if (GSETTINGS_UTIL_FOUND)
     add_library (compizconfig_gsettings_backend_interface STATIC
                  ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_backend_interface.c)
 
+    add_library (compizconfig_gsettings_wrapper_factory_interface STATIC
+                 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_factory_interface.c)
+
+    add_library (compizconfig_gsettings_wrapper_factory STATIC
+                 ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_wrapper_factory.c)
+
     add_library (compizconfig_gsettings_wrapper_interface STATIC
                  ${CMAKE_CURRENT_SOURCE_DIR}/ccs_gsettings_interface.c)
 
@@ -53,6 +59,8 @@ if (GSETTINGS_UTIL_FOUND)
 	 compizconfig_gsettings_wrapper
 	 compizconfig_gnome_integration
 	 compizconfig_gnome_integration_gsettings_setting_factory
+	 compizconfig_gsettings_wrapper_factory_interface
+	 compizconfig_gsettings_wrapper_factory
 	 compizconfig)
 
     if (USE_GCONF)

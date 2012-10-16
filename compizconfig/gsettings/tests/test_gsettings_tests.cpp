@@ -7,13 +7,21 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
+#include "gtest_shared_autodestroy.h"
+
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
 #include "ccs_gsettings_backend.h"
+#include "ccs_gsettings_backend_interface.h"
 #include "ccs_gsettings_backend_mock.h"
 #include "compizconfig_ccs_context_mock.h"
 #include "compizconfig_ccs_plugin_mock.h"
 #include "compizconfig_ccs_setting_mock.h"
+#include "compizconfig_ccs_integration_mock.h"
+#include "ccs_gsettings_wrapper_mock.h"
+#include "ccs_gsettings_wrapper_factory_mock.h"
+#include "ccs_gsettings_wrapper_factory_interface.h"
+#include "ccs_gnome_integration.h"
 #include "gtest_shared_characterwrapper.h"
 #include "compizconfig_test_value_combiners.h"
 #include "compizconfig_ccs_mocked_allocator.h"
@@ -1959,8 +1967,6 @@ TEST_F (CCSGSettingsTestIndependent, TestUnsetAllChangedPluginKeysInProfileDefau
     boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
 					    boost::bind (ccsFreeMockContext, _1));
 
-    GVariantBuilder pluginsWithChangedKeysBuilder;
-
     const unsigned short NUM_KEYS = 3;
 
     gchar ** fooKeys = (gchar **) calloc (1, sizeof (char *) * (NUM_KEYS + 1));
@@ -1974,6 +1980,8 @@ TEST_F (CCSGSettingsTestIndependent, TestUnsetAllChangedPluginKeysInProfileDefau
     barKeys[1] = g_strdup (KEY_EXAMPLE_TWO.c_str ());
     barKeys[2] = g_strdup (KEY_EXAMPLE_THREE.c_str ());
     barKeys[3] = NULL;
+
+    GVariantBuilder pluginsWithChangedKeysBuilder;
 
     g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
     g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", PLUGIN_FOO.c_str ());
@@ -2016,4 +2024,236 @@ TEST_F (CCSGSettingsTestIndependent, TestUnsetAllChangedPluginKeysInProfileDefau
 								  context.get (),
 								  pluginsWithChangedKeys.get (),
 								  "mock");
+}
+
+namespace
+{
+    const CCSBackendInfo stubBackendInfo =
+    {
+	"stub",
+	"stub",
+	"stub",
+	FALSE,
+	FALSE
+    };
+
+    const CCSBackendInfo *
+    stubBackendGetInfo (CCSBackend *backend)
+    {
+	return &stubBackendInfo;
+    }
+
+    Bool
+    stubBackendInit (CCSBackend *backend, CCSContext *context)
+    {
+	return TRUE;
+    }
+
+    Bool
+    stubBackendFini (CCSBackend *backend)
+    {
+	return TRUE;
+    }
+
+    CCSBackendInterface stubBackendInterface =
+    {
+	stubBackendGetInfo,
+	NULL,
+	stubBackendInit,
+	stubBackendFini,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    };
+}
+
+namespace
+{
+    const std::string MOCK_PLUGIN_NAME ("mock");
+    const std::string MOCK_SCHEMA_NAME ("org.compiz.mock");
+    const std::string MOCK_PROFILE_NAME ("mock");
+    const std::string MOCK_GSCHEMA_PATH ("/org/compiz/profiles/mock/plugins/mock");
+    const std::string PLUGINS_WITH_SET_KEYS ("plugins-with-set-keys");
+
+    boost::shared_ptr <GVariant>
+    GetEmptyPluginsWithSetKeys ()
+    {
+	GVariantBuilder pluginsWithChangedKeysBuilder;
+
+	g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+	return AutoDestroy (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+						g_variant_unref);
+    }
+}
+
+class CCSGSettingsTestCCSGSettingsBackend :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	CCSGSettingsTestCCSGSettingsBackend () :
+	    mockContext (AutoDestroy (ccsMockContextNew (), ccsFreeMockContext)),
+	    stubBackend (AutoDestroy (ccsBackendNewWithDynamicInterface (mockContext.get (), &stubBackendInterface),
+				      ccsBackendUnref)),
+	    mockCompizconfigSettings (ccsMockGSettingsWrapperNew ()),
+	    mockCurrentProfileSettings (ccsMockGSettingsWrapperNew ()),
+	    mockWrapperFactory (ccsMockGSettingsWrapperFactoryNew ()),
+	    mockIntegration (ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator)),
+	    valueChangeData (reinterpret_cast <CCSGNOMEValueChangeData *> (calloc (1, sizeof (CCSGNOMEValueChangeData)))),
+	    currentProfile (strdup (MOCK_PROFILE_NAME.c_str ())),
+	    mockMockPluginWrapper (ccsMockGSettingsWrapperNew ()),
+	    gmockWrapperFactory (reinterpret_cast <CCSGSettingsWrapperFactoryGMock *> (ccsObjectGetPrivate (mockWrapperFactory))),
+	    gmockWrapper (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (mockMockPluginWrapper))),
+	    gmockCurrentProfileSettings (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (mockCurrentProfileSettings)))
+
+	{
+	    valueChangeData->integration = mockIntegration;
+	    valueChangeData->factory = NULL;
+	    valueChangeData->storage = NULL;
+	    valueChangeData->context = mockContext.get ();
+
+	    if (!ccsGSettingsBackendAttachNewToBackend (stubBackend.get (),
+							mockContext.get (),
+							mockCompizconfigSettings,
+							mockCurrentProfileSettings,
+							mockWrapperFactory,
+							mockIntegration,
+							valueChangeData,
+							currentProfile))
+		throw std::runtime_error ("Failed to attach GSettings backend");
+	}
+
+	virtual void TearDown ()
+	{
+	    ccsGSettingsBackendDetachFromBackend (stubBackend.get ());
+
+	    CCSGSettingsTestIndependent::TearDown ();
+	}
+
+	boost::shared_ptr <CCSContext> mockContext;
+	boost::shared_ptr <CCSBackend> stubBackend;
+	CCSGSettingsWrapper *mockCompizconfigSettings;
+	CCSGSettingsWrapper *mockCurrentProfileSettings;
+	CCSGSettingsWrapperFactory *mockWrapperFactory;
+	CCSIntegration *mockIntegration;
+	CCSGNOMEValueChangeData           *valueChangeData;
+	char                *currentProfile;
+	CCSGSettingsWrapper *mockMockPluginWrapper;
+
+	CCSGSettingsWrapperFactoryGMock *gmockWrapperFactory;
+	CCSGSettingsWrapperGMock        *gmockWrapper;
+	CCSGSettingsWrapperGMock        *gmockCurrentProfileSettings;
+
+};
+
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestWriteOutSetKeysOnGetSettingsObject)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantEmpty (GetEmptyPluginsWithSetKeys ());
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantEmpty.get ())));
+
+    /* Should acknowledge that we wrote to this schema */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (Eq (PLUGINS_WITH_SET_KEYS),
+							 GVariantHasValueInArray <const gchar *> ("s",
+												  MOCK_PLUGIN_NAME.c_str (),
+												  boost::bind (streq, _1, _2))))
+	    .WillOnce (WithArgs <1> (Invoke (g_variant_unref)));;
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_EQ (wrapper, mockMockPluginWrapper);
+}
+
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestNoWriteOutSetKeysOnGetSettingsObjectIfAlreadyWritten)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    GVariantBuilder pluginsWithChangedKeysBuilder;
+
+    g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", MOCK_PLUGIN_NAME.c_str ());
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantNonEmpty (AutoDestroy (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+										 g_variant_unref));
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantNonEmpty.get ())));
+
+    /* No acknowledgement */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (_, _)).Times (0);
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_EQ (wrapper, mockMockPluginWrapper);
+}
+
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestReturnExistingWrapper)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantEmpty (GetEmptyPluginsWithSetKeys ());
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantEmpty.get ())));
+
+    /* Should acknowledge that we wrote to this schema */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (Eq (PLUGINS_WITH_SET_KEYS),
+							 _))
+	    .WillOnce (WithArgs <1> (Invoke (g_variant_unref)));
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_CALL (*gmockWrapper, getSchemaName ()).WillOnce (Return (MOCK_SCHEMA_NAME.c_str ()));
+
+    /* Shouldn't be called again */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (_, _, _)).Times (0);
+
+    wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+							      MOCK_PLUGIN_NAME.c_str (),
+							      MOCK_GSCHEMA_PATH.c_str (),
+							      mockContext.get ());
+
+    /* It should return the cached one */
+    EXPECT_EQ (mockMockPluginWrapper, wrapper);
 }

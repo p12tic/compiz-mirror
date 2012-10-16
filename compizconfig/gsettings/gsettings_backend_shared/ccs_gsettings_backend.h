@@ -4,12 +4,20 @@
 #include <ccs-defs.h>
 #include <ccs-backend.h>
 #include <ccs_gsettings_backend_fwd.h>
+#include <ccs_gnome_fwd.h>
 #include <glib.h>
 
 COMPIZCONFIG_BEGIN_DECLS
 
 Bool
-ccsGSettingsBackendAttachNewToBackend (CCSBackend *backend, CCSContext *context);
+ccsGSettingsBackendAttachNewToBackend (CCSBackend                 *backend,
+				       CCSContext                 *context,
+				       CCSGSettingsWrapper        *compizconfigSettings,
+				       CCSGSettingsWrapper        *currentProfileSettings,
+				       CCSGSettingsWrapperFactory *wrapperFactory,
+				       CCSIntegration             *integration,
+				       CCSGNOMEValueChangeData    *valueChangeData,
+				       char                       *currentProfile);
 
 void
 ccsGSettingsBackendDetachFromBackend (CCSBackend *backend);

@@ -7,6 +7,7 @@ COMPIZCONFIG_BEGIN_DECLS
 
 typedef struct _CCSGSettingsWrapper CCSGSettingsWrapper;
 typedef struct _CCSGSettingsBackend CCSGSettingsBackend;
+typedef struct _CCSGSettingsWrapperFactory CCSGSettingsWrapperFactory;
 
 COMPIZCONFIG_END_DECLS
 
