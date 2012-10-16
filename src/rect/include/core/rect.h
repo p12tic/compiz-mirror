@@ -138,6 +138,8 @@ class CompRect {
 	REGION       mRegion;
 };
 
+extern template class std::vector<CompRect>;
+
 namespace compiz
 {
     namespace rect
