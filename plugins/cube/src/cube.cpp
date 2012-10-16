@@ -1136,6 +1136,7 @@ CubeScreen::cubePaintTop (const GLScreenPaintAttrib &sAttrib,
 #ifndef USE_GLES
 	priv->gScreen->setTexEnvMode (GL_MODULATE);
 #endif
+	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
@@ -1159,6 +1160,7 @@ CubeScreen::cubePaintTop (const GLScreenPaintAttrib &sAttrib,
 	priv->mTexture[0]->disable ();
 
     priv->gScreen->setTexEnvMode (GL_REPLACE);
+    glDisable (GL_BLEND);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
@@ -1202,6 +1204,7 @@ CubeScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
 #ifndef USE_GLES
 	priv->gScreen->setTexEnvMode (GL_MODULATE);
 #endif
+	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
@@ -1216,6 +1219,7 @@ CubeScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
     streamingBuffer->render (sTransform);
 
     priv->gScreen->setTexEnvMode (GL_REPLACE);
+    glDisable (GL_BLEND);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
