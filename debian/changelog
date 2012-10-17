@@ -1,8 +1,7 @@
-compiz (1:0.9.8.4+bzr3407-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.8.4+bzr3407-0ubuntu1) quantal-proposed; urgency=low
 
   * New upstream snapshot.
     - Cherry-picked fixes in Ubuntu merged to development branch
-    - Disable failing tests due to distro patch (LP: #1058577)
     - Fix leakage of destroyed_pixmaps_table, containing pointers to freed 
       decor_t's which could result in a freed GHashTable being passed into 
       g_hash_table_remove and causing a crash. (LP: #1060171)
