@@ -33,7 +33,11 @@ try:
     plugins_list.remove('unitymtgrabhandles')
 except ValueError:
     pass
-gsettings.set_strv("active-plugins", plugins_list)
+# gsettings doesn't work directly, the key is somewhat reverted. Work one level under then: dconf!
+#gsettings.set_strv("active-plugins", plugins_list)
+from subprocess import Popen, PIPE, STDOUT
+p = Popen(['dconf', 'load', '/org/compiz/profiles/Default/plugins/core/'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+p.communicate(input="[/]\nactive-plugins=%s" % plugins_list)
 
 # remove the eventually existing local config file which can prevent the default profile to use gsettings for quantal users before this fix
 try:
