@@ -1,4 +1,4 @@
-compiz (1:0.9.8.4-0ubuntu3) UNRELEASED; urgency=low
+compiz (1:0.9.8.4-0ubuntu3) quantal-proposed; urgency=low
 
   * debian/config, debian/compiz-gnome.migrations,
     debian/00_remove_unityshell_in_gnome_session.py:
