@@ -753,15 +753,16 @@ GridScreen::handleEvent (XEvent *event)
     if (lastEdge != edge)
     {
 		bool check = false;
+		unsigned int target = typeToMask (edgeToGridType ());
 		lastSlot = desiredSlot;
 
-		if (edge == NoEdge)
-			desiredSlot.setGeometry (0, 0, 0, 0);
+		if (edge == NoEdge || target == GridUnknown)
+			desiredSlot.setGeometry (0, 0, 0, 0);			
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
 
-		check = initiateCommon (NULL, 0, o, typeToMask (edgeToGridType ()), false, false);
+		check = initiateCommon (NULL, 0, o, target, false, false);
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
