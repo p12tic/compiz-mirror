@@ -26,6 +26,7 @@
 #ifndef _COMPRECT_H
 #define _COMPRECT_H
 
+#include <core/templates.h>
 #include <core/point.h>
 #include <core/size.h>
 #include <vector>
@@ -135,7 +136,7 @@ class CompRect {
 	REGION       mRegion;
 };
 
-extern template class std::vector<CompRect>;
+COMPIZ_EXTERN_STD(vector<CompRect>)
 
 namespace compiz
 {

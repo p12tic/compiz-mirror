@@ -28,6 +28,7 @@
 #ifndef _COMPOPTION_H
 #define _COMPOPTION_H
 
+#include <core/templates.h>
 #include <core/string.h>
 
 #include <boost/variant.hpp>
@@ -302,9 +303,9 @@ class CompOption
 	PrivateOption *priv;
 };
 
-extern template class std::vector<unsigned short>;
-extern template class std::vector<CompOption::Value>;
-extern template class std::vector<CompOption>;
+COMPIZ_EXTERN_STD(vector<unsigned short>)
+COMPIZ_EXTERN_STD(vector<CompOption::Value>)
+COMPIZ_EXTERN_STD(vector<CompOption>)
 
 namespace compiz {
 namespace detail {
