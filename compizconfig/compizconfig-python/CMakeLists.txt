@@ -27,10 +27,10 @@ string (REPLACE "\n" "" PY_VERSION ${PY_VERSION})
 set (PY_BUILD_DIR lib.linux-${PROC_ARCH}-${PY_VERSION})
 set (PY_SCRIPTS_DIR scripts-${PY_VERSION})
 set (PY_COMPIZCONFIG_SRC ${CMAKE_CURRENT_BINARY_DIR}/compizconfig.c)
-set (PY_COMPIZCONFIG_PYREX ${PY_COMPIZCONFIG_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/src/compizconfig.pyx)
+set (PY_COMPIZCONFIG_PYREX ${CMAKE_CURRENT_SOURCE_DIR}/src/compizconfig.pyx)
 
 add_custom_command (OUTPUT ${PY_COMPIZCONFIG_SRC}
-		    COMMAND pyrexc -o ${PY_COMPIZCONFIG_PYREX}
+		    COMMAND pyrexc -o ${PY_COMPIZCONFIG_SRC} ${PY_COMPIZCONFIG_PYREX}
 		    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		    DEPENDS ${PY_COMPIZCONFIG_PYREX})
 
@@ -82,7 +82,14 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/compizconfig-python.pc
 
 # This is probably not very portable, but we can't install using distutils
 # as we cannot build with it safely
-set (PYTHON_MODULE_DIR ${libdir}/python${PY_VERSION}/site-packages)
+
+if ($ENV{COMPIZ_DEB_BUILD})
+    set (INSTALL_LAYOUT_DIR dist-packages)
+else ($ENV{COMPIZ_DEB_BUILD})
+    set (INSTALL_LAYOUT_DIR site-packages)
+endif ($ENV{COMPIZ_DEB_BUILD})
+
+set (PYTHON_MODULE_DIR ${libdir}/python${PY_VERSION}/${INSTALL_LAYOUT_DIR})
 
 install (TARGETS compizconfig_python_module
 	 DESTINATION ${PYTHON_MODULE_DIR})
