@@ -1,3 +1,13 @@
+compiz (1:0.9.8.4+bzr3407-0ubuntu1) quantal-proposed; urgency=low
+
+  * New upstream snapshot.
+    - Cherry-picked fixes in Ubuntu merged to development branch
+    - Fix leakage of destroyed_pixmaps_table, containing pointers to freed 
+      decor_t's which could result in a freed GHashTable being passed into 
+      g_hash_table_remove and causing a crash. (LP: #1060171)
+
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 12 Oct 2012 13:36:25 +0300
+
 compiz (1:0.9.8.4-0ubuntu3) quantal-proposed; urgency=low
 
   * debian/config, debian/compiz-gnome.migrations,
