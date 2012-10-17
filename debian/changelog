@@ -1,9 +1,14 @@
 compiz (1:0.9.8.4-0ubuntu3) UNRELEASED; urgency=low
 
-  * debian/config, :
+  * debian/config, debian/compiz-gnome.migrations,
+    debian/00_remove_unityshell_in_gnome_session.py:
     - add the default gnome_session profile to use gsettings as the migrated
       user are on this profile (LP: #1036752). The existing migration scripts
       will upgrade the user config.
+    - For new users and users already on quantal before this fix, remove the
+      local config file created if you logged in the classic session hiding the
+      system one. Also, as the global default is including the unity* plugins,
+      remove them from the list of plugins the first time you log in.
 
  -- Didier Roche <didrocks@ubuntu.com>  Wed, 17 Oct 2012 12:19:08 +0200
 
