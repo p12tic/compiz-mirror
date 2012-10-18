@@ -18,6 +18,7 @@
 	    </relation>
 	</deps>
 	<feature>showdesktop</feature>
+	<feature>fadetodesktop</feature>
 	<options>
 	    <option name="fadetime" type="int">
 		<_short>Fade Time</_short>
