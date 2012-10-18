@@ -1143,7 +1143,9 @@ GridWindow::~GridWindow ()
     if (gScreen->mGrabWindow == window)
 	gScreen->mGrabWindow = NULL;
 
-    gScreen->o[0].value ().set (0);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (gScreen->o, "window"));
+    if (w == window)
+	gScreen->o[0].value ().set (0);
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI
