@@ -68,6 +68,16 @@ class install_data (_install_data):
 
 class uninstall (_install):
 
+    user_options = _install.user_options[:]
+    user_options.extend ([('version=', None, "Version of the package")])
+
+    def initialize_options(self):
+        self.version = None
+        _install.initialize_options (self)
+
+    def finalize_options(self):
+        _install.finalize_options (self)
+
     def run (self):
         try:
             file = open (INSTALLED_FILES, "r")
