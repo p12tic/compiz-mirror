@@ -492,7 +492,6 @@ CompText::draw (const GLMatrix &transform,
 	        float y,
 	        float alpha) const
 {
-    GLboolean  wasBlend;
     GLint      oldBlendSrc, oldBlendDst;
     GLushort        colorData[4];
     GLfloat         textureData[8];
@@ -512,6 +511,7 @@ CompText::draw (const GLMatrix &transform,
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
 
+    GLboolean  wasBlend;
     wasBlend = glIsEnabled (GL_BLEND);
     if (!wasBlend)
 	glEnable (GL_BLEND);
