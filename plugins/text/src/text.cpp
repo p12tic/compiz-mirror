@@ -568,8 +568,8 @@ CompText::draw (const GLMatrix &transform,
                          oldBlendSrcAlpha, oldBlendDstAlpha);
 #else
 
-    glBlendFunc (oldBlendSrc, oldBlendDst);
     glDisable (GL_BLEND);
+    glBlendFunc (oldBlendSrc, oldBlendDst);
 
 #endif
 }
