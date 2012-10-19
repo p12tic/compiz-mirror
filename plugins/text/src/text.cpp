@@ -510,9 +510,7 @@ CompText::draw (const GLMatrix &transform,
 #else
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
-
     glEnable (GL_BLEND);
-
 #endif
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -567,10 +565,8 @@ CompText::draw (const GLMatrix &transform,
     glBlendFuncSeparate (oldBlendSrc, oldBlendDst,
                          oldBlendSrcAlpha, oldBlendDstAlpha);
 #else
-
     glDisable (GL_BLEND);
     glBlendFunc (oldBlendSrc, oldBlendDst);
-
 #endif
 }
 
