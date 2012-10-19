@@ -294,6 +294,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    transform.translate (-output->region ()->extents.x1,
 	    		  -output->region ()->extents.y2,
 	    		  0.0f);
+
 	    glEnable (GL_BLEND);
 	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -302,6 +303,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    streamingBuffer->end ();
 	    streamingBuffer->render (transform);
+
 	    streamingBuffer->begin (GL_LINE_LOOP);
 
 	    vertexData[6]  = x2;
