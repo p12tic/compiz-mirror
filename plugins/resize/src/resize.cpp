@@ -178,7 +178,8 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     }
 
     /* draw outline */
-    glLineWidth (2.0);
+    static const int borderWidth = 2;
+    glLineWidth (borderWidth);
     streamingBuffer->begin (GL_LINES);
     streamingBuffer->addColors (1, borderColor);
     streamingBuffer->addVertices (8, &vertexData2[0]);
@@ -194,7 +195,10 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 #endif
 
     CompositeScreen *cScreen = CompositeScreen::get (screen);
-    CompRect damage (box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1);
+    CompRect damage (box.x1 - borderWidth,
+                     box.y1 - borderWidth,
+                     box.x2 - box.x1 + 2 * borderWidth,
+                     box.y2 - box.y1 + 2 * borderWidth);
     cScreen->damageRegion (damage);
 }
 
