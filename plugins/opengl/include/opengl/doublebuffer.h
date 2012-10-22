@@ -2,17 +2,43 @@
 #define _COMPIZ_OPENGL_BUFFERBLIT_H
 
 #include <core/region.h>
-#include <vsyncmethod.h>
+#include <boost/function.hpp>
 
 namespace compiz
 {
 namespace opengl
 {
 
+typedef enum _BufferSwapType
+{
+    Flip,
+    PartialCopy
+} BufferSwapType;
+
+typedef enum _SyncType
+{
+    NoSync = 0,
+    Asynchronous = 1,
+    Blocking = 2
+} SyncType;
+
+typedef enum _FrameThrottleState
+{
+    ExternalFrameThrottlingRequired,
+    FrameThrottledInternally
+} FrameThrottleState;
+
+namespace impl
+{
+typedef boost::function <int (int, int, unsigned int *)> GLXWaitVideoSyncSGIFunc;
+typedef boost::function <void (int)> GLXSwapIntervalEXTFunc;
+}
+
 class DoubleBuffer
 {
     public:
-	DoubleBuffer (const std::list <VSyncMethod::Ptr> &vsyncMethods);
+	DoubleBuffer (const impl::GLXSwapIntervalEXTFunc  &swapIntervalFunc,
+		      const impl::GLXWaitVideoSyncSGIFunc &waitVideoSyncFunc);
 	virtual ~DoubleBuffer ();
 
 	virtual void swap () const = 0;
@@ -40,9 +66,19 @@ class DoubleBuffer
 	bool setting[_NSETTINGS];
 
     private:
-	unsigned int                 unthrottledFrames;
-	std::list <VSyncMethod::Ptr> vsyncMethods;
-	VSyncMethod::Ptr	     lastSuccessfulVSyncMethod;
+
+	virtual bool enableAsynchronousVideoSync (BufferSwapType, FrameThrottleState &);
+	virtual void disableAsynchronousVideoSync ();
+	virtual bool enableBlockingVideoSync (BufferSwapType, FrameThrottleState &);
+	virtual void disableBlockingVideoSync ();
+
+	SyncType		      syncType;
+
+	unsigned int                  unthrottledFrames;
+
+	impl::GLXSwapIntervalEXTFunc  swapIntervalFunc;
+	impl::GLXWaitVideoSyncSGIFunc waitVideoSyncFunc;
+	unsigned int                  lastVSyncCounter;
 };
 
 }

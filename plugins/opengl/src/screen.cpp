@@ -36,9 +36,6 @@
 #include <boost/make_shared.hpp>
 
 #include "privates.h"
-#include "vsyncmethod.h"
-#include "asynchronous-vsync.h"
-#include "blocking-vsync.h"
 
 #include <dlfcn.h>
 #include <math.h>
@@ -338,8 +335,6 @@ int waitVSyncEGL (int wait,
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
 {
-    std::list <compiz::opengl::VSyncMethod::Ptr> availableVSyncMethods;
-
     #ifdef USE_GLES
     Display             *xdpy;
     Window               overlay;
@@ -563,13 +558,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    availableVSyncMethods.push_back (boost::make_shared <impl::AsynchronousVSync> (
-					 boost::bind (swapIntervalEGL, screen->dpy (), _1)));
-
     priv->doubleBuffer.reset (new EGLDoubleBuffer (screen->dpy (),
 						   *screen,
-						   priv->surface,
-						   availableVSyncMethods));
+						   priv->surface));
 
     if (GL::textureFromPixmap)
 	registerBindPixmap (EglTexture::bindPixmapToTexture);
@@ -881,15 +872,9 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    availableVSyncMethods.push_back (boost::make_shared <impl::AsynchronousVSync> (
-					 boost::bind (swapIntervalGLX, _1)));
-    availableVSyncMethods.push_back (boost::make_shared <impl::BlockingVSync> (
-					 boost::bind (waitVSyncGLX, _1, _2, _3)));
-
     priv->doubleBuffer.reset (new GLXDoubleBuffer (screen->dpy (),
 						   *screen,
-						   priv->cScreen->output (),
-						   availableVSyncMethods));
+						   priv->cScreen->output ()));
 
     if (GL::textureFromPixmap)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
@@ -1769,10 +1754,11 @@ GLScreen::getShaderData (GLShaderParameters &params)
     return &priv->shaderCache.getShaderData(params);
 }
 
-GLDoubleBuffer::GLDoubleBuffer (Display                            *d,
-				const CompSize                     &s,
-				const std::list <VSyncMethod::Ptr> &vsyncMethods) :
-    compiz::opengl::DoubleBuffer (vsyncMethods),
+GLDoubleBuffer::GLDoubleBuffer (Display                                             *d,
+				const CompSize                                      &s,
+				const compiz::opengl::impl::GLXSwapIntervalEXTFunc  &swapIntervalFunc,
+				const compiz::opengl::impl::GLXWaitVideoSyncSGIFunc &waitVideoSyncFunc) :
+    compiz::opengl::DoubleBuffer (swapIntervalFunc, waitVideoSyncFunc),
     mDpy (d),
     mSize (s)
 {
@@ -1807,9 +1793,10 @@ GLXDoubleBuffer::copyFrontToBack() const
 
 GLXDoubleBuffer::GLXDoubleBuffer (Display                          *d,
 				  const CompSize                   &s,
-				  Window                           output,
-				  const std::list <VSyncMethodPtr> &vsyncMethods) :
-    GLDoubleBuffer (d, s, vsyncMethods),
+				  Window                           output) :
+    GLDoubleBuffer (d, s,
+		    boost::bind (compiz::opengl::swapIntervalGLX, _1),
+		    boost::bind (compiz::opengl::waitVSyncGLX, _1, _2, _3)),
     mOutput (output)
 {
 }
@@ -1883,9 +1870,10 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 
 EGLDoubleBuffer::EGLDoubleBuffer (Display                          *d,
 				  const CompSize                   &s,
-				  EGLSurface const                 &surface,
-				  const std::list <VSyncMethodPtr> &vsyncMethods) :
-    GLDoubleBuffer (d, s, vsyncMethods),
+				  EGLSurface const                 &surface) :
+    GLDoubleBuffer (d, s,
+		    boost::bind (compiz::opengl::swapIntervalEGL, _1),
+		    boost::bind (compiz::opengl::waitVSyncEGL, _1, _2, _3)),
     mSurface (surface)
 {
 }

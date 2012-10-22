@@ -46,23 +46,15 @@
 
 extern CompOutput *targetOutput;
 
-namespace compiz
-{
-namespace opengl
-{
-class VSyncMethod;
-typedef boost::shared_ptr <VSyncMethod> VSyncMethodPtr;
-}
-}
-
 class GLDoubleBuffer :
     public compiz::opengl::DoubleBuffer
 {
     public:
 
-	GLDoubleBuffer (Display                                          *,
-			const CompSize                                   &,
-			const std::list <compiz::opengl::VSyncMethodPtr> &vsyncMethods);
+	GLDoubleBuffer (Display                                             *,
+			const CompSize                                      &,
+			const compiz::opengl::impl::GLXSwapIntervalEXTFunc  &,
+			const compiz::opengl::impl::GLXWaitVideoSyncSGIFunc &);
 
     protected:
 
@@ -79,8 +71,7 @@ class GLXDoubleBuffer :
 
 	GLXDoubleBuffer (Display                                          *,
 			 const CompSize                                   &,
-			 Window                                            ,
-			 const std::list <compiz::opengl::VSyncMethodPtr> &vsyncMethods);
+			 Window                                            );
 
 	void swap () const;
 	bool blitAvailable () const;
@@ -103,8 +94,7 @@ class EGLDoubleBuffer :
 
 	EGLDoubleBuffer (Display                                          *,
 			 const CompSize                                   &,
-			 EGLSurface const                                 &,
-			 const std::list <compiz::opengl::VSyncMethodPtr> &vsyncMethods);
+			 EGLSurface const                                 &);
 
 	void swap () const;
 	bool blitAvailable () const;

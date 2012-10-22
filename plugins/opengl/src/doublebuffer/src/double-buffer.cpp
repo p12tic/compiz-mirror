@@ -38,9 +38,13 @@ namespace compiz
 namespace opengl
 {
 
-DoubleBuffer::DoubleBuffer (const std::list <VSyncMethod::Ptr> &vsyncMethods) :
+DoubleBuffer::DoubleBuffer (const impl::GLXSwapIntervalEXTFunc  &swapIntervalFunc,
+			    const impl::GLXWaitVideoSyncSGIFunc &waitVideoSyncFunc) :
+    syncType (NoSync),
     unthrottledFrames (0),
-    vsyncMethods (vsyncMethods)
+    swapIntervalFunc (swapIntervalFunc),
+    waitVideoSyncFunc (waitVideoSyncFunc),
+    lastVSyncCounter (0)
 {
     setting[VSYNC] = true;
     setting[HAVE_PERSISTENT_BACK_BUFFER] = false;
@@ -95,33 +99,34 @@ DoubleBuffer::render (const CompRegion &region,
 void
 DoubleBuffer::vsync (BufferSwapType swapType)
 {
-    bool throttled = true;
+    FrameThrottleState throttleState;
+    SyncType           lastSyncType = syncType;
 
-    for (std::list <VSyncMethod::Ptr>::iterator it = vsyncMethods.begin ();
-	 it != vsyncMethods.end ();
-	 ++it)
+    if (enableAsynchronousVideoSync (swapType, throttleState))
     {
-	VSyncMethod::Ptr &method (*it);
+	syncType = Asynchronous;
 
-	/* Try and use this method, check if this method
-	 * throttled us too */
-	if (method->enable (swapType, throttled))
-	{
-	    if (lastSuccessfulVSyncMethod &&
-		lastSuccessfulVSyncMethod != method)
-		lastSuccessfulVSyncMethod->disable ();
+	if (lastSyncType == Blocking)
+	    disableBlockingVideoSync ();
 
-	    lastSuccessfulVSyncMethod = method;
-	    break;
-	}
-	else
-	{
-	    throttled = false;
-	    method->disable ();
-	}
+	/* This is a special case to make sure that we don't
+	 * need to flip 5 frames before throttling kicks in */
+	unthrottledFrames = unthrottledFrames < 5 ?
+				5 : unthrottledFrames;
+    }
+    else if (enableBlockingVideoSync (swapType, throttleState))
+    {
+	syncType = Blocking;
+	if (lastSyncType == Asynchronous)
+	    disableAsynchronousVideoSync ();
+    }
+    else
+    {
+	syncType = NoSync;
+	throttleState = ExternalFrameThrottlingRequired;
     }
 
-    if (!throttled)
+    if (throttleState == ExternalFrameThrottlingRequired)
 	unthrottledFrames++;
     else
 	unthrottledFrames = 0;
@@ -131,6 +136,52 @@ bool
 DoubleBuffer::hardwareVSyncFunctional ()
 {
     return unthrottledFrames < 5;
+}
+
+bool
+DoubleBuffer::enableAsynchronousVideoSync (BufferSwapType swapType, FrameThrottleState &throttleState)
+{
+    /* Always consider these frames as un-throttled as the buffer
+     * swaps are done asynchronously */
+    throttleState = ExternalFrameThrottlingRequired;
+
+    /* Can't use swapInterval unless using SwapBuffers */
+    if (swapType != Flip)
+	return false;
+
+    /* Enable if not enabled */
+    if (syncType != Asynchronous)
+	swapIntervalFunc (1);
+
+    return true;
+}
+
+void
+DoubleBuffer::disableAsynchronousVideoSync ()
+{
+    /* Disable if enabled */
+    swapIntervalFunc (0);
+}
+
+bool
+DoubleBuffer::enableBlockingVideoSync (BufferSwapType swapType, FrameThrottleState &throttleState)
+{
+    unsigned int oldVideoSyncCounter = lastVSyncCounter;
+    waitVideoSyncFunc (1, 0, &lastVSyncCounter);
+
+    /* Check if this frame was actually throttled */
+    if (lastVSyncCounter == oldVideoSyncCounter)
+	throttleState = ExternalFrameThrottlingRequired;
+    else
+	throttleState = FrameThrottledInternally;
+
+    return true;
+}
+
+void
+DoubleBuffer::disableBlockingVideoSync ()
+{
+    unthrottledFrames = 0;
 }
 
 } // namespace opengl
