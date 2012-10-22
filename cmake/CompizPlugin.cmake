@@ -417,7 +417,11 @@ macro (_build_compiz_plugin plugin)
 	    LIBRARY DESTINATION ${PLUGIN_LIBDIR}
 	)
 
-	compiz_add_uninstall ()
+	if (NOT _COMPIZ_INTERNAL)
+
+	    compiz_add_uninstall ()
+
+	endif (NOT _COMPIZ_INTERNAL)
 
 	if (NOT COMPIZ_PLUGIN_PACK_BUILD)
 		set (CMAKE_PROJECT_NAME plugin-${plugin})

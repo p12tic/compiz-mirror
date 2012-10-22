@@ -20,6 +20,7 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "gwd-settings-interface.h"
 
 void
 decor_update_blur_property (decor_t *d,

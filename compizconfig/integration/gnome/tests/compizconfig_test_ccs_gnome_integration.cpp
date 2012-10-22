@@ -176,22 +176,10 @@ namespace
 	return std::tr1::get <0> (integrationWithMocks);
     }
 
-    CCSBackendGMock &
-    MockBackend (CCSGNOMEIntegrationWithMocks &integrationWithMocks)
-    {
-	return std::tr1::get <1> (integrationWithMocks);
-    }
-
     CCSIntegratedSettingsStorageGMock &
     MockStorage (CCSGNOMEIntegrationWithMocks &integrationWithMocks)
     {
 	return std::tr1::get <2> (integrationWithMocks);
-    }
-
-    CCSIntegratedSettingFactoryGMock &
-    MockFactory (CCSGNOMEIntegrationWithMocks &integrationWithMocks)
-    {
-	return std::tr1::get <3> (integrationWithMocks);
     }
 
     void
@@ -519,7 +507,7 @@ class CCSGNOMEIntegrationTestWithMocksIntegratedMouseButtonModifiers
 	    mButtonValue.edgeMask      = 0;
 	}
 
-	virtual void SetUp (CCSGNOMEIntegrationWithMocks &integration)
+	virtual void GnomeSetUp (CCSGNOMEIntegrationWithMocks &integration)
 	{
 	    CCSIntegratedSettingList integratedSettingsMBM =
 		    *mIntegratedSettingsMBM;
@@ -562,7 +550,7 @@ class CCSGNOMEIntegrationTestWithMocksReadIntegratedMouseButtonModifiers :
 	    vMBM->value.asString = strdup (GNOME_MOUSE_BUTTON_MODIFIERS_STRING.c_str ());
 
 	    CCSGNOMEIntegrationTestReadIntegrated::SetUp ();
-	    CCSGNOMEIntegrationTestWithMocksIntegratedMouseButtonModifiers::SetUp (mIntegration);
+	    CCSGNOMEIntegrationTestWithMocksIntegratedMouseButtonModifiers::GnomeSetUp (mIntegration);
 
 	    EXPECT_CALL (mSettingMock, getButton (_))
 		    .WillOnce (DoAll (
@@ -619,7 +607,7 @@ class CCSGNOMEIntegrationTestWithMocksWriteIntegratedMouseButtonModifiers :
 	virtual void SetUp ()
 	{
 	    CCSGNOMEIntegrationTestWriteIntegrated::SetUp ();
-	    CCSGNOMEIntegrationTestWithMocksIntegratedMouseButtonModifiers::SetUp (mIntegration);
+	    CCSGNOMEIntegrationTestWithMocksIntegratedMouseButtonModifiers::GnomeSetUp (mIntegration);
 	}
 
     protected:

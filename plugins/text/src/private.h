@@ -38,6 +38,9 @@
 
 #include <text/text.h>
 
+class PrivateTextScreen;
+extern template class PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>;
+
 class PrivateTextScreen :
     public PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>,
     public ScreenInterface,

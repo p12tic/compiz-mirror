@@ -753,15 +753,16 @@ GridScreen::handleEvent (XEvent *event)
     if (lastEdge != edge)
     {
 		bool check = false;
+		unsigned int target = typeToMask (edgeToGridType ());
 		lastSlot = desiredSlot;
 
-		if (edge == NoEdge)
-			desiredSlot.setGeometry (0, 0, 0, 0);
+		if (edge == NoEdge || target == GridUnknown)
+			desiredSlot.setGeometry (0, 0, 0, 0);			
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
 
-		check = initiateCommon (NULL, 0, o, typeToMask (edgeToGridType ()), false, false);
+		check = initiateCommon (NULL, 0, o, target, false, false);
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
@@ -1142,7 +1143,9 @@ GridWindow::~GridWindow ()
     if (gScreen->mGrabWindow == window)
 	gScreen->mGrabWindow = NULL;
 
-    gScreen->o[0].value ().set (0);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (gScreen->o, "window"));
+    if (w == window)
+	gScreen->o[0].value ().set (0);
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI

@@ -40,6 +40,8 @@
 #include <dlfcn.h>
 #include <math.h>
 
+template class WrapableInterface<GLScreen, GLScreenInterface>;
+
 using namespace compiz::opengl;
 
 namespace GL {
@@ -891,6 +893,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     return true;
 }
 
+
+template class PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI>;
 
 GLScreen::GLScreen (CompScreen *s) :
     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),

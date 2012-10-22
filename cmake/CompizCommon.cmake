@@ -40,7 +40,7 @@ set (
 )
 
 # Almost everything is a shared library now, so almost everything needs -fPIC
-set (COMMON_FLAGS "-fPIC -Wall -Wl,-zdefs")
+set (COMMON_FLAGS "-fPIC -Wall")
 
 option (COMPIZ_DEPRECATED_WARNINGS "Warn about declarations marked deprecated" OFF)
 if (NOT COMPIZ_DEPRECATED_WARNINGS)
@@ -64,6 +64,11 @@ endif ()
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
+
+set (COMMON_LINKER_FLAGS "-Wl,-zdefs")
+set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
 
 if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 1)
@@ -931,13 +936,76 @@ endfunction ()
 
 #### uninstall
 
+function (compiz_add_code_to_uninstall_target CODE WORKING_DIRECTORY)
+
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY COMPIZ_UNINSTALL_CODE_TARGETS
+		  ${CODE})
+
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS
+		  ${WORKING_DIRECTORY})
+
+endfunction ()
+
 macro (compiz_add_uninstall)
+
    if (NOT _compiz_uninstall_rule_created)
 	compiz_set(_compiz_uninstall_rule_created TRUE)
 
 	set (_file "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
 
-	file (WRITE  ${_file} "if (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n")
+	file (WRITE ${_file} "message (STATUS \"Uninstalling\")\n")
+
+	get_property (COMPIZ_UNINSTALL_CODE_TARGETS_SET
+		      GLOBAL
+		      PROPERTY COMPIZ_UNINSTALL_CODE_TARGETS
+		      SET)
+
+	get_property (COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS_SET
+		      GLOBAL
+		      PROPERTY COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS
+		      SET)
+
+	if (COMPIZ_UNINSTALL_CODE_TARGETS_SET AND
+	    COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS_SET)
+
+	    get_property (COMPIZ_UNINSTALL_CODE_TARGETS
+			  GLOBAL
+			  PROPERTY COMPIZ_UNINSTALL_CODE_TARGETS)
+
+	    get_property (COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS
+			  GLOBAL
+			  PROPERTY COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS)
+
+	    list (LENGTH COMPIZ_UNINSTALL_CODE_TARGETS COMPIZ_UNINSTALL_CODE_TARGETS_LEN)
+	    math (EXPR COMPIZ_UNINSTALL_CODE_TARGETS_RANGE "${COMPIZ_UNINSTALL_CODE_TARGETS_LEN} - 1")
+
+	    foreach (ITER RANGE ${COMPIZ_UNINSTALL_CODE_TARGETS_RANGE})
+
+		list (GET COMPIZ_UNINSTALL_CODE_TARGETS ${ITER} CODE_TARGET)
+		list (GET COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS ${ITER} WORKING_DIRECTORY_TARGET)
+
+		file (APPEND ${_file} "message (STATUS \"Executing custom uninstall script ${CODE_TARGET}\")\n")
+		file (APPEND ${_file} "execute_process (COMMAND ${CODE_TARGET}\n")
+		file (APPEND ${_file} "                 WORKING_DIRECTORY \"${WORKING_DIRECTORY_TARGET}\"\n")
+		file (APPEND ${_file} "                 OUTPUT_VARIABLE cmd_output\n")
+		file (APPEND ${_file} "                 RESULT_VARIABLE cmd_ret)\n")
+		file (APPEND ${_file} "message (\"\${cmd_output}\")\n")
+		file (APPEND ${_file} "if (NOT \"\${cmd_ret}\" STREQUAL 0)\n")
+		file (APPEND ${_file} "    message (FATAL_ERROR \"Problem executing uninstall script ${CODE_TARGET} : \${cmd_ret}\")\n")
+		file (APPEND ${_file} "endif (NOT \"\${cmd_ret}\" STREQUAL 0)\n")
+
+	    endforeach ()
+
+	endif (COMPIZ_UNINSTALL_CODE_TARGETS_SET AND
+	       COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS_SET)
+
+	# Get the code that we need to uninstall, and write it out to the file
+
+	file (APPEND ${_file} "if (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n")
 	file (APPEND ${_file} "  message (FATAL_ERROR \"Cannot find install manifest: \\\"${CMAKE_BINARY_DIR}/install_manifest.txt\\\"\")\n")
 	file (APPEND ${_file} "endif (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n\n")
 	file (APPEND ${_file} "file (READ \"${CMAKE_BINARY_DIR}/install_manifest.txt\" files)\n")

@@ -21,10 +21,9 @@
 #define _GWD_CAIRO_WINDOW_DECORATION_UTIL_H
 
 #include <glib.h>
+#include <decoration.h>
 
 G_BEGIN_DECLS
-
-typedef struct _decor_extents decor_extents_t;
 
 const decor_extents_t * gwd_cairo_window_decoration_get_default_max_win_extents ();
 const decor_extents_t * gwd_cairo_window_decoration_get_default_win_extents ();

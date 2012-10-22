@@ -510,6 +510,11 @@ CompText::draw (const GLMatrix &transform,
 #else
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
+
+    GLboolean  wasBlend;
+    wasBlend = glIsEnabled (GL_BLEND);
+    if (!wasBlend)
+	glEnable (GL_BLEND);
 #endif
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -564,6 +569,8 @@ CompText::draw (const GLMatrix &transform,
     glBlendFuncSeparate (oldBlendSrc, oldBlendDst,
                          oldBlendSrcAlpha, oldBlendDstAlpha);
 #else
+    if (!wasBlend)
+	glDisable (GL_BLEND);
     glBlendFunc (oldBlendSrc, oldBlendDst);
 #endif
 }
@@ -580,6 +587,8 @@ CompText::~CompText ()
     if (pixmap)
 	XFreePixmap (screen->dpy (), pixmap);
 }
+
+template class PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>;
 
 PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),

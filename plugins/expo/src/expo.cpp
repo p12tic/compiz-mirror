@@ -46,10 +46,6 @@ ExpoScreen::dndInit (CompAction          *action,
 		     CompAction::State   state,
 		     CompOption::Vector& options)
 {
-    Window xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
-
     if (expoMode)
     {
 	dndState = DnDStart;
@@ -67,10 +63,6 @@ ExpoScreen::dndFini (CompAction          *action,
 		     CompAction::State   state,
 		     CompOption::Vector& options)
 {
-    Window xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
-
     if (dndState == DnDDuring || dndState == DnDStart)
     {
 	if (dndWindow)
@@ -93,10 +85,6 @@ ExpoScreen::doExpo (CompAction          *action,
 		    CompAction::State   state,
 		    CompOption::Vector& options)
 {
-    Window xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
-
     if (screen->otherGrabExist ("expo", NULL))
 	return false;
 
@@ -139,10 +127,6 @@ ExpoScreen::termExpo (CompAction          *action,
 		      CompAction::State   state,
 		      CompOption::Vector& options)
 {
-    Window xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid && xid != screen->root ())
-	return false;
-
     if (!expoMode)
 	return true;
 
@@ -175,10 +159,6 @@ ExpoScreen::exitExpo (CompAction          *action,
 		      CompAction::State   state,
 		      CompOption::Vector& options)
 {
-    Window xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
-
     if (!expoMode)
 	return false;
 
@@ -195,9 +175,6 @@ ExpoScreen::nextVp (CompAction          *action,
 		    CompOption::Vector& options)
 {
     unsigned int newX, newY;
-    Window       xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
 
     if (!expoMode)
 	return false;
@@ -226,9 +203,6 @@ ExpoScreen::prevVp (CompAction          *action,
 		    CompOption::Vector& options)
 {
     int newX, newY;
-    Window       xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
 
     if (!expoMode)
 	return false;

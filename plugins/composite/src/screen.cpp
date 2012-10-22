@@ -45,6 +45,8 @@
 
 #include <core/timer.h>
 
+template class WrapableInterface<CompositeScreen, CompositeScreenInterface>;
+
 static const int FALLBACK_REFRESH_RATE = 60;   /* if all else fails */
 
 CompWindow *lastDamagedWindow = 0;
@@ -202,6 +204,8 @@ CompositeScreen::damageEvent ()
     return priv->damageEvent;
 }
 
+
+template class PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>;
 
 CompositeScreen::CompositeScreen (CompScreen *s) :
     PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI> (s),

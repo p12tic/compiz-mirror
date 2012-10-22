@@ -262,11 +262,6 @@ const GValue referenceGValue = G_VALUE_INIT;
 
 namespace
 {
-    void gwd_settings_notified_unref (GWDSettingsNotified *notified)
-    {
-	g_object_unref (G_OBJECT (notified));
-    }
-
     void gwd_settings_storage_unref (GWDSettingsStorage *storage)
     {
 	g_object_unref (G_OBJECT (storage));

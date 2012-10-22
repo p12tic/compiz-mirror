@@ -32,6 +32,9 @@ add_executable (compizconfig_test_ccs_text_file
 add_executable (compizconfig_test_ccs_mock_backend_conformance
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_mock_backend_conformance.cpp)
 
+add_executable (compizconfig_test_ccs_util
+		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_util.cpp)
+
 add_executable (compizconfig_test_ccs_upgrade_internal
     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_settings_upgrade_internal.cpp)
 
@@ -136,6 +139,14 @@ target_link_libraries (compizconfig_test_ccs_upgrade_internal
 		       compizconfig_ccs_setting_value_matcher
 )
 
+target_link_libraries (compizconfig_test_ccs_util
+		       ${GTEST_BOTH_LIBRARIES}
+		       ${GMOCK_LIBRARY}
+		       ${GMOCK_MAIN_LIBRARY}
+		       ${CMAKE_THREAD_LIBS_INIT}
+                       compizconfig
+)
+
 compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
 compiz_discover_tests (compizconfig_test_ccs_context COVERAGE compizconfig_ccs_context_mock)
 compiz_discover_tests (compizconfig_test_ccs_plugin COVERAGE compizconfig_ccs_plugin_mock)
@@ -143,3 +154,4 @@ compiz_discover_tests (compizconfig_test_ccs_setting COVERAGE compizconfig_ccs_s
 compiz_discover_tests (compizconfig_test_ccs_mock_backend_conformance COVERAGE compizconfig_ccs_backend_mock)
 compiz_discover_tests (compizconfig_test_ccs_text_file COVERAGE ccs_text_file_interface compizconfig_ccs_text_file_mock)
 compiz_discover_tests (compizconfig_test_ccs_upgrade_internal COVERAGE ccs_settings_upgrade_internal)
+compiz_discover_tests (compizconfig_test_ccs_util COVERAGE compizconfig)

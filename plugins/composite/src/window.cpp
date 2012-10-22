@@ -27,6 +27,9 @@
 
 #include "privates.h"
 
+template class WrapableInterface<CompositeWindow, CompositeWindowInterface>;
+template class PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI>;
+
 CompositeWindow::CompositeWindow (CompWindow *w) :
     PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI> (w),
     priv (new PrivateCompositeWindow (w, this))

@@ -167,7 +167,7 @@ ccsGNOMEIntegrationBackendReadISAndSetSettingForType (CCSIntegratedSetting *inte
 {
     *v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
-    if ((*v)->value.asString)
+    if (*v != NULL && (*v)->value.asString)
     {
 	CCSSettingKeyValue key;
 

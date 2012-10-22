@@ -1544,17 +1544,33 @@ bool
 EZoomScreen::zoomSpecific (CompAction         *action,
 			  CompAction::State  state,
 			  CompOption::Vector options,
-			  float		     target)
+			  SpecificZoomTarget target)
 {
     int          out = screen->outputDeviceForPoint (pointerX, pointerY);
+    float        zoom_level;
     CompWindow   *w;
 
-    if (target == 1.0f && zooms.at (out).newZoom == 1.0f)
+    switch (target)
+    {
+	case ZoomTargetFirst:
+	    zoom_level = optionGetZoomSpec1 ();
+	    break;
+	case ZoomTargetSecond:
+	    zoom_level = optionGetZoomSpec2 ();
+	    break;
+	case ZoomTargetThird:
+	    zoom_level = optionGetZoomSpec3 ();
+	    break;
+	default:
+	    return false;
+    }
+
+    if (zoom_level == 1.0f && zooms.at (out).newZoom == 1.0f)
         return false;
     if (screen->otherGrabExist (NULL))
         return false;
 
-    setScale (out, target);
+    setScale (out, zoom_level);
 
     w = screen->findWindow (screen->activeWindow ());
     if (optionGetSpecTargetFocus ()
@@ -1915,13 +1931,13 @@ EZoomScreen::EZoomScreen (CompScreen *screen) :
 
     optionSetZoomSpecific1KeyInitiate (boost::bind (&EZoomScreen::zoomSpecific,
 						    this, _1, _2, _3,
-						    optionGetZoomSpec1 ()));
+						    ZoomTargetFirst));
     optionSetZoomSpecific2KeyInitiate (boost::bind (&EZoomScreen::zoomSpecific,
 						    this, _1, _2, _3,
-						    optionGetZoomSpec2 ()));
+						    ZoomTargetSecond));
     optionSetZoomSpecific3KeyInitiate (boost::bind (&EZoomScreen::zoomSpecific,
 						    this, _1, _2, _3,
-						    optionGetZoomSpec3 ()));
+						    ZoomTargetThird));
 
     optionSetPanLeftKeyInitiate (boost::bind (&EZoomScreen::zoomPan, this, _1,
 					      _2, _3, -1, 0));

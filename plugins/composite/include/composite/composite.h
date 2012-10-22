@@ -114,6 +114,9 @@ public:
 }
 }
 
+class CompositeScreenInterface;
+extern template class WrapableInterface<CompositeScreen, CompositeScreenInterface>;
+
 /**
  * Wrapable function interface for CompositeScreen
  */
@@ -171,6 +174,8 @@ class CompositeScreenInterface :
 	 */
 	virtual void damageRegion (const CompRegion &r);
 };
+
+extern template class PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>;
 
 class CompositeScreen :
     public WrapableHandler<CompositeScreenInterface, 7>,
@@ -305,6 +310,9 @@ class CompositeScreen :
  */
 #define PAINT_WINDOW_BLEND_MASK			(1 << 19)
 
+class CompositeWindowInterface;
+extern template class WrapableInterface<CompositeWindow, CompositeWindowInterface>;
+
 class CompositeWindowInterface :
     public WrapableInterface<CompositeWindow, CompositeWindowInterface>
 {
@@ -321,6 +329,8 @@ class CompositeWindowInterface :
 	 */
 	virtual bool damageRect (bool initial, const CompRect &rect);
 };
+
+extern template class PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI>;
 
 class CompositeWindow :
     public WrapableHandler<CompositeWindowInterface, 1>,

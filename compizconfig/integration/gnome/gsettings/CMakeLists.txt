@@ -37,12 +37,21 @@ if (USE_GSETTINGS)
 		     ${CMAKE_CURRENT_SOURCE_DIR}/src/ccs_gnome_integration_gsettings_integrated_setting_factory.c)
 
 	target_link_libraries (compizconfig_gnome_integration_gsettings_setting_factory
+			       compizconfig_gsettings_wrapper_factory_interface
 			       compizconfig_gnome_integration_constants
 			       compizconfig_gnome_integrated_setting
 			       compizconfig_gnome_integration_gsettings_integrated_setting
 			       compizconfig
                                compizconfig_gsettings_util
-			       ${COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATIONLIBRARIES})
+			       ${COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_LIBRARIES})
+
+	add_library (compizconfig_gnome_integration_gsettings_wrapper_factory STATIC
+		     ${CMAKE_CURRENT_SOURCE_DIR}/src/ccs_gnome_integration_gsettings_wrapper_factory.c)
+
+	target_link_libraries (compizconfig_gnome_integration_gsettings_setting_factory
+			       compizconfig_gsettings_wrapper_factory_interface
+			       compizconfig
+			       ${COMPIZCONFIG_GNOME_GSETTINGS_INTEGRATION_LIBRARIES})
 
 	find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
 

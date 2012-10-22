@@ -21,10 +21,10 @@
 #define _GWD_METACITY_WINDOW_DECORATION_UTIL_H
 
 #include <glib.h>
+#include <metacity-1/metacity-private/theme.h>
 
 G_BEGIN_DECLS
 
-typedef struct _MetaTheme MetaTheme;
 typedef MetaTheme * (*GWDMetaThemeGetCurrentProc) ();
 typedef void (*GWDMetaThemeSetProc) (const gchar *theme,
 				     gboolean    force_update);

@@ -3,12 +3,11 @@
 
 #include <ccs-defs.h>
 #include <ccs-object.h>
+#include <ccs-fwd.h>
+#include <ccs_gnome_fwd.h>
+#include <gconf/gconf-client.h>
 
 COMPIZCONFIG_BEGIN_DECLS
-
-typedef struct _CCSIntegratedSettingFactory CCSIntegratedSettingFactory;
-typedef struct _CCSGNOMEValueChangeData CCSGNOMEValueChangeData;
-typedef struct _GConfClient GConfClient;
 
 /**
  * @brief ccsGConfIntegratedSettingFactoryNew

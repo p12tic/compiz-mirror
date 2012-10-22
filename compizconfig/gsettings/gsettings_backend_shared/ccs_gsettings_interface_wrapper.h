@@ -2,10 +2,10 @@
 #define _CCS_GSETTINGS_INTERFACE_WRAPPER_H
 
 #include <ccs-defs.h>
+#include <ccs-fwd.h>
+#include <ccs_gsettings_backend_fwd.h>
 
 COMPIZCONFIG_BEGIN_DECLS
-
-#include "ccs_gsettings_interface.h"
 
 CCSGSettingsWrapper *
 ccsGSettingsWrapperNewForSchemaWithPath (const char *schema,

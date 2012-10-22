@@ -580,6 +580,8 @@ extern GLScreenPaintAttrib defaultScreenPaintAttrib;
 
 class GLScreen;
 class GLFramebufferObject;
+class GLScreenInterface;
+extern template class WrapableInterface<GLScreen, GLScreenInterface>;
 
 class GLScreenInterface :
     public WrapableInterface<GLScreen, GLScreenInterface>
@@ -669,6 +671,7 @@ class GLScreenInterface :
 
 };
 
+extern template class PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI>;
 
 class GLScreen :
     public WrapableHandler<GLScreenInterface, 8>,
@@ -807,6 +810,8 @@ struct GLWindowPaintAttrib {
 };
 
 class GLWindow;
+class GLWindowInterface;
+extern template class WrapableInterface<GLWindow, GLWindowInterface>;
 
 class GLWindowInterface :
     public WrapableInterface<GLWindow, GLWindowInterface>
@@ -870,6 +875,8 @@ class GLWindowInterface :
 	virtual void glDrawTexture (GLTexture *texture, const GLMatrix &,
 	                            const GLWindowPaintAttrib &, unsigned int);
 };
+
+extern template class PluginClassHandler<GLWindow, CompWindow, COMPIZ_OPENGL_ABI>;
 
 class GLWindow :
     public WrapableHandler<GLWindowInterface, 4>,

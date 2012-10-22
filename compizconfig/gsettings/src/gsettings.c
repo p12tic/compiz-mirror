@@ -39,6 +39,11 @@
 #include "ccs_gsettings_backend.h"
 #include "ccs_gsettings_interface.h"
 #include "ccs_gsettings_interface_wrapper.h"
+#include "ccs_gsettings_wrapper_factory_interface.h"
+#include "ccs_gsettings_wrapper_factory.h"
+#include "ccs_gnome_integration_gsettings_wrapper_factory.h"
+#include "ccs_gnome_integration_gsettings_integrated_setting_factory.h"
+#include "ccs_gnome_integration.h"
 
 GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
@@ -437,12 +442,72 @@ processEvents (CCSBackend *backend, unsigned int flags)
     }
 }
 
+static char *
+getCurrentProfileName (CCSGSettingsWrapper *compizconfigSettings)
+{
+    GVariant *value;
+    char     *ret = NULL;
+
+    value = ccsGSettingsWrapperGetValue (compizconfigSettings, "current-profile");
+
+    if (value)
+	ret = strdup (g_variant_get_string (value, NULL));
+    else
+	ret = strdup (DEFAULTPROF);
+
+    g_variant_unref (value);
+
+    return ret;
+}
+
 static Bool
 initBackend (CCSBackend *backend, CCSContext * context)
 {
     g_type_init ();
 
-    return ccsGSettingsBackendAttachNewToBackend (backend, context);
+    CCSGSettingsWrapper *compizconfigSettings = ccsGSettingsWrapperNewForSchema (COMPIZCONFIG_SCHEMA_ID,
+										 backend->object.object_allocation);
+    char *currentProfile = getCurrentProfileName (compizconfigSettings);
+    char *currentProfilePath = currentProfilePath = makeCompizProfilePath (currentProfile);
+    CCSGSettingsWrapper *currentProfileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID,
+									    currentProfilePath,
+									    backend->object.object_allocation);
+    CCSGNOMEValueChangeData *valueChangeData = calloc (1, sizeof (CCSGNOMEValueChangeData));
+    CCSGSettingsWrapperFactory *wrapperFactory = ccsGSettingsWrapperFactoryDefaultImplNew (backend->object.object_allocation);
+    CCSGSettingsWrapperFactory *gnomeWrapperFactory = ccsGNOMEIntegrationGSettingsWrapperFactoryDefaultImplNew (backend->object.object_allocation,
+														wrapperFactory,
+														ccsGSettingsIntegratedSettingsChangeCallback (),
+														valueChangeData);
+    CCSIntegratedSettingsStorage *storage = ccsIntegratedSettingsStorageDefaultImplNew (backend->object.object_allocation);
+
+    valueChangeData->storage = storage;
+    valueChangeData->context = context;
+
+    CCSIntegratedSettingFactory *factory = ccsGSettingsIntegratedSettingFactoryNew (gnomeWrapperFactory,
+										    valueChangeData,
+										    backend->object.object_allocation);
+
+    valueChangeData->factory = factory;
+
+    CCSIntegration *integration = ccsGNOMEIntegrationBackendNew (backend, context, factory, storage, backend->object.object_allocation);
+
+
+
+    valueChangeData->integration = integration;
+
+    g_free (currentProfilePath);
+
+    /* Drop our reference to the wrapper factory */
+    ccsGSettingsWrapperFactoryUnref (gnomeWrapperFactory);
+
+    return ccsGSettingsBackendAttachNewToBackend (backend,
+						  context,
+						  compizconfigSettings,
+						  currentProfileSettings,
+						  wrapperFactory,
+						  integration,
+						  valueChangeData,
+						  currentProfile);
 }
 
 static Bool

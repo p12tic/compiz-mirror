@@ -8,9 +8,13 @@
 #include <boost/bind.hpp>
 
 #include <glib-object.h>
+#include <gio/gio.h>
+
+#include <ccs-object.h>
+#include <ccs_gsettings_interface_wrapper.h>
+#include <ccs_gsettings_interface.h>
 
 #include "test_gsettings_tests.h"
-#include <ccs_gsettings_interface_wrapper.h>
 
 using ::testing::NotNull;
 using ::testing::Eq;

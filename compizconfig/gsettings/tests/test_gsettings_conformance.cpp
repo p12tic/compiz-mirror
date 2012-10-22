@@ -77,7 +77,7 @@ class CCSGSettingsBackendEnv :
 	    return &gsettingsBackendInfo;
 	}
 
-	CCSBackend * SetUp (CCSContext *context, CCSContextGMock *gmockContext)
+	CCSBackend * BackendSetUp (CCSContext *context, CCSContextGMock *gmockContext)
 	{
 	    CCSGSettingsBackendInterface *overloadedInterface = NULL;
 
@@ -123,7 +123,7 @@ class CCSGSettingsBackendEnv :
 	    return (CCSBackend *) mBackend;
 	}
 
-	void TearDown (CCSBackend *)
+	void BackendTearDown (CCSBackend *)
 	{
 	    GVariantBuilder noProfilesBuilder;
 	    g_variant_builder_init (&noProfilesBuilder, G_VARIANT_TYPE ("as"));

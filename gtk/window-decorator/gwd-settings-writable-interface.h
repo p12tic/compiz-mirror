@@ -21,6 +21,7 @@
 #define _COMPIZ_GWD_SETTINGS_WRITABLE_INTERFACE_H
 
 #include <glib-object.h>
+#include <gwd-fwd.h>
 
 G_BEGIN_DECLS
 
@@ -32,7 +33,6 @@ G_BEGIN_DECLS
 										 GWDSettingsWritableInterface))
 #define GWD_TYPE_WRITABLE_SETTINGS_INTERFACE (gwd_settings_writable_interface_get_type ())
 
-typedef struct _GWDSettingsWritable GWDSettingsWritable;
 typedef struct _GWDSettingsWritableInterface GWDSettingsWritableInterface;
 
 struct _GWDSettingsWritableInterface
