@@ -295,6 +295,9 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    		  -output->region ()->extents.y2,
 	    		  0.0f);
 
+#ifndef USE_GLES
+	    glEnable (GL_BLEND);
+#endif
 	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
 	    streamingBuffer->addColors (1, colorData);
@@ -315,6 +318,9 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->addVertices (4, vertexData);
 
 	    streamingBuffer->end ();
+#ifndef USE_GLES
+	    glDisable (GL_BLEND);
+#endif
 	    streamingBuffer->render (transform);
 	}
     }
