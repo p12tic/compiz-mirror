@@ -109,9 +109,6 @@ ScaleAddonWindow::drawTitle (const GLMatrix &transform)
 void
 ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
 {
-#ifndef USE_GLES
-    GLboolean     wasBlend;
-#endif
     GLint         oldBlendSrc, oldBlendDst;
     GLushort colorData[4];
     GLfloat  vertexData[12];
@@ -145,7 +142,7 @@ ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
     glGetIntegerv (GL_BLEND_SRC_ALPHA, &oldBlendSrcAlpha);
     glGetIntegerv (GL_BLEND_DST_ALPHA, &oldBlendDstAlpha);
 #else
-    wasBlend = glIsEnabled (GL_BLEND);
+    GLboolean wasBlend = glIsEnabled (GL_BLEND);
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
 
