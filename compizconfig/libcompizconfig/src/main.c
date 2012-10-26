@@ -183,10 +183,10 @@ ccsObjectGetInterface_(CCSObject *object, int interface_type)
 	    return object->interfaces[i];
     }
 
-    ccsError ("Unable to find interface type %i on %p\n"\
-	      "This is either a programmer error or more than one static library \n"\
-	      "defining this interface has been linked in\n"\
-	      "Unable to continue, please file a bug about this\n");
+    ccsError ("Unable to find interface type %i on %p\n"
+	      "This is either a programmer error or more than one static library \n"
+	      "defining this interface has been linked in\n"
+	      "Unable to continue, please file a bug about this\n", interface_type, object);
     assert (0);
 
     return NULL;
