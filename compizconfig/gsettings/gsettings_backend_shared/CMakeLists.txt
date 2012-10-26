@@ -58,7 +58,9 @@ if (GSETTINGS_UTIL_FOUND)
 	 compizconfig_gsettings_util
 	 compizconfig_gsettings_wrapper
 	 compizconfig_gnome_integration
+	 compizconfig_gnome_integration_gsettings_integrated_setting
 	 compizconfig_gnome_integration_gsettings_setting_factory
+	 compizconfig_gnome_integration_gsettings_wrapper_factory
 	 compizconfig_gsettings_wrapper_factory_interface
 	 compizconfig_gsettings_wrapper_factory
 	 compizconfig)
@@ -76,13 +78,5 @@ if (GSETTINGS_UTIL_FOUND)
 
     install (TARGETS compizconfig_gsettings_backend
 	     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-
-    #
-    # Tell CMake that targets using compizconfig_gsettings_backend should NOT re-import the
-    # libraries that compizconfig_gsettings_backend depends on (contains).
-    #
-    set_target_properties (compizconfig_gsettings_backend PROPERTIES
-	LINK_INTERFACE_LIBRARIES ""
-    )
 
 endif (GSETTINGS_UTIL_FOUND)
