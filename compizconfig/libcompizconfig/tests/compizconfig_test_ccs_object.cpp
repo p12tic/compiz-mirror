@@ -123,6 +123,9 @@ TEST(CCSObjectDeathTest, GetInterface)
 		      GET_INTERFACE (Dummy2Interface, to);
 		  },
 		  "Unable to find interface type*");
+
+    ccsObjectRemoveInterface (to, CCS_INTERFACE_TYPE_DUMMY);
+    free (to);
 }
 
 TEST(CCSObjectTest, InterfaceRemove)
