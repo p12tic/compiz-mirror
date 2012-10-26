@@ -33,6 +33,7 @@
 #include <dirent.h>
 #include <math.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <ccs.h>
 
@@ -181,6 +182,12 @@ ccsObjectGetInterface_(CCSObject *object, int interface_type)
 	if (object->interface_types[i] == interface_type)
 	    return object->interfaces[i];
     }
+
+    ccsError ("Unable to find interface type %i on %p\n"\
+	      "This is either a programmer error or more than one static library \n"\
+	      "defining this interface has been linked in\n"\
+	      "Unable to continue, please file a bug about this\n");
+    assert (0);
 
     return NULL;
 }
