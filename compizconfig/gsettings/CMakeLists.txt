@@ -25,12 +25,6 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/gsettings_backend_shared
                      ${CMAKE_SOURCE_DIR}/compizconfig/integration/gnome/include)
 
 set (COMPIZCONFIG_GSETTINGS_BACKEND_LIBRARIES
-     compizconfig_gsettings_wrapper
-     compizconfig_gnome_integration
-     compizconfig_gnome_integration_gsettings_setting_factory
-     compizconfig_gnome_integration_gsettings_wrapper_factory
-     compizconfig_gsettings_wrapper_factory_interface
-     compizconfig_gsettings_wrapper_factory
      compizconfig_gsettings_backend)
 
 compizconfig_backend (gsettings PKGDEPS ${_deps} LIBRARIES ${COMPIZCONFIG_GSETTINGS_BACKEND_LIBRARIES})
