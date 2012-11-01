@@ -142,8 +142,13 @@ ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
     glGetIntegerv (GL_BLEND_SRC_ALPHA, &oldBlendSrcAlpha);
     glGetIntegerv (GL_BLEND_DST_ALPHA, &oldBlendDstAlpha);
 #else
+    GLboolean wasBlend = glIsEnabled (GL_BLEND);
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
+
+    if (!wasBlend)
+	glEnable (GL_BLEND);
+
 #endif
 
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -179,6 +184,8 @@ ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
     glBlendFuncSeparate (oldBlendSrc, oldBlendDst,
                          oldBlendSrcAlpha, oldBlendDstAlpha);
 #else
+    if (!wasBlend)
+	glDisable (GL_BLEND);
     glBlendFunc (oldBlendSrc, oldBlendDst);
 #endif
 }
