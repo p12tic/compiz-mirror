@@ -205,16 +205,16 @@ InfoLayer::renderBackground ()
     a = is->optionGetGradient1Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.00f, r, g, b, a);
 
-    r = is->optionGetGradient1Red () / (float)0xffff;
-    g = is->optionGetGradient1Green () / (float)0xffff;
-    b = is->optionGetGradient1Blue () / (float)0xffff;
-    a = is->optionGetGradient1Alpha () / (float)0xffff;
+    r = is->optionGetGradient2Red () / (float)0xffff;
+    g = is->optionGetGradient2Green () / (float)0xffff;
+    b = is->optionGetGradient2Blue () / (float)0xffff;
+    a = is->optionGetGradient2Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.65f, r, g, b, a);
 
-    r = is->optionGetGradient1Red () / (float)0xffff;
-    g = is->optionGetGradient1Green () / (float)0xffff;
-    b = is->optionGetGradient1Blue () / (float)0xffff;
-    a = is->optionGetGradient1Alpha () / (float)0xffff;
+    r = is->optionGetGradient3Red () / (float)0xffff;
+    g = is->optionGetGradient3Green () / (float)0xffff;
+    b = is->optionGetGradient3Blue () / (float)0xffff;
+    a = is->optionGetGradient3Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.85f, r, g, b, a);
     cairo_set_source (cr, pattern);
 	
