@@ -68,7 +68,7 @@
 		    <alpha>0xcccc</alpha>
 		</default>
 	    </option>
-	    <option name="gradient_4" type="color">
+	    <option name="outline_color" type="color">
 		<_short>Outline Color</_short>
 		<_long>Color of the background's outline.</_long>
 		<default>
