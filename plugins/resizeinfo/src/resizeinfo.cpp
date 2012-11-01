@@ -228,7 +228,11 @@ InfoLayer::renderBackground ()
     cairo_fill_preserve (cr);
 	
     /* Outline */
-    cairo_set_source_rgba (cr, 0.9f, 0.9f, 0.9f, 1.0f);
+    r = is->optionGetGradient4Red () / (float)0xffff;
+    g = is->optionGetGradient4Green () / (float)0xffff;
+    b = is->optionGetGradient4Blue () / (float)0xffff;
+    a = is->optionGetGradient4Alpha () / (float)0xffff;
+    cairo_set_source_rgba (cr, r, g, b, a);
     cairo_stroke (cr);
 	
     cairo_pattern_destroy (pattern);
@@ -530,6 +534,7 @@ InfoScreen::InfoScreen (CompScreen *screen) :
     optionSetGradient1Notify (gradientChanged);
     optionSetGradient2Notify (gradientChanged);
     optionSetGradient3Notify (gradientChanged);
+    optionSetGradient4Notify (gradientChanged);
 }
 
 InfoWindow::InfoWindow (CompWindow *window) :
