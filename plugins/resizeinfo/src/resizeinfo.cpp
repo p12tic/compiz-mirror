@@ -228,10 +228,10 @@ InfoLayer::renderBackground ()
     cairo_fill_preserve (cr);
 	
     /* Outline */
-    r = is->optionGetOutlineColorRed () / (float)0xffff;
-    g = is->optionGetOutlineColorGreen () / (float)0xffff;
-    b = is->optionGetOutlineColorBlue () / (float)0xffff;
-    a = is->optionGetOutlineColorAlpha () / (float)0xffff;
+    r = is->optionGetOutlineColorRed () / static_cast <float> (std::numeric_limits <int>::max ());
+    g = is->optionGetOutlineColorGreen () / static_cast <float> (std::numeric_limits <int>::max ());
+    b = is->optionGetOutlineColorBlue () / static_cast <float> (std::numeric_limits <int>::max ());
+    a = is->optionGetOutlineColorAlpha () / static_cast <float> (std::numeric_limits <int>::max ());
     cairo_set_source_rgba (cr, r, g, b, a);
     cairo_stroke (cr);
 	
