@@ -1411,12 +1411,7 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib& attrib,
 	           (window->wmType () & CompWindowTypeDockMask);
 
 	if (eScreen->expoCam > 0.0)
-	{
-	    if (eScreen->expoCam < 1.0 && !zoomAnim)
-		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-	    else if (hide)
-		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-	}
+	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	if (!zoomAnim)
 	    opacity = attrib.opacity * eScreen->expoCam;
