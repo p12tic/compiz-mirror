@@ -211,6 +211,7 @@ EZoomScreen::ZoomArea::ZoomArea (int out) :
 }
 
 EZoomScreen::ZoomArea::ZoomArea () :
+    output (0),
     viewport (~0),
     currentZoom (1.0f),
     newZoom (1.0f),
