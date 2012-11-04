@@ -1874,7 +1874,11 @@ EZoomScreen::handleEvent (XEvent *event)
 /* TODO: Use this ctor carefully */
 
 EZoomScreen::CursorTexture::CursorTexture () :
-    isSet (false)
+    isSet (false),
+    width (0),
+    height (0),
+    hotX (0),
+    hotY (0)
 {
 }
 
