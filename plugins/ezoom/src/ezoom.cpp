@@ -1875,6 +1875,7 @@ EZoomScreen::handleEvent (XEvent *event)
 
 EZoomScreen::CursorTexture::CursorTexture () :
     isSet (false),
+    screen (0),
     width (0),
     height (0),
     hotX (0),
