@@ -1151,6 +1151,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     bindPixmap (),
     hasCompositing (false),
     commonFrontbuffer (true),
+    incorrectRefreshRate (false),
     programCache (new GLProgramCache (30)),
     shaderCache (),
     autoProgram (new GLScreenAutoProgram(gs)),
