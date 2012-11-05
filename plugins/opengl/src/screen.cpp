@@ -1147,6 +1147,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     #endif
     scratchFbo (NULL),
     outputRegion (),
+    refreshSubBuffer (false),
     lastMask (0),
     bindPixmap (),
     hasCompositing (false),
