@@ -559,6 +559,13 @@ TripScreen::~TripScreen ()
 
 Ripple::Ripple () :    
     dScreen (TripScreen::get (screen))
+    radius (0),
+    rMod (0),
+    duration (0),
+    timer (0),
+    width (0),
+    height (0),
+    adjust (false)
 {
 }
 
