@@ -228,14 +228,18 @@ InfoLayer::renderBackground ()
     cairo_fill_preserve (cr);
 	
     /* Outline */
-    cairo_set_source_rgba (cr, 0.9f, 0.9f, 0.9f, 1.0f);
+    r = is->optionGetOutlineColorRed () / (float)0xffff;
+    g = is->optionGetOutlineColorGreen () / (float)0xffff;
+    b = is->optionGetOutlineColorBlue () / (float)0xffff;
+    a = is->optionGetOutlineColorAlpha () / (float)0xffff;
+    cairo_set_source_rgba (cr, r, g, b, a);
     cairo_stroke (cr);
 	
     cairo_pattern_destroy (pattern);
 }
 
 static void
-gradientChanged (CompOption                 *o, 
+backgroundColorChanged (CompOption                 *o, 
 		 ResizeinfoOptions::Options num)
 {
     INFO_SCREEN (screen);
@@ -527,9 +531,10 @@ InfoScreen::InfoScreen (CompScreen *screen) :
 
     backgroundLayer.renderBackground ();
 
-    optionSetGradient1Notify (gradientChanged);
-    optionSetGradient2Notify (gradientChanged);
-    optionSetGradient3Notify (gradientChanged);
+    optionSetGradient1Notify (backgroundColorChanged);
+    optionSetGradient2Notify (backgroundColorChanged);
+    optionSetGradient3Notify (backgroundColorChanged);
+    optionSetOutlineColorNotify (backgroundColorChanged);
 }
 
 InfoWindow::InfoWindow (CompWindow *window) :
