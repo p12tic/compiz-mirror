@@ -170,7 +170,7 @@ void
 WSNamesScreen::donePaint ()
 {
     /* FIXME: better only damage paint region */
-    if (timer)
+/*    if (timer) */
 	cScreen->damageScreen ();
 
     cScreen->donePaint ();
@@ -207,7 +207,7 @@ WSNamesScreen::handleEvent (XEvent *event)
 	    timeoutHandle.stop ();
 
 	renderNameText ();
-	timeoutHandle.start (timeout, timeout + 200);
+	timeoutHandle.start (timeout, timeout);
 
 	cScreen->damageScreen ();
     }
