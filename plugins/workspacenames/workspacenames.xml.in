@@ -21,14 +21,14 @@
 					<_short>Workspace Names</_short>
 					<option name="viewports" type="list">
 						<_short>Viewport</_short>
-						<_long>Number of viewport to be named</_long>
+						<_long>Number of the viewport to be named.</_long>
 						<type>int</type>
 						<min>1</min>
 						<max>50</max>
 					</option>
 					<option name="names" type="list">
 						<_short>Name</_short>
-						<_long>Viewport name</_long>
+						<_long>Name of the viewport/workspace.</_long>
 						<type>string</type>
 					</option>
 				</subgroup>
@@ -37,15 +37,15 @@
 				<_short>Appearance</_short>
 				<option name="display_time" type="float">
 					<_short>Display Time</_short>
-					<_long>Timeout (in s) of the name display</_long>
+					<_long>Duration of the workspacename display (in seconds).</_long>
 					<min>0.1</min>
 					<max>5.0</max>
 					<precision>0.05</precision>
-					<default>0.5</default>
+					<default>1.5</default>
 				</option>
 				<option name="fade_time" type="float">
 					<_short>Fade Time</_short>
-					<_long>Time (in s) the name display fades out after being shown.</_long>
+					<_long>Duration of the fade-out afterwards (in seconds).</_long>
 					<min>0.0</min>
 					<max>5.0</max>
 					<precision>0.05</precision>
@@ -56,12 +56,12 @@
 					<option name="bold_text" type="bool">
 						<_short>Bold Font</_short>
 						<_long>Selects if the text should be displayed in bold font or not.</_long>
-						<default>false</default>
+						<default>true</default>
 					</option>
 					<option name="text_font_size" type="int">
 						<_short>Font Size</_short>
 						<_long>Font size for the text display.</_long>
-						<default>16</default>
+						<default>24</default>
 						<min>6</min>
 						<max>96</max>
 					</option>
