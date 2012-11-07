@@ -39,21 +39,21 @@ class DoubleBuffer
 
     typedef enum _BufferSwapType
     {
-        Swap,
-        Blit
+	Swap,
+	Blit
     } BufferSwapType;
 
     typedef enum _SyncType
     {
-        NoSync = 0,
-        Asynchronous = 1,
-        Blocking = 2
+	NoSync = 0,
+	Asynchronous = 1,
+	Blocking = 2
     } SyncType;
 
     typedef enum _FrameThrottleState
     {
-        ExternalFrameThrottlingRequired,
-        FrameThrottledInternally
+	ExternalFrameThrottlingRequired,
+	FrameThrottledInternally
     } FrameThrottleState;
 
 	void set (Setting name, bool value);
@@ -74,7 +74,8 @@ class DoubleBuffer
 
 	SyncType		      syncType;
 
-	unsigned int                  unthrottledFrames;
+	FrameThrottleState            bufferFrameThrottleState;
+	unsigned int                  blockingVSyncUnthrottledFrames;
 
 	impl::GLXSwapIntervalEXTFunc  swapIntervalFunc;
 	impl::GLXWaitVideoSyncSGIFunc waitVideoSyncFunc;

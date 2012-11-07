@@ -43,7 +43,8 @@ namespace opengl
 DoubleBuffer::DoubleBuffer (const impl::GLXSwapIntervalEXTFunc  &swapIntervalFunc,
 			    const impl::GLXWaitVideoSyncSGIFunc &waitVideoSyncFunc) :
     syncType (NoSync),
-    unthrottledFrames (0),
+    bufferFrameThrottleState (FrameThrottledInternally),
+    blockingVSyncUnthrottledFrames (0),
     swapIntervalFunc (swapIntervalFunc),
     waitVideoSyncFunc (waitVideoSyncFunc),
     lastVSyncCounter (0)
@@ -70,7 +71,7 @@ DoubleBuffer::render (const CompRegion &region,
     if (fullscreen)
     {
 	if (setting[VSYNC])
-        vsync (Swap);
+	vsync (Swap);
 
 	swap ();
 
@@ -83,7 +84,7 @@ DoubleBuffer::render (const CompRegion &region,
     else
     {
 	if (setting[VSYNC])
-        vsync (Blit);
+	vsync (Blit);
 
 	if (blitAvailable ())
 	    blit (region);
@@ -111,33 +112,40 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 	if (lastSyncType == Blocking)
 	    disableBlockingVideoSync ();
 
-	/* This is a special case to make sure that we don't
-	 * need to flip 5 frames before throttling kicks in */
-    unthrottledFrames = unthrottledFrames > DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX ?
-                DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX : unthrottledFrames;
+	/* Apply throttle */
+	bufferFrameThrottleState = throttleState;
+	blockingVSyncUnthrottledFrames = 0;
     }
     else if (enableBlockingVideoSync (swapType, throttleState))
     {
 	syncType = Blocking;
 	if (lastSyncType == Asynchronous)
 	    disableAsynchronousVideoSync ();
+
+	/* Accumulate throttle */
+	if (throttleState == ExternalFrameThrottlingRequired)
+	    blockingVSyncUnthrottledFrames++;
+	else
+	    blockingVSyncUnthrottledFrames = 0;
+
+	if (blockingVSyncUnthrottledFrames >= DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX)
+	    bufferFrameThrottleState = ExternalFrameThrottlingRequired;
+	else
+	    bufferFrameThrottleState = FrameThrottledInternally;
     }
     else
     {
 	syncType = NoSync;
-	throttleState = ExternalFrameThrottlingRequired;
+	/* Throttle all rendering */
+	bufferFrameThrottleState = ExternalFrameThrottlingRequired;
+	blockingVSyncUnthrottledFrames = 0;
     }
-
-    if (throttleState == ExternalFrameThrottlingRequired)
-	unthrottledFrames++;
-    else
-	unthrottledFrames = 0;
 }
 
 bool
 DoubleBuffer::hardwareVSyncFunctional ()
 {
-    return unthrottledFrames < DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX;
+    return bufferFrameThrottleState == FrameThrottledInternally;
 }
 
 bool
@@ -183,7 +191,7 @@ DoubleBuffer::enableBlockingVideoSync (BufferSwapType swapType, FrameThrottleSta
 void
 DoubleBuffer::disableBlockingVideoSync ()
 {
-    unthrottledFrames = 0;
+    blockingVSyncUnthrottledFrames = 0;
 }
 
 } // namespace opengl

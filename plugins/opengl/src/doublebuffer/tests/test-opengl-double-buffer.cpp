@@ -224,13 +224,13 @@ TEST_F(DoubleBufferTest, TestReportNoHardwareVSyncIfMoreThan5UnthrottledFrames)
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
-		.WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
-        .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
-				  Return (true)));
+	EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+		    .WillOnce (Return (false));
+	EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
+	    .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
+				      Return (true)));
 
-    db.vsync (DoubleBuffer::Blit);
+	db.vsync (DoubleBuffer::Blit);
     }
 
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
@@ -241,15 +241,15 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
-		.WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
-        .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
-				  Return (true)));
+	EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+		    .WillOnce (Return (false));
+	EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
+	    .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
+				      Return (true)));
 
 	EXPECT_TRUE (db.hardwareVSyncFunctional ());
 
-    db.vsync (DoubleBuffer::Blit);
+	db.vsync (DoubleBuffer::Blit);
     }
 
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
@@ -258,7 +258,7 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
-        .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::FrameThrottledInternally),
+	.WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::FrameThrottledInternally),
 			      Return (true)));
 
     db.vsync (DoubleBuffer::Blit);
@@ -266,15 +266,15 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     /* And should report to work for another 5 bad frames */
     for (unsigned int i = 0; i < 5; ++i)
     {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
-		.WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
-        .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
-				  Return (true)));
+	EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+		    .WillOnce (Return (false));
+	EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
+	    .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
+				      Return (true)));
 
 	EXPECT_TRUE (db.hardwareVSyncFunctional ());
 
-    db.vsync (DoubleBuffer::Blit);
+	db.vsync (DoubleBuffer::Blit);
     }
 
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
