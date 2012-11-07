@@ -39,8 +39,8 @@ class DoubleBuffer
 
     typedef enum _BufferSwapType
     {
-        Flip,
-        PartialCopy
+        Swap,
+        Blit
     } BufferSwapType;
 
     typedef enum _SyncType

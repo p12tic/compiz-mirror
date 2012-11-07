@@ -68,7 +68,7 @@ DoubleBuffer::render (const CompRegion &region,
     if (fullscreen)
     {
 	if (setting[VSYNC])
-	    vsync (Flip);
+        vsync (Swap);
 
 	swap ();
 
@@ -81,7 +81,7 @@ DoubleBuffer::render (const CompRegion &region,
     else
     {
 	if (setting[VSYNC])
-	    vsync (PartialCopy);
+        vsync (Blit);
 
 	if (blitAvailable ())
 	    blit (region);
@@ -146,7 +146,7 @@ DoubleBuffer::enableAsynchronousVideoSync (BufferSwapType swapType, FrameThrottl
     throttleState = ExternalFrameThrottlingRequired;
 
     /* Can't use swapInterval unless using SwapBuffers */
-    if (swapType != Flip)
+    if (swapType != Swap)
 	return false;
 
     /* Enable if not enabled */

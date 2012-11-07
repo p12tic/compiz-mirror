@@ -72,7 +72,7 @@ class CompizOpenGLDoubleBufferDeathTest :
 TEST_F(DoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
     EXPECT_CALL (db, swap ());
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Flip, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Swap, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (db, copyFrontToBack ()).Times (0);
 
@@ -83,9 +83,9 @@ TEST_F(DoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
 {
     EXPECT_CALL (db, blitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (db, blit (_));
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (db, copyFrontToBack ()).Times (0);
 
@@ -98,7 +98,7 @@ TEST_F(DoubleBufferTest, SwapWithoutFBO)
     db.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, true);
 
     EXPECT_CALL (db, swap ());
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Flip, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Swap, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (db, copyFrontToBack ()).Times (1);
 
@@ -113,9 +113,9 @@ TEST_F(DoubleBufferTest, BlitWithoutFBO)
     EXPECT_CALL (db, blitAvailable ()).WillRepeatedly (Return (true));
     EXPECT_CALL (db, blit (_));
     EXPECT_CALL (db, swap ()).Times (0);
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (db, copyFrontToBack ()).Times (0);
 
@@ -134,9 +134,9 @@ TEST_F(DoubleBufferTest, TestBlitExactlyWithRegionSpecified)
     CompRegion r3 (200, 200, 100, 100);
 
     EXPECT_CALL (db, blitAvailable ()).WillRepeatedly (Return (true));
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillRepeatedly (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillRepeatedly (Return (true));
 
     EXPECT_CALL (db, blit (r1));
@@ -168,9 +168,9 @@ TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
 
     EXPECT_CALL (dbStrict, blitAvailable ()).WillOnce (Return (false));
     EXPECT_CALL (dbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
-    EXPECT_CALL (dbStrict, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (dbStrict, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
-    EXPECT_CALL (dbStrict, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (dbStrict, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (dbStrict, fallbackBlit (blitRegion));
 
@@ -179,41 +179,41 @@ TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
 
 TEST_F(DoubleBufferTest, TestCallWorkingStrategy)
 {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Flip, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Swap, _))
 	    .WillOnce (Return (true));
 
-    db.vsync (DoubleBuffer::Flip);
+    db.vsync (DoubleBuffer::Swap);
 }
 
 TEST_F(DoubleBufferTest, TestCallNextWorkingStrategy)
 {
     /* This one fails */
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     /* Try the next one */
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
 }
 
 TEST_F(DoubleBufferTest, TestCallPrevCallNextPrevDeactivated)
 {
     /* This one fails */
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     /* Try the next one */
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
 
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
     /* Previous one must be deactivated */
     EXPECT_CALL (db, disableBlockingVideoSync ());
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
 }
 
 TEST_F(DoubleBufferTest, TestReportNoHardwareVSyncIfMoreThan5UnthrottledFrames)
@@ -221,13 +221,13 @@ TEST_F(DoubleBufferTest, TestReportNoHardwareVSyncIfMoreThan5UnthrottledFrames)
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 		.WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
         .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
 				  Return (true)));
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
     }
 
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
@@ -238,40 +238,40 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 		.WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
         .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
 				  Return (true)));
 
 	EXPECT_TRUE (db.hardwareVSyncFunctional ());
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
     }
 
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
 
     /* It works again */
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
         .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::FrameThrottledInternally),
 			      Return (true)));
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
 
     /* And should report to work for another 5 bad frames */
     for (unsigned int i = 0; i < 5; ++i)
     {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
 		.WillOnce (Return (false));
-    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::PartialCopy, _))
+    EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
         .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
 				  Return (true)));
 
 	EXPECT_TRUE (db.hardwareVSyncFunctional ());
 
-    db.vsync (DoubleBuffer::PartialCopy);
+    db.vsync (DoubleBuffer::Blit);
     }
 
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
@@ -321,43 +321,43 @@ class OpenGLVideoSyncTest :
 TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalOnVSyncForFlip)
 {
     EXPECT_CALL (functions, swapIntervalEXT (1));
-    doubleBuffer.vsync (cgl::DoubleBuffer::Flip);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Swap);
 }
 
 TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalOnEnableForFlipOnlyOnce)
 {
     EXPECT_CALL (functions, swapIntervalEXT (1)).Times (1);
-    doubleBuffer.vsync (cgl::DoubleBuffer::Flip);
-    doubleBuffer.vsync (cgl::DoubleBuffer::Flip);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Swap);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Swap);
 }
 
 TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalOnEnableForFlipAndZeroForDisable)
 {
     EXPECT_CALL (functions, swapIntervalEXT (1));
-    doubleBuffer.vsync (cgl::DoubleBuffer::Flip);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Swap);
     EXPECT_CALL (functions, swapIntervalEXT (0));
     EXPECT_CALL (functions, waitVideoSyncSGI (1, 0, _));
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
 }
 
 TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalZeroForDisableOnce)
 {
     /* Enable it */
     EXPECT_CALL (functions, swapIntervalEXT (1)).Times (1);
-    doubleBuffer.vsync (cgl::DoubleBuffer::Flip);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Swap);
 
     /* Disable it twice */
     EXPECT_CALL (functions, swapIntervalEXT (0)).Times (1);
     EXPECT_CALL (functions, waitVideoSyncSGI (1, 0, _)).Times (2);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
 }
 
 TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalFailsToEnableForCopy)
 {
     EXPECT_CALL (functions, swapIntervalEXT (1)).Times (0);
     EXPECT_CALL (functions, waitVideoSyncSGI (1, _, _));
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
 }
 
 TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalUnthrottledWhereSuccess)
@@ -365,7 +365,7 @@ TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalUnthrottledWhereSuccess)
     EXPECT_CALL (functions, swapIntervalEXT (1));
 
     /* At the moment there's no way to test except for the general throttled method */
-    doubleBuffer.vsync (cgl::DoubleBuffer::Flip);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Swap);
 
     EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
 }
@@ -373,7 +373,7 @@ TEST_F (OpenGLVideoSyncTest, TestCallSwapIntervalUnthrottledWhereSuccess)
 TEST_F (OpenGLVideoSyncTest, TestCallsGetVideoSyncAndWaitVideoSyncForCopy)
 {
     EXPECT_CALL (functions, waitVideoSyncSGI (_, _, _));
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
 }
 
 TEST_F (OpenGLVideoSyncTest, TestCallsWaitVideoSyncAndThrottled)
@@ -383,11 +383,11 @@ TEST_F (OpenGLVideoSyncTest, TestCallsWaitVideoSyncAndThrottled)
 									  Return (0)));
     EXPECT_CALL (functions, waitVideoSyncSGI (1, _, _)).Times (5);
     /* Returned next frame, this frame was throttled */
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
     EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
 }
 
@@ -411,11 +411,11 @@ TEST_F (OpenGLVideoSyncTest, TestCallsWaitVideoSyncAndThrottledEveryFrame)
     EXPECT_CALL (functions, waitVideoSyncSGI (1, _, _)).WillOnce (DoAll (SetArgPointee<2> (5),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
     EXPECT_TRUE (doubleBuffer.hardwareVSyncFunctional ());
 }
 
@@ -426,11 +426,11 @@ TEST_F (OpenGLVideoSyncTest, TestCallsWaitVideoSyncAndUnthrottledDueToBrokenWait
 									  Return (0)));
     EXPECT_CALL (functions, waitVideoSyncSGI (1, _, _)).Times (5);
     /* Returned next frame, this frame was not throttled */
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
     EXPECT_FALSE (doubleBuffer.hardwareVSyncFunctional ());
 
     InSequence s;
@@ -451,10 +451,10 @@ TEST_F (OpenGLVideoSyncTest, TestCallsWaitVideoSyncAndUnthrottledDueToBrokenWait
     EXPECT_CALL (functions, waitVideoSyncSGI (1, _, _)).WillOnce (DoAll (SetArgPointee<2> (5),
 									 Return (0)));
     /* Returned next frame, this frame was throttled */
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
-    doubleBuffer.vsync (cgl::DoubleBuffer::PartialCopy);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
+    doubleBuffer.vsync (cgl::DoubleBuffer::Blit);
     EXPECT_TRUE (doubleBuffer.hardwareVSyncFunctional ());
 }
