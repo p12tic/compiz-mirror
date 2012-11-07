@@ -15,6 +15,9 @@ using testing::SetArgReferee;
 using testing::SetArgPointee;
 using testing::InSequence;
 
+char programName[] = "compiz_test_opengl_double_buffer";
+bool debugOutput = false;
+
 class MockDoubleBuffer :
     public DoubleBuffer
 {

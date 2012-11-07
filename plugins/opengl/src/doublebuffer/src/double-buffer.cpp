@@ -30,8 +30,10 @@
 
 using namespace compiz::opengl;
 
-char programName[] = "compiz_test_opengl_double_buffer";
-bool debugOutput = false;
+namespace
+{
+const unsigned int DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX = 5;
+}
 
 namespace compiz
 {
@@ -111,8 +113,8 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 
 	/* This is a special case to make sure that we don't
 	 * need to flip 5 frames before throttling kicks in */
-	unthrottledFrames = unthrottledFrames < 5 ?
-				5 : unthrottledFrames;
+    unthrottledFrames = unthrottledFrames > DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX ?
+                DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX : unthrottledFrames;
     }
     else if (enableBlockingVideoSync (swapType, throttleState))
     {
@@ -135,7 +137,7 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 bool
 DoubleBuffer::hardwareVSyncFunctional ()
 {
-    return unthrottledFrames < 5;
+    return unthrottledFrames < DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX;
 }
 
 bool
