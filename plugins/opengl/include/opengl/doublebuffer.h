@@ -9,25 +9,6 @@ namespace compiz
 namespace opengl
 {
 
-typedef enum _BufferSwapType
-{
-    Flip,
-    PartialCopy
-} BufferSwapType;
-
-typedef enum _SyncType
-{
-    NoSync = 0,
-    Asynchronous = 1,
-    Blocking = 2
-} SyncType;
-
-typedef enum _FrameThrottleState
-{
-    ExternalFrameThrottlingRequired,
-    FrameThrottledInternally
-} FrameThrottleState;
-
 namespace impl
 {
 typedef boost::function <int (int, int, unsigned int *)> GLXWaitVideoSyncSGIFunc;
@@ -55,6 +36,25 @@ class DoubleBuffer
 	    NEED_PERSISTENT_BACK_BUFFER,
 	    _NSETTINGS
 	} Setting;
+
+    typedef enum _BufferSwapType
+    {
+        Flip,
+        PartialCopy
+    } BufferSwapType;
+
+    typedef enum _SyncType
+    {
+        NoSync = 0,
+        Asynchronous = 1,
+        Blocking = 2
+    } SyncType;
+
+    typedef enum _FrameThrottleState
+    {
+        ExternalFrameThrottlingRequired,
+        FrameThrottledInternally
+    } FrameThrottleState;
 
 	void set (Setting name, bool value);
 	void render (const CompRegion &region, bool fullscreen);
