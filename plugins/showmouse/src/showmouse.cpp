@@ -54,12 +54,16 @@ Particle::Particle () :
 {
 }
 
-ParticleSystem::ParticleSystem (int n)
+ParticleSystem::ParticleSystem (int n) :
+    x (0),
+    y (0)
 {
     initParticles (n);
 }
 
-ParticleSystem::ParticleSystem ()
+ParticleSystem::ParticleSystem () :
+    x (0),
+    y (0)
 {
     initParticles (0);
 }

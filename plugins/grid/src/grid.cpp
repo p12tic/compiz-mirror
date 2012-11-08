@@ -695,6 +695,23 @@ GridScreen::handleEvent (XEvent *event)
     if (event->type != MotionNotify || !mGrabWindow)
 	return;
 
+    /* Detect when cursor enters another output */
+
+    currentWorkarea = screen->getWorkareaForOutput
+			    (screen->outputDeviceForPoint (pointerX, pointerY));
+    if (lastWorkarea != currentWorkarea)
+    {
+	lastWorkarea = currentWorkarea;
+
+	if (cScreen)
+	    cScreen->damageRegion (desiredSlot);
+
+	initiateCommon (0, 0, o, typeToMask (edgeToGridType ()), false, false);
+
+	if (cScreen)
+	    cScreen->damageRegion (desiredSlot);
+    }
+
     out = screen->outputDevs ().at (
                    screen->outputDeviceForPoint (CompPoint (pointerX, pointerY)));
 
@@ -730,23 +747,6 @@ GridScreen::handleEvent (XEvent *event)
     /* No Edge */
     else
 	edge = NoEdge;
-
-    /* Detect when cursor enters another output */
-
-    currentWorkarea = screen->getWorkareaForOutput
-			    (screen->outputDeviceForPoint (pointerX, pointerY));
-    if (lastWorkarea != currentWorkarea)
-    {
-	lastWorkarea = currentWorkarea;
-
-	if (cScreen)
-	    cScreen->damageRegion (desiredSlot);
-
-	initiateCommon (0, 0, o, typeToMask (edgeToGridType ()), false, false);
-
-	if (cScreen)
-	    cScreen->damageRegion (desiredSlot);
-    }
 
     /* Detect edge region change */
 

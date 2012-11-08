@@ -211,6 +211,7 @@ EZoomScreen::ZoomArea::ZoomArea (int out) :
 }
 
 EZoomScreen::ZoomArea::ZoomArea () :
+    output (0),
     viewport (~0),
     currentZoom (1.0f),
     newZoom (1.0f),
@@ -1874,7 +1875,12 @@ EZoomScreen::handleEvent (XEvent *event)
 /* TODO: Use this ctor carefully */
 
 EZoomScreen::CursorTexture::CursorTexture () :
-    isSet (false)
+    isSet (false),
+    screen (0),
+    width (0),
+    height (0),
+    hotX (0),
+    hotY (0)
 {
 }
 

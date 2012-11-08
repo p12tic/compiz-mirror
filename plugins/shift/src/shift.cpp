@@ -139,16 +139,13 @@ ShiftScreen::freeWindowTitle ()
 void
 ShiftScreen::renderWindowTitle ()
 {
+    if (!textAvailable || !optionGetWindowTitle ())
+        return;
+
     CompText::Attrib tA;
     CompRect	     oe;
 
     freeWindowTitle ();
-
-    if (!textAvailable)
-        return;
-
-    if (!optionGetWindowTitle ())
-        return;
 
     if (optionGetMultioutputMode () ==
                                     ShiftOptions::MultioutputModeOneBigSwitcher)
@@ -187,6 +184,9 @@ ShiftScreen::renderWindowTitle ()
 void
 ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 {
+    if (!textAvailable || !optionGetWindowTitle ())
+        return;
+
     float width, height, border = 10.0f;
     CompRect oe;
 

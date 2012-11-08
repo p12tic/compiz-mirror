@@ -205,16 +205,16 @@ InfoLayer::renderBackground ()
     a = is->optionGetGradient1Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.00f, r, g, b, a);
 
-    r = is->optionGetGradient1Red () / (float)0xffff;
-    g = is->optionGetGradient1Green () / (float)0xffff;
-    b = is->optionGetGradient1Blue () / (float)0xffff;
-    a = is->optionGetGradient1Alpha () / (float)0xffff;
+    r = is->optionGetGradient2Red () / (float)0xffff;
+    g = is->optionGetGradient2Green () / (float)0xffff;
+    b = is->optionGetGradient2Blue () / (float)0xffff;
+    a = is->optionGetGradient2Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.65f, r, g, b, a);
 
-    r = is->optionGetGradient1Red () / (float)0xffff;
-    g = is->optionGetGradient1Green () / (float)0xffff;
-    b = is->optionGetGradient1Blue () / (float)0xffff;
-    a = is->optionGetGradient1Alpha () / (float)0xffff;
+    r = is->optionGetGradient3Red () / (float)0xffff;
+    g = is->optionGetGradient3Green () / (float)0xffff;
+    b = is->optionGetGradient3Blue () / (float)0xffff;
+    a = is->optionGetGradient3Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.85f, r, g, b, a);
     cairo_set_source (cr, pattern);
 	
@@ -228,14 +228,18 @@ InfoLayer::renderBackground ()
     cairo_fill_preserve (cr);
 	
     /* Outline */
-    cairo_set_source_rgba (cr, 0.9f, 0.9f, 0.9f, 1.0f);
+    r = is->optionGetOutlineColorRed () / (float)0xffff;
+    g = is->optionGetOutlineColorGreen () / (float)0xffff;
+    b = is->optionGetOutlineColorBlue () / (float)0xffff;
+    a = is->optionGetOutlineColorAlpha () / (float)0xffff;
+    cairo_set_source_rgba (cr, r, g, b, a);
     cairo_stroke (cr);
 	
     cairo_pattern_destroy (pattern);
 }
 
 static void
-gradientChanged (CompOption                 *o, 
+backgroundColorChanged (CompOption                 *o, 
 		 ResizeinfoOptions::Options num)
 {
     INFO_SCREEN (screen);
@@ -527,9 +531,10 @@ InfoScreen::InfoScreen (CompScreen *screen) :
 
     backgroundLayer.renderBackground ();
 
-    optionSetGradient1Notify (gradientChanged);
-    optionSetGradient2Notify (gradientChanged);
-    optionSetGradient3Notify (gradientChanged);
+    optionSetGradient1Notify (backgroundColorChanged);
+    optionSetGradient2Notify (backgroundColorChanged);
+    optionSetGradient3Notify (backgroundColorChanged);
+    optionSetOutlineColorNotify (backgroundColorChanged);
 }
 
 InfoWindow::InfoWindow (CompWindow *window) :

@@ -597,6 +597,7 @@ Decoration::Decoration (int   type,
 			unsigned int nQuad,
 			Window       owner,
 			DecorPixmapRequestorInterface *requestor) :
+    refCount (0),
     texture (DecorScreen::get (screen)->getTexture (pixmap)),
     border (border.left, border.right, border.top, border.bottom),
     input (input.left, input.right, input.top, input.bottom),

@@ -25,11 +25,23 @@
 						<type>int</type>
 						<min>1</min>
 						<max>50</max>
+						<default>
+							<value>1</value>
+							<value>2</value>
+							<value>3</value>
+							<value>4</value>
+						</default>
 					</option>
 					<option name="names" type="list">
 						<_short>Name</_short>
 						<_long>Viewport name</_long>
 						<type>string</type>
+						<default>
+							<value>Viewport 1</value>
+							<value>Viewport 2</value>
+							<value>Viewport 3</value>
+							<value>Viewport 4</value>
+						</default>
 					</option>
 				</subgroup>
 			</group>

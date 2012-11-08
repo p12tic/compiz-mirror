@@ -98,6 +98,39 @@ TEST(CCSObjectTest, InterfaceAdd)
     free (to);
 }
 
+TEST(CCSObjectTest, GetInterface)
+{
+    TestingObjectWrapper *to = reinterpret_cast <TestingObjectWrapper *> (calloc (1, sizeof (TestingObjectWrapper)));
+
+    ccsObjectInit (to, &ccsDefaultObjectAllocator);
+    ccsObjectAddInterface (to, reinterpret_cast <const CCSInterface *> (&SomeDummyInterface), CCS_INTERFACE_TYPE_DUMMY);
+    DummyInterface *interface = GET_INTERFACE (DummyInterface, to);
+
+    EXPECT_EQ (interface, &SomeDummyInterface);
+
+    ccsObjectRemoveInterface (to, CCS_INTERFACE_TYPE_DUMMY);
+
+    free (to);
+}
+
+TEST(CCSObjectDeathTest, GetInterface)
+{
+    TestingObjectWrapper *to = reinterpret_cast <TestingObjectWrapper *> (calloc (1, sizeof (TestingObjectWrapper)));
+
+    ccsObjectInit (to, &ccsDefaultObjectAllocator);
+    ccsObjectAddInterface (to, reinterpret_cast <const CCSInterface *> (&SomeDummyInterface), CCS_INTERFACE_TYPE_DUMMY);
+
+    Dummy2Interface *i = NULL;
+    ASSERT_DEATH ({
+		      i = GET_INTERFACE (Dummy2Interface, to);
+		  },
+		  "Unable to find interface type*");
+    EXPECT_EQ (NULL, i);  // Avoid warnings/errors about i being unused.
+
+    ccsObjectRemoveInterface (to, CCS_INTERFACE_TYPE_DUMMY);
+    free (to);
+}
+
 TEST(CCSObjectTest, InterfaceRemove)
 {
     TestingObjectWrapper *to = (TestingObjectWrapper *) calloc (1, sizeof (TestingObjectWrapper));
