@@ -4466,7 +4466,10 @@ ccsProcessSettingMinus (IniDictionary      *dict,
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (asprintf (&keyName, "-s%d_%s", cPrivate->screenNum, ccsSettingGetName (setting)) == -1)
+    {
+	free (sectionName);
 	return FALSE;
+    }
 
     if (ccsIniGetString (dict, sectionName, keyName, &iniValue))
     {
