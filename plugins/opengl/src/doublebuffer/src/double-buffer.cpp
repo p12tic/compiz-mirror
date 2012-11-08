@@ -32,7 +32,7 @@ using namespace compiz::opengl;
 
 namespace
 {
-const unsigned int DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX = 5;
+const unsigned int UNTHROTTLED_FRAMES_MAX = 5;
 }
 
 namespace compiz
@@ -100,14 +100,14 @@ DoubleBuffer::render (const CompRegion &region,
 }
 
 void
-DoubleBuffer::vsync (BufferSwapType swapType)
+DoubleBuffer::vsync (FrontbufferRedrawType redrawType)
 {
     FrameThrottleState throttleState;
     SyncType           lastSyncType = syncType;
 
-    if (enableAsynchronousVideoSync (swapType, throttleState))
+    if (enableAsyncVideoSync (redrawType, throttleState))
     {
-	syncType = Asynchronous;
+	syncType = Async;
 
 	if (lastSyncType == Blocking)
 	    disableBlockingVideoSync ();
@@ -116,11 +116,11 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 	bufferFrameThrottleState = throttleState;
 	blockingVSyncUnthrottledFrames = 0;
     }
-    else if (enableBlockingVideoSync (swapType, throttleState))
+    else if (enableBlockingVideoSync (redrawType, throttleState))
     {
 	syncType = Blocking;
-	if (lastSyncType == Asynchronous)
-	    disableAsynchronousVideoSync ();
+	if (lastSyncType == Async)
+	    disableAsyncVideoSync ();
 
 	/* Accumulate throttle */
 	if (throttleState == ExternalFrameThrottlingRequired)
@@ -128,7 +128,7 @@ DoubleBuffer::vsync (BufferSwapType swapType)
 	else
 	    blockingVSyncUnthrottledFrames = 0;
 
-	if (blockingVSyncUnthrottledFrames >= DOUBLE_BUFFER_UNTHROTTLED_FRAMES_MAX)
+	if (blockingVSyncUnthrottledFrames >= UNTHROTTLED_FRAMES_MAX)
 	    bufferFrameThrottleState = ExternalFrameThrottlingRequired;
 	else
 	    bufferFrameThrottleState = FrameThrottledInternally;
@@ -149,7 +149,7 @@ DoubleBuffer::hardwareVSyncFunctional ()
 }
 
 bool
-DoubleBuffer::enableAsynchronousVideoSync (BufferSwapType swapType, FrameThrottleState &throttleState)
+DoubleBuffer::enableAsyncVideoSync (FrontbufferRedrawType swapType, FrameThrottleState &throttleState)
 {
     /* Always consider these frames as un-throttled as the buffer
      * swaps are done asynchronously */
@@ -160,21 +160,21 @@ DoubleBuffer::enableAsynchronousVideoSync (BufferSwapType swapType, FrameThrottl
 	return false;
 
     /* Enable if not enabled */
-    if (syncType != Asynchronous)
+    if (syncType != Async)
 	swapIntervalFunc (1);
 
     return true;
 }
 
 void
-DoubleBuffer::disableAsynchronousVideoSync ()
+DoubleBuffer::disableAsyncVideoSync ()
 {
     /* Disable if enabled */
     swapIntervalFunc (0);
 }
 
 bool
-DoubleBuffer::enableBlockingVideoSync (BufferSwapType swapType, FrameThrottleState &throttleState)
+DoubleBuffer::enableBlockingVideoSync (FrontbufferRedrawType swapType, FrameThrottleState &throttleState)
 {
     unsigned int oldVideoSyncCounter = lastVSyncCounter;
     waitVideoSyncFunc (1, 0, &lastVSyncCounter);

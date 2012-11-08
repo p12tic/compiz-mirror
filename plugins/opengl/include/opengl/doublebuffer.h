@@ -37,28 +37,28 @@ class DoubleBuffer
 	    _NSETTINGS
 	} Setting;
 
-    typedef enum _BufferSwapType
-    {
-	Swap,
-	Blit
-    } BufferSwapType;
+	typedef enum _RedrawType
+	{
+	    Swap,
+	    Blit
+	} FrontbufferRedrawType;
 
-    typedef enum _SyncType
-    {
-	NoSync = 0,
-	Asynchronous = 1,
-	Blocking = 2
-    } SyncType;
+	typedef enum _SyncType
+	{
+	    NoSync = 0,
+	    Async = 1,
+	    Blocking = 2
+	} SyncType;
 
-    typedef enum _FrameThrottleState
-    {
-	ExternalFrameThrottlingRequired,
-	FrameThrottledInternally
-    } FrameThrottleState;
+	typedef enum _FrameThrottleState
+	{
+	    ExternalFrameThrottlingRequired,
+	    FrameThrottledInternally
+	} FrameThrottleState;
 
 	void set (Setting name, bool value);
 	void render (const CompRegion &region, bool fullscreen);
-	void vsync (BufferSwapType swapType);
+	void vsync (FrontbufferRedrawType redrawType);
 
 	bool hardwareVSyncFunctional ();
 
@@ -67,9 +67,9 @@ class DoubleBuffer
 
     private:
 
-	virtual bool enableAsynchronousVideoSync (BufferSwapType, FrameThrottleState &);
-	virtual void disableAsynchronousVideoSync ();
-	virtual bool enableBlockingVideoSync (BufferSwapType, FrameThrottleState &);
+	virtual bool enableAsyncVideoSync (FrontbufferRedrawType, FrameThrottleState &);
+	virtual void disableAsyncVideoSync ();
+	virtual bool enableBlockingVideoSync (FrontbufferRedrawType, FrameThrottleState &);
 	virtual void disableBlockingVideoSync ();
 
 	SyncType		      syncType;

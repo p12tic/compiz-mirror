@@ -69,9 +69,9 @@ class GLXDoubleBuffer :
 {
     public:
 
-	GLXDoubleBuffer (Display                                          *,
-			 const CompSize                                   &,
-			 Window                                            );
+	GLXDoubleBuffer (Display        *,
+			 const CompSize &,
+			 Window);
 
 	void swap () const;
 	bool blitAvailable () const;
@@ -92,9 +92,9 @@ class EGLDoubleBuffer :
 {
     public:
 
-	EGLDoubleBuffer (Display                                          *,
-			 const CompSize                                   &,
-			 EGLSurface const                                 &);
+	EGLDoubleBuffer (Display          *,
+			 const CompSize   &,
+			 EGLSurface const &);
 
 	void swap () const;
 	bool blitAvailable () const;
@@ -186,12 +186,12 @@ class PrivateGLScreen :
 	#ifdef USE_GLES
 	EGLContext ctx;
 	EGLSurface surface;
-	std::auto_ptr <EGLDoubleBuffer> doubleBuffer;
+	EGLDoubleBuffer doubleBuffer;
 	#else
 	GLXContext ctx;
 
 	GL::GLXGetProcAddressProc getProcAddress;
-	std::auto_ptr <GLXDoubleBuffer> doubleBuffer;
+	GLXDoubleBuffer doubleBuffer;
 	#endif
 
 	GLFramebufferObject *scratchFbo;

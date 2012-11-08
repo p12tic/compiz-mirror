@@ -285,7 +285,7 @@ void swapIntervalGLX (int interval)
 {
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
-    GL::swapInterval (interval);
+	GL::swapInterval (interval);
 }
 
 int waitVSyncGLX (int          wait,
@@ -304,7 +304,7 @@ int waitVSyncGLX (int          wait,
 
     // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
     if (GL::waitVideoSync)
-    return GL::waitVideoSync (wait, remainder, count);
+	return GL::waitVideoSync (wait, remainder, count);
 
     return 0;
 }
@@ -2093,12 +2093,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 bool
 PrivateGLScreen::hasVSync ()
 {
-   #ifdef USE_GLES
-   return false;
-   #else
-   return GL::waitVideoSync && optionGetSyncToVblank () &&
-	  doubleBuffer->hardwareVSyncFunctional ();
-   #endif
+    #ifdef USE_GLES
+    return false;
+    #else
+    return  GL::waitVideoSync && optionGetSyncToVblank () &&
+	    doubleBuffer->hardwareVSyncFunctional ();
+    #endif
 }
 
 bool

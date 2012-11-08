@@ -51,9 +51,9 @@ class MockVSyncDoubleBuffer :
 	{
 	}
 
-	MOCK_METHOD2 (enableAsynchronousVideoSync, bool (BufferSwapType, FrameThrottleState &));
-	MOCK_METHOD2 (enableBlockingVideoSync, bool (BufferSwapType, FrameThrottleState &));
-	MOCK_METHOD0 (disableAsynchronousVideoSync, void ());
+	MOCK_METHOD2 (enableAsyncVideoSync, bool (FrontbufferRedrawType, FrameThrottleState &));
+	MOCK_METHOD2 (enableBlockingVideoSync, bool (FrontbufferRedrawType, FrameThrottleState &));
+	MOCK_METHOD0 (disableAsyncVideoSync, void ());
 	MOCK_METHOD0 (disableBlockingVideoSync, void ());
 };
 
@@ -75,7 +75,7 @@ class CompizOpenGLDoubleBufferDeathTest :
 TEST_F(DoubleBufferTest, TestPaintedFullAlwaysSwaps)
 {
     EXPECT_CALL (db, swap ());
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Swap, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Swap, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (db, copyFrontToBack ()).Times (0);
 
@@ -86,7 +86,7 @@ TEST_F(DoubleBufferTest, TestNoPaintedFullscreenOrFBOAlwaysBlitsSubBuffer)
 {
     EXPECT_CALL (db, blitAvailable ()).WillOnce (Return (true));
     EXPECT_CALL (db, blit (_));
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
@@ -101,7 +101,7 @@ TEST_F(DoubleBufferTest, SwapWithoutFBO)
     db.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, true);
 
     EXPECT_CALL (db, swap ());
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Swap, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Swap, _))
 	    .WillOnce (Return (true));
     EXPECT_CALL (db, copyFrontToBack ()).Times (1);
 
@@ -116,7 +116,7 @@ TEST_F(DoubleBufferTest, BlitWithoutFBO)
     EXPECT_CALL (db, blitAvailable ()).WillRepeatedly (Return (true));
     EXPECT_CALL (db, blit (_));
     EXPECT_CALL (db, swap ()).Times (0);
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
@@ -137,7 +137,7 @@ TEST_F(DoubleBufferTest, TestBlitExactlyWithRegionSpecified)
     CompRegion r3 (200, 200, 100, 100);
 
     EXPECT_CALL (db, blitAvailable ()).WillRepeatedly (Return (true));
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillRepeatedly (Return (false));
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillRepeatedly (Return (true));
@@ -171,7 +171,7 @@ TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
 
     EXPECT_CALL (dbStrict, blitAvailable ()).WillOnce (Return (false));
     EXPECT_CALL (dbStrict, fallbackBlitAvailable ()).WillOnce (Return (true));
-    EXPECT_CALL (dbStrict, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (dbStrict, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     EXPECT_CALL (dbStrict, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
@@ -182,7 +182,7 @@ TEST_F(DoubleBufferTest, TestSubBufferCopyIfNoFBOAndNoSubBufferBlit)
 
 TEST_F(DoubleBufferTest, TestCallWorkingStrategy)
 {
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Swap, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Swap, _))
 	    .WillOnce (Return (true));
 
     db.vsync (DoubleBuffer::Swap);
@@ -191,7 +191,7 @@ TEST_F(DoubleBufferTest, TestCallWorkingStrategy)
 TEST_F(DoubleBufferTest, TestCallNextWorkingStrategy)
 {
     /* This one fails */
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     /* Try the next one */
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
@@ -203,7 +203,7 @@ TEST_F(DoubleBufferTest, TestCallNextWorkingStrategy)
 TEST_F(DoubleBufferTest, TestCallPrevCallNextPrevDeactivated)
 {
     /* This one fails */
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     /* Try the next one */
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
@@ -211,7 +211,7 @@ TEST_F(DoubleBufferTest, TestCallPrevCallNextPrevDeactivated)
 
     db.vsync (DoubleBuffer::Blit);
 
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (true));
     /* Previous one must be deactivated */
     EXPECT_CALL (db, disableBlockingVideoSync ());
@@ -224,7 +224,7 @@ TEST_F(DoubleBufferTest, TestReportNoHardwareVSyncIfMoreThan5UnthrottledFrames)
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-	EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+	EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 		    .WillOnce (Return (false));
 	EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
@@ -241,7 +241,7 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     /* This one succeeds but fails to throttle */
     for (unsigned int i = 0; i < 5; ++i)
     {
-	EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+	EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 		    .WillOnce (Return (false));
 	EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
@@ -255,7 +255,7 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     EXPECT_FALSE (db.hardwareVSyncFunctional ());
 
     /* It works again */
-    EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+    EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (Return (false));
     EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	.WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::FrameThrottledInternally),
@@ -266,7 +266,7 @@ TEST_F(DoubleBufferTest, TestRestoreReportHardwareVSync)
     /* And should report to work for another 5 bad frames */
     for (unsigned int i = 0; i < 5; ++i)
     {
-	EXPECT_CALL (db, enableAsynchronousVideoSync (DoubleBuffer::Blit, _))
+	EXPECT_CALL (db, enableAsyncVideoSync (DoubleBuffer::Blit, _))
 		    .WillOnce (Return (false));
 	EXPECT_CALL (db, enableBlockingVideoSync (DoubleBuffer::Blit, _))
 	    .WillOnce (DoAll (SetArgReferee <1> (DoubleBuffer::ExternalFrameThrottlingRequired),
