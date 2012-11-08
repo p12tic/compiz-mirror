@@ -2392,10 +2392,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 +    RecordProperty ("worldScaleFactorX", worldScaleFactorX);
 +    RecordProperty ("worldScaleFactorY", worldScaleFactorY);
 +
-+    EXPECT_EQ (offsetInWorldX, offset.animationParameters[index].offsetInWorldX);
-+    EXPECT_EQ (offsetInWorldY, offset.animationParameters[index].offsetInWorldY);
-+    EXPECT_EQ (worldScaleFactorX, offset.animationParameters[index].worldScaleFactorX);
-+    EXPECT_EQ (worldScaleFactorY, offset.animationParameters[index].worldScaleFactorY);
++    EXPECT_FLOAT_EQ (offsetInWorldX, offset.animationParameters[index].offsetInWorldX);
++    EXPECT_FLOAT_EQ (offsetInWorldY, offset.animationParameters[index].offsetInWorldY);
++    EXPECT_FLOAT_EQ (worldScaleFactorX, offset.animationParameters[index].worldScaleFactorX);
++    EXPECT_FLOAT_EQ (worldScaleFactorY, offset.animationParameters[index].worldScaleFactorY);
 +}
 +
 +TEST_F (ExpoWallOffsetTest, TestNoOffsetIfOutputIsNotOrigin)
@@ -2416,10 +2416,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 +				       worldScaleFactorY,
 +				       1.0);
 +
-+    EXPECT_EQ (offsetInWorldX, 0.0f);
-+    EXPECT_EQ (offsetInWorldY, 0.0f);
-+    EXPECT_EQ (worldScaleFactorX, 1.0f);
-+    EXPECT_EQ (worldScaleFactorY, 1.0f);
++    EXPECT_FLOAT_EQ (offsetInWorldX, 0.0f);
++    EXPECT_FLOAT_EQ (offsetInWorldY, 0.0f);
++    EXPECT_FLOAT_EQ (worldScaleFactorX, 1.0f);
++    EXPECT_FLOAT_EQ (worldScaleFactorY, 1.0f);
 +}
 +
 +INSTANTIATE_TEST_CASE_P (ExpoAnimationOffsetTest,
