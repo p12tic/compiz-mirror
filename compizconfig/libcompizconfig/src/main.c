@@ -4312,7 +4312,10 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 	CCSSetting *newSetting = malloc (sizeof (CCSSetting));
 
 	if (!newSetting)
+	{
+	    free (sectionName);
 	    return FALSE;
+	}
 
 	ccsObjectInit (newSetting, &ccsDefaultObjectAllocator);
 
