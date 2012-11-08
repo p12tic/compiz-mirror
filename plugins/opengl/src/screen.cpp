@@ -560,10 +560,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
 
-    priv->doubleBuffer.reset (new EGLDoubleBuffer (screen->dpy (),
-						   *screen,
-						   priv->surface));
-
     if (GL::textureFromPixmap)
 	registerBindPixmap (EglTexture::bindPixmapToTexture);
 
@@ -873,10 +869,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     priv->filter[NOTHING_TRANS_FILTER] = GLTexture::Fast;
     priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
     priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
-
-    priv->doubleBuffer.reset (new GLXDoubleBuffer (screen->dpy (),
-						   *screen,
-						   priv->cScreen->output ()));
 
     if (GL::textureFromPixmap)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
@@ -1209,8 +1201,10 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     #ifndef USE_GLES
     ctx (NULL),
     getProcAddress (0),
+    doubleBuffer (screen->dpy (), *screen, cScreen->output ()),
     #else
     ctx (EGL_NO_CONTEXT),
+    doubleBuffer (screen->dpy (), *screen, surface),
     #endif
     scratchFbo (NULL),
     outputRegion (),
@@ -1797,9 +1791,9 @@ GLXDoubleBuffer::copyFrontToBack() const
     glMatrixMode (GL_MODELVIEW);
 }
 
-GLXDoubleBuffer::GLXDoubleBuffer (Display                          *d,
-				  const CompSize                   &s,
-				  Window                           output) :
+GLXDoubleBuffer::GLXDoubleBuffer (Display        *d,
+				  const CompSize &s,
+				  Window         output) :
     GLDoubleBuffer (d, s,
 		    boost::bind (compiz::opengl::swapIntervalGLX, _1),
 		    boost::bind (compiz::opengl::waitVSyncGLX, _1, _2, _3)),
@@ -1874,9 +1868,9 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 
 #else
 
-EGLDoubleBuffer::EGLDoubleBuffer (Display                          *d,
-				  const CompSize                   &s,
-				  EGLSurface const                 &surface) :
+EGLDoubleBuffer::EGLDoubleBuffer (Display          *d,
+				  const CompSize   &s,
+				  EGLSurface const &surface) :
     GLDoubleBuffer (d, s,
 		    boost::bind (compiz::opengl::swapIntervalEGL, _1),
 		    boost::bind (compiz::opengl::waitVSyncEGL, _1, _2, _3)),
@@ -2084,10 +2078,10 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
                       ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                        commonFrontbuffer);
 
-    doubleBuffer->set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
-    doubleBuffer->set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
-    doubleBuffer->set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
-    doubleBuffer->render (tmpRegion, fullscreen);
+    doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
+    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
+    doubleBuffer.render (tmpRegion, fullscreen);
 
     lastMask = mask;
 }
@@ -2098,8 +2092,8 @@ PrivateGLScreen::hasVSync ()
     #ifdef USE_GLES
     return false;
     #else
-    return  GL::waitVideoSync && optionGetSyncToVblank () &&
-	    doubleBuffer->hardwareVSyncFunctional ();
+    return GL::waitVideoSync && optionGetSyncToVblank () && 
+	   doubleBuffer.hardwareVSyncFunctional ();
     #endif
 }
 

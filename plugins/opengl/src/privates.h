@@ -69,9 +69,9 @@ class GLXDoubleBuffer :
 {
     public:
 
-	GLXDoubleBuffer (Display        *,
-			 const CompSize &,
-			 Window);
+	GLXDoubleBuffer (Display *,
+		       const CompSize &,
+		       Window);
 
 	void swap () const;
 	bool blitAvailable () const;
@@ -92,9 +92,9 @@ class EGLDoubleBuffer :
 {
     public:
 
-	EGLDoubleBuffer (Display          *,
-			 const CompSize   &,
-			 EGLSurface const &);
+	EGLDoubleBuffer (Display *,
+		       const CompSize &,
+		       EGLSurface const &);
 
 	void swap () const;
 	bool blitAvailable () const;
