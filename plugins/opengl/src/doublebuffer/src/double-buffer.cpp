@@ -71,7 +71,7 @@ DoubleBuffer::render (const CompRegion &region,
     if (fullscreen)
     {
 	if (setting[VSYNC])
-	vsync (Swap);
+	    vsync (Swap);
 
 	swap ();
 
@@ -84,7 +84,7 @@ DoubleBuffer::render (const CompRegion &region,
     else
     {
 	if (setting[VSYNC])
-	vsync (Blit);
+	    vsync (Blit);
 
 	if (blitAvailable ())
 	    blit (region);
