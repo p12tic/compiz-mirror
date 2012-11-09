@@ -4305,7 +4305,10 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     if (asprintf (&keyName, "+s%d_%s", cPrivate->screenNum, ccsSettingGetName (setting)) == -1)
+    {
+	free (sectionName);
 	return FALSE;
+    }
 
     if (ccsIniGetString (dict, sectionName, keyName, &iniValue))
     {
@@ -4476,7 +4479,10 @@ ccsProcessSettingMinus (IniDictionary      *dict,
 	CCSSetting *newSetting = malloc (sizeof (CCSSetting));
 
 	if (!newSetting)
+	{
+	    free (sectionName);
 	    return FALSE;
+	}
 
 	ccsObjectInit (newSetting, &ccsDefaultObjectAllocator);
 
@@ -4577,8 +4583,11 @@ ccsProcessSettingMinus (IniDictionary      *dict,
 	    }
 	    case TypeAction:
 	    default:
+	    {
 		/* FIXME: cleanup */
+		free (sectionName);
 		return FALSE;
+	    }
 	}
 
         CCSSettingList listIter = upgrade->addValueSettings;
