@@ -1,7 +1,7 @@
-Index: quilt/plugins/expo/expo.xml.in
+Index: ubuntu/plugins/expo/expo.xml.in
 ===================================================================
---- quilt.orig/plugins/expo/expo.xml.in	2012-11-09 14:08:43.708467616 +0800
-+++ quilt/plugins/expo/expo.xml.in	2012-11-09 14:09:37.532468627 +0800
+--- ubuntu.orig/plugins/expo/expo.xml.in	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/expo.xml.in	2012-11-09 14:09:37.532468627 +0800
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -121,10 +121,10 @@ Index: quilt/plugins/expo/expo.xml.in
  			<min>0.0</min>
  			<max>2.0</max>
  			<precision>0.01</precision>
-Index: quilt/plugins/expo/src/expo.cpp
+Index: ubuntu/plugins/expo/src/expo.cpp
 ===================================================================
---- quilt.orig/plugins/expo/src/expo.cpp	2012-11-09 14:08:43.708467616 +0800
-+++ quilt/plugins/expo/src/expo.cpp	2012-11-09 14:09:37.532468627 +0800
+--- ubuntu.orig/plugins/expo/src/expo.cpp	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/src/expo.cpp	2012-11-09 14:09:37.532468627 +0800
 @@ -27,6 +27,8 @@
  
  #include "expo.h"
@@ -1097,10 +1097,10 @@ Index: quilt/plugins/expo/src/expo.cpp
  }
  
  bool
-Index: quilt/plugins/expo/src/expo.h
+Index: ubuntu/plugins/expo/src/expo.h
 ===================================================================
---- quilt.orig/plugins/expo/src/expo.h	2012-11-09 14:08:43.708467616 +0800
-+++ quilt/plugins/expo/src/expo.h	2012-11-09 14:09:37.536468627 +0800
+--- ubuntu.orig/plugins/expo/src/expo.h	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/src/expo.h	2012-11-09 14:09:37.536468627 +0800
 @@ -30,6 +30,44 @@
  #include <opengl/opengl.h>
  
@@ -1282,10 +1282,10 @@ Index: quilt/plugins/expo/src/expo.h
  };
  
  class ExpoPluginVTable :
-Index: quilt/plugins/expo/src/glow.cpp
+Index: ubuntu/plugins/expo/src/glow.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/glow.cpp	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/glow.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,429 @@
 +/**
 + *
@@ -1716,10 +1716,10 @@ Index: quilt/plugins/expo/src/glow.cpp
 +
 +    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 +}
-Index: quilt/plugins/expo/src/glow.h
+Index: ubuntu/plugins/expo/src/glow.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/glow.h	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/glow.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,66 @@
 +/**
 + *
@@ -1787,10 +1787,10 @@ Index: quilt/plugins/expo/src/glow.h
 +extern const GlowTextureProperties glowTextureProperties;
 +
 +#endif
-Index: quilt/plugins/expo/src/group_glow.h
+Index: ubuntu/plugins/expo/src/group_glow.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/group_glow.h	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/group_glow.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,197 @@
 +#ifndef _GROUP_GLOWTEX_H
 +#define _GROUP_GLOWTEX_H
@@ -1989,10 +1989,10 @@ Index: quilt/plugins/expo/src/group_glow.h
 +};
 +
 +#endif
-Index: quilt/plugins/expo/src/wall_offset/CMakeLists.txt
+Index: ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/wall_offset/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,33 @@
 +include_directories (
 +  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2027,10 +2027,10 @@ Index: quilt/plugins/expo/src/wall_offset/CMakeLists.txt
 +  compiz_expo_wall_offset
 +  compiz_core
 +)
-Index: quilt/plugins/expo/src/wall_offset/include/wall-offset.h
+Index: ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/wall_offset/include/wall-offset.h	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,43 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2075,10 +2075,10 @@ Index: quilt/plugins/expo/src/wall_offset/include/wall-offset.h
 +}
 +
 +#endif
-Index: quilt/plugins/expo/src/wall_offset/src/wall-offset.cpp
+Index: ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/wall_offset/src/wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,55 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2135,10 +2135,10 @@ Index: quilt/plugins/expo/src/wall_offset/src/wall-offset.cpp
 +	}
 +    }
 +}
-Index: quilt/plugins/expo/src/wall_offset/tests/CMakeLists.txt
+Index: ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/wall_offset/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,19 @@
 +if (NOT GTEST_FOUND)
 +  message ("Google Test not found - cannot build tests!")
@@ -2159,10 +2159,10 @@ Index: quilt/plugins/expo/src/wall_offset/tests/CMakeLists.txt
 +                       )
 +
 +compiz_discover_tests (compiz_test_expo_wall_offset COVERAGE compiz_expo_wall_offset)
-Index: quilt/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
+Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,263 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2427,10 +2427,10 @@ Index: quilt/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 +			 Combine (ValuesIn (testingOffsetParameters),
 +				  Range (nAnimationsBegin,
 +					 nAnimationSteps)));
-Index: quilt/plugins/expo/CMakeLists.txt
+Index: ubuntu/plugins/expo/CMakeLists.txt
 ===================================================================
---- quilt.orig/plugins/expo/CMakeLists.txt	2012-11-09 14:08:43.708467616 +0800
-+++ quilt/plugins/expo/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
+--- ubuntu.orig/plugins/expo/CMakeLists.txt	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -1,7 +1,16 @@
  find_package (Compiz REQUIRED)
  include (CompizPlugin)
@@ -2449,10 +2449,10 @@ Index: quilt/plugins/expo/CMakeLists.txt
 +	       compiz_expo_click_threshold
 +	       compiz_expo_wall_offset
 +	       compiz_expo_windows_on_viewport)
-Index: quilt/plugins/expo/src/windows_on_viewport/CMakeLists.txt
+Index: ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/windows_on_viewport/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,36 @@
 +include_directories (
 +  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2490,10 +2490,10 @@ Index: quilt/plugins/expo/src/windows_on_viewport/CMakeLists.txt
 +  compiz_window_geometry
 +  compiz_core
 +)
-Index: quilt/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
+Index: ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,43 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2538,10 +2538,10 @@ Index: quilt/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
 +}
 +
 +#endif
-Index: quilt/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
+Index: ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,80 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2623,10 +2623,10 @@ Index: quilt/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
 +	}
 +    }
 +}
-Index: quilt/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
+Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,22 @@
 +if (NOT GTEST_FOUND)
 +  message ("Google Test not found - cannot build tests!")
@@ -2650,10 +2650,10 @@ Index: quilt/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
 +                       )
 +
 +compiz_discover_tests (compiz_test_expo_windows_on_viewport COVERAGE compiz_expo_windows_on_viewport)
-Index: quilt/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp
+Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,149 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2804,10 +2804,10 @@ Index: quilt/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport
 +    EXPECT_EQ (activeStates[2], false);
 +    EXPECT_EQ (activeStates[3], true); // 2,2 has a window on it
 +}
-Index: quilt/plugins/expo/src/client-list-generator.h
+Index: ubuntu/plugins/expo/src/client-list-generator.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/client-list-generator.h	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/client-list-generator.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,45 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2854,10 +2854,10 @@ Index: quilt/plugins/expo/src/client-list-generator.h
 +#endif
 +
 +
-Index: quilt/plugins/expo/src/viewport-member-window.h
+Index: ubuntu/plugins/expo/src/viewport-member-window.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ quilt/plugins/expo/src/viewport-member-window.h	2012-11-09 14:09:37.536468627 +0800
++++ ubuntu/plugins/expo/src/viewport-member-window.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,46 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
