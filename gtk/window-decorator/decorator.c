@@ -1026,7 +1026,10 @@ update_frames_shadows (gpointer key,
     decor_shadow_info_t *info = malloc (sizeof (decor_shadow_info_t));
 
     if (!info)
+    {
+	free (opts);
 	return;
+    }
 
     info->frame = frame;
     info->state = 0;
