@@ -32,6 +32,9 @@
 #endif
 #include <errno.h>
 
+#include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
+
 #include "privates.h"
 
 #include <dlfcn.h>
@@ -164,7 +167,6 @@ namespace GL {
     bool canDoSlightlySaturated = false;
 
     unsigned int vsyncCount = 0;
-    unsigned int unthrottledFrames = 0;
 
     bool stencilBuffer = false;
 #ifndef USE_GLES
@@ -272,6 +274,65 @@ public:
 
     GLScreen *gScreen;
 };
+
+#ifndef USE_GLES
+
+namespace compiz
+{
+namespace opengl
+{
+void swapIntervalGLX (int interval)
+{
+    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
+    if (GL::swapInterval)
+	GL::swapInterval (interval);
+}
+
+int waitVSyncGLX (int          wait,
+		  int          remainder,
+		  unsigned int *count)
+{
+    /*
+     * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
+     * flush before they blit, it is best to not let that happen.
+     * Because that flush would occur after GL::waitVideoSync, causing
+     * a delay and the final blit to be slightly out of sync resulting
+     * in tearing. So we need to do a glFinish before we wait for
+     * vsync, to absolutely minimize tearing.
+     */
+    glFinish ();
+
+    // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
+    if (GL::waitVideoSync)
+	return GL::waitVideoSync (wait, remainder, count);
+
+    return 0;
+}
+}
+}
+
+#else
+
+namespace compiz
+{
+namespace opengl
+{
+void swapIntervalEGL (Display *display, int interval)
+{
+    eglSwapInterval (eglGetDisplay (display), interval);
+}
+
+int waitVSyncEGL (int wait,
+		  int remainder,
+		  int *count)
+{
+    /* not supported */
+    return 0;
+}
+}
+}
+
+#endif
 
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
@@ -1693,81 +1754,11 @@ GLScreen::getShaderData (GLShaderParameters &params)
     return &priv->shaderCache.getShaderData(params);
 }
 
-namespace GL
-{
-
-void
-fastSwapInterval (Display *dpy, int interval)
-{
-    static int prev = -1;
-#ifndef USE_GLES
-    bool       hasSwapInterval = GL::swapInterval ? true : false;
-#else
-    bool       hasSwapInterval = true;
-#endif
-
-    if (hasSwapInterval && interval != prev)
-    {
-#ifndef USE_GLES
-	(*GL::swapInterval) (interval);
-#else
-	eglSwapInterval (eglGetDisplay (dpy), interval);
-#endif
-	prev = interval;
-    }
-}
-
-void
-waitForVideoSync ()
-{
-#ifndef USE_GLES
-    GL::unthrottledFrames++;
-    if (GL::waitVideoSync)
-    {
-	// Don't wait twice. Just in case.
-	fastSwapInterval (screen->dpy (), 0);
-
-	/*
-	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
-	 * flush before they blit, it is best to not let that happen.
-	 * Because that flush would occur after GL::waitVideoSync, causing
-	 * a delay and the final blit to be slightly out of sync resulting
-	 * in tearing. So we need to do a glFinish before we wait for
-	 * vsync, to absolutely minimize tearing.
-	 */
-	glFinish ();
-
-	// Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
-	unsigned int oldCount = GL::vsyncCount;
-	(*GL::waitVideoSync) (1, 0, &GL::vsyncCount);
-
-	if (GL::vsyncCount != oldCount)
-	    GL::unthrottledFrames = 0;
-    }
-#endif
-}
-
-void
-controlSwapVideoSync (bool sync)
-{
-#ifndef USE_GLES
-    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
-    if (GL::swapInterval)
-    {
-	fastSwapInterval (screen->dpy (), sync ? 1 : 0);
-	GL::unthrottledFrames++;
-    }
-    else if (sync)
-	waitForVideoSync ();
-#else
-    fastSwapInterval (screen->dpy (), sync ? 1 : 0);
-    GL::unthrottledFrames++;
-#endif
-}
-
-} // namespace GL
-
-GLDoubleBuffer::GLDoubleBuffer (Display *d, const CompSize &s) :
+GLDoubleBuffer::GLDoubleBuffer (Display                                             *d,
+				const CompSize                                      &s,
+				const compiz::opengl::impl::GLXSwapIntervalEXTFunc  &swapIntervalFunc,
+				const compiz::opengl::impl::GLXWaitVideoSyncSGIFunc &waitVideoSyncFunc) :
+    compiz::opengl::DoubleBuffer (swapIntervalFunc, waitVideoSyncFunc),
     mDpy (d),
     mSize (s)
 {
@@ -1800,10 +1791,12 @@ GLXDoubleBuffer::copyFrontToBack() const
     glMatrixMode (GL_MODELVIEW);
 }
 
-GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
-			      const CompSize &s,
-			      Window output) :
-    GLDoubleBuffer (d, s),
+GLXDoubleBuffer::GLXDoubleBuffer (Display        *d,
+				  const CompSize &s,
+				  Window         output) :
+    GLDoubleBuffer (d, s,
+		    boost::bind (compiz::opengl::swapIntervalGLX, _1),
+		    boost::bind (compiz::opengl::waitVSyncGLX, _1, _2, _3)),
     mOutput (output)
 {
 }
@@ -1811,8 +1804,6 @@ GLXDoubleBuffer::GLXDoubleBuffer (Display *d,
 void
 GLXDoubleBuffer::swap () const
 {
-    GL::controlSwapVideoSync (setting[VSYNC]);
-
     glXSwapBuffers (mDpy, mOutput);
 }
 
@@ -1826,9 +1817,6 @@ void
 GLXDoubleBuffer::blit (const CompRegion &region) const
 {
     const CompRect::vector &blitRects (region.rects ());
-
-    if (setting[VSYNC])
-        GL::waitForVideoSync ();
 
     foreach (const CompRect &r, blitRects)
     {
@@ -1850,9 +1838,6 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
     const CompRect::vector &blitRects (region.rects ());
     int w = screen->width ();
     int h = screen->height ();
-
-    if (setting[VSYNC])
-	GL::waitForVideoSync ();
 
     glMatrixMode (GL_PROJECTION);
     glPushMatrix ();
@@ -1883,10 +1868,12 @@ GLXDoubleBuffer::fallbackBlit (const CompRegion &region) const
 
 #else
 
-EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
-			      const CompSize &s,
-			      EGLSurface const & surface) :
-    GLDoubleBuffer (d, s),
+EGLDoubleBuffer::EGLDoubleBuffer (Display          *d,
+				  const CompSize   &s,
+				  EGLSurface const &surface) :
+    GLDoubleBuffer (d, s,
+		    boost::bind (compiz::opengl::swapIntervalEGL, _1),
+		    boost::bind (compiz::opengl::waitVSyncEGL, _1, _2, _3)),
     mSurface (surface)
 {
 }
@@ -1894,8 +1881,6 @@ EGLDoubleBuffer::EGLDoubleBuffer (Display *d,
 void
 EGLDoubleBuffer::swap () const
 {
-    GL::controlSwapVideoSync (setting[VSYNC]);
-
     eglSwapBuffers (eglGetDisplay (mDpy), mSurface);
     eglWaitGL ();
     XFlush (mDpy);
@@ -1912,8 +1897,6 @@ EGLDoubleBuffer::blit (const CompRegion &region) const
 {
     CompRect::vector blitRects (region.rects ());
     int		     y = 0;
-
-    GL::controlSwapVideoSync (setting[VSYNC]);
 
     foreach (const CompRect &r, blitRects)
     {
@@ -2106,12 +2089,12 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 bool
 PrivateGLScreen::hasVSync ()
 {
-   #ifdef USE_GLES
-   return false;
-   #else
+    #ifdef USE_GLES
+    return false;
+    #else
     return GL::waitVideoSync && optionGetSyncToVblank () && 
-           GL::unthrottledFrames < 5;
-   #endif
+	   doubleBuffer.hardwareVSyncFunctional ();
+    #endif
 }
 
 bool

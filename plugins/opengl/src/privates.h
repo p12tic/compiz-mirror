@@ -28,6 +28,8 @@
 #ifndef _OPENGL_PRIVATES_H
 #define _OPENGL_PRIVATES_H
 
+#include <memory>
+
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <core/atoms.h>
@@ -49,8 +51,10 @@ class GLDoubleBuffer :
 {
     public:
 
-	GLDoubleBuffer (Display *,
-			const CompSize &);
+	GLDoubleBuffer (Display                                             *,
+			const CompSize                                      &,
+			const compiz::opengl::impl::GLXSwapIntervalEXTFunc  &,
+			const compiz::opengl::impl::GLXWaitVideoSyncSGIFunc &);
 
     protected:
 
