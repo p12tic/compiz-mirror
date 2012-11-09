@@ -24,7 +24,7 @@
 	    <option name="unredirect_fullscreen_windows" type="bool">
 		<_short>Unredirect Fullscreen Windows</_short>
 		<_long>Allow drawing of fullscreen windows to not be redirected to offscreen pixmaps</_long>
-		<default>false</default>
+		<default>true</default>
 	    </option>
 	    <option name="force_independent_output_painting" type="bool">
 		<_short>Force independent output painting.</_short>
