@@ -1,7 +1,7 @@
 Index: ubuntu/plugins/expo/expo.xml.in
 ===================================================================
---- ubuntu.orig/plugins/expo/expo.xml.in	2012-09-12 22:20:42.944758828 +0800
-+++ ubuntu/plugins/expo/expo.xml.in	2012-09-12 22:20:43.240760303 +0800
+--- ubuntu.orig/plugins/expo/expo.xml.in	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/expo.xml.in	2012-11-09 14:09:37.532468627 +0800
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -123,8 +123,8 @@ Index: ubuntu/plugins/expo/expo.xml.in
  			<precision>0.01</precision>
 Index: ubuntu/plugins/expo/src/expo.cpp
 ===================================================================
---- ubuntu.orig/plugins/expo/src/expo.cpp	2012-09-12 22:09:32.323735000 +0800
-+++ ubuntu/plugins/expo/src/expo.cpp	2012-09-12 22:29:50.643474721 +0800
+--- ubuntu.orig/plugins/expo/src/expo.cpp	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/src/expo.cpp	2012-11-09 14:09:37.532468627 +0800
 @@ -27,6 +27,8 @@
  
  #include "expo.h"
@@ -134,8 +134,8 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  #include <math.h>
  #ifndef USE_GLES
  #include <GL/glu.h>
-@@ -73,11 +75,10 @@
- 
+@@ -65,11 +67,10 @@
+ {
      if (dndState == DnDDuring || dndState == DnDStart)
      {
 -	if (dndWindow)
@@ -147,7 +147,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
  	action->setState (action->state () & CompAction::StateInitButton);
  	cScreen->damageScreen ();
-@@ -113,7 +114,6 @@
+@@ -101,7 +102,6 @@
  	clickTime   = 0;
  
  	dndState  = DnDNone;
@@ -155,7 +155,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
  	selectedVp = screen->vp ();
  	lastSelectedVp = screen->vp ();
-@@ -156,8 +156,8 @@
+@@ -140,8 +140,8 @@
      else
  	vpUpdateMode = VPUpdateMouseOver;
  
@@ -166,7 +166,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
      screen->removeAction (&optionGetDndButton ());
      screen->removeAction (&optionGetExitButton ());
-@@ -202,6 +202,8 @@
+@@ -179,6 +179,8 @@
      if (!expoMode)
  	return false;
  
@@ -175,7 +175,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      newX = selectedVp.x () + 1;
      newY = selectedVp.y ();
  
-@@ -225,7 +227,7 @@
+@@ -202,7 +204,7 @@
  		    CompAction::State   state,
  		    CompOption::Vector& options)
  {
@@ -184,7 +184,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
      if (!expoMode)
  	return false;
-@@ -272,53 +274,39 @@
+@@ -246,53 +248,39 @@
  void
  ExpoScreen::finishWindowMovement ()
  {
@@ -265,7 +265,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  void
-@@ -402,6 +390,80 @@
+@@ -376,6 +364,80 @@
      screen->handleEvent (event);
  }
  
@@ -346,7 +346,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  void
  ExpoScreen::preparePaint (int msSinceLastPaint)
  {
-@@ -412,33 +474,43 @@
+@@ -386,33 +448,43 @@
      else
  	expoCam = MAX (0.0, expoCam - val);
  
@@ -409,7 +409,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  	{
  	    float fi = (float) i;
  
-@@ -509,6 +581,31 @@
+@@ -483,6 +555,31 @@
      cScreen->paint (outputs, mask);
  }
  
@@ -441,7 +441,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  void
  ExpoScreen::donePaint ()
  {
-@@ -539,6 +636,11 @@
+@@ -513,6 +610,11 @@
  	foreach (float& vp, vpActivity)
  	    if (vp != 0.0 && vp != 1.0)
  		cScreen->damageScreen ();
@@ -453,7 +453,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      }
  
      if (grabIndex && expoCam <= 0.0f && !expoMode)
-@@ -553,10 +655,25 @@
+@@ -527,10 +629,25 @@
      switch (dndState) {
      case DnDDuring:
  	{
@@ -483,7 +483,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
  	    prevCursor = newCursor;
  	    cScreen->damageScreen ();
-@@ -621,13 +738,13 @@
+@@ -595,13 +712,13 @@
  		    break;
  
  		dndState  = DnDDuring;
@@ -499,7 +499,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
  		w->raise ();
  		w->moveInputFocusTo ();
-@@ -762,6 +879,124 @@
+@@ -736,6 +853,124 @@
  }
  
  void
@@ -624,7 +624,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
  		       const GLMatrix&            transform,
  		       const CompRegion&          region,
-@@ -772,13 +1007,11 @@
+@@ -746,13 +981,11 @@
      GLfloat vertexData[12];
      GLushort colorData[16];
      GLMatrix sTransformW, sTransform (transform);
@@ -641,7 +641,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      float     aspectX = 1.0f, aspectY = 1.0f;
      GLVector  cam;
      CompPoint vpSize (screen->vpSize ().width (), screen->vpSize ().height ());
-@@ -910,9 +1143,24 @@
+@@ -884,9 +1117,24 @@
      sTransform.rotate (rotation, 0.0f, 1.0f, 0.0f);
      sTransform.scale (aspectX, aspectY, 1.0);
  
@@ -668,7 +668,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
      if (optionGetDeform () == DeformCurve)
  	sTransform.translate ((vpSize.x () - 1) * sx * 0.5, 0.0, 0.0);
-@@ -936,90 +1184,29 @@
+@@ -910,90 +1158,29 @@
  
      expoActive = true;
  
@@ -774,7 +774,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  //    glNormal3f (0.0, 0.0, -1.0);
  
      if (reflection)
-@@ -1187,12 +1374,16 @@
+@@ -1161,12 +1348,16 @@
  
      expoActive = false;
  
@@ -793,7 +793,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  bool
  ExpoScreen::glPaintOutput (const GLScreenPaintAttrib& attrib,
  			   const GLMatrix&            transform,
-@@ -1243,10 +1434,15 @@
+@@ -1217,10 +1408,15 @@
  
  bool
  ExpoWindow::glDraw (const GLMatrix&     transform,
@@ -810,7 +810,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      if (eScreen->expoCam == 0.0f)
  	return gWindow->glDraw (transform, attrib, region, mask);
  
-@@ -1275,8 +1471,11 @@
+@@ -1249,8 +1445,11 @@
  	    }
  	}
  
@@ -824,7 +824,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      }
      else
      {
-@@ -1287,7 +1486,79 @@
+@@ -1261,7 +1460,79 @@
  	                              (1 - sigmoidProgress (eScreen->expoCam));
      }
  
@@ -904,8 +904,8 @@ Index: ubuntu/plugins/expo/src/expo.cpp
 +
  }
  
- #define EXPO_GRID_SIZE 100
-@@ -1425,11 +1696,17 @@
+ static const unsigned short EXPO_GRID_SIZE = 100;
+@@ -1399,11 +1670,17 @@
  		     const CompRegion&          region,
  		     unsigned int               mask)
  {
@@ -923,7 +923,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
  	zoomAnim = eScreen->optionGetExpoAnimation () ==
  	           ExpoScreen::ExpoAnimationZoom;
-@@ -1458,9 +1735,47 @@
+@@ -1432,9 +1709,47 @@
  
  	if (opacity <= 0)
  	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
@@ -972,7 +972,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  bool
-@@ -1489,7 +1804,7 @@
+@@ -1463,7 +1778,7 @@
      expoActive (false),
      expoMode (false),
      dndState (DnDNone),
@@ -981,7 +981,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      origVp (s->vp ()),
      selectedVp (s->vp ()),
      lastSelectedVp (s->vp ()),
-@@ -1497,14 +1812,21 @@
+@@ -1471,14 +1786,21 @@
      clickTime (0),
      doubleClick (false),
      vpNormals (360 * 3),
@@ -1006,7 +1006,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
      EXPOINITBIND (ExpoKey, doExpo);
      EXPOTERMBIND (ExpoKey, termExpo);
-@@ -1522,12 +1844,58 @@
+@@ -1496,12 +1818,58 @@
      ScreenInterface::setHandler (screen, false);
      CompositeScreenInterface::setHandler (cScreen, false);
      GLScreenInterface::setHandler (gScreen, false);
@@ -1067,7 +1067,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  ExpoWindow::ExpoWindow (CompWindow *w) :
-@@ -1535,10 +1903,28 @@
+@@ -1509,10 +1877,28 @@
      window (w),
      cWindow (CompositeWindow::get (w)),
      gWindow (GLWindow::get (w)),
@@ -1099,8 +1099,8 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  bool
 Index: ubuntu/plugins/expo/src/expo.h
 ===================================================================
---- ubuntu.orig/plugins/expo/src/expo.h	2012-09-08 17:26:40.599035911 +0800
-+++ ubuntu/plugins/expo/src/expo.h	2012-09-12 22:20:43.276760475 +0800
+--- ubuntu.orig/plugins/expo/src/expo.h	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/src/expo.h	2012-11-09 14:09:37.536468627 +0800
 @@ -30,6 +30,44 @@
  #include <opengl/opengl.h>
  
@@ -1285,7 +1285,7 @@ Index: ubuntu/plugins/expo/src/expo.h
 Index: ubuntu/plugins/expo/src/glow.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/glow.cpp	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/glow.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,429 @@
 +/**
 + *
@@ -1719,7 +1719,7 @@ Index: ubuntu/plugins/expo/src/glow.cpp
 Index: ubuntu/plugins/expo/src/glow.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/glow.h	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/glow.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,66 @@
 +/**
 + *
@@ -1790,7 +1790,7 @@ Index: ubuntu/plugins/expo/src/glow.h
 Index: ubuntu/plugins/expo/src/group_glow.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/group_glow.h	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/group_glow.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,197 @@
 +#ifndef _GROUP_GLOWTEX_H
 +#define _GROUP_GLOWTEX_H
@@ -1992,7 +1992,7 @@ Index: ubuntu/plugins/expo/src/group_glow.h
 Index: ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,33 @@
 +include_directories (
 +  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2030,7 +2030,7 @@ Index: ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt
 Index: ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,43 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2078,7 +2078,7 @@ Index: ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h
 Index: ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,55 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2138,7 +2138,7 @@ Index: ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp
 Index: ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,19 @@
 +if (NOT GTEST_FOUND)
 +  message ("Google Test not found - cannot build tests!")
@@ -2162,7 +2162,7 @@ Index: ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt
 Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp	2012-09-12 22:20:43.280760497 +0800
++++ ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,263 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2429,8 +2429,8 @@ Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 +					 nAnimationSteps)));
 Index: ubuntu/plugins/expo/CMakeLists.txt
 ===================================================================
---- ubuntu.orig/plugins/expo/CMakeLists.txt	2012-09-08 17:26:40.599035911 +0800
-+++ ubuntu/plugins/expo/CMakeLists.txt	2012-09-12 22:20:43.300760590 +0800
+--- ubuntu.orig/plugins/expo/CMakeLists.txt	2012-11-09 14:08:43.708467616 +0800
++++ ubuntu/plugins/expo/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -1,7 +1,16 @@
  find_package (Compiz REQUIRED)
  include (CompizPlugin)
@@ -2452,7 +2452,7 @@ Index: ubuntu/plugins/expo/CMakeLists.txt
 Index: ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt	2012-09-12 22:20:43.300760590 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,36 @@
 +include_directories (
 +  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2493,7 +2493,7 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt
 Index: ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h	2012-09-12 22:31:06.807852402 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,43 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2541,7 +2541,7 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
 Index: ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp	2012-09-12 22:20:43.300760590 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,80 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2626,7 +2626,7 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
 Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt	2012-09-12 22:20:43.300760590 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,22 @@
 +if (NOT GTEST_FOUND)
 +  message ("Google Test not found - cannot build tests!")
@@ -2653,7 +2653,7 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
 Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp	2012-09-12 22:20:43.304760606 +0800
++++ ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,149 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2807,7 +2807,7 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewpor
 Index: ubuntu/plugins/expo/src/client-list-generator.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/client-list-generator.h	2012-09-12 22:20:43.304760606 +0800
++++ ubuntu/plugins/expo/src/client-list-generator.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,45 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2857,7 +2857,7 @@ Index: ubuntu/plugins/expo/src/client-list-generator.h
 Index: ubuntu/plugins/expo/src/viewport-member-window.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/viewport-member-window.h	2012-09-12 22:20:43.304760606 +0800
++++ ubuntu/plugins/expo/src/viewport-member-window.h	2012-11-09 14:09:37.536468627 +0800
 @@ -0,0 +1,46 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
