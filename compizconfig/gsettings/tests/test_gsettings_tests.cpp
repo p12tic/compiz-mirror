@@ -8,6 +8,7 @@
 #include <boost/scoped_array.hpp>
 
 #include "gtest_shared_autodestroy.h"
+#include "gtest_unspecified_bool_type_matcher.h"
 
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
@@ -239,6 +240,16 @@ TEST_F(CCSGSettingsTestProfiles, TestDeleteProfileExistingProfile)
     EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
 
     deleteProfile (backend.get (), context.get (), currentProfile.c_str ());
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestWriteVariantToKeyReturnsFalseForNullWrapper)
+{
+    CCSGSettingsWrapper          *wrapper = NULL;
+    boost::shared_ptr <GVariant> v (AutoDestroy (g_variant_new_int32 (1),
+						 g_variant_unref));
+
+    EXPECT_THAT (writeVariantToKey (wrapper, "foo", v.get ()),
+		 IsFalse ());
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)

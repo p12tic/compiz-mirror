@@ -17,6 +17,7 @@
 #include "test_gsettings_tests.h"
 
 using ::testing::NotNull;
+using ::testing::IsNull;
 using ::testing::Eq;
 using ::testing::_;
 
@@ -84,6 +85,16 @@ class CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorAutoInitTest :
 	    ASSERT_THAT (settings, NotNull ());
 	}
 };
+
+TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest, TestWrapperConstructionWithBadSchemaReturnsNull)
+{
+    const std::string badSchema ("org.compiz.invalid");
+
+    EXPECT_THAT (ccsGSettingsWrapperNewForSchemaWithPath (badSchema.c_str (),
+							  mockPath.c_str (),
+							  &ccsDefaultObjectAllocator),
+		 IsNull ());
+}
 
 TEST_F (CCSGSettingsWrapperWithMemoryBackendEnvGoodAllocatorTest, TestWrapperConstruction)
 {

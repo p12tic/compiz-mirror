@@ -930,12 +930,21 @@ Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
     return TRUE;
 }
 
-void
+Bool
 writeVariantToKey (CCSGSettingsWrapper  *settings,
 		   const char *key,
 		   GVariant   *value)
 {
-    ccsGSettingsWrapperSetValue (settings, key, value);
+    if (!settings)
+    {
+	ccsWarning ("attempted to write without a schema");
+	return FALSE;
+    }
+    else
+    {
+	ccsGSettingsWrapperSetValue (settings, key, value);
+	return TRUE;
+    }
 }
 
 typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);
