@@ -165,7 +165,12 @@ target_link_libraries (compiz_test_outputdevices
     compiz_region
     compiz_window_geometry
     -Wl,-end-group
+    ${GTEST_BOTH_LIBRARIES}
 )
+
+if (COMPIZ_BUILD_TESTING)
+    compiz_discover_tests(compiz_test_outputdevices COVERAGE compiz_test_outputdevices)
+endif ()
 
 # workaround for build race
 add_dependencies (compiz core-xml-file)
