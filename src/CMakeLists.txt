@@ -106,7 +106,6 @@ add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/session.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windowgeometry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/icon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/modifierhandler.cpp
@@ -137,6 +136,9 @@ add_executable (compiz
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 
+add_library (compiz_size STATIC
+    size.cpp
+)
 add_library (compiz_output STATIC
     output.cpp
 )
@@ -147,6 +149,7 @@ add_library (compiz_outputdevices STATIC
 )
 
 add_dependencies (compiz_outputdevices
+    compiz_size
     compiz_output
     compiz_rect
     compiz_region
@@ -159,6 +162,7 @@ add_executable (compiz_test_outputdevices
 
 target_link_libraries (compiz_test_outputdevices
     -Wl,-start-group
+    compiz_size
     compiz_output
     compiz_outputdevices
     compiz_rect
@@ -189,6 +193,7 @@ target_link_libraries (
     dl
     
     -Wl,-whole-archive
+    compiz_size
     compiz_string
     compiz_timer
     compiz_logmessage

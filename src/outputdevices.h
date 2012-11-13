@@ -56,11 +56,11 @@ public:
 	    CompSize* screen) const;
     void updateOutputDevices(CoreOptions& coreOptions, CompSize* screen);
 
-private:
     void setGeometryOnDevice(unsigned int nOutput, int x, int y,
 	    const int width, const int height);
     void adoptDevices(unsigned int nOutput, CompSize* screen);
 
+private:
     static CompRect computeWorkareaForBox(const CompRect& box,
 	    const CompWindowList& windows);
 
