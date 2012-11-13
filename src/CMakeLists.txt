@@ -156,23 +156,23 @@ add_dependencies (compiz_outputdevices
     compiz_window_geometry
 )
 
-add_executable (compiz_test_outputdevices
-    test_outputdevices.cpp
-)
-
-target_link_libraries (compiz_test_outputdevices
-    -Wl,-start-group
-    compiz_size
-    compiz_output
-    compiz_outputdevices
-    compiz_rect
-    compiz_region
-    compiz_window_geometry
-    -Wl,-end-group
-    ${GTEST_BOTH_LIBRARIES}
-)
-
 if (COMPIZ_BUILD_TESTING)
+    add_executable (compiz_test_outputdevices
+        test_outputdevices.cpp
+    )
+    
+    target_link_libraries (compiz_test_outputdevices
+        -Wl,-start-group
+        compiz_size
+        compiz_output
+        compiz_outputdevices
+        compiz_rect
+        compiz_region
+        compiz_window_geometry
+        -Wl,-end-group
+        ${GTEST_BOTH_LIBRARIES}
+    )
+    
     compiz_discover_tests(compiz_test_outputdevices COVERAGE compiz_test_outputdevices)
 endif ()
 
