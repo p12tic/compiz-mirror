@@ -281,7 +281,7 @@ namespace compiz
 {
 namespace opengl
 {
-void swapIntervalGLX (int interval)
+void swapIntervalGLX (Display *d, int interval)
 {
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
@@ -324,7 +324,7 @@ void swapIntervalEGL (Display *display, int interval)
 
 int waitVSyncEGL (int wait,
 		  int remainder,
-		  int *count)
+		  unsigned int *count)
 {
     /* not supported */
     return 0;
@@ -1795,7 +1795,7 @@ GLXDoubleBuffer::GLXDoubleBuffer (Display        *d,
 				  const CompSize &s,
 				  Window         output) :
     GLDoubleBuffer (d, s,
-		    boost::bind (compiz::opengl::swapIntervalGLX, _1),
+		    boost::bind (compiz::opengl::swapIntervalGLX, d, _1),
 		    boost::bind (compiz::opengl::waitVSyncGLX, _1, _2, _3)),
     mOutput (output)
 {
@@ -1872,7 +1872,7 @@ EGLDoubleBuffer::EGLDoubleBuffer (Display          *d,
 				  const CompSize   &s,
 				  EGLSurface const &surface) :
     GLDoubleBuffer (d, s,
-		    boost::bind (compiz::opengl::swapIntervalEGL, _1),
+		    boost::bind (compiz::opengl::swapIntervalEGL, d, _1),
 		    boost::bind (compiz::opengl::waitVSyncEGL, _1, _2, _3)),
     mSurface (surface)
 {
