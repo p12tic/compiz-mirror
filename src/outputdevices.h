@@ -53,13 +53,13 @@ public:
     CompOutput::vector& getOutputDevs() { return outputDevs; }
 
     int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
-	    CompScreen* screen) const;
-    void updateOutputDevices(CoreOptions& coreOptions, CompScreen* screen);
+	    CompSize* screen) const;
+    void updateOutputDevices(CoreOptions& coreOptions, CompSize* screen);
 
 private:
     void setGeometryOnDevice(unsigned int nOutput, int x, int y,
 	    const int width, const int height);
-    void adoptDevices(unsigned int nOutput);
+    void adoptDevices(unsigned int nOutput, CompSize* screen);
 
     static CompRect computeWorkareaForBox(const CompRect& box,
 	    const CompWindowList& windows);

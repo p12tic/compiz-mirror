@@ -106,7 +106,6 @@ add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/session.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/output.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windowgeometry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/icon.cpp
@@ -138,8 +137,34 @@ add_executable (compiz
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 
+add_library (compiz_output STATIC
+    output.cpp
+)
+
 add_library (compiz_outputdevices STATIC
     outputdevices.cpp
+    outputdevices_x11.cpp
+)
+
+add_dependencies (compiz_outputdevices
+    compiz_output
+    compiz_rect
+    compiz_region
+    compiz_window_geometry
+)
+
+add_executable (compiz_test_outputdevices
+    test_outputdevices.cpp
+)
+
+target_link_libraries (compiz_test_outputdevices
+    -Wl,-start-group
+    compiz_output
+    compiz_outputdevices
+    compiz_rect
+    compiz_region
+    compiz_window_geometry
+    -Wl,-end-group
 )
 
 # workaround for build race
@@ -171,6 +196,7 @@ target_link_libraries (
     compiz_window_extents
     compiz_window_constrainment
     compiz_servergrab
+    compiz_output
     compiz_outputdevices
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
