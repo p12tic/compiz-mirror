@@ -2,6 +2,7 @@
  * Compiz Core: OutputDevices class: Unit tests
  *
  * Copyright (c) 2012 Canonical Ltd.
+ * Author: Daniel van Vugt <daniel.van.vugt@canonical.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +26,7 @@
 #include "gtest/gtest.h"
 #include "outputdevices.h"
 
-using namespace compiz::private_screen;
+using namespace compiz::core;
 
 TEST (OutputDevices, TrivialSingleMonitor)
 {

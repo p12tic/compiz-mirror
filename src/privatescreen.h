@@ -727,7 +727,7 @@ public:
     compiz::private_screen::StartupSequenceImpl startupSequence;
     compiz::private_screen::EventManager eventManager;
     compiz::private_screen::OrphanData orphanData;
-    compiz::private_screen::OutputDevices outputDevices;
+    compiz::core::OutputDevices outputDevices;
 
     Colormap colormap;
     int screenNum;

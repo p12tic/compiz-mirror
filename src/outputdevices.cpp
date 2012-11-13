@@ -26,7 +26,7 @@
 #include "outputdevices.h"
 #include "core_options.h"
 
-namespace compiz { namespace private_screen {
+namespace compiz { namespace core {
 
 OutputDevices::OutputDevices() :
     outputDevs (),
@@ -198,5 +198,5 @@ OutputDevices::outputDeviceForGeometry (
     return highest;
 }
 
-}} // namespace compiz { namespace private_screen {
+}} // namespace compiz::core
 

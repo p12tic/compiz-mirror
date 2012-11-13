@@ -25,7 +25,7 @@
 #include "outputdevices.h"
 #include "core_options.h"
 
-namespace compiz { namespace private_screen {
+namespace compiz { namespace core {
 
 CompRect
 OutputDevices::computeWorkareaForBox (const CompRect& box, CompWindowList const& windows)
@@ -152,5 +152,5 @@ OutputDevices::updateOutputDevices(CoreOptions& coreOptions, CompSize* screen)
     adoptDevices(nOutput, screen);
 }
 
-}} // namespace compiz { namespace private_screen {
+}} // namespace compiz::core
 
