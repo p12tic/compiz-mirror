@@ -138,6 +138,10 @@ add_executable (compiz
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 
+add_library (compiz_outputdevices STATIC
+    outputdevices.cpp
+)
+
 # workaround for build race
 add_dependencies (compiz core-xml-file)
 
@@ -167,6 +171,7 @@ target_link_libraries (
     compiz_window_extents
     compiz_window_constrainment
     compiz_servergrab
+    compiz_outputdevices
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
 )

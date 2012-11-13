@@ -43,55 +43,11 @@
 #include "privateiosource.h"
 #include "privateeventsource.h"
 #include "privatesignalsource.h"
+#include "outputdevices.h"
 
 #include "core_options.h"
 
 #include <set>
-
-namespace compiz { namespace private_screen
-{
-
-class OutputDevices
-{
-public:
-    OutputDevices();
-
-    void setCurrentOutput(unsigned int outputNum);
-
-    CompOutput& getCurrentOutputDev() { return outputDevs[currentOutputDev]; }
-
-    bool hasOverlappingOutputs() const { return overlappingOutputs; }
-
-    void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
-	    CompRegion& allWorkArea, const CompWindowList& windows);
-
-    const CompOutput& getOutputDev(unsigned int outputNum) const
-    { return outputDevs[outputNum]; }
-
-    // TODO breaks encapsulation horribly ought to be const at least
-    // Even better, use begin() and end() return const_iterators
-    // BUT this is exported directly through API - which makes changing
-    // it a PITA.
-    CompOutput::vector& getOutputDevs() { return outputDevs; }
-
-    int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
-	    CompScreen* screen) const;
-    void updateOutputDevices(CoreOptions& coreOptions, CompScreen* screen);
-
-private:
-    void setGeometryOnDevice(unsigned int nOutput, int x, int y,
-	    const int width, const int height);
-    void adoptDevices(unsigned int nOutput);
-
-    static CompRect computeWorkareaForBox(const CompRect& box,
-	    const CompWindowList& windows);
-
-    CompOutput::vector outputDevs;
-    bool               overlappingOutputs;
-    int	           currentOutputDev;
-};
-
-}} //::compiz::private_screen
 
 CompPlugin::VTable * getCoreVTable ();
 
