@@ -302,12 +302,14 @@ ccsGSettingsWrapperNewForSchemaWithPath (const char *schema,
     if (!allocateWrapperData (ai, &wrapper, &priv))
 	return NULL;
 
+    GSettings *settings = newGSettingsWithPath (schema, path, wrapper, priv, ai);
+
+    if (!settings)
+	return NULL;
+
     priv->schema = g_strdup (schema);
     priv->path = g_strdup (path);
-    priv->settings = newGSettingsWithPath (schema, path, wrapper, priv, ai);
-
-    if (!priv->settings)
-	return NULL;
+    priv->settings = settings;
 
     initCCSGSettingsWrapperObject (wrapper, priv, ai);
 
@@ -324,11 +326,13 @@ ccsGSettingsWrapperNewForSchema (const char *schema,
     if (!allocateWrapperData (ai, &wrapper, &priv))
 	return NULL;
 
-    priv->schema = g_strdup (schema);
-    priv->settings = newGSettings (schema, wrapper, priv, ai);
+    GSettings *settings = newGSettings (schema, wrapper, priv, ai);
 
-    if (!priv->settings)
+    if (!settings)
 	return NULL;
+
+    priv->schema = g_strdup (schema);
+    priv->settings = settings;
 
     GValue pathValue = G_VALUE_INIT;
     g_value_init (&pathValue, G_TYPE_STRING);
