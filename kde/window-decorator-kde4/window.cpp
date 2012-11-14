@@ -367,7 +367,7 @@ KWD::Window::caption (int idx) const
 int
 KWD::Window::tabCount () const
 {
-    return 0;
+    return 1;
 }
 
 long
