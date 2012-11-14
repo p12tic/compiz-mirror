@@ -146,9 +146,31 @@ freeWrapperAndPriv (CCSGSettingsWrapper *wrapper,
 }
 
 static gpointer
-listAllSchemas (gpointer data)
+listAllRelocatableSchemas (gpointer data)
 {
     return (gpointer) g_settings_list_relocatable_schemas ();
+}
+
+static inline const gchar * const *
+listAllRelocatableSchemasOnce ()
+{
+    static GOnce get_settings_once = G_ONCE_INIT;
+    g_once (&get_settings_once, listAllRelocatableSchemas, NULL);
+    return (const gchar * const *) get_settings_once.retval;
+}
+
+static gpointer
+listAllSchemas (gpointer data)
+{
+    return (gpointer) g_settings_list_schemas ();
+}
+
+static inline const gchar * const *
+listAllSchemasOnce ()
+{
+    static GOnce get_settings_once = G_ONCE_INIT;
+    g_once (&get_settings_once, listAllSchemas, NULL);
+    return (const gchar * const *) get_settings_once.retval;
 }
 
 typedef void * GSettingsConstructorFuncUserData;
@@ -171,15 +193,11 @@ ccsGSettingsNewWithPathFromUserData (const gchar                      *schema,
 
 static inline GSettings *
 ccsGSettingsNewGSettingsFuncNoAbort (const gchar                      *schema,
+				     const gchar * const              *schemas,
 				     GSettingsConstructorFunc         func,
 				     GSettingsConstructorFuncUserData data)
 {
-    static GOnce	   get_settings_once = G_ONCE_INIT;
-    const  gchar * const * schemas;
     guint                  i = 0;
-
-    g_once (&get_settings_once, listAllSchemas, NULL);
-    schemas = (const gchar * const *) get_settings_once.retval;
 
     for (; schemas[i]; i++)
 	if (g_strcmp0 (schema, schemas[i]) == 0)
@@ -192,7 +210,9 @@ static inline GSettings *
 ccsGSettingsNewGSettingsWithPathNoAbort (const gchar *schema,
 					 const gchar *path)
 {
+    const gchar * const *schemas = listAllRelocatableSchemasOnce ();
     return ccsGSettingsNewGSettingsFuncNoAbort (schema,
+						schemas,
 						ccsGSettingsNewWithPathFromUserData,
 						(GSettingsConstructorFuncUserData) path);
 }
@@ -200,7 +220,9 @@ ccsGSettingsNewGSettingsWithPathNoAbort (const gchar *schema,
 static inline GSettings *
 ccsGSettingsNewGSettingsNoAbort (const gchar *schema)
 {
+    const gchar * const *schemas = listAllSchemasOnce ();
     return ccsGSettingsNewGSettingsFuncNoAbort (schema,
+						schemas,
 						ccsGSettingsNewNoPath,
 						NULL);
 }
