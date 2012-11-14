@@ -56,9 +56,7 @@ static void
 connectWrapperToChangedSignal (CCSGSettingsWrapper                               *wrapper,
 			       CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate *priv)
 {
-    /* The returned wrapper may be NULL */
-    if (wrapper)
-	ccsGSettingsWrapperConnectToChangedSignal (wrapper, priv->callback, priv->data);
+    ccsGSettingsWrapperConnectToChangedSignal (wrapper, priv->callback, priv->data);
 }
 
 static CCSGSettingsWrapper *
