@@ -64,10 +64,8 @@ TEST (OutputDevices, SideBySide)
     w.set (50, 50, 100, 100, 0);
     EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
 
-    /* FIXME... but not until the initial refactoring has landed
-    w.set (-50, 50, 10, 10, 0);
+    w.set (-50, 50, 100, 10, 0);
     EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
-    */
 
     w.set (-50, 50, 100, 10, 0);
     EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
@@ -78,7 +76,7 @@ TEST (OutputDevices, SideBySide)
     w.set (10, 0, 3000, 768, 0);
     EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
 
-    w.set (99999, 100, 123, 456, 0);
+    w.set (1500, 100, 2000, 456, 0);
     EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
 }
 
@@ -101,6 +99,9 @@ TEST (OutputDevices, LaptopBelowMonitor)
     EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
 
     w.set (200, 1500, 20, 20, 0);
+    EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (100, 1800, 700, 700, 0);
     EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
 }
 
