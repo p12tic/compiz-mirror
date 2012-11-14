@@ -27,7 +27,10 @@
 #include <core/region.h>
 #include <core/screen.h>
 
-namespace compiz { namespace core {
+namespace compiz
+{
+namespace core
+{
 
 class OutputDevices
 {
@@ -69,6 +72,5 @@ private:
     int	           currentOutputDev;
 };
 
-}} //::compiz::core
-
-
+} // namespace core
+} // namespace compiz

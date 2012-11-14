@@ -26,7 +26,10 @@
 #include "outputdevices.h"
 #include "core_options.h"
 
-namespace compiz { namespace core {
+namespace compiz
+{
+namespace core
+{
 
 OutputDevices::OutputDevices() :
     outputDevs (),
@@ -198,5 +201,6 @@ OutputDevices::outputDeviceForGeometry (
     return highest;
 }
 
-}} // namespace compiz::core
+} // namespace core
+} // namespace compiz
 
