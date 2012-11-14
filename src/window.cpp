@@ -3513,15 +3513,21 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
      * but at least the user will be able to see all of the window */
     output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
 
-    if (state & CompWindowStateFullscreenMask ||
-	state & CompWindowStateMaximizedHorzMask)
+    if (state & (CompWindowStateFullscreenMask |
+                 CompWindowStateMaximizedVertMask |
+                 CompWindowStateMaximizedHorzMask))
     {
-	int width = (mask & CWWidth) ? xwc->width : old.width ();
-	int height = (mask & CWHeight) ? xwc->height : old.height ();
+	// Use the full output if allowed, but never more or it won't fit
+	int width =  (state & (CompWindowStateFullscreenMask |
+                               CompWindowStateMaximizedHorzMask)) ?
+                     output->width () : old.width ();
+	int height = (state & (CompWindowStateFullscreenMask |
+                               CompWindowStateMaximizedVertMask)) ?
+                     output->height () : old.height ();
 
 	window->constrainNewWindowSize (width, height, &width, &height);
 
-	if (width > output->width ())
+	if (width > output->width () || height > output->height ())
 	{
 	    int        distance = std::numeric_limits <int>::max ();
 	    CompOutput *selected = output;
@@ -3529,40 +3535,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	     * which has a large enough size */
 	    foreach (CompOutput &o, screen->outputDevs ())
 	    {
-		if (o.workArea ().width () > width)
-		{
-		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
-					  pow (abs (o.y () - output->y ()), 2));
-
-		    if (tDistance < distance)
-		    {
-			selected = &o;
-			tDistance = distance;
-		    }
-		}
-	    }
-
-	    output = selected;
-	}
-    }
-
-    if (state & CompWindowStateFullscreenMask ||
-	state & CompWindowStateMaximizedVertMask)
-    {
-	int width = (mask & CWWidth) ? xwc->width : old.width ();
-	int height = (mask & CWHeight) ? xwc->height : old.height ();
-
-	window->constrainNewWindowSize (width, height, &width, &height);
-
-	if (height > output->height ())
-	{
-	    int        distance = std::numeric_limits <int>::max ();
-	    CompOutput *selected = output;
-	    /* That's no good ... try and find the closest output device to this one
-	     * which has a large enough size */
-	    foreach (CompOutput &o, screen->outputDevs ())
-	    {
-		if (o.workArea ().height () > height)
+		if (o.workArea ().width () >= width &&
+		    o.workArea ().height () >= height)
 		{
 		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
 					  pow (abs (o.y () - output->y ()), 2));
