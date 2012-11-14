@@ -150,6 +150,7 @@ add_library (compiz_outputdevices STATIC
 )
 
 add_dependencies (compiz_outputdevices
+    core-options
     compiz_size
     compiz_output
     compiz_rect
