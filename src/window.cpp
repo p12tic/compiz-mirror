@@ -3517,14 +3517,23 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
                  CompWindowStateMaximizedVertMask |
                  CompWindowStateMaximizedHorzMask))
     {
-	// Use the full output if allowed, but never more or it won't fit
-	int width =  (state & (CompWindowStateFullscreenMask |
-                               CompWindowStateMaximizedHorzMask)) ?
-                     output->width () : old.width ();
-	int height = (state & (CompWindowStateFullscreenMask |
-                               CompWindowStateMaximizedVertMask)) ?
-                     output->height () : old.height ();
+	int width = old.width ();
+	int height = old.height ();
 
+	if (state & CompWindowStateFullscreenMask)
+	{
+	    width = CompOutput::Fullscreen;
+	    height = CompOutput::Fullscreen;
+	}
+	else
+	{
+	    if (state & CompWindowStateMaximizedHorzMask)
+		width = CompOutput::Maximized;
+	    if (state & CompWindowStateMaximizedVertMask)
+		height = CompOutput::Maximized;
+	}
+	
+	output->constrainWindowSize (&width, &height);
 	window->constrainNewWindowSize (width, height, &width, &height);
 
 	if (width > output->width () || height > output->height ())

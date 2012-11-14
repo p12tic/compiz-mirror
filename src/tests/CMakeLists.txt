@@ -2,6 +2,10 @@ add_executable (compiz_test_outputdevices
     test_outputdevices.cpp
 )
 
+add_executable (compiz_test_output
+    test_output.cpp
+)
+
 include_directories (
     ..
     ../rect/include
@@ -14,6 +18,14 @@ include_directories (
 )
 
 link_directories (..)
+
+target_link_libraries (compiz_test_output
+    -Wl,-start-group
+    compiz_output
+    compiz_rect
+    -Wl,-end-group
+    ${GTEST_BOTH_LIBRARIES}
+)
 
 target_link_libraries (compiz_test_outputdevices
     -Wl,-start-group
