@@ -105,3 +105,25 @@ TEST (OutputDevices, LaptopBelowMonitor)
     EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
 }
 
+TEST (OutputDevices, LaptopNextToMonitor)
+{
+    OutputDevices d;
+    CompSize s (1920, 2100);
+    CompWindow::Geometry w;
+
+    d.setGeometryOnDevice (0, 0, 400, 1280, 800);
+    d.setGeometryOnDevice (1, 1280, 0, 1920, 1200);
+
+    w.set (-10, -10, 1034, 778, 0);
+    EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (200, 300, 20, 20, 0);
+    EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (-10, 10, 1500, 500, 0);
+    EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (900, 50, 3000, 20, 0);
+    EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+}
+
