@@ -935,15 +935,16 @@ writeVariantToKey (CCSGSettingsWrapper  *settings,
 		   const char *key,
 		   GVariant   *value)
 {
-    if (!settings)
-    {
-	ccsWarning ("attempted to write without a schema");
-	return FALSE;
-    }
-    else
+    if (settings)
     {
 	ccsGSettingsWrapperSetValue (settings, key, value);
 	return TRUE;
+
+    }
+    else
+    {
+	ccsWarning ("attempted to write without a schema");
+	return FALSE;
     }
 }
 
