@@ -3513,6 +3513,12 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
      * but at least the user will be able to see all of the window */
     output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
 
+    /*
+     * It would be a little cleaner and easier for testing if the below block
+     * was part of screen->outputDeviceForGeometry. Unfortunately, that
+     * requires a core ABI change for CompScreen (extra parameter 'state') and
+     * this code needs to be backportable without ABI changes :/
+     */
     if (state & (CompWindowStateFullscreenMask |
                  CompWindowStateMaximizedVertMask |
                  CompWindowStateMaximizedHorzMask))
