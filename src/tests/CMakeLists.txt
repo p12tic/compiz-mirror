@@ -27,5 +27,5 @@ target_link_libraries (compiz_test_outputdevices
     ${GTEST_BOTH_LIBRARIES}
 )
 
-compiz_discover_tests (compiz_test_outputdevices COVERAGE compiz_test_outputdevices)
+compiz_discover_tests(compiz_test_outputdevices COVERAGE compiz_test_outputdevices)
 
