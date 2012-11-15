@@ -78,6 +78,9 @@ TEST (OutputDevices, SideBySide)
 
     w.set (1500, 100, 2000, 456, 0);
     EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (0, 0, 2048, 768, 0);
+    EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
 }
 
 TEST (OutputDevices, LaptopBelowMonitor)
@@ -125,5 +128,36 @@ TEST (OutputDevices, LaptopNextToMonitor)
 
     w.set (900, 50, 3000, 20, 0);
     EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (10, 500, 2542, 100, 0);
+    EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+}
+
+TEST (OutputDevices, FourSquare)
+{
+    OutputDevices d;
+    CompSize s (2000, 2000);
+    CompWindow::Geometry w;
+
+    d.setGeometryOnDevice (0,    0,    0, 1000, 1000);
+    d.setGeometryOnDevice (1, 1000,    0, 1000, 1000);
+    d.setGeometryOnDevice (2,    0, 1000, 1000, 1000);
+    d.setGeometryOnDevice (3, 1000, 1000, 1000, 1000);
+
+    w.set (-10, -10, 1034, 778, 0);
+    EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (900, 300, 300, 200, 0);
+    EXPECT_EQ (1, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (900, 900, 201, 201, 0);
+    EXPECT_EQ (3, d.outputDeviceForGeometry (w, 0, &s));
+
+    w.set (-10, 1010, 2000, 500, 0);
+    EXPECT_EQ (2, d.outputDeviceForGeometry (w, 0, &s));
+
+    // When there are multiple canidates with equal scores, choose the first:
+    w.set (-5, -5, 3000, 3000, 0);
+    EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
 }
 
