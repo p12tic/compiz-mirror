@@ -7,6 +7,19 @@ compiz (1:0.9.8.4+bzr3407-0ubuntu2) UNRELEASED; urgency=low
 
  -- Michael Terry <mterry@ubuntu.com>  Mon, 05 Nov 2012 14:48:41 -0500
 
+compiz (1:0.9.8.4+bzr3412-0ubuntu1) raring; urgency=low
+
+  * New upstream snapshot.
+    - Avoid duplicate template instantiations of PluginClassHandler<>, at 
+      least for those plugins that get re-used by others. (LP: #1065815)
+    - Don't try to dereference NULL, which is returned by 
+      ccsGConfIntegratedSettingReadValue when it gets unexpected data 
+      from gconf. (LP: #1056615)
+    - Stop the resize border (Rectangle resize mode) from flickering 
+      slightly. (LP: #1068518)
+
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 09 Nov 2012 09:52:15 +0200
+
 compiz (1:0.9.8.4+bzr3407-0ubuntu1) quantal-proposed; urgency=low
 
   * New upstream snapshot.
