@@ -4,6 +4,36 @@ compiz (1:0.9.8.4+bzr3407-0ubuntu2) UNRELEASED; urgency=low
     - Update Vcs-Bzr
   * debian/patches/100_expo_layout.patch:
     - Fix to apply
+  * Automatic snapshot from revision 3451 (bootstrap)
+    - Fix crash from writing to static memory (LP: #1065814)
+    - Fix crash from duplicate template instaces (LP: #1065815)
+    - Fix crash when getting unexpected gconf data (LP: #1056615)
+    - Fix maximized windows changing workspaces (LP: #1071791)
+    - Respect Zoom Factor setting (LP: #1066187)
+    - Respect Show Window Title setting (LP: #1009999)
+    - Restore text background transparency (LP: #1042132)
+    - Restore screenshot selection rectangle transparency (LP: #1047788)
+    - Restore top and bottom cube transparency (LP: #1048272)
+    - Fix scaleaddon window highlighting being solid (LP #1068503)
+    - Make resize hint overlay disappear when changing edges (LP: #839602)
+    - Preserve grid IDs during drag (LP: #1067812, LP: #1048855)
+    - Stop resize border from flickering (LP: #1068518)
+    - Save current display before doing snap preview (LP: #1068173)
+    - Ignore inactive keybindings (LP: #1053280)
+    - Handle <primary> in keyboard shortcuts (LP: #936840)
+    - Make sure showdesktop plugin is loaded after unityshell (LP: #1067534)
+    - Fix grid build failure (LP: #1067577)
+    - Fix Jenkins test failures (LP: #1058577)
+    - Don't allow duplicate static symbols when linking (LP: #1067964)
+    - Make external templates C++0x compatible (LP: #1067598)
+    - Make sure to initialize class members (LP: #1033877)
+    - Don't duplicate templates in plugins (LP: #1066793, LP: #1066803,
+      LP: #1066804, LP: #1066805, LP: #1066799, LP: #1066796,
+      LP: #1066795, LP: #1066798, LP: #1067218, LP: #1067219)
+    - Don't needlessly set gsettings keys (LP: #1064791)
+    - Remove unused code (LP: #1037142, LP: #1067234)
+    - Fix syntax highlighting for trunk xml files (LP: #1066823)
+    - Fix documentation for building with python2 (LP: #1070211)
 
  -- Michael Terry <mterry@ubuntu.com>  Mon, 05 Nov 2012 14:48:41 -0500
 
