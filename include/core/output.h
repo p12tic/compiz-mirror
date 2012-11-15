@@ -58,14 +58,6 @@ class CompOutput : public CompRect {
 	void setGeometry (int x, int y, int width, int height);
 	void setId (CompString, unsigned int);
 
-	typedef enum _SpecialWindowSize
-	{
-	    Maximized = -1,
-	    Fullscreen = -2
-	} SpecialWindowSize;
-
-	void constrainWindowSize (int *width, int *height);
-
 	typedef std::vector<CompOutput> vector;
 	typedef std::list<CompOutput *> ptrList;
 

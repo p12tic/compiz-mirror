@@ -87,22 +87,3 @@ CompOutput::setId (CompString name, unsigned int id)
     mId = id;
 }
 
-void
-CompOutput::constrainWindowSize (int *width, int *height)
-{
-    int w = *width;
-    int h = *height;
-
-    if (w == Fullscreen)
-	w = this->width ();
-    else if (w == Maximized)
-	w = workArea ().width ();
-
-    if (h == Fullscreen)
-	h = this->height ();
-    else if (h == Maximized)
-	h = workArea ().height ();
-
-    *width = w;
-    *height = h;
-}
