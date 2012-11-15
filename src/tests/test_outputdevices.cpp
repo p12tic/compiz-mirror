@@ -64,7 +64,7 @@ TEST (OutputDevices, SideBySide)
     w.set (50, 50, 100, 100, 0);
     EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
 
-    w.set (-50, 50, 100, 10, 0);
+    w.set (-50, 50, 10, 10, 0);
     EXPECT_EQ (0, d.outputDeviceForGeometry (w, 0, &s));
 
     w.set (-50, 50, 100, 10, 0);
