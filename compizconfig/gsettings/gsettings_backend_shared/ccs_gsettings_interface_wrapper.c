@@ -298,11 +298,12 @@ ccsGSettingsWrapperNewForSchemaWithPath (const char *schema,
 {
     CCSGSettingsWrapper *wrapper = NULL;
     CCSGSettingsWrapperPrivate *priv = NULL;
+    GSettings                  *settings = NULL;
 
     if (!allocateWrapperData (ai, &wrapper, &priv))
 	return NULL;
 
-    GSettings *settings = newGSettingsWithPath (schema, path, wrapper, priv, ai);
+    settings = newGSettingsWithPath (schema, path, wrapper, priv, ai);
 
     if (!settings)
 	return NULL;
@@ -322,11 +323,12 @@ ccsGSettingsWrapperNewForSchema (const char *schema,
 {
     CCSGSettingsWrapper *wrapper = NULL;
     CCSGSettingsWrapperPrivate *priv = NULL;
+    GSettings                  *settings = NULL;
 
     if (!allocateWrapperData (ai, &wrapper, &priv))
 	return NULL;
 
-    GSettings *settings = newGSettings (schema, wrapper, priv, ai);
+    settings = newGSettings (schema, wrapper, priv, ai);
 
     if (!settings)
 	return NULL;
