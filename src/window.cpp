@@ -3514,58 +3514,19 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
 
     /*
-     * It would be a little cleaner and easier for testing if the below block
-     * was part of screen->outputDeviceForGeometry. Unfortunately, that
-     * requires a core ABI change for CompScreen (extra parameter 'state') and
-     * this code needs to be backportable without ABI changes :/
+     * output is now the correct output for the given geometry.
+     * There used to be a lot more logic here to handle the rare special
+     * case of maximizing a window whose hints say it is too large to fit
+     * the output and choose a different one. However that logic was a bad
+     * idea because:
+     *   (1) It's confusing to the user to auto-magically move a window
+     *       between monitors when they didn't ask for it. So don't.
+     *   (2) In the worst case where the window can't go small enough to fit
+     *       the output, they can simply move it with Alt+drag, Alt+F7 or
+     *       expo.
+     * Not moving the window at all is much less annoying than moving it when
+     * the user never asked to.
      */
-    if (state & (CompWindowStateFullscreenMask |
-                 CompWindowStateMaximizedVertMask |
-                 CompWindowStateMaximizedHorzMask))
-    {
-	int width = old.width ();
-	int height = old.height ();
-
-	if (state & CompWindowStateFullscreenMask)
-	{
-	    width = output->width ();
-	    height = output->height ();
-	}
-	else
-	{
-	    if (state & CompWindowStateMaximizedHorzMask)
-		width = output->workArea ().width ();
-	    if (state & CompWindowStateMaximizedVertMask)
-		height = output->workArea ().height ();
-	}
-	
-	window->constrainNewWindowSize (width, height, &width, &height);
-
-	if (width > output->width () || height > output->height ())
-	{
-	    int        distance = std::numeric_limits <int>::max ();
-	    CompOutput *selected = output;
-	    /* That's no good ... try and find the closest output device to this one
-	     * which has a large enough size */
-	    foreach (CompOutput &o, screen->outputDevs ())
-	    {
-		if (o.workArea ().width () >= width &&
-		    o.workArea ().height () >= height)
-		{
-		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
-					  pow (abs (o.y () - output->y ()), 2));
-
-		    if (tDistance < distance)
-		    {
-			selected = &o;
-			tDistance = distance;
-		    }
-		}
-	    }
-
-	    output = selected;
-	}
-    }
 
     workArea = output->workArea ();
 

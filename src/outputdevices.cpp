@@ -103,6 +103,10 @@ OutputDevices::outputDeviceForGeometry (
 
     if (strategy == CoreOptions::OverlappingOutputsSmartMode)
     {
+	/* We're only going to use geomRect for overlapping area calculations,
+	   so the window rectangle is enough. We don't need to consider
+	   anything more like the border because it will never be significant
+	   to the result */
 	geomRect = gm;
     }
     else
