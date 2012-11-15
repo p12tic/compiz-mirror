@@ -108,7 +108,7 @@ TEST (OutputDevices, LaptopBelowMonitor)
 TEST (OutputDevices, LaptopNextToMonitor)
 {
     OutputDevices d;
-    CompSize s (1920, 2100);
+    CompSize s (3200, 1200);
     CompWindow::Geometry w;
 
     d.setGeometryOnDevice (0, 0, 400, 1280, 800);
