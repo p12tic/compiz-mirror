@@ -103,28 +103,11 @@ OutputDevices::outputDeviceForGeometry (
 
     if (strategy == CoreOptions::OverlappingOutputsSmartMode)
     {
-	int centerX, centerY;
-
-	/* for smart mode, calculate the overlap of the whole rectangle
-	   with the output device rectangle */
-	geomRect.setWidth (gm.width () + 2 * gm.border ());
-	geomRect.setHeight (gm.height () + 2 * gm.border ());
-
-	x = gm.x () % screen->width ();
-	centerX = (x + (geomRect.width () / 2));
-	if (centerX < 0)
-	    x += screen->width ();
-	else if (centerX > screen->width ())
-	    x -= screen->width ();
-	geomRect.setX (x);
-
-	y = gm.y () % screen->height ();
-	centerY = (y + (geomRect.height () / 2));
-	if (centerY < 0)
-	    y += screen->height ();
-	else if (centerY > screen->height ())
-	    y -= screen->height ();
-	geomRect.setY (y);
+	/* We're only going to use geomRect for overlapping area calculations,
+	   so the window rectangle is enough. We don't need to consider
+	   anything more like the border because it will never be significant
+	   to the result */
+	geomRect = gm;
     }
     else
     {

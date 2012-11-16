@@ -3513,71 +3513,20 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
      * but at least the user will be able to see all of the window */
     output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
 
-    if (state & CompWindowStateFullscreenMask ||
-	state & CompWindowStateMaximizedHorzMask)
-    {
-	int width = (mask & CWWidth) ? xwc->width : old.width ();
-	int height = (mask & CWHeight) ? xwc->height : old.height ();
-
-	window->constrainNewWindowSize (width, height, &width, &height);
-
-	if (width > output->width ())
-	{
-	    int        distance = std::numeric_limits <int>::max ();
-	    CompOutput *selected = output;
-	    /* That's no good ... try and find the closest output device to this one
-	     * which has a large enough size */
-	    foreach (CompOutput &o, screen->outputDevs ())
-	    {
-		if (o.workArea ().width () > width)
-		{
-		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
-					  pow (abs (o.y () - output->y ()), 2));
-
-		    if (tDistance < distance)
-		    {
-			selected = &o;
-			tDistance = distance;
-		    }
-		}
-	    }
-
-	    output = selected;
-	}
-    }
-
-    if (state & CompWindowStateFullscreenMask ||
-	state & CompWindowStateMaximizedVertMask)
-    {
-	int width = (mask & CWWidth) ? xwc->width : old.width ();
-	int height = (mask & CWHeight) ? xwc->height : old.height ();
-
-	window->constrainNewWindowSize (width, height, &width, &height);
-
-	if (height > output->height ())
-	{
-	    int        distance = std::numeric_limits <int>::max ();
-	    CompOutput *selected = output;
-	    /* That's no good ... try and find the closest output device to this one
-	     * which has a large enough size */
-	    foreach (CompOutput &o, screen->outputDevs ())
-	    {
-		if (o.workArea ().height () > height)
-		{
-		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
-					  pow (abs (o.y () - output->y ()), 2));
-
-		    if (tDistance < distance)
-		    {
-			selected = &o;
-			tDistance = distance;
-		    }
-		}
-	    }
-
-	    output = selected;
-	}
-    }
+    /*
+     * output is now the correct output for the given geometry.
+     * There used to be a lot more logic here to handle the rare special
+     * case of maximizing a window whose hints say it is too large to fit
+     * the output and choose a different one. However that logic was a bad
+     * idea because:
+     *   (1) It's confusing to the user to auto-magically move a window
+     *       between monitors when they didn't ask for it. So don't.
+     *   (2) In the worst case where the window can't go small enough to fit
+     *       the output, they can simply move it with Alt+drag, Alt+F7 or
+     *       expo.
+     * Not moving the window at all is much less annoying than moving it when
+     * the user never asked to.
+     */
 
     workArea = output->workArea ();
 
