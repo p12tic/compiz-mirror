@@ -265,7 +265,7 @@ updateSettingWithGSettingsKeyName (CCSBackend *backend,
 	 ret = FALSE;
     }
 
-    g_free (pathOrig);
+    free (pathOrig);
 
     if (uncleanKeyName)
 	g_free (uncleanKeyName);
