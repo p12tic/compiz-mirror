@@ -454,10 +454,10 @@ PrivateCompositeWindow::handleDamageRect (CompositeWindow *w,
 					  int             width,
 					  int             height)
 {
-    bool   initial = false;
-
     if (!w->priv->redirected)
 	return;
+
+    bool   initial = false;
 
     if (!w->priv->damaged)
     {
