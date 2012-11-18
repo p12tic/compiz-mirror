@@ -481,12 +481,10 @@ PrivateCompositeWindow::handleDamageRect (CompositeWindow *w,
 void
 CompositeWindow::updateOpacity ()
 {
-    unsigned short opacity;
-
     if (priv->window->type () & CompWindowTypeDesktopMask)
 	return;
 
-    opacity = screen->getWindowProp32 (priv->window->id (),
+    unsigned short opacity = screen->getWindowProp32 (priv->window->id (),
 					     Atoms::winOpacity, OPAQUE);
 
     if (opacity != priv->opacity)
