@@ -1746,10 +1746,10 @@ CompWindow::sendSyncRequest ()
 void
 PrivateWindow::configure (XConfigureEvent *ce)
 {
-    unsigned int valueMask = 0;
-
     if (priv->frame)
 	return;
+
+    unsigned int valueMask = 0;
 
     /* remove configure event from pending configures */
     if (priv->geometry.x () != ce->x)
