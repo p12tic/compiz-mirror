@@ -1877,17 +1877,16 @@ void
 PrivateScreen::setDesktopHints ()
 {
     unsigned long *data;
-    int		  dSize, offset, hintSize;
-    unsigned int  i;
 
-    dSize = nDesktop * 2 + nDesktop * 2 + nDesktop * 4 + 1;
+    int dSize = nDesktop * 2 + nDesktop * 2 + nDesktop * 4 + 1;
 
     data = (unsigned long *) malloc (sizeof (unsigned long) * dSize);
     if (!data)
 	return;
 
-    offset   = 0;
-    hintSize = nDesktop * 2;
+    unsigned int  i;
+    int offset   = 0;
+    int hintSize = nDesktop * 2;
 
     for (i = 0; i < nDesktop; i++)
     {
