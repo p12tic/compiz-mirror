@@ -4207,11 +4207,11 @@ CompWindow::restackBelow (CompWindow *sibling)
 void
 CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask = 0;
-
     if (overrideRedirect () || !priv->managed)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    int		   mask = 0;
 
     if (priv->state & CompWindowStateShadedMask && !priv->shaded)
     {
