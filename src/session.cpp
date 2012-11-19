@@ -60,7 +60,6 @@ setStringListProperty (SmcConn	  connection,
 		       int	  nValues)
 {
     SmProp prop, *pProp;
-    int	   i;
 
     prop.name = (char *) name;
     prop.type = const_cast<char *> (SmLISTofARRAY8);
@@ -69,7 +68,7 @@ setStringListProperty (SmcConn	  connection,
     if (!prop.vals)
 	return;
 
-    for (i = 0; i < nValues; i++)
+    for (unsigned int i = 0; i < nValues; i++)
     {
 	prop.vals[i].value = (char *) values[i];
 	prop.vals[i].length = strlen (values[i]);
