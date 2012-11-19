@@ -1493,10 +1493,7 @@ ScaleScreen::relayoutSlots (const CompMatch& match)
 void
 PrivateScaleScreen::windowRemove (CompWindow *w)
 {
-    if (!w)
-	return;
-
-    if (state == ScaleScreen::Idle || state == ScaleScreen::In)
+    if (!w || state == ScaleScreen::Idle || state == ScaleScreen::In)
 	return;
 
     foreach (ScaleWindow *lw, windows)
