@@ -2885,11 +2885,11 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
 void
 PrivateWindow::saveGeometry (int mask)
 {
-    int m = mask & ~saveMask;
-
     /* only save geometry if window has been placed */
     if (!placed)
 	return;
+
+    int m = mask & ~saveMask;
 
     if (m & CWX)
 	saveWc.x = serverGeometry.x ();
