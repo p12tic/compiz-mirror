@@ -3944,10 +3944,10 @@ CompWindow::moveResize (XWindowChanges *xwc,
 void
 PrivateWindow::updateSize ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-
     if (window->overrideRedirect () || !managed)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
     int mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
     if (mask)
