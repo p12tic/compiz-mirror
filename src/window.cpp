@@ -4433,10 +4433,10 @@ CompWindow::show ()
 void
 PrivateWindow::hide ()
 {
-    bool onDesktop = window->onCurrentDesktop ();
-
     if (!managed)
 	return;
+
+    bool onDesktop = window->onCurrentDesktop ();
 
     if (!window->minimized () && !inShowDesktopMode &&
 	!hidden && onDesktop)
