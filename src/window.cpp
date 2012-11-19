@@ -805,11 +805,11 @@ CompWindow::recalcType ()
 void
 PrivateWindow::updateFrameWindow ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
-
     if (!serverFrame)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
 
     xwc.x = serverGeometry.x ();
     xwc.y = serverGeometry.y ();
