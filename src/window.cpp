@@ -4290,9 +4290,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 void
 PrivateWindow::ensureWindowVisibility ()
 {
-    int	width = serverGeometry.widthIncBorders ();
-    int	height = serverGeometry.heightIncBorders ();
-
     if (struts || attrib.override_redirect)
 	return;
 
@@ -4310,6 +4307,8 @@ PrivateWindow::ensureWindowVisibility ()
 
     int dx = 0;
     int dy = 0;
+    int	width = serverGeometry.widthIncBorders ();
+    int	height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
