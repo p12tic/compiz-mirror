@@ -3945,12 +3945,11 @@ void
 PrivateWindow::updateSize ()
 {
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask;
 
     if (window->overrideRedirect () || !managed)
 	return;
 
-    mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
+    int mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
     if (mask)
     {
 	if (priv->mapNum && (mask & (CWWidth | CWHeight)))
