@@ -425,17 +425,16 @@ void
 PrivateScaleScreen::layoutSlotsForArea (const CompRect& workArea,
 					int             nWindows)
 {
-    int i, j;
-    int x, y, width, height;
-    int lines, n, nSlots;
-    int spacing;
-
     if (!nWindows)
 	return;
 
-    lines   = sqrt (nWindows + 1);
-    spacing = optionGetSpacing ();
-    nSlots  = 0;
+    int i, j;
+    int x, y, width, height;
+    int n;
+
+    int lines   = sqrt (nWindows + 1);
+    int spacing = optionGetSpacing ();
+    int nSlots  = 0;
 
     y      = workArea.y () + spacing;
     height = (workArea.height () - (lines + 1) * spacing) / lines;
