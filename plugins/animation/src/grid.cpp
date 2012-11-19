@@ -219,12 +219,11 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		       unsigned int                maxGridWidth,
 		       unsigned int                maxGridHeight)
 {
-   
-    GLfloat *v, *vMax;
-    bool notUsing3dCoords = !using3D ();
-
     if (region.isEmpty ()) // nothing to do
 	return;
+
+    GLfloat *v, *vMax;
+    bool notUsing3dCoords = !using3D ();
 
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
