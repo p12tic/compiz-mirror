@@ -4419,9 +4419,11 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 	    }
 	    case TypeAction:
 	    default:
+	    {
 		free (newSetting);
 		free (sectionName);
 		return FALSE;
+	    }
 	}
 
         CCSSettingList listIter = upgrade->clearValueSettings;
