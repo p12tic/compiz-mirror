@@ -4419,7 +4419,8 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 	    }
 	    case TypeAction:
 	    default:
-		/* FIXME: cleanup */
+		free (newSetting);
+		free (sectionName);
 		return FALSE;
 	}
 
