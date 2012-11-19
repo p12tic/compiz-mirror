@@ -896,13 +896,11 @@ PrivateCubeScreen::moveViewportAndPaint (const GLScreenPaintAttrib &sAttrib,
 					 PaintOrder                paintOrder,
 					 int                       dx)
 {
-    int output;
-
     if (!cubeScreen->cubeShouldPaintViewport (sAttrib, transform, outputPtr, 
 					      paintOrder))
 	return;
 
-    output = ((unsigned int) outputPtr->id () != (unsigned int) ~0)
+    int output = ((unsigned int) outputPtr->id () != (unsigned int) ~0)
     							 ? outputPtr->id () : 0;
 
     mPaintOrder = paintOrder;
