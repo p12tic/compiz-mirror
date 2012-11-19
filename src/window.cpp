@@ -1714,13 +1714,13 @@ PrivateWindow::initializeSyncCounter ()
 void
 CompWindow::sendSyncRequest ()
 {
-    XClientMessageEvent xev;
-
     if (priv->syncWait)
 	return;
 
     if (!priv->initializeSyncCounter ())
 	return;
+
+    XClientMessageEvent xev;
 
     xev.type	     = ClientMessage;
     xev.window	     = priv->id;
