@@ -1798,12 +1798,12 @@ PrivateWindow::configure (XConfigureEvent *ce)
 void
 PrivateWindow::configureFrame (XConfigureEvent *ce)
 {
+    if (!priv->frame)
+	return;
+
     int x, y, width, height;
     CompWindow	     *above;
     unsigned int     valueMask = 0;
-
-    if (!priv->frame)
-	return;
 
     /* remove configure event from pending configures */
     if (priv->frameGeometry.x () != ce->x)
