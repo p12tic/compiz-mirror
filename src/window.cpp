@@ -2977,13 +2977,13 @@ void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
 {
-    unsigned int frameValueMask = 0;
-
     if (id == screen->root ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "attempted to reconfigure root window");
 	return;
     }
+
+    unsigned int frameValueMask = 0;
 
     /* Remove redundant bits */
 
