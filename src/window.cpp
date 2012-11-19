@@ -5514,11 +5514,11 @@ PrivateWindow::processMap ()
 void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
-    bool onlyActions = (priv->id == screen->activeWindow() ||
-			!screen->getCoreOptions().optionGetClickToFocus ());
-
     if (!priv->frame)
 	return;
+
+    bool onlyActions = (priv->id == screen->activeWindow() ||
+			!screen->getCoreOptions().optionGetClickToFocus ());
 
     /* Ungrab everything */
     XUngrabButton (screen->dpy(), AnyButton, AnyModifier, frame);
