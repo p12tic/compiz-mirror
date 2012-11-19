@@ -504,12 +504,10 @@ PrivateWindow::setFullscreenMonitors (CompFullscreenMonitorSet *monitors)
 void
 CompWindow::changeState (unsigned int newState)
 {
-    unsigned int oldState;
-
     if (priv->state == newState)
 	return;
 
-    oldState = priv->state;
+    unsigned int oldState = priv->state;
     priv->state = newState;
 
     recalcType ();
