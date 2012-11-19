@@ -87,7 +87,7 @@ static void
 setCloneRestartCommands (SmcConn connection)
 {
     const char **args;
-    int        i, count = 0;
+    int        count = 0;
 
     /* at maximum, we pass our old arguments + our new client id
        to the SM, so allocate for that case */
@@ -95,7 +95,7 @@ setCloneRestartCommands (SmcConn connection)
     if (!args)
 	return;
 
-    for (i = 0; i < programArgc; i++)
+    for (unsigned int i = 0; i < programArgc; i++)
     {
 	if (strcmp (programArgv[i], "--sm-client-id") == 0)
 	    i++; /* skip old client id, we'll add the new one later */
