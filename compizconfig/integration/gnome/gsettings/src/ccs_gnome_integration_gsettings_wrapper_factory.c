@@ -66,11 +66,13 @@ ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapp
 {
     CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate *priv =
 	    GET_PRIVATE (CCSGNOMEIntegrationGSettingsWrapperFactoryPrivate, factory);
-    CCSGSettingsWrapper *wrapper = ccsGSettingsWrapperFactoryNewGSettingsWrapper (priv->wrapperFactory,
-										  schemaName,
-										  factory->object.object_allocation);
+    CCSGSettingsWrapper *wrapper =
+	ccsGSettingsWrapperFactoryNewGSettingsWrapper (priv->wrapperFactory,
+	                                               schemaName,
+	                                               factory->object.object_allocation);
 
-    connectWrapperToChangedSignal (wrapper, priv);
+    if (wrapper != NULL)
+	connectWrapperToChangedSignal (wrapper, priv);
 
     return wrapper;
 }

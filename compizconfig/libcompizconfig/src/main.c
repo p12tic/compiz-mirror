@@ -5727,7 +5727,7 @@ ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPredicate (CCSIntegrate
 
     while (iter)
     {
-	if ((*pred) (iter->data, data))
+	if (iter->data != NULL && pred (iter->data, data))
 	    returnList = ccsIntegratedSettingListAppend (returnList, iter->data);
 
 	iter = iter->next;
