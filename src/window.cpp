@@ -4290,7 +4290,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 void
 PrivateWindow::ensureWindowVisibility ()
 {
-    int x1, y1, x2, y2;
     int	width = serverGeometry.widthIncBorders ();
     int	height = serverGeometry.heightIncBorders ();
     int dx = 0;
@@ -4304,11 +4303,11 @@ PrivateWindow::ensureWindowVisibility ()
 		CompWindowTypeUnknownMask))
 	return;
 
-    x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
-    y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
-    x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
+    int x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
+    int y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
+    int x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
 	 screen->width ();
-    y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
+    int y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
 	 screen->height ();
 
     if (serverGeometry.x () - serverInput.left >= x2)
