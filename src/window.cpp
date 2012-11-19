@@ -4292,8 +4292,6 @@ PrivateWindow::ensureWindowVisibility ()
 {
     int	width = serverGeometry.widthIncBorders ();
     int	height = serverGeometry.heightIncBorders ();
-    int dx = 0;
-    int dy = 0;
 
     if (struts || attrib.override_redirect)
 	return;
@@ -4309,6 +4307,9 @@ PrivateWindow::ensureWindowVisibility ()
 	 screen->width ();
     int y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
 	 screen->height ();
+
+    int dx = 0;
+    int dy = 0;
 
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
