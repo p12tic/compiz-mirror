@@ -3491,10 +3491,7 @@ CompScreenImpl::addAction (CompAction *action)
 void
 CompScreenImpl::removeAction (CompAction *action)
 {
-    if (!privateScreen.initialized)
-	return;
-
-    if (!action->active ())
+    if (!(privateScreen.initialized || action->active ()))
 	return;
 
     grabManager.setCurrentState(action->state());
