@@ -68,7 +68,9 @@ setStringListProperty (SmcConn	  connection,
     if (!prop.vals)
 	return;
 
-    for (unsigned int i = 0; i < nValues; i++)
+    int i;
+
+    for (i = 0; i < nValues; i++)
     {
 	prop.vals[i].value = (char *) values[i];
 	prop.vals[i].length = strlen (values[i]);
@@ -95,7 +97,9 @@ setCloneRestartCommands (SmcConn connection)
     if (!args)
 	return;
 
-    for (unsigned int i = 0; i < programArgc; i++)
+    int i;
+
+    for (i = 0; i < programArgc; i++)
     {
 	if (strcmp (programArgv[i], "--sm-client-id") == 0)
 	    i++; /* skip old client id, we'll add the new one later */
