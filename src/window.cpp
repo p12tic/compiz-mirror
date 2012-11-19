@@ -4480,10 +4480,10 @@ PrivateWindow::hide ()
 void
 PrivateWindow::show ()
 {
-    bool onDesktop = window->onCurrentDesktop ();
-
     if (!managed)
 	return;
+
+    bool onDesktop = window->onCurrentDesktop ();
 
     if (minimized || inShowDesktopMode ||
 	hidden    || !onDesktop)
