@@ -3967,10 +3967,7 @@ CompScreenImpl::getCurrentOutputExtents ()
 void
 PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 {
-    if (nDesktop < 1 || nDesktop >= 0xffffffff)
-	return;
-
-    if (nDesktop == this->nDesktop)
+    if (nDesktop < 1 || nDesktop >= 0xffffffff || nDesktop == this->nDesktop)
 	return;
 
     if (currentDesktop >= nDesktop)
