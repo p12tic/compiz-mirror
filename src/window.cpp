@@ -4306,14 +4306,15 @@ PrivateWindow::ensureWindowVisibility ()
 	 screen->height ();
 
     int dx = 0;
-    int dy = 0;
     int	width = serverGeometry.widthIncBorders ();
-    int	height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
     else if (serverGeometry.x () + width + serverInput.right <= x1)
 	dx = (x1 + 25) - (serverGeometry.x () + width);
+
+    int dy = 0;
+    int	height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.y () - serverInput.top >= y2)
 	dy = (y2 - 25) - serverGeometry.y ();
@@ -5699,7 +5700,6 @@ CompWindow::moveToViewportPosition (int  x,
     {
 	unsigned int   valueMask = CWX | CWY;
 	XWindowChanges xwc = XWINDOWCHANGES_INIT;
-	int m, wx, wy;
 
 	if (!priv->managed)
 	    return;
@@ -5710,8 +5710,9 @@ CompWindow::moveToViewportPosition (int  x,
 	if (priv->state & CompWindowStateStickyMask)
 	    return;
 
-	wx = tx;
-	wy = ty;
+	int wx = tx;
+	int wy = ty;
+	int m;
 
 	if (screen->vpSize ().width ()!= 1)
 	{
