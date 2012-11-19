@@ -3983,10 +3983,7 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 void
 PrivateScreen::setCurrentDesktop (unsigned int desktop)
 {
-    if (desktop >= nDesktop)
-	return;
-
-    if (desktop == currentDesktop)
+    if (desktop >= nDesktop || desktop == currentDesktop)
 	return;
 
     currentDesktop = desktop;
