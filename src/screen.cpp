@@ -1190,11 +1190,11 @@ static const unsigned short N_TARGETS = 4;
 void
 PrivateScreen::handleSelectionRequest (XEvent *event)
 {
-    XSelectionEvent reply;
-
     if (wmSnSelectionWindow != event->xselectionrequest.owner ||
 	wmSnAtom != event->xselectionrequest.selection)
 	return;
+
+    XSelectionEvent reply;
 
     reply.type	    = SelectionNotify;
     reply.display   = dpy;
