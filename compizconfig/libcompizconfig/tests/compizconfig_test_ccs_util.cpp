@@ -305,12 +305,12 @@ operator== (const std::string &str, const CharacterWrapper &wrap)
     return str == getConstCharFromCharacterWrapper (wrap);
 }
 
-class CCSUtilProfileSelectionTest :
+class CCSUtilProfileSelection :
     public ::testing::Test
 {
     public:
 
-	CCSUtilProfileSelectionTest () :
+	CCSUtilProfileSelection () :
 	    ccsEnv ("COMPIZ_CONFIG_PROFILE", NULL),
 	    gnomeEnv ("GNOME_DESKTOP_SESSION_ID", NULL),
 	    kde4Env ("KDE_SESSION_VERSION", NULL),
@@ -326,7 +326,7 @@ class CCSUtilProfileSelectionTest :
 	TmpEnv kdeEnv;
 };
 
-TEST_F (CCSUtilProfileSelectionTest, TestOverrideCompizConfigProfileWithNameReturnsGeneralUnderscoreName)
+TEST_F (CCSUtilProfileSelection, OverrideWithName)
 {
     TmpEnv env ("COMPIZ_CONFIG_PROFILE", globalTestProfileName.c_str ());
     CharacterWrapper sName (getSectionName ());
@@ -334,7 +334,7 @@ TEST_F (CCSUtilProfileSelectionTest, TestOverrideCompizConfigProfileWithNameRetu
     EXPECT_EQ (globalTestGeneralProfileSection, sName);
 }
 
-TEST_F (CCSUtilProfileSelectionTest, TestOverrideCompizConfigProfileWithNoNameReturnsGeneral)
+TEST_F (CCSUtilProfileSelection, OverrideWithNoName)
 {
     TmpEnv env ("COMPIZ_CONFIG_PROFILE", emptyProfileName.c_str ());
     CharacterWrapper sName (getSectionName ());
@@ -342,7 +342,7 @@ TEST_F (CCSUtilProfileSelectionTest, TestOverrideCompizConfigProfileWithNoNameRe
     EXPECT_EQ (globalGeneralProfileSection, sName);
 }
 
-TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideInGNOMEReturnsGNOMESession)
+TEST_F (CCSUtilProfileSelection, NoOverrideInGNOME)
 {
     TmpEnv env ("GNOME_DESKTOP_SESSION_ID", globalTestProfileName.c_str ());
     CharacterWrapper sName (getSectionName ());
@@ -350,7 +350,7 @@ TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideInGNOMEReturnsGNOMESession)
     EXPECT_EQ (globalGNOMEProfileSection, sName);
 }
 
-TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideInKDE4ReturnsKDE4Session)
+TEST_F (CCSUtilProfileSelection, NoOverrideInKDE4)
 {
     TmpEnv env ("KDE_SESSION_VERSION", four.c_str ());
     CharacterWrapper sName (getSectionName ());
@@ -358,7 +358,7 @@ TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideInKDE4ReturnsKDE4Session)
     EXPECT_EQ (globalKDE4ProfileSection, sName);
 }
 
-TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideInKDE3ReturnsKDE3Session)
+TEST_F (CCSUtilProfileSelection, NoOverrideInKDE3)
 {
     TmpEnv env ("KDE_FULL_SESSION", trueStr.c_str ());
     CharacterWrapper sName (getSectionName ());
@@ -366,9 +366,10 @@ TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideInKDE3ReturnsKDE3Session)
     EXPECT_EQ (globalKDE3ProfileSection, sName);
 }
 
-TEST_F (CCSUtilProfileSelectionTest, TestNoOverrideReturnsGeneral)
+TEST_F (CCSUtilProfileSelection, Fallback)
 {
     CharacterWrapper sName (getSectionName ());
 
     EXPECT_EQ (globalGeneralProfileSection, sName);
 }
+
