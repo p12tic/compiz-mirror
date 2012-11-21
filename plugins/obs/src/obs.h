@@ -64,8 +64,6 @@ class ObsWindow :
 
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, unsigned int);
-	bool glDraw (const GLMatrix &, const GLWindowPaintAttrib &,
-		     const CompRegion &, unsigned int);
 
 	void changePaintModifier (unsigned int, int);
 	void updatePaintModifier (unsigned int);
