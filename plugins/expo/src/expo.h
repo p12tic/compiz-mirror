@@ -156,7 +156,7 @@ class ExpoWindow :
 	GLWindow        *gWindow;
 	ExpoScreen      *eScreen;
 
-    public:
+    private:
 	float opacity;
 };
 
