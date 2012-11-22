@@ -157,7 +157,7 @@ class ExpoWindow :
 	ExpoScreen      *eScreen;
 
     public:
-	float opacity, brightness, saturation;
+	float opacity;
 };
 
 class ExpoPluginVTable :

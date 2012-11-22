@@ -1192,6 +1192,11 @@ ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib& attrib,
     if (expoCam > 0)
 	mask |= PAINT_SCREEN_CLEAR_MASK;
 
+    if (optionGetExpoAnimation () == ExpoScreen::ExpoAnimationZoom)
+	vpBrightness = 0.0f;
+    else
+	vpBrightness = (1.0f - sigmoidProgress (expoCam));
+
     if (expoCam <= 0 || (expoCam > 0.0 && expoCam < 1.0 &&
 			 optionGetExpoAnimation () != ExpoAnimationZoom))
     {
@@ -1228,8 +1233,6 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 
     // Scaling factors to be applied to attrib later in glDrawTexture
     opacity = 1.0f;
-    brightness = 1.0f;
-    saturation = 1.0f;
 
     expoAnimation = eScreen->optionGetExpoAnimation ();
 
@@ -1251,16 +1254,6 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 		opacity = 0.0f;
 	    }
 	}
-
-	brightness = eScreen->vpBrightness;
-	saturation = eScreen->vpSaturation;
-    }
-    else
-    {
-	if (expoAnimation == ExpoScreen::ExpoAnimationZoom)
-	    brightness = 0.0f;
-	else
-	    brightness = (1.0f - sigmoidProgress (eScreen->expoCam));
     }
 
     return gWindow->glDraw (transform, attrib, region, mask);
@@ -1344,8 +1337,8 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
     if (eScreen->expoCam > 0.0)
     {
 	a.opacity *= opacity;
-	a.brightness *= brightness;
-	a.saturation *= saturation;
+	a.brightness *= eScreen->vpBrightness;
+	a.saturation *= eScreen->vpSaturation;
     }
 
     if (eScreen->expoCam > 0.0                                 &&
@@ -1516,9 +1509,7 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
     eScreen (ExpoScreen::get (screen)),
-    opacity (1.0f),
-    brightness (1.0f),
-    saturation (1.0f)
+    opacity (1.0f)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
