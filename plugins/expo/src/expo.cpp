@@ -1340,9 +1340,13 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 			   unsigned int        mask)
 {
     GLWindowPaintAttrib a (attrib);
-    a.opacity *= opacity;
-    a.brightness *= brightness;
-    a.saturation *= saturation;
+
+    if (eScreen->expoCam > 0.0)
+    {
+	a.opacity *= opacity;
+	a.brightness *= brightness;
+	a.saturation *= saturation;
+    }
 
     if (eScreen->expoCam > 0.0                                 &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve &&
