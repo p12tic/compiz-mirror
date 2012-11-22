@@ -155,6 +155,9 @@ class ExpoWindow :
 	CompositeWindow *cWindow;
 	GLWindow        *gWindow;
 	ExpoScreen      *eScreen;
+
+    public:
+	float opacity, brightness, saturation;
 };
 
 class ExpoPluginVTable :
