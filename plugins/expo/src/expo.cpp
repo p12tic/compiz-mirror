@@ -1224,7 +1224,6 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
     if (eScreen->expoCam == 0.0f)
 	return gWindow->glDraw (transform, attrib, region, mask);
 
-    GLWindowPaintAttrib eAttrib (attrib);
     int                expoAnimation;
 
     // Scaling factors to be applied to attrib later in glDrawTexture
