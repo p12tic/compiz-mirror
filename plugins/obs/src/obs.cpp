@@ -105,6 +105,9 @@ ObsWindow::modifierChanged (unsigned int modifier)
 {
     bool hasCustom = false;
 
+    if (modifier == MODIFIER_OPACITY)
+	gWindow->glPaintSetEnabled (this, customFactor[modifier] != 100);
+
     for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
 	if (customFactor[i] != 100)
 	{
@@ -112,7 +115,7 @@ ObsWindow::modifierChanged (unsigned int modifier)
 	    break;
 	}
 
-    gWindow->glPaintSetEnabled (this, hasCustom);
+    gWindow->glDrawSetEnabled (this, hasCustom);
     cWindow->addDamage ();
 }
 
@@ -143,6 +146,20 @@ ObsWindow::glPaint (const GLWindowPaintAttrib& attrib,
 {
     mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
+    return gWindow->glPaint (attrib, transform, region, mask);
+}
+
+/* Note: Normally plugins should wrap into glPaintWindow to modify opacity,
+	 brightness and saturation. As some plugins bypass glPaintWindow when
+	 they draw windows and our custom values always need to be applied,
+	 we wrap into glDrawWindow here */
+
+bool
+ObsWindow::glDraw (const GLMatrix            &transform,
+		   const GLWindowPaintAttrib &attrib,
+		   const CompRegion          &region,
+		   unsigned int        mask)
+{
     GLWindowPaintAttrib wAttrib (attrib);
     int factor;
 
@@ -161,7 +178,7 @@ ObsWindow::glPaint (const GLWindowPaintAttrib& attrib,
     if (factor != 100)
 	wAttrib.saturation = factor * wAttrib.saturation / 100;
 
-    return gWindow->glPaint (wAttrib, transform, region, mask);
+    return gWindow->glDraw (transform, wAttrib, region, mask);
 }
 
 void
