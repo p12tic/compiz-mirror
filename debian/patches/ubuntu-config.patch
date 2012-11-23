@@ -1,8 +1,8 @@
 === modified file 'metadata/core.xml.in'
-Index: unpatch/metadata/core.xml.in
+Index: new/metadata/core.xml.in
 ===================================================================
---- unpatch.orig/metadata/core.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/metadata/core.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/metadata/core.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/metadata/core.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -139,7 +139,7 @@
  			<option name="focus_prevention_match" type="match">
  			<_short>Focus Prevention Windows</_short>
@@ -70,10 +70,10 @@ Index: unpatch/metadata/core.xml.in
  			<min>1</min>
  			<max>32</max>
  			</option>
-Index: unpatch/plugins/animation/animation.xml.in
+Index: new/plugins/animation/animation.xml.in
 ===================================================================
---- unpatch.orig/plugins/animation/animation.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/animation/animation.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/animation/animation.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/animation/animation.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -36,7 +36,7 @@
  	    <extensible/>
  	    <sort start="2"/>
@@ -212,10 +212,10 @@ Index: unpatch/plugins/animation/animation.xml.in
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
-Index: unpatch/plugins/decor/decor.xml.in
+Index: new/plugins/decor/decor.xml.in
 ===================================================================
---- unpatch.orig/plugins/decor/decor.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/decor/decor.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/decor/decor.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/decor/decor.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -31,7 +31,7 @@
  		<option name="active_shadow_opacity" type="float">
  		    <_short>Shadow Opacity</_short>
@@ -252,10 +252,10 @@ Index: unpatch/plugins/decor/decor.xml.in
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
-Index: unpatch/plugins/expo/expo.xml.in
+Index: new/plugins/expo/expo.xml.in
 ===================================================================
---- unpatch.orig/plugins/expo/expo.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/expo/expo.xml.in	2012-11-23 18:55:22.875064959 +0800
+--- old/plugins/expo/expo.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/expo/expo.xml.in	2012-11-23 18:55:22.875064959 +0800
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -367,10 +367,10 @@ Index: unpatch/plugins/expo/expo.xml.in
  			<min>0.0</min>
  			<max>2.0</max>
  			<precision>0.01</precision>
-Index: unpatch/plugins/ezoom/ezoom.xml.in
+Index: new/plugins/ezoom/ezoom.xml.in
 ===================================================================
---- unpatch.orig/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -29,7 +29,6 @@
  		<option type="button" name="zoom_in_button">
  		    <_short>Zoom In</_short>
@@ -404,10 +404,10 @@ Index: unpatch/plugins/ezoom/ezoom.xml.in
  		    </option>
  		</subgroup>
  	    </group>
-Index: unpatch/plugins/fade/fade.xml.in
+Index: new/plugins/fade/fade.xml.in
 ===================================================================
---- unpatch.orig/plugins/fade/fade.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/fade/fade.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/fade/fade.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/fade/fade.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -10,6 +10,7 @@
  	    </requirement>
  	    <relation type="after">
@@ -425,10 +425,10 @@ Index: unpatch/plugins/fade/fade.xml.in
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
-Index: unpatch/plugins/gnomecompat/gnomecompat.xml.in
+Index: new/plugins/gnomecompat/gnomecompat.xml.in
 ===================================================================
---- unpatch.orig/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -53,6 +53,7 @@
  		<option name="run_command_terminal_key" type="key">
  		    <_short>Open a terminal</_short>
@@ -437,10 +437,10 @@ Index: unpatch/plugins/gnomecompat/gnomecompat.xml.in
  		</option>
  	    </group>
  	</options>
-Index: unpatch/plugins/grid/grid.xml.in
+Index: new/plugins/grid/grid.xml.in
 ===================================================================
---- unpatch.orig/plugins/grid/grid.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/grid/grid.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/grid/grid.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/grid/grid.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -23,17 +23,16 @@
  		<option name="put_center_key" type="key">
  		    <_short>Put Center</_short>
@@ -469,10 +469,10 @@ Index: unpatch/plugins/grid/grid.xml.in
  		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
-Index: unpatch/plugins/place/place.xml.in
+Index: new/plugins/place/place.xml.in
 ===================================================================
---- unpatch.orig/plugins/place/place.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/place/place.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/place/place.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/place/place.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -20,8 +20,8 @@
  	    <option name="mode" type="int">
  		<_short>Placement Mode</_short>
@@ -484,10 +484,10 @@ Index: unpatch/plugins/place/place.xml.in
  		<max>5</max>
  		<desc>
  		    <value>0</value>
-Index: unpatch/plugins/resize/resize.xml.in
+Index: new/plugins/resize/resize.xml.in
 ===================================================================
---- unpatch.orig/plugins/resize/resize.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/resize/resize.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/resize/resize.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/resize/resize.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -28,7 +28,7 @@
  	    <option name="mode" type="int">
  		<_short>Default Resize Mode</_short>
@@ -532,10 +532,10 @@ Index: unpatch/plugins/resize/resize.xml.in
  		</default>
  	    </option>
  	    <subgroup>
-Index: unpatch/plugins/scale/scale.xml.in
+Index: new/plugins/scale/scale.xml.in
 ===================================================================
---- unpatch.orig/plugins/scale/scale.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/scale/scale.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/scale/scale.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/scale/scale.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -19,14 +19,14 @@
  			<option name="spacing" type="int">
  				<_short>Spacing</_short>
@@ -624,10 +624,10 @@ Index: unpatch/plugins/scale/scale.xml.in
  			</option>
  	    </group>
  	</options>
-Index: unpatch/plugins/staticswitcher/staticswitcher.xml.in
+Index: new/plugins/staticswitcher/staticswitcher.xml.in
 ===================================================================
---- unpatch.orig/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -11,7 +11,6 @@
  	    <relation type="after">
  		<plugin>composite</plugin>
@@ -704,10 +704,10 @@ Index: unpatch/plugins/staticswitcher/staticswitcher.xml.in
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
-Index: unpatch/plugins/vpswitch/vpswitch.xml.in
+Index: new/plugins/vpswitch/vpswitch.xml.in
 ===================================================================
---- unpatch.orig/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- old/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:59.307064517 +0800
 @@ -95,13 +95,11 @@
  				<option name="next_button" type="button">
  					<_short>Move Next</_short>
@@ -722,10 +722,10 @@ Index: unpatch/plugins/vpswitch/vpswitch.xml.in
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
-Index: unpatch/plugins/wall/wall.xml.in
+Index: new/plugins/wall/wall.xml.in
 ===================================================================
---- unpatch.orig/plugins/wall/wall.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ unpatch/plugins/wall/wall.xml.in	2012-11-23 18:54:59.311064517 +0800
+--- old/plugins/wall/wall.xml.in	2012-11-23 18:54:15.673949000 +0800
++++ new/plugins/wall/wall.xml.in	2012-11-23 18:54:59.311064517 +0800
 @@ -31,12 +31,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
