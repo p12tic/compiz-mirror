@@ -1,7 +1,7 @@
-Index: ubuntu/plugins/expo/expo.xml.in
+Index: expo/plugins/expo/expo.xml.in
 ===================================================================
---- ubuntu.orig/plugins/expo/expo.xml.in	2012-11-09 14:08:43.708467616 +0800
-+++ ubuntu/plugins/expo/expo.xml.in	2012-11-09 14:09:37.532468627 +0800
+--- expo.orig/plugins/expo/expo.xml.in	2012-11-23 14:00:07.474732378 +0800
++++ expo/plugins/expo/expo.xml.in	2012-11-23 14:00:07.530732379 +0800
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -121,10 +121,10 @@ Index: ubuntu/plugins/expo/expo.xml.in
  			<min>0.0</min>
  			<max>2.0</max>
  			<precision>0.01</precision>
-Index: ubuntu/plugins/expo/src/expo.cpp
+Index: expo/plugins/expo/src/expo.cpp
 ===================================================================
---- ubuntu.orig/plugins/expo/src/expo.cpp	2012-11-09 14:08:43.708467616 +0800
-+++ ubuntu/plugins/expo/src/expo.cpp	2012-11-09 14:09:37.532468627 +0800
+--- expo.orig/plugins/expo/src/expo.cpp	2012-11-23 13:57:31.221930000 +0800
++++ expo/plugins/expo/src/expo.cpp	2012-11-23 14:09:05.826742484 +0800
 @@ -27,6 +27,8 @@
  
  #include "expo.h"
@@ -696,18 +696,18 @@ Index: ubuntu/plugins/expo/src/expo.cpp
 -
 -	    vpp = (expoCam * vpActivity[vp]) + (1 - expoCam);
 -	    vpp = sigmoidProgress (vpp);
--
--	    vpBrightness = vpp + ((1.0 - vpp) *
--				  optionGetVpBrightness () / 100.0);
--	    vpSaturation = vpp + ((1.0 - vpp) *
--				  optionGetVpSaturation () / 100.0);
 +    for (int j = 0; j < screen->vpSize ().height (); j++)
 +	for (int i = 0; i < screen->vpSize().width (); i++)
 +	    paintViewport (attrib, sTransform, region, output, mask, CompPoint (i, j), vpCamPos, reflection);
  
--	    paintingVp.set (i, j);
+-	    vpBrightness = vpp + ((1.0 - vpp) *
+-				  optionGetVpBrightness () / 100.0);
+-	    vpSaturation = vpp + ((1.0 - vpp) *
+-				  optionGetVpSaturation () / 100.0);
 +    paintingDndWindow = true;
  
+-	    paintingVp.set (i, j);
+-
 -	    if (optionGetDeform () == DeformCurve)
 -	    {
 -		float rotateX;
@@ -793,7 +793,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  bool
  ExpoScreen::glPaintOutput (const GLScreenPaintAttrib& attrib,
  			   const GLMatrix&            transform,
-@@ -1217,10 +1408,15 @@
+@@ -1222,10 +1413,15 @@
  
  bool
  ExpoWindow::glDraw (const GLMatrix&     transform,
@@ -810,26 +810,12 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      if (eScreen->expoCam == 0.0f)
  	return gWindow->glDraw (transform, attrib, region, mask);
  
-@@ -1249,8 +1445,11 @@
- 	    }
+@@ -1256,7 +1452,80 @@
  	}
- 
--	eAttrib.brightness = attrib.brightness * eScreen->vpBrightness;
--	eAttrib.saturation = attrib.saturation * eScreen->vpSaturation;
-+	if ((vp == eScreen->paintingVp || window->onAllViewports ()) && !eScreen->paintingDndWindow)
-+	{
-+	    eAttrib.brightness = attrib.brightness * eScreen->vpBrightness;
-+	    eAttrib.saturation = attrib.saturation * eScreen->vpSaturation;
-+	}
-     }
-     else
-     {
-@@ -1261,7 +1460,79 @@
- 	                              (1 - sigmoidProgress (eScreen->expoCam));
      }
  
--    return gWindow->glDraw (transform, eAttrib, region, mask);
-+    bool status = gWindow->glDraw (transform, eAttrib, region, mask);
+-    return gWindow->glDraw (transform, attrib, region, mask);
++    bool status = gWindow->glDraw (transform, attrib, region, mask);
 +
 +    if (window->type () & CompWindowTypeDesktopMask)
 +    {
@@ -867,6 +853,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
 +	    if (gWindow->vertexBuffer ()->end ())
 +	    {
 +		unsigned int glDrawTextureIndex = gWindow->glDrawTextureGetCurrentIndex ();
++		GLWindowPaintAttrib eAttrib (attrib);
 +		eAttrib.opacity = attrib.opacity * (((1.0 - eScreen->vpBrightness) + (1.0 - eScreen->vpSaturation) / 2.0));
 +		/* Texture rendering set-up */
 +		//eScreen->gScreen->setTexEnvMode(GL_MODULATE);
@@ -905,7 +892,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  static const unsigned short EXPO_GRID_SIZE = 100;
-@@ -1399,11 +1670,17 @@
+@@ -1403,11 +1672,17 @@
  		     const CompRegion&          region,
  		     unsigned int               mask)
  {
@@ -923,7 +910,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
  	zoomAnim = eScreen->optionGetExpoAnimation () ==
  	           ExpoScreen::ExpoAnimationZoom;
-@@ -1432,9 +1709,47 @@
+@@ -1431,9 +1706,47 @@
  
  	if (opacity <= 0)
  	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
@@ -972,7 +959,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  bool
-@@ -1463,7 +1778,7 @@
+@@ -1462,7 +1775,7 @@
      expoActive (false),
      expoMode (false),
      dndState (DnDNone),
@@ -981,7 +968,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
      origVp (s->vp ()),
      selectedVp (s->vp ()),
      lastSelectedVp (s->vp ()),
-@@ -1471,14 +1786,21 @@
+@@ -1470,14 +1783,21 @@
      clickTime (0),
      doubleClick (false),
      vpNormals (360 * 3),
@@ -1006,7 +993,7 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  
      EXPOINITBIND (ExpoKey, doExpo);
      EXPOTERMBIND (ExpoKey, termExpo);
-@@ -1496,12 +1818,58 @@
+@@ -1495,12 +1815,58 @@
      ScreenInterface::setHandler (screen, false);
      CompositeScreenInterface::setHandler (cScreen, false);
      GLScreenInterface::setHandler (gScreen, false);
@@ -1067,14 +1054,13 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  ExpoWindow::ExpoWindow (CompWindow *w) :
-@@ -1509,10 +1877,28 @@
-     window (w),
+@@ -1509,10 +1875,28 @@
      cWindow (CompositeWindow::get (w)),
      gWindow (GLWindow::get (w)),
--    eScreen (ExpoScreen::get (screen))
-+    eScreen (ExpoScreen::get (screen)),
+     eScreen (ExpoScreen::get (screen)),
 +    dndOpacity (0.0f),
-+    mGlowQuads (NULL)
++    mGlowQuads (NULL),
+     expoOpacity (1.0f)
  {
      CompositeWindowInterface::setHandler (cWindow, false);
      GLWindowInterface::setHandler (gWindow, false);
@@ -1097,10 +1083,10 @@ Index: ubuntu/plugins/expo/src/expo.cpp
  }
  
  bool
-Index: ubuntu/plugins/expo/src/expo.h
+Index: expo/plugins/expo/src/expo.h
 ===================================================================
---- ubuntu.orig/plugins/expo/src/expo.h	2012-11-09 14:08:43.708467616 +0800
-+++ ubuntu/plugins/expo/src/expo.h	2012-11-09 14:09:37.536468627 +0800
+--- expo.orig/plugins/expo/src/expo.h	2012-11-23 13:57:31.221930000 +0800
++++ expo/plugins/expo/src/expo.h	2012-11-23 14:01:32.970733977 +0800
 @@ -30,6 +30,44 @@
  #include <opengl/opengl.h>
  
@@ -1250,10 +1236,11 @@ Index: ubuntu/plugins/expo/src/expo.h
  	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
  		     const CompRegion&, unsigned int);
  	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
-@@ -150,11 +225,31 @@
+@@ -150,13 +225,32 @@
  			    unsigned int, unsigned int);
  	void glDrawTexture (GLTexture*, const GLMatrix&,
  	                    const GLWindowPaintAttrib&, unsigned int);
+-
 +	void
 +	paintGlow (const GLMatrix            &transform,
 +	           const GLWindowPaintAttrib &attrib,
@@ -1262,30 +1249,31 @@ Index: ubuntu/plugins/expo/src/expo.h
 +
 +	void
 +	computeGlowQuads (GLTexture::Matrix *matrix);
- 
++ 
  	CompWindow      *window;
  	CompositeWindow *cWindow;
  	GLWindow        *gWindow;
  	ExpoScreen      *eScreen;
-+
+ 
 +	float           dndOpacity;
 +
 +	GlowQuad *mGlowQuads;
 +
-+    private:
+     private:
 +
 +	bool isDesktopOrDock () const;
 +	bool dragged () const;
 +	const compiz::window::Geometry & absoluteGeometry () const;
 +
 +	mutable compiz::window::Geometry mAbsoluteGeometry;
++
+ 	float expoOpacity;
  };
  
- class ExpoPluginVTable :
-Index: ubuntu/plugins/expo/src/glow.cpp
+Index: expo/plugins/expo/src/glow.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/glow.cpp	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/glow.cpp	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,429 @@
 +/**
 + *
@@ -1716,10 +1704,10 @@ Index: ubuntu/plugins/expo/src/glow.cpp
 +
 +    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 +}
-Index: ubuntu/plugins/expo/src/glow.h
+Index: expo/plugins/expo/src/glow.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/glow.h	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/glow.h	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,66 @@
 +/**
 + *
@@ -1787,10 +1775,10 @@ Index: ubuntu/plugins/expo/src/glow.h
 +extern const GlowTextureProperties glowTextureProperties;
 +
 +#endif
-Index: ubuntu/plugins/expo/src/group_glow.h
+Index: expo/plugins/expo/src/group_glow.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/group_glow.h	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/group_glow.h	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,197 @@
 +#ifndef _GROUP_GLOWTEX_H
 +#define _GROUP_GLOWTEX_H
@@ -1989,10 +1977,10 @@ Index: ubuntu/plugins/expo/src/group_glow.h
 +};
 +
 +#endif
-Index: ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt
+Index: expo/plugins/expo/src/wall_offset/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/wall_offset/CMakeLists.txt	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,33 @@
 +include_directories (
 +  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2027,10 +2015,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/CMakeLists.txt
 +  compiz_expo_wall_offset
 +  compiz_core
 +)
-Index: ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h
+Index: expo/plugins/expo/src/wall_offset/include/wall-offset.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/wall_offset/include/wall-offset.h	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,43 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2075,10 +2063,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/include/wall-offset.h
 +}
 +
 +#endif
-Index: ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp
+Index: expo/plugins/expo/src/wall_offset/src/wall-offset.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/wall_offset/src/wall-offset.cpp	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,55 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2135,10 +2123,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/src/wall-offset.cpp
 +	}
 +    }
 +}
-Index: ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt
+Index: expo/plugins/expo/src/wall_offset/tests/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/wall_offset/tests/CMakeLists.txt	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,19 @@
 +if (NOT GTEST_FOUND)
 +  message ("Google Test not found - cannot build tests!")
@@ -2159,10 +2147,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/tests/CMakeLists.txt
 +                       )
 +
 +compiz_discover_tests (compiz_test_expo_wall_offset COVERAGE compiz_expo_wall_offset)
-Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
+Index: expo/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,263 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2427,10 +2415,10 @@ Index: ubuntu/plugins/expo/src/wall_offset/tests/test-expo-wall-offset.cpp
 +			 Combine (ValuesIn (testingOffsetParameters),
 +				  Range (nAnimationsBegin,
 +					 nAnimationSteps)));
-Index: ubuntu/plugins/expo/CMakeLists.txt
+Index: expo/plugins/expo/CMakeLists.txt
 ===================================================================
---- ubuntu.orig/plugins/expo/CMakeLists.txt	2012-11-09 14:08:43.708467616 +0800
-+++ ubuntu/plugins/expo/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
+--- expo.orig/plugins/expo/CMakeLists.txt	2012-11-23 13:57:31.221930000 +0800
++++ expo/plugins/expo/CMakeLists.txt	2012-11-23 14:00:07.534732379 +0800
 @@ -1,7 +1,16 @@
  find_package (Compiz REQUIRED)
  include (CompizPlugin)
@@ -2449,10 +2437,10 @@ Index: ubuntu/plugins/expo/CMakeLists.txt
 +	       compiz_expo_click_threshold
 +	       compiz_expo_wall_offset
 +	       compiz_expo_windows_on_viewport)
-Index: ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt
+Index: expo/plugins/expo/src/windows_on_viewport/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/windows_on_viewport/CMakeLists.txt	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,36 @@
 +include_directories (
 +  ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2490,10 +2478,10 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/CMakeLists.txt
 +  compiz_window_geometry
 +  compiz_core
 +)
-Index: ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
+Index: expo/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,43 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2538,10 +2526,10 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/include/windows-on-viewport.h
 +}
 +
 +#endif
-Index: ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
+Index: expo/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,80 @@
 +/**
 + * Copyright © 2012 Canonical Ltd.
@@ -2623,10 +2611,10 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/src/windows-on-viewport.cpp
 +	}
 +    }
 +}
-Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
+Index: expo/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,22 @@
 +if (NOT GTEST_FOUND)
 +  message ("Google Test not found - cannot build tests!")
@@ -2650,10 +2638,10 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/CMakeLists.txt
 +                       )
 +
 +compiz_discover_tests (compiz_test_expo_windows_on_viewport COVERAGE compiz_expo_windows_on_viewport)
-Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp
+Index: expo/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewport.cpp	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,149 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2804,10 +2792,10 @@ Index: ubuntu/plugins/expo/src/windows_on_viewport/tests/test-windows-on-viewpor
 +    EXPECT_EQ (activeStates[2], false);
 +    EXPECT_EQ (activeStates[3], true); // 2,2 has a window on it
 +}
-Index: ubuntu/plugins/expo/src/client-list-generator.h
+Index: expo/plugins/expo/src/client-list-generator.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/client-list-generator.h	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/client-list-generator.h	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,45 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
@@ -2854,10 +2842,10 @@ Index: ubuntu/plugins/expo/src/client-list-generator.h
 +#endif
 +
 +
-Index: ubuntu/plugins/expo/src/viewport-member-window.h
+Index: expo/plugins/expo/src/viewport-member-window.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ubuntu/plugins/expo/src/viewport-member-window.h	2012-11-09 14:09:37.536468627 +0800
++++ expo/plugins/expo/src/viewport-member-window.h	2012-11-23 14:00:07.534732379 +0800
 @@ -0,0 +1,46 @@
 +/*
 + * Copyright © 2012 Canonical Ltd.
