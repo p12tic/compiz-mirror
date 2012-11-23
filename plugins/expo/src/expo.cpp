@@ -1232,14 +1232,14 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
     int                expoAnimation;
 
     // Scaling factors to be applied to attrib later in glDrawTexture
-    opacity = 1.0f;
+    expoOpacity = 1.0f;
 
     expoAnimation = eScreen->optionGetExpoAnimation ();
 
     if (eScreen->expoActive)
     {
 	if (expoAnimation != ExpoScreen::ExpoAnimationZoom)
-	    opacity = eScreen->expoCam;
+	    expoOpacity = eScreen->expoCam;
 
 	if (window->wmType () & CompWindowTypeDockMask &&
 	    eScreen->optionGetHideDocks ())
@@ -1247,11 +1247,11 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 	    if (expoAnimation == ExpoScreen::ExpoAnimationZoom &&
 		eScreen->paintingVp == eScreen->selectedVp)
 	    {
-		opacity = (1.0f - sigmoidProgress (eScreen->expoCam));
+		expoOpacity = (1.0f - sigmoidProgress (eScreen->expoCam));
 	    }
 	    else
 	    {
-		opacity = 0.0f;
+		expoOpacity = 0.0f;
 	    }
 	}
     }
@@ -1332,13 +1332,13 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
                            const GLWindowPaintAttrib &attrib,
 			   unsigned int        mask)
 {
-    GLWindowPaintAttrib a (attrib);
+    GLWindowPaintAttrib wAttrib (attrib);
 
     if (eScreen->expoCam > 0.0)
     {
-	a.opacity *= opacity;
-	a.brightness *= eScreen->vpBrightness;
-	a.saturation *= eScreen->vpSaturation;
+	wAttrib.opacity *= expoOpacity;
+	wAttrib.brightness *= eScreen->vpBrightness;
+	wAttrib.saturation *= eScreen->vpSaturation;
     }
 
     if (eScreen->expoCam > 0.0                                 &&
@@ -1384,7 +1384,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 #ifndef USE_GLES
 	glEnable (GL_NORMALIZE);
 #endif
-	gWindow->glDrawTexture (texture, transform, a, mask);
+	gWindow->glDrawTexture (texture, transform, wAttrib, mask);
 #ifndef USE_GLES
 	glDisable (GL_NORMALIZE);
 #endif
@@ -1392,7 +1392,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
     else
     {
 //	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (texture, transform, a, mask);
+	gWindow->glDrawTexture (texture, transform, wAttrib, mask);
 //	glDisable (GL_NORMALIZE);
     }
 }
@@ -1509,7 +1509,7 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
     eScreen (ExpoScreen::get (screen)),
-    opacity (1.0f)
+    expoOpacity (1.0f)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
