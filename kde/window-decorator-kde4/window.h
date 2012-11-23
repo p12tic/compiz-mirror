@@ -92,6 +92,8 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	virtual void showWindowMenu (const QRect &);
 	virtual void showWindowMenu (const QPoint &);
 	virtual void showWindowMenu (const QPoint &, long int id);
+	virtual void showApplicationMenu (const QPoint &);
+	virtual bool menuAvailable () const;
 	virtual void performWindowOperation (WindowOperation);
 	virtual void setMask (const QRegion &, int);
 	virtual bool isPreview (void) const;
