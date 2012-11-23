@@ -1263,20 +1263,16 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 
     bool status = gWindow->glDraw (transform, eAttrib, region, mask);
 
-    if (window->type () & CompWindowTypeDesktopMask)
+    if (window->type () & CompWindowTypeDesktopMask &&
+        eScreen->optionGetSelectedColor ()[3] &&  // colour is visible
+        mGlowQuads &&
+        eScreen->paintingVp == eScreen->selectedVp &&
+        region.numRects ())
     {
-	/* Paint the outline */
-	if (mGlowQuads && eScreen->paintingVp == eScreen->selectedVp)
-	{
-	    if (region.numRects ())
-	    {
-		/* reset geometry and paint */
-		gWindow->vertexBuffer ()->begin ();
-		gWindow->vertexBuffer ()->end ();
-
-		paintGlow (transform, attrib, infiniteRegion, mask);
-	    }
-	}
+	/* reset geometry and paint */
+	gWindow->vertexBuffer ()->begin ();
+	gWindow->vertexBuffer ()->end ();
+	paintGlow (transform, attrib, infiniteRegion, mask);
     }
 
     return status;

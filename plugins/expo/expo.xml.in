@@ -213,7 +213,7 @@
 			    <red>0xfbfb</red>
 			    <green>0x8b8b</green>
 			    <blue>0x0</blue>
-			    <alpha>0xffff</alpha>
+			    <alpha>0x0</alpha>
 			</default>
 		    </option>
 		</subgroup>
