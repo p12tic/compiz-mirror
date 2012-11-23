@@ -27,6 +27,7 @@
 
 #include "expo.h"
 #include "click-threshold.h"
+#include "wall-offset.h"
 #include <math.h>
 #ifndef USE_GLES
 #include <GL/glu.h>
@@ -884,9 +885,25 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
     sTransform.rotate (rotation, 0.0f, 1.0f, 0.0f);
     sTransform.scale (aspectX, aspectY, 1.0);
 
+    CompPoint offsetInScreenCoords (optionGetXOffset (),
+				    optionGetYOffset ());
+    float     offsetInWorldCoordX, offsetInWorldCoordY, worldScaleFactorX, worldScaleFactorY;
+
+    compiz::expo::calculateWallOffset (*output,
+				       offsetInScreenCoords,
+				       vpSize,
+				       *screen,
+				       offsetInWorldCoordX,
+				       offsetInWorldCoordY,
+				       worldScaleFactorX,
+				       worldScaleFactorY,
+				       sigmoidProgress (expoCam));
+
     /* translate expo to center */
-    sTransform.translate (vpSize.x () * sx * -0.5,
-			  vpSize.y () * sy * 0.5, 0.0f);
+    sTransform.translate (vpSize.x () * sx * -0.5 + offsetInWorldCoordX,
+			  vpSize.y () * sy * 0.5 - offsetInWorldCoordY, 0.0f);
+    sTransform.scale (worldScaleFactorX, worldScaleFactorY, 1.0f);
+
 
     if (optionGetDeform () == DeformCurve)
 	sTransform.translate ((vpSize.x () - 1) * sx * 0.5, 0.0, 0.0);

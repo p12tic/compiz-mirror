@@ -131,6 +131,16 @@
 			<_name>Curve</_name>
 		    </desc>
 		</option>
+		<option name="x_offset" type="int">
+		    <_short>X Offset</_short>
+		    <_long>X offset in pixels</_long>
+		    <default>0</default>
+                </option>
+		<option name="y_offset" type="int">
+		    <_short>Y Offset</_short>
+		    <_long>Y offset in pixels</_long>
+		    <default>0</default>
+                </option>
 		<option name="distance" type="float">
 		    <_short>Distance</_short>
 		    <_long>Distance of the expo wall</_long>
