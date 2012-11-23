@@ -206,6 +206,16 @@
 			<max>100.0</max>
 			<precision>0.1</precision>
 		    </option>
+		    <option name="selected_color" type="color">
+			<_short>Selected Color</_short>
+			<_long>Color to use when highlighting the selected viewport</_long>
+			<default>
+			    <red>0xfbfb</red>
+			    <green>0x8b8b</green>
+			    <blue>0x0</blue>
+			    <alpha>0xffff</alpha>
+			</default>
+		    </option>
 		</subgroup>
 		<subgroup>
 		    <short>Reflection</short>

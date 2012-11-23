@@ -1261,7 +1261,25 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 	                              (1 - sigmoidProgress (eScreen->expoCam));
     }
 
-    return gWindow->glDraw (transform, eAttrib, region, mask);
+    bool status = gWindow->glDraw (transform, eAttrib, region, mask);
+
+    if (window->type () & CompWindowTypeDesktopMask)
+    {
+	/* Paint the outline */
+	if (mGlowQuads && eScreen->paintingVp == eScreen->selectedVp)
+	{
+	    if (region.numRects ())
+	    {
+		/* reset geometry and paint */
+		gWindow->vertexBuffer ()->begin ();
+		gWindow->vertexBuffer ()->end ();
+
+		paintGlow (transform, attrib, infiniteRegion, mask);
+	    }
+	}
+    }
+
+    return status;
 }
 
 static const unsigned short EXPO_GRID_SIZE = 100;
@@ -1466,7 +1484,8 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     clickTime (0),
     doubleClick (false),
     vpNormals (360 * 3),
-    grabIndex (0)
+    grabIndex (0),
+    mGlowTextureProperties (&glowTextureProperties)
 {
     leftKey  = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Left"));
     rightKey = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Right"));
@@ -1491,6 +1510,11 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
+
+    outline_texture = GLTexture::imageDataToTexture (mGlowTextureProperties->textureData,
+						     CompSize (mGlowTextureProperties->textureSize,
+							       mGlowTextureProperties->textureSize),
+						     GL_RGBA, GL_UNSIGNED_BYTE);
 }
 
 ExpoScreen::~ExpoScreen ()
@@ -1504,10 +1528,25 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     window (w),
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
-    eScreen (ExpoScreen::get (screen))
+    eScreen (ExpoScreen::get (screen)),
+    mGlowQuads (NULL)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
+
+    if (window->type () & CompWindowTypeDesktopMask)
+    {
+	foreach (GLTexture *tex, eScreen->outline_texture)
+	{
+	    GLTexture::Matrix mat = tex->matrix ();
+	    computeGlowQuads (&mat);
+	}
+    }
+}
+
+ExpoWindow::~ExpoWindow ()
+{
+    computeGlowQuads (NULL);
 }
 
 bool
