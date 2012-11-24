@@ -863,40 +863,16 @@ struct SettingMutators
 				 SettingValueType *);
 };
 
-template <typename SettingValueType>
-class DefaultImplSetParam :
-   public DefaultImplSetParamInterface
+class DefaultImplSetParamBase :
+    public DefaultImplSetParamInterface
 {
     public:
 
-	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
-	typedef typename SettingMutators <SettingValueType>::GetFunction GetFunction;
-	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
-
-	DefaultImplSetParam (const ValueContainerPtr &defaultValueContainer,
-			     CCSSettingType          type,
-			     SetFunction             setFunction,
-			     GetFunction             getFunction,
-			     const CCSSettingInfoPtr &info,
-			     const ValueContainerPtr &nonDefaultValueContainer) :
-	    mDefaultValueContainer (defaultValueContainer),
-	    mNonDefaultValueContainer (nonDefaultValueContainer),
+	DefaultImplSetParamBase (const CCSSettingInfoPtr &info,
+				 CCSSettingType          type) :
 	    mInfo (info),
-	    mType        (type),
-	    mSetFunction (setFunction),
-	    mGetFunction (getFunction)
+	    mType (type)
 	{
-	}
-
-	virtual void SetUpSetting (const SetUpSettingFunc &func)
-	{
-	    /* Do delayed setup here */
-	    mValue = mDefaultValueContainer->getContainedValue (mType, mInfo);
-	    mNonDefaultValue = mNonDefaultValueContainer->getRawValue (mType, mInfo);
-
-	    MockInitializerFuncsWithDelegators mockInitializers (mInfo.get (), mValue.get ());
-
-	    func (mockInitializers);
 	}
 
 	virtual void TearDownSetting ()
@@ -905,28 +881,26 @@ class DefaultImplSetParam :
 		setToDefaultValue ();
 	}
 
-	virtual CCSSettingType GetSettingType ()
+	void InitializeDefaultsForSetting (const SetUpSettingFunc &func)
 	{
-	    return mType;
+	    MockInitializerFuncsWithDelegators mockInitializers (mInfo.get (), mValue.get ());
+
+	    func (mockInitializers);
 	}
 
-	virtual void SetUpParam (const CCSSettingPtr &setting)
+	void TakeReferenceToCreatedSetting (const CCSSettingPtr &setting)
 	{
-	    ASSERT_TRUE ((*mGetFunction) (setting.get (), &mDefaultValue));
-
-	    mSetting      = setting;
+	    mSetting = setting;
 	}
 
-	virtual CCSSetStatus setWithInvalidType ()
+	const CCSSettingInterface * RedirectSettingInterface ()
 	{
-	    /* Temporarily redirect the setting interface to
-	     * our own with an overloaded settingGetType function */
 	    const CCSSettingInterface *settingInterface =
 		GET_INTERFACE (CCSSettingInterface, mSetting.get ());
 	    CCSSettingInterface tmpSettingInterface = *settingInterface;
 
 	    tmpSettingInterface.settingGetType =
-		DefaultImplSetParam <SettingValueType>::returnIncorrectSettingType;
+		DefaultImplSetParamBase::returnIncorrectSettingType;
 
 	    ccsObjectRemoveInterface (mSetting.get (),
 				      GET_INTERFACE_TYPE (CCSSettingInterface));
@@ -934,22 +908,137 @@ class DefaultImplSetParam :
 				   (const CCSInterface *) &tmpSettingInterface,
 				   GET_INTERFACE_TYPE (CCSSettingInterface));
 
-	    CCSSetStatus ret =
-		(*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+	    return settingInterface;
+	}
 
+	void RestoreSettingInterface (const CCSSettingInterface *settingInterface)
+	{
 	    /* Restore the old interface */
 	    ccsObjectRemoveInterface (mSetting.get (),
 				      GET_INTERFACE_TYPE (CCSSettingInterface));
 	    ccsObjectAddInterface (mSetting.get (),
 				   (const CCSInterface *) settingInterface,
 				   GET_INTERFACE_TYPE (CCSSettingInterface));
-
-	    return ret;
 	}
 
 	virtual CCSSetStatus setToFailValue ()
 	{
 	    return SetFailed;
+	}
+
+	virtual CCSSettingType GetSettingType ()
+	{
+	    return mType;
+	}
+
+    protected:
+
+	CCSSettingInfoPtr  mInfo;
+	CCSSettingValuePtr mValue;
+	CCSSettingType     mType;
+	CCSSettingPtr      mSetting;
+
+    private:
+
+	static const CCSSettingType incorrectSettingType = TypeNum;
+	static CCSSettingType returnIncorrectSettingType (CCSSetting *setting)
+	{
+	    return incorrectSettingType;
+	}
+};
+
+class RequireSettingInterfaceRedirection
+{
+    public:
+
+	RequireSettingInterfaceRedirection (DefaultImplSetParamBase *base) :
+	    mBase (base),
+	    mSettingInterface (mBase->RedirectSettingInterface ())
+	{
+	}
+
+	~RequireSettingInterfaceRedirection ()
+	{
+	    mBase->RestoreSettingInterface (mSettingInterface);
+	}
+
+    private:
+
+	DefaultImplSetParamBase   *mBase;
+	const CCSSettingInterface *mSettingInterface;
+};
+
+template <typename SettingValueType>
+class DefaultImplSetParamTemplatedBase
+{
+    protected:
+
+	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
+
+	DefaultImplSetParamTemplatedBase (const ValueContainerPtr &defaultValueContainer,
+					  const ValueContainerPtr &nonDefaultValueContainer) :
+	    mDefaultValueContainer (defaultValueContainer),
+	    mNonDefaultValueContainer (nonDefaultValueContainer)
+	{
+	}
+
+	ValueContainerPtr  mDefaultValueContainer;
+	ValueContainerPtr  mNonDefaultValueContainer;
+};
+
+template <typename SettingValueType>
+class DefaultImplSetParam :
+    /* Do not change the order of inheritance here, DefaultImplSetParamTemplatedBase
+     * must be destroyed after DefaultImplSetParamBase as DefaultImplSetParamBase
+     * has indirect weak references to variables in DefaultImplSetParamTemplatedBase
+     */
+   private DefaultImplSetParamTemplatedBase <SettingValueType>,
+   public  DefaultImplSetParamBase
+{
+    public:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+	typedef typename SettingMutators <SettingValueType>::GetFunction GetFunction;
+	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
+	typedef DefaultImplSetParamTemplatedBase <SettingValueType> TemplateParent;
+
+	DefaultImplSetParam (const ValueContainerPtr &defaultValueContainer,
+			     CCSSettingType          type,
+			     SetFunction             setFunction,
+			     GetFunction             getFunction,
+			     const CCSSettingInfoPtr &info,
+			     const ValueContainerPtr &nonDefaultValueContainer) :
+	    DefaultImplSetParamTemplatedBase <SettingValueType> (defaultValueContainer,
+								 nonDefaultValueContainer),
+	    DefaultImplSetParamBase (info, type),
+	    mSetFunction (setFunction),
+	    mGetFunction (getFunction)
+	{
+	}
+
+	virtual void SetUpSetting (const SetUpSettingFunc &func)
+	{
+	    /* Do delayed setup here */
+	    mValue = TemplateParent::mDefaultValueContainer->getContainedValue (mType, mInfo);
+	    mNonDefaultValue = TemplateParent::mNonDefaultValueContainer->getRawValue (mType, mInfo);
+
+	    InitializeDefaultsForSetting (func);
+	}
+
+	virtual void SetUpParam (const CCSSettingPtr &setting)
+	{
+	    ASSERT_TRUE ((*mGetFunction) (setting.get (), &mDefaultValue));
+
+	    TakeReferenceToCreatedSetting (setting);
+	}
+
+	virtual CCSSetStatus setWithInvalidType ()
+	{
+	    /* Temporarily redirect the setting interface to
+	     * our own with an overloaded settingGetType function */
+	    RequireSettingInterfaceRedirection redirection (this);
+
+	    return (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
 	}
 
 	virtual CCSSetStatus setToNonDefaultValue ()
@@ -964,27 +1053,13 @@ class DefaultImplSetParam :
 
     private:
 
-	ValueContainerPtr  mDefaultValueContainer;
-	ValueContainerPtr  mNonDefaultValueContainer;
 	SettingValueType   mDefaultValue;
 	SettingValueType   mNonDefaultValue;
 
     protected:
 
-	CCSSettingInfoPtr  mInfo;
-	CCSSettingValuePtr mValue;
-	CCSSettingType     mType;
 	SetFunction        mSetFunction;
 	GetFunction        mGetFunction;
-	CCSSettingPtr      mSetting;
-
-    private:
-
-	static const CCSSettingType incorrectSettingType = TypeNum;
-	static CCSSettingType returnIncorrectSettingType (CCSSetting *setting)
-	{
-	    return incorrectSettingType;
-	}
 
 };
 
