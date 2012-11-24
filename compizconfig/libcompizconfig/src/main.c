@@ -800,6 +800,30 @@ ccsFreePluginDefault (CCSPlugin * p)
     free (p);
 }
 
+void
+ccsCleanupSettingInfo (CCSSettingInfo *info,
+		       CCSSettingType type)
+{
+    switch (type)
+    {
+    case TypeInt:
+	ccsIntDescListFree (info->forInt.desc, TRUE);
+	break;
+    case TypeString:
+	ccsStrRestrictionListFree (info->forString.restriction, TRUE);
+	break;
+    case TypeList:
+	if (info->forList.listType == TypeInt)
+	    ccsIntDescListFree (info->forList.listInfo->
+				forInt.desc, TRUE);
+	free (info->forList.listInfo);
+	//ccsSettingValueListFree (sPrivate->value->value.asList, TRUE);
+	break;
+    default:
+	break;
+    }
+}
+
 static void
 ccsFreeSettingDefault (CCSSetting *s)
 {
@@ -812,29 +836,12 @@ ccsFreeSettingDefault (CCSSetting *s)
     free (sPrivate->subGroup);
     free (sPrivate->hints);
 
-    switch (sPrivate->type)
-    {
-    case TypeInt:
-	ccsIntDescListFree (sPrivate->info.forInt.desc, TRUE);
-	break;
-    case TypeString:
-	ccsStrRestrictionListFree (sPrivate->info.forString.restriction, TRUE);
-	break;
-    case TypeList:
-	if (sPrivate->info.forList.listType == TypeInt)
-	    ccsIntDescListFree (sPrivate->info.forList.listInfo->
-				forInt.desc, TRUE);
-	free (sPrivate->info.forList.listInfo);
-	//ccsSettingValueListFree (sPrivate->value->value.asList, TRUE);
-	break;
-    default:
-	break;
-    }
-
     if (&sPrivate->defaultValue != sPrivate->value)
     {
 	ccsFreeSettingValue (sPrivate->value);
     }
+
+    ccsCleanupSettingInfo (&sPrivate->info, sPrivate->type);
 
     ccsFreeSettingValue (&sPrivate->defaultValue);
 
@@ -1819,10 +1826,10 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
     return TRUE;
 }
 
-static void
-copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
+void
+ccsCopyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 {	
-    memcpy (from, to, sizeof (CCSSettingInfo));
+    memcpy (to, from, sizeof (CCSSettingInfo));
 
     switch (type)
     {
@@ -1896,7 +1903,7 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 	    {
 		to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
 
-		copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+		ccsCopyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
 	    }
 
 	    break;
@@ -1997,7 +2004,7 @@ copySetting (CCSSetting *from, CCSSetting *to)
     }
 
     copyValue (&fromPrivate->defaultValue, &toPrivate->defaultValue);
-    copyInfo (&fromPrivate->info, &toPrivate->info, fromPrivate->type);
+    ccsCopyInfo (&fromPrivate->info, &toPrivate->info, fromPrivate->type);
 
     toPrivate->defaultValue.parent = to;
     toPrivate->privatePtr = NULL;
@@ -2468,6 +2475,63 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
     return TRUE;
 }
 
+Bool
+ccsCopyValueInto (CCSSettingValue *from,
+		  CCSSettingValue *to,
+		  CCSSettingType  type,
+		  CCSSettingInfo  *info)
+{
+    to->parent = from->parent;
+    to->isListChild = from->isListChild;
+
+    CCSSettingType vType = to->isListChild ? info->forList.listType : type;
+
+    switch (vType)
+    {
+	case TypeInt:
+	    to->value.asInt = from->value.asInt;
+	    break;
+	case TypeBool:
+	    to->value.asBool = from->value.asBool;
+	    break;
+	case TypeFloat:
+	    to->value.asFloat = from->value.asFloat;
+	    break;
+	case TypeString:
+	    to->value.asString = strdup (from->value.asString);
+	    break;
+	case TypeMatch:
+	    to->value.asMatch = strdup (from->value.asMatch);
+	    break;
+	case TypeKey:
+	    memcpy (&to->value.asKey, &from->value.asKey,
+		    sizeof (CCSSettingKeyValue));
+	    break;
+	case TypeButton:
+	    memcpy (&to->value.asButton, &from->value.asButton,
+		    sizeof (CCSSettingButtonValue));
+	    break;
+	case TypeEdge:
+	    to->value.asEdge = from->value.asEdge;
+	    break;
+	case TypeBell:
+	    to->value.asBell = from->value.asBell;
+	    break;
+	case TypeColor:
+	    memcpy (&to->value.asColor, &from->value.asColor,
+		    sizeof (CCSSettingColorValue));
+	    break;
+	case TypeList:
+	    assert (from->parent);
+	    to->value.asList = ccsCopyList (from->value.asList, from->parent);
+	default:
+	    return FALSE;
+	    break;
+    }
+
+    return TRUE;
+}
+
 CCSSettingValue *
 ccsCopyValue (CCSSettingValue *orig,
 	      CCSSettingType  type,
@@ -2479,50 +2543,10 @@ ccsCopyValue (CCSSettingValue *orig,
 	return NULL;
 
     value->refCount = 1;
-    value->parent = orig->parent;
-    value->isListChild = orig->isListChild;
-
-    CCSSettingType vType = value->isListChild ? info->forList.listType : type;
-
-    switch (vType)
+    if (!ccsCopyValueInto (orig, value, type, info))
     {
-	case TypeInt:
-	    value->value.asInt = orig->value.asInt;
-	    break;
-	case TypeBool:
-	    value->value.asBool = orig->value.asBool;
-	    break;
-	case TypeFloat:
-	    value->value.asFloat = orig->value.asFloat;
-	    break;
-	case TypeString:
-	    value->value.asString = strdup (orig->value.asString);
-	    break;
-	case TypeMatch:
-	    value->value.asMatch = strdup (orig->value.asMatch);
-	    break;
-	case TypeKey:
-	    memcpy (&value->value.asKey, &orig->value.asKey,
-		    sizeof (CCSSettingKeyValue));
-	    break;
-	case TypeButton:
-	    memcpy (&value->value.asButton, &orig->value.asButton,
-		    sizeof (CCSSettingButtonValue));
-	    break;
-	case TypeEdge:
-	    value->value.asEdge = orig->value.asEdge;
-	    break;
-	case TypeBell:
-	    value->value.asBell = orig->value.asBell;
-	    break;
-	case TypeColor:
-	    memcpy (&value->value.asColor, &orig->value.asColor,
-		    sizeof (CCSSettingColorValue));
-	    break;
-	default:
-	    free (value);
-	    return NULL;
-	    break;
+	free (value);
+	return NULL;
     }
 
     return value;
