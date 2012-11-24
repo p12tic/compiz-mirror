@@ -482,11 +482,11 @@ Bool ccsGetFloat (CCSSetting *setting,
 Bool ccsGetBool (CCSSetting *setting,
 		 Bool       *data);
 Bool ccsGetString (CCSSetting *setting,
-		   char       **data);
+		   const char **data);
 Bool ccsGetColor (CCSSetting           *setting,
 		  CCSSettingColorValue *data);
 Bool ccsGetMatch (CCSSetting *setting,
-		  char       **data);
+		  const char **data);
 Bool ccsGetKey (CCSSetting         *setting,
 		CCSSettingKeyValue *data);
 Bool ccsGetButton (CCSSetting            *setting,
@@ -580,9 +580,9 @@ typedef Bool (*CCSSettingSetValue) (CCSSetting *setting, CCSSettingValue *data, 
 typedef Bool (*CCSSettingGetInt) (CCSSetting *setting, int *data);
 typedef Bool (*CCSSettingGetFloat) (CCSSetting *setting, float *data);
 typedef Bool (*CCSSettingGetBool) (CCSSetting *setting, Bool *data);
-typedef Bool (*CCSSettingGetString) (CCSSetting *setting, char **data);
+typedef Bool (*CCSSettingGetString) (CCSSetting *setting, const char **data);
 typedef Bool (*CCSSettingGetColor) (CCSSetting *setting, CCSSettingColorValue *data);
-typedef Bool (*CCSSettingGetMatch) (CCSSetting *setting, char **data);
+typedef Bool (*CCSSettingGetMatch) (CCSSetting *setting, const char **data);
 typedef Bool (*CCSSettingGetKey) (CCSSetting *setting, CCSSettingKeyValue *data);
 typedef Bool (*CCSSettingGetButton) (CCSSetting *setting, CCSSettingButtonValue *data);
 typedef Bool (*CCSSettingGetEdge) (CCSSetting *setting, unsigned int *data);

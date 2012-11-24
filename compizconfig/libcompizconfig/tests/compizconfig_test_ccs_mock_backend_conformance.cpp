@@ -723,7 +723,7 @@ class MockCCSBackendConceptTestEnvironment :
 	    Bool vBool;
 	    int  vInt;
 	    float vFloat;
-	    char *vString;
+	    const char *vString;
 	    CCSSettingColorValue vColor;
 	    CCSSettingKeyValue vKey;
 	    CCSSettingButtonValue vButton;

@@ -239,7 +239,7 @@ writeOption (CCSBackend *backend,
     {
     case TypeString:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetString (setting, &value))
 	    {
 		success = writeStringToVariant (value, &gsettingsValue);
@@ -248,7 +248,7 @@ writeOption (CCSBackend *backend,
 	break;
     case TypeMatch:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetMatch (setting, &value))
 	    {
 
