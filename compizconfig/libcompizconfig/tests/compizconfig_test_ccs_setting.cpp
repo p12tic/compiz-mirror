@@ -657,8 +657,17 @@ class ValueContainer
 			   const CCSSettingInfoPtr &info) = 0;
 };
 
+class NormalValueContainerBase
+{
+    protected:
+
+	ContainedValueGenerator  mContainedValueGenerator;
+	CCSSettingValuePtr       mContainedValue;
+};
+
 template <typename SettingValueType>
 class NormalValueContainer :
+    public NormalValueContainerBase,
     public ValueContainer <SettingValueType>
 {
     public:
@@ -689,9 +698,7 @@ class NormalValueContainer :
 
     private:
 
-	ContainedValueGenerator  mContainedValueGenerator;
 	const SettingValueType   &mRawValue;
-	CCSSettingValuePtr       mContainedValue;
 };
 
 template <typename SettingValueType>
