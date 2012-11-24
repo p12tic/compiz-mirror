@@ -549,12 +549,9 @@ RawValueToCCSValue (const SettingValueType &value)
     return settingValue;
 }
 
-template <typename SettingValueType>
 CCSSettingValuePtr
-RawValueToListValue (const SettingValueType &value)
+ListValueToSettingValueList (CCSSettingValue *listChild)
 {
-    CCSSettingValue     *listChild = RawValueToCCSValue (value);
-
     listChild->isListChild = TRUE;
 
     CCSSettingValueList valueListHead = ccsSettingValueListAppend (NULL, listChild);
@@ -566,8 +563,29 @@ RawValueToListValue (const SettingValueType &value)
     return valueListValue;
 }
 
+template <typename SettingValueType>
+CCSSettingValuePtr
+RawValueToListValue (const SettingValueType &value)
+{
+    return ListValueToSettingValueList (RawValueToCCSValue (value));
+}
+
 class ContainedValueGenerator
 {
+    private:
+
+	const CCSSettingValuePtr &
+	InitializedSpawnedValue (const CCSSettingValuePtr &value,
+				 CCSSettingType           type,
+				 const CCSSettingInfoPtr  &info)
+	{
+	    const CCSSettingPtr &setting (GetSetting (type, info));
+	    value->parent = setting.get ();
+	    mContainedValues.push_back (value);
+
+	    return mContainedValues.back ();
+	}
+
     public:
 
 	template <typename SettingValueType>
@@ -576,14 +594,11 @@ class ContainedValueGenerator
 				  CCSSettingType          type,
 				  const CCSSettingInfoPtr &info)
 	{
-	    const CCSSettingPtr &setting (GetSetting (type, info));
+
 	    CCSSettingValuePtr  value (AutoDestroy (RawValueToCCSValue <SettingValueType> (rawValue),
 						    ccsSettingValueUnref));
 
-	    value->parent = setting.get ();
-	    mContainedValues.push_back (value);
-
-	    return mContainedValues.back ();
+	    return InitializedSpawnedValue (value, type, info);
 	}
 
 	const CCSSettingPtr &
