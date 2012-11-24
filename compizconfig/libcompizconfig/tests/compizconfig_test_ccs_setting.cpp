@@ -901,7 +901,7 @@ struct SettingMutators
 class DefaultImplSetParamBase :
     public DefaultImplSetParamInterface
 {
-    public:
+    protected:
 
 	DefaultImplSetParamBase (const CCSSettingInfoPtr &info,
 				 CCSSettingType          type) :
