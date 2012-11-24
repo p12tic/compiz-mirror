@@ -48,9 +48,9 @@ class CCSSettingGMockInterface
 	virtual Bool getInt (int *) = 0;
 	virtual Bool getFloat (float *) = 0;
 	virtual Bool getBool (Bool *) = 0;
-	virtual Bool getString (char **) = 0;
+	virtual Bool getString (const char **) = 0;
 	virtual Bool getColor (CCSSettingColorValue *) = 0;
-	virtual Bool getMatch (char **) = 0;
+	virtual Bool getMatch (const char **) = 0;
 	virtual Bool getKey (CCSSettingKeyValue *) = 0;
 	virtual Bool getButton (CCSSettingButtonValue *) = 0;
 	virtual Bool getEdge (unsigned int *) = 0;
@@ -107,9 +107,9 @@ class CCSSettingGMock :
 	MOCK_METHOD1 (getInt, Bool (int *));
 	MOCK_METHOD1 (getFloat, Bool (float *));
 	MOCK_METHOD1 (getBool, Bool (Bool *));
-	MOCK_METHOD1 (getString, Bool (char **));
+	MOCK_METHOD1 (getString, Bool (const char **));
 	MOCK_METHOD1 (getColor, Bool (CCSSettingColorValue *));
-	MOCK_METHOD1 (getMatch, Bool (char **));
+	MOCK_METHOD1 (getMatch, Bool (const char **));
 	MOCK_METHOD1 (getKey, Bool (CCSSettingKeyValue *));
 	MOCK_METHOD1 (getButton, Bool (CCSSettingButtonValue *));
 	MOCK_METHOD1 (getEdge, Bool (unsigned int *));
@@ -145,7 +145,7 @@ class CCSSettingGMock :
 	}
 
 	static Bool ccsGetString (CCSSetting *setting,
-			   char       **data)
+				  const char **data)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getString (data);
 	}
@@ -157,7 +157,7 @@ class CCSSettingGMock :
 	}
 
 	static Bool ccsGetMatch (CCSSetting *setting,
-			  char       **data)
+				 const char **data)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getMatch (data);
 	}

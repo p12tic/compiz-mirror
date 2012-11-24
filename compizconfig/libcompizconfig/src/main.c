@@ -2693,7 +2693,7 @@ ccsSettingGetBoolDefault (CCSSetting * setting, Bool * data)
 }
 
 Bool
-ccsSettingGetStringDefault (CCSSetting * setting, char **data)
+ccsSettingGetStringDefault (CCSSetting * setting, const char **data)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
@@ -2717,7 +2717,7 @@ ccsSettingGetColorDefault (CCSSetting * setting, CCSSettingColorValue * data)
 }
 
 Bool
-ccsSettingGetMatchDefault (CCSSetting * setting, char **data)
+ccsSettingGetMatchDefault (CCSSetting * setting, const char **data)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
@@ -2807,7 +2807,7 @@ Bool ccsGetBool (CCSSetting *setting,
 }
 
 Bool ccsGetString (CCSSetting *setting,
-		   char       **data)
+		   const char **data)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetString) (setting, data);
 }
@@ -2819,7 +2819,7 @@ Bool ccsGetColor (CCSSetting           *setting,
 }
 
 Bool ccsGetMatch (CCSSetting *setting,
-		  char       **data)
+		  const char **data)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetMatch) (setting, data);
 }
