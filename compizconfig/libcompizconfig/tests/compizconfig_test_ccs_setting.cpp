@@ -1077,30 +1077,43 @@ class DefaultImplSetParam :
 
 };
 
-template <typename SettingValueType>
 class SetWithDisallowedValueBase
 {
     protected:
 
-	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
-
-	SetWithDisallowedValueBase (SetFunction             setFunction,
-				    const CCSSettingPtr     &setting,
+	SetWithDisallowedValueBase (const CCSSettingPtr     &setting,
 				    const CCSSettingInfoPtr &info) :
-	    mSetFunction (setFunction),
 	    mSetting (setting),
 	    mInfo (info)
 	{
 	}
 
-	SetFunction       mSetFunction;
 	CCSSettingPtr     mSetting;
 	CCSSettingInfoPtr mInfo;
 };
 
 template <typename SettingValueType>
+class SetWithDisallowedValueTemplatedBase :
+    public SetWithDisallowedValueBase
+{
+    protected:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+
+	SetWithDisallowedValueTemplatedBase (SetFunction             setFunction,
+					     const CCSSettingPtr     &setting,
+					     const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase (setting, info),
+	    mSetFunction (setFunction)
+	{
+	}
+
+	SetFunction       mSetFunction;
+};
+
+template <typename SettingValueType>
 class SetWithDisallowedValue :
-    public SetWithDisallowedValueBase <SettingValueType>
+    public SetWithDisallowedValueTemplatedBase <SettingValueType>
 {
     public:
 
@@ -1109,7 +1122,7 @@ class SetWithDisallowedValue :
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <SettingValueType> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <SettingValueType> (setFunction, setting, info)
 	{
 	}
 
@@ -1121,21 +1134,21 @@ class SetWithDisallowedValue :
 
 template <>
 class SetWithDisallowedValue <int> :
-    public SetWithDisallowedValueBase <int>
+    public SetWithDisallowedValueTemplatedBase <int>
 {
     public:
 
 	typedef typename SettingMutators <int>::SetFunction SetFunction;
-	typedef SetWithDisallowedValueBase <int> Parent;
+	typedef SetWithDisallowedValueTemplatedBase <int> Parent;
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <int> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <int> (setFunction, setting, info)
 	{
 	}
 
-	virtual CCSSetStatus operator () ()
+	CCSSetStatus operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    Parent::mInfo->forInt.min - 1,
@@ -1145,21 +1158,21 @@ class SetWithDisallowedValue <int> :
 
 template <>
 class SetWithDisallowedValue <float> :
-    public SetWithDisallowedValueBase <float>
+    public SetWithDisallowedValueTemplatedBase <float>
 {
     public:
 
 	typedef typename SettingMutators <float>::SetFunction SetFunction;
-	typedef SetWithDisallowedValueBase <float> Parent;
+	typedef SetWithDisallowedValueTemplatedBase <float> Parent;
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <float> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <float> (setFunction, setting, info)
 	{
 	}
 
-	virtual CCSSetStatus operator () ()
+	CCSSetStatus operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    Parent::mInfo->forFloat.min - 1,
@@ -1169,21 +1182,21 @@ class SetWithDisallowedValue <float> :
 
 template <>
 class SetWithDisallowedValue <const char *> :
-    public SetWithDisallowedValueBase <const char *>
+    public SetWithDisallowedValueTemplatedBase <const char *>
 {
     public:
 
 	typedef typename SettingMutators <const char *>::SetFunction SetFunction;
-	typedef SetWithDisallowedValueBase <const char *> Parent;
+	typedef SetWithDisallowedValueTemplatedBase <const char *> Parent;
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <const char *> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <const char *> (setFunction, setting, info)
 	{
 	}
 
-	virtual CCSSetStatus operator () ()
+	CCSSetStatus operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    NULL,
