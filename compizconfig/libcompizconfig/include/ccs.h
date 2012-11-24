@@ -498,45 +498,54 @@ Bool ccsGetBell (CCSSetting *setting,
 Bool ccsGetList (CCSSetting          *setting,
 		 CCSSettingValueList *data);
 
+typedef enum _CCSSetStatus
+{
+    SetFailed = 0,
+    SetToDefault = 1,
+    SetIsDefault = 2,
+    SetToSameValue = 3,
+    SetToNewValue = 4
+} CCSSetStatus;
+
 /* Setting setters. Set <setting> to value <data>. Return TRUE if new value
    matches data. If the new value doesn't match the old value, the setting
    is added to the context's changedSettings list. */
-Bool ccsSetInt (CCSSetting *setting,
-		int        data,
-		Bool	   processChanged);
-Bool ccsSetFloat (CCSSetting *setting,
-		  float      data,
-		  Bool	     processChanged);
-Bool ccsSetBool (CCSSetting *setting,
-		 Bool       data,
-		 Bool	    processChanged);
-Bool ccsSetString (CCSSetting *setting,
-		   const char *data,
-		   Bool	      processChanged);
-Bool ccsSetColor (CCSSetting           *setting,
-		  CCSSettingColorValue data,
-		  Bool		       processChanged);
-Bool ccsSetMatch (CCSSetting *setting,
-		  const char *data,
-		  Bool	     processChanged);
-Bool ccsSetKey (CCSSetting         *setting,
-		CCSSettingKeyValue data,
-		Bool		   processChanged);
-Bool ccsSetButton (CCSSetting            *setting,
-		   CCSSettingButtonValue data,
-		   Bool			 processChanged);
-Bool ccsSetEdge (CCSSetting   *setting,
-		 unsigned int data,
-		 Bool	      processChanged);
-Bool ccsSetBell (CCSSetting *setting,
-		 Bool       data,
-		 Bool	    processChanged);
-Bool ccsSetList (CCSSetting          *setting,
-		 CCSSettingValueList data,
-		 Bool	 processChanged);
-Bool ccsSetValue (CCSSetting      *setting,
-		  CCSSettingValue *data,
-		  Bool		  processChanged);
+CCSSetStatus ccsSetInt (CCSSetting *setting,
+			int        data,
+			Bool	   processChanged);
+CCSSetStatus ccsSetFloat (CCSSetting *setting,
+			  float      data,
+			  Bool	     processChanged);
+CCSSetStatus ccsSetBool (CCSSetting *setting,
+			 Bool       data,
+			 Bool	    processChanged);
+CCSSetStatus ccsSetString (CCSSetting *setting,
+			   const char *data,
+			   Bool	      processChanged);
+CCSSetStatus ccsSetColor (CCSSetting           *setting,
+			  CCSSettingColorValue data,
+			  Bool		       processChanged);
+CCSSetStatus ccsSetMatch (CCSSetting *setting,
+			  const char *data,
+			  Bool	     processChanged);
+CCSSetStatus ccsSetKey (CCSSetting         *setting,
+			CCSSettingKeyValue data,
+			Bool		   processChanged);
+CCSSetStatus ccsSetButton (CCSSetting            *setting,
+			   CCSSettingButtonValue data,
+			   Bool			 processChanged);
+CCSSetStatus ccsSetEdge (CCSSetting   *setting,
+			 unsigned int data,
+			 Bool	      processChanged);
+CCSSetStatus ccsSetBell (CCSSetting *setting,
+			 Bool       data,
+			 Bool	    processChanged);
+CCSSetStatus ccsSetList (CCSSetting          *setting,
+			 CCSSettingValueList data,
+			 Bool	 processChanged);
+CCSSetStatus ccsSetValue (CCSSetting      *setting,
+			  CCSSettingValue *data,
+			  Bool		  processChanged);
 
 /* Reset all settings to defaults. Settings that were non-default
    previously are added to the changedSettings list of the context. */
@@ -565,18 +574,18 @@ typedef Bool (*CCSSettingGetIsDefault) (CCSSetting *);
 typedef CCSPlugin * (*CCSSettingGetParent) (CCSSetting *);
 typedef void * (*CCSSettingGetPrivatePtr) (CCSSetting *);
 typedef void (*CCSSettingSetPrivatePtr) (CCSSetting *, void *);
-typedef Bool (*CCSSettingSetInt) (CCSSetting *setting, int data, Bool processChanged);
-typedef Bool (*CCSSettingSetFloat) (CCSSetting *setting, float data, Bool processChanged);
-typedef Bool (*CCSSettingSetBool) (CCSSetting *setting, Bool data, Bool processChanged);
-typedef Bool (*CCSSettingSetString) (CCSSetting *setting, const char * data, Bool processChanged);
-typedef Bool (*CCSSettingSetColor) (CCSSetting *setting, CCSSettingColorValue data, Bool processChanged);
-typedef Bool (*CCSSettingSetMatch) (CCSSetting *setting, const char * data, Bool processChanged);
-typedef Bool (*CCSSettingSetKey) (CCSSetting *setting, CCSSettingKeyValue data, Bool processChanged);
-typedef Bool (*CCSSettingSetButton) (CCSSetting *setting, CCSSettingButtonValue data, Bool processChanged);
-typedef Bool (*CCSSettingSetEdge) (CCSSetting *setting, unsigned int data, Bool processChanged);
-typedef Bool (*CCSSettingSetBell) (CCSSetting *setting, Bool data, Bool processChanged);
-typedef Bool (*CCSSettingSetList) (CCSSetting *setting, CCSSettingValueList data, Bool processChanged);
-typedef Bool (*CCSSettingSetValue) (CCSSetting *setting, CCSSettingValue *data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetInt) (CCSSetting *setting, int data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetFloat) (CCSSetting *setting, float data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetBool) (CCSSetting *setting, Bool data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetString) (CCSSetting *setting, const char * data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetColor) (CCSSetting *setting, CCSSettingColorValue data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetMatch) (CCSSetting *setting, const char * data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetKey) (CCSSetting *setting, CCSSettingKeyValue data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetButton) (CCSSetting *setting, CCSSettingButtonValue data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetEdge) (CCSSetting *setting, unsigned int data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetBell) (CCSSetting *setting, Bool data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetList) (CCSSetting *setting, CCSSettingValueList data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetValue) (CCSSetting *setting, CCSSettingValue *data, Bool processChanged);
 typedef Bool (*CCSSettingGetInt) (CCSSetting *setting, int *data);
 typedef Bool (*CCSSettingGetFloat) (CCSSetting *setting, float *data);
 typedef Bool (*CCSSettingGetBool) (CCSSetting *setting, Bool *data);

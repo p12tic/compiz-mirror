@@ -44,6 +44,7 @@ using ::testing::WithArgs;
 using ::testing::WithParamInterface;
 using ::testing::Invoke;
 using ::testing::ReturnNull;
+using ::testing::Values;
 
 TEST(CCSSettingTest, TestMock)
 {
@@ -268,6 +269,179 @@ TEST_F (CCSSettingDefaultImplTest, Construction)
 
 namespace
 {
+
+/* Testing values */
+const int INTEGER_MIN = std::numeric_limits <int>::min () + 1;
+const int INTEGER_MAX = std::numeric_limits <int>::max () - 1;
+const int INTEGER_VALUE = 5;
+const int INTEGER_DEFAULT_VALUE = 2;
+
+const float FLOAT_MIN = std::numeric_limits <float>::min () + 1.0f;
+const float FLOAT_MAX = std::numeric_limits <float>::max () - 1.0f;
+const float FLOAT_VALUE = 5.0;
+const float FLOAT_DEFAULT_VALUE = 2.0;
+const char                  *STRING_VALUE = "string_nondefault_value";
+const char                  *STRING_DEFAULT_VALUE = "string";
+const char                  *MATCH_VALUE = "match_nondefault_value";
+const char                  *MATCH_DEFAULT_VALUE = "match";
+const Bool                  BOOL_VALUE = TRUE;
+const Bool                  BOOL_DEFAULT_VALUE = FALSE;
+
+CCSSettingColorValue
+getColorValue (unsigned short r,
+	       unsigned short g,
+	       unsigned short b,
+	       unsigned short a)
+{
+    CCSSettingColorValue value;
+
+    value.color.red = r;
+    value.color.green = g;
+    value.color.blue = b;
+    value.color.alpha = a;
+
+    return value;
+}
+
+CCSSettingKeyValue
+getKeyValue (int          keysym,
+	     unsigned int modMask)
+{
+    CCSSettingKeyValue value;
+
+    value.keysym = keysym;
+    value.keyModMask = modMask;
+
+    return value;
+}
+
+CCSSettingButtonValue
+getButtonValue (int          button,
+		unsigned int modMask,
+		unsigned int edgeMask)
+{
+    CCSSettingButtonValue value;
+
+    value.button = button;
+    value.buttonModMask = modMask;
+    value.edgeMask = edgeMask;
+
+    return value;
+}
+
+const int          VALUE_KEYSYM = XStringToKeysym ("a");
+const int          VALUE_DEFAULT_KEYSYM = XStringToKeysym ("1");
+const unsigned int VALUE_MODMASK = ShiftMask | ControlMask;
+const unsigned int VALUE_DEFAULT_MODMASK = ControlMask;
+const int          VALUE_BUTTON = 1;
+const int          VALUE_DEFAULT_BUTTON = 3;
+const unsigned int VALUE_EDGEMASK = 1 | 2;
+const unsigned int VALUE_DEFAULT_EDGEMASK = 2 | 3;
+
+const CCSSettingColorValue  COLOR_VALUE = getColorValue (255, 255, 255, 255);
+const CCSSettingColorValue  COLOR_DEFAULT_VALUE = getColorValue (0, 0, 0, 0);
+const CCSSettingKeyValue    KEY_VALUE = getKeyValue (VALUE_KEYSYM, VALUE_MODMASK);
+const CCSSettingKeyValue    KEY_DEFAULT_VALUE = getKeyValue (VALUE_DEFAULT_KEYSYM,
+							     VALUE_DEFAULT_MODMASK);
+const CCSSettingButtonValue BUTTON_VALUE = getButtonValue (VALUE_BUTTON,
+							   VALUE_MODMASK,
+							   VALUE_EDGEMASK);
+const CCSSettingButtonValue BUTTON_DEFAULT_VALUE = getButtonValue (VALUE_DEFAULT_BUTTON,
+								   VALUE_DEFAULT_MODMASK,
+								   VALUE_DEFAULT_EDGEMASK);
+const unsigned int          EDGE_VALUE = 1;
+const unsigned int          EDGE_DEFAULT_VALUE = 2;
+const Bool                  BELL_VALUE = BOOL_VALUE;
+const Bool                  BELL_DEFAULT_VALUE = BOOL_DEFAULT_VALUE;
+
+/* Test CCSSettingInfo */
+
+CCSSettingInfo *
+NewCCSSettingInfo ()
+{
+    return reinterpret_cast <CCSSettingInfo *> (calloc (1, sizeof (CCSSettingInfo)));
+}
+
+void
+FreeAndCleanupInfo (CCSSettingInfo *info,
+		    CCSSettingType type)
+
+{
+    ccsCleanupSettingInfo (info, type);
+    free (info);
+}
+
+CCSSettingInfoPtr
+AutoDestroyInfo (CCSSettingInfo *info,
+		 CCSSettingType type)
+{
+    return CCSSettingInfoPtr (info,
+			      boost::bind (FreeAndCleanupInfo, info, type));
+}
+
+CCSSettingInfo * getGenericInfo (CCSSettingType         type)
+{
+    return NewCCSSettingInfo ();
+}
+
+CCSSettingInfo * getIntInfo ()
+{
+    CCSSettingInfo *info (getGenericInfo (TypeInt));
+
+    info->forInt.max = INTEGER_MAX;
+    info->forInt.min = INTEGER_MIN;
+
+    return info;
+}
+
+CCSSettingInfo * getFloatInfo ()
+{
+    CCSSettingInfo *info (getGenericInfo (TypeFloat));
+
+    info->forFloat.max = FLOAT_MAX;
+    info->forFloat.min = FLOAT_MIN;
+
+    return info;
+}
+
+CCSSettingInfo * getStringInfo ()
+{
+    CCSSettingInfo *info (getGenericInfo (TypeString));
+
+    info->forString.restriction = NULL;
+    info->forString.sortStartsAt = 1;
+    info->forString.extensible = FALSE;
+
+    return info;
+}
+
+CCSSettingInfo *
+getActionInfo (CCSSettingType actionType)
+{
+    EXPECT_TRUE ((actionType == TypeAction ||
+		  actionType == TypeKey ||
+		  actionType == TypeButton ||
+		  actionType == TypeEdge ||
+		  actionType == TypeBell));
+
+    CCSSettingInfo *info (getGenericInfo (actionType));
+
+    info->forAction.internal = FALSE;
+
+    return info;
+}
+
+CCSSettingInfoPtr
+getListInfo (CCSSettingType type,
+	     CCSSettingInfo *childrenInfo)
+{
+    CCSSettingInfo *info = getGenericInfo (TypeList);
+
+    info->forList.listType = type;
+    info->forList.listInfo = childrenInfo;
+
+    return AutoDestroyInfo (info, TypeList);
+}
 
 /* Used to copy different raw values */
 template <typename SettingValueType>
@@ -606,10 +780,10 @@ class DefaultImplSetParamInterface
 	virtual void TearDownSetting () = 0;
 	virtual CCSSettingType GetSettingType () = 0;
 	virtual void         SetUpParam (const CCSSettingPtr &) = 0;
-	virtual Bool setWithInvalidType () = 0;
-	virtual Bool setToFailValue () = 0;
-	virtual Bool setToNonDefaultValue () = 0;
-	virtual Bool setToDefaultValue () = 0;
+	virtual CCSSetStatus setWithInvalidType () = 0;
+	virtual CCSSetStatus setToFailValue () = 0;
+	virtual CCSSetStatus setToNonDefaultValue () = 0;
+	virtual CCSSetStatus setToDefaultValue () = 0;
 };
 
 void stubInitializeSettingInfo (CCSSettingType type,
@@ -682,9 +856,9 @@ class MockInitializerFuncsWithDelegators :
 template <typename SettingValueType>
 struct SettingMutators
 {
-    typedef Bool (*SetFunction) (CCSSetting *setting,
-				 SettingValueType data,
-				 Bool);
+    typedef CCSSetStatus (*SetFunction) (CCSSetting *setting,
+					 SettingValueType data,
+					 Bool);
     typedef Bool (*GetFunction) (CCSSetting *setting,
 				 SettingValueType *);
 };
@@ -743,7 +917,7 @@ class DefaultImplSetParam :
 	    mSetting      = setting;
 	}
 
-	virtual Bool setWithInvalidType ()
+	virtual CCSSetStatus setWithInvalidType ()
 	{
 	    /* Temporarily redirect the setting interface to
 	     * our own with an overloaded settingGetType function */
@@ -760,7 +934,7 @@ class DefaultImplSetParam :
 				   (const CCSInterface *) &tmpSettingInterface,
 				   GET_INTERFACE_TYPE (CCSSettingInterface));
 
-	    Bool ret =
+	    CCSSetStatus ret =
 		(*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
 
 	    /* Restore the old interface */
@@ -773,17 +947,17 @@ class DefaultImplSetParam :
 	    return ret;
 	}
 
-	virtual Bool setToFailValue ()
+	virtual CCSSetStatus setToFailValue ()
 	{
-	    return FALSE;
+	    return SetFailed;
 	}
 
-	virtual Bool setToNonDefaultValue ()
+	virtual CCSSetStatus setToNonDefaultValue ()
 	{
 	    return (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
 	}
 
-	virtual Bool setToDefaultValue ()
+	virtual CCSSetStatus setToDefaultValue ()
 	{
 	    return (*mSetFunction) (mSetting.get (), mDefaultValue, FALSE);
 	}
@@ -850,9 +1024,9 @@ class SetWithDisallowedValue :
 	{
 	}
 
-	Bool operator () ()
+	CCSSetStatus operator () ()
 	{
-	    return FALSE;
+	    return SetFailed;
 	}
 };
 
@@ -872,7 +1046,7 @@ class SetWithDisallowedValue <int> :
 	{
 	}
 
-	virtual Bool operator () ()
+	virtual CCSSetStatus operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    Parent::mInfo->forInt.min - 1,
@@ -896,7 +1070,7 @@ class SetWithDisallowedValue <float> :
 	{
 	}
 
-	virtual Bool operator () ()
+	virtual CCSSetStatus operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    Parent::mInfo->forFloat.min - 1,
@@ -920,7 +1094,7 @@ class SetWithDisallowedValue <const char *> :
 	{
 	}
 
-	virtual Bool operator () ()
+	virtual CCSSetStatus operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    NULL,
@@ -954,7 +1128,7 @@ class DefaultImplSetFailureParam :
 	{
 	}
 
-	virtual Bool setToFailValue ()
+	virtual CCSSetStatus setToFailValue ()
 	{
 	    typedef DefaultImplSetParam <SettingValueType> Parent;
 	    return SetWithDisallowedValue <SettingValueType> (Parent::mSetFunction,
@@ -1028,3 +1202,201 @@ class SettingDefaulImplSetFailure :
 };
 
 }
+
+/* Tests */
+
+TEST_P (SettingDefaultImplSet, Construction)
+{
+}
+
+TEST_P (SettingDefaultImplSet, WithInvalidType)
+{
+    EXPECT_EQ (SetFailed, GetParam ()->setWithInvalidType ());
+}
+
+TEST_P (SettingDefaultImplSet, ToNewValue)
+{
+    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
+}
+
+TEST_P (SettingDefaultImplSet, ToSameValue)
+{
+    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
+    EXPECT_EQ (SetToSameValue, GetParam ()->setToNonDefaultValue ());
+}
+
+TEST_P (SettingDefaultImplSet, ToDefaultValue)
+{
+    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
+    EXPECT_EQ (SetToDefault, GetParam ()->setToDefaultValue ());
+}
+
+TEST_P (SettingDefaultImplSet, IsDefaultValue)
+{
+    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
+    EXPECT_EQ (SetToDefault, GetParam ()->setToDefaultValue ());
+    EXPECT_EQ (SetIsDefault, GetParam ()->setToDefaultValue ());
+}
+
+TEST_P (SettingDefaulImplSetFailure, ToFailValue)
+{
+    EXPECT_EQ (SetFailed, GetParam ()->setToFailValue ());
+}
+
+INSTANTIATE_TEST_CASE_P (SetSemantics, SettingDefaulImplSetFailure,
+			 Values (FailureSemanticsParamFor <int> (ContainNormal (INTEGER_DEFAULT_VALUE),
+								 TypeInt,
+								 ccsSetInt,
+								 ccsGetInt,
+								 AutoDestroyInfo (getIntInfo (), TypeInt),
+								 ContainNormal (INTEGER_VALUE)),
+				 FailureSemanticsParamFor <float> (ContainNormal (FLOAT_DEFAULT_VALUE),
+								   TypeFloat,
+								   ccsSetFloat,
+								   ccsGetFloat,
+								   AutoDestroyInfo (getFloatInfo (), TypeFloat),
+								   ContainNormal (FLOAT_VALUE)),
+				 FailureSemanticsParamFor <const char *> (ContainNormal (STRING_DEFAULT_VALUE),
+									  TypeString,
+									  ccsSetString,
+									  ccsGetString,
+									  AutoDestroyInfo (getGenericInfo (TypeString), TypeMatch),
+									  ContainNormal (STRING_VALUE)),
+				 FailureSemanticsParamFor <const char *> (ContainNormal (MATCH_DEFAULT_VALUE),
+									  TypeMatch,
+									  ccsSetMatch,
+									  ccsGetMatch,
+									  AutoDestroyInfo (getGenericInfo (TypeMatch), TypeMatch),
+									  ContainNormal (MATCH_VALUE))));
+
+INSTANTIATE_TEST_CASE_P (SetSemantics, SettingDefaultImplSet,
+			 Values (SemanticsParamFor <int> (ContainNormal (INTEGER_DEFAULT_VALUE),
+							  TypeInt,
+							  ccsSetInt,
+							  ccsGetInt,
+							  AutoDestroyInfo (getIntInfo (), TypeInt),
+							  ContainNormal (INTEGER_VALUE)),
+				 SemanticsParamFor <float> (ContainNormal (FLOAT_DEFAULT_VALUE),
+							    TypeFloat,
+							    ccsSetFloat,
+							    ccsGetFloat,
+							    AutoDestroyInfo (getFloatInfo (), TypeFloat),
+							    ContainNormal  (FLOAT_VALUE)),
+				 SemanticsParamFor <Bool> (ContainNormal  (BOOL_DEFAULT_VALUE),
+							   TypeBool,
+							   ccsSetBool,
+							   ccsGetBool,
+							   AutoDestroyInfo (getGenericInfo (TypeBool), TypeBool),
+							   ContainNormal (BOOL_VALUE)),
+				 SemanticsParamFor <const char *> (ContainNormal (STRING_DEFAULT_VALUE),
+								   TypeString,
+								   ccsSetString,
+								   ccsGetString,
+								   AutoDestroyInfo (getStringInfo (), TypeBool),
+								   ContainNormal (STRING_VALUE)),
+				 SemanticsParamFor <const char *> (ContainNormal (MATCH_DEFAULT_VALUE),
+								   TypeMatch,
+								   ccsSetMatch,
+								   ccsGetMatch,
+							   AutoDestroyInfo (getGenericInfo (TypeMatch), TypeMatch),
+								   ContainNormal (MATCH_VALUE)),
+				 SemanticsParamFor <CCSSettingColorValue> (ContainNormal (COLOR_DEFAULT_VALUE),
+									   TypeColor,
+									   ccsSetColor,
+									   ccsGetColor,
+									   AutoDestroyInfo (getGenericInfo (TypeColor), TypeColor),
+									   ContainNormal (COLOR_VALUE)),
+				 SemanticsParamFor <CCSSettingKeyValue> (ContainNormal (KEY_DEFAULT_VALUE),
+									 TypeKey,
+									 ccsSetKey,
+									 ccsGetKey,
+									 AutoDestroyInfo (getActionInfo (TypeKey), TypeKey),
+									 ContainNormal (KEY_VALUE)),
+				 SemanticsParamFor <CCSSettingButtonValue> (ContainNormal (BUTTON_DEFAULT_VALUE),
+									    TypeButton,
+									    ccsSetButton,
+									    ccsGetButton,
+									    AutoDestroyInfo (getActionInfo (TypeButton), TypeButton),
+									    ContainNormal (BUTTON_VALUE)),
+				 SemanticsParamFor <unsigned int> (ContainNormal (EDGE_DEFAULT_VALUE),
+								   TypeEdge,
+								   ccsSetEdge,
+								   ccsGetEdge,
+								   AutoDestroyInfo (getActionInfo (TypeEdge), TypeEdge),
+								   ContainNormal (EDGE_VALUE)),
+				 SemanticsParamFor <Bool> (ContainNormal  (BELL_DEFAULT_VALUE),
+							   TypeBell,
+							   ccsSetBell,
+							   ccsGetBell,
+							   AutoDestroyInfo (getGenericInfo (TypeBell), TypeBell),
+							   ContainNormal (BELL_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (INTEGER_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeInt,
+										       getIntInfo ()),
+									  ContainList (INTEGER_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (FLOAT_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeFloat,
+										       getFloatInfo ()),
+									  ContainList (FLOAT_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (BOOL_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeBool,
+										       getGenericInfo (TypeBool)),
+									  ContainList (BOOL_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (STRING_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeString,
+										       getGenericInfo (TypeMatch)),
+									  ContainList (STRING_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (MATCH_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeMatch,
+										       getGenericInfo (TypeMatch)),
+									  ContainList (MATCH_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (COLOR_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeColor,
+										       getGenericInfo (TypeColor)),
+									  ContainList (COLOR_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (KEY_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeKey,
+										       getActionInfo (TypeKey)),
+									  ContainList (KEY_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (BUTTON_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeButton,
+										       getActionInfo (TypeButton)),
+									  ContainList (BUTTON_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (EDGE_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeEdge,
+										       getIntInfo ()),
+									  ContainList (EDGE_VALUE)),
+				 SemanticsParamFor <CCSSettingValueList> (ContainList (BELL_DEFAULT_VALUE),
+									  TypeList,
+									  ccsSetList,
+									  ccsGetList,
+									  getListInfo (TypeBell,
+										       getActionInfo (TypeBell)),
+									  ContainList (BELL_VALUE))));
