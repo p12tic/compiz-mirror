@@ -641,7 +641,6 @@ class ContainedValueGenerator
 
 };
 
-/* ValueContainer Interface */
 template <typename SettingValueType>
 class ValueContainer
 {
