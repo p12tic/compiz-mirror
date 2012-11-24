@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/function.hpp>
+
 #include <ccs.h>
 
 #include "compizconfig_ccs_setting_mock.h"
@@ -108,4 +112,137 @@ TEST(CCSSettingTest, TestMock)
     ccsSettingIsReadableByBackend (setting);
 
     ccsSettingUnref (setting);
+}
+
+namespace
+{
+
+typedef boost::shared_ptr <CCSSettingInfo> CCSSettingInfoPtr;
+typedef boost::shared_ptr <CCSSettingValue> CCSSettingValuePtr;
+typedef boost::shared_ptr <CCSSetting> CCSSettingPtr;
+
+template <typename SettingValueType>
+struct SettingMutators
+{
+    typedef Bool (*SetFunction) (CCSSetting *setting,
+				 SettingValueType data,
+				 Bool);
+    typedef Bool (*GetFunction) (CCSSetting *setting,
+				 SettingValueType *);
+};
+
+template <typename SettingValueType>
+class SetWithDisallowedValueBase
+{
+    protected:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+
+	SetWithDisallowedValueBase (SetFunction             setFunction,
+				    const CCSSettingPtr     &setting,
+				    const CCSSettingInfoPtr &info) :
+	    mSetFunction (setFunction),
+	    mSetting (setting),
+	    mInfo (info)
+	{
+	}
+
+	SetFunction       mSetFunction;
+	CCSSettingPtr     mSetting;
+	CCSSettingInfoPtr mInfo;
+};
+
+template <typename SettingValueType>
+class SetWithDisallowedValue :
+    public SetWithDisallowedValueBase <SettingValueType>
+{
+    public:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase <SettingValueType> (setFunction, setting, info)
+	{
+	}
+
+	Bool operator () ()
+	{
+	    return FALSE;
+	}
+};
+
+template <>
+class SetWithDisallowedValue <int> :
+    public SetWithDisallowedValueBase <int>
+{
+    public:
+
+	typedef typename SettingMutators <int>::SetFunction SetFunction;
+	typedef SetWithDisallowedValueBase <int> Parent;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase <int> (setFunction, setting, info)
+	{
+	}
+
+	virtual Bool operator () ()
+	{
+	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
+					    Parent::mInfo->forInt.min - 1,
+					    FALSE);
+	}
+};
+
+template <>
+class SetWithDisallowedValue <float> :
+    public SetWithDisallowedValueBase <float>
+{
+    public:
+
+	typedef typename SettingMutators <float>::SetFunction SetFunction;
+	typedef SetWithDisallowedValueBase <float> Parent;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase <float> (setFunction, setting, info)
+	{
+	}
+
+	virtual Bool operator () ()
+	{
+	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
+					    Parent::mInfo->forFloat.min - 1,
+					    FALSE);
+	}
+};
+
+template <>
+class SetWithDisallowedValue <const char *> :
+    public SetWithDisallowedValueBase <const char *>
+{
+    public:
+
+	typedef typename SettingMutators <const char *>::SetFunction SetFunction;
+	typedef SetWithDisallowedValueBase <const char *> Parent;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase <const char *> (setFunction, setting, info)
+	{
+	}
+
+	virtual Bool operator () ()
+	{
+	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
+					    NULL,
+					    FALSE);
+	}
+};
+
 }
