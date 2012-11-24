@@ -40,6 +40,9 @@ namespace cc = compiz::config;
 using ::testing::_;
 using ::testing::Return;
 using ::testing::InSequence;
+using ::testing::WithArgs;
+using ::testing::WithParamInterface;
+using ::testing::Invoke;
 using ::testing::ReturnNull;
 
 TEST(CCSSettingTest, TestMock)
@@ -590,6 +593,92 @@ ContainList (const SettingValueType &value)
     return boost::make_shared <ListValueContainer <SettingValueType> > (value);
 }
 
+class DefaultImplSetParamInterface
+{
+    public:
+
+	typedef boost::shared_ptr <DefaultImplSetParamInterface> Ptr;
+	typedef boost::function <void (MockInitializerFuncs &funcs)> SetUpSettingFunc;
+
+	virtual ~DefaultImplSetParamInterface () {};
+
+	virtual void SetUpSetting (const SetUpSettingFunc &func) = 0;
+	virtual void TearDownSetting () = 0;
+	virtual CCSSettingType GetSettingType () = 0;
+	virtual void         SetUpParam (const CCSSettingPtr &) = 0;
+	virtual Bool setWithInvalidType () = 0;
+	virtual Bool setToFailValue () = 0;
+	virtual Bool setToNonDefaultValue () = 0;
+	virtual Bool setToDefaultValue () = 0;
+};
+
+void stubInitializeSettingInfo (CCSSettingType type,
+				CCSSettingInfo *copyToInfo,
+				void           *data)
+{
+    CCSSettingInfo *copyFromInfo = reinterpret_cast <CCSSettingInfo *> (data);
+
+    ccsCopyInfo (copyFromInfo, copyToInfo, type);
+}
+
+void stubInitializeSettingDefaultValue (CCSSettingType  type,
+					CCSSettingInfo  *info,
+					CCSSettingValue *copyToValue,
+					void           *data)
+{
+    CCSSettingValue *copyFromValue = reinterpret_cast <CCSSettingValue *> (data);
+    CCSSetting      *oldParentForOtherValue = copyFromValue->parent;
+
+    /* Change the parent to this setting that's being initialized
+     * as that needs to go into the setting's default value as
+     * the parent entry */
+    copyFromValue->parent = copyToValue->parent;
+    ccsCopyValueInto (copyFromValue, copyToValue, type, info);
+
+    /* Restore the old parent */
+    copyFromValue->parent = oldParentForOtherValue;
+}
+
+class MockInitializerFuncsWithDelegators :
+    public MockInitializerFuncs
+{
+    public:
+
+	MockInitializerFuncsWithDelegators (CCSSettingInfo  *info,
+					    CCSSettingValue *value) :
+	    MockInitializerFuncs (),
+	    mInfo (info),
+	    mValue (value)
+	{
+	    ON_CALL (*this, initializeInfo (_, _, _))
+		    .WillByDefault (WithArgs <0, 1> (
+					Invoke (this,
+						&MockInitializerFuncsWithDelegators::initializeInfoDelegator)));
+
+	    ON_CALL (*this, initializeDefaultValue (_, _, _, _))
+		    .WillByDefault (WithArgs <0, 1, 2> (
+					Invoke (this,
+						&MockInitializerFuncsWithDelegators::initializeValueDelegator)));
+	}
+
+	void initializeInfoDelegator (CCSSettingType type,
+				      CCSSettingInfo *info)
+	{
+	    stubInitializeSettingInfo (type, info, reinterpret_cast <void *> (mInfo));
+	}
+
+	void initializeValueDelegator (CCSSettingType  type,
+				       CCSSettingInfo  *info,
+				       CCSSettingValue *value)
+	{
+	    stubInitializeSettingDefaultValue (type, info, value,
+					       reinterpret_cast <void *> (mValue));
+	}
+
+	CCSSettingInfo  *mInfo;
+	CCSSettingValue *mValue;
+};
+
 template <typename SettingValueType>
 struct SettingMutators
 {
@@ -598,6 +687,131 @@ struct SettingMutators
 				 Bool);
     typedef Bool (*GetFunction) (CCSSetting *setting,
 				 SettingValueType *);
+};
+
+template <typename SettingValueType>
+class DefaultImplSetParam :
+   public DefaultImplSetParamInterface
+{
+    public:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+	typedef typename SettingMutators <SettingValueType>::GetFunction GetFunction;
+	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
+
+	DefaultImplSetParam (const ValueContainerPtr &defaultValueContainer,
+			     CCSSettingType          type,
+			     SetFunction             setFunction,
+			     GetFunction             getFunction,
+			     const CCSSettingInfoPtr &info,
+			     const ValueContainerPtr &nonDefaultValueContainer) :
+	    mDefaultValueContainer (defaultValueContainer),
+	    mNonDefaultValueContainer (nonDefaultValueContainer),
+	    mInfo (info),
+	    mType        (type),
+	    mSetFunction (setFunction),
+	    mGetFunction (getFunction)
+	{
+	}
+
+	virtual void SetUpSetting (const SetUpSettingFunc &func)
+	{
+	    /* Do delayed setup here */
+	    mValue = mDefaultValueContainer->getContainedValue (mType, mInfo);
+	    mNonDefaultValue = mNonDefaultValueContainer->getRawValue (mType, mInfo);
+
+	    MockInitializerFuncsWithDelegators mockInitializers (mInfo.get (), mValue.get ());
+
+	    func (mockInitializers);
+	}
+
+	virtual void TearDownSetting ()
+	{
+	    if (mSetting)
+		setToDefaultValue ();
+	}
+
+	virtual CCSSettingType GetSettingType ()
+	{
+	    return mType;
+	}
+
+	virtual void SetUpParam (const CCSSettingPtr &setting)
+	{
+	    ASSERT_TRUE ((*mGetFunction) (setting.get (), &mDefaultValue));
+
+	    mSetting      = setting;
+	}
+
+	virtual Bool setWithInvalidType ()
+	{
+	    /* Temporarily redirect the setting interface to
+	     * our own with an overloaded settingGetType function */
+	    const CCSSettingInterface *settingInterface =
+		GET_INTERFACE (CCSSettingInterface, mSetting.get ());
+	    CCSSettingInterface tmpSettingInterface = *settingInterface;
+
+	    tmpSettingInterface.settingGetType =
+		DefaultImplSetParam <SettingValueType>::returnIncorrectSettingType;
+
+	    ccsObjectRemoveInterface (mSetting.get (),
+				      GET_INTERFACE_TYPE (CCSSettingInterface));
+	    ccsObjectAddInterface (mSetting.get (),
+				   (const CCSInterface *) &tmpSettingInterface,
+				   GET_INTERFACE_TYPE (CCSSettingInterface));
+
+	    Bool ret =
+		(*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+
+	    /* Restore the old interface */
+	    ccsObjectRemoveInterface (mSetting.get (),
+				      GET_INTERFACE_TYPE (CCSSettingInterface));
+	    ccsObjectAddInterface (mSetting.get (),
+				   (const CCSInterface *) settingInterface,
+				   GET_INTERFACE_TYPE (CCSSettingInterface));
+
+	    return ret;
+	}
+
+	virtual Bool setToFailValue ()
+	{
+	    return FALSE;
+	}
+
+	virtual Bool setToNonDefaultValue ()
+	{
+	    return (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+	}
+
+	virtual Bool setToDefaultValue ()
+	{
+	    return (*mSetFunction) (mSetting.get (), mDefaultValue, FALSE);
+	}
+
+    private:
+
+	ValueContainerPtr  mDefaultValueContainer;
+	ValueContainerPtr  mNonDefaultValueContainer;
+	SettingValueType   mDefaultValue;
+	SettingValueType   mNonDefaultValue;
+
+    protected:
+
+	CCSSettingInfoPtr  mInfo;
+	CCSSettingValuePtr mValue;
+	CCSSettingType     mType;
+	SetFunction        mSetFunction;
+	GetFunction        mGetFunction;
+	CCSSettingPtr      mSetting;
+
+    private:
+
+	static const CCSSettingType incorrectSettingType = TypeNum;
+	static CCSSettingType returnIncorrectSettingType (CCSSetting *setting)
+	{
+	    return incorrectSettingType;
+	}
+
 };
 
 template <typename SettingValueType>
@@ -712,6 +926,105 @@ class SetWithDisallowedValue <const char *> :
 					    NULL,
 					    FALSE);
 	}
+};
+
+template <typename SettingValueType>
+class DefaultImplSetFailureParam :
+    public DefaultImplSetParam <SettingValueType>
+{
+    public:
+
+	typedef DefaultImplSetParam <SettingValueType> Parent;
+	typedef typename DefaultImplSetParam <SettingValueType>::SetFunction SetFunction;
+	typedef typename DefaultImplSetParam <SettingValueType>::GetFunction GetFunction;
+	typedef typename DefaultImplSetParam <SettingValueType>::ValueContainerPtr ValueContainerPtr;
+
+	DefaultImplSetFailureParam (const ValueContainerPtr &defaultValueContainer,
+				    CCSSettingType          type,
+				    SetFunction             setFunction,
+				    GetFunction             getFunction,
+				    const CCSSettingInfoPtr &info,
+				    const ValueContainerPtr &nonDefaultValueContainer) :
+	    DefaultImplSetParam <SettingValueType> (defaultValueContainer,
+						    type,
+						    setFunction,
+						    getFunction,
+						    info,
+						    nonDefaultValueContainer)
+	{
+	}
+
+	virtual Bool setToFailValue ()
+	{
+	    typedef DefaultImplSetParam <SettingValueType> Parent;
+	    return SetWithDisallowedValue <SettingValueType> (Parent::mSetFunction,
+							      Parent::mSetting,
+							      Parent::mInfo) ();
+	}
+};
+
+template <typename SettingValueType>
+DefaultImplSetParamInterface::Ptr
+SemanticsParamFor (const typename ValueContainer <SettingValueType>::Ptr   &defaultValue,
+		   CCSSettingType                                          type,
+		   typename SettingMutators<SettingValueType>::SetFunction setFunc,
+		   typename SettingMutators<SettingValueType>::GetFunction getFunc,
+		   const CCSSettingInfoPtr                                 &settingInfo,
+		   const typename ValueContainer <SettingValueType>::Ptr   &changeTo)
+{
+    typedef SettingValueType T;
+    return boost::make_shared <DefaultImplSetParam <T> > (defaultValue,
+							  type,
+							  setFunc,
+							  getFunc,
+							  settingInfo,
+							  changeTo);
+}
+
+template <typename SettingValueType>
+DefaultImplSetParamInterface::Ptr
+FailureSemanticsParamFor (const typename ValueContainer <SettingValueType>::Ptr   &defaultValue,
+			  CCSSettingType                                          type,
+			  typename SettingMutators<SettingValueType>::SetFunction setFunc,
+			  typename SettingMutators<SettingValueType>::GetFunction getFunc,
+			  const CCSSettingInfoPtr                                 &settingInfo,
+			  const typename ValueContainer <SettingValueType>::Ptr   &changeTo)
+{
+    typedef SettingValueType T;
+    return boost::make_shared <DefaultImplSetFailureParam <T> > (defaultValue,
+								 type,
+								 setFunc,
+								 getFunc,
+								 settingInfo,
+								 changeTo);
+}
+
+class SettingDefaultImplSet :
+    public CCSSettingDefaultImplTest,
+    public WithParamInterface <DefaultImplSetParamInterface::Ptr>
+{
+    public:
+
+	virtual void SetUp ()
+	{
+	    GetParam ()->SetUpSetting (boost::bind (&CCSSettingDefaultImplTest::SetUpSetting, this, _1));
+	    GetParam ()->SetUpParam (setting);
+	}
+
+	virtual void TearDown ()
+	{
+	    GetParam ()->TearDownSetting ();
+	}
+
+	CCSSettingType GetSettingType ()
+	{
+	    return GetParam ()->GetSettingType ();
+	}
+};
+
+class SettingDefaulImplSetFailure :
+    public SettingDefaultImplSet
+{
 };
 
 }
