@@ -686,25 +686,10 @@ ContainNormal (const SettingValueType &value)
     return boost::make_shared <NormalValueContainer <SettingValueType> > (value);
 }
 
-template <typename SettingValueType>
-class ListValueContainer :
+class ListValueContainerBase :
     public ValueContainer <CCSSettingValueList>
 {
-    public:
-
-	ListValueContainer (const SettingValueType &value) :
-	    mRawChildValue (value)
-	{
-	}
-
-	const CCSSettingValueList &
-	getRawValue (CCSSettingType          type,
-		     const CCSSettingInfoPtr &info)
-	{
-	    const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
-
-	    return *wrapper;
-	}
+    protected:
 
 	const CCSSettingValuePtr &
 	getContainedValue (CCSSettingType          type,
@@ -723,6 +708,24 @@ class ListValueContainer :
 	    return mContainedWrapper;
 	}
 
+	const CCSSettingValueList &
+	getRawValue (CCSSettingType          type,
+		     const CCSSettingInfoPtr &info)
+	{
+	    const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
+
+	    return *wrapper;
+	}
+
+	cci::SettingValueListWrapper::Ptr mWrapper;
+
+	/* ccsFreeSettingValue has an implicit
+	 * dependency on mWrapper (CCSSettingValue -> CCSSetting ->
+	 * CCSSettingInfo -> cci::SettingValueListWrapper), these should
+	 * be kept after mWrapper here */
+	ContainedValueGenerator           mContainedValueGenerator;
+	CCSSettingValuePtr                mContainedWrapper;
+
     private:
 
 	const cci::SettingValueListWrapper::Ptr &
@@ -732,7 +735,7 @@ class ListValueContainer :
 	    if (!mWrapper)
 	    {
 		const CCSSettingPtr &setting (mContainedValueGenerator.GetSetting (type, info));
-		CCSSettingValue     *value = RawValueToCCSValue (mRawChildValue);
+		CCSSettingValue     *value = GetValueForListWrapper ();
 
 		value->parent = setting.get ();
 		value->isListChild = TRUE;
@@ -747,17 +750,28 @@ class ListValueContainer :
 	    return mWrapper;
 	}
 
-	typedef cc::ListWrapper <CCSSettingValueList, CCSSettingValue *> SVLInterface;
+	virtual CCSSettingValue * GetValueForListWrapper () = 0;
+};
 
-	cci::SettingValueListWrapper::Ptr mWrapper;
+template <typename SettingValueType>
+class ListValueContainer :
+    public ListValueContainerBase
+{
+    public:
 
-	/* ccsFreeSettingValue has an implicit
-	 * dependency on mWrapper (CCSSettingValue -> CCSSetting ->
-	 * CCSSettingInfo -> cci::SettingValueListWrapper), these should
-	 * be kept after mWrapper here */
-	ContainedValueGenerator           mContainedValueGenerator;
-	CCSSettingValuePtr                mContainedWrapper;
-	const SettingValueType            &mRawChildValue;
+	ListValueContainer (const SettingValueType &value) :
+	    mRawChildValue (value)
+	{
+	}
+
+    private:
+
+	CCSSettingValue * GetValueForListWrapper ()
+	{
+	    return RawValueToCCSValue (mRawChildValue);
+	}
+
+	const SettingValueType  &mRawChildValue;
 };
 
 template <typename SettingValueType>
