@@ -375,12 +375,9 @@ RawValueToCCSValue (const SettingValueType &value)
     return settingValue;
 }
 
-template <typename SettingValueType>
 CCSSettingValuePtr
-RawValueToListValue (const SettingValueType &value)
+ListValueToSettingValueList (CCSSettingValue *listChild)
 {
-    CCSSettingValue     *listChild = RawValueToCCSValue (value);
-
     listChild->isListChild = TRUE;
 
     CCSSettingValueList valueListHead = ccsSettingValueListAppend (NULL, listChild);
@@ -392,8 +389,29 @@ RawValueToListValue (const SettingValueType &value)
     return valueListValue;
 }
 
+template <typename SettingValueType>
+CCSSettingValuePtr
+RawValueToListValue (const SettingValueType &value)
+{
+    return ListValueToSettingValueList (RawValueToCCSValue (value));
+}
+
 class ContainedValueGenerator
 {
+    private:
+
+	const CCSSettingValuePtr &
+	InitializedSpawnedValue (const CCSSettingValuePtr &value,
+				 CCSSettingType           type,
+				 const CCSSettingInfoPtr  &info)
+	{
+	    const CCSSettingPtr &setting (GetSetting (type, info));
+	    value->parent = setting.get ();
+	    mContainedValues.push_back (value);
+
+	    return mContainedValues.back ();
+	}
+
     public:
 
 	template <typename SettingValueType>
@@ -402,14 +420,11 @@ class ContainedValueGenerator
 				  CCSSettingType          type,
 				  const CCSSettingInfoPtr &info)
 	{
-	    const CCSSettingPtr &setting (GetSetting (type, info));
+
 	    CCSSettingValuePtr  value (AutoDestroy (RawValueToCCSValue <SettingValueType> (rawValue),
 						    ccsSettingValueUnref));
 
-	    value->parent = setting.get ();
-	    mContainedValues.push_back (value);
-
-	    return mContainedValues.back ();
+	    return InitializedSpawnedValue (value, type, info);
 	}
 
 	const CCSSettingPtr &
@@ -468,8 +483,17 @@ class ValueContainer
 			   const CCSSettingInfoPtr &info) = 0;
 };
 
+class NormalValueContainerBase
+{
+    protected:
+
+	ContainedValueGenerator  mContainedValueGenerator;
+	CCSSettingValuePtr       mContainedValue;
+};
+
 template <typename SettingValueType>
 class NormalValueContainer :
+    public NormalValueContainerBase,
     public ValueContainer <SettingValueType>
 {
     public:
@@ -500,9 +524,7 @@ class NormalValueContainer :
 
     private:
 
-	ContainedValueGenerator  mContainedValueGenerator;
 	const SettingValueType   &mRawValue;
-	CCSSettingValuePtr       mContainedValue;
 };
 
 template <typename SettingValueType>
@@ -512,25 +534,10 @@ ContainNormal (const SettingValueType &value)
     return boost::make_shared <NormalValueContainer <SettingValueType> > (value);
 }
 
-template <typename SettingValueType>
-class ListValueContainer :
+class ListValueContainerBase :
     public ValueContainer <CCSSettingValueList>
 {
-    public:
-
-	ListValueContainer (const SettingValueType &value) :
-	    mRawChildValue (value)
-	{
-	}
-
-	const CCSSettingValueList &
-	getRawValue (CCSSettingType          type,
-		     const CCSSettingInfoPtr &info)
-	{
-	    const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
-
-	    return *wrapper;
-	}
+    protected:
 
 	const CCSSettingValuePtr &
 	getContainedValue (CCSSettingType          type,
@@ -549,6 +556,24 @@ class ListValueContainer :
 	    return mContainedWrapper;
 	}
 
+	const CCSSettingValueList &
+	getRawValue (CCSSettingType          type,
+		     const CCSSettingInfoPtr &info)
+	{
+	    const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
+
+	    return *wrapper;
+	}
+
+	cci::SettingValueListWrapper::Ptr mWrapper;
+
+	/* ccsFreeSettingValue has an implicit
+	 * dependency on mWrapper (CCSSettingValue -> CCSSetting ->
+	 * CCSSettingInfo -> cci::SettingValueListWrapper), these should
+	 * be kept after mWrapper here */
+	ContainedValueGenerator           mContainedValueGenerator;
+	CCSSettingValuePtr                mContainedWrapper;
+
     private:
 
 	const cci::SettingValueListWrapper::Ptr &
@@ -558,7 +583,7 @@ class ListValueContainer :
 	    if (!mWrapper)
 	    {
 		const CCSSettingPtr &setting (mContainedValueGenerator.GetSetting (type, info));
-		CCSSettingValue     *value = RawValueToCCSValue (mRawChildValue);
+		CCSSettingValue     *value = GetValueForListWrapper ();
 
 		value->parent = setting.get ();
 		value->isListChild = TRUE;
@@ -573,17 +598,28 @@ class ListValueContainer :
 	    return mWrapper;
 	}
 
-	typedef cc::ListWrapper <CCSSettingValueList, CCSSettingValue *> SVLInterface;
+	virtual CCSSettingValue * GetValueForListWrapper () = 0;
+};
 
-	cci::SettingValueListWrapper::Ptr mWrapper;
+template <typename SettingValueType>
+class ListValueContainer :
+    public ListValueContainerBase
+{
+    public:
 
-	/* ccsFreeSettingValue has an implicit
-	 * dependency on mWrapper (CCSSettingValue -> CCSSetting ->
-	 * CCSSettingInfo -> cci::SettingValueListWrapper), these should
-	 * be kept after mWrapper here */
-	ContainedValueGenerator           mContainedValueGenerator;
-	CCSSettingValuePtr                mContainedWrapper;
-	const SettingValueType            &mRawChildValue;
+	ListValueContainer (const SettingValueType &value) :
+	    mRawChildValue (value)
+	{
+	}
+
+    private:
+
+	CCSSettingValue * GetValueForListWrapper ()
+	{
+	    return RawValueToCCSValue (mRawChildValue);
+	}
+
+	const SettingValueType  &mRawChildValue;
 };
 
 template <typename SettingValueType>
@@ -892,25 +928,39 @@ class SetWithDisallowedValueBase
 {
     protected:
 
-	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
-
-	SetWithDisallowedValueBase (SetFunction             setFunction,
-				    const CCSSettingPtr     &setting,
+	SetWithDisallowedValueBase (const CCSSettingPtr     &setting,
 				    const CCSSettingInfoPtr &info) :
-	    mSetFunction (setFunction),
 	    mSetting (setting),
 	    mInfo (info)
 	{
 	}
 
-	SetFunction       mSetFunction;
 	CCSSettingPtr     mSetting;
 	CCSSettingInfoPtr mInfo;
 };
 
 template <typename SettingValueType>
+class SetWithDisallowedValueTemplatedBase :
+    public SetWithDisallowedValueBase
+{
+    protected:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+
+	SetWithDisallowedValueTemplatedBase (SetFunction             setFunction,
+					     const CCSSettingPtr     &setting,
+					     const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase (setting, info),
+	    mSetFunction (setFunction)
+	{
+	}
+
+	SetFunction       mSetFunction;
+};
+
+template <typename SettingValueType>
 class SetWithDisallowedValue :
-    public SetWithDisallowedValueBase <SettingValueType>
+    public SetWithDisallowedValueTemplatedBase <SettingValueType>
 {
     public:
 
@@ -919,7 +969,7 @@ class SetWithDisallowedValue :
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <SettingValueType> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <SettingValueType> (setFunction, setting, info)
 	{
 	}
 
@@ -931,21 +981,21 @@ class SetWithDisallowedValue :
 
 template <>
 class SetWithDisallowedValue <int> :
-    public SetWithDisallowedValueBase <int>
+    public SetWithDisallowedValueTemplatedBase <int>
 {
     public:
 
 	typedef typename SettingMutators <int>::SetFunction SetFunction;
-	typedef SetWithDisallowedValueBase <int> Parent;
+	typedef SetWithDisallowedValueTemplatedBase <int> Parent;
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <int> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <int> (setFunction, setting, info)
 	{
 	}
 
-	virtual Bool operator () ()
+	Bool operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    Parent::mInfo->forInt.min - 1,
@@ -955,21 +1005,21 @@ class SetWithDisallowedValue <int> :
 
 template <>
 class SetWithDisallowedValue <float> :
-    public SetWithDisallowedValueBase <float>
+    public SetWithDisallowedValueTemplatedBase <float>
 {
     public:
 
 	typedef typename SettingMutators <float>::SetFunction SetFunction;
-	typedef SetWithDisallowedValueBase <float> Parent;
+	typedef SetWithDisallowedValueTemplatedBase <float> Parent;
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <float> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <float> (setFunction, setting, info)
 	{
 	}
 
-	virtual Bool operator () ()
+	Bool operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    Parent::mInfo->forFloat.min - 1,
@@ -979,21 +1029,21 @@ class SetWithDisallowedValue <float> :
 
 template <>
 class SetWithDisallowedValue <const char *> :
-    public SetWithDisallowedValueBase <const char *>
+    public SetWithDisallowedValueTemplatedBase <const char *>
 {
     public:
 
 	typedef typename SettingMutators <const char *>::SetFunction SetFunction;
-	typedef SetWithDisallowedValueBase <const char *> Parent;
+	typedef SetWithDisallowedValueTemplatedBase <const char *> Parent;
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
 				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase <const char *> (setFunction, setting, info)
+	    SetWithDisallowedValueTemplatedBase <const char *> (setFunction, setting, info)
 	{
 	}
 
-	virtual Bool operator () ()
+	Bool operator () ()
 	{
 	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
 					    NULL,
