@@ -1,5 +1,7 @@
-include (CompizBcop)
+set (COMPIZ_MAIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set (COMPIZ_MAIN_BINARY_DIR ${CMAKE_CURRENT_BINDARY_DIR})
 
+include (CompizBcop)
 
 add_subdirectory( string )
 add_subdirectory( logmessage )
