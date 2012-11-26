@@ -822,14 +822,14 @@ writeOption (CCSSetting * setting)
     {
     case TypeString:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetString (setting, &value))
 		gconf_client_set_string (client, pathName, value, NULL);
 	}
 	break;
     case TypeMatch:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetMatch (setting, &value))
 		gconf_client_set_string (client, pathName, value, NULL);
 	}
