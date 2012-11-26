@@ -2521,9 +2521,10 @@ ccsCopyValueInto (const CCSSettingValue *from,
 		    sizeof (CCSSettingColorValue));
 	    break;
 	case TypeList:
-	    assert (from->parent);
+	    assert ((int) from->parent);
 	    to->value.asList = ccsCopyList (from->value.asList, from->parent);
 	default:
+	    ccsError ("unexpected setting type in ccsCopyValueInto")
 	    return FALSE;
 	    break;
     }
