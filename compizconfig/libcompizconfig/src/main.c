@@ -1827,7 +1827,7 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 }
 
 void
-ccsCopyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 {	
     memcpy (to, from, sizeof (CCSSettingInfo));
 
@@ -2476,10 +2476,10 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
 }
 
 Bool
-ccsCopyValueInto (CCSSettingValue *from,
-		  CCSSettingValue *to,
-		  CCSSettingType  type,
-		  CCSSettingInfo  *info)
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info)
 {
     to->parent = from->parent;
     to->isListChild = from->isListChild;
@@ -2533,9 +2533,9 @@ ccsCopyValueInto (CCSSettingValue *from,
 }
 
 CCSSettingValue *
-ccsCopyValue (CCSSettingValue *orig,
-	      CCSSettingType  type,
-	      CCSSettingInfo  *info)
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info)
 {
     CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 
