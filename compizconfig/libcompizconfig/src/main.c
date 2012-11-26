@@ -2524,7 +2524,7 @@ ccsCopyValueInto (const CCSSettingValue *from,
 	    assert ((int) from->parent);
 	    to->value.asList = ccsCopyList (from->value.asList, from->parent);
 	default:
-	    ccsError ("unexpected setting type in ccsCopyValueInto")
+	    ccsError ("unexpected setting type in ccsCopyValueInto");
 	    return FALSE;
 	    break;
     }
