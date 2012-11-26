@@ -30,6 +30,7 @@
 #include <opengl/opengl.h>
 
 #include "expo_options.h"
+#include "glow.h"
 
 class ExpoScreen :
     public ScreenInterface,
@@ -113,6 +114,11 @@ class ExpoScreen :
 
 	CompScreen::GrabHandle grabIndex;
 
+	GLTexture::List outline_texture;
+	CompSize        outline_texture_size;
+
+	const GlowTextureProperties *mGlowTextureProperties;
+
     private:
 	void moveFocusViewport (int, int);
 	void finishWindowMovement ();
@@ -138,6 +144,7 @@ class ExpoWindow :
 {
     public:
 	ExpoWindow (CompWindow *);
+	~ExpoWindow ();
 
 	bool damageRect (bool, const CompRect&);
 
@@ -150,11 +157,21 @@ class ExpoWindow :
 			    unsigned int, unsigned int);
 	void glDrawTexture (GLTexture*, const GLMatrix&,
 	                    const GLWindowPaintAttrib&, unsigned int);
+	void
+	paintGlow (const GLMatrix            &transform,
+	           const GLWindowPaintAttrib &attrib,
+		   const CompRegion	     &paintRegion,
+		   unsigned int		     mask);
+
+	void
+	computeGlowQuads (GLTexture::Matrix *matrix);
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;
 	GLWindow        *gWindow;
 	ExpoScreen      *eScreen;
+
+	GlowQuad *mGlowQuads;
 };
 
 class ExpoPluginVTable :
