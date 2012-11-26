@@ -817,7 +817,6 @@ ccsCleanupSettingInfo (CCSSettingInfo *info,
 	    ccsIntDescListFree (info->forList.listInfo->
 				forInt.desc, TRUE);
 	free (info->forList.listInfo);
-	//ccsSettingValueListFree (sPrivate->value->value.asList, TRUE);
 	break;
     default:
 	break;
