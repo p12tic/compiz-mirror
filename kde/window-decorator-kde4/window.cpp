@@ -554,6 +554,17 @@ KWD::Window::showWindowMenu (const QRect &pos)
     showWindowMenu (pos.bottomLeft ());
 }
 
+void
+KWD::Window::showApplicationMenu (const QPoint &p)
+{
+}
+
+bool
+KWD::Window::menuAvailable () const
+{
+    return false;
+}
+
 KWD::Options::MouseCommand
 KWD::Window::buttonToCommand (Qt::MouseButtons button)
 {
