@@ -27,6 +27,7 @@
 
 #include "expo.h"
 #include "click-threshold.h"
+#include "wall-offset.h"
 #include <math.h>
 #ifndef USE_GLES
 #include <GL/glu.h>
@@ -884,9 +885,25 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
     sTransform.rotate (rotation, 0.0f, 1.0f, 0.0f);
     sTransform.scale (aspectX, aspectY, 1.0);
 
+    CompPoint offsetInScreenCoords (optionGetXOffset (),
+				    optionGetYOffset ());
+    float     offsetInWorldCoordX, offsetInWorldCoordY, worldScaleFactorX, worldScaleFactorY;
+
+    compiz::expo::calculateWallOffset (*output,
+				       offsetInScreenCoords,
+				       vpSize,
+				       *screen,
+				       offsetInWorldCoordX,
+				       offsetInWorldCoordY,
+				       worldScaleFactorX,
+				       worldScaleFactorY,
+				       sigmoidProgress (expoCam));
+
     /* translate expo to center */
-    sTransform.translate (vpSize.x () * sx * -0.5,
-			  vpSize.y () * sy * 0.5, 0.0f);
+    sTransform.translate (vpSize.x () * sx * -0.5 + offsetInWorldCoordX,
+			  vpSize.y () * sy * 0.5 - offsetInWorldCoordY, 0.0f);
+    sTransform.scale (worldScaleFactorX, worldScaleFactorY, 1.0f);
+
 
     if (optionGetDeform () == DeformCurve)
 	sTransform.translate ((vpSize.x () - 1) * sx * 0.5, 0.0, 0.0);
@@ -1256,7 +1273,21 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 	}
     }
 
-    return gWindow->glDraw (transform, attrib, region, mask);
+    bool status = gWindow->glDraw (transform, attrib, region, mask);
+
+    if (window->type () & CompWindowTypeDesktopMask &&
+        eScreen->optionGetSelectedColor ()[3] &&  // colour is visible
+        mGlowQuads &&
+        eScreen->paintingVp == eScreen->selectedVp &&
+        region.numRects ())
+    {
+	/* reset geometry and paint */
+	gWindow->vertexBuffer ()->begin ();
+	gWindow->vertexBuffer ()->end ();
+	paintGlow (transform, attrib, infiniteRegion, mask);
+    }
+
+    return status;
 }
 
 static const unsigned short EXPO_GRID_SIZE = 100;
@@ -1470,7 +1501,8 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     clickTime (0),
     doubleClick (false),
     vpNormals (360 * 3),
-    grabIndex (0)
+    grabIndex (0),
+    mGlowTextureProperties (&glowTextureProperties)
 {
     leftKey  = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Left"));
     rightKey = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Right"));
@@ -1495,6 +1527,11 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
+
+    outline_texture = GLTexture::imageDataToTexture (mGlowTextureProperties->textureData,
+						     CompSize (mGlowTextureProperties->textureSize,
+							       mGlowTextureProperties->textureSize),
+						     GL_RGBA, GL_UNSIGNED_BYTE);
 }
 
 ExpoScreen::~ExpoScreen ()
@@ -1509,10 +1546,25 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
     eScreen (ExpoScreen::get (screen)),
+    mGlowQuads (NULL),
     expoOpacity (1.0f)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
+
+    if (window->type () & CompWindowTypeDesktopMask)
+    {
+	foreach (GLTexture *tex, eScreen->outline_texture)
+	{
+	    GLTexture::Matrix mat = tex->matrix ();
+	    computeGlowQuads (&mat);
+	}
+    }
+}
+
+ExpoWindow::~ExpoWindow ()
+{
+    computeGlowQuads (NULL);
 }
 
 bool
