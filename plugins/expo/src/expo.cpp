@@ -1209,6 +1209,11 @@ ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib& attrib,
     if (expoCam > 0)
 	mask |= PAINT_SCREEN_CLEAR_MASK;
 
+    if (optionGetExpoAnimation () == ExpoScreen::ExpoAnimationZoom)
+	vpBrightness = 0.0f;
+    else
+	vpBrightness = (1.0f - sigmoidProgress (expoCam));
+
     if (expoCam <= 0 || (expoCam > 0.0 && expoCam < 1.0 &&
 			 optionGetExpoAnimation () != ExpoAnimationZoom))
     {
@@ -1241,15 +1246,17 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
     if (eScreen->expoCam == 0.0f)
 	return gWindow->glDraw (transform, attrib, region, mask);
 
-    GLWindowPaintAttrib eAttrib (attrib);
     int                expoAnimation;
+
+    // Scaling factors to be applied to attrib later in glDrawTexture
+    expoOpacity = 1.0f;
 
     expoAnimation = eScreen->optionGetExpoAnimation ();
 
     if (eScreen->expoActive)
     {
 	if (expoAnimation != ExpoScreen::ExpoAnimationZoom)
-	    eAttrib.opacity = attrib.opacity * eScreen->expoCam;
+	    expoOpacity = eScreen->expoCam;
 
 	if (window->wmType () & CompWindowTypeDockMask &&
 	    eScreen->optionGetHideDocks ())
@@ -1257,28 +1264,16 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 	    if (expoAnimation == ExpoScreen::ExpoAnimationZoom &&
 		eScreen->paintingVp == eScreen->selectedVp)
 	    {
-		eAttrib.opacity = attrib.opacity *
-		                      (1 - sigmoidProgress (eScreen->expoCam));
+		expoOpacity = (1.0f - sigmoidProgress (eScreen->expoCam));
 	    }
 	    else
 	    {
-		eAttrib.opacity = 0;
+		expoOpacity = 0.0f;
 	    }
 	}
-
-	eAttrib.brightness = attrib.brightness * eScreen->vpBrightness;
-	eAttrib.saturation = attrib.saturation * eScreen->vpSaturation;
-    }
-    else
-    {
-	if (expoAnimation == ExpoScreen::ExpoAnimationZoom)
-	    eAttrib.brightness = 0;
-	else
-	    eAttrib.brightness = attrib.brightness *
-	                              (1 - sigmoidProgress (eScreen->expoCam));
     }
 
-    bool status = gWindow->glDraw (transform, eAttrib, region, mask);
+    bool status = gWindow->glDraw (transform, attrib, region, mask);
 
     if (window->type () & CompWindowTypeDesktopMask &&
         eScreen->optionGetSelectedColor ()[3] &&  // colour is visible
@@ -1368,6 +1363,15 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
                            const GLWindowPaintAttrib &attrib,
 			   unsigned int        mask)
 {
+    GLWindowPaintAttrib wAttrib (attrib);
+
+    if (eScreen->expoCam > 0.0)
+    {
+	wAttrib.opacity *= expoOpacity;
+	wAttrib.brightness *= eScreen->vpBrightness;
+	wAttrib.saturation *= eScreen->vpSaturation;
+    }
+
     if (eScreen->expoCam > 0.0                                 &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve &&
 	eScreen->gScreen->lighting ()                          &&
@@ -1411,7 +1415,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 #ifndef USE_GLES
 	glEnable (GL_NORMALIZE);
 #endif
-	gWindow->glDrawTexture (texture, transform, attrib, mask);
+	gWindow->glDrawTexture (texture, transform, wAttrib, mask);
 #ifndef USE_GLES
 	glDisable (GL_NORMALIZE);
 #endif
@@ -1419,7 +1423,7 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
     else
     {
 //	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (texture, transform, attrib, mask);
+	gWindow->glDrawTexture (texture, transform, wAttrib, mask);
 //	glDisable (GL_NORMALIZE);
     }
 }
@@ -1542,7 +1546,8 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),
     eScreen (ExpoScreen::get (screen)),
-    mGlowQuads (NULL)
+    mGlowQuads (NULL),
+    expoOpacity (1.0f)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);

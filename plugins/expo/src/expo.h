@@ -171,7 +171,9 @@ class ExpoWindow :
 	GLWindow        *gWindow;
 	ExpoScreen      *eScreen;
 
+    private:
 	GlowQuad *mGlowQuads;
+	float expoOpacity;
 };
 
 class ExpoPluginVTable :
