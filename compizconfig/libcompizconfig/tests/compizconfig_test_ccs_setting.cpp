@@ -372,20 +372,6 @@ RawValueToCCSValue (const SettingValueType &value)
     return settingValue;
 }
 
-CCSSettingValuePtr
-ListValueToSettingValueList (CCSSettingValue *listChild)
-{
-    listChild->isListChild = TRUE;
-
-    CCSSettingValueList valueListHead = ccsSettingValueListAppend (NULL, listChild);
-    CCSSettingValuePtr  valueListValue (AutoDestroy (NewCCSSettingValue (),
-						     ccsSettingValueUnref));
-
-    valueListValue->value.asList = valueListHead;
-
-    return valueListValue;
-}
-
 template <typename SettingValueType>
 CCSSettingValuePtr
 RawValueToListValue (const SettingValueType &value)
