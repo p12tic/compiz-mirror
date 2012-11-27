@@ -898,8 +898,18 @@ struct SettingMutators
 				 SettingValueType *);
 };
 
+class GetTypeRedirection
+{
+    public:
+
+	virtual ~GetTypeRedirection () {}
+	virtual const CCSSettingInterface * RedirectSettingInterface () = 0;
+	virtual void RestoreSettingInterface (const CCSSettingInterface *) = 0;
+};
+
 class DefaultImplSetParamBase :
-    public DefaultImplSetParamInterface
+    public DefaultImplSetParamInterface,
+    public GetTypeRedirection
 {
     protected:
 
@@ -986,7 +996,7 @@ class RequireSettingInterfaceRedirection
 {
     public:
 
-	RequireSettingInterfaceRedirection (DefaultImplSetParamBase *base) :
+	RequireSettingInterfaceRedirection (GetTypeRedirection *base) :
 	    mBase (base),
 	    mSettingInterface (mBase->RedirectSettingInterface ())
 	{
@@ -999,7 +1009,7 @@ class RequireSettingInterfaceRedirection
 
     private:
 
-	DefaultImplSetParamBase   *mBase;
+	GetTypeRedirection        *mBase;
 	const CCSSettingInterface *mSettingInterface;
 };
 

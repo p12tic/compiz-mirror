@@ -658,61 +658,6 @@ ccsSettingDefaultValueEmptyInitializer (CCSSettingType  type,
     }
 }
 
-CCSSetting *
-ccsSettingDefaultImplNew (CCSPlugin                             *plugin,
-			  const char                            *name,
-			  CCSSettingType                        type,
-			  const char                            *shortDesc,
-			  const char                            *longDesc,
-			  const char                            *hints,
-			  const char                            *group,
-			  const char                            *subGroup,
-			  CCSSettingDefaultValueInitializerFunc valueInit,
-			  void                                  *valueInitData,
-			  CCSSettingInfoInitializerFunc         infoInit,
-			  void                                  *infoInitData,
-			  CCSObjectAllocationInterface          *ai,
-			  const CCSInterfaceTable               *interfaces)
-{
-    CCSSetting *setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
-
-    if (!setting)
-	return NULL;
-
-    ccsObjectInit (setting, ai);
-
-    CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) (*ai->calloc_) (ai->allocator, 1, sizeof (CCSSettingPrivate));
-
-    if (!sPrivate)
-    {
-	free (setting);
-	return NULL;
-    }
-
-    ccsObjectSetPrivate (setting, (CCSPrivate *) sPrivate);
-    ccsObjectAddInterface (setting, (CCSInterface *) interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
-    ccsSettingRef (setting);
-
-    sPrivate->parent = plugin;
-    sPrivate->isDefault = TRUE;
-    sPrivate->name = strdup (name);
-
-    sPrivate->shortDesc = strdup (shortDesc);
-    sPrivate->longDesc  = strdup (longDesc);
-    sPrivate->group     = strdup (group);
-    sPrivate->hints     = strdup (hints);
-    sPrivate->subGroup  = strdup (subGroup);
-
-    sPrivate->type = type;
-    sPrivate->value = &sPrivate->defaultValue;
-    sPrivate->defaultValue.parent = setting;
-
-    (*infoInit) (type, &sPrivate->info, infoInitData);
-    (*valueInit) (type, &sPrivate->info, &sPrivate->defaultValue, valueInitData);
-
-    return setting;
-}
-
 static void
 addOptionForPluginPB (CCSPlugin * plugin,
 		      const char * name,
