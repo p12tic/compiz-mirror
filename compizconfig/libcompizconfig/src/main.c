@@ -817,7 +817,6 @@ ccsCleanupSettingInfo (CCSSettingInfo *info,
 	    ccsIntDescListFree (info->forList.listInfo->
 				forInt.desc, TRUE);
 	free (info->forList.listInfo);
-	//ccsSettingValueListFree (sPrivate->value->value.asList, TRUE);
 	break;
     default:
 	break;
@@ -1827,7 +1826,7 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
 }
 
 void
-ccsCopyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 {	
     memcpy (to, from, sizeof (CCSSettingInfo));
 
@@ -2476,10 +2475,10 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
 }
 
 Bool
-ccsCopyValueInto (CCSSettingValue *from,
-		  CCSSettingValue *to,
-		  CCSSettingType  type,
-		  CCSSettingInfo  *info)
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info)
 {
     to->parent = from->parent;
     to->isListChild = from->isListChild;
@@ -2522,9 +2521,10 @@ ccsCopyValueInto (CCSSettingValue *from,
 		    sizeof (CCSSettingColorValue));
 	    break;
 	case TypeList:
-	    assert (from->parent);
+	    assert (from->parent != NULL);
 	    to->value.asList = ccsCopyList (from->value.asList, from->parent);
 	default:
+	    ccsError ("unexpected setting type in ccsCopyValueInto");
 	    return FALSE;
 	    break;
     }
@@ -2533,9 +2533,9 @@ ccsCopyValueInto (CCSSettingValue *from,
 }
 
 CCSSettingValue *
-ccsCopyValue (CCSSettingValue *orig,
-	      CCSSettingType  type,
-	      CCSSettingInfo  *info)
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info)
 {
     CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 
