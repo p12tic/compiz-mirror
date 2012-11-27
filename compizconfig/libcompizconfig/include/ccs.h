@@ -803,18 +803,18 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
 
 /* Deep copy setting value */
 CCSSettingValue *
-ccsCopyValue (CCSSettingValue *orig,
-	      CCSSettingType  type,
-	      CCSSettingInfo  *info);
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info);
 Bool
-ccsCopyValueInto (CCSSettingValue *from,
-		  CCSSettingValue *to,
-		  CCSSettingType  type,
-		  CCSSettingInfo  *info);
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info);
 
 /* Deep copy setting info */
 void
-ccsCopyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type);
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type);
 
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
