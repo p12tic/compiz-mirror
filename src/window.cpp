@@ -5461,7 +5461,9 @@ PrivateWindow::processMap ()
     else
 	stackingMode = CompStackingUpdateModeInitialMap;
 
+    ++pendingMaps;
     window->updateAttributes (stackingMode);
+    --pendingMaps;
 
     if (window->minimized () && !initiallyMinimized)
 	window->unminimize ();
