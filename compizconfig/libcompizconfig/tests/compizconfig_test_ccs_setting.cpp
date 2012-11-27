@@ -909,7 +909,6 @@ class DefaultImplSetParam :
 
 };
 
-template <typename SettingValueType>
 class SetWithDisallowedValueBase
 {
     protected:
