@@ -99,7 +99,7 @@ namespace
 	XChangeProperty (dpy, w,
 			 _NET_WM_USER_TIME,
 			 XA_CARDINAL, 32, PropModeReplace,
-			 unsigned char *) &value, 1);
+			 (unsigned char *) &value, 1);
     }
 
     void SetClientLeader (Display *dpy, Window w, Window leader)

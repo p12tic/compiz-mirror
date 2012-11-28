@@ -2611,7 +2611,7 @@ PrivateWindow::avoidStackingRelativeTo (CompWindow *w)
     if (w->destroyed ())
 	return true;
 
-    if (!w->priv->shaded && !w->priv->pendingMaps)
+    if (!w->priv->receivedMapRequestAndAwaitingMap && !w->priv->shaded && !w->priv->pendingMaps)
     {
 	if (!w->isViewable () || !w->isMapped ())
 	    return true;
@@ -5424,6 +5424,9 @@ PrivateWindow::processMap ()
 
     priv->managed = true;
 
+    if (!initiallyMinimized && !(priv->state & CompWindowStateHiddenMask))
+	receivedMapRequestAndAwaitingMap = true;
+
     if (!priv->placed)
     {
 	int            gravity = priv->sizeHints.win_gravity;
@@ -5461,9 +5464,7 @@ PrivateWindow::processMap ()
     else
 	stackingMode = CompStackingUpdateModeInitialMap;
 
-    ++pendingMaps;
     window->updateAttributes (stackingMode);
-    --pendingMaps;
 
     if (window->minimized () && !initiallyMinimized)
 	window->unminimize ();
@@ -5476,7 +5477,10 @@ PrivateWindow::processMap ()
 	    screen->setCurrentDesktop (priv->desktop);
 
 	if (!(priv->state & CompWindowStateHiddenMask))
+	{
 	    show ();
+	    receivedMapRequestAndAwaitingMap = false;
+	 }
 
 	if (allowFocus)
 	{
@@ -6246,6 +6250,7 @@ PrivateWindow::PrivateWindow () :
     pendingUnmaps (0),
     pendingMaps (0),
     pendingConfigures (screen->dpy ()),
+    receivedMapRequestAndAwaitingMap (false),
 
     startupId (0),
     resName (0),
