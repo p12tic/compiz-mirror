@@ -647,6 +647,31 @@ struct _CCSSetting
     CCSObject object;
 };
 
+typedef void (*CCSSettingDefaultValueInitializerFunc) (CCSSettingType  type,
+						       CCSSettingInfo  *info,
+						       CCSSettingValue *value,
+						       void            *data);
+
+typedef void (*CCSSettingInfoInitializerFunc) (CCSSettingType  type,
+					       CCSSettingInfo  *info,
+					       void            *data);
+
+CCSSetting *
+ccsSettingDefaultImplNew (CCSPlugin                             *plugin,
+			  const char                            *name,
+			  CCSSettingType                        type,
+			  const char                            *shortDesc,
+			  const char                            *longDesc,
+			  const char                            *hints,
+			  const char                            *group,
+			  const char                            *subGroup,
+			  CCSSettingDefaultValueInitializerFunc valueInit,
+			  void                                  *valueInitData,
+			  CCSSettingInfoInitializerFunc         infoInit,
+			  void                                  *infoInitData,
+			  CCSObjectAllocationInterface          *ai,
+			  const CCSInterfaceTable               *interfaces);
+
 struct _CCSPluginCategory
 {
     const char *name;      /* plugin category name */
