@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <tr1/tuple>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -45,6 +47,7 @@ using ::testing::WithParamInterface;
 using ::testing::Invoke;
 using ::testing::ReturnNull;
 using ::testing::Values;
+using ::testing::Combine;
 
 TEST(CCSSettingTest, TestMock)
 {
@@ -497,7 +500,7 @@ class CopyRawValue <const char *> :
 	{
 	    /* XXX: Valgrind complains here that mValue is uninitialized, but
 	     * verification using gdb confirms that isn't true */
-	    return strdup (Parent::mValue);
+	    return Parent::mValue ? strdup (Parent::mValue) : NULL;
 	}
 };
 
@@ -749,7 +752,17 @@ class ListValueContainerBase :
 
     private:
 
-	const cci::SettingValueListWrapper::Ptr &
+	virtual const cci::SettingValueListWrapper::Ptr &
+	SetupWrapper (CCSSettingType          type,
+		      const CCSSettingInfoPtr &info) = 0;
+};
+
+class ListValueContainerFromChildValueBase :
+    public ListValueContainerBase
+{
+    private:
+
+	virtual const cci::SettingValueListWrapper::Ptr &
 	SetupWrapper (CCSSettingType          type,
 		      const CCSSettingInfoPtr &info)
 	{
@@ -774,13 +787,45 @@ class ListValueContainerBase :
 	virtual CCSSettingValue * GetValueForListWrapper () = 0;
 };
 
-template <typename SettingValueType>
-class ListValueContainer :
+class ListValueContainerFromList :
     public ListValueContainerBase
 {
     public:
 
-	ListValueContainer (const SettingValueType &value) :
+	ListValueContainerFromList (CCSSettingValueList rawValueList) :
+	    mRawValueList (rawValueList)
+	{
+	}
+
+    private:
+
+	const cci::SettingValueListWrapper::Ptr &
+	SetupWrapper (CCSSettingType          type,
+		      const CCSSettingInfoPtr &info)
+	{
+	    if (!mWrapper)
+	    {
+		const CCSSettingPtr &setting (mContainedValueGenerator.GetSetting (type, info));
+		mWrapper.reset (new cci::SettingValueListWrapper (ccsCopyList (mRawValueList, setting.get ()),
+								  cci::Deep,
+								  type,
+								  info,
+								  setting));
+	    }
+
+	    return mWrapper;
+	}
+
+	CCSSettingValueList mRawValueList;
+};
+
+template <typename SettingValueType>
+class ChildValueListValueContainer :
+    public ListValueContainerFromChildValueBase
+{
+    public:
+
+	ChildValueListValueContainer (const SettingValueType &value) :
 	    mRawChildValue (value)
 	{
 	}
@@ -799,8 +844,136 @@ template <typename SettingValueType>
 typename ValueContainer <CCSSettingValueList>::Ptr
 ContainList (const SettingValueType &value)
 {
-    return boost::make_shared <ListValueContainer <SettingValueType> > (value);
+    return boost::make_shared <ChildValueListValueContainer <SettingValueType> > (value);
 }
+
+typename ValueContainer <CCSSettingValueList>::Ptr
+ContainPrexistingList (const CCSSettingValueList &value)
+{
+    return boost::make_shared <ListValueContainerFromList> (value);
+}
+
+template <typename SettingValueType>
+struct SettingMutators
+{
+    typedef CCSSetStatus (*SetFunction) (CCSSetting *setting,
+					 SettingValueType data,
+					 Bool);
+    typedef Bool (*GetFunction) (CCSSetting *setting,
+				 SettingValueType *);
+};
+
+typedef enum _SetMethod
+{
+    ThroughRaw,
+    ThroughValue
+} SetMethod;
+
+template <typename SettingValueType>
+CCSSetStatus performRawSet (const SettingValueType                                  &rawValue,
+			    const CCSSettingPtr                                     &setting,
+			    typename SettingMutators<SettingValueType>::SetFunction setFunction)
+{
+    return (*setFunction) (setting.get (), rawValue, FALSE);
+}
+
+template <typename SettingValueType>
+class RawValueContainmentPacker
+{
+    public:
+
+	RawValueContainmentPacker (const SettingValueType &value) :
+	    mValue (value)
+	{
+	}
+
+	typename ValueContainer <SettingValueType>::Ptr
+	operator () ()
+	{
+	    return ContainNormal (mValue);
+	}
+
+    private:
+
+	const SettingValueType &mValue;
+};
+
+template <>
+class RawValueContainmentPacker <CCSSettingValueList>
+{
+    public:
+
+	RawValueContainmentPacker (const CCSSettingValueList &value) :
+	    mValue (value)
+	{
+	}
+
+	typename ValueContainer <CCSSettingValueList>::Ptr
+	operator () ()
+	{
+	    return ContainPrexistingList (mValue);
+	}
+
+    private:
+
+	const CCSSettingValueList &mValue;
+};
+
+template <typename SettingValueType>
+typename ValueContainer <SettingValueType>::Ptr
+ContainRawValue (const SettingValueType &value)
+{
+    return RawValueContainmentPacker <SettingValueType> (value) ();
+}
+
+template <typename SettingValueType>
+CCSSetStatus performValueSet (const SettingValueType  &rawValue,
+			      const CCSSettingInfoPtr &info,
+			      CCSSettingType          type,
+			      const CCSSettingPtr     &setting)
+{
+    typename ValueContainer <SettingValueType>::Ptr container (ContainRawValue (rawValue));
+    const CCSSettingValuePtr                        &value (container->getContainedValue (type,
+											  info));
+
+    return ccsSetValue (setting.get (), value.get (), FALSE);
+}
+
+template <typename SettingValueType>
+CCSSetStatus performSet (const SettingValueType                                  &rawValue,
+			 const CCSSettingPtr                                     &setting,
+			 const CCSSettingInfoPtr                                 &info,
+			 CCSSettingType                                          type,
+			 typename SettingMutators<SettingValueType>::SetFunction setFunction,
+			 SetMethod                                               method)
+{
+    /* XXX:
+     * This is really bad design because it effectively involves runtime
+     * switching on types. Unfortunately, there doesn't seem to be a better
+     * way to do this that's not hugely verbose - injecting the method
+     * as a class or a function would mean that we'd have to expose
+     * template parameters to areas where we can't do that because we
+     * want the tests to run once for ccsSetValue and once for
+     * ccsSet* . If we did that, we'd have to either write the tests
+     * twice, or write the INSTANTIATE_TEST_CASE_P sections twice and
+     * both are 200+ lines of copy-and-paste as opposed to this type-switch
+     * here
+     */
+    switch (method)
+    {
+	case ThroughRaw:
+	    return performRawSet (rawValue, setting, setFunction);
+	    break;
+	case ThroughValue:
+	    return performValueSet (rawValue, info, type, setting);
+	    break;
+	default:
+	    throw std::runtime_error ("called PerfomSet with unknown SetMethod");
+    }
+
+    throw std::runtime_error ("Unreachable");
+}
+
 
 class DefaultImplSetParamInterface
 {
@@ -815,10 +988,10 @@ class DefaultImplSetParamInterface
 	virtual void TearDownSetting () = 0;
 	virtual CCSSettingType GetSettingType () = 0;
 	virtual void         SetUpParam (const CCSSettingPtr &) = 0;
-	virtual CCSSetStatus setWithInvalidType () = 0;
-	virtual CCSSetStatus setToFailValue () = 0;
-	virtual CCSSetStatus setToNonDefaultValue () = 0;
-	virtual CCSSetStatus setToDefaultValue () = 0;
+	virtual CCSSetStatus setWithInvalidType (SetMethod) = 0;
+	virtual CCSSetStatus setToFailValue (SetMethod) = 0;
+	virtual CCSSetStatus setToNonDefaultValue (SetMethod) = 0;
+	virtual CCSSetStatus setToDefaultValue (SetMethod) = 0;
 };
 
 void stubInitializeSettingInfo (CCSSettingType type,
@@ -888,16 +1061,6 @@ class MockInitializerFuncsWithDelegators :
 	CCSSettingValue *mValue;
 };
 
-template <typename SettingValueType>
-struct SettingMutators
-{
-    typedef CCSSetStatus (*SetFunction) (CCSSetting *setting,
-					 SettingValueType data,
-					 Bool);
-    typedef Bool (*GetFunction) (CCSSetting *setting,
-				 SettingValueType *);
-};
-
 class GetTypeRedirection
 {
     public:
@@ -922,8 +1085,6 @@ class DefaultImplSetParamBase :
 
 	virtual void TearDownSetting ()
 	{
-	    if (mSetting)
-		setToDefaultValue ();
 	}
 
 	void InitializeDefaultsForSetting (const SetUpSettingFunc &func)
@@ -942,7 +1103,8 @@ class DefaultImplSetParamBase :
 	{
 	    const CCSSettingInterface *settingInterface =
 		GET_INTERFACE (CCSSettingInterface, mSetting.get ());
-	    CCSSettingInterface tmpSettingInterface = *settingInterface;
+
+	    tmpSettingInterface = *settingInterface;
 
 	    tmpSettingInterface.settingGetType =
 		DefaultImplSetParamBase::returnIncorrectSettingType;
@@ -966,7 +1128,7 @@ class DefaultImplSetParamBase :
 				   GET_INTERFACE_TYPE (CCSSettingInterface));
 	}
 
-	virtual CCSSetStatus setToFailValue ()
+	virtual CCSSetStatus setToFailValue (SetMethod method)
 	{
 	    return SetFailed;
 	}
@@ -982,6 +1144,8 @@ class DefaultImplSetParamBase :
 	CCSSettingValuePtr mValue;
 	CCSSettingType     mType;
 	CCSSettingPtr      mSetting;
+
+	CCSSettingInterface tmpSettingInterface;
 
     private:
 
@@ -1077,23 +1241,23 @@ class DefaultImplSetParam :
 	    TakeReferenceToCreatedSetting (setting);
 	}
 
-	virtual CCSSetStatus setWithInvalidType ()
+	virtual CCSSetStatus setWithInvalidType (SetMethod method)
 	{
 	    /* Temporarily redirect the setting interface to
 	     * our own with an overloaded settingGetType function */
 	    RequireSettingInterfaceRedirection redirection (this);
 
-	    return (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+	    return performSet (mNonDefaultValue, mSetting, mInfo, mType, mSetFunction, method);
 	}
 
-	virtual CCSSetStatus setToNonDefaultValue ()
+	virtual CCSSetStatus setToNonDefaultValue (SetMethod method)
 	{
-	    return (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+	    return performSet (mNonDefaultValue, mSetting, mInfo, mType, mSetFunction, method);
 	}
 
-	virtual CCSSetStatus setToDefaultValue ()
+	virtual CCSSetStatus setToDefaultValue (SetMethod method)
 	{
-	    return (*mSetFunction) (mSetting.get (), mDefaultValue, FALSE);
+	    return performSet (mDefaultValue, mSetting, mInfo, mType, mSetFunction, method);
 	}
 
     private:
@@ -1113,14 +1277,17 @@ class SetWithDisallowedValueBase
     protected:
 
 	SetWithDisallowedValueBase (const CCSSettingPtr     &setting,
-				    const CCSSettingInfoPtr &info) :
+				    const CCSSettingInfoPtr &info,
+				    CCSSettingType          type) :
 	    mSetting (setting),
-	    mInfo (info)
+	    mInfo (info),
+	    mType (type)
 	{
 	}
 
 	CCSSettingPtr     mSetting;
 	CCSSettingInfoPtr mInfo;
+	CCSSettingType    mType;
 };
 
 template <typename SettingValueType>
@@ -1133,8 +1300,9 @@ class SetWithDisallowedValueTemplatedBase :
 
 	SetWithDisallowedValueTemplatedBase (SetFunction             setFunction,
 					     const CCSSettingPtr     &setting,
-					     const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueBase (setting, info),
+					     const CCSSettingInfoPtr &info,
+					     CCSSettingType          type) :
+	    SetWithDisallowedValueBase (setting, info, type),
 	    mSetFunction (setFunction)
 	{
 	}
@@ -1152,12 +1320,13 @@ class SetWithDisallowedValue :
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
-				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueTemplatedBase <SettingValueType> (setFunction, setting, info)
+				const CCSSettingInfoPtr &info,
+				CCSSettingType          type) :
+	    SetWithDisallowedValueTemplatedBase <SettingValueType> (setFunction, setting, info, type)
 	{
 	}
 
-	CCSSetStatus operator () ()
+	CCSSetStatus operator () (SetMethod method)
 	{
 	    return SetFailed;
 	}
@@ -1174,16 +1343,20 @@ class SetWithDisallowedValue <int> :
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
-				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueTemplatedBase <int> (setFunction, setting, info)
+				const CCSSettingInfoPtr &info,
+				CCSSettingType          type) :
+	    SetWithDisallowedValueTemplatedBase <int> (setFunction, setting, info, type)
 	{
 	}
 
-	CCSSetStatus operator () ()
+	CCSSetStatus operator () (SetMethod method)
 	{
-	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
-					    Parent::mInfo->forInt.min - 1,
-					    FALSE);
+	    return performSet <int> (Parent::mInfo->forInt.min - 1,
+				     Parent::mSetting,
+				     Parent::mInfo,
+				     Parent::mType,
+				     Parent::mSetFunction,
+				     method);
 	}
 };
 
@@ -1198,16 +1371,20 @@ class SetWithDisallowedValue <float> :
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
-				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueTemplatedBase <float> (setFunction, setting, info)
+				const CCSSettingInfoPtr &info,
+				CCSSettingType          type) :
+	    SetWithDisallowedValueTemplatedBase <float> (setFunction, setting, info, type)
 	{
 	}
 
-	CCSSetStatus operator () ()
+	CCSSetStatus operator () (SetMethod method)
 	{
-	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
-					    Parent::mInfo->forFloat.min - 1,
-					    FALSE);
+	    return performSet <float> (Parent::mInfo->forFloat.min - 1.0f,
+				       Parent::mSetting,
+				       Parent::mInfo,
+				       Parent::mType,
+				       Parent::mSetFunction,
+				       method);
 	}
 };
 
@@ -1222,16 +1399,20 @@ class SetWithDisallowedValue <const char *> :
 
 	SetWithDisallowedValue (SetFunction             setFunction,
 				const CCSSettingPtr     &setting,
-				const CCSSettingInfoPtr &info) :
-	    SetWithDisallowedValueTemplatedBase <const char *> (setFunction, setting, info)
+				const CCSSettingInfoPtr &info,
+				CCSSettingType          type) :
+	    SetWithDisallowedValueTemplatedBase <const char *> (setFunction, setting, info, type)
 	{
 	}
 
-	CCSSetStatus operator () ()
+	CCSSetStatus operator () (SetMethod method)
 	{
-	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
-					    NULL,
-					    FALSE);
+	    return performSet <const char *> (NULL,
+					      Parent::mSetting,
+					      Parent::mInfo,
+					      Parent::mType,
+					      Parent::mSetFunction,
+					      method);
 	}
 };
 
@@ -1261,12 +1442,13 @@ class DefaultImplSetFailureParam :
 	{
 	}
 
-	virtual CCSSetStatus setToFailValue ()
+	virtual CCSSetStatus setToFailValue (SetMethod method)
 	{
 	    typedef DefaultImplSetParam <SettingValueType> Parent;
 	    return SetWithDisallowedValue <SettingValueType> (Parent::mSetFunction,
 							      Parent::mSetting,
-							      Parent::mInfo) ();
+							      Parent::mInfo,
+							      Parent::mType) (method);
 	}
 };
 
@@ -1306,27 +1488,41 @@ FailureSemanticsParamFor (const typename ValueContainer <SettingValueType>::Ptr 
 								 changeTo);
 }
 
+typedef std::tr1::tuple <DefaultImplSetParamInterface::Ptr,
+			 SetMethod> SettingDefaultImplSetParamType;
+
 class SettingDefaultImplSet :
     public CCSSettingDefaultImplTest,
-    public WithParamInterface <DefaultImplSetParamInterface::Ptr>
+    public WithParamInterface <SettingDefaultImplSetParamType>
 {
     public:
 
+	SettingDefaultImplSet () :
+	    setHarness (std::tr1::get <0> (GetParam ())),
+	    setMethod (std::tr1::get <1> (GetParam ()))
+	{
+	}
+
 	virtual void SetUp ()
 	{
-	    GetParam ()->SetUpSetting (boost::bind (&CCSSettingDefaultImplTest::SetUpSetting, this, _1));
-	    GetParam ()->SetUpParam (setting);
+	    setHarness->SetUpSetting (boost::bind (&CCSSettingDefaultImplTest::SetUpSetting, this, _1));
+	    setHarness->SetUpParam (setting);
 	}
 
 	virtual void TearDown ()
 	{
-	    GetParam ()->TearDownSetting ();
+	    setHarness->TearDownSetting ();
 	}
 
 	CCSSettingType GetSettingType ()
 	{
-	    return GetParam ()->GetSettingType ();
+	    return setHarness->GetSettingType ();
 	}
+
+    protected:
+
+	DefaultImplSetParamInterface::Ptr setHarness;
+	SetMethod                         setMethod;
 };
 
 class SettingDefaulImplSetFailure :
@@ -1344,192 +1540,194 @@ TEST_P (SettingDefaultImplSet, Construction)
 
 TEST_P (SettingDefaultImplSet, WithInvalidType)
 {
-    EXPECT_EQ (SetFailed, GetParam ()->setWithInvalidType ());
+    EXPECT_EQ (SetFailed, setHarness->setWithInvalidType (setMethod));
 }
 
 TEST_P (SettingDefaultImplSet, ToNewValue)
 {
-    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
+    EXPECT_EQ (SetToNewValue, setHarness->setToNonDefaultValue (setMethod));
 }
 
 TEST_P (SettingDefaultImplSet, ToSameValue)
 {
-    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
-    EXPECT_EQ (SetToSameValue, GetParam ()->setToNonDefaultValue ());
+    EXPECT_EQ (SetToNewValue, setHarness->setToNonDefaultValue (setMethod));
+    EXPECT_EQ (SetToSameValue, setHarness->setToNonDefaultValue (setMethod));
 }
 
 TEST_P (SettingDefaultImplSet, ToDefaultValue)
 {
-    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
-    EXPECT_EQ (SetToDefault, GetParam ()->setToDefaultValue ());
+    EXPECT_EQ (SetToNewValue, setHarness->setToNonDefaultValue (setMethod));
+    EXPECT_EQ (SetToDefault, setHarness->setToDefaultValue (setMethod));
 }
 
 TEST_P (SettingDefaultImplSet, IsDefaultValue)
 {
-    EXPECT_EQ (SetToNewValue, GetParam ()->setToNonDefaultValue ());
-    EXPECT_EQ (SetToDefault, GetParam ()->setToDefaultValue ());
-    EXPECT_EQ (SetIsDefault, GetParam ()->setToDefaultValue ());
+    EXPECT_EQ (SetToNewValue, setHarness->setToNonDefaultValue (setMethod));
+    EXPECT_EQ (SetToDefault, setHarness->setToDefaultValue (setMethod));
+    EXPECT_EQ (SetIsDefault, setHarness->setToDefaultValue (setMethod));
 }
 
 TEST_P (SettingDefaulImplSetFailure, ToFailValue)
 {
-    EXPECT_EQ (SetFailed, GetParam ()->setToFailValue ());
+    EXPECT_EQ (SetFailed, setHarness->setToFailValue (setMethod));
 }
 
 INSTANTIATE_TEST_CASE_P (SetSemantics, SettingDefaulImplSetFailure,
-			 Values (FailureSemanticsParamFor <int> (ContainNormal (INTEGER_DEFAULT_VALUE),
-								 TypeInt,
-								 ccsSetInt,
-								 ccsGetInt,
-								 AutoDestroyInfo (getIntInfo (), TypeInt),
-								 ContainNormal (INTEGER_VALUE)),
-				 FailureSemanticsParamFor <float> (ContainNormal (FLOAT_DEFAULT_VALUE),
-								   TypeFloat,
-								   ccsSetFloat,
-								   ccsGetFloat,
-								   AutoDestroyInfo (getFloatInfo (), TypeFloat),
-								   ContainNormal (FLOAT_VALUE)),
-				 FailureSemanticsParamFor <const char *> (ContainNormal (STRING_DEFAULT_VALUE),
-									  TypeString,
-									  ccsSetString,
-									  ccsGetString,
-									  AutoDestroyInfo (getGenericInfo (TypeString), TypeMatch),
-									  ContainNormal (STRING_VALUE)),
-				 FailureSemanticsParamFor <const char *> (ContainNormal (MATCH_DEFAULT_VALUE),
-									  TypeMatch,
-									  ccsSetMatch,
-									  ccsGetMatch,
-									  AutoDestroyInfo (getGenericInfo (TypeMatch), TypeMatch),
-									  ContainNormal (MATCH_VALUE))));
+			 Combine (Values (FailureSemanticsParamFor <int> (ContainNormal (INTEGER_DEFAULT_VALUE),
+									  TypeInt,
+									  ccsSetInt,
+									  ccsGetInt,
+									  AutoDestroyInfo (getIntInfo (), TypeInt),
+									  ContainNormal (INTEGER_VALUE)),
+					  FailureSemanticsParamFor <float> (ContainNormal (FLOAT_DEFAULT_VALUE),
+									    TypeFloat,
+									    ccsSetFloat,
+									    ccsGetFloat,
+									    AutoDestroyInfo (getFloatInfo (), TypeFloat),
+									    ContainNormal (FLOAT_VALUE)),
+					  FailureSemanticsParamFor <const char *> (ContainNormal (STRING_DEFAULT_VALUE),
+										   TypeString,
+										   ccsSetString,
+										   ccsGetString,
+										   AutoDestroyInfo (getGenericInfo (TypeString), TypeMatch),
+										   ContainNormal (STRING_VALUE)),
+					  FailureSemanticsParamFor <const char *> (ContainNormal (MATCH_DEFAULT_VALUE),
+										   TypeMatch,
+										   ccsSetMatch,
+										   ccsGetMatch,
+										   AutoDestroyInfo (getGenericInfo (TypeMatch), TypeMatch),
+										   ContainNormal (MATCH_VALUE))),
+				  Values (ThroughRaw, ThroughValue)));
 
 INSTANTIATE_TEST_CASE_P (SetSemantics, SettingDefaultImplSet,
-			 Values (SemanticsParamFor <int> (ContainNormal (INTEGER_DEFAULT_VALUE),
+			 Combine (Values (SemanticsParamFor <int> (ContainNormal (INTEGER_DEFAULT_VALUE),
 							  TypeInt,
 							  ccsSetInt,
 							  ccsGetInt,
 							  AutoDestroyInfo (getIntInfo (), TypeInt),
 							  ContainNormal (INTEGER_VALUE)),
-				 SemanticsParamFor <float> (ContainNormal (FLOAT_DEFAULT_VALUE),
-							    TypeFloat,
-							    ccsSetFloat,
-							    ccsGetFloat,
-							    AutoDestroyInfo (getFloatInfo (), TypeFloat),
-							    ContainNormal  (FLOAT_VALUE)),
-				 SemanticsParamFor <Bool> (ContainNormal  (BOOL_DEFAULT_VALUE),
-							   TypeBool,
-							   ccsSetBool,
-							   ccsGetBool,
-							   AutoDestroyInfo (getGenericInfo (TypeBool), TypeBool),
-							   ContainNormal (BOOL_VALUE)),
-				 SemanticsParamFor <const char *> (ContainNormal (STRING_DEFAULT_VALUE),
-								   TypeString,
-								   ccsSetString,
-								   ccsGetString,
-								   AutoDestroyInfo (getStringInfo (), TypeBool),
-								   ContainNormal (STRING_VALUE)),
-				 SemanticsParamFor <const char *> (ContainNormal (MATCH_DEFAULT_VALUE),
-								   TypeMatch,
-								   ccsSetMatch,
-								   ccsGetMatch,
-							   AutoDestroyInfo (getGenericInfo (TypeMatch), TypeMatch),
-								   ContainNormal (MATCH_VALUE)),
-				 SemanticsParamFor <CCSSettingColorValue> (ContainNormal (COLOR_DEFAULT_VALUE),
-									   TypeColor,
-									   ccsSetColor,
-									   ccsGetColor,
-									   AutoDestroyInfo (getGenericInfo (TypeColor), TypeColor),
-									   ContainNormal (COLOR_VALUE)),
-				 SemanticsParamFor <CCSSettingKeyValue> (ContainNormal (KEY_DEFAULT_VALUE),
-									 TypeKey,
-									 ccsSetKey,
-									 ccsGetKey,
-									 AutoDestroyInfo (getActionInfo (TypeKey), TypeKey),
-									 ContainNormal (KEY_VALUE)),
-				 SemanticsParamFor <CCSSettingButtonValue> (ContainNormal (BUTTON_DEFAULT_VALUE),
-									    TypeButton,
-									    ccsSetButton,
-									    ccsGetButton,
-									    AutoDestroyInfo (getActionInfo (TypeButton), TypeButton),
-									    ContainNormal (BUTTON_VALUE)),
-				 SemanticsParamFor <unsigned int> (ContainNormal (EDGE_DEFAULT_VALUE),
-								   TypeEdge,
-								   ccsSetEdge,
-								   ccsGetEdge,
-								   AutoDestroyInfo (getActionInfo (TypeEdge), TypeEdge),
-								   ContainNormal (EDGE_VALUE)),
-				 SemanticsParamFor <Bool> (ContainNormal  (BELL_DEFAULT_VALUE),
-							   TypeBell,
-							   ccsSetBell,
-							   ccsGetBell,
-							   AutoDestroyInfo (getGenericInfo (TypeBell), TypeBell),
-							   ContainNormal (BELL_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (INTEGER_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeInt,
-										       getIntInfo ()),
-									  ContainList (INTEGER_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (FLOAT_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeFloat,
-										       getFloatInfo ()),
-									  ContainList (FLOAT_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (BOOL_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeBool,
-										       getGenericInfo (TypeBool)),
-									  ContainList (BOOL_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (STRING_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeString,
-										       getGenericInfo (TypeMatch)),
-									  ContainList (STRING_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (MATCH_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeMatch,
-										       getGenericInfo (TypeMatch)),
-									  ContainList (MATCH_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (COLOR_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeColor,
-										       getGenericInfo (TypeColor)),
-									  ContainList (COLOR_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (KEY_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeKey,
-										       getActionInfo (TypeKey)),
-									  ContainList (KEY_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (BUTTON_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeButton,
-										       getActionInfo (TypeButton)),
-									  ContainList (BUTTON_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (EDGE_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeEdge,
-										       getIntInfo ()),
-									  ContainList (EDGE_VALUE)),
-				 SemanticsParamFor <CCSSettingValueList> (ContainList (BELL_DEFAULT_VALUE),
-									  TypeList,
-									  ccsSetList,
-									  ccsGetList,
-									  getListInfo (TypeBell,
-										       getActionInfo (TypeBell)),
-									  ContainList (BELL_VALUE))));
+					  SemanticsParamFor <float> (ContainNormal (FLOAT_DEFAULT_VALUE),
+								     TypeFloat,
+								     ccsSetFloat,
+								     ccsGetFloat,
+								     AutoDestroyInfo (getFloatInfo (), TypeFloat),
+								     ContainNormal  (FLOAT_VALUE)),
+					  SemanticsParamFor <Bool> (ContainNormal  (BOOL_DEFAULT_VALUE),
+								    TypeBool,
+								    ccsSetBool,
+								    ccsGetBool,
+								    AutoDestroyInfo (getGenericInfo (TypeBool), TypeBool),
+								    ContainNormal (BOOL_VALUE)),
+					  SemanticsParamFor <const char *> (ContainNormal (STRING_DEFAULT_VALUE),
+									    TypeString,
+									    ccsSetString,
+									    ccsGetString,
+									    AutoDestroyInfo (getStringInfo (), TypeBool),
+									    ContainNormal (STRING_VALUE)),
+					  SemanticsParamFor <const char *> (ContainNormal (MATCH_DEFAULT_VALUE),
+									    TypeMatch,
+									    ccsSetMatch,
+									    ccsGetMatch,
+									    AutoDestroyInfo (getGenericInfo (TypeMatch), TypeMatch),
+									    ContainNormal (MATCH_VALUE)),
+					  SemanticsParamFor <CCSSettingColorValue> (ContainNormal (COLOR_DEFAULT_VALUE),
+										    TypeColor,
+										    ccsSetColor,
+										    ccsGetColor,
+										    AutoDestroyInfo (getGenericInfo (TypeColor), TypeColor),
+										    ContainNormal (COLOR_VALUE)),
+					  SemanticsParamFor <CCSSettingKeyValue> (ContainNormal (KEY_DEFAULT_VALUE),
+										  TypeKey,
+										  ccsSetKey,
+										  ccsGetKey,
+										  AutoDestroyInfo (getActionInfo (TypeKey), TypeKey),
+										  ContainNormal (KEY_VALUE)),
+					  SemanticsParamFor <CCSSettingButtonValue> (ContainNormal (BUTTON_DEFAULT_VALUE),
+										     TypeButton,
+										     ccsSetButton,
+										     ccsGetButton,
+										     AutoDestroyInfo (getActionInfo (TypeButton), TypeButton),
+										     ContainNormal (BUTTON_VALUE)),
+					  SemanticsParamFor <unsigned int> (ContainNormal (EDGE_DEFAULT_VALUE),
+									    TypeEdge,
+									    ccsSetEdge,
+									    ccsGetEdge,
+									    AutoDestroyInfo (getActionInfo (TypeEdge), TypeEdge),
+									    ContainNormal (EDGE_VALUE)),
+					  SemanticsParamFor <Bool> (ContainNormal  (BELL_DEFAULT_VALUE),
+								    TypeBell,
+								    ccsSetBell,
+								    ccsGetBell,
+								    AutoDestroyInfo (getGenericInfo (TypeBell), TypeBell),
+								    ContainNormal (BELL_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (INTEGER_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeInt,
+												getIntInfo ()),
+										   ContainList (INTEGER_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (FLOAT_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeFloat,
+												getFloatInfo ()),
+										   ContainList (FLOAT_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (BOOL_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeBool,
+												getGenericInfo (TypeBool)),
+										   ContainList (BOOL_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (STRING_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeString,
+												getGenericInfo (TypeMatch)),
+										   ContainList (STRING_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (MATCH_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeMatch,
+												getGenericInfo (TypeMatch)),
+										   ContainList (MATCH_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (COLOR_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeColor,
+												getGenericInfo (TypeColor)),
+										   ContainList (COLOR_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (KEY_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeKey,
+												getActionInfo (TypeKey)),
+										   ContainList (KEY_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (BUTTON_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeButton,
+												getActionInfo (TypeButton)),
+										   ContainList (BUTTON_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (EDGE_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeEdge,
+												getIntInfo ()),
+										   ContainList (EDGE_VALUE)),
+					  SemanticsParamFor <CCSSettingValueList> (ContainList (BELL_DEFAULT_VALUE),
+										   TypeList,
+										   ccsSetList,
+										   ccsGetList,
+										   getListInfo (TypeBell,
+												getActionInfo (TypeBell)),
+										   ContainList (BELL_VALUE))),
+				  Values (ThroughRaw, ThroughValue)));
