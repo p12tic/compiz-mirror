@@ -26,14 +26,21 @@
 #include <boost/make_shared.hpp>
 #include <boost/function.hpp>
 
+#include <X11/Xlib.h>
+
 #include <ccs.h>
 
 #include "compizconfig_ccs_setting_mock.h"
 #include "compizconfig_ccs_plugin_mock.h"
+#include "compizconfig_ccs_list_wrapper.h"
+
+namespace cci = compiz::config::impl;
+namespace cc = compiz::config;
 
 using ::testing::_;
 using ::testing::Return;
 using ::testing::InSequence;
+using ::testing::ReturnNull;
 
 TEST(CCSSettingTest, TestMock)
 {
@@ -134,6 +141,11 @@ TEST(CCSSettingTest, TestMock)
 
 namespace
 {
+
+typedef boost::shared_ptr <CCSSettingInfo> CCSSettingInfoPtr;
+typedef boost::shared_ptr <CCSSettingValue> CCSSettingValuePtr;
+typedef boost::shared_ptr <CCSSetting> CCSSettingPtr;
+
 class MockInitializerFuncs
 {
     public:
@@ -249,4 +261,492 @@ TEST_F (CCSSettingDefaultImplTest, Construction)
 
     EXPECT_EQ (ccsSettingGetParent (setting.get ()),
 	       plugin.get ());
+}
+
+namespace
+{
+
+/* Used to copy different raw values */
+template <typename SettingValueType>
+class CopyRawValueBase
+{
+    public:
+
+	CopyRawValueBase (const SettingValueType &value) :
+	    mValue (value)
+	{
+	}
+
+    protected:
+
+	const SettingValueType &mValue;
+};
+
+template <typename SettingValueType>
+class CopyRawValue :
+    public CopyRawValueBase <SettingValueType>
+{
+    public:
+
+	typedef SettingValueType ReturnType;
+	typedef CopyRawValueBase <SettingValueType> Parent;
+
+	CopyRawValue (const SettingValueType &value) :
+	    CopyRawValueBase <SettingValueType> (value)
+	{
+	}
+
+	SettingValueType operator () ()
+	{
+	    return Parent::mValue;
+	}
+};
+
+template <>
+class CopyRawValue <const char *> :
+    public CopyRawValueBase <const char *>
+{
+    public:
+
+	typedef const char * ReturnType;
+	typedef CopyRawValueBase <const char *> Parent;
+
+	CopyRawValue (const char * value) :
+	    CopyRawValueBase <const char *> (value)
+	{
+	}
+
+	ReturnType operator () ()
+	{
+	    /* XXX: Valgrind complains here that mValue is uninitialized, but
+	     * verification using gdb confirms that isn't true */
+	    return strdup (Parent::mValue);
+	}
+};
+
+template <>
+class CopyRawValue <cci::SettingValueListWrapper::Ptr> :
+    public CopyRawValueBase <cci::SettingValueListWrapper::Ptr>
+{
+    public:
+
+	typedef CCSSettingValueList ReturnType;
+	typedef CopyRawValueBase <cci::SettingValueListWrapper::Ptr> Parent;
+
+	CopyRawValue (const cci::SettingValueListWrapper::Ptr &value) :
+	    CopyRawValueBase <cci::SettingValueListWrapper::Ptr> (value)
+	{
+	}
+
+	ReturnType operator () ()
+	{
+	    return ccsCopyList (*Parent::mValue,
+				Parent::mValue->setting ().get ());
+	}
+};
+
+CCSSettingValue *
+NewCCSSettingValue ()
+{
+    CCSSettingValue *value =
+	    reinterpret_cast <CCSSettingValue *> (
+		calloc (1, sizeof (CCSSettingValue)));
+
+    value->refCount = 1;
+
+    return value;
+}
+
+template <typename SettingValueType>
+CCSSettingValue *
+RawValueToCCSValue (const SettingValueType &value)
+{
+    typedef typename CopyRawValue <SettingValueType>::ReturnType UnionType;
+
+    CCSSettingValue  *settingValue = NewCCSSettingValue ();
+    UnionType *unionMember =
+	    reinterpret_cast <UnionType *> (&settingValue->value);
+
+    *unionMember = (CopyRawValue <SettingValueType> (value)) ();
+
+    return settingValue;
+}
+
+template <typename SettingValueType>
+CCSSettingValuePtr
+RawValueToListValue (const SettingValueType &value)
+{
+    return ListValueToSettingValueList (RawValueToCCSValue (value));
+}
+
+class ContainedValueGenerator
+{
+    private:
+
+	const CCSSettingValuePtr &
+	InitializedSpawnedValue (const CCSSettingValuePtr &value,
+				 CCSSettingType           type,
+				 const CCSSettingInfoPtr  &info)
+	{
+	    const CCSSettingPtr &setting (GetSetting (type, info));
+	    value->parent = setting.get ();
+	    mContainedValues.push_back (value);
+
+	    return mContainedValues.back ();
+	}
+
+    public:
+
+	template <typename SettingValueType>
+	const CCSSettingValuePtr &
+	SpawnValueForInfoAndType (const SettingValueType  &rawValue,
+				  CCSSettingType          type,
+				  const CCSSettingInfoPtr &info)
+	{
+
+	    CCSSettingValuePtr  value (AutoDestroy (RawValueToCCSValue <SettingValueType> (rawValue),
+						    ccsSettingValueUnref));
+
+	    return InitializedSpawnedValue (value, type, info);
+	}
+
+	const CCSSettingPtr &
+	GetSetting (CCSSettingType          type,
+		    const CCSSettingInfoPtr &info)
+	{
+	    if (!mSetting)
+		SetupMockSetting (type, info);
+
+	    return mSetting;
+	}
+
+    private:
+
+	void SetupMockSetting (CCSSettingType          type,
+			       const CCSSettingInfoPtr &info)
+	{
+	    mSetting = AutoDestroy (ccsMockSettingNew (),
+				    ccsSettingUnref);
+
+	    CCSSettingGMock *settingMock =
+		    reinterpret_cast <CCSSettingGMock *> (
+			ccsObjectGetPrivate (mSetting.get ()));
+
+	    EXPECT_CALL (*settingMock, getType ())
+		.WillRepeatedly (Return (type));
+
+	    EXPECT_CALL (*settingMock, getInfo ())
+		.WillRepeatedly (Return (info.get ()));
+
+	    EXPECT_CALL (*settingMock, getDefaultValue ())
+		.WillRepeatedly (ReturnNull ());
+	}
+
+	/* This must always be before the value
+	 * as the values hold a weak reference to
+	 * it */
+	CCSSettingPtr                    mSetting;
+	std::vector <CCSSettingValuePtr> mContainedValues;
+
+};
+
+/* ValueContainer Interface */
+template <typename SettingValueType>
+class ValueContainer
+{
+    public:
+
+	typedef boost::shared_ptr <ValueContainer> Ptr;
+
+	virtual const SettingValueType &
+	getRawValue (CCSSettingType          type,
+		     const CCSSettingInfoPtr &info) = 0;
+	virtual const CCSSettingValuePtr &
+	getContainedValue (CCSSettingType          type,
+			   const CCSSettingInfoPtr &info) = 0;
+};
+
+class NormalValueContainerBase
+{
+    protected:
+
+	ContainedValueGenerator  mContainedValueGenerator;
+	CCSSettingValuePtr       mContainedValue;
+};
+
+template <typename SettingValueType>
+class NormalValueContainer :
+    public NormalValueContainerBase,
+    public ValueContainer <SettingValueType>
+{
+    public:
+
+	NormalValueContainer (const SettingValueType &value) :
+	    mRawValue (value)
+	{
+	}
+
+	const SettingValueType &
+	getRawValue (CCSSettingType          type,
+		     const CCSSettingInfoPtr &info)
+	{
+	    return mRawValue;
+	}
+
+	const CCSSettingValuePtr &
+	getContainedValue (CCSSettingType          type,
+			   const CCSSettingInfoPtr &info)
+	{
+	    if (!mContainedValue)
+		mContainedValue = mContainedValueGenerator.SpawnValueForInfoAndType (mRawValue,
+										     type,
+										     info);
+
+	    return mContainedValue;
+	}
+
+    private:
+
+	const SettingValueType   &mRawValue;
+};
+
+template <typename SettingValueType>
+typename NormalValueContainer <SettingValueType>::Ptr
+ContainNormal (const SettingValueType &value)
+{
+    return boost::make_shared <NormalValueContainer <SettingValueType> > (value);
+}
+
+class ListValueContainerBase :
+    public ValueContainer <CCSSettingValueList>
+{
+    protected:
+
+	const CCSSettingValuePtr &
+	getContainedValue (CCSSettingType          type,
+			   const CCSSettingInfoPtr &info)
+	{
+	    if (!mContainedWrapper)
+	    {
+		const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
+
+		mContainedWrapper =
+			mContainedValueGenerator.SpawnValueForInfoAndType (wrapper,
+									   type,
+									   info);
+	    }
+
+	    return mContainedWrapper;
+	}
+
+	const CCSSettingValueList &
+	getRawValue (CCSSettingType          type,
+		     const CCSSettingInfoPtr &info)
+	{
+	    const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
+
+	    return *wrapper;
+	}
+
+	cci::SettingValueListWrapper::Ptr mWrapper;
+
+	/* ccsFreeSettingValue has an implicit
+	 * dependency on mWrapper (CCSSettingValue -> CCSSetting ->
+	 * CCSSettingInfo -> cci::SettingValueListWrapper), these should
+	 * be kept after mWrapper here */
+	ContainedValueGenerator           mContainedValueGenerator;
+	CCSSettingValuePtr                mContainedWrapper;
+
+    private:
+
+	const cci::SettingValueListWrapper::Ptr &
+	SetupWrapper (CCSSettingType          type,
+		      const CCSSettingInfoPtr &info)
+	{
+	    if (!mWrapper)
+	    {
+		const CCSSettingPtr &setting (mContainedValueGenerator.GetSetting (type, info));
+		CCSSettingValue     *value = GetValueForListWrapper ();
+
+		value->parent = setting.get ();
+		value->isListChild = TRUE;
+		mWrapper.reset (new cci::SettingValueListWrapper (NULL,
+								  cci::Deep,
+								  type,
+								  info,
+								  setting));
+		mWrapper->append (value);
+	    }
+
+	    return mWrapper;
+	}
+
+	virtual CCSSettingValue * GetValueForListWrapper () = 0;
+};
+
+template <typename SettingValueType>
+class ListValueContainer :
+    public ListValueContainerBase
+{
+    public:
+
+	ListValueContainer (const SettingValueType &value) :
+	    mRawChildValue (value)
+	{
+	}
+
+    private:
+
+	CCSSettingValue * GetValueForListWrapper ()
+	{
+	    return RawValueToCCSValue (mRawChildValue);
+	}
+
+	const SettingValueType  &mRawChildValue;
+};
+
+template <typename SettingValueType>
+typename ValueContainer <CCSSettingValueList>::Ptr
+ContainList (const SettingValueType &value)
+{
+    return boost::make_shared <ListValueContainer <SettingValueType> > (value);
+}
+
+template <typename SettingValueType>
+struct SettingMutators
+{
+    typedef Bool (*SetFunction) (CCSSetting *setting,
+				 SettingValueType data,
+				 Bool);
+    typedef Bool (*GetFunction) (CCSSetting *setting,
+				 SettingValueType *);
+};
+
+class SetWithDisallowedValueBase
+{
+    protected:
+
+	SetWithDisallowedValueBase (const CCSSettingPtr     &setting,
+				    const CCSSettingInfoPtr &info) :
+	    mSetting (setting),
+	    mInfo (info)
+	{
+	}
+
+	CCSSettingPtr     mSetting;
+	CCSSettingInfoPtr mInfo;
+};
+
+template <typename SettingValueType>
+class SetWithDisallowedValueTemplatedBase :
+    public SetWithDisallowedValueBase
+{
+    protected:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+
+	SetWithDisallowedValueTemplatedBase (SetFunction             setFunction,
+					     const CCSSettingPtr     &setting,
+					     const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueBase (setting, info),
+	    mSetFunction (setFunction)
+	{
+	}
+
+	SetFunction       mSetFunction;
+};
+
+template <typename SettingValueType>
+class SetWithDisallowedValue :
+    public SetWithDisallowedValueTemplatedBase <SettingValueType>
+{
+    public:
+
+	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueTemplatedBase <SettingValueType> (setFunction, setting, info)
+	{
+	}
+
+	Bool operator () ()
+	{
+	    return FALSE;
+	}
+};
+
+template <>
+class SetWithDisallowedValue <int> :
+    public SetWithDisallowedValueTemplatedBase <int>
+{
+    public:
+
+	typedef typename SettingMutators <int>::SetFunction SetFunction;
+	typedef SetWithDisallowedValueTemplatedBase <int> Parent;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueTemplatedBase <int> (setFunction, setting, info)
+	{
+	}
+
+	Bool operator () ()
+	{
+	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
+					    Parent::mInfo->forInt.min - 1,
+					    FALSE);
+	}
+};
+
+template <>
+class SetWithDisallowedValue <float> :
+    public SetWithDisallowedValueTemplatedBase <float>
+{
+    public:
+
+	typedef typename SettingMutators <float>::SetFunction SetFunction;
+	typedef SetWithDisallowedValueTemplatedBase <float> Parent;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueTemplatedBase <float> (setFunction, setting, info)
+	{
+	}
+
+	Bool operator () ()
+	{
+	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
+					    Parent::mInfo->forFloat.min - 1,
+					    FALSE);
+	}
+};
+
+template <>
+class SetWithDisallowedValue <const char *> :
+    public SetWithDisallowedValueTemplatedBase <const char *>
+{
+    public:
+
+	typedef typename SettingMutators <const char *>::SetFunction SetFunction;
+	typedef SetWithDisallowedValueTemplatedBase <const char *> Parent;
+
+	SetWithDisallowedValue (SetFunction             setFunction,
+				const CCSSettingPtr     &setting,
+				const CCSSettingInfoPtr &info) :
+	    SetWithDisallowedValueTemplatedBase <const char *> (setFunction, setting, info)
+	{
+	}
+
+	Bool operator () ()
+	{
+	    return (*Parent::mSetFunction) (Parent::mSetting.get (),
+					    NULL,
+					    FALSE);
+	}
+};
+
 }

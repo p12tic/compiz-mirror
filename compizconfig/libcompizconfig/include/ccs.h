@@ -722,6 +722,8 @@ void ccsFreePlugin (CCSPlugin *plugin);
 void ccsFreeSetting (CCSSetting *setting);
 void ccsFreeGroup (CCSGroup *group);
 void ccsFreeSubGroup (CCSSubGroup *subGroup);
+void ccsCleanupSettingInfo (CCSSettingInfo *info,
+			 CCSSettingType type);
 void ccsFreeSettingValue (CCSSettingValue *value);
 void ccsFreeSettingValueWithType (CCSSettingValue *v,
 				  CCSSettingType  type);
@@ -792,9 +794,18 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
 
 /* Deep copy setting value */
 CCSSettingValue *
-ccsCopyValue (CCSSettingValue *orig,
-	      CCSSettingType  type,
-	      CCSSettingInfo  *info);
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info);
+Bool
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info);
+
+/* Deep copy setting info */
+void
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type);
 
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
