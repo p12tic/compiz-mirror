@@ -2611,7 +2611,11 @@ PrivateWindow::avoidStackingRelativeTo (CompWindow *w)
     if (w->destroyed ())
 	return true;
 
-    if (!w->priv->receivedMapRequestAndAwaitingMap && !w->priv->shaded && !w->priv->pendingMaps)
+    bool allowRelativeToUnmmaped = w->priv->receivedMapRequestAndAwaitingMap ||
+				   w->priv->shaded ||
+				   w->priv->pendingMaps;
+
+    if (!allowRelativeToUnmmaped)
     {
 	if (!w->isViewable () || !w->isMapped ())
 	    return true;
