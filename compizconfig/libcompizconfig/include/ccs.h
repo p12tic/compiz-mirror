@@ -482,11 +482,11 @@ Bool ccsGetFloat (CCSSetting *setting,
 Bool ccsGetBool (CCSSetting *setting,
 		 Bool       *data);
 Bool ccsGetString (CCSSetting *setting,
-		   char       **data);
+		   const char **data);
 Bool ccsGetColor (CCSSetting           *setting,
 		  CCSSettingColorValue *data);
 Bool ccsGetMatch (CCSSetting *setting,
-		  char       **data);
+		  const char **data);
 Bool ccsGetKey (CCSSetting         *setting,
 		CCSSettingKeyValue *data);
 Bool ccsGetButton (CCSSetting            *setting,
@@ -580,9 +580,9 @@ typedef Bool (*CCSSettingSetValue) (CCSSetting *setting, CCSSettingValue *data, 
 typedef Bool (*CCSSettingGetInt) (CCSSetting *setting, int *data);
 typedef Bool (*CCSSettingGetFloat) (CCSSetting *setting, float *data);
 typedef Bool (*CCSSettingGetBool) (CCSSetting *setting, Bool *data);
-typedef Bool (*CCSSettingGetString) (CCSSetting *setting, char **data);
+typedef Bool (*CCSSettingGetString) (CCSSetting *setting, const char **data);
 typedef Bool (*CCSSettingGetColor) (CCSSetting *setting, CCSSettingColorValue *data);
-typedef Bool (*CCSSettingGetMatch) (CCSSetting *setting, char **data);
+typedef Bool (*CCSSettingGetMatch) (CCSSetting *setting, const char **data);
 typedef Bool (*CCSSettingGetKey) (CCSSetting *setting, CCSSettingKeyValue *data);
 typedef Bool (*CCSSettingGetButton) (CCSSetting *setting, CCSSettingButtonValue *data);
 typedef Bool (*CCSSettingGetEdge) (CCSSetting *setting, unsigned int *data);
@@ -647,6 +647,31 @@ struct _CCSSetting
     CCSObject object;
 };
 
+typedef void (*CCSSettingDefaultValueInitializerFunc) (CCSSettingType  type,
+						       CCSSettingInfo  *info,
+						       CCSSettingValue *value,
+						       void            *data);
+
+typedef void (*CCSSettingInfoInitializerFunc) (CCSSettingType  type,
+					       CCSSettingInfo  *info,
+					       void            *data);
+
+CCSSetting *
+ccsSettingDefaultImplNew (CCSPlugin                             *plugin,
+			  const char                            *name,
+			  CCSSettingType                        type,
+			  const char                            *shortDesc,
+			  const char                            *longDesc,
+			  const char                            *hints,
+			  const char                            *group,
+			  const char                            *subGroup,
+			  CCSSettingDefaultValueInitializerFunc valueInit,
+			  void                                  *valueInitData,
+			  CCSSettingInfoInitializerFunc         infoInit,
+			  void                                  *infoInitData,
+			  CCSObjectAllocationInterface          *ai,
+			  const CCSInterfaceTable               *interfaces);
+
 struct _CCSPluginCategory
 {
     const char *name;      /* plugin category name */
@@ -697,6 +722,8 @@ void ccsFreePlugin (CCSPlugin *plugin);
 void ccsFreeSetting (CCSSetting *setting);
 void ccsFreeGroup (CCSGroup *group);
 void ccsFreeSubGroup (CCSSubGroup *subGroup);
+void ccsCleanupSettingInfo (CCSSettingInfo *info,
+			 CCSSettingType type);
 void ccsFreeSettingValue (CCSSettingValue *value);
 void ccsFreeSettingValueWithType (CCSSettingValue *v,
 				  CCSSettingType  type);
@@ -767,9 +794,18 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
 
 /* Deep copy setting value */
 CCSSettingValue *
-ccsCopyValue (CCSSettingValue *orig,
-	      CCSSettingType  type,
-	      CCSSettingInfo  *info);
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info);
+Bool
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info);
+
+/* Deep copy setting info */
+void
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type);
 
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */

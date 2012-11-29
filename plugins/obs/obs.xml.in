@@ -9,7 +9,6 @@
 		<plugin>opengl</plugin>
 	    </requirement>
 	    <relation type="after">
-		<plugin>decor</plugin>
 		<plugin>blur</plugin>
 	    </relation>
 	</deps>

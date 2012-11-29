@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "ccs-private.h"
+#include "ccs-config-private.h"
 
 #define SETTINGPATH "compiz-1/compizconfig"
 
@@ -56,17 +57,24 @@ getConfigFileName (void)
     return NULL;
 }
 
-static char*
+char *
 getSectionName (void)
 {
     char *profile;
     char *section;
 
     profile = getenv ("COMPIZ_CONFIG_PROFILE");
-    if (profile && strlen (profile))
+    if (profile)
     {
-	if (asprintf (&section, "general_%s", profile) == -1)
-	    section = NULL;
+	if (strlen (profile))
+	{
+	    if (asprintf (&section, "general_%s", profile) == -1)
+		section = NULL;
+	}
+	else
+	{
+	    section = strdup ("general");
+	}
 
 	return section;
     }

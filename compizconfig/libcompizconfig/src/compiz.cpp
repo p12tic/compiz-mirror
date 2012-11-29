@@ -547,177 +547,177 @@ initActionInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 }
 
 static void
+ccsSettingInfoPBInitializer (CCSSettingType type,
+			     CCSSettingInfo *info,
+			     void           *data)
+{
+    const OptionMetadata &option (*((const OptionMetadata *) data));
+
+    switch (type)
+    {
+    case TypeInt:
+	initIntInfoPB (info, option);
+	break;
+    case TypeFloat:
+	initFloatInfoPB (info, option);
+	break;
+    case TypeString:
+	initStringInfoPB (info, option);
+	break;
+    case TypeList:
+	initListInfoPB (info, option);
+	break;
+    case TypeKey:
+    case TypeButton:
+    case TypeEdge:
+    case TypeBell:
+	initActionInfoPB (info, option);
+	break;
+    case TypeAction: // do nothing and fall through
+    default:
+	break;
+    }
+}
+
+static void
+ccsSettingDefaultValuePBInitializer (CCSSettingType  type,
+				     CCSSettingInfo  *info,
+				     CCSSettingValue *value,
+				     void            *data)
+{
+    const OptionMetadata &option (*((const OptionMetadata *) data));
+
+    switch (type)
+    {
+    case TypeInt:
+	initIntValuePB (value, info,
+			option.default_value (0));
+	break;
+    case TypeBool:
+	initBoolValuePB (value, option.default_value (0));
+	break;
+    case TypeFloat:
+	initFloatValuePB (value, info,
+			  option.default_value (0));
+	break;
+    case TypeString:
+	initStringValuePB (value, info,
+			   option.default_value (0));
+	break;
+    case TypeColor:
+	initColorValuePB (value, option.default_value (0));
+	break;
+    case TypeKey:
+	initKeyValuePB (value, info,
+			option.default_value (0));
+	break;
+    case TypeButton:
+	initButtonValuePB (value, info,
+			   option.default_value (0));
+	break;
+    case TypeEdge:
+	initEdgeValuePB (value, info,
+			 option.default_value (0));
+	break;
+    case TypeBell:
+	initBellValuePB (value, info,
+			 option.default_value (0));
+	break;
+    case TypeMatch:
+	initMatchValuePB (value,
+			  option.default_value (0));
+	break;
+    case TypeList:
+	initListValuePB (value, info,
+			 option);
+	break;
+    case TypeAction: // do nothing and fall through
+    default:
+	break;
+    }
+}
+
+static void
+ccsSettingDefaultValueEmptyInitializer (CCSSettingType  type,
+					CCSSettingInfo  *info,
+					CCSSettingValue *value,
+					void            *data)
+{
+    /* if we have no set defaults, we have at least to set
+       the string defaults to empty strings */
+    switch (type)
+    {
+    case TypeString:
+	value->value.asString = strdup ("");
+	break;
+    case TypeMatch:
+	value->value.asMatch = strdup ("");
+	break;
+    default:
+	break;
+    }
+}
+
+static void
 addOptionForPluginPB (CCSPlugin * plugin,
 		      const char * name,
 		      const StringList & groups,
 		      const StringList & subgroups,
 		      const OptionMetadata & option)
 {
-    CCSSetting *setting;
-
     if (ccsFindSetting (plugin, name))
     {
 	ccsError ("Option \"%s\" already defined", name);
 	return;
     }
 
-    CCSContext *context = ccsPluginGetContext (plugin);
-    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
+    const char *shortDesc = name;
+    const char *longDesc  = "";
+    const char *group     = "";
+    const char *hints     = "";
+    const char *subGroup  = "";
 
-    setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
-
-    if (!setting)
-	return;
-
-    ccsObjectInit (setting, &ccsDefaultObjectAllocator);
-
-    CCSSettingPrivate *ccsPrivate = (CCSSettingPrivate *) calloc (1, sizeof (CCSSettingPrivate));
-
-    if (!ccsPrivate)
-    {
-	free (setting);
-	return;
-    }
-
-    ccsObjectSetPrivate (setting, (CCSPrivate *) ccsPrivate);
-    ccsObjectAddInterface (setting, (CCSInterface *) cPrivate->object_interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
-    ccsSettingRef (setting);
-
-    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
-
-    sPrivate->parent = plugin;
-    sPrivate->isDefault = TRUE;
-    sPrivate->name = strdup (name);
+    CCSSettingType type = (CCSSettingType) option.type ();
 
     if (!basicMetadata)
     {
-	sPrivate->shortDesc =
-	    strdup (option.has_short_desc () ?
+	shortDesc = option.has_short_desc () ?
 		    option.short_desc ().c_str () :
-		    name);
-	sPrivate->longDesc =
-	    strdup (option.has_long_desc () ?
+		    name;
+	longDesc =  option.has_long_desc () ?
 		    option.long_desc ().c_str () :
-		    name);
-	sPrivate->hints = strdup (option.has_hints () ?
-				 option.hints ().c_str () :
-				 name);
-	sPrivate->group =
-	    strdup (option.group_id () >= 0 ?
-		    groups.Get (option.group_id ()).c_str () :
-		    "");
-	sPrivate->subGroup =
-	    strdup (option.subgroup_id () >= 0 ?
-		    subgroups.Get (option.subgroup_id ()).c_str () :
-		    "");
-    }
-    else
-    {
-	sPrivate->shortDesc = strdup (name);
-	sPrivate->longDesc  = strdup ("");
-	sPrivate->hints     = strdup ("");
-	sPrivate->group     = strdup ("");
-	sPrivate->subGroup  = strdup ("");
+		    name;
+	hints = option.has_hints () ?
+		option.hints ().c_str () :
+		name;
+	group = option.group_id () >= 0 ?
+		groups.Get (option.group_id ()).c_str () :
+		"";
+	subGroup = option.subgroup_id () >= 0 ?
+		   subgroups.Get (option.subgroup_id ()).c_str () :
+		   "";
     }
 
-    sPrivate->type = (CCSSettingType) option.type ();
-    sPrivate->value = &sPrivate->defaultValue;
-    sPrivate->defaultValue.parent = setting;
-
-    switch (sPrivate->type)
-    {
-    case TypeInt:
-	initIntInfoPB (&sPrivate->info, option);
-	break;
-    case TypeFloat:
-	initFloatInfoPB (&sPrivate->info, option);
-	break;
-    case TypeString:
-	initStringInfoPB (&sPrivate->info, option);
-	break;
-    case TypeList:
-	initListInfoPB (&sPrivate->info, option);
-	break;
-    case TypeKey:
-    case TypeButton:
-    case TypeEdge:
-    case TypeBell:
-	initActionInfoPB (&sPrivate->info, option);
-	break;
-    case TypeAction: // do nothing and fall through
-    default:
-	break;
-    }
-
-    if (option.default_value_size () > 0)
-    {
-	switch (sPrivate->type)
-	{
-	case TypeInt:
-	    initIntValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			    option.default_value (0));
-	    break;
-	case TypeBool:
-	    initBoolValuePB (&sPrivate->defaultValue, option.default_value (0));
-	    break;
-	case TypeFloat:
-	    initFloatValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			      option.default_value (0));
-	    break;
-	case TypeString:
-	    initStringValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			       option.default_value (0));
-	    break;
-	case TypeColor:
-	    initColorValuePB (&sPrivate->defaultValue, option.default_value (0));
-	    break;
-	case TypeKey:
-	    initKeyValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			    option.default_value (0));
-	    break;
-	case TypeButton:
-	    initButtonValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			       option.default_value (0));
-	    break;
-	case TypeEdge:
-	    initEdgeValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			     option.default_value (0));
-	    break;
-	case TypeBell:
-	    initBellValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			     option.default_value (0));
-	    break;
-	case TypeMatch:
-	    initMatchValuePB (&sPrivate->defaultValue,
-			      option.default_value (0));
-	    break;
-	case TypeList:
-	    initListValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			     option);
-	    break;
-	case TypeAction: // do nothing and fall through
-	default:
-	    break;
-	}
-    }
-    else
-    {
-	/* if we have no set defaults, we have at least to set
-	   the string defaults to empty strings */
-	switch (sPrivate->type)
-	{
-	case TypeString:
-	    sPrivate->defaultValue.value.asString = strdup ("");
-	    break;
-	case TypeMatch:
-	    sPrivate->defaultValue.value.asMatch = strdup ("");
-	    break;
-	default:
-	    break;
-	}
-    }
-
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
+
+    CCSSetting *setting = ccsSettingDefaultImplNew (plugin,
+						    name,
+						    type,
+						    shortDesc,
+						    longDesc,
+						    hints,
+						    group,
+						    subGroup,
+						    option.default_value_size () > 0 ?
+							ccsSettingDefaultValuePBInitializer :
+							ccsSettingDefaultValueEmptyInitializer,
+						    (void *) &option,
+						    ccsSettingInfoPBInitializer,
+						    (void *) &option,
+						    plugin->object.object_allocation,
+						    cPrivate->object_interfaces);
 
     pPrivate->settings = ccsSettingListAppend (pPrivate->settings, setting);
 }

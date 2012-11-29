@@ -113,7 +113,8 @@ target_link_libraries (compizconfig_test_ccs_setting
 		       compizconfig
 		       compizconfig_ccs_context_mock
 		       compizconfig_ccs_plugin_mock
-		       compizconfig_ccs_setting_mock)
+                       compizconfig_ccs_setting_mock
+                       compizconfig_ccs_list_wrapper)
 
 target_link_libraries (compizconfig_test_ccs_text_file
 		       ${GTEST_BOTH_LIBRARIES}
