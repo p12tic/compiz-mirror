@@ -163,6 +163,11 @@ class Decorator:public KApplication {
 
 	void plasmaThemeChanged ();
 
+	void showRequest (qulonglong wid);
+	void menuAvailable (qulonglong wid);
+	void menuHidden (qulonglong wid);
+	void clearMenus ();
+
     private:
 	static PluginManager *mPlugins;
 	static KWD::Options *mOptions;
@@ -182,6 +187,8 @@ class Decorator:public KApplication {
 	WId mCompositeWindow;
 
 	Switcher *mSwitcher;
+
+	QList<WId> mWindowsMenu;
 
         static KWD::Decorator *mSelf; /* XXX: Remove */
     };

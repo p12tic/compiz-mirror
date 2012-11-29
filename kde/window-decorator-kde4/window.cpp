@@ -60,7 +60,15 @@
 #include <QStyle>
 #include <QPainter>
 
+#include <QDBusMessage>
+#include <QDBusConnection>
+#include <QDBusPendingCall>
+
 #include "paintredirector.h"
+
+static const char *KDED_SERVICE = "org.kde.kded";
+static const char *KDED_APPMENU_PATH = "/modules/appmenu";
+static const char *KDED_INTERFACE = "org.kde.kded";
 
 KWD::Window::Window (WId  parentId,
 		     WId  clientId,
@@ -80,6 +88,7 @@ KWD::Window::Window (WId  parentId,
     mAdvancedMenu (0),
     mOpacityMenu (0),
     mDesktopMenu (0),
+    mAppMenuAvailable (false),
     mProcessKiller (this),
     mKeys (this),
     mResizeOpAction (0),
@@ -557,12 +566,31 @@ KWD::Window::showWindowMenu (const QRect &pos)
 void
 KWD::Window::showApplicationMenu (const QPoint &p)
 {
+    QList<QVariant> args = QList<QVariant> () << p.x () << p.y () << qulonglong (mClientId);
+    QDBusMessage method = QDBusMessage::createMethodCall (
+		    KDED_SERVICE, KDED_APPMENU_PATH, KDED_INTERFACE, "showMenu");
+    method.setArguments (args);
+    QDBusConnection::sessionBus ().asyncCall (method);
 }
 
 bool
 KWD::Window::menuAvailable () const
 {
-    return false;
+    return mAppMenuAvailable;
+}
+
+void
+KWD::Window::setAppMenuAvailable ()
+{
+    mAppMenuAvailable = true;
+    emit appMenuAvailable ();
+}
+
+void
+KWD::Window::setAppMenuUnavailable ()
+{
+    mAppMenuAvailable = false;
+    emit appMenuUnavailable ();
 }
 
 KWD::Options::MouseCommand
@@ -932,15 +960,17 @@ KWD::Window::buttonToWindowOperation(Qt::MouseButtons button)
 void
 KWD::Window::createDecoration (void)
 {
-    KDecoration *decor;
-
     if (mDecor)
 	return;
 
-    decor = Decorator::pluginManager ()->createDecoration (this);
-    decor->init ();
+    mDecor = Decorator::pluginManager ()->createDecoration (this);
 
-    mDecor = decor;
+    connect(this, SIGNAL(showRequest()), mDecor, SIGNAL(showRequest()));
+    connect(this, SIGNAL(appMenuAvailable()), mDecor, SIGNAL(appMenuAvailable()));
+    connect(this, SIGNAL(appMenuUnavailable()), mDecor, SIGNAL(appMenuUnavailable()));
+    connect(this, SIGNAL(menuHidden()), mDecor, SIGNAL(menuHidden()));
+
+    mDecor->init ();
     mDecor->widget ()->installEventFilter (this);
 
     if (mType != Normal2D)
@@ -952,7 +982,7 @@ KWD::Window::createDecoration (void)
 
     mPadding.top = mPadding.bottom = mPadding.left = mPadding.right = 0;
 
-    if (KDecorationUnstable *deco2 = dynamic_cast<KDecorationUnstable*>(decor))
+    if (KDecorationUnstable *deco2 = dynamic_cast<KDecorationUnstable*>(mDecor))
         deco2->padding (mPadding.left, mPadding.right, mPadding.top, mPadding.bottom);
 
     if (mType == Normal2D && mFrame)
