@@ -4306,7 +4306,7 @@ PrivateWindow::ensureWindowVisibility ()
 	 screen->height ();
 
     int dx = 0;
-    int	width = serverGeometry.widthIncBorders ();
+    int width = serverGeometry.widthIncBorders ();
 
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
@@ -4314,7 +4314,7 @@ PrivateWindow::ensureWindowVisibility ()
 	dx = (x1 + 25) - (serverGeometry.x () + width);
 
     int dy = 0;
-    int	height = serverGeometry.heightIncBorders ();
+    int height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.y () - serverInput.top >= y2)
 	dy = (y2 - 25) - serverGeometry.y ();
