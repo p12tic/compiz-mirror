@@ -32,25 +32,18 @@ COMPIZ_PLUGIN_20090315 (wobbly, WobblyPluginVTable)
 void
 WobblyWindow::findNextWestEdge (Object *object)
 {
-    int v1, v2;
-    int start;
-    int end;
-    int x;
-    int output;
-    int workAreaEdge;
+    int start = -65535;
+    int end   =  65535;
 
-    start = -65535.0f;
-    end   =  65535.0f;
+    int v1 = -65535;
+    int v2 =  65535;
 
-    v1 = -65535.0f;
-    v2 =  65535.0f;
+    int x = object->position.x + window->output ().left - window->border ().left;
 
-    x = object->position.x + window->output ().left - window->border ().left;
-
-    output = ::screen->outputDeviceForPoint (x, object->position.y);
+    int output = ::screen->outputDeviceForPoint (x, object->position.y);
     const CompRect &workArea =
 	::screen->outputDevs ()[(unsigned) output].workArea ();
-    workAreaEdge = workArea.x1 ();
+    int workAreaEdge = workArea.x1 ();
 
     if (x >= workAreaEdge)
     {
@@ -141,25 +134,18 @@ WobblyWindow::findNextWestEdge (Object *object)
 void
 WobblyWindow::findNextEastEdge (Object *object)
 {
-    int v1, v2;
-    int start;
-    int end;
-    int x;
-    int output;
-    int workAreaEdge;
+    int start = -65535;
+    int end   =  65535;
 
-    start = -65535.0f;
-    end   =  65535.0f;
+    int v1 =  65535;
+    int v2 = -65535;
 
-    v1 =  65535.0f;
-    v2 = -65535.0f;
+    int x = object->position.x - window->output ().right + window->border ().right;
 
-    x = object->position.x - window->output ().right + window->border ().right;
-
-    output = ::screen->outputDeviceForPoint (x, object->position.y);
+    int output = ::screen->outputDeviceForPoint (x, object->position.y);
     const CompRect &workArea =
 	::screen->outputDevs ()[(unsigned) output].workArea ();
-    workAreaEdge = workArea.x2 ();
+    int workAreaEdge = workArea.x2 ();
 
     if (x <= workAreaEdge)
     {
@@ -249,25 +235,18 @@ WobblyWindow::findNextEastEdge (Object *object)
 void
 WobblyWindow::findNextNorthEdge (Object *object)
 {
-    int v1, v2;
-    int start;
-    int end;
-    int y;
-    int output;
-    int workAreaEdge;
+    int start = -65535;
+    int end   =  65535;
 
-    start = -65535.0f;
-    end   =  65535.0f;
+    int v1 = -65535;
+    int v2 =  65535;
 
-    v1 = -65535.0f;
-    v2 =  65535.0f;
+    int y = object->position.y + window->output ().top - window->border ().top;
 
-    y = object->position.y + window->output ().top - window->border ().top;
-
-    output = ::screen->outputDeviceForPoint (object->position.x, y);
+    int output = ::screen->outputDeviceForPoint (object->position.x, y);
     const CompRect &workArea =
 	::screen->outputDevs ()[(unsigned) output].workArea ();
-    workAreaEdge = workArea.y1 ();
+    int workAreaEdge = workArea.y1 ();
 
     if (y >= workAreaEdge)
     {
@@ -357,25 +336,18 @@ WobblyWindow::findNextNorthEdge (Object *object)
 void
 WobblyWindow::findNextSouthEdge (Object *object)
 {
-    int v1, v2;
-    int start;
-    int end;
-    int y;
-    int output;
-    int workAreaEdge;
+    int start = -65535;
+    int end   =  65535;
 
-    start = -65535.0f;
-    end   =  65535.0f;
+    int v1 =  65535;
+    int v2 = -65535;
 
-    v1 =  65535.0f;
-    v2 = -65535.0f;
+    int y = object->position.y - window->output ().bottom + window->border ().bottom;
 
-    y = object->position.y - window->output ().bottom + window->border ().bottom;
-
-    output = ::screen->outputDeviceForPoint (object->position.x, y);
+    int output = ::screen->outputDeviceForPoint (object->position.x, y);
     const CompRect &workArea =
 	::screen->outputDevs ()[(unsigned) output].workArea ();
-    workAreaEdge = workArea.y2 ();
+    int workAreaEdge = workArea.y2 ();
 
     if (y <= workAreaEdge)
     {
