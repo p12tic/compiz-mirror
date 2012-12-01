@@ -29,10 +29,11 @@
 
 COMPIZ_PLUGIN_20090315 (wobbly, WobblyPluginVTable)
 
+
 const float MASS = 15.0f;
 
-const float EDGE_DISTANCE = 25.0f;
-const float EDGE_VELOCITY = 13.0f;
+const unsigned short EDGE_DISTANCE = 25;
+const unsigned short EDGE_VELOCITY = 13;
 
 void
 WobblyWindow::findNextWestEdge (Object *object)

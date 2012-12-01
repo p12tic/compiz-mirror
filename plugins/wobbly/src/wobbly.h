@@ -53,8 +53,8 @@ extern const float MASS;
 #define WestEdgeMask  (1L << 2)
 #define EastEdgeMask  (1L << 3)
 
-extern const float EDGE_DISTANCE;
-extern const float EDGE_VELOCITY;
+extern const unsigned short EDGE_DISTANCE;
+extern const unsigned short EDGE_VELOCITY;
 
 typedef enum
 {
