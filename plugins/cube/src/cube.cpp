@@ -966,7 +966,6 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 {
     GLScreenPaintAttrib sa = sAttrib;
 
-    int i;
     int xMoveAdd;
     int origXMoveAdd = 0; /* dx for the viewport we start
 			     painting with (back-most). */
@@ -1001,7 +1000,7 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 	    iFirstSign = 1;
     }
 
-    for (i = 0; i <= hsize / 2; i++)
+    for (int i = 0; i <= hsize / 2; i++)
     {
 	/* move to the correct viewport (back to front). */
 	xMoveAdd = origXMoveAdd;	/* move to farthest viewport. */
