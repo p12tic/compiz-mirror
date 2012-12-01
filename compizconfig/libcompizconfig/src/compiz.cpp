@@ -1111,7 +1111,6 @@ getNodesFromXPath (xmlDoc * doc, xmlNode * base, const char *path, int *num)
     xmlXPathContextPtr xpathCtx;
     xmlNode **rv = NULL;
     int size;
-    int i;
 
     *num = 0;
 
@@ -1146,7 +1145,7 @@ getNodesFromXPath (xmlDoc * doc, xmlNode * base, const char *path, int *num)
     }
     *num = size;
 
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
 	rv[i] = xpathObj->nodesetval->nodeTab[i];
 
     xmlXPathFreeObject (xpathObj);
@@ -2296,8 +2295,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
-	int i;
-	for (i = 0; i < num; i++)
+	for (int i = 0; i < num; i++)
 	{
 	    void *optionPBv = NULL;
     #ifdef USE_PROTOBUF
@@ -2334,8 +2332,7 @@ addStringsFromPath (CCSStringList * list,
 
     if (num)
     {
-	int i;
-	for (i = 0; i < num; i++)
+	for (int i = 0; i < num; i++)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
 

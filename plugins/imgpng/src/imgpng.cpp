@@ -56,9 +56,7 @@ premultiplyData (png_structp   png,
 		 png_row_infop row_info,
 		 png_bytep     data)
 {
-    unsigned int i;
-
-    for (i = 0; i < row_info->rowbytes; i += 4)
+    for (unsigned int i = 0; i < row_info->rowbytes; i += 4)
     {
 	unsigned char *base = &data[i];
 	unsigned char blue  = base[0];

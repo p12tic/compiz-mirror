@@ -4307,7 +4307,7 @@ PrivateWindow::ensureWindowVisibility ()
     int x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
 	 screen->width ();
     int y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
-	     screen->height ();
+	 screen->height ();
 
     int dx = 0;
     int width = serverGeometry.widthIncBorders ();

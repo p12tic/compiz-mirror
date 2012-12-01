@@ -407,7 +407,6 @@ signal_cb (int signum)
 static void
 load_script (const gchar *filename)
 {
-    int i;
     gchar *data, **lines;
 
     if (!g_file_get_contents (filename, &data, NULL, NULL))
@@ -420,7 +419,7 @@ load_script (const gchar *filename)
     g_free (data);
 
     /* Load lines with #? prefix as expected behaviour */
-    for (i = 0; lines[i]; i++)
+    for (int i = 0; lines[i]; i++)
     {
         gchar *line = g_strstrip (lines[i]);
         if (g_str_has_prefix (line, "#?"))

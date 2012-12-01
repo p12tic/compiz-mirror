@@ -972,9 +972,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    unsigned int i;
-
-		    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+		    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
 		    {
 			if (event->xclient.window == screenEdge[i].id)
 			{
@@ -1016,9 +1014,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    unsigned int i;
-
-		    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+		    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
 		    {
 			if (xdndWindow == screenEdge[i].id)
 			{

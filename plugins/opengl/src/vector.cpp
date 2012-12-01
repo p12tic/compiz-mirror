@@ -95,9 +95,7 @@ GLVector::operator[] (VectorCoordsEnum coord) const
 GLVector&
 GLVector::operator+= (const GLVector& rhs)
 {
-    int i;
-
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	v[i] += rhs[i];
 
     return *this;
@@ -119,9 +117,7 @@ operator+ (const GLVector& lhs,
 GLVector&
 GLVector::operator-= (const GLVector& rhs)
 {
-    int i;
-
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	v[i] -= rhs[i];
 
     return *this;
@@ -155,9 +151,7 @@ operator- (const GLVector& vector)
 GLVector&
 GLVector::operator*= (const float k)
 {
-    int i;
-
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	v[i] *= k;
 
     return *this;
@@ -199,9 +193,7 @@ operator* (const GLVector& vector,
 GLVector&
 GLVector::operator/= (const float k)
 {
-    int i;
-
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	v[i] /= k;
 
     return *this;

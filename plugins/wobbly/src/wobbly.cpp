@@ -2054,8 +2054,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetGrabWindowMatch ().evaluate (window))
 	    {
-		int i;
-		for (i = 0; i < model->numSprings; i++)
+		for (int i = 0; i < model->numSprings; i++)
 		{
 		    s = &model->springs[i];
 

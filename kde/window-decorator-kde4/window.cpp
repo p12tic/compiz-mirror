@@ -1570,9 +1570,7 @@ KWD::Window::getWindowProtocols (void)
 
     if (status)
     {
-	int i;
-
-	for (i = 0; i < n; i++)
+	for (int i = 0; i < n; i++)
 	{
 	    if (p[i] == Atoms::wmTakeFocus)
 		mSupportTakeFocus = true;
