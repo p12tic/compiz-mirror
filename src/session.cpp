@@ -68,9 +68,7 @@ setStringListProperty (SmcConn	  connection,
     if (!prop.vals)
 	return;
 
-    int i;
-
-    for (i = 0; i < nValues; i++)
+    for (int i = 0; i < nValues; i++)
     {
 	prop.vals[i].value = (char *) values[i];
 	prop.vals[i].length = strlen (values[i]);
