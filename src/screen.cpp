@@ -2227,9 +2227,8 @@ PrivateScreen::updateScreenEdges ()
 	{ 0, -1,   1, -1,   0,  2,   0,  2 }, /* bottom-left */
 	{ 1, -1,   1, -1,   0,  2,   0,  2 }  /* bottom-right */
     };
-    int i;
 
-    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
 	if (screenEdge[i].id)
 	    XMoveResizeWindow (dpy, screenEdge[i].id,
@@ -3476,9 +3475,7 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->edgeMask ())
     {
-	int i;
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
 		privateScreen.enableEdge (i);
     }
@@ -3504,9 +3501,7 @@ CompScreenImpl::removeAction (CompAction *action)
 
     if (action->edgeMask ())
     {
-	int i;
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
 		privateScreen.disableEdge (i);
     }
