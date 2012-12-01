@@ -41,10 +41,10 @@
 			  CompWindowTypeMenuMask    | \
 			  CompWindowTypeUtilMask)
 
-extern const unsigned short GRID_WIDTH;
-extern const unsigned short GRID_HEIGHT;
+const unsigned short GRID_WIDTH = 4;
+const unsigned short GRID_HEIGHT = 4;
 
-extern const unsigned short MODEL_MAX_SPRINGS;
+const unsigned short MODEL_MAX_SPRINGS = (GRID_WIDTH * GRID_HEIGHT * 2);
 
 extern const float MASS;
 

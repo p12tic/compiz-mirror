@@ -29,11 +29,6 @@
 
 COMPIZ_PLUGIN_20090315 (wobbly, WobblyPluginVTable)
 
-const unsigned short GRID_WIDTH = 4;
-const unsigned short GRID_HEIGHT = 4;
-
-const unsigned short MODEL_MAX_SPRINGS = (GRID_WIDTH * GRID_HEIGHT * 2);
-
 const float MASS = 15.0f;
 
 const float EDGE_DISTANCE = 25.0f;
