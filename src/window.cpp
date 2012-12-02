@@ -2506,7 +2506,6 @@ CompWindow::moveInputFocusToOtherWindow ()
     if (priv->id == screen->activeWindow () ||
 	priv->id == screen->getNextActiveWindow())
     {
-	CompWindow *ancestor;
 	CompWindow *nextActive = screen->findWindow (screen->getNextActiveWindow());
 
         /* Window pending focus */
@@ -2518,6 +2517,7 @@ CompWindow::moveInputFocusToOtherWindow ()
 	}
 	else if (priv->transientFor && priv->transientFor != screen->root ())
 	{
+	    CompWindow *ancestor;
 	    ancestor = screen->findWindow (priv->transientFor);
 	    if (ancestor &&
 		ancestor->focus () &&
