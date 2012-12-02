@@ -43,7 +43,7 @@ CompEventSource::connect (const sigc::slot <bool> &slot)
 CompEventSource::CompEventSource (Display *dpy, int fd) :
     Glib::Source (),
     mDpy (dpy),
-    mConnectionFD ()
+    mConnectionFD (ConnectionNumber (dpy))
 {
     mPollFD.set_fd (mConnectionFD);
     mPollFD.set_events (Glib::IO_IN);
