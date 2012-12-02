@@ -38,11 +38,11 @@ const unsigned short EDGE_VELOCITY = 13;
 void
 WobblyWindow::findNextWestEdge (Object *object)
 {
-    int start = -65535;
-    int end   =  65535;
+    int start = std::numeric_limits <short>::min ();
+    int end   = std::numeric_limits <short>::max ();
 
-    int v1 = -65535;
-    int v2 =  65535;
+    int v1 = std::numeric_limits <short>::min ();
+    int v2 = std::numeric_limits <short>::max ();
 
     int x = object->position.x + window->output ().left - window->border ().left;
 
@@ -140,11 +140,11 @@ WobblyWindow::findNextWestEdge (Object *object)
 void
 WobblyWindow::findNextEastEdge (Object *object)
 {
-    int start = -65535;
-    int end   =  65535;
+    int start = std::numeric_limits <short>::min ();
+    int end   = std::numeric_limits <short>::max ();
 
-    int v1 =  65535;
-    int v2 = -65535;
+    int v1 = std::numeric_limits <short>::max ();
+    int v2 = std::numeric_limits <short>::min ();
 
     int x = object->position.x - window->output ().right + window->border ().right;
 
@@ -241,11 +241,11 @@ WobblyWindow::findNextEastEdge (Object *object)
 void
 WobblyWindow::findNextNorthEdge (Object *object)
 {
-    int start = -65535;
-    int end   =  65535;
+    int start = std::numeric_limits <short>::min ();
+    int end   = std::numeric_limits <short>::max ();
 
-    int v1 = -65535;
-    int v2 =  65535;
+    int v1 = std::numeric_limits <short>::min ();
+    int v2 = std::numeric_limits <short>::max ();
 
     int y = object->position.y + window->output ().top - window->border ().top;
 
@@ -342,11 +342,11 @@ WobblyWindow::findNextNorthEdge (Object *object)
 void
 WobblyWindow::findNextSouthEdge (Object *object)
 {
-    int start = -65535;
-    int end   =  65535;
+    int start = std::numeric_limits <short>::min ();
+    int end   = std::numeric_limits <short>::max ();
 
-    int v1 =  65535;
-    int v2 = -65535;
+    int v1 = std::numeric_limits <short>::max ();
+    int v2 = std::numeric_limits <short>::min ();
 
     int y = object->position.y - window->output ().bottom + window->border ().bottom;
 
