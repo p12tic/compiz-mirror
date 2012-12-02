@@ -5221,14 +5221,23 @@ cps::OrphanData::~OrphanData()
 
 cps::EventManager::~EventManager ()
 {
-    /* This will implicitly call ~CompTimeoutSource
-     * See LP: #1085590 */
-    g_source_destroy (timeout->gobj ());
+    /* Not guaranteed to be created by EventManager's constructor */
+    if (timeout)
+    {
+	/* This will implicitly call ~CompTimeoutSource
+	 * See LP: #1085590 */
+	g_source_destroy (timeout->gobj ());
+    }
     delete sigintSource;
     delete sigtermSource;
     delete sighupSource;
-    /* This will implicitly call ~CompEventSource */
-    g_source_destroy (source->gobj ());
+
+    /* Not guaranteed to be created by EventManager's constructor */
+    if (source)
+    {
+	/* This will implicitly call ~CompEventSource */
+	g_source_destroy (source->gobj ());
+    }
 
     /* This will implicitly call ~CompWatchFd */
     foreach (CompWatchFd *fd, watchFds)
