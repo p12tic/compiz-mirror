@@ -79,8 +79,8 @@ extern unsigned int pointerMods;
 #define SCREEN_EDGE_BOTTOMRIGHT	    7
 #define SCREEN_EDGE_NUM		    8
 
-typedef boost::function<void (const char *)> FileWatchCallBack;
 typedef boost::function<void (short int)> FdWatchCallBack;
+typedef boost::function<void (const char *)> FileWatchCallBack;
 
 typedef int CompFileWatchHandle;
 typedef int CompWatchFdHandle;
