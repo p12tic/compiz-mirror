@@ -1614,7 +1614,6 @@ initListValue (CCSSettingValue * v,
 static void
 initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
-    xmlNode **nodes;
     char *value;
     int num;
     i->forInt.min = std::numeric_limits <short>::min ();
@@ -1647,6 +1646,7 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 
     if (!basicMetadata)
     {
+	xmlNode **nodes;
 	nodes = getNodesFromXPath (node->doc, node, "desc", &num);
 	if (num)
 	{
