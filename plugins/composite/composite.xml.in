@@ -28,7 +28,7 @@
 	    </option>
 	    <option name="unredirect_match" type="match">
 		<_short>Unredirect Match</_short>
-		<_long>Specifies which windows will be unredirected when they are fullscreen. You might want to exclude video players for example, to avoid tearing. But this will be at the expense of performance/frame rate.</_long>
+		<_long>Specifies which windows will be unredirected when they are fullscreen. You might want to exclude video players for example, to avoid tearing. But this will be at the expense of performance/frame rate. Note: "class=" matching requires the regex plugin to work.</_long>
 		<default>(any) &amp; !(class=Totem) &amp; !(class=MPlayer) &amp; !(class=Vlc) &amp; !(class=Plugin-container)</default>
 	    </option>
 	    <option name="force_independent_output_painting" type="bool">
