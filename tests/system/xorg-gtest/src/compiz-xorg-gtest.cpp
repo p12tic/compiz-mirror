@@ -162,7 +162,6 @@ ct::XorgSystemTest::CompizProcessState ()
 
 namespace
 {
-    Display *d;
 class StartupClientMessageMatcher :
     public ct::XEventMatcher
 {
@@ -218,7 +217,6 @@ ct::XorgSystemTest::StartCompiz (StartupState startupState)
 
     /* Wait for the startup message */
     ::Display *dpy = Display ();
-    d = dpy;
     Window    root = DefaultRootWindow (dpy);
 
     Atom    startup = XInternAtom (dpy,
