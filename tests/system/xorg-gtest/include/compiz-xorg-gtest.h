@@ -57,6 +57,9 @@ namespace compiz
 		virtual void SetUp ();
 		virtual void TearDown ();
 
+		xorg::testing::Process::State CompizProcessState ();
+		void StartCompiz ();
+
 	    private:
 
 		xorg::testing::Process mCompizProcess;

@@ -13,15 +13,27 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     add_executable (compiz_xorg_gtest_test_window_stacking
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_test_window_stacking.cpp)
 
+    add_executable (compiz_xorg_gtest_test_icccm
+		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_icccm.cpp)
+
+    set (COMPIZ_XORG_GTEST_LIBRARIES
+	 compiz_xorg_gtest_system_test
+	 xorg_gtest_all
+	 xorg_gtest_main
+	 ${GTEST_BOTH_LIBRARIES}
+	 ${CMAKE_THREAD_LIBS_INIT}
+	 ${XORG_SERVER_LIBRARIES}
+	 ${X11_XI_LIBRARIES}
+	 ${CMAKE_THREAD_LIBS_INIT})
+
     target_link_libraries (compiz_xorg_gtest_test_window_stacking
-			   compiz_xorg_gtest_system_test
-			   xorg_gtest_all
-			   xorg_gtest_main
-			   ${GTEST_BOTH_LIBRARIES}
-			   ${CMAKE_THREAD_LIBS_INIT}
-			   ${XORG_SERVER_LIBRARIES}
-			   ${X11_XI_LIBRARIES})
+			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
     compiz_discover_tests (compiz_xorg_gtest_test_window_stacking)
+
+    target_link_libraries (compiz_xorg_gtest_test_icccm
+			   ${COMPIZ_XORG_GTEST_LIBRARIES})
+
+    compiz_discover_tests (compiz_xorg_gtest_test_icccm)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)

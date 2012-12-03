@@ -128,10 +128,26 @@ void
 ct::XorgSystemTest::SetUp ()
 {
     xorg::testing::Test::SetUp ();
+}
 
-    ::Display *dpy = Display ();
-    XSelectInput (dpy, DefaultRootWindow (dpy), SubstructureNotifyMask | PropertyChangeMask);
+void
+ct::XorgSystemTest::TearDown ()
+{
+    if (mCompizProcess.GetState () == xorg::testing::Process::RUNNING)
+	mCompizProcess.Kill ();
 
+    xorg::testing::Test::TearDown ();
+}
+
+xorg::testing::Process::State
+ct::XorgSystemTest::CompizProcessState ()
+{
+    return mCompizProcess.GetState ();
+}
+
+void
+ct::XorgSystemTest::StartCompiz ()
+{
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
     mCompizProcess.Start (compizBinaryPath, "--replace", NULL);
 
@@ -140,11 +156,4 @@ ct::XorgSystemTest::SetUp ()
     ASSERT_TRUE (xorg::testing::XServer::WaitForEventOfType (Display (), PropertyNotify, -1, -1, 3000));
 
     ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
-}
-
-void
-ct::XorgSystemTest::TearDown ()
-{
-    mCompizProcess.Kill ();
-    xorg::testing::Test::TearDown ();
 }
