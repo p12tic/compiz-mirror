@@ -49,7 +49,7 @@ using ::testing::Matcher;
 namespace ct = compiz::testing;
 
 class CompizXorgSystemICCCM :
-    public compiz::testing::XorgSystemTest
+    public ct::XorgSystemTest
 {
     public:
 
@@ -66,6 +66,19 @@ class CompizXorgSystemICCCM :
 		perror ("pipe2");
 		exit (EXIT_FAILURE);
 	    }
+	}
+
+	virtual void SetUp ()
+	{
+	    ct::XorgSystemTest::SetUp ();
+
+	    ::Display *dpy = Display ();
+
+	    XSelectInput (dpy, DefaultRootWindow (dpy),
+			  StructureNotifyMask |
+			  FocusChangeMask |
+			  PropertyChangeMask |
+			  SubstructureRedirectMask);
 	}
 
 	~CompizXorgSystemICCCM ()
@@ -180,14 +193,6 @@ CompizXorgSystemICCCM::WaitForDeathEntry (void *data)
 
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 {
-    ::Display *dpy = Display ();
-
-    XSelectInput (dpy, DefaultRootWindow (dpy),
-		  StructureNotifyMask |
-		  FocusChangeMask |
-		  PropertyChangeMask |
-		  SubstructureRedirectMask);
-
     pthread_t waitingForDeathThread;
 
     if (pthread_create (&waitingForDeathThread,
