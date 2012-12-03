@@ -35,6 +35,8 @@ namespace compiz
 	typedef  ::testing::MatcherInterface <const XEvent &> XEventMatcher;
 
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
+	bool AdvanceToNextEventOnSuccess (Display *dpy,
+					  bool waitResult);
 	bool WaitForEventOfTypeOnWindow (Display *dpy,
 					 Window  w,
 					 int     type,

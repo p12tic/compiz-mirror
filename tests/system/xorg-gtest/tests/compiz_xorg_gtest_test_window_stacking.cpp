@@ -66,6 +66,12 @@ namespace
 
     const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
 
+    bool Advance (Display *dpy,
+		  bool waitResult)
+    {
+	return ct::AdvanceToNextEventOnSuccess (dpy, waitResult);
+    }
+
     void MakeDock (Display *dpy, Window w)
     {
 	Atom _NET_WM_WINDOW_TYPE = XInternAtom (dpy, "_NET_WM_WINDOW_TYPE", false);
@@ -176,16 +182,26 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     XMapRaised (dpy, w2);
 
     /* Both reparented and both mapped */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, ReparentNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,w1, ReparentNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1)));
 
     PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
 
     /* Wait for property change notify on the root window to happen twice */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
 
     /* Check the client list to see that w2 > w1 */
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
@@ -208,12 +224,16 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     /* Immediately map the dock window and clear the event queue for it */
     XMapRaised (dpy, dock);
 
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, dock, ReparentNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, dock, MapNotify, -1, -1));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, dock, ReparentNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, dock, MapNotify, -1, -1)));
 
     /* Dock window needs to be in the client list */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
     ASSERT_EQ (clientList.size (), 1);
 
@@ -226,15 +246,24 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     XMapRaised (dpy, w2);
 
     /* Both reparented and both mapped */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, ReparentNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w1, ReparentNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1)));
 
     /* Wait for property change notify on the root window to happen twice */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
     clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
 
     /* Check the client list to see that dock > w2 > w1 */
@@ -260,8 +289,18 @@ TEST_F (CompizXorgSystemStackingTest, TestMapWindowWithOldUserTime)
     XMapRaised (dpy, w2);
 
     /* Wait for property change notify on the root window to happen twice */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
 
     SetUserTime (dpy, w2, 200);
     SetClientLeader (dpy, w2, w2);
@@ -269,7 +308,7 @@ TEST_F (CompizXorgSystemStackingTest, TestMapWindowWithOldUserTime)
     SetClientLeader (dpy, w3, w3);
 
     XMapRaised (dpy, w3);
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher)));
 
     /* Check the client list to see that w2 > w3 > w1 */
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
@@ -294,15 +333,28 @@ TEST_F (CompizXorgSystemStackingTest, TestMapWindowAndDenyFocus)
     XMapRaised (dpy, w2);
 
     /* Wait for property change notify on the root window to happen twice */
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
     SetUserTime (dpy, w3, 0);
     SetClientLeader (dpy, w3, w3);
 
     XMapRaised (dpy, w3);
-    ASSERT_TRUE (ct::WaitForEventOfTypeOnWindowMatching (dpy, DefaultRootWindow (dpy), PropertyNotify, -1, -1, matcher));
-
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
     /* Check the client list to see that w2 > w3 > w1 */
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
     ASSERT_EQ (clientList.size (), 3);

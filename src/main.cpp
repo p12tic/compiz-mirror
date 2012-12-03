@@ -103,6 +103,10 @@ CompManager::parseArguments (int argc, char **argv)
 	{
 	    replaceCurrentWm = true;
 	}
+	else if (!strcmp (argv[i], "--send-startup-message"))
+	{
+	    sendStartupMessage = true;
+	}
 	else if (!strcmp (argv[i], "--sm-disable"))
 	{
 	    disableSm = true;

@@ -5100,6 +5100,33 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     pingTimer.start ();
 
+    /* Send a client message indicating that our startup is complete if
+     * we were asked to do so */
+    if (sendStartupMessage)
+    {
+	Atom   startupMessageAtom = XInternAtom (dpy,
+						 "_COMPIZ_TESTING_STARTUP",
+						 FALSE);
+	XEvent startupMessageEvent;
+
+	startupMessageEvent.xclient.type         = ClientMessage;
+	startupMessageEvent.xclient.window       = root_tmp;
+	startupMessageEvent.xclient.message_type = startupMessageAtom;
+	startupMessageEvent.xclient.format       = 32;
+	startupMessageEvent.xclient.data.l[0]    = wmSnTimestamp;
+	startupMessageEvent.xclient.data.l[1]    = 0;
+	startupMessageEvent.xclient.data.l[2]    = 0;
+	startupMessageEvent.xclient.data.l[3]    = 0;
+	startupMessageEvent.xclient.data.l[4]    = 0;
+
+	XSendEvent (dpy,
+		    root_tmp,
+		    FALSE,
+		    SubstructureNotifyMask,
+		    &startupMessageEvent);
+	XFlush (dpy);
+    }
+
     return true;
 }
 

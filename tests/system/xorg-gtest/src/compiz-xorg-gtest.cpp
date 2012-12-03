@@ -31,6 +31,9 @@
 
 #include "compiz-xorg-gtest-config.h"
 
+using ::testing::MatchResultListener;
+using ::testing::MatcherInterface;
+
 namespace ct = compiz::testing;
 namespace
 {
@@ -41,6 +44,16 @@ namespace
 	if (XNextEvent (dpy, &event) != Success)
 	    throw std::runtime_error("Failed to remove X event");
     }
+}
+
+bool
+ct::AdvanceToNextEventOnSuccess (Display *dpy,
+				 bool waitResult)
+{
+    if (waitResult)
+	RemoveEventFromQueue (dpy);
+
+    return waitResult;
 }
 
 bool
@@ -57,10 +70,11 @@ ct::WaitForEventOfTypeOnWindow (Display *dpy,
 	if (!XPeekEvent (dpy, &event))
 	    throw std::runtime_error ("Failed to peek event");
 
-	RemoveEventFromQueue (dpy);
-
 	if (event.xany.window != w)
+	{
+	    RemoveEventFromQueue (dpy);
 	    continue;
+	}
 
 	return true;
     }
@@ -84,9 +98,10 @@ ct::WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 	    throw std::runtime_error ("Failed to peek event");
 
 	if (!matcher.MatchAndExplain (event, NULL))
+	{
+	    RemoveEventFromQueue (dpy);
 	    continue;
-
-	RemoveEventFromQueue (dpy);
+	}
 
 	return true;
     }
@@ -145,15 +160,72 @@ ct::XorgSystemTest::CompizProcessState ()
     return mCompizProcess.GetState ();
 }
 
+namespace
+{
+class StartupClientMessageMatcher :
+    public ct::XEventMatcher
+{
+    public:
+
+	StartupClientMessageMatcher (Atom   startup,
+				     Window root) :
+	    mStartup (startup),
+	    mRoot (root)
+	{
+	}
+
+	virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+	{
+	    if (event.xclient.window == mRoot &&
+		event.xclient.message_type == mStartup)
+		return true;
+
+	    return false;
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "is startup message";
+	}
+
+	virtual void DescribeNegationTo (std::ostream *os) const
+	{
+	    *os << "is not startup message";
+	}
+
+    private:
+
+	Atom mStartup;
+	Window mRoot;
+};
+}
+
+
 void
 ct::XorgSystemTest::StartCompiz ()
 {
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
-    mCompizProcess.Start (compizBinaryPath, "--replace", NULL);
+    mCompizProcess.Start (compizBinaryPath, "--replace", "--send-startup-message", NULL);
 
-    /* Output buffer is flushed by this point, compiz has a server grab,
-     * so we will only get this once the relevant initialization is complete */
-    ASSERT_TRUE (xorg::testing::XServer::WaitForEventOfType (Display (), PropertyNotify, -1, -1, 3000));
+    ::Display *dpy = Display ();
+    Window    root = DefaultRootWindow (dpy);
+
+    Atom    startup = XInternAtom (dpy,
+				   "_COMPIZ_TESTING_STARTUP",
+				   false);
+
+    StartupClientMessageMatcher matcher (startup, root);
+
+    /* Wait for the startup message */
+    ASSERT_TRUE (ct::AdvanceToNextEventOnSuccess (
+		     dpy,
+		     ct::WaitForEventOfTypeOnWindowMatching (dpy,
+							     root,
+							     ClientMessage,
+							     -1,
+							     -1,
+							     matcher,
+							     3000)));
 
     ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
 }
