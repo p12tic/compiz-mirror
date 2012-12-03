@@ -48,7 +48,7 @@ class CompizXorgSystemStackingTest :
 	    ::Display *dpy = Display ();
 	    XSelectInput (dpy, DefaultRootWindow (dpy), SubstructureNotifyMask | PropertyChangeMask);
 
-	    StartCompiz ();
+	    StartCompiz (ct::XorgSystemTest::ExpectStartupSuccess);
 	}
 };
 

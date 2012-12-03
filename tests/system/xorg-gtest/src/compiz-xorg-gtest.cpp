@@ -162,22 +162,28 @@ ct::XorgSystemTest::CompizProcessState ()
 
 namespace
 {
+    Display *d;
 class StartupClientMessageMatcher :
     public ct::XEventMatcher
 {
     public:
 
-	StartupClientMessageMatcher (Atom   startup,
-				     Window root) :
+	StartupClientMessageMatcher (Atom                             startup,
+				     Window                           root,
+				     ct::XorgSystemTest::StartupState state) :
 	    mStartup (startup),
-	    mRoot (root)
+	    mRoot (root),
+	    mExpectedState (state)
 	{
 	}
 
 	virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
 	{
+	    int state = mExpectedState == ct::XorgSystemTest::ExpectStartupSuccess ? 1 : 0;
+
 	    if (event.xclient.window == mRoot &&
-		event.xclient.message_type == mStartup)
+		event.xclient.message_type == mStartup &&
+		event.xclient.data.l[0] == state)
 		return true;
 
 	    return false;
@@ -197,26 +203,37 @@ class StartupClientMessageMatcher :
 
 	Atom mStartup;
 	Window mRoot;
+	ct::XorgSystemTest::StartupState mExpectedState;
 };
 }
 
 
 void
-ct::XorgSystemTest::StartCompiz ()
+ct::XorgSystemTest::StartCompiz (StartupState startupState)
 {
+    XWindowAttributes attrib;
+
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
     mCompizProcess.Start (compizBinaryPath, "--replace", "--send-startup-message", NULL);
 
+    /* Wait for the startup message */
     ::Display *dpy = Display ();
+    d = dpy;
     Window    root = DefaultRootWindow (dpy);
 
     Atom    startup = XInternAtom (dpy,
 				   "_COMPIZ_TESTING_STARTUP",
 				   false);
 
-    StartupClientMessageMatcher matcher (startup, root);
+    StartupClientMessageMatcher matcher (startup, root, startupState);
 
-    /* Wait for the startup message */
+    ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
+
+    /* Save the current event mask and subscribe to StructureNotifyMask only */
+    ASSERT_TRUE (XGetWindowAttributes (dpy, root, &attrib));
+    XSelectInput (dpy, root, StructureNotifyMask |
+			     attrib.your_event_mask);
+
     ASSERT_TRUE (ct::AdvanceToNextEventOnSuccess (
 		     dpy,
 		     ct::WaitForEventOfTypeOnWindowMatching (dpy,
@@ -227,5 +244,5 @@ ct::XorgSystemTest::StartCompiz ()
 							     matcher,
 							     3000)));
 
-    ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
+    XSelectInput (dpy, root, attrib.your_event_mask);
 }

@@ -56,11 +56,17 @@ namespace compiz
 	{
 	    public:
 
+		typedef enum _StartupState
+		{
+		    ExpectStartupSuccess,
+		    ExpectStartupFailure
+		} StartupState;
+
 		virtual void SetUp ();
 		virtual void TearDown ();
 
 		xorg::testing::Process::State CompizProcessState ();
-		void StartCompiz ();
+		void StartCompiz (StartupState startupState);
 
 	    private:
 

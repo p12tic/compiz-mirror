@@ -211,7 +211,7 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
      * implicitly, eg XCloseDisplay) */
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
 
-    StartCompiz ();
+    StartCompiz (ct::XorgSystemTest::ExpectStartupFailure);
 
     /* Now wait for the thread to tell us the news -
      * this will block for up to ten seconds */

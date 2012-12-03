@@ -4675,6 +4675,40 @@ CompScreenImpl::getNextActiveWindow() const
     return privateScreen.orphanData.nextActiveWindow;
 }
 
+namespace
+{
+void sendStartupMessageToClients (Display *dpy, bool success)
+{
+    /* Send a client message indicating that our startup is complete if
+     * we were asked to do so */
+    if (sendStartupMessage)
+    {
+	Atom   startupMessageAtom = XInternAtom (dpy,
+						 "_COMPIZ_TESTING_STARTUP",
+						 FALSE);
+	XEvent startupMessageEvent;
+	Window root = DefaultRootWindow (dpy);
+
+	startupMessageEvent.xclient.type         = ClientMessage;
+	startupMessageEvent.xclient.window       = root;
+	startupMessageEvent.xclient.message_type = startupMessageAtom;
+	startupMessageEvent.xclient.format       = 32;
+	startupMessageEvent.xclient.data.l[0]    = success ? 1 : 0;
+	startupMessageEvent.xclient.data.l[1]    = 0;
+	startupMessageEvent.xclient.data.l[2]    = 0;
+	startupMessageEvent.xclient.data.l[3]    = 0;
+	startupMessageEvent.xclient.data.l[4]    = 0;
+
+	XSendEvent (dpy,
+		    root,
+		    FALSE,
+		    StructureNotifyMask,
+		    &startupMessageEvent);
+	XFlush (dpy);
+    }
+}
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned int showingDesktopMask)
@@ -4706,6 +4740,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 		       "No sync extension");
+	sendStartupMessageToClients (dpy, false);
 	return false;
     }
 
@@ -4806,6 +4841,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't get visual info for default visual");
+	sendStartupMessageToClients (dpy, false);
 	return false;
     }
 
@@ -4816,6 +4852,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't allocate color");
+	sendStartupMessageToClients (dpy, false);
 	XFree (visinfo);
 	return false;
     }
@@ -4826,6 +4863,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't create bitmap");
+	sendStartupMessageToClients (dpy, false);
 	XFree (visinfo);
 	return false;
     }
@@ -4836,6 +4874,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't create invisible cursor");
+	sendStartupMessageToClients (dpy, false);
 	XFree (visinfo);
 	return false;
     }
@@ -4872,6 +4911,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 			    "--replace option to replace the current "
 			    "window manager.",
 			    DefaultScreen (dpy), DisplayString (dpy));
+	    sendStartupMessageToClients (dpy, false);
 
 	    return false;
 	}
@@ -4909,6 +4949,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 			DefaultScreen (dpy), DisplayString (dpy));
 
 	XDestroyWindow (dpy, newWmSnOwner);
+	sendStartupMessageToClients (dpy, false);
 
 	return false;
     }
@@ -5000,6 +5041,8 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
 	XUngrabServer (dpy);
 	XSync (dpy, FALSE);
+
+	sendStartupMessageToClients (dpy, false);
 	return false;
     }
 
@@ -5100,32 +5143,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     pingTimer.start ();
 
-    /* Send a client message indicating that our startup is complete if
-     * we were asked to do so */
-    if (sendStartupMessage)
-    {
-	Atom   startupMessageAtom = XInternAtom (dpy,
-						 "_COMPIZ_TESTING_STARTUP",
-						 FALSE);
-	XEvent startupMessageEvent;
-
-	startupMessageEvent.xclient.type         = ClientMessage;
-	startupMessageEvent.xclient.window       = root_tmp;
-	startupMessageEvent.xclient.message_type = startupMessageAtom;
-	startupMessageEvent.xclient.format       = 32;
-	startupMessageEvent.xclient.data.l[0]    = wmSnTimestamp;
-	startupMessageEvent.xclient.data.l[1]    = 0;
-	startupMessageEvent.xclient.data.l[2]    = 0;
-	startupMessageEvent.xclient.data.l[3]    = 0;
-	startupMessageEvent.xclient.data.l[4]    = 0;
-
-	XSendEvent (dpy,
-		    root_tmp,
-		    FALSE,
-		    SubstructureNotifyMask,
-		    &startupMessageEvent);
-	XFlush (dpy);
-    }
+    sendStartupMessageToClients (dpy, true);
 
     return true;
 }
