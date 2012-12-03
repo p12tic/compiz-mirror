@@ -4854,55 +4854,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     getDesktopHints (showingDesktopMask);
 
-    /* Server grab from here, we are creating windows */
-
-    XGrabServer (dpy);
-
-    {
-	XSetWindowAttributes attrib;
-	attrib.override_redirect = 1;
-	attrib.event_mask = PropertyChangeMask;
-
-	eventManager.createGrabWindow(dpy, rootWindow(), &attrib);
-
-	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
-	{
-	    long xdndVersion = 3;
-
-	    screenEdge[i].id = XCreateWindow (dpy, rootWindow(),
-						    -100, -100, 1, 1, 0,
-						    CopyFromParent, InputOnly,
-						    CopyFromParent,
-						    CWOverrideRedirect,
-						    &attrib);
-
-	    XChangeProperty (dpy, screenEdge[i].id, Atoms::xdndAware,
-			     XA_ATOM, 32, PropModeReplace,
-			     (unsigned char *) &xdndVersion, 1);
-
-	    /* CompWindow::CompWindow will select for
-	     * crossing events when it gets called on
-	     * CreateNotify of this window, so no need
-	     * to select for them here */
-	    XSelectInput (dpy, screenEdge[i].id,
-			  StructureNotifyMask |
-			  ButtonPressMask   |
-			  ButtonReleaseMask |
-			  PointerMotionMask);
-	}
-    }
-
-    updateScreenEdges ();
-
-    setDesktopHints ();
-    eventManager.setSupportingWmCheck (dpy, rootWindow());
-    screen->updateSupportedWmHints ();
-
-    normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
-    busyCursor   = XCreateFontCursor (dpy, XC_watch);
-
-    XDefineCursor (dpy, rootWindow(), normalCursor);
-
     /* Check for other window managers */
 
     char                 buf[128];
@@ -4982,6 +4933,56 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
 	} while (event.type != DestroyNotify);
     }
+
+
+    /* Server grab from here, we are creating windows */
+
+    XGrabServer (dpy);
+
+    {
+	XSetWindowAttributes attrib;
+	attrib.override_redirect = 1;
+	attrib.event_mask = PropertyChangeMask;
+
+	eventManager.createGrabWindow(dpy, rootWindow(), &attrib);
+
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
+	{
+	    long xdndVersion = 3;
+
+	    screenEdge[i].id = XCreateWindow (dpy, rootWindow(),
+						    -100, -100, 1, 1, 0,
+						    CopyFromParent, InputOnly,
+						    CopyFromParent,
+						    CWOverrideRedirect,
+						    &attrib);
+
+	    XChangeProperty (dpy, screenEdge[i].id, Atoms::xdndAware,
+			     XA_ATOM, 32, PropModeReplace,
+			     (unsigned char *) &xdndVersion, 1);
+
+	    /* CompWindow::CompWindow will select for
+	     * crossing events when it gets called on
+	     * CreateNotify of this window, so no need
+	     * to select for them here */
+	    XSelectInput (dpy, screenEdge[i].id,
+			  StructureNotifyMask |
+			  ButtonPressMask   |
+			  ButtonReleaseMask |
+			  PointerMotionMask);
+	}
+    }
+
+    updateScreenEdges ();
+
+    setDesktopHints ();
+    eventManager.setSupportingWmCheck (dpy, rootWindow());
+    screen->updateSupportedWmHints ();
+
+    normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
+    busyCursor   = XCreateFontCursor (dpy, XC_watch);
+
+    XDefineCursor (dpy, rootWindow(), normalCursor);
 
     /* Attempt to gain SubstructureRedirectMask */
     CompScreenImpl::checkForError (dpy);
