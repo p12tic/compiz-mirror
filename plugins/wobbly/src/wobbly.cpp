@@ -29,20 +29,27 @@
 
 COMPIZ_PLUGIN_20090315 (wobbly, WobblyPluginVTable)
 
+const unsigned short GRID_WIDTH = 4;
+const unsigned short GRID_HEIGHT = 4;
+
+const unsigned short MODEL_MAX_SPRINGS = (GRID_WIDTH * GRID_HEIGHT * 2);
 
 const float MASS = 15.0f;
 
 const unsigned short EDGE_DISTANCE = 25;
 const unsigned short EDGE_VELOCITY = 13;
 
+const int kObjectSearchMaximum = std::numeric_limits <unsigned short>::max ();
+const int kObjectSearchMinimum = -(std::numeric_limits <unsigned short>::max ());
+
 void
 WobblyWindow::findNextWestEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = kObjectSearchMinimum;
+    int end   = kObjectSearchMaximum;
 
-    int v1 = std::numeric_limits <short>::min ();
-    int v2 = std::numeric_limits <short>::max ();
+    int v1 = kObjectSearchMinimum;
+    int v2 = kObjectSearchMaximum;
 
     int x = object->position.x + window->output ().left - window->border ().left;
 
@@ -140,11 +147,11 @@ WobblyWindow::findNextWestEdge (Object *object)
 void
 WobblyWindow::findNextEastEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = kObjectSearchMinimum;
+    int end   = kObjectSearchMaximum;
 
-    int v1 = std::numeric_limits <short>::max ();
-    int v2 = std::numeric_limits <short>::min ();
+    int v1 = kObjectSearchMaximum;
+    int v2 = kObjectSearchMinimum;
 
     int x = object->position.x - window->output ().right + window->border ().right;
 
@@ -241,11 +248,11 @@ WobblyWindow::findNextEastEdge (Object *object)
 void
 WobblyWindow::findNextNorthEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = kObjectSearchMinimum;
+    int end   = kObjectSearchMaximum;
 
-    int v1 = std::numeric_limits <short>::min ();
-    int v2 = std::numeric_limits <short>::max ();
+    int v1 = kObjectSearchMinimum;
+    int v2 = kObjectSearchMaximum;
 
     int y = object->position.y + window->output ().top - window->border ().top;
 
@@ -342,11 +349,11 @@ WobblyWindow::findNextNorthEdge (Object *object)
 void
 WobblyWindow::findNextSouthEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = kObjectSearchMinimum;
+    int end   = kObjectSearchMaximum;
 
-    int v1 = std::numeric_limits <short>::max ();
-    int v2 = std::numeric_limits <short>::min ();
+    int v1 = kObjectSearchMaximum;
+    int v2 = kObjectSearchMinimum;
 
     int y = object->position.y - window->output ().bottom + window->border ().bottom;
 
@@ -870,6 +877,7 @@ Model::Model (int	   x,
 	      int	   height,
 	      unsigned int edgeMask) :
     numObjects (GRID_WIDTH * GRID_HEIGHT),
+    springs (new Spring[MODEL_MAX_SPRINGS]),
     numSprings (0),
     anchorObject (0),
     steps (0),
