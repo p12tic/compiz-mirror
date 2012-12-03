@@ -864,7 +864,7 @@ WallScreen::initiateFlip (Direction         direction,
 
 	if (dx < 0)
 	{
-	    offsetX = screen->width () - 10;
+	    offsetX = screen->width () - 1;
 	    warpX = pointerX + screen->width ();
 	}
 	else if (dx > 0)
@@ -880,7 +880,7 @@ WallScreen::initiateFlip (Direction         direction,
 
 	if (dy < 0)
 	{
-	    offsetY = screen->height () - 10;
+	    offsetY = screen->height () - 1;
 	    warpY = pointerY + screen->height ();
 	}
 	else if (dy > 0)
