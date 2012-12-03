@@ -39,14 +39,16 @@ const float MASS = 15.0f;
 const unsigned short EDGE_DISTANCE = 25;
 const unsigned short EDGE_VELOCITY = 13;
 
+typedef std::numeric_limits <short> ShortLimits;
+
 void
 WobblyWindow::findNextWestEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = ShortLimits::min ();
+    int end   = ShortLimits::max ();
 
-    int v1 = std::numeric_limits <short>::min ();
-    int v2 = std::numeric_limits <short>::max ();
+    int v1 = ShortLimits::min ();
+    int v2 = ShortLimits::max ();
 
     int x = object->position.x + window->output ().left - window->border ().left;
 
@@ -144,11 +146,11 @@ WobblyWindow::findNextWestEdge (Object *object)
 void
 WobblyWindow::findNextEastEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = ShortLimits::min ();
+    int end   = ShortLimits::max ();
 
-    int v1 = std::numeric_limits <short>::max ();
-    int v2 = std::numeric_limits <short>::min ();
+    int v1 = ShortLimits::max ();
+    int v2 = ShortLimits::min ();
 
     int x = object->position.x - window->output ().right + window->border ().right;
 
@@ -245,11 +247,11 @@ WobblyWindow::findNextEastEdge (Object *object)
 void
 WobblyWindow::findNextNorthEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = ShortLimits::min ();
+    int end   = ShortLimits::max ();
 
-    int v1 = std::numeric_limits <short>::min ();
-    int v2 = std::numeric_limits <short>::max ();
+    int v1 = ShortLimits::min ();
+    int v2 = ShortLimits::max ();
 
     int y = object->position.y + window->output ().top - window->border ().top;
 
@@ -346,11 +348,11 @@ WobblyWindow::findNextNorthEdge (Object *object)
 void
 WobblyWindow::findNextSouthEdge (Object *object)
 {
-    int start = std::numeric_limits <short>::min ();
-    int end   = std::numeric_limits <short>::max ();
+    int start = ShortLimits::min ();
+    int end   = ShortLimits::max ();
 
-    int v1 = std::numeric_limits <short>::max ();
-    int v2 = std::numeric_limits <short>::min ();
+    int v1 = ShortLimits::max ();
+    int v2 = ShortLimits::min ();
 
     int y = object->position.y - window->output ().bottom + window->border ().bottom;
 
