@@ -187,7 +187,7 @@ ccsObjectGetInterface_(CCSObject *object, int interface_type)
 	      "This is either a programmer error or more than one static library \n"
 	      "defining this interface has been linked in\n"
 	      "Unable to continue, please file a bug about this\n", interface_type, object);
-    assert (0);
+    abort ();
 
     return NULL;
 }
