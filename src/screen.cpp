@@ -4736,91 +4736,10 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     escapeKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Escape"));
     returnKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Return"));
 
-    char                 buf[128];
-    sprintf (buf, "WM_S%d", DefaultScreen (dpy));
-    wmSnAtom = XInternAtom (dpy, buf, 0);
-
-    Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
-
-    if (currentWmSnOwner != None)
-    {
-	if (!replaceCurrentWm)
-	{
-	    compLogMessage ("core", CompLogLevelError,
-			    "Screen %d on display \"%s\" already "
-			    "has a window manager; try using the "
-			    "--replace option to replace the current "
-			    "window manager.",
-			    DefaultScreen (dpy), DisplayString (dpy));
-
-	    return false;
-	}
-
-	XSelectInput (dpy, currentWmSnOwner, StructureNotifyMask);
-    }
+    modHandler->updateModifierMappings ();
 
     Window root_tmp = XRootWindow (dpy, DefaultScreen (dpy));
 
-    XSetWindowAttributes attr;
-    attr.override_redirect = true;
-    attr.event_mask        = PropertyChangeMask;
-
-    Window newWmSnOwner =
-	XCreateWindow (dpy, root_tmp, -100, -100, 1, 1, 0,
-		       CopyFromParent, CopyFromParent,
-		       CopyFromParent,
-		       CWOverrideRedirect | CWEventMask,
-		       &attr);
-
-    XChangeProperty (dpy, newWmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
-		     PropModeReplace, (unsigned char *) PACKAGE,
-		     strlen (PACKAGE));
-
-    XEvent event;
-    XWindowEvent (dpy, newWmSnOwner, PropertyChangeMask, &event);
-
-    Time wmSnTimestamp = event.xproperty.time;
-
-    XSetSelectionOwner (dpy, wmSnAtom, newWmSnOwner, wmSnTimestamp);
-
-    if (XGetSelectionOwner (dpy, wmSnAtom) != newWmSnOwner)
-    {
-	compLogMessage ("core", CompLogLevelError,
-			"Could not acquire window manager "
-			"selection on screen %d display \"%s\"",
-			DefaultScreen (dpy), DisplayString (dpy));
-
-	XDestroyWindow (dpy, newWmSnOwner);
-
-	return false;
-    }
-
-    /* Send client message indicating that we are now the window manager */
-    event.xclient.type         = ClientMessage;
-    event.xclient.window       = root_tmp;
-    event.xclient.message_type = Atoms::manager;
-    event.xclient.format       = 32;
-    event.xclient.data.l[0]    = wmSnTimestamp;
-    event.xclient.data.l[1]    = wmSnAtom;
-    event.xclient.data.l[2]    = 0;
-    event.xclient.data.l[3]    = 0;
-    event.xclient.data.l[4]    = 0;
-
-    XSendEvent (dpy, root_tmp, FALSE, StructureNotifyMask, &event);
-
-    /* Wait for old window manager to go away */
-    if (currentWmSnOwner != None)
-    {
-	do {
-	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
-	} while (event.type != DestroyNotify);
-    }
-
-    modHandler->updateModifierMappings ();
-
-    CompScreenImpl::checkForError (dpy);
-
-    XGrabServer (dpy);
 
     /* Don't select for SubstructureRedirectMask or
      * SubstructureNotifyMask yet since we need to
@@ -4859,17 +4778,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 		      SubstructureNotifyMask);
     }
 
-    if (CompScreenImpl::checkForError (dpy))
-    {
-	compLogMessage ("core", CompLogLevelError,
-			"Another window manager is "
-			"already running on screen: %d", DefaultScreen (dpy));
-
-	XUngrabServer (dpy);
-	XSync (dpy, false);
-	return false;
-    }
-
     for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
 	screenEdge[i].id    = None;
@@ -4882,9 +4790,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     snContext = sn_monitor_context_new (snDisplay, screenNum,
 					      compScreenSnEvent, this, NULL);
-
-    wmSnSelectionWindow = newWmSnOwner;
-    this->wmSnTimestamp       = wmSnTimestamp;
 
     if (!XGetWindowAttributes (dpy, rootWindow(), &attrib))
 	return false;
@@ -4949,6 +4854,10 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     getDesktopHints (showingDesktopMask);
 
+    /* Server grab from here, we are creating windows */
+
+    XGrabServer (dpy);
+
     {
 	XSetWindowAttributes attrib;
 	attrib.override_redirect = 1;
@@ -4994,10 +4903,107 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     XDefineCursor (dpy, rootWindow(), normalCursor);
 
+    /* Check for other window managers */
+
+    char                 buf[128];
+    sprintf (buf, "WM_S%d", DefaultScreen (dpy));
+    wmSnAtom = XInternAtom (dpy, buf, 0);
+
+    Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
+
+    if (currentWmSnOwner != None)
+    {
+	if (!replaceCurrentWm)
+	{
+	    compLogMessage ("core", CompLogLevelError,
+			    "Screen %d on display \"%s\" already "
+			    "has a window manager; try using the "
+			    "--replace option to replace the current "
+			    "window manager.",
+			    DefaultScreen (dpy), DisplayString (dpy));
+
+	    return false;
+	}
+
+	XSelectInput (dpy, currentWmSnOwner, StructureNotifyMask);
+    }
+
+    XSetWindowAttributes attr;
+    attr.override_redirect = true;
+    attr.event_mask        = PropertyChangeMask;
+
+    Window newWmSnOwner =
+	XCreateWindow (dpy, root_tmp, -100, -100, 1, 1, 0,
+		       CopyFromParent, CopyFromParent,
+		       CopyFromParent,
+		       CWOverrideRedirect | CWEventMask,
+		       &attr);
+
+    XChangeProperty (dpy, newWmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
+		     PropModeReplace, (unsigned char *) PACKAGE,
+		     strlen (PACKAGE));
+
+    XEvent event;
+    XWindowEvent (dpy, newWmSnOwner, PropertyChangeMask, &event);
+
+    Time wmSnTimestamp = event.xproperty.time;
+
+    XSetSelectionOwner (dpy, wmSnAtom, newWmSnOwner, wmSnTimestamp);
+
+    if (XGetSelectionOwner (dpy, wmSnAtom) != newWmSnOwner)
+    {
+	compLogMessage ("core", CompLogLevelError,
+			"Could not acquire window manager "
+			"selection on screen %d display \"%s\"",
+			DefaultScreen (dpy), DisplayString (dpy));
+
+	XDestroyWindow (dpy, newWmSnOwner);
+
+	return false;
+    }
+
+    /* Send client message indicating that we are now the window manager */
+    event.xclient.type         = ClientMessage;
+    event.xclient.window       = root_tmp;
+    event.xclient.message_type = Atoms::manager;
+    event.xclient.format       = 32;
+    event.xclient.data.l[0]    = wmSnTimestamp;
+    event.xclient.data.l[1]    = wmSnAtom;
+    event.xclient.data.l[2]    = 0;
+    event.xclient.data.l[3]    = 0;
+    event.xclient.data.l[4]    = 0;
+
+    XSendEvent (dpy, root_tmp, FALSE, StructureNotifyMask, &event);
+
+    /* Wait for old window manager to go away */
+    if (currentWmSnOwner != None)
+    {
+	do {
+	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
+	} while (event.type != DestroyNotify);
+    }
+
+    /* Attempt to gain SubstructureRedirectMask */
+    CompScreenImpl::checkForError (dpy);
+
     /* We should get DestroyNotify events for any windows that were
      * destroyed while initializing windows here now */
     XSelectInput (dpy, rootWindow(), attrib.your_event_mask |
 		  SubstructureRedirectMask | SubstructureNotifyMask);
+
+    if (CompScreenImpl::checkForError (dpy))
+    {
+	compLogMessage ("core", CompLogLevelError,
+			"Another window manager is "
+			"already running on screen: %d", DefaultScreen (dpy));
+
+	XUngrabServer (dpy);
+	XSync (dpy, FALSE);
+	return false;
+    }
+
+    wmSnSelectionWindow = newWmSnOwner;
+    this->wmSnTimestamp       = wmSnTimestamp;
 
     Window rootReturn, parentReturn;
     Window               *children;

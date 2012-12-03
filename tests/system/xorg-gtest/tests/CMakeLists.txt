@@ -2,7 +2,8 @@ pkg_check_modules (X11_XI x11 xi)
 
 if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 
-    include_directories (${COMPIZ_XORG_SYSTEM_TEST_INCLUDE_DIR}
+    include_directories (${compiz_SOURCE_DIR}/tests/shared
+                         ${COMPIZ_XORG_SYSTEM_TEST_INCLUDE_DIR}
 			 ${X11_INCLUDE_DIRS}
 			 ${XORG_SERVER_INCLUDE_XORG_GTEST}
 			 ${XORG_SERVER_GTEST_SRC}

@@ -37,6 +37,8 @@
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 
+#include <gtest_shared_tmpenv.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
@@ -176,10 +178,6 @@ CompizXorgSystemICCCM::WaitForDeathEntry (void *data)
     return NULL;
 }
 
-namespace
-{
-}
-
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 {
     ::Display *dpy = Display ();
@@ -200,6 +198,13 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 	FAIL ();
 	perror ("pthread_create");
     }
+
+    /* XXX: This is a bit stupid, but we have to do it.
+     * It seems as though closing the child stdout or
+     * stderr will cause the client to hang indefinitely
+     * when the child calls XSync (and that can happen
+     * implicitly, eg XCloseDisplay) */
+    TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
 
     StartCompiz ();
 
