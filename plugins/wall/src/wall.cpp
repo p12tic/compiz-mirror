@@ -1195,7 +1195,6 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (optionGetMiniscreen ())
         {
-	    unsigned int i, j;
 	    float        mw, mh;
 
 	    mw = viewportWidth;
@@ -1207,9 +1206,9 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    mSAttribs.opacity = OPAQUE * (1.0 + mSzCamera);
 	    mSAttribs.saturation = COLOR;
 
-	    for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
+	    for (unsigned int j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	    {
-		for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
+		for (unsigned int i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
 		{
 		    float        mx, my;
 		    unsigned int msMask;
