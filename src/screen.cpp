@@ -4120,10 +4120,9 @@ cps::History::addToCurrentActiveWindowHistory (Window id)
 {
     CompActiveWindowHistory *history = &this->history[currentHistory_];
     Window		    tmp, next = id;
-    int			    i;
 
     /* walk and move history */
-    for (i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
+    for (int i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
     {
 	tmp = history->id[i];
 	history->id[i] = next;
