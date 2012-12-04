@@ -197,9 +197,7 @@ ObsScreen::matchExpHandlerChanged ()
 void
 ObsScreen::matchPropertyChanged (CompWindow  *w)
 {
-    unsigned int i;
-
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
 	ObsWindow::get (w)->updatePaintModifier (i);
 
     screen->matchPropertyChanged (w);
