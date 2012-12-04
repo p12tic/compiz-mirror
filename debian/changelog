@@ -1,13 +1,12 @@
-compiz (1:0.9.8.4+bzr3407-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.9~-0ubuntu1) UNRELEASED; urgency=low
 
+  [ Michael Terry ]
   * debian/control:
     - Update Vcs-Bzr
   * debian/patches/100_expo_layout.patch:
     - Fix to apply
   * Automatic snapshot from revision 3451 (bootstrap)
     - Fix crash from writing to static memory (LP: #1065814)
-    - Fix crash from duplicate template instaces (LP: #1065815)
-    - Fix crash when getting unexpected gconf data (LP: #1056615)
     - Fix maximized windows changing workspaces (LP: #1071791)
     - Respect Zoom Factor setting (LP: #1066187)
     - Respect Show Window Title setting (LP: #1009999)
@@ -17,7 +16,6 @@ compiz (1:0.9.8.4+bzr3407-0ubuntu2) UNRELEASED; urgency=low
     - Fix scaleaddon window highlighting being solid (LP #1068503)
     - Make resize hint overlay disappear when changing edges (LP: #839602)
     - Preserve grid IDs during drag (LP: #1067812, LP: #1048855)
-    - Stop resize border from flickering (LP: #1068518)
     - Save current display before doing snap preview (LP: #1068173)
     - Ignore inactive keybindings (LP: #1053280)
     - Handle <primary> in keyboard shortcuts (LP: #936840)
@@ -35,7 +33,7 @@ compiz (1:0.9.8.4+bzr3407-0ubuntu2) UNRELEASED; urgency=low
     - Fix syntax highlighting for trunk xml files (LP: #1066823)
     - Fix documentation for building with python2 (LP: #1070211)
 
- -- Michael Terry <mterry@ubuntu.com>  Mon, 05 Nov 2012 14:48:41 -0500
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 04 Dec 2012 15:59:25 +0800
 
 compiz (1:0.9.8.4+bzr3412-0ubuntu1) raring; urgency=low
 

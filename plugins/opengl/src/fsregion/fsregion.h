@@ -42,7 +42,8 @@ public:
 
     typedef unsigned int WinFlags;
 
-    FullscreenRegion (const CompRect &rect);
+    FullscreenRegion (const CompRect &output);
+    FullscreenRegion (const CompRect &output, const CompRegion &all);
 
     // isCoveredBy is called for windows from TOP to BOTTOM
     bool isCoveredBy (const CompRegion &region, WinFlags flags = 0);
@@ -51,6 +52,7 @@ public:
 private:
     CompRegion untouched;
     CompRegion orig;
+    CompRegion allOutputs;
 };
 
 } // namespace opengl
