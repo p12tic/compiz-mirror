@@ -2433,10 +2433,10 @@ initStringExtensionsFromRootNode (CCSPlugin * plugin,
 				  void * pluginPBv)
 {
     xmlNode **nodes;
-    int num, i;
+    int num;
     nodes = getNodesFromXPath (node->doc, node, "/compiz/*/extension", &num);
 
-    for (i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
 	void *extensionPBv = NULL;
 #ifdef USE_PROTOBUF
