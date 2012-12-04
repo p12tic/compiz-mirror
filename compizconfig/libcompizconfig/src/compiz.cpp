@@ -1647,8 +1647,7 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	if (num)
 	{
 	    char *name;
-	    int j;
-	    for (j = 0; j < num; j++)
+	    for (int j = 0; j < num; j++)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
 					    "value/child::text()");
