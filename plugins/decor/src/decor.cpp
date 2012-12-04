@@ -998,7 +998,6 @@ WindowDecoration::destroy (WindowDecoration *wd)
 void
 DecorWindow::setDecorationMatrices ()
 {
-    int		      i;
     float	      x0, y0;
     decor_matrix_t    a;
     GLTexture::Matrix b;
@@ -1006,7 +1005,7 @@ DecorWindow::setDecorationMatrices ()
     if (!wd)
 	return;
 
-    for (i = 0; i < wd->nQuad; i++)
+    for (int i = 0; i < wd->nQuad; i++)
     {
 	/* Set the quad matrix to the texture matrix */
 	wd->quad[i].matrix = wd->decor->texture->textures[0]->matrix ();
