@@ -181,7 +181,6 @@ const std::string SETTING_GROUP = "Group";
 const std::string SETTING_SUBGROUP = "Sub Group";
 const std::string SETTING_HINTS = "Hints";
 const CCSSettingType SETTING_TYPE = TypeInt;
-}
 
 class CCSSettingDefaultImplTest :
     public ::testing::Test
@@ -240,6 +239,8 @@ class CCSSettingDefaultImplTest :
 	boost::shared_ptr <CCSSetting> setting;
 };
 
+}
+
 TEST_F (CCSSettingDefaultImplTest, Construction)
 {
     EXPECT_EQ (SETTING_TYPE, ccsSettingGetType (setting.get ()));
@@ -268,8 +269,7 @@ TEST_F (CCSSettingDefaultImplTest, Construction)
 
 namespace
 {
-namespace testing
-{
+
 /* Used to copy different raw values */
 template <typename SettingValueType>
 class CopyRawValueBase
@@ -712,10 +712,8 @@ struct SettingMutators
 				 SettingValueType *);
 };
 
-namespace impl
-{
 class InternalSetParam :
-    public testing::SetParam
+    public SetParam
 {
     protected:
 
@@ -817,7 +815,7 @@ class SetParamContainerStorage
 };
 
 template <typename SettingValueType>
-class SetParam :
+class TypedSetParam :
     /* Do not change the order of inheritance here, DefaultImplSetParamTemplatedBase
      * must be destroyed after DefaultImplSetParamBase as DefaultImplSetParamBase
      * has indirect weak references to variables in DefaultImplSetParamTemplatedBase
@@ -832,12 +830,12 @@ class SetParam :
 	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
 	typedef SetParamContainerStorage <SettingValueType> TemplateParent;
 
-	SetParam (const ValueContainerPtr &defaultValue,
-			     CCSSettingType          type,
-			     SetFunction             setFunction,
-			     GetFunction             getFunction,
-			     const CCSSettingInfoPtr &info,
-			     const ValueContainerPtr &nonDefaultValue) :
+	TypedSetParam (const ValueContainerPtr &defaultValue,
+		       CCSSettingType          type,
+		       SetFunction             setFunction,
+		       GetFunction             getFunction,
+		       const CCSSettingInfoPtr &info,
+		       const ValueContainerPtr &nonDefaultValue) :
 	    SetParamContainerStorage <SettingValueType> (defaultValue,
 								 nonDefaultValue),
 	    InternalSetParam (info, type),
@@ -892,7 +890,6 @@ class SetParam :
 	GetFunction        mGetFunction;
 
 };
-}
 
 class SetWithDisallowedValueBase
 {
@@ -1021,18 +1018,16 @@ class SetWithDisallowedValue <const char *> :
 	}
 };
 
-namespace impl
-{
 template <typename SettingValueType>
 class SetFailureParam :
-    public SetParam <SettingValueType>
+    public TypedSetParam <SettingValueType>
 {
     public:
 
-	typedef SetParam <SettingValueType> Parent;
-	typedef typename SetParam <SettingValueType>::SetFunction SetFunction;
-	typedef typename SetParam <SettingValueType>::GetFunction GetFunction;
-	typedef typename SetParam <SettingValueType>::ValueContainerPtr ValueContainerPtr;
+	typedef TypedSetParam <SettingValueType> Parent;
+	typedef typename TypedSetParam <SettingValueType>::SetFunction SetFunction;
+	typedef typename TypedSetParam <SettingValueType>::GetFunction GetFunction;
+	typedef typename TypedSetParam <SettingValueType>::ValueContainerPtr ValueContainerPtr;
 
 	SetFailureParam (const ValueContainerPtr &defaultValue,
 			 CCSSettingType          type,
@@ -1040,24 +1035,23 @@ class SetFailureParam :
 			 GetFunction             getFunction,
 			 const CCSSettingInfoPtr &info,
 			 const ValueContainerPtr &nonDefault) :
-	    SetParam <SettingValueType> (defaultValue,
-						    type,
-						    setFunction,
-						    getFunction,
-						    info,
-						    nonDefault)
+	    TypedSetParam <SettingValueType> (defaultValue,
+					      type,
+					      setFunction,
+					      getFunction,
+					      info,
+					      nonDefault)
 	{
 	}
 
 	virtual Bool setToFailValue ()
 	{
-	    typedef SetParam <SettingValueType> Parent;
+	    typedef TypedSetParam <SettingValueType> Parent;
 	    return SetWithDisallowedValue <SettingValueType> (Parent::mSetFunction,
 							      Parent::mSetting,
 							      Parent::mInfo) ();
 	}
 };
-}
 
 template <typename T>
 SetParam::Ptr
@@ -1068,12 +1062,12 @@ SemanticsParamFor (const typename ValueContainer <T>::Ptr   &defaultValue,
 		   const CCSSettingInfoPtr                  &settingInfo,
 		   const typename ValueContainer <T>::Ptr   &changeTo)
 {
-    return boost::make_shared <impl::SetParam <T> > (defaultValue,
-						     type,
-						     setFunc,
-						     getFunc,
-						     settingInfo,
-						     changeTo);
+    return boost::make_shared <TypedSetParam <T> > (defaultValue,
+						    type,
+						    setFunc,
+						    getFunc,
+						    settingInfo,
+						    changeTo);
 }
 
 template <typename T>
@@ -1085,12 +1079,12 @@ FailureSemanticsParamFor (const typename ValueContainer <T>::Ptr   &defaultValue
 			  const CCSSettingInfo			   &settingInfo,
 			  const typename ValueContainer <T>::Ptr   &changeTo)
 {
-    return boost::make_shared <impl::SetFailureParam <T> > (defaultValue,
-							    type,
-							    setFunc,
-							    getFunc,
-							    settingInfo,
-							    changeTo);
+    return boost::make_shared <SetFailureParam <T> > (defaultValue,
+						      type,
+						      setFunc,
+						      getFunc,
+						      settingInfo,
+						      changeTo);
 }
 
 class SettingDefaultImplSet :
@@ -1121,5 +1115,4 @@ class SettingDefaulImplSetFailure :
 {
 };
 
-}
 }
