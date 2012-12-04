@@ -444,7 +444,6 @@ fillCircleTable (GLfloat   **ppSint,
 {
     const GLfloat angle = 2 * M_PI / (GLfloat) ((n == 0) ? 1 : n);
     const int	  size = abs (n);
-    int		  i;
 
     *ppSint = (GLfloat *) calloc (sizeof (GLfloat), size + 1);
     *ppCost = (GLfloat *) calloc (sizeof (GLfloat), size + 1);
@@ -460,7 +459,7 @@ fillCircleTable (GLfloat   **ppSint,
     (*ppSint)[0] = 0.0;
     (*ppCost)[0] = 1.0;
 
-    for (i = 1; i < size; i++)
+    for (int i = 1; i < size; i++)
     {
 	(*ppSint)[i] = sin (angle * i);
 	(*ppCost)[i] = cos (angle * i);
