@@ -1692,11 +1692,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    if (w)
 	    {
 		unsigned long wState, state;
-		int	      i;
 
 		wState = w->state ();
 
-		for (i = 1; i < 3; i++)
+		for (int i = 1; i < 3; i++)
 		{
 		    state = cps::windowStateMask (event->xclient.data.l[i]);
 		    if (state & ~CompWindowStateHiddenMask)
