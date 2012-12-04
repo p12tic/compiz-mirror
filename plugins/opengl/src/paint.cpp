@@ -276,7 +276,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
-	FullscreenRegion fs (*output);
+	FullscreenRegion fs (*output, screen->region ());
 
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)

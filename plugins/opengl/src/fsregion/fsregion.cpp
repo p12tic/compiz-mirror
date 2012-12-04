@@ -28,9 +28,18 @@
 namespace compiz {
 namespace opengl {
 
-FullscreenRegion::FullscreenRegion (const CompRect &rect) :
-    untouched (rect),
-    orig (untouched)
+FullscreenRegion::FullscreenRegion (const CompRect &output) :
+    untouched (output),
+    orig (output),
+    allOutputs (output)
+{
+}
+
+FullscreenRegion::FullscreenRegion (const CompRect &output,
+                                    const CompRegion &all) :
+    untouched (output),
+    orig (output),
+    allOutputs (all)
 {
 }
 
@@ -56,8 +65,11 @@ FullscreenRegion::allowRedirection (const CompRegion &region)
 {
     /* Don't allow existing unredirected windows that cover this
      * region to be redirected again as they were probably unredirected
-     * on another monitor */
-    return region.intersects (orig);
+     * on another monitor
+     * Also be careful to not allow unredirection of offscreen windows
+     * (outside of allOutputs).
+     */
+    return region.intersects (orig) || !region.intersects (allOutputs);
 }
 
 } // namespace opengl
