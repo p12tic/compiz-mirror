@@ -1788,9 +1788,8 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
-	    int j;
 	    char *name, *value;
-	    for (j = 0; j < num; j++)
+	    for (int j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
 		OptionMetadata::StringRestriction * strRestrictionPB = NULL;
