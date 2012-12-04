@@ -236,7 +236,7 @@ SvgWindow::glDraw (const GLMatrix     &transform,
     if (context && reg.numRects ())
     {
 	GLTexture::MatrixList matrix (1);
-	unsigned int          i, j;
+	unsigned int          j;
 	int		      x1, y1, x2, y2;
 	CompRect              rect = context->box.boundingRect ();
 
@@ -247,7 +247,7 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 
 	rect.setGeometry (x1, y1, x2 - x1, y2 - y1);
 
-	for (i = 0; i < context->texture[0].textures.size (); i++)
+	for (unsigned int i = 0; i < context->texture[0].textures.size (); i++)
 	{
 	    matrix[0] = context->texture[0].matrices[i];
 
