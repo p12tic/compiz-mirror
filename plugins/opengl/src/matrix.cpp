@@ -146,9 +146,8 @@ operator* (const GLMatrix& lhs,
 {
     GLVector  result;
     const float *a = lhs.m;
-    int         i;
 
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
 	result[i] = A(i,0) * rhs[0] + A(i,1) * rhs[1] +
 	            A(i,2) * rhs[2] + A(i,3) * rhs[3];
