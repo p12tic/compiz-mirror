@@ -3021,7 +3021,7 @@ static void
 loadPluginsFromName (CCSContext * context, char *path)
 {
     struct dirent **nameList;
-    int nFile, i;
+    int nFile;
 
     if (!path)
 	return;
@@ -3030,7 +3030,7 @@ loadPluginsFromName (CCSContext * context, char *path)
     if (nFile <= 0)
 	return;
 
-    for (i = 0; i < nFile; i++)
+    for (int i = 0; i < nFile; i++)
     {
 	char name[1024];
 	sscanf (nameList[i]->d_name, "lib%s", name);
