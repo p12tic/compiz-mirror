@@ -785,7 +785,6 @@ static void
 addStringExtensionFromPB (CCSPlugin * plugin,
 			  const ExtensionMetadata & extensionPB)
 {
-    int j;
     CCSStrExtension *extension;
 
     extension = (CCSStrExtension *) calloc (1, sizeof (CCSStrExtension));
@@ -807,7 +806,7 @@ addStringExtensionFromPB (CCSPlugin * plugin,
 	return;
     }
 
-    for (j = 0; j < numRestrictions; j++)
+    for (int j = 0; j < numRestrictions; j++)
     {
 	const OptionMetadata::StringRestriction & restrictionPB =
 	    extensionPB.str_restriction (j);
