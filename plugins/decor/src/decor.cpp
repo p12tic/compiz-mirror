@@ -2780,9 +2780,7 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 {
     if (wd)
     {
-	int		 i;
-
-	for (i = 0; i < wd->nQuad; i++)
+	for (int i = 0; i < wd->nQuad; i++)
 	{
 	    wd->quad[i].box.x1 += dx;
 	    wd->quad[i].box.y1 += dy;
