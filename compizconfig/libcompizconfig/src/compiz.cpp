@@ -2358,7 +2358,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
 			       void * extensionPBv)
 {
     xmlNode **nodes;
-    int num, j;
+    int num;
     CCSStrExtension *extension;
     char *name;
     char *value;
@@ -2395,7 +2395,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
 	return;
     }
 
-    for (j = 0; j < num; j++)
+    for (int j = 0; j < num; j++)
     {
 	value = getStringFromXPath (node->doc, nodes[j], "value/child::text()");
 	if (value)
