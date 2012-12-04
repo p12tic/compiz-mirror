@@ -49,7 +49,7 @@ using ::testing::Matcher;
 namespace ct = compiz::testing;
 
 class CompizXorgSystemICCCM :
-    public ct::XorgSystemTest
+    public ct::CompizXorgSystemTest
 {
     public:
 
@@ -70,7 +70,7 @@ class CompizXorgSystemICCCM :
 
 	virtual void SetUp ()
 	{
-	    ct::XorgSystemTest::SetUp ();
+	    ct::CompizXorgSystemTest::SetUp ();
 
 	    ::Display *dpy = Display ();
 
@@ -211,7 +211,10 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
      * implicitly, eg XCloseDisplay) */
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
 
-    StartCompiz (ct::XorgSystemTest::ExpectStartupFailure);
+    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
+		     ct::CompizProcess::ExpectStartupFailure |
+		     ct::CompizProcess::ReplaceCurrentWM |
+		     ct::CompizProcess::WaitForStartupMessage));
 
     /* Now wait for the thread to tell us the news -
      * this will block for up to ten seconds */

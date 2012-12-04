@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <boost/shared_ptr.hpp>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 #include <X11/Xlib.h>
@@ -139,26 +140,7 @@ ct::NET_CLIENT_LIST_STACKING (Display *dpy)
     return stackingOrder;
 }
 
-void
-ct::XorgSystemTest::SetUp ()
-{
-    xorg::testing::Test::SetUp ();
-}
-
-void
-ct::XorgSystemTest::TearDown ()
-{
-    if (mCompizProcess.GetState () == xorg::testing::Process::RUNNING)
-	mCompizProcess.Kill ();
-
-    xorg::testing::Test::TearDown ();
-}
-
-xorg::testing::Process::State
-ct::XorgSystemTest::CompizProcessState ()
-{
-    return mCompizProcess.GetState ();
-}
+Display *d;
 
 namespace
 {
@@ -169,16 +151,16 @@ class StartupClientMessageMatcher :
 
 	StartupClientMessageMatcher (Atom                             startup,
 				     Window                           root,
-				     ct::XorgSystemTest::StartupState state) :
+				     ct::CompizProcess::StartupFlags state) :
 	    mStartup (startup),
 	    mRoot (root),
-	    mExpectedState (state)
+	    mFlags (state)
 	{
 	}
 
 	virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
 	{
-	    int state = mExpectedState == ct::XorgSystemTest::ExpectStartupSuccess ? 1 : 0;
+	    int state = mFlags & ct::CompizProcess::ExpectStartupFailure ? 0 : 1;
 
 	    if (event.xclient.window == mRoot &&
 		event.xclient.message_type == mStartup &&
@@ -202,31 +184,43 @@ class StartupClientMessageMatcher :
 
 	Atom mStartup;
 	Window mRoot;
-	ct::XorgSystemTest::StartupState mExpectedState;
+	ct::CompizProcess::StartupFlags mFlags;
 };
 }
 
+class ct::PrivateCompizProcess
+{
+    public:
+	PrivateCompizProcess (ct::CompizProcess::StartupFlags flags) :
+	    mFlags (flags),
+	    mIsRunning (true)
+	{
+	}
+
+	void WaitForStartupMessage (Display                         *dpy,
+				    ct::CompizProcess::StartupFlags flags);
+
+	typedef boost::shared_ptr <xorg::testing::Process> ProcessPtr;
+
+	ct::CompizProcess::StartupFlags mFlags;
+	bool                            mIsRunning;
+	xorg::testing::Process          mProcess;
+};
 
 void
-ct::XorgSystemTest::StartCompiz (StartupState startupState)
+ct::PrivateCompizProcess::WaitForStartupMessage (Display                         *dpy,
+						 ct::CompizProcess::StartupFlags flags)
 {
     XWindowAttributes attrib;
-
-    xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
-    mCompizProcess.Start (compizBinaryPath, "--replace", "--send-startup-message", NULL);
-
-    /* Wait for the startup message */
-    ::Display *dpy = Display ();
     Window    root = DefaultRootWindow (dpy);
 
     Atom    startup = XInternAtom (dpy,
 				   "_COMPIZ_TESTING_STARTUP",
 				   false);
 
-    StartupClientMessageMatcher matcher (startup, root, startupState);
+    StartupClientMessageMatcher matcher (startup, root, flags);
 
-    ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
-
+    d = dpy;
     /* Save the current event mask and subscribe to StructureNotifyMask only */
     ASSERT_TRUE (XGetWindowAttributes (dpy, root, &attrib));
     XSelectInput (dpy, root, StructureNotifyMask |
@@ -243,4 +237,117 @@ ct::XorgSystemTest::StartCompiz (StartupState startupState)
 							     3000)));
 
     XSelectInput (dpy, root, attrib.your_event_mask);
+}
+
+ct::CompizProcess::CompizProcess (::Display                       *dpy,
+				  ct::CompizProcess::StartupFlags flags) :
+    priv (new PrivateCompizProcess (flags))
+{
+    xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
+
+    std::vector <std::string> args;
+
+    if (flags & ct::CompizProcess::ReplaceCurrentWM)
+	args.push_back ("--replace");
+
+    args.push_back ("--send-startup-message");
+
+    priv->mProcess.Start (compizBinaryPath, args);
+    EXPECT_EQ (priv->mProcess.GetState (), xorg::testing::Process::RUNNING);
+
+    if (flags & ct::CompizProcess::WaitForStartupMessage)
+	priv->WaitForStartupMessage (dpy, flags);
+}
+
+ct::CompizProcess::~CompizProcess ()
+{
+    if (priv->mProcess.GetState () == xorg::testing::Process::RUNNING)
+	priv->mProcess.Kill ();
+}
+
+xorg::testing::Process::State
+ct::CompizProcess::State ()
+{
+    return priv->mProcess.GetState ();
+}
+
+pid_t
+ct::CompizProcess::Pid ()
+{
+    return priv->mProcess.Pid ();
+}
+
+bool
+ct::CompizProcess::ToggleRunning ()
+{
+    EXPECT_TRUE (priv->mProcess.GetState () == xorg::testing::Process::RUNNING);
+
+    pid_t pid = priv->mProcess.Pid ();
+
+    if (priv->mIsRunning)
+    {
+	if (kill (pid, SIGSTOP) == -1)
+	{
+	    perror ("kill");
+	    return false;
+	}
+    }
+    else
+    {
+	if (kill (pid, SIGCONT) == -2)
+	{
+	    perror ("kill");
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+class ct::PrivateCompizXorgSystemTest
+{
+    public:
+
+	boost::shared_ptr <ct::CompizProcess> mProcess;
+};
+
+ct::CompizXorgSystemTest::CompizXorgSystemTest () :
+    priv (new PrivateCompizXorgSystemTest)
+{
+}
+
+void
+ct::CompizXorgSystemTest::SetUp ()
+{
+    xorg::testing::Test::SetUp ();
+}
+
+void
+ct::CompizXorgSystemTest::TearDown ()
+{
+    priv->mProcess.reset ();
+
+    xorg::testing::Test::TearDown ();
+}
+
+xorg::testing::Process::State
+ct::CompizXorgSystemTest::CompizProcessState ()
+{
+    if (priv->mProcess)
+	return priv->mProcess->State ();
+    return xorg::testing::Process::NONE;
+}
+
+void
+ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags flags)
+{
+    priv->mProcess.reset (new ct::CompizProcess (Display (), flags));
+}
+
+void
+ct::AutostartCompizXorgSystemTest::SetUp ()
+{
+    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
+		     ct::CompizProcess::ReplaceCurrentWM |
+		     ct::CompizProcess::WaitForStartupMessage));
 }

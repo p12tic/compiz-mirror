@@ -38,17 +38,16 @@ using ::testing::Matcher;
 namespace ct = compiz::testing;
 
 class CompizXorgSystemStackingTest :
-    public ct::XorgSystemTest
+    public ct::AutostartCompizXorgSystemTest
 {
     public:
 
 	virtual void SetUp ()
 	{
-	    ct::XorgSystemTest::SetUp ();
+	    ct::CompizXorgSystemTest::SetUp ();
+
 	    ::Display *dpy = Display ();
 	    XSelectInput (dpy, DefaultRootWindow (dpy), SubstructureNotifyMask | PropertyChangeMask);
-
-	    StartCompiz (ct::XorgSystemTest::ExpectStartupSuccess);
 	}
 };
 
