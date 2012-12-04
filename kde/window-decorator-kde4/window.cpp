@@ -1625,7 +1625,6 @@ KWD::Window::handlePopupAboutToShow (void)
     {
 	NETRootInfo *rootInfo = Decorator::rootInfo ();
 	QString	    name;
-	int	    i;
 	int	    winDesktop = desktop ();
 	QAction     *action;
 	const int   BASE = 10;
@@ -1640,7 +1639,7 @@ KWD::Window::handlePopupAboutToShow (void)
 	action->setChecked (winDesktop == NET::OnAllDesktops);
 	mDesktopMenu->addSeparator ();
 
-	for (i = 1; i <= numberOfDesktops; i++)
+	for (int i = 1; i <= numberOfDesktops; i++)
 	{
 	    QString basic_name ("%1 %2");
 	    if (i < BASE)
