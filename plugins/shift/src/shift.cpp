@@ -1347,7 +1347,6 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
     {
 	int        steps;
 	float      amount, chunk;
-	int        i;
 
 	amount = msSinceLastPaint * 0.05f * optionGetShiftSpeed ();
 	steps  = amount / (0.5f * optionGetTimestep ());
@@ -1380,7 +1379,7 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
 		SHIFT_WINDOW (w);
 
 		mMoreAdjust |= sw->adjustShiftAttribs (chunk);
-		for (i = 0; i < 2; i++)
+		for (int i = 0; i < 2; i++)
 		{
 		    ShiftSlot *slot = &sw->mSlots[i];
 		    slot->tx = slot->x - w->x () -
