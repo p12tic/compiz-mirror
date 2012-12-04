@@ -349,8 +349,7 @@ initListValuePB (CCSSettingValue * v,
 
     if (num)
     {
-	int j;
-	for (j = 0; j < num; j++)
+	for (int j = 0; j < num; j++)
 	{
 	    CCSSettingValue *val;
 	    val = (CCSSettingValue *) calloc (1, sizeof (CCSSettingValue));
