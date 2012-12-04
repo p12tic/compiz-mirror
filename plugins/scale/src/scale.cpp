@@ -428,7 +428,6 @@ PrivateScaleScreen::layoutSlotsForArea (const CompRect& workArea,
     if (!nWindows)
 	return;
 
-    int i, j;
     int x, y, width, height;
     int n;
 
@@ -439,14 +438,14 @@ PrivateScaleScreen::layoutSlotsForArea (const CompRect& workArea,
     y      = workArea.y () + spacing;
     height = (workArea.height () - (lines + 1) * spacing) / lines;
 
-    for (i = 0; i < lines; i++)
+    for (int i = 0; i < lines; i++)
     {
 	n = MIN (nWindows - nSlots, ceilf ((float) nWindows / lines));
 
 	x     = workArea.x () + spacing;
 	width = (workArea.width () - (n + 1) * spacing) / n;
 
-	for (j = 0; j < n; j++)
+	for (int j = 0; j < n; j++)
 	{
 	    slots[this->nSlots].setGeometry (x, y, width, height);
 
