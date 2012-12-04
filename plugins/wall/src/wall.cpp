@@ -948,7 +948,6 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     float             width, height;
     float             topLeftX, topLeftY;
     float             border;
-    unsigned int      i, j;
     GLTexture::Matrix matrix;
     BOX               box;
     GLMatrix          wTransform (transform);
@@ -1019,9 +1018,9 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     height = (float) thumbContext.height;
 
     thumbContext.texture[0]->enable (GLTexture::Fast);
-    for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
+    for (unsigned int i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
     {
-	for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
+	for (unsigned int j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	{
 	    if (i == gotoX && j == gotoY && moving)
 		continue;
