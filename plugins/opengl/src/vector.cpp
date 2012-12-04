@@ -204,9 +204,8 @@ operator/ (const GLVector& vector,
 	   const float       k)
 {
     GLVector result;
-    int        i;
 
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	result[i] = vector[i] / k;
 
     return result;
