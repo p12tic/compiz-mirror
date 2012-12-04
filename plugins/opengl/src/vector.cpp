@@ -140,9 +140,8 @@ GLVector
 operator- (const GLVector& vector)
 {
     GLVector result;
-    int        i;
 
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	result[i] = -vector[i];
 
     return result;
