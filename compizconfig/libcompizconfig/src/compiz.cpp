@@ -1551,8 +1551,7 @@ initListValue (CCSSettingValue * v,
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
-	int j;
-	for (j = 0; j < num; j++)
+	for (int j = 0; j < num; j++)
 	{
 	    void *valuePBv = NULL;
 #ifdef USE_PROTOBUF
