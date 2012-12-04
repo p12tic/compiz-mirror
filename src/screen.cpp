@@ -1691,9 +1691,7 @@ cps::XWindowInfo::getProtocols (Window id)
 
     if (XGetWMProtocols (dpy, id, &protocol, &count))
     {
-	int  i;
-
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 	    if (protocol[i] == Atoms::wmDeleteWindow)
 		protocols |= CompWindowProtocolDeleteMask;
