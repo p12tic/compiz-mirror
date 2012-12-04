@@ -236,7 +236,6 @@ SvgWindow::glDraw (const GLMatrix     &transform,
     if (context && reg.numRects ())
     {
 	GLTexture::MatrixList matrix (1);
-	unsigned int          j;
 	int		      x1, y1, x2, y2;
 	CompRect              rect = context->box.boundingRect ();
 
@@ -313,7 +312,7 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 		    }
 		}
 
-		for (j = 0; j < context->texture[1].textures.size (); j++)
+		for (unsigned int j = 0; j < context->texture[1].textures.size (); j++)
 		{
 		    GLTexture::Filter saveFilter;
 		    CompRegion        r (rect);
