@@ -70,7 +70,7 @@ WallScreen::drawSwitcherBackground ()
     float           outline = 2.0f;
     int             width, height, radius;
     float           r, g, b, a;
-    unsigned int    i, j;
+    unsigned int    j;
 
     destroyCairoContext (switcherContext);
     setupCairoContext (switcherContext);
@@ -124,7 +124,7 @@ WallScreen::drawSwitcherBackground ()
     cairo_restore (cr);
 
     cairo_save (cr);
-    for (i = 0; i < (unsigned int) screen->vpSize ().height (); i++)
+    for (unsigned int i = 0; i < (unsigned int) screen->vpSize ().height (); i++)
     {
 	cairo_translate (cr, 0.0, viewportBorder);
 	cairo_save (cr);
