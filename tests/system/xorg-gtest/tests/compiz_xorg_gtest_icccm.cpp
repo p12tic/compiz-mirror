@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
@@ -89,11 +91,8 @@ class CompizXorgSystemICCCM :
 	    close (waitThreadToTestPipeFd[0]);
 	}
 
-	static void * WaitForDeathEntry (void *data);
+	static void * ThreadEntry (void *data);
 	void WaitForDeath ();
-
-	static void * StopStartEntry (void *data);
-	void StopStart ();
 
 	void SendMsgToTest (char msg);
 	void SendMsgToThread (char msg);
@@ -187,21 +186,22 @@ CompizXorgSystemICCCM::WaitForDeath ()
 }
 
 void *
-CompizXorgSystemICCCM::WaitForDeathEntry (void *data)
+CompizXorgSystemICCCM::ThreadEntry (void *data)
 {
-    CompizXorgSystemICCCM *self = reinterpret_cast <CompizXorgSystemICCCM *> (data);
-    self->WaitForDeath ();
+    boost::function <void ()> *func = reinterpret_cast <boost::function <void ()> *> (data);
+    (*func) ();
     return NULL;
 }
 
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 {
     pthread_t waitingForDeathThread;
+    boost::function <void ()> waitForDeathFunc (boost::bind (&CompizXorgSystemICCCM::WaitForDeath, this));
 
     if (pthread_create (&waitingForDeathThread,
 			NULL,
-			CompizXorgSystemICCCM::WaitForDeathEntry,
-			this) != 0)
+			CompizXorgSystemICCCM::ThreadEntry,
+			reinterpret_cast<void *> (&waitForDeathFunc)) != 0)
     {
 	FAIL ();
 	perror ("pthread_create");
