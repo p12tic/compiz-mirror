@@ -678,7 +678,6 @@ ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib& attrib,
     GLMatrix sTransform (transform);
     float    p1[3], p2[3], v[3], alpha;
     GLint    viewport[4];
-    int      i;
 
     gScreen->glApplyTransform (attrib, output, &sTransform);
     sTransform.toScreenSpace (output, -attrib.zTranslate);
@@ -692,7 +691,7 @@ ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib& attrib,
                sTransform, *gScreen->projectionMatrix (), viewport,
                &p2[0], &p2[1], &p2[2]);
 
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
 	v[i] = p1[i] - p2[i];
 
     alpha = -p1[2] / v[2];
