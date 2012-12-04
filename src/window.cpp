@@ -4956,7 +4956,6 @@ CompWindow::getIcon (int width,
 
 		if (iw && ih)
 		{
-		    unsigned long j;
 		    icon = new CompIcon (iw, ih);
 		    if (!icon)
 			continue;
@@ -4968,7 +4967,7 @@ CompWindow::getIcon (int width,
 		    /* EWMH doesn't say if icon data is premultiplied or
 		       not but most applications seem to assume data should
 		       be unpremultiplied. */
-		    for (j = 0; j < iw * ih; j++)
+		    for (unsigned long j = 0; j < iw * ih; j++)
 		    {
 			alpha = (idata[i + j + 2] >> 24) & 0xff;
 			red   = (idata[i + j + 2] >> 16) & 0xff;
