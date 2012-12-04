@@ -1287,9 +1287,8 @@ Model::findNearestObject (float x,
 {
     Object *object = &objects[0];
     float  distance, minDistance = 0.0;
-    int    i;
 
-    for (i = 0; i < numObjects; i++)
+    for (int i = 0; i < numObjects; i++)
     {
 	distance = objects[i].distanceToPoint (x, y);
 	if (i == 0 || distance < minDistance)
