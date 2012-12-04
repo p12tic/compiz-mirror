@@ -92,10 +92,13 @@ class CompizXorgSystemICCCM :
 	static void * WaitForDeathEntry (void *data);
 	void WaitForDeath ();
 
-	void SendGotDeathToTest ();
-	void SendTestFailedToThread ();
-	bool CheckIfTestTimedOut ();
-	bool CheckIfProcessDied ();
+	static void * StopStartEntry (void *data);
+	void StopStart ();
+
+	void SendMsgToTest (char msg);
+	void SendMsgToThread (char msg);
+	bool ReadThreadMsg (char msg);
+	bool ReadTestMsg (char msg);
 
     private:
 
@@ -135,23 +138,23 @@ char PROCESS_DIED_MSG = 'd';
 }
 
 bool
-CompizXorgSystemICCCM::CheckIfTestTimedOut ()
+CompizXorgSystemICCCM::ReadThreadMsg (char msg)
 {
-    return checkForMessageOnFd (testToWaitThreadPipeFd[0], 1, TEST_FAILED_MSG);
+    return checkForMessageOnFd (testToWaitThreadPipeFd[0], 1, msg);
 }
 
 bool
-CompizXorgSystemICCCM::CheckIfProcessDied ()
+CompizXorgSystemICCCM::ReadTestMsg (char msg)
 {
     const int maximumWaitTime = 1000 * 10; // 10 seconds
 
-    return checkForMessageOnFd (waitThreadToTestPipeFd[0], maximumWaitTime, PROCESS_DIED_MSG);
+    return checkForMessageOnFd (waitThreadToTestPipeFd[0], maximumWaitTime, msg);
 }
 
 void
-CompizXorgSystemICCCM::SendGotDeathToTest ()
+CompizXorgSystemICCCM::SendMsgToTest (char msg)
 {
-    char buf[1] = { PROCESS_DIED_MSG };
+    char buf[1] = { msg };
     if (write (waitThreadToTestPipeFd[1], reinterpret_cast <void *> (buf), 1) == -1)
     {
 	FAIL ();
@@ -160,9 +163,9 @@ CompizXorgSystemICCCM::SendGotDeathToTest ()
 }
 
 void
-CompizXorgSystemICCCM::SendTestFailedToThread ()
+CompizXorgSystemICCCM::SendMsgToThread (char msg)
 {
-    char buf[1] = { TEST_FAILED_MSG };
+    char buf[1] = { msg };
     if (write (testToWaitThreadPipeFd[1], reinterpret_cast <void *> (buf), 1) == -1)
     {
 	FAIL ();
@@ -175,12 +178,12 @@ CompizXorgSystemICCCM::WaitForDeath ()
 {
     do
     {
-	if (CheckIfTestTimedOut ())
+	if (ReadThreadMsg (TEST_FAILED_MSG))
 	    return;
     } while (CompizProcessState () != xorg::testing::Process::FINISHED_FAILURE);
 
     /* The process died, send a message back saying that it did */
-    SendGotDeathToTest ();
+    SendMsgToTest (PROCESS_DIED_MSG);
 }
 
 void *
@@ -218,7 +221,7 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 
     /* Now wait for the thread to tell us the news -
      * this will block for up to ten seconds */
-    if (!CheckIfProcessDied ())
+    if (!ReadTestMsg (PROCESS_DIED_MSG))
     {
 	FAIL () << "compiz process did not exit with failure status";
     }
