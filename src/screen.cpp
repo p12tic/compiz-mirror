@@ -5079,6 +5079,8 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
      * screens from option changes */
     bool init_succeeded = CompPlugin::screenInitPlugins (screen);
     assert (init_succeeded);
+    if (!init_succeeded)
+      return false;
 
     /* The active plugins list might have been changed - load any
      * new plugins */

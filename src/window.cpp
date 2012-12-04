@@ -6117,6 +6117,8 @@ CompWindow::CompWindow (Window aboveId,
     /* TODO: bailout properly when objectInitPlugins fails */
     bool init_succeeded = CompPlugin::windowInitPlugins (this);
     assert (init_succeeded);
+    if (!init_succeeded)
+      return;
 
     recalcActions ();
     priv->updateIconGeometry ();
