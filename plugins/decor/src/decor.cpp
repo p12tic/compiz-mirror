@@ -1082,12 +1082,11 @@ DecorWindow::updateDecorationScale ()
 {
     int		     x1, y1, x2, y2;
     float            sx, sy;
-    int		     i;
 
     if (!wd)
 	return;
 
-    for (i = 0; i < wd->nQuad; i++)
+    for (int i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
 	unsigned int width = window->size ().width ();
