@@ -139,13 +139,24 @@ TEST (OpenGLFullscreenRegion, Overflow)
 
 TEST (OpenGLFullscreenRegion, KeepUnredirectedStateIfNotOnMonitor)
 {
-    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
-    CompRegion       window (1025, 0, 1024, 768);
+    CompRect left (0, 0, 1024, 768);
+    CompRect right (1025, 0, 1024, 768);
+    CompRegion all (0, 0, 2048, 768);
+    CompRect offscreen1 (2048, 0, 1024, 768);
+    CompRect offscreen2 (-1024, 0, 1024, 768);
+    CompRegion window (right);
+    FullscreenRegion monitor (left, all);
+
     /* Eg, not covering the monitor, should be redirected */
     EXPECT_FALSE (monitor.isCoveredBy (window));
+
     /* Don't allow the redirection however, because we weren't
      * covering the monitor at all. */
     EXPECT_FALSE (monitor.allowRedirection (window));
+
+    /* Verify off-screen windows are always redirected (eg. other viewports) */
+    EXPECT_TRUE (monitor.allowRedirection (offscreen1));
+    EXPECT_TRUE (monitor.allowRedirection (offscreen2));
 }
 
 TEST (OpenGLFullscreenRegion, MaximizedWithDocks)  // LP: #1053902
