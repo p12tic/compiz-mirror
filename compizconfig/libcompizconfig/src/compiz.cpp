@@ -827,10 +827,10 @@ static void
 initStringExtensionsFromPB (CCSPlugin * plugin,
 			    const PluginMetadata & pluginPB)
 {
-    int numExtensions, i;
+    int numExtensions;
 
     numExtensions = pluginPB.extension_size ();
-    for (i = 0; i < numExtensions; i++)
+    for (int i = 0; i < numExtensions; i++)
 	addStringExtensionFromPB (plugin, pluginPB.extension (i));
 }
 
