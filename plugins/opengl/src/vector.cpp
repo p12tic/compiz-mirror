@@ -162,9 +162,8 @@ operator* (const GLVector& lhs,
 	   const GLVector& rhs)
 {
     float result = 0;
-    int   i;
 
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
 	result += lhs[i] * rhs[i];
 
     return result;
