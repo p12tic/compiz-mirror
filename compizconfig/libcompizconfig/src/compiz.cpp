@@ -2945,7 +2945,7 @@ static void
 loadPluginsFromXMLFiles (CCSContext * context, char *path)
 {
     struct dirent **nameList;
-    int nFile, i;
+    int nFile;
 
     if (!path)
 	return;
@@ -2961,7 +2961,7 @@ loadPluginsFromXMLFiles (CCSContext * context, char *path)
     if (nFile <= 0)
 	return;
 
-    for (i = 0; i < nFile; i++)
+    for (int i = 0; i < nFile; i++)
     {
 	loadPluginFromXMLFile (context, nameList[i]->d_name, path);
 	free (nameList[i]);
