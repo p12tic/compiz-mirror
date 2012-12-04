@@ -149,28 +149,28 @@ typedef boost::shared_ptr <CCSSettingInfo> CCSSettingInfoPtr;
 typedef boost::shared_ptr <CCSSettingValue> CCSSettingValuePtr;
 typedef boost::shared_ptr <CCSSetting> CCSSettingPtr;
 
-class MockInitializerFuncs
+class MockInitFuncs
 {
     public:
 
-	MOCK_METHOD3 (initializeInfo, void (CCSSettingType, CCSSettingInfo *, void *));
-	MOCK_METHOD4 (initializeDefaultValue, void (CCSSettingType, CCSSettingInfo *, CCSSettingValue *, void *));
+	MOCK_METHOD3 (initInfo, void (CCSSettingType, CCSSettingInfo *, void *));
+	MOCK_METHOD4 (initDefaultValue, void (CCSSettingType, CCSSettingInfo *, CCSSettingValue *, void *));
 
-	static void wrapInitializeInfo (CCSSettingType type,
-					CCSSettingInfo *info,
-					void           *data)
+	static void wrapInitInfo (CCSSettingType type,
+				  CCSSettingInfo *info,
+				  void           *data)
 	{
-	    MockInitializerFuncs &funcs (*(reinterpret_cast <MockInitializerFuncs *> (data)));
-	    funcs.initializeInfo (type, info, data);
+	    MockInitFuncs &funcs (*(reinterpret_cast <MockInitFuncs *> (data)));
+	    funcs.initInfo (type, info, data);
 	}
 
-	static void wrapInitializeValue (CCSSettingType  type,
-					 CCSSettingInfo  *info,
-					 CCSSettingValue *value,
-					 void            *data)
+	static void wrapInitValue (CCSSettingType  type,
+				   CCSSettingInfo  *info,
+				   CCSSettingValue *value,
+				   void            *data)
 	{
-	    MockInitializerFuncs &funcs (*(reinterpret_cast <MockInitializerFuncs *> (data)));
-	    funcs.initializeDefaultValue (type, info, value, data);
+	    MockInitFuncs &funcs (*(reinterpret_cast <MockInitFuncs *> (data)));
+	    funcs.initDefaultValue (type, info, value, data);
 	}
 };
 
@@ -195,15 +195,15 @@ class CCSSettingDefaultImplTest :
 	{
 	}
 
-	virtual void SetUpSetting (MockInitializerFuncs &funcs)
+	virtual void SetUpSetting (MockInitFuncs &funcs)
 	{
 	    void                 *vFuncs = reinterpret_cast <void *> (&funcs);
 
 	    /* Info must be initialized before the value */
 	    InSequence s;
 
-	    EXPECT_CALL (funcs, initializeInfo (GetSettingType (), _, vFuncs));
-	    EXPECT_CALL (funcs, initializeDefaultValue (GetSettingType (), _, _, vFuncs));
+	    EXPECT_CALL (funcs, initInfo (GetSettingType (), _, vFuncs));
+	    EXPECT_CALL (funcs, initDefaultValue (GetSettingType (), _, _, vFuncs));
 
 	    setting = AutoDestroy (ccsSettingDefaultImplNew (plugin.get (),
 							     SETTING_NAME.c_str (),
@@ -213,9 +213,9 @@ class CCSSettingDefaultImplTest :
 							     SETTING_HINTS.c_str (),
 							     SETTING_GROUP.c_str (),
 							     SETTING_SUBGROUP.c_str (),
-							     MockInitializerFuncs::wrapInitializeValue,
+							     MockInitFuncs::wrapInitValue,
 							     vFuncs,
-							     MockInitializerFuncs::wrapInitializeInfo,
+							     MockInitFuncs::wrapInitInfo,
 							     vFuncs,
 							     &ccsDefaultObjectAllocator,
 							     &ccsDefaultInterfaceTable),
@@ -224,7 +224,7 @@ class CCSSettingDefaultImplTest :
 
 	virtual void SetUp ()
 	{
-	    MockInitializerFuncs funcs;
+	    MockInitFuncs funcs;
 
 	    SetUpSetting (funcs);
 
@@ -268,7 +268,8 @@ TEST_F (CCSSettingDefaultImplTest, Construction)
 
 namespace
 {
-
+namespace testing
+{
 /* Used to copy different raw values */
 template <typename SettingValueType>
 class CopyRawValueBase
@@ -387,30 +388,30 @@ class ContainedValueGenerator
     private:
 
 	const CCSSettingValuePtr &
-	InitializedSpawnedValue (const CCSSettingValuePtr &value,
-				 CCSSettingType           type,
-				 const CCSSettingInfoPtr  &info)
+	InitValue (const CCSSettingValuePtr &value,
+		   CCSSettingType           type,
+		   const CCSSettingInfoPtr  &info)
 	{
 	    const CCSSettingPtr &setting (GetSetting (type, info));
 	    value->parent = setting.get ();
-	    mContainedValues.push_back (value);
+	    mValues.push_back (value);
 
-	    return mContainedValues.back ();
+	    return mValues.back ();
 	}
 
     public:
 
 	template <typename SettingValueType>
 	const CCSSettingValuePtr &
-	SpawnValueForInfoAndType (const SettingValueType  &rawValue,
-				  CCSSettingType          type,
-				  const CCSSettingInfoPtr &info)
+	SpawnValue (const SettingValueType  &rawValue,
+		    CCSSettingType          type,
+		    const CCSSettingInfoPtr &info)
 	{
 
 	    CCSSettingValuePtr  value (AutoDestroy (RawValueToCCSValue <SettingValueType> (rawValue),
 						    ccsSettingValueUnref));
 
-	    return InitializedSpawnedValue (value, type, info);
+	    return InitValue (value, type, info);
 	}
 
 	const CCSSettingPtr &
@@ -449,7 +450,7 @@ class ContainedValueGenerator
 	 * as the values hold a weak reference to
 	 * it */
 	CCSSettingPtr                    mSetting;
-	std::vector <CCSSettingValuePtr> mContainedValues;
+	std::vector <CCSSettingValuePtr> mValues;
 
 };
 
@@ -473,8 +474,8 @@ class NormalValueContainerBase
 {
     protected:
 
-	ContainedValueGenerator  mContainedValueGenerator;
-	CCSSettingValuePtr       mContainedValue;
+	ContainedValueGenerator  mGenerator;
+	CCSSettingValuePtr       mValue;
 };
 
 template <typename SettingValueType>
@@ -500,12 +501,12 @@ class NormalValueContainer :
 	getContainedValue (CCSSettingType          type,
 			   const CCSSettingInfoPtr &info)
 	{
-	    if (!mContainedValue)
-		mContainedValue = mContainedValueGenerator.SpawnValueForInfoAndType (mRawValue,
-										     type,
-										     info);
+	    if (!mValue)
+		mValue = mGenerator.SpawnValue (mRawValue,
+						type,
+						info);
 
-	    return mContainedValue;
+	    return mValue;
 	}
 
     private:
@@ -534,9 +535,9 @@ class ListValueContainerBase :
 		const cci::SettingValueListWrapper::Ptr &wrapper (SetupWrapper (type, info));
 
 		mContainedWrapper =
-			mContainedValueGenerator.SpawnValueForInfoAndType (wrapper,
-									   type,
-									   info);
+			mContainedValueGenerator.SpawnValue (wrapper,
+							     type,
+							     info);
 	    }
 
 	    return mContainedWrapper;
@@ -615,14 +616,14 @@ ContainList (const SettingValueType &value)
     return boost::make_shared <ListValueContainer <SettingValueType> > (value);
 }
 
-class DefaultImplSetParamInterface
+class SetParam
 {
     public:
 
-	typedef boost::shared_ptr <DefaultImplSetParamInterface> Ptr;
-	typedef boost::function <void (MockInitializerFuncs &funcs)> SetUpSettingFunc;
+	typedef boost::shared_ptr <SetParam> Ptr;
+	typedef boost::function <void (MockInitFuncs &funcs)> SetUpSettingFunc;
 
-	virtual ~DefaultImplSetParamInterface () {};
+	virtual ~SetParam () {};
 
 	virtual void SetUpSetting (const SetUpSettingFunc &func) = 0;
 	virtual void TearDownSetting () = 0;
@@ -634,67 +635,67 @@ class DefaultImplSetParamInterface
 	virtual Bool setToDefaultValue () = 0;
 };
 
-void stubInitializeSettingInfo (CCSSettingType type,
-				CCSSettingInfo *copyToInfo,
-				void           *data)
+void stubInitInfo (CCSSettingType type,
+		   CCSSettingInfo *dst,
+		   void           *data)
 {
-    CCSSettingInfo *copyFromInfo = reinterpret_cast <CCSSettingInfo *> (data);
+    CCSSettingInfo *src = reinterpret_cast <CCSSettingInfo *> (data);
 
-    ccsCopyInfo (copyFromInfo, copyToInfo, type);
+    ccsCopyInfo (src, dst, type);
 }
 
-void stubInitializeSettingDefaultValue (CCSSettingType  type,
-					CCSSettingInfo  *info,
-					CCSSettingValue *copyToValue,
-					void           *data)
+void stubInitDefaultValue (CCSSettingType  type,
+			   CCSSettingInfo  *info,
+			   CCSSettingValue *dest,
+			   void           *data)
 {
-    CCSSettingValue *copyFromValue = reinterpret_cast <CCSSettingValue *> (data);
-    CCSSetting      *oldParentForOtherValue = copyFromValue->parent;
+    CCSSettingValue *src = reinterpret_cast <CCSSettingValue *> (data);
+    CCSSetting      *oldDestParent = src->parent;
 
     /* Change the parent to this setting that's being initialized
      * as that needs to go into the setting's default value as
      * the parent entry */
-    copyFromValue->parent = copyToValue->parent;
-    ccsCopyValueInto (copyFromValue, copyToValue, type, info);
+    src->parent = dest->parent;
+    ccsCopyValueInto (src, dest, type, info);
 
     /* Restore the old parent */
-    copyFromValue->parent = oldParentForOtherValue;
+    src->parent = oldDestParent;
 }
 
-class MockInitializerFuncsWithDelegators :
-    public MockInitializerFuncs
+class StubInitFuncs :
+    public MockInitFuncs
 {
     public:
 
-	MockInitializerFuncsWithDelegators (CCSSettingInfo  *info,
-					    CCSSettingValue *value) :
-	    MockInitializerFuncs (),
+	StubInitFuncs (CCSSettingInfo  *info,
+		       CCSSettingValue *value) :
+	    MockInitFuncs (),
 	    mInfo (info),
 	    mValue (value)
 	{
-	    ON_CALL (*this, initializeInfo (_, _, _))
+	    ON_CALL (*this, initInfo (_, _, _))
 		    .WillByDefault (WithArgs <0, 1> (
 					Invoke (this,
-						&MockInitializerFuncsWithDelegators::initializeInfoDelegator)));
+						&StubInitFuncs::initInfo)));
 
-	    ON_CALL (*this, initializeDefaultValue (_, _, _, _))
+	    ON_CALL (*this, initDefaultValue (_, _, _, _))
 		    .WillByDefault (WithArgs <0, 1, 2> (
 					Invoke (this,
-						&MockInitializerFuncsWithDelegators::initializeValueDelegator)));
+						&StubInitFuncs::initializeValue)));
 	}
 
-	void initializeInfoDelegator (CCSSettingType type,
-				      CCSSettingInfo *info)
+	void initInfo (CCSSettingType type,
+		       CCSSettingInfo *info)
 	{
-	    stubInitializeSettingInfo (type, info, reinterpret_cast <void *> (mInfo));
+	    stubInitInfo (type, info, reinterpret_cast <void *> (mInfo));
 	}
 
-	void initializeValueDelegator (CCSSettingType  type,
-				       CCSSettingInfo  *info,
-				       CCSSettingValue *value)
+	void initializeValue (CCSSettingType  type,
+			      CCSSettingInfo  *info,
+			      CCSSettingValue *value)
 	{
-	    stubInitializeSettingDefaultValue (type, info, value,
-					       reinterpret_cast <void *> (mValue));
+	    stubInitDefaultValue (type, info, value,
+				  reinterpret_cast <void *> (mValue));
 	}
 
 	CCSSettingInfo  *mInfo;
@@ -711,12 +712,14 @@ struct SettingMutators
 				 SettingValueType *);
 };
 
-class DefaultImplSetParamBase :
-    public DefaultImplSetParamInterface
+namespace impl
 {
-    public:
+class InternalSetParam :
+    public testing::SetParam
+{
+    protected:
 
-	DefaultImplSetParamBase (const CCSSettingInfoPtr &info,
+	InternalSetParam (const CCSSettingInfoPtr &info,
 				 CCSSettingType          type) :
 	    mInfo (info),
 	    mType (type)
@@ -729,11 +732,11 @@ class DefaultImplSetParamBase :
 		setToDefaultValue ();
 	}
 
-	void InitializeDefaultsForSetting (const SetUpSettingFunc &func)
+	void InitDefaultsForSetting (const SetUpSettingFunc &func)
 	{
-	    MockInitializerFuncsWithDelegators mockInitializers (mInfo.get (), mValue.get ());
+	    StubInitFuncs stubInitializers (mInfo.get (), mValue.get ());
 
-	    func (mockInitializers);
+	    func (stubInitializers);
 	}
 
 	void TakeReferenceToCreatedSetting (const CCSSettingPtr &setting)
@@ -748,7 +751,7 @@ class DefaultImplSetParamBase :
 	    CCSSettingInterface tmpSettingInterface = *settingInterface;
 
 	    tmpSettingInterface.settingGetType =
-		DefaultImplSetParamBase::returnIncorrectSettingType;
+		InternalSetParam::returnIncorrectSettingType;
 
 	    ccsObjectRemoveInterface (mSetting.get (),
 				      GET_INTERFACE_TYPE (CCSSettingInterface));
@@ -795,70 +798,49 @@ class DefaultImplSetParamBase :
 	}
 };
 
-class RequireSettingInterfaceRedirection
-{
-    public:
-
-	RequireSettingInterfaceRedirection (DefaultImplSetParamBase *base) :
-	    mBase (base),
-	    mSettingInterface (mBase->RedirectSettingInterface ())
-	{
-	}
-
-	~RequireSettingInterfaceRedirection ()
-	{
-	    mBase->RestoreSettingInterface (mSettingInterface);
-	}
-
-    private:
-
-	DefaultImplSetParamBase   *mBase;
-	const CCSSettingInterface *mSettingInterface;
-};
-
 template <typename SettingValueType>
-class DefaultImplSetParamTemplatedBase
+class SetParamContainerStorage
 {
     protected:
 
 	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
 
-	DefaultImplSetParamTemplatedBase (const ValueContainerPtr &defaultValueContainer,
-					  const ValueContainerPtr &nonDefaultValueContainer) :
-	    mDefaultValueContainer (defaultValueContainer),
-	    mNonDefaultValueContainer (nonDefaultValueContainer)
+	SetParamContainerStorage (const ValueContainerPtr &defaultValue,
+				  const ValueContainerPtr &nonDefaultValue) :
+	    mDefault (defaultValue),
+	    mNonDefault (nonDefaultValue)
 	{
 	}
 
-	ValueContainerPtr  mDefaultValueContainer;
-	ValueContainerPtr  mNonDefaultValueContainer;
+	ValueContainerPtr  mDefault;
+	ValueContainerPtr  mNonDefault;
 };
 
 template <typename SettingValueType>
-class DefaultImplSetParam :
+class SetParam :
     /* Do not change the order of inheritance here, DefaultImplSetParamTemplatedBase
      * must be destroyed after DefaultImplSetParamBase as DefaultImplSetParamBase
      * has indirect weak references to variables in DefaultImplSetParamTemplatedBase
      */
-   private DefaultImplSetParamTemplatedBase <SettingValueType>,
-   public  DefaultImplSetParamBase
+   private SetParamContainerStorage <SettingValueType>,
+   public  InternalSetParam
 {
     public:
 
 	typedef typename SettingMutators <SettingValueType>::SetFunction SetFunction;
 	typedef typename SettingMutators <SettingValueType>::GetFunction GetFunction;
 	typedef typename ValueContainer <SettingValueType>::Ptr ValueContainerPtr;
-	typedef DefaultImplSetParamTemplatedBase <SettingValueType> TemplateParent;
+	typedef SetParamContainerStorage <SettingValueType> TemplateParent;
 
-	DefaultImplSetParam (const ValueContainerPtr &defaultValueContainer,
+	SetParam (const ValueContainerPtr &defaultValue,
 			     CCSSettingType          type,
 			     SetFunction             setFunction,
 			     GetFunction             getFunction,
 			     const CCSSettingInfoPtr &info,
-			     const ValueContainerPtr &nonDefaultValueContainer) :
-	    DefaultImplSetParamTemplatedBase <SettingValueType> (defaultValueContainer,
-								 nonDefaultValueContainer),
-	    DefaultImplSetParamBase (info, type),
+			     const ValueContainerPtr &nonDefaultValue) :
+	    SetParamContainerStorage <SettingValueType> (defaultValue,
+								 nonDefaultValue),
+	    InternalSetParam (info, type),
 	    mSetFunction (setFunction),
 	    mGetFunction (getFunction)
 	{
@@ -867,10 +849,10 @@ class DefaultImplSetParam :
 	virtual void SetUpSetting (const SetUpSettingFunc &func)
 	{
 	    /* Do delayed setup here */
-	    mValue = TemplateParent::mDefaultValueContainer->getContainedValue (mType, mInfo);
-	    mNonDefaultValue = TemplateParent::mNonDefaultValueContainer->getRawValue (mType, mInfo);
+	    mValue = TemplateParent::mDefault->getContainedValue (mType, mInfo);
+	    mNonDefaultValue = TemplateParent::mNonDefault->getRawValue (mType, mInfo);
 
-	    InitializeDefaultsForSetting (func);
+	    InitDefaultsForSetting (func);
 	}
 
 	virtual void SetUpParam (const CCSSettingPtr &setting)
@@ -882,9 +864,11 @@ class DefaultImplSetParam :
 
 	virtual Bool setWithInvalidType ()
 	{
-	    RequireSettingInterfaceRedirection redirection (this);
+	    CCSSettingInterface *iface = RedirectSettingInterface ();
+	    Bool ret = (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+	    RestoreSettingInterface (iface);
 
-	    return (*mSetFunction) (mSetting.get (), mNonDefaultValue, FALSE);
+	    return ret;
 	}
 
 	virtual Bool setToNonDefaultValue ()
@@ -908,6 +892,7 @@ class DefaultImplSetParam :
 	GetFunction        mGetFunction;
 
 };
+}
 
 class SetWithDisallowedValueBase
 {
@@ -1036,80 +1021,81 @@ class SetWithDisallowedValue <const char *> :
 	}
 };
 
+namespace impl
+{
 template <typename SettingValueType>
-class DefaultImplSetFailureParam :
-    public DefaultImplSetParam <SettingValueType>
+class SetFailureParam :
+    public SetParam <SettingValueType>
 {
     public:
 
-	typedef DefaultImplSetParam <SettingValueType> Parent;
-	typedef typename DefaultImplSetParam <SettingValueType>::SetFunction SetFunction;
-	typedef typename DefaultImplSetParam <SettingValueType>::GetFunction GetFunction;
-	typedef typename DefaultImplSetParam <SettingValueType>::ValueContainerPtr ValueContainerPtr;
+	typedef SetParam <SettingValueType> Parent;
+	typedef typename SetParam <SettingValueType>::SetFunction SetFunction;
+	typedef typename SetParam <SettingValueType>::GetFunction GetFunction;
+	typedef typename SetParam <SettingValueType>::ValueContainerPtr ValueContainerPtr;
 
-	DefaultImplSetFailureParam (const ValueContainerPtr &defaultValueContainer,
-				    CCSSettingType          type,
-				    SetFunction             setFunction,
-				    GetFunction             getFunction,
-				    const CCSSettingInfoPtr &info,
-				    const ValueContainerPtr &nonDefaultValueContainer) :
-	    DefaultImplSetParam <SettingValueType> (defaultValueContainer,
+	SetFailureParam (const ValueContainerPtr &defaultValue,
+			 CCSSettingType          type,
+			 SetFunction             setFunction,
+			 GetFunction             getFunction,
+			 const CCSSettingInfoPtr &info,
+			 const ValueContainerPtr &nonDefault) :
+	    SetParam <SettingValueType> (defaultValue,
 						    type,
 						    setFunction,
 						    getFunction,
 						    info,
-						    nonDefaultValueContainer)
+						    nonDefault)
 	{
 	}
 
 	virtual Bool setToFailValue ()
 	{
-	    typedef DefaultImplSetParam <SettingValueType> Parent;
+	    typedef SetParam <SettingValueType> Parent;
 	    return SetWithDisallowedValue <SettingValueType> (Parent::mSetFunction,
 							      Parent::mSetting,
 							      Parent::mInfo) ();
 	}
 };
-
-template <typename SettingValueType>
-DefaultImplSetParamInterface::Ptr
-SemanticsParamFor (const typename ValueContainer <SettingValueType>::Ptr   &defaultValue,
-		   CCSSettingType                                          type,
-		   typename SettingMutators<SettingValueType>::SetFunction setFunc,
-		   typename SettingMutators<SettingValueType>::GetFunction getFunc,
-		   const CCSSettingInfoPtr                                 &settingInfo,
-		   const typename ValueContainer <SettingValueType>::Ptr   &changeTo)
-{
-    typedef SettingValueType T;
-    return boost::make_shared <DefaultImplSetParam <T> > (defaultValue,
-							  type,
-							  setFunc,
-							  getFunc,
-							  settingInfo,
-							  changeTo);
 }
 
-template <typename SettingValueType>
-DefaultImplSetParamInterface::Ptr
-FailureSemanticsParamFor (const typename ValueContainer <SettingValueType>::Ptr   &defaultValue,
-			  CCSSettingType                                          type,
-			  typename SettingMutators<SettingValueType>::SetFunction setFunc,
-			  typename SettingMutators<SettingValueType>::GetFunction getFunc,
-			  const CCSSettingInfoPtr                                 &settingInfo,
-			  const typename ValueContainer <SettingValueType>::Ptr   &changeTo)
+template <typename T>
+SetParam::Ptr
+SemanticsParamFor (const typename ValueContainer <T>::Ptr   &defaultValue,
+		   CCSSettingType                           type,
+		   typename SettingMutators<T>::SetFunction setFunc,
+		   typename SettingMutators<T>::GetFunction getFunc,
+		   const CCSSettingInfoPtr                  &settingInfo,
+		   const typename ValueContainer <T>::Ptr   &changeTo)
 {
-    typedef SettingValueType T;
-    return boost::make_shared <DefaultImplSetFailureParam <T> > (defaultValue,
-								 type,
-								 setFunc,
-								 getFunc,
-								 settingInfo,
-								 changeTo);
+    return boost::make_shared <impl::SetParam <T> > (defaultValue,
+						     type,
+						     setFunc,
+						     getFunc,
+						     settingInfo,
+						     changeTo);
+}
+
+template <typename T>
+SetParam::Ptr
+FailureSemanticsParamFor (const typename ValueContainer <T>::Ptr   &defaultValue,
+			  CCSSettingType			   type,
+			  typename SettingMutators<T>::SetFunction setFunc,
+			  typename SettingMutators<T>::GetFunction getFunc,
+			  const CCSSettingInfo			   &settingInfo,
+			  const typename ValueContainer <T>::Ptr   &changeTo)
+{
+    return boost::make_shared <impl::SetFailureParam <T> > (defaultValue,
+							    type,
+							    setFunc,
+							    getFunc,
+							    settingInfo,
+							    changeTo);
 }
 
 class SettingDefaultImplSet :
     public CCSSettingDefaultImplTest,
-    public WithParamInterface <DefaultImplSetParamInterface::Ptr>
+    public WithParamInterface <SetParam::Ptr>
 {
     public:
 
@@ -1135,4 +1121,5 @@ class SettingDefaulImplSetFailure :
 {
 };
 
+}
 }
