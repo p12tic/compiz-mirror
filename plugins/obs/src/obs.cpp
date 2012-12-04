@@ -249,9 +249,7 @@ ObsScreen::ObsScreen (CompScreen *s) :
 bool
 ObsWindow::updateTimeout ()
 {
-    int i;
-    
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (int i = 0; i < MODIFIER_COUNT; i++)
 	updatePaintModifier (i);
 
     return false;
