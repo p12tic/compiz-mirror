@@ -489,7 +489,6 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
     GLfloat x;
     GLfloat y;
     GLfloat z;
-    int	    i;
     int	    j;
     int	    iStacksStart;
     int	    iStacksEnd;
@@ -548,7 +547,7 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 
     glBegin (GL_QUADS);
 
-    for (i = iStacksStart; i < iStacksEnd; i++)
+    for (int i = iStacksStart; i < iStacksEnd; i++)
     {
 	afTexCoordX[0] = 1.0f;
 	afTexCoordX[1] = 1.0f - fStepX;
