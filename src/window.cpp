@@ -3226,12 +3226,16 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    xwc->x = 0;
 	    xwc->y = 0;
 	}
-
-	window->sendConfigureNotify ();
     }
 
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+
+    /* Send the synthetic configure notify
+     * after the real configure notify arrives
+     * (ICCCM s4.1.5) */
+    if (serverFrame)
+	window->sendConfigureNotify ();
 
     /* When updating plugins we care about
      * the absolute position */
