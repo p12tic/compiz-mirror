@@ -219,8 +219,8 @@ class CCSSettingGMock :
 	}
 
 	static CCSSetStatus ccsSetBool (CCSSetting *setting,
-			 Bool       data,
-			 Bool	    processChanged)
+					Bool       data,
+					Bool       processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setBool (data, processChanged);
 	}
@@ -282,8 +282,8 @@ class CCSSettingGMock :
 	}
 
 	static CCSSetStatus ccsSetValue (CCSSetting      *setting,
-			  CCSSettingValue *data,
-			  Bool		  processChanged)
+					 CCSSettingValue *data,
+					 Bool            processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setValue (data, processChanged);
 	}
