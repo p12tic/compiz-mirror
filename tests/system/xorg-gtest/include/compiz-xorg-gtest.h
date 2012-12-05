@@ -22,6 +22,8 @@
  */
 #ifndef _COMPIZ_XORG_GTEST_H
 #define _COMPIZ_XORG_GTEST_H
+#include <memory>
+#include <list>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
@@ -35,6 +37,8 @@ namespace compiz
 	typedef  ::testing::MatcherInterface <const XEvent &> XEventMatcher;
 
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
+	bool AdvanceToNextEventOnSuccess (Display *dpy,
+					  bool waitResult);
 	bool WaitForEventOfTypeOnWindow (Display *dpy,
 					 Window  w,
 					 int     type,
@@ -49,17 +53,50 @@ namespace compiz
 						 const XEventMatcher &matcher,
 						 int                 timeout = 1000);
 
-	class XorgSystemTest :
+	class PrivateCompizProcess;
+	class CompizProcess
+	{
+	    public:
+		typedef enum _StartupFlags
+		{
+		    ReplaceCurrentWM = (1 << 0),
+		    WaitForStartupMessage = (1 << 1),
+		    ExpectStartupFailure = (1 << 2)
+		} StartupFlags;
+
+		CompizProcess (Display *dpy, StartupFlags, unsigned int waitTimeout);
+		~CompizProcess ();
+		xorg::testing::Process::State State ();
+		pid_t Pid ();
+
+	    private:
+		std::auto_ptr <PrivateCompizProcess> priv;
+	};
+
+	class PrivateCompizXorgSystemTest;
+	class CompizXorgSystemTest :
 	    public xorg::testing::Test
 	{
 	    public:
 
+		CompizXorgSystemTest ();
+
 		virtual void SetUp ();
 		virtual void TearDown ();
 
-	    private:
+		xorg::testing::Process::State CompizProcessState ();
+		void StartCompiz (CompizProcess::StartupFlags flags);
 
-		xorg::testing::Process mCompizProcess;
+	    private:
+		std::auto_ptr <PrivateCompizXorgSystemTest> priv;
+	};
+
+	class AutostartCompizXorgSystemTest :
+	    public CompizXorgSystemTest
+	{
+	    public:
+
+		virtual void SetUp ();
 	};
     }
 }
