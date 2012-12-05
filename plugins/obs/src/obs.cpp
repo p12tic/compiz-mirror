@@ -197,9 +197,7 @@ ObsScreen::matchExpHandlerChanged ()
 void
 ObsScreen::matchPropertyChanged (CompWindow  *w)
 {
-    unsigned int i;
-
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
 	ObsWindow::get (w)->updatePaintModifier (i);
 
     screen->matchPropertyChanged (w);
@@ -249,9 +247,7 @@ ObsScreen::ObsScreen (CompScreen *s) :
 bool
 ObsWindow::updateTimeout ()
 {
-    int i;
-    
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (int i = 0; i < MODIFIER_COUNT; i++)
 	updatePaintModifier (i);
 
     return false;
@@ -262,7 +258,6 @@ ObsScreen::setOption (const CompString  &name,
 		      CompOption::Value &value)
 {
     CompOption   *o;
-    unsigned int i;
 
     if (!ObsOptions::setOption (name, value))
 	return false;
@@ -271,7 +266,7 @@ ObsScreen::setOption (const CompString  &name,
     if (!o)
         return false;
 
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
     {
 	if (o == matchOptions[i] || o == valueOptions[i])
 	{

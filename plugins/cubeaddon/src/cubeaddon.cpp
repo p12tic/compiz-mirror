@@ -52,6 +52,9 @@ CubeaddonScreen::CubeCap::CubeCap ()
 void
 CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
 {
+    if (mFiles.empty ())
+	return;
+
     CompSize tSize;
     float    xScale, yScale;
 
@@ -60,9 +63,6 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
     mTexture.clear ();
 
     mLoaded = false;
-
-    if (mFiles.empty ())
-	return;
 
     mCurrent = mCurrent % mFiles.size ();
 

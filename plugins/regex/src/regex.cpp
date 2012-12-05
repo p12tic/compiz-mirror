@@ -147,9 +147,7 @@ RegexExp::evaluate (CompWindow *w)
 int
 RegexExp::matches (const CompString& str)
 {
-    unsigned int i;
-
-    for (i = 0; i < sizeof (prefix) / sizeof (prefix[0]); i++)
+    for (unsigned int i = 0; i < sizeof (prefix) / sizeof (prefix[0]); i++)
 	if (str.compare (0, prefix[i].length, prefix[i].name) == 0)
 	    return (int) i;
 

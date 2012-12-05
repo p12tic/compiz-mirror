@@ -504,12 +504,10 @@ PrivateWindow::setFullscreenMonitors (CompFullscreenMonitorSet *monitors)
 void
 CompWindow::changeState (unsigned int newState)
 {
-    unsigned int oldState;
-
     if (priv->state == newState)
 	return;
 
-    oldState = priv->state;
+    unsigned int oldState = priv->state;
     priv->state = newState;
 
     recalcType ();
@@ -807,11 +805,11 @@ CompWindow::recalcType ()
 void
 PrivateWindow::updateFrameWindow ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
-
     if (!serverFrame)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
 
     xwc.x = serverGeometry.x ();
     xwc.y = serverGeometry.y ();
@@ -1716,13 +1714,13 @@ PrivateWindow::initializeSyncCounter ()
 void
 CompWindow::sendSyncRequest ()
 {
-    XClientMessageEvent xev;
-
     if (priv->syncWait)
 	return;
 
     if (!priv->initializeSyncCounter ())
 	return;
+
+    XClientMessageEvent xev;
 
     xev.type	     = ClientMessage;
     xev.window	     = priv->id;
@@ -1748,10 +1746,10 @@ CompWindow::sendSyncRequest ()
 void
 PrivateWindow::configure (XConfigureEvent *ce)
 {
-    unsigned int valueMask = 0;
-
     if (priv->frame)
 	return;
+
+    unsigned int valueMask = 0;
 
     /* remove configure event from pending configures */
     if (priv->geometry.x () != ce->x)
@@ -1800,12 +1798,12 @@ PrivateWindow::configure (XConfigureEvent *ce)
 void
 PrivateWindow::configureFrame (XConfigureEvent *ce)
 {
+    if (!priv->frame)
+	return;
+
     int x, y, width, height;
     CompWindow	     *above;
     unsigned int     valueMask = 0;
-
-    if (!priv->frame)
-	return;
 
     /* remove configure event from pending configures */
     if (priv->frameGeometry.x () != ce->x)
@@ -2891,11 +2889,11 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
 void
 PrivateWindow::saveGeometry (int mask)
 {
-    int m = mask & ~saveMask;
-
     /* only save geometry if window has been placed */
     if (!placed)
 	return;
+
+    int m = mask & ~saveMask;
 
     if (m & CWX)
 	saveWc.x = serverGeometry.x ();
@@ -2983,13 +2981,13 @@ void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
 {
-    unsigned int frameValueMask = 0;
-
     if (id == screen->root ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "attempted to reconfigure root window");
 	return;
     }
+
+    unsigned int frameValueMask = 0;
 
     /* Remove redundant bits */
 
@@ -3950,13 +3948,12 @@ CompWindow::moveResize (XWindowChanges *xwc,
 void
 PrivateWindow::updateSize ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask;
-
     if (window->overrideRedirect () || !managed)
 	return;
 
-    mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+
+    int mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
     if (mask)
     {
 	if (priv->mapNum && (mask & (CWWidth | CWHeight)))
@@ -4214,11 +4211,11 @@ CompWindow::restackBelow (CompWindow *sibling)
 void
 CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask = 0;
-
     if (overrideRedirect () || !priv->managed)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    int		   mask = 0;
 
     if (priv->state & CompWindowStateShadedMask && !priv->shaded)
     {
@@ -4297,12 +4294,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 void
 PrivateWindow::ensureWindowVisibility ()
 {
-    int x1, y1, x2, y2;
-    int	width = serverGeometry.widthIncBorders ();
-    int	height = serverGeometry.heightIncBorders ();
-    int dx = 0;
-    int dy = 0;
-
     if (struts || attrib.override_redirect)
 	return;
 
@@ -4311,17 +4302,23 @@ PrivateWindow::ensureWindowVisibility ()
 		CompWindowTypeUnknownMask))
 	return;
 
-    x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
-    y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
-    x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
+    int x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
+    int y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
+    int x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
 	 screen->width ();
-    y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
+    int y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
 	 screen->height ();
+
+    int dx = 0;
+    int width = serverGeometry.widthIncBorders ();
 
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
     else if (serverGeometry.x () + width + serverInput.right <= x1)
 	dx = (x1 + 25) - (serverGeometry.x () + width);
+
+    int dy = 0;
+    int height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.y () - serverInput.top >= y2)
 	dy = (y2 - 25) - serverGeometry.y ();
@@ -4440,10 +4437,10 @@ CompWindow::show ()
 void
 PrivateWindow::hide ()
 {
-    bool onDesktop = window->onCurrentDesktop ();
-
     if (!managed)
 	return;
+
+    bool onDesktop = window->onCurrentDesktop ();
 
     if (!window->minimized () && !inShowDesktopMode &&
 	!hidden && onDesktop)
@@ -4487,10 +4484,10 @@ PrivateWindow::hide ()
 void
 PrivateWindow::show ()
 {
-    bool onDesktop = window->onCurrentDesktop ();
-
     if (!managed)
 	return;
+
+    bool onDesktop = window->onCurrentDesktop ();
 
     if (minimized || inShowDesktopMode ||
 	hidden    || !onDesktop)
@@ -4959,7 +4956,6 @@ CompWindow::getIcon (int width,
 
 		if (iw && ih)
 		{
-		    unsigned long j;
 		    icon = new CompIcon (iw, ih);
 		    if (!icon)
 			continue;
@@ -4971,7 +4967,7 @@ CompWindow::getIcon (int width,
 		    /* EWMH doesn't say if icon data is premultiplied or
 		       not but most applications seem to assume data should
 		       be unpremultiplied. */
-		    for (j = 0; j < iw * ih; j++)
+		    for (unsigned long j = 0; j < iw * ih; j++)
 		    {
 			alpha = (idata[i + j + 2] >> 24) & 0xff;
 			red   = (idata[i + j + 2] >> 16) & 0xff;
@@ -5527,11 +5523,11 @@ PrivateWindow::processMap ()
 void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
-    bool onlyActions = (priv->id == screen->activeWindow() ||
-			!screen->getCoreOptions().optionGetClickToFocus ());
-
     if (!priv->frame)
 	return;
+
+    bool onlyActions = (priv->id == screen->activeWindow() ||
+			!screen->getCoreOptions().optionGetClickToFocus ());
 
     /* Ungrab everything */
     XUngrabButton (screen->dpy(), AnyButton, AnyModifier, frame);
@@ -5713,7 +5709,6 @@ CompWindow::moveToViewportPosition (int  x,
     {
 	unsigned int   valueMask = CWX | CWY;
 	XWindowChanges xwc = XWINDOWCHANGES_INIT;
-	int m, wx, wy;
 
 	if (!priv->managed)
 	    return;
@@ -5724,8 +5719,9 @@ CompWindow::moveToViewportPosition (int  x,
 	if (priv->state & CompWindowStateStickyMask)
 	    return;
 
-	wx = tx;
-	wy = ty;
+	int wx = tx;
+	int wy = ty;
+	int m;
 
 	if (screen->vpSize ().width ()!= 1)
 	{

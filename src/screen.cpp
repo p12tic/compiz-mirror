@@ -1190,11 +1190,11 @@ static const unsigned short N_TARGETS = 4;
 void
 PrivateScreen::handleSelectionRequest (XEvent *event)
 {
-    XSelectionEvent reply;
-
     if (wmSnSelectionWindow != event->xselectionrequest.owner ||
 	wmSnAtom != event->xselectionrequest.selection)
 	return;
+
+    XSelectionEvent reply;
 
     reply.type	    = SelectionNotify;
     reply.display   = dpy;
@@ -1691,9 +1691,7 @@ cps::XWindowInfo::getProtocols (Window id)
 
     if (XGetWMProtocols (dpy, id, &protocol, &count))
     {
-	int  i;
-
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 	    if (protocol[i] == Atoms::wmDeleteWindow)
 		protocols |= CompWindowProtocolDeleteMask;
@@ -1877,17 +1875,16 @@ void
 PrivateScreen::setDesktopHints ()
 {
     unsigned long *data;
-    int		  dSize, offset, hintSize;
-    unsigned int  i;
 
-    dSize = nDesktop * 2 + nDesktop * 2 + nDesktop * 4 + 1;
+    int dSize = nDesktop * 2 + nDesktop * 2 + nDesktop * 4 + 1;
 
     data = (unsigned long *) malloc (sizeof (unsigned long) * dSize);
     if (!data)
 	return;
 
-    offset   = 0;
-    hintSize = nDesktop * 2;
+    unsigned int  i;
+    int offset   = 0;
+    int hintSize = nDesktop * 2;
 
     for (i = 0; i < nDesktop; i++)
     {
@@ -2228,9 +2225,8 @@ PrivateScreen::updateScreenEdges ()
 	{ 0, -1,   1, -1,   0,  2,   0,  2 }, /* bottom-left */
 	{ 1, -1,   1, -1,   0,  2,   0,  2 }  /* bottom-right */
     };
-    int i;
 
-    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
 	if (screenEdge[i].id)
 	    XMoveResizeWindow (dpy, screenEdge[i].id,
@@ -3477,9 +3473,7 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->edgeMask ())
     {
-	int i;
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
 		privateScreen.enableEdge (i);
     }
@@ -3492,10 +3486,7 @@ CompScreenImpl::addAction (CompAction *action)
 void
 CompScreenImpl::removeAction (CompAction *action)
 {
-    if (!privateScreen.initialized)
-	return;
-
-    if (!action->active ())
+    if (!(privateScreen.initialized || action->active ()))
 	return;
 
     grabManager.setCurrentState(action->state());
@@ -3508,9 +3499,7 @@ CompScreenImpl::removeAction (CompAction *action)
 
     if (action->edgeMask ())
     {
-	int i;
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
 		privateScreen.disableEdge (i);
     }
@@ -3971,10 +3960,7 @@ CompScreenImpl::getCurrentOutputExtents ()
 void
 PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 {
-    if (nDesktop < 1 || nDesktop >= 0xffffffff)
-	return;
-
-    if (nDesktop == this->nDesktop)
+    if (nDesktop < 1 || nDesktop >= 0xffffffff || nDesktop == this->nDesktop)
 	return;
 
     if (currentDesktop >= nDesktop)
@@ -3990,10 +3976,7 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 void
 PrivateScreen::setCurrentDesktop (unsigned int desktop)
 {
-    if (desktop >= nDesktop)
-	return;
-
-    if (desktop == currentDesktop)
+    if (desktop >= nDesktop || desktop == currentDesktop)
 	return;
 
     currentDesktop = desktop;
@@ -4135,10 +4118,9 @@ cps::History::addToCurrentActiveWindowHistory (Window id)
 {
     CompActiveWindowHistory *history = &this->history[currentHistory_];
     Window		    tmp, next = id;
-    int			    i;
 
     /* walk and move history */
-    for (i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
+    for (int i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
     {
 	tmp = history->id[i];
 	history->id[i] = next;

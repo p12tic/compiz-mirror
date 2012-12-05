@@ -1218,7 +1218,6 @@ Model::bezierPatchEvaluate (float u,
 {
     float coeffsU[4], coeffsV[4];
     float x, y;
-    int   i, j;
 
     coeffsU[0] = (1 - u) * (1 - u) * (1 - u);
     coeffsU[1] = 3 * u * (1 - u) * (1 - u);
@@ -1232,9 +1231,9 @@ Model::bezierPatchEvaluate (float u,
 
     x = y = 0.0f;
 
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
-	for (j = 0; j < 4; j++)
+	for (int j = 0; j < 4; j++)
 	{
 	    x += coeffsU[i] * coeffsV[j] *
 		objects[j * GRID_WIDTH + i].position.x;
@@ -1288,9 +1287,8 @@ Model::findNearestObject (float x,
 {
     Object *object = &objects[0];
     float  distance, minDistance = 0.0;
-    int    i;
 
-    for (i = 0; i < numObjects; i++)
+    for (int i = 0; i < numObjects; i++)
     {
 	distance = objects[i].distanceToPoint (x, y);
 	if (i == 0 || distance < minDistance)
@@ -2054,8 +2052,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetGrabWindowMatch ().evaluate (window))
 	    {
-		int i;
-		for (i = 0; i < model->numSprings; i++)
+		for (int i = 0; i < model->numSprings; i++)
 		{
 		    s = &model->springs[i];
 
