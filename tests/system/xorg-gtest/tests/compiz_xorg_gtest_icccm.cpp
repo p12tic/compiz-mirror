@@ -34,12 +34,15 @@
 #include <stdlib.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 
 #include <gtest_shared_tmpenv.h>
+#include <gtest_shared_characterwrapper.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -50,63 +53,15 @@ using ::testing::Matcher;
 
 namespace ct = compiz::testing;
 
-class CompizXorgSystemICCCM :
-    public ct::CompizXorgSystemTest
-{
-    public:
-
-	CompizXorgSystemICCCM ()
-	{
-	    if (pipe2 (testToWaitThreadPipeFd, O_NONBLOCK | O_CLOEXEC) == -1)
-	    {
-		perror ("pipe2");
-		exit (EXIT_FAILURE);
-	    }
-
-	    if (pipe2 (waitThreadToTestPipeFd, O_NONBLOCK | O_CLOEXEC) == -1)
-	    {
-		perror ("pipe2");
-		exit (EXIT_FAILURE);
-	    }
-	}
-
-	virtual void SetUp ()
-	{
-	    ct::CompizXorgSystemTest::SetUp ();
-
-	    ::Display *dpy = Display ();
-
-	    XSelectInput (dpy, DefaultRootWindow (dpy),
-			  StructureNotifyMask |
-			  FocusChangeMask |
-			  PropertyChangeMask |
-			  SubstructureRedirectMask);
-	}
-
-	~CompizXorgSystemICCCM ()
-	{
-	    close (testToWaitThreadPipeFd[0]);
-	    close (testToWaitThreadPipeFd[1]);
-	    close (waitThreadToTestPipeFd[0]);
-	    close (waitThreadToTestPipeFd[0]);
-	}
-
-	static void * ThreadEntry (void *data);
-	void WaitForDeath ();
-
-	void SendMsgToTest (char msg);
-	void SendMsgToThread (char msg);
-	bool ReadThreadMsg (char msg);
-	bool ReadTestMsg (char msg);
-
-    private:
-
-	int testToWaitThreadPipeFd[2];
-	int waitThreadToTestPipeFd[2];
-};
-
 namespace
 {
+
+void
+runtimeErrorWithErrno ()
+{
+    CharacterWrapper allocatedError (strerror (errno));
+    throw std::runtime_error (std::string (allocatedError));
+}
 
 bool
 checkForMessageOnFd (int fd, int timeout, char expected)
@@ -136,77 +91,153 @@ char PROCESS_DIED_MSG = 'd';
 
 }
 
-bool
-CompizXorgSystemICCCM::ReadThreadMsg (char msg)
+class AsyncTask
 {
-    return checkForMessageOnFd (testToWaitThreadPipeFd[0], 1, msg);
+    public:
+
+	typedef boost::shared_ptr <AsyncTask> Ptr;
+
+	AsyncTask ()
+	{
+	    if (pipe2 (testToTaskFd, O_NONBLOCK | O_CLOEXEC) == -1)
+		runtimeErrorWithErrno ();
+
+	    if (pipe2 (taskToTestFd, O_NONBLOCK | O_CLOEXEC) == -1)
+		runtimeErrorWithErrno ();
+
+	    if (pthread_create (&mThread,
+				NULL,
+				AsyncTask::ThreadEntry,
+				reinterpret_cast<void *> (this)) != 0)
+		runtimeErrorWithErrno ();
+	}
+
+	~AsyncTask ()
+	{
+	    void *ret;
+	    if (pthread_join (mThread, &ret) != 0)
+	    {
+		CharacterWrapper allocatedError (strerror (errno));
+		throw std::runtime_error (std::string (allocatedError));
+	    }
+
+	    close (testToTaskFd[0]);
+	    close (testToTaskFd[1]);
+	    close (taskToTestFd[0]);
+	    close (taskToTestFd[0]);
+	}
+
+	void SendMsgToTask (char msg);
+	bool ReadMsgFromTask (char msg);
+
+    protected:
+
+	void SendMsgToTest (char msg);
+	bool ReadMsgFromTest (char msg);
+
+    private:
+
+	static void * ThreadEntry (void *data);
+	virtual void Task () = 0;
+
+	int testToTaskFd[2];
+	int taskToTestFd[2];
+	pthread_t mThread;
+};
+
+bool
+AsyncTask::ReadMsgFromTest (char msg)
+{
+    return checkForMessageOnFd (testToTaskFd[0], 1, msg);
 }
 
 bool
-CompizXorgSystemICCCM::ReadTestMsg (char msg)
+AsyncTask::ReadMsgFromTask (char msg)
 {
     const int maximumWaitTime = 1000 * 10; // 10 seconds
 
-    return checkForMessageOnFd (waitThreadToTestPipeFd[0], maximumWaitTime, msg);
+    return checkForMessageOnFd (taskToTestFd[0], maximumWaitTime, msg);
 }
 
 void
-CompizXorgSystemICCCM::SendMsgToTest (char msg)
+AsyncTask::SendMsgToTest (char msg)
 {
     char buf[1] = { msg };
-    if (write (waitThreadToTestPipeFd[1], reinterpret_cast <void *> (buf), 1) == -1)
-    {
-	FAIL ();
-	perror ("write");
-    }
+    if (write (taskToTestFd[1], reinterpret_cast <void *> (buf), 1) == -1)
+	runtimeErrorWithErrno ();
 }
 
 void
-CompizXorgSystemICCCM::SendMsgToThread (char msg)
+AsyncTask::SendMsgToTask (char msg)
 {
     char buf[1] = { msg };
-    if (write (testToWaitThreadPipeFd[1], reinterpret_cast <void *> (buf), 1) == -1)
-    {
-	FAIL ();
-	perror ("write");
-    }
+    if (write (testToTaskFd[1], reinterpret_cast <void *> (buf), 1) == -1)
+	runtimeErrorWithErrno ();
 }
 
+void *
+AsyncTask::ThreadEntry (void *data)
+{
+    AsyncTask *task = reinterpret_cast <AsyncTask *> (data);
+    task->Task ();
+    return NULL;
+}
+
+class WaitForDeathTask :
+    public AsyncTask
+{
+    public:
+
+	typedef boost::function <xorg::testing::Process::State ()> GetProcessState;
+
+	WaitForDeathTask (const GetProcessState &procState) :
+	    mProcessState (procState)
+	{
+	}
+
+    private:
+
+	GetProcessState mProcessState;
+
+	void Task ();
+};
+
 void
-CompizXorgSystemICCCM::WaitForDeath ()
+WaitForDeathTask::Task ()
 {
     do
     {
-	if (ReadThreadMsg (TEST_FAILED_MSG))
+	if (ReadMsgFromTest (TEST_FAILED_MSG))
 	    return;
-    } while (CompizProcessState () != xorg::testing::Process::FINISHED_FAILURE);
+    } while (mProcessState () != xorg::testing::Process::FINISHED_FAILURE);
 
     /* The process died, send a message back saying that it did */
     SendMsgToTest (PROCESS_DIED_MSG);
 }
 
-void *
-CompizXorgSystemICCCM::ThreadEntry (void *data)
+class CompizXorgSystemICCCM :
+    public ct::CompizXorgSystemTest
 {
-    boost::function <void ()> *func = reinterpret_cast <boost::function <void ()> *> (data);
-    (*func) ();
-    return NULL;
-}
+    public:
+
+	virtual void SetUp ()
+	{
+	    ct::CompizXorgSystemTest::SetUp ();
+
+	    ::Display *dpy = Display ();
+
+	    XSelectInput (dpy, DefaultRootWindow (dpy),
+			  StructureNotifyMask |
+			  FocusChangeMask |
+			  PropertyChangeMask |
+			  SubstructureRedirectMask);
+	}
+
+    private:
+};
 
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 {
-    pthread_t waitingForDeathThread;
-    boost::function <void ()> waitForDeathFunc (boost::bind (&CompizXorgSystemICCCM::WaitForDeath, this));
-
-    if (pthread_create (&waitingForDeathThread,
-			NULL,
-			CompizXorgSystemICCCM::ThreadEntry,
-			reinterpret_cast<void *> (&waitForDeathFunc)) != 0)
-    {
-	FAIL ();
-	perror ("pthread_create");
-    }
-
     /* XXX: This is a bit stupid, but we have to do it.
      * It seems as though closing the child stdout or
      * stderr will cause the client to hang indefinitely
@@ -219,17 +250,14 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 		     ct::CompizProcess::ReplaceCurrentWM |
 		     ct::CompizProcess::WaitForStartupMessage));
 
+    WaitForDeathTask::GetProcessState processState (boost::bind (&CompizXorgSystemICCCM::CompizProcessState,
+								 this));
+    AsyncTask::Ptr task (boost::make_shared <WaitForDeathTask> (processState));
+
     /* Now wait for the thread to tell us the news -
      * this will block for up to ten seconds */
-    if (!ReadTestMsg (PROCESS_DIED_MSG))
+    if (!task->ReadMsgFromTask (PROCESS_DIED_MSG))
     {
-	FAIL () << "compiz process did not exit with failure status";
-    }
-
-    void *ret;
-    if (pthread_join (waitingForDeathThread, &ret) != 0)
-    {
-	FAIL ();
-	perror ("pthread_join");
+	throw std::runtime_error ("compiz process did not exit with failure status");
     }
 }
