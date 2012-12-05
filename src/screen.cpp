@@ -5059,7 +5059,10 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
      * plugins loaded on the command line screen's and then
      * we need to call updatePlugins () to init the remaining
      * screens from option changes */
-    assert (CompPlugin::screenInitPlugins (screen));
+    bool init_succeeded = CompPlugin::screenInitPlugins (screen);
+    assert (init_succeeded);
+    if (!init_succeeded)
+      return false;
 
     /* The active plugins list might have been changed - load any
      * new plugins */

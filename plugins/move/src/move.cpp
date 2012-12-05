@@ -549,7 +549,6 @@ MoveScreen::handleEvent (XEvent *event)
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::wmMoveResize)
 	    {
-		CompWindow *w;
 		unsigned   long type = (unsigned long) event->xclient.data.l[2];
 
 		MOVE_SCREEN (screen);
@@ -557,6 +556,7 @@ MoveScreen::handleEvent (XEvent *event)
 		if (type == WmMoveResizeMove ||
 		    type == WmMoveResizeMoveKeyboard)
 		{
+		    CompWindow *w;
 		    w = screen->findWindow (event->xclient.window);
 		    if (w)
 		    {

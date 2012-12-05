@@ -639,11 +639,11 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 	else
 	{
 	    CCSPlugin     *plugin = NULL;
-	    CCSSetting    *setting;
 
 	    plugin = ccsFindPlugin (priv->context, pluginName);
 	    if (plugin)
 	    {
+		CCSSetting    *setting;
 		setting = ccsFindSetting (plugin, settingName);
 
 		if (setting)

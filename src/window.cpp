@@ -2504,7 +2504,6 @@ CompWindow::moveInputFocusToOtherWindow ()
     if (priv->id == screen->activeWindow () ||
 	priv->id == screen->getNextActiveWindow())
     {
-	CompWindow *ancestor;
 	CompWindow *nextActive = screen->findWindow (screen->getNextActiveWindow());
 
         /* Window pending focus */
@@ -2516,6 +2515,7 @@ CompWindow::moveInputFocusToOtherWindow ()
 	}
 	else if (priv->transientFor && priv->transientFor != screen->root ())
 	{
+	    CompWindow *ancestor;
 	    ancestor = screen->findWindow (priv->transientFor);
 	    if (ancestor &&
 		ancestor->focus () &&
@@ -6111,7 +6111,10 @@ CompWindow::CompWindow (Window aboveId,
     }
 
     /* TODO: bailout properly when objectInitPlugins fails */
-    assert (CompPlugin::windowInitPlugins (this));
+    bool init_succeeded = CompPlugin::windowInitPlugins (this);
+    assert (init_succeeded);
+    if (!init_succeeded)
+      return;
 
     recalcActions ();
     priv->updateIconGeometry ();

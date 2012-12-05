@@ -1447,14 +1447,13 @@ ShiftScreen::donePaint ()
 
 		CompWindow *w;
 
-		CompWindow *pw = NULL;
-
 		mState = ShiftStateIn;
 		mMoreAdjust = true;
 		cScreen->damageScreen ();
 
 		if (!mCancelled && mMvTarget != 0)
 		{
+		    CompWindow *pw = NULL;
 		    for (int i = 0; i < mNSlots; i++)
 		    {
 			w = mDrawSlots[i].w;

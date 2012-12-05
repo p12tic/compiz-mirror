@@ -132,12 +132,12 @@ ResizeLogic::handleEvent (XEvent *event)
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::wmMoveResize)
 	    {
-		CompWindowInterface *w;
 		unsigned long	    type = event->xclient.data.l[2];
 
 		if (type <= WmMoveResizeSizeLeft ||
 		    type == WmMoveResizeSizeKeyboard)
 		{
+		    CompWindowInterface *w;
 		    w = mScreen->findWindow (event->xclient.window);
 		    if (w)
 		    {

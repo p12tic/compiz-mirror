@@ -514,7 +514,6 @@ SvgWindow::initTexture (SvgSource  *source,
 			SvgTexture &texture,
 			CompSize   size)
 {
-    cairo_surface_t *surface;
     Display         *dpy = screen->dpy ();
 
     texture.size    = size;
@@ -523,6 +522,7 @@ SvgWindow::initTexture (SvgSource  *source,
 
     if (size.width () && size.height ())
     {
+	cairo_surface_t *surface;
 	XWindowAttributes attr;
 	XGetWindowAttributes (dpy, window->id (), &attr);
 
