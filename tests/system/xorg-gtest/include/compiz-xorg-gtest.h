@@ -48,11 +48,31 @@ namespace compiz
 
 		virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const;
 		virtual void DescribeTo (std::ostream *os) const;
-		virtual void DescribeNegationTo (std::ostream *os) const;
 
 	    private:
 
 		std::auto_ptr <PrivatePropertyNotifyXEventMatcher> priv;
+	};
+
+	class PrivateConfigureNotifyXEventMatcher;
+	class ConfigureNotifyXEventMatcher :
+	    public compiz::testing::XEventMatcher
+	{
+	    public:
+
+		ConfigureNotifyXEventMatcher (Window       above,
+					      unsigned int border,
+					      int          x,
+					      int          y,
+					      unsigned int width,
+					      unsigned int height);
+
+		virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const;
+		virtual void DescribeTo (std::ostream *os) const;
+
+	    private:
+
+		std::auto_ptr <PrivateConfigureNotifyXEventMatcher> priv;
 	};
 
 	Window CreateNormalWindow (Display *dpy);

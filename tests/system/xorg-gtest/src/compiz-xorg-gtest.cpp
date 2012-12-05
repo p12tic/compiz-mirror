@@ -22,6 +22,7 @@
  */
 #include <list>
 #include <stdexcept>
+#include <iomanip>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <boost/shared_ptr.hpp>
@@ -257,10 +258,71 @@ ct::PropertyNotifyXEventMatcher::DescribeTo (std::ostream *os) const
     *os << "Is property identified by " << priv->mPropertyName;
 }
 
-void
-ct::PropertyNotifyXEventMatcher::DescribeNegationTo (std::ostream *os) const
+class ct::PrivateConfigureNotifyXEventMatcher
 {
-    *os << "Is not a property identified by" << priv->mPropertyName;
+    public:
+
+	PrivateConfigureNotifyXEventMatcher (Window       above,
+					     unsigned int border,
+					     int          x,
+					     int          y,
+					     unsigned int width,
+					     unsigned int height) :
+	    mAbove (above),
+	    mBorder (border),
+	    mX (x),
+	    mY (y),
+	    mWidth (width),
+	    mHeight (height)
+	{
+	}
+
+	Window       mAbove;
+	int          mBorder;
+	int          mX;
+	int          mY;
+	int          mWidth;
+	int          mHeight;
+};
+
+ct::ConfigureNotifyXEventMatcher::ConfigureNotifyXEventMatcher (Window       above,
+								unsigned int border,
+								int          x,
+								int          y,
+								unsigned int width,
+								unsigned int height) :
+    priv (new ct::PrivateConfigureNotifyXEventMatcher (above,
+						       border,
+						       x,
+						       y,
+						       width,
+						       height))
+{
+}
+
+bool
+ct::ConfigureNotifyXEventMatcher::MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+{
+    const XConfigureEvent *ce = reinterpret_cast <const XConfigureEvent *> (&event);
+
+    return ce->above == priv->mAbove &&
+	   ce->border_width == priv->mBorder &&
+	   ce->x == priv->mX &&
+	   ce->y == priv->mY &&
+	   ce->width == priv->mWidth &&
+	   ce->height == priv->mHeight;
+}
+
+void
+ct::ConfigureNotifyXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    *os << "Matches ConfigureNotify with parameters : " << std::endl <<
+	   " x: " << priv->mX <<
+	   " y: " << priv->mY <<
+	   " width: " << priv->mWidth <<
+	   " height: " << priv->mHeight <<
+	   " border: " << priv->mBorder <<
+	   " above: " << std::hex << priv->mAbove << std::dec;
 }
 
 class ct::PrivateCompizProcess

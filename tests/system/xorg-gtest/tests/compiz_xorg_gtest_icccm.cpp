@@ -51,6 +51,11 @@ namespace
 char TEST_FAILED_MSG = 's';
 char PROCESS_EXITED_MSG = 'd';
 
+bool Advance (Display *d, bool r)
+{
+    return ct::AdvanceToNextEventOnSuccess (d, r);
+}
+
 }
 
 class WaitForSuccessDeathTask :
@@ -135,7 +140,115 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
     }
 }
 
-TEST_F (CompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConfigureNotify)
+class AutostartCompizXorgSystemICCCM :
+    public ct::CompizXorgSystemTest
 {
+    public:
 
+	virtual void SetUp ()
+	{
+	    ct::CompizXorgSystemTest::SetUp ();
+
+	    ::Display *dpy = Display ();
+
+	    XSelectInput (dpy, DefaultRootWindow (dpy),
+			  StructureNotifyMask |
+			  SubstructureNotifyMask |
+			  FocusChangeMask |
+			  PropertyChangeMask);
+
+	    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
+			     ct::CompizProcess::ReplaceCurrentWM |
+			     ct::CompizProcess::WaitForStartupMessage));
+	}
+};
+
+TEST_F (AutostartCompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConfigureNotify)
+{
+    ::Display *dpy = Display ();
+    Window    root = DefaultRootWindow (dpy);
+
+    Window w1 = ct::CreateNormalWindow (dpy);
+    Window w2 = ct::CreateNormalWindow (dpy);
+
+    XMapRaised (dpy, w1);
+    XMapRaised (dpy, w2);
+
+    /* Select for StructureNotify on w1 */
+    XSelectInput (dpy, w1, StructureNotifyMask);
+
+    /* Send a ConfigureRequest to the server asking for
+     * a particular geometry and stack position relative
+     * to w2 */
+
+    XEvent                 event;
+    XConfigureRequestEvent *configureRequestEvent = &event.xconfigurerequest;
+
+    event.type = ConfigureRequest;
+
+    const Window REQUEST_ABOVE = w2;
+    const unsigned int REQUEST_BORDER_WIDTH = 0;
+    const unsigned int REQUEST_X = 110;
+    const unsigned int REQUEST_Y = 120;
+    const unsigned int REQUEST_WIDTH = 200;
+    const unsigned int REQUEST_HEIGHT = 200;
+
+    configureRequestEvent->window = w1;
+
+    configureRequestEvent->above = REQUEST_ABOVE;
+    configureRequestEvent->detail = Above;
+    configureRequestEvent->border_width = REQUEST_BORDER_WIDTH;
+    configureRequestEvent->x = REQUEST_X;
+    configureRequestEvent->y = REQUEST_Y;
+    configureRequestEvent->width = REQUEST_WIDTH;
+    configureRequestEvent->height = REQUEST_HEIGHT;
+
+    configureRequestEvent->value_mask = CWX |
+					CWY |
+					CWWidth |
+					CWHeight |
+					CWBorderWidth |
+					CWSibling |
+					CWStackMode;
+
+    XSendEvent (dpy,
+		root,
+		0,
+		SubstructureRedirectMask | SubstructureNotifyMask,
+		&event);
+
+    XFlush (dpy);
+
+    /* Now wait for a ConfigureNotify to be sent back */
+    ct::ConfigureNotifyXEventMatcher configureMatcher (0, // Always zero
+						       REQUEST_BORDER_WIDTH,
+						       REQUEST_X,
+						       REQUEST_Y,
+						       REQUEST_WIDTH,
+						       REQUEST_HEIGHT);
+
+    /* Should get a ConfigureNotify with the right parameters */
+    EXPECT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       w1,
+								       ConfigureNotify,
+								       -1,
+								       -1,
+								       configureMatcher)));
+
+    ct::PropertyNotifyXEventMatcher propertyMatcher (dpy, "_NET_CLIENT_LIST_STACKING");
+
+    /* Check if the window is actually above */
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       propertyMatcher)));
+
+    /* Check the client list to see that w1 > w2 */
+    std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
+
+    ASSERT_EQ (clientList.size (), 2);
+    EXPECT_EQ (clientList.front (), w2);
+    EXPECT_EQ (clientList.back (), w1);
 }
