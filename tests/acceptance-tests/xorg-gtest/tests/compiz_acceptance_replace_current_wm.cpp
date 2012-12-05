@@ -186,7 +186,7 @@ SlowDownTask::Task ()
 {
     do
     {
-	if (ReadMsgFromTest (TEST_FINISHED_MSG, 1))
+	if (ReadMsgFromTest (TEST_FINISHED_MSG, mIsRunning ? 1 : 400))
 	    return;
 
 	pid_t pid = mPid ();
