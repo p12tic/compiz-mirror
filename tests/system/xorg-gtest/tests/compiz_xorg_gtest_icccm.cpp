@@ -174,6 +174,21 @@ TEST_F (AutostartCompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConf
     XMapRaised (dpy, w1);
     XMapRaised (dpy, w2);
 
+    ct::PropertyNotifyXEventMatcher propertyMatcher (dpy, "_NET_CLIENT_LIST_STACKING");
+
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       propertyMatcher)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       propertyMatcher)));
+
     /* Select for StructureNotify on w1 */
     XSelectInput (dpy, w1, StructureNotifyMask);
 
@@ -235,8 +250,6 @@ TEST_F (AutostartCompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConf
 								       -1,
 								       configureMatcher)));
 
-    ct::PropertyNotifyXEventMatcher propertyMatcher (dpy, "_NET_CLIENT_LIST_STACKING");
-
     /* Check if the window is actually above */
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
 								       DefaultRootWindow (dpy),
@@ -248,7 +261,7 @@ TEST_F (AutostartCompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConf
     /* Check the client list to see that w1 > w2 */
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
 
-    ASSERT_EQ (clientList.size (), 2);
-    EXPECT_EQ (clientList.front (), w2);
-    EXPECT_EQ (clientList.back (), w1);
+    ASSERT_EQ (2, clientList.size ());
+    EXPECT_EQ (w2, clientList.front ());
+    EXPECT_EQ (w1, clientList.back ());
 }
