@@ -1,4 +1,4 @@
-compiz (1:0.9.9~-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.9~daily12.12.05-0ubuntu1) raring; urgency=low
 
   [ Michael Terry ]
   * debian/control:
@@ -33,7 +33,92 @@ compiz (1:0.9.9~-0ubuntu1) UNRELEASED; urgency=low
     - Fix syntax highlighting for trunk xml files (LP: #1066823)
     - Fix documentation for building with python2 (LP: #1070211)
 
- -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 04 Dec 2012 15:59:25 +0800
+  [ Stephen M. Webb ]
+  * Windows open below panel and launcher, grid does not work at all,
+    window animations missing, and general plugin chaos if built on
+    raring (cmake >= 2.8.10) (LP: #1085581)
+
+  [ Iven Hsu ]
+  * KDE Appmenu doesn't work with compiz decorators (LP: #1082265)
+  * compiz 0.9.8.6 fails to build from source in KDE4-window-decorator
+    with latest KDE 4.10 beta (LP: #1082152)
+  * kde4-window-decorator crashes when starting up with oxygen theme
+    (LP: #1050776)
+
+  [ sampo555 ]
+  * Grid: Window management - resize preview does not show when moving a
+    window from the semi-maximised state to the maximised state in a
+    single action (LP: #1071689)
+
+  [ Timo Jyrinki ]
+  * HTML5 video in Firefox continues to tear (LP: #1086337)
+
+  [ MC Return ]
+  * Workspacenames Plug-in: Wishlist: Default Appearance values not
+    ideal (LP: #1075600)
+  * Resizeinfo Plug-in: No possibility to change the color and
+    transparency of the rounded background outline (LP: #1070297)
+  * Resizeinfo Plug-in: Gradient color 2 and 3 settings are ignored and
+    no background gradient is rendered (LP: #1070233)
+  * Expo animations "Fade + Zoom" & "Vortex" result in a black screen
+    (LP: #875311)
+  * Workspacenames Plug-in: Wishlist: No default values for
+    workspacenames, should be changed (LP: #1075584)
+
+  [ Daniel d'Andrada ]
+  * unity build fails if compiz is installed outside /usr (LP: #1084162)
+
+  [ Daniel van Vugt ]
+  * [regression] Window decorations ignore brightness/opacity changes in
+    expo (LP: #1081425)
+  * Unredirected fullscreen windows freeze and stay on top when wall
+    sliding (Ctrl+Alt+Left/Right) (LP: #1084401)
+  * Test failures:
+    ExpoAnimationOffsetTest/ExpoWallOffsetTestAnimations.TestAnimationVa
+    lues/21 (from ExpoAnimationOffsetTest_ExpoWallOffsetTestAnimations)
+    (LP: #1071238)
+  * Window management - Cursor position changes relative to window while
+    dragging windows (LP: #201681)
+  * Multi-monitor - Maximized windows cast shadows on adjacent monitors
+    and workspaces (LP: #928807)
+  * "Unredirect Fullscreen Windows" can cause significant tearing on
+    fullscreen windows (especially playing video) (LP: #1051802)
+  * 100_expo_layout.patch does not apply totally cleanly (LP: #1076876)
+  * Tests 1-4 fail with SEGFAULT: CompizConfigPython.test_*
+    (SEGFAULT)... (LP: #1080555)
+  * Unredirect fullscreen windows should be the default for optimal
+    performance (LP: #1063690)
+  * lp:compiz r3447 FTBFS: compizconfig_test_ccs_object.cpp:123:9:
+    error:        expression result unused [-Werror,-Wunused-value]
+    GET_INTERFACE (Dummy2Interface, to);  (LP: #1075048)
+  * [regression][GLES] obs opacity no longer applies to all window
+    decorations (LP: #1028809)
+
+  [ Andrea Azzarone ]
+  * New windows are moved to front but don't take focus (LP: #781931)
+
+  [ Sam Spilsbury ]
+  * CompizConfigPython tests not using ini backend (LP: #1080989)
+  * CMake Warning in src/tests/CMakeLists.txt:16 This command specifies
+    the relative path (LP: #1082633)
+  * CCSObjectDeathTest.GetInterface fails (LP: #1085687)
+  * make test fails in CompizConfigPython.test_* (OTHER_FAULT)  (LP:
+    #1070817)
+  * It is possible to write to a plugin in compizconfig that has no
+    associated gsettings schema (LP: #1078330)
+  * CompizConfigPython tests not using ini backend (LP: #1077787)
+  * When building with xorg-gtest, cmake fails to find xorg-gtest
+    sources (LP: #1084096)
+  * GLib warning - source still attached to context, but ref_count == 0
+    on shutdown (LP: #1085590)
+  * Can not find target to add properties to:
+    compizconfig_gnome_gsettings_integrated_setting (LP: #1070411)
+  * Fix LP: #1084796
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3502
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Wed, 05 Dec 2012 09:27:30 +0000
 
 compiz (1:0.9.8.4+bzr3412-0ubuntu1) raring; urgency=low
 
