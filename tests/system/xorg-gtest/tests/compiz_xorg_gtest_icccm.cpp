@@ -134,3 +134,8 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 	throw std::runtime_error ("compiz process did not exit with failure status");
     }
 }
+
+TEST_F (CompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConfigureNotify)
+{
+
+}

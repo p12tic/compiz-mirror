@@ -29,12 +29,33 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 using ::testing::MatcherInterface;
+using ::testing::MatchResultListener;
 
 namespace compiz
 {
     namespace testing
     {
 	typedef  ::testing::MatcherInterface <const XEvent &> XEventMatcher;
+
+	class PrivatePropertyNotifyXEventMatcher;
+	class PropertyNotifyXEventMatcher :
+	    public compiz::testing::XEventMatcher
+	{
+	    public:
+
+		PropertyNotifyXEventMatcher (Display *dpy,
+					     const std::string &propertyName);
+
+		virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const;
+		virtual void DescribeTo (std::ostream *os) const;
+		virtual void DescribeNegationTo (std::ostream *os) const;
+
+	    private:
+
+		std::auto_ptr <PrivatePropertyNotifyXEventMatcher> priv;
+	};
+
+	Window CreateNormalWindow (Display *dpy);
 
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
 	bool AdvanceToNextEventOnSuccess (Display *dpy,

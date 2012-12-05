@@ -38,13 +38,46 @@ using ::testing::MatcherInterface;
 namespace ct = compiz::testing;
 namespace
 {
-    void RemoveEventFromQueue (Display *dpy)
-    {
-	XEvent event;
+const int          WINDOW_X = 0;
+const int          WINDOW_Y = 0;
+const unsigned int WINDOW_WIDTH = 640;
+const unsigned int WINDOW_HEIGHT = 480;
+const unsigned int WINDOW_BORDER = 0;
+const unsigned int WINDOW_DEPTH = CopyFromParent;
+const unsigned int WINDOW_CLASS = InputOutput;
+Visual             *WINDOW_VISUAL = CopyFromParent;
 
-	if (XNextEvent (dpy, &event) != Success)
-	    throw std::runtime_error("Failed to remove X event");
-    }
+
+const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
+
+void RemoveEventFromQueue (Display *dpy)
+{
+    XEvent event;
+
+    if (XNextEvent (dpy, &event) != Success)
+	throw std::runtime_error("Failed to remove X event");
+}
+}
+
+Window
+ct::CreateNormalWindow (Display *dpy)
+{
+    XSetWindowAttributes WINDOW_ATTRIB;
+    Window w = XCreateWindow (dpy,
+			      DefaultRootWindow (dpy),
+			      WINDOW_X,
+			      WINDOW_Y,
+			      WINDOW_WIDTH,
+			      WINDOW_HEIGHT,
+			      WINDOW_BORDER,
+			      WINDOW_DEPTH,
+			      WINDOW_CLASS,
+			      WINDOW_VISUAL,
+			      WINDOW_ATTRIB_VALUE_MASK,
+			      &WINDOW_ATTRIB);
+
+    XSelectInput (dpy, w, StructureNotifyMask);
+    return w;
 }
 
 bool
@@ -140,8 +173,6 @@ ct::NET_CLIENT_LIST_STACKING (Display *dpy)
     return stackingOrder;
 }
 
-Display *d;
-
 namespace
 {
 class StartupClientMessageMatcher :
@@ -188,6 +219,50 @@ class StartupClientMessageMatcher :
 };
 }
 
+class ct::PrivatePropertyNotifyXEventMatcher
+{
+    public:
+
+	PrivatePropertyNotifyXEventMatcher (Display           *dpy,
+					    const std::string &propertyName) :
+	    mPropertyName (propertyName),
+	    mProperty (XInternAtom (dpy, propertyName.c_str (), false))
+	{
+	}
+
+	std::string mPropertyName;
+	Atom	mProperty;
+};
+
+ct::PropertyNotifyXEventMatcher::PropertyNotifyXEventMatcher (Display           *dpy,
+							      const std::string &propertyName) :
+    priv (new ct::PrivatePropertyNotifyXEventMatcher (dpy, propertyName))
+{
+}
+
+bool
+ct::PropertyNotifyXEventMatcher::MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+{
+    const XPropertyEvent *propertyEvent = reinterpret_cast <const XPropertyEvent *> (&event);
+
+    if (priv->mProperty == propertyEvent->atom)
+	return true;
+    else
+	return false;
+}
+
+void
+ct::PropertyNotifyXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    *os << "Is property identified by " << priv->mPropertyName;
+}
+
+void
+ct::PropertyNotifyXEventMatcher::DescribeNegationTo (std::ostream *os) const
+{
+    *os << "Is not a property identified by" << priv->mPropertyName;
+}
+
 class ct::PrivateCompizProcess
 {
     public:
@@ -222,7 +297,6 @@ ct::PrivateCompizProcess::WaitForStartupMessage (Display                        
 
     StartupClientMessageMatcher matcher (startup, root, flags);
 
-    d = dpy;
     /* Save the current event mask and subscribe to StructureNotifyMask only */
     ASSERT_TRUE (XGetWindowAttributes (dpy, root, &attrib));
     XSelectInput (dpy, root, StructureNotifyMask |
@@ -323,6 +397,7 @@ ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags flags)
 void
 ct::AutostartCompizXorgSystemTest::SetUp ()
 {
+    ct::CompizXorgSystemTest::SetUp ();
     StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
 		     ct::CompizProcess::ReplaceCurrentWM |
 		     ct::CompizProcess::WaitForStartupMessage));
