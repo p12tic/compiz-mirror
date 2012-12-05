@@ -69,8 +69,6 @@ namespace compiz
 		xorg::testing::Process::State State ();
 		pid_t Pid ();
 
-		bool ToggleRunning ();
-
 	    private:
 		std::auto_ptr <PrivateCompizProcess> priv;
 	};

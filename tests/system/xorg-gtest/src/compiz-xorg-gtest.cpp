@@ -280,33 +280,6 @@ ct::CompizProcess::Pid ()
     return priv->mProcess.Pid ();
 }
 
-bool
-ct::CompizProcess::ToggleRunning ()
-{
-    EXPECT_TRUE (priv->mProcess.GetState () == xorg::testing::Process::RUNNING);
-
-    pid_t pid = priv->mProcess.Pid ();
-
-    if (priv->mIsRunning)
-    {
-	if (kill (pid, SIGSTOP) == -1)
-	{
-	    perror ("kill");
-	    return false;
-	}
-    }
-    else
-    {
-	if (kill (pid, SIGCONT) == -2)
-	{
-	    perror ("kill");
-	    return false;
-	}
-    }
-
-    return true;
-}
-
 class ct::PrivateCompizXorgSystemTest
 {
     public:
