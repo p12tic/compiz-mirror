@@ -23,6 +23,7 @@
 #ifndef _COMPIZ_XORG_GTEST_H
 #define _COMPIZ_XORG_GTEST_H
 #include <memory>
+#include <list>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <xorg/gtest/xorg-gtest.h>
@@ -63,7 +64,7 @@ namespace compiz
 		    ExpectStartupFailure = (1 << 2)
 		} StartupFlags;
 
-		CompizProcess (Display *dpy, StartupFlags);
+		CompizProcess (Display *dpy, StartupFlags, unsigned int waitTimeout);
 		~CompizProcess ();
 		xorg::testing::Process::State State ();
 		pid_t Pid ();

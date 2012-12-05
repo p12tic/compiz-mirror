@@ -198,7 +198,8 @@ class ct::PrivateCompizProcess
 	}
 
 	void WaitForStartupMessage (Display                         *dpy,
-				    ct::CompizProcess::StartupFlags flags);
+				    ct::CompizProcess::StartupFlags flags,
+				    unsigned int                    waitTimeout);
 
 	typedef boost::shared_ptr <xorg::testing::Process> ProcessPtr;
 
@@ -209,7 +210,8 @@ class ct::PrivateCompizProcess
 
 void
 ct::PrivateCompizProcess::WaitForStartupMessage (Display                         *dpy,
-						 ct::CompizProcess::StartupFlags flags)
+						 ct::CompizProcess::StartupFlags flags,
+						 unsigned int                    waitTimeout)
 {
     XWindowAttributes attrib;
     Window    root = DefaultRootWindow (dpy);
@@ -234,13 +236,14 @@ ct::PrivateCompizProcess::WaitForStartupMessage (Display                        
 							     -1,
 							     -1,
 							     matcher,
-							     3000)));
+							     waitTimeout)));
 
     XSelectInput (dpy, root, attrib.your_event_mask);
 }
 
 ct::CompizProcess::CompizProcess (::Display                       *dpy,
-				  ct::CompizProcess::StartupFlags flags) :
+				  ct::CompizProcess::StartupFlags flags,
+				  unsigned int                    waitTimeout) :
     priv (new PrivateCompizProcess (flags))
 {
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
@@ -256,7 +259,7 @@ ct::CompizProcess::CompizProcess (::Display                       *dpy,
     EXPECT_EQ (priv->mProcess.GetState (), xorg::testing::Process::RUNNING);
 
     if (flags & ct::CompizProcess::WaitForStartupMessage)
-	priv->WaitForStartupMessage (dpy, flags);
+	priv->WaitForStartupMessage (dpy, flags, waitTimeout);
 }
 
 ct::CompizProcess::~CompizProcess ()
@@ -341,7 +344,7 @@ ct::CompizXorgSystemTest::CompizProcessState ()
 void
 ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags flags)
 {
-    priv->mProcess.reset (new ct::CompizProcess (Display (), flags));
+    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, 3000));
 }
 
 void

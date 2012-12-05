@@ -1,5 +1,5 @@
 /*
- * Compiz XOrg GTest, window stacking
+ * Compiz XOrg GTest, ICCCM compliance
  *
  * Copyright (C) 2012 Canonical Ltd.
  *
@@ -18,12 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Authored By:
- * Sam Spilsbury <sam.spilsbury@canonical.com>
+ * Sam Spilsbury <smspillaz@gmail.com>
  */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
 #include <list>
 #include <string>
 #include <stdexcept>
@@ -53,18 +49,18 @@ namespace
 {
 
 char TEST_FAILED_MSG = 's';
-char PROCESS_DIED_MSG = 'd';
+char PROCESS_EXITED_MSG = 'd';
 
 }
 
-class WaitForDeathTask :
+class WaitForSuccessDeathTask :
     public AsyncTask
 {
     public:
 
 	typedef boost::function <xorg::testing::Process::State ()> GetProcessState;
 
-	WaitForDeathTask (const GetProcessState &procState) :
+	WaitForSuccessDeathTask (const GetProcessState &procState) :
 	    mProcessState (procState)
 	{
 	}
@@ -77,7 +73,7 @@ class WaitForDeathTask :
 };
 
 void
-WaitForDeathTask::Task ()
+WaitForSuccessDeathTask::Task ()
 {
     do
     {
@@ -86,7 +82,7 @@ WaitForDeathTask::Task ()
     } while (mProcessState () != xorg::testing::Process::FINISHED_FAILURE);
 
     /* The process died, send a message back saying that it did */
-    SendMsgToTest (PROCESS_DIED_MSG);
+    SendMsgToTest (PROCESS_EXITED_MSG);
 }
 
 class CompizXorgSystemICCCM :
@@ -124,14 +120,17 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 		     ct::CompizProcess::ReplaceCurrentWM |
 		     ct::CompizProcess::WaitForStartupMessage));
 
-    WaitForDeathTask::GetProcessState processState (boost::bind (&CompizXorgSystemICCCM::CompizProcessState,
+    WaitForSuccessDeathTask::GetProcessState processState (boost::bind (&CompizXorgSystemICCCM::CompizProcessState,
 								 this));
-    AsyncTask::Ptr task (boost::make_shared <WaitForDeathTask> (processState));
+    AsyncTask::Ptr task (boost::make_shared <WaitForSuccessDeathTask> (processState));
 
     /* Now wait for the thread to tell us the news -
      * this will block for up to ten seconds */
     const int maximumWaitTime = 1000 * 10; // 10 seconds
 
-    if (!task->ReadMsgFromTask (PROCESS_DIED_MSG, maximumWaitTime))
+    if (!task->ReadMsgFromTask (PROCESS_EXITED_MSG, maximumWaitTime))
+    {
+	task->SendMsgToTask (TEST_FAILED_MSG);
 	throw std::runtime_error ("compiz process did not exit with failure status");
+    }
 }
