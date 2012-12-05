@@ -5327,8 +5327,23 @@ PrivateScreen::~PrivateScreen ()
 	if (invisibleCursor != None)
 	    XFreeCursor (dpy, invisibleCursor);
 
-	if (wmSnSelectionWindow != None)
-	    XDestroyWindow (dpy, wmSnSelectionWindow);
+	/* Do not destroy wmSnSelectionWindow here.
+	 *
+	 * Because we haven't changed our active event mask
+	 * to remove SubstructureRedirectMask, other ICCCM
+	 * compliant window managers may receive a DestroyNotify
+	 * (eg, because we're blocked on XSync) before we get
+	 * a chance to close our display connection and remove
+	 * our SubstructureRedirectMask. That will cause them
+	 * to fail to start.
+	 *
+	 * The selection window is destroyed anyways when we
+	 * close our connection, and that is a very accurate
+	 * indicator to other WM's that we are well and truly
+	 * gone because the protocol requires the implementation
+	 * to remove all client event masks before destroying
+	 * windows
+	 */
 
 	XSync (dpy, False);  // Redundant?
 	XCloseDisplay (dpy);
