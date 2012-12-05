@@ -9,7 +9,8 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 			 ${XORG_SERVER_GTEST_SRC}
 			 ${GTEST_INCLUDE_DIRS})
 
-    link_directories (${X11_XI_LIBRARY_DIRS})
+    link_directories (${X11_XI_LIBRARY_DIRS}
+                      ${compiz_BINARY_DIR}/tests/shared/src)
 
     add_executable (compiz_xorg_gtest_test_window_stacking
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_test_window_stacking.cpp)
@@ -33,6 +34,7 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     compiz_discover_tests (compiz_xorg_gtest_test_window_stacking)
 
     target_link_libraries (compiz_xorg_gtest_test_icccm
+                           compiz_gtest_shared_async_task
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
     compiz_discover_tests (compiz_xorg_gtest_test_icccm)

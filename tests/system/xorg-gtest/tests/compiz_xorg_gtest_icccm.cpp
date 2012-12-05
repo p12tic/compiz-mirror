@@ -27,11 +27,6 @@
 #include <list>
 #include <string>
 #include <stdexcept>
-#include <poll.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <stdlib.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -43,6 +38,7 @@
 
 #include <gtest_shared_tmpenv.h>
 #include <gtest_shared_characterwrapper.h>
+#include <gtest_shared_asynctask.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -56,131 +52,9 @@ namespace ct = compiz::testing;
 namespace
 {
 
-void
-runtimeErrorWithErrno ()
-{
-    CharacterWrapper allocatedError (strerror (errno));
-    throw std::runtime_error (std::string (allocatedError));
-}
-
-bool
-checkForMessageOnFd (int fd, int timeout, char expected)
-{
-    struct pollfd pfd;
-    pfd.fd = fd;
-    pfd.events = POLLIN;
-    pfd.revents = 0;
-
-    /* Wait 1ms */
-    poll (&pfd, 1, timeout);
-
-    if (pfd.revents == POLLIN)
-    {
-	char msg[1];
-	size_t sz = read (pfd.fd, reinterpret_cast <void *> (msg), 1);
-	if (sz == 1 &&
-	    msg[0] == expected)
-	    return true;
-    }
-
-    return false;
-}
-
 char TEST_FAILED_MSG = 's';
 char PROCESS_DIED_MSG = 'd';
 
-}
-
-class AsyncTask
-{
-    public:
-
-	typedef boost::shared_ptr <AsyncTask> Ptr;
-
-	AsyncTask ()
-	{
-	    if (pipe2 (testToTaskFd, O_NONBLOCK | O_CLOEXEC) == -1)
-		runtimeErrorWithErrno ();
-
-	    if (pipe2 (taskToTestFd, O_NONBLOCK | O_CLOEXEC) == -1)
-		runtimeErrorWithErrno ();
-
-	    if (pthread_create (&mThread,
-				NULL,
-				AsyncTask::ThreadEntry,
-				reinterpret_cast<void *> (this)) != 0)
-		runtimeErrorWithErrno ();
-	}
-
-	~AsyncTask ()
-	{
-	    void *ret;
-	    if (pthread_join (mThread, &ret) != 0)
-	    {
-		CharacterWrapper allocatedError (strerror (errno));
-		throw std::runtime_error (std::string (allocatedError));
-	    }
-
-	    close (testToTaskFd[0]);
-	    close (testToTaskFd[1]);
-	    close (taskToTestFd[0]);
-	    close (taskToTestFd[0]);
-	}
-
-	void SendMsgToTask (char msg);
-	bool ReadMsgFromTask (char msg);
-
-    protected:
-
-	void SendMsgToTest (char msg);
-	bool ReadMsgFromTest (char msg);
-
-    private:
-
-	static void * ThreadEntry (void *data);
-	virtual void Task () = 0;
-
-	int testToTaskFd[2];
-	int taskToTestFd[2];
-	pthread_t mThread;
-};
-
-bool
-AsyncTask::ReadMsgFromTest (char msg)
-{
-    return checkForMessageOnFd (testToTaskFd[0], 1, msg);
-}
-
-bool
-AsyncTask::ReadMsgFromTask (char msg)
-{
-    const int maximumWaitTime = 1000 * 10; // 10 seconds
-
-    return checkForMessageOnFd (taskToTestFd[0], maximumWaitTime, msg);
-}
-
-void
-AsyncTask::SendMsgToTest (char msg)
-{
-    char buf[1] = { msg };
-    if (write (taskToTestFd[1], reinterpret_cast <void *> (buf), 1) == -1)
-	runtimeErrorWithErrno ();
-}
-
-void
-AsyncTask::SendMsgToTask (char msg)
-{
-    char buf[1] = { msg };
-    if (write (testToTaskFd[1], reinterpret_cast <void *> (buf), 1) == -1)
-	runtimeErrorWithErrno ();
-}
-
-void *
-AsyncTask::ThreadEntry (void *data)
-{
-    AsyncTask *task = reinterpret_cast <AsyncTask *> (data);
-    task->Task ();
-    return NULL;
 }
 
 class WaitForDeathTask :
@@ -207,7 +81,7 @@ WaitForDeathTask::Task ()
 {
     do
     {
-	if (ReadMsgFromTest (TEST_FAILED_MSG))
+	if (ReadMsgFromTest (TEST_FAILED_MSG, 1))
 	    return;
     } while (mProcessState () != xorg::testing::Process::FINISHED_FAILURE);
 
@@ -256,8 +130,8 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 
     /* Now wait for the thread to tell us the news -
      * this will block for up to ten seconds */
-    if (!task->ReadMsgFromTask (PROCESS_DIED_MSG))
-    {
+    const int maximumWaitTime = 1000 * 10; // 10 seconds
+
+    if (!task->ReadMsgFromTask (PROCESS_DIED_MSG, maximumWaitTime))
 	throw std::runtime_error ("compiz process did not exit with failure status");
-    }
 }

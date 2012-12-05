@@ -1,4 +1,5 @@
 if (COMPIZ_BUILD_TESTING)
     add_subdirectory (integration)
     add_subdirectory (system)
+    add_subdirectory (shared)
 endif (COMPIZ_BUILD_TESTING)
