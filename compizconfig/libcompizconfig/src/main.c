@@ -2523,6 +2523,7 @@ ccsCopyValueInto (const CCSSettingValue *from,
 	case TypeList:
 	    assert (from->parent != NULL);
 	    to->value.asList = ccsCopyList (from->value.asList, from->parent);
+	    break;
 	default:
 	    ccsError ("unexpected setting type in ccsCopyValueInto");
 	    return FALSE;
