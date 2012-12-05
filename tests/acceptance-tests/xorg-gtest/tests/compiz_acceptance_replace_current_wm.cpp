@@ -252,6 +252,4 @@ TEST_F (XorgAcceptance, ReplaceOtherWMSlow)
 	task->SendMsgToTask (TEST_FINISHED_MSG);
 	throw std::runtime_error ("compiz process did not exit with success status");
     }
-
-
 }
