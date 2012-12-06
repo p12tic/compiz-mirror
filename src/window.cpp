@@ -1268,66 +1268,50 @@ void
 CompWindow::sendConfigureNotify ()
 {
     XConfigureEvent xev;
-    XWindowAttributes attrib;
-    unsigned int      nchildren;
-    Window            rootRet, parentRet = 0;
-    Window            *children;
 
     xev.type   = ConfigureNotify;
     xev.event  = priv->id;
     xev.window = priv->id;
 
-    /* in order to avoid race conditions we must use the current
-     * server configuration */
+    xev.x	     = priv->serverGeometry.x ();
+    xev.y	     = priv->serverGeometry.y ();
+    xev.width	     = priv->serverGeometry.width ();
+    xev.height	     = priv->serverGeometry.height ();
+    xev.border_width = priv->serverGeometry.border ();
+    xev.override_redirect = priv->attrib.override_redirect;
 
-    XGrabServer (screen->dpy ());
-    XSync (screen->dpy (), false);
+    /* These used to be based on the actual sibling of the window
+     * (eg, obtained using XQueryTree), but they are now zeroed out.
+     *
+     * The ICCCM is a big unclear on what these should be - it
+     * requires that after the client attempts to configure a window
+     * we should issue a synthetic ConfigureNotify to work around
+     * the change of co-ordinates due to reparenting:
+     *
+     * "A client will receive a synthetic ConfigureNotify event
+     *  following the change that describes the new geometry of the window"
+     *
+     * However there is an acknowledgement on stacking order:
+     *
+     * "Not changing the size, location, border width,
+     *  or stacking order of the window at all."
+     *
+     * Since there isn't any advice as to what to set the above and
+     * detail members, the only choices are to either grab the server
+     * and query it for the sibling to the window's parent, or to just
+     * set them to zero.
+     *
+     * An evaluation of other window managers showed that they just set
+     * these fields to zero. This is probably a safe option and justifies
+     * the potential performance tradeoff that we get out of not having
+     * to grab the server, query window attributes and children and
+     * translate co-ordinates every time a window is moved
+     */
 
-    if (XGetWindowAttributes (screen->dpy (), priv->id, &attrib))
-    {
-	xev.x	     = attrib.x;
-	xev.y	     = attrib.y;
-	xev.width	     = attrib.width;
-	xev.height	     = attrib.height;
-	xev.border_width = attrib.border_width;
-	xev.above = None;
+    xev.above = None;
 
-	/* Translate co-ordinates to root space */
-	XTranslateCoordinates (screen->dpy (), priv->id, screen->root (), 0, 0,
-			       &xev.x, &xev.y, &parentRet);
-
-	/* We need to ensure that the stacking order is
-	 * based on the current server stacking order so
-	 * find the sibling to this window's frame in the
-	 * server side stack and stack above that */
-	XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
-
-	if (nchildren)
-	{
-	    for (unsigned int i = 0; i < nchildren; i++)
-	    {
-		if (i + 1 == nchildren ||
-		    children[i + 1] == ROOTPARENT (this))
-		{
-		    xev.above = children[i];
-		    break;
-		}
-	    }
-	}
-
-	if (children)
-	    XFree (children);
-
-	if (!xev.above)
-	    xev.above		  = (serverPrev) ? ROOTPARENT (serverPrev) : None;
-	xev.override_redirect = priv->attrib.override_redirect;
-
-	XSendEvent (screen->dpy (), priv->id, false,
-		    StructureNotifyMask, (XEvent *) &xev);
-    }
-
-    XUngrabServer (screen->dpy ());
-    XSync (screen->dpy (), false);
+    XSendEvent (screen->dpy (), priv->id, false,
+		StructureNotifyMask, (XEvent *) &xev);
 }
 
 void
@@ -3226,12 +3210,16 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    xwc->x = 0;
 	    xwc->y = 0;
 	}
-
-	window->sendConfigureNotify ();
     }
 
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+
+    /* Send the synthetic configure notify
+     * after the real configure notify arrives
+     * (ICCCM s4.1.5) */
+    if (serverFrame)
+	window->sendConfigureNotify ();
 
     /* When updating plugins we care about
      * the absolute position */

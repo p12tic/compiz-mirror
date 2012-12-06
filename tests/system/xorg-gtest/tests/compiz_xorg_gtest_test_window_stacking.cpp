@@ -44,7 +44,7 @@ class CompizXorgSystemStackingTest :
 
 	virtual void SetUp ()
 	{
-	    ct::CompizXorgSystemTest::SetUp ();
+	    ct::AutostartCompizXorgSystemTest::SetUp ();
 
 	    ::Display *dpy = Display ();
 	    XSelectInput (dpy, DefaultRootWindow (dpy), SubstructureNotifyMask | PropertyChangeMask);
@@ -53,18 +53,6 @@ class CompizXorgSystemStackingTest :
 
 namespace
 {
-    const int          WINDOW_X = 0;
-    const int          WINDOW_Y = 0;
-    const unsigned int WINDOW_WIDTH = 640;
-    const unsigned int WINDOW_HEIGHT = 480;
-    const unsigned int WINDOW_BORDER = 0;
-    const unsigned int WINDOW_DEPTH = CopyFromParent;
-    const unsigned int WINDOW_CLASS = InputOutput;
-    Visual             *WINDOW_VISUAL = CopyFromParent;
-
-
-    const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
-
     bool Advance (Display *dpy,
 		  bool waitResult)
     {
@@ -84,26 +72,6 @@ namespace
 			 PropModeReplace,
 			 reinterpret_cast <const unsigned char *> (&_NET_WM_WINDOW_TYPE_DOCK),
 			 1);
-    }
-
-    Window CreateNormalWindow (Display *dpy)
-    {
-	XSetWindowAttributes WINDOW_ATTRIB;
-	Window w = XCreateWindow (dpy,
-				  DefaultRootWindow (dpy),
-				  WINDOW_X,
-				  WINDOW_Y,
-				  WINDOW_WIDTH,
-				  WINDOW_HEIGHT,
-				  WINDOW_BORDER,
-				  WINDOW_DEPTH,
-				  WINDOW_CLASS,
-				  WINDOW_VISUAL,
-				  WINDOW_ATTRIB_VALUE_MASK,
-				  &WINDOW_ATTRIB);
-
-	XSelectInput (dpy, w, StructureNotifyMask);
-	return w;
     }
 
     void SetUserTime (Display *dpy, Window w, Time time)
@@ -126,44 +94,6 @@ namespace
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &leader, 1);
     }
-
-    class PropertyNotifyXEventMatcher :
-	public ct::XEventMatcher
-    {
-	public:
-
-	    PropertyNotifyXEventMatcher (Display *dpy,
-					 const std::string &propertyName) :
-		mPropertyName (propertyName),
-		mProperty (XInternAtom (dpy, propertyName.c_str (), false))
-	    {
-	    }
-
-	    virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
-	    {
-		const XPropertyEvent *propertyEvent = reinterpret_cast <const XPropertyEvent *> (&event);
-
-		if (mProperty == propertyEvent->atom)
-		    return true;
-		else
-		    return false;
-	    }
-
-	    virtual void DescribeTo (std::ostream *os) const
-	    {
-		*os << "Is property identified by " << mPropertyName;
-	    }
-
-	    virtual void DescribeNegationTo (std::ostream *os) const
-	    {
-		*os << "Is not a property identified by" << mPropertyName;
-	    }
-
-	private:
-
-	    std::string mPropertyName;
-	    Atom	mProperty;
-    };
 }
 
 TEST_F (CompizXorgSystemStackingTest, TestSetup)
@@ -174,8 +104,8 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 {
     ::Display *dpy = Display ();
 
-    Window w1 = CreateNormalWindow (dpy);
-    Window w2 = CreateNormalWindow (dpy);
+    Window w1 = ct::CreateNormalWindow (dpy);
+    Window w2 = ct::CreateNormalWindow (dpy);
 
     XMapRaised (dpy, w1);
     XMapRaised (dpy, w2);
@@ -186,7 +116,7 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1)));
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1)));
 
-    PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+    ct::PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
 
     /* Wait for property change notify on the root window to happen twice */
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
@@ -213,9 +143,9 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachOtherDockAlwaysOnTop)
 {
     ::Display *dpy = Display ();
-    PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+    ct::PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
 
-    Window dock = CreateNormalWindow (dpy);
+    Window dock = ct::CreateNormalWindow (dpy);
 
     /* Make it a dock */
     MakeDock (dpy, dock);
@@ -236,8 +166,8 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
     std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
     ASSERT_EQ (clientList.size (), 1);
 
-    Window w1 = CreateNormalWindow (dpy);
-    Window w2 = CreateNormalWindow (dpy);
+    Window w1 = ct::CreateNormalWindow (dpy);
+    Window w2 = ct::CreateNormalWindow (dpy);
 
     XSelectInput (dpy, w2, StructureNotifyMask);
 
@@ -278,11 +208,11 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateWindowsAndRestackRelativeToEachO
 TEST_F (CompizXorgSystemStackingTest, TestMapWindowWithOldUserTime)
 {
     ::Display *dpy = Display ();
-    PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+    ct::PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
 
-    Window w1 = CreateNormalWindow (dpy);
-    Window w2 = CreateNormalWindow (dpy);
-    Window w3 = CreateNormalWindow (dpy);
+    Window w1 = ct::CreateNormalWindow (dpy);
+    Window w2 = ct::CreateNormalWindow (dpy);
+    Window w3 = ct::CreateNormalWindow (dpy);
 
     XMapRaised (dpy, w1);
     XMapRaised (dpy, w2);
@@ -322,11 +252,11 @@ TEST_F (CompizXorgSystemStackingTest, TestMapWindowWithOldUserTime)
 TEST_F (CompizXorgSystemStackingTest, TestMapWindowAndDenyFocus)
 {
     ::Display *dpy = Display ();
-    PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+    ct::PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
 
-    Window w1 = CreateNormalWindow (dpy);
-    Window w2 = CreateNormalWindow (dpy);
-    Window w3 = CreateNormalWindow (dpy);
+    Window w1 = ct::CreateNormalWindow (dpy);
+    Window w2 = ct::CreateNormalWindow (dpy);
+    Window w3 = ct::CreateNormalWindow (dpy);
 
     XMapRaised (dpy, w1);
     XMapRaised (dpy, w2);
