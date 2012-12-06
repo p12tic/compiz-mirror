@@ -27,8 +27,6 @@
  * Spring model implemented by Kristian Hogsberg.
  */
 
-#include <boost/scoped_array.hpp>
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -43,10 +41,10 @@
 			  CompWindowTypeMenuMask    | \
 			  CompWindowTypeUtilMask)
 
-extern const unsigned short GRID_WIDTH;
-extern const unsigned short GRID_HEIGHT;
+const unsigned short GRID_WIDTH = 4;
+const unsigned short GRID_HEIGHT = 4;
 
-extern const unsigned short MODEL_MAX_SPRINGS;
+const unsigned short MODEL_MAX_SPRINGS = (GRID_WIDTH * GRID_HEIGHT * 2);
 
 extern const float MASS;
 
@@ -114,8 +112,6 @@ public:
 class Spring
 {
 public:
-    typedef boost::scoped_array <Spring> Array;
-
     Object *a;
     Object *b;
     Vector offset;
@@ -187,15 +183,14 @@ public:
 
     Object	 *objects;
     int		 numObjects;
-    
-    Spring::Array springs;
-    int           numSprings;
-    Object        *anchorObject;
-    float         steps;
-    Point         topLeft;
-    Point         bottomRight;
-    unsigned int  edgeMask;
-    unsigned int  snapCnt[4];
+    Spring	 springs[MODEL_MAX_SPRINGS];
+    int		 numSprings;
+    Object	 *anchorObject;
+    float	 steps;
+    Point	 topLeft;
+    Point	 bottomRight;
+    unsigned int edgeMask;
+    unsigned int snapCnt[4];
 };
 
 class WobblyScreen :
