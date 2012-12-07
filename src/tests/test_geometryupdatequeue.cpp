@@ -102,24 +102,38 @@ MATCHER_P2 (MaskXWC, xwc, vm, "Matches XWindowChanges")
     return true;
 }
 
-TEST (ConfigureRequestBuffer, PushDirectUpdate)
+class ConfigureRequestBuffer :
+    public testing::Test
 {
-    MockAsyncServerWindow       asyncServerWindow;
+    public:
+
+	ConfigureRequestBuffer ()
+	{
+	    /* Initialize xwc, we control it
+	     * through the value masks */
+	    xwc.x = REQUEST_X;
+	    xwc.y = REQUEST_Y;
+	    xwc.width = REQUEST_WIDTH;
+	    xwc.height = REQUEST_HEIGHT;
+	    xwc.border_width = REQUEST_BORDER;
+	    xwc.sibling = REQUEST_ABOVE;
+	    xwc.stack_mode = REQUEST_MODE;
+	}
+
+    protected:
+
+	XWindowChanges xwc;
+	MockAsyncServerWindow       asyncServerWindow;
+};
+
+TEST_F (ConfigureRequestBuffer, PushDirectUpdate)
+{
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
     crb::ConfigureRequestBuffer buffer (&asyncServerWindow, factory);
 
-    XWindowChanges xwc;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
 			       CWSibling | CWStackMode;
-
-    xwc.x = REQUEST_X;
-    xwc.y = REQUEST_Y;
-    xwc.width = REQUEST_WIDTH;
-    xwc.height = REQUEST_HEIGHT;
-    xwc.border_width = REQUEST_BORDER;
-    xwc.sibling = REQUEST_ABOVE;
-    xwc.stack_mode = REQUEST_MODE;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillOnce (Return (false));
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
@@ -128,16 +142,14 @@ TEST (ConfigureRequestBuffer, PushDirectUpdate)
     buffer.pushConfigureRequest (xwc, valueMask);
 }
 
-TEST (ConfigureRequestBuffer, PushUpdateLocked)
+TEST_F (ConfigureRequestBuffer, PushUpdateLocked)
 {
-    MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
     crb::ConfigureRequestBuffer buffer (&asyncServerWindow, factory);
 
     crb::Releasable::Ptr lock (buffer.obtainLock ());
-
-    XWindowChanges xwc;
+;
     unsigned int   valueMask = 0;
 
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
@@ -145,27 +157,19 @@ TEST (ConfigureRequestBuffer, PushUpdateLocked)
     buffer.pushConfigureRequest (xwc, valueMask);
 }
 
-TEST (ConfigureRequestBuffer, PushCombinedUpdateLocked)
+TEST_F (ConfigureRequestBuffer, PushCombinedUpdateLocked)
 {
-    MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
     crb::ConfigureRequestBuffer buffer (&asyncServerWindow, factory);
 
     crb::Releasable::Ptr lock (buffer.obtainLock ());
 
-    XWindowChanges xwc;
     unsigned int   valueMask = CWX | CWY;
-
-    xwc.x = REQUEST_X;
-    xwc.y = REQUEST_Y;
 
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
     buffer.pushConfigureRequest (xwc, valueMask);
-
-    xwc.width = REQUEST_WIDTH;
-    xwc.height = REQUEST_HEIGHT;
 
     valueMask |= CWWidth | CWHeight;
 
@@ -180,7 +184,7 @@ TEST (ConfigureRequestBuffer, PushCombinedUpdateLocked)
     lock->release ();
 }
 
-TEST (ConfigureRequestBuffer, UnlockBuffer)
+TEST_F (ConfigureRequestBuffer, UnlockBuffer)
 {
     MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
@@ -189,14 +193,7 @@ TEST (ConfigureRequestBuffer, UnlockBuffer)
 
     crb::Releasable::Ptr lock (buffer.obtainLock ());
 
-    XWindowChanges xwc;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
-
-    xwc.x = REQUEST_X;
-    xwc.y = REQUEST_Y;
-    xwc.width = REQUEST_WIDTH;
-    xwc.height = REQUEST_HEIGHT;
-    xwc.border_width = REQUEST_BORDER;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
@@ -209,7 +206,7 @@ TEST (ConfigureRequestBuffer, UnlockBuffer)
     lock->release ();
 }
 
-TEST (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
+TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
 {
     MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
@@ -218,11 +215,7 @@ TEST (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
 
     crb::Releasable::Ptr lock (buffer.obtainLock ());
 
-    XWindowChanges xwc;
     unsigned int   valueMask = CWStackMode | CWSibling;
-
-    xwc.sibling = REQUEST_ABOVE;
-    xwc.stack_mode = REQUEST_MODE;
 
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
 					       valueMask));
@@ -230,7 +223,7 @@ TEST (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
     buffer.pushConfigureRequest (xwc, valueMask);
 }
 
-TEST (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
+TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
 {
     MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
@@ -239,11 +232,7 @@ TEST (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
 
     crb::Releasable::Ptr lock (buffer.obtainLock ());
 
-    XWindowChanges xwc;
     unsigned int   valueMask = CWWidth | CWHeight;
-
-    xwc.width = REQUEST_WIDTH;
-    xwc.height = REQUEST_HEIGHT;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillOnce (Return (true));
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
@@ -304,7 +293,7 @@ class MockLockFactory
 };
 }
 
-TEST (ConfigureRequestBuffer, RearmBufferLockOnRelease)
+TEST_F (ConfigureRequestBuffer, RearmBufferLockOnRelease)
 {
     typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
     typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
@@ -324,7 +313,6 @@ TEST (ConfigureRequestBuffer, RearmBufferLockOnRelease)
     EXPECT_CALL (*lock, lock ());
     crb::Releasable::Ptr releasable (buffer.obtainLock ());
 
-    XWindowChanges xwc;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillRepeatedly (Return (false));
@@ -345,7 +333,7 @@ TEST (ConfigureRequestBuffer, RearmBufferLockOnRelease)
     releasable->release ();
 }
 
-TEST (ConfigureRequestBuffer, NoRearmBufferLockNoReleaseRequired)
+TEST_F (ConfigureRequestBuffer, NoRearmBufferLockNoReleaseRequired)
 {
     typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
     typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
@@ -379,7 +367,7 @@ TEST (ConfigureRequestBuffer, NoRearmBufferLockNoReleaseRequired)
     releasable->release ();
 }
 
-TEST (ConfigureRequestBuffer, RearmWhenPushReady)
+TEST_F (ConfigureRequestBuffer, RearmWhenPushReady)
 {
     typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
     typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
@@ -415,14 +403,7 @@ TEST (ConfigureRequestBuffer, RearmWhenPushReady)
     /* Since we're now going to push something to a queue
      * that's effectively not locked, the locks should now
      * be released */
-    XWindowChanges xwc;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
-
-    xwc.x = REQUEST_X;
-    xwc.y = REQUEST_Y;
-    xwc.width = REQUEST_WIDTH;
-    xwc.height = REQUEST_HEIGHT;
-    xwc.border_width = REQUEST_BORDER;
 
     /* Now rearm it */
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillOnce (Return (false));
@@ -432,7 +413,7 @@ TEST (ConfigureRequestBuffer, RearmWhenPushReady)
     buffer.pushConfigureRequest (xwc, valueMask);
 }
 
-TEST (ConfigureRequestBuffer, NoRearmBufferLockOnNoRelease)
+TEST_F (ConfigureRequestBuffer, NoRearmBufferLockOnNoRelease)
 {
     typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
     typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
