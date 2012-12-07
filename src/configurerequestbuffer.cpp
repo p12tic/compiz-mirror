@@ -233,8 +233,8 @@ crb::ConfigureRequestBuffer::obtainLock ()
 {
     crb::BufferLock::Ptr lock (priv->lockFactory (this));
 
-    lock->lock ();
     priv->locks.push_back (crb::Lockable::Weak (lock));
+    lock->lock ();
 
     return lock;
 }
