@@ -381,9 +381,7 @@ CompOption::findOption (CompOption::Vector &options,
 			CompString         name,
 			unsigned int       *index)
 {
-    unsigned int i;
-
-    for (i = 0; i < options.size (); i++)
+    for (unsigned int i = 0; i < options.size (); i++)
     {
 	if (options[i].priv->name == name)
 	{

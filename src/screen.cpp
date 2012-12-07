@@ -1190,11 +1190,11 @@ static const unsigned short N_TARGETS = 4;
 void
 PrivateScreen::handleSelectionRequest (XEvent *event)
 {
-    XSelectionEvent reply;
-
     if (wmSnSelectionWindow != event->xselectionrequest.owner ||
 	wmSnAtom != event->xselectionrequest.selection)
 	return;
+
+    XSelectionEvent reply;
 
     reply.type	    = SelectionNotify;
     reply.display   = dpy;
@@ -1691,9 +1691,7 @@ cps::XWindowInfo::getProtocols (Window id)
 
     if (XGetWMProtocols (dpy, id, &protocol, &count))
     {
-	int  i;
-
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 	    if (protocol[i] == Atoms::wmDeleteWindow)
 		protocols |= CompWindowProtocolDeleteMask;
@@ -1877,17 +1875,16 @@ void
 PrivateScreen::setDesktopHints ()
 {
     unsigned long *data;
-    int		  dSize, offset, hintSize;
-    unsigned int  i;
 
-    dSize = nDesktop * 2 + nDesktop * 2 + nDesktop * 4 + 1;
+    int dSize = nDesktop * 2 + nDesktop * 2 + nDesktop * 4 + 1;
 
     data = (unsigned long *) malloc (sizeof (unsigned long) * dSize);
     if (!data)
 	return;
 
-    offset   = 0;
-    hintSize = nDesktop * 2;
+    unsigned int  i;
+    int offset   = 0;
+    int hintSize = nDesktop * 2;
 
     for (i = 0; i < nDesktop; i++)
     {
@@ -2228,9 +2225,8 @@ PrivateScreen::updateScreenEdges ()
 	{ 0, -1,   1, -1,   0,  2,   0,  2 }, /* bottom-left */
 	{ 1, -1,   1, -1,   0,  2,   0,  2 }  /* bottom-right */
     };
-    int i;
 
-    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
 	if (screenEdge[i].id)
 	    XMoveResizeWindow (dpy, screenEdge[i].id,
@@ -3477,9 +3473,7 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->edgeMask ())
     {
-	int i;
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
 		privateScreen.enableEdge (i);
     }
@@ -3492,10 +3486,7 @@ CompScreenImpl::addAction (CompAction *action)
 void
 CompScreenImpl::removeAction (CompAction *action)
 {
-    if (!privateScreen.initialized)
-	return;
-
-    if (!action->active ())
+    if (!(privateScreen.initialized || action->active ()))
 	return;
 
     grabManager.setCurrentState(action->state());
@@ -3508,9 +3499,7 @@ CompScreenImpl::removeAction (CompAction *action)
 
     if (action->edgeMask ())
     {
-	int i;
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
 		privateScreen.disableEdge (i);
     }
@@ -3971,10 +3960,7 @@ CompScreenImpl::getCurrentOutputExtents ()
 void
 PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 {
-    if (nDesktop < 1 || nDesktop >= 0xffffffff)
-	return;
-
-    if (nDesktop == this->nDesktop)
+    if (nDesktop < 1 || nDesktop >= 0xffffffff || nDesktop == this->nDesktop)
 	return;
 
     if (currentDesktop >= nDesktop)
@@ -3990,10 +3976,7 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 void
 PrivateScreen::setCurrentDesktop (unsigned int desktop)
 {
-    if (desktop >= nDesktop)
-	return;
-
-    if (desktop == currentDesktop)
+    if (desktop >= nDesktop || desktop == currentDesktop)
 	return;
 
     currentDesktop = desktop;
@@ -4135,10 +4118,9 @@ cps::History::addToCurrentActiveWindowHistory (Window id)
 {
     CompActiveWindowHistory *history = &this->history[currentHistory_];
     Window		    tmp, next = id;
-    int			    i;
 
     /* walk and move history */
-    for (i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
+    for (int i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
     {
 	tmp = history->id[i];
 	history->id[i] = next;
@@ -4675,6 +4657,40 @@ CompScreenImpl::getNextActiveWindow() const
     return privateScreen.orphanData.nextActiveWindow;
 }
 
+namespace
+{
+void sendStartupMessageToClients (Display *dpy, bool success)
+{
+    /* Send a client message indicating that our startup is complete if
+     * we were asked to do so */
+    if (sendStartupMessage)
+    {
+	Atom   startupMessageAtom = XInternAtom (dpy,
+						 "_COMPIZ_TESTING_STARTUP",
+						 FALSE);
+	XEvent startupMessageEvent;
+	Window root = DefaultRootWindow (dpy);
+
+	startupMessageEvent.xclient.type         = ClientMessage;
+	startupMessageEvent.xclient.window       = root;
+	startupMessageEvent.xclient.message_type = startupMessageAtom;
+	startupMessageEvent.xclient.format       = 32;
+	startupMessageEvent.xclient.data.l[0]    = success ? 1 : 0;
+	startupMessageEvent.xclient.data.l[1]    = 0;
+	startupMessageEvent.xclient.data.l[2]    = 0;
+	startupMessageEvent.xclient.data.l[3]    = 0;
+	startupMessageEvent.xclient.data.l[4]    = 0;
+
+	XSendEvent (dpy,
+		    root,
+		    FALSE,
+		    StructureNotifyMask,
+		    &startupMessageEvent);
+	XFlush (dpy);
+    }
+}
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned int showingDesktopMask)
@@ -4706,6 +4722,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 		       "No sync extension");
+	sendStartupMessageToClients (dpy, false);
 	return false;
     }
 
@@ -4736,91 +4753,10 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     escapeKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Escape"));
     returnKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Return"));
 
-    char                 buf[128];
-    sprintf (buf, "WM_S%d", DefaultScreen (dpy));
-    wmSnAtom = XInternAtom (dpy, buf, 0);
-
-    Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
-
-    if (currentWmSnOwner != None)
-    {
-	if (!replaceCurrentWm)
-	{
-	    compLogMessage ("core", CompLogLevelError,
-			    "Screen %d on display \"%s\" already "
-			    "has a window manager; try using the "
-			    "--replace option to replace the current "
-			    "window manager.",
-			    DefaultScreen (dpy), DisplayString (dpy));
-
-	    return false;
-	}
-
-	XSelectInput (dpy, currentWmSnOwner, StructureNotifyMask);
-    }
+    modHandler->updateModifierMappings ();
 
     Window root_tmp = XRootWindow (dpy, DefaultScreen (dpy));
 
-    XSetWindowAttributes attr;
-    attr.override_redirect = true;
-    attr.event_mask        = PropertyChangeMask;
-
-    Window newWmSnOwner =
-	XCreateWindow (dpy, root_tmp, -100, -100, 1, 1, 0,
-		       CopyFromParent, CopyFromParent,
-		       CopyFromParent,
-		       CWOverrideRedirect | CWEventMask,
-		       &attr);
-
-    XChangeProperty (dpy, newWmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
-		     PropModeReplace, (unsigned char *) PACKAGE,
-		     strlen (PACKAGE));
-
-    XEvent event;
-    XWindowEvent (dpy, newWmSnOwner, PropertyChangeMask, &event);
-
-    Time wmSnTimestamp = event.xproperty.time;
-
-    XSetSelectionOwner (dpy, wmSnAtom, newWmSnOwner, wmSnTimestamp);
-
-    if (XGetSelectionOwner (dpy, wmSnAtom) != newWmSnOwner)
-    {
-	compLogMessage ("core", CompLogLevelError,
-			"Could not acquire window manager "
-			"selection on screen %d display \"%s\"",
-			DefaultScreen (dpy), DisplayString (dpy));
-
-	XDestroyWindow (dpy, newWmSnOwner);
-
-	return false;
-    }
-
-    /* Send client message indicating that we are now the window manager */
-    event.xclient.type         = ClientMessage;
-    event.xclient.window       = root_tmp;
-    event.xclient.message_type = Atoms::manager;
-    event.xclient.format       = 32;
-    event.xclient.data.l[0]    = wmSnTimestamp;
-    event.xclient.data.l[1]    = wmSnAtom;
-    event.xclient.data.l[2]    = 0;
-    event.xclient.data.l[3]    = 0;
-    event.xclient.data.l[4]    = 0;
-
-    XSendEvent (dpy, root_tmp, FALSE, StructureNotifyMask, &event);
-
-    /* Wait for old window manager to go away */
-    if (currentWmSnOwner != None)
-    {
-	do {
-	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
-	} while (event.type != DestroyNotify);
-    }
-
-    modHandler->updateModifierMappings ();
-
-    CompScreenImpl::checkForError (dpy);
-
-    XGrabServer (dpy);
 
     /* Don't select for SubstructureRedirectMask or
      * SubstructureNotifyMask yet since we need to
@@ -4859,17 +4795,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 		      SubstructureNotifyMask);
     }
 
-    if (CompScreenImpl::checkForError (dpy))
-    {
-	compLogMessage ("core", CompLogLevelError,
-			"Another window manager is "
-			"already running on screen: %d", DefaultScreen (dpy));
-
-	XUngrabServer (dpy);
-	XSync (dpy, false);
-	return false;
-    }
-
     for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
 	screenEdge[i].id    = None;
@@ -4882,9 +4807,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     snContext = sn_monitor_context_new (snDisplay, screenNum,
 					      compScreenSnEvent, this, NULL);
-
-    wmSnSelectionWindow = newWmSnOwner;
-    this->wmSnTimestamp       = wmSnTimestamp;
 
     if (!XGetWindowAttributes (dpy, rootWindow(), &attrib))
 	return false;
@@ -4901,6 +4823,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't get visual info for default visual");
+	sendStartupMessageToClients (dpy, false);
 	return false;
     }
 
@@ -4911,6 +4834,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't allocate color");
+	sendStartupMessageToClients (dpy, false);
 	XFree (visinfo);
 	return false;
     }
@@ -4921,6 +4845,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't create bitmap");
+	sendStartupMessageToClients (dpy, false);
 	XFree (visinfo);
 	return false;
     }
@@ -4931,6 +4856,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't create invisible cursor");
+	sendStartupMessageToClients (dpy, false);
 	XFree (visinfo);
 	return false;
     }
@@ -4948,6 +4874,93 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     updateOutputDevices (*this);
 
     getDesktopHints (showingDesktopMask);
+
+    /* Check for other window managers */
+
+    char                 buf[128];
+    sprintf (buf, "WM_S%d", DefaultScreen (dpy));
+    wmSnAtom = XInternAtom (dpy, buf, 0);
+
+    Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
+
+    if (currentWmSnOwner != None)
+    {
+	if (!replaceCurrentWm)
+	{
+	    compLogMessage ("core", CompLogLevelError,
+			    "Screen %d on display \"%s\" already "
+			    "has a window manager; try using the "
+			    "--replace option to replace the current "
+			    "window manager.",
+			    DefaultScreen (dpy), DisplayString (dpy));
+	    sendStartupMessageToClients (dpy, false);
+
+	    return false;
+	}
+
+	XSelectInput (dpy, currentWmSnOwner, StructureNotifyMask);
+    }
+
+    XSetWindowAttributes attr;
+    attr.override_redirect = true;
+    attr.event_mask        = PropertyChangeMask;
+
+    Window newWmSnOwner =
+	XCreateWindow (dpy, root_tmp, -100, -100, 1, 1, 0,
+		       CopyFromParent, CopyFromParent,
+		       CopyFromParent,
+		       CWOverrideRedirect | CWEventMask,
+		       &attr);
+
+    XChangeProperty (dpy, newWmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
+		     PropModeReplace, (unsigned char *) PACKAGE,
+		     strlen (PACKAGE));
+
+    XEvent event;
+    XWindowEvent (dpy, newWmSnOwner, PropertyChangeMask, &event);
+
+    Time wmSnTimestamp = event.xproperty.time;
+
+    XSetSelectionOwner (dpy, wmSnAtom, newWmSnOwner, wmSnTimestamp);
+
+    if (XGetSelectionOwner (dpy, wmSnAtom) != newWmSnOwner)
+    {
+	compLogMessage ("core", CompLogLevelError,
+			"Could not acquire window manager "
+			"selection on screen %d display \"%s\"",
+			DefaultScreen (dpy), DisplayString (dpy));
+
+	XDestroyWindow (dpy, newWmSnOwner);
+	sendStartupMessageToClients (dpy, false);
+
+	return false;
+    }
+
+    /* Send client message indicating that we are now the window manager */
+    event.xclient.type         = ClientMessage;
+    event.xclient.window       = root_tmp;
+    event.xclient.message_type = Atoms::manager;
+    event.xclient.format       = 32;
+    event.xclient.data.l[0]    = wmSnTimestamp;
+    event.xclient.data.l[1]    = wmSnAtom;
+    event.xclient.data.l[2]    = 0;
+    event.xclient.data.l[3]    = 0;
+    event.xclient.data.l[4]    = 0;
+
+    XSendEvent (dpy, root_tmp, FALSE, StructureNotifyMask, &event);
+
+    /* Wait for old window manager to go away */
+    if (currentWmSnOwner != None)
+    {
+	do {
+	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
+	} while (event.type != DestroyNotify);
+    }
+
+
+    /* Server grab from here, we are creating windows */
+
+    XGrabServer (dpy);
 
     {
 	XSetWindowAttributes attrib;
@@ -4994,10 +5007,29 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     XDefineCursor (dpy, rootWindow(), normalCursor);
 
+    /* Attempt to gain SubstructureRedirectMask */
+    CompScreenImpl::checkForError (dpy);
+
     /* We should get DestroyNotify events for any windows that were
      * destroyed while initializing windows here now */
     XSelectInput (dpy, rootWindow(), attrib.your_event_mask |
 		  SubstructureRedirectMask | SubstructureNotifyMask);
+
+    if (CompScreenImpl::checkForError (dpy))
+    {
+	compLogMessage ("core", CompLogLevelError,
+			"Another window manager is "
+			"already running on screen: %d", DefaultScreen (dpy));
+
+	XUngrabServer (dpy);
+	XSync (dpy, FALSE);
+
+	sendStartupMessageToClients (dpy, false);
+	return false;
+    }
+
+    wmSnSelectionWindow = newWmSnOwner;
+    this->wmSnTimestamp       = wmSnTimestamp;
 
     Window rootReturn, parentReturn;
     Window               *children;
@@ -5095,6 +5127,8 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 			      optionGetPingDelay () + 500);
 
     pingTimer.start ();
+
+    sendStartupMessageToClients (dpy, true);
 
     return true;
 }
@@ -5278,8 +5312,23 @@ PrivateScreen::~PrivateScreen ()
 	if (invisibleCursor != None)
 	    XFreeCursor (dpy, invisibleCursor);
 
-	if (wmSnSelectionWindow != None)
-	    XDestroyWindow (dpy, wmSnSelectionWindow);
+	/* Do not destroy wmSnSelectionWindow here.
+	 *
+	 * Because we haven't changed our active event mask
+	 * to remove SubstructureRedirectMask, other ICCCM
+	 * compliant window managers may receive a DestroyNotify
+	 * (eg, because we're blocked on XSync) before we get
+	 * a chance to close our display connection and remove
+	 * our SubstructureRedirectMask. That will cause them
+	 * to fail to start.
+	 *
+	 * The selection window is destroyed anyways when we
+	 * close our connection, and that is a very accurate
+	 * indicator to other WM's that we are well and truly
+	 * gone because the protocol requires the implementation
+	 * to remove all client event masks before destroying
+	 * windows
+	 */
 
 	XSync (dpy, False);  // Redundant?
 	XCloseDisplay (dpy);

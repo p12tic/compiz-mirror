@@ -52,6 +52,7 @@ typedef std::vector<CompWindow *> CompWindowVector;
 
 extern bool       replaceCurrentWm;
 extern bool       debugOutput;
+extern bool       sendStartupMessage;
 
 extern CompScreen   *screen;
 

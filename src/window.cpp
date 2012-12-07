@@ -504,12 +504,10 @@ PrivateWindow::setFullscreenMonitors (CompFullscreenMonitorSet *monitors)
 void
 CompWindow::changeState (unsigned int newState)
 {
-    unsigned int oldState;
-
     if (priv->state == newState)
 	return;
 
-    oldState = priv->state;
+    unsigned int oldState = priv->state;
     priv->state = newState;
 
     recalcType ();
@@ -807,11 +805,11 @@ CompWindow::recalcType ()
 void
 PrivateWindow::updateFrameWindow ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
-
     if (!serverFrame)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
 
     xwc.x = serverGeometry.x ();
     xwc.y = serverGeometry.y ();
@@ -934,7 +932,7 @@ PrivateWindow::updateRegion ()
     if (nInput < 1)
     {
 	inputShapeRects = &r;
-	nBounding = 1;
+	nInput = 1;
     }
 
     priv->region += rectsToRegion (nBounding, boundingShapeRects);
@@ -1270,66 +1268,50 @@ void
 CompWindow::sendConfigureNotify ()
 {
     XConfigureEvent xev;
-    XWindowAttributes attrib;
-    unsigned int      nchildren;
-    Window            rootRet, parentRet = 0;
-    Window            *children;
 
     xev.type   = ConfigureNotify;
     xev.event  = priv->id;
     xev.window = priv->id;
 
-    /* in order to avoid race conditions we must use the current
-     * server configuration */
+    xev.x	     = priv->serverGeometry.x ();
+    xev.y	     = priv->serverGeometry.y ();
+    xev.width	     = priv->serverGeometry.width ();
+    xev.height	     = priv->serverGeometry.height ();
+    xev.border_width = priv->serverGeometry.border ();
+    xev.override_redirect = priv->attrib.override_redirect;
 
-    XGrabServer (screen->dpy ());
-    XSync (screen->dpy (), false);
+    /* These used to be based on the actual sibling of the window
+     * (eg, obtained using XQueryTree), but they are now zeroed out.
+     *
+     * The ICCCM is a big unclear on what these should be - it
+     * requires that after the client attempts to configure a window
+     * we should issue a synthetic ConfigureNotify to work around
+     * the change of co-ordinates due to reparenting:
+     *
+     * "A client will receive a synthetic ConfigureNotify event
+     *  following the change that describes the new geometry of the window"
+     *
+     * However there is an acknowledgement on stacking order:
+     *
+     * "Not changing the size, location, border width,
+     *  or stacking order of the window at all."
+     *
+     * Since there isn't any advice as to what to set the above and
+     * detail members, the only choices are to either grab the server
+     * and query it for the sibling to the window's parent, or to just
+     * set them to zero.
+     *
+     * An evaluation of other window managers showed that they just set
+     * these fields to zero. This is probably a safe option and justifies
+     * the potential performance tradeoff that we get out of not having
+     * to grab the server, query window attributes and children and
+     * translate co-ordinates every time a window is moved
+     */
 
-    if (XGetWindowAttributes (screen->dpy (), priv->id, &attrib))
-    {
-	xev.x	     = attrib.x;
-	xev.y	     = attrib.y;
-	xev.width	     = attrib.width;
-	xev.height	     = attrib.height;
-	xev.border_width = attrib.border_width;
-	xev.above = None;
+    xev.above = None;
 
-	/* Translate co-ordinates to root space */
-	XTranslateCoordinates (screen->dpy (), priv->id, screen->root (), 0, 0,
-			       &xev.x, &xev.y, &parentRet);
-
-	/* We need to ensure that the stacking order is
-	 * based on the current server stacking order so
-	 * find the sibling to this window's frame in the
-	 * server side stack and stack above that */
-	XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
-
-	if (nchildren)
-	{
-	    for (unsigned int i = 0; i < nchildren; i++)
-	    {
-		if (i + 1 == nchildren ||
-		    children[i + 1] == ROOTPARENT (this))
-		{
-		    xev.above = children[i];
-		    break;
-		}
-	    }
-	}
-
-	if (children)
-	    XFree (children);
-
-	if (!xev.above)
-	    xev.above		  = (serverPrev) ? ROOTPARENT (serverPrev) : None;
-	xev.override_redirect = priv->attrib.override_redirect;
-
-	XSendEvent (screen->dpy (), priv->id, false,
-		    StructureNotifyMask, (XEvent *) &xev);
-    }
-
-    XUngrabServer (screen->dpy ());
-    XSync (screen->dpy (), false);
+    XSendEvent (screen->dpy (), priv->id, false,
+		StructureNotifyMask, (XEvent *) &xev);
 }
 
 void
@@ -1716,13 +1698,13 @@ PrivateWindow::initializeSyncCounter ()
 void
 CompWindow::sendSyncRequest ()
 {
-    XClientMessageEvent xev;
-
     if (priv->syncWait)
 	return;
 
     if (!priv->initializeSyncCounter ())
 	return;
+
+    XClientMessageEvent xev;
 
     xev.type	     = ClientMessage;
     xev.window	     = priv->id;
@@ -1748,10 +1730,10 @@ CompWindow::sendSyncRequest ()
 void
 PrivateWindow::configure (XConfigureEvent *ce)
 {
-    unsigned int valueMask = 0;
-
     if (priv->frame)
 	return;
+
+    unsigned int valueMask = 0;
 
     /* remove configure event from pending configures */
     if (priv->geometry.x () != ce->x)
@@ -1800,12 +1782,12 @@ PrivateWindow::configure (XConfigureEvent *ce)
 void
 PrivateWindow::configureFrame (XConfigureEvent *ce)
 {
+    if (!priv->frame)
+	return;
+
     int x, y, width, height;
     CompWindow	     *above;
     unsigned int     valueMask = 0;
-
-    if (!priv->frame)
-	return;
 
     /* remove configure event from pending configures */
     if (priv->frameGeometry.x () != ce->x)
@@ -2506,7 +2488,6 @@ CompWindow::moveInputFocusToOtherWindow ()
     if (priv->id == screen->activeWindow () ||
 	priv->id == screen->getNextActiveWindow())
     {
-	CompWindow *ancestor;
 	CompWindow *nextActive = screen->findWindow (screen->getNextActiveWindow());
 
         /* Window pending focus */
@@ -2518,6 +2499,7 @@ CompWindow::moveInputFocusToOtherWindow ()
 	}
 	else if (priv->transientFor && priv->transientFor != screen->root ())
 	{
+	    CompWindow *ancestor;
 	    ancestor = screen->findWindow (priv->transientFor);
 	    if (ancestor &&
 		ancestor->focus () &&
@@ -2891,11 +2873,11 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
 void
 PrivateWindow::saveGeometry (int mask)
 {
-    int m = mask & ~saveMask;
-
     /* only save geometry if window has been placed */
     if (!placed)
 	return;
+
+    int m = mask & ~saveMask;
 
     if (m & CWX)
 	saveWc.x = serverGeometry.x ();
@@ -2983,13 +2965,13 @@ void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
 {
-    unsigned int frameValueMask = 0;
-
     if (id == screen->root ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "attempted to reconfigure root window");
 	return;
     }
+
+    unsigned int frameValueMask = 0;
 
     /* Remove redundant bits */
 
@@ -3228,12 +3210,16 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    xwc->x = 0;
 	    xwc->y = 0;
 	}
-
-	window->sendConfigureNotify ();
     }
 
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+
+    /* Send the synthetic configure notify
+     * after the real configure notify arrives
+     * (ICCCM s4.1.5) */
+    if (serverFrame)
+	window->sendConfigureNotify ();
 
     /* When updating plugins we care about
      * the absolute position */
@@ -3950,13 +3936,12 @@ CompWindow::moveResize (XWindowChanges *xwc,
 void
 PrivateWindow::updateSize ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask;
-
     if (window->overrideRedirect () || !managed)
 	return;
 
-    mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+
+    int mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
     if (mask)
     {
 	if (priv->mapNum && (mask & (CWWidth | CWHeight)))
@@ -4214,11 +4199,11 @@ CompWindow::restackBelow (CompWindow *sibling)
 void
 CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask = 0;
-
     if (overrideRedirect () || !priv->managed)
 	return;
+
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    int		   mask = 0;
 
     if (priv->state & CompWindowStateShadedMask && !priv->shaded)
     {
@@ -4297,12 +4282,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 void
 PrivateWindow::ensureWindowVisibility ()
 {
-    int x1, y1, x2, y2;
-    int	width = serverGeometry.widthIncBorders ();
-    int	height = serverGeometry.heightIncBorders ();
-    int dx = 0;
-    int dy = 0;
-
     if (struts || attrib.override_redirect)
 	return;
 
@@ -4311,17 +4290,23 @@ PrivateWindow::ensureWindowVisibility ()
 		CompWindowTypeUnknownMask))
 	return;
 
-    x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
-    y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
-    x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
+    int x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
+    int y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
+    int x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
 	 screen->width ();
-    y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
+    int y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
 	 screen->height ();
+
+    int dx = 0;
+    int width = serverGeometry.widthIncBorders ();
 
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
     else if (serverGeometry.x () + width + serverInput.right <= x1)
 	dx = (x1 + 25) - (serverGeometry.x () + width);
+
+    int dy = 0;
+    int height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.y () - serverInput.top >= y2)
 	dy = (y2 - 25) - serverGeometry.y ();
@@ -4440,10 +4425,10 @@ CompWindow::show ()
 void
 PrivateWindow::hide ()
 {
-    bool onDesktop = window->onCurrentDesktop ();
-
     if (!managed)
 	return;
+
+    bool onDesktop = window->onCurrentDesktop ();
 
     if (!window->minimized () && !inShowDesktopMode &&
 	!hidden && onDesktop)
@@ -4487,10 +4472,10 @@ PrivateWindow::hide ()
 void
 PrivateWindow::show ()
 {
-    bool onDesktop = window->onCurrentDesktop ();
-
     if (!managed)
 	return;
+
+    bool onDesktop = window->onCurrentDesktop ();
 
     if (minimized || inShowDesktopMode ||
 	hidden    || !onDesktop)
@@ -4959,7 +4944,6 @@ CompWindow::getIcon (int width,
 
 		if (iw && ih)
 		{
-		    unsigned long j;
 		    icon = new CompIcon (iw, ih);
 		    if (!icon)
 			continue;
@@ -4971,7 +4955,7 @@ CompWindow::getIcon (int width,
 		    /* EWMH doesn't say if icon data is premultiplied or
 		       not but most applications seem to assume data should
 		       be unpremultiplied. */
-		    for (j = 0; j < iw * ih; j++)
+		    for (unsigned long j = 0; j < iw * ih; j++)
 		    {
 			alpha = (idata[i + j + 2] >> 24) & 0xff;
 			red   = (idata[i + j + 2] >> 16) & 0xff;
@@ -5527,11 +5511,11 @@ PrivateWindow::processMap ()
 void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
-    bool onlyActions = (priv->id == screen->activeWindow() ||
-			!screen->getCoreOptions().optionGetClickToFocus ());
-
     if (!priv->frame)
 	return;
+
+    bool onlyActions = (priv->id == screen->activeWindow() ||
+			!screen->getCoreOptions().optionGetClickToFocus ());
 
     /* Ungrab everything */
     XUngrabButton (screen->dpy(), AnyButton, AnyModifier, frame);
@@ -5713,7 +5697,6 @@ CompWindow::moveToViewportPosition (int  x,
     {
 	unsigned int   valueMask = CWX | CWY;
 	XWindowChanges xwc = XWINDOWCHANGES_INIT;
-	int m, wx, wy;
 
 	if (!priv->managed)
 	    return;
@@ -5724,8 +5707,9 @@ CompWindow::moveToViewportPosition (int  x,
 	if (priv->state & CompWindowStateStickyMask)
 	    return;
 
-	wx = tx;
-	wy = ty;
+	int wx = tx;
+	int wy = ty;
+	int m;
 
 	if (screen->vpSize ().width ()!= 1)
 	{
