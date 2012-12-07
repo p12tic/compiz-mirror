@@ -2583,7 +2583,7 @@ ccsSettingSetListDefault (CCSSetting * setting, CCSSettingValueList data, Bool p
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
     if (ccsSettingGetType (setting) != TypeList)
-	return FALSE;
+	return SetFailed;
 
     Bool isDefault = ccsCompareLists (sPrivate->defaultValue.value.asList, data,
 				      sPrivate->info.forList);
