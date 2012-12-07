@@ -500,7 +500,7 @@ Bool ccsGetList (CCSSetting          *setting,
 
 typedef enum _CCSSetStatus
 {
-    SetFailed = 0,
+    SetFailed = -1,
     SetToDefault = 1,
     SetIsDefault = 2,
     SetToSameValue = 3,
