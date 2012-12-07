@@ -85,7 +85,7 @@ class CoreExp : public CompMatch::Expression {
 	    }
 	}
 
-	bool evaluate (CompWindow *w)
+	bool evaluate (CompWindow *w) const
 	{
 	    switch (mType)
 	    {
@@ -623,7 +623,7 @@ CompMatch::update ()
 }
 
 bool
-CompMatch::evaluate (CompWindow *window)
+CompMatch::evaluate (CompWindow *window) const
 {
     return matchEvalOps (priv->op.op, window);
 }
