@@ -73,7 +73,7 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
     const unsigned int allEventMasks = 0x7f;
     bool immediate = valueMask & (CWStackMode | CWSibling);
     immediate |= (valueMask & (CWWidth | CWHeight)) &&
-		 asyncServerWindow->HasCustomShape ();
+		 asyncServerWindow->hasCustomShape ();
     immediate |= force;
 
     bool dispatch = !lockCount && (valueMask & allEventMasks);
@@ -84,7 +84,7 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 	 * to be re-locked soon */
 	lockCount = 0;
 
-	asyncServerWindow->Configure (xwc, valueMask);
+	asyncServerWindow->configureClient (xwc, valueMask);
 
 	/* Reset value mask */
 	valueMask = 0;

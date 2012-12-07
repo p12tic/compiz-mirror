@@ -121,8 +121,8 @@ class PrivateWindow :
 	~PrivateWindow ();
 
 	bool queryAttributes (XWindowAttributes &attrib) const;
-	int  Configure (const XWindowChanges &xwc, unsigned int valueMask) const;
-	bool HasCustomShape () const;
+	int  configureClient (const XWindowChanges &xwc, unsigned int valueMask) const;
+	bool hasCustomShape () const;
 
 	void recalcNormalHints ();
 

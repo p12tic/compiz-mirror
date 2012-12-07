@@ -2968,13 +2968,13 @@ PrivateWindow::queryAttributes (XWindowAttributes &attrib) const
 }
 
 int
-PrivateWindow::Configure (const XWindowChanges &xwc, unsigned int valueMask) const
+PrivateWindow::configureClient (const XWindowChanges &xwc, unsigned int valueMask) const
 {
     return 0;
 }
 
 bool
-PrivateWindow::HasCustomShape () const
+PrivateWindow::hasCustomShape () const
 {
     return false;
 }

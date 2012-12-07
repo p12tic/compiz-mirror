@@ -37,9 +37,9 @@ class AsyncServerWindow
 
 	virtual ~AsyncServerWindow () {};
 
-	virtual int Configure (const XWindowChanges &xwc,
-			       unsigned int         valueMask) const = 0;
-	virtual bool HasCustomShape () const = 0;
+	virtual int configureClient (const XWindowChanges &xwc,
+				     unsigned int         valueMask) const = 0;
+	virtual bool hasCustomShape () const = 0;
 };
 }
 }
