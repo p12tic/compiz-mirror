@@ -35,6 +35,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "syncserverwindow.h"
+#include "asyncserverwindow.h"
+#include "configurerequestbuffer.h"
+
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 namespace compiz {namespace X11
@@ -107,11 +111,18 @@ struct CompGroup;
 
 typedef CompWindowExtents CompFullscreenMonitorSet;
 
-class PrivateWindow {
+class PrivateWindow :
+    public compiz::window::SyncServerWindow,
+    public compiz::window::AsyncServerWindow
+{
 
     public:
 	PrivateWindow ();
 	~PrivateWindow ();
+
+	bool queryAttributes (XWindowAttributes &attrib) const;
+	int  Configure (const XWindowChanges &xwc, unsigned int valueMask) const;
+	bool HasCustomShape () const;
 
 	void recalcNormalHints ();
 

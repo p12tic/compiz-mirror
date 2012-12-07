@@ -2961,6 +2961,24 @@ static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges 
     return pc->matchRequest (xwc, valueMask);
 }
 
+bool
+PrivateWindow::queryAttributes (XWindowAttributes &attrib) const
+{
+    return false;
+}
+
+int
+PrivateWindow::Configure (const XWindowChanges &xwc, unsigned int valueMask) const
+{
+    return 0;
+}
+
+bool
+PrivateWindow::HasCustomShape () const
+{
+    return false;
+}
+
 void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
