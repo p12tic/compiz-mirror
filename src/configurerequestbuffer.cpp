@@ -48,6 +48,7 @@ class crb::ConfigureRequestBuffer::Private
 	    clientChangeMask (0),
 	    wrapperChangeMask (0),
 	    frameChangeMask (0),
+	    sendSyntheticConfigure (false),
 	    lockCount (0),
 	    asyncServerWindow (asyncServerWindow),
 	    syncServerWindow (syncServerWindow),
@@ -65,6 +66,8 @@ class crb::ConfigureRequestBuffer::Private
 
 	XWindowChanges frameChanges;
 	unsigned int   frameChangeMask;
+
+	bool           sendSyntheticConfigure;
 
 	unsigned int   lockCount;
 
@@ -90,7 +93,8 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 
     bool dispatch = !lockCount && (clientDispatch ||
 				   wrapperDispatch ||
-				   frameDispatch);
+				   frameDispatch ||
+				   sendSyntheticConfigure);
 
     if (dispatch || immediate)
     {
@@ -117,6 +121,12 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 	    asyncServerWindow->requestConfigureOnClient (clientChanges,
 							 clientChangeMask);
 	    clientChangeMask = 0;
+	}
+
+	if (sendSyntheticConfigure)
+	{
+	    asyncServerWindow->sendSyntheticConfigureNotify ();
+	    sendSyntheticConfigure = false;
 	}
 
 	foreach (const LockObserver &lock, locks)
@@ -204,6 +214,14 @@ crb::ConfigureRequestBuffer::pushFrameRequest (const XWindowChanges &xwc,
     priv->dispatchConfigure ();
 }
 
+void
+crb::ConfigureRequestBuffer::pushSyntheticConfigureNotify ()
+{
+    priv->sendSyntheticConfigure = true;
+
+    priv->dispatchConfigure ();
+}
+
 crb::Releasable::Ptr
 crb::ConfigureRequestBuffer::obtainLock ()
 {
@@ -257,6 +275,11 @@ bool crb::ConfigureRequestBuffer::queryFrameAttributes (XWindowAttributes &attri
      * have to be released before we can query attributes from the server */
     const_cast <crb::ConfigureRequestBuffer::Private *> (priv.get ())->dispatchConfigure (true);
     return priv->syncServerWindow->queryFrameAttributes (attrib);
+}
+
+void crb::ConfigureRequestBuffer::forceRelease ()
+{
+    priv->dispatchConfigure (true);
 }
 
 crb::ConfigureRequestBuffer::ConfigureRequestBuffer (AsyncServerWindow                          *asyncServerWindow,

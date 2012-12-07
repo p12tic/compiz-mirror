@@ -523,6 +523,9 @@ class CompWindow :
 	bool updateStruts ();
 	CompStruts *struts ();
 
+	bool queryAttributes (XWindowAttributes &);
+	bool queryFrameAttributes (XWindowAttributes &);
+
 	WRAPABLE_HND (0, WindowInterface, void, getOutputExtents,
 		      CompWindowExtents&);
 	WRAPABLE_HND (1, WindowInterface, void, getAllowedActions,

@@ -53,6 +53,7 @@ class MockAsyncServerWindow :
 	MOCK_CONST_METHOD2 (requestConfigureOnClient, int (const XWindowChanges &, unsigned int));
 	MOCK_CONST_METHOD2 (requestConfigureOnFrame, int (const XWindowChanges &, unsigned int));
 	MOCK_CONST_METHOD2 (requestConfigureOnWrapper, int (const XWindowChanges &, unsigned int));
+	MOCK_CONST_METHOD0 (sendSyntheticConfigureNotify, void ());
 	MOCK_CONST_METHOD0 (hasCustomShape, bool ());
 };
 
@@ -141,6 +142,20 @@ class ConfigureRequestBuffer :
 	MockAsyncServerWindow asyncServerWindow;
 	MockSyncServerWindow  syncServerWindow;
 };
+
+TEST_F (ConfigureRequestBuffer, PushDirectSyntheticConfigureNotify)
+{
+    crb::ConfigureRequestBuffer::LockFactory factory (
+		boost::bind (CreateNormalLock, _1));
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
+
+    EXPECT_CALL (asyncServerWindow, sendSyntheticConfigureNotify ());
+
+    buffer->pushSyntheticConfigureNotify ();
+}
 
 TEST_F (ConfigureRequestBuffer, PushDirectClientUpdate)
 {
@@ -655,3 +670,43 @@ TEST_F (ConfigureRequestBuffer, QueryFrameAttributesDispatchAndRearm)
 
     buffer->queryFrameAttributes (xwa);
 }
+
+TEST_F (ConfigureRequestBuffer, ForceReleaseDispatchAndRearm)
+{
+    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
+    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
+
+    NiceServerWindow asyncServerWindow;
+    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
+    MockLockFactory  mockLockFactory;
+
+    mockLockFactory.QueueLockForCreation (lock);
+
+    LockFactory      factory (
+	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
+
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
+
+    /* Locks get armed on construction */
+    EXPECT_CALL (*lock, lock ());
+
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
+
+    unsigned int valueMask = CWX | CWY;
+
+    /* Queue locked */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
+
+    buffer->pushFrameRequest (xwc, valueMask);
+
+    /* Queue forceably unlocked, locks rearmed */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _));
+    EXPECT_CALL (*lock, lock ());
+
+    /* Force release */
+    buffer->forceRelease ();
+}
+

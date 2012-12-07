@@ -3019,6 +3019,12 @@ PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int 
     return XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 }
 
+void
+PrivateWindow::sendSyntheticConfigureNotify () const
+{
+    window->sendConfigureNotify ();
+}
+
 bool
 PrivateWindow::hasCustomShape () const
 {
@@ -3237,23 +3243,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (serverFrame)
     {
 	if (frameValueMask)
-	{
-	    XWindowChanges wc = *xwc;
-
-	    wc.x      = serverFrameGeometry.x ();
-	    wc.y      = serverFrameGeometry.y ();
-	    wc.width  = serverFrameGeometry.width ();
-	    wc.height = serverFrameGeometry.height ();
-
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
-
-	    pendingConfigures.add (pc);
-
-	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
-	}
+	    priv->configureBuffer->pushFrameRequest (*xwc, frameValueMask);
 
 	valueMask &= ~(CWSibling | CWStackMode);
 
@@ -3269,7 +3259,8 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	{
 	    xwc->x = serverInput.left;
 	    xwc->y = serverInput.top;
-	    XConfigureWindow (screen->dpy (), wrapper, valueMask, xwc);
+
+	    priv->configureBuffer->pushWrapperRequest (*xwc, valueMask);
 
 	    xwc->x = 0;
 	    xwc->y = 0;
@@ -3277,7 +3268,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     }
 
     if (valueMask)
-	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+	priv->configureBuffer->pushClientRequest (*xwc, valueMask);
 
     /* Send the synthetic configure notify
      * after the real configure notify arrives
@@ -5719,6 +5710,18 @@ CompWindow::struts ()
     return priv->struts;
 }
 
+bool
+CompWindow::queryAttributes (XWindowAttributes &attrib)
+{
+    return priv->queryAttributes (attrib);
+}
+
+bool
+CompWindow::queryFrameAttributes (XWindowAttributes &attrib)
+{
+    return priv->queryFrameAttributes (attrib);
+}
+
 int &
 CompWindow::saveMask ()
 {
@@ -6278,7 +6281,9 @@ X11SyncServerWindow::queryAttributes (XWindowAttributes &attrib) const
 bool
 X11SyncServerWindow::queryFrameAttributes (XWindowAttributes &attrib) const
 {
-    if (XGetWindowAttributes (mDpy, *mFrame, &attrib))
+    Window w = *mFrame ? *mFrame : *mWindow;
+
+    if (XGetWindowAttributes (mDpy, w, &attrib))
 	return true;
 
     return false;
@@ -6368,11 +6373,11 @@ PrivateWindow::PrivateWindow () :
 
     syncServerWindow (screen->dpy (),
 		      &id,
-		      &frame),
+		      &serverFrame),
     configureBuffer (
 	crb::ConfigureRequestBuffer::Create (
 	    this,
-	    this,
+	    &syncServerWindow,
 	    boost::bind (createConfigureBufferLock, _1)))
 {
     input.left   = 0;
@@ -6663,7 +6668,11 @@ PrivateWindow::reparent ()
     XSync (dpy, false);
     XGrabServer (dpy);
 
-    if (!XGetWindowAttributes (dpy, id, &wa))
+    /* We need to flush all queued up requests */
+    foreach (CompWindow *w, screen->windows ())
+	w->priv->configureBuffer->forceRelease ();
+
+    if (!window->priv->queryAttributes (wa))
     {
 	XUngrabServer (dpy);
 	XSync (dpy, false);
@@ -6950,7 +6959,7 @@ PrivateWindow::unreparent ()
 	 * a DestroyNotify for it yet, it is possible that restacking
 	 * operations could occurr relative to it so we need to hold it
 	 * in the stack for now. Ensure that it is marked override redirect */
-	XGetWindowAttributes (screen->dpy (), serverFrame, &attrib);
+	window->priv->queryFrameAttributes (attrib);
 
 	/* Put the frame window "above" the client window
 	 * in the stack */

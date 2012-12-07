@@ -144,6 +144,7 @@ class PrivateWindow :
 	int  requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const;
 	int  requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const;
 	int  requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int valueMask) const;
+	void sendSyntheticConfigureNotify () const;
 	bool hasCustomShape () const;
 
 	void recalcNormalHints ();

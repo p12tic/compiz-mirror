@@ -57,7 +57,15 @@ class Buffer :
 	virtual void pushWrapperRequest (const XWindowChanges &xwc, unsigned int mask) = 0;
 	virtual void pushFrameRequest (const XWindowChanges &xwc, unsigned int mask) = 0;
 
+	virtual void pushSyntheticConfigureNotify () = 0;
+
 	virtual Releasable::Ptr obtainLock () = 0;
+
+	/* This API will all configure requests to be
+	 * released. It should only be used in situations
+	 * where you have a server grab and need
+	 * to have complete sync with the server */
+	virtual void forceRelease () = 0;
 };
 }
 }

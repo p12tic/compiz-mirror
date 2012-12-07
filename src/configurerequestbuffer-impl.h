@@ -92,6 +92,7 @@ class ConfigureRequestBuffer :
 	void pushClientRequest (const XWindowChanges &xwc, unsigned int mask);
 	void pushWrapperRequest (const XWindowChanges &xwc, unsigned int mask);
 	void pushFrameRequest (const XWindowChanges &xwc, unsigned int mask);
+	void pushSyntheticConfigureNotify ();
 	compiz::window::configure_buffers::Releasable::Ptr obtainLock ();
 
 	/* Implement getAttributes and require that
@@ -99,6 +100,8 @@ class ConfigureRequestBuffer :
 	 * to the SyncServerWindow */
 	bool queryAttributes (XWindowAttributes &attrib) const;
 	bool queryFrameAttributes (XWindowAttributes &attrib) const;
+
+	void forceRelease ();
 
 	static compiz::window::configure_buffers::Buffer::Ptr
 	Create (AsyncServerWindow *asyncServerWindow,

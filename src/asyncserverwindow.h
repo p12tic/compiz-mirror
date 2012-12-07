@@ -43,6 +43,7 @@ class AsyncServerWindow
 					       unsigned int         valueMask) const = 0;
 	virtual int requestConfigureOnFrame  (const XWindowChanges &xwc,
 					      unsigned int         valueMask) const = 0;
+	virtual void sendSyntheticConfigureNotify () const = 0;
 	virtual bool hasCustomShape () const = 0;
 };
 }
