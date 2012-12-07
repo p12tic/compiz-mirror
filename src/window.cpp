@@ -5816,19 +5816,19 @@ CompWindow::shaded () const
     return priv->shaded;
 }
 
-CompWindowExtents &
+const CompWindowExtents &
 CompWindow::border () const
 {
     return priv->border;
 }
 
-CompWindowExtents &
+const CompWindowExtents &
 CompWindow::input () const
 {
     return priv->serverInput;
 }
 
-CompWindowExtents &
+const CompWindowExtents &
 CompWindow::output () const
 {
     return priv->output;
@@ -6457,8 +6457,8 @@ CompWindow::updateFrameRegion ()
 }
 
 void
-CompWindow::setWindowFrameExtents (CompWindowExtents *b,
-				   CompWindowExtents *i)
+CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
+				   const CompWindowExtents *i)
 {
     /* override redirect windows can't have frame extents */
     if (priv->attrib.override_redirect)

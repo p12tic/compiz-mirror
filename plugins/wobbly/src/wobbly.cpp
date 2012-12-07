@@ -1311,7 +1311,7 @@ WobblyWindow::isWobblyWin ()
     if (window->width () == 1 && window->height () == 1)
 	return false;
 
-    CompWindow::Geometry &geom = window->geometry ();
+    const CompWindow::Geometry &geom = window->geometry ();
 
     /* avoid fullscreen windows */
     if (geom.x () <= 0 &&

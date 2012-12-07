@@ -305,7 +305,7 @@ class CompWindow :
 	*  Geometry retrieved from the
 	 * last ConfigureNotify event received
 	 */
-	Geometry & geometry () const;
+	const Geometry & geometry () const;
 
 	int x () const;
 	int y () const;
@@ -319,7 +319,7 @@ class CompWindow :
 	/**
 	 * Geometry last sent to the server
          */
-	Geometry & serverGeometry () const;
+	const Geometry & serverGeometry () const;
 
 	int serverX () const;
 	int serverY () const;
@@ -352,8 +352,8 @@ class CompWindow :
 	const CompRegion & frameRegion () const;
 
 	void updateFrameRegion ();
-	void setWindowFrameExtents (CompWindowExtents *border,
-				    CompWindowExtents *frame = NULL);
+	void setWindowFrameExtents (const CompWindowExtents *border,
+				    const CompWindowExtents *frame = NULL);
 
 	unsigned int & wmType () const;
 
@@ -483,10 +483,11 @@ class CompWindow :
 
 	bool shaded () const;
 
-	CompWindowExtents & border () const;
-	CompWindowExtents & input () const;
-	CompWindowExtents & output () const;
+	const CompWindowExtents & border () const;
+	const CompWindowExtents & input () const;
+	const CompWindowExtents & output () const;
 
+	// FIXME: This should return a const reference but grid needs fixing...
 	XSizeHints & sizeHints () const;
 
 	bool destroyed () const;
