@@ -166,9 +166,6 @@ add_library (compiz_geometryupdatequeue STATIC
 target_link_libraries (compiz_geometryupdatequeue
                        compiz_window_geometry)
 
-add_library (compiz_syncserverwindow STATIC
-             syncserverwindow.cpp)
-
 # workaround for build race
 add_dependencies (compiz core-xml-file)
 
@@ -201,6 +198,7 @@ target_link_libraries (
     compiz_servergrab
     compiz_output
     compiz_outputdevices
+    compiz_geometryupdatequeue
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
 )

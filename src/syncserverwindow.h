@@ -29,6 +29,8 @@
 
 namespace compiz
 {
+namespace window
+{
 class SyncServerWindow
 {
     public:
@@ -37,6 +39,7 @@ class SyncServerWindow
 
 	virtual bool queryAttributes (XWindowAttributes &attrib) const = 0;
 };
+}
 }
 
 #endif

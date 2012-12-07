@@ -42,35 +42,39 @@ class crb::ConfigureRequestBuffer::Private
 
 	typedef crb::Lockable::Weak LockObserver;
 
-	Private (cw::AsyncServerWindow                          *w,
+	Private (cw::AsyncServerWindow                          *asyncServerWindow,
+		 cw::SyncServerWindow                           *syncServerWindow,
 		 const crb::ConfigureRequestBuffer::LockFactory &lockFactory) :
 	    valueMask (0),
 	    lockCount (0),
-	    serverWindow (w),
+	    asyncServerWindow (asyncServerWindow),
+	    syncServerWindow (syncServerWindow),
 	    lockFactory (lockFactory)
 	{
 	}
 
-	void dispatchConfigure ();
+	void dispatchConfigure (bool force = false);
 
 	XWindowChanges xwc;
 	unsigned int   valueMask;
 
 	unsigned int   lockCount;
 
-	cw::AsyncServerWindow *serverWindow;
+	cw::AsyncServerWindow *asyncServerWindow;
+	cw::SyncServerWindow  *syncServerWindow;
 
 	crb::ConfigureRequestBuffer::LockFactory lockFactory;
 	std::vector <LockObserver>               locks;
 };
 
 void
-crb::ConfigureRequestBuffer::Private::dispatchConfigure ()
+crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 {
     const unsigned int allEventMasks = 0x7f;
     bool immediate = valueMask & (CWStackMode | CWSibling);
     immediate |= (valueMask & (CWWidth | CWHeight)) &&
-		 serverWindow->HasCustomShape ();
+		 asyncServerWindow->HasCustomShape ();
+    immediate |= force;
 
     bool dispatch = !lockCount && (valueMask & allEventMasks);
 
@@ -80,7 +84,7 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure ()
 	 * to be re-locked soon */
 	lockCount = 0;
 
-	serverWindow->Configure (xwc, valueMask);
+	asyncServerWindow->Configure (xwc, valueMask);
 
 	/* Reset value mask */
 	valueMask = 0;
@@ -187,9 +191,19 @@ crb::ConfigureRequestBuffer::untrackLock (crb::BufferLock *lock)
 		    boost::bind (isLock, _1, lock));
 }
 
-crb::ConfigureRequestBuffer::ConfigureRequestBuffer (cw::AsyncServerWindow                          *serverWindow,
+bool crb::ConfigureRequestBuffer::queryAttributes (XWindowAttributes &attrib) const
+{
+    /* This is a little ugly, however the queryAttributes method from
+     * the SyncServerWindow interface is const, and the queue really does
+     * have to be released before we can query attributes from the server */
+    const_cast <crb::ConfigureRequestBuffer::Private *> (priv.get ())->dispatchConfigure (true);
+    return priv->syncServerWindow->queryAttributes (attrib);
+}
+
+crb::ConfigureRequestBuffer::ConfigureRequestBuffer (cw::AsyncServerWindow                          *asyncServerWindow,
+						     SyncServerWindow                               *syncServerWindow,
 						     const crb::ConfigureRequestBuffer::LockFactory &factory) :
-    priv (new crb::ConfigureRequestBuffer::Private (serverWindow, factory))
+    priv (new crb::ConfigureRequestBuffer::Private (asyncServerWindow, syncServerWindow, factory))
 {
 }
 

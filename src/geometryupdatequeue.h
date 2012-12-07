@@ -33,6 +33,7 @@
 #include <X11/Xlib.h>
 
 #include <configurerequestbuffer.h>
+#include <syncserverwindow.h>
 
 namespace compiz
 {
@@ -78,14 +79,16 @@ class CountedFreeze
 
 class ConfigureRequestBuffer :
     public CountedFreeze,
-    public Buffer
+    public Buffer,
+    public SyncServerWindow
 {
     public:
 
 	typedef boost::function <BufferLock::Ptr (CountedFreeze *)> LockFactory;
 
-	ConfigureRequestBuffer (AsyncServerWindow *,
-				const LockFactory &);
+	ConfigureRequestBuffer (AsyncServerWindow *asyncServerWindow,
+				SyncServerWindow  *syncServerWindow,
+				const LockFactory &factory);
 
 	void freeze ();
 	void release ();
@@ -94,6 +97,11 @@ class ConfigureRequestBuffer :
 
 	void pushConfigureRequest (const XWindowChanges &xwc, unsigned int mask);
 	compiz::window::configure_buffers::Releasable::Ptr obtainLock ();
+
+	/* Implement getAttributes and require that
+	 * the queue is released before calling through
+	 * to the SyncServerWindow */
+	bool queryAttributes (XWindowAttributes &attrib) const;
 
     private:
 
