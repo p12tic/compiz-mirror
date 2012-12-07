@@ -4819,7 +4819,7 @@ CompWindow::defaultViewport () const
     return viewport;
 }
 
-CompPoint &
+const CompPoint &
 CompWindow::initialViewport () const
 {
     return priv->initialViewport;

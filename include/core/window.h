@@ -459,7 +459,7 @@ class CompWindow :
 
 	CompPoint defaultViewport () const;
 
-	CompPoint & initialViewport () const;
+	const CompPoint & initialViewport () const;
 
 	CompIcon * getIcon (int width, int height);
 
