@@ -1780,7 +1780,7 @@ PrivateWindow::configure (XConfigureEvent *ce)
 }
 
 void
-PrivateWindow::configureFrame (XConfigureEvent *ce)
+PrivateWindow::requestConfigureOnFrame (XConfigureEvent *ce)
 {
     if (!priv->frame)
 	return;
@@ -2968,7 +2968,19 @@ PrivateWindow::queryAttributes (XWindowAttributes &attrib) const
 }
 
 int
-PrivateWindow::configureClient (const XWindowChanges &xwc, unsigned int valueMask) const
+PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const
+{
+    return 0;
+}
+
+int
+PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const
+{
+    return 0;
+}
+
+int
+PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int valueMask) const
 {
     return 0;
 }

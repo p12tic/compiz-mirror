@@ -121,7 +121,9 @@ class PrivateWindow :
 	~PrivateWindow ();
 
 	bool queryAttributes (XWindowAttributes &attrib) const;
-	int  configureClient (const XWindowChanges &xwc, unsigned int valueMask) const;
+	int  requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const;
+	int  requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const;
+	int  requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int valueMask) const;
 	bool hasCustomShape () const;
 
 	void recalcNormalHints ();
@@ -255,7 +257,7 @@ class PrivateWindow :
 
 	void configure (XConfigureEvent *ce);
 
-	void configureFrame (XConfigureEvent *ce);
+	void requestConfigureOnFrame (XConfigureEvent *ce);
 
 	void circulate (XCirculateEvent *ce);
 

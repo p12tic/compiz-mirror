@@ -53,7 +53,10 @@ class Buffer :
 
 	virtual ~Buffer () {}
 
-	virtual void pushConfigureRequest (const XWindowChanges &xwc, unsigned int mask) = 0;
+	virtual void pushClientRequest (const XWindowChanges &xwc, unsigned int mask) = 0;
+	virtual void pushWrapperRequest (const XWindowChanges &xwc, unsigned int mask) = 0;
+	virtual void pushFrameRequest (const XWindowChanges &xwc, unsigned int mask) = 0;
+
 	virtual Releasable::Ptr obtainLock () = 0;
 };
 }

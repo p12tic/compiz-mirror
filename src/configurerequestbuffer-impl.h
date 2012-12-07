@@ -89,7 +89,9 @@ class ConfigureRequestBuffer :
 
 	void untrackLock (compiz::window::configure_buffers::BufferLock *lock);
 
-	void pushConfigureRequest (const XWindowChanges &xwc, unsigned int mask);
+	void pushClientRequest (const XWindowChanges &xwc, unsigned int mask);
+	void pushWrapperRequest (const XWindowChanges &xwc, unsigned int mask);
+	void pushFrameRequest (const XWindowChanges &xwc, unsigned int mask);
 	compiz::window::configure_buffers::Releasable::Ptr obtainLock ();
 
 	/* Implement getAttributes and require that

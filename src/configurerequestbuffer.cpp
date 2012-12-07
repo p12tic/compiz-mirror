@@ -45,7 +45,9 @@ class crb::ConfigureRequestBuffer::Private
 	Private (cw::AsyncServerWindow                          *asyncServerWindow,
 		 cw::SyncServerWindow                           *syncServerWindow,
 		 const crb::ConfigureRequestBuffer::LockFactory &lockFactory) :
-	    valueMask (0),
+	    clientChangeMask (0),
+	    wrapperChangeMask (0),
+	    frameChangeMask (0),
 	    lockCount (0),
 	    asyncServerWindow (asyncServerWindow),
 	    syncServerWindow (syncServerWindow),
@@ -55,8 +57,14 @@ class crb::ConfigureRequestBuffer::Private
 
 	void dispatchConfigure (bool force = false);
 
-	XWindowChanges xwc;
-	unsigned int   valueMask;
+	XWindowChanges clientChanges;
+	unsigned int   clientChangeMask;
+
+	XWindowChanges wrapperChanges;
+	unsigned int   wrapperChangeMask;
+
+	XWindowChanges frameChanges;
+	unsigned int   frameChangeMask;
 
 	unsigned int   lockCount;
 
@@ -71,12 +79,18 @@ void
 crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 {
     const unsigned int allEventMasks = 0x7f;
-    bool immediate = valueMask & (CWStackMode | CWSibling);
-    immediate |= (valueMask & (CWWidth | CWHeight)) &&
+    bool immediate = frameChangeMask & (CWStackMode | CWSibling);
+    immediate |= (frameChangeMask & (CWWidth | CWHeight)) &&
 		 asyncServerWindow->hasCustomShape ();
     immediate |= force;
 
-    bool dispatch = !lockCount && (valueMask & allEventMasks);
+    bool clientDispatch = (clientChangeMask & allEventMasks);
+    bool wrapperDispatch = (wrapperChangeMask & allEventMasks);
+    bool frameDispatch  = (frameChangeMask & allEventMasks);
+
+    bool dispatch = !lockCount && (clientDispatch ||
+				   wrapperDispatch ||
+				   frameDispatch);
 
     if (dispatch || immediate)
     {
@@ -84,10 +98,26 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 	 * to be re-locked soon */
 	lockCount = 0;
 
-	asyncServerWindow->configureClient (xwc, valueMask);
+	if (clientDispatch)
+	{
+	    asyncServerWindow->requestConfigureOnClient (clientChanges,
+							 clientChangeMask);
+	    clientChangeMask = 0;
+	}
 
-	/* Reset value mask */
-	valueMask = 0;
+	if (wrapperDispatch)
+	{
+	    asyncServerWindow->requestConfigureOnWrapper (wrapperChanges,
+							  wrapperChangeMask);
+	    wrapperChangeMask = 0;
+	}
+
+	if (frameDispatch)
+	{
+	    asyncServerWindow->requestConfigureOnFrame (frameChanges,
+							frameChangeMask);
+	    frameChangeMask = 0;
+	}
 
 	foreach (const LockObserver &lock, locks)
 	{
@@ -145,11 +175,31 @@ void applyChangeToXWC (const XWindowChanges &from,
 }
 
 void
-crb::ConfigureRequestBuffer::pushConfigureRequest (const XWindowChanges &xwc,
-						   unsigned int         mask)
+crb::ConfigureRequestBuffer::pushClientRequest (const XWindowChanges &xwc,
+						unsigned int         mask)
 {
-    applyChangeToXWC (xwc, priv->xwc, mask);
-    priv->valueMask |= mask;
+    applyChangeToXWC (xwc, priv->clientChanges, mask);
+    priv->clientChangeMask |= mask;
+
+    priv->dispatchConfigure ();
+}
+
+void
+crb::ConfigureRequestBuffer::pushWrapperRequest (const XWindowChanges &xwc,
+						 unsigned int         mask)
+{
+    applyChangeToXWC (xwc, priv->wrapperChanges, mask);
+    priv->wrapperChangeMask |= mask;
+
+    priv->dispatchConfigure ();
+}
+
+void
+crb::ConfigureRequestBuffer::pushFrameRequest (const XWindowChanges &xwc,
+					       unsigned int         mask)
+{
+    applyChangeToXWC (xwc, priv->frameChanges, mask);
+    priv->frameChangeMask |= mask;
 
     priv->dispatchConfigure ();
 }
