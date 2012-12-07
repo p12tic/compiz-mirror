@@ -32,7 +32,7 @@
 #include <boost/function.hpp>
 #include <X11/Xlib.h>
 
-#include <configurerequestbuffer.h>
+#include <core/configurerequestbuffer.h>
 
 namespace compiz
 {
@@ -126,6 +126,7 @@ class ConfigureBufferLock :
 	typedef boost::shared_ptr <ConfigureBufferLock> Ptr;
 
 	ConfigureBufferLock (CountedFreeze *);
+	~ConfigureBufferLock ();
 
 	void lock ();
 	void release ();

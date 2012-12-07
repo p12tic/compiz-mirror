@@ -35,9 +35,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <core/configurerequestbuffer.h>
+
 #include "syncserverwindow.h"
 #include "asyncserverwindow.h"
-#include "configurerequestbuffer.h"
 
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 

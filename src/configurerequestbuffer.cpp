@@ -318,6 +318,11 @@ crb::ConfigureBufferLock::ConfigureBufferLock (crb::CountedFreeze *freezable) :
 {
 }
 
+crb::ConfigureBufferLock::~ConfigureBufferLock ()
+{
+    release ();
+}
+
 void
 crb::ConfigureBufferLock::lock ()
 {

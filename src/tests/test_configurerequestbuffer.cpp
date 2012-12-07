@@ -320,6 +320,29 @@ TEST_F (ConfigureRequestBuffer, UnlockBuffer)
     lock->release ();
 }
 
+TEST_F (ConfigureRequestBuffer, ImplicitUnlockBuffer)
+{
+    MockAsyncServerWindow       asyncServerWindow;
+    crb::ConfigureRequestBuffer::LockFactory factory (
+		boost::bind (CreateNormalLock, _1));
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
+
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
+
+    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
+
+    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
+
+    buffer->pushFrameRequest (xwc, valueMask);
+
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (MaskXWC (xwc, valueMask),
+					       valueMask));
+}
+
 TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
 {
     MockAsyncServerWindow       asyncServerWindow;

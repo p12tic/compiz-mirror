@@ -5722,6 +5722,12 @@ CompWindow::queryFrameAttributes (XWindowAttributes &attrib)
     return priv->queryFrameAttributes (attrib);
 }
 
+crb::Releasable::Ptr
+CompWindow::obtainLockOnConfigureRequests ()
+{
+    return priv->configureBuffer->obtainLock ();
+}
+
 int &
 CompWindow::saveMask ()
 {
