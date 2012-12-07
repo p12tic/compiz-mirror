@@ -653,5 +653,5 @@ TEST_F (ConfigureRequestBuffer, QueryFrameAttributesDispatchAndRearm)
 		    SetArgReferee <0> (xwa),
 		    Return (true)));
 
-    buffer->queryAttributes (xwa);
+    buffer->queryFrameAttributes (xwa);
 }
