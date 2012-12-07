@@ -62,6 +62,7 @@ class MockSyncServerWindow :
     public:
 
 	MOCK_CONST_METHOD1 (queryAttributes, bool (XWindowAttributes &));
+	MOCK_CONST_METHOD1 (queryFrameAttributes, bool (XWindowAttributes &));
 };
 
 namespace
@@ -601,6 +602,52 @@ TEST_F (ConfigureRequestBuffer, QueryAttributesDispatchAndRearm)
     /* Expect a call to XGetWindowAttributes */
     XWindowAttributes xwa;
     EXPECT_CALL (syncServerWindow, queryAttributes (_))
+	    .WillOnce (
+		DoAll (
+		    SetArgReferee <0> (xwa),
+		    Return (true)));
+
+    buffer->queryAttributes (xwa);
+}
+
+TEST_F (ConfigureRequestBuffer, QueryFrameAttributesDispatchAndRearm)
+{
+    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
+    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
+
+    NiceServerWindow asyncServerWindow;
+    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
+    MockLockFactory  mockLockFactory;
+
+    mockLockFactory.QueueLockForCreation (lock);
+
+    LockFactory      factory (
+	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
+
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
+
+    /* Locks get armed on construction */
+    EXPECT_CALL (*lock, lock ());
+
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
+
+    unsigned int valueMask = CWX | CWY;
+
+    /* Queue locked */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
+
+    buffer->pushFrameRequest (xwc, valueMask);
+
+    /* Queue forceably unlocked, locks rearmed */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _));
+    EXPECT_CALL (*lock, lock ());
+
+    /* Expect a call to XGetWindowAttributes */
+    XWindowAttributes xwa;
+    EXPECT_CALL (syncServerWindow, queryFrameAttributes (_))
 	    .WillOnce (
 		DoAll (
 		    SetArgReferee <0> (xwa),

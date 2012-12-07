@@ -37,6 +37,7 @@
 #include <math.h>
 
 #include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -45,7 +46,12 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
+#include "configurerequestbuffer-impl.h"
+
 #include <boost/scoped_array.hpp>
+
+namespace crb = compiz::window::configure_buffers;
+namespace cw = compiz::window;
 
 template class WrapableInterface<CompWindow, WindowInterface>;
 
@@ -2964,7 +2970,13 @@ static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges 
 bool
 PrivateWindow::queryAttributes (XWindowAttributes &attrib) const
 {
-    return false;
+    return configureBuffer->queryAttributes (attrib);
+}
+
+bool
+PrivateWindow::queryFrameAttributes (XWindowAttributes &attrib) const
+{
+    return configureBuffer->queryFrameAttributes (attrib);
 }
 
 int
@@ -6245,6 +6257,42 @@ CompWindow::~CompWindow ()
     delete priv;
 }
 
+X11SyncServerWindow::X11SyncServerWindow (Display      *dpy,
+					  const Window *w,
+					  const Window *frame) :
+    mDpy (dpy),
+    mWindow (w),
+    mFrame (frame)
+{
+}
+
+bool
+X11SyncServerWindow::queryAttributes (XWindowAttributes &attrib) const
+{
+    if (XGetWindowAttributes (mDpy, *mWindow, &attrib))
+	return true;
+
+    return false;
+}
+
+bool
+X11SyncServerWindow::queryFrameAttributes (XWindowAttributes &attrib) const
+{
+    if (XGetWindowAttributes (mDpy, *mFrame, &attrib))
+	return true;
+
+    return false;
+}
+
+namespace
+{
+crb::BufferLock::Ptr
+createConfigureBufferLock (crb::CountedFreeze *cf)
+{
+    return boost::make_shared <crb::ConfigureBufferLock> (cf);
+}
+}
+
 PrivateWindow::PrivateWindow () :
     priv (this),
     refcnt (1),
@@ -6316,7 +6364,16 @@ PrivateWindow::PrivateWindow () :
 
     syncWait (false),
     closeRequests (false),
-    lastCloseRequestTime (0)
+    lastCloseRequestTime (0),
+
+    syncServerWindow (screen->dpy (),
+		      &id,
+		      &frame),
+    configureBuffer (
+	crb::ConfigureRequestBuffer::Create (
+	    this,
+	    this,
+	    boost::bind (createConfigureBufferLock, _1)))
 {
     input.left   = 0;
     input.right  = 0;

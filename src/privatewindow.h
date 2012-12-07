@@ -111,6 +111,25 @@ struct CompGroup;
 
 typedef CompWindowExtents CompFullscreenMonitorSet;
 
+class X11SyncServerWindow :
+    public compiz::window::SyncServerWindow
+{
+    public:
+
+	X11SyncServerWindow (Display      *dpy,
+			     const Window *w,
+			     const Window *frame);
+
+	bool queryAttributes (XWindowAttributes &attrib) const;
+	bool queryFrameAttributes (XWindowAttributes &attrib) const;
+
+    private:
+
+	Display      *mDpy;
+	const Window *mWindow;
+	const Window *mFrame;
+};
+
 class PrivateWindow :
     public compiz::window::SyncServerWindow,
     public compiz::window::AsyncServerWindow
@@ -121,6 +140,7 @@ class PrivateWindow :
 	~PrivateWindow ();
 
 	bool queryAttributes (XWindowAttributes &attrib) const;
+	bool queryFrameAttributes (XWindowAttributes &attrib) const;
 	int  requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const;
 	int  requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const;
 	int  requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int valueMask) const;
@@ -411,6 +431,9 @@ class PrivateWindow :
 	Time lastCloseRequestTime;
 
 	bool nextMoveImmediate;
+
+	X11SyncServerWindow                            syncServerWindow;
+	compiz::window::configure_buffers::Buffer::Ptr configureBuffer;
 };
 
 #endif

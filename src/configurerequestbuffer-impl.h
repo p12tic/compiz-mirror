@@ -98,6 +98,7 @@ class ConfigureRequestBuffer :
 	 * the queue is released before calling through
 	 * to the SyncServerWindow */
 	bool queryAttributes (XWindowAttributes &attrib) const;
+	bool queryFrameAttributes (XWindowAttributes &attrib) const;
 
 	static compiz::window::configure_buffers::Buffer::Ptr
 	Create (AsyncServerWindow *asyncServerWindow,
