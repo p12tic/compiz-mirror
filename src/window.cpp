@@ -4802,7 +4802,7 @@ PrivateWindow::allowWindowFocus (unsigned int noFocusMask,
 }
 
 CompPoint
-CompWindow::defaultViewport ()
+CompWindow::defaultViewport () const
 {
     CompPoint viewport;
 
@@ -5034,13 +5034,13 @@ PrivateWindow::freeIcons ()
 }
 
 int
-CompWindow::outputDevice ()
+CompWindow::outputDevice () const
 {
     return screen->outputDeviceForGeometry (priv->serverGeometry);
 }
 
 bool
-CompWindow::onCurrentDesktop ()
+CompWindow::onCurrentDesktop () const
 {
     if (priv->desktop == 0xffffffff ||
 	priv->desktop == screen->currentDesktop ())
@@ -5105,7 +5105,7 @@ PrivateWindow::compareWindowActiveness (CompWindow *w1,
 }
 
 bool
-CompWindow::onAllViewports ()
+CompWindow::onAllViewports () const
 {
     if (overrideRedirect ())
 	return true;
@@ -5123,7 +5123,7 @@ CompWindow::onAllViewports ()
 }
 
 CompPoint
-CompWindow::getMovementForOffset (CompPoint offset)
+CompWindow::getMovementForOffset (const CompPoint &offset) const
 {
     CompScreen *s = screen;
     int         m, vWidth, vHeight;
@@ -5242,51 +5242,51 @@ WindowInterface::unminimize ()
     WRAPABLE_DEF (unminimize);
 
 bool
-WindowInterface::minimized ()
+WindowInterface::minimized () const
     WRAPABLE_DEF (minimized);
 
 bool
-WindowInterface::alpha ()
+WindowInterface::alpha () const
     WRAPABLE_DEF (alpha);
 
 bool
-WindowInterface::isFocussable ()
+WindowInterface::isFocussable () const
     WRAPABLE_DEF (isFocussable);
 
 bool
-WindowInterface::managed ()
+WindowInterface::managed () const
     WRAPABLE_DEF (managed);
 
 bool
-WindowInterface::focused ()
+WindowInterface::focused () const
     WRAPABLE_DEF (focused);
 
 Window
-CompWindow::id ()
+CompWindow::id () const
 {
     return priv->id;
 }
 
 unsigned int
-CompWindow::type ()
+CompWindow::type () const
 {
     return priv->type;
 }
 
 unsigned int &
-CompWindow::state ()
+CompWindow::state () const
 {
     return priv->state;
 }
 
 unsigned int
-CompWindow::actions ()
+CompWindow::actions () const
 {
     return priv->actions;
 }
 
 unsigned int &
-CompWindow::protocols ()
+CompWindow::protocols () const
 {
     return priv->protocols;
 }
@@ -5579,7 +5579,7 @@ CompWindow::frameRegion () const
 }
 
 bool
-CompWindow::inShowDesktopMode ()
+CompWindow::inShowDesktopMode () const
 {
     return priv->inShowDesktopMode;
 }
@@ -5591,51 +5591,51 @@ CompWindow::setShowDesktopMode (bool value)
 }
 
 bool
-CompWindow::managed ()
+CompWindow::managed () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, managed);
     return priv->managed;
 }
 
 bool
-CompWindow::focused ()
+CompWindow::focused () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, focused);
     return screen->activeWindow () == id ();
 }
 
 bool
-CompWindow::grabbed ()
+CompWindow::grabbed () const
 {
     return priv->grabbed;
 }
 
 int
-CompWindow::pendingMaps ()
+CompWindow::pendingMaps () const
 {
     return priv->pendingMaps;
 }
 
 unsigned int &
-CompWindow::wmType ()
+CompWindow::wmType () const
 {
     return priv->wmType;
 }
 
 unsigned int
-CompWindow::activeNum ()
+CompWindow::activeNum () const
 {
     return priv->activeNum;
 }
 
 Window
-CompWindow::frame ()
+CompWindow::frame () const
 {
     return priv->serverFrame;
 }
 
 CompString
-CompWindow::resName ()
+CompWindow::resName () const
 {
     if (priv->resName)
 	return priv->resName;
@@ -5649,14 +5649,14 @@ CompWindow::mapNum () const
     return priv->mapNum;
 }
 
-CompStruts *
-CompWindow::struts ()
+const CompStruts *
+CompWindow::struts () const
 {
     return priv->struts;
 }
 
 int &
-CompWindow::saveMask ()
+CompWindow::saveMask () const
 {
     return priv->saveMask;
 }
@@ -5745,7 +5745,7 @@ CompWindow::moveToViewportPosition (int  x,
 }
 
 char *
-CompWindow::startupId ()
+CompWindow::startupId () const
 {
      return priv->startupId;
 }
@@ -5768,13 +5768,13 @@ PrivateWindow::applyStartupProperties (CompStartupSequence *s)
 }
 
 unsigned int
-CompWindow::desktop ()
+CompWindow::desktop () const
 {
     return priv->desktop;
 }
 
 Window
-CompWindow::clientLeader (bool checkAncestor)
+CompWindow::clientLeader (bool checkAncestor) const
 {
     if (priv->clientLeader)
 	return priv->clientLeader;
@@ -5786,32 +5786,32 @@ CompWindow::clientLeader (bool checkAncestor)
 }
 
 Window
-CompWindow::transientFor ()
+CompWindow::transientFor () const
 {
     return priv->transientFor;
 }
 
 int
-CompWindow::pendingUnmaps ()
+CompWindow::pendingUnmaps () const
 {
     return priv->pendingUnmaps;
 }
 
 bool
-CompWindow::minimized ()
+CompWindow::minimized () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, minimized);
     return priv->minimized;
 }
 
 bool
-CompWindow::placed ()
+CompWindow::placed () const
 {
     return priv->placed;
 }
 
 bool
-CompWindow::shaded ()
+CompWindow::shaded () const
 {
     return priv->shaded;
 }
@@ -5895,19 +5895,19 @@ PrivateWindow::updateStartupId ()
 }
 
 bool
-CompWindow::destroyed ()
+CompWindow::destroyed () const
 {
     return priv->destroyed;
 }
 
 bool
-CompWindow::invisible ()
+CompWindow::invisible () const
 {
     return priv->invisible;
 }
 
 XSyncAlarm
-CompWindow::syncAlarm ()
+CompWindow::syncAlarm () const
 {
     return priv->syncAlarm;
 }
@@ -6323,13 +6323,13 @@ PrivateWindow::~PrivateWindow ()
 }
 
 bool
-CompWindow::syncWait ()
+CompWindow::syncWait () const
 {
     return priv->syncWait;
 }
 
 bool
-CompWindow::alpha ()
+CompWindow::alpha () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, alpha);
 
@@ -6337,7 +6337,7 @@ CompWindow::alpha ()
 }
 
 bool
-CompWindow::overrideRedirect ()
+CompWindow::overrideRedirect () const
 {
     return priv->attrib.override_redirect;
 }
@@ -6368,7 +6368,7 @@ CompWindow::isViewable () const
 }
 
 bool
-CompWindow::isFocussable ()
+CompWindow::isFocussable () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, isFocussable);
 
@@ -6382,31 +6382,31 @@ CompWindow::isFocussable ()
 }
 
 int
-CompWindow::windowClass ()
+CompWindow::windowClass () const
 {
     return priv->attrib.c_class;
 }
 
 unsigned int
-CompWindow::depth ()
+CompWindow::depth () const
 {
     return priv->attrib.depth;
 }
 
 bool
-CompWindow::alive ()
+CompWindow::alive () const
 {
     return priv->alive;
 }
 
 unsigned int
-CompWindow::mwmDecor ()
+CompWindow::mwmDecor () const
 {
     return priv->mwmDecor;
 }
 
 unsigned int
-CompWindow::mwmFunc ()
+CompWindow::mwmFunc () const
 {
     return priv->mwmFunc;
 }
@@ -6524,7 +6524,7 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 }
 
 bool
-CompWindow::hasUnmapReference ()
+CompWindow::hasUnmapReference () const
 {
     return (priv && priv->unmapRefCnt > 1);
 }
