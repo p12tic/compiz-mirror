@@ -269,7 +269,7 @@ WorkaroundsWindow::unminimize ()
 }
 
 bool
-WorkaroundsWindow::minimized ()
+WorkaroundsWindow::minimized () const
 {
     return isMinimized;
 }

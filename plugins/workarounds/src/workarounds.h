@@ -175,7 +175,7 @@ class WorkaroundsWindow :
 
 	void minimize ();
 	void unminimize ();
-	bool minimized ();
+	bool minimized () const;
 
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, unsigned int);
