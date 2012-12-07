@@ -38,7 +38,6 @@ bool
 GroupWindow::windowInRegion (CompRegion src,
 				  float  precision)
 {
-    int    i;
     int    area = 0;
     CompRegion buf;
 
@@ -46,7 +45,7 @@ GroupWindow::windowInRegion (CompRegion src,
     buf = window->region ().intersected (src);
 
     /* buf area */
-    for (i = 0; i < buf.numRects (); i++)
+    for (int i = 0; i < buf.numRects (); i++)
     {
 	CompRect box = buf.rects ().at (i);
 	area += (box.width ()) * (box.height ()); /* width * height */

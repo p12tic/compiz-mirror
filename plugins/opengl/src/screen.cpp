@@ -1882,8 +1882,6 @@ void
 EGLDoubleBuffer::swap () const
 {
     eglSwapBuffers (eglGetDisplay (mDpy), mSurface);
-    eglWaitGL ();
-    XFlush (mDpy);
 }
 
 bool
@@ -1908,9 +1906,6 @@ EGLDoubleBuffer::blit (const CompRegion &region) const
 			      r.width (),
 			      r.height ());
     }
-
-    eglWaitGL ();
-    XFlush (screen->dpy ());
 }
 
 bool

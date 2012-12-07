@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 #include <gtest_shared_characterwrapper.h>
+#include <gtest_shared_tmpenv.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -256,35 +257,6 @@ static const std::string globalKDE4ProfileSection ("kde4_session");
 static const std::string globalKDE3ProfileSection ("kde_session");
 static const std::string four ("4");
 static const std::string trueStr ("true");
-
-class TmpEnv :
-    boost::noncopyable
-{
-    public:
-
-	explicit TmpEnv (const char *env, const char *val) :
-	    envRestore (env),
-	    envRestoreVal (getenv (env))
-	{
-	    if (!val)
-		unsetenv (env);
-	    else
-		setenv (env, val, TRUE);
-	}
-
-	~TmpEnv ()
-	{
-	    if (envRestoreVal)
-		setenv (envRestore, envRestoreVal, TRUE);
-	    else
-		unsetenv (envRestore);
-	}
-
-    private:
-
-	const char *envRestore;
-	const char *envRestoreVal;
-};
 
 const char * getConstCharFromCharacterWrapper (const CharacterWrapper &wrap)
 {

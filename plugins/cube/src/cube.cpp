@@ -444,7 +444,6 @@ fillCircleTable (GLfloat   **ppSint,
 {
     const GLfloat angle = 2 * M_PI / (GLfloat) ((n == 0) ? 1 : n);
     const int	  size = abs (n);
-    int		  i;
 
     *ppSint = (GLfloat *) calloc (sizeof (GLfloat), size + 1);
     *ppCost = (GLfloat *) calloc (sizeof (GLfloat), size + 1);
@@ -460,7 +459,7 @@ fillCircleTable (GLfloat   **ppSint,
     (*ppSint)[0] = 0.0;
     (*ppCost)[0] = 1.0;
 
-    for (i = 1; i < size; i++)
+    for (int i = 1; i < size; i++)
     {
 	(*ppSint)[i] = sin (angle * i);
 	(*ppCost)[i] = cos (angle * i);
@@ -489,8 +488,6 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
     GLfloat x;
     GLfloat y;
     GLfloat z;
-    int	    i;
-    int	    j;
     int	    iStacksStart;
     int	    iStacksEnd;
     int	    iSlicesStart;
@@ -548,14 +545,14 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 
     glBegin (GL_QUADS);
 
-    for (i = iStacksStart; i < iStacksEnd; i++)
+    for (int i = iStacksStart; i < iStacksEnd; i++)
     {
 	afTexCoordX[0] = 1.0f;
 	afTexCoordX[1] = 1.0f - fStepX;
 	afTexCoordX[2] = 1.0f - fStepX;
 	afTexCoordX[3] = 1.0f;
 
-	for (j = iSlicesStart; j < iSlicesEnd; j++)
+	for (int j = iSlicesStart; j < iSlicesEnd; j++)
 	{
 	    /* bottom-right */
 	    z = cost2[i];
@@ -896,13 +893,11 @@ PrivateCubeScreen::moveViewportAndPaint (const GLScreenPaintAttrib &sAttrib,
 					 PaintOrder                paintOrder,
 					 int                       dx)
 {
-    int output;
-
     if (!cubeScreen->cubeShouldPaintViewport (sAttrib, transform, outputPtr, 
 					      paintOrder))
 	return;
 
-    output = ((unsigned int) outputPtr->id () != (unsigned int) ~0)
+    int output = ((unsigned int) outputPtr->id () != (unsigned int) ~0)
     							 ? outputPtr->id () : 0;
 
     mPaintOrder = paintOrder;
@@ -968,7 +963,6 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 {
     GLScreenPaintAttrib sa = sAttrib;
 
-    int i;
     int xMoveAdd;
     int origXMoveAdd = 0; /* dx for the viewport we start
 			     painting with (back-most). */
@@ -1003,7 +997,7 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 	    iFirstSign = 1;
     }
 
-    for (i = 0; i <= hsize / 2; i++)
+    for (int i = 0; i <= hsize / 2; i++)
     {
 	/* move to the correct viewport (back to front). */
 	xMoveAdd = origXMoveAdd;	/* move to farthest viewport. */

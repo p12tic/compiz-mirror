@@ -211,8 +211,6 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
     PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI> (s),
     priv (new PrivateCompositeScreen (this))
 {
-    int	compositeMajor, compositeMinor;
-
     if (!XQueryExtension (s->dpy (), COMPOSITE_NAME,
 			  &priv->compositeOpcode,
 			  &priv->compositeEvent,
@@ -223,6 +221,8 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 	setFailed ();
 	return;
     }
+
+    int	compositeMajor, compositeMinor;
 
     XCompositeQueryVersion (s->dpy (), &compositeMajor, &compositeMinor);
     if (compositeMajor == 0 && compositeMinor < 2)
