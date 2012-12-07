@@ -385,7 +385,7 @@ class CompWindow :
 
 	void moveToViewportPosition (int x, int y, bool sync);
 
-	char * startupId () const;
+	const char * startupId () const;
 
 	unsigned int desktop () const;
 

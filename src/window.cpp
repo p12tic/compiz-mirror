@@ -5744,7 +5744,7 @@ CompWindow::moveToViewportPosition (int  x,
     }
 }
 
-char *
+const char *
 CompWindow::startupId () const
 {
      return priv->startupId;
