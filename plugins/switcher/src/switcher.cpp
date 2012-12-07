@@ -948,7 +948,7 @@ SwitchWindow::updateIconPos (int   &wx,
 
 /* Only for the popup window */
 bool
-SwitchWindow::managed ()
+SwitchWindow::managed () const
 {
     return true;
 }
