@@ -1,3 +1,9 @@
+compiz (1:0.9.9~daily12.12.05-0ubuntu2) raring; urgency=low
+
+  * Backport a tentative fix from rev 3387 for LP: #1060327
+
+ -- Didier Roche <didrocks@ubuntu.com>  Fri, 07 Dec 2012 09:28:46 +0100
+
 compiz (1:0.9.9~daily12.12.05-0ubuntu1) raring; urgency=low
 
   [ Michael Terry ]
