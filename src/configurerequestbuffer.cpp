@@ -148,7 +148,7 @@ crb::ConfigureRequestBuffer::freeze ()
 {
     priv->lockCount++;
 
-    assert (priv->lockCount < priv->locks.size ());
+    assert (priv->lockCount <= priv->locks.size ());
 }
 
 void
