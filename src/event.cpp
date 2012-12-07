@@ -1269,7 +1269,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    w = findTopLevelWindow (event->xconfigure.window);
 
 	    if (w && w->priv->frame == event->xconfigure.window)
-		w->priv->requestConfigureOnFrame (&event->xconfigure);
+		w->priv->configureFrame (&event->xconfigure);
 	    else
 	    {
 		if (event->xconfigure.window == privateScreen.rootWindow())

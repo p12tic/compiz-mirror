@@ -284,7 +284,7 @@ class PrivateWindow :
 
 	void configure (XConfigureEvent *ce);
 
-	void requestConfigureOnFrame (XConfigureEvent *ce);
+	void configureFrame (XConfigureEvent *ce);
 
 	void circulate (XCirculateEvent *ce);
 

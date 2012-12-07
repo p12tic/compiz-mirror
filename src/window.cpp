@@ -1788,7 +1788,7 @@ PrivateWindow::configure (XConfigureEvent *ce)
 }
 
 void
-PrivateWindow::requestConfigureOnFrame (XConfigureEvent *ce)
+PrivateWindow::configureFrame (XConfigureEvent *ce)
 {
     if (!priv->frame)
 	return;
