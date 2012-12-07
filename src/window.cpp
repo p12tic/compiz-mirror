@@ -938,7 +938,7 @@ PrivateWindow::updateRegion ()
     if (nInput < 1)
     {
 	inputShapeRects = &r;
-	nBounding = 1;
+	nInput = 1;
     }
 
     priv->region += rectsToRegion (nBounding, boundingShapeRects);
