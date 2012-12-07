@@ -1094,16 +1094,17 @@ class InternalSetParam :
 	{
 	    const CCSSettingInterface *settingInterface =
 		GET_INTERFACE (CCSSettingInterface, mSetting.get ());
+	    CCSSettingInterface *tmpSettingInterface =
+		    new CCSSettingInterface;
+	    *tmpSettingInterface = *settingInterface;
 
-	    tmpSettingInterface = *settingInterface;
-
-	    tmpSettingInterface.settingGetType =
+	    tmpSettingInterface->settingGetType =
 		InternalSetParam::returnIncorrectSettingType;
 
 	    ccsObjectRemoveInterface (mSetting.get (),
 				      GET_INTERFACE_TYPE (CCSSettingInterface));
 	    ccsObjectAddInterface (mSetting.get (),
-				   (const CCSInterface *) &tmpSettingInterface,
+				   (const CCSInterface *) tmpSettingInterface,
 				   GET_INTERFACE_TYPE (CCSSettingInterface));
 
 	    return settingInterface;
@@ -1112,8 +1113,11 @@ class InternalSetParam :
 	void RestoreSettingInterface (const CCSSettingInterface *settingInterface)
 	{
 	    /* Restore the old interface */
+	    const CCSSettingInterface *oldSettingInterface =
+		GET_INTERFACE (CCSSettingInterface, mSetting.get ());
 	    ccsObjectRemoveInterface (mSetting.get (),
 				      GET_INTERFACE_TYPE (CCSSettingInterface));
+	    delete oldSettingInterface;
 	    ccsObjectAddInterface (mSetting.get (),
 				   (const CCSInterface *) settingInterface,
 				   GET_INTERFACE_TYPE (CCSSettingInterface));
