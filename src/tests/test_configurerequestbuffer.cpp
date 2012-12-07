@@ -50,10 +50,10 @@ class MockAsyncServerWindow :
 {
     public:
 
-	MOCK_CONST_METHOD2 (requestConfigureOnClient, int (const XWindowChanges &, unsigned int));
-	MOCK_CONST_METHOD2 (requestConfigureOnFrame, int (const XWindowChanges &, unsigned int));
-	MOCK_CONST_METHOD2 (requestConfigureOnWrapper, int (const XWindowChanges &, unsigned int));
-	MOCK_CONST_METHOD0 (sendSyntheticConfigureNotify, void ());
+	MOCK_METHOD2 (requestConfigureOnClient, int (const XWindowChanges &, unsigned int));
+	MOCK_METHOD2 (requestConfigureOnFrame, int (const XWindowChanges &, unsigned int));
+	MOCK_METHOD2 (requestConfigureOnWrapper, int (const XWindowChanges &, unsigned int));
+	MOCK_METHOD0 (sendSyntheticConfigureNotify, void ());
 	MOCK_CONST_METHOD0 (hasCustomShape, bool ());
 };
 
@@ -62,8 +62,8 @@ class MockSyncServerWindow :
 {
     public:
 
-	MOCK_CONST_METHOD1 (queryAttributes, bool (XWindowAttributes &));
-	MOCK_CONST_METHOD1 (queryFrameAttributes, bool (XWindowAttributes &));
+	MOCK_METHOD1 (queryAttributes, bool (XWindowAttributes &));
+	MOCK_METHOD1 (queryFrameAttributes, bool (XWindowAttributes &));
 };
 
 namespace

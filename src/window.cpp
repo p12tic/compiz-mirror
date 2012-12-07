@@ -2968,39 +2968,42 @@ static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges 
 }
 
 bool
-PrivateWindow::queryAttributes (XWindowAttributes &attrib) const
+PrivateWindow::queryAttributes (XWindowAttributes &attrib)
 {
     return configureBuffer->queryAttributes (attrib);
 }
 
 bool
-PrivateWindow::queryFrameAttributes (XWindowAttributes &attrib) const
+PrivateWindow::queryFrameAttributes (XWindowAttributes &attrib)
 {
     return configureBuffer->queryFrameAttributes (attrib);
 }
 
 int
-PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const
+PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc,
+					 unsigned int valueMask)
 {
-    int ret = XConfigureWindow (screen->dpy (), id, valueMask, const_cast <XWindowChanges *> (&xwc));
-
-    /* Send the synthetic configure notify
-     * after the real configure notify arrives
-     * (ICCCM s4.1.5) */
-    if (serverFrame)
-	window->sendConfigureNotify ();
+    int ret = XConfigureWindow (screen->dpy (),
+				id,
+				valueMask,
+				const_cast <XWindowChanges *> (&xwc));
 
     return ret;
 }
 
 int
-PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const
+PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc,
+					  unsigned int valueMask)
 {
-    return XConfigureWindow (screen->dpy (), wrapper, valueMask, const_cast <XWindowChanges *> (&xwc));
+    return XConfigureWindow (screen->dpy (),
+			     wrapper,
+			     valueMask,
+			     const_cast <XWindowChanges *> (&xwc));
 }
 
 int
-PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int frameValueMask) const
+PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc,
+					unsigned int frameValueMask)
 {
     XWindowChanges wc = xwc;
 
@@ -3009,18 +3012,19 @@ PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int 
     wc.width  = serverFrameGeometry.width ();
     wc.height = serverFrameGeometry.height ();
 
-    compiz::X11::PendingEvent::Ptr pc =
-	    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-								      new compiz::X11::PendingConfigureEvent (
-									  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
+    compiz::X11::PendingEvent::Ptr pc (
+	new compiz::X11::PendingConfigureEvent (
+	    screen->dpy (),
+	    priv->serverFrame,
+	    frameValueMask, &wc));
 
-    const_cast <PrivateWindow *> (this)->pendingConfigures.add (pc);
+    pendingConfigures.add (pc);
 
     return XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 }
 
 void
-PrivateWindow::sendSyntheticConfigureNotify () const
+PrivateWindow::sendSyntheticConfigureNotify ()
 {
     window->sendConfigureNotify ();
 }
@@ -3245,14 +3249,14 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (frameValueMask)
 	    priv->configureBuffer->pushFrameRequest (*xwc, frameValueMask);
 
-	valueMask &= ~(CWSibling | CWStackMode);
+	valueMask &= (CWWidth | CWHeight);
 
 	/* If the frame has changed position (eg, serverInput.top
 	 * or serverInput.left have changed) then we also need to
 	 * update the client and wrapper position */
-	if (!(valueMask & CWX))
+	if (lastServerInput.left != serverInput.left)
 	    valueMask |= frameValueMask & CWX;
-	if (!(valueMask & CWY))
+	if (lastServerInput.top != serverInput.top)
 	    valueMask |= frameValueMask & CWY;
 
 	if (valueMask)
@@ -3260,12 +3264,16 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    xwc->x = serverInput.left;
 	    xwc->y = serverInput.top;
 
-	    priv->configureBuffer->pushWrapperRequest (*xwc, valueMask);
+	    lastServerInput = serverInput;
 
-	    xwc->x = 0;
-	    xwc->y = 0;
+	    priv->configureBuffer->pushWrapperRequest (*xwc, valueMask);
 	}
     }
+
+    /* Client is reparented, the only things that can change
+     * are the width, height and border width */
+    if (serverFrame)
+	valueMask &= (CWWidth | CWHeight | CWBorderWidth);
 
     if (valueMask)
 	priv->configureBuffer->pushClientRequest (*xwc, valueMask);
@@ -6276,7 +6284,7 @@ X11SyncServerWindow::X11SyncServerWindow (Display      *dpy,
 }
 
 bool
-X11SyncServerWindow::queryAttributes (XWindowAttributes &attrib) const
+X11SyncServerWindow::queryAttributes (XWindowAttributes &attrib)
 {
     if (XGetWindowAttributes (mDpy, *mWindow, &attrib))
 	return true;
@@ -6285,7 +6293,7 @@ X11SyncServerWindow::queryAttributes (XWindowAttributes &attrib) const
 }
 
 bool
-X11SyncServerWindow::queryFrameAttributes (XWindowAttributes &attrib) const
+X11SyncServerWindow::queryFrameAttributes (XWindowAttributes &attrib)
 {
     Window w = *mFrame ? *mFrame : *mWindow;
 
@@ -6391,20 +6399,11 @@ PrivateWindow::PrivateWindow () :
     input.top    = 0;
     input.bottom = 0;
 
-    serverInput.left   = 0;
-    serverInput.right  = 0;
-    serverInput.top    = 0;
-    serverInput.bottom = 0;
-
-    border.top    = 0;
-    border.bottom = 0;
-    border.left   = 0;
-    border.right  = 0;
-
-    output.left   = 0;
-    output.right  = 0;
-    output.top    = 0;
-    output.bottom = 0;
+    /* Zero initialize */
+    serverInput = input;
+    lastServerInput = input;
+    border = input;
+    output = input;
 
     syncWaitTimer.setTimes (1000, 1200);
     syncWaitTimer.setCallback (boost::bind (&PrivateWindow::handleSyncAlarm,

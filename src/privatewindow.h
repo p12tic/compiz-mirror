@@ -121,8 +121,8 @@ class X11SyncServerWindow :
 			     const Window *w,
 			     const Window *frame);
 
-	bool queryAttributes (XWindowAttributes &attrib) const;
-	bool queryFrameAttributes (XWindowAttributes &attrib) const;
+	bool queryAttributes (XWindowAttributes &attrib);
+	bool queryFrameAttributes (XWindowAttributes &attrib);
 
     private:
 
@@ -140,12 +140,15 @@ class PrivateWindow :
 	PrivateWindow ();
 	~PrivateWindow ();
 
-	bool queryAttributes (XWindowAttributes &attrib) const;
-	bool queryFrameAttributes (XWindowAttributes &attrib) const;
-	int  requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const;
-	int  requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const;
-	int  requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int valueMask) const;
-	void sendSyntheticConfigureNotify () const;
+	bool queryAttributes (XWindowAttributes &attrib);
+	bool queryFrameAttributes (XWindowAttributes &attrib);
+	int  requestConfigureOnClient (const XWindowChanges &xwc,
+				       unsigned int valueMask);
+	int  requestConfigureOnWrapper (const XWindowChanges &xwc,
+					unsigned int valueMask);
+	int  requestConfigureOnFrame (const XWindowChanges &xwc,
+				      unsigned int valueMask);
+	void sendSyntheticConfigureNotify ();
 	bool hasCustomShape () const;
 
 	void recalcNormalHints ();
@@ -408,6 +411,7 @@ class PrivateWindow :
 
 	CompWindowExtents input;
 	CompWindowExtents serverInput;
+	CompWindowExtents lastServerInput;
 	CompWindowExtents border;
 	CompWindowExtents output;
 

@@ -37,8 +37,8 @@ class SyncServerWindow
 
 	virtual ~SyncServerWindow () {}
 
-	virtual bool queryAttributes (XWindowAttributes &attrib) const = 0;
-	virtual bool queryFrameAttributes (XWindowAttributes &attrib) const = 0;
+	virtual bool queryAttributes (XWindowAttributes &attrib) = 0;
+	virtual bool queryFrameAttributes (XWindowAttributes &attrib) = 0;
 };
 }
 }

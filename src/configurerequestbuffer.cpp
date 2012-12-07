@@ -265,21 +265,15 @@ crb::ConfigureRequestBuffer::untrackLock (crb::BufferLock *lock)
 		    boost::bind (isLock, _1, lock));
 }
 
-bool crb::ConfigureRequestBuffer::queryAttributes (XWindowAttributes &attrib) const
+bool crb::ConfigureRequestBuffer::queryAttributes (XWindowAttributes &attrib)
 {
-    /* This is a little ugly, however the queryAttributes method from
-     * the SyncServerWindow interface is const, and the queue really does
-     * have to be released before we can query attributes from the server */
-    const_cast <crb::ConfigureRequestBuffer::Private *> (priv.get ())->dispatchConfigure (true);
+    priv->dispatchConfigure (true);
     return priv->syncServerWindow->queryAttributes (attrib);
 }
 
-bool crb::ConfigureRequestBuffer::queryFrameAttributes (XWindowAttributes &attrib) const
+bool crb::ConfigureRequestBuffer::queryFrameAttributes (XWindowAttributes &attrib)
 {
-    /* This is a little ugly, however the queryFrameAttributes method from
-     * the SyncServerWindow interface is const, and the queue really does
-     * have to be released before we can query attributes from the server */
-    const_cast <crb::ConfigureRequestBuffer::Private *> (priv.get ())->dispatchConfigure (true);
+    priv->dispatchConfigure (true);
     return priv->syncServerWindow->queryFrameAttributes (attrib);
 }
 

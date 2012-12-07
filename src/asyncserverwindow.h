@@ -38,12 +38,12 @@ class AsyncServerWindow
 	virtual ~AsyncServerWindow () {};
 
 	virtual int requestConfigureOnClient (const XWindowChanges &xwc,
-					      unsigned int         valueMask) const = 0;
+					      unsigned int         valueMask) = 0;
 	virtual int requestConfigureOnWrapper (const XWindowChanges &xwc,
-					       unsigned int         valueMask) const = 0;
+					       unsigned int         valueMask) = 0;
 	virtual int requestConfigureOnFrame  (const XWindowChanges &xwc,
-					      unsigned int         valueMask) const = 0;
-	virtual void sendSyntheticConfigureNotify () const = 0;
+					      unsigned int         valueMask) = 0;
+	virtual void sendSyntheticConfigureNotify () = 0;
 	virtual bool hasCustomShape () const = 0;
 };
 }

@@ -98,8 +98,8 @@ class ConfigureRequestBuffer :
 	/* Implement getAttributes and require that
 	 * the queue is released before calling through
 	 * to the SyncServerWindow */
-	bool queryAttributes (XWindowAttributes &attrib) const;
-	bool queryFrameAttributes (XWindowAttributes &attrib) const;
+	bool queryAttributes (XWindowAttributes &attrib);
+	bool queryFrameAttributes (XWindowAttributes &attrib);
 
 	void forceRelease ();
 
