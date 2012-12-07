@@ -160,10 +160,10 @@ add_dependencies (compiz_outputdevices
     compiz_window_geometry
 )
 
-add_library (compiz_geometryupdatequeue STATIC
-             geometryupdatequeue.cpp)
+add_library (compiz_configurerequestbuffer STATIC
+             configurerequestbuffer.cpp)
 
-target_link_libraries (compiz_geometryupdatequeue
+target_link_libraries (compiz_configurerequestbuffer
                        compiz_window_geometry)
 
 # workaround for build race
@@ -198,7 +198,7 @@ target_link_libraries (
     compiz_servergrab
     compiz_output
     compiz_outputdevices
-    compiz_geometryupdatequeue
+    compiz_configurerequestbuffer
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
 )

@@ -29,14 +29,14 @@ target_link_libraries (compiz_test_outputdevices
 
 compiz_discover_tests(compiz_test_outputdevices COVERAGE compiz_core)
 
-add_executable (compiz_test_geometryupdatequeue
-                test_geometryupdatequeue.cpp)
+add_executable (compiz_test_configurerequestbuffer
+                test_configurerequestbuffer.cpp)
 
-target_link_libraries (compiz_test_geometryupdatequeue
-    compiz_geometryupdatequeue
+target_link_libraries (compiz_test_configurerequestbuffer
+    compiz_configurerequestbuffer
     ${GTEST_BOTH_LIBRARIES}
     ${GMOCK_MAIN_LIBRARY}
     ${GMOCK_LIBRARY}
 )
 
-compiz_discover_tests(compiz_test_geometryupdatequeue COVERAGE compiz_geometryupdatequeue)
+compiz_discover_tests(compiz_test_configurerequestbuffer COVERAGE compiz_configurerequestbuffer)

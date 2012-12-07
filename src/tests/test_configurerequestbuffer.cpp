@@ -30,7 +30,7 @@
 #include <gtest/gtest.h>
 #include <X11/Xlib.h>
 
-#include "geometryupdatequeue.h"
+#include "configurerequestbuffer-impl.h"
 #include "asyncserverwindow.h"
 
 namespace crb = compiz::window::configure_buffers;

@@ -27,7 +27,7 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/bind.hpp>
 #include "asyncserverwindow.h"
-#include "geometryupdatequeue.h"
+#include "configurerequestbuffer-impl.h"
 
 #ifndef foreach
 #define foreach BOOST_FOREACH
