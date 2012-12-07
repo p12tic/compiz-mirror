@@ -918,10 +918,12 @@ PrivateWindow::updateRegion ()
 	/* We should update the server here */
 	XSync (screen->dpy (), false);
 
-	boundingShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
-					 	  ShapeBounding, &nBounding, &order);
-	inputShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
-					       ShapeInput, &nInput, &order);
+	boundingShapeRects = priv->queryShapeRectangles (ShapeBounding,
+							 &nBounding,
+							 &order);
+	inputShapeRects = priv->queryShapeRectangles (ShapeInput,
+						      &nBounding,
+						      &order);
     }
 
     r.x      = -geom.border ();
