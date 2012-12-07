@@ -132,7 +132,13 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 	foreach (const LockObserver &lock, locks)
 	{
 	    crb::Lockable::Ptr strongLock (lock.lock ());
-	    strongLock->lock ();
+
+	    /* We might be in a lock's destructor so check
+	     * if this can really be re-locked, if not, its
+	     * no big deal as the lock is going away anyways
+	     */
+	    if (strongLock)
+		strongLock->lock ();
 	}
     }
 }

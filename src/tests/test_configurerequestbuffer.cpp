@@ -143,29 +143,34 @@ class ConfigureRequestBuffer :
 	MockSyncServerWindow  syncServerWindow;
 };
 
-TEST_F (ConfigureRequestBuffer, PushDirectSyntheticConfigureNotify)
+class ConfigureRequestBufferDispatch :
+    public ConfigureRequestBuffer
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
+    protected:
 
+	ConfigureRequestBufferDispatch () :
+	    ConfigureRequestBuffer (),
+	    factory (boost::bind (CreateNormalLock, _1)),
+	    buffer (
+		crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+						     &syncServerWindow,
+						     factory))
+	{
+	}
+
+	crb::ConfigureRequestBuffer::LockFactory factory;
+	crb::Buffer::Ptr buffer;
+};
+
+TEST_F (ConfigureRequestBufferDispatch, PushDirectSyntheticConfigureNotify)
+{
     EXPECT_CALL (asyncServerWindow, sendSyntheticConfigureNotify ());
 
     buffer->pushSyntheticConfigureNotify ();
 }
 
-TEST_F (ConfigureRequestBuffer, PushDirectClientUpdate)
+TEST_F (ConfigureRequestBufferDispatch, PushDirectClientUpdate)
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
 			       CWSibling | CWStackMode;
 
@@ -175,15 +180,8 @@ TEST_F (ConfigureRequestBuffer, PushDirectClientUpdate)
     buffer->pushClientRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBuffer, PushDirectWrapperUpdate)
+TEST_F (ConfigureRequestBufferDispatch, PushDirectWrapperUpdate)
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
 			       CWSibling | CWStackMode;
 
@@ -193,15 +191,8 @@ TEST_F (ConfigureRequestBuffer, PushDirectWrapperUpdate)
     buffer->pushWrapperRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBuffer, PushDirectFrameUpdate)
+TEST_F (ConfigureRequestBufferDispatch, PushDirectFrameUpdate)
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
 			       CWSibling | CWStackMode;
 
@@ -212,15 +203,8 @@ TEST_F (ConfigureRequestBuffer, PushDirectFrameUpdate)
     buffer->pushFrameRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBuffer, PushUpdateLocked)
+TEST_F (ConfigureRequestBufferDispatch, PushUpdateLocked)
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = 0;
@@ -230,15 +214,8 @@ TEST_F (ConfigureRequestBuffer, PushUpdateLocked)
     buffer->pushFrameRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBuffer, PushCombinedUpdateLocked)
+TEST_F (ConfigureRequestBufferDispatch, PushCombinedUpdateLocked)
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY;
@@ -260,15 +237,8 @@ TEST_F (ConfigureRequestBuffer, PushCombinedUpdateLocked)
     lock->release ();
 }
 
-TEST_F (ConfigureRequestBuffer, PushUpdateLockedReleaseInOrder)
+TEST_F (ConfigureRequestBufferDispatch, PushUpdateLockedReleaseInOrder)
 {
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY;
@@ -295,16 +265,8 @@ TEST_F (ConfigureRequestBuffer, PushUpdateLockedReleaseInOrder)
     lock->release ();
 }
 
-TEST_F (ConfigureRequestBuffer, UnlockBuffer)
+TEST_F (ConfigureRequestBufferDispatch, UnlockBuffer)
 {
-    MockAsyncServerWindow       asyncServerWindow;
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
@@ -320,16 +282,8 @@ TEST_F (ConfigureRequestBuffer, UnlockBuffer)
     lock->release ();
 }
 
-TEST_F (ConfigureRequestBuffer, ImplicitUnlockBuffer)
+TEST_F (ConfigureRequestBufferDispatch, ImplicitUnlockBuffer)
 {
-    MockAsyncServerWindow       asyncServerWindow;
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
@@ -343,16 +297,8 @@ TEST_F (ConfigureRequestBuffer, ImplicitUnlockBuffer)
 					       valueMask));
 }
 
-TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
+TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnRestack)
 {
-    MockAsyncServerWindow       asyncServerWindow;
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWStackMode | CWSibling;
@@ -363,16 +309,8 @@ TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
     buffer->pushFrameRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
+TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnShapedWindowSizeChange)
 {
-    MockAsyncServerWindow       asyncServerWindow;
-    crb::ConfigureRequestBuffer::LockFactory factory (
-		boost::bind (CreateNormalLock, _1));
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWWidth | CWHeight;
@@ -436,25 +374,42 @@ class MockLockFactory
 };
 }
 
-TEST_F (ConfigureRequestBuffer, RearmBufferLockOnRelease)
+class ConfigureRequestBufferLockBehaviour :
+    public ConfigureRequestBuffer
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
+    public:
 
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
+	ConfigureRequestBufferLockBehaviour () :
+	    ConfigureRequestBuffer (),
+	    lock (boost::make_shared <MockLock> ()),
+	    factory (
+		boost::bind (&MockLockFactory::CreateMockLock,
+			     &mockLockFactory,
+			     _1)),
+	    buffer (
+		crb::ConfigureRequestBuffer::Create (
+		    &asyncServerWindow,
+		    &syncServerWindow,
+		    factory))
 
-    mockLockFactory.QueueLockForCreation (lock);
+	{
+	    mockLockFactory.QueueLockForCreation (lock);
+	}
 
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
+    protected:
 
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
+	typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
+	typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
 
+	MockLock::Ptr    lock;
+	MockLockFactory  mockLockFactory;
+
+	LockFactory      factory;
+	crb::Buffer::Ptr buffer;
+};
+
+TEST_F (ConfigureRequestBufferLockBehaviour, RearmBufferLockOnRelease)
+{
     EXPECT_CALL (*lock, lock ());
     crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
@@ -478,25 +433,8 @@ TEST_F (ConfigureRequestBuffer, RearmBufferLockOnRelease)
     releasable->release ();
 }
 
-TEST_F (ConfigureRequestBuffer, NoRearmBufferLockNoReleaseRequired)
+TEST_F (ConfigureRequestBufferLockBehaviour, NoRearmBufferLockNoReleaseRequired)
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
-
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
-
-    mockLockFactory.QueueLockForCreation (lock);
-
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
-
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
     crb::Releasable::Ptr releasable (buffer->obtainLock ());
@@ -514,25 +452,8 @@ TEST_F (ConfigureRequestBuffer, NoRearmBufferLockNoReleaseRequired)
     releasable->release ();
 }
 
-TEST_F (ConfigureRequestBuffer, RearmWhenPushReady)
+TEST_F (ConfigureRequestBufferLockBehaviour, RearmWhenPushReady)
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
-
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
-
-    mockLockFactory.QueueLockForCreation (lock);
-
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
-
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
     crb::Releasable::Ptr releasable (buffer->obtainLock ());
@@ -562,26 +483,10 @@ TEST_F (ConfigureRequestBuffer, RearmWhenPushReady)
     buffer->pushFrameRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBuffer, NoRearmBufferLockOnNoRelease)
+TEST_F (ConfigureRequestBufferLockBehaviour, NoRearmBufferLockOnNoRelease)
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
-
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
     MockLock::Ptr    second (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
-
-    mockLockFactory.QueueLockForCreation (lock);
     mockLockFactory.QueueLockForCreation (second);
-
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
-
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
 
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
@@ -602,25 +507,8 @@ TEST_F (ConfigureRequestBuffer, NoRearmBufferLockOnNoRelease)
     releasable->release ();
 }
 
-TEST_F (ConfigureRequestBuffer, QueryAttributesDispatchAndRearm)
+TEST_F (ConfigureRequestBufferLockBehaviour, QueryAttributesDispatchAndRearm)
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
-
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
-
-    mockLockFactory.QueueLockForCreation (lock);
-
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
-
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
 
@@ -648,25 +536,8 @@ TEST_F (ConfigureRequestBuffer, QueryAttributesDispatchAndRearm)
     buffer->queryAttributes (xwa);
 }
 
-TEST_F (ConfigureRequestBuffer, QueryFrameAttributesDispatchAndRearm)
+TEST_F (ConfigureRequestBufferLockBehaviour, QueryFrameAttributesDispatchAndRearm)
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
-
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
-
-    mockLockFactory.QueueLockForCreation (lock);
-
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
-
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
 
@@ -694,25 +565,8 @@ TEST_F (ConfigureRequestBuffer, QueryFrameAttributesDispatchAndRearm)
     buffer->queryFrameAttributes (xwa);
 }
 
-TEST_F (ConfigureRequestBuffer, ForceReleaseDispatchAndRearm)
+TEST_F (ConfigureRequestBufferLockBehaviour, ForceReleaseDispatchAndRearm)
 {
-    typedef NiceMock <MockAsyncServerWindow> NiceServerWindow;
-    typedef crb::ConfigureRequestBuffer::LockFactory LockFactory;
-
-    NiceServerWindow asyncServerWindow;
-    MockLock::Ptr    lock (boost::make_shared <MockLock> ());
-    MockLockFactory  mockLockFactory;
-
-    mockLockFactory.QueueLockForCreation (lock);
-
-    LockFactory      factory (
-	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
-
-    crb::Buffer::Ptr buffer (
-	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
-					     &syncServerWindow,
-					     factory));
-
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
 
