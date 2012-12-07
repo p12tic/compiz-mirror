@@ -538,7 +538,6 @@ ShiftScreen::layoutThumbsCover ()
     int ww, wh;
     float xScale, yScale;
     float distance;
-    int i;
 
     CompRect oe;
 
@@ -588,7 +587,7 @@ ShiftScreen::layoutThumbsCover ()
 	space *= 2;
 	//space += (space / sin (PI / 4)) - space;
 
-	for (i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 	    if (mInvert ^ (i == 0))
 	    {
@@ -676,7 +675,6 @@ ShiftScreen::layoutThumbsFlip ()
     int ww, wh;
     float xScale, yScale;
     float distance;
-    int i;
     float angle;
     int slotNum;
 
@@ -722,7 +720,7 @@ ShiftScreen::layoutThumbsFlip ()
 
 	angle = optionGetFlipRotation () * PI / 180.0;
 
-	for (i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 	    if (mInvert ^ (i == 0))
 		distance = mMvTarget - index;
@@ -1349,7 +1347,6 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
     {
 	int        steps;
 	float      amount, chunk;
-	int        i;
 
 	amount = msSinceLastPaint * 0.05f * optionGetShiftSpeed ();
 	steps  = amount / (0.5f * optionGetTimestep ());
@@ -1382,7 +1379,7 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
 		SHIFT_WINDOW (w);
 
 		mMoreAdjust |= sw->adjustShiftAttribs (chunk);
-		for (i = 0; i < 2; i++)
+		for (int i = 0; i < 2; i++)
 		{
 		    ShiftSlot *slot = &sw->mSlots[i];
 		    slot->tx = slot->x - w->x () -
@@ -1450,16 +1447,14 @@ ShiftScreen::donePaint ()
 
 		CompWindow *w;
 
-		CompWindow *pw = NULL;
-
 		mState = ShiftStateIn;
 		mMoreAdjust = true;
 		cScreen->damageScreen ();
 
 		if (!mCancelled && mMvTarget != 0)
 		{
-		    int i;
-		    for (i = 0; i < mNSlots; i++)
+		    CompWindow *pw = NULL;
+		    for (int i = 0; i < mNSlots; i++)
 		    {
 			w = mDrawSlots[i].w;
 

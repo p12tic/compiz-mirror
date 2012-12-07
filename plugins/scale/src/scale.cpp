@@ -425,29 +425,27 @@ void
 PrivateScaleScreen::layoutSlotsForArea (const CompRect& workArea,
 					int             nWindows)
 {
-    int i, j;
-    int x, y, width, height;
-    int lines, n, nSlots;
-    int spacing;
-
     if (!nWindows)
 	return;
 
-    lines   = sqrt (nWindows + 1);
-    spacing = optionGetSpacing ();
-    nSlots  = 0;
+    int x, y, width, height;
+    int n;
+
+    int lines   = sqrt (nWindows + 1);
+    int spacing = optionGetSpacing ();
+    int nSlots  = 0;
 
     y      = workArea.y () + spacing;
     height = (workArea.height () - (lines + 1) * spacing) / lines;
 
-    for (i = 0; i < lines; i++)
+    for (int i = 0; i < lines; i++)
     {
 	n = MIN (nWindows - nSlots, ceilf ((float) nWindows / lines));
 
 	x     = workArea.x () + spacing;
 	width = (workArea.width () - (n + 1) * spacing) / n;
 
-	for (j = 0; j < n; j++)
+	for (int j = 0; j < n; j++)
 	{
 	    slots[this->nSlots].setGeometry (x, y, width, height);
 
@@ -1493,10 +1491,7 @@ ScaleScreen::relayoutSlots (const CompMatch& match)
 void
 PrivateScaleScreen::windowRemove (CompWindow *w)
 {
-    if (!w)
-	return;
-
-    if (state == ScaleScreen::Idle || state == ScaleScreen::In)
+    if (!w || state == ScaleScreen::Idle || state == ScaleScreen::In)
 	return;
 
     foreach (ScaleWindow *lw, windows)

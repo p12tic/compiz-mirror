@@ -998,7 +998,6 @@ WindowDecoration::destroy (WindowDecoration *wd)
 void
 DecorWindow::setDecorationMatrices ()
 {
-    int		      i;
     float	      x0, y0;
     decor_matrix_t    a;
     GLTexture::Matrix b;
@@ -1006,7 +1005,7 @@ DecorWindow::setDecorationMatrices ()
     if (!wd)
 	return;
 
-    for (i = 0; i < wd->nQuad; i++)
+    for (int i = 0; i < wd->nQuad; i++)
     {
 	/* Set the quad matrix to the texture matrix */
 	wd->quad[i].matrix = wd->decor->texture->textures[0]->matrix ();
@@ -1082,12 +1081,11 @@ DecorWindow::updateDecorationScale ()
 {
     int		     x1, y1, x2, y2;
     float            sx, sy;
-    int		     i;
 
     if (!wd)
 	return;
 
-    for (i = 0; i < wd->nQuad; i++)
+    for (int i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
 	unsigned int width = window->size ().width ();
@@ -1180,7 +1178,6 @@ DecorWindow::matchType (CompWindow *w,
                         unsigned int decorType)
 {
     const unsigned int nTypeStates = 5;
-    unsigned int i;
     struct typestate {
         unsigned int compFlag;
         unsigned int decorFlag;
@@ -1193,7 +1190,7 @@ DecorWindow::matchType (CompWindow *w,
         { CompWindowTypeUtilMask, DECOR_WINDOW_TYPE_UTILITY}
     };
 
-    for (i = 0; i < nTypeStates; i++)
+    for (unsigned int i = 0; i < nTypeStates; i++)
     {
         if ((decorType & typeStates[i].decorFlag) && (w->type () & typeStates[i].compFlag))
             return true;
@@ -1218,7 +1215,6 @@ DecorWindow::matchState (CompWindow   *w,
                          unsigned int decorState)
 {
     const unsigned int nStateStates = 3;
-    unsigned int i;
     struct statestate {
         unsigned int compFlag;
         unsigned int decorFlag;
@@ -1233,7 +1229,7 @@ DecorWindow::matchState (CompWindow   *w,
     if (screen->activeWindow () == w->id ())
         decorState &= ~(DECOR_WINDOW_STATE_FOCUS);
 
-    for (i = 0; i < nStateStates; i++)
+    for (unsigned int i = 0; i < nStateStates; i++)
     {
         if ((decorState & stateStates[i].decorFlag) && (w->state () & stateStates[i].compFlag))
             decorState &= ~(stateStates[i].decorFlag);
@@ -1254,7 +1250,6 @@ DecorWindow::matchActions (CompWindow   *w,
                            unsigned int decorActions)
 {
     const unsigned int nActionStates =16;
-    unsigned int i;
     struct actionstate {
         unsigned int compFlag;
         unsigned int decorFlag;
@@ -1278,7 +1273,7 @@ DecorWindow::matchActions (CompWindow   *w,
         { DECOR_WINDOW_ACTION_BELOW, CompWindowActionBelowMask },
     };
 
-    for (i = 0; i < nActionStates; i++)
+    for (unsigned int i = 0; i < nActionStates; i++)
     {
         if ((decorActions & actionStates[i].decorFlag) && (w->type () & actionStates[i].compFlag))
             decorActions &= ~(actionStates[i].decorFlag);
@@ -2484,10 +2479,8 @@ DecorScreen::handleEvent (XEvent *event)
 		    }
 		    else
 		    {
-			int i;
-
 			/* A default decoration changed */
-			for (i = 0; i < DECOR_NUM; i++)
+			for (int i = 0; i < DECOR_NUM; i++)
 			{
 			    if (event->xproperty.atom == decorAtom[i])
 			    {
@@ -2785,9 +2778,7 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 {
     if (wd)
     {
-	int		 i;
-
-	for (i = 0; i < wd->nQuad; i++)
+	for (int i = 0; i < wd->nQuad; i++)
 	{
 	    wd->quad[i].box.x1 += dx;
 	    wd->quad[i].box.y1 += dy;

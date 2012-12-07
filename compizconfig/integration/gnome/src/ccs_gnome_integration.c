@@ -378,7 +378,6 @@ setButtonBindingForSetting (CCSContext   *context,
 			    unsigned int buttonModMask)
 {
     CCSSetting            *s;
-    CCSSettingButtonValue value;
 
     s = findDisplaySettingForPlugin (context, plugin, setting);
     if (!s)
@@ -387,7 +386,7 @@ setButtonBindingForSetting (CCSContext   *context,
     if (ccsSettingGetType (s) != TypeButton)
 	return;
 
-    value = ccsSettingGetValue (s)->value.asButton;
+    CCSSettingButtonValue value = ccsSettingGetValue (s)->value.asButton;
 
     if ((value.button != button) || (value.buttonModMask != buttonModMask))
     {
@@ -640,11 +639,11 @@ ccsGNOMEIntegrationBackendUpdateIntegratedSettings (CCSIntegration *integration,
 	else
 	{
 	    CCSPlugin     *plugin = NULL;
-	    CCSSetting    *setting;
 
 	    plugin = ccsFindPlugin (priv->context, pluginName);
 	    if (plugin)
 	    {
+		CCSSetting    *setting;
 		setting = ccsFindSetting (plugin, settingName);
 
 		if (setting)
