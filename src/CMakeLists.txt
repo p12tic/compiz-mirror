@@ -160,6 +160,15 @@ add_dependencies (compiz_outputdevices
     compiz_window_geometry
 )
 
+add_library (compiz_geometryupdatequeue STATIC
+             geometryupdatequeue.cpp)
+
+target_link_libraries (compiz_geometryupdatequeue
+                       compiz_window_geometry)
+
+add_library (compiz_syncserverwindow STATIC
+             syncserverwindow.cpp)
+
 # workaround for build race
 add_dependencies (compiz core-xml-file)
 

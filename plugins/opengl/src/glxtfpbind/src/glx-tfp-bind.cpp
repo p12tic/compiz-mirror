@@ -52,6 +52,9 @@ cgl::bindTexImageGLX (ServerGrabInterface                *serverGrabInterface,
 #endif
 	if (!checkPixmapValidity (x11Pixmap))
 	    return false;
+
+	bindTexImageEXT (glxPixmap);
+	return true;
     }
 
     bindTexImageEXT (glxPixmap);
