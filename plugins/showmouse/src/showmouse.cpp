@@ -99,9 +99,7 @@ ParticleSystem::initParticles (int            f_numParticles)
     coords_cache.size  = 0;
     dcolors_cache.size = 0;
 
-    int i;
-
-    for (i = 0; i < f_numParticles; i++)
+    for (int i = 0; i < f_numParticles; i++)
     {
 	Particle p;
 	p.life = 0.0f;

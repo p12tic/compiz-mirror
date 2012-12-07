@@ -233,7 +233,6 @@ copyGconfValues (GConfEngine *conf,
     while (tmp)
     {
 	GConfEntry *entry = tmp->data;
-	GConfValue *value;
 	const char *key = gconf_entry_get_key (entry);
 	char       *name, *newKey, *newSchema = NULL;
 
@@ -243,6 +242,8 @@ copyGconfValues (GConfEngine *conf,
 
 	if (to)
 	{
+	    GConfValue *value;
+
 	    if (asprintf (&newKey, "%s/%s", to, name + 1) == -1)
 		newKey = NULL;
 

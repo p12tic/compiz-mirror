@@ -113,9 +113,8 @@ static CompString
 edgeMaskToBindingString (unsigned int edgeMask)
 {
     CompString binding;
-    int        i;
 
-    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	if (edgeMask & (1 << i))
 	    binding += edges[i].modifierName;
 

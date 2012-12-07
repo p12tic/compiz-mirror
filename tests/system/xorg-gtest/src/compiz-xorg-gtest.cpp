@@ -22,8 +22,10 @@
  */
 #include <list>
 #include <stdexcept>
+#include <iomanip>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <boost/shared_ptr.hpp>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 #include <X11/Xlib.h>
@@ -31,16 +33,62 @@
 
 #include "compiz-xorg-gtest-config.h"
 
+using ::testing::MatchResultListener;
+using ::testing::MatcherInterface;
+
 namespace ct = compiz::testing;
 namespace
 {
-    void RemoveEventFromQueue (Display *dpy)
-    {
-	XEvent event;
+const int          WINDOW_X = 0;
+const int          WINDOW_Y = 0;
+const unsigned int WINDOW_WIDTH = 640;
+const unsigned int WINDOW_HEIGHT = 480;
+const unsigned int WINDOW_BORDER = 0;
+const unsigned int WINDOW_DEPTH = CopyFromParent;
+const unsigned int WINDOW_CLASS = InputOutput;
+Visual             *WINDOW_VISUAL = CopyFromParent;
 
-	if (XNextEvent (dpy, &event) != Success)
-	    throw std::runtime_error("Failed to remove X event");
-    }
+
+const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
+
+void RemoveEventFromQueue (Display *dpy)
+{
+    XEvent event;
+
+    if (XNextEvent (dpy, &event) != Success)
+	throw std::runtime_error("Failed to remove X event");
+}
+}
+
+Window
+ct::CreateNormalWindow (Display *dpy)
+{
+    XSetWindowAttributes WINDOW_ATTRIB;
+    Window w = XCreateWindow (dpy,
+			      DefaultRootWindow (dpy),
+			      WINDOW_X,
+			      WINDOW_Y,
+			      WINDOW_WIDTH,
+			      WINDOW_HEIGHT,
+			      WINDOW_BORDER,
+			      WINDOW_DEPTH,
+			      WINDOW_CLASS,
+			      WINDOW_VISUAL,
+			      WINDOW_ATTRIB_VALUE_MASK,
+			      &WINDOW_ATTRIB);
+
+    XSelectInput (dpy, w, StructureNotifyMask);
+    return w;
+}
+
+bool
+ct::AdvanceToNextEventOnSuccess (Display *dpy,
+				 bool waitResult)
+{
+    if (waitResult)
+	RemoveEventFromQueue (dpy);
+
+    return waitResult;
 }
 
 bool
@@ -57,10 +105,11 @@ ct::WaitForEventOfTypeOnWindow (Display *dpy,
 	if (!XPeekEvent (dpy, &event))
 	    throw std::runtime_error ("Failed to peek event");
 
-	RemoveEventFromQueue (dpy);
-
 	if (event.xany.window != w)
+	{
+	    RemoveEventFromQueue (dpy);
 	    continue;
+	}
 
 	return true;
     }
@@ -84,9 +133,10 @@ ct::WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 	    throw std::runtime_error ("Failed to peek event");
 
 	if (!matcher.MatchAndExplain (event, NULL))
+	{
+	    RemoveEventFromQueue (dpy);
 	    continue;
-
-	RemoveEventFromQueue (dpy);
+	}
 
 	return true;
     }
@@ -124,27 +174,293 @@ ct::NET_CLIENT_LIST_STACKING (Display *dpy)
     return stackingOrder;
 }
 
-void
-ct::XorgSystemTest::SetUp ()
+namespace
 {
-    xorg::testing::Test::SetUp ();
+class StartupClientMessageMatcher :
+    public ct::XEventMatcher
+{
+    public:
 
-    ::Display *dpy = Display ();
-    XSelectInput (dpy, DefaultRootWindow (dpy), SubstructureNotifyMask | PropertyChangeMask);
+	StartupClientMessageMatcher (Atom                             startup,
+				     Window                           root,
+				     ct::CompizProcess::StartupFlags state) :
+	    mStartup (startup),
+	    mRoot (root),
+	    mFlags (state)
+	{
+	}
 
-    xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
-    mCompizProcess.Start (compizBinaryPath, "--replace", NULL);
+	virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+	{
+	    int state = mFlags & ct::CompizProcess::ExpectStartupFailure ? 0 : 1;
 
-    /* Output buffer is flushed by this point, compiz has a server grab,
-     * so we will only get this once the relevant initialization is complete */
-    ASSERT_TRUE (xorg::testing::XServer::WaitForEventOfType (Display (), PropertyNotify, -1, -1, 3000));
+	    if (event.xclient.window == mRoot &&
+		event.xclient.message_type == mStartup &&
+		event.xclient.data.l[0] == state)
+		return true;
 
-    ASSERT_EQ (mCompizProcess.GetState (), xorg::testing::Process::RUNNING);
+	    return false;
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "is startup message";
+	}
+
+	virtual void DescribeNegationTo (std::ostream *os) const
+	{
+	    *os << "is not startup message";
+	}
+
+    private:
+
+	Atom mStartup;
+	Window mRoot;
+	ct::CompizProcess::StartupFlags mFlags;
+};
+}
+
+class ct::PrivatePropertyNotifyXEventMatcher
+{
+    public:
+
+	PrivatePropertyNotifyXEventMatcher (Display           *dpy,
+					    const std::string &propertyName) :
+	    mPropertyName (propertyName),
+	    mProperty (XInternAtom (dpy, propertyName.c_str (), false))
+	{
+	}
+
+	std::string mPropertyName;
+	Atom	mProperty;
+};
+
+ct::PropertyNotifyXEventMatcher::PropertyNotifyXEventMatcher (Display           *dpy,
+							      const std::string &propertyName) :
+    priv (new ct::PrivatePropertyNotifyXEventMatcher (dpy, propertyName))
+{
+}
+
+bool
+ct::PropertyNotifyXEventMatcher::MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+{
+    const XPropertyEvent *propertyEvent = reinterpret_cast <const XPropertyEvent *> (&event);
+
+    if (priv->mProperty == propertyEvent->atom)
+	return true;
+    else
+	return false;
 }
 
 void
-ct::XorgSystemTest::TearDown ()
+ct::PropertyNotifyXEventMatcher::DescribeTo (std::ostream *os) const
 {
-    mCompizProcess.Kill ();
+    *os << "Is property identified by " << priv->mPropertyName;
+}
+
+class ct::PrivateConfigureNotifyXEventMatcher
+{
+    public:
+
+	PrivateConfigureNotifyXEventMatcher (Window       above,
+					     unsigned int border,
+					     int          x,
+					     int          y,
+					     unsigned int width,
+					     unsigned int height) :
+	    mAbove (above),
+	    mBorder (border),
+	    mX (x),
+	    mY (y),
+	    mWidth (width),
+	    mHeight (height)
+	{
+	}
+
+	Window       mAbove;
+	int          mBorder;
+	int          mX;
+	int          mY;
+	int          mWidth;
+	int          mHeight;
+};
+
+ct::ConfigureNotifyXEventMatcher::ConfigureNotifyXEventMatcher (Window       above,
+								unsigned int border,
+								int          x,
+								int          y,
+								unsigned int width,
+								unsigned int height) :
+    priv (new ct::PrivateConfigureNotifyXEventMatcher (above,
+						       border,
+						       x,
+						       y,
+						       width,
+						       height))
+{
+}
+
+bool
+ct::ConfigureNotifyXEventMatcher::MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+{
+    const XConfigureEvent *ce = reinterpret_cast <const XConfigureEvent *> (&event);
+
+    return ce->above == priv->mAbove &&
+	   ce->border_width == priv->mBorder &&
+	   ce->x == priv->mX &&
+	   ce->y == priv->mY &&
+	   ce->width == priv->mWidth &&
+	   ce->height == priv->mHeight;
+}
+
+void
+ct::ConfigureNotifyXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    *os << "Matches ConfigureNotify with parameters : " << std::endl <<
+	   " x: " << priv->mX <<
+	   " y: " << priv->mY <<
+	   " width: " << priv->mWidth <<
+	   " height: " << priv->mHeight <<
+	   " border: " << priv->mBorder <<
+	   " above: " << std::hex << priv->mAbove << std::dec;
+}
+
+class ct::PrivateCompizProcess
+{
+    public:
+	PrivateCompizProcess (ct::CompizProcess::StartupFlags flags) :
+	    mFlags (flags),
+	    mIsRunning (true)
+	{
+	}
+
+	void WaitForStartupMessage (Display                         *dpy,
+				    ct::CompizProcess::StartupFlags flags,
+				    unsigned int                    waitTimeout);
+
+	typedef boost::shared_ptr <xorg::testing::Process> ProcessPtr;
+
+	ct::CompizProcess::StartupFlags mFlags;
+	bool                            mIsRunning;
+	xorg::testing::Process          mProcess;
+};
+
+void
+ct::PrivateCompizProcess::WaitForStartupMessage (Display                         *dpy,
+						 ct::CompizProcess::StartupFlags flags,
+						 unsigned int                    waitTimeout)
+{
+    XWindowAttributes attrib;
+    Window    root = DefaultRootWindow (dpy);
+
+    Atom    startup = XInternAtom (dpy,
+				   "_COMPIZ_TESTING_STARTUP",
+				   false);
+
+    StartupClientMessageMatcher matcher (startup, root, flags);
+
+    /* Save the current event mask and subscribe to StructureNotifyMask only */
+    ASSERT_TRUE (XGetWindowAttributes (dpy, root, &attrib));
+    XSelectInput (dpy, root, StructureNotifyMask |
+			     attrib.your_event_mask);
+
+    ASSERT_TRUE (ct::AdvanceToNextEventOnSuccess (
+		     dpy,
+		     ct::WaitForEventOfTypeOnWindowMatching (dpy,
+							     root,
+							     ClientMessage,
+							     -1,
+							     -1,
+							     matcher,
+							     waitTimeout)));
+
+    XSelectInput (dpy, root, attrib.your_event_mask);
+}
+
+ct::CompizProcess::CompizProcess (::Display                       *dpy,
+				  ct::CompizProcess::StartupFlags flags,
+				  unsigned int                    waitTimeout) :
+    priv (new PrivateCompizProcess (flags))
+{
+    xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
+
+    std::vector <std::string> args;
+
+    if (flags & ct::CompizProcess::ReplaceCurrentWM)
+	args.push_back ("--replace");
+
+    args.push_back ("--send-startup-message");
+
+    priv->mProcess.Start (compizBinaryPath, args);
+    EXPECT_EQ (priv->mProcess.GetState (), xorg::testing::Process::RUNNING);
+
+    if (flags & ct::CompizProcess::WaitForStartupMessage)
+	priv->WaitForStartupMessage (dpy, flags, waitTimeout);
+}
+
+ct::CompizProcess::~CompizProcess ()
+{
+    if (priv->mProcess.GetState () == xorg::testing::Process::RUNNING)
+	priv->mProcess.Kill ();
+}
+
+xorg::testing::Process::State
+ct::CompizProcess::State ()
+{
+    return priv->mProcess.GetState ();
+}
+
+pid_t
+ct::CompizProcess::Pid ()
+{
+    return priv->mProcess.Pid ();
+}
+
+class ct::PrivateCompizXorgSystemTest
+{
+    public:
+
+	boost::shared_ptr <ct::CompizProcess> mProcess;
+};
+
+ct::CompizXorgSystemTest::CompizXorgSystemTest () :
+    priv (new PrivateCompizXorgSystemTest)
+{
+}
+
+void
+ct::CompizXorgSystemTest::SetUp ()
+{
+    xorg::testing::Test::SetUp ();
+}
+
+void
+ct::CompizXorgSystemTest::TearDown ()
+{
+    priv->mProcess.reset ();
+
     xorg::testing::Test::TearDown ();
+}
+
+xorg::testing::Process::State
+ct::CompizXorgSystemTest::CompizProcessState ()
+{
+    if (priv->mProcess)
+	return priv->mProcess->State ();
+    return xorg::testing::Process::NONE;
+}
+
+void
+ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags flags)
+{
+    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, 3000));
+}
+
+void
+ct::AutostartCompizXorgSystemTest::SetUp ()
+{
+    ct::CompizXorgSystemTest::SetUp ();
+    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
+		     ct::CompizProcess::ReplaceCurrentWM |
+		     ct::CompizProcess::WaitForStartupMessage));
 }

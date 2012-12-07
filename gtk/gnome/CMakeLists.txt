@@ -34,5 +34,5 @@ if (BUILD_GNOME)
 	DESTINATION ${datadir}/gnome-control-center/keybindings
     )
 
-    add_custom_target (compiz.desktop ALL SOURCES ${desktop_file})
+    add_custom_target (compiz.desktop-file ALL DEPENDS ${desktop_file})
 endif (BUILD_GNOME)
