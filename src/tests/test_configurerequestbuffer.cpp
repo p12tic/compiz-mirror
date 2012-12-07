@@ -43,6 +43,7 @@ using testing::Invoke;
 using testing::WithArgs;
 using testing::SetArgReferee;
 using testing::DoAll;
+using testing::InSequence;
 
 class MockAsyncServerWindow :
     public cw::AsyncServerWindow
@@ -205,7 +206,7 @@ TEST_F (ConfigureRequestBuffer, PushUpdateLocked)
 					     factory));
 
     crb::Releasable::Ptr lock (buffer->obtainLock ());
-;
+
     unsigned int   valueMask = 0;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
@@ -238,6 +239,41 @@ TEST_F (ConfigureRequestBuffer, PushCombinedUpdateLocked)
     buffer->pushFrameRequest (xwc, valueMask);
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (MaskXWC (xwc, valueMask),
+					       valueMask));
+
+    lock->release ();
+}
+
+TEST_F (ConfigureRequestBuffer, PushUpdateLockedReleaseInOrder)
+{
+    crb::ConfigureRequestBuffer::LockFactory factory (
+		boost::bind (CreateNormalLock, _1));
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
+
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
+
+    unsigned int   valueMask = CWX | CWY;
+
+    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnWrapper (_, _)).Times (0);
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnClient (_, _)).Times (0);
+
+    buffer->pushClientRequest (xwc, valueMask);
+    buffer->pushWrapperRequest (xwc, valueMask);
+    buffer->pushFrameRequest (xwc, valueMask);
+
+    InSequence s;
+
+    /* Always frame -> wrapper -> client */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (MaskXWC (xwc, valueMask),
+					       valueMask));
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnWrapper (MaskXWC (xwc, valueMask),
+					       valueMask));
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnClient (MaskXWC (xwc, valueMask),
 					       valueMask));
 
     lock->release ();

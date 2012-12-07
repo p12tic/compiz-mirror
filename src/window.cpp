@@ -2970,19 +2970,41 @@ PrivateWindow::queryAttributes (XWindowAttributes &attrib) const
 int
 PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc, unsigned int valueMask) const
 {
-    return 0;
+    int ret = XConfigureWindow (screen->dpy (), id, valueMask, const_cast <XWindowChanges *> (&xwc));
+
+    /* Send the synthetic configure notify
+     * after the real configure notify arrives
+     * (ICCCM s4.1.5) */
+    if (serverFrame)
+	window->sendConfigureNotify ();
+
+    return ret;
 }
 
 int
 PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc, unsigned int valueMask) const
 {
-    return 0;
+    return XConfigureWindow (screen->dpy (), wrapper, valueMask, const_cast <XWindowChanges *> (&xwc));
 }
 
 int
-PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int valueMask) const
+PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc, unsigned int frameValueMask) const
 {
-    return 0;
+    XWindowChanges wc = xwc;
+
+    wc.x      = serverFrameGeometry.x ();
+    wc.y      = serverFrameGeometry.y ();
+    wc.width  = serverFrameGeometry.width ();
+    wc.height = serverFrameGeometry.height ();
+
+    compiz::X11::PendingEvent::Ptr pc =
+	    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+								      new compiz::X11::PendingConfigureEvent (
+									  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
+
+    const_cast <PrivateWindow *> (this)->pendingConfigures.add (pc);
+
+    return XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 }
 
 bool

@@ -98,11 +98,11 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 	 * to be re-locked soon */
 	lockCount = 0;
 
-	if (clientDispatch)
+	if (frameDispatch)
 	{
-	    asyncServerWindow->requestConfigureOnClient (clientChanges,
-							 clientChangeMask);
-	    clientChangeMask = 0;
+	    asyncServerWindow->requestConfigureOnFrame (frameChanges,
+							frameChangeMask);
+	    frameChangeMask = 0;
 	}
 
 	if (wrapperDispatch)
@@ -112,11 +112,11 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 	    wrapperChangeMask = 0;
 	}
 
-	if (frameDispatch)
+	if (clientDispatch)
 	{
-	    asyncServerWindow->requestConfigureOnFrame (frameChanges,
-							frameChangeMask);
-	    frameChangeMask = 0;
+	    asyncServerWindow->requestConfigureOnClient (clientChanges,
+							 clientChangeMask);
+	    clientChangeMask = 0;
 	}
 
 	foreach (const LockObserver &lock, locks)
