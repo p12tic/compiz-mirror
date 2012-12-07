@@ -277,6 +277,22 @@ bool crb::ConfigureRequestBuffer::queryFrameAttributes (XWindowAttributes &attri
     return priv->syncServerWindow->queryFrameAttributes (attrib);
 }
 
+/* This is more or less of a stop-gap for the fact that
+ * when resizing window we re-query the window shape
+ * and apply that to the frame. That's a separate unit of
+ * work and should be dealt with separately. For now, force
+ * a release of the queue whenever we do that so that
+ * XShapeGetRectangles doesn't return an unexpected value
+ */
+XRectangle *
+crb::ConfigureRequestBuffer::queryShapeRectangles (int kind,
+						   int *count,
+						   int *ordering)
+{
+    priv->dispatchConfigure (true);
+    return priv->syncServerWindow->queryShapeRectangles (kind, count, ordering);
+}
+
 void crb::ConfigureRequestBuffer::forceRelease ()
 {
     priv->dispatchConfigure (true);

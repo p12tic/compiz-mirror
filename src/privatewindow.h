@@ -123,6 +123,7 @@ class X11SyncServerWindow :
 
 	bool queryAttributes (XWindowAttributes &attrib);
 	bool queryFrameAttributes (XWindowAttributes &attrib);
+	XRectangle * queryShapeRectangles(int kind, int *count, int *ordering);
 
     private:
 
@@ -142,6 +143,7 @@ class PrivateWindow :
 
 	bool queryAttributes (XWindowAttributes &attrib);
 	bool queryFrameAttributes (XWindowAttributes &attrib);
+	XRectangle * queryShapeRectangles (int kind, int *count, int *ordering);
 	int  requestConfigureOnClient (const XWindowChanges &xwc,
 				       unsigned int valueMask);
 	int  requestConfigureOnWrapper (const XWindowChanges &xwc,

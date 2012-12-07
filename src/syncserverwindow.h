@@ -39,6 +39,9 @@ class SyncServerWindow
 
 	virtual bool queryAttributes (XWindowAttributes &attrib) = 0;
 	virtual bool queryFrameAttributes (XWindowAttributes &attrib) = 0;
+	virtual XRectangle * queryShapeRectangles (int kind,
+						   int *count,
+						   int *ordering) = 0;
 };
 }
 }

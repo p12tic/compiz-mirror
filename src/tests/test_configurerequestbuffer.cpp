@@ -44,6 +44,8 @@ using testing::WithArgs;
 using testing::SetArgReferee;
 using testing::DoAll;
 using testing::InSequence;
+using testing::ReturnNull;
+using testing::IsNull;
 
 class MockAsyncServerWindow :
     public cw::AsyncServerWindow
@@ -64,6 +66,7 @@ class MockSyncServerWindow :
 
 	MOCK_METHOD1 (queryAttributes, bool (XWindowAttributes &));
 	MOCK_METHOD1 (queryFrameAttributes, bool (XWindowAttributes &));
+	MOCK_METHOD3 (queryShapeRectangles, XRectangle * (int, int *, int *));
 };
 
 namespace
@@ -526,17 +529,45 @@ TEST_F (ConfigureRequestBufferLockBehaviour, QueryAttributesDispatchAndRearm)
     EXPECT_CALL (*lock, lock ());
 
     /* Expect a call to XGetWindowAttributes */
+    EXPECT_CALL (syncServerWindow, queryShapeRectangles (_, _, _))
+	    .WillOnce (
+		ReturnNull ());
+
+    int a, b;
+
+    EXPECT_THAT (buffer->queryShapeRectangles (0, &a, &b), IsNull ());
+}
+
+TEST_F (ConfigureRequestBufferLockBehaviour, QueryFrameAttributesDispatchAndRearm)
+{
+    /* Locks get armed on construction */
+    EXPECT_CALL (*lock, lock ());
+
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
+
+    unsigned int valueMask = CWX | CWY;
+
+    /* Queue locked */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
+
+    buffer->pushFrameRequest (xwc, valueMask);
+
+    /* Queue forceably unlocked, locks rearmed */
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _));
+    EXPECT_CALL (*lock, lock ());
+
+    /* Expect a call to XGetWindowAttributes */
     XWindowAttributes xwa;
-    EXPECT_CALL (syncServerWindow, queryAttributes (_))
+    EXPECT_CALL (syncServerWindow, queryFrameAttributes (_))
 	    .WillOnce (
 		DoAll (
 		    SetArgReferee <0> (xwa),
 		    Return (true)));
 
-    buffer->queryAttributes (xwa);
+    buffer->queryFrameAttributes (xwa);
 }
 
-TEST_F (ConfigureRequestBufferLockBehaviour, QueryFrameAttributesDispatchAndRearm)
+TEST_F (ConfigureRequestBufferLockBehaviour, QueryShapeRectanglesDispatchAndRearm)
 {
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());

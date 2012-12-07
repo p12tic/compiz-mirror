@@ -100,6 +100,9 @@ class ConfigureRequestBuffer :
 	 * to the SyncServerWindow */
 	bool queryAttributes (XWindowAttributes &attrib);
 	bool queryFrameAttributes (XWindowAttributes &attrib);
+	XRectangle * queryShapeRectangles (int kind,
+					   int *count,
+					   int *ordering);
 
 	void forceRelease ();
 

@@ -2979,6 +2979,12 @@ PrivateWindow::queryFrameAttributes (XWindowAttributes &attrib)
     return configureBuffer->queryFrameAttributes (attrib);
 }
 
+XRectangle *
+PrivateWindow::queryShapeRectangles (int kind, int *count, int *ordering)
+{
+    return configureBuffer->queryShapeRectangles (kind, count, ordering);
+}
+
 int
 PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc,
 					 unsigned int valueMask)
@@ -3249,15 +3255,20 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (frameValueMask)
 	    priv->configureBuffer->pushFrameRequest (*xwc, frameValueMask);
 
-	valueMask &= (CWWidth | CWHeight);
+	valueMask = frameValueMask & (CWWidth | CWHeight);
 
 	/* If the frame has changed position (eg, serverInput.top
 	 * or serverInput.left have changed) then we also need to
 	 * update the client and wrapper position */
 	if (lastServerInput.left != serverInput.left)
-	    valueMask |= frameValueMask & CWX;
+	    valueMask |= CWX;
 	if (lastServerInput.top != serverInput.top)
-	    valueMask |= frameValueMask & CWY;
+	    valueMask |= CWY;
+
+	if (lastServerInput.right != serverInput.right)
+	    valueMask |= CWWidth;
+	if (lastServerInput.bottom != serverInput.bottom)
+	    valueMask |= CWHeight;
 
 	if (valueMask)
 	{
@@ -6301,6 +6312,17 @@ X11SyncServerWindow::queryFrameAttributes (XWindowAttributes &attrib)
 	return true;
 
     return false;
+}
+
+XRectangle *
+X11SyncServerWindow::queryShapeRectangles (int kind,
+					   int *count,
+					   int *ordering)
+{
+    return XShapeGetRectangles (mDpy, *mWindow,
+				kind,
+				count,
+				ordering);
 }
 
 namespace
