@@ -27,6 +27,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <X11/Xlib.h>
+#include <syncserverwindow.h>
 
 namespace compiz
 {
@@ -43,9 +44,12 @@ class Releasable
 	virtual void release () = 0;
 };
 
-class Buffer
+class Buffer :
+    public SyncServerWindow
 {
     public:
+
+	typedef boost::shared_ptr <Buffer> Ptr;
 
 	virtual ~Buffer () {}
 

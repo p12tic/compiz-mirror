@@ -200,11 +200,21 @@ bool crb::ConfigureRequestBuffer::queryAttributes (XWindowAttributes &attrib) co
     return priv->syncServerWindow->queryAttributes (attrib);
 }
 
-crb::ConfigureRequestBuffer::ConfigureRequestBuffer (cw::AsyncServerWindow                          *asyncServerWindow,
-						     SyncServerWindow                               *syncServerWindow,
+crb::ConfigureRequestBuffer::ConfigureRequestBuffer (AsyncServerWindow                          *asyncServerWindow,
+						     SyncServerWindow                           *syncServerWindow,
 						     const crb::ConfigureRequestBuffer::LockFactory &factory) :
     priv (new crb::ConfigureRequestBuffer::Private (asyncServerWindow, syncServerWindow, factory))
 {
+}
+
+compiz::window::configure_buffers::Buffer::Ptr
+crb::ConfigureRequestBuffer::Create (AsyncServerWindow *asyncServerWindow,
+				     SyncServerWindow  *syncServerWindow,
+				     const LockFactory &factory)
+{
+    return crb::Buffer::Ptr (new crb::ConfigureRequestBuffer (asyncServerWindow,
+							      syncServerWindow,
+							      factory));
 }
 
 class crb::ConfigureBufferLock::Private

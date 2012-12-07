@@ -142,9 +142,10 @@ TEST_F (ConfigureRequestBuffer, PushDirectUpdate)
 {
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
 			       CWSibling | CWStackMode;
@@ -153,48 +154,50 @@ TEST_F (ConfigureRequestBuffer, PushDirectUpdate)
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
 					       valueMask));
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 }
 
 TEST_F (ConfigureRequestBuffer, PushUpdateLocked)
 {
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
-    crb::Releasable::Ptr lock (buffer.obtainLock ());
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
 ;
     unsigned int   valueMask = 0;
 
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 }
 
 TEST_F (ConfigureRequestBuffer, PushCombinedUpdateLocked)
 {
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
-    crb::Releasable::Ptr lock (buffer.obtainLock ());
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY;
 
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 
     valueMask |= CWWidth | CWHeight;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
 					       valueMask));
@@ -207,18 +210,19 @@ TEST_F (ConfigureRequestBuffer, UnlockBuffer)
     MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
-    crb::Releasable::Ptr lock (buffer.obtainLock ());
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
 					       valueMask));
@@ -231,18 +235,19 @@ TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnRestack)
     MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
-    crb::Releasable::Ptr lock (buffer.obtainLock ());
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWStackMode | CWSibling;
 
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
 					       valueMask));
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 }
 
 TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
@@ -250,11 +255,12 @@ TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
     MockAsyncServerWindow       asyncServerWindow;
     crb::ConfigureRequestBuffer::LockFactory factory (
 		boost::bind (CreateNormalLock, _1));
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
-    crb::Releasable::Ptr lock (buffer.obtainLock ());
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWWidth | CWHeight;
 
@@ -262,7 +268,7 @@ TEST_F (ConfigureRequestBuffer, ForceImmediateConfigureOnShapedWindowSizeChange)
     EXPECT_CALL (asyncServerWindow, Configure (MaskXWC (xwc, valueMask),
 					       valueMask));
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 }
 
 namespace
@@ -331,19 +337,20 @@ TEST_F (ConfigureRequestBuffer, RearmBufferLockOnRelease)
     LockFactory      factory (
 	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
 
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
     EXPECT_CALL (*lock, lock ());
-    crb::Releasable::Ptr releasable (buffer.obtainLock ());
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
 
     EXPECT_CALL (asyncServerWindow, HasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 
     /* We are releasing this lock */
     EXPECT_CALL (*lock, release ());
@@ -372,13 +379,14 @@ TEST_F (ConfigureRequestBuffer, NoRearmBufferLockNoReleaseRequired)
     LockFactory      factory (
 	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
 
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
-    crb::Releasable::Ptr releasable (buffer.obtainLock ());
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
     /* No call to Configure if there's nothing to be configured */
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
@@ -407,13 +415,14 @@ TEST_F (ConfigureRequestBuffer, RearmWhenPushReady)
     LockFactory      factory (
 	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
 
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
-    crb::Releasable::Ptr releasable (buffer.obtainLock ());
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
     /* We are releasing this lock */
     EXPECT_CALL (*lock, release ());
@@ -437,7 +446,7 @@ TEST_F (ConfigureRequestBuffer, RearmWhenPushReady)
     EXPECT_CALL (asyncServerWindow, Configure (_, _));
     EXPECT_CALL (*lock, lock ());
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 }
 
 TEST_F (ConfigureRequestBuffer, NoRearmBufferLockOnNoRelease)
@@ -456,16 +465,17 @@ TEST_F (ConfigureRequestBuffer, NoRearmBufferLockOnNoRelease)
     LockFactory      factory (
 	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
 
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
     EXPECT_CALL (*second, lock ());
 
-    crb::Releasable::Ptr releasable (buffer.obtainLock ());
-    crb::Releasable::Ptr otherReleasable (buffer.obtainLock ());
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
+    crb::Releasable::Ptr otherReleasable (buffer->obtainLock ());
 
     /* We are releasing this lock */
     EXPECT_CALL (*lock, release ());
@@ -493,21 +503,22 @@ TEST_F (ConfigureRequestBuffer, QueryAttributesDispatchAndRearm)
     LockFactory      factory (
 	boost::bind (&MockLockFactory::CreateMockLock, &mockLockFactory, _1));
 
-    crb::ConfigureRequestBuffer buffer (&asyncServerWindow,
-					&syncServerWindow,
-					factory);
+    crb::Buffer::Ptr buffer (
+	crb::ConfigureRequestBuffer::Create (&asyncServerWindow,
+					     &syncServerWindow,
+					     factory));
 
     /* Locks get armed on construction */
     EXPECT_CALL (*lock, lock ());
 
-    crb::Releasable::Ptr releasable (buffer.obtainLock ());
+    crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
     unsigned int valueMask = CWX | CWY;
 
     /* Queue locked */
     EXPECT_CALL (asyncServerWindow, Configure (_, _)).Times (0);
 
-    buffer.pushConfigureRequest (xwc, valueMask);
+    buffer->pushConfigureRequest (xwc, valueMask);
 
     /* Queue forceably unlocked, locks rearmed */
     EXPECT_CALL (asyncServerWindow, Configure (_, _));
@@ -521,5 +532,5 @@ TEST_F (ConfigureRequestBuffer, QueryAttributesDispatchAndRearm)
 		    SetArgReferee <0> (xwa),
 		    Return (true)));
 
-    buffer.queryAttributes (xwa);
+    buffer->queryAttributes (xwa);
 }
