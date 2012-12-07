@@ -98,10 +98,6 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 
     if (dispatch || immediate)
     {
-	/* Immediately make the lockCount zero, as we're going
-	 * to be re-locked soon */
-	lockCount = 0;
-
 	if (frameDispatch)
 	{
 	    asyncServerWindow->requestConfigureOnFrame (frameChanges,

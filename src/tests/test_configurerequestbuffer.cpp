@@ -332,12 +332,38 @@ class MockLock :
 {
     public:
 
-	void OperateOver (crb::CountedFreeze *cf)
+	/* We're currently importing the locks statefulness and coupling
+	 * the caller with that */
+	MockLock () :
+	    armed (false)
 	{
 	    ON_CALL (*this, lock ()).WillByDefault (
-			Invoke (cf, &crb::CountedFreeze::freeze));
+			Invoke (this, &MockLock::FreezeIfUnarmed));
 	    ON_CALL (*this, release ()).WillByDefault (
-			Invoke (cf, &crb::CountedFreeze::release));
+			Invoke (this, &MockLock::ReleaseIfArmed));
+	}
+
+	void OperateOver (crb::CountedFreeze *cf)
+	{
+	    countedFreeze = cf;
+	}
+
+	void FreezeIfUnarmed ()
+	{
+	    if (!armed)
+	    {
+		countedFreeze->freeze ();
+		armed = true;
+	    }
+	}
+
+	void ReleaseIfArmed ()
+	{
+	    if (armed)
+	    {
+		countedFreeze->release ();
+		armed = false;
+	    }
 	}
 
 	typedef boost::shared_ptr <MockLock> Ptr;
@@ -348,6 +374,7 @@ class MockLock :
     private:
 
 	crb::CountedFreeze *countedFreeze;
+	bool               armed;
 };
 
 class MockLockFactory
