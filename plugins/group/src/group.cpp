@@ -43,7 +43,7 @@ class GroupExp :
     public:
 	GroupExp (const CompString &str);
 
-	bool evaluate (CompWindow *w);
+	bool evaluate (const CompWindow *w) const;
 
 	bool value;
 };
@@ -71,7 +71,7 @@ GroupExp::GroupExp (const CompString &str) :
  */
 
 bool
-GroupExp::evaluate (CompWindow *w)
+GroupExp::evaluate (const CompWindow *w) const
 {
     GROUP_WINDOW (w);
 

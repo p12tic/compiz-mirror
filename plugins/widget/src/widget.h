@@ -157,7 +157,7 @@ class WidgetWindow :
 	updateMatch ();
 
 	bool
-	managed ();
+	managed () const;
 
 	bool mIsWidget;
 	bool mWasHidden;

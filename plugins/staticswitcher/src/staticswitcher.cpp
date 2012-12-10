@@ -1244,7 +1244,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	float          px, py, pos;
 	int            count = sScreen->windows.size ();
 
-	CompWindow::Geometry &g = window->geometry ();
+	const CompWindow::Geometry &g = window->geometry ();
 
 	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK ||
 	    sScreen->ignoreSwitcher)
