@@ -38,7 +38,7 @@ class WidgetExp :
     public:
 	WidgetExp (const CompString &str);
 
-	bool evaluate (CompWindow *w) const;
+	bool evaluate (const CompWindow *w) const;
 
 	bool value;
 };
@@ -243,9 +243,9 @@ WidgetExp::WidgetExp (const CompString &str) :
 }
 
 bool
-WidgetExp::evaluate (CompWindow *w) const
+WidgetExp::evaluate (const CompWindow *w) const
 {
-    WIDGET_WINDOW (w);
+    const WidgetWindow *ww = WidgetWindow::get (w);
 
     return ((value && ww->mIsWidget) || (!value && !ww->mIsWidget));
 }
