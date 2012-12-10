@@ -948,7 +948,7 @@ SwitchWindow::updateIconPos (int   &wx,
 
 /* Only for the popup window */
 bool
-SwitchWindow::managed ()
+SwitchWindow::managed () const
 {
     return true;
 }
@@ -969,7 +969,7 @@ SwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	int            x, y, x1, x2, cx;
 	unsigned short color[4];
 
-	CompWindow::Geometry &g = window->geometry ();
+	const CompWindow::Geometry &g = window->geometry ();
 
 	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK ||
 	    sScreen->ignoreSwitcher)
