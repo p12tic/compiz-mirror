@@ -258,8 +258,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     unredirectFS = CompositeScreen::get (screen)->
 	getOption ("unredirect_fullscreen_windows")->value ().b ();
 
-    // This should be const but CompMatch is not const-friendly.
-    CompMatch &unredirectable = CompositeScreen::get (screen)->
+    const CompMatch &unredirectable = CompositeScreen::get (screen)->
 	getOption ("unredirect_match")->value ().match ();
 
     if (mask & PAINT_SCREEN_TRANSFORMED_MASK)
