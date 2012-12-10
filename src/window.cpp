@@ -5429,6 +5429,9 @@ PrivateWindow::processMap ()
 
 	xwcm = adjustConfigureRequestForGravity (&xwc, CWX | CWY, gravity, 1);
 
+	xwc.width = priv->serverGeometry.width ();
+	xwc.height = priv->serverGeometry.height ();
+
 	window->validateResizeRequest (xwcm, &xwc, ClientTypeApplication);
 
 	CompPoint pos (xwc.x, xwc.y);
