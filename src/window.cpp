@@ -4241,9 +4241,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 
 	sibling = PrivateWindow::findSiblingBelow (this, aboveFs);
 
-	if (sibling)
-	printf ("sibling for 0x%x 0x%x\n", (unsigned int) priv->id, (unsigned int) sibling->priv->id);
-
 	if (sibling &&
 	    (stackingMode == CompStackingUpdateModeInitialMapDeniedFocus))
 	{

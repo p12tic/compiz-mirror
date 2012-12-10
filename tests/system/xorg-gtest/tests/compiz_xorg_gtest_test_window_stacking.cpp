@@ -294,14 +294,6 @@ TEST_F (CompizXorgSystemStackingTest, TestMapWindowAndDenyFocus)
     EXPECT_EQ (*it++, w2);
 }
 
-/* This test isn't really an accurate representation of the problem
- * because the real problem is a race condition where in between
- * w3 getting a MapRequest and a MapNotify, w3 is destroyed on
- * the server and it would be an error to restack relative to it.
- *
- * Unfortunately there's no way to accurately reproduce that problem,
- * because it is purely timing based, so this test case just tests
- * the relevant codepath for regressions */
 TEST_F (CompizXorgSystemStackingTest, TestCreateRelativeToDestroyedWindowFindsAnotherAppropriatePosition)
 {
     ::Display *dpy = Display ();
@@ -332,46 +324,23 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateRelativeToDestroyedWindowFindsAn
     Window w2 = ct::CreateNormalWindow (dpy);
 
     XMapRaised (dpy, w1);
-    XMapRaised (dpy, w2);
 
     /* All reparented and mapped */
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,w1, ReparentNotify, -1, -1)));
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1)));
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, ReparentNotify, -1, -1)));
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w2, MapNotify, -1, -1)));
-
-    /* Wait for property change notify on the root window to happen twice */
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
-								       DefaultRootWindow (dpy),
-								       PropertyNotify,
-								       -1,
-								       -1,
-								       matcher)));
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
-								       DefaultRootWindow (dpy),
-								       PropertyNotify,
-								       -1,
-								       -1,
-								       matcher)));
-
-    /* Check the client list to see that w2 > w1 */
-    clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
-
-    ASSERT_EQ (clientList.size (), 3);
-
-    std::list <Window>::iterator it (clientList.begin ());
-
-    EXPECT_EQ (w1, (*it++));
-    EXPECT_EQ (w2, (*it++));
-    EXPECT_EQ (dock, (*it++));
 
     /* Grab the server so that we can guaruntee that all of these requests
      * happen before compiz gets them */
     XGrabServer (dpy);
     XSync (dpy, false);
 
-    /* Create window that has w3 as its
-     * ideal candidate */
+    /* Map the second window, so it ideally goes above w1. Compiz will
+     * receive the MapRequest for this first */
+    XMapRaised (dpy, w2);
+
+    /* Create window that has w2 as its ideal above-candidate
+     * (compiz will receive the CreateNotify for this window
+     *  after the MapRequest but before the subsequent MapNotify) */
     Window w3 = ct::CreateNormalWindow (dpy);
 
     XMapRaised (dpy, w3);
@@ -393,17 +362,11 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateRelativeToDestroyedWindowFindsAn
 								       -1,
 								       -1,
 								       matcher)));
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
-								       DefaultRootWindow (dpy),
-								       PropertyNotify,
-								       -1,
-								       -1,
-								       matcher)));
 
     /* Check the client list to see that dock > w3 > w1 */
     clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
 
-    it = clientList.begin ();
+    std::list <Window>::iterator it = clientList.begin ();
 
     EXPECT_EQ (3, clientList.size ());
     EXPECT_EQ (w1, (*it++));
