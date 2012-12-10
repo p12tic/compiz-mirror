@@ -42,6 +42,29 @@
 
 template class WrapableInterface<GLScreen, GLScreenInterface>;
 
+#ifndef USE_GLES
+/*
+ * Historically most versions of fglrx have contained a nasty hack that checks
+ * if argv[0] == "compiz", and downgrades OpenGL features including dropping
+ * GLSL support (hides GL_ARB_shading_language_100). (LP #1026920)
+ * This hack in fglrx is misguided and I'm told AMD have or will remove
+ * it soon. In the mean time, modify argv[0] so it's not triggered...
+ */
+class DetectionWorkaround
+{
+    public:
+        DetectionWorkaround ()
+        {
+            program_invocation_short_name[0] = 'C';
+        }
+        ~DetectionWorkaround ()
+        {
+            program_invocation_short_name[0] = 'c';
+        }
+};
+#endif
+
+
 using namespace compiz::opengl;
 
 namespace GL {
@@ -337,6 +360,10 @@ int waitVSyncEGL (int wait,
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
 {
+#ifndef USE_GLES
+    DetectionWorkaround workaround;
+#endif
+
     #ifdef USE_GLES
     Display             *xdpy;
     Window               overlay;
@@ -773,15 +800,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     priv->updateRenderMode ();
 
-    /*
-     * !!! WARNING for users of the ATI/AMD fglrx driver !!!
-     *
-     * fglrx contains a hack which hides GL_ARB_shading_language_100 if
-     * your argv[0]=="compiz" for stupid historical reasons, so you won't
-     * get shader support by default when using fglrx.
-     *
-     * Workaround: Rename or link your "compiz" binary to "Compiz".
-     */
     if (strstr (glExtensions, "GL_ARB_fragment_shader") &&
         strstr (glExtensions, "GL_ARB_vertex_shader") &&
 	strstr (glExtensions, "GL_ARB_shader_objects") &&
@@ -892,6 +910,10 @@ GLScreen::GLScreen (CompScreen *s) :
     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),
     priv (new PrivateGLScreen (this))
 {
+#ifndef USE_GLES
+    DetectionWorkaround workaround;
+#endif
+
     XVisualInfo		 *visinfo = NULL;
 #ifndef USE_GLES
     Display		 *dpy = s->dpy ();

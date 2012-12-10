@@ -181,7 +181,7 @@ WidgetWindow::updateWidgetMapState (bool map)
 }
 
 bool
-WidgetWindow::managed ()
+WidgetWindow::managed () const
 {
     return false;
 }
