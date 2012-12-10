@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
+include (FindPkgConfig)
+
 if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     message (SEND_ERROR "Building in the source directory is not supported.")
     message (FATAL_ERROR "Please remove the created \"CMakeCache.txt\" file, the \"CMakeFiles\" directory and create a build directory and call \"${CMAKE_COMMAND} <path to the sources>\".")
@@ -18,7 +20,13 @@ cmake_policy (SET CMP0011 OLD)
 
 set (CMAKE_SKIP_RPATH FALSE)
 
-option (BUILD_GLES "Build against GLESv2 instead of GL" OFF)
+pkg_check_modules (GL QUIET gl)
+set (BUILD_GLES_DEFAULT OFF)
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm.*" OR NOT GL_FOUND)
+    set (BUILD_GLES_DEFAULT ON)
+endif ()
+option (BUILD_GLES "Build against GLESv2 instead of GL" ${BUILD_GLES_DEFAULT})
+
 option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)

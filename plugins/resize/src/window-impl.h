@@ -93,17 +93,17 @@ class CompWindowImpl : public CompWindowInterface
 	    return mImpl->sizeHints ();
 	}
 
-	virtual CompWindow::Geometry & serverGeometry () const
+	virtual const CompWindow::Geometry & serverGeometry () const
 	{
 	    return mImpl->serverGeometry ();
 	}
 
-	virtual CompWindowExtents & border () const
+	virtual const CompWindowExtents & border () const
 	{
 	    return mImpl->border ();
 	}
 
-	virtual CompWindowExtents & output () const
+	virtual const CompWindowExtents & output () const
 	{
 	    return mImpl->output ();
 	}
