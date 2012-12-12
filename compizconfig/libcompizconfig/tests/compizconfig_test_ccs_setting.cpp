@@ -490,16 +490,19 @@ class CopyRawValue <const char *> :
 	typedef CopyRawValueBase <const char *> Parent;
 
 	CopyRawValue (const char * value) :
-	    CopyRawValueBase <const char *> (value)
+	    CopyRawValueBase <const char *> (ptr),
+	    ptr (value)
 	{
 	}
 
 	ReturnType operator () ()
 	{
-	    /* XXX: Valgrind complains here that mValue is uninitialized, but
-	     * verification using gdb confirms that isn't true */
 	    return strdup (Parent::mValue);
 	}
+
+    private:
+	// mValue is a reference so it needs a persistent variable to point at
+	const char *ptr;
 };
 
 template <>
