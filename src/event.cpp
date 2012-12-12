@@ -1928,7 +1928,7 @@ static const unsigned short _NET_WM_STATE_TOGGLE = 2;
 
 	    /* We should check the override_redirect flag here, because the
 	       client might have changed it while being unmapped. */
-	    if (XGetWindowAttributes (privateScreen.dpy, w->id (), &attr))
+	    if (w->queryAttributes (attr))
 		w->priv->setOverrideRedirect (attr.override_redirect != 0);
 
 	    if (w->state () & CompWindowStateHiddenMask)
