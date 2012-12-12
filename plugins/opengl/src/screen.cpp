@@ -36,6 +36,7 @@
 #include <boost/make_shared.hpp>
 
 #include "privates.h"
+#include "blacklist/blacklist.h"
 
 #include <dlfcn.h>
 #include <math.h>
@@ -600,8 +601,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GLfloat		 ambientLight[]   = { 0.0f, 0.0f,  0.0f, 0.0f };
     GLfloat		 diffuseLight[]   = { 0.9f, 0.9f,  0.9f, 0.9f };
     GLfloat		 light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
-    const char           *glRenderer;
-    const char           *glVendor;
     CompOption::Vector o (0);
 
     priv->ctx = glXCreateContext (dpy, visinfo, NULL, True);
@@ -640,8 +639,14 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
-    glRenderer = (const char *) glGetString (GL_RENDERER);
-    glVendor = (const char *) glGetString (GL_VENDOR);
+    const char *glVendor = (const char *) glGetString (GL_VENDOR);
+    const char *glRenderer = (const char *) glGetString (GL_RENDERER);
+    const char *glVersion = (const char *) glGetString (GL_VERSION);
+
+    priv->glVendor = glVendor;
+    priv->glRenderer = glRenderer;
+    priv->glVersion = glVersion;
+
     if (glRenderer != NULL &&
 	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
 	 strcmp (glRenderer, "Mesa X11") == 0))
@@ -1240,7 +1245,10 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     shaderCache (),
     autoProgram (new GLScreenAutoProgram(gs)),
     rootPixmapCopy (None),
-    rootPixmapSize ()
+    rootPixmapSize (),
+    glVendor (NULL),
+    glRenderer (NULL),
+    glVersion (NULL)
 {
     ScreenInterface::setHandler (screen);
 }
@@ -2142,6 +2150,12 @@ PrivateGLScreen::prepareDrawing ()
     updateRenderMode ();
     if (wasFboEnabled != GL::fboEnabled)
 	CompositeScreen::get (screen)->damageScreen ();
+}
+
+bool
+PrivateGLScreen::driverIsBlacklisted (const char *regex) const
+{
+    return blacklisted (regex, glVendor, glRenderer, glVersion);
 }
 
 GLTexture::BindPixmapHandle
