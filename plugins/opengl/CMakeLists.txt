@@ -10,6 +10,7 @@ set (INTERNAL_LIBRARIES
 
 add_subdirectory (src/doublebuffer)
 add_subdirectory (src/fsregion)
+add_subdirectory (src/blacklist)
 add_subdirectory (src/glxtfpbind)
 
 include_directories (src/glxtfpbind/include)
