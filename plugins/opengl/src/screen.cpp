@@ -36,6 +36,7 @@
 #include <boost/make_shared.hpp>
 
 #include "privates.h"
+#include "blacklist/blacklist.h"
 
 #include <dlfcn.h>
 #include <math.h>
@@ -2154,7 +2155,7 @@ PrivateGLScreen::prepareDrawing ()
 bool
 PrivateGLScreen::driverIsBlacklisted (const char *regex) const
 {
-    return false;
+    return blacklisted (regex, glVendor, glRenderer, glVersion);
 }
 
 GLTexture::BindPixmapHandle

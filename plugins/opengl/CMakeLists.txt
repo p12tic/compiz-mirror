@@ -5,6 +5,7 @@ include (CompizPlugin)
 set (INTERNAL_LIBRARIES
     compiz_opengl_double_buffer
     compiz_opengl_fsregion
+    compiz_opengl_blacklist
     compiz_opengl_glx_tfp_bind
 )
 
