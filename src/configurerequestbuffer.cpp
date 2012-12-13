@@ -83,8 +83,16 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
 {
     const unsigned int allEventMasks = 0x7f;
     bool immediate = frameChangeMask & (CWStackMode | CWSibling);
-    immediate |= (frameChangeMask & (CWWidth | CWHeight)) &&
-		 asyncServerWindow->hasCustomShape ();
+
+    /* This is a stop-gap solution for not having a plugin API to
+     * query the window shape. Once we have that, we can safely
+     * remove these and require the queue to be unlocked when that
+     * happens. Its a separate unit of work for improving resize
+     * performance anyways.
+     */
+    immediate |= (frameChangeMask & (CWWidth | CWHeight));
+    immediate |= (wrapperChangeMask & (CWWidth | CWHeight));
+    immediate |= (clientChangeMask & (CWWidth | CWHeight));
     immediate |= force;
 
     bool clientDispatch = (clientChangeMask & allEventMasks);

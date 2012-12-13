@@ -174,7 +174,7 @@ TEST_F (ConfigureRequestBufferDispatch, PushDirectSyntheticConfigureNotify)
 
 TEST_F (ConfigureRequestBufferDispatch, PushDirectClientUpdate)
 {
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth |
 			       CWSibling | CWStackMode;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnClient (MaskXWC (xwc, valueMask),
@@ -185,7 +185,7 @@ TEST_F (ConfigureRequestBufferDispatch, PushDirectClientUpdate)
 
 TEST_F (ConfigureRequestBufferDispatch, PushDirectWrapperUpdate)
 {
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth |
 			       CWSibling | CWStackMode;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnWrapper (MaskXWC (xwc, valueMask),
@@ -196,10 +196,9 @@ TEST_F (ConfigureRequestBufferDispatch, PushDirectWrapperUpdate)
 
 TEST_F (ConfigureRequestBufferDispatch, PushDirectFrameUpdate)
 {
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth |
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth |
 			       CWSibling | CWStackMode;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillOnce (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (MaskXWC (xwc, valueMask),
 					       valueMask));
 
@@ -221,15 +220,14 @@ TEST_F (ConfigureRequestBufferDispatch, PushCombinedUpdateLocked)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY;
+    unsigned int   valueMask = CWX;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
     buffer->pushFrameRequest (xwc, valueMask);
 
-    valueMask |= CWWidth | CWHeight;
+    valueMask |= CWY;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
     buffer->pushFrameRequest (xwc, valueMask);
@@ -246,7 +244,6 @@ TEST_F (ConfigureRequestBufferDispatch, PushUpdateLockedReleaseInOrder)
 
     unsigned int   valueMask = CWX | CWY;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
     EXPECT_CALL (asyncServerWindow, requestConfigureOnWrapper (_, _)).Times (0);
     EXPECT_CALL (asyncServerWindow, requestConfigureOnClient (_, _)).Times (0);
@@ -272,9 +269,8 @@ TEST_F (ConfigureRequestBufferDispatch, UnlockBuffer)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
     buffer->pushFrameRequest (xwc, valueMask);
@@ -289,9 +285,8 @@ TEST_F (ConfigureRequestBufferDispatch, ImplicitUnlockBuffer)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
     buffer->pushFrameRequest (xwc, valueMask);
@@ -312,13 +307,12 @@ TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnRestack)
     buffer->pushFrameRequest (xwc, valueMask);
 }
 
-TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnShapedWindowSizeChange)
+TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnWindowSizeChange)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
     unsigned int   valueMask = CWWidth | CWHeight;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillOnce (Return (true));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (MaskXWC (xwc, valueMask),
 					       valueMask));
 
@@ -443,9 +437,8 @@ TEST_F (ConfigureRequestBufferLockBehaviour, RearmBufferLockOnRelease)
     EXPECT_CALL (*lock, lock ());
     crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
 
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillRepeatedly (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
     buffer->pushFrameRequest (xwc, valueMask);
@@ -503,10 +496,9 @@ TEST_F (ConfigureRequestBufferLockBehaviour, RearmWhenPushReady)
     /* Since we're now going to push something to a queue
      * that's effectively not locked, the locks should now
      * be released */
-    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
 
     /* Now rearm it */
-    EXPECT_CALL (asyncServerWindow, hasCustomShape ()).WillOnce (Return (false));
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _));
     EXPECT_CALL (*lock, lock ());
 
