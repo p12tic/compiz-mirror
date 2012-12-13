@@ -33,7 +33,6 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <core/atoms.h>
-#include <core/configurerequestbuffer.h>
 
 #ifdef USE_GLES
 #include <opengl/framebufferobject.h>
@@ -161,6 +160,8 @@ class PrivateGLScreen :
 
 	void updateView ();
 
+	bool driverIsBlacklisted (const char *regex) const;
+
     public:
 
 	GLScreen        *gScreen;
@@ -219,6 +220,8 @@ class PrivateGLScreen :
 
 	Pixmap rootPixmapCopy;
 	CompSize rootPixmapSize;
+
+	const char *glVendor, *glRenderer, *glVersion;
 };
 
 class PrivateGLWindow :
@@ -277,8 +280,6 @@ class PrivateGLWindow :
 	GLVertexBuffer::AutoProgram *autoProgram;
 
 	std::list<GLIcon> icons;
-
-	compiz::window::configure_buffers::Releasable::Ptr configureLock;
 };
 
 #endif

@@ -35,11 +35,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <core/configurerequestbuffer.h>
-
-#include "syncserverwindow.h"
-#include "asyncserverwindow.h"
-
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 namespace compiz {namespace X11
@@ -112,46 +107,11 @@ struct CompGroup;
 
 typedef CompWindowExtents CompFullscreenMonitorSet;
 
-class X11SyncServerWindow :
-    public compiz::window::SyncServerWindow
-{
-    public:
-
-	X11SyncServerWindow (Display      *dpy,
-			     const Window *w,
-			     const Window *frame);
-
-	bool queryAttributes (XWindowAttributes &attrib);
-	bool queryFrameAttributes (XWindowAttributes &attrib);
-	XRectangle * queryShapeRectangles(int kind, int *count, int *ordering);
-
-    private:
-
-	Display      *mDpy;
-	const Window *mWindow;
-	const Window *mFrame;
-};
-
-class PrivateWindow :
-    public compiz::window::SyncServerWindow,
-    public compiz::window::AsyncServerWindow
-{
+class PrivateWindow {
 
     public:
 	PrivateWindow ();
 	~PrivateWindow ();
-
-	bool queryAttributes (XWindowAttributes &attrib);
-	bool queryFrameAttributes (XWindowAttributes &attrib);
-	XRectangle * queryShapeRectangles (int kind, int *count, int *ordering);
-	int  requestConfigureOnClient (const XWindowChanges &xwc,
-				       unsigned int valueMask);
-	int  requestConfigureOnWrapper (const XWindowChanges &xwc,
-					unsigned int valueMask);
-	int  requestConfigureOnFrame (const XWindowChanges &xwc,
-				      unsigned int valueMask);
-	void sendSyntheticConfigureNotify ();
-	bool hasCustomShape () const;
 
 	void recalcNormalHints ();
 
@@ -413,7 +373,6 @@ class PrivateWindow :
 
 	CompWindowExtents input;
 	CompWindowExtents serverInput;
-	CompWindowExtents lastServerInput;
 	CompWindowExtents border;
 	CompWindowExtents output;
 
@@ -439,9 +398,6 @@ class PrivateWindow :
 	Time lastCloseRequestTime;
 
 	bool nextMoveImmediate;
-
-	X11SyncServerWindow                            syncServerWindow;
-	compiz::window::configure_buffers::Buffer::Ptr configureBuffer;
 };
 
 #endif

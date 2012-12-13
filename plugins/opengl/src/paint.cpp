@@ -258,9 +258,13 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     unredirectFS = CompositeScreen::get (screen)->
 	getOption ("unredirect_fullscreen_windows")->value ().b ();
 
-    // This should be const but CompMatch is not const-friendly.
-    CompMatch &unredirectable = CompositeScreen::get (screen)->
+    const CompMatch &unredirectable = CompositeScreen::get (screen)->
 	getOption ("unredirect_match")->value ().match ();
+
+    const CompString &blacklist =
+	getOption ("unredirect_driver_blacklist")->value ().s ();
+
+    bool blacklisted = driverIsBlacklisted (blacklist.c_str ());
 
     if (mask & PAINT_SCREEN_TRANSFORMED_MASK)
     {
@@ -355,6 +359,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	     * beneath them and so neither should be unredirected in that case.
 	     */
 	    if (unredirectFS &&
+		!blacklisted &&
 		unredirectable.evaluate (w) &&
 		!(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
 		!(mask & PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK) &&
@@ -1282,9 +1287,6 @@ GLWindow::glDraw (const GLMatrix     &transform,
     if (!priv->window->isViewable () ||
 	!priv->cWindow->damaged ())
 	return true;
-
-    /* Release any queued ConfigureWindow requests now */
-    priv->configureLock->release ();
 
     if (textures ().empty () && !bind ())
 	return false;

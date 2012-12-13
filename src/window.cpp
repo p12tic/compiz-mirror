@@ -37,7 +37,6 @@
 #include <math.h>
 
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -46,12 +45,7 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
-#include "configurerequestbuffer-impl.h"
-
 #include <boost/scoped_array.hpp>
-
-namespace crb = compiz::window::configure_buffers;
-namespace cw = compiz::window;
 
 template class WrapableInterface<CompWindow, WindowInterface>;
 
@@ -918,12 +912,10 @@ PrivateWindow::updateRegion ()
 	/* We should update the server here */
 	XSync (screen->dpy (), false);
 
-	boundingShapeRects = priv->queryShapeRectangles (ShapeBounding,
-							 &nBounding,
-							 &order);
-	inputShapeRects = priv->queryShapeRectangles (ShapeInput,
-						      &nBounding,
-						      &order);
+	boundingShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
+					 	  ShapeBounding, &nBounding, &order);
+	inputShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
+					       ShapeInput, &nInput, &order);
     }
 
     r.x      = -geom.border ();
@@ -2969,80 +2961,6 @@ static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges 
     return pc->matchRequest (xwc, valueMask);
 }
 
-bool
-PrivateWindow::queryAttributes (XWindowAttributes &attrib)
-{
-    return configureBuffer->queryAttributes (attrib);
-}
-
-bool
-PrivateWindow::queryFrameAttributes (XWindowAttributes &attrib)
-{
-    return configureBuffer->queryFrameAttributes (attrib);
-}
-
-XRectangle *
-PrivateWindow::queryShapeRectangles (int kind, int *count, int *ordering)
-{
-    return configureBuffer->queryShapeRectangles (kind, count, ordering);
-}
-
-int
-PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc,
-					 unsigned int valueMask)
-{
-    int ret = XConfigureWindow (screen->dpy (),
-				id,
-				valueMask,
-				const_cast <XWindowChanges *> (&xwc));
-
-    return ret;
-}
-
-int
-PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc,
-					  unsigned int valueMask)
-{
-    return XConfigureWindow (screen->dpy (),
-			     wrapper,
-			     valueMask,
-			     const_cast <XWindowChanges *> (&xwc));
-}
-
-int
-PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc,
-					unsigned int frameValueMask)
-{
-    XWindowChanges wc = xwc;
-
-    wc.x      = serverFrameGeometry.x ();
-    wc.y      = serverFrameGeometry.y ();
-    wc.width  = serverFrameGeometry.width ();
-    wc.height = serverFrameGeometry.height ();
-
-    compiz::X11::PendingEvent::Ptr pc (
-	new compiz::X11::PendingConfigureEvent (
-	    screen->dpy (),
-	    priv->serverFrame,
-	    frameValueMask, &wc));
-
-    pendingConfigures.add (pc);
-
-    return XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
-}
-
-void
-PrivateWindow::sendSyntheticConfigureNotify ()
-{
-    window->sendConfigureNotify ();
-}
-
-bool
-PrivateWindow::hasCustomShape () const
-{
-    return false;
-}
-
 void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
@@ -3255,41 +3173,47 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (serverFrame)
     {
 	if (frameValueMask)
-	    priv->configureBuffer->pushFrameRequest (*xwc, frameValueMask);
+	{
+	    XWindowChanges wc = *xwc;
 
-	valueMask = frameValueMask & (CWWidth | CWHeight);
+	    wc.x      = serverFrameGeometry.x ();
+	    wc.y      = serverFrameGeometry.y ();
+	    wc.width  = serverFrameGeometry.width ();
+	    wc.height = serverFrameGeometry.height ();
+
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
+
+	    pendingConfigures.add (pc);
+
+	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
+	}
+
+	valueMask &= ~(CWSibling | CWStackMode);
 
 	/* If the frame has changed position (eg, serverInput.top
 	 * or serverInput.left have changed) then we also need to
 	 * update the client and wrapper position */
-	if (lastServerInput.left != serverInput.left)
-	    valueMask |= CWX;
-	if (lastServerInput.top != serverInput.top)
-	    valueMask |= CWY;
-
-	if (lastServerInput.right != serverInput.right)
-	    valueMask |= CWWidth;
-	if (lastServerInput.bottom != serverInput.bottom)
-	    valueMask |= CWHeight;
+	if (!(valueMask & CWX))
+	    valueMask |= frameValueMask & CWX;
+	if (!(valueMask & CWY))
+	    valueMask |= frameValueMask & CWY;
 
 	if (valueMask)
 	{
 	    xwc->x = serverInput.left;
 	    xwc->y = serverInput.top;
+	    XConfigureWindow (screen->dpy (), wrapper, valueMask, xwc);
 
-	    lastServerInput = serverInput;
-
-	    priv->configureBuffer->pushWrapperRequest (*xwc, valueMask);
+	    xwc->x = 0;
+	    xwc->y = 0;
 	}
     }
 
-    /* Client is reparented, the only things that can change
-     * are the width, height and border width */
-    if (serverFrame)
-	valueMask &= (CWWidth | CWHeight | CWBorderWidth);
-
     if (valueMask)
-	priv->configureBuffer->pushClientRequest (*xwc, valueMask);
+	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
 
     /* Send the synthetic configure notify
      * after the real configure notify arrives
@@ -4878,7 +4802,7 @@ PrivateWindow::allowWindowFocus (unsigned int noFocusMask,
 }
 
 CompPoint
-CompWindow::defaultViewport ()
+CompWindow::defaultViewport () const
 {
     CompPoint viewport;
 
@@ -4895,7 +4819,7 @@ CompWindow::defaultViewport ()
     return viewport;
 }
 
-CompPoint &
+const CompPoint &
 CompWindow::initialViewport () const
 {
     return priv->initialViewport;
@@ -5110,13 +5034,13 @@ PrivateWindow::freeIcons ()
 }
 
 int
-CompWindow::outputDevice ()
+CompWindow::outputDevice () const
 {
     return screen->outputDeviceForGeometry (priv->serverGeometry);
 }
 
 bool
-CompWindow::onCurrentDesktop ()
+CompWindow::onCurrentDesktop () const
 {
     if (priv->desktop == 0xffffffff ||
 	priv->desktop == screen->currentDesktop ())
@@ -5181,7 +5105,7 @@ PrivateWindow::compareWindowActiveness (CompWindow *w1,
 }
 
 bool
-CompWindow::onAllViewports ()
+CompWindow::onAllViewports () const
 {
     if (overrideRedirect ())
 	return true;
@@ -5199,7 +5123,7 @@ CompWindow::onAllViewports ()
 }
 
 CompPoint
-CompWindow::getMovementForOffset (CompPoint offset)
+CompWindow::getMovementForOffset (const CompPoint &offset) const
 {
     CompScreen *s = screen;
     int         m, vWidth, vHeight;
@@ -5318,51 +5242,51 @@ WindowInterface::unminimize ()
     WRAPABLE_DEF (unminimize);
 
 bool
-WindowInterface::minimized ()
+WindowInterface::minimized () const
     WRAPABLE_DEF (minimized);
 
 bool
-WindowInterface::alpha ()
+WindowInterface::alpha () const
     WRAPABLE_DEF (alpha);
 
 bool
-WindowInterface::isFocussable ()
+WindowInterface::isFocussable () const
     WRAPABLE_DEF (isFocussable);
 
 bool
-WindowInterface::managed ()
+WindowInterface::managed () const
     WRAPABLE_DEF (managed);
 
 bool
-WindowInterface::focused ()
+WindowInterface::focused () const
     WRAPABLE_DEF (focused);
 
 Window
-CompWindow::id ()
+CompWindow::id () const
 {
     return priv->id;
 }
 
 unsigned int
-CompWindow::type ()
+CompWindow::type () const
 {
     return priv->type;
 }
 
 unsigned int &
-CompWindow::state ()
+CompWindow::state () const
 {
     return priv->state;
 }
 
 unsigned int
-CompWindow::actions ()
+CompWindow::actions () const
 {
     return priv->actions;
 }
 
 unsigned int &
-CompWindow::protocols ()
+CompWindow::protocols () const
 {
     return priv->protocols;
 }
@@ -5504,6 +5428,9 @@ PrivateWindow::processMap ()
 	xwc.height = 0;
 
 	xwcm = adjustConfigureRequestForGravity (&xwc, CWX | CWY, gravity, 1);
+
+	xwc.width = priv->serverGeometry.width ();
+	xwc.height = priv->serverGeometry.height ();
 
 	window->validateResizeRequest (xwcm, &xwc, ClientTypeApplication);
 
@@ -5655,7 +5582,7 @@ CompWindow::frameRegion () const
 }
 
 bool
-CompWindow::inShowDesktopMode ()
+CompWindow::inShowDesktopMode () const
 {
     return priv->inShowDesktopMode;
 }
@@ -5667,51 +5594,51 @@ CompWindow::setShowDesktopMode (bool value)
 }
 
 bool
-CompWindow::managed ()
+CompWindow::managed () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, managed);
     return priv->managed;
 }
 
 bool
-CompWindow::focused ()
+CompWindow::focused () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, focused);
     return screen->activeWindow () == id ();
 }
 
 bool
-CompWindow::grabbed ()
+CompWindow::grabbed () const
 {
     return priv->grabbed;
 }
 
 int
-CompWindow::pendingMaps ()
+CompWindow::pendingMaps () const
 {
     return priv->pendingMaps;
 }
 
 unsigned int &
-CompWindow::wmType ()
+CompWindow::wmType () const
 {
     return priv->wmType;
 }
 
 unsigned int
-CompWindow::activeNum ()
+CompWindow::activeNum () const
 {
     return priv->activeNum;
 }
 
 Window
-CompWindow::frame ()
+CompWindow::frame () const
 {
     return priv->serverFrame;
 }
 
 CompString
-CompWindow::resName ()
+CompWindow::resName () const
 {
     if (priv->resName)
 	return priv->resName;
@@ -5725,32 +5652,14 @@ CompWindow::mapNum () const
     return priv->mapNum;
 }
 
-CompStruts *
-CompWindow::struts ()
+const CompStruts *
+CompWindow::struts () const
 {
     return priv->struts;
 }
 
-bool
-CompWindow::queryAttributes (XWindowAttributes &attrib)
-{
-    return priv->queryAttributes (attrib);
-}
-
-bool
-CompWindow::queryFrameAttributes (XWindowAttributes &attrib)
-{
-    return priv->queryFrameAttributes (attrib);
-}
-
-crb::Releasable::Ptr
-CompWindow::obtainLockOnConfigureRequests ()
-{
-    return priv->configureBuffer->obtainLock ();
-}
-
 int &
-CompWindow::saveMask ()
+CompWindow::saveMask () const
 {
     return priv->saveMask;
 }
@@ -5838,8 +5747,8 @@ CompWindow::moveToViewportPosition (int  x,
     }
 }
 
-char *
-CompWindow::startupId ()
+const char *
+CompWindow::startupId () const
 {
      return priv->startupId;
 }
@@ -5862,13 +5771,13 @@ PrivateWindow::applyStartupProperties (CompStartupSequence *s)
 }
 
 unsigned int
-CompWindow::desktop ()
+CompWindow::desktop () const
 {
     return priv->desktop;
 }
 
 Window
-CompWindow::clientLeader (bool checkAncestor)
+CompWindow::clientLeader (bool checkAncestor) const
 {
     if (priv->clientLeader)
 	return priv->clientLeader;
@@ -5880,49 +5789,49 @@ CompWindow::clientLeader (bool checkAncestor)
 }
 
 Window
-CompWindow::transientFor ()
+CompWindow::transientFor () const
 {
     return priv->transientFor;
 }
 
 int
-CompWindow::pendingUnmaps ()
+CompWindow::pendingUnmaps () const
 {
     return priv->pendingUnmaps;
 }
 
 bool
-CompWindow::minimized ()
+CompWindow::minimized () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, minimized);
     return priv->minimized;
 }
 
 bool
-CompWindow::placed ()
+CompWindow::placed () const
 {
     return priv->placed;
 }
 
 bool
-CompWindow::shaded ()
+CompWindow::shaded () const
 {
     return priv->shaded;
 }
 
-CompWindowExtents &
+const CompWindowExtents &
 CompWindow::border () const
 {
     return priv->border;
 }
 
-CompWindowExtents &
+const CompWindowExtents &
 CompWindow::input () const
 {
     return priv->serverInput;
 }
 
-CompWindowExtents &
+const CompWindowExtents &
 CompWindow::output () const
 {
     return priv->output;
@@ -5989,19 +5898,19 @@ PrivateWindow::updateStartupId ()
 }
 
 bool
-CompWindow::destroyed ()
+CompWindow::destroyed () const
 {
     return priv->destroyed;
 }
 
 bool
-CompWindow::invisible ()
+CompWindow::invisible () const
 {
     return priv->invisible;
 }
 
 XSyncAlarm
-CompWindow::syncAlarm ()
+CompWindow::syncAlarm () const
 {
     return priv->syncAlarm;
 }
@@ -6287,55 +6196,6 @@ CompWindow::~CompWindow ()
     delete priv;
 }
 
-X11SyncServerWindow::X11SyncServerWindow (Display      *dpy,
-					  const Window *w,
-					  const Window *frame) :
-    mDpy (dpy),
-    mWindow (w),
-    mFrame (frame)
-{
-}
-
-bool
-X11SyncServerWindow::queryAttributes (XWindowAttributes &attrib)
-{
-    if (XGetWindowAttributes (mDpy, *mWindow, &attrib))
-	return true;
-
-    return false;
-}
-
-bool
-X11SyncServerWindow::queryFrameAttributes (XWindowAttributes &attrib)
-{
-    Window w = *mFrame ? *mFrame : *mWindow;
-
-    if (XGetWindowAttributes (mDpy, w, &attrib))
-	return true;
-
-    return false;
-}
-
-XRectangle *
-X11SyncServerWindow::queryShapeRectangles (int kind,
-					   int *count,
-					   int *ordering)
-{
-    return XShapeGetRectangles (mDpy, *mWindow,
-				kind,
-				count,
-				ordering);
-}
-
-namespace
-{
-crb::BufferLock::Ptr
-createConfigureBufferLock (crb::CountedFreeze *cf)
-{
-    return boost::make_shared <crb::ConfigureBufferLock> (cf);
-}
-}
-
 PrivateWindow::PrivateWindow () :
     priv (this),
     refcnt (1),
@@ -6407,27 +6267,27 @@ PrivateWindow::PrivateWindow () :
 
     syncWait (false),
     closeRequests (false),
-    lastCloseRequestTime (0),
-
-    syncServerWindow (screen->dpy (),
-		      &id,
-		      &serverFrame),
-    configureBuffer (
-	crb::ConfigureRequestBuffer::Create (
-	    this,
-	    &syncServerWindow,
-	    boost::bind (createConfigureBufferLock, _1)))
+    lastCloseRequestTime (0)
 {
     input.left   = 0;
     input.right  = 0;
     input.top    = 0;
     input.bottom = 0;
 
-    /* Zero initialize */
-    serverInput = input;
-    lastServerInput = input;
-    border = input;
-    output = input;
+    serverInput.left   = 0;
+    serverInput.right  = 0;
+    serverInput.top    = 0;
+    serverInput.bottom = 0;
+
+    border.top    = 0;
+    border.bottom = 0;
+    border.left   = 0;
+    border.right  = 0;
+
+    output.left   = 0;
+    output.right  = 0;
+    output.top    = 0;
+    output.bottom = 0;
 
     syncWaitTimer.setTimes (1000, 1200);
     syncWaitTimer.setCallback (boost::bind (&PrivateWindow::handleSyncAlarm,
@@ -6466,13 +6326,13 @@ PrivateWindow::~PrivateWindow ()
 }
 
 bool
-CompWindow::syncWait ()
+CompWindow::syncWait () const
 {
     return priv->syncWait;
 }
 
 bool
-CompWindow::alpha ()
+CompWindow::alpha () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, alpha);
 
@@ -6480,7 +6340,7 @@ CompWindow::alpha ()
 }
 
 bool
-CompWindow::overrideRedirect ()
+CompWindow::overrideRedirect () const
 {
     return priv->attrib.override_redirect;
 }
@@ -6511,7 +6371,7 @@ CompWindow::isViewable () const
 }
 
 bool
-CompWindow::isFocussable ()
+CompWindow::isFocussable () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, isFocussable);
 
@@ -6525,31 +6385,31 @@ CompWindow::isFocussable ()
 }
 
 int
-CompWindow::windowClass ()
+CompWindow::windowClass () const
 {
     return priv->attrib.c_class;
 }
 
 unsigned int
-CompWindow::depth ()
+CompWindow::depth () const
 {
     return priv->attrib.depth;
 }
 
 bool
-CompWindow::alive ()
+CompWindow::alive () const
 {
     return priv->alive;
 }
 
 unsigned int
-CompWindow::mwmDecor ()
+CompWindow::mwmDecor () const
 {
     return priv->mwmDecor;
 }
 
 unsigned int
-CompWindow::mwmFunc ()
+CompWindow::mwmFunc () const
 {
     return priv->mwmFunc;
 }
@@ -6600,8 +6460,8 @@ CompWindow::updateFrameRegion ()
 }
 
 void
-CompWindow::setWindowFrameExtents (CompWindowExtents *b,
-				   CompWindowExtents *i)
+CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
+				   const CompWindowExtents *i)
 {
     /* override redirect windows can't have frame extents */
     if (priv->attrib.override_redirect)
@@ -6667,7 +6527,7 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 }
 
 bool
-CompWindow::hasUnmapReference ()
+CompWindow::hasUnmapReference () const
 {
     return (priv && priv->unmapRefCnt > 1);
 }
@@ -6697,11 +6557,7 @@ PrivateWindow::reparent ()
     XSync (dpy, false);
     XGrabServer (dpy);
 
-    /* We need to flush all queued up requests */
-    foreach (CompWindow *w, screen->windows ())
-	w->priv->configureBuffer->forceRelease ();
-
-    if (!window->priv->queryAttributes (wa))
+    if (!XGetWindowAttributes (dpy, id, &wa))
     {
 	XUngrabServer (dpy);
 	XSync (dpy, false);
@@ -6988,7 +6844,7 @@ PrivateWindow::unreparent ()
 	 * a DestroyNotify for it yet, it is possible that restacking
 	 * operations could occurr relative to it so we need to hold it
 	 * in the stack for now. Ensure that it is marked override redirect */
-	window->priv->queryFrameAttributes (attrib);
+	XGetWindowAttributes (screen->dpy (), serverFrame, &attrib);
 
 	/* Put the frame window "above" the client window
 	 * in the stack */

@@ -160,12 +160,6 @@ add_dependencies (compiz_outputdevices
     compiz_window_geometry
 )
 
-add_library (compiz_configurerequestbuffer STATIC
-             configurerequestbuffer.cpp)
-
-target_link_libraries (compiz_configurerequestbuffer
-                       compiz_window_geometry)
-
 # workaround for build race
 add_dependencies (compiz core-xml-file)
 
@@ -198,7 +192,6 @@ target_link_libraries (
     compiz_servergrab
     compiz_output
     compiz_outputdevices
-    compiz_configurerequestbuffer
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
 )

@@ -617,7 +617,7 @@ waterTitleWave (CompAction         *action,
     w = screen->findWindow (xid);
     if (w)
     {
-	CompWindow::Geometry &g = w->geometry ();
+	const CompWindow::Geometry &g = w->geometry ();
 	XPoint p[2];
 
 	p[0].x = g.x () - w->border ().left;

@@ -33,18 +33,18 @@ class CCSSettingGMockInterface
 	virtual CCSPlugin * getParent () = 0;
 	virtual void * getPrivatePtr () = 0;
 	virtual void setPrivatePtr (void *) = 0;
-	virtual Bool setInt (int, Bool) = 0;
-	virtual Bool setFloat (float, Bool) = 0;
-	virtual Bool setBool (Bool, Bool) = 0;
-	virtual Bool setString (const char *, Bool) = 0;
-	virtual Bool setColor (CCSSettingColorValue, Bool) = 0;
-	virtual Bool setMatch (const char *, Bool) = 0;
-	virtual Bool setKey (CCSSettingKeyValue, Bool) = 0;
-	virtual Bool setButton (CCSSettingButtonValue, Bool) = 0;
-	virtual Bool setEdge (unsigned int, Bool) = 0;
-	virtual Bool setBell (Bool, Bool) = 0;
-	virtual Bool setList (CCSSettingValueList, Bool) = 0;
-	virtual Bool setValue (CCSSettingValue *, Bool) = 0;
+	virtual CCSSetStatus setInt (int, Bool) = 0;
+	virtual CCSSetStatus setFloat (float, Bool) = 0;
+	virtual CCSSetStatus setBool (Bool, Bool) = 0;
+	virtual CCSSetStatus setString (const char *, Bool) = 0;
+	virtual CCSSetStatus setColor (CCSSettingColorValue, Bool) = 0;
+	virtual CCSSetStatus setMatch (const char *, Bool) = 0;
+	virtual CCSSetStatus setKey (CCSSettingKeyValue, Bool) = 0;
+	virtual CCSSetStatus setButton (CCSSettingButtonValue, Bool) = 0;
+	virtual CCSSetStatus setEdge (unsigned int, Bool) = 0;
+	virtual CCSSetStatus setBell (Bool, Bool) = 0;
+	virtual CCSSetStatus setList (CCSSettingValueList, Bool) = 0;
+	virtual CCSSetStatus setValue (CCSSettingValue *, Bool) = 0;
 	virtual Bool getInt (int *) = 0;
 	virtual Bool getFloat (float *) = 0;
 	virtual Bool getBool (Bool *) = 0;
@@ -74,6 +74,18 @@ class CCSSettingGMock :
 	{
 	    /* Teach GMock how to handle it */
 	    ON_CALL (*this, getType ()).WillByDefault (Return (TypeNum));
+	    ON_CALL (*this, setInt (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setFloat (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setBool (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setString (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setMatch (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setColor (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setKey (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setButton (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setEdge (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setList (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setBell (_, _)).WillByDefault (Return (SetFailed));
+	    ON_CALL (*this, setValue (_, _)).WillByDefault (Return (SetFailed));
 	}
 
 	CCSSetting * setting () { return mSetting; }
@@ -92,18 +104,18 @@ class CCSSettingGMock :
 	MOCK_METHOD0 (getParent, CCSPlugin * ());
 	MOCK_METHOD0 (getPrivatePtr, void * ());
 	MOCK_METHOD1 (setPrivatePtr, void (void *));
-	MOCK_METHOD2 (setInt, Bool (int, Bool));
-	MOCK_METHOD2 (setFloat, Bool (float, Bool));
-	MOCK_METHOD2 (setBool, Bool (Bool, Bool));
-	MOCK_METHOD2 (setString, Bool (const char *, Bool));
-	MOCK_METHOD2 (setColor, Bool (CCSSettingColorValue, Bool));
-	MOCK_METHOD2 (setMatch, Bool (const char *, Bool));
-	MOCK_METHOD2 (setKey, Bool (CCSSettingKeyValue, Bool));
-	MOCK_METHOD2 (setButton, Bool (CCSSettingButtonValue, Bool));
-	MOCK_METHOD2 (setEdge, Bool (unsigned int, Bool));
-	MOCK_METHOD2 (setBell, Bool (Bool, Bool));
-	MOCK_METHOD2 (setList, Bool (CCSSettingValueList, Bool));
-	MOCK_METHOD2 (setValue, Bool (CCSSettingValue *, Bool));
+	MOCK_METHOD2 (setInt, CCSSetStatus (int, Bool));
+	MOCK_METHOD2 (setFloat, CCSSetStatus (float, Bool));
+	MOCK_METHOD2 (setBool, CCSSetStatus (Bool, Bool));
+	MOCK_METHOD2 (setString, CCSSetStatus (const char *, Bool));
+	MOCK_METHOD2 (setColor, CCSSetStatus (CCSSettingColorValue, Bool));
+	MOCK_METHOD2 (setMatch, CCSSetStatus (const char *, Bool));
+	MOCK_METHOD2 (setKey, CCSSetStatus (CCSSettingKeyValue, Bool));
+	MOCK_METHOD2 (setButton, CCSSetStatus (CCSSettingButtonValue, Bool));
+	MOCK_METHOD2 (setEdge, CCSSetStatus (unsigned int, Bool));
+	MOCK_METHOD2 (setBell, CCSSetStatus (Bool, Bool));
+	MOCK_METHOD2 (setList, CCSSetStatus (CCSSettingValueList, Bool));
+	MOCK_METHOD2 (setValue, CCSSetStatus (CCSSettingValue *, Bool));
 	MOCK_METHOD1 (getInt, Bool (int *));
 	MOCK_METHOD1 (getFloat, Bool (float *));
 	MOCK_METHOD1 (getBool, Bool (Bool *));
@@ -192,86 +204,86 @@ class CCSSettingGMock :
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->getList (data);
 	}
 
-	static Bool ccsSetInt (CCSSetting *setting,
-			int        data,
-			Bool	   processChanged)
+	static CCSSetStatus ccsSetInt (CCSSetting *setting,
+				       int        data,
+				       Bool       processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setInt (data, processChanged);
 	}
 
-	static Bool ccsSetFloat (CCSSetting *setting,
-			  float      data,
-			  Bool	     processChanged)
+	static CCSSetStatus ccsSetFloat (CCSSetting *setting,
+					 float      data,
+					 Bool       processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setFloat (data, processChanged);
 	}
 
-	static Bool ccsSetBool (CCSSetting *setting,
-			 Bool       data,
-			 Bool	    processChanged)
+	static CCSSetStatus ccsSetBool (CCSSetting *setting,
+					Bool       data,
+					Bool       processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setBool (data, processChanged);
 	}
 
-	static Bool ccsSetString (CCSSetting *setting,
-			   const char *data,
-			   Bool	      processChanged)
+	static CCSSetStatus ccsSetString (CCSSetting *setting,
+					  const char *data,
+					  Bool       processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setString (data, processChanged);
 	}
 
-	static Bool ccsSetColor (CCSSetting           *setting,
-			  CCSSettingColorValue data,
-			  Bool		       processChanged)
+	static CCSSetStatus ccsSetColor (CCSSetting           *setting,
+					 CCSSettingColorValue data,
+					 Bool                 processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setColor (data, processChanged);
 	}
 
-	static Bool ccsSetMatch (CCSSetting *setting,
+	static CCSSetStatus ccsSetMatch (CCSSetting *setting,
 			  const char *data,
 			  Bool	     processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setMatch (data, processChanged);
 	}
 
-	static Bool ccsSetKey (CCSSetting         *setting,
-			CCSSettingKeyValue data,
-			Bool		   processChanged)
+	static CCSSetStatus ccsSetKey (CCSSetting         *setting,
+				       CCSSettingKeyValue data,
+				       Bool               processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setKey (data, processChanged);
 	}
 
-	static Bool ccsSetButton (CCSSetting            *setting,
-			   CCSSettingButtonValue data,
-			   Bool			 processChanged)
+	static CCSSetStatus ccsSetButton (CCSSetting            *setting,
+					  CCSSettingButtonValue data,
+					  Bool                  processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setButton (data, processChanged);
 	}
 
-	static Bool ccsSetEdge (CCSSetting   *setting,
-			 unsigned int data,
-			 Bool	      processChanged)
+	static CCSSetStatus ccsSetEdge (CCSSetting   *setting,
+					unsigned int data,
+					Bool         processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setEdge (data, processChanged);
 	}
 
-	static Bool ccsSetBell (CCSSetting *setting,
-			 Bool       data,
-			 Bool	    processChanged)
+	static CCSSetStatus ccsSetBell (CCSSetting *setting,
+					Bool       data,
+					Bool       processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setBell (data, processChanged);
 	}
 
-	static Bool ccsSetList (CCSSetting          *setting,
-			 CCSSettingValueList data,
-			 Bool	 processChanged)
+	static CCSSetStatus ccsSetList (CCSSetting          *setting,
+					CCSSettingValueList data,
+					Bool                processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setList (data, processChanged);
 	}
 
-	static Bool ccsSetValue (CCSSetting      *setting,
-			  CCSSettingValue *data,
-			  Bool		  processChanged)
+	static CCSSetStatus ccsSetValue (CCSSetting      *setting,
+					 CCSSettingValue *data,
+					 Bool            processChanged)
 	{
 	    return ((CCSSettingGMock *) ccsObjectGetPrivate (setting))->setValue (data, processChanged);
 	}

@@ -36,11 +36,35 @@
 #include <boost/make_shared.hpp>
 
 #include "privates.h"
+#include "blacklist/blacklist.h"
 
 #include <dlfcn.h>
 #include <math.h>
 
 template class WrapableInterface<GLScreen, GLScreenInterface>;
+
+#ifndef USE_GLES
+/*
+ * Historically most versions of fglrx have contained a nasty hack that checks
+ * if argv[0] == "compiz", and downgrades OpenGL features including dropping
+ * GLSL support (hides GL_ARB_shading_language_100). (LP #1026920)
+ * This hack in fglrx is misguided and I'm told AMD have or will remove
+ * it soon. In the mean time, modify argv[0] so it's not triggered...
+ */
+class DetectionWorkaround
+{
+    public:
+        DetectionWorkaround ()
+        {
+            program_invocation_short_name[0] = 'C';
+        }
+        ~DetectionWorkaround ()
+        {
+            program_invocation_short_name[0] = 'c';
+        }
+};
+#endif
+
 
 using namespace compiz::opengl;
 
@@ -337,6 +361,10 @@ int waitVSyncEGL (int wait,
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
 {
+#ifndef USE_GLES
+    DetectionWorkaround workaround;
+#endif
+
     #ifdef USE_GLES
     Display             *xdpy;
     Window               overlay;
@@ -573,8 +601,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GLfloat		 ambientLight[]   = { 0.0f, 0.0f,  0.0f, 0.0f };
     GLfloat		 diffuseLight[]   = { 0.9f, 0.9f,  0.9f, 0.9f };
     GLfloat		 light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
-    const char           *glRenderer;
-    const char           *glVendor;
     CompOption::Vector o (0);
 
     priv->ctx = glXCreateContext (dpy, visinfo, NULL, True);
@@ -613,8 +639,14 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
-    glRenderer = (const char *) glGetString (GL_RENDERER);
-    glVendor = (const char *) glGetString (GL_VENDOR);
+    const char *glVendor = (const char *) glGetString (GL_VENDOR);
+    const char *glRenderer = (const char *) glGetString (GL_RENDERER);
+    const char *glVersion = (const char *) glGetString (GL_VERSION);
+
+    priv->glVendor = glVendor;
+    priv->glRenderer = glRenderer;
+    priv->glVersion = glVersion;
+
     if (glRenderer != NULL &&
 	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
 	 strcmp (glRenderer, "Mesa X11") == 0))
@@ -773,15 +805,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     priv->updateRenderMode ();
 
-    /*
-     * !!! WARNING for users of the ATI/AMD fglrx driver !!!
-     *
-     * fglrx contains a hack which hides GL_ARB_shading_language_100 if
-     * your argv[0]=="compiz" for stupid historical reasons, so you won't
-     * get shader support by default when using fglrx.
-     *
-     * Workaround: Rename or link your "compiz" binary to "Compiz".
-     */
     if (strstr (glExtensions, "GL_ARB_fragment_shader") &&
         strstr (glExtensions, "GL_ARB_vertex_shader") &&
 	strstr (glExtensions, "GL_ARB_shader_objects") &&
@@ -892,6 +915,10 @@ GLScreen::GLScreen (CompScreen *s) :
     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),
     priv (new PrivateGLScreen (this))
 {
+#ifndef USE_GLES
+    DetectionWorkaround workaround;
+#endif
+
     XVisualInfo		 *visinfo = NULL;
 #ifndef USE_GLES
     Display		 *dpy = s->dpy ();
@@ -1218,7 +1245,10 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     shaderCache (),
     autoProgram (new GLScreenAutoProgram(gs)),
     rootPixmapCopy (None),
-    rootPixmapSize ()
+    rootPixmapSize (),
+    glVendor (NULL),
+    glRenderer (NULL),
+    glVersion (NULL)
 {
     ScreenInterface::setHandler (screen);
 }
@@ -2120,6 +2150,12 @@ PrivateGLScreen::prepareDrawing ()
     updateRenderMode ();
     if (wasFboEnabled != GL::fboEnabled)
 	CompositeScreen::get (screen)->damageScreen ();
+}
+
+bool
+PrivateGLScreen::driverIsBlacklisted (const char *regex) const
+{
+    return blacklisted (regex, glVendor, glRenderer, glVersion);
 }
 
 GLTexture::BindPixmapHandle
