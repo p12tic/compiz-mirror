@@ -7,7 +7,7 @@ set (COMPIZCONFIG_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/libcompizconfig)
 option (USE_GCONF "Enable legacy GNOME 2.x option integration with GConf" ON)
 
 add_subdirectory (libcompizconfig)
-#add_subdirectory (compizconfig-python)
+add_subdirectory (compizconfig-python)
 add_subdirectory (integration)
 add_subdirectory (ccsm)
 
