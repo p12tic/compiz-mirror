@@ -238,7 +238,11 @@ TEST_F (ConfigureRequestBufferDispatch, PushCombinedUpdateLocked)
     lock->release ();
 }
 
-TEST_F (ConfigureRequestBufferDispatch, PushUpdateLockedReleaseInOrder)
+/*
+ * This test is disabled until we can expose the QueryShapeRectangles API
+ * to plugins
+ */
+TEST_F (ConfigureRequestBufferDispatch, DISABLED_PushUpdateLockedReleaseInOrder)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
@@ -249,8 +253,8 @@ TEST_F (ConfigureRequestBufferDispatch, PushUpdateLockedReleaseInOrder)
     EXPECT_CALL (asyncServerWindow, requestConfigureOnClient (_, _)).Times (0);
 
     buffer->pushClientRequest (xwc, valueMask);
-    buffer->pushWrapperRequest (xwc, valueMask);
-    buffer->pushFrameRequest (xwc, valueMask);
+    buffer->pushWrapperRequest (xwc, 0);
+    buffer->pushFrameRequest (xwc, 0);
 
     InSequence s;
 
@@ -269,7 +273,7 @@ TEST_F (ConfigureRequestBufferDispatch, UnlockBuffer)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
@@ -285,7 +289,7 @@ TEST_F (ConfigureRequestBufferDispatch, ImplicitUnlockBuffer)
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
@@ -311,12 +315,36 @@ TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnWindowSizeChang
 {
     crb::Releasable::Ptr lock (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWWidth | CWHeight;
+    unsigned int   valueMask = CWWidth | CWHeight | CWBorderWidth;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (MaskXWC (xwc, valueMask),
 					       valueMask));
 
     buffer->pushFrameRequest (xwc, valueMask);
+}
+
+TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnClientReposition)
+{
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
+
+    unsigned int   valueMask = CWX | CWY;
+
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnClient (MaskXWC (xwc, valueMask),
+					       valueMask));
+
+    buffer->pushClientRequest (xwc, valueMask);
+}
+
+TEST_F (ConfigureRequestBufferDispatch, ForceImmediateConfigureOnWrapperReposition)
+{
+    crb::Releasable::Ptr lock (buffer->obtainLock ());
+
+    unsigned int   valueMask = CWX | CWY;
+
+    EXPECT_CALL (asyncServerWindow, requestConfigureOnWrapper (MaskXWC (xwc, valueMask),
+					       valueMask));
+
+    buffer->pushWrapperRequest (xwc, valueMask);
 }
 
 namespace
@@ -437,7 +465,7 @@ TEST_F (ConfigureRequestBufferLockBehaviour, RearmBufferLockOnRelease)
     EXPECT_CALL (*lock, lock ());
     crb::Releasable::Ptr releasable (buffer->obtainLock ());
 
-    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY;
 
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _)).Times (0);
 
@@ -496,7 +524,7 @@ TEST_F (ConfigureRequestBufferLockBehaviour, RearmWhenPushReady)
     /* Since we're now going to push something to a queue
      * that's effectively not locked, the locks should now
      * be released */
-    unsigned int   valueMask = CWX | CWY | CWBorderWidth;
+    unsigned int   valueMask = CWX | CWY;
 
     /* Now rearm it */
     EXPECT_CALL (asyncServerWindow, requestConfigureOnFrame (_, _));

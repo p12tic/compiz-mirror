@@ -90,9 +90,9 @@ crb::ConfigureRequestBuffer::Private::dispatchConfigure (bool force)
      * happens. Its a separate unit of work for improving resize
      * performance anyways.
      */
-    immediate |= (frameChangeMask & (CWWidth | CWHeight));
-    immediate |= (wrapperChangeMask & (CWWidth | CWHeight));
-    immediate |= (clientChangeMask & (CWWidth | CWHeight));
+    immediate |= (frameChangeMask & (CWWidth | CWHeight | CWBorderWidth));
+    immediate |= (wrapperChangeMask & (CWWidth | CWHeight | CWBorderWidth | CWX | CWY));
+    immediate |= (clientChangeMask & (CWWidth | CWHeight | CWBorderWidth | CWX | CWY));
     immediate |= force;
 
     bool clientDispatch = (clientChangeMask & allEventMasks);
