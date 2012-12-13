@@ -1,6 +1,7 @@
 set (_headers
     action.h
     atoms.h
+    configurerequestbuffer.h
     core.h
     countedlist.h
     global.h
