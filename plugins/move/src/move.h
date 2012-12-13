@@ -27,7 +27,6 @@
 
 #include <core/screen.h>
 #include <core/pluginclasshandler.h>
-#include <core/configurerequestbuffer.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -118,7 +117,6 @@ class MoveWindow :
 	CompWindow      *window;
 	GLWindow        *gWindow;
 	CompositeWindow *cWindow;
-	compiz::window::configure_buffers::Releasable::Ptr releasable;
 };
 
 #define MOVE_SCREEN(s) \

@@ -181,7 +181,11 @@ PrivateCompositeWindow::getPixmap ()
 bool
 PrivateCompositeWindow::getAttributes (XWindowAttributes &attr)
 {
-    return window->queryFrameAttributes (attr);
+    if (XGetWindowAttributes (screen->dpy (),
+			      ROOTPARENT (window), &attr))
+	return true;
+
+    return false;
 }
 
 bool
