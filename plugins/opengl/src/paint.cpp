@@ -1288,9 +1288,6 @@ GLWindow::glDraw (const GLMatrix     &transform,
 	!priv->cWindow->damaged ())
 	return true;
 
-    /* Release any queued ConfigureWindow requests now */
-    priv->configureLock->release ();
-
     if (textures ().empty () && !bind ())
 	return false;
 
