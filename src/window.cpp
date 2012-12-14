@@ -905,7 +905,8 @@ PrivateWindow::updateRegion ()
 
     priv->region = priv->inputRegion = emptyRegion;
 
-    if (screen->XShape ())
+    bool useXShape = screen->XShape ();
+    if (useXShape)
     {
 	int order;
 
@@ -929,7 +930,7 @@ PrivateWindow::updateRegion ()
 	nBounding = 1;
     }
 
-    if (nInput < 1)
+    if (!useXShape)
     {
 	inputShapeRects = &r;
 	nInput = 1;
