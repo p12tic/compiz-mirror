@@ -3277,8 +3277,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    xwc->x = serverInput.left;
 	    xwc->y = serverInput.top;
 
-	    lastServerInput = serverInput;
-
 	    priv->configureBuffer->pushWrapperRequest (*xwc, valueMask);
 	}
     }
@@ -6638,6 +6636,9 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	 * whenever the frame extents update
 	 * so that plugins can re-position appropriately */
 	moveNotify (0, 0, true);
+
+	/* Once we have updated everything, re-set lastServerInput */
+	priv->lastServerInput = priv->serverInput;
     }
 
     /* Use b for _NET_WM_FRAME_EXTENTS here because
