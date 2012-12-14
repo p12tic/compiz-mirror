@@ -905,7 +905,8 @@ PrivateWindow::updateRegion ()
 
     priv->region = priv->inputRegion = emptyRegion;
 
-    if (screen->XShape ())
+    bool useXShape = screen->XShape ();
+    if (useXShape)
     {
 	int order;
 
@@ -929,22 +930,14 @@ PrivateWindow::updateRegion ()
 	nBounding = 1;
     }
 
-    if (nInput < 1)
+    if (!useXShape)
     {
 	inputShapeRects = &r;
 	nInput = 1;
     }
 
     priv->region += rectsToRegion (nBounding, boundingShapeRects);
-
-    /*
-     * Plugins (like unityshell) could override minimize behaviour and
-     * do a fake minimize without unmapping the window. In this case the
-     * input region will still exist but should be ignored. So check
-     * minimized() in case its been overridden (like unityshell does).
-     */
-    if (!window->minimized ())
-	priv->inputRegion += rectsToRegion (nInput, inputShapeRects);
+    priv->inputRegion += rectsToRegion (nInput, inputShapeRects);
 
     if (boundingShapeRects && boundingShapeRects != &r)
 	XFree (boundingShapeRects);
