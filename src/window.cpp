@@ -911,6 +911,11 @@ PrivateWindow::updateRegion ()
 
     priv->region = priv->inputRegion = emptyRegion;
 
+    r.x      = -geom.border ();
+    r.y      = -geom.border ();
+    r.width  = geom.widthIncBorders ();
+    r.height = geom.heightIncBorders ();
+
     if (screen->XShape ())
     {
 	int order;
@@ -922,23 +927,14 @@ PrivateWindow::updateRegion ()
 							 &nBounding,
 							 &order);
 	inputShapeRects = priv->queryShapeRectangles (ShapeInput,
-						      &nBounding,
+						      &nInput,
 						      &order);
     }
-
-    r.x      = -geom.border ();
-    r.y      = -geom.border ();
-    r.width  = geom.widthIncBorders ();
-    r.height = geom.heightIncBorders ();
-
-    if (nBounding < 1)
+    else
     {
 	boundingShapeRects = &r;
 	nBounding = 1;
-    }
 
-    if (nInput < 1)
-    {
 	inputShapeRects = &r;
 	nInput = 1;
     }
