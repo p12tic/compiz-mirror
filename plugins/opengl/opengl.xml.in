@@ -62,7 +62,7 @@
 	    <option name="unredirect_driver_blacklist" type="string">
 		<_short>Unredirect Driver Blacklist</_short>
 		<_long>If non-empty, specifies a POSIX (extended) regular expression to match against the OpenGL driver strings (newline separated): "GL_VENDOR\nGL_RENDERER\nGL_VERSION". If the regular expression matches a substring of that concatenation then no windows will ever be unredirected while using that particular graphics driver.</_long>
-		<default>(nouveau|Intel).*Mesa 8\\.0</default>
+		<default>(nouveau|Intel).*Mesa 8.0</default>
 	    </option>
 	</options>
     </plugin>
