@@ -300,7 +300,7 @@ PlaceWindow::PlaceWindow (CompWindow *w) :
 
 PlaceWindow::~PlaceWindow ()
 {
-    if (!ps->mStrutWindows.empty())
+    if (!ps->mStrutWindows.empty() && window->struts())
     {
 	window->updateStruts();
 	if (!window->struts())
@@ -311,7 +311,7 @@ PlaceWindow::~PlaceWindow ()
 		ps->doHandleScreenSizeChange(screen->width(), screen->height());
 	    }
 	}
-    }
+  }
 }
 
 bool
