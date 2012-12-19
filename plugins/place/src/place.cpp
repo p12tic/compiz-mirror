@@ -302,16 +302,12 @@ PlaceWindow::~PlaceWindow ()
 {
     if (!ps->mStrutWindows.empty() && window->struts())
     {
-	window->updateStruts();
-	if (!window->struts())
+	ps->mStrutWindows.remove(window);
+	if (ps->mStrutWindows.empty())
 	{
-	    ps->mStrutWindows.remove(window);
-	    if (ps->mStrutWindows.empty())
-	    {
-		ps->doHandleScreenSizeChange(screen->width(), screen->height());
-	    }
+	    ps->doHandleScreenSizeChange(screen->width(), screen->height());
 	}
-  }
+    }
 }
 
 bool
