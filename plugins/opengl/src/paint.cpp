@@ -409,6 +409,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	if (w->destroyed ())
 	    continue;
 
+        gw = GLWindow::get (w);
+
+        /* Release any queued ConfigureWindow requests now */
+        gw->priv->configureLock->release ();
+
 	if (unredirected.find (w) != unredirected.end ())
 	    continue;
 
@@ -417,8 +422,6 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	    if (!w->isViewable ())
 		continue;
 	}
-
-	gw = GLWindow::get (w);
 
 	const CompRegion &clip =
 	    (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK)) ?
@@ -1287,9 +1290,6 @@ GLWindow::glDraw (const GLMatrix     &transform,
     if (!priv->window->isViewable () ||
 	!priv->cWindow->damaged ())
 	return true;
-
-    /* Release any queued ConfigureWindow requests now */
-    priv->configureLock->release ();
 
     if (textures ().empty () && !bind ())
 	return false;
