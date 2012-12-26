@@ -6,6 +6,7 @@ debian/tmp/usr/*/compiz/*commands.*
 debian/tmp/usr/*/compiz/*copytex.*
 debian/tmp/usr/*/compiz/*crashhandler.*
 debian/tmp/usr/*/compiz/*cube.*
+debian/tmp/usr/*/compiz/*cubeaddon.*
 debian/tmp/usr/*/compiz/*dbus.*
 debian/tmp/usr/*/compiz/*extrawm.*
 debian/tmp/usr/*/compiz/*fadedesktop.*
