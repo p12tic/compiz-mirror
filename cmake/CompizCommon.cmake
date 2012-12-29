@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
+include (FindPkgConfig)
+
 if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     message (SEND_ERROR "Building in the source directory is not supported.")
     message (FATAL_ERROR "Please remove the created \"CMakeCache.txt\" file, the \"CMakeFiles\" directory and create a build directory and call \"${CMAKE_COMMAND} <path to the sources>\".")
@@ -17,6 +19,13 @@ cmake_policy (SET CMP0005 OLD)
 cmake_policy (SET CMP0011 OLD)
 
 set (CMAKE_SKIP_RPATH FALSE)
+
+pkg_check_modules (GL QUIET gl)
+set (BUILD_GLES_DEFAULT OFF)
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm.*" OR NOT GL_FOUND)
+    set (BUILD_GLES_DEFAULT ON)
+endif ()
+option (BUILD_GLES "Build against GLESv2 instead of GL" ${BUILD_GLES_DEFAULT})
 
 option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
@@ -64,11 +73,27 @@ endif ()
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
 
+set (COMMON_LINKER_FLAGS "-Wl,-zdefs")
+set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COMMON_LINKER_FLAGS}")
+
 if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 1)
 elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
+
+set (USE_GLES ${BUILD_GLES})
+
+if (USE_GLES)
+    find_package(OpenGLES2)
+
+    if (NOT OPENGLES2_FOUND)
+	set (USE_GLES 0)
+	message (SEND_ERROR "OpenGLESv2 not found")
+    endif (NOT OPENGLES2_FOUND)
+endif (USE_GLES)
 
 # Parse arguments passed to a function into several lists separated by
 # upper-case identifiers and options that do not have an associated list e.g.:
@@ -431,8 +456,12 @@ macro (compiz_add_plugins_in_folder folder)
     )
 
     foreach (_plugin ${_plugins_in})
-        get_filename_component (_plugin_dir ${_plugin} PATH)
-        add_subdirectory (${folder}/${_plugin_dir})
+	get_filename_component (_plugin_dir ${_plugin} PATH)
+	string (TOUPPER ${_plugin_dir} _plugin_upper)
+	if (NOT COMPIZ_DISABLE_PLUGIN_${_plugin_upper})
+	    add_subdirectory (${folder}/${_plugin_dir})
+	    set (COMPIZ_ENABLED_PLUGIN_${_plugin_upper} Y CACHE INTERNAL "")
+	endif ()
     endforeach ()
 endmacro ()
 
@@ -457,14 +486,29 @@ function (compiz_translate_xml _src _dst)
     find_program (INTLTOOL_MERGE_EXECUTABLE intltool-merge)
     mark_as_advanced (FORCE INTLTOOL_MERGE_EXECUTABLE)
 
+    set (_additional_arg
+	 -x
+	 -u
+	 ${COMPIZ_I18N_DIR})
+
+    foreach (_arg ${ARGN})
+	if ("${_arg}" STREQUAL "NOTRANSLATIONS")
+	    set (_additional_arg
+		 --no-translations
+		 -x
+		 -u)
+	endif ("${_arg}" STREQUAL "NOTRANSLATIONS")
+    endforeach (_arg ${ARGN})
+
     if (INTLTOOL_MERGE_EXECUTABLE
 	AND COMPIZ_I18N_DIR
 	AND EXISTS ${COMPIZ_I18N_DIR})
 	add_custom_command (
 	    OUTPUT ${_dst}
-	    COMMAND ${INTLTOOL_MERGE_EXECUTABLE} -x -u -c
+	    COMMAND ${INTLTOOL_MERGE_EXECUTABLE}
+		    -c
 		    ${CMAKE_BINARY_DIR}/.intltool-merge-cache
-		    ${COMPIZ_I18N_DIR}
+		    ${_additional_arg}
 		    ${_src}
 		    ${_dst}
 	    DEPENDS ${_src}
@@ -900,13 +944,76 @@ endfunction ()
 
 #### uninstall
 
+function (compiz_add_code_to_uninstall_target CODE WORKING_DIRECTORY)
+
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY COMPIZ_UNINSTALL_CODE_TARGETS
+		  ${CODE})
+
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS
+		  ${WORKING_DIRECTORY})
+
+endfunction ()
+
 macro (compiz_add_uninstall)
+
    if (NOT _compiz_uninstall_rule_created)
 	compiz_set(_compiz_uninstall_rule_created TRUE)
 
 	set (_file "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
 
-	file (WRITE  ${_file} "if (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n")
+	file (WRITE ${_file} "message (STATUS \"Uninstalling\")\n")
+
+	get_property (COMPIZ_UNINSTALL_CODE_TARGETS_SET
+		      GLOBAL
+		      PROPERTY COMPIZ_UNINSTALL_CODE_TARGETS
+		      SET)
+
+	get_property (COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS_SET
+		      GLOBAL
+		      PROPERTY COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS
+		      SET)
+
+	if (COMPIZ_UNINSTALL_CODE_TARGETS_SET AND
+	    COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS_SET)
+
+	    get_property (COMPIZ_UNINSTALL_CODE_TARGETS
+			  GLOBAL
+			  PROPERTY COMPIZ_UNINSTALL_CODE_TARGETS)
+
+	    get_property (COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS
+			  GLOBAL
+			  PROPERTY COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS)
+
+	    list (LENGTH COMPIZ_UNINSTALL_CODE_TARGETS COMPIZ_UNINSTALL_CODE_TARGETS_LEN)
+	    math (EXPR COMPIZ_UNINSTALL_CODE_TARGETS_RANGE "${COMPIZ_UNINSTALL_CODE_TARGETS_LEN} - 1")
+
+	    foreach (ITER RANGE ${COMPIZ_UNINSTALL_CODE_TARGETS_RANGE})
+
+		list (GET COMPIZ_UNINSTALL_CODE_TARGETS ${ITER} CODE_TARGET)
+		list (GET COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS ${ITER} WORKING_DIRECTORY_TARGET)
+
+		file (APPEND ${_file} "message (STATUS \"Executing custom uninstall script ${CODE_TARGET}\")\n")
+		file (APPEND ${_file} "execute_process (COMMAND ${CODE_TARGET}\n")
+		file (APPEND ${_file} "                 WORKING_DIRECTORY \"${WORKING_DIRECTORY_TARGET}\"\n")
+		file (APPEND ${_file} "                 OUTPUT_VARIABLE cmd_output\n")
+		file (APPEND ${_file} "                 RESULT_VARIABLE cmd_ret)\n")
+		file (APPEND ${_file} "message (\"\${cmd_output}\")\n")
+		file (APPEND ${_file} "if (NOT \"\${cmd_ret}\" STREQUAL 0)\n")
+		file (APPEND ${_file} "    message (FATAL_ERROR \"Problem executing uninstall script ${CODE_TARGET} : \${cmd_ret}\")\n")
+		file (APPEND ${_file} "endif (NOT \"\${cmd_ret}\" STREQUAL 0)\n")
+
+	    endforeach ()
+
+	endif (COMPIZ_UNINSTALL_CODE_TARGETS_SET AND
+	       COMPIZ_UNINSTALL_WORKING_DIRECTORY_TARGETS_SET)
+
+	# Get the code that we need to uninstall, and write it out to the file
+
+	file (APPEND ${_file} "if (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n")
 	file (APPEND ${_file} "  message (FATAL_ERROR \"Cannot find install manifest: \\\"${CMAKE_BINARY_DIR}/install_manifest.txt\\\"\")\n")
 	file (APPEND ${_file} "endif (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n\n")
 	file (APPEND ${_file} "file (READ \"${CMAKE_BINARY_DIR}/install_manifest.txt\" files)\n")

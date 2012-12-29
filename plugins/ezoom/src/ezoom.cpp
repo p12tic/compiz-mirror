@@ -211,6 +211,7 @@ EZoomScreen::ZoomArea::ZoomArea (int out) :
 }
 
 EZoomScreen::ZoomArea::ZoomArea () :
+    output (0),
     viewport (~0),
     currentZoom (1.0f),
     newZoom (1.0f),
@@ -381,10 +382,13 @@ EZoomScreen::drawBox (const GLMatrix &transform,
 		     CompOutput          *output,
 		     CompRect             box)
 {
-    GLMatrix zTransform = transform;
+    GLMatrix zTransform (transform);
     int           x1,x2,y1,y2;
     int		  inx1, inx2, iny1, iny2;
     int	          out = output->id ();
+    GLushort colorData[4];
+    GLfloat  vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     zTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
     convertToZoomed (out, box.x1 (), box.y1 (), &inx1, &iny1);
@@ -394,23 +398,61 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     y1 = MIN (iny1, iny2);
     x2 = MAX (inx1, inx2);
     y2 = MAX (iny1, iny2);
-    glPushMatrix ();
-    glLoadMatrixf (zTransform.getMatrix ());
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glEnable (GL_BLEND);
-    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
-    glRecti (x1,y2,x2,y1);
-    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
-    glBegin (GL_LINE_LOOP);
-    glVertex2i (x1, y1);
-    glVertex2i (x2, y1);
-    glVertex2i (x2, y2);
-    glVertex2i (x1, y2);
-    glEnd ();
-    glColor4usv (defaultColor);
-    glDisable (GL_BLEND);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glPopMatrix ();
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    colorData[0] = 0x2fff;
+    colorData[1] = 0x2fff;
+    colorData[2] = 0x2fff;
+    colorData[3] = 0x4fff;
+
+    streamingBuffer->addColors (1, colorData);
+
+    vertexData[0]  = x1;
+    vertexData[1]  = y1;
+    vertexData[2]  = 0.0f;
+    vertexData[3]  = x1;
+    vertexData[4]  = y2;
+    vertexData[5]  = 0.0f;
+    vertexData[6]  = x2;
+    vertexData[7]  = y1;
+    vertexData[8]  = 0.0f;
+    vertexData[9]  = x2;
+    vertexData[10] = y2;
+    vertexData[11] = 0.0f;
+
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (zTransform);
+
+
+    streamingBuffer->begin (GL_LINE_LOOP);
+
+    colorData[0] = 0x2fff;
+    colorData[1] = 0x2fff;
+    colorData[2] = 0x4fff;
+    colorData[3] = 0x9fff;
+
+    streamingBuffer->addColors (1, colorData);
+
+    vertexData[0]  = x1;
+    vertexData[1]  = y1;
+    vertexData[2]  = 0.0f;
+    vertexData[3]  = x2;
+    vertexData[4]  = y1;
+    vertexData[5]  = 0.0f;
+    vertexData[6]  = x2;
+    vertexData[7]  = y2;
+    vertexData[8]  = 0.0f;
+    vertexData[9]  = x1;
+    vertexData[10] = y2;
+    vertexData[11] = 0.0f;
+
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (zTransform);
 }
 /* Apply the zoom if we are grabbed.
  * Make sure to use the correct filter.
@@ -1060,6 +1102,9 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	GLMatrix      sTransform = transform;
 	float	      scaleFactor;
 	int           ax, ay, x, y;
+	GLfloat         textureData[8];
+	GLfloat         vertexData[12];
+	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	/*
 	 * XXX: expo knows how to handle mouse when zoomed, so we back off
@@ -1073,37 +1118,55 @@ EZoomScreen::drawCursor (CompOutput          *output,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 	convertToZoomed (out, mouse.x (), mouse.y (), &ax, &ay);
-        glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-	glTranslatef ((float) ax, (float) ay, 0.0f);
+	sTransform.translate ((float) ax, (float) ay, 0.0f);
+
 	if (optionGetScaleMouseDynamic ())
 	    scaleFactor = 1.0f / zooms.at (out).currentZoom;
 	else
 	    scaleFactor = 1.0f / optionGetScaleMouseStatic ();
-	glScalef (scaleFactor,
-		  scaleFactor,
-		  1.0f);
+
+	sTransform.scale (scaleFactor, scaleFactor, 1.0f);
 	x = -cursor.hotX;
 	y = -cursor.hotY;
 
 	glEnable (GL_BLEND);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, cursor.texture);
-	glEnable (GL_TEXTURE_RECTANGLE_ARB);
+	glEnable (GL_TEXTURE_2D);
+	glBindTexture (GL_TEXTURE_2D, cursor.texture);
 
-	glBegin (GL_QUADS);
-	glTexCoord2d (0, 0);
-	glVertex2f (x, y);
-	glTexCoord2d (0, cursor.height);
-	glVertex2f (x, y + cursor.height);
-	glTexCoord2d (cursor.width, cursor.height);
-	glVertex2f (x + cursor.width, y + cursor.height);
-	glTexCoord2d (cursor.width, 0);
-	glVertex2f (x + cursor.width, y);
-	glEnd ();
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	vertexData[0]  = x;
+	vertexData[1]  = y;
+	vertexData[2]  = 0.0f;
+	vertexData[3]  = x;
+	vertexData[4]  = y + cursor.height;
+	vertexData[5]  = 0.0f;
+	vertexData[6]  = x + cursor.width;
+	vertexData[7]  = y;
+	vertexData[8]  = 0.0f;
+	vertexData[9]  = x + cursor.width;
+	vertexData[10] = y + cursor.height;
+	vertexData[11] = 0.0f;
+
+	streamingBuffer->addVertices (4, vertexData);
+
+	textureData[0] = 0;
+	textureData[1] = 0;
+	textureData[2] = 0;
+	textureData[3] = 1;
+	textureData[4] = 1;
+	textureData[5] = 0;
+	textureData[6] = 1;
+	textureData[7] = 1;
+
+	streamingBuffer->addTexCoords (0, 4, textureData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
+
+	glBindTexture (GL_TEXTURE_2D, 0);
+	glDisable (GL_TEXTURE_2D);
 	glDisable (GL_BLEND);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
-	glDisable (GL_TEXTURE_RECTANGLE_ARB);
-	glPopMatrix ();
     }
 }
 
@@ -1120,16 +1183,20 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
     {
 	cursor->isSet = true;
 	cursor->screen = screen;
-	glEnable (GL_TEXTURE_RECTANGLE_ARB);
-	glGenTextures (1, &cursor->texture);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, cursor->texture);
 
-	glTexParameteri (GL_TEXTURE_RECTANGLE_ARB,
-			 GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri (GL_TEXTURE_RECTANGLE_ARB,
-			 GL_TEXTURE_WRAP_T, GL_CLAMP);
-    } else {
-	glEnable (GL_TEXTURE_RECTANGLE_ARB);
+	glEnable (GL_TEXTURE_2D);
+	glGenTextures (1, &cursor->texture);
+	glBindTexture (GL_TEXTURE_2D, cursor->texture);
+
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+	                 gScreen->textureFilter ());
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+	                 gScreen->textureFilter ());
+    }
+    else {
+	glEnable (GL_TEXTURE_2D);
     }
 
     XFixesCursorImage *ci = XFixesGetCursorImage (dpy);
@@ -1185,11 +1252,11 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
 	compLogMessage ("ezoom", CompLogLevelWarn, "unable to get system cursor image!");
     }
 
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, cursor->texture);
-    glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, cursor->width,
+    glBindTexture (GL_TEXTURE_2D, cursor->texture);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, cursor->width,
 		  cursor->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
-    glDisable (GL_TEXTURE_RECTANGLE_ARB);
+    glBindTexture (GL_TEXTURE_2D, 0);
+    glDisable (GL_TEXTURE_2D);
 	
     free (pixels);
 }
@@ -1478,17 +1545,33 @@ bool
 EZoomScreen::zoomSpecific (CompAction         *action,
 			  CompAction::State  state,
 			  CompOption::Vector options,
-			  float		     target)
+			  SpecificZoomTarget target)
 {
     int          out = screen->outputDeviceForPoint (pointerX, pointerY);
+    float        zoom_level;
     CompWindow   *w;
 
-    if (target == 1.0f && zooms.at (out).newZoom == 1.0f)
+    switch (target)
+    {
+	case ZoomTargetFirst:
+	    zoom_level = optionGetZoomSpec1 ();
+	    break;
+	case ZoomTargetSecond:
+	    zoom_level = optionGetZoomSpec2 ();
+	    break;
+	case ZoomTargetThird:
+	    zoom_level = optionGetZoomSpec3 ();
+	    break;
+	default:
+	    return false;
+    }
+
+    if (zoom_level == 1.0f && zooms.at (out).newZoom == 1.0f)
         return false;
     if (screen->otherGrabExist (NULL))
         return false;
 
-    setScale (out, target);
+    setScale (out, zoom_level);
 
     w = screen->findWindow (screen->activeWindow ());
     if (optionGetSpecTargetFocus ()
@@ -1792,39 +1875,17 @@ EZoomScreen::handleEvent (XEvent *event)
 /* TODO: Use this ctor carefully */
 
 EZoomScreen::CursorTexture::CursorTexture () :
-    isSet (false)
+    isSet (false),
+    screen (0),
+    width (0),
+    height (0),
+    hotX (0),
+    hotY (0)
 {
-}
-
-void
-EZoomScreen::postLoad ()
-{
-    const CompPoint &m = pollHandle.getCurrentPosition ();
-    int         out = screen->outputDeviceForPoint (m.x (), m.y ());
-
-    if (!grabbed)
-	return;
-
-    toggleFunctions (true);
-
-    if (!pollHandle.active ())
-	enableMousePolling ();
-
-    foreach (ZoomArea &za, zooms)
-    {
-	grabbed |= (1 << za.output);
-    }
-
-    cursorZoomActive (out);
-    updateCursor (&cursor);
-
-    cScreen->damageScreen ();
-
 }
 
 EZoomScreen::EZoomScreen (CompScreen *screen) :
     PluginClassHandler <EZoomScreen, CompScreen> (screen),
-    PluginStateWriter <EZoomScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     grabbed (0),
@@ -1876,13 +1937,13 @@ EZoomScreen::EZoomScreen (CompScreen *screen) :
 
     optionSetZoomSpecific1KeyInitiate (boost::bind (&EZoomScreen::zoomSpecific,
 						    this, _1, _2, _3,
-						    optionGetZoomSpec1 ()));
+						    ZoomTargetFirst));
     optionSetZoomSpecific2KeyInitiate (boost::bind (&EZoomScreen::zoomSpecific,
 						    this, _1, _2, _3,
-						    optionGetZoomSpec2 ()));
+						    ZoomTargetSecond));
     optionSetZoomSpecific3KeyInitiate (boost::bind (&EZoomScreen::zoomSpecific,
 						    this, _1, _2, _3,
-						    optionGetZoomSpec3 ()));
+						    ZoomTargetThird));
 
     optionSetPanLeftKeyInitiate (boost::bind (&EZoomScreen::zoomPan, this, _1,
 					      _2, _3, -1, 0));
@@ -1920,8 +1981,6 @@ EZoomScreen::EZoomScreen (CompScreen *screen) :
 
 EZoomScreen::~EZoomScreen ()
 {
-    writeSerializedData ();
-
     if (pollHandle.active ())
 	pollHandle.stop ();
 

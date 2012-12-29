@@ -34,8 +34,11 @@ typedef enum _MousepollOptions
     MP_DISPLAY_OPTION_NUM
 } MousepollDisplayOptions;
 
-#define MP_OPTION_MOUSE_POLL_INTERVAL 0
-#define MP_OPTION_NUM 1
+extern const unsigned short MP_OPTION_MOUSE_POLL_INTERVAL;
+extern const unsigned short MP_OPTION_NUM;
+
+class MousepollScreen;
+extern template class PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>;
 
 class MousepollScreen :
     public PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>,

@@ -26,8 +26,6 @@
 #include "annotate_options.h"
 #include <composite/composite.h>
 
-#include <core/serialization.h>
-
 #include <cairo-xlib-xrender.h>
 #include <opengl/opengl.h>
 
@@ -58,7 +56,6 @@ enum DrawMode
 
 class AnnoScreen :
     public PluginClassHandler <AnnoScreen, CompScreen>,
-    public PluginStateWriter <AnnoScreen>,
     public ScreenInterface,
     public GLScreenInterface,
     public AnnotateOptions
@@ -85,20 +82,6 @@ class AnnoScreen :
 
 	CompPoint	lineVector;
 	Ellipse		ellipse;
-	
-	template <class Archive>
-	void serialize (Archive & ar, const unsigned int count)
-	{
-	    /* FIXME:
-	     * cairo_surface_get_image_data is broken or something
-	     * so serializing cairo bits is next to impossible at the moment
-	     *
-	     * ar & cairoBuffer;
-	     * ar & content;
-	     */
-	}
-	
-	void postLoad ();
 
 	void handleEvent (XEvent *);
 
@@ -154,7 +137,7 @@ class AnnoScreen :
 	          unsigned short 		     *strokeColor,
 	          double	     		     strokeWidth);
 
-/* Actions */
+        /* Actions */
 
 	bool
 	draw (CompAction         *action,

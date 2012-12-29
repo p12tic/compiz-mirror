@@ -1335,7 +1335,7 @@ class AboutDialog (gtk.AboutDialog):
         if IconTheme.lookup_icon("ccsm", 64, 0):
             icon = IconTheme.load_icon("ccsm", 64, 0)
             self.set_logo (icon)
-        self.set_website ("http://www.compiz-fusion.org")
+        self.set_website ("https://launchpad.net/compiz")
 
 # Error dialog
 #

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="titleinfo" useBcop="true">
 	<_short>Title Bar Info</_short>

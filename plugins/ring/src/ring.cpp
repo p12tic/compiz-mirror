@@ -31,6 +31,10 @@
 
 COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
+const double PI = 3.14159265359f;
+
+const unsigned short ICON_SIZE = 64;
+
 bool textAvailable;
 
 static void
@@ -177,10 +181,11 @@ RingScreen::renderWindowTitle ()
 }
 
 void
-RingScreen::drawWindowTitle ()
+RingScreen::drawWindowTitle (const GLMatrix &transform)
 {
     if (!textAvailable)
 	return;
+
     float      x, y;
     CompRect   oe;
 
@@ -211,7 +216,7 @@ RingScreen::drawWindowTitle ()
 	    break;
     }
 
-    mText.draw (floor (x), floor (y), 1.0f);
+    mText.draw (transform, floor (x), floor (y), 1.0f);
 }
 
 bool
@@ -256,7 +261,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (scaled && pixmap)
 	{
-	    GLFragment::Attrib fragment (gWindow->lastPaintAttrib ());
+	    GLWindowPaintAttrib wAttrib (gWindow->lastPaintAttrib ());
 	    GLMatrix           wTransform = transform;
 
 	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
@@ -264,15 +269,15 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    if (mSlot)
 	    {
-    		fragment.setBrightness((float) fragment.getBrightness () *
-					 mSlot->depthBrightness);
+    		wAttrib.brightness = (float)wAttrib.brightness *
+		                                         mSlot->depthBrightness;
 
 		if (window != rs->mSelectedWindow)
-		    fragment.setOpacity ((float)fragment.getOpacity () *
-			                 rs->optionGetInactiveOpacity () / 100);
+		    wAttrib.opacity = (float)wAttrib.opacity *
+		                          rs->optionGetInactiveOpacity () / 100;
 	    }
 
-	    if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	    if (window->alpha () || wAttrib.opacity != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	    wTransform.translate (window->x (), window->y (), 0.0f);
@@ -281,13 +286,8 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			          mTy / mScale - window->y (),
 			          0.0f);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
-
-	    gWindow->glDraw (wTransform, fragment, region,
+	    gWindow->glDraw (wTransform, wAttrib, region,
 			     mask | PAINT_WINDOW_TRANSFORMED_MASK);
-
-	    glPopMatrix ();
 	}
 
 	if (scaled && (rs->mState != RingScreen::RingStateIn) &&
@@ -375,37 +375,27 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 		matricies.push_back (matrix);
 
-		gWindow->geometry ().reset ();
-
+		gWindow->vertexBuffer ()->begin ();
 		gWindow->glAddGeometry (matricies, iconReg, iconReg);
-
-		if (gWindow->geometry ().vCount)
+		if (gWindow->vertexBuffer ()->end ())
 		{
-		    GLFragment::Attrib fragment (sAttrib);
+		    GLWindowPaintAttrib wAttrib (sAttrib);
 		    GLMatrix	       wTransform = transform;
 
 		    if (!pixmap)
 			sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
 		    if (mSlot)
-			fragment.setBrightness (
-					(float) fragment.getBrightness () *
-					mSlot->depthBrightness);
+		        wAttrib.brightness = (float)wAttrib.brightness *
+		                             mSlot->depthBrightness;
 
 		    wTransform.translate (window->x (), window->y (), 0.0f);
 		    wTransform.scale (scale, scale, 1.0f);
-		    wTransform.translate ((x - window->x ()) / scale -
-							 	window->x (),
-				          (y - window->y ()) / scale -
-								 window->y (),
+		    wTransform.translate ((x - window->x ()) / scale - window->x (),
+		                          (y - window->y ()) / scale - window->y (),
 				          0.0f);
 
-		    glPushMatrix ();
-		    glLoadMatrixf (wTransform.getMatrix ());
-
-		    gWindow->glDrawTexture (icon, fragment, mask);
-
-		    glPopMatrix ();
+		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
 		}
 	    }
 	}
@@ -775,8 +765,6 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	GLMatrix      sTransform = transform;
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
 
 	/* TODO: This code here should be reworked */
 
@@ -796,9 +784,7 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	}
 
 	if (mState != RingStateIn)
-	    drawWindowTitle ();
-
-	glPopMatrix ();
+	    drawWindowTitle (sTransform);
     }
 
     return status;

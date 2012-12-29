@@ -153,7 +153,7 @@ DecorWindow::doUpdateGroupShadows ()
 
 bool
 DecorWindow::glDraw (const GLMatrix     &transform,
-		     GLFragment::Attrib &attrib,
+		     const GLWindowPaintAttrib &attrib,
 		     const CompRegion   &region,
 		     unsigned int       mask)
 {
@@ -188,14 +188,13 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 		     */
 		    pmask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-		    if (d->gWindow->glPaint (d->gWindow->paintAttrib (),
+		    const GLWindowPaintAttrib &pAttrib (d->gWindow->paintAttrib ());
+
+		    if (d->gWindow->glPaint (pAttrib,
 					     transform,
 					     region,
 					     pmask))
-		    {
-			GLFragment::Attrib fa (d->gWindow->paintAttrib ());
-			d->glDecorate (transform, fa, region, mask);
-		    }
+			d->glDecorate (transform, pAttrib, region, mask);
 		}
 	    }
 	}
@@ -206,7 +205,7 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 
 void
 DecorWindow::glDecorate (const GLMatrix     &transform,
-		         GLFragment::Attrib &attrib,
+			 const GLWindowPaintAttrib &attrib,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
@@ -217,6 +216,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	GLTexture::MatrixList ml (1);
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
+	gWindow->vertexBuffer ()->begin ();
 	const CompRegion *preg = NULL;
 
 	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
@@ -228,11 +228,8 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	{
 	    tmpRegion = mOutputRegion;
 	    tmpRegion &= region;
-
-	    if (tmpRegion.isEmpty ())
-		preg = &region;
-	    else
-		preg = &shadowRegion;
+	    tmpRegion &= shadowRegion;
+	    preg = &tmpRegion;
 	}
 	else
 	    preg = &region;
@@ -242,8 +239,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    preg = &region;
 
 	const CompRegion &reg (*preg);
-
-	gWindow->geometry ().reset ();
 
 	if (updateMatrix)
 	    updateDecorationScale ();
@@ -263,9 +258,13 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    }
 	}
 
-	if (gWindow->geometry ().vCount)
-	    gWindow->glDrawTexture (wd->decor->texture->textures[0],
+	if (gWindow->vertexBuffer ()->end ())
+	{
+	    glEnable (GL_BLEND);
+	    gWindow->glDrawTexture (wd->decor->texture->textures[0], transform,
 				    attrib, mask);
+	    glDisable (GL_BLEND);
+	}
     }
     else if (wd && wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
     {
@@ -279,14 +278,16 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	if (updateMatrix)
 	    updateDecorationScale ();
 
+	glEnable (GL_BLEND);
+
 	if (gWindow->textures ().size () == 1)
 	{
 	    ml[0] = gWindow->matrices ()[0];
-	    gWindow->geometry ().reset ();
+	    gWindow->vertexBuffer ()->begin ();
 	    gWindow->glAddGeometry (ml, window->frameRegion (), region);
-
-	    if (gWindow->geometry ().vCount)
-		gWindow->glDrawTexture (gWindow->textures ()[0], attrib, mask);
+	    if (gWindow->vertexBuffer ()->end ())
+		gWindow->glDrawTexture (gWindow->textures ()[0], transform,
+		                        attrib, mask);
 	}
 	else
 	{
@@ -295,14 +296,15 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    for (unsigned int i = 0; i < gWindow->textures ().size (); i++)
 	    {
 		ml[0] = gWindow->matrices ()[i];
-		gWindow->geometry ().reset ();
+		gWindow->vertexBuffer ()->begin ();
 		gWindow->glAddGeometry (ml, regions[i], region);
-
-		if (gWindow->geometry ().vCount)
-		    gWindow->glDrawTexture (gWindow->textures ()[i], attrib,
-					    mask);
+		if (gWindow->vertexBuffer ()->end ())
+		    gWindow->glDrawTexture (gWindow->textures ()[i], transform,
+		                            attrib, mask);
 	    }
 	}
+
+	glDisable (GL_BLEND);
     }
 }
 
@@ -335,7 +337,9 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
     }
 
     bindFailed = false;
-    textures = GLTexture::bindPixmapToTexture (pixmap->getPixmap (), width, height, depth);
+    textures = GLTexture::bindPixmapToTexture (pixmap->getPixmap (),
+					       width, height, depth,
+					       compiz::opengl::ExternallyManaged);
     if (textures.size () != 1)
     {
 	bindFailed = true;
@@ -593,6 +597,7 @@ Decoration::Decoration (int   type,
 			unsigned int nQuad,
 			Window       owner,
 			DecorPixmapRequestorInterface *requestor) :
+    refCount (0),
     texture (DecorScreen::get (screen)->getTexture (pixmap)),
     border (border.left, border.right, border.top, border.bottom),
     input (input.left, input.right, input.top, input.bottom),
@@ -993,7 +998,6 @@ WindowDecoration::destroy (WindowDecoration *wd)
 void
 DecorWindow::setDecorationMatrices ()
 {
-    int		      i;
     float	      x0, y0;
     decor_matrix_t    a;
     GLTexture::Matrix b;
@@ -1001,7 +1005,7 @@ DecorWindow::setDecorationMatrices ()
     if (!wd)
 	return;
 
-    for (i = 0; i < wd->nQuad; i++)
+    for (int i = 0; i < wd->nQuad; i++)
     {
 	/* Set the quad matrix to the texture matrix */
 	wd->quad[i].matrix = wd->decor->texture->textures[0]->matrix ();
@@ -1077,12 +1081,11 @@ DecorWindow::updateDecorationScale ()
 {
     int		     x1, y1, x2, y2;
     float            sx, sy;
-    int		     i;
 
     if (!wd)
 	return;
 
-    for (i = 0; i < wd->nQuad; i++)
+    for (int i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
 	unsigned int width = window->size ().width ();
@@ -1175,7 +1178,6 @@ DecorWindow::matchType (CompWindow *w,
                         unsigned int decorType)
 {
     const unsigned int nTypeStates = 5;
-    unsigned int i;
     struct typestate {
         unsigned int compFlag;
         unsigned int decorFlag;
@@ -1188,7 +1190,7 @@ DecorWindow::matchType (CompWindow *w,
         { CompWindowTypeUtilMask, DECOR_WINDOW_TYPE_UTILITY}
     };
 
-    for (i = 0; i < nTypeStates; i++)
+    for (unsigned int i = 0; i < nTypeStates; i++)
     {
         if ((decorType & typeStates[i].decorFlag) && (w->type () & typeStates[i].compFlag))
             return true;
@@ -1213,7 +1215,6 @@ DecorWindow::matchState (CompWindow   *w,
                          unsigned int decorState)
 {
     const unsigned int nStateStates = 3;
-    unsigned int i;
     struct statestate {
         unsigned int compFlag;
         unsigned int decorFlag;
@@ -1228,7 +1229,7 @@ DecorWindow::matchState (CompWindow   *w,
     if (screen->activeWindow () == w->id ())
         decorState &= ~(DECOR_WINDOW_STATE_FOCUS);
 
-    for (i = 0; i < nStateStates; i++)
+    for (unsigned int i = 0; i < nStateStates; i++)
     {
         if ((decorState & stateStates[i].decorFlag) && (w->state () & stateStates[i].compFlag))
             decorState &= ~(stateStates[i].decorFlag);
@@ -1249,7 +1250,6 @@ DecorWindow::matchActions (CompWindow   *w,
                            unsigned int decorActions)
 {
     const unsigned int nActionStates =16;
-    unsigned int i;
     struct actionstate {
         unsigned int compFlag;
         unsigned int decorFlag;
@@ -1273,7 +1273,7 @@ DecorWindow::matchActions (CompWindow   *w,
         { DECOR_WINDOW_ACTION_BELOW, CompWindowActionBelowMask },
     };
 
-    for (i = 0; i < nActionStates; i++)
+    for (unsigned int i = 0; i < nActionStates; i++)
     {
         if ((decorActions & actionStates[i].decorFlag) && (w->type () & actionStates[i].compFlag))
             decorActions &= ~(actionStates[i].decorFlag);
@@ -2479,10 +2479,8 @@ DecorScreen::handleEvent (XEvent *event)
 		    }
 		    else
 		    {
-			int i;
-
 			/* A default decoration changed */
-			for (i = 0; i < DECOR_NUM; i++)
+			for (int i = 0; i < DECOR_NUM; i++)
 			{
 			    if (event->xproperty.atom == decorAtom[i])
 			    {
@@ -2780,9 +2778,7 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 {
     if (wd)
     {
-	int		 i;
-
-	for (i = 0; i < wd->nQuad; i++)
+	for (int i = 0; i < wd->nQuad; i++)
 	{
 	    wd->quad[i].box.x1 += dx;
 	    wd->quad[i].box.y1 += dy;

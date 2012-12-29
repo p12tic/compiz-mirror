@@ -23,23 +23,14 @@
 #define _CSS_H
 
 #include <stddef.h>  /* for NULL */
+#include <ccs-defs.h>
+#include <ccs-object.h>
+#include <ccs-list.h>
+#include <ccs-string.h>
+#include <ccs-backend.h>
+#include <ccs-setting-types.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-#ifndef Bool
-#define Bool int
-#endif
-
-#ifndef TRUE
-#define TRUE ~0
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
+COMPIZCONFIG_BEGIN_DECLS
 
 #ifndef CCS_LOG_DOMAIN
 #define CCS_LOG_DOMAIN NULL
@@ -78,77 +69,16 @@ typedef enum
 
 void ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...);
 
-/**
- * list functions:
- * for each list there is a set of functions, explained using String as example
- *
- * ccsStringListAppend (list, item)
- * Adds an item at the end of the list. Returns the new list.
- *
- * ccsStringListPrepend (list, item)
- * Adds an item at the beginning of the list. Returns the new list.
- *
- * ccsStringListInsert (list, item, position)
- * Adds an item at a given position. Position is 0-based. If position is
- * larger than the amount of items in the list, the item is inserted at the
- * end of the list. Returns the new list.
- *
- * ccsStringListInsertBefore (list, sibling, item)
- * Inserts item before sibling into the list. If sibling is no list member,
- * item is inserted at the end. Returns the new list.
- *
- * ccsStringListLength (list)
- * Returns the amount of items in list.
- *
- * ccsStringListFind (list, item)
- * Finds and returns an item matching <item>. If nothing is found, returns NULL.
- *
- * ccsStringListGetItem (list, index)
- * Returns the list item at position <index>. If index is larger than the
- * amount of items in the list, returns NULL.
- *
- * ccsStringListRemove (list, item, freeObj)
- * Removes item from the list. If freeObj is TRUE, also frees the data item.
- * Returns the new list.
- *
- * ccsStringListFree (list, freeObj)
- * Frees the complete list. If freeObj is TRUE, also frees the data items.
- * Returns the new list (NULL).
- */
-#define CCSLIST_HDR(type,dtype)		\
-    typedef struct _CCS##type##List *	CCS##type##List;\
-    struct _CCS##type##List	\
-    {								\
-	dtype   * data;			\
-	CCS##type##List next;		\
-    }; \
-    CCS##type##List ccs##type##ListAppend (CCS##type##List list, dtype *data); \
-    CCS##type##List ccs##type##ListPrepend (CCS##type##List list, dtype *data); \
-    CCS##type##List ccs##type##ListInsert (CCS##type##List list, dtype *data, int position); \
-    CCS##type##List ccs##type##ListInsertBefore (CCS##type##List list, CCS##type##List sibling, dtype *data); \
-    unsigned int ccs##type##ListLength (CCS##type##List list); \
-    CCS##type##List ccs##type##ListFind (CCS##type##List list, dtype *data); \
-    CCS##type##List ccs##type##ListGetItem (CCS##type##List list, unsigned int index); \
-    CCS##type##List ccs##type##ListRemove (CCS##type##List list, dtype *data, Bool freeObj); \
-    CCS##type##List ccs##type##ListFree (CCS##type##List list, Bool freeObj);
-
-typedef struct _CCSContext	  CCSContext;
-typedef struct _CCSPlugin	  CCSPlugin;
-typedef struct _CCSSetting	  CCSSetting;
 typedef struct _CCSGroup	  CCSGroup;
 typedef struct _CCSSubGroup	  CCSSubGroup;
 typedef struct _CCSPluginCategory CCSPluginCategory;
-typedef struct _CCSSettingValue	  CCSSettingValue;
 typedef struct _CCSPluginConflict CCSPluginConflict;
-typedef struct _CCSBackendInfo	  CCSBackendInfo;
 typedef struct _CCSIntDesc	  CCSIntDesc;
 typedef struct _CCSStrRestriction CCSStrRestriction;
 typedef struct _CCSStrExtension   CCSStrExtension;
-typedef struct _CCSString	  CCSString;
 
 CCSLIST_HDR (Plugin, CCSPlugin)
 CCSLIST_HDR (Setting, CCSSetting)
-CCSLIST_HDR (String, CCSString)
 CCSLIST_HDR (Group, CCSGroup)
 CCSLIST_HDR (SubGroup, CCSSubGroup)
 CCSLIST_HDR (SettingValue, CCSSettingValue)
@@ -158,124 +88,10 @@ CCSLIST_HDR (IntDesc, CCSIntDesc)
 CCSLIST_HDR (StrRestriction, CCSStrRestriction)
 CCSLIST_HDR (StrExtension, CCSStrExtension)
 
-typedef struct _CCSInterface CCSInterface; /* Dummy typedef */
-typedef struct _CCSPrivate CCSPrivate; /* Dummy typedef */
-typedef struct _CCSObject CCSObject;
-
-typedef void * (*reallocObjectProc) (void *, void *, size_t);
-typedef void * (*mallocObjectProc) (void *, size_t);
-typedef void * (*callocObjectProc) (void *, size_t, size_t);
-typedef void (*freeObjectProc) (void *, void *);
-
-typedef struct _CCSObjectAllocationInterface
-{
-    reallocObjectProc realloc_;
-    mallocObjectProc  malloc_;
-    callocObjectProc  calloc_;
-    freeObjectProc    free_;
-    void              *allocator;
-} CCSObjectAllocationInterface;
-
-extern CCSObjectAllocationInterface ccsDefaultObjectAllocator;
-
-struct _CCSObject
-{
-    CCSPrivate *priv; /* Private pointer for object storage */
-
-    const CCSInterface **interfaces; /* An array of interfaces that this object implements */
-    int          *interface_types; /* An array of interface types */
-    unsigned int n_interfaces;
-    unsigned int n_allocated_interfaces;
-
-    CCSObjectAllocationInterface *object_allocation;
-
-    unsigned int refcnt; /* Reference count of this object */
-};
-
-Bool
-ccsObjectInit_ (CCSObject *object, CCSObjectAllocationInterface *interface);
-
-#define ccsObjectInit(o, interface) (ccsObjectInit_) (&(o)->object, interface)
-
-Bool
-ccsObjectAddInterface_ (CCSObject *object, const CCSInterface *interface, int interface_type);
-
-#define ccsObjectAddInterface(o, interface, type) (ccsObjectAddInterface_) (&(o)->object, interface, type);
-
-Bool
-ccsObjectRemoveInterface_ (CCSObject *object, int interface_type);
-
-#define ccsObjectRemoveInterface(o, interface_type) (ccsObjectRemoveInterface_) (&(o)->object, interface_type);
-
-const CCSInterface * ccsObjectGetInterface_ (CCSObject *object, int interface_type);
-
-#define ccsObjectGetInterface(o, interface_type) (ccsObjectGetInterface_) (&(o)->object, interface_type)
-
-#define ccsObjectRef(o) \
-    do { ((o)->object).refcnt++; } while (FALSE)
-
-#define ccsObjectUnref(o, freeFunc) \
-    do \
-    { \
-	((o)->object).refcnt--; \
-	if (!((o)->object).refcnt) \
-	    freeFunc (o); \
-    } while (FALSE)
-
-CCSPrivate *
-ccsObjectGetPrivate_ (CCSObject *object);
-
-#define ccsObjectGetPrivate(o) (ccsObjectGetPrivate_) (&(o)->object)
-
-void
-ccsObjectSetPrivate_ (CCSObject *object, CCSPrivate *priv);
-
-#define ccsObjectSetPrivate(o, priv) (ccsObjectSetPrivate_) (&(o)->object, priv)
-
-void
-ccsObjectFinalize_ (CCSObject *object);
-
-#define ccsObjectFinalize(o) (ccsObjectFinalize_) (&(o)->object)
-
-unsigned int
-ccsAllocateType ();
-
-#define GET_INTERFACE_TYPE(Interface) \
-    ccs##Interface##GetType ()
-
-#define INTERFACE_TYPE(Interface) \
-    unsigned int ccs##Interface##GetType () \
-    { \
-	static unsigned int   type_id = 0; \
-	if (!type_id) \
-	    type_id = ccsAllocateType (); \
-	 \
-	return type_id; \
-    }
-
-#define GET_INTERFACE(CType, o) (CType *) ccsObjectGetInterface (o, GET_INTERFACE_TYPE(CType))
-
-/**
- * reference counting
- * 
- * ccsSettingRef
- * References the settings object so it can be kept in a list and
- * unreferenced later with freeObj (mixed with objects that need
- * to be freed and need not be freed)
- * 
- * ccsSettingUnref
- * Unreferences the settings object, when the reference count reaches
- * zero, the object is freed
- * 
- */
-
-#define CCSREF_HDR(type,dtype) \
-	void ccs##type##Ref (dtype *);  \
-	void ccs##type##Unref (dtype *);
-
 CCSREF_HDR (Plugin, CCSPlugin)
 CCSREF_HDR (Setting, CCSSetting)
 CCSREF_HDR (String, CCSString)
+CCSREF_HDR (Backend, CCSBackend)
 CCSREF_HDR (Group, CCSGroup)
 CCSREF_HDR (SubGroup, CCSSubGroup)
 CCSREF_HDR (SettingValue, CCSSettingValue)
@@ -285,7 +101,6 @@ CCSREF_HDR (IntDesc, CCSIntDesc)
 CCSREF_HDR (StrRestriction, CCSStrRestriction)
 CCSREF_HDR (StrExtension, CCSStrExtension)
 
-typedef struct _CCSInterfaceTable CCSInterfaceTable;
 typedef struct _CCSContextInterface CCSContextInterface;
 typedef struct _CCSPluginInterface CCSPluginInterface;
 typedef struct _CCSSettingInterface CCSSettingInterface;
@@ -295,6 +110,8 @@ struct _CCSInterfaceTable
     const CCSContextInterface *contextInterface;
     const CCSPluginInterface *pluginInterface;
     const CCSSettingInterface *settingInterface;
+    const CCSBackendInterface *dynamicBackendWrapperInterface;
+    const CCSDynamicBackendInterface *dynamicBackendInterface;
 };
 
 extern const CCSInterfaceTable ccsDefaultInterfaceTable;
@@ -311,15 +128,15 @@ typedef void * (*CCSContextGetPrivatePtr) (CCSContext *context);
 typedef void (*CCSContextSetPrivatePtr) (CCSContext *context, void *ptr);
 typedef Bool (*CCSContextLoadPlugin) (CCSContext *context, char *name);
 typedef CCSPlugin * (*CCSContextFindPlugin) (CCSContext *context, const char *name);
-typedef Bool (*CCSContextPluginIsActive) (CCSContext *context, char *name);
+typedef Bool (*CCSContextPluginIsActive) (CCSContext *context, const char *name);
 typedef CCSPluginList (*CCSContextGetActivePluginList) (CCSContext *context);
 typedef CCSStringList (*CCSContextGetSortedPluginStringList) (CCSContext *context);
 typedef Bool (*CCSContextSetBackend) (CCSContext *context, char *name);
-typedef char * (*CCSContextGetBackend) (CCSContext *context);
+typedef const char * (*CCSContextGetBackend) (CCSContext *context);
 typedef void (*CCSContextSetIntegrationEnabled) (CCSContext *context, Bool value);
 typedef void (*CCSContextSetProfile) (CCSContext *context, char *name);
 typedef void (*CCSContextSetPluginListAutoSort) (CCSContext *context, Bool value);
-typedef char * (*CCSContextGetProfile) (CCSContext *context);
+typedef const char * (*CCSContextGetProfile) (CCSContext *context);
 typedef Bool (*CCSContextGetIntegrationEnabled) (CCSContext *context);
 typedef Bool (*CCSContextGetPluginListAutoSort) (CCSContext *context);
 typedef void (*CCSContextProcessEvents) (CCSContext *context, unsigned int flags);
@@ -334,6 +151,7 @@ typedef CCSStringList (*CCSContextGetExistingProfiles) (CCSContext *context);
 typedef void (*CCSContextDeleteProfile) (CCSContext *context, char *name);
 typedef Bool (*CCSContextCheckForSettingsUpgrade) (CCSContext *context);
 typedef void (*CCSContextLoadPlugins) (CCSContext *context);
+typedef void (*CCSContextDestructor) (CCSContext *context);
 
 struct _CCSContextInterface
 {
@@ -371,6 +189,7 @@ struct _CCSContextInterface
     CCSContextDeleteProfile contextDeleteProfile;
     CCSContextCheckForSettingsUpgrade contextCheckForSettingsUpgrade;
     CCSContextLoadPlugins contextLoadPlugins;
+    CCSContextDestructor contextDestructor;
 };
 
 unsigned int ccsCCSContextInterfaceGetType ();
@@ -396,22 +215,12 @@ struct _CCSContext
     CCSObject object;
 };
 
-struct _CCSBackendInfo
-{
-    char *name;              /* name of the backend */
-    char *shortDesc;         /* backend's short description */
-    char *longDesc;          /* backend's long description */
-    Bool integrationSupport; /* does the backend support DE integration? */
-    Bool profileSupport;     /* does the backend support profiles? */
-    unsigned int refCount;   /* reference count */
-};
-
 /* CCSPluginInterface */
-typedef char * (*CCSPluginGetName) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetShortDesc) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetLongDesc) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetHints) (CCSPlugin *plugin);
-typedef char * (*CCSPluginGetCategory) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetName) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetShortDesc) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetLongDesc) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetHints) (CCSPlugin *plugin);
+typedef const char * (*CCSPluginGetCategory) (CCSPlugin *plugin);
 
 typedef CCSStringList (*CCSPluginGetLoadAfter) (CCSPlugin *plugin);
 typedef CCSStringList (*CCSPluginGetLoadBefore) (CCSPlugin *plugin);
@@ -430,6 +239,8 @@ typedef CCSSettingList (*CCSPluginGetPluginSettings) (CCSPlugin *plugin);
 typedef CCSGroupList (*CCSPluginGetPluginGroups) (CCSPlugin *plugin);
 typedef void (*CCSPluginReadPluginSettings) (CCSPlugin *plugin);
 typedef CCSStrExtensionList (*CCSPluginGetPluginStrExtensions) (CCSPlugin *plugin);
+
+typedef void (*CCSPluginDestructor) (CCSPlugin *plugin);
 
 unsigned int ccsCCSPluginInterfaceGetType ();
 
@@ -454,14 +265,15 @@ struct _CCSPluginInterface
     CCSPluginGetPluginGroups pluginGetPluginGroups;
     CCSPluginReadPluginSettings pluginReadPluginSettings;
     CCSPluginGetPluginStrExtensions pluginGetPluginStrExtensions;
+    CCSPluginDestructor pluginDestructor;
 };
 
 /* CCSPlugin accessor functions */
-char * ccsPluginGetName (CCSPlugin *plugin);
-char * ccsPluginGetShortDesc (CCSPlugin *plugin);
-char * ccsPluginGetLongDesc (CCSPlugin *plugin);
-char * ccsPluginGetHints (CCSPlugin *plugin);
-char * ccsPluginGetCategory (CCSPlugin *plugin);
+const char * ccsPluginGetName (CCSPlugin *plugin);
+const char * ccsPluginGetShortDesc (CCSPlugin *plugin);
+const char * ccsPluginGetLongDesc (CCSPlugin *plugin);
+const char * ccsPluginGetHints (CCSPlugin *plugin);
+const char * ccsPluginGetCategory (CCSPlugin *plugin);
 
 CCSStringList ccsPluginGetLoadAfter (CCSPlugin *plugin);
 CCSStringList ccsPluginGetLoadBefore (CCSPlugin *plugin);
@@ -481,24 +293,6 @@ struct _CCSPlugin
 {
     CCSObject object;
 };
-
-typedef enum _CCSSettingType
-{
-    /* This needs to be in the same order as CompOptionType for consistency */
-    TypeBool,
-    TypeInt,
-    TypeFloat,
-    TypeString,
-    TypeColor,
-    TypeAction,
-    TypeKey,
-    TypeButton,
-    TypeEdge,
-    TypeBell,
-    TypeMatch,
-    TypeList,
-    TypeNum
-} CCSSettingType;
 
 struct _CCSSubGroup
 {
@@ -537,12 +331,6 @@ struct _CCSPluginConflict
 };
 
 union _CCSSettingInfo;
-
-struct _CCSString
-{
-    char 	 *value;
-    unsigned int refCount;
-};
 
 struct _CCSIntDesc
 {
@@ -670,14 +458,14 @@ struct _CCSSettingValue
 };
 
 /* Interface for CCSSetting */
-char * ccsSettingGetName (CCSSetting *setting);
-char * ccsSettingGetShortDesc (CCSSetting *setting);
-char * ccsSettingGetLongDesc (CCSSetting *setting);
+const char * ccsSettingGetName (CCSSetting *setting);
+const char * ccsSettingGetShortDesc (CCSSetting *setting);
+const char * ccsSettingGetLongDesc (CCSSetting *setting);
 CCSSettingType ccsSettingGetType (CCSSetting *setting);
 CCSSettingInfo * ccsSettingGetInfo (CCSSetting *setting);
-char * ccsSettingGetGroup (CCSSetting *setting);
-char * ccsSettingGetSubGroup (CCSSetting *setting);
-char * ccsSettingGetHints (CCSSetting *setting);
+const char * ccsSettingGetGroup (CCSSetting *setting);
+const char * ccsSettingGetSubGroup (CCSSetting *setting);
+const char * ccsSettingGetHints (CCSSetting *setting);
 CCSSettingValue * ccsSettingGetDefaultValue (CCSSetting *setting);
 CCSSettingValue *ccsSettingGetValue (CCSSetting *setting);
 Bool ccsSettingGetIsDefault (CCSSetting *setting);
@@ -694,11 +482,11 @@ Bool ccsGetFloat (CCSSetting *setting,
 Bool ccsGetBool (CCSSetting *setting,
 		 Bool       *data);
 Bool ccsGetString (CCSSetting *setting,
-		   char       **data);
+		   const char **data);
 Bool ccsGetColor (CCSSetting           *setting,
 		  CCSSettingColorValue *data);
 Bool ccsGetMatch (CCSSetting *setting,
-		  char       **data);
+		  const char **data);
 Bool ccsGetKey (CCSSetting         *setting,
 		CCSSettingKeyValue *data);
 Bool ccsGetButton (CCSSetting            *setting,
@@ -710,45 +498,54 @@ Bool ccsGetBell (CCSSetting *setting,
 Bool ccsGetList (CCSSetting          *setting,
 		 CCSSettingValueList *data);
 
+typedef enum _CCSSetStatus
+{
+    SetFailed = -1,
+    SetToDefault = 1,
+    SetIsDefault = 2,
+    SetToSameValue = 3,
+    SetToNewValue = 4
+} CCSSetStatus;
+
 /* Setting setters. Set <setting> to value <data>. Return TRUE if new value
    matches data. If the new value doesn't match the old value, the setting
    is added to the context's changedSettings list. */
-Bool ccsSetInt (CCSSetting *setting,
-		int        data,
-		Bool	   processChanged);
-Bool ccsSetFloat (CCSSetting *setting,
-		  float      data,
-		  Bool	     processChanged);
-Bool ccsSetBool (CCSSetting *setting,
-		 Bool       data,
-		 Bool	    processChanged);
-Bool ccsSetString (CCSSetting *setting,
-		   const char *data,
-		   Bool	      processChanged);
-Bool ccsSetColor (CCSSetting           *setting,
-		  CCSSettingColorValue data,
-		  Bool		       processChanged);
-Bool ccsSetMatch (CCSSetting *setting,
-		  const char *data,
-		  Bool	     processChanged);
-Bool ccsSetKey (CCSSetting         *setting,
-		CCSSettingKeyValue data,
-		Bool		   processChanged);
-Bool ccsSetButton (CCSSetting            *setting,
-		   CCSSettingButtonValue data,
-		   Bool			 processChanged);
-Bool ccsSetEdge (CCSSetting   *setting,
-		 unsigned int data,
-		 Bool	      processChanged);
-Bool ccsSetBell (CCSSetting *setting,
-		 Bool       data,
-		 Bool	    processChanged);
-Bool ccsSetList (CCSSetting          *setting,
-		 CCSSettingValueList data,
-		 Bool	 processChanged);
-Bool ccsSetValue (CCSSetting      *setting,
-		  CCSSettingValue *data,
-		  Bool		  processChanged);
+CCSSetStatus ccsSetInt (CCSSetting *setting,
+			int        data,
+			Bool	   processChanged);
+CCSSetStatus ccsSetFloat (CCSSetting *setting,
+			  float      data,
+			  Bool	     processChanged);
+CCSSetStatus ccsSetBool (CCSSetting *setting,
+			 Bool       data,
+			 Bool	    processChanged);
+CCSSetStatus ccsSetString (CCSSetting *setting,
+			   const char *data,
+			   Bool	      processChanged);
+CCSSetStatus ccsSetColor (CCSSetting           *setting,
+			  CCSSettingColorValue data,
+			  Bool		       processChanged);
+CCSSetStatus ccsSetMatch (CCSSetting *setting,
+			  const char *data,
+			  Bool	     processChanged);
+CCSSetStatus ccsSetKey (CCSSetting         *setting,
+			CCSSettingKeyValue data,
+			Bool		   processChanged);
+CCSSetStatus ccsSetButton (CCSSetting            *setting,
+			   CCSSettingButtonValue data,
+			   Bool			 processChanged);
+CCSSetStatus ccsSetEdge (CCSSetting   *setting,
+			 unsigned int data,
+			 Bool	      processChanged);
+CCSSetStatus ccsSetBell (CCSSetting *setting,
+			 Bool       data,
+			 Bool	    processChanged);
+CCSSetStatus ccsSetList (CCSSetting          *setting,
+			 CCSSettingValueList data,
+			 Bool	 processChanged);
+CCSSetStatus ccsSetValue (CCSSetting      *setting,
+			  CCSSettingValue *data,
+			  Bool		  processChanged);
 
 /* Reset all settings to defaults. Settings that were non-default
    previously are added to the changedSettings list of the context. */
@@ -760,38 +557,41 @@ Bool ccsSettingIsIntegrated (CCSSetting *setting);
 /* Checks if a given setting is read-only. */
 Bool ccsSettingIsReadOnly (CCSSetting *setting);
 
-typedef char * (*CCSSettingGetName) (CCSSetting *);
-typedef char * (*CCSSettingGetShortDesc) (CCSSetting *);
-typedef char * (*CCSSettingGetLongDesc) (CCSSetting *);
+/* Checks if a setting is readable by backends */
+Bool ccsSettingIsReadableByBackend (CCSSetting *setting);
+
+typedef const char * (*CCSSettingGetName) (CCSSetting *);
+typedef const char * (*CCSSettingGetShortDesc) (CCSSetting *);
+typedef const char * (*CCSSettingGetLongDesc) (CCSSetting *);
 typedef CCSSettingType (*CCSSettingGetType) (CCSSetting *);
 typedef CCSSettingInfo * (*CCSSettingGetInfo) (CCSSetting *);
-typedef char * (*CCSSettingGetGroup) (CCSSetting *);
-typedef char * (*CCSSettingGetSubGroup) (CCSSetting *);
-typedef char * (*CCSSettingGetHints) (CCSSetting *);
+typedef const char * (*CCSSettingGetGroup) (CCSSetting *);
+typedef const char * (*CCSSettingGetSubGroup) (CCSSetting *);
+typedef const char * (*CCSSettingGetHints) (CCSSetting *);
 typedef CCSSettingValue * (*CCSSettingGetDefaultValue) (CCSSetting *setting);
 typedef CCSSettingValue * (*CCSSettingGetValue) (CCSSetting *setting);
 typedef Bool (*CCSSettingGetIsDefault) (CCSSetting *);
 typedef CCSPlugin * (*CCSSettingGetParent) (CCSSetting *);
 typedef void * (*CCSSettingGetPrivatePtr) (CCSSetting *);
 typedef void (*CCSSettingSetPrivatePtr) (CCSSetting *, void *);
-typedef Bool (*CCSSettingSetInt) (CCSSetting *setting, int data, Bool processChanged);
-typedef Bool (*CCSSettingSetFloat) (CCSSetting *setting, float data, Bool processChanged);
-typedef Bool (*CCSSettingSetBool) (CCSSetting *setting, Bool data, Bool processChanged);
-typedef Bool (*CCSSettingSetString) (CCSSetting *setting, const char * data, Bool processChanged);
-typedef Bool (*CCSSettingSetColor) (CCSSetting *setting, CCSSettingColorValue data, Bool processChanged);
-typedef Bool (*CCSSettingSetMatch) (CCSSetting *setting, const char * data, Bool processChanged);
-typedef Bool (*CCSSettingSetKey) (CCSSetting *setting, CCSSettingKeyValue data, Bool processChanged);
-typedef Bool (*CCSSettingSetButton) (CCSSetting *setting, CCSSettingButtonValue data, Bool processChanged);
-typedef Bool (*CCSSettingSetEdge) (CCSSetting *setting, unsigned int data, Bool processChanged);
-typedef Bool (*CCSSettingSetBell) (CCSSetting *setting, Bool data, Bool processChanged);
-typedef Bool (*CCSSettingSetList) (CCSSetting *setting, CCSSettingValueList data, Bool processChanged);
-typedef Bool (*CCSSettingSetValue) (CCSSetting *setting, CCSSettingValue *data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetInt) (CCSSetting *setting, int data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetFloat) (CCSSetting *setting, float data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetBool) (CCSSetting *setting, Bool data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetString) (CCSSetting *setting, const char * data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetColor) (CCSSetting *setting, CCSSettingColorValue data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetMatch) (CCSSetting *setting, const char * data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetKey) (CCSSetting *setting, CCSSettingKeyValue data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetButton) (CCSSetting *setting, CCSSettingButtonValue data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetEdge) (CCSSetting *setting, unsigned int data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetBell) (CCSSetting *setting, Bool data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetList) (CCSSetting *setting, CCSSettingValueList data, Bool processChanged);
+typedef CCSSetStatus (*CCSSettingSetValue) (CCSSetting *setting, CCSSettingValue *data, Bool processChanged);
 typedef Bool (*CCSSettingGetInt) (CCSSetting *setting, int *data);
 typedef Bool (*CCSSettingGetFloat) (CCSSetting *setting, float *data);
 typedef Bool (*CCSSettingGetBool) (CCSSetting *setting, Bool *data);
-typedef Bool (*CCSSettingGetString) (CCSSetting *setting, char **data);
+typedef Bool (*CCSSettingGetString) (CCSSetting *setting, const char **data);
 typedef Bool (*CCSSettingGetColor) (CCSSetting *setting, CCSSettingColorValue *data);
-typedef Bool (*CCSSettingGetMatch) (CCSSetting *setting, char **data);
+typedef Bool (*CCSSettingGetMatch) (CCSSetting *setting, const char **data);
 typedef Bool (*CCSSettingGetKey) (CCSSetting *setting, CCSSettingKeyValue *data);
 typedef Bool (*CCSSettingGetButton) (CCSSetting *setting, CCSSettingButtonValue *data);
 typedef Bool (*CCSSettingGetEdge) (CCSSetting *setting, unsigned int *data);
@@ -800,6 +600,7 @@ typedef Bool (*CCSSettingGetList) (CCSSetting *setting, CCSSettingValueList *dat
 typedef void (*CCSSettingResetToDefault) (CCSSetting *setting, Bool processChanged);
 typedef Bool (*CCSSettingIsIntegrated) (CCSSetting *setting);
 typedef Bool (*CCSSettingIsReadOnly) (CCSSetting *setting);
+typedef Bool (*CCSSettingIsReadableByBackend) (CCSSetting *setting);
 typedef void (*CCSSettingDestructor) (CCSSetting *setting);
 
 unsigned int ccsCCSSettingInterfaceGetType ();
@@ -846,6 +647,7 @@ struct _CCSSettingInterface
     CCSSettingResetToDefault settingResetToDefault;
     CCSSettingIsIntegrated settingIsIntegrated;
     CCSSettingIsReadOnly settingIsReadOnly;
+    CCSSettingIsReadableByBackend settingIsReadableByBackend;
     CCSSettingDestructor settingDestructor;
 };
 
@@ -853,6 +655,31 @@ struct _CCSSetting
 {
     CCSObject object;
 };
+
+typedef void (*CCSSettingDefaultValueInitializerFunc) (CCSSettingType  type,
+						       CCSSettingInfo  *info,
+						       CCSSettingValue *value,
+						       void            *data);
+
+typedef void (*CCSSettingInfoInitializerFunc) (CCSSettingType  type,
+					       CCSSettingInfo  *info,
+					       void            *data);
+
+CCSSetting *
+ccsSettingDefaultImplNew (CCSPlugin                             *plugin,
+			  const char                            *name,
+			  CCSSettingType                        type,
+			  const char                            *shortDesc,
+			  const char                            *longDesc,
+			  const char                            *hints,
+			  const char                            *group,
+			  const char                            *subGroup,
+			  CCSSettingDefaultValueInitializerFunc valueInit,
+			  void                                  *valueInitData,
+			  CCSSettingInfoInitializerFunc         infoInit,
+			  void                                  *infoInitData,
+			  CCSObjectAllocationInterface          *ai,
+			  const CCSInterfaceTable               *interfaces);
 
 struct _CCSPluginCategory
 {
@@ -897,21 +724,23 @@ CCSSetting* ccsFindSetting (CCSPlugin    *plugin,
 
 /* Returns TRUE if the named plugin is in the context and marked as currently
    active in Compiz, FALSE otherwise. */
-Bool ccsPluginIsActive (CCSContext *context,
-			char       *name);
+Bool ccsPluginIsActive(CCSContext *context, const char *name);
 
 void ccsFreeContext (CCSContext *context);
 void ccsFreePlugin (CCSPlugin *plugin);
 void ccsFreeSetting (CCSSetting *setting);
 void ccsFreeGroup (CCSGroup *group);
 void ccsFreeSubGroup (CCSSubGroup *subGroup);
+void ccsCleanupSettingInfo (CCSSettingInfo *info,
+			 CCSSettingType type);
 void ccsFreeSettingValue (CCSSettingValue *value);
+void ccsFreeSettingValueWithType (CCSSettingValue *v,
+				  CCSSettingType  type);
 void ccsFreePluginConflict (CCSPluginConflict *value);
 void ccsFreeBackendInfo (CCSBackendInfo *value);
 void ccsFreeIntDesc (CCSIntDesc *value);
 void ccsFreeStrRestriction (CCSStrRestriction *restriction);
 void ccsFreeStrExtension (CCSStrExtension *extension);
-void ccsFreeString (CCSString *str);
 
 
 
@@ -923,6 +752,10 @@ Bool ccsIsEqualKey (CCSSettingKeyValue c1,
 		    CCSSettingKeyValue c2);
 Bool ccsIsEqualButton (CCSSettingButtonValue c1,
 		       CCSSettingButtonValue c2);
+
+/* Compares lists */
+Bool ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
+		      CCSSettingListInfo info);
 
 /* Retrieves a list of settings in a plugin */
 CCSSettingList ccsGetPluginSettings (CCSPlugin *plugin);
@@ -964,12 +797,31 @@ Bool * ccsGetBoolArrayFromValueList (CCSSettingValueList list,
 CCSSettingColorValue* ccsGetColorArrayFromValueList (CCSSettingValueList list,
 	       					     int                 *num);
 
+/* Deep copies value lists */
+CCSSettingValueList
+ccsCopyList (CCSSettingValueList l1, CCSSetting * setting);
+
+/* Deep copy setting value */
+CCSSettingValue *
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info);
+Bool
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info);
+
+/* Deep copy setting info */
+void
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type);
+
 /* Converts an array of data items to a setting value list. Behaves similar
    to ccsGetListFromStringArray */
-CCSSettingValueList ccsGetValueListFromStringArray (char       **array,
+CCSSettingValueList ccsGetValueListFromStringArray (const char **array,
 						    int        num,
 						    CCSSetting *parent);
-CCSSettingValueList ccsGetValueListFromMatchArray (char       **array,
+CCSSettingValueList ccsGetValueListFromMatchArray (const char  **array,
 						   int        num,
 						   CCSSetting *parent);
 CCSSettingValueList ccsGetValueListFromIntArray (int        *array,
@@ -997,7 +849,7 @@ CCSStringList ccsGetSortedPluginStringList (CCSContext *context);
 Bool ccsSetBackend (CCSContext *context,
 		    char       *name);
 /* Retrieves the name of the backend active for the context. */
-char * ccsGetBackend (CCSContext *context);
+const char * ccsGetBackend (CCSContext *context);
 
 /* Enable/disable DE integration for a context. */
 void ccsSetIntegrationEnabled (CCSContext *context,
@@ -1012,7 +864,7 @@ void ccsSetPluginListAutoSort (CCSContext *context,
 			       Bool       value);
 
 /* Retrieve current profile of the context. */
-char * ccsGetProfile (CCSContext *context);
+const char * ccsGetProfile (CCSContext *context);
 
 /* Retrieves current DE integration status for a context */
 Bool ccsGetIntegrationEnabled (CCSContext *context);
@@ -1261,13 +1113,24 @@ CCSStringList ccsGetExistingProfiles (CCSContext * context);
 void ccsDeleteProfile (CCSContext *context,
 		       char       *name);
 
+/* Copies backend info out from backend */
+CCSBackendInfo *
+ccsCopyBackendInfoFromBackend (CCSBackend	   *backend,
+			       const CCSBackendInterface *backendInterface);
+
 /* Enumerates the available backends. */
-CCSBackendInfoList ccsGetExistingBackends (void);
+CCSBackendInfoList ccsGetExistingBackends (CCSContext *);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
 
-#ifdef __cplusplus
-}
-#endif
+Bool
+ccsCheckValueEq (const CCSSettingValue *rhs,
+		 CCSSettingType	       rhsType,
+		 CCSSettingInfo	       *rhsInfo,
+		 const CCSSettingValue *lhs,
+		 CCSSettingType	       lhsType,
+		 CCSSettingInfo	       *lhsInfo);
+
+COMPIZCONFIG_END_DECLS
 
 #endif

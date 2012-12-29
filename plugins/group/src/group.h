@@ -74,8 +74,6 @@ class GroupScreen;
 #include "glow.h"
 #include "group_options.h"
 
-#include <core/serialization.h>
-
 /*
  * Used to check if we can use the text plugin
  *
@@ -87,7 +85,7 @@ extern bool gTextAvailable;
  * Constants
  *
  */
-#define PI 3.1415926535897
+extern const double PI;
 
 /*
  * Helpers
@@ -271,16 +269,6 @@ public:
 
     std::list <Window> mWindowIds;
     Window	       mTopId;
-
-public:
-
-    template <class Archive>
-    void serialize (Archive &ar, const unsigned int version = 0)
-    {
-	ar & mWindowIds;
-	ar & mTopId;
-	ar & mColor;
-    }
 };
 
 /*
@@ -538,8 +526,7 @@ class GroupScreen :
     public GroupOptions,
     public ScreenInterface,
     public CompositeScreenInterface,
-    public GLScreenInterface,
-    public PluginStateWriter <GroupScreen>
+    public GLScreenInterface
 {
     public:
 
@@ -771,16 +758,6 @@ class GroupScreen :
 	GLTexture::List   mGlowTexture;
 
 	Window		  mLastGrabbedWindow;
-
-    public:
-
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version = 0)
-	{
-	    ar & mGroups;
-	}
-
-	void postLoad ();
 };
 
 #define GROUP_SCREEN(s)							       \

@@ -1,11 +1,8 @@
-
-
-
 ################################################################################
 #
 # FindCompiz
 #
-# This module finds Compiz (www.compiz.org). It uses the FindPkgConfig to
+# This module finds Compiz (https://launchpad.net/compiz). It uses the FindPkgConfig to
 # locate Compiz and adds the Compiz CMake module path to the CMake module path.
 # It also loads the CompizDefaults that sets all variables to compile Compiz
 # modules.
@@ -89,7 +86,7 @@ if (NOT _COMPIZ_INTERNAL)
 	if (COMPIZ_FOUND AND _compiz_def_macro)
             # everything found. Set module path and include defaults module
 	    set (COMPIZ_CMAKE_MODULE_PATH ${COMPIZ_PREFIX}/share/compiz/cmake)
-	    set (CMAKE_MODULE_PATH  ${COMPIZ_CMAKE_MODULE_PATH})
+	    set (CMAKE_MODULE_PATH ${COMPIZ_CMAKE_MODULE_PATH} ${CMAKE_MODULE_PATH})
 	    include (CompizDefaults)
 	else ()
 	    set (COMPIZ_FOUND 0)

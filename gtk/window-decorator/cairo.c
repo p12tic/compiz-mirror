@@ -24,6 +24,7 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "gwd-cairo-window-decoration-util.h"
 
 void
 rounded_rectangle (cairo_t *cr,
@@ -354,7 +355,7 @@ draw_window_decoration (decor_t *d)
     {
 	decor_color_t *title_color = _title_color;
 
-	alpha = settings->decoration_alpha + 0.3;
+	alpha = decoration_alpha + 0.3;
 
 	fill_rounded_rectangle (cr,
 				x1 + 0.5,
@@ -386,7 +387,7 @@ draw_window_decoration (decor_t *d)
     }
     else
     {
-	alpha = settings->decoration_alpha;
+	alpha = decoration_alpha;
 
 	fill_rounded_rectangle (cr,
 				x1 + 0.5,
@@ -922,8 +923,9 @@ update_border_extents (decor_frame_t *frame)
 {
     frame = gwd_decor_frame_ref (frame);
 
-    frame->win_extents = frame->win_extents;
-    frame->max_win_extents = frame->win_extents;
+    gwd_cairo_window_decoration_get_extents (&frame->win_extents,
+					     &frame->max_win_extents);
+
     frame->titlebar_height = frame->max_titlebar_height =
 	    (frame->text_height < 17) ? 17 : frame->text_height;
 

@@ -118,7 +118,11 @@ destroy_bare_frame (decor_frame_t *frame)
 static const PangoFontDescription *
 get_titlebar_font (decor_frame_t *frame)
 {
-    if (settings->use_system_font)
+    const gchar *titlebar_font;
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
+
+    /* Using system font */
+    if (!titlebar_font)
 	return NULL;
     else
 	return frame->titlebar_font;
@@ -554,10 +558,10 @@ update_window_decoration_icon (WnckWindow *win)
 	/* 32 bit pixmap on pixmap mode, 24 for reparenting */
 	if (d->frame_window)
 	    d->icon_pixmap = pixmap_new_from_pixbuf (d->icon_pixbuf,
-						     d->frame->style_window_rgba);
+						     d->frame->style_window_rgb);
 	else
 	    d->icon_pixmap = pixmap_new_from_pixbuf (d->icon_pixbuf,
-						     d->frame->style_window_rgb);
+						     d->frame->style_window_rgba);
 	cr = gdk_cairo_create (GDK_DRAWABLE (d->icon_pixmap));
 	d->icon = cairo_pattern_create_for_surface (cairo_get_target (cr));
 	cairo_destroy (cr);
@@ -682,7 +686,16 @@ update_window_decoration_size (WnckWindow *win)
 
     /* Destroy the old pixmaps and pictures */
     if (d->pixmap)
-	g_hash_table_insert (destroyed_pixmaps_table, GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap)), d->pixmap);
+    {
+	gpointer key = GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap));
+
+	if (d->old_pixmaps == NULL)
+	    d->old_pixmaps = g_hash_table_new_full (NULL, NULL, NULL,
+	                                            g_object_unref);
+
+	g_hash_table_insert (destroyed_pixmaps_table, key, d);
+	g_hash_table_insert (d->old_pixmaps, key, d->pixmap);
+    }
 
     if (d->buffer_pixmap)
 	g_object_unref (G_OBJECT (d->buffer_pixmap));
@@ -773,12 +786,12 @@ draw_border_shape (Display	   *xdisplay,
     /* create shadow from opaque decoration
      * FIXME: Should not modify settings value
      * like this */
-    save_decoration_alpha = settings->decoration_alpha;
-    settings->decoration_alpha = 1.0;
+    save_decoration_alpha = decoration_alpha;
+    decoration_alpha = 1.0;
 
     (*d.draw) (&d);
 
-    settings->decoration_alpha = save_decoration_alpha;
+    decoration_alpha = save_decoration_alpha;
 
     XRenderFillRectangle (xdisplay, PictOpSrc, picture, &white,
 			  c->left_space,
@@ -898,6 +911,12 @@ decor_frame_update_shadow (Display		  *xdisplay,
 	*shadow_normal = NULL;
     }
 
+    /*
+     * Warning: decor_shadow_create does more than return a decor_shadow_t*
+     *          It also has to be called to populate the context parameter
+     *          (third last parameter). So even if you don't want a shadow
+     *          then you still need to call decor_shadow_create :(
+     */
     *shadow_normal = decor_shadow_create (xdisplay,
 						 screen,
 						 1, 1,
@@ -941,7 +960,7 @@ decor_frame_update_shadow (Display		  *xdisplay,
 			     frame->max_win_extents.top + frame->max_titlebar_height -
 			     TRANSLUCENT_CORNER_SIZE,
 			     frame->max_win_extents.bottom - TRANSLUCENT_CORNER_SIZE,
-			     opt_shadow,
+			     opt_no_shadow,  /* No shadow when maximized */
 			     context_max,
 			     draw_border_shape,
 			     (void *) info);
@@ -963,6 +982,7 @@ frame_update_shadow (decor_frame_t	    *frame,
 		     decor_shadow_options_t *opt_active_shadow,
 		     decor_shadow_options_t *opt_inactive_shadow)
 {
+    static decor_shadow_options_t no_shadow = {0.0, 0.0, {0, 0, 0}, 0, 0};
     gwd_decor_frame_ref (frame);
 
     info->active = TRUE;
@@ -973,7 +993,7 @@ frame_update_shadow (decor_frame_t	    *frame,
 			     &frame->window_context_active,
 			     &frame->max_border_shadow_active,
 			     &frame->max_window_context_active,
-			     info, opt_active_shadow, opt_inactive_shadow);
+			     info, opt_active_shadow, &no_shadow);
 
     info->active = FALSE;
 
@@ -983,7 +1003,7 @@ frame_update_shadow (decor_frame_t	    *frame,
                              &frame->window_context_inactive,
                              &frame->max_border_shadow_inactive,
                              &frame->max_window_context_inactive,
-                             info, opt_inactive_shadow, opt_active_shadow);
+                             info, opt_inactive_shadow, &no_shadow);
 
     gwd_decor_frame_unref (frame);
 }
@@ -1013,7 +1033,10 @@ update_frames_shadows (gpointer key,
     decor_shadow_info_t *info = malloc (sizeof (decor_shadow_info_t));
 
     if (!info)
+    {
+	free (opts);
 	return;
+    }
 
     info->frame = frame;
     info->state = 0;
@@ -1030,49 +1053,32 @@ update_frames_shadows (gpointer key,
 
 }
 
-void
-cairo_get_shadow (decor_frame_t *d, decor_shadow_options_t *opts, gboolean active)
+static void
+get_shadow_common (decor_frame_t *d, decor_shadow_options_t *opts, gboolean active)
 {
+    decor_shadow_options_t *setting_opts = NULL;
+
     if (active)
-    {
-	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
-	opts->shadow_radius = settings->active_shadow_radius;
-	opts->shadow_offset_x = settings->active_shadow_offset_x;
-	opts->shadow_offset_y = settings->active_shadow_offset_y;
-	opts->shadow_opacity = settings->active_shadow_opacity;
-    }
-    /* TODO: Inactive shadows */
+	g_object_get (settings, "active-shadow", &setting_opts, NULL);
     else
+	g_object_get (settings, "inactive-shadow", &setting_opts, NULL);
+
+    if (setting_opts)
     {
-	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
-	opts->shadow_radius = settings->inactive_shadow_radius;
-	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
-	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
-	opts->shadow_opacity = settings->inactive_shadow_opacity;
+	memcpy (opts, setting_opts, sizeof (decor_shadow_options_t));
     }
+}
+
+void
+cairo_get_shadow (decor_frame_t *frame, decor_shadow_options_t *opts, gboolean active)
+{
+    get_shadow_common (frame, opts, active);
 }
 
 void
 meta_get_shadow (decor_frame_t *frame, decor_shadow_options_t *opts, gboolean active)
 {
-    if (active)
-    {
-	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
-	opts->shadow_radius = settings->active_shadow_radius;
-	opts->shadow_offset_x = settings->active_shadow_offset_x;
-	opts->shadow_offset_y = settings->active_shadow_offset_y;
-	opts->shadow_opacity = settings->active_shadow_opacity;
-    }
-    /* TODO: Inactive shadows */
-    else
-    {
-	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
-	opts->shadow_radius = settings->inactive_shadow_radius;
-	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
-	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
-	opts->shadow_opacity = settings->inactive_shadow_opacity;
-    }
-
+    get_shadow_common (frame, opts, active);
 }
 
 int

@@ -63,6 +63,7 @@ function (compiz_install_gsettings_schema _src _dst)
     find_program (PKG_CONFIG_TOOL pkg-config)
     find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
     mark_as_advanced (FORCE PKG_CONFIG_TOOL)
+    mark_as_advanced (GLIB_COMPILE_SCHEMAS)
 
     # find out where schemas need to go if we are installing them systemwide
     execute_process (COMMAND ${PKG_CONFIG_TOOL} glib-2.0 --variable prefix  OUTPUT_VARIABLE GSETTINGS_GLIB_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -105,32 +106,83 @@ function (compiz_install_gsettings_schema _src _dst)
 	   USE_GSETTINGS)
 endfunction ()
 
-function (add_gsettings_schema_to_recompilation_list _target_name_for_schema)
+function (add_gsettings_local_recompilation_rule _schemas)
+
+    get_property (GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE_SET
+		  GLOBAL
+		  PROPERTY GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE
+		  SET)
+
+    if (GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE_SET)
+	get_property (GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE
+		      GLOBAL
+		      PROPERTY GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE)
+    else (GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE_SET)
+	set (GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE FALSE)
+    endif (GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE_SET)
 
     get_property (GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		  GLOBAL
 		  PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
 		  SET)
 
-    if (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+    if (NOT GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE AND
+	NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
 
-	add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
-			   COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
-                    	   ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
-			   COMMENT "Recompiling GSettings schemas locally"
-	)
+	find_program (GLIB_COMPILE_SCHEMAS glib-compile-schemas)
+	mark_as_advanced (GLIB_COMPILE_SCHEMAS)
 
-	add_custom_target (compiz_gsettings_compile_local ALL
-			   DEPENDS ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled)
+	if (GLIB_COMPILE_SCHEMAS)
 
-	set_property (GLOBAL
-		      PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
-		      TRUE)
+	    set (_compiled_gschemas ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled)
 
-    endif (NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+	    # Invalidate the rule
+	    if (EXISTS ${_compiled_gschemas})
+		execute_process (COMMAND rm ${_compiled_gschemas})
+	    endif (EXISTS ${_compiled_gschemas})
 
-    add_dependencies (compiz_gsettings_compile_local
-		      ${_target_name_for_schema})
+	    add_custom_command (OUTPUT ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled
+				COMMAND ${GLIB_COMPILE_SCHEMAS} --targetdir=${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
+				${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/
+				COMMENT "Recompiling GSettings schemas locally"
+				DEPENDS ${${_schemas}}
+	    )
+
+	    add_custom_target (compiz_gsettings_compile_local ALL
+			       DEPENDS ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/gschemas.compiled)
+
+	    set_property (GLOBAL
+			  PROPERTY GSETTINGS_LOCAL_COMPILE_TARGET_SET
+			  TRUE)
+
+	endif (GLIB_COMPILE_SCHEMAS)
+
+    endif (NOT GSETTINGS_LOCAL_COMPILE_INHIBIT_RULE AND
+	   NOT GSETTINGS_LOCAL_COMPILE_TARGET_SET)
+
+endfunction ()
+
+function (add_all_gsettings_schemas_to_local_recompilation_rule)
+
+    get_property (GSETTINGS_LOCAL_COMPILE_SCHEMAS
+		  GLOBAL
+		  PROPERTY GSETTINGS_LOCAL_COMPILE_SCHEMAS)
+
+    # Deferencing it appears to just give it the first schema, that's not what
+    # we really want, so just pass the reference and double-dereference
+    # internally
+    add_gsettings_local_recompilation_rule (GSETTINGS_LOCAL_COMPILE_SCHEMAS)
+
+endfunction ()
+
+function (add_gsettings_schema_to_recompilation_list _schema_file_name)
+
+    set_property (GLOBAL
+		  APPEND
+		  PROPERTY GSETTINGS_LOCAL_COMPILE_SCHEMAS
+		  "${_schema_file_name}")
+
+    add_all_gsettings_schemas_to_local_recompilation_rule ()
 
 endfunction ()
 

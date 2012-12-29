@@ -1,13 +1,129 @@
+#include <tr1/tuple>
+
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_array.hpp>
+
+#include "gtest_shared_autodestroy.h"
+#include "gtest_unspecified_bool_type_matcher.h"
 
 #include "test_gsettings_tests.h"
 #include "gsettings.h"
-#include "gsettings_mocks.h"
+#include "ccs_gsettings_backend.h"
+#include "ccs_gsettings_backend_interface.h"
+#include "ccs_gsettings_backend_mock.h"
+#include "compizconfig_ccs_context_mock.h"
+#include "compizconfig_ccs_plugin_mock.h"
+#include "compizconfig_ccs_setting_mock.h"
+#include "compizconfig_ccs_integration_mock.h"
+#include "ccs_gsettings_wrapper_mock.h"
+#include "ccs_gsettings_wrapper_factory_mock.h"
+#include "ccs_gsettings_wrapper_factory_interface.h"
+#include "ccs_gnome_integration.h"
+#include "gtest_shared_characterwrapper.h"
+#include "compizconfig_test_value_combiners.h"
+#include "compizconfig_ccs_mocked_allocator.h"
+#include "gsettings_shared.h"
+#include "ccs_gsettings_interface.h"
+#include "ccs_gsettings_wrapper_mock.h"
 
 using ::testing::Values;
 using ::testing::ValuesIn;
 using ::testing::Return;
+using ::testing::ReturnNull;
+using ::testing::Invoke;
+using ::testing::WithArgs;
+using ::testing::MatcherInterface;
+using ::testing::MatchResultListener;
+using ::testing::AllOf;
+using ::testing::Not;
+using ::testing::Matcher;
+using ::testing::Eq;
+using ::testing::NiceMock;
+using ::testing::StrictMock;
+using ::testing::IsNull;
+
+class GVariantSubtypeMatcher :
+    public ::testing::MatcherInterface<GVariant *>
+{
+    public:
+	GVariantSubtypeMatcher (const std::string &type) :
+	    mType (type)
+	{
+	}
+
+	virtual ~GVariantSubtypeMatcher () {}
+	virtual bool MatchAndExplain (GVariant *x, MatchResultListener *listener) const
+	{
+	    return g_variant_type_is_subtype_of (G_VARIANT_TYPE (mType.c_str ()), g_variant_get_type (x));
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "is subtype of " << mType;
+	}
+    private:
+
+	std::string mType;
+};
+
+template <typename T>
+class GVariantHasValueInArrayMatcher :
+    public ::testing::MatcherInterface<GVariant *>
+{
+    public:
+	GVariantHasValueInArrayMatcher (const std::string &type,
+					const T &t,
+					const boost::function <bool (T const&, T const&)> &eq) :
+	    mType (type),
+	    mT (t),
+	    mEq (eq)
+	{
+	}
+
+	virtual ~GVariantHasValueInArrayMatcher () {}
+	virtual bool MatchAndExplain (GVariant *x, MatchResultListener *listener) const
+	{
+	    GVariantIter iter;
+	    T            match;
+	    bool         found = false;
+
+	    g_variant_iter_init (&iter, x);
+	    while (g_variant_iter_loop (&iter, mType.c_str (), &match))
+	    {
+		if (mEq (match, mT))
+		    found = true;
+	    }
+
+	    return found;
+	}
+
+	virtual void DescribeTo (std::ostream *os) const
+	{
+	    *os << "contains " << mT;
+	}
+    private:
+
+	std::string mType;
+	T           mT;
+	boost::function <bool (T const&, T const&)> mEq;
+};
+
+template <typename T>
+inline Matcher<GVariant *> GVariantHasValueInArray (const std::string &type,
+						    const T &t,
+						    const boost::function <bool (T const &, T const &)> &eq)
+{
+    return MakeMatcher (new GVariantHasValueInArrayMatcher<T> (type, t, eq));
+}
+
+inline Matcher<GVariant *> IsVariantSubtypeOf (const std::string &type)
+{
+    return MakeMatcher (new GVariantSubtypeMatcher (type));
+}
 
 TEST_P(CCSGSettingsTest, TestTestFixtures)
 {
@@ -15,6 +131,125 @@ TEST_P(CCSGSettingsTest, TestTestFixtures)
 
 TEST_F(CCSGSettingsTestIndependent, TestTest)
 {
+}
+
+namespace
+{
+bool streq (const char * const &s1, const char * const &s2)
+{
+    return g_str_equal (s1, s2);
+}
+
+}
+
+class CCSGSettingsTestProfiles :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	static const std::string newProfileName;
+	static const std::string existingProfileName;
+};
+
+const std::string CCSGSettingsTestProfiles::existingProfileName ("ExistingProfile");
+const std::string CCSGSettingsTestProfiles::newProfileName ("NewProfile");
+
+TEST_F(CCSGSettingsTestProfiles, TestAddProfile)
+{
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    GVariantBuilder builder;
+
+    g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&builder, "s", existingProfileName.c_str ());
+
+    GVariant *existingProfiles = g_variant_builder_end (&builder);
+
+    EXPECT_CALL (*gmock, getExistingProfiles ()).WillOnce (Return (existingProfiles));
+    EXPECT_CALL (*gmock, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
+						     GVariantHasValueInArray<const gchar *> ("s",
+											     newProfileName.c_str (),
+											     boost::bind (streq, _1, _2)))))
+	    .WillOnce (WithArgs <0> (Invoke (g_variant_unref)));
+
+    ccsGSettingsBackendAddProfileDefault (backend.get (), newProfileName.c_str ());
+}
+
+TEST_F(CCSGSettingsTestProfiles, TestUpdateCurrentProfileNameAppendNew)
+{
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    EXPECT_CALL (*gmock, addProfile (Eq (newProfileName)));
+    EXPECT_CALL (*gmock, setCurrentProfile (Eq (newProfileName)));
+
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), newProfileName.c_str ());
+}
+
+TEST_F(CCSGSettingsTestProfiles, TestUpdateCurrentProfileNameExisting)
+{
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmock = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    EXPECT_CALL (*gmock, addProfile (Eq (existingProfileName)));
+    EXPECT_CALL (*gmock, setCurrentProfile (Eq (existingProfileName)));
+
+    ccsGSettingsBackendUpdateCurrentProfileNameDefault (backend.get (), existingProfileName.c_str ());
+}
+
+TEST_F(CCSGSettingsTestProfiles, TestDeleteProfileExistingProfile)
+{
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (ccsFreeMockContext, _1));
+
+    CCSGSettingsBackendGMock *mockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+
+    std::string currentProfile ("foo");
+    std::string otherProfile ("other");
+
+    GVariant *existingProfiles = NULL;
+    GVariantBuilder existingProfilesBuilder;
+
+    g_variant_builder_init (&existingProfilesBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&existingProfilesBuilder, "s", currentProfile.c_str ());
+    g_variant_builder_add (&existingProfilesBuilder, "s", otherProfile.c_str ());
+
+    existingProfiles = g_variant_builder_end (&existingProfilesBuilder);
+
+    EXPECT_CALL (*mockBackend, getPluginsWithSetKeys ()).WillOnce (ReturnNull ());
+    EXPECT_CALL (*mockBackend, unsetAllChangedPluginKeysInProfile (context.get (), NULL, Eq (currentProfile)));
+    EXPECT_CALL (*mockBackend, clearPluginsWithSetKeys ());
+
+    EXPECT_CALL (*mockBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*mockBackend, getExistingProfiles ()).WillOnce (Return (existingProfiles));
+    EXPECT_CALL (*mockBackend, setExistingProfiles (AllOf (IsVariantSubtypeOf ("as"),
+							   Not (GVariantHasValueInArray<const gchar *> ("s",
+													currentProfile.c_str (),
+													boost::bind (streq, _1, _2))),
+							   GVariantHasValueInArray<const gchar *> ("s",
+												   otherProfile.c_str (),
+												   boost::bind (streq, _1, _2)))))
+	    .WillOnce (WithArgs <0> (Invoke (g_variant_unref)));
+
+    EXPECT_CALL (*mockBackend, updateProfile (context.get ()));
+
+    deleteProfile (backend.get (), context.get (), currentProfile.c_str ());
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestWriteVariantToKeyReturnsFalseForNullWrapper)
+{
+    CCSGSettingsWrapper          *wrapper = NULL;
+    boost::shared_ptr <GVariant> v (AutoDestroy (g_variant_new_int32 (1),
+						 g_variant_unref));
+
+    EXPECT_THAT (writeVariantToKey (wrapper, "foo", v.get ()),
+		 IsFalse ());
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestGetSchemaNameForPlugin)
@@ -86,6 +321,32 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateUpperToLowerForGSettings)
     translateToLowercaseForGSettings (keyname);
 
     EXPECT_EQ (std::string (keyname), "plugin-option");
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsNoTrunc)
+{
+    std::string keyname ("FoO_BaR");
+    std::string expected ("foo-bar");
+
+    CharacterWrapper translated (translateKeyForGSettings (keyname.c_str ()));
+
+    EXPECT_EQ (std::string (translated), expected);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsTrunc)
+{
+    const unsigned int OVER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE + 1;
+    std::string keyname;
+
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+	keyname.push_back ('a');
+
+    ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
+
+    CharacterWrapper translated (translateKeyForGSettings (keyname.c_str ()));
+    std::string      stringOfTranslated (translated);
+
+    EXPECT_EQ (stringOfTranslated.size (), MAX_GSETTINGS_KEY_SIZE);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForCCS)
@@ -171,6 +432,22 @@ TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPath)
     EXPECT_EQ (screenNum, 0);
 
     g_free (pluginName);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestDecomposeGSettingsPathBadPathname)
+{
+    std::string compiz_gsettings_path ("org/this/path/is/wrong/");
+    std::string fake_option_path ("PROFILENAME/plugins/PLUGINNAME");
+
+    compiz_gsettings_path += fake_option_path;
+
+    CharacterWrapper pluginName (strdup ("aaa"));
+    char             *pluginNameC = pluginName;
+    unsigned int screenNum = 1;
+
+    EXPECT_FALSE (decomposeGSettingsPath (compiz_gsettings_path.c_str (), &pluginNameC, &screenNum));
+    EXPECT_EQ (std::string (pluginNameC), "aaa");
+    EXPECT_EQ (screenNum, 1);
 }
 
 TEST_F(CCSGSettingsTestIndependent, TestMakeCompizProfilePath)
@@ -267,6 +544,11 @@ namespace GVariantSubtypeWrappers
     {
 	return g_variant_type_is_array (g_variant_get_type (v));
     }
+
+    gboolean unknown (GVariant *)
+    {
+	return FALSE;
+    }
 }
 
 struct ArrayVariantInfo
@@ -283,6 +565,7 @@ namespace
     const char *vInt = "i";
     const char *vDouble = "d";
     const char *vArray = "as";
+    const char *vUnknown = "";
 
     ArrayVariantInfo arrayVariantInfo[] =
     {
@@ -296,7 +579,8 @@ namespace
 	{ &GVariantSubtypeWrappers::edge, TypeEdge, vString },
 	{ &GVariantSubtypeWrappers::integer, TypeInt, vInt },
 	{ &GVariantSubtypeWrappers::doubleprecision, TypeFloat, vDouble },
-	{ &GVariantSubtypeWrappers::list, TypeList, vArray }
+	{ &GVariantSubtypeWrappers::list, TypeList, vArray },
+	{ &GVariantSubtypeWrappers::unknown, TypeNum, vUnknown }
     };
 }
 
@@ -431,60 +715,72 @@ TEST_F(CCSGSettingsTestPluginsWithSetKeysGVariantSetup, TestAppendToPluginsWithS
     EXPECT_EQ (std::string (newWrittenPlugins[1]), std::string ("bar"));
 }
 
-class CCSGSettingsTestGObjectListWithProperty :
+class CCSGSettingsTestGSettingsWrapperWithSchemaName :
     public CCSGSettingsTestIndependent
 {
     public:
 
-	virtual void SetUp ()
+	typedef std::tr1::tuple <boost::shared_ptr <CCSGSettingsWrapper>, CCSGSettingsWrapperGMock *> WrapperMock;
+
+	CCSGSettingsTestGSettingsWrapperWithSchemaName () :
+	    objectSchemaGList (NULL)
 	{
 	    CCSGSettingsTestIndependent::SetUp ();
-	    g_type_init ();
-
-	    objectSchemaList = NULL;
 	}
 
-	virtual void TearDown ()
+	~CCSGSettingsTestGSettingsWrapperWithSchemaName ()
 	{
-	    GList *iter = objectSchemaList;
-
-	    while (iter)
-	    {
-		g_object_unref ((GObject *) iter->data);
-		iter = g_list_next (iter);
-	    }
-
-	    g_list_free (objectSchemaList);
-	    objectSchemaList = NULL;
+	    g_list_free (objectSchemaGList);
 	    CCSGSettingsTestIndependent::TearDown ();
 	}
 
-	CCSGSettingsWrapGSettings * AddObjectWithSchemaName (const std::string &schemaName)
+	WrapperMock
+	AddObject ()
 	{
-	    CCSGSettingsWrapGSettings *wrapGSettingsObject =
-		    compizconfig_gsettings_wrap_gsettings_new (COMPIZCONFIG_GSETTINGS_TYPE_MOCK_WRAP_GSETTINGS, schemaName.c_str ());
-	    objectSchemaList = g_list_append (objectSchemaList, wrapGSettingsObject);
+	    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+							     boost::bind (ccsGSettingsWrapperUnref, _1));
+	    CCSGSettingsWrapperGMock			  *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
 
-	    return wrapGSettingsObject;
+	    objectSchemaGList = g_list_append (objectSchemaGList, wrapper.get ());
+	    objectSchemaList.push_back (wrapper);
+
+	    return WrapperMock (wrapper, gmockWrapper);
 	}
+
+	static const std::string VALUE_FOO;
+	static const std::string VALUE_BAR;
+	static const std::string VALUE_BAZ;
 
     protected:
 
-	GList *objectSchemaList;
+	GList						       *objectSchemaGList;
+	std::vector <boost::shared_ptr <CCSGSettingsWrapper> > objectSchemaList;
 };
 
-TEST_F(CCSGSettingsTestGObjectListWithProperty, TestFindExistingObjectWithSchema)
-{
-    GObject *obj = reinterpret_cast <GObject *> (AddObjectWithSchemaName ("foo"));
+const std::string CCSGSettingsTestGSettingsWrapperWithSchemaName::VALUE_FOO = "foo";
+const std::string CCSGSettingsTestGSettingsWrapperWithSchemaName::VALUE_BAR = "bar";
+const std::string CCSGSettingsTestGSettingsWrapperWithSchemaName::VALUE_BAZ = "baz";
 
-    EXPECT_EQ (findObjectInListWithPropertySchemaName ("foo", objectSchemaList), obj);
+TEST_F(CCSGSettingsTestGSettingsWrapperWithSchemaName, TestFindExistingObjectWithSchema)
+{
+    WrapperMock wr1 (AddObject ());
+    WrapperMock wr2 (AddObject ());
+
+    EXPECT_CALL (*(std::tr1::get <1> (wr1)), getSchemaName ()).WillRepeatedly (Return (VALUE_BAR.c_str ()));
+    EXPECT_CALL (*(std::tr1::get <1> (wr2)), getSchemaName ()).WillRepeatedly (Return (VALUE_FOO.c_str ()));
+
+    EXPECT_EQ (findCCSGSettingsWrapperBySchemaName (VALUE_FOO.c_str (), objectSchemaGList), (std::tr1::get <0> (wr2)).get ());
 }
 
-TEST_F(CCSGSettingsTestGObjectListWithProperty, TestNoFindNonexistingObjectWithSchema)
+TEST_F(CCSGSettingsTestGSettingsWrapperWithSchemaName, TestNoFindNonexistingObjectWithSchema)
 {
-    AddObjectWithSchemaName ("bar");
+    WrapperMock wr1 (AddObject ());
+    WrapperMock wr2 (AddObject ());
 
-    EXPECT_EQ (NULL, findObjectInListWithPropertySchemaName ("foo", objectSchemaList));
+    EXPECT_CALL (*(std::tr1::get <1> (wr1)), getSchemaName ()).WillRepeatedly (Return (VALUE_BAR.c_str ()));
+    EXPECT_CALL (*(std::tr1::get <1> (wr2)), getSchemaName ()).WillRepeatedly (Return (VALUE_BAZ.c_str ()));
+
+    EXPECT_THAT (findCCSGSettingsWrapperBySchemaName (VALUE_FOO.c_str (), objectSchemaGList), IsNull ());
 }
 
 class CCSGSettingsTestFindSettingLossy :
@@ -719,22 +1015,7 @@ namespace
 	    {
 		return !(*this == l);
 	    }
-
-	    friend bool operator== (GList *lhs, const GListContainerEqualityInterface &rhs);
-	    friend bool operator!= (GList *lhs, const GListContainerEqualityInterface &rhs);
     };
-
-    bool
-    operator== (GList *lhs, const GListContainerEqualityInterface &rhs)
-    {
-	return rhs == lhs;
-    }
-
-    bool
-    operator!= (GList *lhs, const GListContainerEqualityInterface &rhs)
-    {
-	return !(rhs == lhs);
-    }
 
     class GListContainerEqualityBase :
 	public GListContainerEqualityInterface
@@ -745,14 +1026,16 @@ namespace
 
 	    GListContainerEqualityBase (const PopulateFunc &populateGList)
 	    {
-		setenv ("G_SLICE", "always-malloc", 1);
+		g_setenv ("G_SLICE", "always-malloc", 1);
 		mList = populateGList ();
-		unsetenv ("G_SLICE");
+		g_unsetenv ("G_SLICE");
 	    }
 
-	    GListContainerEqualityBase (const GListContainerEqualityBase &other) :
-		mList (g_list_copy (other.mList))
+	    GListContainerEqualityBase (const GListContainerEqualityBase &other)
 	    {
+		g_setenv ("G_SLICE", "always-malloc", 1);
+		mList = g_list_copy (other.mList);
+		g_unsetenv ("G_SLICE");
 	    }
 
 	    GListContainerEqualityBase &
@@ -899,3 +1182,1089 @@ TEST_P(CCSGSettingsTestVariantTypeToCCSTypeListFixture, TestVariantTypesInListTe
 
 INSTANTIATE_TEST_CASE_P(CCSGSettingsTestVariantTypeToCCSTypeListInstantiation, CCSGSettingsTestVariantTypeToCCSTypeListFixture,
 			ValuesIn (variantTypeToListOfCCSTypes));
+
+TEST_F(CCSGSettingsTestIndependent, TestGetNameForCCSSetting)
+{
+    CCSSetting *setting = ccsMockSettingNew ();
+    CCSSettingGMock *gmock = (CCSSettingGMock *) ccsObjectGetPrivate (setting);
+    char *rawSettingName = strdup ("FoO_BaR");
+    char *properSettingName = translateKeyForGSettings (rawSettingName);
+
+    EXPECT_CALL (*gmock, getName ()).WillOnce (Return (rawSettingName));
+
+    char *translatedSettingName = getNameForCCSSetting (setting);
+
+    EXPECT_EQ (std::string (translatedSettingName), std::string (properSettingName));
+    EXPECT_NE (std::string (translatedSettingName), std::string (rawSettingName));
+
+    free (translatedSettingName);
+    free (properSettingName);
+    free (rawSettingName);
+
+    ccsSettingUnref (setting);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidNULL)
+{
+    EXPECT_FALSE (checkReadVariantIsValid (NULL, TypeNum, "foo/bar"));
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidTypeBad)
+{
+    GVariant *v = g_variant_new ("i", 1);
+
+    EXPECT_FALSE (checkReadVariantIsValid (v, TypeString, "foo/bar"));
+
+    g_variant_unref (v);
+}
+
+TEST_F(CCSGSettingsTestIndependent, TestReadVariantIsValidTypeGood)
+{
+    GVariant *v = g_variant_new ("i", 1);
+
+    EXPECT_TRUE (checkReadVariantIsValid (v, TypeInt, "foo/bar"));
+
+    g_variant_unref (v);
+}
+
+typedef CCSSettingValueList (*ReadValueListOfDataTypeFunc) (GVariantIter *, guint nItems, CCSSetting *setting);
+
+class ReadListValueTypeTestParam
+{
+    public:
+
+	typedef boost::function <CCSSettingValueList (GVariantIter *,
+						      guint nItems,
+						      CCSSetting *setting,
+						      CCSObjectAllocationInterface *allocator)> ReadValueListFunc;
+	typedef boost::function <GVariant * ()> GVariantPopulator;
+	typedef boost::function <CCSSettingValueList (CCSSetting *)> CCSSettingValueListPopulator;
+
+	ReadListValueTypeTestParam (const ReadValueListFunc &readFunc,
+				    const GVariantPopulator &variantPopulator,
+				    const CCSSettingValueListPopulator &listPopulator,
+				    const CCSSettingType    &type) :
+	    mReadFunc (readFunc),
+	    mVariantPopulator (variantPopulator),
+	    mListPopulator (listPopulator),
+	    mType (type)
+	{
+	}
+
+	CCSSettingValueList read (GVariantIter *iter,
+				  guint        nItems,
+				  CCSSetting   *setting,
+				  CCSObjectAllocationInterface *allocator) const
+	{
+	    return mReadFunc (iter, nItems, setting, allocator);
+	}
+
+	boost::shared_ptr <GVariant> populateVariant () const
+	{
+	    return boost::shared_ptr <GVariant> (mVariantPopulator (), boost::bind (g_variant_unref, _1));
+	}
+
+	boost::shared_ptr <_CCSSettingValueList> populateList (CCSSetting *setting) const
+	{
+	    return boost::shared_ptr <_CCSSettingValueList> (mListPopulator (setting), boost::bind (ccsSettingValueListFree, _1, TRUE));
+	}
+
+	CCSSettingType type () const { return mType; }
+
+    private:
+
+	ReadValueListFunc mReadFunc;
+	GVariantPopulator mVariantPopulator;
+	CCSSettingValueListPopulator mListPopulator;
+	CCSSettingType    mType;
+
+};
+
+namespace compizconfig
+{
+    namespace test
+    {
+	namespace impl
+	{
+	    namespace populators
+	    {
+		namespace variant
+		{
+		    GVariant * boolean ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("ab"));
+			g_variant_builder_add (&vb, "b", boolValues[0]);
+			g_variant_builder_add (&vb, "b", boolValues[1]);
+			g_variant_builder_add (&vb, "b", boolValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * integer ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("ai"));
+			g_variant_builder_add (&vb, "i", intValues[0]);
+			g_variant_builder_add (&vb, "i", intValues[1]);
+			g_variant_builder_add (&vb, "i", intValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * doubleprecision ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("ad"));
+			g_variant_builder_add (&vb, "d", floatValues[0]);
+			g_variant_builder_add (&vb, "d", floatValues[1]);
+			g_variant_builder_add (&vb, "d", floatValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * string ()
+		    {
+			GVariantBuilder vb;
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("as"));
+			g_variant_builder_add (&vb, "s", stringValues[0]);
+			g_variant_builder_add (&vb, "s", stringValues[1]);
+			g_variant_builder_add (&vb, "s", stringValues[2]);
+			return g_variant_builder_end (&vb);
+		    }
+
+		    GVariant * color ()
+		    {
+			GVariantBuilder vb;
+
+			CharacterWrapper s1 (ccsColorToString (&(getColorValueList ()[0])));
+			CharacterWrapper s2 (ccsColorToString (&(getColorValueList ()[1])));
+			CharacterWrapper s3 (ccsColorToString (&(getColorValueList ()[2])));
+
+			char * c1 = s1;
+			char * c2 = s2;
+			char * c3 = s3;
+
+			g_variant_builder_init (&vb, G_VARIANT_TYPE ("as"));
+			g_variant_builder_add (&vb, "s", c1);
+			g_variant_builder_add (&vb, "s", c2);
+			g_variant_builder_add (&vb, "s", c3);
+			return g_variant_builder_end (&vb);
+		    }
+		}
+	    }
+	}
+    }
+}
+
+class CCSGSettingsTestReadListValueTypes :
+    public ::testing::TestWithParam <ReadListValueTypeTestParam>
+{
+};
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueGoodAllocation)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info;
+
+    info.forList.listType = GetParam ().type ();
+
+    boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
+    GVariantIter			    iter;
+
+    g_variant_iter_init (&iter, variant.get ());
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter,
+									      3,
+									      mockSetting.get (),
+									      &ccsDefaultObjectAllocator),
+							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+
+    EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
+}
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueThroughListValueDispatch)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info;
+
+    info.forList.listType = GetParam ().type ();
+
+    boost::shared_ptr <_CCSSettingValueList> valueList (GetParam ().populateList (mockSetting.get ()));
+    GVariantIter			    iter;
+
+    g_variant_iter_init (&iter, variant.get ());
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (readListValue (variant.get (),
+									   mockSetting.get (),
+									   &ccsDefaultObjectAllocator),
+							    boost::bind (ccsSettingValueListFree, _1, TRUE));
+
+    EXPECT_TRUE (ccsCompareLists (valueList.get (), readValueList.get (), info.forList));
+}
+
+TEST_P(CCSGSettingsTestReadListValueTypes, TestListValueBadAllocation)
+{
+    boost::shared_ptr <GVariant>   variant = GetParam ().populateVariant ();
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+    StrictMock <ObjectAllocationGMock> objectAllocationGMock;
+    FailingObjectAllocation fakeFailingAllocator;
+
+    CCSObjectAllocationInterface failingAllocatorGMock = failingAllocator;
+    failingAllocatorGMock.allocator = reinterpret_cast <void *> (&objectAllocationGMock);
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    GVariantIter			    iter;
+    g_variant_iter_init (&iter, variant.get ());
+
+    EXPECT_CALL (objectAllocationGMock, calloc_ (_, _)).WillOnce (Invoke (&fakeFailingAllocator,
+								       &FailingObjectAllocation::calloc_));
+
+    boost::shared_ptr <_CCSSettingValueList> readValueList (GetParam ().read (&iter,
+									      3,
+									      mockSetting.get (),
+									      &failingAllocatorGMock));
+
+    EXPECT_THAT (readValueList.get (), IsNull ());
+}
+
+namespace variant_populators = compizconfig::test::impl::populators::variant;
+namespace list_populators = compizconfig::test::impl::populators::list;
+
+ReadListValueTypeTestParam readListValueTypeTestParam[] =
+{
+    ReadListValueTypeTestParam (boost::bind (readBoolListValue, _1, _2, _3, _4),
+				boost::bind (variant_populators::boolean),
+				boost::bind (list_populators::boolean, _1),
+				TypeBool),
+    ReadListValueTypeTestParam (boost::bind (readIntListValue, _1, _2, _3, _4),
+				boost::bind (variant_populators::integer),
+				boost::bind (list_populators::integer, _1),
+				TypeInt),
+    ReadListValueTypeTestParam (boost::bind (readFloatListValue, _1, _2, _3, _4),
+				boost::bind (variant_populators::doubleprecision),
+				boost::bind (list_populators::doubleprecision, _1),
+				TypeFloat),
+    ReadListValueTypeTestParam (boost::bind (readStringListValue, _1, _2, _3, _4),
+				boost::bind (variant_populators::string),
+				boost::bind (list_populators::string, _1),
+				TypeString),
+    ReadListValueTypeTestParam (boost::bind (readColorListValue, _1, _2, _3, _4),
+				boost::bind (variant_populators::color),
+				boost::bind (list_populators::color, _1),
+				TypeColor)
+};
+
+INSTANTIATE_TEST_CASE_P (TestGSettingsReadListValueParameterized, CCSGSettingsTestReadListValueTypes,
+			 ::testing::ValuesIn (readListValueTypeTestParam));
+
+class CCSGSettingsBackendReadListValueBadTypesTest :
+    public ::testing::TestWithParam <CCSSettingType>
+{
+};
+
+TEST_P (CCSGSettingsBackendReadListValueBadTypesTest, TestGSettingsReadListValueFailsOnNonVariantTypes)
+{
+    GVariant			   *variant = NULL;
+    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), boost::bind (ccsFreeMockSetting, _1));
+    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+
+    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+
+    CCSSettingInfo			    info;
+
+    info.forList.listType = GetParam ();
+
+    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (&info));
+
+    EXPECT_THAT (readListValue (variant, mockSetting.get (), &ccsDefaultObjectAllocator), IsNull ());
+}
+
+CCSSettingType readListValueNonVariantTypes[] =
+{
+    TypeAction,
+    TypeKey,
+    TypeButton,
+    TypeEdge,
+    TypeBell,
+    TypeList,
+    TypeNum
+};
+
+INSTANTIATE_TEST_CASE_P (CCSGSettingsBackendReadListValueBadTypesTestParameterized,
+			 CCSGSettingsBackendReadListValueBadTypesTest,
+			 ::testing::ValuesIn (readListValueNonVariantTypes));
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplCurrentProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (currentProfile.c_str ()));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplDifferentProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("other");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (otherProfile.c_str ()));
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (otherProfile)));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplNullProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("other");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (ReturnNull ());
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (std::string (DEFAULTPROF))));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUpdateProfileDefaultImplEmptyStringProfile)
+{
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (&ccsFreeMockContext, _1));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (&ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockGSettingsBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend));
+    CCSContextGMock	     *gmockContext = reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context));
+
+    std::string currentProfile ("mock");
+    std::string otherProfile ("");
+
+    EXPECT_CALL (*gmockGSettingsBackend, getCurrentProfile ()).WillOnce (Return (currentProfile.c_str ()));
+    EXPECT_CALL (*gmockContext, getProfile ()).WillOnce (Return (otherProfile.c_str ()));
+    EXPECT_CALL (*gmockGSettingsBackend, updateCurrentProfileName (Eq (std::string (DEFAULTPROF))));
+
+    ccsGSettingsBackendUpdateProfileDefault (backend.get (), context.get ());
+}
+
+class CCSGSettingsUpdateHandlersTest :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	CCSGSettingsUpdateHandlersTest () :
+	    gsettingsBackend (ccsGSettingsBackendGMockNew (),
+			      boost::bind (ccsGSettingsBackendGMockFree, _1)),
+	    gmockBackend (reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (gsettingsBackend.get ()))),
+	    wrapper (ccsMockGSettingsWrapperNew (),
+		     boost::bind (ccsGSettingsWrapperUnref, _1)),
+	    gmockWrapper (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()))),
+	    context (ccsMockContextNew (),
+		     boost::bind (ccsFreeMockContext, _1)),
+	    gmockContext (reinterpret_cast <CCSContextGMock *> (ccsObjectGetPrivate (context.get ()))),
+	    plugin (NULL),
+	    setting (NULL),
+	    uncleanKeyName (NULL)
+	{
+	}
+
+	~CCSGSettingsUpdateHandlersTest ()
+	{
+	    if (plugin)
+		ccsPluginUnref (plugin);
+
+	    if (setting)
+		ccsSettingUnref (setting);
+
+	    if (uncleanKeyName)
+		free (uncleanKeyName);
+	}
+
+	void SetPathAndKeyname (const std::string &setPath,
+				const std::string &setKeyName)
+	{
+	    path = setPath;
+	    keyName = setKeyName;
+	}
+
+    protected:
+
+	boost::shared_ptr <CCSBackend> gsettingsBackend;
+	CCSGSettingsBackendGMock *gmockBackend;
+	boost::shared_ptr <CCSGSettingsWrapper> wrapper;
+	CCSGSettingsWrapperGMock *gmockWrapper;
+	boost::shared_ptr <CCSContext> context;
+	CCSContextGMock *gmockContext;
+	std::string path;
+	std::string keyName;
+	CCSPlugin			   *plugin;
+	CCSSetting			   *setting;
+	char			   *uncleanKeyName;
+};
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestBadPath)
+{
+    SetPathAndKeyname ("/wrong", "foo");
+
+    EXPECT_FALSE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+							path.c_str (),
+							keyName.c_str (),
+							context.get (),
+							&plugin,
+							&setting,
+							&uncleanKeyName));
+
+    EXPECT_THAT (plugin, IsNull ());
+    EXPECT_THAT (setting, IsNull ());
+    EXPECT_THAT (uncleanKeyName, IsNull ());
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestNoPluginFound)
+{
+    SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", "foo-bar");
+
+    EXPECT_CALL (*gmockContext, findPlugin (Eq (std::string ("bar")))).WillOnce (ReturnNull ());
+
+    EXPECT_FALSE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+							path.c_str (),
+							keyName.c_str (),
+							context.get (),
+							&plugin,
+							&setting,
+							&uncleanKeyName));
+
+    EXPECT_THAT (plugin, IsNull ());
+    EXPECT_THAT (setting, IsNull ());
+    EXPECT_THAT (uncleanKeyName, IsNull ());
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestNoSettingFound)
+{
+    CCSPlugin *mockPlugin = ccsMockPluginNew ();
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
+    std::string    gKeyName ("foo-bar");
+
+    SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", gKeyName.c_str ());
+
+    CharacterWrapper translated (translateKeyForCCS (gKeyName.c_str ()));
+
+    EXPECT_CALL (*gmockContext, findPlugin (Eq (std::string ("bar")))).WillOnce (Return (mockPlugin));
+    EXPECT_CALL (*gmockPlugin, findSetting (Eq (std::string (translated)))).WillOnce (ReturnNull ());
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (std::string (gKeyName.c_str ())))).WillOnce (ReturnNull ());
+
+    EXPECT_FALSE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+							path.c_str (),
+							keyName.c_str (),
+							context.get (),
+							&plugin,
+							&setting,
+							&uncleanKeyName));
+
+    EXPECT_EQ (plugin, mockPlugin);
+    EXPECT_THAT (setting, IsNull ());
+    EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestSettingNotFoundAndNoTypeMatches)
+{
+    GVariant *value = g_variant_new_int16 (2);
+    CCSPlugin *mockPlugin = ccsMockPluginNew ();
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
+    std::string    gKeyName ("foo-bar");
+
+    SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", gKeyName.c_str ());
+
+    CharacterWrapper translated (translateKeyForCCS (gKeyName.c_str ()));
+
+    EXPECT_CALL (*gmockContext, findPlugin (Eq (std::string ("bar")))).WillOnce (Return (mockPlugin));
+    EXPECT_CALL (*gmockPlugin, findSetting (Eq (std::string (translated)))).WillOnce (ReturnNull ());
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (std::string (gKeyName.c_str ())))).WillOnce (Return (value));
+
+    EXPECT_FALSE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+							path.c_str (),
+							keyName.c_str (),
+							context.get (),
+							&plugin,
+							&setting,
+							&uncleanKeyName));
+
+    EXPECT_EQ (plugin, mockPlugin);
+    EXPECT_THAT (setting, IsNull ());
+    EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestSettingNotFoundAndNoSettingMatches)
+{
+    GVariant *value = g_variant_new_int32 (2);
+    CCSPlugin *mockPlugin = ccsMockPluginNew ();
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
+    boost::shared_ptr <CCSSetting> mockSetting (ccsMockSettingNew (),
+						boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (mockSetting));
+    std::string    gKeyName ("foo-bar");
+
+    SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", gKeyName.c_str ());
+
+    /* Maybe we should fix ccsSettingGetName to return
+     * const char * instead of char * */
+    CharacterWrapper settingNameInList (strdup ("fbrarr"));
+    char	     *settingNameInListC = settingNameInList;
+
+    CharacterWrapper translated (translateKeyForCCS (gKeyName.c_str ()));
+
+    boost::shared_ptr <_CCSSettingList> settingList (ccsSettingListAppend (NULL, mockSetting.get ()),
+						    boost::bind (ccsSettingListFree, _1, FALSE));
+
+    EXPECT_CALL (*gmockContext, findPlugin (Eq (std::string ("bar")))).WillOnce (Return (mockPlugin));
+    EXPECT_CALL (*gmockPlugin, findSetting (Eq (std::string (translated)))).WillOnce (ReturnNull ());
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (std::string (gKeyName.c_str ())))).WillOnce (Return (value));
+    EXPECT_CALL (*gmockPlugin, getPluginSettings ()).WillOnce (Return (settingList.get ()));
+    EXPECT_CALL (*gmockSetting, getType ()).WillRepeatedly (Return (TypeInt));
+    EXPECT_CALL (*gmockSetting, getName ()).WillRepeatedly (Return (settingNameInListC));
+
+    EXPECT_FALSE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+							path.c_str (),
+							keyName.c_str (),
+							context.get (),
+							&plugin,
+							&setting,
+							&uncleanKeyName));
+
+    EXPECT_EQ (plugin, mockPlugin);
+    EXPECT_THAT (setting, IsNull ());
+    EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestSettingMatches)
+{
+    CCSPlugin *mockPlugin = ccsMockPluginNew ();
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
+    CCSSetting     *mockSetting = ccsMockSettingNew ();
+    std::string    gKeyName ("foo-bar");
+
+    SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", gKeyName.c_str ());
+
+    CharacterWrapper translated (translateKeyForCCS (gKeyName.c_str ()));
+
+    EXPECT_CALL (*gmockContext, findPlugin (Eq (std::string ("bar")))).WillOnce (Return (mockPlugin));
+    EXPECT_CALL (*gmockPlugin, findSetting (Eq (std::string (translated)))).WillOnce (Return (mockSetting));
+    EXPECT_TRUE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+						       path.c_str (),
+						       keyName.c_str (),
+						       context.get (),
+						       &plugin,
+						       &setting,
+						       &uncleanKeyName));
+
+    EXPECT_EQ (plugin, mockPlugin);
+    EXPECT_THAT (setting, mockSetting);
+    EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestFoundSetting)
+{
+    GVariant *value = g_variant_new_int32 (2);
+    CCSPlugin *mockPlugin = ccsMockPluginNew ();
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (mockPlugin));
+    CCSSetting     *mockSetting = ccsMockSettingNew ();
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (mockSetting));
+    std::string    gKeyName ("foo-bar");
+
+    SetPathAndKeyname ("/org/compiz/profiles/baz/plugins/bar", gKeyName.c_str ());
+
+    /* Maybe we should fix ccsSettingGetName to return
+     * const char * instead of char * */
+    CharacterWrapper settingNameInList (strdup ("foo_bar"));
+    char	     *settingNameInListC = settingNameInList;
+
+    CharacterWrapper translated (translateKeyForCCS (gKeyName.c_str ()));
+
+    boost::shared_ptr <_CCSSettingList> settingList (ccsSettingListAppend (NULL, mockSetting),
+						    boost::bind (ccsSettingListFree, _1, FALSE));
+
+    EXPECT_CALL (*gmockContext, findPlugin (Eq (std::string ("bar")))).WillOnce (Return (mockPlugin));
+    EXPECT_CALL (*gmockPlugin, findSetting (Eq (std::string (translated)))).WillOnce (ReturnNull ());
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (std::string (gKeyName.c_str ())))).WillOnce (Return (value));
+    EXPECT_CALL (*gmockPlugin, getPluginSettings ()).WillOnce (Return (settingList.get ()));
+    EXPECT_CALL (*gmockSetting, getType ()).WillRepeatedly (Return (TypeInt));
+    EXPECT_CALL (*gmockSetting, getName ()).WillRepeatedly (Return (settingNameInListC));
+
+    EXPECT_TRUE (findSettingAndPluginToUpdateFromPath (wrapper.get (),
+						       path.c_str (),
+						       keyName.c_str (),
+						       context.get (),
+						       &plugin,
+						       &setting,
+						       &uncleanKeyName));
+
+    EXPECT_EQ (plugin, mockPlugin);
+    EXPECT_THAT (setting, mockSetting);
+    EXPECT_THAT (uncleanKeyName, Eq (std::string (translated)));
+}
+
+TEST_F (CCSGSettingsUpdateHandlersTest, TestUnfindableSettingToUpdateSetttingsWithGSettingsKeyName)
+{
+    SetPathAndKeyname ("/wrong", "bad-key");
+
+    EXPECT_CALL (*gmockBackend, getContext ()).WillOnce (Return (context.get ()));
+    EXPECT_CALL (*gmockWrapper, getPath ()).WillOnce (Return (path.c_str ()));
+
+    EXPECT_FALSE (updateSettingWithGSettingsKeyName (gsettingsBackend.get (),
+						     wrapper.get (),
+						     keyName.c_str (),
+						     NULL));
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeySuccess)
+{
+    CCSSettingType    TYPE = TypeInt;
+    const std::string KEY ("good-key");
+    const std::string PATH ("/org/compiz/mock/plugins/mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    boost::shared_ptr <GVariant> value (g_variant_ref_sink (g_variant_new_int32 (2)),
+					boost::bind (g_variant_unref, _1));
+
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value.get ()));
+    EXPECT_EQ (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), value.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestGetVariantAtKeyFailure)
+{
+    CCSSettingType    TYPE = TypeString;
+    const std::string KEY ("good-key");
+    const std::string PATH ("/org/compiz/mock/plugins/mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    GVariant *value = g_variant_new_int32 (2);
+
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, getValue (Eq (KEY))).WillOnce (Return (value));
+    EXPECT_THAT (getVariantAtKey (wrapper.get (), KEY.c_str (), PATH.c_str (), TYPE), IsNull ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestMakeSettingPath)
+{
+    CharacterWrapper  PLUGIN (strdup ("mock"));
+    char	      *PLUGIN_STR = PLUGIN;
+    std::string  PROFILE ("mock");
+    std::string  EXPECTED_PATH ("/org/compiz/profiles/mock/plugins/mock/");
+    boost::shared_ptr <CCSPlugin> plugin (ccsMockPluginNew (),
+					  boost::bind (ccsPluginUnref, _1));
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin));
+    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
+					   boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting));
+
+    EXPECT_CALL (*gmockSetting, getParent ()).WillOnce (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, getName ()).WillOnce (Return (PLUGIN_STR));
+
+    CharacterWrapper path (makeSettingPath (PROFILE.c_str (), setting.get ()));
+    std::string      pathString (path);
+
+    EXPECT_EQ (pathString, EXPECTED_PATH);
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestFindSettingsObject)
+{
+    CharacterWrapper  PLUGIN (strdup ("mock"));
+    char	      *PLUGIN_STR = PLUGIN;
+    std::string  PROFILE ("mock");
+    std::string  EXPECTED_PATH ("/org/compiz/profiles/mock/plugins/mock/");
+    boost::shared_ptr <CCSPlugin> plugin (ccsMockPluginNew (),
+					  boost::bind (ccsPluginUnref, _1));
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin));
+    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
+					   boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting));
+
+    EXPECT_CALL (*gmockSetting, getParent ()).WillOnce (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, getName ()).WillOnce (Return (PLUGIN_STR));
+
+    CharacterWrapper path (makeSettingPath (PROFILE.c_str (), setting.get ()));
+    std::string      pathString (path);
+
+    EXPECT_EQ (pathString, EXPECTED_PATH);
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestResetOptionToDefault)
+{
+    CharacterWrapper  SETTING_NAME (strdup ("Mock_setting"));
+    char	      *SETTING_NAME_STR = SETTING_NAME;
+    CharacterWrapper  TRANSLATED_SETTING_NAME (translateKeyForGSettings (SETTING_NAME));
+    CharacterWrapper  PLUGIN (strdup ("mock"));
+    char	      *PLUGIN_STR = PLUGIN;
+    std::string  PROFILE ("mock");
+    boost::shared_ptr <CCSGSettingsWrapper> wrapper (ccsMockGSettingsWrapperNew (),
+						     boost::bind (ccsGSettingsWrapperUnref, _1));
+    CCSGSettingsWrapperGMock *gmockWrapper = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapper.get ()));
+    boost::shared_ptr <CCSPlugin> plugin (ccsMockPluginNew (),
+					  boost::bind (ccsPluginUnref, _1));
+    CCSPluginGMock *gmockPlugin = reinterpret_cast <CCSPluginGMock *> (ccsObjectGetPrivate (plugin));
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+    boost::shared_ptr <CCSSetting> setting (ccsMockSettingNew (),
+					    boost::bind (ccsSettingUnref, _1));
+    CCSSettingGMock *gmockSetting = reinterpret_cast <CCSSettingGMock *> (ccsObjectGetPrivate (setting.get ()));
+
+    EXPECT_CALL (*gmockSetting, getName ()).WillRepeatedly (Return (SETTING_NAME_STR));
+    EXPECT_CALL (*gmockSetting, getParent ()).WillRepeatedly (Return (plugin.get ()));
+    EXPECT_CALL (*gmockPlugin, getName ()).WillRepeatedly (Return (PLUGIN_STR));
+    EXPECT_CALL (*gmockPlugin, getContext ()).WillRepeatedly (ReturnNull ());
+
+    EXPECT_CALL (*gmockBackend, getCurrentProfile ()).WillRepeatedly (Return (PROFILE.c_str ()));
+    EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (std::string (PLUGIN)),
+								    _,
+								    IsNull ())).WillOnce (Return (wrapper.get ()));
+
+    EXPECT_CALL (*gmockWrapper, resetKey (Eq (std::string (TRANSLATED_SETTING_NAME))));
+
+    resetOptionToDefault (backend.get (), setting.get ());
+}
+
+TEST_F (CCSGSettingsTestIndependent, TestUnsetAllChangedPluginKeysInProfileDefaultImpl)
+{
+    std::string PLUGIN_FOO ("foo");
+    std::string PLUGIN_BAR ("bar");
+
+    std::string KEY_EXAMPLE_ONE ("example-one");
+    std::string KEY_EXAMPLE_TWO ("example-two");
+    std::string KEY_EXAMPLE_THREE ("example-three");
+
+    boost::shared_ptr <CCSBackend> backend (ccsGSettingsBackendGMockNew (),
+					    boost::bind (ccsGSettingsBackendGMockFree, _1));
+    CCSGSettingsBackendGMock *gmockBackend = reinterpret_cast <CCSGSettingsBackendGMock *> (ccsObjectGetPrivate (backend.get ()));
+    boost::shared_ptr <CCSContext> context (ccsMockContextNew (),
+					    boost::bind (ccsFreeMockContext, _1));
+
+    const unsigned short NUM_KEYS = 3;
+
+    gchar ** fooKeys = (gchar **) calloc (1, sizeof (char *) * (NUM_KEYS + 1));
+    fooKeys[0] = g_strdup (KEY_EXAMPLE_ONE.c_str ());
+    fooKeys[1] = g_strdup (KEY_EXAMPLE_TWO.c_str ());
+    fooKeys[2] = g_strdup (KEY_EXAMPLE_THREE.c_str ());
+    fooKeys[3] = NULL;
+
+    gchar ** barKeys = (gchar **) calloc (1, sizeof (char *) * (NUM_KEYS + 1));
+    barKeys[0] = g_strdup (KEY_EXAMPLE_ONE.c_str ());
+    barKeys[1] = g_strdup (KEY_EXAMPLE_TWO.c_str ());
+    barKeys[2] = g_strdup (KEY_EXAMPLE_THREE.c_str ());
+    barKeys[3] = NULL;
+
+    GVariantBuilder pluginsWithChangedKeysBuilder;
+
+    g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", PLUGIN_FOO.c_str ());
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", PLUGIN_BAR.c_str ());
+
+    boost::shared_ptr <GVariant> pluginsWithChangedKeys (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+							 boost::bind (g_variant_unref, _1));
+
+    boost::shared_ptr <CCSGSettingsWrapper> wrapperForFoo (ccsMockGSettingsWrapperNew (),
+							   boost::bind (ccsGSettingsWrapperUnref, _1));
+    CCSGSettingsWrapperGMock *gmockWrapperForFoo = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapperForFoo.get ()));
+    boost::shared_ptr <CCSGSettingsWrapper> wrapperForBar (ccsMockGSettingsWrapperNew (),
+							   boost::bind (ccsGSettingsWrapperUnref, _1));
+    CCSGSettingsWrapperGMock *gmockWrapperForBar = reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (wrapperForBar.get ()));
+
+
+    /* Get the settings wrapper */
+    EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (PLUGIN_FOO), _, context.get ())).WillOnce (Return (wrapperForFoo.get ()));
+
+    /* List the keys */
+    EXPECT_CALL (*gmockWrapperForFoo, listKeys ()).WillOnce (Return (fooKeys));
+
+    /* Unset all the keys */
+    EXPECT_CALL (*gmockWrapperForFoo, resetKey (Eq (KEY_EXAMPLE_ONE)));
+    EXPECT_CALL (*gmockWrapperForFoo, resetKey (Eq (KEY_EXAMPLE_TWO)));
+    EXPECT_CALL (*gmockWrapperForFoo, resetKey (Eq (KEY_EXAMPLE_THREE)));
+
+    /* Get the settings wrapper */
+    EXPECT_CALL (*gmockBackend, getSettingsObjectForPluginWithPath (Eq (PLUGIN_BAR), _, context.get ())).WillOnce (Return (wrapperForBar.get ()));
+
+    /* List the keys */
+    EXPECT_CALL (*gmockWrapperForBar, listKeys ()).WillOnce (Return (barKeys));
+
+    /* Unset all the keys */
+    EXPECT_CALL (*gmockWrapperForBar, resetKey (Eq (KEY_EXAMPLE_ONE)));
+    EXPECT_CALL (*gmockWrapperForBar, resetKey (Eq (KEY_EXAMPLE_TWO)));
+    EXPECT_CALL (*gmockWrapperForBar, resetKey (Eq (KEY_EXAMPLE_THREE)));
+
+    ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (backend.get (),
+								  context.get (),
+								  pluginsWithChangedKeys.get (),
+								  "mock");
+}
+
+namespace
+{
+    const CCSBackendInfo stubBackendInfo =
+    {
+	"stub",
+	"stub",
+	"stub",
+	FALSE,
+	FALSE
+    };
+
+    const CCSBackendInfo *
+    stubBackendGetInfo (CCSBackend *backend)
+    {
+	return &stubBackendInfo;
+    }
+
+    Bool
+    stubBackendInit (CCSBackend *backend, CCSContext *context)
+    {
+	return TRUE;
+    }
+
+    Bool
+    stubBackendFini (CCSBackend *backend)
+    {
+	return TRUE;
+    }
+
+    CCSBackendInterface stubBackendInterface =
+    {
+	stubBackendGetInfo,
+	NULL,
+	stubBackendInit,
+	stubBackendFini,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    };
+}
+
+namespace
+{
+    const std::string MOCK_PLUGIN_NAME ("mock");
+    const std::string MOCK_SCHEMA_NAME ("org.compiz.mock");
+    const std::string MOCK_PROFILE_NAME ("mock");
+    const std::string MOCK_GSCHEMA_PATH ("/org/compiz/profiles/mock/plugins/mock");
+    const std::string PLUGINS_WITH_SET_KEYS ("plugins-with-set-keys");
+
+    boost::shared_ptr <GVariant>
+    GetEmptyPluginsWithSetKeys ()
+    {
+	GVariantBuilder pluginsWithChangedKeysBuilder;
+
+	g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+	return AutoDestroy (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+						g_variant_unref);
+    }
+}
+
+class CCSGSettingsTestCCSGSettingsBackend :
+    public CCSGSettingsTestIndependent
+{
+    public:
+
+	CCSGSettingsTestCCSGSettingsBackend () :
+	    mockContext (AutoDestroy (ccsMockContextNew (), ccsFreeMockContext)),
+	    stubBackend (AutoDestroy (ccsBackendNewWithDynamicInterface (mockContext.get (), &stubBackendInterface),
+				      ccsBackendUnref)),
+	    mockCompizconfigSettings (ccsMockGSettingsWrapperNew ()),
+	    mockCurrentProfileSettings (ccsMockGSettingsWrapperNew ()),
+	    mockWrapperFactory (ccsMockGSettingsWrapperFactoryNew ()),
+	    mockIntegration (ccsMockIntegrationBackendNew (&ccsDefaultObjectAllocator)),
+	    valueChangeData (reinterpret_cast <CCSGNOMEValueChangeData *> (calloc (1, sizeof (CCSGNOMEValueChangeData)))),
+	    currentProfile (strdup (MOCK_PROFILE_NAME.c_str ())),
+	    mockMockPluginWrapper (ccsMockGSettingsWrapperNew ()),
+	    gmockWrapperFactory (reinterpret_cast <CCSGSettingsWrapperFactoryGMock *> (ccsObjectGetPrivate (mockWrapperFactory))),
+	    gmockWrapper (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (mockMockPluginWrapper))),
+	    gmockCurrentProfileSettings (reinterpret_cast <CCSGSettingsWrapperGMock *> (ccsObjectGetPrivate (mockCurrentProfileSettings)))
+
+	{
+	    valueChangeData->integration = mockIntegration;
+	    valueChangeData->factory = NULL;
+	    valueChangeData->storage = NULL;
+	    valueChangeData->context = mockContext.get ();
+
+	    if (!ccsGSettingsBackendAttachNewToBackend (stubBackend.get (),
+							mockContext.get (),
+							mockCompizconfigSettings,
+							mockCurrentProfileSettings,
+							mockWrapperFactory,
+							mockIntegration,
+							valueChangeData,
+							currentProfile))
+		throw std::runtime_error ("Failed to attach GSettings backend");
+	}
+
+	virtual void TearDown ()
+	{
+	    ccsGSettingsBackendDetachFromBackend (stubBackend.get ());
+
+	    CCSGSettingsTestIndependent::TearDown ();
+	}
+
+	boost::shared_ptr <CCSContext> mockContext;
+	boost::shared_ptr <CCSBackend> stubBackend;
+	CCSGSettingsWrapper *mockCompizconfigSettings;
+	CCSGSettingsWrapper *mockCurrentProfileSettings;
+	CCSGSettingsWrapperFactory *mockWrapperFactory;
+	CCSIntegration *mockIntegration;
+	CCSGNOMEValueChangeData           *valueChangeData;
+	char                *currentProfile;
+	CCSGSettingsWrapper *mockMockPluginWrapper;
+
+	CCSGSettingsWrapperFactoryGMock *gmockWrapperFactory;
+	CCSGSettingsWrapperGMock        *gmockWrapper;
+	CCSGSettingsWrapperGMock        *gmockCurrentProfileSettings;
+
+};
+
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestWriteOutSetKeysOnGetSettingsObject)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantEmpty (GetEmptyPluginsWithSetKeys ());
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantEmpty.get ())));
+
+    /* Should acknowledge that we wrote to this schema */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (Eq (PLUGINS_WITH_SET_KEYS),
+							 GVariantHasValueInArray <const gchar *> ("s",
+												  MOCK_PLUGIN_NAME.c_str (),
+												  boost::bind (streq, _1, _2))))
+	    .WillOnce (WithArgs <1> (Invoke (g_variant_unref)));;
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_EQ (wrapper, mockMockPluginWrapper);
+}
+
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestNoWriteOutSetKeysOnGetSettingsObjectIfAlreadyWritten)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    GVariantBuilder pluginsWithChangedKeysBuilder;
+
+    g_variant_builder_init (&pluginsWithChangedKeysBuilder, G_VARIANT_TYPE ("as"));
+    g_variant_builder_add (&pluginsWithChangedKeysBuilder, "s", MOCK_PLUGIN_NAME.c_str ());
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantNonEmpty (AutoDestroy (g_variant_ref_sink (g_variant_builder_end (&pluginsWithChangedKeysBuilder)),
+										 g_variant_unref));
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantNonEmpty.get ())));
+
+    /* No acknowledgement */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (_, _)).Times (0);
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_EQ (wrapper, mockMockPluginWrapper);
+}
+
+TEST_F (CCSGSettingsTestCCSGSettingsBackend, TestReturnExistingWrapper)
+{
+    /* Should create a new wrapper for this "plugin" */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (Eq (MOCK_SCHEMA_NAME),
+								    Eq (MOCK_GSCHEMA_PATH),
+								    _)).WillOnce (Return (mockMockPluginWrapper));
+    EXPECT_CALL (*gmockWrapper, connectToChangedSignal (_, stubBackend.get ()));
+
+
+    boost::shared_ptr <GVariant> pluginsWithSetKeysVariantEmpty (GetEmptyPluginsWithSetKeys ());
+
+    /* Should now get the value of plugins-with-set-keys from
+     * mockCurrentProfileSettings */
+    EXPECT_CALL (*gmockCurrentProfileSettings, getValue (Eq (PLUGINS_WITH_SET_KEYS)))
+	    .WillOnce (Return (g_variant_ref (pluginsWithSetKeysVariantEmpty.get ())));
+
+    /* Should acknowledge that we wrote to this schema */
+    EXPECT_CALL (*gmockCurrentProfileSettings, setValue (Eq (PLUGINS_WITH_SET_KEYS),
+							 _))
+	    .WillOnce (WithArgs <1> (Invoke (g_variant_unref)));
+
+    CCSGSettingsWrapper *wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+										   MOCK_PLUGIN_NAME.c_str (),
+										   MOCK_GSCHEMA_PATH.c_str (),
+										   mockContext.get ());
+
+    EXPECT_CALL (*gmockWrapper, getSchemaName ()).WillOnce (Return (MOCK_SCHEMA_NAME.c_str ()));
+
+    /* Shouldn't be called again */
+    EXPECT_CALL (*gmockWrapperFactory, newGSettingsWrapperWithPath (_, _, _)).Times (0);
+
+    wrapper = ccsGSettingsGetSettingsObjectForPluginWithPath (stubBackend.get (),
+							      MOCK_PLUGIN_NAME.c_str (),
+							      MOCK_GSCHEMA_PATH.c_str (),
+							      mockContext.get ());
+
+    /* It should return the cached one */
+    EXPECT_EQ (mockMockPluginWrapper, wrapper);
+}

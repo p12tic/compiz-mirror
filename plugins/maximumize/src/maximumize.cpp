@@ -31,6 +31,10 @@
 
 COMPIZ_PLUGIN_20090315 (maximumize, MaximumizePluginVTable);
 
+/* Convenience constants to make the code more readable (hopefully) */
+const short		REDUCE  = -1;
+const unsigned short	INCREASE = 1;
+
 /* Returns true if rectangles a and b intersect by at least 40 in both
  * directions
  */

@@ -91,6 +91,7 @@ class PrivateScaleScreen :
 	bool ensureDndRedirectWindow ();
 
 	bool selectWindowAt (int x, int y, bool moveInputFocus);
+	bool selectWindowAt (int x, int y);
 
 	void moveFocusWindow (int dx, int dy);
 

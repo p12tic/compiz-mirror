@@ -22,10 +22,12 @@
  * Press the tiling keys several times to cycle through some tiling options.
  */
 
+#include <boost/bind.hpp>
 #include "grid.h"
 #include "grabhandler.h"
 
 using namespace GridWindowType;
+namespace cgw = compiz::grid::window;
 
 static std::map <unsigned int, GridProps> gridProps;
 
@@ -432,35 +434,52 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     CompRect rect;
     GLMatrix sTransform (transform);
 	std::vector<Animation>::iterator iter;
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLfloat         vertexData[12];
+    GLushort        colorData[4];
+    GLushort       *color;
+    GLboolean       isBlendingEnabled;
 
     getPaintRectangle (rect);
 
 	for (unsigned int i = 0; i < animations.size (); i++)
 		setCurrentRect (animations.at (i));
 
-    glPushMatrix ();
-
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-    glLoadMatrixf (sTransform.getMatrix ());
-
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    glGetBooleanv (GL_BLEND, &isBlendingEnabled);
     glEnable (GL_BLEND);
 
 	for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
 	{
 		Animation& anim = *iter;
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
+	color = optionGetFillColor ();
 
-		/* fill rectangle */
-		glColor4f (((float) optionGetFillColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorBlue () / 65535.0f) * alpha,
-			   alpha);
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
 
-		/* fill rectangle */
-		glRecti (anim.currentRect.x1 (), anim.currentRect.y2 (),
-				 anim.currentRect.x2 (), anim.currentRect.y1 ());
+	vertexData[0]  = anim.currentRect.x1 ();
+	vertexData[1]  = anim.currentRect.y1 ();
+	vertexData[2]  = 0.0f;
+	vertexData[3]  = anim.currentRect.x1 ();
+	vertexData[4]  = anim.currentRect.y2 ();
+	vertexData[5]  = 0.0f;
+	vertexData[6]  = anim.currentRect.x2 ();
+	vertexData[7]  = anim.currentRect.y1 ();
+	vertexData[8]  = 0.0f;
+	vertexData[9]  = anim.currentRect.x2 ();
+	vertexData[10] = anim.currentRect.y2 ();
+	vertexData[11] = 0.0f;
+
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
 
 		/* Set outline rect smaller to avoid damage issues */
 		anim.currentRect.setGeometry (anim.currentRect.x () + 1,
@@ -468,63 +487,101 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 					      anim.currentRect.width () - 2,
 					      anim.currentRect.height () - 2);
 
-		alpha = (float) (optionGetOutlineColorAlpha () / 65535.0f) * anim.opacity;
-
 		/* draw outline */
-		glColor4f (((float) optionGetOutlineColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorBlue () / 65535.0f) * alpha,
-			   alpha);
+	alpha = ((float) optionGetOutlineColorAlpha () / 65535.0f) * anim.opacity;
+	color = optionGetOutlineColor ();
+
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
+
+	vertexData[0]  = anim.currentRect.x1 ();
+	vertexData[1]  = anim.currentRect.y1 ();
+	vertexData[3]  = anim.currentRect.x1 ();
+	vertexData[4]  = anim.currentRect.y2 ();
+	vertexData[6]  = anim.currentRect.x2 ();
+	vertexData[7]  = anim.currentRect.y2 ();
+	vertexData[9]  = anim.currentRect.x2 ();
+	vertexData[10] = anim.currentRect.y1 ();
 
 		glLineWidth (2.0);
 
-		glBegin (GL_LINE_LOOP);
-		glVertex2i (anim.currentRect.x1 (),	anim.currentRect.y1 ());
-		glVertex2i (anim.currentRect.x2 (),	anim.currentRect.y1 ());
-		glVertex2i (anim.currentRect.x2 (),	anim.currentRect.y2 ());
-		glVertex2i (anim.currentRect.x1 (),	anim.currentRect.y2 ());
-		glEnd ();
+	streamingBuffer->begin (GL_LINE_LOOP);
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
 	}
 
 	if (!animating)
 	{
-		/* fill rectangle */
+	/* draw filled rectangle */
 		float alpha = (float) optionGetFillColorAlpha () / 65535.0f;
+	color = optionGetFillColor ();
 
-		/* fill rectangle */
-		glColor4f (((float) optionGetFillColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorBlue () / 65535.0f) * alpha,
-			   alpha);
-		glRecti (rect.x1 (), rect.y2 (), rect.x2 (), rect.y1 ());
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
+
+	vertexData[0]  = rect.x1 ();
+	vertexData[1]  = rect.y1 ();
+	vertexData[2]  = 0.0f;
+	vertexData[3]  = rect.x1 ();
+	vertexData[4]  = rect.y2 ();
+	vertexData[5]  = 0.0f;
+	vertexData[6]  = rect.x2 ();
+	vertexData[7]  = rect.y1 ();
+	vertexData[8]  = 0.0f;
+	vertexData[9]  = rect.x2 ();
+	vertexData[10] = rect.y2 ();
+	vertexData[11] = 0.0f;
+
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
 
 		/* Set outline rect smaller to avoid damage issues */
-		rect.setGeometry (rect.x () + 1, rect.y () + 1,
-				  rect.width () - 2, rect.height () - 2);
+	rect.setGeometry (rect.x () + 1,
+			  rect.y () + 1,
+			  rect.width () - 2,
+			  rect.height () - 2);
 
 		/* draw outline */
 		alpha = (float) optionGetOutlineColorAlpha () / 65535.0f;
+	color = optionGetOutlineColor ();
 
-		/* draw outline */
-		glColor4f (((float) optionGetOutlineColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorBlue () / 65535.0f) * alpha,
-			   alpha);
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
+
+	vertexData[0]  = rect.x1 ();
+	vertexData[1]  = rect.y1 ();
+	vertexData[3]  = rect.x1 ();
+	vertexData[4]  = rect.y2 ();
+	vertexData[6]  = rect.x2 ();
+	vertexData[7]  = rect.y2 ();
+	vertexData[9]  = rect.x2 ();
+	vertexData[10] = rect.y1 ();
 
 		glLineWidth (2.0);
-		glBegin (GL_LINE_LOOP);
-		glVertex2i (rect.x1 (), rect.y1 ());
-		glVertex2i (rect.x2 (), rect.y1 ());
-		glVertex2i (rect.x2 (), rect.y2 ());
-		glVertex2i (rect.x1 (), rect.y2 ());
-		glEnd ();
+
+	streamingBuffer->begin (GL_LINE_LOOP);
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
 	}
 
-    /* clean up */
-    glColor4usv (defaultColor);
+    if (!isBlendingEnabled)
     glDisable (GL_BLEND);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glPopMatrix ();
 }
 
 bool
@@ -638,6 +695,23 @@ GridScreen::handleEvent (XEvent *event)
     if (event->type != MotionNotify || !mGrabWindow)
 	return;
 
+    /* Detect when cursor enters another output */
+
+    currentWorkarea = screen->getWorkareaForOutput
+			    (screen->outputDeviceForPoint (pointerX, pointerY));
+    if (lastWorkarea != currentWorkarea)
+    {
+	lastWorkarea = currentWorkarea;
+
+	if (cScreen)
+	    cScreen->damageRegion (desiredSlot);
+
+	initiateCommon (0, 0, o, typeToMask (edgeToGridType ()), false, false);
+
+	if (cScreen)
+	    cScreen->damageRegion (desiredSlot);
+    }
+
     out = screen->outputDevs ().at (
                    screen->outputDeviceForPoint (CompPoint (pointerX, pointerY)));
 
@@ -674,37 +748,21 @@ GridScreen::handleEvent (XEvent *event)
     else
 	edge = NoEdge;
 
-    /* Detect when cursor enters another output */
-
-    currentWorkarea = screen->getWorkareaForOutput
-			    (screen->outputDeviceForPoint (pointerX, pointerY));
-    if (lastWorkarea != currentWorkarea)
-    {
-	lastWorkarea = currentWorkarea;
-
-	if (cScreen)
-	    cScreen->damageRegion (desiredSlot);
-
-	initiateCommon (0, 0, o, typeToMask (edgeToGridType ()), false, false);
-
-	if (cScreen)
-	    cScreen->damageRegion (desiredSlot);
-    }
-
     /* Detect edge region change */
 
     if (lastEdge != edge)
     {
 		bool check = false;
+		unsigned int target = typeToMask (edgeToGridType ());
 		lastSlot = desiredSlot;
 
-		if (edge == NoEdge)
-			desiredSlot.setGeometry (0, 0, 0, 0);
+		if (edge == NoEdge || target == GridUnknown)
+			desiredSlot.setGeometry (0, 0, 0, 0);			
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
 
-		check = initiateCommon (NULL, 0, o, typeToMask (edgeToGridType ()), false, false);
+		check = initiateCommon (NULL, 0, o, target, false, false);
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
@@ -779,7 +837,9 @@ GridWindow::grabNotify (int          x,
 			unsigned int state,
 			unsigned int mask)
 {
-    compiz::grid::window::GrabWindowHandler gwHandler (mask);
+    static cgw::GrabActiveFunc grabActive (boost::bind (&CompScreen::grabExist,
+							screen, _1));
+    cgw::GrabWindowHandler gwHandler (mask, grabActive);
 
     if (gwHandler.track ())
     {
@@ -857,7 +917,8 @@ GridWindow::stateChangeNotify (unsigned int lastState)
     else if (!(lastState & MAXIMIZE_STATE) &&
 	     window->state () & MAXIMIZE_STATE)
     {
-	lastTarget = GridMaximize;
+	if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+	    lastTarget = GridMaximize;
 	if (window->grabbed ())
 	{
 	    originalSize = gScreen->slotToRect (window,
@@ -1083,7 +1144,9 @@ GridWindow::~GridWindow ()
     if (gScreen->mGrabWindow == window)
 	gScreen->mGrabWindow = NULL;
 
-    gScreen->o[0].value ().set (0);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (gScreen->o, "window"));
+    if (w == window)
+	gScreen->o[0].value ().set (0);
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI

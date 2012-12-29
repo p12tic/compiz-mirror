@@ -226,25 +226,19 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	    GLTexture::MatrixList ml (1);
 
 	    ml[0] = icon->matrix ();
-	    priv->gWindow->geometry ().reset ();
+	    priv->gWindow->vertexBuffer ()->begin ();
 
 	    if (width && height)
 		priv->gWindow->glAddGeometry (ml, iconReg, iconReg);
 
-	    if (priv->gWindow->geometry ().vCount)
+	    if (priv->gWindow->vertexBuffer ()->end ())
 	    {
-		GLFragment::Attrib fragment (sAttrib);
 		GLMatrix           wTransform (transform);
 
 		wTransform.scale (scale, scale, 1.0f);
 		wTransform.translate (x / scale, y / scale, 0.0f);
 
-		glPushMatrix ();
-		glLoadMatrixf (wTransform.getMatrix ());
-
-		priv->gWindow->glDrawTexture (icon, fragment, mask);
-
-		glPopMatrix ();
+		priv->gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
 	    }
 	}
     }
@@ -392,13 +386,13 @@ PrivateScaleWindow::glPaint (const GLWindowPaintAttrib& attrib,
 
 	if (scaled)
 	{
-	    GLFragment::Attrib fragment (gWindow->lastPaintAttrib ());
+	    GLWindowPaintAttrib lastAttrib (gWindow->lastPaintAttrib ());
 	    GLMatrix           wTransform (transform);
 
 	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 		return false;
 
-	    if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	    if (window->alpha () || lastAttrib.opacity != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	    wTransform.translate (window->x (), window->y (), 0.0f);
@@ -406,13 +400,8 @@ PrivateScaleWindow::glPaint (const GLWindowPaintAttrib& attrib,
 	    wTransform.translate (tx / scale - window->x (),
 				  ty / scale - window->y (), 0.0f);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
-
-	    gWindow->glDraw (wTransform, fragment, region,
+	    gWindow->glDraw (wTransform, lastAttrib, region,
 			     mask | PAINT_WINDOW_TRANSFORMED_MASK);
-
-	    glPopMatrix ();
 
 	    sWindow->scalePaintDecoration (sAttrib, transform, region, mask);
 	}
@@ -436,29 +425,27 @@ void
 PrivateScaleScreen::layoutSlotsForArea (const CompRect& workArea,
 					int             nWindows)
 {
-    int i, j;
-    int x, y, width, height;
-    int lines, n, nSlots;
-    int spacing;
-
     if (!nWindows)
 	return;
 
-    lines   = sqrt (nWindows + 1);
-    spacing = optionGetSpacing ();
-    nSlots  = 0;
+    int x, y, width, height;
+    int n;
+
+    int lines   = sqrt (nWindows + 1);
+    int spacing = optionGetSpacing ();
+    int nSlots  = 0;
 
     y      = workArea.y () + spacing;
     height = (workArea.height () - (lines + 1) * spacing) / lines;
 
-    for (i = 0; i < lines; i++)
+    for (int i = 0; i < lines; i++)
     {
 	n = MIN (nWindows - nSlots, ceilf ((float) nWindows / lines));
 
 	x     = workArea.x () + spacing;
 	width = (workArea.width () - (n + 1) * spacing) / n;
 
-	for (j = 0; j < n; j++)
+	for (int j = 0; j < n; j++)
 	{
 	    slots[this->nSlots].setGeometry (x, y, width, height);
 
@@ -865,6 +852,10 @@ PrivateScaleScreen::glPaintOutput (const GLScreenPaintAttrib& sAttrib,
 void
 PrivateScaleScreen::preparePaint (int msSinceLastPaint)
 {
+#ifndef LP1026986_FIXED_PROPERLY
+    if (state != ScaleScreen::Idle)
+	cScreen->damageScreen ();
+#endif
     if (state != ScaleScreen::Idle && state != ScaleScreen::Wait)
     {
 	int   steps;
@@ -936,7 +927,12 @@ PrivateScaleScreen::donePaint ()
 		}
 	    }
 	    else if (state == ScaleScreen::Out)
+	    {
 		state = ScaleScreen::Wait;
+
+		// When the animation is completed, select the window under mouse
+		selectWindowAt (pointerX, pointerY);
+	    }
 	}
     }
 
@@ -1353,9 +1349,15 @@ ScaleWindow::setCurrentPosition (const ScalePosition &newPos)
 }
 
 const Window &
-ScaleScreen::getHoveredWindow ()
+ScaleScreen::getHoveredWindow () const
 {
     return priv->hoveredWindow;
+}
+
+const Window &
+ScaleScreen::getSelectedWindow () const
+{
+    return priv->selectedWindow;
 }
 
 bool
@@ -1384,6 +1386,16 @@ PrivateScaleScreen::selectWindowAt (int  x,
     hoveredWindow = None;
 
     return false;
+}
+
+bool
+PrivateScaleScreen::selectWindowAt (int  x,
+				    int  y)
+{
+    CompOption *o = screen->getOption ("click_to_focus");
+    bool focus = (o && !o->value ().b ());
+
+    return selectWindowAt (x, y, focus);
 }
 
 void
@@ -1479,10 +1491,7 @@ ScaleScreen::relayoutSlots (const CompMatch& match)
 void
 PrivateScaleScreen::windowRemove (CompWindow *w)
 {
-    if (!w)
-	return;
-
-    if (state == ScaleScreen::Idle || state == ScaleScreen::In)
+    if (!w || state == ScaleScreen::Idle || state == ScaleScreen::In)
 	return;
 
     foreach (ScaleWindow *lw, windows)
@@ -1605,15 +1614,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		grabIndex                              &&
 		state != ScaleScreen::In)
 	    {
-		bool       focus = false;
-		CompOption *o = screen->getOption ("click_to_focus");
-
-		if (o && !o->value ().b ())
-		    focus = true;
-
-		selectWindowAt (event->xmotion.x_root,
-				event->xmotion.y_root,
-				focus);
+		selectWindowAt (event->xmotion.x_root, event->xmotion.y_root);
 	    }
 	    break;
 	case DestroyNotify:
@@ -1636,12 +1637,6 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    bool       focus = false;
-		    CompOption *o = screen->getOption ("click_to_focus");
-
-		    if (o && !o->value ().b ())
-			focus = true;
-
 		    if (w->id () == dndTarget)
 			sendDndStatusMessage (event->xclient.data.l[0]);
 
@@ -1669,7 +1664,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 				hover.start (time, (float) time * 1.2);
 			    }
 
-			    selectWindowAt (pointerX, pointerY, focus);
+			    selectWindowAt (pointerX, pointerY);
 			}
 			else
 			{
@@ -1752,6 +1747,8 @@ PrivateScaleWindow::damageRect (bool            initial,
     return status;
 }
 
+template class PluginClassHandler<ScaleScreen, CompScreen, COMPIZ_SCALE_ABI>;
+
 ScaleScreen::ScaleScreen (CompScreen *s) :
     PluginClassHandler<ScaleScreen, CompScreen, COMPIZ_SCALE_ABI> (s),
     priv (new PrivateScaleScreen (s))
@@ -1762,6 +1759,8 @@ ScaleScreen::~ScaleScreen ()
 {
     delete priv;
 }
+
+template class PluginClassHandler<ScaleWindow, CompWindow, COMPIZ_SCALE_ABI>;
 
 ScaleWindow::ScaleWindow (CompWindow *w) :
     PluginClassHandler<ScaleWindow, CompWindow, COMPIZ_SCALE_ABI> (w),

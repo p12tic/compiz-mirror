@@ -30,7 +30,7 @@
 
 #include <X11/extensions/Xcomposite.h>
 
-#define COMPIZ_COMPOSITE_ABI 4
+#define COMPIZ_COMPOSITE_ABI 5
 
 #include "core/pluginclasshandler.h"
 #include "core/timer.h"
@@ -106,12 +106,16 @@ public:
 			       const CompRegion    &region) = 0;
 
     virtual bool hasVSync () { return false; };
+    virtual bool requiredForcedRefreshRate () { return false; };
 
     virtual void prepareDrawing () {};
     virtual bool compositingActive () { return false; };
 };
 }
 }
+
+class CompositeScreenInterface;
+extern template class WrapableInterface<CompositeScreen, CompositeScreenInterface>;
 
 /**
  * Wrapable function interface for CompositeScreen
@@ -171,6 +175,8 @@ class CompositeScreenInterface :
 	virtual void damageRegion (const CompRegion &r);
 };
 
+extern template class PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>;
+
 class CompositeScreen :
     public WrapableHandler<CompositeScreenInterface, 7>,
     public PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>,
@@ -205,6 +211,7 @@ class CompositeScreen :
 	void showOutputWindow ();
 	void hideOutputWindow ();
 	void updateOutputWindow ();
+	bool outputWindowChanged () const;
 
 	Window overlay ();
 	Window output ();
@@ -303,6 +310,9 @@ class CompositeScreen :
  */
 #define PAINT_WINDOW_BLEND_MASK			(1 << 19)
 
+class CompositeWindowInterface;
+extern template class WrapableInterface<CompositeWindow, CompositeWindowInterface>;
+
 class CompositeWindowInterface :
     public WrapableInterface<CompositeWindow, CompositeWindowInterface>
 {
@@ -319,6 +329,8 @@ class CompositeWindowInterface :
 	 */
 	virtual bool damageRect (bool initial, const CompRect &rect);
 };
+
+extern template class PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI>;
 
 class CompositeWindow :
     public WrapableHandler<CompositeWindowInterface, 1>,

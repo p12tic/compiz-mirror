@@ -54,12 +54,16 @@ Particle::Particle () :
 {
 }
 
-ParticleSystem::ParticleSystem (int n)
+ParticleSystem::ParticleSystem (int n) :
+    x (0),
+    y (0)
 {
     initParticles (n);
 }
 
-ParticleSystem::ParticleSystem ()
+ParticleSystem::ParticleSystem () :
+    x (0),
+    y (0)
 {
     initParticles (0);
 }
@@ -95,9 +99,7 @@ ParticleSystem::initParticles (int            f_numParticles)
     coords_cache.size  = 0;
     dcolors_cache.size = 0;
 
-    int i;
-
-    for (i = 0; i < f_numParticles; i++)
+    for (int i = 0; i < f_numParticles; i++)
     {
 	Particle p;
 	p.life = 0.0f;
@@ -629,46 +631,8 @@ ShowmouseScreen::initiate (CompAction         *action,
     return true;
 }
 
-void
-ShowmouseScreen::postLoad ()
-{
-    if (ps.particles.empty ())
-    {
-	return;
-    }
-
-    toggleFunctions (true);
-
-    // Initialize cache
-    ps.vertices_cache.cache = NULL;
-    ps.colors_cache.cache   = NULL;
-    ps.coords_cache.cache   = NULL;
-    ps.dcolors_cache.cache  = NULL;
-
-    ps.vertices_cache.count  = 0;
-    ps.colors_cache.count   = 0;
-    ps.coords_cache.count  = 0;
-    ps.dcolors_cache.count = 0;
-
-    ps.vertices_cache.size  = 0;
-    ps.colors_cache.size   = 0;
-    ps.coords_cache.size  = 0;
-    ps.dcolors_cache.size = 0;
-
-    glGenTextures (1, &ps.tex);
-    glBindTexture (GL_TEXTURE_2D, ps.tex);
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
-	          GL_RGBA, GL_UNSIGNED_BYTE, starTex);
-    glBindTexture (GL_TEXTURE_2D, 0);
-}
-
 ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
     PluginClassHandler <ShowmouseScreen, CompScreen> (screen),
-    PluginStateWriter <ShowmouseScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     active (false),
@@ -698,8 +662,6 @@ ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
 
 ShowmouseScreen::~ShowmouseScreen ()
 {
-    writeSerializedData ();
-
     ps.finiParticles ();
 
     if (pollHandle.active ())

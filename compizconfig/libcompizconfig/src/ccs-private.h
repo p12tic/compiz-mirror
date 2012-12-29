@@ -22,21 +22,18 @@
 #ifndef CCS_PRIVATE_H
 #define CSS_PRIVATE_H
 
+#include <ccs-defs.h>
+
+COMPIZCONFIG_BEGIN_DECLS
+
 #include <ccs.h>
 #include <ccs-backend.h>
-
-#define CONTEXT_PRIV(c) \
-    CCSContextPrivate *cPrivate = (CCSContextPrivate *) ccsObjectGetPrivate (c);
-#define PLUGIN_PRIV(p) \
-    CCSPluginPrivate *pPrivate = (CCSPluginPrivate *) ccsObjectGetPrivate (p);
-#define SETTING_PRIV(s) \
-    CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) ccsObjectGetPrivate (s);
 
 extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate
 {
-    CCSBackend        *backend;
+    CCSDynamicBackend  *backend;
     CCSPluginList     plugins;         /* list of plugins settings
                                           were loaded for */
     CCSPluginCategory *categories;     /* list of plugin categories */
@@ -120,6 +117,12 @@ typedef struct _CCSSettingPrivate
     void      *privatePtr;        /* private pointer for usage by the caller */
 } CCSSettingPrivate;
 
+typedef struct _CCSDynamicBackendPrivate
+{
+    void            *dlhand;
+    CCSBackend	    *backend;
+} CCSDynamicBackendPrivate;
+
 typedef struct _CCSSettingsUpgrade
 {
     char	   *profile;
@@ -158,5 +161,20 @@ Bool ccsWriteConfig (ConfigOption option,
 		     char         *value);
 unsigned int ccsAddConfigWatch (CCSContext            *context,
 				FileWatchCallbackProc callback);
+
+void
+ccsAddKeybindingMaskToString (char         **bindingString,
+			      unsigned int matchBindingMask,
+			      unsigned int *addedBindingMask,
+			      unsigned int addBindingMask,
+			      const char   *addBindingString);
+
+void
+ccsAddStringToKeybindingMask (unsigned int *bindingMask,
+			      const char   *bindingString,
+			      unsigned int addBindingMask,
+			      const char   *addBindingString);
+
+COMPIZCONFIG_END_DECLS
 
 #endif

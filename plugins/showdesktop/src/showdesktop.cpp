@@ -37,6 +37,11 @@
 
 COMPIZ_PLUGIN_20090315 (showdesktop, ShowdesktopPluginVTable);
 
+const unsigned short SD_STATE_OFF          = 0;
+const unsigned short SD_STATE_ACTIVATING   = 1;
+const unsigned short SD_STATE_ON           = 2;
+const unsigned short SD_STATE_DEACTIVATING = 3;
+
 /* non interfacing code, aka the logic of the plugin */
 bool
 ShowdesktopWindow::is ()

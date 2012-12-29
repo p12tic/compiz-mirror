@@ -36,13 +36,19 @@
     return mHandler-> func (__VA_ARGS__);	 \
 }
 
-#define WRAPABLE_HND(num,itype,rtype, func, ...)	\
-   rtype func (__VA_ARGS__);				\
-   void  func ## SetEnabled (itype *obj, bool enabled)	\
+#define WRAPABLE_HND(num, itype, rtype, func, ...) \
+    WRAPABLE_HND_ANY(num, itype, rtype, func,, __VA_ARGS__)
+
+#define WRAPABLE_HND_CONST(num, itype, rtype, func, ...) \
+    WRAPABLE_HND_ANY(num, itype, rtype, func, const, __VA_ARGS__)
+
+#define WRAPABLE_HND_ANY(num, itype, rtype, func, cons, ...)	\
+   rtype func (__VA_ARGS__) cons;				\
+   void  func ## SetEnabled (cons itype *obj, bool enabled)	\
    {							\
-       functionSetEnabled (obj, num, enabled);		\
+       functionSetEnabled ((itype*)obj, num, enabled);		\
    }							\
-   unsigned int func ## GetCurrentIndex ()		\
+   unsigned int func ## GetCurrentIndex () const	\
    {							\
        return mCurrFunction[num];			\
    }							\
@@ -51,6 +57,10 @@
        mCurrFunction[num] = index;			\
    }                                                    \
    enum { func ## Index = num };
+
+// For compatability ignore num and forward
+#define WRAPABLE_HND_FUNC(num, func, ...)				\
+    WRAPABLE_HND_FUNCTN(func, __VA_ARGS__)
 
 // New macro that doesn't need magic number
 #define WRAPABLE_HND_FUNCTN(func, ...)				        \
@@ -68,6 +78,10 @@
     }									\
     mCurrFunction[num] = curr;						\
 }
+
+// For compatability ignore num and forward
+#define WRAPABLE_HND_FUNC_RETURN(num, rtype, func, ...)			\
+    WRAPABLE_HND_FUNCTN_RETURN(rtype, func, __VA_ARGS__)
 
 // New macro that doesn't need magic number
 #define WRAPABLE_HND_FUNCTN_RETURN(rtype, func, ...)			\
@@ -141,7 +155,7 @@ class WrapableHandler : public T
 
 	void functionSetEnabled (T *, unsigned int, bool);
 
-        unsigned int mCurrFunction[N];
+        mutable unsigned int mCurrFunction[N];
         std::vector<Interface> mInterface;
 };
 

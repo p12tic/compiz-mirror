@@ -144,7 +144,7 @@ class RingScreen :
 	renderWindowTitle ();
 
 	void
-	drawWindowTitle ();
+	drawWindowTitle (const GLMatrix &transform);
 
 	bool
 	layoutThumbs ();
@@ -246,10 +246,10 @@ class RingWindow :
 	adjustVelocity ();
 };
 
-#define PI 3.1415926
+extern const double PI;
 #define DIST_ROT (3600 / mWindows.size ())
 #define DIST_ROT_w (3600 / rs->mWindows.size ())
-#define ICON_SIZE 64
+extern const unsigned short ICON_SIZE;
 
 #define RING_SCREEN(s)							       \
     RingScreen *rs = RingScreen::get (s)

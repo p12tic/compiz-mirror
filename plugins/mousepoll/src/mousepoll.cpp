@@ -24,6 +24,9 @@
 
 COMPIZ_PLUGIN_20090315 (mousepoll, MousepollPluginVTable);
 
+const unsigned short MP_OPTION_MOUSE_POLL_INTERVAL = 0;
+const unsigned short MP_OPTION_NUM = 1;
+
 bool
 MousepollScreen::getMousePosition ()
 {
@@ -223,6 +226,8 @@ MousepollScreen::updateTimer ()
     timer.setTimes (timeout, timeout * 1.5);
 
 }
+
+template class PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>;
 
 MousepollScreen::MousepollScreen (CompScreen *screen) :
     PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen)

@@ -40,7 +40,6 @@
  */
 
 #include <core/core.h>
-#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <mousepoll/mousepoll.h>
@@ -50,9 +49,15 @@
 
 #include <cmath>
 
+enum SpecificZoomTarget
+{
+    ZoomTargetFirst = 0,
+    ZoomTargetSecond,
+    ZoomTargetThird
+};
+
 class EZoomScreen :
     public PluginClassHandler <EZoomScreen, CompScreen>,
-    public PluginStateWriter <EZoomScreen>,
     public EzoomOptions,
     public ScreenInterface,
     public CompositeScreenInterface,
@@ -116,25 +121,6 @@ class EZoomScreen :
 	class ZoomArea
 	{
 	    public:
-
-		template <class Archive>
-		void serialize (Archive &ar, const unsigned int)
-		{
-		    ar & output;
-		    ar & viewport;
-		    ar & newZoom;
-		    ar & xVelocity;
-		    ar & yVelocity;
-		    ar & xTranslate;
-		    ar & yTranslate;
-		    ar & realXTranslate;
-		    ar & realYTranslate;
-		    ar & xtrans;
-		    ar & ytrans;
-		    ar & locked;
-		}
-
-	    public:
 		int               output;
 		unsigned long int viewport;
 		GLfloat           currentZoom;
@@ -160,14 +146,6 @@ class EZoomScreen :
 
     public:
 
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & zooms;
-	    ar & lastChange;
-	    ar & grabbed;
-	}
-
 	std::vector <ZoomArea>   zooms; // list of zooms (different zooms for
 					// each output
 	CompPoint		 mouse; // we get this from mousepoll
@@ -192,9 +170,6 @@ class EZoomScreen :
 	bool canHideCursor;
 
      public:
-
-	void
-	postLoad ();
 
 	void
 	preparePaint (int);
@@ -346,7 +321,7 @@ class EZoomScreen :
 	zoomSpecific (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector options,
-		      float		     target);
+		      SpecificZoomTarget target);
 
 	bool
 	zoomToWindow (CompAction         *action,

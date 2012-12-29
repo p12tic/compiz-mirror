@@ -89,7 +89,7 @@ extern AnimEffect AnimEffectSidekick;
 extern AnimEffect AnimEffectWave;
 extern AnimEffect AnimEffectZoom;
 
-#define NUM_EFFECTS 16
+extern const unsigned short NUM_EFFECTS;
 
 extern int customOptionOptionIds[AnimEventNum];
 
@@ -407,9 +407,9 @@ private:
     void glAddGeometry (const GLTexture::MatrixList &,
 			const CompRegion &, const CompRegion &,
 			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
-    void glDrawTexture (GLTexture *texture, GLFragment::Attrib &,
-			unsigned int);
-    void glDrawGeometry ();
+    void glDrawTexture (GLTexture *texture, const GLMatrix &,
+                        const GLWindowPaintAttrib &, unsigned int);
+    //void glDrawGeometry ();
 };
 
 class RollUpAnim :

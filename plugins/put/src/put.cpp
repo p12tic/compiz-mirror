@@ -106,10 +106,10 @@ PutScreen::boxCompare (const CompRect& a,
  * PS: Decorations are icky.
  */
 
-#define LEFT   0
-#define RIGHT  1
-#define TOP    2
-#define BOTTOM 3
+static const unsigned short LEFT = 0;
+static const unsigned short RIGHT = 1;
+static const unsigned short TOP = 2;
+static const unsigned short BOTTOM = 3;
 
 inline void
 addToCorner (CompRect&    rect,

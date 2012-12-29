@@ -33,9 +33,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <imgsvg-config.h>
+
 #include <cairo/cairo-xlib.h>
 #include <librsvg/rsvg.h>
+ 
+#ifndef HAVE_RSVG_2_36_2
 #include <librsvg/rsvg-cairo.h>
+#endif
 
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
@@ -76,7 +81,8 @@ class SvgWindow :
 	SvgWindow (CompWindow *window);
 	~SvgWindow ();
 
-	bool glDraw (const GLMatrix &transform, GLFragment::Attrib &fragment,
+	bool glDraw (const GLMatrix &transform,
+		     const GLWindowPaintAttrib &attrib,
 		     const CompRegion &region, unsigned int mask);
 	void moveNotify (int dx, int dy, bool immediate);
 	void resizeNotify (int dx, int dy, int dwidth, int dheight);
