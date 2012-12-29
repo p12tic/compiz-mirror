@@ -414,7 +414,8 @@ WizardScreen::drawParticles (ParticleSystem * ps)
 	    }
 	}
     }
-
+    glEnableClientState (GL_VERTEX_ARRAY);
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnableClientState (GL_COLOR_ARRAY);
 
     glTexCoordPointer (2, GL_FLOAT, 2 * sizeof (GLfloat), ps->coords_cache);
@@ -435,6 +436,8 @@ WizardScreen::drawParticles (ParticleSystem * ps)
     glDrawArrays (GL_QUADS, 0, numActive);
 
     glDisableClientState (GL_COLOR_ARRAY);
+    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState (GL_VERTEX_ARRAY);
 
     glPopMatrix ();
     glColor4usv (defaultColor);
