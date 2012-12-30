@@ -421,7 +421,7 @@ class ViewportRetrievalInterface
 	virtual ~ViewportRetrievalInterface () {}
 
 	virtual const CompPoint & getCurrentViewport () const = 0;
-	virtual const CompSize & viewportDimentions () const = 0;
+	virtual const CompSize & viewportDimensions () const = 0;
 };
 
 // Apart from a use by StartupSequence::addSequence this data
@@ -438,7 +438,7 @@ struct ViewPort :
     private:
 
 	const CompPoint & getCurrentViewport () const { return vp; }
-	const CompSize & viewportDimentions () const { return vpSize; }
+	const CompSize & viewportDimensions () const { return vpSize; }
 };
 
 namespace viewports
