@@ -1248,7 +1248,9 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     rootPixmapSize (),
     glVendor (NULL),
     glRenderer (NULL),
-    glVersion (NULL)
+    glVersion (NULL),
+    prevRegex (),
+    prevBlacklisted (false)
 {
     ScreenInterface::setHandler (screen);
 }
@@ -2155,7 +2157,16 @@ PrivateGLScreen::prepareDrawing ()
 bool
 PrivateGLScreen::driverIsBlacklisted (const char *regex) const
 {
-    return blacklisted (regex, glVendor, glRenderer, glVersion);
+    /*
+     * regex matching is VERY expensive, so only do it when the result might
+     * be different to last time. The gl* variables never change value...
+     */
+    if (prevRegex != regex)
+    {
+	prevBlacklisted = blacklisted (regex, glVendor, glRenderer, glVersion);
+	prevRegex = regex;
+    }
+    return prevBlacklisted;
 }
 
 GLTexture::BindPixmapHandle
