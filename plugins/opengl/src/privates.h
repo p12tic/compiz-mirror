@@ -222,6 +222,9 @@ class PrivateGLScreen :
 	CompSize rootPixmapSize;
 
 	const char *glVendor, *glRenderer, *glVersion;
+
+	mutable CompString prevRegex;
+	mutable bool       prevBlacklisted;
 };
 
 class PrivateGLWindow :
