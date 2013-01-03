@@ -3263,9 +3263,11 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (lastServerInput.top != serverInput.top)
 	    valueMask |= CWY;
 
-	if (lastServerInput.right != serverInput.right)
+	if (lastServerInput.right - lastServerInput.left !=
+	    serverInput.right - serverInput.left)
 	    valueMask |= CWWidth;
-	if (lastServerInput.bottom != serverInput.bottom)
+	if (lastServerInput.bottom - lastServerInput.top !=
+	    serverInput.bottom - serverInput.top)
 	    valueMask |= CWHeight;
 
 	if (valueMask)
