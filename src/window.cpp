@@ -3369,8 +3369,8 @@ PrivateWindow::stackDocks (CompWindow       *w,
             {
 		bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
 		bool visible = !(dw->priv->state & CompWindowStateHiddenMask);
-		bool acceptableType = dww->type () & (CompWindowTypeFullscreenMask |
-						      CompWindowTypeDockMask);
+		bool acceptableType = !(dww->type () & (CompWindowTypeFullscreenMask |
+							CompWindowTypeDockMask));
 		if (currentlyManaged &&
 		    visible &&
 		    acceptableType &&
