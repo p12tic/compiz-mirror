@@ -8,7 +8,8 @@ execute_process (COMMAND uname -p OUTPUT_VARIABLE PROC_ARCH)
 execute_process (COMMAND python -c "import sys; print str (sys.version_info[0]) + '.' + str (sys.version_info[1])"
 		 OUTPUT_VARIABLE PY_VERSION)
 
-find_package (PythonLibs)
+include (FindPkgConfig)
+pkg_check_modules (PYTHON python-2.7)
 
 # This is a workaround for a broken FindPythonLibs always finding the
 # wrong library version because PYTHON_LIBRARY is in the cache and

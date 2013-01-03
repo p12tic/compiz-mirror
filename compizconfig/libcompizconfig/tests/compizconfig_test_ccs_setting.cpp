@@ -490,16 +490,19 @@ class CopyRawValue <const char *> :
 	typedef CopyRawValueBase <const char *> Parent;
 
 	CopyRawValue (const char * value) :
-	    CopyRawValueBase <const char *> (value)
+	    CopyRawValueBase <const char *> (ptr),
+	    ptr (value)
 	{
 	}
 
 	ReturnType operator () ()
 	{
-	    /* XXX: Valgrind complains here that mValue is uninitialized, but
-	     * verification using gdb confirms that isn't true */
 	    return strdup (Parent::mValue);
 	}
+
+    private:
+	// mValue is a reference so it needs a persistent variable to point at
+	const char *ptr;
 };
 
 template <>
@@ -548,27 +551,6 @@ RawValueToCCSValue (const SettingValueType &value)
     *unionMember = (CopyRawValue <SettingValueType> (value)) ();
 
     return settingValue;
-}
-
-CCSSettingValuePtr
-ListValueToSettingValueList (CCSSettingValue *listChild)
-{
-    listChild->isListChild = TRUE;
-
-    CCSSettingValueList valueListHead = ccsSettingValueListAppend (NULL, listChild);
-    CCSSettingValuePtr  valueListValue (AutoDestroy (NewCCSSettingValue (),
-                                                    ccsSettingValueUnref));
-
-    valueListValue->value.asList = valueListHead;
-
-    return valueListValue;
-}
-
-template <typename SettingValueType>
-CCSSettingValuePtr
-RawValueToListValue (const SettingValueType &value)
-{
-    return ListValueToSettingValueList (RawValueToCCSValue (value));
 }
 
 class ContainedValueGenerator
