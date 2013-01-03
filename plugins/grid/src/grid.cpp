@@ -917,6 +917,10 @@ GridWindow::stateChangeNotify (unsigned int lastState)
     else if (!(lastState & MAXIMIZE_STATE) &&
 	     window->state () & MAXIMIZE_STATE)
     {
+	/* Unset grid resize state */
+	isGridResized = false;
+	resizeCount = 0;
+
 	if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	    lastTarget = GridMaximize;
 	if (window->grabbed ())
