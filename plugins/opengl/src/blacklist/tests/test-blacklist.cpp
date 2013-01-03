@@ -28,7 +28,7 @@
 
 using namespace compiz::opengl;
 
-static const char *recommendedRegex = "(nouveau|Intel).*Mesa 8\\.0";
+static const char *recommendedRegex = "(nouveau|Intel).*Mesa 8.0";
 
 TEST (DriverBlacklist, QuantalIntelIsGood)
 {

@@ -566,7 +566,12 @@ KWD::Window::showWindowMenu (const QRect &pos)
 void
 KWD::Window::showApplicationMenu (const QPoint &p)
 {
-    QList<QVariant> args = QList<QVariant> () << p.x () << p.y () << qulonglong (mClientId);
+    QPoint pnt = mDecor->widget ()->mapFromGlobal (p);
+
+    pnt += QPoint (mGeometry.x () - mBorder.left - mPadding.left,
+		   mGeometry.y () - mBorder.top - mPadding.top);
+
+    QList<QVariant> args = QList<QVariant> () << pnt.x () << pnt.y () << qulonglong (mClientId);
     QDBusMessage method = QDBusMessage::createMethodCall (
 		    KDED_SERVICE, KDED_APPMENU_PATH, KDED_INTERFACE, "showMenu");
     method.setArguments (args);
