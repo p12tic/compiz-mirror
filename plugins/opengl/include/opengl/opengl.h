@@ -247,7 +247,7 @@ namespace GL {
     typedef GLuint (*GLCreateShaderProc) (GLenum type);
     typedef void (*GLShaderSourceProc) (GLuint shader,
                                         GLsizei count,
-					const GLchar **string,
+                                        const GLchar **string,
                                         const GLint* length);
     typedef void (*GLCompileShaderProc) (GLuint shader);
     typedef GLuint (*GLCreateProgramProc) ();
