@@ -110,10 +110,13 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
     {
 	if (GL::textureBorderClamp)
 	{
+#ifndef USE_GLES
+	    /* FIXME: Simulate with shaders */
 	    glTexParameteri (mTexture[0]->target (), GL_TEXTURE_WRAP_S,
 			     GL_CLAMP_TO_BORDER);
 	    glTexParameteri (mTexture[0]->target (), GL_TEXTURE_WRAP_T,
 			     GL_CLAMP_TO_BORDER);
+#endif
 	}
 	else
 	{
@@ -907,10 +910,10 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 }
 
 bool 
-CubeaddonWindow::glDraw (const GLMatrix     &transform,
-			 GLWindowPaintAttrib &attrib,
-			 const CompRegion   &region,
-			 unsigned int       mask)
+CubeaddonWindow::glDraw (const GLMatrix            &transform,
+			 const GLWindowPaintAttrib &attrib,
+			 const CompRegion          &region,
+			 unsigned int              mask)
 {
     if (!(mask & PAINT_WINDOW_TRANSFORMED_MASK) && caScreen->mDeform)
     {
@@ -935,10 +938,10 @@ CubeaddonWindow::glDraw (const GLMatrix     &transform,
 }
 
 void 
-CubeaddonWindow::glDrawTexture (GLTexture           *texture,
-				const GLMatrix      &matrix,
-				GLWindowPaintAttrib &attrib,
-				unsigned int        mask)
+CubeaddonWindow::glDrawTexture (GLTexture                 *texture,
+				const GLMatrix            &matrix,
+				const GLWindowPaintAttrib &attrib,
+				unsigned int              mask)
 {
     if (caScreen->mDeform > 0.0 && caScreen->gScreen->lighting ())
     {

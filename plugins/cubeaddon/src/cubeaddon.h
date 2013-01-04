@@ -167,14 +167,14 @@ class CubeaddonWindow :
     public:
 	CubeaddonWindow (CompWindow *);
 
-	bool glDraw (const GLMatrix&, GLWindowPaintAttrib&,
+	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
 		     const CompRegion&, unsigned int);
 	void glAddGeometry (const GLTexture::MatrixList&,
 			    const CompRegion&, const CompRegion&,
 			    unsigned int, unsigned int);
 	void glDrawTexture (GLTexture *,
 			    const GLMatrix &matrix,
-			    GLWindowPaintAttrib& attrib,
+			    const GLWindowPaintAttrib& attrib,
 			    unsigned int);
 
 	CompWindow      *window;
