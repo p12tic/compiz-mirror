@@ -110,7 +110,7 @@ class WallScreen :
 	void releaseMoveWindow ();
 	void computeTranslation (float &, float &);
 	void determineMovementAngle ();
-	bool checkDestination (int, int);
+	bool checkDestination (unsigned int, unsigned int);
 	void checkAmount (int, int, int &, int &);
 
 	bool initiate (CompAction *, CompAction::State, CompOption::Vector &,

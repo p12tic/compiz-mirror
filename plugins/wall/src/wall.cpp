@@ -331,8 +331,8 @@ WallScreen::destroyCairoContext (WallCairoContext &context)
 }
 
 bool
-WallScreen::checkDestination (int destX,
-			      int destY)
+WallScreen::checkDestination (unsigned int destX,
+			      unsigned int destY)
 {
     CompPoint point;
     CompSize  size;
@@ -340,10 +340,10 @@ WallScreen::checkDestination (int destX,
     point = screen->vp ();
     size = screen->vpSize ();
 
-    if (point.x () - destX >= size.width ())
+    if (point.x () - destX >= (unsigned int) size.width ())
 	return false;
 
-    if (point.y () - destY >= size.height ())
+    if (point.y () - destY >= (unsigned int) size.height ())
 	return false;
 
     return true;
