@@ -514,17 +514,16 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 		streamingBuffer->addNormals (CAP_NVERTEX / 3, (l == 0) ? mCapFill : mCapFillNorm);
 
 		GLushort *idx = mCapFillIdx;
-		std::vector <GLfloat> capVertices;
-
-		capVertices.reserve (CAP_NIDX * 3);
+		GLfloat  capVertices[CAP_NIDX * 3];
+		GLfloat  *capVerticesPtr = capVertices;
 
 		for (unsigned int i = 0; i < CAP_NIDX; ++i)
 		{
 		    unsigned int   vertexIndex = idx[i] * 3;
 
-		    capVertices.push_back (mCapFill[vertexIndex]);
-		    capVertices.push_back (mCapFill[vertexIndex + 1]);
-		    capVertices.push_back (mCapFill[vertexIndex + 2]);
+		    *(capVerticesPtr++) = (mCapFill[vertexIndex]);
+		    *(capVerticesPtr++) = (mCapFill[vertexIndex + 1]);
+		    *(capVerticesPtr++) = (mCapFill[vertexIndex + 2]);
 		}
 
 		streamingBuffer->addVertices (CAP_NIDX, &capVertices[0]);
@@ -584,11 +583,10 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 		GLVector sGen (texMat[0], texMat[8], texMat[4], texMat[12]);
 		GLVector tGen (texMat[1], texMat[9], texMat[5], texMat[13]);
 
-		std::vector <GLfloat> texCoords;
-
 		/* Generate texCoords for the top section of the
 		 * cap */
-		texCoords.reserve ((CAP_ELEMENTS + 2) * 2);
+		GLfloat texCoords[(CAP_ELEMENTS + 2) * 2];
+		GLfloat *texCoordsPtr = texCoords;
 
 		for (unsigned int i = 0; i < CAP_ELEMENTS + 2; i++)
 		{
@@ -599,8 +597,8 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 		    float s = v * sGen;
 		    float t = v * tGen;
 
-		    texCoords.push_back (s);
-		    texCoords.push_back (t);
+		    *(texCoordsPtr++) = s;
+		    *(texCoordsPtr++) = t;
 		}
 
 		streamingBuffer->addTexCoords (0, CAP_NVERTEX / 3, &texCoords[0]);
@@ -635,14 +633,11 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 		     * OpenGL|ES at the moment
 		     */
 		    GLushort *idx = mCapFillIdx;
-		    std::vector <GLfloat> capVertices;
+		    GLfloat  capVertices[CAP_NIDX * 3];
+		    GLfloat  texCoords[CAP_NIDX * 2];
 
-		    /* Clear old texCoords buffer */
-		    texCoords.clear ();
-
-		    /* Reserve enough space */
-		    capVertices.reserve (CAP_NIDX * 3);
-		    texCoords.reserve (CAP_NIDX * 2);
+		    GLfloat *capVerticesPtr = capVertices;
+		    GLfloat *texCoordsPtr = texCoords;
 
 		    for (unsigned int i = 0; i < CAP_NIDX; ++i)
 		    {
@@ -653,9 +648,9 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 				    mCapFill[vertexIndex + 2],
 				    1.0f);
 
-			capVertices.push_back (v[GLVector::x]);
-			capVertices.push_back (v[GLVector::y]);
-			capVertices.push_back (v[GLVector::z]);
+			*(capVerticesPtr++) = v[GLVector::x];
+			*(capVerticesPtr++) = v[GLVector::y];
+			*(capVerticesPtr++) = v[GLVector::z];
 
 			/* GL_OBJECT_LINEAR is simulated by doing:
 			 * texCoord.s = dot (vec4 (obj, 1.0), sGenPlane)
@@ -664,8 +659,8 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 			float s = v * sGen;
 			float t = v * tGen;
 
-			texCoords.push_back (s);
-			texCoords.push_back (t);
+			*(texCoordsPtr++) = s;
+			*(texCoordsPtr++) = t;
 		    }
 
 		    streamingBuffer->addVertices (CAP_NIDX, &capVertices[0]);
