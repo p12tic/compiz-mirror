@@ -197,9 +197,7 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
     if (ccsIntegratedSettingsStorageEmpty (priv->storage))
 	registerAllIntegratedOptions (integration);
 
-    ret = ccsSettingIsReadableByBackend (setting);
-
-    if (!ret)
+    if (!ccsSettingIsReadableByBackend (setting))
 	return FALSE;
 
     switch (ccsGNOMEIntegratedSettingInfoGetSpecialOptionType ((CCSGNOMEIntegratedSettingInfo *) integratedSetting)) {
@@ -207,6 +205,8 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	{
 	    type = TypeInt;
 	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
+	    if (!v)
+		break;
 	    ccsSetInt (setting, v->value.asInt, TRUE);
 	    ret = TRUE;
 	}
@@ -215,6 +215,8 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	{
 	    type = TypeBool;
 	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
+	    if (!v)
+		break;
 	    ccsSetBool (setting, v->value.asBool, TRUE);
 	    ret = TRUE;
 	}
@@ -223,6 +225,8 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	{
 	    type = TypeString;
 	    v = ccsIntegratedSettingReadValue (integratedSetting, type);
+	    if (!v)
+		break;
 	    char *str = v->value.asString;
 
 	    ccsSetString (setting, str, TRUE);
@@ -249,6 +253,9 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		type = TypeBool;
 		v = ccsIntegratedSettingReadValue (integratedSetting, type);
 
+		if (!v)
+		    break;
+
 		Bool showAll = v->value.asBool;
 		ccsSetBool (setting, !showAll, TRUE);
 		ret = TRUE;
@@ -257,6 +264,8 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	    {
 		type = TypeString;
 		v = ccsIntegratedSettingReadValue (integratedSetting, type);
+		if (!v)
+		    break;
 
 		const char *value = v->value.asString;
 		if (value)
@@ -272,6 +281,8 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	    {
 		type = TypeString;
 		v = ccsIntegratedSettingReadValue (integratedSetting, type);
+		if (!v)
+		    break;
 
 		const char *focusMode = v->value.asString;
 
