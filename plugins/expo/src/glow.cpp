@@ -118,7 +118,7 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
  *
  * This function computures the matrix transformation required for each
  * part of the glow texture which we wish to stretch to some rectangular
- * dimentions
+ * dimensions
  *
  * There are eight quads different parts of the texture which we wish to
  * paint here, the 4 sides and four corners, eg:
@@ -188,7 +188,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix;
 
-    /* Set the desired rect dimentions
+    /* Set the desired rect dimensions
      * for the part of the glow we are painting */
 
     x1 = WIN_REAL_X (w) - glowSize + glowOffset;
@@ -201,7 +201,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * here (left to right top to bottom)
      *
      * The base position (x0 and y0) here requires us to move backwards
-     * on the x and y dimentions by the calculated rect dimentions
+     * on the x and y dimensions by the calculated rect dimensions
      * multiplied by the scale factors
      */
 
@@ -222,7 +222,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix;
 
-    /* Set the desired rect dimentions
+    /* Set the desired rect dimensions
      * for the part of the glow we are painting */
 
     x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
@@ -237,7 +237,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * (right to left top to bottom)
      *
      * The base position (x0 and y0) here requires us to move backwards
-     * on the y dimention and forwards on x by the calculated rect dimentions
+     * on the y dimension and forwards on x by the calculated rect dimensions
      * multiplied by the scale factors (since we are moving forward on x we
      * need the inverse of that which is 1 - x1 * xx
      */
@@ -272,7 +272,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * (left to right bottom to top)
      *
      * The base position (x0 and y0) here requires us to move backwards
-     * on the x dimention and forwards on y by the calculated rect dimentions
+     * on the x dimension and forwards on y by the calculated rect dimensions
      * multiplied by the scale factors (since we are moving forward on x we
      * need the inverse of that which is 1 - y1 * yy
      */
@@ -306,7 +306,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * (right to left bottom to top)
      *
      * The base position (x0 and y0) here requires us to move forwards
-     * on both dimentions by the calculated rect dimentions
+     * on both dimensions by the calculated rect dimensions
      * multiplied by the scale factors
      */
 
@@ -339,7 +339,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * are scaling on the y part in a positive direciton
      *
      * The base position (y0) here requires us to move backwards
-     * on the x dimention and forwards on y by the calculated rect dimentions
+     * on the x dimension and forwards on y by the calculated rect dimensions
      * multiplied by the scale factors
      */
 
@@ -367,7 +367,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * are scaling on the y part in a negative direciton
      *
      * The base position (y0) here requires us to move forwards
-     * on y by the calculated rect dimentions
+     * on y by the calculated rect dimensions
      * multiplied by the scale factors
      */
 
@@ -395,7 +395,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * are scaling on the x part in a positive direciton
      *
      * The base position (x0) here requires us to move backwards
-     * on x by the calculated rect dimentions
+     * on x by the calculated rect dimensions
      * multiplied by the scale factors
      */
 
@@ -423,7 +423,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * are scaling on the x part in a negative direciton
      *
      * The base position (x0) here requires us to move forwards
-     * on x by the calculated rect dimentions
+     * on x by the calculated rect dimensions
      * multiplied by the scale factors
      */
 

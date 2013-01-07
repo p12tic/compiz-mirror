@@ -4028,7 +4028,7 @@ compiz::private_screen::viewports::viewportForGeometry (const CompWindow::Geomet
     int      offset;
 
     const CompPoint &vp = viewports->getCurrentViewport ();
-    const CompSize &vpSize = viewports->viewportDimentions ();
+    const CompSize &vpSize = viewports->viewportDimensions ();
 
     rect.setWidth  (gm.widthIncBorders ());
     rect.setHeight (gm.heightIncBorders ());

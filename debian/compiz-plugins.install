@@ -6,6 +6,8 @@ debian/tmp/usr/*/compiz/*commands.*
 debian/tmp/usr/*/compiz/*copytex.*
 debian/tmp/usr/*/compiz/*crashhandler.*
 debian/tmp/usr/*/compiz/*cube.*
+debian/tmp/usr/*/compiz/*cubeaddon.*
+debian/tmp/usr/share/compiz/cubeaddon
 debian/tmp/usr/*/compiz/*dbus.*
 debian/tmp/usr/*/compiz/*extrawm.*
 debian/tmp/usr/*/compiz/*fadedesktop.*
@@ -46,6 +48,7 @@ debian/tmp/usr/*/compiz/*trailfocus.*
 debian/tmp/usr/*/compiz/*water.*
 debian/tmp/usr/*/compiz/*widget.*
 debian/tmp/usr/*/compiz/*winrules.*
+debian/tmp/usr/*/compiz/*wizard.*
 debian/tmp/usr/*/compiz/*wobbly.*
 debian/tmp/usr/*/compiz/*workspacenames.*
 

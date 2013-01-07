@@ -1586,7 +1586,7 @@ GroupSelection::tabGroup (CompWindow *main)
     /* Slot is initialized after GroupTabBar is created */
     gs->changeTab (gw->mSlot, GroupTabBar::RotateUncertain);
 
-    /* Set up tab bar dimentions */
+    /* Set up tab bar dimensions */
     mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
