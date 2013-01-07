@@ -43,6 +43,7 @@ debian/tmp/usr/*/compiz/*td.*
 debian/tmp/usr/*/compiz/*text.*
 debian/tmp/usr/*/compiz/*titleinfo.*
 debian/tmp/usr/*/compiz/*trailfocus.*
+debian/tmp/usr/*/compiz/*wallpaper.*
 debian/tmp/usr/*/compiz/*water.*
 debian/tmp/usr/*/compiz/*widget.*
 debian/tmp/usr/*/compiz/*winrules.*
