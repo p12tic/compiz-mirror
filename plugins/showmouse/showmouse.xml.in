@@ -34,6 +34,28 @@
 					<_long>Toggle the mouse pointer trail.</_long>
 					<default/>
 				</option>
+				<option name="rotation_speed" type="float">
+					<_short>Rotation speed</_short>
+					<_long>Rotation speed.</_long>
+					<default>0.5</default>
+					<min>0.1</min>
+					<max>10.0</max>
+					<precision>0.1</precision>
+				</option>
+				<option name="radius" type="int">
+					<_short>Radius</_short>
+					<_long>Ring radius</_long>
+					<default>100</default>
+					<min>10</min>
+					<max>1000</max>
+				</option>
+				<option name="emiters" type="int">
+					<_short>Emiters</_short>
+					<_long>Number of particle emiters.</_long>
+					<default>3</default>
+					<min>1</min>
+					<max>10</max>
+				</option>
 			</group>
 			<group>
 				<_short>Particle Options</_short>
@@ -95,31 +117,6 @@
 					<_short>Randomly Colored Particles</_short>
 					<_long>Have random colors for the particles</_long>
 					<default>false</default>
-				</option>
-			    </group>
-			    <group>
-				<_short>General</_short>
-				<option name="rotation_speed" type="float">
-					<_short>Rotation speed</_short>
-					<_long>Rotation speed.</_long>
-					<default>0.5</default>
-					<min>0.1</min>
-					<max>10.0</max>
-					<precision>0.1</precision>
-				</option>
-				<option name="radius" type="int">
-					<_short>Radius</_short>
-					<_long>Ring radius</_long>
-					<default>100</default>
-					<min>10</min>
-					<max>1000</max>
-				</option>
-				<option name="emiters" type="int">
-					<_short>Emiters</_short>
-					<_long>Number of particle emiters.</_long>
-					<default>3</default>
-					<min>1</min>
-					<max>10</max>
 				</option>
 			</group>
 		</options>
