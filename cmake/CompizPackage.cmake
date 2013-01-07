@@ -52,6 +52,7 @@ function (compiz_print_plugin_stats _folder)
 	RELATIVE "${_folder}"
 	"${_folder}/*/CMakeLists.txt"
     )
+    list (SORT _plugins_in)
     foreach (_plugin ${_plugins_in})
 	file (READ "${_folder}/${_plugin}" _file)
 	if (_file MATCHES "^.*compiz_plugin ?\\(([^\\)\r\n ]*).*$")
