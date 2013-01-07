@@ -54,10 +54,10 @@ function (compiz_print_plugin_stats _folder)
     )
     foreach (_plugin ${_plugins_in})
 	file (READ "${_folder}/${_plugin}" _file)
-	if (_file MATCHES "^.*compiz_plugin ?\\(([^\\) ]*).*$")
+	if (_file MATCHES "^.*compiz_plugin ?\\(([^\\)\r\n ]*).*$")
 	    string (
 		REGEX REPLACE
-		"^.*compiz_plugin ?\\(([^\\) ]*).*$" "\\1"
+		"^.*compiz_plugin ?\\(([^\\)\r\n ]*).*$" "\\1"
 		_plugin_name ${_file}
 	    )
 	else ()
