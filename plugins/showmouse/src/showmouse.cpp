@@ -394,7 +394,7 @@ ShowmouseScreen::genNewParticles (int f_time)
     unsigned int i, j;
 
     float pos[10][2];
-    int nE       = MIN (10, optionGetEmiters ());
+    int nE       = MIN (10, optionGetEmitters ());
     float rA     = (2 * M_PI) / nE;
     int radius   = optionGetRadius ();
     for (i = 0; i < (unsigned int) nE; i++)
