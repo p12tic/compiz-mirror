@@ -860,6 +860,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	GLenum         filter = gScreen->textureFilter ();
 	GLMatrix       wTransform (*transform);
 
+	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (optionGetWindowLike ())
@@ -892,6 +893,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	}
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable (GL_BLEND);
 
 	if (t->text)
 	{
@@ -943,7 +945,7 @@ ThumbScreen::preparePaint (int ms)
     val /= 1000;
     val /= optionGetFadeSpeed ();
 
-    /*if (screen->otherGrabExist ("")) // shouldn't there be a s->grabs.empty () or something?
+/*    if (screen->otherGrabExist ("")) // shouldn't there be a s->grabs.empty () or something?
     {
 	dock = NULL;
 
@@ -954,7 +956,7 @@ ThumbScreen::preparePaint (int ms)
 
 	pointedWin   = 0;
 	showingThumb = false;
-    }*/
+    } */
 
     if (showingThumb && thumb.win == pointedWin)
     {
