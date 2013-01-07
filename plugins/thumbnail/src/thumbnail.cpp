@@ -945,7 +945,7 @@ ThumbScreen::preparePaint (int ms)
     val /= 1000;
     val /= optionGetFadeSpeed ();
 
-/*    if (screen->otherGrabExist ("")) // shouldn't there be a s->grabs.empty () or something?
+    /*if (screen->otherGrabExist ("")) // shouldn't there be a s->grabs.empty () or something?
     {
 	dock = NULL;
 
@@ -956,7 +956,7 @@ ThumbScreen::preparePaint (int ms)
 
 	pointedWin   = 0;
 	showingThumb = false;
-    } */
+    }*/
 
     if (showingThumb && thumb.win == pointedWin)
     {
