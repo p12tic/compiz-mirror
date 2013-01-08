@@ -36,7 +36,7 @@ debian/tmp/usr/*/compiz/*shelf.*
 debian/tmp/usr/*/compiz/*shift.*
 debian/tmp/usr/*/compiz/*showdesktop.*
 debian/tmp/usr/*/compiz/*showmouse.*
-debian/tmp//usr/share/compiz/showmouse
+debian/tmp/usr/share/compiz/showmouse
 debian/tmp/usr/*/compiz/*splash.*
 debian/tmp/usr/share/compiz/splash
 debian/tmp/usr/*/compiz/*showrepaint.*
