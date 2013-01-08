@@ -94,6 +94,7 @@ ResizeLogic::ResizeLogic() :
 
 ResizeLogic::~ResizeLogic()
 {
+    delete w;
 }
 
 void
@@ -141,6 +142,8 @@ ResizeLogic::handleEvent (XEvent *event)
 		    w = mScreen->findWindow (event->xclient.window);
 		    if (w)
 		    {
+			delete w;
+
 			CompOption::Vector o (0);
 
 			o.push_back (CompOption ("window",
@@ -593,6 +596,7 @@ ResizeLogic::finishResizing ()
 
     resizeInformationAtom->deleteProperty (w->id ());
 
+    delete w;
     w = NULL;
 }
 
@@ -1243,15 +1247,24 @@ ResizeLogic::initiateResize (CompAction		*action,
 	    return false;
 
 	if (this->w)
+	{
+	    delete w;
 	    return false;
+	}
 
 	if (w->type () & (CompWindowTypeDesktopMask |
 		          CompWindowTypeDockMask	 |
 		          CompWindowTypeFullscreenMask))
+	{
+	    delete w;
 	    return false;
+	}
 
 	if (w->overrideRedirect ())
+	{
+	    delete w;
 	    return false;
+	}
 
 	if (state & CompAction::StateInitButton)
 	    action->setState (action->state () | CompAction::StateTermButton);
@@ -1549,6 +1562,8 @@ ResizeLogic::initiateResizeDefaultMode (CompAction	    *action,
 	mode = ResizeOptions::ModeRectangle;
     if (w->evaluate (this->options->optionGetStretchMatch ()))
 	mode = ResizeOptions::ModeStretch;
+
+    delete w;
 
     return initiateResize (action, state, options, mode);
 }
