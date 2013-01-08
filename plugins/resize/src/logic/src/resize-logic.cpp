@@ -1240,27 +1240,18 @@ ResizeLogic::initiateResize (CompAction		*action,
 	       just prevent input to the window */
 
 	    if (!mask)
+	    {
+		delete w;
 		return true;
+	    }
 	}
 
-	if (mScreen->otherGrabExist ("resize", NULL))
-	    return false;
-
-	if (this->w)
-	{
-	    delete w;
-	    return false;
-	}
-
-	if (w->type () & (CompWindowTypeDesktopMask |
-		          CompWindowTypeDockMask	 |
-		          CompWindowTypeFullscreenMask))
-	{
-	    delete w;
-	    return false;
-	}
-
-	if (w->overrideRedirect ())
+	if (mScreen->otherGrabExist ("resize", NULL) ||
+	    this->w ||
+	    (w->type () & (CompWindowTypeDesktopMask |
+	                   CompWindowTypeDockMask |
+	                   CompWindowTypeFullscreenMask)) ||
+	    w->overrideRedirect ())
 	{
 	    delete w;
 	    return false;
