@@ -94,7 +94,6 @@ ResizeLogic::ResizeLogic() :
 
 ResizeLogic::~ResizeLogic()
 {
-    delete w;
 }
 
 void
@@ -142,7 +141,8 @@ ResizeLogic::handleEvent (XEvent *event)
 		    w = mScreen->findWindow (event->xclient.window);
 		    if (w)
 		    {
-			delete w;
+			mScreen->freeWindowInterface (w);
+			w = NULL;
 
 			CompOption::Vector o (0);
 
@@ -596,7 +596,7 @@ ResizeLogic::finishResizing ()
 
     resizeInformationAtom->deleteProperty (w->id ());
 
-    delete w;
+    mScreen->freeWindowInterface (w);
     w = NULL;
 }
 
@@ -1241,7 +1241,7 @@ ResizeLogic::initiateResize (CompAction		*action,
 
 	    if (!mask)
 	    {
-		delete w;
+		mScreen->freeWindowInterface (w);
 		return true;
 	    }
 	}
@@ -1253,7 +1253,7 @@ ResizeLogic::initiateResize (CompAction		*action,
 	                   CompWindowTypeFullscreenMask)) ||
 	    w->overrideRedirect ())
 	{
-	    delete w;
+	    mScreen->freeWindowInterface (w);
 	    return false;
 	}
 
@@ -1411,6 +1411,8 @@ ResizeLogic::initiateResize (CompAction		*action,
 
         maximized_vertically = false;
     }
+    else if (w)
+	mScreen->freeWindowInterface (w);
 
     return false;
 }
@@ -1554,7 +1556,7 @@ ResizeLogic::initiateResizeDefaultMode (CompAction	    *action,
     if (w->evaluate (this->options->optionGetStretchMatch ()))
 	mode = ResizeOptions::ModeStretch;
 
-    delete w;
+    mScreen->freeWindowInterface (w);
 
     return initiateResize (action, state, options, mode);
 }
