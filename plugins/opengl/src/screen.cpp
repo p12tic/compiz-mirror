@@ -1257,6 +1257,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
 
 PrivateGLScreen::~PrivateGLScreen ()
 {
+    delete projection;
     delete programCache;
     delete autoProgram;
     if (rootPixmapCopy)
