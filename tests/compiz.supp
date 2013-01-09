@@ -93,17 +93,9 @@
 }
 
 {
-    g_type_init leaks by design, at least up to glib 2.35, malloc
+    g_type_init leaks by design, at least up to glib 2.35
     Memcheck:Leak
-    fun:malloc
-    ...
-    fun:g_type_init_with_debug_flags
-}
-
-{
-    g_type_init leaks by design, at least up to glib 2.35, cmalloc
-    Memcheck:Leak
-    fun:calloc
+    fun:*alloc
     ...
     fun:g_type_init_with_debug_flags
 }
@@ -125,7 +117,7 @@
 }
 
 {
-    I hate dbus
+    dbus *alloc leaks
     Memcheck:Leak
     fun:*alloc
     ...
@@ -133,11 +125,17 @@
 }
 
 {
-    I still hate dbus
+    dbus memalign leaks
     Memcheck:Leak
     fun:memalign
     ...
     fun:g_dbus_*
 }
 
-
+{
+    compizBinPath needs to leak env vars
+    Memcheck:Leak
+    fun:malloc
+    fun:strdup
+    fun:*detectCompizBinPath*
+}
