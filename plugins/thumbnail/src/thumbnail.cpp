@@ -860,6 +860,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	GLenum         filter = gScreen->textureFilter ();
 	GLMatrix       wTransform (*transform);
 
+	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (optionGetWindowLike ())
@@ -892,6 +893,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	}
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable (GL_BLEND);
 
 	if (t->text)
 	{
