@@ -50,7 +50,7 @@
 #include <opengl/programcache.h>
 #include <opengl/shadercache.h>
 
-#define COMPIZ_OPENGL_ABI 7
+#define COMPIZ_OPENGL_ABI 6
 
 /*
  * Some plugins check for #ifdef USE_MODERN_COMPIZ_GL. Support it for now, but
