@@ -122,7 +122,7 @@ ccsGNOMEIntegrationBackendGetIntegratedSetting (CCSIntegration *integration,
     if (integratedSettings)
     {
 	/* At the moment, we only support the first setting out of
-	 * the list. Assert the returned size is zero */
+	 * the list. Assert the returned size is one */
 	g_assert (ccsIntegratedSettingListLength (integratedSettings) == 1);
 
 	CCSIntegratedSetting *integratedSetting = integratedSettings->data;
