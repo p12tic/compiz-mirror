@@ -138,4 +138,7 @@ TEST_F (CompizXorgSystemEWMH, InitialViewportGeometry)
 
     EXPECT_EQ (expectedDefaultWidth, geometry[0]);
     EXPECT_EQ (expectedDefaultHeight, geometry[1]);
+
+    if (property)
+	XFree (property);
 }
