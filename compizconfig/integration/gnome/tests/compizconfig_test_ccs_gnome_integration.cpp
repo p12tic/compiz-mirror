@@ -317,6 +317,32 @@ TEST_F (CCSGNOMEIntegrationTestWithMocks, TestConstructGNOMEIntegration)
 {
 }
 
+TEST_F (CCSGNOMEIntegrationTestWithMocks, TestGetIntegratedSettingFromStorage)
+{
+    mIntegratedSetting = createIntegratedSettingCompositionFromMock (MOCK_PLUGIN,
+								     MOCK_SETTING,
+								     TypeBool,
+								     OptionSpecial,
+								     MOCK_GNOME_NAME,
+								     &ccsDefaultObjectAllocator);
+
+    CCSIntegratedSettingList returnIntegratedSettings =
+	ccsIntegratedSettingListAppend (NULL, Real (*mIntegratedSetting));
+    CCSIntegratedSettingsStorageGMock &mockStorage (MockStorage (mIntegration));
+
+    EXPECT_CALL (mockStorage, empty ()).WillOnce (Return (FALSE));
+    EXPECT_CALL (mockStorage, findMatchingSettingsByPluginAndSettingName (Eq (MOCK_PLUGIN),
+									  Eq (MOCK_SETTING)))
+	    .WillOnce (Return (returnIntegratedSettings));
+
+    EXPECT_EQ (Real (*mIntegratedSetting),
+	       ccsIntegrationGetIntegratedSetting (Real (mIntegration),
+						   MOCK_PLUGIN.c_str (),
+						   MOCK_SETTING.c_str ()));
+
+
+}
+
 TEST_F (CCSGNOMEIntegrationTestReadIntegrated, TestReadInSpecialOptionCurrentViewport)
 {
     const std::string settingName ("current_viewport");
