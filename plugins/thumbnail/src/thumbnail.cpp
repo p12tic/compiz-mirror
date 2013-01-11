@@ -996,10 +996,10 @@ ThumbScreen::donePaint ()
 {
     std::vector <Thumbnail *> damageThumbs;
 
-    if (thumb.opacity > 0.0 && thumb.opacity < 1.0)
+    if (thumb.opacity > 0.0)
 	damageThumbs.push_back (&thumb);
 
-    if (oldThumb.opacity > 0.0 && oldThumb.opacity < 1.0)
+    if (oldThumb.opacity > 0.0)
 	damageThumbs.push_back (&oldThumb);
 
     if (!damageThumbs.empty ())
