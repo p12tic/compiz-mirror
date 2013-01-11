@@ -1,3 +1,118 @@
+compiz (1:0.9.9~daily13.01.11-0ubuntu1) raring; urgency=low
+
+  [ Jussi Pakkanen ]
+  * Build warning "multiple rules generate gtk/gnome/compiz.desktop.
+    build will not be correct; continuing anyway" (LP: #1086789)
+  * Build uses pyrexc without checking that it exists (LP: #1086704)
+
+  [ Iven Hsu ]
+  * KWD: Appmenu always pops up at top-left corner of the screen (LP:
+    #1089863)
+
+  [ Matija Skala ]
+  * findcompiz_install doesn't work (LP: #1051595)
+
+  [ Michail Bitzes ]
+  * [regression-r3320] firepaint doesn't paint any fire any more (LP:
+    #1048505)
+
+  [ Timo Jyrinki ]
+  * Default blacklist string shouldn't contain double escape (LP:
+    #1091103)
+
+  [ Scott Moreau <oreaus@gmail.com>, MC Return <mc.return@gmx.net>, Sam Spilsbury ]
+  * [needs-packaging] Wishlist: Missing plug-In: Wizard (LP: #1012330)
+
+  [ Brandon Schaefer ]
+  * Window management - When a monitor is disconnected, the windows do
+    not move to the remaining monitor and the Launcher pips do not
+    update (LP: #1002246)
+
+  [ MC Return ]
+  * [regression] thumbnail plugin does not build any more (LP: #1020825)
+  * [regression-r3320][GLES]: showmouse plugin does not work anymore at
+    all (LP: #1048267)
+
+  [ Robert M <osfan6313@gmail.com>, Sam Spilsbury ]
+  * CCSM segfaults if no settings found (LP: #1092651)
+
+  [ Daniel van Vugt ]
+  * [regression] Window resize granularity is lost when restored after
+    using Grid (LP: #925867)
+  * compiz_test_resize_logic: Multiple errors: Conditional jump or move
+    depends on uninitialised value(s) (LP: #1097179)
+  * Add support for blacklisting some drivers from using unredirected
+    fullscreen windows (LP: #1089246)
+  * [regression] compiz spends 31% of its CPU time in regexec() (LP:
+    #1095001)
+  * GLShaderCache::priv [PrivateShaderCache] is leaked (LP: #1097664)
+  * [regression] r3523: Restored windows' contents are offset from (not
+    aligned with) their frames (LP: #1089279)
+  * On ARM lp:compiz defaults to GL instead of GLES and FTBFS unless you
+    -DBUILD_GLES=ON (LP: #1088414)
+  * [regression][GLES] wallpaper plugin does not build any more (LP:
+    #1020830)
+  * [regression-r3320] firepaint doesn't paint any fire any more (LP:
+    #1048505)
+  * findcompiz_install doesn't work (LP: #1051595)
+  * [Regression] Minimizing a window creates an input-insensitive area
+    if you have unityshell loaded (LP: #1089811)
+  * [clang] lp:compiz r3523 FTBFS: unused function
+    'ListValueToSettingValueList' [-Werror,-Wunused-function]  (LP:
+    #1089250)
+  * compiz fails to configure on arm with -DCOMPIZ_BUILD_TESTING=ON
+    [package 'gl' not found] (LP: #1088419)
+  * PrivateGLScreen::projection is leaked (LP: #1097657)
+  * [clang] Multiple segfaults in test: SetSemantics (LP: #1089251)
+  * Plugin names are not sorted (they're shown in directory order) when
+    cmake is run (LP: #1096780)
+  * Windows don't respond to input (mouse clicks) if XShape is disabled
+    or unavailable (LP: #1087193)
+  * cmake suggests (kind of) expo is disabled but it still builds
+    correctly. (LP: #1083027)
+  * EGL/GLES compiz builds do a eglWaitGL (synchronous wait) on every
+    frame, likely to slow things down (LP: #1086779)
+  * Incorrect detection of shader support on fglrx (LP: #1026920)
+  * 1:0.9.8+bzr3319-0ubuntu1 regression: keeps setting gsettings keys to
+    wrong values (LP: #1063617)
+  * resize leaks memory in multiple locations calling
+    resize::CompScreenImpl::findWindow() -> operator new() (LP:
+    #1097126)
+
+  [ Andrea Azzarone ]
+  * Modal dialogs don't appear on the same workspace/monitor as their
+    parent window (LP: #754508)
+  * Multimonitor: New windows open on the wrong monitor, Place Plugin
+    settings silently ignored (LP: #874146)
+
+  [ Sam Spilsbury ]
+  * [regression][GLES] cubeaddon plugin does not build any more (LP:
+    #1020823)
+  * [regression-r3320] Animations and modules/plugins missing in Ubuntu
+    12.10 and 13.04 (LP: #1069112)
+  * [nvidia] Moving or resizing windows freezes and stutters on nvidia
+    (especially if some other window is redrawing). (LP: #1027211)
+  * Clicking on semi-maximized windows in a different workspace fails to
+    switch to the correct workspace (LP: #1037164)
+  * CCSM segfaults if no settings found (LP: #1092651)
+  * Building compiz with clang++ on raring fails to build libgtest (LP:
+    #1095906)
+  * Using grid-resize prevents windows from maximizing correctly (LP:
+    #1093757)
+  * 1:0.9.8+bzr3319-0ubuntu1 regression: keeps setting gsettings keys to
+    wrong values (LP: #1063617)
+  * ccp can fail to compile, as CompizPlugin is not included (LP:
+    #1090845)
+  * opengl plugin FTBFS with clang (LP: #1095915)
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * FTBFS after python2.7 upgrade - missing pyconfig.h (LP: #1088996)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3554
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 11 Jan 2013 04:03:03 +0000
+
 compiz (1:0.9.9~daily12.12.05-0ubuntu2) raring; urgency=low
 
   * Backport a tentative fix from rev 3387 for LP: #1060327
