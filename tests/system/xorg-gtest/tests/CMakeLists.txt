@@ -18,6 +18,9 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     add_executable (compiz_xorg_gtest_test_icccm
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_icccm.cpp)
 
+    add_executable (compiz_xorg_gtest_test_shape_handling
+		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_test_shape_handling.cpp)
+
     set (COMPIZ_XORG_GTEST_LIBRARIES
 	 compiz_xorg_gtest_system_test
 	 xorg_gtest_all
@@ -37,5 +40,10 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
     compiz_discover_tests (compiz_xorg_gtest_test_icccm)
+
+    target_link_libraries (compiz_xorg_gtest_test_shape_handling
+			   ${COMPIZ_XORG_GTEST_LIBRARIES})
+
+    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)
