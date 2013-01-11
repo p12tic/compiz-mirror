@@ -132,11 +132,11 @@ class WallpaperWindow :
         GLWindow        *gWindow;
 
 	void
-	drawBackgrounds (GLFragment::Attrib &,
+	drawBackgrounds (const GLMatrix &, const GLWindowPaintAttrib &,
 			 const CompRegion &, unsigned int,
 			 WallpaperBackgrounds&, bool);
 
-	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
+	bool glDraw (const GLMatrix &, const GLWindowPaintAttrib &,
 		     const CompRegion &, unsigned int);
 
 	bool damageRect (bool, const CompRect &);

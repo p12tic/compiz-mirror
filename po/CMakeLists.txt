@@ -1,7 +1,9 @@
 project (po)
 
 find_program (_intltool_update intltool-update)
-mark_as_advanced (intltool_update)
+if (NOT EXISTS "${_intltool_update}")
+    message (SEND_ERROR "Missing intltool-update (try: sudo apt-get install intltool)")
+endif ()
 
 find_program (_xgettext xgettext)
 mark_as_advanced (_xgettext)

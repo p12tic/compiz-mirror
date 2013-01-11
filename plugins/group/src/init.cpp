@@ -118,7 +118,7 @@ GroupScreen::optionChanged (CompOption *opt,
 					      glowProperty->textureSize),
 				    GL_RGBA, GL_UNSIGNED_BYTE);
 
-		if (optionGetGlow () && mGroups.size ())
+		if (optionGetGlow () && !mGroups.empty ())
 		{
 		    foreach (CompWindow *w, screen->windows ())
 		    {
@@ -185,7 +185,7 @@ GroupScreen::applyInitialActions ()
 	    }
 	}
 
-	rit++;
+	++rit;
     }
 
     return false;
@@ -228,7 +228,7 @@ GroupScreen::checkFunctions ()
 	 mGrabState == GroupScreen::ScreenGrabTabDrag)
 	 functionsMask |= (GL_PAINT_OUTPUT |
 			   GL_PAINT_TRANSFORMED_OUTPUT);
-    else if (mGroups.size ())
+    else if (!mGroups.empty ())
     {
 	foreach (GroupSelection *group, mGroups)
 	{
@@ -284,74 +284,6 @@ GroupScreen::checkFunctions ()
 }
 
 /*
- * GroupScreen::postLoad
- *
- * Load all information about this group that was previously saved
- *
- */
-
-void
-GroupScreen::postLoad ()
-{
-    foreach (GroupSelection *group, mGroups)
-    {
-	bool topIdInGroup = false;
-	for (std::list <Window>::iterator it = group->mWindowIds.begin ();
-	     it != group->mWindowIds.end ();
-	     it++)
-	{
-	    CompWindow *w = screen->findWindow (*it);
-
-	    if (w)
-	    {
-		if (group->mTopId == (*it))
-		    topIdInGroup = true;
-		GroupWindow::get (w)->addWindowToGroup (group);
-	    }
-	    else
-	    {
-		group->mWindowIds.erase (it);
-		it = group->mWindowIds.begin ();
-	    }
-	}
-
-	if (group->mTopId && topIdInGroup)
-	{
-	    CompWindow *w;
-
-	    w = screen->findWindow (group->mTopId);
-
-	    if (w)
-		group->tabGroup (w);
-	    else
-	    {
-		w = screen->findWindow (group->mWindowIds.front ());
-
-		if (w)
-		    group->tabGroup (w);
-	    }
-
-	    /* if there was a tab bar, re-render it */
-	    if (group->mTabBar)
-	    {
-		CompRegion     &r = group->mTabBar->mRegion;
-		SelectionLayer *l = group->mTabBar->mSelectionLayer;
-
-		CompSize size (r.boundingRect ().width (),
-			       r.boundingRect ().height ());
-		group->mTabBar->mSelectionLayer =
-		       SelectionLayer::rebuild (l, size);
-		if (group->mTabBar->mSelectionLayer)
-		    group->mTabBar->mSelectionLayer->render ();
-	    }
-	}
-	else
-	    group->mTopId = None;
-
-    }
-}
-
-/*
  * GroupScreen::GroupScreen
  *
  * Constructor for GroupScreen. Set up atoms, glow texture, queues, etc
@@ -359,7 +291,6 @@ GroupScreen::postLoad ()
  */
 GroupScreen::GroupScreen (CompScreen *s) :
     PluginClassHandler <GroupScreen, CompScreen> (s),
-    PluginStateWriter <GroupScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mIgnoreMode (false),
@@ -465,8 +396,6 @@ GroupScreen::GroupScreen (CompScreen *s) :
  */
 GroupScreen::~GroupScreen ()
 {
-    writeSerializedData ();
-
     if (mGroups.size ())
     {
 	GroupSelection *group;
@@ -493,7 +422,7 @@ GroupScreen::~GroupScreen ()
 		{
 		    GroupTabBarSlot *slot = *rit;
 		    delete slot;
-		    rit--;
+		    --rit;
 		}
 
 		group->mTabBar->mSlots.clear ();
@@ -502,7 +431,7 @@ GroupScreen::~GroupScreen ()
 	    }
 
 	    delete group;
-	    rit++;
+	    ++rit;
 	}
     }
 

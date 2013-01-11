@@ -78,11 +78,13 @@ class StaticSwitchScreen :
 				  int y);
 	void handleEvent (XEvent *event);
 	bool adjustVelocity ();
-	void paintRect (CompRect &box,
+	void paintRect (const GLMatrix &transform,
+			CompRect &box,
 			int offset,
 			unsigned short *color,
-			int opacity);
-	void paintSelectionRect (int          x,
+			unsigned short opacity);
+	void paintSelectionRect (const GLMatrix &transform,
+	                         int             x,
 				 int          y,
 				 float        dx,
 				 float        dy,
@@ -157,8 +159,8 @@ class StaticSwitchWindow :
 
 #define MAX_ICON_SIZE 256
 
-#define PREVIEWSIZE 150
-#define BORDER 10
+extern const unsigned short PREVIEWSIZE;
+extern const unsigned short BORDER;
 
 #define SWITCH_SCREEN(s) \
     StaticSwitchScreen *ss = StaticSwitchScreen::get (s)

@@ -510,6 +510,14 @@ decor_post_generate_request (Display *xdisplay,
 			     unsigned int frame_state,
 			     unsigned int frame_actions);
 
+int
+decor_extents_cmp (const decor_extents_t *a,
+		   const decor_extents_t *b);
+
+int
+decor_shadow_options_cmp (const decor_shadow_options_t *a,
+			  const decor_shadow_options_t *b);
+
 #ifdef  __cplusplus
 }
 #endif

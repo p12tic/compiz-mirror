@@ -34,10 +34,10 @@
 
 #define NUM_KEYS (sizeof (mKeys) / sizeof (mKeys[0]))
 
-#define KEY_MOVE_INC 24
+extern const unsigned short KEY_MOVE_INC;
 
-#define SNAP_BACK 20
-#define SNAP_OFF  100
+extern const unsigned short SNAP_BACK;
+extern const unsigned short SNAP_OFF;
 
 struct _MoveKeys {
     const char *name;

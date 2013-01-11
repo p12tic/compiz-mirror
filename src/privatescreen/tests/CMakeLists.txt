@@ -53,4 +53,4 @@ target_link_libraries(
   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
-compiz_discover_tests (compiz_privatescreen_test)
+compiz_discover_tests (compiz_privatescreen_test COVERAGE compiz_core)

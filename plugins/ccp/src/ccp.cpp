@@ -22,8 +22,8 @@
 
 COMPIZ_PLUGIN_20090315 (ccp, CcpPluginVTable)
 
-#define CCP_UPDATE_MIN_TIMEOUT 250
-#define CCP_UPDATE_MAX_TIMEOUT 4000
+static const unsigned short CCP_UPDATE_MIN_TIMEOUT = 250;
+static const unsigned short CCP_UPDATE_MAX_TIMEOUT = 4000;
 #define CORE_VTABLE_NAME  "core"
 
 
@@ -193,7 +193,6 @@ ccpSettingToValue (CCSSetting        *s,
     else
     {
 	CCSSettingValueList list;
-	int                 i = 0;
 	CompOption::Type    type;
 
 	ccsGetList (s, &list);
@@ -208,6 +207,7 @@ ccpSettingToValue (CCSSetting        *s,
 	}
 	else
 	{
+	    int i = 0;
 	    CompOption::Value::Vector val (ccsSettingValueListLength (list));
 
 	    while (list)
@@ -422,12 +422,7 @@ CcpScreen::reload ()
 bool
 CcpScreen::timeout ()
 {
-    unsigned int flags = 0;
-
-    if (CompPlugin::find ("glib"))
-	flags |= ProcessEventsNoGlibMainLoopMask;
-
-    ccsProcessEvents (mContext, flags);
+    ccsProcessEvents (mContext, ProcessEventsNoGlibMainLoopMask);
 
     CCSSettingList list = ccsContextStealChangedSettings (mContext);
 

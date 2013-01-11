@@ -28,6 +28,16 @@
 #include <core/pluginclasshandler.h>
 #include "privates.h"
 
+const float DEFAULT_Z_CAMERA = 0.866025404f;
+
+const float RED_SATURATION_WEIGHT   = 0.30f;
+const float GREEN_SATURATION_WEIGHT = 0.59f;
+const float BLUE_SATURATION_WEIGHT  = 0.11f;
+
+const unsigned short NOTHING_TRANS_FILTER = 0;
+const unsigned short SCREEN_TRANS_FILTER  = 1;
+const unsigned short WINDOW_TRANS_FILTER  = 2;
+
 CompOption::Vector &
 GLScreen::getOptions ()
 {

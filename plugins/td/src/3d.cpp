@@ -2,6 +2,8 @@
 
 COMPIZ_PLUGIN_20090315 (td, TdPluginVTable);
 
+const double PI = 3.14159265359f;
+
 void
 setFunctions (bool enabled)
 {
@@ -390,7 +392,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 	pl = cScreen->getWindowPaintList ();
 
 	/* paint all windows from bottom to top */
-	for (it = pl.begin (); it != pl.end (); it++)
+	for (it = pl.begin (); it != pl.end (); ++it)
 	{
 	    CompWindow *w = (*it);
 	    tdw = TdWindow::get (w);

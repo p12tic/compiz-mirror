@@ -279,7 +279,7 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
     CompWindow               *w;
 
     it = fail = windowManager.begin ();
-    for (;it != windowManager.end (); it++)
+    for (;it != windowManager.end (); ++it)
     {
 	w = *it;
 	if (!p->vTable->initWindow (w))
@@ -294,7 +294,7 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
     }
 
     it = windowManager.begin ();
-    for (;it != fail; it++)
+    for (;it != fail; ++it)
     {
 	w = *it;
 	p->vTable->finiWindow (w);
@@ -331,7 +331,7 @@ CompPlugin::screenInitPlugins (CompScreen *s)
 	if (p->vTable->initScreen (s))
 	    s->initPluginForScreen (p);
 
-	it++;
+	++it;
     }
 
     return true;

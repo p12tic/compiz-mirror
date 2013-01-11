@@ -51,7 +51,7 @@ target_link_libraries (compiz_timer_while-calling
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-compiz_discover_tests (compiz_timer_callbacks)
-compiz_discover_tests (compiz_timer_diffs)
-compiz_discover_tests (compiz_timer_set-values)
-compiz_discover_tests (compiz_timer_while-calling)
+compiz_discover_tests (compiz_timer_callbacks COVERAGE compiz_timer)
+compiz_discover_tests (compiz_timer_diffs COVERAGE compiz_timer)
+compiz_discover_tests (compiz_timer_set-values COVERAGE compiz_timer)
+compiz_discover_tests (compiz_timer_while-calling COVERAGE compiz_timer)

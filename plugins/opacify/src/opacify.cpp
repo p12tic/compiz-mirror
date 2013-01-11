@@ -28,6 +28,8 @@
 
 COMPIZ_PLUGIN_20090315 (opacify, OpacifyPluginVTable);
 
+const unsigned short MAX_WINDOWS = 64;
+
 void
 setFunctions (bool enabled)
 {
@@ -62,7 +64,7 @@ OpacifyWindow::setOpacity (int fOpacity)
 */
 
 void
-OpacifyScreen::resetOpacity (Window  id)
+OpacifyScreen::resetWindowOpacity (Window  id)
 {
     CompWindow *w;
 
@@ -76,11 +78,39 @@ OpacifyScreen::resetOpacity (Window  id)
     ow->cWindow->addDamage ();
 }
 
+/* Resets all the windows on the screen to the original opacity
+ * if necessary. Then reset active.
+*/
+
+void
+OpacifyScreen::resetScreenOpacity ()
+{
+    if (active)
+    {
+	clearPassive();
+	resetWindowOpacity(active);
+	active = 0;
+    }
+}
+
 /* Resets the opacity of windows on the passive list.
 */
 void
 OpacifyScreen::clearPassive ()
 {
+    foreach (Window xid, passive)
+    {
+	CompWindow *win = screen->findWindow (xid);
+
+	if (!win)
+	    continue;
+
+	OPACIFY_WINDOW (win);
+
+	ow->setOpacity (MAX (OPAQUE * optionGetActiveOpacity () / 100,
+			ow->gWindow->paintAttrib ().opacity));
+	resetWindowOpacity (xid);
+    }
     passive.clear ();
 }
 
@@ -114,20 +144,7 @@ OpacifyScreen::passiveWindows (CompRegion     fRegion)
     int        i = 0;
 
     /* Clear the list first to prevent memleaks */
-    foreach (Window xid, passive)
-    {
-	CompWindow *win = screen->findWindow (xid);
-
-	if (!win)
-	    continue;
-
-	OPACIFY_WINDOW (win);
-
-	resetOpacity (xid);
-	ow->setOpacity (MAX (OPAQUE * optionGetActiveOpacity () / 100,
-			ow->gWindow->paintAttrib ().opacity));
-    }
-    passive.clear ();
+    clearPassive ();
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -175,16 +192,14 @@ OpacifyWindow::handleEnter ()
 	    return;
 	}
 
-	os->clearPassive ();
-	os->resetOpacity (os->active);
-	os->active = 0;
+	os->resetScreenOpacity ();
 	return;
     }
 
     if (!window || os->active != window->id () || os->justMoved)
     {
 	os->justMoved = false;
-	os->resetOpacity (os->active);
+	os->resetWindowOpacity (os->active);
 	os->active = 0;
     }
 
@@ -212,7 +227,7 @@ bool
 OpacifyScreen::handleTimeout ()
 {
     if (newActive)
-        OpacifyWindow::get (newActive)->handleEnter ();
+	OpacifyWindow::get (newActive)->handleEnter ();
 
     return false;
 }
@@ -235,7 +250,7 @@ OpacifyScreen::checkDelay ()
     {
 	return false;
     }
-    if (optionGetNoDelayChange () && passive.size ())
+    if (optionGetNoDelayChange () && !passive.empty ())
 	return true;
 
     return false;
@@ -285,7 +300,7 @@ OpacifyScreen::handleEvent (XEvent *event)
 	Window id;
 
 	id = event->xcrossing.window;
-	    newActive = screen->findTopLevelWindow (id);
+	newActive = screen->findTopLevelWindow (id);
 
 	if (timeoutHandle.active ())
 	    timeoutHandle.stop ();
@@ -294,7 +309,10 @@ OpacifyScreen::handleEvent (XEvent *event)
 	    handleTimeout ();
 	else
 	    timeoutHandle.start ();
-     	break;
+	break;
+    case FocusIn:
+	resetScreenOpacity();
+	break;
     case ConfigureNotify:
 
 	if (active != event->xconfigure.window)
@@ -309,7 +327,7 @@ OpacifyScreen::handleEvent (XEvent *event)
 	    if (w)
 		passiveWindows (w->region ());
 	}
-     	break;
+	break;
     default:
 	break;
     }
@@ -327,12 +345,7 @@ OpacifyScreen::toggle (CompAction         *action,
     isToggle = !isToggle;
     if (!isToggle && optionGetToggleReset ())
     {
-	if (active)
-	{
-	    clearPassive ();
-	    resetOpacity (active);
-	    active = 0;
-	}
+	resetScreenOpacity();
     }
 
     setFunctions (isToggle);
@@ -355,12 +368,7 @@ OpacifyScreen::optionChanged (CompOption              *option,
     case OpacifyOptions::InitToggle:
 	isToggle = option->value ().b ();
 	setFunctions (isToggle);
-	if (active)
-	{
-	    clearPassive ();
-	    resetOpacity (active);
-	    active = 0;
-	}
+	resetScreenOpacity();
 	break;
 	case OpacifyOptions::Timeout:
 	timeoutHandle.setTimes (optionGetTimeout (), optionGetTimeout () * 1.2);
@@ -386,12 +394,6 @@ OpacifyWindow::OpacifyWindow (CompWindow *window) :
     GLWindowInterface::setHandler (gWindow, false);
 }
 
-void
-OpacifyScreen::postLoad ()
-{
-    setFunctions (isToggle);
-}
-
 /** Constructor for OpacifyScreen. This is called whenever a new screen
  *  is created and we set our custom variables to it and also register to
  *  handle X.org events when they come through
@@ -399,7 +401,6 @@ OpacifyScreen::postLoad ()
 
 OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     PluginClassHandler <OpacifyScreen, CompScreen> (screen),
-    PluginStateWriter <OpacifyScreen> (this, screen->root ()),
     isToggle (true),
     newActive (NULL),
     active (screen->activeWindow ()),
@@ -419,12 +420,7 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     optionSetTimeoutNotify (boost::bind (&OpacifyScreen::optionChanged,
 								 this, _1, _2));
 
-    screen->handleEventSetEnabled (this, optionGetInitToggle ());
-}
-
-OpacifyScreen::~OpacifyScreen ()
-{
-    writeSerializedData ();
+    setFunctions (optionGetInitToggle ());
 }
 
 bool

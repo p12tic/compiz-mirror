@@ -35,6 +35,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 namespace compiz {namespace X11
 {
@@ -359,6 +360,7 @@ class PrivateWindow {
 	typedef std::pair <XWindowChanges, unsigned int> XWCValueMask;
 
 	compiz::X11::PendingEventQueue pendingConfigures;
+	bool receivedMapRequestAndAwaitingMap;
 
 	char *startupId;
 	char *resName;

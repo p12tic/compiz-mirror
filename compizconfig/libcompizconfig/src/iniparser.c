@@ -120,7 +120,7 @@ strlwc (char * s)
     memset (l, 0, ASCIILINESZ + 1);
     i = 0;
 
-    while (s[i] && i < ASCIILINESZ)
+    while (i < ASCIILINESZ && s[i])
     {
 	l[i] = (char) tolower ((int) s[i]);
 	i++;
@@ -690,6 +690,7 @@ iniparser_dump_ini (dictionary * d, const char * file_name)
 	}
 
 	fflush (f);
+	fclose (f);
 	ini_file_unlock (lock);
 	return;
     }
@@ -718,6 +719,7 @@ iniparser_dump_ini (dictionary * d, const char * file_name)
     }
 
     fflush (f);
+    fclose (f);
     ini_file_unlock (lock );
 }
 

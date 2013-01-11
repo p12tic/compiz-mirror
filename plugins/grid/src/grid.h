@@ -30,7 +30,7 @@
 
 #include "grid_options.h"
 
-#define SNAPOFF_THRESHOLD 50
+static const unsigned short SNAPOFF_THRESHOLD = 50;
 
 namespace GridWindowType
 {
@@ -53,7 +53,12 @@ class GridProps
 {
 public:
 
-    GridProps () {}
+    GridProps ():
+	gravityRight (0),
+	gravityDown (0),
+	numCellsX (0),
+	numCellsY (0)
+    {}
 
     GridProps (int r, int d, int x, int y):
 	gravityRight (r),

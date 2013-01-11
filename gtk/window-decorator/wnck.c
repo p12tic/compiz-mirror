@@ -183,7 +183,10 @@ decorations_changed (WnckScreen *screen)
     gdkdisplay = gdk_display_get_default ();
     gdkscreen  = gdk_display_get_default_screen (gdkdisplay);
 
-    gwd_frames_foreach (set_frames_scales, (gpointer) settings->font);
+    const gchar *titlebar_font = NULL;
+    g_object_get (settings, "titlebar-font", &titlebar_font, NULL);
+
+    gwd_frames_foreach (set_frames_scales, (gpointer) titlebar_font);
 
     update_titlebar_font ();
     gwd_process_frames (update_frames_border_extents,
@@ -452,13 +455,45 @@ add_frame_window (WnckWindow *win,
     d->created = TRUE;
 }
 
+gboolean
+clean_destroyed_pixmaps (gpointer key, gpointer value, gpointer d)
+{
+    return value == d;
+}
+
 void
 remove_frame_window (WnckWindow *win)
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     Display *xdisplay;
 
+    g_hash_table_foreach_remove (destroyed_pixmaps_table,
+                                 clean_destroyed_pixmaps,
+                                 d);
+
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
+
+    if (!d->frame_window)
+    {
+	int i, j;
+
+	for (i = 0; i < 3; i++)
+	{
+	    for (j = 0; j < 3; j++)
+	    {
+		XDestroyWindow (xdisplay, d->event_windows[i][j].window);
+		d->event_windows[i][j].window = None;
+	    }
+	}
+
+	for (i = 0; i < BUTTON_NUM; i++)
+	{
+	    XDestroyWindow (xdisplay, d->button_windows[i].window);
+	    d->button_windows[i].window = None;
+
+	    d->button_states[i] = 0;
+	}
+    }
 
     if (d->pixmap)
     {
@@ -470,6 +505,12 @@ remove_frame_window (WnckWindow *win)
     {
 	g_object_unref (G_OBJECT (d->buffer_pixmap));
 	d->buffer_pixmap = NULL;
+    }
+
+    if (d->old_pixmaps)
+    {
+	g_hash_table_destroy (d->old_pixmaps);
+	d->old_pixmaps = NULL;
     }
 
     if (d->cr)

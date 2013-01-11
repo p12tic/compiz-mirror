@@ -59,7 +59,7 @@ class WSNamesScreen :
 	renderNameText ();
 
 	void
-	drawText ();
+	drawText (const GLMatrix &);
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &attrib,

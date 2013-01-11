@@ -15,4 +15,4 @@ target_link_libraries (compiz_test_place_constrain_to_workarea
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-compiz_discover_tests (compiz_test_place_constrain_to_workarea)
+compiz_discover_tests (compiz_test_place_constrain_to_workarea COVERAGE compiz_place_constrain_to_workarea)

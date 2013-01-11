@@ -188,7 +188,7 @@ class ShiftScreen :
 	renderWindowTitle ();
 
 	void
-	drawWindowTitle ();
+	drawWindowTitle (const GLMatrix &transform);
 
 	bool
 	layoutThumbsCover ();
@@ -305,7 +305,7 @@ class ShiftWindow :
 
 };
 
-#define PI 3.1415926
+extern const double PI;
 
 #define SHIFT_WINDOW(w)							      \
     ShiftWindow *sw = ShiftWindow::get (w)

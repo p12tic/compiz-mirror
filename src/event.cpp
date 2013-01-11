@@ -41,8 +41,10 @@
 #include "privatescreen.h"
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
+#include "eventmanagement.h"
 
 namespace cps = compiz::private_screen;
+namespace ce = compiz::events;
 
 namespace
 {
@@ -107,6 +109,9 @@ isCallBackBinding (CompOption	           &option,
 	return false;
 
     if (!(option.value ().action ().state () & state))
+	return false;
+
+    if (!option.value ().action ().active ())
 	return false;
 
     return true;
@@ -189,78 +194,160 @@ cps::EventManager::triggerRelease (CompAction         *action,
     return false;
 }
 
+int
+ce::processButtonPressOnEdgeWindow (Window               edgeWindow,
+				    Window               root,
+				    Window               eventWindow,
+				    Window               eventRoot,
+				    cps::GrabList        &grabList,
+				    const CompScreenEdge *screenEdge)
+{
+    int edge = -1;
+
+    if (eventRoot != root)
+	return edge;
+
+    if (eventWindow != edgeWindow)
+    {
+	if (grabList.grabsEmpty () ||
+	    eventRoot != root)
+	    return edge;
+    }
+
+    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
+    {
+	if (edgeWindow == screenEdge[i].id)
+	{
+	    edge = 1 << i;
+	    break;
+	}
+    }
+
+    return edge;
+}
+
+void
+ce::setEventWindowInButtonPressArguments (ce::EventArguments &arguments,
+					  Window             eventWindow)
+{
+    arguments[1].value ().set ((int) eventWindow);
+}
+
+namespace
+{
+    bool buttonActionModifiersMatchEventState (unsigned int actionModifiers,
+					       unsigned int eventState)
+    {
+	const unsigned int ignored = modHandler->ignoredModMask ();
+	const unsigned int modMask = REAL_MOD_MASK & ~ignored;
+	const unsigned int bindMods = modHandler->virtualToRealModMask (actionModifiers);
+
+	return (bindMods & modMask) == (eventState & modMask);
+    }
+}
+
+bool
+ce::activateButtonPressOnWindowBindingOption (CompOption                            &option,
+					      unsigned int                          eventButton,
+					      unsigned int                          eventState,
+					      cps::EventManager                     &eventManager,
+					      const ActionModsMatchesEventStateFunc &matchEventState,
+					      ce::EventArguments                    &arguments)
+{
+    CompAction              *action;
+    const CompAction::State state = CompAction::StateInitButton;
+
+    if (isBound (option, CompAction::BindingTypeButton, state, &action))
+    {
+	if (action->button ().button () == (int) eventButton)
+	{
+	    if (matchEventState (action->button ().modifiers (),
+				 eventState))
+	    {
+		if (eventManager.triggerPress (action, state, arguments))
+		    return true;
+	    }
+	}
+    }
+
+    return false;
+}
+
+bool
+ce::activateButtonPressOnEdgeBindingOption (CompOption                            &option,
+					    unsigned int                          eventButton,
+					    unsigned int                          eventState,
+					    int                                   edge,
+					    cps::EventManager                     &eventManager,
+					    const ActionModsMatchesEventStateFunc &matchEventState,
+					    ce::EventArguments                    &arguments)
+{
+    CompAction              *action;
+    const CompAction::State state = CompAction::StateInitButton |
+				    CompAction::StateInitEdge;
+
+    if (edge != -1)
+    {
+	if (isInitiateBinding (option, CompAction::BindingTypeEdgeButton,
+			       state, &action))
+	{
+	    if ((action->button ().button () == (int) eventButton) &&
+		(action->edgeMask () & edge))
+	    {
+		if (matchEventState (action->button ().modifiers (),
+				     eventState))
+		    if (action->initiate () (action, state,
+					     arguments))
+			return true;
+	    }
+	}
+    }
+
+    return false;
+}
+
 bool
 PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 					   XButtonEvent       *event,
 					   CompOption::Vector &arguments)
 {
-    CompAction::State state = CompAction::StateInitButton;
-    CompAction        *action;
-    unsigned int      ignored = modHandler->ignoredModMask ();
-    unsigned int      modMask = REAL_MOD_MASK & ~ignored;
-    unsigned int      bindMods;
-    unsigned int      edge = 0;
+    int               edge = -1;
+
+    static const ce::ActionModsMatchesEventStateFunc matchEventState (
+		boost::bind (buttonActionModifiersMatchEventState,
+			     _1, _2));
 
     if (edgeWindow)
-    {
-	unsigned int i;
+	edge = ce::processButtonPressOnEdgeWindow (edgeWindow,
+						   screen->root (),
+						   event->window,
+						   event->root,
+						   eventManager,
+						   screenEdge);
 
-	if (event->root != screen->root())
-	    return false;
-
-	if (event->window != edgeWindow)
-	{
-	    if (eventManager.grabsEmpty () || event->window != screen->root())
-		return false;
-	}
-
-	for (i = 0; i < SCREEN_EDGE_NUM; i++)
-	{
-	    if (edgeWindow == screenEdge[i].id)
-	    {
-		edge = 1 << i;
-		arguments[1].value ().set ((int) orphanData.activeWindow);
-		break;
-	    }
-	}
-    }
+    if (edge != -1)
+	ce::setEventWindowInButtonPressArguments (arguments,
+						  orphanData.activeWindow);
 
     foreach (CompOption &option, options)
     {
-	if (isBound (option, CompAction::BindingTypeButton, state, &action))
-	{
-	    if (action->button ().button () == (int) event->button)
-	    {
-		bindMods = modHandler->virtualToRealModMask (
-		    action->button ().modifiers ());
+	if (ce::activateButtonPressOnWindowBindingOption (option,
+							  event->button,
+							  event->state,
+							  eventManager,
+							  matchEventState,
+							  arguments))
+	    return true;
 
-		if ((bindMods & modMask) == (event->state & modMask))
-		{
-		    if (eventManager.triggerPress (action, state, arguments))
-			return true;
-		}
-	    }
-	}
+	if (ce::activateButtonPressOnEdgeBindingOption (option,
+							event->button,
+							event->state,
+							edge,
+							eventManager,
+							matchEventState,
+							arguments))
+	    return true;
 
-	if (edge)
-	{
-	    if (isInitiateBinding (option, CompAction::BindingTypeEdgeButton,
-				   state | CompAction::StateInitEdge, &action))
-	    {
-		if ((action->button ().button () == (int) event->button) &&
-		    (action->edgeMask () & edge))
-		{
-		    bindMods = modHandler->virtualToRealModMask (
-			action->button ().modifiers ());
-
-		    if ((bindMods & modMask) == (event->state & modMask))
-			if (action->initiate () (action, state |
-						 CompAction::StateInitEdge,
-						 arguments))
-			    return true;
-		}
-	    }
-	}
     }
 
     return false;
@@ -360,6 +447,8 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
     if (!xkbEvent.get() && !mods)
 	return false;
 
+    bool handled = false;
+
     foreach (CompOption &option, options)
     {
 	if (isBound (option, CompAction::BindingTypeKey, state, &action))
@@ -373,12 +462,11 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
 	    else if (!xkbEvent.get() && ((mods & modMask & bindMods) != bindMods))
 	        match = true;
 
-	    if (match && eventManager.triggerRelease (action, state, arguments))
-		return true;
+	    handled |= match && eventManager.triggerRelease (action, state, arguments);
 	}
     }
 
-    return false;
+    return handled;
 }
 
 bool
@@ -417,6 +505,7 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
     else if (event->event_type == KeyRelease)
     {
 	state = CompAction::StateTermKey;
+	bool handled = false;
 
 	foreach (CompOption &option, options)
 	{
@@ -430,11 +519,13 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 		if ((event->mods && ((event->mods & modMask) != bindMods)) ||
 		    (!event->mods && (modKey == bindMods)))
 		{
-		    if (eventManager.triggerRelease (action, state, arguments))
-			return true;
+		    handled |= eventManager.triggerRelease (action, state, arguments);
 		}
 	    }
 	}
+
+	if (handled)
+	    return true;
     }
 
     return false;
@@ -757,6 +848,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	}
 	break;
     case KeyRelease:
+    {
 	o[0].value ().set ((int) event->xkey.window);
 	o[1].value ().set ((int) orphanData.activeWindow);
 	o[2].value ().set ((int) event->xkey.state);
@@ -770,13 +862,19 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[6].value ().set ((int) event->xkey.keycode);
 	o[7].value ().set ((int) event->xkey.time);
 
+	bool handled = false;
+
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
-	    if (triggerKeyReleaseBindings (options, &event->xkey, o))
-		return true;
+	    handled |= triggerKeyReleaseBindings (options, &event->xkey, o);
 	}
+
+        if (handled)
+	    return true;
+
 	break;
+    }
     case EnterNotify:
 	if (event->xcrossing.mode   != NotifyGrab   &&
 	    event->xcrossing.mode   != NotifyUngrab &&
@@ -874,9 +972,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    unsigned int i;
-
-		    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+		    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
 		    {
 			if (event->xclient.window == screenEdge[i].id)
 			{
@@ -918,9 +1014,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		w = screen->findWindow (event->xclient.window);
 		if (w)
 		{
-		    unsigned int i;
-
-		    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+		    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
 		    {
 			if (xdndWindow == screenEdge[i].id)
 			{
@@ -977,12 +1071,16 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		if (stateEvent->event_type == KeyPress)
 		    eventManager.resetPossibleTap();
 
+		bool handled = false;
+
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
 		    CompOption::Vector &options = p->vTable->getOptions ();
-		    if (triggerStateNotifyBindings (options, stateEvent, arg))
-			return true;
+		    handled |= triggerStateNotifyBindings (options, stateEvent, arg);
 		}
+
+		if (handled)
+		    return true;
 	    }
 	    else if (xkbEvent->xkb_type == XkbBellNotify)
 	    {
@@ -1594,19 +1692,18 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    if (w)
 	    {
 		unsigned long wState, state;
-		int	      i;
 
 		wState = w->state ();
 
-		for (i = 1; i < 3; i++)
+		for (int i = 1; i < 3; i++)
 		{
 		    state = cps::windowStateMask (event->xclient.data.l[i]);
 		    if (state & ~CompWindowStateHiddenMask)
 		    {
 
-#define _NET_WM_STATE_REMOVE 0
-#define _NET_WM_STATE_ADD    1
-#define _NET_WM_STATE_TOGGLE 2
+static const unsigned short _NET_WM_STATE_REMOVE = 0;
+static const unsigned short _NET_WM_STATE_ADD    = 1;
+static const unsigned short _NET_WM_STATE_TOGGLE = 2;
 
 			switch (event->xclient.data.l[0]) {
 			case _NET_WM_STATE_REMOVE:
@@ -2005,7 +2102,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 					if (sibling)
 					{
 					    for (CompWindowList::reverse_iterator rit = windowsLostFocus.rbegin ();
-						 rit != windowsLostFocus.rend (); rit++)
+						 rit != windowsLostFocus.rend (); ++rit)
 					    {
 						(*rit)->restackAbove (sibling);
 					    }

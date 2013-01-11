@@ -230,6 +230,9 @@ struct CompStruts {
     XRectangle bottom;
 };
 
+class WindowInterface;
+extern template class WrapableInterface<CompWindow, WindowInterface>;
+
 /**
  * Wrappable core window functions. Derive from this class
  * and overload these functions in order to have your function called
@@ -265,13 +268,13 @@ class WindowInterface : public WrapableInterface<CompWindow, WindowInterface>
 
 	virtual void minimize ();
 	virtual void unminimize ();
-	virtual bool minimized ();
+	virtual bool minimized () const;
 
-	virtual bool alpha ();
-	virtual bool isFocussable ();
-	virtual bool managed ();
+	virtual bool alpha () const;
+	virtual bool isFocussable () const;
+	virtual bool managed () const;
 
-	virtual bool focused ();
+	virtual bool focused () const;
 };
 
 /**
@@ -302,7 +305,7 @@ class CompWindow :
 	*  Geometry retrieved from the
 	 * last ConfigureNotify event received
 	 */
-	Geometry & geometry () const;
+	const Geometry & geometry () const;
 
 	int x () const;
 	int y () const;
@@ -316,7 +319,7 @@ class CompWindow :
 	/**
 	 * Geometry last sent to the server
          */
-	Geometry & serverGeometry () const;
+	const Geometry & serverGeometry () const;
 
 	int serverX () const;
 	int serverY () const;
@@ -339,54 +342,54 @@ class CompWindow :
 	CompRect outputRect () const;
 	CompRect serverOutputRect () const;
 
-	Window id ();
-	Window frame ();
+	Window id () const;
+	Window frame () const;
 
-	CompString resName ();
+	CompString resName () const;
 
 	const CompRegion & region () const;
 
 	const CompRegion & frameRegion () const;
 
 	void updateFrameRegion ();
-	void setWindowFrameExtents (CompWindowExtents *border,
-				    CompWindowExtents *frame = NULL);
+	void setWindowFrameExtents (const CompWindowExtents *border,
+				    const CompWindowExtents *frame = NULL);
 
-	unsigned int & wmType ();
+	unsigned int & wmType () const;
 
-	unsigned int type ();
+	unsigned int type () const;
 
-	unsigned int & state ();
+	unsigned int & state () const;
 
-	unsigned int actions ();
+	unsigned int actions () const;
 
-	unsigned int & protocols ();
+	unsigned int & protocols () const;
 
 	void close (Time serverTime);
 
-	bool inShowDesktopMode ();
+	bool inShowDesktopMode () const;
 
 	void setShowDesktopMode (bool);
 
-	bool grabbed ();
+	bool grabbed () const;
 
-	int pendingMaps ();
+	int pendingMaps () const;
 
-	unsigned int activeNum ();
+	unsigned int activeNum () const;
 
 	int mapNum () const;
 
-	int & saveMask ();
+	int & saveMask () const;
 
 	XWindowChanges & saveWc ();
 
 	void moveToViewportPosition (int x, int y, bool sync);
 
-	char * startupId ();
+	const char * startupId () const;
 
-	unsigned int desktop ();
+	unsigned int desktop () const;
 
-	Window clientLeader (bool checkAncestor = false);
+	Window clientLeader (bool checkAncestor = false) const;
 
 	void changeState (unsigned int newState);
 
@@ -402,7 +405,7 @@ class CompWindow :
 
 	void sendSyncRequest ();
 
-	XSyncAlarm syncAlarm ();
+	XSyncAlarm syncAlarm () const;
 
 	void map ();
 
@@ -412,7 +415,7 @@ class CompWindow :
 
 	void incrementDestroyReference ();
 
-	bool hasUnmapReference ();
+	bool hasUnmapReference () const;
 
 	bool resize (XWindowAttributes);
 
@@ -454,57 +457,58 @@ class CompWindow :
 
 	void maximize (unsigned int state = 0);
 
-	CompPoint defaultViewport ();
+	CompPoint defaultViewport () const;
 
-	CompPoint & initialViewport () const;
+	const CompPoint & initialViewport () const;
 
 	CompIcon * getIcon (int width, int height);
 
 	const CompRect & iconGeometry () const;
 
-	int outputDevice ();
+	int outputDevice () const;
 
 	void setDesktop (unsigned int desktop);
 
-	bool onCurrentDesktop ();
+	bool onCurrentDesktop () const;
 
-	bool onAllViewports ();
+	bool onAllViewports () const;
 
-	CompPoint getMovementForOffset (CompPoint offset);
+	CompPoint getMovementForOffset (const CompPoint &offset) const;
 
-	Window transientFor ();
+	Window transientFor () const;
 
-	int pendingUnmaps ();
+	int pendingUnmaps () const;
 
-	bool placed ();
+	bool placed () const;
 
-	bool shaded ();
+	bool shaded () const;
 
-	CompWindowExtents & border () const;
-	CompWindowExtents & input () const;
-	CompWindowExtents & output () const;
+	const CompWindowExtents & border () const;
+	const CompWindowExtents & input () const;
+	const CompWindowExtents & output () const;
 
+	// FIXME: This should return a const reference but grid needs fixing...
 	XSizeHints & sizeHints () const;
 
-	bool destroyed ();
+	bool destroyed () const;
 
-	bool invisible ();
+	bool invisible () const;
 
-	bool syncWait ();
+	bool syncWait () const;
 
-	bool alive ();
+	bool alive () const;
 
-	bool overrideRedirect ();
+	bool overrideRedirect () const;
 
 	bool isMapped () const;
 	bool isViewable () const;
 
-	int windowClass ();
+	int windowClass () const;
 
-	unsigned int depth ();
+	unsigned int depth () const;
 
-	unsigned int mwmDecor ();
-	unsigned int mwmFunc ();
+	unsigned int mwmDecor () const;
+	unsigned int mwmFunc () const;
 
 	bool constrainNewWindowSize (int width,
 				     int height,
@@ -518,7 +522,7 @@ class CompWindow :
 	static void freePluginClassIndex (unsigned int index);
 
 	bool updateStruts ();
-	CompStruts *struts ();
+	const CompStruts *struts () const;
 
 	WRAPABLE_HND (0, WindowInterface, void, getOutputExtents,
 		      CompWindowExtents&);
@@ -546,13 +550,13 @@ class CompWindow :
 
 	WRAPABLE_HND (13, WindowInterface, void, minimize);
 	WRAPABLE_HND (14, WindowInterface, void, unminimize);
-	WRAPABLE_HND (15, WindowInterface, bool, minimized);
+	WRAPABLE_HND_CONST (15, WindowInterface, bool, minimized);
 
-	WRAPABLE_HND (16, WindowInterface, bool, alpha);
-	WRAPABLE_HND (17, WindowInterface, bool, isFocussable);
-	WRAPABLE_HND (18, WindowInterface, bool, managed);
+	WRAPABLE_HND_CONST (16, WindowInterface, bool, alpha);
+	WRAPABLE_HND_CONST (17, WindowInterface, bool, isFocussable);
+	WRAPABLE_HND_CONST (18, WindowInterface, bool, managed);
 
-	WRAPABLE_HND (19, WindowInterface, bool, focused);
+	WRAPABLE_HND_CONST (19, WindowInterface, bool, focused);
 
 	friend class PrivateWindow;
 	friend class CompScreenImpl;

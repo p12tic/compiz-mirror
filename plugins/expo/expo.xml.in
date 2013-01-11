@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="expo" useBcop="true">
 	<_short>Expo</_short>
@@ -131,6 +131,16 @@
 			<_name>Curve</_name>
 		    </desc>
 		</option>
+		<option name="x_offset" type="int">
+		    <_short>X Offset</_short>
+		    <_long>X offset in pixels</_long>
+		    <default>0</default>
+                </option>
+		<option name="y_offset" type="int">
+		    <_short>Y Offset</_short>
+		    <_long>Y offset in pixels</_long>
+		    <default>0</default>
+                </option>
 		<option name="distance" type="float">
 		    <_short>Distance</_short>
 		    <_long>Distance of the expo wall</_long>
@@ -205,6 +215,16 @@
 			<min>0.0</min>
 			<max>100.0</max>
 			<precision>0.1</precision>
+		    </option>
+		    <option name="selected_color" type="color">
+			<_short>Selected Color</_short>
+			<_long>Color to use when highlighting the selected viewport</_long>
+			<default>
+			    <red>0xfbfb</red>
+			    <green>0x8b8b</green>
+			    <blue>0x0</blue>
+			    <alpha>0x0</alpha>
+			</default>
 		    </option>
 		</subgroup>
 		<subgroup>

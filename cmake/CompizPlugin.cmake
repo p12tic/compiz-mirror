@@ -75,8 +75,6 @@ endif (COMPIZ_PACKAGING_ENABLED)
 
 ### Set up core lib dependences so this in correctly imported into plugins
 
-find_package (Boost 1.34.0 REQUIRED serialization)
-
 set (COMPIZ_REQUIRES
     x11
     xext
@@ -94,7 +92,6 @@ set (COMPIZ_REQUIRES
 )
 
 compiz_pkg_check_modules (COMPIZ REQUIRED ${COMPIZ_REQUIRES})
-
 list (APPEND COMPIZ_LIBRARIES ${Boost_LIBRARIES})
 
 # determinate installation directories
@@ -257,6 +254,16 @@ macro (_build_compiz_plugin plugin)
 	    NO_DEFAULT_PATH
 	)
 
+	set (COMPIZ_CURRENT_PLUGIN ${plugin})
+	set (COMPIZ_CURRENT_XML_FILE ${_translated_xml})
+
+	# find extension files
+	file (GLOB _extension_files "${COMPIZ_CMAKE_MODULE_PATH}/plugin_extensions/*.cmake")
+
+	foreach (_file ${_extension_files})
+	    include (${_file})
+	endforeach ()
+
 	# generate pkgconfig file and install it and the plugin header file
 	if (_${plugin}_pkg AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/${plugin})
 	    if ("${PLUGIN_BUILDTYPE}" STREQUAL "local")
@@ -269,11 +276,15 @@ macro (_build_compiz_plugin plugin)
 		    set (VERSION 0.0.1-git)
 		endif (NOT VERSION)
 
+		#add CFLAGSADD so pkg-config file has correct flags
+		set (COMPIZ_CFLAGS ${COMPIZ_CFLAGS} ${${_PLUGIN}_CFLAGSADD})
+
 		compiz_configure_file (
 		    ${_${plugin}_pkg}
 		    ${CMAKE_BINARY_DIR}/generated/compiz-${plugin}.pc
 		    COMPIZ_REQUIRES
 		    COMPIZ_CFLAGS
+		    PKGCONFIG_LIBS
 		)
 
 		install (
@@ -286,16 +297,6 @@ macro (_build_compiz_plugin plugin)
 		)
 	    endif ()
 	endif ()
-
-	set (COMPIZ_CURRENT_PLUGIN ${plugin})
-	set (COMPIZ_CURRENT_XML_FILE ${_translated_xml})
-
-	# find extension files
-	file (GLOB _extension_files "${COMPIZ_CMAKE_MODULE_PATH}/plugin_extensions/*.cmake")
-
-	foreach (_file ${_extension_files})
-	    include (${_file})
-	endforeach ()
 
 	# find files for build
 	file (GLOB _h_files "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
@@ -416,7 +417,11 @@ macro (_build_compiz_plugin plugin)
 	    LIBRARY DESTINATION ${PLUGIN_LIBDIR}
 	)
 
-	compiz_add_uninstall ()
+	if (NOT _COMPIZ_INTERNAL)
+
+	    compiz_add_uninstall ()
+
+	endif (NOT _COMPIZ_INTERNAL)
 
 	if (NOT COMPIZ_PLUGIN_PACK_BUILD)
 		set (CMAKE_PROJECT_NAME plugin-${plugin})

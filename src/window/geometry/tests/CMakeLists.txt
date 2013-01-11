@@ -15,4 +15,4 @@ target_link_libraries (compiz_test_window_geometry
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-compiz_discover_tests (compiz_test_window_geometry)
+compiz_discover_tests (compiz_test_window_geometry COVERAGE compiz_window_geometry)

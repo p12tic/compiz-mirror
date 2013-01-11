@@ -588,7 +588,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	/* groupDrawTabAnimation may delete the group, so better
 	   save the pointer to the next chain element */
 
-	it++;
+	++it;
 
 	if (group->mTabbingState != GroupSelection::NoTabbing)
 	    keepPainting |= group->drawTabAnimation (msSinceLastPaint);

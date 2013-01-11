@@ -50,9 +50,9 @@ struct Vector {
 };
 
 /* FIXME: Remove */
-#define DECOR_BARE   0
-#define DECOR_ACTIVE 1
-#define DECOR_NUM    2
+#define DECOR_BARE	0
+#define DECOR_ACTIVE	1
+#define DECOR_NUM	2
 
 using namespace compiz::decor;
 
@@ -276,9 +276,9 @@ class DecorWindow :
 
 	bool damageRect (bool, const CompRect &);
 
-	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
+	bool glDraw (const GLMatrix &, const GLWindowPaintAttrib &,
 		     const CompRegion &, unsigned int);
-	void glDecorate (const GLMatrix &, GLFragment::Attrib &,
+	void glDecorate (const GLMatrix &, const GLWindowPaintAttrib &,
 		         const CompRegion &, unsigned int);
 
 	void windowNotify (CompWindowNotify n);

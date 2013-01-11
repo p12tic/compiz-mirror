@@ -27,7 +27,6 @@
  */
 
 #include <core/core.h>
-#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
@@ -36,13 +35,11 @@
 
 class AddScreen :
     public PluginClassHandler <AddScreen, CompScreen>,
-    public PluginStateWriter <AddScreen>,
     public ScreenInterface,
     public AddhelperOptions
 {
     public:
 	AddScreen (CompScreen *screen);
-	~AddScreen ();
 
 	CompositeScreen *cScreen;
 
@@ -51,17 +48,6 @@ class AddScreen :
 	GLushort	    saturation;
 
 	bool	    	    isToggle;
-	
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & isToggle;
-	    ar & opacity;
-	    ar & brightness;
-	    ar & saturation;
-	};
-	
-	void postLoad ();
 
 	void
 	handleEvent (XEvent *event);
@@ -83,7 +69,6 @@ class AddScreen :
 
 class AddWindow :
     public PluginClassHandler <AddWindow, CompWindow>,
-    public PluginStateWriter <AddWindow>,
     public GLWindowInterface
 {
     public:
@@ -95,14 +80,6 @@ class AddWindow :
 	GLWindow   *gWindow;
 
 	bool dim;
-	
-	template <class Archive>
-	void serialize (Archive &ar, const unsigned int version)
-	{
-	    ar & dim;
-	};
-	
-	void postLoad ();
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,

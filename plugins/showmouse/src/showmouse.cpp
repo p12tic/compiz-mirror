@@ -54,12 +54,16 @@ Particle::Particle () :
 {
 }
 
-ParticleSystem::ParticleSystem (int n)
+ParticleSystem::ParticleSystem (int n) :
+    x (0),
+    y (0)
 {
     initParticles (n);
 }
 
-ParticleSystem::ParticleSystem ()
+ParticleSystem::ParticleSystem () :
+    x (0),
+    y (0)
 {
     initParticles (0);
 }
@@ -95,9 +99,7 @@ ParticleSystem::initParticles (int            f_numParticles)
     coords_cache.size  = 0;
     dcolors_cache.size = 0;
 
-    int i;
-
-    for (i = 0; i < f_numParticles; i++)
+    for (int i = 0; i < f_numParticles; i++)
     {
 	Particle p;
 	p.life = 0.0f;
@@ -260,7 +262,8 @@ ParticleSystem::drawParticles ()
 	    }
 	}
     }
-
+    glEnableClientState (GL_VERTEX_ARRAY);
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnableClientState (GL_COLOR_ARRAY);
 
     glTexCoordPointer (2, GL_FLOAT, 2 * sizeof (GLfloat), coords_cache.cache);
@@ -281,6 +284,8 @@ ParticleSystem::drawParticles ()
     glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), colors_cache.cache);
     glDrawArrays (GL_QUADS, 0, numActive);
     glDisableClientState (GL_COLOR_ARRAY);
+    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState (GL_VERTEX_ARRAY);
 
     glPopMatrix ();
     glColor4usv (defaultColor);
@@ -389,7 +394,7 @@ ShowmouseScreen::genNewParticles (int f_time)
     unsigned int i, j;
 
     float pos[10][2];
-    int nE       = MIN (10, optionGetEmiters ());
+    int nE       = MIN (10, optionGetEmitters ());
     float rA     = (2 * M_PI) / nE;
     int radius   = optionGetRadius ();
     for (i = 0; i < (unsigned int) nE; i++)
@@ -450,7 +455,7 @@ ShowmouseScreen::genNewParticles (int f_time)
 		part.g = colg1 - rVal * colg2;
 		part.b = colb1 - rVal * colb2;
 	    }
-	    // set transparancy
+	    // set transparency
 	    part.a = cola;
 
 	    // set gravity
@@ -629,46 +634,8 @@ ShowmouseScreen::initiate (CompAction         *action,
     return true;
 }
 
-void
-ShowmouseScreen::postLoad ()
-{
-    if (ps.particles.empty ())
-    {
-	return;
-    }
-
-    toggleFunctions (true);
-
-    // Initialize cache
-    ps.vertices_cache.cache = NULL;
-    ps.colors_cache.cache   = NULL;
-    ps.coords_cache.cache   = NULL;
-    ps.dcolors_cache.cache  = NULL;
-
-    ps.vertices_cache.count  = 0;
-    ps.colors_cache.count   = 0;
-    ps.coords_cache.count  = 0;
-    ps.dcolors_cache.count = 0;
-
-    ps.vertices_cache.size  = 0;
-    ps.colors_cache.size   = 0;
-    ps.coords_cache.size  = 0;
-    ps.dcolors_cache.size = 0;
-
-    glGenTextures (1, &ps.tex);
-    glBindTexture (GL_TEXTURE_2D, ps.tex);
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
-	          GL_RGBA, GL_UNSIGNED_BYTE, starTex);
-    glBindTexture (GL_TEXTURE_2D, 0);
-}
-
 ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
     PluginClassHandler <ShowmouseScreen, CompScreen> (screen),
-    PluginStateWriter <ShowmouseScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     active (false),
@@ -698,8 +665,6 @@ ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
 
 ShowmouseScreen::~ShowmouseScreen ()
 {
-    writeSerializedData ();
-
     ps.finiParticles ();
 
     if (pollHandle.active ())

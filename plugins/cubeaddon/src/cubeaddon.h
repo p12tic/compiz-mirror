@@ -39,15 +39,15 @@
 
 #include "cubeaddon_options.h"
 
-#define CUBEADDON_GRID_SIZE    100
-#define CAP_ELEMENTS 15
-#define CAP_NVERTEX (((CAP_ELEMENTS * (CAP_ELEMENTS + 1)) + 2) * 3)
-#define CAP_NIDX (CAP_ELEMENTS * (CAP_ELEMENTS - 1) * 4)
+const unsigned short CUBEADDON_GRID_SIZE = 100;
+const unsigned short CAP_ELEMENTS    = 15;
+const unsigned int   CAP_NVERTEX	    = (((CAP_ELEMENTS * (CAP_ELEMENTS + 1)) + 2) * 3);
+const unsigned int   CAP_NIDX	    = (CAP_ELEMENTS * (CAP_ELEMENTS - 1) * 4);
 
-#define CAP_NIMGVERTEX (((CAP_ELEMENTS + 1) * (CAP_ELEMENTS + 1)) * 5)
-#define CAP_NIMGIDX (CAP_ELEMENTS * CAP_ELEMENTS * 4)
+const unsigned int   CAP_NIMGVERTEX  = (((CAP_ELEMENTS + 1) * (CAP_ELEMENTS + 1)) * 5);
+const unsigned int   CAP_NIMGIDX	    = (CAP_ELEMENTS * CAP_ELEMENTS * 4);
 
-#define RAD2I1024 162.9746617
+const float RAD2I1024 = 162.9746617f;
 
 class CubeaddonScreen :
     public CompositeScreenInterface,
@@ -76,11 +76,13 @@ class CubeaddonScreen :
 	void cubePaintTop (const GLScreenPaintAttrib &sAttrib,
 			   const GLMatrix            &transform,
 			   CompOutput                *output,
-			   int                       size);
+			   int                       size,
+			   const GLVector            &normal);
 	void cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
 			      const GLMatrix            &transform,
 			      CompOutput                *output,
-			      int                       size);
+			      int                       size,
+			      const GLVector            &normal);
 	bool cubeCheckOrientation (const GLScreenPaintAttrib &sAttrib,
 				   const GLMatrix            &transform,
 				   CompOutput                *output,
@@ -165,12 +167,14 @@ class CubeaddonWindow :
     public:
 	CubeaddonWindow (CompWindow *);
 
-	bool glDraw (const GLMatrix&, GLFragment::Attrib&,
+	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
 		     const CompRegion&, unsigned int);
 	void glAddGeometry (const GLTexture::MatrixList&,
 			    const CompRegion&, const CompRegion&,
 			    unsigned int, unsigned int);
-	void glDrawTexture (GLTexture *, GLFragment::Attrib& attrib,
+	void glDrawTexture (GLTexture *,
+			    const GLMatrix &matrix,
+			    const GLWindowPaintAttrib& attrib,
 			    unsigned int);
 
 	CompWindow      *window;

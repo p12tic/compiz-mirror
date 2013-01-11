@@ -2,7 +2,7 @@
  *
  * GSettings libccs backend
  *
- * gconf-integration.c
+ * gsettings.h
  *
  * Copyright (c) 2011 Canonical Ltd
  *
@@ -34,87 +34,13 @@
 #ifndef _COMPIZCONFIG_BACKEND_GSETTINGS_GSETTINGS_H
 #define _COMPIZCONFIG_BACKEND_GSETTINGS_GSETTINGS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include <string.h>
-#include <dirent.h>
-
 #include <ccs.h>
 #include <ccs-backend.h>
 
 #include <gio/gio.h>
 
-#include "gsettings_shared.h"
-
-#define BUFSIZE 512
-
-#define NUM_WATCHED_DIRS 3
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#endif
-
-typedef enum {
-    OptionInt,
-    OptionBool,
-    OptionKey,
-    OptionString,
-    OptionSpecial,
-} SpecialOptionType;
-
-char *currentProfile;
-
-Bool readInit (CCSContext * context);
-void readSetting (CCSContext * context, CCSSetting * setting);
-Bool readOption (CCSSetting * setting);
-Bool writeInit (CCSContext * context);
-void writeOption (CCSSetting *setting);
-
-#ifdef USE_GCONF
-
-#include <gconf/gconf.h>
-#include <gconf/gconf-client.h>
-#include <gconf/gconf-value.h>
-
-GConfClient *client;
-guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
-
-typedef struct _SpecialOptionGConf {
-    const char*       settingName;
-    const char*       pluginName;
-    Bool	      screen;
-    const char*       gnomeName;
-    SpecialOptionType type;
-} SpecialOptionGConf;
-
-Bool
-isGConfIntegratedOption (CCSSetting *setting,
-			 int	    *index);
-
-void
-gnomeGConfValueChanged (GConfClient *client,
-			guint       cnxn_id,
-			GConfEntry  *entry,
-			gpointer    user_data);
-
-void
-initGConfClient (CCSContext *context);
-
-void
-finiGConfClient (void);
-
-Bool
-readGConfIntegratedOption (CCSContext *context,
-			   CCSSetting *setting,
-			   int	      index);
-
-void
-writeGConfIntegratedOption (CCSContext *context,
-			    CCSSetting *setting,
-			    int	       index);
-
 #endif
 
 #endif

@@ -221,11 +221,11 @@ SvgWindow::~SvgWindow ()
 
 bool
 SvgWindow::glDraw (const GLMatrix     &transform,
-		   GLFragment::Attrib &fragment,
+		   const GLWindowPaintAttrib &attrib,
 		   const CompRegion   &region,
 		   unsigned int       mask)
 {
-    bool status = gWindow->glDraw (transform, fragment, region, mask);
+    bool status = gWindow->glDraw (transform, attrib, region, mask);
 
     if (!status)
 	return status;
@@ -236,7 +236,6 @@ SvgWindow::glDraw (const GLMatrix     &transform,
     if (context && reg.numRects ())
     {
 	GLTexture::MatrixList matrix (1);
-	unsigned int          i, j;
 	int		      x1, y1, x2, y2;
 	CompRect              rect = context->box.boundingRect ();
 
@@ -247,17 +246,19 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 
 	rect.setGeometry (x1, y1, x2 - x1, y2 - y1);
 
-	for (i = 0; i < context->texture[0].textures.size (); i++)
+	for (unsigned int i = 0; i < context->texture[0].textures.size (); i++)
 	{
 	    matrix[0] = context->texture[0].matrices[i];
 
-	    gWindow->geometry ().reset ();
+	    gWindow->vertexBuffer ()->begin ();
 	    gWindow->glAddGeometry (matrix, context->box, reg);
+	    gWindow->vertexBuffer ()->end ();
 
 	    if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
 		mask |= PAINT_WINDOW_BLEND_MASK;
 
-	    gWindow->glDrawTexture (context->texture[0].textures[i], fragment, mask);
+	    gWindow->glDrawTexture (context->texture[0].textures[i], transform,
+	                            attrib, mask);
 
 	    if (rect.width () > 0 && rect.height () > 0)
 	    {
@@ -311,7 +312,7 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 		    }
 		}
 
-		for (j = 0; j < context->texture[1].textures.size (); j++)
+		for (unsigned int j = 0; j < context->texture[1].textures.size (); j++)
 		{
 		    GLTexture::Filter saveFilter;
 		    CompRegion        r (rect);
@@ -321,11 +322,12 @@ SvgWindow::glDraw (const GLMatrix     &transform,
 		    saveFilter = gScreen->filter (SCREEN_TRANS_FILTER);
 		    gScreen->setFilter (SCREEN_TRANS_FILTER, GLTexture::Good);
 
-		    gWindow->geometry ().reset ();
+		    gWindow->vertexBuffer ()->begin ();
 		    gWindow->glAddGeometry (matrix, r, reg);
+		    gWindow->vertexBuffer ()->end ();
 
 		    gWindow->glDrawTexture (context->texture[1].textures[j],
-					    fragment, mask);
+					    transform, attrib, mask);
 
 		    gScreen->setFilter (SCREEN_TRANS_FILTER, saveFilter);
 		}
@@ -512,7 +514,6 @@ SvgWindow::initTexture (SvgSource  *source,
 			SvgTexture &texture,
 			CompSize   size)
 {
-    cairo_surface_t *surface;
     Display         *dpy = screen->dpy ();
 
     texture.size    = size;
@@ -521,6 +522,7 @@ SvgWindow::initTexture (SvgSource  *source,
 
     if (size.width () && size.height ())
     {
+	cairo_surface_t *surface;
 	XWindowAttributes attr;
 	XGetWindowAttributes (dpy, window->id (), &attr);
 

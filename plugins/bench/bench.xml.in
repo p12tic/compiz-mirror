@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="bench" useBcop="true">
 	<_short>Benchmark</_short>
@@ -50,14 +50,14 @@
 		    <option name="position_x" type="int">
 			<_short>X position</_short>
 			<_long>X Position of benchmark window</_long>
-			<default>0</default>
+			<default>100</default>
 			<min>0</min>
 			<max>4096</max>
 		    </option>
 		    <option name="position_y" type="int">
 			<_short>Y position</_short>
 			<_long>Y Position of benchmark window</_long>
-			<default>0</default>
+			<default>50</default>
 			<min>0</min>
 			<max>4096</max>
 		    </option>

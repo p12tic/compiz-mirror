@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="scaleaddon" useBcop="true">
 	<_short>Scale Addons</_short>

@@ -983,7 +983,7 @@ GroupSelection::finishTabbing ()
     /* Move all windows to their animation target position */
     for (CompWindowList::iterator it = mWindows.begin ();
 	 it != mWindows.end ();
-	 it++)
+	 ++it)
     {
 	CompWindow *w = *it;
 	GROUP_WINDOW (w);
@@ -1586,7 +1586,7 @@ GroupSelection::tabGroup (CompWindow *main)
     /* Slot is initialized after GroupTabBar is created */
     gs->changeTab (gw->mSlot, GroupTabBar::RotateUncertain);
 
-    /* Set up tab bar dimentions */
+    /* Set up tab bar dimensions */
     mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
@@ -1850,11 +1850,11 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	/* Count from left to the current top tab */
 	if (group->mTabBar->mTopTab)
 	    for (; (*it) && ((*it) != group->mTabBar->mTopTab);
-		 it++, distanceOld++);
+		 ++it, distanceOld++);
 
 	/* Count from left to the requested top tab */
 	for (it = group->mTabBar->mSlots.begin (); (*it) && ((*it) != topTab);
-	     it++, distanceNew++);
+	     ++it, distanceNew++);
 
 	if (distanceNew < distanceOld)
 	    group->mTabBar->mChangeAnimationDirection = 1;   /*left */
@@ -2187,7 +2187,7 @@ GroupTabBar::damageRegion ()
        properly - however the best way would be if slot->mRegion was
        sized including the border */
 
-#define DAMAGE_BUFFER 20
+static const unsigned short DAMAGE_BUFFER = 20;
 
     /* If there is a front slot in this bar, then we need to damage
      * areas just outside where the slot might be sitting */

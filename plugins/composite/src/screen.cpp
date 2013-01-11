@@ -45,6 +45,8 @@
 
 #include <core/timer.h>
 
+template class WrapableInterface<CompositeScreen, CompositeScreenInterface>;
+
 static const int FALLBACK_REFRESH_RATE = 60;   /* if all else fails */
 
 CompWindow *lastDamagedWindow = 0;
@@ -203,12 +205,12 @@ CompositeScreen::damageEvent ()
 }
 
 
+template class PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>;
+
 CompositeScreen::CompositeScreen (CompScreen *s) :
     PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI> (s),
     priv (new PrivateCompositeScreen (this))
 {
-    int	compositeMajor, compositeMinor;
-
     if (!XQueryExtension (s->dpy (), COMPOSITE_NAME,
 			  &priv->compositeOpcode,
 			  &priv->compositeEvent,
@@ -219,6 +221,8 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 	setFailed ();
 	return;
     }
+
+    int	compositeMajor, compositeMinor;
 
     XCompositeQueryVersion (s->dpy (), &compositeMajor, &compositeMinor);
     if (compositeMajor == 0 && compositeMinor < 2)
@@ -275,12 +279,27 @@ CompositeScreen::~CompositeScreen ()
 
 PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     cScreen (cs),
+    compositeEvent (0),
+    compositeError (0),
+    compositeOpcode (0),
+    damageEvent (0),
+    damageError (0),
+    fixesEvent (0),
+    fixesError (0),
+    fixesVersion (0),
+    shapeExtension (false),
+    shapeEvent (0),
+    shapeError (0),
+    randrExtension (false),
+    randrEvent (0),
+    randrError (0),
     damageMask (COMPOSITE_SCREEN_DAMAGE_ALL_MASK),
     overlay (None),
     output (None),
     exposeRects (),
     windowPaintOffset (0, 0),
     overlayWindowCount (0),
+    outputShapeChanged (false),
     redrawTime (1000 / FALLBACK_REFRESH_RATE),
     optimalRedrawTime (1000 / FALLBACK_REFRESH_RATE),
     scheduled (false),
@@ -426,6 +445,8 @@ CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
 
     priv->pHnd = pHnd;
 
+    priv->detectRefreshRate ();
+
     showOutputWindow ();
 
     return true;
@@ -455,6 +476,8 @@ CompositeScreen::unregisterPaintHandler ()
 
     priv->pHnd = NULL;
     priv->paintTimer.stop ();
+
+    priv->detectRefreshRate ();
 
     hideOutputWindow ();
 }
@@ -543,6 +566,8 @@ CompositeScreen::showOutputWindow ()
 	XFixesDestroyRegion (dpy, region);
 
 	damageScreen ();
+
+	priv->outputShapeChanged = true;
     }
 }
 
@@ -573,7 +598,7 @@ CompositeScreen::updateOutputWindow ()
 
 	for (CompWindowList::reverse_iterator rit =
 	     screen->windows ().rbegin ();
-	     rit != screen->windows ().rend (); rit++)
+	     rit != screen->windows ().rend (); ++rit)
 	    if (CompositeWindow::get (*rit)->overlayWindow ())
 	    {
 		tmpRegion -= (*rit)->region ();
@@ -591,8 +616,16 @@ CompositeScreen::updateOutputWindow ()
 				    0, 0, region);
 
 	XFixesDestroyRegion (dpy, region);
+
+	priv->outputShapeChanged = true;
     }
 
+}
+
+bool
+CompositeScreen::outputWindowChanged () const
+{
+    return priv->outputShapeChanged;
 }
 
 void
@@ -639,7 +672,10 @@ CompositeScreen::windowPaintOffset ()
 void
 PrivateCompositeScreen::detectRefreshRate ()
 {
-    if (optionGetDetectRefreshRate ())
+    const bool forceRefreshRate = (pHnd ? pHnd->requiredForcedRefreshRate () : false);
+    const bool detect = optionGetDetectRefreshRate () && !forceRefreshRate;
+
+    if (detect)
     {
 	CompString        name;
 	CompOption::Value value;
@@ -770,7 +806,7 @@ CompositeScreen::handlePaintTimeout ()
 	{
 	    for (CompWindowList::reverse_iterator rit =
 		 screen->windows ().rbegin ();
-	         rit != screen->windows ().rend (); rit++)
+		 rit != screen->windows ().rend (); ++rit)
 	    {
 		CompWindow *w = (*rit);
 
@@ -800,7 +836,7 @@ CompositeScreen::handlePaintTimeout ()
 
 	Display *dpy = screen->dpy ();
 	std::map<Damage, XRectangle>::iterator d = priv->damages.begin ();
-	for (; d != priv->damages.end (); d++)
+	for (; d != priv->damages.end (); ++d)
 	{
 	    XserverRegion sub = XFixesCreateRegion (dpy, &d->second, 1);
 	    if (sub != None)
@@ -832,6 +868,8 @@ CompositeScreen::handlePaintTimeout ()
 
 
 	donePaint ();
+
+	priv->outputShapeChanged = false;
 
 	foreach (CompWindow *w, screen->windows ())
 	{

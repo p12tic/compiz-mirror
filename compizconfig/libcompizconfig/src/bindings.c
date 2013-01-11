@@ -38,14 +38,7 @@
 #include <X11/Xlib.h>
 
 #include <ccs.h>
-
-#define CompAltMask        (1 << 16)
-#define CompMetaMask       (1 << 17)
-#define CompSuperMask      (1 << 18)
-#define CompHyperMask      (1 << 19)
-#define CompModeSwitchMask (1 << 20)
-#define CompNumLockMask    (1 << 21)
-#define CompScrollLockMask (1 << 22)
+#include <ccs-modifier-list-inl.h>
 
 #define SCREEN_EDGE_LEFT	(1 << 0)
 #define SCREEN_EDGE_RIGHT	(1 << 1)
@@ -56,15 +49,10 @@
 #define SCREEN_EDGE_BOTTOMLEFT	(1 << 6)
 #define SCREEN_EDGE_BOTTOMRIGHT (1 << 7)
 
-struct _Modifier
-{
-    char *name;
-    int  modifier;
-}
-
-modifierList[] = {
+struct _Modifier modifierList[] = {
     { "<Shift>",      ShiftMask		 },
     { "<Control>",    ControlMask	 },
+    { "<Primary>",    ControlMask	 },
     { "<Mod1>",	      Mod1Mask		 },
     { "<Mod2>",	      Mod2Mask		 },
     { "<Mod3>",	      Mod3Mask		 },
@@ -76,8 +64,6 @@ modifierList[] = {
     { "<Hyper>",      CompHyperMask	 },
     { "<ModeSwitch>", CompModeSwitchMask },
 };
-
-#define N_MODIFIERS (sizeof (modifierList) / sizeof (struct _Modifier))
 
 struct _Edge {
     char *name;
@@ -98,9 +84,15 @@ edgeList[] = {
 
 #define N_EDGES (sizeof (edgeList) / sizeof (edgeList[0]))
 
+unsigned int
+ccsInternalUtilNumModifiers ()
+{
+    return sizeof (modifierList) / sizeof (struct _Modifier);
+}
+
 static char *
-stringAppend (char *s,
-	      char *a)
+stringAppend (char       *s,
+	      const char *a)
 {
     char *r;
     int  len;
@@ -133,16 +125,48 @@ stringAppend (char *s,
     return s;
 }
 
+void
+ccsAddKeybindingMaskToString (char         **bindingString,
+			      unsigned int matchBindingMask,
+			      unsigned int *addedBindingMask,
+			      unsigned int addBindingMask,
+			      const char   *addBindingString)
+{
+    if (addBindingMask & matchBindingMask &&
+	!(*addedBindingMask & addBindingMask))
+    {
+	*bindingString = stringAppend (*bindingString, addBindingString);
+	*addedBindingMask |= addBindingMask;
+    }
+}
+
+
+void
+ccsAddStringToKeybindingMask (unsigned int *bindingMask,
+			      const char   *bindingString,
+			      unsigned int addBindingMask,
+			      const char   *addBindingString)
+{
+    if (strcasestr (bindingString, addBindingString))
+    {
+	*bindingMask |= addBindingMask;
+    }
+}
+
 char *
 ccsModifiersToString (unsigned int modMask)
 {
-    char *binding = NULL;
+    char         *binding = NULL;
+    unsigned int addedBindings = 0;
     int  i;
 
-    for (i = 0; i < N_MODIFIERS; i++)
+    for (i = 0; i < ccsInternalUtilNumModifiers (); i++)
     {
-	if (modMask & modifierList[i].modifier)
-	    binding = stringAppend (binding, modifierList[i].name);
+	ccsAddKeybindingMaskToString (&binding,
+				      modMask,
+				      &addedBindings,
+				      modifierList[i].modifier,
+				      modifierList[i].name);
     }
 
     return binding;
@@ -213,15 +237,15 @@ ccsButtonBindingToString (CCSSettingButtonValue *button)
 {
     char *binding;
     char *edges;
-    char buttonStr[256];
 
     edges = ccsEdgesToModString (button->edgeMask);
     binding = stringAppend (edges, ccsModifiersToString (button->buttonModMask));
 
     if (button->button)
     {
+	char buttonStr[256];
         snprintf (buttonStr, 256, "Button%d", button->button);
-        binding = stringAppend (binding, buttonStr);
+	binding = stringAppend (binding, buttonStr);
     }
 
     if (!binding)
@@ -235,10 +259,12 @@ ccsStringToModifiers (const char *binding)
     unsigned int mods = 0;
     int		 i;
 
-    for (i = 0; i < N_MODIFIERS; i++)
+    for (i = 0; i < ccsInternalUtilNumModifiers (); i++)
     {
-	if (strcasestr (binding, modifierList[i].name))
-	    mods |= modifierList[i].modifier;
+	ccsAddStringToKeybindingMask (&mods,
+				      binding,
+				      modifierList[i].modifier,
+				      modifierList[i].name);
     }
 
     return mods;

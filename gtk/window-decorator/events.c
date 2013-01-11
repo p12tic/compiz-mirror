@@ -23,7 +23,8 @@
  *        Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "gtk-window-decorator.h" 
+#include "gtk-window-decorator.h"
+#include "gwd-settings-interface.h"
 
 void
 move_resize_window (WnckWindow *win,
@@ -85,8 +86,11 @@ common_button_event (WnckWindow *win,
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[button];
+    gboolean use_tooltips = FALSE;
 
-    if (settings->use_tooltips)
+    g_object_get (settings, "use-tooltips", &use_tooltips, NULL);
+
+    if (use_tooltips)
 	handle_tooltip_event (win, gtkwd_event, gtkwd_type, state, tooltip);
 
     if (d->frame_window && gtkwd_type == GEnterNotify)
@@ -417,7 +421,11 @@ void
 handle_mouse_wheel_title_event (WnckWindow   *win,
 				unsigned int button)
 {
-    switch (settings->wheel_action) {
+    gint wheel_action = WHEEL_ACTION_NONE;
+
+    g_object_get (settings, "mouse-wheel-action", &wheel_action, NULL);
+
+    switch (wheel_action) {
     case WHEEL_ACTION_SHADE:
 	if (button == 4)
 	{
@@ -440,11 +448,9 @@ title_event (WnckWindow       *win,
 	     decor_event      *gtkwd_event,
 	     decor_event_type gtkwd_type)
 {
-    static int	  last_button_num = 0;
     static Window last_button_xwindow = None;
     static Time	  last_button_time = 0;
-    static int	  last_button_x = 0;
-    static int	  last_button_y = 0;
+    gint	  titlebar_action = 0;
 
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
 
@@ -460,13 +466,17 @@ title_event (WnckWindow       *win,
 
     if (gtkwd_event->button == 1)
     {
+	static int last_button_num = 0;
+	static int last_button_x = 0;
+	static int last_button_y = 0;
 	if (gtkwd_event->button == last_button_num		        &&
 	    gtkwd_event->window == last_button_xwindow		        &&
 	    gtkwd_event->time < last_button_time + double_click_timeout &&
 	    dist (gtkwd_event->x, gtkwd_event->y,
 		  last_button_x, last_button_y) < DOUBLE_CLICK_DISTANCE)
 	{
-	    handle_title_button_event (win, settings->double_click_action,
+	    g_object_get (settings, "titlebar-double-click-action", &titlebar_action, NULL);
+	    handle_title_button_event (win, titlebar_action,
 				       gtkwd_event);
 
 	    last_button_num	= 0;
@@ -490,12 +500,14 @@ title_event (WnckWindow       *win,
     }
     else if (gtkwd_event->button == 2)
     {
-	handle_title_button_event (win, settings->middle_click_action,
+	g_object_get (settings, "titlebar-middle-click-action", &titlebar_action, NULL);
+	handle_title_button_event (win, titlebar_action,
 				   gtkwd_event);
     }
     else if (gtkwd_event->button == 3)
     {
-	handle_title_button_event (win, settings->right_click_action,
+	g_object_get (settings, "titlebar-right-click-action", &titlebar_action, NULL);
+	handle_title_button_event (win, titlebar_action,
 				   gtkwd_event);
     }
     else if (gtkwd_event->button == 4 ||
@@ -511,7 +523,7 @@ frame_common_event (WnckWindow       *win,
 		    decor_event      *gtkwd_event,
 		    decor_event_type gtkwd_type)
 {
-
+    gint    titlebar_action = 0;
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
 
     if (d->frame_window && gtkwd_type == GEnterNotify)
@@ -564,11 +576,13 @@ frame_common_event (WnckWindow       *win,
 	restack_window (win, Above);
 	break;
     case 2:
-	handle_title_button_event (win, settings->middle_click_action,
+	g_object_get (settings, "titlebar-middle-click-action", &titlebar_action, NULL);
+	handle_title_button_event (win, titlebar_action,
 				   gtkwd_event);
 	break;
     case 3:
-	handle_title_button_event (win, settings->right_click_action,
+	g_object_get (settings, "titlebar-right-click-action", &titlebar_action, NULL);
+	handle_title_button_event (win, titlebar_action,
 				   gtkwd_event);
 	break;
     }
@@ -982,7 +996,7 @@ event_filter_func (GdkXEvent *gdkxevent,
 	    
 	    if (screen)
 	    {
-		if (shadow_property_changed (screen))
+		if (gwd_process_decor_shadow_property_update ())
 		    decorations_changed (screen);
 	    }
 	}
@@ -1081,7 +1095,14 @@ event_filter_func (GdkXEvent *gdkxevent,
 	}
 	else if (xevent->xclient.message_type == decor_delete_pixmap_atom)
 	{
-	    g_hash_table_remove (destroyed_pixmaps_table, GINT_TO_POINTER (xevent->xclient.data.l[0]));
+	    gconstpointer key = GINT_TO_POINTER (xevent->xclient.data.l[0]);
+	    decor_t *d = g_hash_table_lookup (destroyed_pixmaps_table, key);
+
+	    if (d != NULL)
+	    {
+		g_hash_table_remove (d->old_pixmaps, key);
+		g_hash_table_remove (destroyed_pixmaps_table, key);
+	    }
 	}
     default:
 	break;

@@ -27,6 +27,9 @@
 
 COMPIZ_PLUGIN_20090315 (copytex, CopytexPluginVTable)
 
+const int MAX_SUB_TEX = 2048;
+const unsigned int SHM_SIZE = MAX_SUB_TEX * MAX_SUB_TEX * 4;
+
 static GLTexture::Matrix _identity_matrix = {
     1.0f, 0.0f,
     0.0f, 1.0f,
@@ -34,10 +37,11 @@ static GLTexture::Matrix _identity_matrix = {
 };
 
 GLTexture::List
-CopyPixmap::bindPixmapToTexture (Pixmap pixmap,
-				 int width,
-				 int height,
-				 int depth)
+CopyPixmap::bindPixmapToTexture (Pixmap                       pixmap,
+				 int                          width,
+				 int                          height,
+				 int                          depth,
+				 compiz::opengl::PixmapSource source)
 {
     if (depth != 32 && depth != 24)
 	return GLTexture::List ();
@@ -112,6 +116,14 @@ CopyTexture::CopyTexture (CopyPixmap::Ptr cp, CompRect dim) :
     GLenum            target;
     GLTexture::Matrix matrix = _identity_matrix;
 
+#ifdef USE_GLES
+    target = GL_TEXTURE_2D;
+    matrix.xx = 1.0f / dim.width ();
+    matrix.yy = 1.0f / dim.height ();
+    matrix.x0 = -dim.x () * matrix.xx;
+    matrix.y0 = -dim.y () * matrix.yy;
+#else
+
     if (GL::textureNonPowerOfTwo ||
 	(POWER_OF_TWO (dim.width ()) && POWER_OF_TWO (dim.height ())))
     {
@@ -129,6 +141,7 @@ CopyTexture::CopyTexture (CopyPixmap::Ptr cp, CompRect dim) :
 	matrix.x0 = -dim.x ();
 	matrix.y0 = -dim.y ();
     }
+#endif
 
     setData (target, matrix, false);
     setGeometry (dim.x1 (), dim.y1 (), dim.x2 () - dim.x1 (), dim.y2 () - dim.y1 ());

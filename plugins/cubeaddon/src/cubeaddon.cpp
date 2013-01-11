@@ -27,6 +27,8 @@
 
 COMPIZ_PLUGIN_20090315 (cubeaddon, CubeaddonPluginVTable);
 
+unsigned short COLORMAX = 0xffff;
+
 /*
  * Initiate a CubeCap
  */
@@ -42,6 +44,9 @@ CubeaddonScreen::CubeCap::CubeCap ()
 void
 CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
 {
+    if (mFiles.empty ())
+	return;
+
     CompSize tSize;
     float    xScale, yScale;
 
@@ -50,9 +55,6 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
     mTexture.clear ();
 
     mLoaded = false;
-
-    if (mFiles.empty ())
-	return;
 
     mCurrent = mCurrent % mFiles.size ();
 
@@ -108,10 +110,13 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
     {
 	if (GL::textureBorderClamp)
 	{
+#ifndef USE_GLES
+	    /* FIXME: Simulate with shaders */
 	    glTexParameteri (mTexture[0]->target (), GL_TEXTURE_WRAP_S,
 			     GL_CLAMP_TO_BORDER);
 	    glTexParameteri (mTexture[0]->target (), GL_TEXTURE_WRAP_T,
 			     GL_CLAMP_TO_BORDER);
+#endif
 	}
 	else
 	{
@@ -203,42 +208,62 @@ CubeaddonScreen::drawBasicGround ()
 {
     float i;
 
-    glPushMatrix ();
-
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glLoadIdentity ();
-    glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
-
     i = optionGetIntensity () * 2;
 
-    glBegin (GL_QUADS);
-    glColor4f (0.0, 0.0, 0.0, MAX (0.0, 1.0 - i) );
-    glVertex2f (0.5, 0.0);
-    glVertex2f (-0.5, 0.0);
-    glColor4f (0.0, 0.0, 0.0, MIN (1.0, 1.0 - (i - 1.0) ) );
-    glVertex2f (-0.5, -0.5);
-    glVertex2f (0.5, -0.5);
-    glEnd ();
+    GLMatrix transform;
+    transform.translate (0.0f, 0.0f, -DEFAULT_Z_CAMERA);
+
+    GLfloat ground1Vertices[] =
+    {
+	-0.5, -0.5, 0.0,
+	0.5, -0.5, 0.0,
+	-0.5, 0.0, 0.0,
+	0.5, 0.0, 0.0
+    };
+
+    unsigned short maxG1Color = MAX (0.0f, 1.0f - i) * 65535;
+    unsigned short minG1Color = MIN (1.0, 1.0 - (i - 1.0)) * 65535;
+
+    GLushort ground1Colors[] =
+    {
+	0, 0, 0, maxG1Color,
+	0, 0, 0, maxG1Color,
+	0, 0, 0, minG1Color,
+	0, 0, 0, minG1Color
+    };
+
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    streamingBuffer->addVertices (4, ground1Vertices);
+    streamingBuffer->addColors (4, ground1Colors);
+    if (streamingBuffer->end ())
+	streamingBuffer->render (transform);
 
     if (optionGetGroundSize () > 0.0)
     {
-	glBegin (GL_QUADS);
-	glColor4usv (optionGetGroundColor1 () );
-	glVertex2f (-0.5, -0.5);
-	glVertex2f (0.5, -0.5);
-	glColor4usv (optionGetGroundColor2 () );
-	glVertex2f (0.5, -0.5 + optionGetGroundSize () );
-	glVertex2f (-0.5, -0.5 + optionGetGroundSize () );
-	glEnd ();
-    }
+	GLfloat ground2Vertices[] =
+	{
+	    -0.5, -0.5, 0.0,
+	    0.5, -0.5, 0.0,
+	    -0.5, static_cast <GLfloat> (-0.5 + optionGetGroundSize ()), 0.0,
+	    0.5, static_cast <GLfloat> (-0.5 + optionGetGroundSize ()), 0.0
+	};
 
-    glColor4usv (defaultColor);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+	streamingBuffer->addColors (1, optionGetGroundColor1 ());
+	streamingBuffer->addColors (1, optionGetGroundColor1 ());
+	streamingBuffer->addColors (1, optionGetGroundColor2 ());
+	streamingBuffer->addColors (1, optionGetGroundColor2 ());
+	streamingBuffer->addVertices (4, ground2Vertices);
+	if (streamingBuffer->end ())
+	    streamingBuffer->render (transform);
+    }
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_BLEND);
-    glPopMatrix ();
 }
 
 bool 
@@ -400,7 +425,6 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 
     opacity = cubeScreen->desktopOpacity () * color[3] / 0xffff;
 
-    glPushMatrix ();
     glEnable (GL_BLEND);
 
     if (top)
@@ -414,31 +438,29 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 	cAspect = optionGetBottomAspect ();
     }
 
-
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-
-    if (optionGetDeformation () == DeformationSphere &&
-        optionGetDeformCaps ())
-	glEnableClientState (GL_NORMAL_ARRAY);
-
-    glVertexPointer (3, GL_FLOAT, 0, mCapFill);
-
     glEnable(GL_CULL_FACE);
 
     for (l = 0; l < ((cubeScreen->invert () == 1) ? 2 : 1); l++)
     {
-	if (optionGetDeformation () == DeformationSphere &&
-	    optionGetDeformCaps ())
-	{
-	    glNormalPointer (GL_FLOAT, 0, (l == 0) ? mCapFill : mCapFillNorm);
-	}
-	else
-	    glNormal3f (0.0, (l == 0) ? 1.0 : -1.0, 0.0);
-
 	glCullFace(((l == 1) ^ top) ? cullInv : cullNorm);
 
 	for (i = 0; i < size; i++)
 	{
+	    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+
+	    streamingBuffer->begin (GL_TRIANGLE_FAN);
+
+	    if (optionGetDeformation () == DeformationSphere &&
+		optionGetDeformCaps ())
+	    {
+		streamingBuffer->addNormals (CAP_NVERTEX / 3, (l == 0) ? mCapFill : mCapFillNorm);
+	    }
+	    else
+	    {
+		GLfloat nonDeformNormals[] = { 0.0f, (l == 0) ? 1.0f : -1.0f, 0.0f };
+		streamingBuffer->addNormals (1, nonDeformNormals);
+	    }
+
 	    sa = sAttrib;
 	    sTransform = transform;
 	    if (cubeScreen->invert () == 1)
@@ -458,33 +480,76 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 
 	    gScreen->glApplyTransform (sa, output, &sTransform);
 
-	    glLoadMatrixf (sTransform.getMatrix ());
-	    glTranslatef (cubeScreen->outputXOffset (), -cubeScreen->outputYOffset (), 0.0f);
-	    glScalef (cubeScreen->outputXScale (), cubeScreen->outputYScale (), 1.0f);
+	    GLMatrix cTransform (sTransform);
+	    cTransform.translate (cubeScreen->outputXOffset (), -cubeScreen->outputYOffset (), 0.0f);
+	    cTransform.scale (cubeScreen->outputXScale (), cubeScreen->outputYScale (), 1.0f);
+	    cTransform.scale (1.0, cInv, 1.0);
 
-	    glScalef (1.0, cInv, 1.0);
+	    float normalizedOpacity = opacity / static_cast <float> (OPAQUE);
+	    float premultColors[] =
+	    {
+		(color[0] / OPAQUE) * normalizedOpacity,
+		(color[1] / OPAQUE) * normalizedOpacity,
+		(color[2] / OPAQUE) * normalizedOpacity
+	    };
 
-	    glColor4us (color[0] * opacity / 0xffff,
-		color[1] * opacity / 0xffff,
-		color[2] * opacity / 0xffff,
-		opacity);
+	    streamingBuffer->color4f (premultColors[0],
+				      premultColors[1],
+				      premultColors[2],
+				      normalizedOpacity);
 
-	    glDrawArrays (GL_TRIANGLE_FAN, 0, CAP_ELEMENTS + 2);
+	    streamingBuffer->addVertices (CAP_ELEMENTS + 2, mCapFill);
+	    if (streamingBuffer->end ())
+		streamingBuffer->render (cTransform);
+
 	    if (optionGetDeformation () == DeformationSphere &&
 	        optionGetDeformCaps ())
-		glDrawElements (GL_QUADS, CAP_NIDX, GL_UNSIGNED_SHORT,
-				mCapFillIdx);
+	    {
+#ifndef USE_GLES
+		streamingBuffer->begin (GL_QUADS);
+		streamingBuffer->color4f (premultColors[0],
+					  premultColors[1],
+					  premultColors[2],
+					  normalizedOpacity);
+		streamingBuffer->addNormals (CAP_NVERTEX / 3, (l == 0) ? mCapFill : mCapFillNorm);
+
+		GLushort *idx = mCapFillIdx;
+		GLfloat  capVertices[CAP_NIDX * 3];
+		GLfloat  *capVerticesPtr = capVertices;
+
+		for (unsigned int i = 0; i < CAP_NIDX; ++i)
+		{
+		    unsigned int   vertexIndex = idx[i] * 3;
+
+		    *(capVerticesPtr++) = (mCapFill[vertexIndex]);
+		    *(capVerticesPtr++) = (mCapFill[vertexIndex + 1]);
+		    *(capVerticesPtr++) = (mCapFill[vertexIndex + 2]);
+		}
+
+		streamingBuffer->addVertices (CAP_NIDX, &capVertices[0]);
+
+		if (streamingBuffer->end ())
+		    streamingBuffer->render (cTransform);
+#endif
+	    }
 
 	    if (cap->mLoaded)
 	    {
-		float    s_gen[4], t_gen[4];
+		GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 		GLMatrix texMat = cap->mTexMat;
 
 		if (cubeScreen->invert () != 1)
 		    texMat.scale (-1.0, 1.0, 1.0);
 
-		glColor4us (cubeScreen->desktopOpacity (), cubeScreen->desktopOpacity (),
-			    cubeScreen->desktopOpacity (), cubeScreen->desktopOpacity ());
+		streamingBuffer->begin (GL_TRIANGLE_FAN);
+
+		float normalizedOpacity = cubeScreen->desktopOpacity () / OPAQUE;
+
+		streamingBuffer->color4f (normalizedOpacity,
+					  normalizedOpacity,
+					  normalizedOpacity,
+					  normalizedOpacity);
+
 	        cap->mTexture[0]->enable (GLTexture::Good);
 
 		if (cAspect)
@@ -515,61 +580,120 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 		
 		texMat.rotate (-(360.0f / size) * i, 0.0, 0.0, 1.0);
 
-		s_gen[0] = texMat[0];
-		s_gen[1] = texMat[8];
-		s_gen[2] = texMat[4];
-		s_gen[3] = texMat[12];
-		t_gen[0] = texMat[1];
-		t_gen[1] = texMat[9];
-		t_gen[2] = texMat[5];
-		t_gen[3] = texMat[13];
+		GLVector sGen (texMat[0], texMat[8], texMat[4], texMat[12]);
+		GLVector tGen (texMat[1], texMat[9], texMat[5], texMat[13]);
 
-		glTexGenfv(GL_T, GL_OBJECT_PLANE, t_gen);
-		glTexGenfv(GL_S, GL_OBJECT_PLANE, s_gen);
+		/* Generate texCoords for the top section of the
+		 * cap */
+		GLfloat texCoords[(CAP_ELEMENTS + 2) * 2];
+		GLfloat *texCoordsPtr = texCoords;
 
-		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+		for (unsigned int i = 0; i < CAP_ELEMENTS + 2; i++)
+		{
+		    GLVector v (mCapFill[i * 3],
+				mCapFill[i * 3 + 1],
+				mCapFill[i * 3 + 2],
+				1.0f);
+		    float s = v * sGen;
+		    float t = v * tGen;
 
-		glEnable(GL_TEXTURE_GEN_S);
-		glEnable(GL_TEXTURE_GEN_T);
+		    *(texCoordsPtr++) = s;
+		    *(texCoordsPtr++) = t;
+		}
 
-		glDrawArrays (GL_TRIANGLE_FAN, 0, CAP_ELEMENTS + 2);
+		streamingBuffer->addTexCoords (0, CAP_NVERTEX / 3, &texCoords[0]);
+		streamingBuffer->addVertices (CAP_NVERTEX / 3, mCapFill);
+		streamingBuffer->setMaxVertices (CAP_ELEMENTS + 2);
+		if (streamingBuffer->end ())
+		    streamingBuffer->render (cTransform);
+
 		if (optionGetDeformation () == DeformationSphere &&
 	            optionGetDeformCaps ())
-		    glDrawElements (GL_QUADS, CAP_NIDX, GL_UNSIGNED_SHORT,
-				    mCapFillIdx);
+		{
+#ifndef USE_GLES
+		    streamingBuffer->begin (GL_QUADS);
+		    streamingBuffer->color4f (normalizedOpacity,
+					      normalizedOpacity,
+					      normalizedOpacity,
+					      normalizedOpacity);
+		    streamingBuffer->addNormals (CAP_NVERTEX / 3, (l == 0) ? mCapFill : mCapFillNorm);
 
-		glDisable(GL_TEXTURE_GEN_S);
-		glDisable(GL_TEXTURE_GEN_T);
+		    /* Generate texCoords and vertices for the
+		     * curvature around the top section of the cap
+		     *
+		     * This is a little more inefficient than it should be.
+		     *
+		     * The previous implementation used glDrawElements with
+		     * and IBO to ensure that we didn't send lots of redundant
+		     * geometry to the GPU, however GLVertexBuffer doesn't have
+		     * any concept of indexed rendering, and instead takes a vertex
+		     * buffer with all the geometry.
+		     *
+		     * FIXME: This code uses GL_QUADS, so its not compatible with
+		     * OpenGL|ES at the moment
+		     */
+		    GLushort *idx = mCapFillIdx;
+		    GLfloat  capVertices[CAP_NIDX * 3];
+		    GLfloat  texCoords[CAP_NIDX * 2];
+
+		    GLfloat *capVerticesPtr = capVertices;
+		    GLfloat *texCoordsPtr = texCoords;
+
+		    for (unsigned int i = 0; i < CAP_NIDX; ++i)
+		    {
+			unsigned int   vertexIndex = idx[i] * 3;
+
+			GLVector v (mCapFill[vertexIndex],
+				    mCapFill[vertexIndex + 1],
+				    mCapFill[vertexIndex + 2],
+				    1.0f);
+
+			*(capVerticesPtr++) = v[GLVector::x];
+			*(capVerticesPtr++) = v[GLVector::y];
+			*(capVerticesPtr++) = v[GLVector::z];
+
+			/* GL_OBJECT_LINEAR is simulated by doing:
+			 * texCoord.s = dot (vec4 (obj, 1.0), sGenPlane)
+			 * texCoord.t = dot (vec4 (obj, 1.0), tGenPlane)
+			 */
+			float s = v * sGen;
+			float t = v * tGen;
+
+			*(texCoordsPtr++) = s;
+			*(texCoordsPtr++) = t;
+		    }
+
+		    streamingBuffer->addVertices (CAP_NIDX, &capVertices[0]);
+		    streamingBuffer->addTexCoords (0, CAP_NIDX, &texCoords[0]);
+
+		    if (streamingBuffer->end ())
+			streamingBuffer->render (cTransform);
+#endif
+		}
+
 		cap->mTexture[0]->disable ();
 	    }
 	}
     }
 
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState (GL_NORMAL_ARRAY);
     glDisable (GL_BLEND);
-    glNormal3f (0.0, -1.0, 0.0);
 
     glCullFace (cullNorm);
     if (!wasCulled)
 	glDisable (GL_CULL_FACE);
-
-    glPopMatrix ();
-
-    glColor4usv (defaultColor);
 }
 
 void 
 CubeaddonScreen::cubePaintTop (const GLScreenPaintAttrib &sAttrib,
 			       const GLMatrix            &transform,
 			       CompOutput                *output,
-			       int                       size)
+			       int                       size,
+			       const GLVector            &normal)
 {
     if ((!optionGetDrawBottom () && cubeScreen->invert () == -1) ||
         (!optionGetDrawTop () && cubeScreen->invert () == 1))
     {
-	cubeScreen->cubePaintTop (sAttrib, transform, output, size);
+	cubeScreen->cubePaintTop (sAttrib, transform, output, size, normal);
     }
 
     if (!optionGetDrawTop ())
@@ -583,12 +707,13 @@ void
 CubeaddonScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
 				  const GLMatrix            &transform,
 				  CompOutput                *output,
-				  int                       size)
+				  int                       size,
+				  const GLVector            &normal)
 {
     if ((!optionGetDrawBottom () && cubeScreen->invert () == 1) ||
         (!optionGetDrawTop () && cubeScreen->invert () == -1))
     {
-	cubeScreen->cubePaintBottom (sAttrib, transform, output, size);
+	cubeScreen->cubePaintBottom (sAttrib, transform, output, size, normal);
     }
 
     if (!optionGetDrawBottom ())
@@ -607,16 +732,15 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 {
     if (caScreen->mDeform > 0.0)
     {
-	GLWindow::Geometry &geometry = gWindow->geometry ();
-	int                i, oldVCount = geometry.vCount;
+	GLVertexBuffer     *vb = gWindow->vertexBuffer ();
+	int                i, oldVCount = vb->countVertices ();
 	GLfloat            *v;
 	int                offX = 0, offY = 0;
-	int                sx1, sx2, sw, sy1, sy2, sh, cLast;
-	float              lastX, lastZ = 0.0, radSquare, last[2][4];
+	int                sx1, sx2, sw, sy1, sy2, sh;
+	float              radSquare, last[2][4];
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
-	float              a1, a2, ang, vpx, vpy, sx1g, sx2g, sy1g, sy2g;
-	int                iang;
+	float              ang, sx1g, sx2g, sy1g, sy2g;
 	
 	CubeScreen::MultioutputMode   cMOM = cubeScreen->multioutputMode ();
 	int                           caD = caScreen->optionGetDeformation ();
@@ -636,10 +760,12 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	gWindow->glAddGeometry (matrix, region, clip, 
 				MIN (CUBEADDON_GRID_SIZE, maxGridWidth),
 				maxGridHeight);
+
+	vb = gWindow->vertexBuffer ();
 	
-	v  = geometry.vertices;
-	v += geometry.vertexStride - 3;
-	v += geometry.vertexStride * oldVCount;
+	v  = vb->getVertices ();
+	v += vb->getVertexStride () - 3;
+	v += vb->getVertexStride () * oldVCount;
 
 	if (!window->onAllViewports ())
 	{
@@ -696,9 +822,9 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
-	    lastX = -1000000000.0;
+	    float lastX = std::numeric_limits <float>::min (), lastZ = 0.0;
 	
-	    for (i = oldVCount; i < geometry.vCount; i++)
+	    for (i = oldVCount; i < vb->countVertices (); i++)
 	    {
 		if (v[0] == lastX)
 		{
@@ -719,7 +845,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		lastX = v[0];
 		lastZ = v[2];
 
-		v += geometry.vertexStride;
+		v += vb->getVertexStride ();
 	    }
 	}
 	else
@@ -728,39 +854,39 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    last[0][0] = -1000000000.0;
 	    last[1][0] = -1000000000.0;
 
-	    cLast = 0;
-	    for (i = oldVCount; i < geometry.vCount; i++)
+	    int cLast = 0;
+	    for (i = oldVCount; i < vb->countVertices (); i++)
 	    {
 		if (last[0][0] == v[0] && last[0][1] == v[1])
 		{
 		    v[0] = last[0][2];
 		    v[2] = last[0][3];
-		    v += geometry.vertexStride;
+		    v += vb->getVertexStride ();
 		    continue;
 		}
 		else if (last[1][0] == v[0] && last[1][1] == v[1])
 		{
 		    v[0] = last[1][2];
 		    v[2] = last[1][3];
-		    v += geometry.vertexStride;
+		    v += vb->getVertexStride ();
 		    continue;
 		}
 		
-		vpx = v[0] + offX;
-		vpy = v[1] + offY;
+		float vpx = v[0] + offX;
+		float vpy = v[1] + offY;
 		
 		if (vpx >= sx1g && vpx < sx2g &&
 		    vpy >= sy1g && vpy < sy2g)
 		{
 		    last[cLast][0] = v[0];
 		    last[cLast][1] = v[1];
-		    a1 = (((vpx - sx1) / (float)sw) - 0.5);
-		    a2 = (((vpy - sy1) / (float)sh) - 0.5);
+		    float a1 = (((vpx - sx1) / (float)sw) - 0.5);
+		    float a2 = (((vpy - sy1) / (float)sh) - 0.5);
 		    a2 *= a2;
 
 		    ang = atanf (a1 / cDist);
 		    a2 = sqrtf (radSquare - a2);
-		    iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
+		    int iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
 
 		    v[2] += ((caScreen->mCosT [iang] * a2) - cDist) * caScreen->mDeform * inv;
 		    v[0] += ((caScreen->mSinT [iang] * a2) - a1) * sw * caScreen->mDeform;
@@ -768,7 +894,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		    last[cLast][3] = v[2];
 		    cLast = (cLast + 1) & 1;
 		}
-		v += geometry.vertexStride;
+		v += vb->getVertexStride ();
 	    }
 	}
     }
@@ -779,10 +905,10 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 }
 
 bool 
-CubeaddonWindow::glDraw (const GLMatrix     &transform,
-			 GLFragment::Attrib &attrib,
-			 const CompRegion   &region,
-			 unsigned int       mask)
+CubeaddonWindow::glDraw (const GLMatrix            &transform,
+			 const GLWindowPaintAttrib &attrib,
+			 const CompRegion          &region,
+			 unsigned int              mask)
 {
     if (!(mask & PAINT_WINDOW_TRANSFORMED_MASK) && caScreen->mDeform)
     {
@@ -807,9 +933,10 @@ CubeaddonWindow::glDraw (const GLMatrix     &transform,
 }
 
 void 
-CubeaddonWindow::glDrawTexture (GLTexture           *texture,
-				GLFragment::Attrib& attrib,
-				unsigned int        mask)
+CubeaddonWindow::glDrawTexture (GLTexture                 *texture,
+				const GLMatrix            &matrix,
+				const GLWindowPaintAttrib &attrib,
+				unsigned int              mask)
 {
     if (caScreen->mDeform > 0.0 && caScreen->gScreen->lighting ())
     {
@@ -820,18 +947,20 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 	GLfloat   *v, *n;
 	float     inv;
 	
-	GLWindow::Geometry           &geometry = gWindow->geometry ();
+	GLVertexBuffer               *vb = gWindow->vertexBuffer ();
 	CubeScreen::MultioutputMode  cMOM = cubeScreen->multioutputMode ();
 	float                        cDist = cubeScreen->distance ();
 
 	inv = (cubeScreen->invert () == 1) ? 1.0: -1.0;
 	ym  = (caScreen->optionGetDeformation () == CubeaddonScreen::DeformationCylinder) ? 0.0 : 1.0;
 	
-	if ((int) caScreen->mWinNormSize < geometry.vCount * 3)
+	int vertexCount = vb->countVertices ();
+
+	if ((int) caScreen->mWinNormSize < vertexCount * 3)
 	{
 	    delete [] caScreen->mWinNormals;
-	    caScreen->mWinNormals = new GLfloat[geometry.vCount * 3];
-	    caScreen->mWinNormSize = geometry.vCount * 3;
+	    caScreen->mWinNormals = new GLfloat[vertexCount * 3];
+	    caScreen->mWinNormSize = vertexCount * 3;
 	}
 	
 	if (!window->onAllViewports ())
@@ -882,12 +1011,12 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 	    }
 	}
 	
-	v = geometry.vertices + (geometry.vertexStride - 3);
+	v = vb->getVertices () + (vb->getVertexStride () - 3);
 	n = caScreen->mWinNormals;
 
 	if (cubeScreen->paintOrder () == FTB)
 	{
-	    for (i = 0; i < geometry.vCount; i++)
+	    for (i = 0; i < vertexCount; i++)
 	    {
 		x = (((v[0] + offX - sx1) / (float)sw) - 0.5);
 		y = (((v[1] + offY - sy1) / (float)sh) - 0.5);
@@ -896,12 +1025,12 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 		*(n)++ = y / sh * caScreen->mDeform * ym;
 		*(n)++ = v[2] + cDist;
 
-		v += geometry.vertexStride;
+		v += vb->getVertexStride ();
 	    }
 	}
 	else
 	{
-	    for (i = 0; i < geometry.vCount; i++)
+	    for (i = 0; i < vertexCount; i++)
 	    {
 		x = (((v[0] + offX - sx1) / (float)sw) - 0.5);
 		y = (((v[1] + offY - sy1) / (float)sh) - 0.5);
@@ -910,24 +1039,18 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 		*(n)++ = -y / sh * caScreen->mDeform * ym * inv;
 		*(n)++ = -(v[2] + cDist);
     
-		v += geometry.vertexStride;
+		v += vb->getVertexStride ();
 	    }
 	}
-	
-	glEnable (GL_NORMALIZE);
-	glNormalPointer (GL_FLOAT,0, caScreen->mWinNormals);
-	
-	glEnableClientState (GL_NORMAL_ARRAY);
-	
-	gWindow->glDrawTexture (texture, attrib, mask);
 
-	glDisable (GL_NORMALIZE);
-	glDisableClientState (GL_NORMAL_ARRAY);
-	glNormal3f (0.0, 0.0, -1.0);
+	vb->addNormals (caScreen->mWinNormSize / 3,
+			caScreen->mWinNormals);
+
+	gWindow->glDrawTexture (texture, matrix, attrib, mask);
 	return;
     }
 
-    gWindow->glDrawTexture (texture, attrib, mask);
+    gWindow->glDrawTexture (texture, matrix, attrib, mask);
 }
 
 bool
@@ -947,7 +1070,6 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 					   CompOutput                *output,
 					   unsigned int              mask)
 {
-    static GLfloat light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
     GLMatrix       sTransform = transform;
     float          cDist = cubeScreen->distance ();
     float          cDist2 = cubeScreen->distance () * cubeScreen->distance ();
@@ -1001,8 +1123,8 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
         mCapDeformType != optionGetDeformation ())
     {
 	float       *quad;
-	int         i, j;
-	float       rS, r, x, y, z, w;
+	int         j;
+	float       rS, r, x, y, z;
 	if (optionGetDeformation () != DeformationSphere ||
 	    !optionGetDeformCaps ())
 	{
@@ -1039,6 +1161,8 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	}
 	else
 	{
+	    int i;
+	    float w;
 	    rS = cDist2 + 0.5;
 
 	    mCapFill[0] = 0.0;
@@ -1246,82 +1370,97 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 		rTransform.scale (1.0, -1.0, 1.0);
 	    }
 
-	    glPushMatrix ();
-	    glLoadIdentity ();
-	    glScalef (1.0, -1.0, 1.0);
-	    glLightfv (GL_LIGHT0, GL_POSITION, light0Position);
-	    glPopMatrix ();
 	    glCullFace (GL_FRONT);
 
 	    gScreen->glPaintTransformedOutput (sAttrib, rTransform,
 					       region, output, mask);
 
 	    glCullFace (GL_BACK);
-	    glPushMatrix ();
-	    glLoadIdentity ();
-	    glLightfv (GL_LIGHT0, GL_POSITION, light0Position);
-	    glPopMatrix ();
 
 	    if (optionGetMode () == ModeAbove && mVRot > 0.0)
 	    {
 		int   j;
 		float i, c;
 		float v = MIN (1.0, mVRot / 30.0);
-		float col1[4], col2[4];
+		unsigned short col1[4], col2[4];
 
-		glPushMatrix ();
+		GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+
+		GLMatrix gTransform;
 
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glLoadIdentity ();
-		glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
+		gTransform.translate (0, 0, -DEFAULT_Z_CAMERA);
 
 		i = optionGetIntensity () * 2;
 		c = optionGetIntensity ();
 
-		glBegin (GL_QUADS);
-		glColor4f (0.0, 0.0, 0.0,
-			   ((1 - v) * MAX (0.0, 1.0 - i)) + (v * c));
-		glVertex2f (0.5, v / 2.0);
-		glVertex2f (-0.5, v / 2.0);
-		glColor4f (0.0, 0.0, 0.0,
-			   ((1 - v) * MIN (1.0, 1.0 - (i - 1.0))) + (v * c));
-		glVertex2f (-0.5, -0.5);
-		glVertex2f (0.5, -0.5);
-		glEnd ();
+		GLfloat vertices[] =
+		{
+		    0.5f, v / 2.0f, 0.0f,
+		    -0.5f, v / 2.0f, 0.0f,
+		    -0.5f, -0.5f, 0.0f,
+		    0.5f, -0.5f, 0.0f
+		};
+
+		unsigned short cMax = MAX (0.0, 1.0 - i) + (v * c);
+		unsigned short cMin = MIN (1.0, 1.0 - (i - 1.0)) + (v * c);
+
+		GLushort colors[] =
+		{
+		    0, 0, 0, cMax,
+		    0, 0, 0, cMax,
+		    0, 0, 0, cMin,
+		    0, 0, 0, cMin
+		};
+
+		streamingBuffer->begin (GL_TRIANGLE_STRIP);
+		streamingBuffer->addColors (4, colors);
+		streamingBuffer->addVertices (4, vertices);
+		if (streamingBuffer->end ())
+		    streamingBuffer->render (gTransform);
 
 		for (j = 0; j < 4; j++)
 		{
 		    col1[j] = (1.0 - v) * optionGetGroundColor1 () [j] +
 			      (v * (optionGetGroundColor1 () [j] +
 				    optionGetGroundColor2 () [j]) * 0.5);
-		    col1[j] /= 0xffff;
 		    col2[j] = (1.0 - v) * optionGetGroundColor2 () [j] +
 			      (v * (optionGetGroundColor1 () [j] +
 				    optionGetGroundColor2 () [j]) * 0.5);
-		    col2[j] /= 0xffff;
 		}
 
 		if (optionGetGroundSize () > 0.0)
 		{
-		    glBegin (GL_QUADS);
-		    glColor4fv (col1);
-		    glVertex2f (-0.5, -0.5);
-		    glVertex2f (0.5, -0.5);
-		    glColor4fv (col2);
-		    glVertex2f (0.5, -0.5 +
-				((1 - v) * optionGetGroundSize ()) + v);
-		    glVertex2f (-0.5, -0.5 +
-				((1 - v) * optionGetGroundSize ()) + v);
-		    glEnd ();
-		}
+		    GLfloat vertices[] =
+		    {
+			-0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f +
+			static_cast <GLfloat> (((1 - v) * optionGetGroundSize ()) + v),
+			-0.5f, -0.5f +
+			static_cast <GLfloat> (((1 - v) * optionGetGroundSize ()) + v)
+		    };
 
-		glColor4usv (defaultColor);
+		    GLushort colors[] =
+		    {
+			col1[0], col1[1], col1[2], col1[3],
+			col1[0], col1[1], col1[2], col1[3],
+			col2[0], col2[1], col2[2], col2[3],
+			col2[0], col2[1], col2[2], col2[3]
+		    };
+
+		    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+		    streamingBuffer->addVertices (4, vertices);
+		    streamingBuffer->addColors (4, colors);
+
+		    if (streamingBuffer->end ())
+			streamingBuffer->render (gTransform);
+		}
 
 		glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable (GL_BLEND);
-		glPopMatrix ();
 	    }
 	    else
 		drawBasicGround ();

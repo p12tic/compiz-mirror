@@ -25,6 +25,11 @@
 
 COMPIZ_PLUGIN_20090315 (resizeinfo, InfoPluginVTable);
 
+const unsigned short RESIZE_POPUP_WIDTH = 85;
+const unsigned short RESIZE_POPUP_HEIGHT = 50;
+
+const double PI = 3.14159265359f;
+
 /* Set up an InfoLayer to build a cairo->opengl texture pipeline */
 InfoLayer::~InfoLayer ()
 {
@@ -200,16 +205,16 @@ InfoLayer::renderBackground ()
     a = is->optionGetGradient1Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.00f, r, g, b, a);
 
-    r = is->optionGetGradient1Red () / (float)0xffff;
-    g = is->optionGetGradient1Green () / (float)0xffff;
-    b = is->optionGetGradient1Blue () / (float)0xffff;
-    a = is->optionGetGradient1Alpha () / (float)0xffff;
+    r = is->optionGetGradient2Red () / (float)0xffff;
+    g = is->optionGetGradient2Green () / (float)0xffff;
+    b = is->optionGetGradient2Blue () / (float)0xffff;
+    a = is->optionGetGradient2Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.65f, r, g, b, a);
 
-    r = is->optionGetGradient1Red () / (float)0xffff;
-    g = is->optionGetGradient1Green () / (float)0xffff;
-    b = is->optionGetGradient1Blue () / (float)0xffff;
-    a = is->optionGetGradient1Alpha () / (float)0xffff;
+    r = is->optionGetGradient3Red () / (float)0xffff;
+    g = is->optionGetGradient3Green () / (float)0xffff;
+    b = is->optionGetGradient3Blue () / (float)0xffff;
+    a = is->optionGetGradient3Alpha () / (float)0xffff;
     cairo_pattern_add_color_stop_rgba (pattern, 0.85f, r, g, b, a);
     cairo_set_source (cr, pattern);
 	
@@ -223,14 +228,18 @@ InfoLayer::renderBackground ()
     cairo_fill_preserve (cr);
 	
     /* Outline */
-    cairo_set_source_rgba (cr, 0.9f, 0.9f, 0.9f, 1.0f);
+    r = is->optionGetOutlineColorRed () / (float)0xffff;
+    g = is->optionGetOutlineColorGreen () / (float)0xffff;
+    b = is->optionGetOutlineColorBlue () / (float)0xffff;
+    a = is->optionGetOutlineColorAlpha () / (float)0xffff;
+    cairo_set_source_rgba (cr, r, g, b, a);
     cairo_stroke (cr);
 	
     cairo_pattern_destroy (pattern);
 }
 
 static void
-gradientChanged (CompOption                 *o, 
+backgroundColorChanged (CompOption                 *o, 
 		 ResizeinfoOptions::Options num)
 {
     INFO_SCREEN (screen);
@@ -349,7 +358,8 @@ InfoWindow::ungrabNotify ()
 /* Draw a texture at x/y on a quad of RESIZE_POPUP_WIDTH /
    RESIZE_POPUP_HEIGHT with the opacity in InfoScreen. */
 void
-InfoLayer::draw (int x,
+InfoLayer::draw (const GLMatrix &transform,
+                 int             x,
 	   	 int y)
 {
     BOX   box;
@@ -362,9 +372,12 @@ InfoLayer::draw (int x,
 
     for (unsigned int i = 0; i < texture.size (); i++)
     {
-
+	GLushort           colorData[4];
+	GLfloat            textureData[8];
+	GLfloat            vertexData[12];
 	GLTexture         *tex = texture[i];
 	GLTexture::Matrix matrix = tex->matrix ();
+	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	tex->enable (GLTexture::Good);
 
@@ -380,22 +393,41 @@ InfoLayer::draw (int x,
 	if (is->drawing)
 	    opacity = 1.0f - opacity;
 
-	glColor4f (opacity, opacity, opacity, opacity); 
-	glBegin (GL_QUADS);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x1), 
-		      COMP_TEX_COORD_Y (matrix, box.y2));
-	glVertex2i (box.x1, box.y2);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x2), 
-		      COMP_TEX_COORD_Y (matrix, box.y2));
-	glVertex2i (box.x2, box.y2);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x2), 
-		      COMP_TEX_COORD_Y (matrix, box.y1));
-	glVertex2i (box.x2, box.y1);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x1), 
-		      COMP_TEX_COORD_Y (matrix, box.y1));
-	glVertex2i (box.x1, box.y1);	
-	glEnd ();
-	glColor4usv (defaultColor);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	colorData[0] = opacity * 65535;
+	colorData[1] = opacity * 65535;
+	colorData[2] = opacity * 65535;
+	colorData[3] = opacity * 65535;
+
+	textureData[0] = COMP_TEX_COORD_X (matrix, box.x1);
+	textureData[1] = COMP_TEX_COORD_Y (matrix, box.y2);
+	textureData[2] = COMP_TEX_COORD_X (matrix, box.x2);
+	textureData[3] = COMP_TEX_COORD_Y (matrix, box.y2);
+	textureData[4] = COMP_TEX_COORD_X (matrix, box.x1);
+	textureData[5] = COMP_TEX_COORD_Y (matrix, box.y1);
+	textureData[6] = COMP_TEX_COORD_X (matrix, box.x2);
+	textureData[7] = COMP_TEX_COORD_Y (matrix, box.y1);
+
+	vertexData[0]  = box.x1;
+	vertexData[1]  = box.y2;
+	vertexData[2]  = 0;
+	vertexData[3]  = box.x2;
+	vertexData[4]  = box.y2;
+	vertexData[5]  = 0;
+	vertexData[6]  = box.x1;
+	vertexData[7]  = box.y1;
+	vertexData[8]  = 0;
+	vertexData[9]  = box.x2;
+	vertexData[10] = box.y1;
+	vertexData[11] = 0;
+
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addTexCoords (0, 4, textureData);
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (transform);
 
 	tex->disable ();
     }
@@ -424,21 +456,16 @@ InfoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
       
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	glEnable (GL_BLEND);
+#ifndef USE_GLES
 	gScreen->setTexEnvMode (GL_MODULATE);
-  
-	backgroundLayer.draw (x, y);
-	textLayer.draw (x, y);
+#endif
+	backgroundLayer.draw (sTransform, x, y);
+	textLayer.draw (sTransform, x, y);
   
 	gScreen->setTexEnvMode (GL_REPLACE);
 	glDisable (GL_BLEND);
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
-	glPopMatrix ();
     }
 
     return status;
@@ -504,9 +531,10 @@ InfoScreen::InfoScreen (CompScreen *screen) :
 
     backgroundLayer.renderBackground ();
 
-    optionSetGradient1Notify (gradientChanged);
-    optionSetGradient2Notify (gradientChanged);
-    optionSetGradient3Notify (gradientChanged);
+    optionSetGradient1Notify (backgroundColorChanged);
+    optionSetGradient2Notify (backgroundColorChanged);
+    optionSetGradient3Notify (backgroundColorChanged);
+    optionSetOutlineColorNotify (backgroundColorChanged);
 }
 
 InfoWindow::InfoWindow (CompWindow *window) :

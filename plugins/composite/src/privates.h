@@ -93,6 +93,7 @@ class PrivateCompositeScreen :
 	CompPoint windowPaintOffset;
 
 	int overlayWindowCount;
+	bool outputShapeChanged;
 
 	struct timeval lastRedraw;
 	int            redrawTime;

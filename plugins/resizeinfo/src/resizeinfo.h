@@ -34,10 +34,10 @@
 
 #include "resizeinfo_options.h"
 
-#define RESIZE_POPUP_WIDTH 85
-#define RESIZE_POPUP_HEIGHT 50
+extern const unsigned short RESIZE_POPUP_WIDTH;
+extern const unsigned short RESIZE_POPUP_HEIGHT;
 
-#define PI 3.1415926
+extern const double PI;
 
 /* Cairo helper class */
 
@@ -57,7 +57,8 @@ class InfoLayer
 	GLTexture::List   texture;
 	cairo_t           *cr;
 
-	void draw (int x,
+	void draw (const GLMatrix &transform,
+	           int             x,
 	 	   int y);
 
 	void renderBackground ();

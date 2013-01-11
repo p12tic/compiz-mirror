@@ -121,7 +121,7 @@ TrailfocusScreen::pushWindow (Window id)
     if (!isTrailfocusWindow (w))
 	return false;
 
-    for (iter = windows.begin (); iter != windows.end (); iter++)
+    for (iter = windows.begin (); iter != windows.end (); ++iter)
 	if ((*iter)->window->id () == id)
 	    break;
 
@@ -150,9 +150,8 @@ TrailfocusScreen::popWindow (TrailfocusWindow *tw)
     CompWindow             *best = NULL;
     TfWindowList::iterator iter;
     int                    distance, bestDist = 1000000;
-    unsigned int           i;
 
-    for (iter = windows.begin (); iter != windows.end (); iter++)
+    for (iter = windows.begin (); iter != windows.end (); ++iter)
 	if (*iter == tw)
 	    break;
 
@@ -178,7 +177,7 @@ TrailfocusScreen::popWindow (TrailfocusWindow *tw)
 	    continue;
 
 	/* we do not want any windows already present in the list */
-	for (i = 0; i < windows.size (); i++)
+	for (unsigned int i = 0; i < windows.size (); i++)
 	{
 	    if (windows[i]->window == cur)
 	    {

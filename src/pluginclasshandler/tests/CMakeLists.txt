@@ -74,8 +74,8 @@ target_link_libraries(
 #  gtest_main
 #)
 
-compiz_discover_tests (compiz_pch_construct)
-compiz_discover_tests (compiz_pch_get)
+compiz_discover_tests (compiz_pch_construct COVERAGE compiz_pluginclasshandler)
+compiz_discover_tests (compiz_pch_get COVERAGE compiz_pluginclasshandler)
 #add_test( compiz_pch_indexes compiz_pch_indexes )
-compiz_discover_tests (compiz_pch_typenames)
+compiz_discover_tests (compiz_pch_typenames COVERAGE compiz_pluginclasshandler)
 

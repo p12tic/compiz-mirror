@@ -51,6 +51,26 @@ if (HAVE_INOTIFY)
 endif (HAVE_INOTIFY)
 
 add_library (
+    ccs_text_file_interface STATIC
+    ccs_text_file_interface.c
+)
+
+add_library (
+    ccs_text_file STATIC
+    ccs_text_file.c
+)
+
+target_link_libraries (
+    ccs_text_file
+    ccs_text_file_interface
+)
+
+add_library (
+    ccs_settings_upgrade_internal STATIC
+    ccs_settings_upgrade_internal.c
+)
+
+add_library (
     compizconfig SHARED
     ${LIBCOMPIZCONFIG_FILES}
 )
@@ -65,7 +85,20 @@ link_directories (
 )
 
 target_link_libraries (
-    compizconfig ${LIBCOMPIZCONFIG_LIBRARIES} m
+    compizconfig
+    ${LIBCOMPIZCONFIG_LIBRARIES}
+    m
+    dl
+    ccs_settings_upgrade_internal
+    ccs_text_file
+)
+
+#
+# Tell CMake that targets using compizconfig should NOT re-import the
+# libraries that compizconfig depends on (contains).
+#
+set_target_properties (compizconfig PROPERTIES
+		       LINK_INTERFACE_LIBRARIES ""
 )
 
 set (COMPIZCONFIG_LIBS "")

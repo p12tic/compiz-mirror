@@ -15,4 +15,4 @@ target_link_libraries (compiz_test_point
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
                        )
 
-compiz_discover_tests (compiz_test_point)
+compiz_discover_tests (compiz_test_point COVERAGE compiz_point)
