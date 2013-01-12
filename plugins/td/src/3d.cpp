@@ -595,6 +595,7 @@ TdWindow::TdWindow (CompWindow *window) :
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
     mIs3D (false),
+    mFtb (false),
     mDepth (0.0f)
 {
     GLWindowInterface::setHandler (gWindow, false);
