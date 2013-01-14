@@ -546,7 +546,7 @@
 		</option>
 		<option name="draw_duration" type="int">
 			<_short>Draw Duration</_short>
-			<_long>Draw Resize Duration</_long>
+			<_long>Draw Resize Duration in Milliseconds</_long>
 			<default>350</default>
 			<min>250</min>
 			<max>1000</max>

@@ -588,11 +588,6 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 void
 GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
 {
-    std::vector<Animation>::iterator iter;
-    GLMatrix wTransform (transform);
-    GLWindowPaintAttrib wAttrib;
-    unsigned int mask;
-
     CompWindow *cw = screen->findWindow (CompOption::getIntOptionNamed (o, "window"));
 
     if (!cw)
@@ -600,12 +595,11 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
 
     GLWindow *glWindow = GLWindow::get(cw);
 
-    if (!glWindow || glWindow->textures().empty())
+    if (!glWindow)
         return;
 
-    wAttrib.opacity = OPAQUE;
-    wAttrib.brightness = BRIGHT;
-    wAttrib.saturation = COLOR;
+    std::vector<Animation>::iterator iter;
+    GLMatrix wTransform (transform);
 
     wTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
@@ -615,6 +609,13 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
 
         if (!anim.fadingOut && anim.timer > 0.0f)
         {
+    	    GLWindowPaintAttrib wAttrib;
+    	    unsigned int mask;
+
+    	    wAttrib.opacity = OPAQUE;
+    	    wAttrib.brightness = BRIGHT;
+    	    wAttrib.saturation = COLOR;
+
             mask = glWindow->lastMask ();
             mask |= PAINT_WINDOW_TRANSFORMED_MASK;
             mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
