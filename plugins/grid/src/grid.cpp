@@ -612,31 +612,29 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
     	    GLWindowPaintAttrib wAttrib;
     	    unsigned int mask;
 
-    	    wAttrib.opacity = OPAQUE;
+    	    mask = glWindow->lastMask ();
+    	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+    	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
+    	    mask |= PAINT_WINDOW_BLEND_MASK;
+
+    	    int width = cw->width() + cw->border().left + cw->border().right;
+    	    int height = cw->height() + cw->border().top + cw->border().bottom;
+    	    float scaleX = (float)(anim.currentRect.x2() - anim.currentRect.x1()) / width;
+    	    float scaleY = (float)(anim.currentRect.y2() - anim.currentRect.y1()) / height;
+
+    	    float translateX = (anim.currentRect.x1() - cw->x()) + cw->border().left * scaleX;
+    	    float translateY = (anim.currentRect.y1() - cw->y()) + cw->border().top * scaleY;
+
+    	    wTransform.translate (cw->x(), cw->y(), 0.0f);
+    	    wTransform.scale(scaleX, scaleY, 1.0f);
+    	    wTransform.translate (translateX / scaleX - cw->x(), translateY / scaleY - cw->y(), 0.0f);
+
+    	    float curve = powf(25, -anim.progress);
+    	    wAttrib.opacity = OPAQUE * curve;
     	    wAttrib.brightness = BRIGHT;
     	    wAttrib.saturation = COLOR;
 
-            mask = glWindow->lastMask ();
-            mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-            mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-            mask |= PAINT_WINDOW_BLEND_MASK;
-
-            int width = cw->width() + cw->border().left + cw->border().right;
-            int height = cw->height() + cw->border().top + cw->border().bottom;
-            float scaleX = (float)(anim.currentRect.x2() - anim.currentRect.x1()) / width;
-            float scaleY = (float)(anim.currentRect.y2() - anim.currentRect.y1()) / height;
-
-            float translateX = (anim.currentRect.x1() - cw->x()) + cw->border().left * scaleX;
-            float translateY = (anim.currentRect.y1() - cw->y()) + cw->border().top * scaleY;
-
-            wTransform.translate (cw->x(), cw->y(), 0.0f);
-            wTransform.scale(scaleX, scaleY, 1.0f);
-            wTransform.translate (translateX / scaleX - cw->x(), translateY / scaleY - cw->y(), 0.0f);
-
-            float curve = powf(25, -anim.progress);
-            wAttrib.opacity = OPAQUE * curve;
-
-            glWindow->glDraw(wTransform, wAttrib, infiniteRegion, mask);
+    	    glWindow->glDraw(wTransform, wAttrib, infiniteRegion, mask);
         }
     }
 }
