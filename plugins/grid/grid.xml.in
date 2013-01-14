@@ -541,12 +541,12 @@
 		</option>
 		<option name="draw_preview" type="bool">
 			<_short>Draw Window Preview</_short>
-			<_long>Draw window preview where the window will be resized</_long>
+			<_long>Draw window resize preview animation</_long>
 			<default>true</default>
 		</option>
 		<option name="draw_duration" type="int">
 			<_short>Draw Duration</_short>
-			<_long>Draw Resize Duration in Milliseconds</_long>
+			<_long>Draw preview animation duration (in ms)</_long>
 			<default>350</default>
 			<min>250</min>
 			<max>1000</max>
