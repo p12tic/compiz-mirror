@@ -1,3 +1,30 @@
+compiz (1:0.9.9~daily13.01.14-0ubuntu1) raring; urgency=low
+
+  [ sampo555 ]
+  * compiz crashed with SIGSEGV in DodgeAnim::applyDodgeTransform() (LP:
+    #1048840)
+  * compiz crashing if window un-/minimize animation is "Random" (LP:
+    #1098185)
+
+  [ Daniel van Vugt ]
+  * Several leaks in new GLProgram from compileProgram() from
+    GLScreen::getProgram() from GLWindowAutoProgram::getProgram() (LP:
+    #1097644)
+
+  [ Sam Spilsbury ]
+  * Several leaks in ccsIntegratedSettingListAppend() ... from
+    ccsGNOMEIntegrationBackendGetIntegratedSetting() from readSetting
+    (gsettings.c:375) (LP: #1097661)
+
+  [ MC Return ]
+  * Thumbnail Window Previews: Flickering of background/glow and window
+    title text (LP: #1098758)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3561
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 14 Jan 2013 04:03:09 +0000
+
 compiz (1:0.9.9~daily13.01.11-0ubuntu1) raring; urgency=low
 
   [ Jussi Pakkanen ]
