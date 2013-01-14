@@ -87,8 +87,7 @@ enum Edges
     TopRight
 };
 
-class Animation :
-    public GridOptions
+class Animation
 {
 	public:
 

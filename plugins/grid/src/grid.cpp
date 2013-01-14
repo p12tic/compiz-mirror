@@ -841,6 +841,7 @@ GridScreen::handleEvent (XEvent *event)
 				    int current = animations.size () - 1;
 				    animations.at (current).fromRect	= cw->serverBorderRect ();
 				    animations.at (current).currentRect	= cw->serverBorderRect ();
+				    animations.at (current).duration = optionGetDrawDuration();
 				    animations.at (current).timer = animations.at (current).duration;
 				    animations.at (current).targetRect = desiredSlot;
 
@@ -1122,7 +1123,7 @@ Animation::Animation ()
 	currentRect = CompRect (0, 0, 0, 0);
 	opacity = 0.0f;
 	timer = 0.0f;
-	duration = optionGetDrawDuration();
+	duration = 0;
 	complete = false;
 	fadingOut = false;
 }
