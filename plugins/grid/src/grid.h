@@ -87,7 +87,8 @@ enum Edges
     TopRight
 };
 
-class Animation
+class Animation :
+    public GridOptions
 {
 	public:
 
@@ -135,6 +136,8 @@ class GridScreen :
 
 	void glPaintRectangle (const GLScreenPaintAttrib&,
 			       const GLMatrix&, CompOutput *);
+
+    	void glPaintWindowPreview (const GLMatrix&, CompOutput *);
 
 	bool glPaintOutput (const GLScreenPaintAttrib &,
 			    const GLMatrix &, const CompRegion &,

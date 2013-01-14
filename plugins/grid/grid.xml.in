@@ -539,6 +539,18 @@
 			<_long>Draw Window Resize Indicator</_long>
 			<default>true</default>
 		</option>
+		<option name="draw_preview" type="bool">
+			<_short>Draw Window Preview</_short>
+			<_long>Draw window preview where the window will be resized</_long>
+			<default>true</default>
+		</option>
+		<option name="draw_duration" type="int">
+			<_short>Draw Duration</_short>
+			<_long>Draw Resize Duration</_long>
+			<default>350</default>
+			<min>250</min>
+			<max>1000</max>
+		</option>
 		<option name="outline_color" type="color">
 			<_short>Outline Color</_short>
 			<_long>Color of the resize indicator outline</_long>
