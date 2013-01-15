@@ -290,7 +290,7 @@ GridScreen::initiateCommon (CompAction         *action,
 		    currentRect.x () == desiredRect.x ()) ||
 		    (gw->resizeCount < 1) || (gw->resizeCount > 5))
 		    gw->resizeCount = 1;
-
+	    
 		switch (gw->resizeCount)
 		{
 		    case 1:
@@ -385,11 +385,11 @@ GridScreen::initiateCommon (CompAction         *action,
 	        gw->isGridMaximized = false;
 	    }
 
-	    int dw = (lastBorder.left + lastBorder.right) -
+	    int dw = (lastBorder.left + lastBorder.right) - 
 		      (gw->window->border ().left +
 		       gw->window->border ().right);
-
-	    int dh = (lastBorder.top + lastBorder.bottom) -
+			
+	    int dh = (lastBorder.top + lastBorder.bottom) - 
 			(gw->window->border ().top +
 			 gw->window->border ().bottom);
 
@@ -591,13 +591,9 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
     CompWindow *cw = screen->findWindow (CompOption::getIntOptionNamed (o, "window"));
 
     if (!cw)
-        return;
+    	return;
 
-    GLWindow *glWindow = GLWindow::get(cw);
-
-    if (!glWindow)
-        return;
-
+    GLWindow *glWindow = GLWindow::get (cw);
     std::vector<Animation>::iterator iter;
     GLMatrix wTransform (transform);
 
@@ -605,10 +601,10 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
 
     for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
     {
-        Animation& anim = *iter;
+    	Animation& anim = *iter;
 
-        if (!anim.fadingOut && anim.timer > 0.0f)
-        {
+    	if (!anim.fadingOut && anim.timer > 0.0f)
+    	{
     	    GLWindowPaintAttrib wAttrib;
     	    unsigned int mask;
 
@@ -617,25 +613,23 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
     	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
     	    mask |= PAINT_WINDOW_BLEND_MASK;
 
-    	    int width = cw->width() + cw->border().left + cw->border().right;
-    	    int height = cw->height() + cw->border().top + cw->border().bottom;
-    	    float scaleX = (float)(anim.currentRect.x2() - anim.currentRect.x1()) / width;
-    	    float scaleY = (float)(anim.currentRect.y2() - anim.currentRect.y1()) / height;
+    	    float scaleX = (float)(anim.currentRect.x2 () - anim.currentRect.x1 ()) / cw->borderRect ().width ();
+    	    float scaleY = (float)(anim.currentRect.y2 () - anim.currentRect.y1 ()) / cw->borderRect ().height ();
 
-    	    float translateX = (anim.currentRect.x1() - cw->x()) + cw->border().left * scaleX;
-    	    float translateY = (anim.currentRect.y1() - cw->y()) + cw->border().top * scaleY;
+    	    float translateX = (anim.currentRect.x1 () - cw->x ()) + cw->border ().left * scaleX;
+    	    float translateY = (anim.currentRect.y1 () - cw->y ()) + cw->border ().top * scaleY;
 
-    	    wTransform.translate (cw->x(), cw->y(), 0.0f);
-    	    wTransform.scale(scaleX, scaleY, 1.0f);
-    	    wTransform.translate (translateX / scaleX - cw->x(), translateY / scaleY - cw->y(), 0.0f);
+    	    wTransform.translate (cw->x (), cw->y (), 0.0f);
+    	    wTransform.scale (scaleX, scaleY, 1.0f);
+    	    wTransform.translate (translateX / scaleX - cw->x (), translateY / scaleY - cw->y (), 0.0f);
 
     	    float curve = powf(25, -anim.progress);
     	    wAttrib.opacity = OPAQUE * curve;
     	    wAttrib.brightness = BRIGHT;
     	    wAttrib.saturation = COLOR;
 
-    	    glWindow->glDraw(wTransform, wAttrib, infiniteRegion, mask);
-        }
+    	    glWindow->glDraw (wTransform, wAttrib, infiniteRegion, mask);
+    	}
     }
 }
 
@@ -653,7 +647,7 @@ GridScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     glPaintRectangle (attrib, matrix, output);
 
     if (optionGetDrawPreview ())
-    	glPaintWindowPreview(matrix, output);
+    	glPaintWindowPreview (matrix, output);
 
     return status;
 }
@@ -815,7 +809,7 @@ GridScreen::handleEvent (XEvent *event)
 		lastSlot = desiredSlot;
 
 		if (edge == NoEdge || target == GridUnknown)
-			desiredSlot.setGeometry (0, 0, 0, 0);
+			desiredSlot.setGeometry (0, 0, 0, 0);			
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
@@ -1122,7 +1116,7 @@ Animation::Animation ()
 	currentRect = CompRect (0, 0, 0, 0);
 	opacity = 0.0f;
 	timer = 0.0f;
-	duration = 0;
+	duration = 250;
 	complete = false;
 	fadingOut = false;
 }
@@ -1196,7 +1190,7 @@ GridWindow::GridWindow (CompWindow *window) :
     grabMask (0),
     pointerBufDx (0),
     pointerBufDy (0),
-    resizeCount (0),
+    resizeCount (0),	
     lastTarget (GridUnknown),
     sizeHintsFlags(0)
 {
