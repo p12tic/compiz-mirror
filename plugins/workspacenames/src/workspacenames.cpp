@@ -28,11 +28,9 @@ CompString
 WSNamesScreen::getCurrentWSName ()
 {
     CompString	ret;
-    CompOption::Value::Vector names;
-    CompOption::Value::Vector vpNumbers;
 
-    vpNumbers = optionGetViewports ();
-    names     = optionGetNames ();
+    CompOption::Value::Vector vpNumbers = optionGetViewports ();
+    CompOption::Value::Vector names     = optionGetNames ();
 
     int currentVp = screen->vp ().y () * screen->vpSize ().width () +
 		screen->vp ().x () + 1;
