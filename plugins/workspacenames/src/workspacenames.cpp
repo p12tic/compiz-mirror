@@ -27,8 +27,6 @@
 CompString
 WSNamesScreen::getCurrentWSName ()
 {
-    int		currentVp;
-    int		listSize, i;
     CompString	ret;
     CompOption::Value::Vector names;
     CompOption::Value::Vector vpNumbers;
@@ -36,11 +34,11 @@ WSNamesScreen::getCurrentWSName ()
     vpNumbers = optionGetViewports ();
     names     = optionGetNames ();
 
-    currentVp = screen->vp ().y () * screen->vpSize ().width () +
+    int currentVp = screen->vp ().y () * screen->vpSize ().width () +
 		screen->vp ().x () + 1;
-    listSize  = MIN (vpNumbers.size (), names.size ());
+    int listSize  = MIN (vpNumbers.size (), names.size ());
 
-    for (i = 0; i < listSize; i++)
+    for (int i = 0; i < listSize; i++)
 	if (vpNumbers[i].i () == currentVp)
 	    return names[i].s ();
 
