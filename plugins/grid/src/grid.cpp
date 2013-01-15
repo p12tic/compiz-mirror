@@ -834,7 +834,7 @@ GridScreen::handleEvent (XEvent *event)
 				    int current = animations.size () - 1;
 				    animations.at (current).fromRect	= cw->serverBorderRect ();
 				    animations.at (current).currentRect	= cw->serverBorderRect ();
-				    animations.at (current).duration = optionGetDrawDuration();
+				    animations.at (current).duration = optionGetDrawDuration ();
 				    animations.at (current).timer = animations.at (current).duration;
 				    animations.at (current).targetRect = desiredSlot;
 
@@ -1192,7 +1192,7 @@ GridWindow::GridWindow (CompWindow *window) :
     pointerBufDy (0),
     resizeCount (0),	
     lastTarget (GridUnknown),
-    sizeHintsFlags(0)
+    sizeHintsFlags (0)
 {
     WindowInterface::setHandler (window);
 }
