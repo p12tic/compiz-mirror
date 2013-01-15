@@ -130,9 +130,7 @@ WSNamesScreen::glPaintOutput (const GLScreenPaintAttrib	&attrib,
 			      CompOutput		*output,
 			      unsigned int		mask)
 {
-    bool status;
-
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if (textData.getWidth () && textData.getHeight ())
     {
