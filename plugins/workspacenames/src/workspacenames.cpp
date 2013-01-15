@@ -47,11 +47,10 @@ void
 WSNamesScreen::renderNameText ()
 {
     CompText::Attrib attrib;
-    CompString	     name;
 
     textData.clear ();
 
-    name = getCurrentWSName ();
+    CompString name = getCurrentWSName ();
 
     if (name.empty ())
 	return;
