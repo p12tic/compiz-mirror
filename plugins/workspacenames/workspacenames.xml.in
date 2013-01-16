@@ -12,6 +12,7 @@
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
+				<plugin>text</plugin>
 			</requirement>
 		</deps>
 		<options>
