@@ -454,13 +454,15 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
 	{
 		Animation& anim = *iter;
+
+	float curve = powf (25, -anim.progress);
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetFillColor ();
 
 	colorData[0] = alpha * color[0];
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
-	colorData[3] = alpha * 65535.0f;
+	colorData[3] = alpha * 65535.0f * (1.0 - curve);
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -495,7 +497,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	colorData[0] = alpha * color[0];
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
-	colorData[3] = alpha * 65535.0f;
+	colorData[3] = alpha * 65535.0f * (1.0 - curve);
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -1079,7 +1081,7 @@ Animation::Animation ()
 	currentRect = CompRect (0, 0, 0, 0);
 	opacity = 0.0f;
 	timer = 0.0f;
-	duration = 250;
+	duration = 0;
 	complete = false;
 	fadingOut = false;
 }
@@ -1185,7 +1187,7 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     {
     	Animation& anim = *iter;
 
-    	if (!anim.fadingOut && anim.timer > 0.0f)
+    	if (anim.timer > 0.0f)
     	{
     	    GLWindowPaintAttrib wAttrib(attrib);
     	    GLMatrix wTransform (matrix);
