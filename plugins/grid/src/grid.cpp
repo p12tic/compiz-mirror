@@ -1176,50 +1176,45 @@ bool
 GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     	    	     const CompRegion& region, const unsigned int mask)
 {
-    CompWindow *cw = screen->findWindow (screen->activeWindow ());
+    std::vector<Animation>::iterator iter;
 
-    if (cw)
+    for (iter = gScreen->animations.begin ();
+    	 iter != gScreen->animations.end () && gScreen->animating; ++iter)
     {
-    	std::vector<Animation>::iterator iter;
+    	Animation& anim = *iter;
 
-    	for (iter = gScreen->animations.begin ();
-    	     iter != gScreen->animations.end () && gScreen->animating; ++iter)
+    	if (!anim.fadingOut && anim.timer > 0.0f)
     	{
-    	    Animation& anim = *iter;
+    	    GLWindowPaintAttrib wAttrib(attrib);
+    	    GLMatrix wTransform (matrix);
+    	    unsigned int wMask(mask);
 
-    	    if (!anim.fadingOut && anim.timer > 0.0f)
-    	    {
-    	    	GLWindowPaintAttrib wAttrib(attrib);
-    	    	GLMatrix wTransform (matrix);
-    	    	unsigned int wMask(mask);
+    	    float curve = powf (25, -anim.progress);
+    	    wAttrib.opacity *= curve;
 
-    	    	float curve = powf (25, -anim.progress);
-    	    	wAttrib.opacity *= curve;
+    	    wMask |= PAINT_WINDOW_TRANSFORMED_MASK;
+    	    wMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
+    	    wMask |= PAINT_WINDOW_BLEND_MASK;
 
-    	    	wMask |= PAINT_WINDOW_TRANSFORMED_MASK;
-    	    	wMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-    	    	wMask |= PAINT_WINDOW_BLEND_MASK;
+    	    float scaleX = (anim.currentRect.x2 () - anim.currentRect.x1 ()) /
+    	    	    	   (float) window->borderRect ().width ();
 
-    	    	float scaleX = (anim.currentRect.x2 () - anim.currentRect.x1 ()) /
-    	    	    	       (float) cw->borderRect ().width ();
+    	    float scaleY = (anim.currentRect.y2 () - anim.currentRect.y1 ()) /
+    	    	    	   (float) window->borderRect ().height ();
 
-    	    	float scaleY = (anim.currentRect.y2 () - anim.currentRect.y1 ()) /
-    	    	    	       (float) cw->borderRect ().height ();
+    	    float translateX = (anim.currentRect.x1 () - window->x ()) +
+    	    	     	    	window->border ().left * scaleX;
 
-    	    	float translateX = (anim.currentRect.x1 () - cw->x ()) +
-    	    	     	    	    cw->border ().left * scaleX;
+    	    float translateY = (anim.currentRect.y1 () - window->y ()) +
+    	    	    	    	window->border ().top * scaleY;
 
-    	    	float translateY = (anim.currentRect.y1 () - cw->y ()) +
-    	    	    	    	    cw->border ().top * scaleY;
-
-    	    	wTransform.translate (cw->x (), cw->y (), 0.0f);
-    	    	wTransform.scale (scaleX, scaleY, 1.0f);
-    	    	wTransform.translate (translateX / scaleX - cw->x (),
-    	    	    	    	      translateY / scaleY - cw->y (), 0.0f);
+    	    wTransform.translate (window->x (), window->y (), 0.0f);
+    	    wTransform.scale (scaleX, scaleY, 1.0f);
+    	    wTransform.translate (translateX / scaleX - window->x (),
+    	    	    	    	  translateY / scaleY - window->y (), 0.0f);
 
 
-    	    	gWindow->glPaint (wAttrib, wTransform, infiniteRegion, wMask);
-    	    }
+    	    gWindow->glPaint (wAttrib, wTransform, infiniteRegion, wMask);
     	}
     }
 
