@@ -23,9 +23,9 @@
  */
 
 #include <boost/bind.hpp>
+#include <cmath>
 #include "grid.h"
 #include "grabhandler.h"
-#include "math.h"
 
 using namespace GridWindowType;
 namespace cgw = compiz::grid::window;
@@ -586,7 +586,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 }
 
 void
-GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
+GridScreen::glPaintStretchedWindow (const GLMatrix& transform, CompOutput *output)
 {
     CompWindow *cw = screen->findWindow (CompOption::getIntOptionNamed (o, "window"));
 
@@ -606,24 +606,31 @@ GridScreen::glPaintWindowPreview (const GLMatrix& transform, CompOutput *output)
     	if (!anim.fadingOut && anim.timer > 0.0f)
     	{
     	    GLWindowPaintAttrib wAttrib;
-    	    unsigned int mask;
 
+    	    unsigned int mask;
     	    mask = glWindow->lastMask ();
     	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
     	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
     	    mask |= PAINT_WINDOW_BLEND_MASK;
 
-    	    float scaleX = (float)(anim.currentRect.x2 () - anim.currentRect.x1 ()) / cw->borderRect ().width ();
-    	    float scaleY = (float)(anim.currentRect.y2 () - anim.currentRect.y1 ()) / cw->borderRect ().height ();
+    	    float scaleX = (anim.currentRect.x2 () - anim.currentRect.x1 ()) /
+    	    	    	    (float) cw->borderRect ().width ();
 
-    	    float translateX = (anim.currentRect.x1 () - cw->x ()) + cw->border ().left * scaleX;
-    	    float translateY = (anim.currentRect.y1 () - cw->y ()) + cw->border ().top * scaleY;
+    	    float scaleY = (anim.currentRect.y2 () - anim.currentRect.y1 ()) /
+    	    	    	    (float) cw->borderRect ().height ();
+
+    	    float translateX = (anim.currentRect.x1 () - cw->x ()) +
+    	    	    	    	cw->border ().left * scaleX;
+
+    	    float translateY = (anim.currentRect.y1 () - cw->y ()) +
+    	    	    	    	cw->border ().top * scaleY;
 
     	    wTransform.translate (cw->x (), cw->y (), 0.0f);
     	    wTransform.scale (scaleX, scaleY, 1.0f);
-    	    wTransform.translate (translateX / scaleX - cw->x (), translateY / scaleY - cw->y (), 0.0f);
+    	    wTransform.translate (translateX / scaleX - cw->x (),
+    	    	    	    	  translateY / scaleY - cw->y (), 0.0f);
 
-    	    float curve = powf(25, -anim.progress);
+    	    float curve = powf (25, -anim.progress);
     	    wAttrib.opacity = OPAQUE * curve;
     	    wAttrib.brightness = BRIGHT;
     	    wAttrib.saturation = COLOR;
@@ -646,8 +653,8 @@ GridScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     glPaintRectangle (attrib, matrix, output);
 
-    if (optionGetDrawPreview ())
-    	glPaintWindowPreview (matrix, output);
+    if (optionGetDrawStretchedWindow ())
+    	glPaintStretchedWindow (matrix, output);
 
     return status;
 }
@@ -834,7 +841,7 @@ GridScreen::handleEvent (XEvent *event)
 				    int current = animations.size () - 1;
 				    animations.at (current).fromRect	= cw->serverBorderRect ();
 				    animations.at (current).currentRect	= cw->serverBorderRect ();
-				    animations.at (current).duration = optionGetDrawDuration ();
+				    animations.at (current).duration = optionGetAnimationDuration ();
 				    animations.at (current).timer = animations.at (current).duration;
 				    animations.at (current).targetRect = desiredSlot;
 

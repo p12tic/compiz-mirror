@@ -136,7 +136,7 @@ class GridScreen :
 	void glPaintRectangle (const GLScreenPaintAttrib&,
 			       const GLMatrix&, CompOutput *);
 
-    	void glPaintWindowPreview (const GLMatrix&, CompOutput *);
+    	void glPaintStretchedWindow (const GLMatrix&, CompOutput *);
 
 	bool glPaintOutput (const GLScreenPaintAttrib &,
 			    const GLMatrix &, const CompRegion &,
