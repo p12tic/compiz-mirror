@@ -9,10 +9,12 @@
 				<plugin>opengl</plugin>
 				<plugin>composite</plugin>
 				<plugin>text</plugin>
+				<plugin>mousepoll</plugin>
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
 				<plugin>text</plugin>
+				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
 		<options>
