@@ -1176,6 +1176,8 @@ bool
 GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     	    	     const CompRegion& region, const unsigned int mask)
 {
+    bool status = gWindow->glPaint(attrib, matrix, region, mask);
+
     std::vector<Animation>::iterator iter;
 
     for (iter = gScreen->animations.begin ();
@@ -1218,7 +1220,7 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     	}
     }
 
-    return gWindow->glPaint(attrib, matrix, region, mask);
+    return status;
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI
