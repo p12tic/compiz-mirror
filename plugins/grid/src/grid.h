@@ -136,8 +136,6 @@ class GridScreen :
 	void glPaintRectangle (const GLScreenPaintAttrib&,
 			       const GLMatrix&, CompOutput *);
 
-    	void glPaintStretchedWindow (const GLMatrix&, CompOutput *);
-
 	bool glPaintOutput (const GLScreenPaintAttrib &,
 			    const GLMatrix &, const CompRegion &,
 			    CompOutput *, unsigned int);
@@ -171,6 +169,7 @@ class GridScreen :
 
 class GridWindow :
     public WindowInterface,
+    public GLWindowInterface,
     public PluginClassHandler <GridWindow, CompWindow>
 {
     public:
@@ -178,6 +177,7 @@ class GridWindow :
 	GridWindow (CompWindow *);
 	~GridWindow ();
 	CompWindow *window;
+    	GLWindow *gWindow;
 	GridScreen *gScreen;
 
 	bool isGridResized;
@@ -190,6 +190,9 @@ class GridWindow :
 	CompRect originalSize;
 	GridType lastTarget;
 	unsigned int sizeHintsFlags;
+
+        bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
+                      const CompRegion&, unsigned int);
 
 	void grabNotify (int, int, unsigned int, unsigned int);
 

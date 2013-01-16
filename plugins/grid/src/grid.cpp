@@ -585,61 +585,6 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     glDisable (GL_BLEND);
 }
 
-void
-GridScreen::glPaintStretchedWindow (const GLMatrix& transform, CompOutput *output)
-{
-    CompWindow *cw = screen->findWindow (CompOption::getIntOptionNamed (o, "window"));
-
-    if (!cw)
-    	return;
-
-    GLWindow *glWindow = GLWindow::get (cw);
-    std::vector<Animation>::iterator iter;
-    GLMatrix wTransform (transform);
-
-    wTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-
-    for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
-    {
-    	Animation& anim = *iter;
-
-    	if (!anim.fadingOut && anim.timer > 0.0f)
-    	{
-    	    GLWindowPaintAttrib wAttrib;
-
-    	    unsigned int mask;
-    	    mask = glWindow->lastMask ();
-    	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-    	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-    	    mask |= PAINT_WINDOW_BLEND_MASK;
-
-    	    float scaleX = (anim.currentRect.x2 () - anim.currentRect.x1 ()) /
-    	    	    	    (float) cw->borderRect ().width ();
-
-    	    float scaleY = (anim.currentRect.y2 () - anim.currentRect.y1 ()) /
-    	    	    	    (float) cw->borderRect ().height ();
-
-    	    float translateX = (anim.currentRect.x1 () - cw->x ()) +
-    	    	    	    	cw->border ().left * scaleX;
-
-    	    float translateY = (anim.currentRect.y1 () - cw->y ()) +
-    	    	    	    	cw->border ().top * scaleY;
-
-    	    wTransform.translate (cw->x (), cw->y (), 0.0f);
-    	    wTransform.scale (scaleX, scaleY, 1.0f);
-    	    wTransform.translate (translateX / scaleX - cw->x (),
-    	    	    	    	  translateY / scaleY - cw->y (), 0.0f);
-
-    	    float curve = powf (25, -anim.progress);
-    	    wAttrib.opacity = OPAQUE * curve;
-    	    wAttrib.brightness = BRIGHT;
-    	    wAttrib.saturation = COLOR;
-
-    	    glWindow->glDraw (wTransform, wAttrib, infiniteRegion, mask);
-    	}
-    }
-}
-
 bool
 GridScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			   const GLMatrix            &matrix,
@@ -652,9 +597,6 @@ GridScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     status = glScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
     glPaintRectangle (attrib, matrix, output);
-
-    if (optionGetDrawStretchedWindow ())
-    	glPaintStretchedWindow (matrix, output);
 
     return status;
 }
@@ -852,6 +794,13 @@ GridScreen::handleEvent (XEvent *event)
 					glScreen->glPaintOutputSetEnabled (this, true);
 					cScreen->preparePaintSetEnabled (this, true);
 					cScreen->donePaintSetEnabled (this, true);
+
+
+    	    	    	    	    	if (optionGetDrawStretchedWindow ())
+    	    	    	    	    	{
+					    GRID_WINDOW (cw);
+    	    	    	    	    	    gw->gWindow->glPaintSetEnabled (gw, true);
+    	    	    	    	    	}
 				    }
 				}
 			}
@@ -1108,6 +1057,15 @@ GridScreen::donePaint ()
 			glScreen->glPaintOutputSetEnabled (this, false);
 		animations.clear ();
 		animating = false;
+
+
+    	    	if (optionGetDrawStretchedWindow ())
+    	    	{
+    	    	    CompWindow *cw = screen->findWindow (screen->activeWindow ());
+    	    	    GRID_WINDOW (cw);
+
+    	    	    gw->gWindow->glPaintSetEnabled (gw, false);
+    	    	}
 	}
 
 	cScreen->damageScreen ();
@@ -1191,6 +1149,7 @@ GridScreen::GridScreen (CompScreen *screen) :
 GridWindow::GridWindow (CompWindow *window) :
     PluginClassHandler <GridWindow, CompWindow> (window),
     window (window),
+    gWindow (GLWindow::get(window)),
     gScreen (GridScreen::get (screen)),
     isGridResized (false),
     isGridMaximized (false),
@@ -1202,6 +1161,7 @@ GridWindow::GridWindow (CompWindow *window) :
     sizeHintsFlags (0)
 {
     WindowInterface::setHandler (window);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 GridWindow::~GridWindow ()
@@ -1212,6 +1172,60 @@ GridWindow::~GridWindow ()
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (gScreen->o, "window"));
     if (w == window)
 	gScreen->o[0].value ().set (0);
+}
+
+bool
+GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
+    	    	     const CompRegion& region, const unsigned int mask)
+{
+    CompWindow *cw = screen->findWindow (screen->activeWindow ());
+
+    if (cw)
+    {
+    	std::vector<Animation>::iterator iter;
+
+    	for (iter = gScreen->animations.begin ();
+    	     iter != gScreen->animations.end () && gScreen->animating; ++iter)
+    	{
+    	    Animation& anim = *iter;
+
+    	    if (!anim.fadingOut && anim.timer > 0.0f)
+    	    {
+    	    	GLWindowPaintAttrib wAttrib(attrib);
+    	    	GLMatrix wTransform (matrix);
+    	    	unsigned int wMask(mask);
+
+    	    	float curve = powf (25, -anim.progress);
+    	    	wAttrib.opacity *= curve;
+
+    	    	wMask |= PAINT_WINDOW_TRANSFORMED_MASK;
+    	    	wMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
+    	    	wMask |= PAINT_WINDOW_BLEND_MASK;
+
+    	    	float scaleX = (anim.currentRect.x2 () - anim.currentRect.x1 ()) /
+    	    	    	       (float) cw->borderRect ().width ();
+
+    	    	float scaleY = (anim.currentRect.y2 () - anim.currentRect.y1 ()) /
+    	    	    	       (float) cw->borderRect ().height ();
+
+    	    	float translateX = (anim.currentRect.x1 () - cw->x ()) +
+    	    	     	    	    cw->border ().left * scaleX;
+
+    	    	float translateY = (anim.currentRect.y1 () - cw->y ()) +
+    	    	    	    	    cw->border ().top * scaleY;
+
+    	    	wTransform.translate (cw->x (), cw->y (), 0.0f);
+    	    	wTransform.scale (scaleX, scaleY, 1.0f);
+    	    	wTransform.translate (translateX / scaleX - cw->x (),
+    	    	    	    	      translateY / scaleY - cw->y (), 0.0f);
+
+
+    	    	gWindow->glPaint (wAttrib, wTransform, infiniteRegion, wMask);
+    	    }
+    	}
+    }
+
+    return gWindow->glPaint(attrib, matrix, region, mask);
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI
