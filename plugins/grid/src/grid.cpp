@@ -795,7 +795,6 @@ GridScreen::handleEvent (XEvent *event)
 					cScreen->preparePaintSetEnabled (this, true);
 					cScreen->donePaintSetEnabled (this, true);
 
-
     	    	    	    	    	if (optionGetDrawStretchedWindow ())
     	    	    	    	    	{
 					    GRID_WINDOW (cw);
@@ -1057,7 +1056,6 @@ GridScreen::donePaint ()
 			glScreen->glPaintOutputSetEnabled (this, false);
 		animations.clear ();
 		animating = false;
-
 
     	    	if (optionGetDrawStretchedWindow ())
     	    	{
