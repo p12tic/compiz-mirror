@@ -457,6 +457,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	{
 		Animation& anim = *iter;
 
+	float curve = powf (CURVE_ANIMATION, -anim.progress);
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetFillColor ();
 
@@ -464,6 +465,9 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
 	colorData[3] = alpha * 65535.0f;
+
+	if (optionGetDrawStretchedWindow ())
+	    colorData[3] *= (1.0 - curve);
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -499,6 +503,9 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
 	colorData[3] = alpha * 65535.0f;
+
+	if (optionGetDrawStretchedWindow ())
+	    colorData[3] *= (1.0 - curve);
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
