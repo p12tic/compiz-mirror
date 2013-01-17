@@ -325,18 +325,20 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		memset (&button, 0, sizeof (CCSSettingButtonValue));
 		ccsGetButton (setting, &button);
 
-		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
-														ccsGNOMEIntegratedPluginNames.SPECIAL,
-														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
+		CCSIntegratedSettingList mouseModifierSetting =
+		    ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
+											    ccsGNOMEIntegratedPluginNames.SPECIAL,
+											    ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
 
-		button.buttonModMask = getGnomeMouseButtonModifier (integratedSettingsMBM->data);
+		button.buttonModMask = getGnomeMouseButtonModifier (mouseModifierSetting->data);
 
-		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
-														ccsGNOMEIntegratedPluginNames.SPECIAL,
-														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
+		CCSIntegratedSettingList resizeButtonSetting =
+		    ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
+											    ccsGNOMEIntegratedPluginNames.SPECIAL,
+											    ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
 		type = TypeBool;
-		v = ccsIntegratedSettingReadValue (integratedSettings->data, type);
+		v = ccsIntegratedSettingReadValue (resizeButtonSetting->data, type);
 
 		resizeWithRightButton =
 		   v->value.asBool;
@@ -350,6 +352,10 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 
 		ccsSetButton (setting, button, TRUE);
 		ret = TRUE;
+
+		/* Free the returned lists */
+		ccsIntegratedSettingListFree (mouseModifierSetting, FALSE);
+		ccsIntegratedSettingListFree (resizeButtonSetting, FALSE);
 	    }
 
 	}
@@ -562,21 +568,23 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		     resizeWithRightButton = TRUE;
 		}
 
-		CCSIntegratedSettingList integratedSettings = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
-														ccsGNOMEIntegratedPluginNames.SPECIAL,
-														ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
+		CCSIntegratedSettingList resizeButtonSetting =
+		    ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
+											    ccsGNOMEIntegratedPluginNames.SPECIAL,
+											    ccsGNOMEIntegratedSettingNames.NULL_RESIZE_WITH_RIGHT_BUTTON.compizName);
 
 		newValue->value.asBool = resizeWithRightButton;
 		type = TypeBool;
 
-		ccsIntegratedSettingWriteValue (integratedSettings->data, newValue, type);
+		ccsIntegratedSettingWriteValue (resizeButtonSetting->data, newValue, type);
 
-		CCSIntegratedSettingList integratedSettingsMBM = ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
-														ccsGNOMEIntegratedPluginNames.SPECIAL,
-														ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
+		CCSIntegratedSettingList mouseModifierSetting =
+		    ccsIntegratedSettingsStorageFindMatchingSettingsByPluginAndSettingName (priv->storage,
+											    ccsGNOMEIntegratedPluginNames.SPECIAL,
+											    ccsGNOMEIntegratedSettingNames.NULL_MOUSE_BUTTON_MODIFIER.compizName);
 
 		modMask = v->value.asButton.buttonModMask;
-		if (setGnomeMouseButtonModifier (integratedSettingsMBM->data, modMask))
+		if (setGnomeMouseButtonModifier (mouseModifierSetting->data, modMask))
 		{
 		    setButtonBindingForSetting (priv->context, "move",
 						"initiate_button", 1, modMask);
@@ -589,6 +597,10 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 						resizeWithRightButton ? 2 : 3,
 						modMask);
 		}
+
+		/* We own the returned lists, so free them */
+		ccsIntegratedSettingListFree (resizeButtonSetting, FALSE);
+		ccsIntegratedSettingListFree (mouseModifierSetting, FALSE);
 	    }
 
 	    if (newValue)
