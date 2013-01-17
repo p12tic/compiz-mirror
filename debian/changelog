@@ -1,3 +1,17 @@
+compiz (1:0.9.9~daily13.01.17-0ubuntu1) raring; urgency=low
+
+  [ Didier Roche ]
+  * Launcher - Workspace switcher should not be in the Launcher by
+    default (LP: #868423)
+
+  [ MC Return ]
+  * Workspacenames plugin: Requires text plugin to work (LP: #1100172)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3564
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 17 Jan 2013 07:03:41 +0000
+
 compiz (1:0.9.9~daily13.01.14-0ubuntu1) raring; urgency=low
 
   [ sampo555 ]
