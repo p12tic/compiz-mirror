@@ -183,9 +183,17 @@ ccsGNOMEIntegrationBackendReadISAndSetSettingForType (CCSIntegratedSetting *inte
 	memset (&key, 0, sizeof (CCSSettingKeyValue));
 	if (ccsStringToKeyBinding ((*v)->value.asString, &key))
 	{
+	    /* Since we effectively change the type of the value here
+	     * we need to free the old string value */
+	    free ((*v)->value.asString);
 	    ccsSetKey (setting, key, TRUE);
 	    return TRUE;
 	}
+	/* We were not successful at converting strings to keybindings
+	 * but we must free the string value anyways as we present
+	 * this value to ccsSettingValueFreeWithType as a TypeKey
+	 * intentionally made empty */
+	free ((*v)->value.asString);
     }
 
     return FALSE;
