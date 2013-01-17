@@ -139,3 +139,13 @@
     fun:strdup
     fun:*detectCompizBinPath*
 }
+
+{
+    g_settings_class_init intentionally leaks signals
+    Memcheck:Leak
+    fun:g_signal_new
+    ...
+    fun:g_type_class_ref
+    ...
+    fun:g_object_new
+}
