@@ -32,7 +32,7 @@ namespace cgw = compiz::grid::window;
 
 static std::map <unsigned int, GridProps> gridProps;
 
-int const CURVE_ANIMATION = 35;
+static int const CURVE_ANIMATION = 35;
 
 void
 GridScreen::handleCompizEvent(const char*    plugin,
@@ -457,14 +457,13 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	{
 		Animation& anim = *iter;
 
-	float curve = powf (CURVE_ANIMATION, -anim.progress);
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetFillColor ();
 
 	colorData[0] = alpha * color[0];
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
-	colorData[3] = alpha * 65535.0f * (1.0 - curve);
+	colorData[3] = alpha * 65535.0f;
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -499,7 +498,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	colorData[0] = alpha * color[0];
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
-	colorData[3] = alpha * 65535.0f * (1.0 - curve);
+	colorData[3] = alpha * 65535.0f;
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
