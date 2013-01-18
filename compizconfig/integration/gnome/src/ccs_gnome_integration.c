@@ -172,28 +172,38 @@ static Bool
 ccsGNOMEIntegrationBackendReadISAndSetSettingForType (CCSIntegratedSetting *integratedSetting,
 						      CCSSetting           *setting,
 						      CCSSettingValue      **v,
-						      CCSSettingType       type)
+						      CCSSettingType       sourceType,
+						      CCSSettingType       destinationType)
 {
-    *v = ccsIntegratedSettingReadValue (integratedSetting, type);
+    *v = ccsIntegratedSettingReadValue (integratedSetting, sourceType);
 
     if (*v != NULL && (*v)->value.asString)
     {
-	CCSSettingKeyValue key;
-
-	memset (&key, 0, sizeof (CCSSettingKeyValue));
-	if (ccsStringToKeyBinding ((*v)->value.asString, &key))
+	/* Conversion to key type option necessary */
+	if (destinationType == TypeKey)
 	{
-	    /* Since we effectively change the type of the value here
-	     * we need to free the old string value */
-	    free ((*v)->value.asString);
-	    ccsSetKey (setting, key, TRUE);
-	    return TRUE;
+	    CCSSettingKeyValue key;
+
+	    memset (&key, 0, sizeof (CCSSettingKeyValue));
+	    if (ccsStringToKeyBinding ((*v)->value.asString, &key))
+	    {
+		/* Since we effectively change the type of the value here
+		* we need to free the old string value */
+		free ((*v)->value.asString);
+		ccsSetKey (setting, key, TRUE);
+	        return TRUE;
+	    }
+	    else
+	    {
+		/* We were not successful at converting strings to keybindings
+		 * but we must free the string value anyways as we present
+		 * this value to ccsSettingValueFreeWithType as a TypeKey
+		 * intentionally made empty */
+		free ((*v)->value.asString);
+		return FALSE;
+	    }
 	}
-	/* We were not successful at converting strings to keybindings
-	 * but we must free the string value anyways as we present
-	 * this value to ccsSettingValueFreeWithType as a TypeKey
-	 * intentionally made empty */
-	free ((*v)->value.asString);
+	return TRUE;
     }
 
     return FALSE;
@@ -252,10 +262,13 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 	break;
     case OptionKey:
 	{
+	    /* Some backends store keys differently so we need to let the backend know
+	     * that we really intend to read a key and let it handle the conversion */
 	    type = TypeKey;
 	    if (ccsGNOMEIntegrationBackendReadISAndSetSettingForType (integratedSetting,
 								      setting,
 								      &v,
+								      TypeKey,
 								      type))
 		ret = TRUE;
 	}
@@ -314,10 +327,13 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		      strcmp (settingName, "run_command_window_screenshot_key") == 0 ||
 		      strcmp (settingName, "run_command_terminal_key") == 0))
 	    {
-		type = TypeString;
+		/* These are always stored as strings, no matter what the backend is
+		 * so the source type should be string */
+		type = TypeKey;
 		if (ccsGNOMEIntegrationBackendReadISAndSetSettingForType (integratedSetting,
 									  setting,
 									  &v,
+									  TypeString,
 									  type))
 		    ret = TRUE;
 	    }
