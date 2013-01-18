@@ -192,8 +192,8 @@ class GridWindow :
 	GridType lastTarget;
 	unsigned int sizeHintsFlags;
 
-	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
-		     const CompRegion&, unsigned int);
+	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
+		      const CompRegion&, unsigned int);
 
 	void grabNotify (int, int, unsigned int, unsigned int);
 

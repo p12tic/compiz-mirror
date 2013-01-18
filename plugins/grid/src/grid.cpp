@@ -1041,7 +1041,7 @@ GridScreen::preparePaint (int msSinceLastPaint)
 		CompWindow *cw = screen->findWindow (screen->activeWindow ());
 		GRID_WINDOW (cw);
 
-		gw->gWindow->glDrawSetEnabled (gw, true);
+		gw->gWindow->glPaintSetEnabled (gw, true);
 	}
 
     cScreen->preparePaint (msSinceLastPaint);
@@ -1076,7 +1076,7 @@ GridScreen::donePaint ()
 		CompWindow *cw = screen->findWindow (screen->activeWindow ());
 		GRID_WINDOW (cw);
 
-		gw->gWindow->glDrawSetEnabled (gw, false);
+		gw->gWindow->glPaintSetEnabled (gw, false);
 	}
 
 	cScreen->damageScreen ();
@@ -1187,10 +1187,10 @@ GridWindow::~GridWindow ()
 }
 
 bool
-GridWindow::glDraw (const GLMatrix& matrix, const GLWindowPaintAttrib& attrib,
+GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     	    	     const CompRegion& region, const unsigned int mask)
 {
-    bool status = gWindow->glDraw(matrix, attrib, region, mask);
+    bool status = gWindow->glPaint (attrib, matrix, region, mask);
 
     std::vector<Animation>::iterator iter;
 
@@ -1230,7 +1230,7 @@ GridWindow::glDraw (const GLMatrix& matrix, const GLWindowPaintAttrib& attrib,
     	    	    	    	  translateY / scaleY - window->y (), 0.0f);
 
 
-    	    gWindow->glDraw (wTransform, wAttrib, infiniteRegion, wMask);
+    	    gWindow->glPaint (wAttrib, wTransform, region, wMask);
     	}
     }
 
