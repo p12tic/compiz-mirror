@@ -99,6 +99,7 @@ class Animation
 	CompRect currentRect;
 	GLfloat opacity;
 	GLfloat timer;
+	Window window;
 	int duration;
 	bool complete;
 	bool fadingOut;
@@ -191,8 +192,8 @@ class GridWindow :
 	GridType lastTarget;
 	unsigned int sizeHintsFlags;
 
-	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
-		      const CompRegion&, unsigned int);
+	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
+		     const CompRegion&, unsigned int);
 
 	void grabNotify (int, int, unsigned int, unsigned int);
 

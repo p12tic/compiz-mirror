@@ -796,6 +796,7 @@ GridScreen::handleEvent (XEvent *event)
 				    animations.at (current).duration = optionGetAnimationDuration ();
 				    animations.at (current).timer = animations.at (current).duration;
 				    animations.at (current).targetRect = desiredSlot;
+				    animations.at (current).window = cw->id();
 
 				    if (lastEdge == NoEdge || !animating)
 				    {
@@ -804,12 +805,6 @@ GridScreen::handleEvent (XEvent *event)
 					glScreen->glPaintOutputSetEnabled (this, true);
 					cScreen->preparePaintSetEnabled (this, true);
 					cScreen->donePaintSetEnabled (this, true);
-
-    	    	    	    	    	if (optionGetDrawStretchedWindow ())
-    	    	    	    	    	{
-					    GRID_WINDOW (cw);
-    	    	    	    	    	    gw->gWindow->glPaintSetEnabled (gw, true);
-    	    	    	    	    	}
 				    }
 				}
 			}
@@ -1041,6 +1036,14 @@ GridScreen::preparePaint (int msSinceLastPaint)
 		anim.progress =	(anim.duration - anim.timer) / anim.duration;
 	}
 
+	if (optionGetDrawStretchedWindow ())
+	{
+		CompWindow *cw = screen->findWindow (screen->activeWindow ());
+		GRID_WINDOW (cw);
+
+		gw->gWindow->glDrawSetEnabled (gw, true);
+	}
+
     cScreen->preparePaint (msSinceLastPaint);
 }
 
@@ -1066,14 +1069,14 @@ GridScreen::donePaint ()
 			glScreen->glPaintOutputSetEnabled (this, false);
 		animations.clear ();
 		animating = false;
+	}
 
-    	    	if (optionGetDrawStretchedWindow ())
-    	    	{
-    	    	    CompWindow *cw = screen->findWindow (screen->activeWindow ());
-    	    	    GRID_WINDOW (cw);
+	if (optionGetDrawStretchedWindow ())
+	{
+		CompWindow *cw = screen->findWindow (screen->activeWindow ());
+		GRID_WINDOW (cw);
 
-    	    	    gw->gWindow->glPaintSetEnabled (gw, false);
-    	    	}
+		gw->gWindow->glDrawSetEnabled (gw, false);
 	}
 
 	cScreen->damageScreen ();
@@ -1092,6 +1095,7 @@ Animation::Animation ()
 	duration = 0;
 	complete = false;
 	fadingOut = false;
+	window = 0;
 }
 
 
@@ -1183,10 +1187,10 @@ GridWindow::~GridWindow ()
 }
 
 bool
-GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
+GridWindow::glDraw (const GLMatrix& matrix, const GLWindowPaintAttrib& attrib,
     	    	     const CompRegion& region, const unsigned int mask)
 {
-    bool status = gWindow->glPaint(attrib, matrix, region, mask);
+    bool status = gWindow->glDraw(matrix, attrib, region, mask);
 
     std::vector<Animation>::iterator iter;
 
@@ -1195,7 +1199,7 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     {
     	Animation& anim = *iter;
 
-    	if (anim.timer > 0.0f)
+    	if (anim.timer > 0.0f && anim.window == window->id())
     	{
     	    GLWindowPaintAttrib wAttrib(attrib);
     	    GLMatrix wTransform (matrix);
@@ -1226,7 +1230,7 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
     	    	    	    	  translateY / scaleY - window->y (), 0.0f);
 
 
-    	    gWindow->glPaint (wAttrib, wTransform, infiniteRegion, wMask);
+    	    gWindow->glDraw (wTransform, wAttrib, infiniteRegion, wMask);
     	}
     }
 
