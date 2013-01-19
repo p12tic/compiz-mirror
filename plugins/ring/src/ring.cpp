@@ -1199,6 +1199,7 @@ RingScreen::handleEvent (XEvent *event)
 	    windowSelectAt (event->xmotion.x_root,
 			    event->xmotion.y_root,
 			    false);
+	break;
     case UnmapNotify:
 	w = ::screen->findWindow (event->xunmap.window);
 	windowRemove (w);
