@@ -99,6 +99,7 @@ class Animation
 	CompRect currentRect;
 	GLfloat opacity;
 	GLfloat timer;
+	Window window;
 	int duration;
 	bool complete;
 	bool fadingOut;
@@ -169,6 +170,7 @@ class GridScreen :
 
 class GridWindow :
     public WindowInterface,
+    public GLWindowInterface,
     public PluginClassHandler <GridWindow, CompWindow>
 {
     public:
@@ -176,6 +178,7 @@ class GridWindow :
 	GridWindow (CompWindow *);
 	~GridWindow ();
 	CompWindow *window;
+    	GLWindow *gWindow;
 	GridScreen *gScreen;
 
 	bool isGridResized;
@@ -188,6 +191,9 @@ class GridWindow :
 	CompRect originalSize;
 	GridType lastTarget;
 	unsigned int sizeHintsFlags;
+
+	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
+		      const CompRegion&, unsigned int);
 
 	void grabNotify (int, int, unsigned int, unsigned int);
 
