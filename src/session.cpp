@@ -324,9 +324,11 @@ CompSession::getClientId (CompSession::ClientIdType type)
 	case CompSession::ClientId:
 	    if (smClientId)
 		return smClientId;
+	    break;
 	case CompSession::PrevClientId:
 	    if (smPrevClientId)
 		return smPrevClientId;
+	    break;
     }
 
     return "";
