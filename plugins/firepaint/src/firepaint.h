@@ -63,14 +63,6 @@ class Particle
 	float zo;		/* orginal Z position */
 };
 
-class ParticleCache
-{
-    public:
-
-	GLfloat *cache;
-	unsigned int count;
-	unsigned int size;
-};
 
 class ParticleSystem
 {
@@ -88,17 +80,19 @@ class ParticleSystem
 	float    darken;
 	GLuint   blendMode;
 
-	/* Moved from drawParticles to get rid of spurious malloc's */
-	ParticleCache vertices_cache;
-	ParticleCache coords_cache;
-	ParticleCache colors_cache;
-	ParticleCache dcolors_cache;
+	/* Cache used in drawParticles 
+        It's here to avoid multiple mem allocation 
+        during drawing */
+	std::vector<GLfloat>  vertices_cache;
+	std::vector<GLfloat>  coords_cache;
+	std::vector<GLushort> colors_cache;
+	std::vector<GLushort> dcolors_cache;
 
 	void
 	initParticles (int            f_numParticles);
 
 	void
-	drawParticles ();
+	drawParticles (const GLMatrix	&transform);
 
 	void
 	updateParticles (float          time);

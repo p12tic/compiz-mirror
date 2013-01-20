@@ -81,20 +81,10 @@ ParticleSystem::initParticles (int            f_numParticles)
     darken = 0;
 
     // Initialize cache
-    vertices_cache.cache = NULL;
-    colors_cache.cache   = NULL;
-    coords_cache.cache   = NULL;
-    dcolors_cache.cache  = NULL;
-
-    vertices_cache.count  = 0;
-    colors_cache.count   = 0;
-    coords_cache.count  = 0;
-    dcolors_cache.count = 0;
-
-    vertices_cache.size  = 0;
-    colors_cache.size   = 0;
-    coords_cache.size  = 0;
-    dcolors_cache.size = 0;
+    vertices_cache.clear ();
+    coords_cache.clear ();
+    colors_cache.clear ();
+    dcolors_cache.clear ();
 
     for (int i = 0; i < f_numParticles; i++)
     {
@@ -105,15 +95,27 @@ ParticleSystem::initParticles (int            f_numParticles)
 }
 
 void
-ParticleSystem::drawParticles ()
+ParticleSystem::drawParticles(const GLMatrix	     &transform)
 {
-    GLfloat *dcolors;
-    GLfloat *vertices;
-    GLfloat *coords;
-    GLfloat *colors;
+    vertices_cache.clear ();
+    coords_cache.clear ();
+    colors_cache.clear ();
+    dcolors_cache.clear ();
 
-    glPushMatrix ();
+    /* Check that the cache is big enough */
+    if (particles.size () * 6 * 3 > vertices_cache.size ())
+	vertices_cache.reserve (particles.size() * 6 * 3);
 
+    if (particles.size () * 6 * 2 > coords_cache.size ())
+	coords_cache.reserve (particles.size() * 6 * 2);
+
+    if (particles.size () * 6 * 4 > colors_cache.size ())
+	colors_cache.reserve (particles.size() * 6 * 4);
+
+    if (darken > 0)
+	if (particles.size () * 6 * 4 > dcolors_cache.size ())
+	    dcolors_cache.reserve (particles.size() * 6 * 4);
+    
     glEnable (GL_BLEND);
 
     if (tex)
@@ -122,174 +124,154 @@ ParticleSystem::drawParticles ()
 	glEnable (GL_TEXTURE_2D);
     }
 
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    /* Check that the cache is big enough */
-
-    if (particles.size () > vertices_cache.count)
-    {
-	vertices_cache.cache = (GLfloat *) realloc (vertices_cache.cache,
-						    particles.size () * 4 * 3 *
-						    sizeof (GLfloat));
-	vertices_cache.size = particles.size () * 4 * 3;
-	vertices_cache.count = particles.size ();
-    }
-
-    if (particles.size () > coords_cache.count)
-    {
-	coords_cache.cache = (GLfloat *) realloc (coords_cache.cache,
-						  particles.size () * 4 * 2 *
-						  sizeof (GLfloat));
-	coords_cache.size = particles.size () * 4 * 2;
-	coords_cache.count = particles.size ();
-    }
-
-    if (particles.size () > colors_cache.count)
-    {
-	colors_cache.cache = (GLfloat *) realloc (colors_cache.cache,
-						  particles.size () * 4 * 4 *
-						  sizeof (GLfloat));
-	colors_cache.size = particles.size () * 4 * 4;
-	colors_cache.count = particles.size ();
-    }
-
-    if (darken > 0)
-    {
-	if (dcolors_cache.count < particles.size ())
-	{
-	    dcolors_cache.cache = (GLfloat *) realloc (dcolors_cache.cache,
-						       particles.size () * 4 * 4 *
-						       sizeof (GLfloat));
-	    dcolors_cache.size = particles.size () * 4 * 4;
-	    dcolors_cache.count = particles.size ();
-	}
-    }
-
-    dcolors  = dcolors_cache.cache;
-    vertices = vertices_cache.cache;
-    coords   = coords_cache.cache;
-    colors   = colors_cache.cache;
-
-    int numActive = 0;
-
-    foreach (Particle &part, particles)
+    /* for each particle, use two triangles to display it */
+    foreach (Particle &part, particles) 
     {
 	if (part.life > 0.0f)
 	{
-	    numActive += 4;
-
 	    float w = part.width / 2;
 	    float h = part.height / 2;
 
 	    w += (w * part.w_mod) * part.life;
 	    h += (h * part.h_mod) * part.life;
+            
+            //first triangle
+	    vertices_cache.push_back (part.x - w); 
+	    vertices_cache.push_back (part.y - h); 
+	    vertices_cache.push_back (part.z);
 
-	    vertices[0]  = part.x - w;
-	    vertices[1]  = part.y - h;
-	    vertices[2]  = part.z;
+	    vertices_cache.push_back (part.x - w); 
+	    vertices_cache.push_back (part.y + h); 
+	    vertices_cache.push_back (part.z);
 
-	    vertices[3]  = part.x - w;
-	    vertices[4]  = part.y + h;
-	    vertices[5]  = part.z;
+	    vertices_cache.push_back (part.x + w); 
+	    vertices_cache.push_back (part.y + h); 
+	    vertices_cache.push_back (part.z);
+            
+            //second triangle
+	    vertices_cache.push_back (part.x + w);
+	    vertices_cache.push_back (part.y + h);
+	    vertices_cache.push_back (part.z);
 
-	    vertices[6]  = part.x + w;
-	    vertices[7]  = part.y + h;
-	    vertices[8]  = part.z;
+	    vertices_cache.push_back (part.x + w);
+	    vertices_cache.push_back (part.y - h);
+	    vertices_cache.push_back (part.z);
 
-	    vertices[9]  = part.x + w;
-	    vertices[10] = part.y - h;
-	    vertices[11] = part.z;
+	    vertices_cache.push_back (part.x - w);
+	    vertices_cache.push_back (part.y - h);
+	    vertices_cache.push_back (part.z);
 
-	    vertices += 12;
+	    coords_cache.push_back (0.0);
+	    coords_cache.push_back (0.0);
 
-	    coords[0] = 0.0;
-	    coords[1] = 0.0;
+	    coords_cache.push_back (0.0);
+	    coords_cache.push_back (1.0);
 
-	    coords[2] = 0.0;
-	    coords[3] = 1.0;
+	    coords_cache.push_back (1.0);
+	    coords_cache.push_back (1.0);
 
-	    coords[4] = 1.0;
-	    coords[5] = 1.0;
+            //second
+	    coords_cache.push_back (1.0);
+	    coords_cache.push_back (1.0);
 
-	    coords[6] = 1.0;
-	    coords[7] = 0.0;
+	    coords_cache.push_back (1.0);
+	    coords_cache.push_back (0.0);
+	    
+	    coords_cache.push_back (0.0);
+	    coords_cache.push_back (0.0);
 
-	    coords += 8;
+	    colors_cache.push_back (part.r * 65535.0f);
+	    colors_cache.push_back (part.g * 65535.0f);
+	    colors_cache.push_back (part.b * 65535.0f);
+	    colors_cache.push_back (part.life * part.a * 65535.0f);
 
-	    colors[0]  = part.r;
-	    colors[1]  = part.g;
-	    colors[2]  = part.b;
-	    colors[3]  = part.life * part.a;
-	    colors[4]  = part.r;
-	    colors[5]  = part.g;
-	    colors[6]  = part.b;
-	    colors[7]  = part.life * part.a;
-	    colors[8]  = part.r;
-	    colors[9]  = part.g;
-	    colors[10] = part.b;
-	    colors[11] = part.life * part.a;
-	    colors[12] = part.r;
-	    colors[13] = part.g;
-	    colors[14] = part.b;
-	    colors[15] = part.life * part.a;
+	    colors_cache.push_back (part.r * 65535.0f);
+	    colors_cache.push_back (part.g * 65535.0f);
+	    colors_cache.push_back (part.b * 65535.0f);
+	    colors_cache.push_back (part.life * part.a * 65535.0f);
 
-	    colors += 16;
+	    colors_cache.push_back (part.r * 65535.0f);
+	    colors_cache.push_back (part.g * 65535.0f);
+	    colors_cache.push_back (part.b * 65535.0f);
+	    colors_cache.push_back (part.life * part.a * 65535.0f);
 
-	    if (darken > 0)
-	    {
+            //second
+	    colors_cache.push_back (part.r * 65535.0f);
+	    colors_cache.push_back (part.g * 65535.0f);
+	    colors_cache.push_back (part.b * 65535.0f);
+	    colors_cache.push_back (part.life * part.a * 65535.0f);
 
-		dcolors[0]  = part.r;
-		dcolors[1]  = part.g;
-		dcolors[2]  = part.b;
-		dcolors[3]  = part.life * part.a * darken;
-		dcolors[4]  = part.r;
-		dcolors[5]  = part.g;
-		dcolors[6]  = part.b;
-		dcolors[7]  = part.life * part.a * darken;
-		dcolors[8]  = part.r;
-		dcolors[9]  = part.g;
-		dcolors[10] = part.b;
-		dcolors[11] = part.life * part.a * darken;
-		dcolors[12] = part.r;
-		dcolors[13] = part.g;
-		dcolors[14] = part.b;
-		dcolors[15] = part.life * part.a * darken;
+	    colors_cache.push_back (part.r * 65535.0f);
+	    colors_cache.push_back (part.g * 65535.0f);
+	    colors_cache.push_back (part.b * 65535.0f);
+	    colors_cache.push_back (part.life * part.a * 65535.0f);
 
-		dcolors += 16;
-	    }
+	    colors_cache.push_back (part.r * 65535.0f);
+	    colors_cache.push_back (part.g * 65535.0f);
+	    colors_cache.push_back (part.b * 65535.0f);
+	    colors_cache.push_back (part.life * part.a * 65535.0f);
+
+	    if(darken > 0)
+            {
+		dcolors_cache.push_back (part.r * 65535.0f);
+		dcolors_cache.push_back (part.g * 65535.0f);
+		dcolors_cache.push_back (part.b * 65535.0f);
+		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+
+		dcolors_cache.push_back (part.r * 65535.0f);
+		dcolors_cache.push_back (part.g * 65535.0f);
+		dcolors_cache.push_back (part.b * 65535.0f);
+		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+
+		dcolors_cache.push_back (part.r * 65535.0f);
+		dcolors_cache.push_back (part.g * 65535.0f);
+		dcolors_cache.push_back (part.b * 65535.0f);
+		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+
+		//second
+		dcolors_cache.push_back (part.r * 65535.0f);
+		dcolors_cache.push_back (part.g * 65535.0f);
+		dcolors_cache.push_back (part.b * 65535.0f);
+		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+
+		dcolors_cache.push_back (part.r * 65535.0f);
+		dcolors_cache.push_back (part.g * 65535.0f);
+		dcolors_cache.push_back (part.b * 65535.0f);
+		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+
+		dcolors_cache.push_back (part.r * 65535.0f);
+		dcolors_cache.push_back (part.g * 65535.0f);
+		dcolors_cache.push_back (part.b * 65535.0f);
+		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+            }
 	}
     }
-
-    glEnableClientState (GL_VERTEX_ARRAY);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState (GL_COLOR_ARRAY);
-
-    glTexCoordPointer (2, GL_FLOAT, 2 * sizeof (GLfloat), coords_cache.cache);
-    glVertexPointer (3, GL_FLOAT, 3 * sizeof (GLfloat), vertices_cache.cache);
-
-    // darken the background
-
+    
+    GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
+ 
     if (darken > 0)
     {
-	glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-	glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), dcolors_cache.cache);
-	glDrawArrays (GL_QUADS, 0, numActive);
+        glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+        stream->begin (GL_TRIANGLES);
+        stream->addVertices (vertices_cache.size () / 3, &vertices_cache[0]);
+        stream->addTexCoords (0, coords_cache.size () / 2, &coords_cache[0]);
+        stream->addColors (dcolors_cache.size () / 4, &dcolors_cache[0]);
+	
+        if (stream->end ())
+            stream->render (transform);
     }
-
-    // draw particles
+    
+    /* draw particles */
     glBlendFunc (GL_SRC_ALPHA, blendMode);
+    stream->begin (GL_TRIANGLES);  
+    
+    stream->addVertices (vertices_cache.size () / 3, &vertices_cache[0]);
+    stream->addTexCoords (0, coords_cache.size () / 2, &coords_cache[0]);
+    stream->addColors (colors_cache.size () / 4, &colors_cache[0]);
 
-    glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), colors_cache.cache);
-    glDrawArrays (GL_QUADS, 0, numActive);
-    glDisableClientState (GL_COLOR_ARRAY);
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState (GL_VERTEX_ARRAY);
-
-    glPopMatrix ();
-    glColor4usv (defaultColor);
-
-    GLScreen::get(screen)->setTexEnvMode (GL_REPLACE); // ???
-
+    if (stream->end ())
+            stream->render (transform);
+  
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
     glDisable (GL_BLEND);
@@ -331,30 +313,6 @@ ParticleSystem::finiParticles ()
 
     if (tex)
 	glDeleteTextures (1, &tex);
-
-    if (vertices_cache.cache)
-    {
-	free (vertices_cache.cache);
-	vertices_cache.cache = NULL;
-    }
-
-    if (colors_cache.cache)
-    {
-	free (colors_cache.cache);
-	colors_cache.cache = NULL;
-    }
-
-    if (coords_cache.cache)
-    {
-	free (coords_cache.cache);
-	coords_cache.cache = NULL;
-    }
-
-    if (dcolors_cache.cache)
-    {
-	free (dcolors_cache.cache);
-	dcolors_cache.cache = NULL;
-    }
 }
 
 static void
@@ -616,31 +574,62 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
 	if (brightness < 1.0)
 	{
-	    glColor4f (0.0, 0.0, 0.0, 1.0 - brightness);
-	    glEnable (GL_BLEND);
-	    glBegin (GL_QUADS);
-	    glVertex2d (output->region ()->extents.x1,
-			output->region ()->extents.y1);
-	    glVertex2d (output->region ()->extents.x1,
-			output->region ()->extents.y2);
-	    glVertex2d (output->region ()->extents.x2,
-			output->region ()->extents.y2);
-	    glVertex2d (output->region ()->extents.x2,
-			output->region ()->extents.y1);
-	    glEnd ();
-	    glDisable (GL_BLEND);
-	    glColor4usv (defaultColor);
-	}
+            std::vector<GLfloat> vertices;
+            std::vector<GLushort> colors;
+
+            vertices.reserve ( 6 * 3 );
+
+            vertices.push_back (output->region ()->extents.x1);
+            vertices.push_back (output->region ()->extents.y1);
+            vertices.push_back (0.0);
+
+            vertices.push_back (output->region ()->extents.x1);
+            vertices.push_back (output->region ()->extents.y2);
+            vertices.push_back (0.0);
+         
+            vertices.push_back (output->region ()->extents.x2);
+            vertices.push_back (output->region ()->extents.y2);
+            vertices.push_back (0.0);
+
+            vertices.push_back (output->region ()->extents.x2);
+            vertices.push_back (output->region ()->extents.y2);
+            vertices.push_back (0.0);
+
+            vertices.push_back (output->region ()->extents.x2);
+            vertices.push_back (output->region ()->extents.y1);
+            vertices.push_back (0.0);
+         
+            vertices.push_back (output->region ()->extents.x1);
+            vertices.push_back (output->region ()->extents.y1);
+            vertices.push_back (0.0);
+
+            colors.reserve ( 6 * 4 );
+
+            for ( int i = 0; i <= 5; i++ )
+            {
+                colors.push_back (0);
+                colors.push_back (0);
+                colors.push_back (0); 
+                colors.push_back ((1.0 - brightness) * 65535.0f);
+            }
+
+            GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
+            glEnable (GL_BLEND);
+            stream->begin (GL_TRIANGLES);
+            stream->addVertices (6, &vertices[0]);
+            stream->addColors (6, &colors[0]);
+
+            if (stream->end ())
+                stream->render (sTransform);
+
+            glDisable (GL_BLEND);
+        }
 
 	if (!init && ps.active)
-	    ps.drawParticles ();
+	    ps.drawParticles (sTransform);
 
-	glPopMatrix ();
     }
 
     return status;
