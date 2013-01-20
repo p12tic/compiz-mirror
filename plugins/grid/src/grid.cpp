@@ -198,8 +198,8 @@ GridScreen::initiateCommon (CompAction         *action,
 		cw->configureXWindow (CWX | CWY, &xwc);
 	    }
 	    cw->maximize (MAXIMIZE_STATE);
-	    gw->isGridResized = true;
-	    gw->isGridMaximized = true;
+	    gw->isGridResized = false;
+	    gw->isGridMaximized = false;
 		for (unsigned int i = 0; i < animations.size (); i++)
 			animations.at (i).fadingOut = true;
 	    return true;
@@ -926,7 +926,11 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 {
     if (lastState & MAXIMIZE_STATE &&
 	!(window->state () & MAXIMIZE_STATE))
+    {
 	lastTarget = GridUnknown;
+	if (isGridMaximized)
+	    gScreen->restoreWindow(0, 0, gScreen->o);
+    }
     else if (!(lastState & MAXIMIZE_STATE) &&
 	     window->state () & MAXIMIZE_STATE)
     {
@@ -952,6 +956,7 @@ GridScreen::restoreWindow (CompAction         *action,
 			   CompOption::Vector &option)
 {
     XWindowChanges xwc;
+    int xwcm = 0;
     CompWindow *cw = screen->findWindow (screen->activeWindow ());
 
     if (!cw)
@@ -959,35 +964,59 @@ GridScreen::restoreWindow (CompAction         *action,
 
     GRID_WINDOW (cw);
 
-    if (!gw->isGridResized)
-	return false;
-
-    if (gw->isGridMaximized & !(cw->state () & MAXIMIZE_STATE))
+    if (!gw->isGridResized && !gw->isGridMaximized)
     {
-	gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
-	gw->isGridMaximized = false;
+	/* Grid hasn't touched this window or has maximized it. If it's
+	 * maximized, unmaximize it and get out. */
+	if (cw->state () & MAXIMIZE_STATE)
+	    cw->maximize(0);
+	return true;
+    }
+
+    else if (!gw->isGridResized && gw->isGridMaximized)
+    {
+	/* Window has been vertically maximized by grid. We only need
+	 * to restore the X and width - core handles Y and height. */
+
+	if (gw->sizeHintsFlags)
+	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
+
+	xwcm |= CWX | CWWidth;
+    }
+
+    else if (gw->isGridResized && !gw->isGridMaximized)
+	/* Window is just gridded (top, bottom, center, corners). We
+	 * need to handle everything. */
+	xwcm |= CWX | CWY | CWWidth | CWHeight;
+
+    else
+	/* This should never happen. But if it does, just bail out
+	 * gracefully. */
+        return false;
+
+    if (cw == mGrabWindow)
+    {
+	xwc.x = pointerX - (gw->originalSize.width () >> 1);
+	xwc.y = pointerY + (cw->border ().top >> 1);
     }
     else
     {
-        if (cw == mGrabWindow)
-	{
-	    xwc.x = pointerX - (gw->originalSize.width () >> 1);
-	    xwc.y = pointerY + (cw->border ().top >> 1);
-	}
-	else
-	{
-	    xwc.x = gw->originalSize.x ();
-	    xwc.y = gw->originalSize.y ();
-	}
-	xwc.width  = gw->originalSize.width ();
-	xwc.height = gw->originalSize.height ();
-	cw->maximize (0);
-	gw->currentSize = CompRect ();
-	cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
-	gw->pointerBufDx = 0;
-	gw->pointerBufDy = 0;
+	xwc.x = gw->originalSize.x ();
+	xwc.y = gw->originalSize.y ();
     }
+    xwc.width  = gw->originalSize.width ();
+    xwc.height = gw->originalSize.height ();
+
+    if (cw->mapNum())
+	cw->sendSyncRequest();
+    cw->configureXWindow (xwcm, &xwc);
+    gw->currentSize = CompRect ();
+    gw->pointerBufDx = 0;
+    gw->pointerBufDy = 0;
+    gw->isGridMaximized = false;
     gw->isGridResized = false;
+    if (cw->state () & MAXIMIZE_STATE)
+	cw->maximize(0);
     gw->resizeCount = 0;
     gw->lastTarget = GridUnknown;
 
