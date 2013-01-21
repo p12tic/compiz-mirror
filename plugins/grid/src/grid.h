@@ -182,7 +182,7 @@ class GridWindow :
 	GridScreen *gScreen;
 
 	bool isGridResized;
-	bool isGridMaximized;
+	bool isGridSemiMaximized;
 	unsigned int grabMask;
 	int pointerBufDx;
 	int pointerBufDy;
