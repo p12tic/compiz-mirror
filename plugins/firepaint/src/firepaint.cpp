@@ -591,56 +591,56 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (brightness < 1.0)
 	{
-            std::vector<GLfloat> vertices;
-            std::vector<GLushort> colors;
+		/* cover the screen with a rectangle and darken it 
+		(coded as two GL_TRIANGLES for GLES compatibility)
+		*/
+	
+		GLfloat vertices[18];
+		GLushort colors[24];
+		
+		vertices[0] = (GLfloat)output->region ()->extents.x1;
+		vertices[1] = (GLfloat)output->region ()->extents.y1;
+		vertices[2] = 0.0f;
 
-            vertices.reserve ( 6 * 3 );
+		vertices[3] = (GLfloat)output->region ()->extents.x1;
+		vertices[4] = (GLfloat)output->region ()->extents.y2;
+		vertices[5] = 0.0f;
 
-            vertices.push_back (output->region ()->extents.x1);
-            vertices.push_back (output->region ()->extents.y1);
-            vertices.push_back (0.0);
+		vertices[6] = (GLfloat)output->region ()->extents.x2;
+		vertices[7] = (GLfloat)output->region ()->extents.y2;
+		vertices[8] = 0.0f;
 
-            vertices.push_back (output->region ()->extents.x1);
-            vertices.push_back (output->region ()->extents.y2);
-            vertices.push_back (0.0);
-         
-            vertices.push_back (output->region ()->extents.x2);
-            vertices.push_back (output->region ()->extents.y2);
-            vertices.push_back (0.0);
+		vertices[9] = (GLfloat)output->region ()->extents.x2;
+		vertices[10] = (GLfloat)output->region ()->extents.y2;
+		vertices[11] = 0.0f;
 
-            vertices.push_back (output->region ()->extents.x2);
-            vertices.push_back (output->region ()->extents.y2);
-            vertices.push_back (0.0);
+		vertices[12] = (GLfloat)output->region ()->extents.x2;
+		vertices[13] = (GLfloat)output->region ()->extents.y1;
+		vertices[14] = 0.0f;
 
-            vertices.push_back (output->region ()->extents.x2);
-            vertices.push_back (output->region ()->extents.y1);
-            vertices.push_back (0.0);
-         
-            vertices.push_back (output->region ()->extents.x1);
-            vertices.push_back (output->region ()->extents.y1);
-            vertices.push_back (0.0);
+		vertices[15] = (GLfloat)output->region ()->extents.x1;
+		vertices[16] = (GLfloat)output->region ()->extents.y1;
+		vertices[17] = 0.0f;
+				
+		for ( int i = 0; i <= 5; i++ )
+		{
+		    colors[i*4+0] = 0;
+		    colors[i*4+1] = 0;
+		    colors[i*4+2] = 0; 
+		    colors[i*4+3] = (1.0 - brightness) * 65535.0f;
+		}
 
-            colors.reserve ( 6 * 4 );
+		GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
+		glEnable (GL_BLEND);
+		stream->begin (GL_TRIANGLES);
+		stream->addVertices (6, vertices);
+		stream->addColors (6, colors);
 
-            for ( int i = 0; i <= 5; i++ )
-            {
-                colors.push_back (0);
-                colors.push_back (0);
-                colors.push_back (0); 
-                colors.push_back ((1.0 - brightness) * 65535.0f);
-            }
+		if (stream->end ())
+		    stream->render (sTransform);
 
-            GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
-            glEnable (GL_BLEND);
-            stream->begin (GL_TRIANGLES);
-            stream->addVertices (6, &vertices[0]);
-            stream->addColors (6, &colors[0]);
-
-            if (stream->end ())
-                stream->render (sTransform);
-
-            glDisable (GL_BLEND);
-        }
+		glDisable (GL_BLEND);
+	}
 
 	if (!init && ps.active)
 	    ps.drawParticles (sTransform);
