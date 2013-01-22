@@ -339,8 +339,29 @@ TEST_F (CCSGNOMEIntegrationTestWithMocks, TestGetIntegratedSettingFromStorage)
 	       ccsIntegrationGetIntegratedSetting (Real (mIntegration),
 						   MOCK_PLUGIN.c_str (),
 						   MOCK_SETTING.c_str ()));
+}
 
+TEST_F (CCSGNOMEIntegrationTestReadIntegrated, TestReadInKeyOption)
+{
+    CCSSettingValue *v = MakeSettingValue ();
+    v->value.asString = strdup ("<Control>a");
 
+    mIntegratedSetting = createIntegratedSettingCompositionFromMock (MOCK_PLUGIN,
+								     MOCK_SETTING,
+								     TypeKey,
+								     OptionKey,
+								     MOCK_GNOME_NAME,
+								     &ccsDefaultObjectAllocator);
+
+    CCSSettingKeyValue keyValue;
+    ASSERT_TRUE (ccsStringToKeyBinding (v->value.asString, &keyValue));
+    EXPECT_CALL (Mock (*mIntegratedSetting), readValue (TypeKey)).WillOnce (Return (v));
+    EXPECT_CALL (mSettingMock, setKey (Eq (keyValue), IsTrue ()));
+
+    EXPECT_THAT (ccsIntegrationReadOptionIntoSetting (Real (mIntegration),
+						      NULL,
+						      mSetting.get (),
+						      Real (*mIntegratedSetting)), IsTrue ());
 }
 
 TEST_F (CCSGNOMEIntegrationTestReadIntegrated, TestReadInSpecialOptionCurrentViewport)
