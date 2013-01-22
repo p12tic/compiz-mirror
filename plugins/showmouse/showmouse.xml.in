@@ -87,7 +87,7 @@
 					<_long>Particle life.</_long>
 					<default>0.7</default>
 					<min>0.1</min>
-					<max>1</max>
+					<max>0.9490</max>
 					<precision>0.1</precision>
 				</option>
 				<option name="darken" type="float">
