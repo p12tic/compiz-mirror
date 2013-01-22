@@ -97,24 +97,21 @@ ParticleSystem::initParticles (int            f_numParticles)
 void
 ParticleSystem::drawParticles(const GLMatrix	     &transform)
 {
-    vertices_cache.clear ();
-    coords_cache.clear ();
-    colors_cache.clear ();
-    dcolors_cache.clear ();
+    int i, j, k, l;
 
     /* Check that the cache is big enough */
     if (particles.size () * 6 * 3 > vertices_cache.size ())
-	vertices_cache.reserve (particles.size() * 6 * 3);
+	vertices_cache.resize (particles.size() * 6 * 3);
 
     if (particles.size () * 6 * 2 > coords_cache.size ())
-	coords_cache.reserve (particles.size() * 6 * 2);
+	coords_cache.resize (particles.size() * 6 * 2);
 
     if (particles.size () * 6 * 4 > colors_cache.size ())
-	colors_cache.reserve (particles.size() * 6 * 4);
+	colors_cache.resize (particles.size() * 6 * 4);
 
     if (darken > 0)
 	if (particles.size () * 6 * 4 > dcolors_cache.size ())
-	    dcolors_cache.reserve (particles.size() * 6 * 4);
+	    dcolors_cache.resize (particles.size() * 6 * 4);
     
     glEnable (GL_BLEND);
 
@@ -124,6 +121,8 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	glEnable (GL_TEXTURE_2D);
     }
 
+    i = j = k = l = 0;
+
     /* for each particle, use two triangles to display it */
     foreach (Particle &part, particles) 
     {
@@ -132,117 +131,133 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	    float w = part.width / 2;
 	    float h = part.height / 2;
 
+	    GLushort r, g, b, a, dark_a;
+
+	    r = part.r * 65535.0f;
+	    g = part.g * 65535.0f;
+	    b = part.b * 65535.0f;
+	    a = part.life * part.a * 65535.0f;
+	    dark_a = part.life * part.a * darken * 65535.0f;
+
 	    w += (w * part.w_mod) * part.life;
 	    h += (h * part.h_mod) * part.life;
             
             //first triangle
-	    vertices_cache.push_back (part.x - w); 
-	    vertices_cache.push_back (part.y - h); 
-	    vertices_cache.push_back (part.z);
+	    vertices_cache[i+ 0] = part.x - w; 
+	    vertices_cache[i+ 1] = part.y - h; 
+	    vertices_cache[i+ 2] = part.z;
 
-	    vertices_cache.push_back (part.x - w); 
-	    vertices_cache.push_back (part.y + h); 
-	    vertices_cache.push_back (part.z);
+	    vertices_cache[i+ 3] = part.x - w; 
+	    vertices_cache[i+ 4] = part.y + h; 
+	    vertices_cache[i+ 5] = part.z;
 
-	    vertices_cache.push_back (part.x + w); 
-	    vertices_cache.push_back (part.y + h); 
-	    vertices_cache.push_back (part.z);
+	    vertices_cache[i+ 6] = part.x + w; 
+	    vertices_cache[i+ 7] = part.y + h; 
+	    vertices_cache[i+ 8] = part.z;
             
             //second triangle
-	    vertices_cache.push_back (part.x + w);
-	    vertices_cache.push_back (part.y + h);
-	    vertices_cache.push_back (part.z);
+	    vertices_cache[i+ 9] = part.x + w;
+	    vertices_cache[i+10] = part.y + h;
+	    vertices_cache[i+11] = part.z;
 
-	    vertices_cache.push_back (part.x + w);
-	    vertices_cache.push_back (part.y - h);
-	    vertices_cache.push_back (part.z);
+	    vertices_cache[i+12] = part.x + w;
+	    vertices_cache[i+13] = part.y - h;
+	    vertices_cache[i+14] = part.z;
 
-	    vertices_cache.push_back (part.x - w);
-	    vertices_cache.push_back (part.y - h);
-	    vertices_cache.push_back (part.z);
+	    vertices_cache[i+15] = part.x - w;
+	    vertices_cache[i+16] = part.y - h;
+	    vertices_cache[i+17] = part.z;
 
-	    coords_cache.push_back (0.0);
-	    coords_cache.push_back (0.0);
+	    i += 18;
 
-	    coords_cache.push_back (0.0);
-	    coords_cache.push_back (1.0);
+	    coords_cache[j+ 0] = 0.0;
+	    coords_cache[j+ 1] = 0.0;
 
-	    coords_cache.push_back (1.0);
-	    coords_cache.push_back (1.0);
+	    coords_cache[j+ 2] = 0.0;
+	    coords_cache[j+ 3] = 1.0;
+
+	    coords_cache[j+ 4] = 1.0;
+	    coords_cache[j+ 5] = 1.0;
 
             //second
-	    coords_cache.push_back (1.0);
-	    coords_cache.push_back (1.0);
+	    coords_cache[j+ 6] = 1.0;
+	    coords_cache[j+ 7] = 1.0;
 
-	    coords_cache.push_back (1.0);
-	    coords_cache.push_back (0.0);
+	    coords_cache[j+ 8] = 1.0;
+	    coords_cache[j+ 9] = 0.0;
 	    
-	    coords_cache.push_back (0.0);
-	    coords_cache.push_back (0.0);
+	    coords_cache[j+10] = 0.0;
+	    coords_cache[j+11] = 0.0;
 
-	    colors_cache.push_back (part.r * 65535.0f);
-	    colors_cache.push_back (part.g * 65535.0f);
-	    colors_cache.push_back (part.b * 65535.0f);
-	    colors_cache.push_back (part.life * part.a * 65535.0f);
+	    j += 12;
 
-	    colors_cache.push_back (part.r * 65535.0f);
-	    colors_cache.push_back (part.g * 65535.0f);
-	    colors_cache.push_back (part.b * 65535.0f);
-	    colors_cache.push_back (part.life * part.a * 65535.0f);
+	    colors_cache[k+ 0] = r;
+	    colors_cache[k+ 1] = g;
+	    colors_cache[k+ 2] = b;
+	    colors_cache[k+ 3] = a;
 
-	    colors_cache.push_back (part.r * 65535.0f);
-	    colors_cache.push_back (part.g * 65535.0f);
-	    colors_cache.push_back (part.b * 65535.0f);
-	    colors_cache.push_back (part.life * part.a * 65535.0f);
+	    colors_cache[k+ 4] = r;
+	    colors_cache[k+ 5] = g;
+	    colors_cache[k+ 6] = b;
+	    colors_cache[k+ 7] = a;
+
+	    colors_cache[k+ 8] = r;
+	    colors_cache[k+ 9] = g;
+	    colors_cache[k+10] = b;
+	    colors_cache[k+11] = a;
 
             //second
-	    colors_cache.push_back (part.r * 65535.0f);
-	    colors_cache.push_back (part.g * 65535.0f);
-	    colors_cache.push_back (part.b * 65535.0f);
-	    colors_cache.push_back (part.life * part.a * 65535.0f);
+	    colors_cache[k+12] = r;
+	    colors_cache[k+13] = g;
+	    colors_cache[k+14] = b;
+	    colors_cache[k+15] = a;
 
-	    colors_cache.push_back (part.r * 65535.0f);
-	    colors_cache.push_back (part.g * 65535.0f);
-	    colors_cache.push_back (part.b * 65535.0f);
-	    colors_cache.push_back (part.life * part.a * 65535.0f);
+	    colors_cache[k+16] = r;
+	    colors_cache[k+17] = g;
+	    colors_cache[k+18] = b;
+	    colors_cache[k+19] = a;
 
-	    colors_cache.push_back (part.r * 65535.0f);
-	    colors_cache.push_back (part.g * 65535.0f);
-	    colors_cache.push_back (part.b * 65535.0f);
-	    colors_cache.push_back (part.life * part.a * 65535.0f);
+	    colors_cache[k+20] = r;
+	    colors_cache[k+21] = g;
+	    colors_cache[k+22] = b;
+	    colors_cache[k+23] = a;
+
+	    k += 24;
 
 	    if(darken > 0)
             {
-		dcolors_cache.push_back (part.r * 65535.0f);
-		dcolors_cache.push_back (part.g * 65535.0f);
-		dcolors_cache.push_back (part.b * 65535.0f);
-		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+		dcolors_cache[l+ 0] = r;
+		dcolors_cache[l+ 1] = g;
+		dcolors_cache[l+ 2] = b;
+		dcolors_cache[l+ 3] = dark_a;
 
-		dcolors_cache.push_back (part.r * 65535.0f);
-		dcolors_cache.push_back (part.g * 65535.0f);
-		dcolors_cache.push_back (part.b * 65535.0f);
-		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+		dcolors_cache[l+ 4] = r;
+		dcolors_cache[l+ 5] = g;
+		dcolors_cache[l+ 6] = b;
+		dcolors_cache[l+ 7] = dark_a;
 
-		dcolors_cache.push_back (part.r * 65535.0f);
-		dcolors_cache.push_back (part.g * 65535.0f);
-		dcolors_cache.push_back (part.b * 65535.0f);
-		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+		dcolors_cache[l+ 8] = r;
+		dcolors_cache[l+ 9] = g;
+		dcolors_cache[l+10] = b;
+		dcolors_cache[l+11] = dark_a;
 
 		//second
-		dcolors_cache.push_back (part.r * 65535.0f);
-		dcolors_cache.push_back (part.g * 65535.0f);
-		dcolors_cache.push_back (part.b * 65535.0f);
-		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+		dcolors_cache[l+12] = r;
+		dcolors_cache[l+13] = g;
+		dcolors_cache[l+14] = b;
+		dcolors_cache[l+15] = dark_a;
 
-		dcolors_cache.push_back (part.r * 65535.0f);
-		dcolors_cache.push_back (part.g * 65535.0f);
-		dcolors_cache.push_back (part.b * 65535.0f);
-		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+		dcolors_cache[l+16] = r;
+		dcolors_cache[l+17] = g;
+		dcolors_cache[l+18] = b;
+		dcolors_cache[l+19] = dark_a;
 
-		dcolors_cache.push_back (part.r * 65535.0f);
-		dcolors_cache.push_back (part.g * 65535.0f);
-		dcolors_cache.push_back (part.b * 65535.0f);
-		dcolors_cache.push_back (part.life * part.a * darken * 65535.0f);
+		dcolors_cache[l+20] = r;
+		dcolors_cache[l+21] = g;
+		dcolors_cache[l+22] = b;
+		dcolors_cache[l+23] = dark_a;
+
+		l += 24;
             }
 	}
     }
@@ -253,9 +268,9 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
     {
         glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
         stream->begin (GL_TRIANGLES);
-        stream->addVertices (vertices_cache.size () / 3, &vertices_cache[0]);
-        stream->addTexCoords (0, coords_cache.size () / 2, &coords_cache[0]);
-        stream->addColors (dcolors_cache.size () / 4, &dcolors_cache[0]);
+        stream->addVertices (i / 3, &vertices_cache[0]);
+        stream->addTexCoords (0, j / 2, &coords_cache[0]);
+        stream->addColors (l / 4, &dcolors_cache[0]);
 	
         if (stream->end ())
             stream->render (transform);
@@ -265,9 +280,9 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
     glBlendFunc (GL_SRC_ALPHA, blendMode);
     stream->begin (GL_TRIANGLES);  
     
-    stream->addVertices (vertices_cache.size () / 3, &vertices_cache[0]);
-    stream->addTexCoords (0, coords_cache.size () / 2, &coords_cache[0]);
-    stream->addColors (colors_cache.size () / 4, &colors_cache[0]);
+    stream->addVertices (i / 3, &vertices_cache[0]);
+    stream->addTexCoords (0, j / 2, &coords_cache[0]);
+    stream->addColors (k / 4, &colors_cache[0]);
 
     if (stream->end ())
             stream->render (transform);
