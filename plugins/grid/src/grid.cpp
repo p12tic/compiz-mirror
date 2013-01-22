@@ -933,7 +933,7 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	!(window->state () & MAXIMIZE_STATE))
     {
 	lastTarget = GridUnknown;
-	if (isGridSemiMaximized && lastState == CompWindowStateMaximizedVertMask)
+	if (isGridSemiMaximized && (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedVertMask)
 	    gScreen->restoreWindow(0, 0, gScreen->o);
     }
     else if (!(lastState & MAXIMIZE_STATE) &&
