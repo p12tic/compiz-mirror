@@ -1,3 +1,10 @@
+compiz (1:0.9.9~daily13.01.21-0ubuntu2) UNRELEASED; urgency=low
+
+  * Really take default patched hsize and vsize and don't override them
+    to fix (LP: #868423)
+
+ -- Didier Roche <didrocks@ubuntu.com>  Wed, 23 Jan 2013 11:03:51 +0100
+
 compiz (1:0.9.9~daily13.01.21-0ubuntu1) raring; urgency=low
 
   [ Brandon Schaefer ]
