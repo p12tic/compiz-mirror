@@ -24,7 +24,7 @@
 
 #include <boost/bind.hpp>
 #include <cmath>
-#include <assert.h>
+#include <cassert>
 #include "grid.h"
 #include "grabhandler.h"
 
