@@ -10,6 +10,7 @@ debian/tmp/usr/share/compiz/cubeaddon
 debian/tmp/usr/*/compiz/*dbus.*
 debian/tmp/usr/*/compiz/*extrawm.*
 debian/tmp/usr/*/compiz/*fadedesktop.*
+debian/tmp/usr/*/compiz/*firepaint.*
 debian/tmp/usr/*/compiz/*imgjpeg.*
 debian/tmp/usr/*/compiz/*imgsvg.*
 debian/tmp/usr/*/compiz/*inotify.*
@@ -41,5 +42,4 @@ debian/tmp/usr/*/compiz/*water.*
 debian/tmp/usr/*/compiz/*winrules.*
 debian/tmp/usr/*/compiz/*wobbly.*
 debian/tmp/usr/*/compiz/*workspacenames.*
-debian/tmp/usr/*/compiz/*firepaint.*
 
