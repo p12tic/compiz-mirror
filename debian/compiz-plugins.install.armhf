@@ -10,6 +10,7 @@ debian/tmp/usr/share/compiz/cubeaddon
 debian/tmp/usr/*/compiz/*dbus.*
 debian/tmp/usr/*/compiz/*extrawm.*
 debian/tmp/usr/*/compiz/*fadedesktop.*
+debian/tmp/usr/*/compiz/*firepaint.*
 debian/tmp/usr/*/compiz/*imgjpeg.*
 debian/tmp/usr/*/compiz/*imgsvg.*
 debian/tmp/usr/*/compiz/*inotify.*
