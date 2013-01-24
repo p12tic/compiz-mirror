@@ -41,4 +41,5 @@ debian/tmp/usr/*/compiz/*water.*
 debian/tmp/usr/*/compiz/*winrules.*
 debian/tmp/usr/*/compiz/*wobbly.*
 debian/tmp/usr/*/compiz/*workspacenames.*
+debian/tmp/usr/*/compiz/*firepaint.*
 
