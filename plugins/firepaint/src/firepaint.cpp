@@ -23,8 +23,6 @@
 
 COMPIZ_PLUGIN_20090315 (firepaint, FirePluginVTable);
 
-const unsigned int NUM_ADD_POINTS = 1000;
-
 Particle::Particle () :
     life (0),
     fade (0),
@@ -112,7 +110,7 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
     if (darken > 0)
 	if (particles.size () * 6 * 4 > dcolors_cache.size ())
 	    dcolors_cache.resize (particles.size() * 6 * 4);
-    
+
     glEnable (GL_BLEND);
 
     if (tex)
@@ -141,21 +139,21 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 
 	    w += (w * part.w_mod) * part.life;
 	    h += (h * part.h_mod) * part.life;
-            
-            //first triangle
-	    vertices_cache[i+ 0] = part.x - w; 
-	    vertices_cache[i+ 1] = part.y - h; 
+
+	    //first triangle
+	    vertices_cache[i+ 0] = part.x - w;
+	    vertices_cache[i+ 1] = part.y - h;
 	    vertices_cache[i+ 2] = part.z;
 
-	    vertices_cache[i+ 3] = part.x - w; 
-	    vertices_cache[i+ 4] = part.y + h; 
+	    vertices_cache[i+ 3] = part.x - w;
+	    vertices_cache[i+ 4] = part.y + h;
 	    vertices_cache[i+ 5] = part.z;
 
-	    vertices_cache[i+ 6] = part.x + w; 
-	    vertices_cache[i+ 7] = part.y + h; 
+	    vertices_cache[i+ 6] = part.x + w;
+	    vertices_cache[i+ 7] = part.y + h;
 	    vertices_cache[i+ 8] = part.z;
-            
-            //second triangle
+
+	    //second triangle
 	    vertices_cache[i+ 9] = part.x + w;
 	    vertices_cache[i+10] = part.y + h;
 	    vertices_cache[i+11] = part.z;
@@ -179,7 +177,7 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	    coords_cache[j+ 4] = 1.0;
 	    coords_cache[j+ 5] = 1.0;
 
-            //second
+	    //second
 	    coords_cache[j+ 6] = 1.0;
 	    coords_cache[j+ 7] = 1.0;
 
@@ -206,7 +204,7 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	    colors_cache[k+10] = b;
 	    colors_cache[k+11] = a;
 
-            //second
+	    //second
 	    colors_cache[k+12] = r;
 	    colors_cache[k+13] = g;
 	    colors_cache[k+14] = b;
@@ -225,7 +223,7 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	    k += 24;
 
 	    if(darken > 0)
-            {
+	    {
 		dcolors_cache[l+ 0] = r;
 		dcolors_cache[l+ 1] = g;
 		dcolors_cache[l+ 2] = b;
@@ -258,35 +256,35 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 		dcolors_cache[l+23] = dark_a;
 
 		l += 24;
-            }
+	    }
 	}
     }
     
     GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
- 
+
     if (darken > 0)
     {
-        glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-        stream->begin (GL_TRIANGLES);
-        stream->addVertices (i / 3, &vertices_cache[0]);
-        stream->addTexCoords (0, j / 2, &coords_cache[0]);
-        stream->addColors (l / 4, &dcolors_cache[0]);
-	
-        if (stream->end ())
-            stream->render (transform);
+	glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+	stream->begin (GL_TRIANGLES);
+	stream->addVertices (i / 3, &vertices_cache[0]);
+	stream->addTexCoords (0, j / 2, &coords_cache[0]);
+	stream->addColors (l / 4, &dcolors_cache[0]);
+
+	if (stream->end ())
+	    stream->render (transform);
     }
-    
+
     /* draw particles */
     glBlendFunc (GL_SRC_ALPHA, blendMode);
-    stream->begin (GL_TRIANGLES);  
-    
+    stream->begin (GL_TRIANGLES);
+
     stream->addVertices (i / 3, &vertices_cache[0]);
     stream->addTexCoords (0, j / 2, &coords_cache[0]);
     stream->addColors (k / 4, &colors_cache[0]);
 
     if (stream->end ())
-            stream->render (transform);
-  
+	stream->render (transform);
+
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
     glDisable (GL_BLEND);
@@ -528,7 +526,7 @@ FireScreen::preparePaint (int      time)
 			      (float) optionGetFireColorBlue () / 0xffff);
 		}
 
-		/* set transparancy */
+		/* set transparency */
 		part.a = (float) optionGetFireColorAlpha () / 0xffff;
 
 		/* set gravity */
@@ -591,55 +589,55 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (brightness < 1.0)
 	{
-		/* cover the screen with a rectangle and darken it 
-		(coded as two GL_TRIANGLES for GLES compatibility)
-		*/
-	
-		GLfloat vertices[18];
-		GLushort colors[24];
-		
-		vertices[0] = (GLfloat)output->region ()->extents.x1;
-		vertices[1] = (GLfloat)output->region ()->extents.y1;
-		vertices[2] = 0.0f;
+	    /* cover the screen with a rectangle and darken it
+	    (coded as two GL_TRIANGLES for GLES compatibility)
+	    */
 
-		vertices[3] = (GLfloat)output->region ()->extents.x1;
-		vertices[4] = (GLfloat)output->region ()->extents.y2;
-		vertices[5] = 0.0f;
+	    GLfloat vertices[18];
+	    GLushort colors[24];
 
-		vertices[6] = (GLfloat)output->region ()->extents.x2;
-		vertices[7] = (GLfloat)output->region ()->extents.y2;
-		vertices[8] = 0.0f;
+	    vertices[0] = (GLfloat)output->region ()->extents.x1;
+	    vertices[1] = (GLfloat)output->region ()->extents.y1;
+	    vertices[2] = 0.0f;
 
-		vertices[9] = (GLfloat)output->region ()->extents.x2;
-		vertices[10] = (GLfloat)output->region ()->extents.y2;
-		vertices[11] = 0.0f;
+	    vertices[3] = (GLfloat)output->region ()->extents.x1;
+	    vertices[4] = (GLfloat)output->region ()->extents.y2;
+	    vertices[5] = 0.0f;
 
-		vertices[12] = (GLfloat)output->region ()->extents.x2;
-		vertices[13] = (GLfloat)output->region ()->extents.y1;
-		vertices[14] = 0.0f;
+	    vertices[6] = (GLfloat)output->region ()->extents.x2;
+	    vertices[7] = (GLfloat)output->region ()->extents.y2;
+	    vertices[8] = 0.0f;
 
-		vertices[15] = (GLfloat)output->region ()->extents.x1;
-		vertices[16] = (GLfloat)output->region ()->extents.y1;
-		vertices[17] = 0.0f;
-				
-		for ( int i = 0; i <= 5; i++ )
-		{
-		    colors[i*4+0] = 0;
-		    colors[i*4+1] = 0;
-		    colors[i*4+2] = 0; 
-		    colors[i*4+3] = (1.0 - brightness) * 65535.0f;
-		}
+	    vertices[9] = (GLfloat)output->region ()->extents.x2;
+	    vertices[10] = (GLfloat)output->region ()->extents.y2;
+	    vertices[11] = 0.0f;
 
-		GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
-		glEnable (GL_BLEND);
-		stream->begin (GL_TRIANGLES);
-		stream->addVertices (6, vertices);
-		stream->addColors (6, colors);
+	    vertices[12] = (GLfloat)output->region ()->extents.x2;
+	    vertices[13] = (GLfloat)output->region ()->extents.y1;
+	    vertices[14] = 0.0f;
 
-		if (stream->end ())
-		    stream->render (sTransform);
+	    vertices[15] = (GLfloat)output->region ()->extents.x1;
+	    vertices[16] = (GLfloat)output->region ()->extents.y1;
+	    vertices[17] = 0.0f;
 
-		glDisable (GL_BLEND);
+	    for (int i = 0; i <= 5; i++)
+	    {
+		colors[i*4+0] = 0;
+		colors[i*4+1] = 0;
+		colors[i*4+2] = 0;
+		colors[i*4+3] = (1.0 - brightness) * 65535.0f;
+	    }
+
+	    GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
+	    glEnable (GL_BLEND);
+	    stream->begin (GL_TRIANGLES);
+	    stream->addVertices (6, vertices);
+	    stream->addColors (6, colors);
+
+	    if (stream->end ())
+		stream->render (sTransform);
+
+	    glDisable (GL_BLEND);
 	}
 
 	if (!init && ps.active)
