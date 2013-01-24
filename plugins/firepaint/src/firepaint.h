@@ -101,8 +101,6 @@ class ParticleSystem
 	finiParticles ();
 };
 
-extern const unsigned int NUM_ADD_POINTS;
-
 class FireScreen:
     public PluginClassHandler <FireScreen, CompScreen>,
     public FirepaintOptions,
