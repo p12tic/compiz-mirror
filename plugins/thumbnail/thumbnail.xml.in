@@ -126,7 +126,7 @@
               <blue>0x0000</blue>
               <alpha>0x7fff</alpha>
             </default>
-        </option>
+          </option>
         </subgroup>
       </group>
     </options>
