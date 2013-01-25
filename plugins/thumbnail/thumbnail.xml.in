@@ -111,9 +111,9 @@
             <_short>Font Color</_short>
             <_long>Window title Font Color.</_long>
             <default>
-              <red>0x0000</red>
-              <green>0x0000</green>
-              <blue>0x0000</blue>
+              <red>0xffff</red>
+              <green>0xffff</green>
+              <blue>0xffff</blue>
               <alpha>0xffff</alpha>
             </default>
           </option>
