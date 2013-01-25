@@ -93,6 +93,13 @@
             <_long>Should be the window title Bold.</_long>
             <default>true</default>
           </option>
+          <option name="text_distance" type="int">
+            <_short>Text Distance</_short>
+            <_long>The gap between the thumbnail and the window title text (in pixel).</_long>
+            <default>10</default>
+            <min>0</min>
+            <max>32</max>
+          </option>
           <option name="font_size" type="int">
             <_short>Font Size</_short>
             <_long>Window title Font Size.</_long>
@@ -110,6 +117,16 @@
               <alpha>0xffff</alpha>
             </default>
           </option>
+          <option name="font_background_color" type="color">
+            <_short>Font Background Color</_short>
+            <_long>Color and opacity of the rounded rectangle title text background.</_long>
+            <default>
+              <red>0x0000</red>
+              <green>0x0000</green>
+              <blue>0x0000</blue>
+              <alpha>0x7fff</alpha>
+            </default>
+        </option>
         </subgroup>
       </group>
     </options>
