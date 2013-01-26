@@ -419,7 +419,6 @@ ShowmouseScreen::genNewParticles (int f_time)
 	    // set size
 	    part.width = partw;
 	    part.height = parth;
-	    rVal = (float)(random() & 0xff) / 255.0;
 	    part.w_mod = part.h_mod = -1;
 
 	    // choose random position
