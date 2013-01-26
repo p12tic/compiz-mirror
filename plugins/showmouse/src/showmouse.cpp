@@ -290,7 +290,8 @@ ParticleSystem::drawParticles ()
     glPopMatrix ();
     glColor4usv (defaultColor);
 
-    GLScreen::get(screen)->setTexEnvMode (GL_REPLACE); // ??? 
+    // also work on other potentially active GLScreens like expo or scale
+    GLScreen::get(screen)->setTexEnvMode (GL_REPLACE);
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
