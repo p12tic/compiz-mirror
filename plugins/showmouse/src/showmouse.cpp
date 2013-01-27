@@ -103,18 +103,18 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
     int i, j, k, l;
 
     /* Check that the cache is big enough */
-    if (vertices_cache.size () < particles.size()* 6 * 3)
-	vertices_cache.resize (particles.size() * 6 * 3);
+    if (vertices_cache.size () < particles.size () * 6 * 3)
+	vertices_cache.resize (particles.size () * 6 * 3);
 
     if (coords_cache.size () < particles.size () * 6 * 2)
-	coords_cache.resize (particles.size() * 6 * 2);
+	coords_cache.resize (particles.size () * 6 * 2);
 
     if (colors_cache.size () < particles.size () * 6 * 4)
-	colors_cache.resize (particles.size() * 6 * 4);
+	colors_cache.resize (particles.size () * 6 * 4);
 
     if (darken > 0)
 	if (dcolors_cache.size () < particles.size () * 6 * 4)
-	    dcolors_cache.resize (particles.size() * 6 * 4);
+	    dcolors_cache.resize (particles.size () * 6 * 4);
 
     glEnable (GL_BLEND);
 
