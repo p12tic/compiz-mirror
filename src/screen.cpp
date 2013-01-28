@@ -526,7 +526,7 @@ errorHandler (Display     *dpy,
     XGetErrorDatabaseText (dpy, "XlibMessage", "MajorCode", "%d", str, 128);
     fprintf (stderr, str, e->request_code);
 
-    sprintf (str, "%d", e->request_code);
+    snprintf (str, 128, "%d", e->request_code);
     XGetErrorDatabaseText (dpy, "XRequest", str, "", str, 128);
     if (strcmp (str, ""))
 	fprintf (stderr, " (%s)", str);
@@ -4878,7 +4878,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     /* Check for other window managers */
 
     char                 buf[128];
-    sprintf (buf, "WM_S%d", DefaultScreen (dpy));
+    snprintf (buf, 128, "WM_S%d", DefaultScreen (dpy));
     wmSnAtom = XInternAtom (dpy, buf, 0);
 
     Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
