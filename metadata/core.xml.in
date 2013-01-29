@@ -193,7 +193,6 @@
 			<option name="unmaximize_or_minimize_window_key" type="key">
 			<_short>Unmaximize or Minimize Window</_short>
 			<_long>Unmaximize or minimize active window</_long>
-			<default>&lt;Control&gt;&lt;Super&gt;Down</default>
 			</option>
 			<option name="maximize_window_horizontally_key" type="key">
 			<_short>Maximize Window Horizontally</_short>
