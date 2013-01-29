@@ -68,6 +68,25 @@ CompScreenImpl::unmaximizeWin (CompAction         *action,
 }
 
 bool
+CompScreenImpl::unmaximizeOrMinimizeWin (CompAction         *action,
+			   CompAction::State  state,
+			   CompOption::Vector &options)
+{
+    CompWindow *w;
+    Window     xid;
+
+    xid = CompOption::getIntOptionNamed (options, "window");
+
+    w = screen->findTopLevelWindow (xid);
+    if (w && ((w->priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE))
+	w->maximize (0);
+    else if (w && (w->actions () & CompWindowActionMinimizeMask))
+	w->minimize ();
+
+    return true;
+}
+
+bool
 CompScreenImpl::minimizeWin (CompAction         *action,
 			 CompAction::State  state,
 			 CompOption::Vector &options)

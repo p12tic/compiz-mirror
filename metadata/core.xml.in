@@ -188,6 +188,10 @@
 			<option name="unmaximize_window_key" type="key">
 			<_short>Unmaximize Window</_short>
 			<_long>Unmaximize active window</_long>
+			</option>
+			<option name="unmaximize_or_minimize_window_key" type="key">
+			<_short>Unmaximize Window</_short>
+			<_long>Unmaximize or minimize active window</_long>
 			<default>&lt;Alt&gt;F5</default>
 			</option>
 			<option name="maximize_window_horizontally_key" type="key">

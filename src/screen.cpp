@@ -4490,7 +4490,8 @@ CompScreenImpl::init (const char *name)
 	privateScreen.optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
 
 	privateScreen.optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
-
+	privateScreen.optionSetUnmaximizeOrMinimizeWindowKeyInitiate (CompScreenImpl::unmaximizeOrMinimizeWin);
+	
 	privateScreen.optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
 	privateScreen.optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
 	privateScreen.optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
