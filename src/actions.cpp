@@ -69,8 +69,8 @@ CompScreenImpl::unmaximizeWin (CompAction         *action,
 
 bool
 CompScreenImpl::unmaximizeOrMinimizeWin (CompAction         *action,
-			   CompAction::State  state,
-			   CompOption::Vector &options)
+					 CompAction::State  state,
+					 CompOption::Vector &options)
 {
     CompWindow *w;
     Window     xid;
