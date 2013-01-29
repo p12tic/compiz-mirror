@@ -80,7 +80,9 @@ CompScreenImpl::unmaximizeOrMinimizeWin (CompAction         *action,
     w = screen->findTopLevelWindow (xid);
     if (w)
     {
-	if ((w->priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+	if (((w->priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE) ||
+	    (w->priv->state & CompWindowStateMaximizedHorzMask) ||
+	    (w->priv->state & CompWindowStateMaximizedVertMask))
 	    w->maximize (0);
 	else if (w->actions () & CompWindowActionMinimizeMask)
 	    w->minimize ();
