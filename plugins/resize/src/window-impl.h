@@ -73,6 +73,11 @@ class CompWindowImpl : public CompWindowInterface
 		return NULL;
 	}
 
+	static void unwrap (CompWindowInterface *i)
+	{
+	    delete i;
+	}
+
 	virtual Window id ()
 	{
 	    return mImpl->id ();

@@ -88,7 +88,7 @@ class CompPlugin {
 		/**
 		 * Gets the name of this compiz plugin
 		 */
-		const CompString name () const;
+		const CompString &name () const;
 
 		virtual bool init () = 0;
 
@@ -143,18 +143,7 @@ class CompPlugin {
 	    bool setOption (const CompString &name, CompOption::Value &value);
 	};
 	
-	/**
-	 * Interface for matching plugins by name.
-	 */
-	struct cmpStr
-	{
-	    bool operator () (const char *a, const char *b) const
-	    {
-		return strcmp (a, b) < 0;
-	    }
-	};
-
-	typedef std::map<const char *, CompPlugin *, cmpStr> Map;
+	typedef std::map<CompString, CompPlugin *> Map;
 	typedef std::list<CompPlugin *> List;
 
     public:

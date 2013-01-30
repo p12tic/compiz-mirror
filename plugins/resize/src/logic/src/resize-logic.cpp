@@ -141,6 +141,9 @@ ResizeLogic::handleEvent (XEvent *event)
 		    w = mScreen->findWindow (event->xclient.window);
 		    if (w)
 		    {
+			mScreen->freeWindowInterface (w);
+			w = NULL;
+
 			CompOption::Vector o (0);
 
 			o.push_back (CompOption ("window",
@@ -593,6 +596,7 @@ ResizeLogic::finishResizing ()
 
     resizeInformationAtom->deleteProperty (w->id ());
 
+    mScreen->freeWindowInterface (w);
     w = NULL;
 }
 
@@ -1236,22 +1240,22 @@ ResizeLogic::initiateResize (CompAction		*action,
 	       just prevent input to the window */
 
 	    if (!mask)
+	    {
+		mScreen->freeWindowInterface (w);
 		return true;
+	    }
 	}
 
-	if (mScreen->otherGrabExist ("resize", NULL))
+	if (mScreen->otherGrabExist ("resize", NULL) ||
+	    this->w ||
+	    (w->type () & (CompWindowTypeDesktopMask |
+	                   CompWindowTypeDockMask |
+	                   CompWindowTypeFullscreenMask)) ||
+	    w->overrideRedirect ())
+	{
+	    mScreen->freeWindowInterface (w);
 	    return false;
-
-	if (this->w)
-	    return false;
-
-	if (w->type () & (CompWindowTypeDesktopMask |
-		          CompWindowTypeDockMask	 |
-		          CompWindowTypeFullscreenMask))
-	    return false;
-
-	if (w->overrideRedirect ())
-	    return false;
+	}
 
 	if (state & CompAction::StateInitButton)
 	    action->setState (action->state () | CompAction::StateTermButton);
@@ -1407,6 +1411,8 @@ ResizeLogic::initiateResize (CompAction		*action,
 
         maximized_vertically = false;
     }
+    else if (w)
+	mScreen->freeWindowInterface (w);
 
     return false;
 }
@@ -1549,6 +1555,8 @@ ResizeLogic::initiateResizeDefaultMode (CompAction	    *action,
 	mode = ResizeOptions::ModeRectangle;
     if (w->evaluate (this->options->optionGetStretchMatch ()))
 	mode = ResizeOptions::ModeStretch;
+
+    mScreen->freeWindowInterface (w);
 
     return initiateResize (action, state, options, mode);
 }

@@ -2995,7 +2995,7 @@ decor_acquire_dm_session (Display    *xdisplay,
 
     utf8_string_atom = XInternAtom (xdisplay, "UTF8_STRING", 0);
 
-    sprintf (buf, "_COMPIZ_DM_S%d", screen);
+    snprintf (buf, 128, "_COMPIZ_DM_S%d", screen);
     dm_sn_atom = XInternAtom (xdisplay, buf, 0);
 
     current_dm_sn_owner = XGetSelectionOwner (xdisplay, dm_sn_atom);

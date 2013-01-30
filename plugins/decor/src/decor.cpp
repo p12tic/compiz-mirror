@@ -2381,6 +2381,7 @@ DecorScreen::handleEvent (XEvent *event)
 		    dw->mRequestor.handlePending (event->xclient.data.l);
 		}
 	    }
+	    break;
 	default:
 	    /* Check for damage events. If the output or input window
 	     * or a texture is updated then damage output extents.

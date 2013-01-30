@@ -1214,9 +1214,24 @@ PrivateScaleScreen::scaleInitiateCommon (CompAction         *action,
 	if (!lastActiveNum)
 	    lastActiveNum = screen->activeNum () - 1;
 
-	previousActiveWindow = screen->activeWindow ();
-	lastActiveWindow     = screen->activeWindow ();
-	selectedWindow       = screen->activeWindow ();
+	Window active_window = screen->activeWindow ();
+	bool found_active = false;
+
+	foreach (ScaleWindow *sw, windows)
+	{
+	    if (sw->window->id() == active_window)
+	    {
+		found_active = true;
+		break;
+	    }
+	}
+
+	if (!found_active)
+	    active_window = None;
+
+	previousActiveWindow = active_window;
+	lastActiveWindow     = active_window;
+	selectedWindow       = active_window;
 	hoveredWindow        = None;
 
 	this->state = ScaleScreen::Out;

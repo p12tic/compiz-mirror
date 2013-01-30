@@ -23,6 +23,8 @@
  */
 
 #include <boost/bind.hpp>
+#include <cmath>
+#include <cassert>
 #include "grid.h"
 #include "grabhandler.h"
 
@@ -30,6 +32,8 @@ using namespace GridWindowType;
 namespace cgw = compiz::grid::window;
 
 static std::map <unsigned int, GridProps> gridProps;
+
+static int const CURVE_ANIMATION = 35;
 
 void
 GridScreen::handleCompizEvent(const char*    plugin,
@@ -195,8 +199,12 @@ GridScreen::initiateCommon (CompAction         *action,
 		cw->configureXWindow (CWX | CWY, &xwc);
 	    }
 	    cw->maximize (MAXIMIZE_STATE);
-	    gw->isGridResized = true;
-	    gw->isGridMaximized = true;
+	    /* Core can handle fully maximized windows so we don't
+	     * have to worry about them. Don't mark the window as a
+	     * gridded one.
+	     */
+	    gw->isGridResized = false;
+	    gw->isGridSemiMaximized = false;
 		for (unsigned int i = 0; i < animations.size (); i++)
 			animations.at (i).fadingOut = true;
 	    return true;
@@ -365,7 +373,7 @@ GridScreen::initiateCommon (CompAction         *action,
 
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
-		gw->isGridMaximized = true;
+		gw->isGridSemiMaximized = true;
 		gw->isGridResized = false;
 
 		/* Maximize the window */
@@ -381,7 +389,7 @@ GridScreen::initiateCommon (CompAction         *action,
 	    else
 	    {
 	        gw->isGridResized = true;
-	        gw->isGridMaximized = false;
+	        gw->isGridSemiMaximized = false;
 	    }
 
 	    int dw = (lastBorder.left + lastBorder.right) - 
@@ -453,6 +461,8 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	for (iter = animations.begin (); iter != animations.end () && animating; ++iter)
 	{
 		Animation& anim = *iter;
+
+	float curve = powf (CURVE_ANIMATION, -anim.progress);
 		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetFillColor ();
 
@@ -460,6 +470,9 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
 	colorData[3] = alpha * 65535.0f;
+
+	if (optionGetDrawStretchedWindow ())
+	    colorData[3] *= (1.0 - curve);
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -495,6 +508,9 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
 	colorData[3] = alpha * 65535.0f;
+
+	if (optionGetDrawStretchedWindow ())
+	    colorData[3] *= (1.0 - curve);
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -782,8 +798,10 @@ GridScreen::handleEvent (XEvent *event)
 				    int current = animations.size () - 1;
 				    animations.at (current).fromRect	= cw->serverBorderRect ();
 				    animations.at (current).currentRect	= cw->serverBorderRect ();
+				    animations.at (current).duration = optionGetAnimationDuration ();
 				    animations.at (current).timer = animations.at (current).duration;
 				    animations.at (current).targetRect = desiredSlot;
+				    animations.at (current).window = cw->id();
 
 				    if (lastEdge == NoEdge || !animating)
 				    {
@@ -826,7 +844,7 @@ GridWindow::validateResizeRequest (unsigned int &xwcm,
     /* Don't allow non-pagers to change
      * the size of the window, the user
      * specified this size, thank-you */
-    if (isGridMaximized)
+    if (isGridSemiMaximized)
 	if (source != ClientTypePager)
 	    xwcm = 0;
 }
@@ -850,7 +868,7 @@ GridWindow::grabNotify (int          x,
 	pointerBufDx = pointerBufDy = 0;
 	grabMask = mask;
 
-	if (!isGridResized && !isGridMaximized && gScreen->optionGetSnapbackWindows ())
+	if (!isGridResized && !isGridSemiMaximized && gScreen->optionGetSnapbackWindows ())
 	    /* Store size not including borders when grabbing with cursor */
 	    originalSize = gScreen->slotToRect(window,
 						    window->serverBorderRect ());
@@ -891,7 +909,7 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 {
     window->moveNotify (dx, dy, immediate);
 
-    if (isGridResized && !isGridMaximized && !GridScreen::get (screen)->mSwitchingVp)
+    if (isGridResized && !isGridSemiMaximized && !GridScreen::get (screen)->mSwitchingVp)
     {
 	if (window->grabbed () && (grabMask & CompWindowGrabMoveMask))
 	{
@@ -913,10 +931,18 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 {
     if (lastState & MAXIMIZE_STATE &&
 	!(window->state () & MAXIMIZE_STATE))
+    {
 	lastTarget = GridUnknown;
+	if (isGridSemiMaximized && (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedVertMask)
+	    gScreen->restoreWindow(0, 0, gScreen->o);
+    }
     else if (!(lastState & MAXIMIZE_STATE) &&
 	     window->state () & MAXIMIZE_STATE)
     {
+	/* Unset grid resize state */
+	isGridResized = false;
+	resizeCount = 0;
+
 	if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	    lastTarget = GridMaximize;
 	if (window->grabbed ())
@@ -935,6 +961,7 @@ GridScreen::restoreWindow (CompAction         *action,
 			   CompOption::Vector &option)
 {
     XWindowChanges xwc;
+    int xwcm = 0;
     CompWindow *cw = screen->findWindow (screen->activeWindow ());
 
     if (!cw)
@@ -942,35 +969,59 @@ GridScreen::restoreWindow (CompAction         *action,
 
     GRID_WINDOW (cw);
 
-    if (!gw->isGridResized)
-	return false;
-
-    if (gw->isGridMaximized & !(cw->state () & MAXIMIZE_STATE))
+    if (!gw->isGridResized && !gw->isGridSemiMaximized)
     {
-	gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
-	gw->isGridMaximized = false;
+	/* Grid hasn't touched this window or has maximized it. If it's
+	 * maximized, unmaximize it and get out. */
+	if (cw->state () & MAXIMIZE_STATE)
+	    cw->maximize(0);
+	return true;
+    }
+
+    else if (!gw->isGridResized && gw->isGridSemiMaximized)
+    {
+	/* Window has been vertically maximized by grid. We only need
+	 * to restore the X and width - core handles Y and height. */
+	if (gw->sizeHintsFlags)
+	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
+	xwcm |= CWX | CWWidth;
+    }
+
+    else if (gw->isGridResized && !gw->isGridSemiMaximized)
+	/* Window is just gridded (top, bottom, center, corners). We
+	 * need to handle everything. */
+	xwcm |= CWX | CWY | CWWidth | CWHeight;
+    else
+    {
+	/* This should never happen. But if it does, just bail out
+	 * gracefully. */
+	assert (gw->isGridResized && gw->isGridSemiMaximized);
+	return false;
+    }
+
+    if (cw == mGrabWindow)
+    {
+	xwc.x = pointerX - (gw->originalSize.width () / 2);
+	xwc.y = pointerY + (cw->border ().top / 2);
     }
     else
     {
-        if (cw == mGrabWindow)
-	{
-	    xwc.x = pointerX - (gw->originalSize.width () >> 1);
-	    xwc.y = pointerY + (cw->border ().top >> 1);
-	}
-	else
-	{
-	    xwc.x = gw->originalSize.x ();
-	    xwc.y = gw->originalSize.y ();
-	}
-	xwc.width  = gw->originalSize.width ();
-	xwc.height = gw->originalSize.height ();
-	cw->maximize (0);
-	gw->currentSize = CompRect ();
-	cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
-	gw->pointerBufDx = 0;
-	gw->pointerBufDy = 0;
+	xwc.x = gw->originalSize.x ();
+	xwc.y = gw->originalSize.y ();
     }
+    xwc.width  = gw->originalSize.width ();
+    xwc.height = gw->originalSize.height ();
+
+    if (cw->mapNum() && xwcm)
+	cw->sendSyncRequest();
+    cw->configureXWindow (xwcm, &xwc);
+    gw->currentSize = CompRect ();
+    gw->pointerBufDx = 0;
+    gw->pointerBufDy = 0;
+    gw->isGridSemiMaximized = false;
     gw->isGridResized = false;
+    if (cw->state () & MAXIMIZE_STATE)
+	cw->maximize(0);
     gw->resizeCount = 0;
     gw->lastTarget = GridUnknown;
 
@@ -984,7 +1035,7 @@ GridScreen::snapbackOptionChanged (CompOption *option,
     GRID_WINDOW (screen->findWindow
 		    (CompOption::getIntOptionNamed (o, "window")));
     gw->isGridResized = false;
-    gw->isGridMaximized = false;
+    gw->isGridSemiMaximized = false;
     gw->resizeCount = 0;
 }
 
@@ -1019,6 +1070,14 @@ GridScreen::preparePaint (int msSinceLastPaint)
 		anim.progress =	(anim.duration - anim.timer) / anim.duration;
 	}
 
+	if (optionGetDrawStretchedWindow ())
+	{
+		CompWindow *cw = screen->findWindow (screen->activeWindow ());
+		GRID_WINDOW (cw);
+
+		gw->gWindow->glPaintSetEnabled (gw, true);
+	}
+
     cScreen->preparePaint (msSinceLastPaint);
 }
 
@@ -1046,6 +1105,14 @@ GridScreen::donePaint ()
 		animating = false;
 	}
 
+	if (optionGetDrawStretchedWindow ())
+	{
+		CompWindow *cw = screen->findWindow (screen->activeWindow ());
+		GRID_WINDOW (cw);
+
+		gw->gWindow->glPaintSetEnabled (gw, false);
+	}
+
 	cScreen->damageScreen ();
 
     cScreen->donePaint ();
@@ -1059,9 +1126,10 @@ Animation::Animation ()
 	currentRect = CompRect (0, 0, 0, 0);
 	opacity = 0.0f;
 	timer = 0.0f;
-	duration = 250;
+	duration = 0;
 	complete = false;
 	fadingOut = false;
+	window = 0;
 }
 
 
@@ -1127,16 +1195,19 @@ GridScreen::GridScreen (CompScreen *screen) :
 GridWindow::GridWindow (CompWindow *window) :
     PluginClassHandler <GridWindow, CompWindow> (window),
     window (window),
+    gWindow (GLWindow::get(window)),
     gScreen (GridScreen::get (screen)),
     isGridResized (false),
-    isGridMaximized (false),
+    isGridSemiMaximized (false),
     grabMask (0),
     pointerBufDx (0),
     pointerBufDy (0),
     resizeCount (0),	
-    lastTarget (GridUnknown)
+    lastTarget (GridUnknown),
+    sizeHintsFlags (0)
 {
     WindowInterface::setHandler (window);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 GridWindow::~GridWindow ()
@@ -1147,6 +1218,57 @@ GridWindow::~GridWindow ()
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (gScreen->o, "window"));
     if (w == window)
 	gScreen->o[0].value ().set (0);
+}
+
+bool
+GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
+    	    	     const CompRegion& region, const unsigned int mask)
+{
+    bool status = gWindow->glPaint (attrib, matrix, region, mask);
+
+    std::vector<Animation>::iterator iter;
+
+    for (iter = gScreen->animations.begin ();
+    	 iter != gScreen->animations.end () && gScreen->animating; ++iter)
+    {
+    	Animation& anim = *iter;
+
+    	if (anim.timer > 0.0f && anim.window == window->id())
+    	{
+    	    GLWindowPaintAttrib wAttrib(attrib);
+    	    GLMatrix wTransform (matrix);
+    	    unsigned int wMask(mask);
+
+    	    float curve = powf (CURVE_ANIMATION, -anim.progress);
+    	    wAttrib.opacity *= curve;
+
+    	    wMask |= PAINT_WINDOW_TRANSFORMED_MASK;
+    	    wMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
+    	    wMask |= PAINT_WINDOW_BLEND_MASK;
+
+    	    float scaleX = (anim.currentRect.x2 () - anim.currentRect.x1 ()) /
+    	    	    	   (float) window->borderRect ().width ();
+
+    	    float scaleY = (anim.currentRect.y2 () - anim.currentRect.y1 ()) /
+    	    	    	   (float) window->borderRect ().height ();
+
+    	    float translateX = (anim.currentRect.x1 () - window->x ()) +
+    	    	     	    	window->border ().left * scaleX;
+
+    	    float translateY = (anim.currentRect.y1 () - window->y ()) +
+    	    	    	    	window->border ().top * scaleY;
+
+    	    wTransform.translate (window->x (), window->y (), 0.0f);
+    	    wTransform.scale (scaleX, scaleY, 1.0f);
+    	    wTransform.translate (translateX / scaleX - window->x (),
+    	    	    	    	  translateY / scaleY - window->y (), 0.0f);
+
+
+    	    gWindow->glPaint (wAttrib, wTransform, region, wMask);
+    	}
+    }
+
+    return status;
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI

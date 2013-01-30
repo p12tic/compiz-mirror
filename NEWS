@@ -1,3 +1,268 @@
+Release 0.9.9.0 (2013-01-24 Daniel van Vugt <daniel.van.vugt@canonical.com>)
+============================================================================
+
+Highlights
+
+  * Lots and lots of bug fixes. See the full list below.
+  * Restored support for several features lost in the GL|ES port of 0.9.8:
+    Plugins: cubeaddon, firepaint, showmouse, thumbnail, wallpaper, wizard
+    Features: expo animations, text rendering, screenshot selection
+  * Several multi-monitor fixes.
+
+Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.9.0)
+
+    201681 - Window management - Cursor position changes relative to window
+             while dragging windows
+    689792 - Window Management - Implement maximize and semi-maximise
+             transitions
+    751605 - Multi-monitor - Windows maximize on the wrong monitor
+    754508 - Modal dialogs don't appear on the same workspace/monitor as their
+             parent window
+    781931 - New windows are moved to front but don't take focus
+    839602 - Grid overlay effect does not disappear when it should
+    868423 - Launcher - Workspace switcher should not be in the Launcher by
+             default
+    874146 - Multimonitor: New windows open on the wrong monitor, Place Plugin
+             settings silently ignored
+    875311 - Expo animations "Fade + Zoom" & "Vortex" result in a black screen
+    878516 - Window management - Restoring a grid-placed window by dragging
+             the title bar downwards does not restore the original window width
+    925867 - [regression] Window resize granularity is lost when restored after
+             using Grid
+    928807 - Multi-monitor - Maximized windows cast shadows on adjacent
+             monitors and workspaces
+    936840 - <ctrl> key now known as <primary> which breaks keyboard shortcuts
+    950160 - Unity blocks other programs from binding globally to Super+*
+             (* = any key)
+   1002246 - Window management - When a monitor is disconnected, the windows do
+             not move to the remaining monitor and the Launcher pips do not
+             update
+   1007944 - XFCE + Compiz : icons in the titlebar have a black background
+             instead of transparent
+   1009999 - Shift Switcher: Window title display settings partially ignored
+   1012330 - [needs-packaging] Wishlist: Missing plug-In: Wizard
+   1020823 - [regression][GLES] cubeaddon plugin does not build any more
+   1020825 - [regression] thumbnail plugin does not build any more
+   1020830 - [regression][GLES] wallpaper plugin does not build any more
+   1026920 - Incorrect detection of shader support on fglrx
+   1028809 - [regression][GLES] obs opacity no longer applies to all window
+             decorations
+   1033877 - Member variables that are not initialized in the constructors
+             reported by cppcheck
+   1033879 - Memory leak in decorator reported by cppcheck
+   1037164 - Clicking on semi-maximized windows in a different workspace fails
+             to switch to the correct workspace
+   1042132 - [GLES] Regression: Text background rendering broken - black
+             rectangle instead of rectangle with rounded edges and transparency
+             is drawn
+   1047788 - [GLES] Regression: Screenshot selection rectangle is now solid
+             instead of being transparent
+   1048267 - [regression-r3320][GLES]: showmouse plugin does not work anymore
+             at all
+   1048272 - [regression][GLES]: Cube plugin: Transparency for top and bottom
+             faces broken
+   1048505 - [regression-r3320] firepaint doesn't paint any fire any more
+   1048840 - compiz crashed with SIGSEGV in DodgeAnim::applyDodgeTransform()
+   1048855 - [grid] Gedit, Nautilus will not snap/semi-maximize with the mouse
+   1050776 - kde4-window-decorator crashes when starting up with oxygen theme
+   1051595 - findcompiz_install doesn't work
+   1051802 - "Unredirect Fullscreen Windows" can cause significant tearing on
+             fullscreen windows (especially playing video)
+   1053280 - Button1 Actions are triggered regardless of whether or not they
+             are actually active
+   1056615 - CompizConfigPython.test_* fail with SEGFAULT
+   1057955 - Removed schema keys still used in keybindings and automated tests
+   1058149 - compiz fails to build with GNU gold linker
+   1058577 - CCSGNOMEMediaKeys/CCSGNOMEIntegrationTestWriteIntegratedMediaKeys.
+             TestWriteIntegratedMediaKey/* fail in jenkins
+   1058638 - GrabGrabHandlerTest.TestNoTrackOnExpoGrab fails when run
+             independently
+   1059549 - [regression] [quantal] Workspace overview (expo) doesn't always
+             display the active workspace colored
+   1060171 - gtk-window-decorator crashed with SIGSEGV in
+             g_hash_table_lookup_node() from g_hash_table_remove_internal()
+             from event_filter_func() from gdk_event_apply_filters()
+   1060327 - compiz crashed with SIGSEGV in compiz::opengl::bindTexImageGLX()
+             from TfpTexture::bindTexImage()
+   1060708 - Redundant check for libcompizconfig_internal in compizconfig
+             gsettings tests
+   1060804 - Compiz can't build with clang
+   1063690 - Unredirect fullscreen windows should be the default for optimal
+             performance
+   1064791 - Redundant writes to plugins-with-set-keys
+   1065814 - compiz crashes with SIGSEGV in
+             ccsGNOMEIntegrationInitializeIntegratedSettingsList
+             [ccs_gnome_integration_constants.c:170]
+   1065815 - compiz crashes with SIGSEGV in startup:
+             ./bin/compiz (core) - Fatal: Private index value
+             "15CompositeScreen_index_5" already stored in screen.
+   1066187 - Enhanced Desktop Zoom: Specific Zoom Factor ignored
+   1066793 - std::vector<CompOption, std::allocator<CompOption> > is duplicated
+             in 63 plugins
+   1066795 - WrapableInterface<GLScreen, GLScreenInterface> is duplicated in 38
+             plugins
+   1066796 - WrapableInterface<CompScreen, ScreenInterface> is duplicated in 56
+             plugins
+   1066798 - WrapableInterface<GLWindow, GLWindowInterface> is duplicated in 31
+             plugins
+   1066799 - WrapableInterface<CompWindow, WindowInterface> is duplicated in 26
+             plugins
+   1066803 - std::vector<CompOption::Value, std::allocator<CompOption::Value> >
+             is duplicated in 6 plugins
+   1066804 - WrapableInterface<CompositeScreen, CompositeScreenInterface> is
+             duplicated in 37 plugins
+   1066805 - WrapableInterface<CompositeWindow, CompositeWindowInterface> is
+             duplicated in 15 plugins
+   1066823 - Editors like gedit and others will not recognize *.xml.in files as
+             xml, so if opened there is no syntax highlighting making those
+             files harder to read.
+   1067218 - std::vector<CompRegion, std::allocator<CompRegion> > is duplicated
+             in 2 plugins
+   1067219 - std::vector<CompRect, std::allocator<CompRect> > is duplicated in
+             2 plugins
+   1067234 - Duplicate file: include/core/point.h ==
+             src/point/include/core/point.h
+   1067534 - "Show desktop" plug-in actually works with Unity when ensured that
+             it is loaded after unityshell
+   1067577 - Compiz (grid) fails to build due to explicit instantiation
+   1067598 - Unity fails to build due to explicit instantiation of templates in
+             compiz.
+   1067812 - Gedit, blocked window at the corners with compiz grid plugin
+   1067964 - CCSGSettingsBackendConcept tests fail in continuous-integration
+             due to incorrect linking
+   1068173 - [Multimonitor] [Grid] plug-in: The window snapping does not follow
+             the preview, but uses the display the mousepointer is on when the
+             mousebutton gets released
+   1068503 - scaleaddon: Draw Window Highlight is a solid white rectangle. No
+             transparency.
+   1068518 - resize: Resize rectangle flickers between light and dark
+   1070211 - Compiz fails to build in Arch Linux
+   1070233 - Resizeinfo Plug-in: Gradient color 2 and 3 settings are ignored
+             and no background gradient is rendered
+   1070297 - Resizeinfo Plug-in: No possibility to change the color and
+             transparency of the rounded background outline
+   1070411 - Can not find target to add properties to:
+             compizconfig_gnome_gsettings_integrated_setting
+   1070817 - make test fails in CompizConfigPython.test_* (OTHER_FAULT)
+   1071238 - Test failures: ExpoAnimationOffsetTest/ExpoWallOffsetTestAnima-
+             tions.TestAnimationValues/21
+             (from ExpoAnimationOffsetTest_ExpoWallOffsetTestAnimations)
+   1071689 - Grid: Window management - resize preview does not show when moving
+             a window from the semi-maximised state to the maximised state in a
+             single action
+   1071791 - Maximized windows are moving between workspaces all by themselves
+   1075048 - lp:compiz r3447 FTBFS: compizconfig_test_ccs_object.cpp:123:9:
+             error: expression result unused [-Werror,-Wunused-value]
+             GET_INTERFACE (Dummy2Interface, to);
+   1075451 - gtk-window-decorator crash when pressing Alt+Space to activate
+             actionmenu on windows without decorations (e.g. google-chrome)
+   1075584 - Workspacenames Plug-in: Wishlist: No default values for
+             workspacenames, should be changed
+   1075600 - Workspacenames Plug-in: Wishlist: Default Appearance values not
+             ideal
+   1076876 - 100_expo_layout.patch does not apply totally cleanly
+   1077787 - CompizConfigPython tests not using ini backend
+   1077823 - gtk-window-decorator: decorator.c : a small typo error
+   1077866 - untest fails to link with binutils-gold
+   1078244 - FTBFS with GLES enabled in plugins/opengl/src/screen.cpp
+   1078330 - It is possible to write to a plugin in compizconfig that has no
+             associated gsettings schema
+   1080555 - Tests 1-4 fail with SEGFAULT: CompizConfigPython.test_*
+             (SEGFAULT)...
+   1081425 - [regression] Window decorations ignore brightness/opacity changes
+             in expo
+   1082152 - compiz 0.9.8.6 fails to build from source in KDE4-window-decorator
+             with latest KDE 4.10 beta
+   1082265 - KDE Appmenu doesn't work with compiz decorators
+   1082633 - CMake Warning in src/tests/CMakeLists.txt:16 This command
+             specifies the relative path
+   1083027 - cmake suggests (kind of) expo is disabled but it still builds
+             correctly.
+   1084096 - When building with xorg-gtest, cmake fails to find xorg-gtest
+             sources
+   1084162 - unity build fails if compiz is installed outside /usr
+   1084401 - Unredirected fullscreen windows freeze and stay on top when wall
+             sliding (Ctrl+Alt+Left/Right)
+   1085581 - Windows open below panel and launcher, grid does not work at all,
+             window animations missing, and general plugin chaos if built on
+             raring (cmake >= 2.8.10)
+   1085590 - GLib warning - source still attached to context, but ref_count ==
+             0 on shutdown
+   1085591 - --replace race condition: Another window manager is already
+             running on screen
+   1085687 - CCSObjectDeathTest.GetInterface fails
+   1086337 - HTML5 video in Firefox continues to tear
+   1086704 - Build uses pyrexc without checking that it exists
+   1086779 - EGL/GLES compiz builds do a eglWaitGL (synchronous wait) on every
+             frame, likely to slow things down
+   1086789 - Build warning "multiple rules generate gtk/gnome/compiz.desktop.
+             build will not be correct; continuing anyway"
+   1087193 - Windows don't respond to input (mouse clicks) if XShape is
+             disabled or unavailable
+   1088414 - On ARM lp:compiz defaults to GL instead of GLES and FTBFS unless
+             you -DBUILD_GLES=ON
+   1088419 - compiz fails to configure on arm with -DCOMPIZ_BUILD_TESTING=ON
+             [package 'gl' not found]
+   1088996 - FTBFS after python2.7 upgrade - missing pyconfig.h
+   1089246 - Add support for blacklisting some drivers from using unredirected
+             fullscreen windows
+   1089250 - [clang] lp:compiz r3523 FTBFS: unused function
+             'ListValueToSettingValueList' [-Werror,-Wunused-function]
+   1089251 - [clang] Multiple segfaults in test: SetSemantics
+   1089811 - [Regression] Minimizing a window creates an input-insensitive area
+             if you have unityshell loaded
+   1089863 - KWD: Appmenu always pops up at top-left corner of the screen
+   1090845 - ccp can fail to compile, as CompizPlugin is not included
+   1091103 - Default blacklist string shouldn't contain double escape
+   1092651 - CCSM segfaults if no settings found
+   1093757 - Using grid-resize prevents windows from maximizing correctly
+   1095001 - [regression] compiz spends 31% of its CPU time in regexec()
+   1095906 - Building compiz with clang++ on raring fails to build libgtest
+   1095915 - opengl plugin FTBFS with clang
+   1096455 - Compiz reports incorrect _NET_DESKTOP_GEOMETRY until first
+             viewport switch
+   1096780 - Plugin names are not sorted (they're shown in directory order)
+             when cmake is run
+   1097126 - resize leaks memory in multiple locations calling
+             resize::CompScreenImpl::findWindow() -> operator new()
+   1097179 - compiz_test_resize_logic: Multiple errors: Conditional jump or
+             move depends on uninitialised value(s)
+   1097644 - Several leaks in new GLProgram from compileProgram() from
+             GLScreen::getProgram() from GLWindowAutoProgram::getProgram()
+   1097649 - Several leaks in g_settings_new() [g_object_new()] from
+             ccsGSettingsNewNoPath() [ccs_gsettings_interface_wrapper.c:184]
+   1097657 - PrivateGLScreen::projection is leaked
+   1097661 - Several leaks in ccsIntegratedSettingListAppend() ... from
+             ccsGNOMEIntegrationBackendGetIntegratedSetting() from readSetting
+             (gsettings.c:375)
+   1097664 - GLShaderCache::priv [PrivateShaderCache] is leaked
+   1098148 - Compiz 0.9.8 trunk FTBFS on ARM due to an unused variable
+   1098758 - Thumbnail Window Previews: Flickering of background/glow and
+             window title text
+   1098877 - Showmouse plugin: Possible values of the particle life setting can
+             destroy the plugin's functionality
+   1100172 - Workspacenames plugin: Requires text plugin to work
+   1100539 - Several memory leaks in ccsIntegratedSettingListAppend() from
+             ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPredi-
+             cate() from ccsIntegratedSettingsStorageDefaultFindMatchingSett-
+             ingsByPluginAndSettingName()
+   1100564 - Several memory leaks in strdup() from ccsGSettingsIntegratedSett-
+             ingReadValue() from ccsGNOMEIntegrationBackendReadISAndSetSett-
+             ingForType() from ccsGNOMEIntegrationBackendReadOptionIntoSett-
+             ing()
+   1101430 - Coverity MISSING_BREAK - CID 12468
+   1101465 - Coverity MISSING_BREAK - CID 12467
+   1101557 - Coverity MISSING_BREAK - CID 12465
+   1101558 - Coverity MISSING_BREAK - CID 12466
+   1102822 - Several memory leaks in g_signal_new() ... from
+             ccsGSettingsWrapperNewForSchema()
+             [ccs_gsettings_interface_wrapper.c:184] from initBackend()
+             [gsettings.c:468]
+   1102829 - Several memory leaks in
+             google::protobuf::DescriptorPool::InternalAddGeneratedFile() from
+             google::protobuf::protobuf_AddDesc_*()
+
+
 Release 0.9.8.4 (2012-09-27 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 ============================================================================
 

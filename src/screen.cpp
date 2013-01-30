@@ -4028,7 +4028,7 @@ compiz::private_screen::viewports::viewportForGeometry (const CompWindow::Geomet
     int      offset;
 
     const CompPoint &vp = viewports->getCurrentViewport ();
-    const CompSize &vpSize = viewports->viewportDimentions ();
+    const CompSize &vpSize = viewports->viewportDimensions ();
 
     rect.setWidth  (gm.widthIncBorders ());
     rect.setHeight (gm.heightIncBorders ());
@@ -4998,7 +4998,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     updateScreenEdges ();
 
-    setDesktopHints ();
     eventManager.setSupportingWmCheck (dpy, rootWindow());
     screen->updateSupportedWmHints ();
 
@@ -5114,11 +5113,11 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     if (!init_succeeded)
       return false;
 
-    /* The active plugins list might have been changed - load any
-     * new plugins */
-
+    /* The viewport geometry depends on the new new plugins loaded
+     * especially those that modify option values */
     viewPort.vpSize.setWidth (optionGetHsize ());
     viewPort.vpSize.setHeight (optionGetVsize ());
+    setDesktopHints ();
 
     setAudibleBell (optionGetAudibleBell ());
 

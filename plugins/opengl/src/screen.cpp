@@ -544,7 +544,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::getProgramiv = glGetProgramiv;
     GL::getProgramInfoLog = glGetProgramInfoLog;
     GL::createShader = glCreateShader;
-    GL::shaderSource = glShaderSource;
+    GL::shaderSource = (GL::GLShaderSourceProc) glShaderSource;
     GL::compileShader = glCompileShader;
     GL::createProgram = glCreateProgram;
     GL::attachShader = glAttachShader;
@@ -1257,6 +1257,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
 
 PrivateGLScreen::~PrivateGLScreen ()
 {
+    delete projection;
     delete programCache;
     delete autoProgram;
     if (rootPixmapCopy)
