@@ -83,9 +83,13 @@ CompScreenImpl::unmaximizeOrMinimizeWin (CompAction         *action,
 	if (((w->priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE) ||
 	    (w->priv->state & CompWindowStateMaximizedHorzMask) ||
 	    (w->priv->state & CompWindowStateMaximizedVertMask))
+	{
 	    w->maximize (0);
+	}
 	else if (w->actions () & CompWindowActionMinimizeMask)
+	{
 	    w->minimize ();
+	}
     }
     return true;
 }
