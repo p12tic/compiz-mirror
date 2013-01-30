@@ -3268,7 +3268,7 @@ decor_handle_selection_clear (Display *xdisplay,
     Atom dm_sn_atom;
     char buf[128];
 
-    sprintf (buf, "_COMPIZ_DM_S%d", screen);
+    snprintf (buf, 128, "_COMPIZ_DM_S%d", screen);
     dm_sn_atom = XInternAtom (xdisplay, buf, 0);
 
     if (xevent->xselectionclear.selection == dm_sn_atom)
