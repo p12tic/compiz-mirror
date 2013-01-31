@@ -340,7 +340,7 @@ PrivateCompositeScreen::init ()
     Window               currentCmSnOwner;
     char                 buf[128];
 
-    sprintf (buf, "_NET_WM_CM_S%d", screen->screenNum ());
+    snprintf (buf, 128, "_NET_WM_CM_S%d", screen->screenNum ());
     cmSnAtom = XInternAtom (dpy, buf, 0);
 
     currentCmSnOwner = XGetSelectionOwner (dpy, cmSnAtom);

@@ -1,9 +1,46 @@
-compiz (1:0.9.9~daily13.01.21-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.9~daily13.01.25-0ubuntu1) raring; urgency=low
 
+  [ Didier Roche ]
   * Really take default patched hsize and vsize and don't override them
     to fix (LP: #868423)
 
- -- Didier Roche <didrocks@ubuntu.com>  Wed, 23 Jan 2013 11:03:51 +0100
+  [ sampo555 ]
+  * [regression] Window resize granularity is lost when restored after
+    using Grid (LP: #925867)
+  * Window management - Restoring a grid-placed window by dragging the
+    title bar downwards does not restore the original window width (LP:
+    #878516)
+
+  [ Daniel van Vugt ]
+  * Several memory leaks in
+    google::protobuf::DescriptorPool::InternalAddGeneratedFile() from
+    google::protobuf::protobuf_AddDesc_*() (LP: #1102829)
+  * Several leaks in g_settings_new() [g_object_new()] from
+    ccsGSettingsNewNoPath() [ccs_gsettings_interface_wrapper.c:184] (LP:
+    #1097649)
+  * Several memory leaks in g_signal_new() ... from
+    ccsGSettingsWrapperNewForSchema()
+    [ccs_gsettings_interface_wrapper.c:184] from initBackend()
+    [gsettings.c:468] (LP: #1102822)
+
+  [ Sam Spilsbury ]
+  * Several memory leaks in strdup() from
+    ccsGSettingsIntegratedSettingReadValue() from
+    ccsGNOMEIntegrationBackendReadISAndSetSettingForType() from
+    ccsGNOMEIntegrationBackendReadOptionIntoSetting() (LP: #1100564)
+
+  [ MC Return ]
+  * Coverity MISSING_BREAK - CID 12468 (LP: #1101430)
+  * Coverity MISSING_BREAK - CID 12466 (LP: #1101558)
+  * Coverity MISSING_BREAK - CID 12467 (LP: #1101465)
+  * Showmouse plugin: Possible values of the particle life setting can
+    destroy the plugin's functionality (LP: #1098877)
+  * Coverity MISSING_BREAK - CID 12465 (LP: #1101557)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3582
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 25 Jan 2013 04:03:43 +0000
 
 compiz (1:0.9.9~daily13.01.21-0ubuntu1) raring; urgency=low
 
