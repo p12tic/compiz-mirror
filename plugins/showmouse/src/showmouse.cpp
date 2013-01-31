@@ -281,7 +281,6 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
 
     // draw particles
     glBlendFunc (GL_SRC_ALPHA, blendMode);
-
     stream->begin (GL_TRIANGLES);
 
     stream->addVertices (i / 3, &vertices_cache[0]);
