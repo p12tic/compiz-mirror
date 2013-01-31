@@ -258,6 +258,14 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     unredirectFS = CompositeScreen::get (screen)->
 	getOption ("unredirect_fullscreen_windows")->value ().b ();
 
+    const CompMatch &unredirectable = CompositeScreen::get (screen)->
+	getOption ("unredirect_match")->value ().match ();
+
+    const CompString &blacklist =
+	getOption ("unredirect_driver_blacklist")->value ().s ();
+
+    bool blacklisted = driverIsBlacklisted (blacklist.c_str ());
+
     if (mask & PAINT_SCREEN_TRANSFORMED_MASK)
     {
 	windowMask     = PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK;
@@ -276,7 +284,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
-	FullscreenRegion fs (*output);
+	FullscreenRegion fs (*output, screen->region ());
 
 	/* detect occlusions */
 	for (rit = pl.rbegin (); rit != pl.rend (); ++rit)
@@ -346,20 +354,31 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	    if (w->alpha ())
 		flags |= FullscreenRegion::Alpha;
 	    
+	    CompositeWindow *cw = CompositeWindow::get (w);
+
 	    /*
 	     * Windows with alpha channels can partially occlude windows
 	     * beneath them and so neither should be unredirected in that case.
+	     *
+	     * Performance note:  unredirectable.evaluate is SLOW because it
+	     * involves regex matching. Too slow to do on every window for
+	     * every frame. So we only call it if a window is redirected AND
+	     * potentially needs unredirecting. This means changes to
+	     * unredirect_match while a window is unredirected already may not
+	     * take effect until it is un-fullscreened again. But that's better
+	     * than the high price of regex matching on every frame.
 	     */
 	    if (unredirectFS &&
+		!blacklisted &&
 		!(mask & PAINT_SCREEN_TRANSFORMED_MASK) &&
 		!(mask & PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK) &&
-		fs.isCoveredBy (w->region (), flags))
+		fs.isCoveredBy (w->region (), flags) &&
+		(!cw->redirected () || unredirectable.evaluate (w)))
 	    {
 		unredirected.insert (w);
 	    }
 	    else
 	    {
-		CompositeWindow *cw = CompositeWindow::get (w);
 		if (!cw->redirected ())
 		{
 		    if (fs.allowRedirection (w->region ()))

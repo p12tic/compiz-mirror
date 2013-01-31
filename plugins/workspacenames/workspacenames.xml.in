@@ -14,7 +14,6 @@
 			<requirement>
 				<plugin>opengl</plugin>
 				<plugin>text</plugin>
-				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
 		<options>
@@ -28,11 +27,23 @@
 						<type>int</type>
 						<min>1</min>
 						<max>50</max>
+						<default>
+							<value>1</value>
+							<value>2</value>
+							<value>3</value>
+							<value>4</value>
+						</default>
 					</option>
 					<option name="names" type="list">
 						<_short>Name</_short>
 						<_long>Viewport name</_long>
 						<type>string</type>
+						<default>
+							<value>Viewport 1</value>
+							<value>Viewport 2</value>
+							<value>Viewport 3</value>
+							<value>Viewport 4</value>
+						</default>
 					</option>
 				</subgroup>
 			</group>
@@ -44,7 +55,7 @@
 					<min>0.1</min>
 					<max>5.0</max>
 					<precision>0.05</precision>
-					<default>0.5</default>
+					<default>1.5</default>
 				</option>
 				<option name="fade_time" type="float">
 					<_short>Fade Time</_short>
@@ -59,12 +70,12 @@
 					<option name="bold_text" type="bool">
 						<_short>Bold Font</_short>
 						<_long>Selects if the text should be displayed in bold font or not.</_long>
-						<default>false</default>
+						<default>true</default>
 					</option>
 					<option name="text_font_size" type="int">
 						<_short>Font Size</_short>
 						<_long>Font size for the text display.</_long>
-						<default>16</default>
+						<default>24</default>
 						<min>6</min>
 						<max>96</max>
 					</option>

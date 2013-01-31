@@ -61,6 +61,10 @@ static const unsigned short  SHADOW_OFFSET_Y = 1;
 #define SHADOW_COLOR_GREEN 0x0000
 #define SHADOW_COLOR_BLUE  0x0000
 
+static const char *KDED_SERVICE = "org.kde.kded";
+static const char *KDED_APPMENU_PATH = "/modules/appmenu";
+static const char *KDED_INTERFACE = "org.kde.kded";
+
 int    blurType = BLUR_TYPE_NONE;
 
 decor_shadow_t *KWD::Decorator::mNoBorderShadow = 0;
@@ -166,6 +170,16 @@ KWD::Decorator::Decorator () :
 				  CompositeRedirectManual);
 
     XMapWindow (QX11Info::display (), mCompositeWindow);
+
+    QDBusConnection dbus = QDBusConnection::sessionBus ();
+    dbus.connect (KDED_SERVICE, KDED_APPMENU_PATH, KDED_INTERFACE, "showRequest",
+		 this, SIGNAL (showRequest (qulonglong)));
+    dbus.connect (KDED_SERVICE, KDED_APPMENU_PATH, KDED_INTERFACE, "menuAvailable",
+		 this, SLOT (menuAvailable (qulonglong)));
+    dbus.connect (KDED_SERVICE, KDED_APPMENU_PATH, KDED_INTERFACE, "clearMenus",
+		 this, SLOT (clearMenus ()));
+    dbus.connect (KDED_SERVICE, KDED_APPMENU_PATH, KDED_INTERFACE, "menuHidden",
+		 this, SIGNAL (menuHidden ()));
 }
 
 KWD::Decorator::~Decorator (void)
@@ -790,6 +804,9 @@ KWD::Decorator::handleWindowAdded (WId id)
 
 	    client->updateFrame (frame);
 	}
+
+	if (mWindowsMenu.removeOne (id))
+	    mClients[id]->setAppMenuAvailable ();
     }
     else
     {
@@ -1002,3 +1019,38 @@ KWD::Decorator::plasmaThemeChanged ()
 	mSwitcher = new Switcher (mCompositeWindow, win);
     }
 }
+
+void
+KWD::Decorator::showRequest (qulonglong id)
+{
+    if (mClients.contains (id))
+	mClients[id]->emitShowRequest ();
+}
+
+void
+KWD::Decorator::menuAvailable (qulonglong id)
+{
+    if (mClients.contains (id))
+	mClients[id]->setAppMenuAvailable ();
+    else
+	mWindowsMenu.append (id);
+}
+
+void
+KWD::Decorator::clearMenus ()
+{
+    QMap < WId, KWD::Window * >::ConstIterator it;
+
+    for (it = mClients.constBegin (); it != mClients.constEnd (); it++)
+	it.value ()->setAppMenuUnavailable ();
+
+    mWindowsMenu.clear ();
+}
+
+void
+KWD::Decorator::menuHidden (qulonglong id)
+{
+    if (mClients.contains (id))
+	mClients[id]->emitMenuHidden ();
+}
+

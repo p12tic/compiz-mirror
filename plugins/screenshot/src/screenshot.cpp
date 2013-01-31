@@ -209,7 +209,7 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 			if (n)
 			    free (namelist);
 
-			sprintf (name, "screenshot%d.png", number);
+			snprintf (name, 256, "screenshot%d.png", number);
 
 			CompString app (optionGetLaunchApp ());
 			CompString path (dir + "/" + name);

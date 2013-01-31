@@ -570,7 +570,6 @@ layoutOrganicCalculateOverlap (CompScreen *s,
 			       int        x,
 			       int        y)
 {
-    int    i;
     int    x1, y1, x2, y2;
     int    overlapX, overlapY;
     int    xMin, xMax, yMin, yMax;
@@ -584,7 +583,7 @@ layoutOrganicCalculateOverlap (CompScreen *s,
     x2 = x1 + WIN_W (ss->windows[win]) * as->scale;
     y2 = y1 + WIN_H (ss->windows[win]) * as->scale;
 
-    for (i = 0; i < ss->nWindows; i++)
+    for (int i = 0; i < ss->nWindows; i++)
     {
 	if (i == win)
 	    continue;

@@ -115,7 +115,7 @@ ObsWindow::modifierChanged (unsigned int modifier)
 	    break;
 	}
 
-    gWindow->glDrawSetEnabled (this, hasCustom);
+    gWindow->glDrawTextureSetEnabled (this, hasCustom);
     cWindow->addDamage ();
 }
 
@@ -149,16 +149,16 @@ ObsWindow::glPaint (const GLWindowPaintAttrib& attrib,
     return gWindow->glPaint (attrib, transform, region, mask);
 }
 
-/* Note: Normally plugins should wrap into glPaintWindow to modify opacity,
-	 brightness and saturation. As some plugins bypass glPaintWindow when
-	 they draw windows and our custom values always need to be applied,
-	 we wrap into glDrawWindow here */
+/* Note: Normally plugins should wrap into glPaint to modify opacity,
+         brightness and saturation. As some plugins bypass glPaint when
+         they draw windows and our custom values always need to be applied,
+         we wrap into glDrawTexture here */
 
-bool
-ObsWindow::glDraw (const GLMatrix            &transform,
-		   const GLWindowPaintAttrib &attrib,
-		   const CompRegion          &region,
-		   unsigned int        mask)
+void
+ObsWindow::glDrawTexture (GLTexture                 *texture,
+                          const GLMatrix            &transform,
+                          const GLWindowPaintAttrib &attrib,
+                          unsigned int              mask)
 {
     GLWindowPaintAttrib wAttrib (attrib);
     int factor;
@@ -178,7 +178,7 @@ ObsWindow::glDraw (const GLMatrix            &transform,
     if (factor != 100)
 	wAttrib.saturation = factor * wAttrib.saturation / 100;
 
-    return gWindow->glDraw (transform, wAttrib, region, mask);
+    return gWindow->glDrawTexture (texture, transform, wAttrib, mask);
 }
 
 void
@@ -197,9 +197,7 @@ ObsScreen::matchExpHandlerChanged ()
 void
 ObsScreen::matchPropertyChanged (CompWindow  *w)
 {
-    unsigned int i;
-
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
 	ObsWindow::get (w)->updatePaintModifier (i);
 
     screen->matchPropertyChanged (w);
@@ -249,9 +247,7 @@ ObsScreen::ObsScreen (CompScreen *s) :
 bool
 ObsWindow::updateTimeout ()
 {
-    int i;
-    
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (int i = 0; i < MODIFIER_COUNT; i++)
 	updatePaintModifier (i);
 
     return false;
@@ -262,7 +258,6 @@ ObsScreen::setOption (const CompString  &name,
 		      CompOption::Value &value)
 {
     CompOption   *o;
-    unsigned int i;
 
     if (!ObsOptions::setOption (name, value))
 	return false;
@@ -271,7 +266,7 @@ ObsScreen::setOption (const CompString  &name,
     if (!o)
         return false;
 
-    for (i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
     {
 	if (o == matchOptions[i] || o == valueOptions[i])
 	{

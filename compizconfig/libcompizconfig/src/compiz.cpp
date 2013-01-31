@@ -349,8 +349,7 @@ initListValuePB (CCSSettingValue * v,
 
     if (num)
     {
-	int j;
-	for (j = 0; j < num; j++)
+	for (int j = 0; j < num; j++)
 	{
 	    CCSSettingValue *val;
 	    val = (CCSSettingValue *) calloc (1, sizeof (CCSSettingValue));
@@ -547,177 +546,177 @@ initActionInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 }
 
 static void
+ccsSettingInfoPBInitializer (CCSSettingType type,
+			     CCSSettingInfo *info,
+			     void           *data)
+{
+    const OptionMetadata &option (*((const OptionMetadata *) data));
+
+    switch (type)
+    {
+    case TypeInt:
+	initIntInfoPB (info, option);
+	break;
+    case TypeFloat:
+	initFloatInfoPB (info, option);
+	break;
+    case TypeString:
+	initStringInfoPB (info, option);
+	break;
+    case TypeList:
+	initListInfoPB (info, option);
+	break;
+    case TypeKey:
+    case TypeButton:
+    case TypeEdge:
+    case TypeBell:
+	initActionInfoPB (info, option);
+	break;
+    case TypeAction: // do nothing and fall through
+    default:
+	break;
+    }
+}
+
+static void
+ccsSettingDefaultValuePBInitializer (CCSSettingType  type,
+				     CCSSettingInfo  *info,
+				     CCSSettingValue *value,
+				     void            *data)
+{
+    const OptionMetadata &option (*((const OptionMetadata *) data));
+
+    switch (type)
+    {
+    case TypeInt:
+	initIntValuePB (value, info,
+			option.default_value (0));
+	break;
+    case TypeBool:
+	initBoolValuePB (value, option.default_value (0));
+	break;
+    case TypeFloat:
+	initFloatValuePB (value, info,
+			  option.default_value (0));
+	break;
+    case TypeString:
+	initStringValuePB (value, info,
+			   option.default_value (0));
+	break;
+    case TypeColor:
+	initColorValuePB (value, option.default_value (0));
+	break;
+    case TypeKey:
+	initKeyValuePB (value, info,
+			option.default_value (0));
+	break;
+    case TypeButton:
+	initButtonValuePB (value, info,
+			   option.default_value (0));
+	break;
+    case TypeEdge:
+	initEdgeValuePB (value, info,
+			 option.default_value (0));
+	break;
+    case TypeBell:
+	initBellValuePB (value, info,
+			 option.default_value (0));
+	break;
+    case TypeMatch:
+	initMatchValuePB (value,
+			  option.default_value (0));
+	break;
+    case TypeList:
+	initListValuePB (value, info,
+			 option);
+	break;
+    case TypeAction: // do nothing and fall through
+    default:
+	break;
+    }
+}
+
+static void
+ccsSettingDefaultValueEmptyInitializer (CCSSettingType  type,
+					CCSSettingInfo  *info,
+					CCSSettingValue *value,
+					void            *data)
+{
+    /* if we have no set defaults, we have at least to set
+       the string defaults to empty strings */
+    switch (type)
+    {
+    case TypeString:
+	value->value.asString = strdup ("");
+	break;
+    case TypeMatch:
+	value->value.asMatch = strdup ("");
+	break;
+    default:
+	break;
+    }
+}
+
+static void
 addOptionForPluginPB (CCSPlugin * plugin,
 		      const char * name,
 		      const StringList & groups,
 		      const StringList & subgroups,
 		      const OptionMetadata & option)
 {
-    CCSSetting *setting;
-
     if (ccsFindSetting (plugin, name))
     {
 	ccsError ("Option \"%s\" already defined", name);
 	return;
     }
 
-    CCSContext *context = ccsPluginGetContext (plugin);
-    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
+    const char *shortDesc = name;
+    const char *longDesc  = "";
+    const char *group     = "";
+    const char *hints     = "";
+    const char *subGroup  = "";
 
-    setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
-
-    if (!setting)
-	return;
-
-    ccsObjectInit (setting, &ccsDefaultObjectAllocator);
-
-    CCSSettingPrivate *ccsPrivate = (CCSSettingPrivate *) calloc (1, sizeof (CCSSettingPrivate));
-
-    if (!ccsPrivate)
-    {
-	free (setting);
-	return;
-    }
-
-    ccsObjectSetPrivate (setting, (CCSPrivate *) ccsPrivate);
-    ccsObjectAddInterface (setting, (CCSInterface *) cPrivate->object_interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
-    ccsSettingRef (setting);
-
-    CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
-
-    sPrivate->parent = plugin;
-    sPrivate->isDefault = TRUE;
-    sPrivate->name = strdup (name);
+    CCSSettingType type = (CCSSettingType) option.type ();
 
     if (!basicMetadata)
     {
-	sPrivate->shortDesc =
-	    strdup (option.has_short_desc () ?
+	shortDesc = option.has_short_desc () ?
 		    option.short_desc ().c_str () :
-		    name);
-	sPrivate->longDesc =
-	    strdup (option.has_long_desc () ?
+		    name;
+	longDesc =  option.has_long_desc () ?
 		    option.long_desc ().c_str () :
-		    name);
-	sPrivate->hints = strdup (option.has_hints () ?
-				 option.hints ().c_str () :
-				 name);
-	sPrivate->group =
-	    strdup (option.group_id () >= 0 ?
-		    groups.Get (option.group_id ()).c_str () :
-		    "");
-	sPrivate->subGroup =
-	    strdup (option.subgroup_id () >= 0 ?
-		    subgroups.Get (option.subgroup_id ()).c_str () :
-		    "");
-    }
-    else
-    {
-	sPrivate->shortDesc = strdup (name);
-	sPrivate->longDesc  = strdup ("");
-	sPrivate->hints     = strdup ("");
-	sPrivate->group     = strdup ("");
-	sPrivate->subGroup  = strdup ("");
+		    name;
+	hints = option.has_hints () ?
+		option.hints ().c_str () :
+		name;
+	group = option.group_id () >= 0 ?
+		groups.Get (option.group_id ()).c_str () :
+		"";
+	subGroup = option.subgroup_id () >= 0 ?
+		   subgroups.Get (option.subgroup_id ()).c_str () :
+		   "";
     }
 
-    sPrivate->type = (CCSSettingType) option.type ();
-    sPrivate->value = &sPrivate->defaultValue;
-    sPrivate->defaultValue.parent = setting;
-
-    switch (sPrivate->type)
-    {
-    case TypeInt:
-	initIntInfoPB (&sPrivate->info, option);
-	break;
-    case TypeFloat:
-	initFloatInfoPB (&sPrivate->info, option);
-	break;
-    case TypeString:
-	initStringInfoPB (&sPrivate->info, option);
-	break;
-    case TypeList:
-	initListInfoPB (&sPrivate->info, option);
-	break;
-    case TypeKey:
-    case TypeButton:
-    case TypeEdge:
-    case TypeBell:
-	initActionInfoPB (&sPrivate->info, option);
-	break;
-    case TypeAction: // do nothing and fall through
-    default:
-	break;
-    }
-
-    if (option.default_value_size () > 0)
-    {
-	switch (sPrivate->type)
-	{
-	case TypeInt:
-	    initIntValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			    option.default_value (0));
-	    break;
-	case TypeBool:
-	    initBoolValuePB (&sPrivate->defaultValue, option.default_value (0));
-	    break;
-	case TypeFloat:
-	    initFloatValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			      option.default_value (0));
-	    break;
-	case TypeString:
-	    initStringValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			       option.default_value (0));
-	    break;
-	case TypeColor:
-	    initColorValuePB (&sPrivate->defaultValue, option.default_value (0));
-	    break;
-	case TypeKey:
-	    initKeyValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			    option.default_value (0));
-	    break;
-	case TypeButton:
-	    initButtonValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			       option.default_value (0));
-	    break;
-	case TypeEdge:
-	    initEdgeValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			     option.default_value (0));
-	    break;
-	case TypeBell:
-	    initBellValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			     option.default_value (0));
-	    break;
-	case TypeMatch:
-	    initMatchValuePB (&sPrivate->defaultValue,
-			      option.default_value (0));
-	    break;
-	case TypeList:
-	    initListValuePB (&sPrivate->defaultValue, &sPrivate->info,
-			     option);
-	    break;
-	case TypeAction: // do nothing and fall through
-	default:
-	    break;
-	}
-    }
-    else
-    {
-	/* if we have no set defaults, we have at least to set
-	   the string defaults to empty strings */
-	switch (sPrivate->type)
-	{
-	case TypeString:
-	    sPrivate->defaultValue.value.asString = strdup ("");
-	    break;
-	case TypeMatch:
-	    sPrivate->defaultValue.value.asMatch = strdup ("");
-	    break;
-	default:
-	    break;
-	}
-    }
-
+    CCSContext *context = ccsPluginGetContext (plugin);
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
     CCSPluginPrivate *pPrivate = GET_PRIVATE (CCSPluginPrivate, plugin);
+
+    CCSSetting *setting = ccsSettingDefaultImplNew (plugin,
+						    name,
+						    type,
+						    shortDesc,
+						    longDesc,
+						    hints,
+						    group,
+						    subGroup,
+						    option.default_value_size () > 0 ?
+							ccsSettingDefaultValuePBInitializer :
+							ccsSettingDefaultValueEmptyInitializer,
+						    (void *) &option,
+						    ccsSettingInfoPBInitializer,
+						    (void *) &option,
+						    plugin->object.object_allocation,
+						    cPrivate->object_interfaces);
 
     pPrivate->settings = ccsSettingListAppend (pPrivate->settings, setting);
 }
@@ -786,7 +785,6 @@ static void
 addStringExtensionFromPB (CCSPlugin * plugin,
 			  const ExtensionMetadata & extensionPB)
 {
-    int j;
     CCSStrExtension *extension;
 
     extension = (CCSStrExtension *) calloc (1, sizeof (CCSStrExtension));
@@ -808,7 +806,7 @@ addStringExtensionFromPB (CCSPlugin * plugin,
 	return;
     }
 
-    for (j = 0; j < numRestrictions; j++)
+    for (int j = 0; j < numRestrictions; j++)
     {
 	const OptionMetadata::StringRestriction & restrictionPB =
 	    extensionPB.str_restriction (j);
@@ -829,10 +827,10 @@ static void
 initStringExtensionsFromPB (CCSPlugin * plugin,
 			    const PluginMetadata & pluginPB)
 {
-    int numExtensions, i;
+    int numExtensions;
 
     numExtensions = pluginPB.extension_size ();
-    for (i = 0; i < numExtensions; i++)
+    for (int i = 0; i < numExtensions; i++)
 	addStringExtensionFromPB (plugin, pluginPB.extension (i));
 }
 
@@ -1111,7 +1109,6 @@ getNodesFromXPath (xmlDoc * doc, xmlNode * base, const char *path, int *num)
     xmlXPathContextPtr xpathCtx;
     xmlNode **rv = NULL;
     int size;
-    int i;
 
     *num = 0;
 
@@ -1146,7 +1143,7 @@ getNodesFromXPath (xmlDoc * doc, xmlNode * base, const char *path, int *num)
     }
     *num = size;
 
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
 	rv[i] = xpathObj->nodesetval->nodeTab[i];
 
     xmlXPathFreeObject (xpathObj);
@@ -1554,8 +1551,7 @@ initListValue (CCSSettingValue * v,
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
-	int j;
-	for (j = 0; j < num; j++)
+	for (int j = 0; j < num; j++)
 	{
 	    void *valuePBv = NULL;
 #ifdef USE_PROTOBUF
@@ -1614,7 +1610,6 @@ initListValue (CCSSettingValue * v,
 static void
 initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
-    xmlNode **nodes;
     char *value;
     int num;
     i->forInt.min = std::numeric_limits <short>::min ();
@@ -1647,12 +1642,12 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 
     if (!basicMetadata)
     {
+	xmlNode **nodes;
 	nodes = getNodesFromXPath (node->doc, node, "desc", &num);
 	if (num)
 	{
 	    char *name;
-	    int j;
-	    for (j = 0; j < num; j++)
+	    for (int j = 0; j < num; j++)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
 					    "value/child::text()");
@@ -1750,7 +1745,6 @@ initFloatInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 static void
 initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
-    xmlNode **nodes;
     int num;
     i->forString.restriction = NULL;
     i->forString.sortStartsAt = -1;
@@ -1766,7 +1760,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 		((OptionMetadata *) optionPBv)->set_extensible (TRUE);
 #endif
 	}
-
+	xmlNode **nodes;
 	nodes = getNodesFromXPath (node->doc, node, "sort", &num);
 	if (num)
 	{
@@ -1793,9 +1787,8 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	nodes = getNodesFromXPath (node->doc, node, "restriction", &num);
 	if (num)
 	{
-	    int j;
 	    char *name, *value;
-	    for (j = 0; j < num; j++)
+	    for (int j = 0; j < num; j++)
 	    {
 #ifdef USE_PROTOBUF
 		OptionMetadata::StringRestriction * strRestrictionPB = NULL;
@@ -2296,8 +2289,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
-	int i;
-	for (i = 0; i < num; i++)
+	for (int i = 0; i < num; i++)
 	{
 	    void *optionPBv = NULL;
     #ifdef USE_PROTOBUF
@@ -2334,8 +2326,7 @@ addStringsFromPath (CCSStringList * list,
 
     if (num)
     {
-	int i;
-	for (i = 0; i < num; i++)
+	for (int i = 0; i < num; i++)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
 
@@ -2366,7 +2357,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
 			       void * extensionPBv)
 {
     xmlNode **nodes;
-    int num, j;
+    int num;
     CCSStrExtension *extension;
     char *name;
     char *value;
@@ -2403,7 +2394,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
 	return;
     }
 
-    for (j = 0; j < num; j++)
+    for (int j = 0; j < num; j++)
     {
 	value = getStringFromXPath (node->doc, nodes[j], "value/child::text()");
 	if (value)
@@ -2441,10 +2432,10 @@ initStringExtensionsFromRootNode (CCSPlugin * plugin,
 				  void * pluginPBv)
 {
     xmlNode **nodes;
-    int num, i;
+    int num;
     nodes = getNodesFromXPath (node->doc, node, "/compiz/*/extension", &num);
 
-    for (i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
     {
 	void *extensionPBv = NULL;
 #ifdef USE_PROTOBUF
@@ -2953,7 +2944,7 @@ static void
 loadPluginsFromXMLFiles (CCSContext * context, char *path)
 {
     struct dirent **nameList;
-    int nFile, i;
+    int nFile;
 
     if (!path)
 	return;
@@ -2969,7 +2960,7 @@ loadPluginsFromXMLFiles (CCSContext * context, char *path)
     if (nFile <= 0)
 	return;
 
-    for (i = 0; i < nFile; i++)
+    for (int i = 0; i < nFile; i++)
     {
 	loadPluginFromXMLFile (context, nameList[i]->d_name, path);
 	free (nameList[i]);
@@ -3029,7 +3020,7 @@ static void
 loadPluginsFromName (CCSContext * context, char *path)
 {
     struct dirent **nameList;
-    int nFile, i;
+    int nFile;
 
     if (!path)
 	return;
@@ -3038,7 +3029,7 @@ loadPluginsFromName (CCSContext * context, char *path)
     if (nFile <= 0)
 	return;
 
-    for (i = 0; i < nFile; i++)
+    for (int i = 0; i < nFile; i++)
     {
 	char name[1024];
 	sscanf (nameList[i]->d_name, "lib%s", name);

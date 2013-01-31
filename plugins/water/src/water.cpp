@@ -264,13 +264,13 @@ WaterScreen::waterSetup ()
 	                              set_water_vertices_fragment_shader);
 
 	if (target == GL_TEXTURE_2D)
-	    sprintf (buf, update_water_vertices_fragment_shader.c_str (),
+	    snprintf (buf, 8192, update_water_vertices_fragment_shader.c_str (),
 		     "2D", "2D",
 		     1.0f / (float) texWidth,  1.0f / (float) texWidth,
 		     1.0f / (float) texHeight, 1.0f / (float) texHeight,
 		     "2D", "2D", "2D", "2D");
 	else
-	    sprintf (buf, update_water_vertices_fragment_shader.c_str (),
+	    snprintf (buf, 8192, update_water_vertices_fragment_shader.c_str (),
 		     "RECT", "RECT",
 		     1.0f, 1.0f, 1.0f, 1.0f,
 		     "RECT", "RECT", "RECT", "RECT");
@@ -279,7 +279,7 @@ WaterScreen::waterSetup ()
 	program[UPDATE] = new GLProgram (update_water_vertices_vertex_shader,
 				         buffer);
 
-	sprintf (buf, paint_water_vertices_fragment_shader.c_str (),
+	snprintf (buf, 8192, paint_water_vertices_fragment_shader.c_str (),
 		     screen->width (), screen->height ());
 
 	buffer.assign (buf);
@@ -617,7 +617,7 @@ waterTitleWave (CompAction         *action,
     w = screen->findWindow (xid);
     if (w)
     {
-	CompWindow::Geometry &g = w->geometry ();
+	const CompWindow::Geometry &g = w->geometry ();
 	XPoint p[2];
 
 	p[0].x = g.x () - w->border ().left;

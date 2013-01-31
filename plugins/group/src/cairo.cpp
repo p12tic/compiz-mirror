@@ -289,7 +289,7 @@ BackgroundLayer::render ()
     if (!HAS_TOP_WIN (mGroup) || !mCairo)
 	return;
 
-    /* Dimentions are the tab bar's region */
+    /* Dimensions are the tab bar's region */
     twidth = mGroup->mTabBar->mRegion.boundingRect ().width ();
     theight = mGroup->mTabBar->mRegion.boundingRect ().height ();
     radius = gs->optionGetBorderRadius ();

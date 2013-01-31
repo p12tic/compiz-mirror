@@ -28,4 +28,4 @@ target_link_libraries (compizconfig_test_ccs_gnome_gsettings_integrated_setting
                        compizconfig_gnome_integration_gsettings_integrated_setting
                        compizconfig_gsettings_backend_interface)
 
-compiz_discover_tests (compizconfig_test_ccs_gnome_gsettings_integrated_setting COVERAGE compizconfig_gnome_gsettings_integrated_setting)
+compiz_discover_tests (compizconfig_test_ccs_gnome_gsettings_integrated_setting COVERAGE compizconfig_gnome_integration_gsettings_integrated_setting)

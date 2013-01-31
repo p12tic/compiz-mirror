@@ -860,6 +860,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	GLenum         filter = gScreen->textureFilter ();
 	GLMatrix       wTransform (*transform);
 
+	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (optionGetWindowLike ())
@@ -892,6 +893,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	}
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable (GL_BLEND);
 
 	if (t->text)
 	{
@@ -994,10 +996,10 @@ ThumbScreen::donePaint ()
 {
     std::vector <Thumbnail *> damageThumbs;
 
-    if (thumb.opacity > 0.0 && thumb.opacity < 1.0)
+    if (thumb.opacity > 0.0)
 	damageThumbs.push_back (&thumb);
 
-    if (oldThumb.opacity > 0.0 && oldThumb.opacity < 1.0)
+    if (oldThumb.opacity > 0.0)
 	damageThumbs.push_back (&oldThumb);
 
     if (!damageThumbs.empty ())
