@@ -1066,6 +1066,10 @@ class CompScreenImpl : public CompScreen,
 				   CompAction::State  state,
 				   CompOption::Vector &options);
 
+	static bool unmaximizeOrMinimizeWin (CompAction         *action,
+					     CompAction::State  state,
+					     CompOption::Vector &options);
+
 	static bool minimizeWin (CompAction         *action,
 				 CompAction::State  state,
 				 CompOption::Vector &options);

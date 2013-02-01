@@ -429,31 +429,30 @@ CompPlugin::load (const char *name)
 bool
 CompPlugin::push (CompPlugin *p)
 {
-    const char *name = p->vTable->name ().c_str ();
-
+    const CompString &name = p->vTable->name ();
     std::pair<CompPlugin::Map::iterator, bool> insertRet =
-        pluginsMap.insert (std::pair<const char *, CompPlugin *> (name, p));
+        pluginsMap.insert (std::make_pair (name, p));
 
     if (!insertRet.second)
     {
 	compLogMessage (here, CompLogLevelWarn,
 			"Plugin '%s' already active",
-			p->vTable->name ().c_str ());
+			name.c_str ());
 
 	return false;
     }
 
     plugins.push_front (p);
 
-    compLogMessage (here, CompLogLevelInfo, "Starting plugin: %s", name);
+    compLogMessage (here, CompLogLevelInfo, "Starting plugin: %s", name.c_str ());
     if (CompManager::initPlugin (p))
     {
-	compLogMessage (here, CompLogLevelDebug, "Started plugin: %s", name);
+	compLogMessage (here, CompLogLevelDebug, "Started plugin: %s", name.c_str ());
     }
     else
     {
 	compLogMessage (here, CompLogLevelError,
-	    "Failed to start plugin: %s", name);
+	    "Failed to start plugin: %s", name.c_str ());
 
         pluginsMap.erase (name);
 	plugins.pop_front ();
@@ -475,12 +474,12 @@ CompPlugin::pop (void)
     if (!p)
 	return 0;
 
-    const char *name = p->vTable->name ().c_str ();
+    const CompString &name = p->vTable->name ();
     pluginsMap.erase (name);
 
-    compLogMessage (here, CompLogLevelInfo, "Stopping plugin: %s", name);
+    compLogMessage (here, CompLogLevelInfo, "Stopping plugin: %s", name.c_str ());
     CompManager::finiPlugin (p);
-    compLogMessage (here, CompLogLevelDebug, "Stopped plugin: %s", name);
+    compLogMessage (here, CompLogLevelDebug, "Stopped plugin: %s", name.c_str ());
 
     plugins.pop_front ();
 
@@ -559,7 +558,7 @@ CompPlugin::VTable::initVTable (CompString         name,
     }
 }
 
-const CompString
+const CompString&
 CompPlugin::VTable::name () const
 {
     return mName;
