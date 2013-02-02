@@ -154,7 +154,7 @@ Bool writeButtonToVariant (CCSSettingButtonValue button, GVariant **variant);
 
 Bool writeEdgeToVariant (unsigned int edges, GVariant **variant);
 
-void writeVariantToKey (CCSGSettingsWrapper *settings,
+Bool writeVariantToKey (CCSGSettingsWrapper *settings,
 			const char *key,
 			GVariant   *value);
 

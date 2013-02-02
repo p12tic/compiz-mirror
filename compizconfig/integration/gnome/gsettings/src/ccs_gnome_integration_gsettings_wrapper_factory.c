@@ -70,7 +70,8 @@ ccsGNOMEIntegrationGSettingsWrapperFactoryNewGSettingsWrapper (CCSGSettingsWrapp
 										  schemaName,
 										  factory->object.object_allocation);
 
-    connectWrapperToChangedSignal (wrapper, priv);
+    if (wrapper != NULL)
+	connectWrapperToChangedSignal (wrapper, priv);
 
     return wrapper;
 }

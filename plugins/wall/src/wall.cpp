@@ -70,7 +70,6 @@ WallScreen::drawSwitcherBackground ()
     float           outline = 2.0f;
     int             width, height, radius;
     float           r, g, b, a;
-    unsigned int    i, j;
 
     destroyCairoContext (switcherContext);
     setupCairoContext (switcherContext);
@@ -124,11 +123,11 @@ WallScreen::drawSwitcherBackground ()
     cairo_restore (cr);
 
     cairo_save (cr);
-    for (i = 0; i < (unsigned int) screen->vpSize ().height (); i++)
+    for (unsigned int i = 0; i < (unsigned int) screen->vpSize ().height (); i++)
     {
 	cairo_translate (cr, 0.0, viewportBorder);
 	cairo_save (cr);
-	for (j = 0; j < (unsigned int) screen->vpSize ().width (); j++)
+	for (unsigned int j = 0; j < (unsigned int) screen->vpSize ().width (); j++)
 	{
 	    cairo_translate (cr, viewportBorder, 0.0);
 
@@ -609,6 +608,10 @@ WallWindow::activate ()
 	dx       = viewport.x ();
 	dy       = viewport.y ();
 
+	/* Handle negative value */
+	dx = (unsigned int) dx % screen->vpSize ().width ();
+	dy = (unsigned int) dy % screen->vpSize ().height ();
+
 	dx -= screen->vp ().x ();
 	dy -= screen->vp ().y ();
 
@@ -638,8 +641,8 @@ WallWindow::activate ()
 	    mask |= d.x () !=0 ? CWX : 0;
 	    mask |= d.y () !=0 ? CWY : 0;
 
-	    xwc.x = window->serverGeometry ().x () + dx;
-	    xwc.y = window->serverGeometry ().y () + dy;
+	    xwc.x = window->serverGeometry ().x () + d.x ();
+	    xwc.y = window->serverGeometry ().y () + d.y ();
 
 	    window->configureXWindow (mask, &xwc);
 	}
@@ -864,7 +867,7 @@ WallScreen::initiateFlip (Direction         direction,
 
 	if (dx < 0)
 	{
-	    offsetX = screen->width () - 10;
+	    offsetX = screen->width () - 1;
 	    warpX = pointerX + screen->width ();
 	}
 	else if (dx > 0)
@@ -880,7 +883,7 @@ WallScreen::initiateFlip (Direction         direction,
 
 	if (dy < 0)
 	{
-	    offsetY = screen->height () - 10;
+	    offsetY = screen->height () - 1;
 	    warpY = pointerY + screen->height ();
 	}
 	else if (dy > 0)
@@ -949,7 +952,6 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     float             width, height;
     float             topLeftX, topLeftY;
     float             border;
-    unsigned int      i, j;
     GLTexture::Matrix matrix;
     BOX               box;
     GLMatrix          wTransform (transform);
@@ -1020,9 +1022,9 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     height = (float) thumbContext.height;
 
     thumbContext.texture[0]->enable (GLTexture::Fast);
-    for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
+    for (unsigned int i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
     {
-	for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
+	for (unsigned int j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	{
 	    if (i == gotoX && j == gotoY && moving)
 		continue;
@@ -1197,7 +1199,6 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (optionGetMiniscreen ())
         {
-	    unsigned int i, j;
 	    float        mw, mh;
 
 	    mw = viewportWidth;
@@ -1209,9 +1210,9 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    mSAttribs.opacity = OPAQUE * (1.0 + mSzCamera);
 	    mSAttribs.saturation = COLOR;
 
-	    for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
+	    for (unsigned int j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	    {
-		for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
+		for (unsigned int i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
 		{
 		    float        mx, my;
 		    unsigned int msMask;

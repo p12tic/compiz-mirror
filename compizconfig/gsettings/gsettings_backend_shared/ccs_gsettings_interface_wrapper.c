@@ -145,6 +145,88 @@ freeWrapperAndPriv (CCSGSettingsWrapper *wrapper,
     (*ai->free_) (ai->allocator, wrapper);
 }
 
+static gpointer
+listAllRelocatableSchemas (gpointer data)
+{
+    return (gpointer) g_settings_list_relocatable_schemas ();
+}
+
+static inline const gchar * const *
+listAllRelocatableSchemasOnce ()
+{
+    static GOnce get_settings_once = G_ONCE_INIT;
+    g_once (&get_settings_once, listAllRelocatableSchemas, NULL);
+    return (const gchar * const *) get_settings_once.retval;
+}
+
+static gpointer
+listAllSchemas (gpointer data)
+{
+    return (gpointer) g_settings_list_schemas ();
+}
+
+static inline const gchar * const *
+listAllSchemasOnce ()
+{
+    static GOnce get_settings_once = G_ONCE_INIT;
+    g_once (&get_settings_once, listAllSchemas, NULL);
+    return (const gchar * const *) get_settings_once.retval;
+}
+
+typedef void * GSettingsConstructorFuncUserData;
+typedef GSettings * (*GSettingsConstructorFunc) (const gchar *, GSettingsConstructorFuncUserData);
+
+static inline GSettings *
+ccsGSettingsNewNoPath (const gchar                      *schema,
+		       GSettingsConstructorFuncUserData data)
+{
+    (void) data;
+    return g_settings_new (schema);
+}
+
+static inline GSettings *
+ccsGSettingsNewWithPathFromUserData (const gchar                      *schema,
+				     GSettingsConstructorFuncUserData data)
+{
+    return g_settings_new_with_path (schema, (const gchar *) data);
+}
+
+static inline GSettings *
+ccsGSettingsNewGSettingsFuncNoAbort (const gchar                      *schema,
+				     const gchar * const              *schemas,
+				     GSettingsConstructorFunc         func,
+				     GSettingsConstructorFuncUserData data)
+{
+    guint                  i = 0;
+
+    for (; schemas[i]; i++)
+	if (g_strcmp0 (schema, schemas[i]) == 0)
+	    return (*func) (schema, data);
+
+    return NULL;
+}
+
+static inline GSettings *
+ccsGSettingsNewGSettingsWithPathNoAbort (const gchar *schema,
+					 const gchar *path)
+{
+    const gchar * const *schemas = listAllRelocatableSchemasOnce ();
+    return ccsGSettingsNewGSettingsFuncNoAbort (schema,
+						schemas,
+						ccsGSettingsNewWithPathFromUserData,
+						(GSettingsConstructorFuncUserData) path);
+}
+
+static inline GSettings *
+ccsGSettingsNewGSettingsNoAbort (const gchar *schema)
+{
+    const gchar * const *schemas = listAllSchemasOnce ();
+    return ccsGSettingsNewGSettingsFuncNoAbort (schema,
+						schemas,
+						ccsGSettingsNewNoPath,
+						NULL);
+}
+
 static GSettings *
 newGSettingsWithPath (const char *schema,
 		      const char *path,
@@ -152,7 +234,7 @@ newGSettingsWithPath (const char *schema,
 		      CCSGSettingsWrapperPrivate *priv,
 		      CCSObjectAllocationInterface *ai)
 {
-    GSettings *settings = g_settings_new_with_path (schema, path);
+    GSettings *settings = ccsGSettingsNewGSettingsWithPathNoAbort (schema, path);
 
     if (!settings)
     {
@@ -169,7 +251,7 @@ newGSettings (const char *schema,
 	      CCSGSettingsWrapperPrivate *priv,
 	      CCSObjectAllocationInterface *ai)
 {
-    GSettings *settings = g_settings_new (schema);
+    GSettings *settings = ccsGSettingsNewGSettingsNoAbort (schema);
 
     if (!settings)
     {
@@ -216,16 +298,19 @@ ccsGSettingsWrapperNewForSchemaWithPath (const char *schema,
 {
     CCSGSettingsWrapper *wrapper = NULL;
     CCSGSettingsWrapperPrivate *priv = NULL;
+    GSettings                  *settings = NULL;
 
     if (!allocateWrapperData (ai, &wrapper, &priv))
 	return NULL;
 
+    settings = newGSettingsWithPath (schema, path, wrapper, priv, ai);
+
+    if (!settings)
+	return NULL;
+
     priv->schema = g_strdup (schema);
     priv->path = g_strdup (path);
-    priv->settings = newGSettingsWithPath (schema, path, wrapper, priv, ai);
-
-    if (!priv->settings)
-	return NULL;
+    priv->settings = settings;
 
     initCCSGSettingsWrapperObject (wrapper, priv, ai);
 
@@ -238,15 +323,18 @@ ccsGSettingsWrapperNewForSchema (const char *schema,
 {
     CCSGSettingsWrapper *wrapper = NULL;
     CCSGSettingsWrapperPrivate *priv = NULL;
+    GSettings                  *settings = NULL;
 
     if (!allocateWrapperData (ai, &wrapper, &priv))
 	return NULL;
 
-    priv->schema = g_strdup (schema);
-    priv->settings = newGSettings (schema, wrapper, priv, ai);
+    settings = newGSettings (schema, wrapper, priv, ai);
 
-    if (!priv->settings)
+    if (!settings)
 	return NULL;
+
+    priv->schema = g_strdup (schema);
+    priv->settings = settings;
 
     GValue pathValue = G_VALUE_INIT;
     g_value_init (&pathValue, G_TYPE_STRING);

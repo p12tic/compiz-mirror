@@ -265,7 +265,7 @@ updateSettingWithGSettingsKeyName (CCSBackend *backend,
 	 ret = FALSE;
     }
 
-    g_free (pathOrig);
+    free (pathOrig);
 
     if (uncleanKeyName)
 	g_free (uncleanKeyName);
@@ -930,12 +930,22 @@ Bool writeEdgeToVariant (unsigned int edges, GVariant **variant)
     return TRUE;
 }
 
-void
+Bool
 writeVariantToKey (CCSGSettingsWrapper  *settings,
 		   const char *key,
 		   GVariant   *value)
 {
-    ccsGSettingsWrapperSetValue (settings, key, value);
+    if (settings)
+    {
+	ccsGSettingsWrapperSetValue (settings, key, value);
+	return TRUE;
+
+    }
+    else
+    {
+	ccsWarning ("attempted to write without a schema");
+	return FALSE;
+    }
 }
 
 typedef void (*VariantItemCheckAndInsertFunc) (GVariantBuilder *, const char *item, void *userData);

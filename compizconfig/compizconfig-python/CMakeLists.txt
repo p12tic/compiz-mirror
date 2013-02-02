@@ -8,7 +8,8 @@ execute_process (COMMAND uname -p OUTPUT_VARIABLE PROC_ARCH)
 execute_process (COMMAND python -c "import sys; print str (sys.version_info[0]) + '.' + str (sys.version_info[1])"
 		 OUTPUT_VARIABLE PY_VERSION)
 
-find_package (PythonLibs)
+include (FindPkgConfig)
+pkg_check_modules (PYTHON python-2.7)
 
 # This is a workaround for a broken FindPythonLibs always finding the
 # wrong library version because PYTHON_LIBRARY is in the cache and
@@ -29,8 +30,13 @@ set (PY_SCRIPTS_DIR scripts-${PY_VERSION})
 set (PY_COMPIZCONFIG_SRC ${CMAKE_CURRENT_BINARY_DIR}/compizconfig.c)
 set (PY_COMPIZCONFIG_PYREX ${CMAKE_CURRENT_SOURCE_DIR}/src/compizconfig.pyx)
 
+find_program(PYREXC_BIN pyrexc)
+if(NOT PYREXC_BIN)
+  message(FATAL_ERROR "Can not build because pyrexc binary not found.")
+endif()
+
 add_custom_command (OUTPUT ${PY_COMPIZCONFIG_SRC}
-		    COMMAND pyrexc -o ${PY_COMPIZCONFIG_SRC} ${PY_COMPIZCONFIG_PYREX}
+		    COMMAND ${PYREXC_BIN} -o ${PY_COMPIZCONFIG_SRC} ${PY_COMPIZCONFIG_PYREX}
 		    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		    DEPENDS ${PY_COMPIZCONFIG_PYREX})
 

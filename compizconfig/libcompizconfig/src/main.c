@@ -187,7 +187,7 @@ ccsObjectGetInterface_(CCSObject *object, int interface_type)
 	      "This is either a programmer error or more than one static library \n"
 	      "defining this interface has been linked in\n"
 	      "Unable to continue, please file a bug about this\n", interface_type, object);
-    assert (0);
+    abort ();
 
     return NULL;
 }
@@ -800,6 +800,29 @@ ccsFreePluginDefault (CCSPlugin * p)
     free (p);
 }
 
+void
+ccsCleanupSettingInfo (CCSSettingInfo *info,
+		       CCSSettingType type)
+{
+    switch (type)
+    {
+    case TypeInt:
+	ccsIntDescListFree (info->forInt.desc, TRUE);
+	break;
+    case TypeString:
+	ccsStrRestrictionListFree (info->forString.restriction, TRUE);
+	break;
+    case TypeList:
+	if (info->forList.listType == TypeInt)
+	    ccsIntDescListFree (info->forList.listInfo->
+				forInt.desc, TRUE);
+	free (info->forList.listInfo);
+	break;
+    default:
+	break;
+    }
+}
+
 static void
 ccsFreeSettingDefault (CCSSetting *s)
 {
@@ -812,29 +835,12 @@ ccsFreeSettingDefault (CCSSetting *s)
     free (sPrivate->subGroup);
     free (sPrivate->hints);
 
-    switch (sPrivate->type)
-    {
-    case TypeInt:
-	ccsIntDescListFree (sPrivate->info.forInt.desc, TRUE);
-	break;
-    case TypeString:
-	ccsStrRestrictionListFree (sPrivate->info.forString.restriction, TRUE);
-	break;
-    case TypeList:
-	if (sPrivate->info.forList.listType == TypeInt)
-	    ccsIntDescListFree (sPrivate->info.forList.listInfo->
-				forInt.desc, TRUE);
-	free (sPrivate->info.forList.listInfo);
-	//ccsSettingValueListFree (sPrivate->value->value.asList, TRUE);
-	break;
-    default:
-	break;
-    }
-
     if (&sPrivate->defaultValue != sPrivate->value)
     {
 	ccsFreeSettingValue (sPrivate->value);
     }
+
+    ccsCleanupSettingInfo (&sPrivate->info, sPrivate->type);
 
     ccsFreeSettingValue (&sPrivate->defaultValue);
 
@@ -1819,10 +1825,10 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
     return TRUE;
 }
 
-static void
-copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
+void
+ccsCopyInfo (const CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 {	
-    memcpy (from, to, sizeof (CCSSettingInfo));
+    memcpy (to, from, sizeof (CCSSettingInfo));
 
     switch (type)
     {
@@ -1896,7 +1902,7 @@ copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
 	    {
 		to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
 
-		copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+		ccsCopyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
 	    }
 
 	    break;
@@ -1997,7 +2003,7 @@ copySetting (CCSSetting *from, CCSSetting *to)
     }
 
     copyValue (&fromPrivate->defaultValue, &toPrivate->defaultValue);
-    copyInfo (&fromPrivate->info, &toPrivate->info, fromPrivate->type);
+    ccsCopyInfo (&fromPrivate->info, &toPrivate->info, fromPrivate->type);
 
     toPrivate->defaultValue.parent = to;
     toPrivate->privatePtr = NULL;
@@ -2110,29 +2116,29 @@ ccsCheckValueEq (const CCSSettingValue *rhs,
 /* FIXME: That's a lot of code for the sake of type switching ...
  * maybe we need to switch to C++ here and use templates ... */
 
-Bool
+CCSSetStatus
 ccsSettingSetIntDefault (CCSSetting * setting, int data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
-    if (sPrivate->type != TypeInt)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeInt)
+	return SetFailed;
 
     if (sPrivate->isDefault && (sPrivate->defaultValue.value.asInt == data))
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && (sPrivate->defaultValue.value.asInt == data))
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (sPrivate->value->value.asInt == data)
-	return TRUE;
+	return SetToSameValue;
 
     if ((data < sPrivate->info.forInt.min) ||
 	 (data > sPrivate->info.forInt.max))
-	return FALSE;
+	return SetFailed;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2142,34 +2148,34 @@ ccsSettingSetIntDefault (CCSSetting * setting, int data, Bool processChanged)
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetFloatDefault (CCSSetting * setting, float data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
-    if (sPrivate->type != TypeFloat)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeFloat)
+	return SetFailed;
 
     if (sPrivate->isDefault && (sPrivate->defaultValue.value.asFloat == data))
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && (sPrivate->defaultValue.value.asFloat == data))
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     /* allow the values to differ a tiny bit because of
        possible rounding / precision issues */
     if (fabs (sPrivate->value->value.asFloat - data) < 1e-5)
-	return TRUE;
+	return SetToSameValue;
 
     if ((data < sPrivate->info.forFloat.min) ||
 	 (data > sPrivate->info.forFloat.max))
-	return FALSE;
+	return SetFailed;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2179,33 +2185,33 @@ ccsSettingSetFloatDefault (CCSSetting * setting, float data, Bool processChanged
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetBoolDefault (CCSSetting * setting, Bool data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
-    if (sPrivate->type != TypeBool)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeBool)
+	return SetFailed;
 
     if (sPrivate->isDefault
 	&& ((sPrivate->defaultValue.value.asBool && data)
 	     || (!sPrivate->defaultValue.value.asBool && !data)))
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault
 	&& ((sPrivate->defaultValue.value.asBool && data)
 	     || (!sPrivate->defaultValue.value.asBool && !data)))
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if ((sPrivate->value->value.asBool && data)
 	 || (!sPrivate->value->value.asBool && !data))
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2215,33 +2221,33 @@ ccsSettingSetBoolDefault (CCSSetting * setting, Bool data, Bool processChanged)
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetStringDefault (CCSSetting * setting, const char *data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
-    if (sPrivate->type != TypeString)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeString)
+	return SetFailed;
 
     if (!data)
-	return FALSE;
+	return SetFailed;
 
     Bool isDefault = strcmp (sPrivate->defaultValue.value.asString, data) == 0;
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (!strcmp (sPrivate->value->value.asString, data))
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2253,32 +2259,32 @@ ccsSettingSetStringDefault (CCSSetting * setting, const char *data, Bool process
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetColorDefault (CCSSetting * setting, CCSSettingColorValue data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
-    if (sPrivate->type != TypeColor)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeColor)
+	return SetFailed;
 
     CCSSettingColorValue defValue = sPrivate->defaultValue.value.asColor;
 
     Bool isDefault = ccsIsEqualColor (defValue, data);
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (ccsIsEqualColor (sPrivate->value->value.asColor, data))
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2288,33 +2294,33 @@ ccsSettingSetColorDefault (CCSSetting * setting, CCSSettingColorValue data, Bool
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetMatchDefault (CCSSetting * setting, const char *data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
-    if (sPrivate->type != TypeMatch)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeMatch)
+	return SetFailed;
 
     if (!data)
-	return FALSE;
+	return SetFailed;
 
     Bool isDefault = strcmp (sPrivate->defaultValue.value.asMatch, data) == 0;
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (!strcmp (sPrivate->value->value.asMatch, data))
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2326,32 +2332,32 @@ ccsSettingSetMatchDefault (CCSSetting * setting, const char *data, Bool processC
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetKeyDefault (CCSSetting * setting, CCSSettingKeyValue data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
-    if (sPrivate->type != TypeKey)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeKey)
+	return SetFailed;
 
     CCSSettingKeyValue defValue = sPrivate->defaultValue.value.asKey;
 
     Bool isDefault = ccsIsEqualKey (data, defValue);
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (ccsIsEqualKey (sPrivate->value->value.asKey, data))
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2362,32 +2368,32 @@ ccsSettingSetKeyDefault (CCSSetting * setting, CCSSettingKeyValue data, Bool pro
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetButtonDefault (CCSSetting * setting, CCSSettingButtonValue data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
-    if (sPrivate->type != TypeButton)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeButton)
+	return SetFailed;
 
     CCSSettingButtonValue defValue = sPrivate->defaultValue.value.asButton;
 
     Bool isDefault = ccsIsEqualButton (data, defValue);
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (ccsIsEqualButton (sPrivate->value->value.asButton, data))
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2399,30 +2405,30 @@ ccsSettingSetButtonDefault (CCSSetting * setting, CCSSettingButtonValue data, Bo
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetEdgeDefault (CCSSetting * setting, unsigned int data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
-    if (sPrivate->type != TypeEdge)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeEdge)
+	return SetFailed;
 
     Bool isDefault = (data == sPrivate->defaultValue.value.asEdge);
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (sPrivate->value->value.asEdge == data)
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2432,30 +2438,30 @@ ccsSettingSetEdgeDefault (CCSSetting * setting, unsigned int data, Bool processC
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
 
-    if (sPrivate->type != TypeBell)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeBell)
+	return SetFailed;
 
     Bool isDefault = (data == sPrivate->defaultValue.value.asBool);
 
     if (sPrivate->isDefault && isDefault)
-	return TRUE;
+	return SetIsDefault;
 
     if (!sPrivate->isDefault && isDefault)
     {
 	ccsResetToDefault (setting, processChanged);
-	return TRUE;
+	return SetToDefault;
     }
 
     if (sPrivate->value->value.asBell == data)
-	return TRUE;
+	return SetToSameValue;
 
     if (sPrivate->isDefault)
 	copyFromDefault (setting);
@@ -2465,13 +2471,72 @@ ccsSettingSetBellDefault (CCSSetting * setting, Bool data, Bool processChanged)
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
+    return SetToNewValue;
+}
+
+Bool
+ccsCopyValueInto (const CCSSettingValue *from,
+		  CCSSettingValue       *to,
+		  CCSSettingType        type,
+		  CCSSettingInfo        *info)
+{
+    to->parent = from->parent;
+    to->isListChild = from->isListChild;
+
+    CCSSettingType vType = to->isListChild ? info->forList.listType : type;
+
+    switch (vType)
+    {
+	case TypeInt:
+	    to->value.asInt = from->value.asInt;
+	    break;
+	case TypeBool:
+	    to->value.asBool = from->value.asBool;
+	    break;
+	case TypeFloat:
+	    to->value.asFloat = from->value.asFloat;
+	    break;
+	case TypeString:
+	    to->value.asString = strdup (from->value.asString);
+	    break;
+	case TypeMatch:
+	    to->value.asMatch = strdup (from->value.asMatch);
+	    break;
+	case TypeKey:
+	    memcpy (&to->value.asKey, &from->value.asKey,
+		    sizeof (CCSSettingKeyValue));
+	    break;
+	case TypeButton:
+	    memcpy (&to->value.asButton, &from->value.asButton,
+		    sizeof (CCSSettingButtonValue));
+	    break;
+	case TypeEdge:
+	    to->value.asEdge = from->value.asEdge;
+	    break;
+	case TypeBell:
+	    to->value.asBell = from->value.asBell;
+	    break;
+	case TypeColor:
+	    memcpy (&to->value.asColor, &from->value.asColor,
+		    sizeof (CCSSettingColorValue));
+	    break;
+	case TypeList:
+	    assert (from->parent != NULL);
+	    to->value.asList = ccsCopyList (from->value.asList, from->parent);
+	    break;
+	default:
+	    ccsError ("unexpected setting type in ccsCopyValueInto");
+	    return FALSE;
+	    break;
+    }
+
     return TRUE;
 }
 
 CCSSettingValue *
-ccsCopyValue (CCSSettingValue *orig,
-	      CCSSettingType  type,
-	      CCSSettingInfo  *info)
+ccsCopyValue (const CCSSettingValue *orig,
+	      CCSSettingType        type,
+	      CCSSettingInfo        *info)
 {
     CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 
@@ -2479,50 +2544,10 @@ ccsCopyValue (CCSSettingValue *orig,
 	return NULL;
 
     value->refCount = 1;
-    value->parent = orig->parent;
-    value->isListChild = orig->isListChild;
-
-    CCSSettingType vType = value->isListChild ? info->forList.listType : type;
-
-    switch (vType)
+    if (!ccsCopyValueInto (orig, value, type, info))
     {
-	case TypeInt:
-	    value->value.asInt = orig->value.asInt;
-	    break;
-	case TypeBool:
-	    value->value.asBool = orig->value.asBool;
-	    break;
-	case TypeFloat:
-	    value->value.asFloat = orig->value.asFloat;
-	    break;
-	case TypeString:
-	    value->value.asString = strdup (orig->value.asString);
-	    break;
-	case TypeMatch:
-	    value->value.asMatch = strdup (orig->value.asMatch);
-	    break;
-	case TypeKey:
-	    memcpy (&value->value.asKey, &orig->value.asKey,
-		    sizeof (CCSSettingKeyValue));
-	    break;
-	case TypeButton:
-	    memcpy (&value->value.asButton, &orig->value.asButton,
-		    sizeof (CCSSettingButtonValue));
-	    break;
-	case TypeEdge:
-	    value->value.asEdge = orig->value.asEdge;
-	    break;
-	case TypeBell:
-	    value->value.asBell = orig->value.asBell;
-	    break;
-	case TypeColor:
-	    memcpy (&value->value.asColor, &orig->value.asColor,
-		    sizeof (CCSSettingColorValue));
-	    break;
-	default:
-	    free (value);
-	    return NULL;
-	    break;
+	free (value);
+	return NULL;
     }
 
     return value;
@@ -2552,13 +2577,13 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
     return l2;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetListDefault (CCSSetting * setting, CCSSettingValueList data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
-    if (sPrivate->type != TypeList)
-	return FALSE;
+    if (ccsSettingGetType (setting) != TypeList)
+	return SetFailed;
 
     Bool isDefault = ccsCompareLists (sPrivate->defaultValue.value.asList, data,
 				      sPrivate->info.forList);
@@ -2571,20 +2596,20 @@ ccsSettingSetListDefault (CCSSetting * setting, CCSSettingValueList data, Bool p
     {
 	if (sPrivate->isDefault && isDefault)
 	{
-	    return TRUE;
+	    return SetIsDefault;
 	}
 
 	if (!sPrivate->isDefault && isDefault)
 	{
 	    ccsResetToDefault (setting, processChanged);
-	    return TRUE;
+	    return SetToDefault;
 	}
     }
 
     if (ccsCompareLists (sPrivate->value->value.asList, data,
 			 sPrivate->info.forList))
     {
-	return TRUE;
+	return SetToSameValue;
     }
 
     if (sPrivate->isDefault)
@@ -2607,10 +2632,10 @@ ccsSettingSetListDefault (CCSSetting * setting, CCSSettingValueList data, Bool p
     if (processChanged)
 	ccsContextAddChangedSetting (ccsPluginGetContext (sPrivate->parent), setting);
 
-    return TRUE;
+    return SetToNewValue;
 }
 
-Bool
+CCSSetStatus
 ccsSettingSetValueDefault (CCSSetting * setting, CCSSettingValue * data, Bool processChanged)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting);
@@ -2653,7 +2678,7 @@ ccsSettingSetValueDefault (CCSSetting * setting, CCSSettingValue * data, Bool pr
 	break;
     }
 
-    return FALSE;
+    return SetFailed;
 }
 
 Bool
@@ -2693,7 +2718,7 @@ ccsSettingGetBoolDefault (CCSSetting * setting, Bool * data)
 }
 
 Bool
-ccsSettingGetStringDefault (CCSSetting * setting, char **data)
+ccsSettingGetStringDefault (CCSSetting * setting, const char **data)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
@@ -2717,7 +2742,7 @@ ccsSettingGetColorDefault (CCSSetting * setting, CCSSettingColorValue * data)
 }
 
 Bool
-ccsSettingGetMatchDefault (CCSSetting * setting, char **data)
+ccsSettingGetMatchDefault (CCSSetting * setting, const char **data)
 {
     CCSSettingPrivate *sPrivate = GET_PRIVATE (CCSSettingPrivate, setting)
 
@@ -2807,7 +2832,7 @@ Bool ccsGetBool (CCSSetting *setting,
 }
 
 Bool ccsGetString (CCSSetting *setting,
-		   char       **data)
+		   const char **data)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetString) (setting, data);
 }
@@ -2819,7 +2844,7 @@ Bool ccsGetColor (CCSSetting           *setting,
 }
 
 Bool ccsGetMatch (CCSSetting *setting,
-		  char       **data)
+		  const char **data)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetMatch) (setting, data);
 }
@@ -2854,86 +2879,86 @@ Bool ccsGetList (CCSSetting          *setting,
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingGetList) (setting, data);
 }
 
-Bool ccsSetInt (CCSSetting *setting,
-		int        data,
-		Bool	   processChanged)
+CCSSetStatus ccsSetInt (CCSSetting *setting,
+			int        data,
+			Bool	   processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetInt) (setting, data, processChanged);
 }
 
-Bool ccsSetFloat (CCSSetting *setting,
-		  float      data,
-		  Bool	     processChanged)
+CCSSetStatus ccsSetFloat (CCSSetting *setting,
+			  float      data,
+			  Bool	     processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetFloat) (setting, data, processChanged);
 }
 
-Bool ccsSetBool (CCSSetting *setting,
-		 Bool       data,
-		 Bool	    processChanged)
+CCSSetStatus ccsSetBool (CCSSetting *setting,
+			 Bool       data,
+			 Bool	    processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetBool) (setting, data, processChanged);
 }
 
-Bool ccsSetString (CCSSetting *setting,
-		   const char *data,
-		   Bool	      processChanged)
+CCSSetStatus ccsSetString (CCSSetting *setting,
+			   const char *data,
+			   Bool	      processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetString) (setting, data, processChanged);
 }
 
-Bool ccsSetColor (CCSSetting           *setting,
-		  CCSSettingColorValue data,
-		  Bool		       processChanged)
+CCSSetStatus ccsSetColor (CCSSetting           *setting,
+			  CCSSettingColorValue data,
+			  Bool		       processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetColor) (setting, data, processChanged);
 }
 
-Bool ccsSetMatch (CCSSetting *setting,
-		  const char *data,
-		  Bool	     processChanged)
+CCSSetStatus ccsSetMatch (CCSSetting *setting,
+			  const char *data,
+			  Bool	     processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetMatch) (setting, data, processChanged);
 }
 
-Bool ccsSetKey (CCSSetting         *setting,
-		CCSSettingKeyValue data,
-		Bool		   processChanged)
+CCSSetStatus ccsSetKey (CCSSetting         *setting,
+			CCSSettingKeyValue data,
+			Bool		   processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetKey) (setting, data, processChanged);
 }
 
-Bool ccsSetButton (CCSSetting            *setting,
-		   CCSSettingButtonValue data,
-		   Bool			 processChanged)
+CCSSetStatus ccsSetButton (CCSSetting            *setting,
+			   CCSSettingButtonValue data,
+			   Bool			 processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetButton) (setting, data, processChanged);
 }
 
-Bool ccsSetEdge (CCSSetting   *setting,
-		 unsigned int data,
-		 Bool	      processChanged)
+CCSSetStatus ccsSetEdge (CCSSetting   *setting,
+			 unsigned int data,
+			 Bool	      processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetEdge) (setting, data, processChanged);
 }
 
-Bool ccsSetBell (CCSSetting *setting,
-		 Bool       data,
-		 Bool	    processChanged)
+CCSSetStatus ccsSetBell (CCSSetting *setting,
+			 Bool       data,
+			 Bool	    processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetBell) (setting, data, processChanged);
 }
 
-Bool ccsSetList (CCSSetting          *setting,
-		 CCSSettingValueList data,
-		 Bool	 processChanged)
+CCSSetStatus ccsSetList (CCSSetting          *setting,
+			 CCSSettingValueList data,
+			 Bool	 processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetList) (setting, data, processChanged);
 }
 
-Bool ccsSetValue (CCSSetting      *setting,
-		  CCSSettingValue *data,
-		  Bool		  processChanged)
+CCSSetStatus ccsSetValue (CCSSetting      *setting,
+			  CCSSettingValue *data,
+			  Bool		  processChanged)
 {
     return (*(GET_INTERFACE (CCSSettingInterface, setting))->settingSetValue) (setting, data, processChanged);
 }
@@ -5586,6 +5611,61 @@ void ccsFreeIntegratedSetting (CCSIntegratedSetting *setting)
     (*(GET_INTERFACE (CCSIntegratedSettingInterface, setting))->free) (setting);
 }
 
+CCSSetting *
+ccsSettingDefaultImplNew (CCSPlugin                             *plugin,
+			  const char                            *name,
+			  CCSSettingType                        type,
+			  const char                            *shortDesc,
+			  const char                            *longDesc,
+			  const char                            *hints,
+			  const char                            *group,
+			  const char                            *subGroup,
+			  CCSSettingDefaultValueInitializerFunc valueInit,
+			  void                                  *valueInitData,
+			  CCSSettingInfoInitializerFunc         infoInit,
+			  void                                  *infoInitData,
+			  CCSObjectAllocationInterface          *ai,
+			  const CCSInterfaceTable               *interfaces)
+{
+    CCSSetting *setting = (CCSSetting *) calloc (1, sizeof (CCSSetting));
+
+    if (!setting)
+        return NULL;
+
+    ccsObjectInit (setting, ai);
+
+    CCSSettingPrivate *sPrivate = (CCSSettingPrivate *) (*ai->calloc_) (ai->allocator, 1, sizeof (CCSSettingPrivate));
+
+    if (!sPrivate)
+    {
+        free (setting);
+        return NULL;
+    }
+
+    ccsObjectSetPrivate (setting, (CCSPrivate *) sPrivate);
+    ccsObjectAddInterface (setting, (CCSInterface *) interfaces->settingInterface, GET_INTERFACE_TYPE (CCSSettingInterface));
+    ccsSettingRef (setting);
+
+    sPrivate->parent = plugin;
+    sPrivate->isDefault = TRUE;
+    sPrivate->name = strdup (name);
+
+    sPrivate->shortDesc = strdup (shortDesc);
+    sPrivate->longDesc  = strdup (longDesc);
+    sPrivate->group     = strdup (group);
+    sPrivate->hints     = strdup (hints);
+    sPrivate->subGroup  = strdup (subGroup);
+
+    sPrivate->type = type;
+    sPrivate->value = &sPrivate->defaultValue;
+    sPrivate->defaultValue.parent = setting;
+
+    (*infoInit) (type, &sPrivate->info, infoInitData);
+    (*valueInit) (type, &sPrivate->info, &sPrivate->defaultValue, valueInitData);
+
+    return setting;
+}
+
 /* CCSSharedIntegratedSettingInfo implementation */
 
 typedef struct _CCSSharedIntegratedSettingInfoPrivate CCSSharedIntegratedSettingInfoPrivate;
@@ -5745,7 +5825,7 @@ ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPredicate (CCSIntegrate
 
     while (iter)
     {
-	if ((*pred) (iter->data, data))
+	if (iter->data != NULL && pred (iter->data, data))
 	    returnList = ccsIntegratedSettingListAppend (returnList, iter->data);
 
 	iter = iter->next;

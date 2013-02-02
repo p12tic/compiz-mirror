@@ -92,6 +92,8 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	virtual void showWindowMenu (const QRect &);
 	virtual void showWindowMenu (const QPoint &);
 	virtual void showWindowMenu (const QPoint &, long int id);
+	virtual void showApplicationMenu (const QPoint &);
+	virtual bool menuAvailable () const;
 	virtual void performWindowOperation (WindowOperation);
 	virtual void setMask (const QRegion &, int);
 	virtual bool isPreview (void) const;
@@ -212,6 +214,19 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	
 	virtual bool eventFilter (QObject *o, QEvent *e);
 
+	void emitShowRequest ()
+	{
+	    emit showRequest ();
+	}
+
+	void emitMenuHidden ()
+	{
+	    emit menuHidden ();
+	}
+
+	void setAppMenuAvailable ();
+	void setAppMenuUnavailable ();
+
     private:
 	void createDecoration (void);
 	void resizeDecoration (bool force = false);
@@ -236,6 +251,12 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	void handlePopupAboutToShow (void);
 
 	void decorRepaintPending ();
+
+    signals:
+	void showRequest ();
+	void appMenuAvailable ();
+	void appMenuUnavailable ();
+	void menuHidden ();
 
     private:
 	Type mType;
@@ -265,6 +286,8 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	QMenu *mOpacityMenu;
 	QMenu *mDesktopMenu;
 	unsigned long mState;
+
+	bool mAppMenuAvailable;
 
 	QProcess mProcessKiller;
 	KActionCollection mKeys;

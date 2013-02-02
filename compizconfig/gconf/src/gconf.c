@@ -233,7 +233,6 @@ copyGconfValues (GConfEngine *conf,
     while (tmp)
     {
 	GConfEntry *entry = tmp->data;
-	GConfValue *value;
 	const char *key = gconf_entry_get_key (entry);
 	char       *name, *newKey, *newSchema = NULL;
 
@@ -243,6 +242,8 @@ copyGconfValues (GConfEngine *conf,
 
 	if (to)
 	{
+	    GConfValue *value;
+
 	    if (asprintf (&newKey, "%s/%s", to, name + 1) == -1)
 		newKey = NULL;
 
@@ -822,14 +823,14 @@ writeOption (CCSSetting * setting)
     {
     case TypeString:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetString (setting, &value))
 		gconf_client_set_string (client, pathName, value, NULL);
 	}
 	break;
     case TypeMatch:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetMatch (setting, &value))
 		gconf_client_set_string (client, pathName, value, NULL);
 	}

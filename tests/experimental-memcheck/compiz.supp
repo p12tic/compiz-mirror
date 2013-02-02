@@ -234,6 +234,18 @@
 }
 
 {
+    g_settings_class_init intentionally leaks signals
+    Memcheck:Leak
+    fun:*alloc
+    ...
+    fun:g_signal_new
+    ...
+    fun:g_type_class_ref
+    ...
+    fun:g_object_new
+}
+
+{
     g_list_append calls g_slice_alloc can call g_private_get which seems to leave reachable blocks
     Memcheck:Leak
     fun:malloc

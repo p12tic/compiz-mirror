@@ -239,7 +239,7 @@ writeOption (CCSBackend *backend,
     {
     case TypeString:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetString (setting, &value))
 	    {
 		success = writeStringToVariant (value, &gsettingsValue);
@@ -248,7 +248,7 @@ writeOption (CCSBackend *backend,
 	break;
     case TypeMatch:
 	{
-	    char *value;
+	    const char *value;
 	    if (ccsGetMatch (setting, &value))
 	    {
 
@@ -468,7 +468,7 @@ initBackend (CCSBackend *backend, CCSContext * context)
     CCSGSettingsWrapper *compizconfigSettings = ccsGSettingsWrapperNewForSchema (COMPIZCONFIG_SCHEMA_ID,
 										 backend->object.object_allocation);
     char *currentProfile = getCurrentProfileName (compizconfigSettings);
-    char *currentProfilePath = currentProfilePath = makeCompizProfilePath (currentProfile);
+    char *currentProfilePath = makeCompizProfilePath (currentProfile);
     CCSGSettingsWrapper *currentProfileSettings = ccsGSettingsWrapperNewForSchemaWithPath (PROFILE_SCHEMA_ID,
 									    currentProfilePath,
 									    backend->object.object_allocation);

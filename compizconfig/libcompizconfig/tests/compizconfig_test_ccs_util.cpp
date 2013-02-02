@@ -19,11 +19,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <iostream>
+
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 #include <gtest_shared_characterwrapper.h>
+#include <gtest_shared_tmpenv.h>
+
+#include <boost/noncopyable.hpp>
 
 #include <ccs.h>
 #include <ccs-private.h>
+#include <ccs-config-private.h>
 #include <ccs-modifier-list-inl.h>
 
 using ::testing::WithParamInterface;
@@ -236,3 +244,104 @@ TEST (CCSUtilModifierTest, TestMultiStringToModifier)
 
     EXPECT_EQ (expectedModifierMask, modifierMask);
 }
+
+namespace
+{
+static const std::string emptyProfileName ("");
+static const std::string globalTestProfileName ("test");
+static const std::string globalGeneralProfileSection ("general");
+static const std::string globalGeneralProfileSectionUnderscore ("general_");
+static const std::string globalTestGeneralProfileSection (globalGeneralProfileSectionUnderscore + globalTestProfileName);
+static const std::string globalGNOMEProfileSection ("gnome_session");
+static const std::string globalKDE4ProfileSection ("kde4_session");
+static const std::string globalKDE3ProfileSection ("kde_session");
+static const std::string four ("4");
+static const std::string trueStr ("true");
+
+const char * getConstCharFromCharacterWrapper (const CharacterWrapper &wrap)
+{
+    return wrap;
+}
+
+}
+
+std::ostream &
+operator<< (std::ostream &os, const CharacterWrapper &wrap)
+{
+    return os << getConstCharFromCharacterWrapper (wrap);
+}
+
+bool
+operator== (const std::string &str, const CharacterWrapper &wrap)
+{
+    return str == getConstCharFromCharacterWrapper (wrap);
+}
+
+class CCSUtilProfileSelection :
+    public ::testing::Test
+{
+    public:
+
+	CCSUtilProfileSelection () :
+	    ccsEnv ("COMPIZ_CONFIG_PROFILE", NULL),
+	    gnomeEnv ("GNOME_DESKTOP_SESSION_ID", NULL),
+	    kde4Env ("KDE_SESSION_VERSION", NULL),
+	    kdeEnv ("KDE_FULL_SESSION", NULL)
+	{
+	}
+
+    private:
+
+	TmpEnv ccsEnv;
+	TmpEnv gnomeEnv;
+	TmpEnv kde4Env;
+	TmpEnv kdeEnv;
+};
+
+TEST_F (CCSUtilProfileSelection, OverrideWithName)
+{
+    TmpEnv env ("COMPIZ_CONFIG_PROFILE", globalTestProfileName.c_str ());
+    CharacterWrapper sName (getSectionName ());
+
+    EXPECT_EQ (globalTestGeneralProfileSection, sName);
+}
+
+TEST_F (CCSUtilProfileSelection, OverrideWithNoName)
+{
+    TmpEnv env ("COMPIZ_CONFIG_PROFILE", emptyProfileName.c_str ());
+    CharacterWrapper sName (getSectionName ());
+
+    EXPECT_EQ (globalGeneralProfileSection, sName);
+}
+
+TEST_F (CCSUtilProfileSelection, NoOverrideInGNOME)
+{
+    TmpEnv env ("GNOME_DESKTOP_SESSION_ID", globalTestProfileName.c_str ());
+    CharacterWrapper sName (getSectionName ());
+
+    EXPECT_EQ (globalGNOMEProfileSection, sName);
+}
+
+TEST_F (CCSUtilProfileSelection, NoOverrideInKDE4)
+{
+    TmpEnv env ("KDE_SESSION_VERSION", four.c_str ());
+    CharacterWrapper sName (getSectionName ());
+
+    EXPECT_EQ (globalKDE4ProfileSection, sName);
+}
+
+TEST_F (CCSUtilProfileSelection, NoOverrideInKDE3)
+{
+    TmpEnv env ("KDE_FULL_SESSION", trueStr.c_str ());
+    CharacterWrapper sName (getSectionName ());
+
+    EXPECT_EQ (globalKDE3ProfileSection, sName);
+}
+
+TEST_F (CCSUtilProfileSelection, Fallback)
+{
+    CharacterWrapper sName (getSectionName ());
+
+    EXPECT_EQ (globalGeneralProfileSection, sName);
+}
+

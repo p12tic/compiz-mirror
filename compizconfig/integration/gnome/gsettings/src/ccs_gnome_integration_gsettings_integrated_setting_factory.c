@@ -179,6 +179,9 @@ ccsGSettingsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndT
 	SpecialOptionType specialType = (SpecialOptionType) GPOINTER_TO_INT (g_hash_table_lookup (settingsSpecialTypesHashTable, settingName));
 	const gchar *integratedName = g_hash_table_lookup (settingsSettingNameGNOMENameHashTable, settingName);
 
+	if (wrapper == NULL)
+	    return NULL;
+
 	return createNewGSettingsIntegratedSetting (wrapper,
 						    integratedName,
 						    pluginName,
