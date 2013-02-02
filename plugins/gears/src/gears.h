@@ -64,7 +64,8 @@ class GearsScreen :
 	cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 			 const GLMatrix            &transform,
 			 CompOutput                *output,
-			 int                       size);
+			 int                       size,
+			 const GLVector            &normal);
 
 	void
 	preparePaint (int);
