@@ -5,16 +5,16 @@
     <_long>Live window thumbnails at the dock, launcher or taskbar</_long>
     <category>Extras</category>
     <deps>
-        <relation type="after">
-            <plugin>opengl</plugin>
-            <plugin>mousepoll</plugin>
-            <plugin>text</plugin>
-            <plugin>decor</plugin>
-        </relation>
-        <requirement>
+      <relation type="after">
         <plugin>opengl</plugin>
-            <plugin>mousepoll</plugin>
-        </requirement>
+        <plugin>mousepoll</plugin>
+        <plugin>text</plugin>
+        <plugin>decor</plugin>
+      </relation>
+      <requirement>
+        <plugin>opengl</plugin>
+        <plugin>mousepoll</plugin>
+      </requirement>
     </deps>
     <options>
       <group>
