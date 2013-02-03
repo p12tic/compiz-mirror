@@ -324,7 +324,6 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			 CompOutput		   *output,
 			 unsigned int		   mask)
 {
-    bool wasCulled, status;
     GLMatrix zTransform (transform);
     float x, y;
     int j;
@@ -332,7 +331,7 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     if (mTransformedWindows.size ())
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if (mAxisHelp && mHoverWindow)
     {
@@ -343,7 +342,7 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	float zRad = fww->mRadius * (optionGetTdPercent () / 100);
 
-	wasCulled = glIsEnabled (GL_CULL_FACE);
+	bool wasCulled = glIsEnabled (GL_CULL_FACE);
 
 	zTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
