@@ -199,8 +199,8 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    autoScaleX = autoScaleY = (autoScaleX + autoScaleY) / 2;
 
 	    /* Because we modified the scale after calculating
-	      * the output rect, we need to recalculate again
-	      */
+	     * the output rect, we need to recalculate again
+	     */
 
 	    calculateOutputRect ();
 
