@@ -326,7 +326,7 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 {
     GLMatrix zTransform (transform);
 
-    if (mTransformedWindows.size ())
+    if (!mTransformedWindows.empty ())
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
