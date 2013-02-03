@@ -451,8 +451,6 @@ FWWindow::determineZAxisClick (int px,
 
 	    if (direction != direction)
 		directionChange = TRUE;
-
-	    direction = direction;
 	}
 
 	steps++;
