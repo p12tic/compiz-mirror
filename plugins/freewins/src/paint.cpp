@@ -140,7 +140,7 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     /* Has something happened? */
     
-    /* Check to see if we are painting on a transformed screen*/
+    /* Check to see if we are painting on a transformed screen */
     /* Enable this code when we can animate between the two states */
 
     if ((mTransform.angX != 0.0 ||
@@ -357,7 +357,7 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glEnable (GL_BLEND);
 
 	    glBegin (GL_POLYGON);
-	    for (j=0; j<360; j += 10)
+	    for (j = 0; j < 360; j += 10)
 		glVertex3f ( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
 	    glEnd ();
 
@@ -366,12 +366,12 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glLineWidth (3.0);
 
 	    glBegin (GL_LINE_LOOP);
-	    for (j=360; j>=0; j -= 10)
+	    for (j = 360; j >= 0; j -= 10)
 		glVertex3f ( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
 	    glEnd ();
 
 	    glBegin (GL_LINE_LOOP);
-	    for (j=360; j>=0; j -= 10)
+	    for (j = 360; j >= 0; j -= 10)
 		glVertex3f( x + fww->mRadius * cos(D2R(j)), y + fww->mRadius * sin(D2R(j)), 0.0 );
 	    glEnd ();
 
@@ -392,8 +392,7 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glRotatef (fww->mTransform.angZ, 0.0f, 0.0f, 1.0f);
 
 	    glLineWidth (4.0f);
-	    int i;
-	    for (i=0; i<3; i++)
+	    for (int i = 0; i < 3; i++)
 	    {
 		glPushMatrix ();
 		glColor4f (1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2), 1.0);
