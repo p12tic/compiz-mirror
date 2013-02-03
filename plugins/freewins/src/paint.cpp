@@ -176,9 +176,9 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	calculateOutputRect ();
 
-	/* Prepare for transformation by doing
-	  * any neccesary adjustments
-	  */
+	/* Prepare for transformation by
+	 * doing any necessary adjustments
+	 */
 
 	float autoScaleX = 1.0f;
 	float autoScaleY = 1.0f;
