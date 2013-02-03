@@ -193,7 +193,6 @@
 		    <_short>Scaling</_short>
 			<option type="int" name="scale_mode">
 				    <_short>Scale Mode</_short>
-				    <!-- Comment out 'To Opposite Corner' for now as it is EXTREMELY BROKEN !-->			    
 				    <_long>How to scale windows</_long>
 				    <desc>
 		            <value>0</value><name>To Centre</name>
