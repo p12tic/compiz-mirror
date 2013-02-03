@@ -648,7 +648,7 @@ FWScreen::handleEvent (XEvent *ev)
 		    if (fww->mGrab == grabMove || fww->mGrab == grabResize)
 		    {
 			FWWindowInputInfo *info;
-			CompWindow *w = mGrabWindow;
+//			CompWindow *w = mGrabWindow;
 			foreach (info, mTransformedWindows)
 			{
 			    if (mGrabWindow->id () == info->ipw)
