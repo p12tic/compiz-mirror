@@ -132,7 +132,8 @@ typedef enum _FWAxisType
 } FWAxisType;
 
 /* Shape info / restoration */
-class FWWindowInputInfo {
+class FWWindowInputInfo
+{
     public:
 
 	FWWindowInputInfo (CompWindow *);
