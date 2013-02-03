@@ -432,7 +432,7 @@ FWWindow::determineZAxisClick (int px,
 	 * to change to 2D rotation.
 	 */
 
-	Direction direction;
+	Direction direction, oldDirection = LeftRight;
 
 	static int ddx, ddy;
 
@@ -449,8 +449,10 @@ FWWindow::determineZAxisClick (int px,
 	    else
 		direction = UpDown;
 
-	    if (direction != direction)
+	    if (direction != oldDirection)
 		directionChange = TRUE;
+
+	    direction = oldDirection;
 	}
 
 	steps++;
