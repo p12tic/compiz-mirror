@@ -856,7 +856,7 @@ DecorationList::updateDecoration (Window   id,
 	    /* Creating a new decoration failed ... see if we can use
 	     * the old one */
 
-	    unsigned int    frameType, frameState, frameActions;
+	    unsigned int    frameType, frameState, frameActions = 0;
 	    Pixmap	    pixmap = None;
 	    decor_extents_t border;
 	    decor_extents_t input;
