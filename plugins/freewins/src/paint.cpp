@@ -325,7 +325,6 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			 unsigned int		   mask)
 {
     GLMatrix zTransform (transform);
-    float x, y;
     int j;
 
     if (mTransformedWindows.size ())
@@ -335,8 +334,8 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     if (mAxisHelp && mHoverWindow)
     {
-	x = WIN_REAL_X(mHoverWindow) + WIN_REAL_W(mHoverWindow)/2.0;
-	y = WIN_REAL_Y(mHoverWindow) + WIN_REAL_H(mHoverWindow)/2.0;
+	float x = WIN_REAL_X(mHoverWindow) + WIN_REAL_W(mHoverWindow)/2.0;
+	float y = WIN_REAL_Y(mHoverWindow) + WIN_REAL_H(mHoverWindow)/2.0;
 
 	FREEWINS_WINDOW (mHoverWindow);
 
