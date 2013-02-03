@@ -488,11 +488,9 @@ TdScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &attrib,
 				   CompOutput		     *outputPtr,
 				   PaintOrder		     order)
 {
-    bool rv = false;
-
     CUBE_SCREEN (screen);
 
-    rv = cs->cubeShouldPaintViewport (attrib, transform, outputPtr, order);
+    bool rv = cs->cubeShouldPaintViewport (attrib, transform, outputPtr, order);
 
     if (mActive)
     {
