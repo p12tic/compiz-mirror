@@ -32,8 +32,6 @@
 
 COMPIZ_PLUGIN_20090315 (thumbnail, ThumbPluginVTable);
 
-const unsigned short TEXT_DISTANCE = 10;
-
 void
 ThumbScreen::freeThumbText (Thumbnail  *t)
 {
@@ -48,6 +46,9 @@ void
 ThumbScreen::renderThumbText (Thumbnail  *t,
 		 	      bool       freeThumb)
 {
+    if (!textPluginLoaded)
+	return;
+
     CompText::Attrib tA;
 
     if (freeThumb || !t->text)
@@ -56,18 +57,23 @@ ThumbScreen::renderThumbText (Thumbnail  *t,
 	t->text = new CompText ();
     }
 
-    if (!textPluginLoaded)
-	return;
-
     tA.maxWidth   = t->width;
     tA.maxHeight  = 100;
+
+    // text background
+    tA.bgHMargin  = 4;
+    tA.bgVMargin  = 4;
+    tA.bgColor[0] = optionGetFontBackgroundColorRed ();
+    tA.bgColor[1] = optionGetFontBackgroundColorGreen ();
+    tA.bgColor[2] = optionGetFontBackgroundColorBlue ();
+    tA.bgColor[3] = optionGetFontBackgroundColorAlpha ();
 
     tA.size       = optionGetFontSize ();
     tA.color[0]   = optionGetFontColorRed ();
     tA.color[1]   = optionGetFontColorGreen ();
     tA.color[2]   = optionGetFontColorBlue ();
     tA.color[3]   = optionGetFontColorAlpha ();
-    tA.flags      = CompText::Ellipsized;
+    tA.flags      = CompText::WithBackground | CompText::Ellipsized;
     if (optionGetFontBold ())
 	tA.flags |= CompText::StyleBold;
     tA.family     = "Sans";
@@ -85,7 +91,7 @@ ThumbScreen::damageThumbRegion (Thumbnail  *t)
     CompRect   rect (x, y, width, height);
 
     if (t->text)
-	rect.setHeight (rect.height () + t->text->getHeight () + TEXT_DISTANCE);
+	rect.setHeight (rect.height () + t->text->getHeight () + optionGetTextDistance ());
 
     CompRegion region (rect);
 
@@ -188,7 +194,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     tHeight = thumb.height;
     if (thumb.text)
-	tHeight += thumb.text->getHeight () + TEXT_DISTANCE;
+	tHeight += thumb.text->getHeight () + optionGetTextDistance ();
 
     /* Could someone please explain how this works */
 
@@ -835,7 +841,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
     int                   wx = t->x;
     int                   wy = t->y;
     float                 width  = t->width;
-    float                 height = t->height;
+    float                 backheight = t->height;	// background/glow height
     GLWindowPaintAttrib     sAttrib;
     unsigned int          mask = PAINT_WINDOW_TRANSFORMED_MASK |
 	                         PAINT_WINDOW_TRANSLUCENT_MASK;
@@ -845,9 +851,6 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	return;
 
     sAttrib = gWindow->paintAttrib ();
-
-    if (t->text)
-	height += t->text->getHeight () + TEXT_DISTANCE;
 
     /* Wrap drawWindowGeometry to make sure the general
        drawWindowGeometry function is used */
@@ -873,7 +876,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	    foreach (GLTexture *tex, windowTexture)
 	    {
 		tex->enable (GLTexture::Good);
-		paintTexture (*transform, color, wx, wy, width, height, off);
+		paintTexture (*transform, color, wx, wy, width, backheight, off);
 		tex->disable ();
 	    }
 	}
@@ -887,7 +890,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	    foreach (GLTexture *tex, glowTexture)
 	    {
 		tex->enable (GLTexture::Good);
-		paintTexture (*transform, color, wx, wy, width, height, off);
+		paintTexture (*transform, color, wx, wy, width, backheight, off);
 		tex->disable ();
 	    }
 	}
@@ -897,7 +900,8 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 
 	if (t->text)
 	{
-	    float ox = 0.0;
+	    float ox = 0.0f;
+	    float height = backheight + t->text->getHeight () + optionGetTextDistance ();
 
 	    if (t->text->getWidth () < width)
 		ox = (width - t->text->getWidth ()) / 2.0;
@@ -996,10 +1000,10 @@ ThumbScreen::donePaint ()
 {
     std::vector <Thumbnail *> damageThumbs;
 
-    if (thumb.opacity > 0.0 && thumb.opacity < 1.0)
+    if (thumb.opacity > 0.0)
 	damageThumbs.push_back (&thumb);
 
-    if (oldThumb.opacity > 0.0 && oldThumb.opacity < 1.0)
+    if (oldThumb.opacity > 0.0)
 	damageThumbs.push_back (&oldThumb);
 
     if (!damageThumbs.empty ())

@@ -526,7 +526,7 @@ errorHandler (Display     *dpy,
     XGetErrorDatabaseText (dpy, "XlibMessage", "MajorCode", "%d", str, 128);
     fprintf (stderr, str, e->request_code);
 
-    sprintf (str, "%d", e->request_code);
+    snprintf (str, 128, "%d", e->request_code);
     XGetErrorDatabaseText (dpy, "XRequest", str, "", str, 128);
     if (strcmp (str, ""))
 	fprintf (stderr, " (%s)", str);
@@ -4490,6 +4490,7 @@ CompScreenImpl::init (const char *name)
 	privateScreen.optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
 
 	privateScreen.optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+	privateScreen.optionSetUnmaximizeOrMinimizeWindowKeyInitiate (CompScreenImpl::unmaximizeOrMinimizeWin);
 
 	privateScreen.optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
 	privateScreen.optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
@@ -4878,7 +4879,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     /* Check for other window managers */
 
     char                 buf[128];
-    sprintf (buf, "WM_S%d", DefaultScreen (dpy));
+    snprintf (buf, 128, "WM_S%d", DefaultScreen (dpy));
     wmSnAtom = XInternAtom (dpy, buf, 0);
 
     Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
@@ -4998,7 +4999,6 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 
     updateScreenEdges ();
 
-    setDesktopHints ();
     eventManager.setSupportingWmCheck (dpy, rootWindow());
     screen->updateSupportedWmHints ();
 
@@ -5114,11 +5114,11 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     if (!init_succeeded)
       return false;
 
-    /* The active plugins list might have been changed - load any
-     * new plugins */
-
+    /* The viewport geometry depends on the new new plugins loaded
+     * especially those that modify option values */
     viewPort.vpSize.setWidth (optionGetHsize ());
     viewPort.vpSize.setHeight (optionGetVsize ());
+    setDesktopHints ();
 
     setAudibleBell (optionGetAudibleBell ());
 

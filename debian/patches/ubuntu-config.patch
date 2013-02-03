@@ -1,8 +1,6 @@
 === modified file 'metadata/core.xml.in'
-Index: new/metadata/core.xml.in
-===================================================================
---- old/metadata/core.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/metadata/core.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/metadata/core.xml.in
++++ b/metadata/core.xml.in
 @@ -139,7 +139,7 @@
  			<option name="focus_prevention_match" type="match">
  			<_short>Focus Prevention Windows</_short>
@@ -21,7 +19,7 @@ Index: new/metadata/core.xml.in
  			</option>
  			<option name="minimize_window_button" type="button">
  			<_short>Minimize Window</_short>
-@@ -183,12 +183,12 @@
+@@ -183,16 +183,16 @@
  			<option name="maximize_window_key" type="key">
  			<_short>Maximize Window</_short>
  			<_long>Maximize active window</_long>
@@ -32,11 +30,15 @@ Index: new/metadata/core.xml.in
  			<_short>Unmaximize Window</_short>
  			<_long>Unmaximize active window</_long>
 -			<default>&lt;Alt&gt;F5</default>
+ 			</option>
+ 			<option name="unmaximize_or_minimize_window_key" type="key">
+ 			<_short>Unmaximize or Minimize Window</_short>
+ 			<_long>Unmaximize or minimize active window</_long>
 +			<default>&lt;Control&gt;&lt;Super&gt;Down</default>
  			</option>
  			<option name="maximize_window_horizontally_key" type="key">
  			<_short>Maximize Window Horizontally</_short>
-@@ -211,7 +211,7 @@
+@@ -215,7 +215,7 @@
  			<option name="show_desktop_key" type="key">
  			<_short>Show Desktop</_short>
  			<_long>Hide all windows and focus desktop</_long>
@@ -45,7 +47,7 @@ Index: new/metadata/core.xml.in
  			</option>
  			<option name="show_desktop_edge" type="edge">
  			<_short>Show Desktop</_short>
-@@ -221,6 +221,7 @@
+@@ -225,6 +225,7 @@
  			<option name="toggle_window_maximized_key" type="key">
  			<_short>Toggle Window Maximized</_short>
  			<_long>Toggle active window maximized</_long>
@@ -53,27 +55,17 @@ Index: new/metadata/core.xml.in
  			</option>
  			<option name="toggle_window_maximized_button" type="button">
  			<_short>Toggle Window Maximized</_short>
-@@ -245,14 +246,14 @@
+@@ -249,7 +250,7 @@
  			<option name="hsize" type="int">
  			<_short>Horizontal Virtual Size</_short>
  			<_long>Screen size multiplier for horizontal virtual size</_long>
 -			<default>4</default>
-+			<default>2</default>
++			<default>1</default>
  			<min>1</min>
  			<max>32</max>
  			</option>
- 			<option name="vsize" type="int">
- 			<_short>Vertical Virtual Size</_short>
- 			<_long>Screen size multiplier for vertical virtual size</_long>
--			<default>1</default>
-+			<default>2</default>
- 			<min>1</min>
- 			<max>32</max>
- 			</option>
-Index: new/plugins/animation/animation.xml.in
-===================================================================
---- old/plugins/animation/animation.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/animation/animation.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/animation/animation.xml.in
++++ b/plugins/animation/animation.xml.in
 @@ -36,7 +36,7 @@
  	    <extensible/>
  	    <sort start="2"/>
@@ -212,10 +204,8 @@ Index: new/plugins/animation/animation.xml.in
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
-Index: new/plugins/decor/decor.xml.in
-===================================================================
---- old/plugins/decor/decor.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/decor/decor.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/decor/decor.xml.in
++++ b/plugins/decor/decor.xml.in
 @@ -31,7 +31,7 @@
  		<option name="active_shadow_opacity" type="float">
  		    <_short>Shadow Opacity</_short>
@@ -252,10 +242,8 @@ Index: new/plugins/decor/decor.xml.in
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
-Index: new/plugins/expo/expo.xml.in
-===================================================================
---- old/plugins/expo/expo.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/expo/expo.xml.in	2012-11-23 18:55:22.875064959 +0800
+--- a/plugins/expo/expo.xml.in
++++ b/plugins/expo/expo.xml.in
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -367,10 +355,8 @@ Index: new/plugins/expo/expo.xml.in
  			<min>0.0</min>
  			<max>2.0</max>
  			<precision>0.01</precision>
-Index: new/plugins/ezoom/ezoom.xml.in
-===================================================================
---- old/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/ezoom/ezoom.xml.in
++++ b/plugins/ezoom/ezoom.xml.in
 @@ -29,7 +29,6 @@
  		<option type="button" name="zoom_in_button">
  		    <_short>Zoom In</_short>
@@ -404,10 +390,8 @@ Index: new/plugins/ezoom/ezoom.xml.in
  		    </option>
  		</subgroup>
  	    </group>
-Index: new/plugins/fade/fade.xml.in
-===================================================================
---- old/plugins/fade/fade.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/fade/fade.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/fade/fade.xml.in
++++ b/plugins/fade/fade.xml.in
 @@ -10,6 +10,7 @@
  	    </requirement>
  	    <relation type="after">
@@ -425,10 +409,8 @@ Index: new/plugins/fade/fade.xml.in
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
-Index: new/plugins/gnomecompat/gnomecompat.xml.in
-===================================================================
---- old/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/gnomecompat/gnomecompat.xml.in
++++ b/plugins/gnomecompat/gnomecompat.xml.in
 @@ -53,6 +53,7 @@
  		<option name="run_command_terminal_key" type="key">
  		    <_short>Open a terminal</_short>
@@ -437,10 +419,8 @@ Index: new/plugins/gnomecompat/gnomecompat.xml.in
  		</option>
  	    </group>
  	</options>
-Index: new/plugins/grid/grid.xml.in
-===================================================================
---- old/plugins/grid/grid.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/grid/grid.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/grid/grid.xml.in
++++ b/plugins/grid/grid.xml.in
 @@ -23,17 +23,16 @@
  		<option name="put_center_key" type="key">
  		    <_short>Put Center</_short>
@@ -469,10 +449,8 @@ Index: new/plugins/grid/grid.xml.in
  		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
-Index: new/plugins/place/place.xml.in
-===================================================================
---- old/plugins/place/place.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/place/place.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/place/place.xml.in
++++ b/plugins/place/place.xml.in
 @@ -20,8 +20,8 @@
  	    <option name="mode" type="int">
  		<_short>Placement Mode</_short>
@@ -484,10 +462,8 @@ Index: new/plugins/place/place.xml.in
  		<max>5</max>
  		<desc>
  		    <value>0</value>
-Index: new/plugins/resize/resize.xml.in
-===================================================================
---- old/plugins/resize/resize.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/resize/resize.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/resize/resize.xml.in
++++ b/plugins/resize/resize.xml.in
 @@ -28,7 +28,7 @@
  	    <option name="mode" type="int">
  		<_short>Default Resize Mode</_short>
@@ -532,10 +508,8 @@ Index: new/plugins/resize/resize.xml.in
  		</default>
  	    </option>
  	    <subgroup>
-Index: new/plugins/scale/scale.xml.in
-===================================================================
---- old/plugins/scale/scale.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/scale/scale.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/scale/scale.xml.in
++++ b/plugins/scale/scale.xml.in
 @@ -19,14 +19,14 @@
  			<option name="spacing" type="int">
  				<_short>Spacing</_short>
@@ -624,10 +598,8 @@ Index: new/plugins/scale/scale.xml.in
  			</option>
  	    </group>
  	</options>
-Index: new/plugins/staticswitcher/staticswitcher.xml.in
-===================================================================
---- old/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/staticswitcher/staticswitcher.xml.in
++++ b/plugins/staticswitcher/staticswitcher.xml.in
 @@ -11,7 +11,6 @@
  	    <relation type="after">
  		<plugin>composite</plugin>
@@ -704,10 +676,8 @@ Index: new/plugins/staticswitcher/staticswitcher.xml.in
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
-Index: new/plugins/vpswitch/vpswitch.xml.in
-===================================================================
---- old/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- a/plugins/vpswitch/vpswitch.xml.in
++++ b/plugins/vpswitch/vpswitch.xml.in
 @@ -95,13 +95,11 @@
  				<option name="next_button" type="button">
  					<_short>Move Next</_short>
@@ -722,10 +692,8 @@ Index: new/plugins/vpswitch/vpswitch.xml.in
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
-Index: new/plugins/wall/wall.xml.in
-===================================================================
---- old/plugins/wall/wall.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/wall/wall.xml.in	2012-11-23 18:54:59.311064517 +0800
+--- a/plugins/wall/wall.xml.in
++++ b/plugins/wall/wall.xml.in
 @@ -31,12 +31,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
