@@ -705,7 +705,6 @@ FWScreen::scaleAction (CompAction         *action,
 		       CompOption::Vector options)
 {
     CompWindow *w;
-    float x, y;
 
     w = screen->findWindow (CompOption::getIntOptionNamed (options, "window", 0));
 
@@ -713,8 +712,8 @@ FWScreen::scaleAction (CompAction         *action,
     {
 	FREEWINS_WINDOW (w);
 
-	x = CompOption::getFloatOptionNamed (options, "x", 0.0f);
-	y = CompOption::getFloatOptionNamed (options, "y", 0.0f);
+	float x = CompOption::getFloatOptionNamed (options, "x", 0.0f);
+	float y = CompOption::getFloatOptionNamed (options, "y", 0.0f);
 
 	fww->setPrepareRotation (0, 0, 0,
 				 x - fww->mAnimate.destScaleX,
