@@ -209,7 +209,7 @@ FWWindow::handleRotateMotionEvent (float dx,
 
     float percentFromXAxis = 0.0, percentFromYAxis = 0.0;
 
-    if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangable)
+    if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangeable)
     {
 
 	/* Trackball rotation was too hard to implement. If anyone can implement it,
@@ -248,7 +248,7 @@ FWWindow::handleRotateMotionEvent (float dx,
 
     bool can2D = mCan2D, can3D = mCan3D;
 
-    if (fws->mInvert && fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangable)
+    if (fws->mInvert && fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangeable)
     {
 	can2D = !mCan2D;
 	can3D = !mCan3D;
@@ -260,7 +260,7 @@ FWWindow::handleRotateMotionEvent (float dx,
 	float zX = 1.0f;
 	float zY = 1.0f;
 
-	if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangable)
+	if (fws->optionGetZAxisRotation () == FreewinsOptions::ZAxisRotationInterchangeable)
 	{
 	    zX = percentFromXAxis;
 	    zY = percentFromYAxis;
@@ -334,7 +334,7 @@ FWWindow::handleRotateMotionEvent (float dx,
 
     if (can3D)
     {
-	if (fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangable)
+	if (fws->optionGetZAxisRotation () != FreewinsOptions::ZAxisRotationInterchangeable)
 	{
 	    percentFromXAxis = 0.0f;
 	    percentFromYAxis = 0.0f;

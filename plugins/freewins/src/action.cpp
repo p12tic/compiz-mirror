@@ -144,7 +144,7 @@ FWScreen::initiateFWRotate (CompAction         *action,
 		case ZAxisRotationDetermineOnClick:
 		case ZAxisRotationSwitch:
 		    fww->determineZAxisClick (pointerX, pointerY, FALSE); break;
-		case ZAxisRotationInterchangable:
+		case ZAxisRotationInterchangeable:
 		    fww->mCan3D = TRUE;
 		    fww->mCan2D = TRUE;  break;
 		default:

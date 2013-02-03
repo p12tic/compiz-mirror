@@ -247,7 +247,7 @@
 		            <value>5</value><name>Trackball</name>
 		        </desc>
 		        <default>2</default>
-		        <min>0</min><max>4</max>
+		        <min>0</min><max>3</max>
 			</option>
 			<option type="int" name="rotation_axis">
 				    <_short>Rotation Axis</_short>
