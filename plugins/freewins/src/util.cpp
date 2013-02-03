@@ -248,7 +248,6 @@ FWScreen::createSizedRect (float xScreen1,
 			   float yScreen4)
 {
     float leftmost, rightmost, topmost, bottommost;
-//    Box rect;
 
     /* Left most point */
 
@@ -301,12 +300,13 @@ FWScreen::createSizedRect (float xScreen1,
 
     if (yScreen4 >= bottommost)
 	bottommost = yScreen4;
-
+/*
+    Box rect;
     rect.x1 = leftmost;
     rect.x2 = rightmost;
     rect.y1 = topmost;
     rect.y2 = bottommost;
-
+*/
     return CompRect (leftmost, topmost, rightmost - leftmost, bottommost - topmost);
 }
 

@@ -88,7 +88,7 @@ FWScreen::initiateFWRotate (CompAction         *action,
 	if (!screen->otherGrabExist ("freewins", 0))
 	    if (!mGrabIndex)
 	    {
-		mGrabIndex = screen->pushGrab (NULL, "freewins");
+		mGrabIndex = screen->pushGrab (0, "freewins");
 	    }
 
     }
