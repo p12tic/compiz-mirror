@@ -63,7 +63,6 @@ FWScreen::initiateFWRotate (CompAction         *action,
     CompWindow* w;
     CompWindow *useW;
     Window xid;
-    int x, y, mods;
 
     xid = CompOption::getIntOptionNamed (options, "window", 0);
 
@@ -99,12 +98,12 @@ FWScreen::initiateFWRotate (CompAction         *action,
 	{
 	    FREEWINS_WINDOW (useW);
 
-	    x = CompOption::getIntOptionNamed (options, "x",
+	    int x = CompOption::getIntOptionNamed (options, "x",
 					       useW->x () + (useW->width () / 2));
-	    y = CompOption::getIntOptionNamed (options, "y",
+	    int y = CompOption::getIntOptionNamed (options, "y",
 					       useW->y () + (useW->height () / 2));
 
-	    mods = CompOption::getIntOptionNamed (options, "modifiers", 0);
+	    int mods = CompOption::getIntOptionNamed (options, "modifiers", 0);
 
 	    mGrabWindow = useW;
 
