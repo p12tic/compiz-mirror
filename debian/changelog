@@ -1,3 +1,31 @@
+compiz (1:0.9.9~daily13.02.04-0ubuntu1) raring; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * Spread - Window glow is incorrectly painted in the screen when
+    switching spreaded application (LP: #1109805)
+
+  [ MC Return ]
+  * Coverity MISSING_BREAK - CID 12463 (LP: #1101561)
+  * Thumbnail plugin: Window title text is rendered into transparency
+    and glow/background are too large (LP: #1099100)
+  * Showmouse plugin code: Needs cleanup (LP: #1105969)
+  * Coverity SECURE_CODING - CID 10019 (LP: #957582)
+  * Coverity SECURE_CODING - CID 12511 (LP: #1101605)
+  * Coverity SECURE_CODING - CID 12512 (LP: #1101571)
+  * Keyboard shortcut overlay says Ctrl+Super+Down "minimises" the
+    current window, but it doesn't (LP: #966099)
+  * Coverity SECURE_CODING - CID 10020 (LP: #957587)
+  * Coverity SECURE_CODING - CID 12529 (LP: #1101641)
+  * Coverity MISSING_BREAK - CID 12464 (LP: #1101549)
+  * Coverity SECURE_CODING - CID 12519 (LP: #1101565)
+  * Coverity SECURE_CODING - CID 12516 (LP: #1101499)
+  * [GLES] Showmouse plugin needs port to OpenGL|ES (LP: #1106270)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3594
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 04 Feb 2013 04:01:58 +0000
+
 compiz (1:0.9.9~daily13.01.25-0ubuntu1) raring; urgency=low
 
   [ Didier Roche ]
