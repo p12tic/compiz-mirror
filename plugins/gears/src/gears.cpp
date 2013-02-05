@@ -202,7 +202,8 @@ GearsScreen::cubeClearTargetOutput (float      xRotate,
 void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 			           const GLMatrix            &transform,
 				   CompOutput                *output,
-				   int                       size)
+				   int                       size,
+				   const GLVector            &normal)
 {
 //    CUBE_SCREEN (screen);
 
@@ -290,7 +291,7 @@ void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 
     damage = true;
 
-    csScreen->cubePaintInside (sAttrib, transform, output, size);
+    csScreen->cubePaintInside (sAttrib, transform, output, size, normal);
 }
 void
 GearsScreen::preparePaint (int ms)
