@@ -119,7 +119,7 @@ const CCSGNOMEIntegratedSettingNames ccsGNOMEIntegratedSettingNames =
     { "raise_window_key", "raise" },
     { "maximize_window_vertically_key", "maximize_vertically" },
     { "maximize_window_horizontally_key", "maximize_horizontally" },
-    { "unmaximize_or_minimize_window_key", "unmaximize or minimize" },
+    { "unmaximize_or_minimize_window_key", "unmaximize" },
     { "maximize_window_key", "maximize" },
     { "minimize_window_key", "minimize" },
     { "toggle_window_maximized_key", "toggle_maximized" },
