@@ -2697,7 +2697,7 @@ CompScreenImpl::focusDefaultWindow ()
     {
 	/* Traverse down the stack */
 	for (cps::WindowManager::reverse_iterator rit = windowManager.rbegin();
-	     rit != windowManager.rend(); rit++)
+	     rit != windowManager.rend(); ++rit)
 	{
 	    w = (*rit);
 

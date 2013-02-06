@@ -281,7 +281,6 @@ ThumbScreen::thumbUpdateThumbnail ()
     {
 	tPos[0]  = tmpPos[0];
 	tPos[1]  = tmpPos[1];
-	distance = GET_DISTANCE (igMidPoint, tMidPoint);
     }
 
     thumb.x       = tPos[0];
