@@ -225,17 +225,17 @@ void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
     glTranslatef (csScreen->outputXOffset (), -csScreen->outputYOffset (), 0.0f);
     glScalef (csScreen->outputXScale (), csScreen->outputYScale (), 1.0f);
 
-//    bool enabledCull = false;
+    bool enabledCull = false;
 
     glPushAttrib (GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
 
     glDisable (GL_BLEND);
 
-//    if (!glIsEnabled (GL_CULL_FACE) )
-//    {
-//	enabledCull = true;
+    if (!glIsEnabled (GL_CULL_FACE) )
+    {
+	enabledCull = true;
 	glEnable (GL_CULL_FACE);
-//    }
+    }
 
     glPushMatrix();
 
@@ -283,7 +283,7 @@ void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 
     glDisable (GL_DEPTH_TEST);
 
-//    if (enabledCull)
+    if (enabledCull)
 	glDisable (GL_CULL_FACE);
 
     glPopMatrix();
