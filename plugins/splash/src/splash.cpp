@@ -211,7 +211,6 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    stream->color4f (1.0, 1.0, 1.0, alpha);
 
     if (back_img.size ())
     {
@@ -317,6 +316,7 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    }
 
 	    stream->begin (GL_TRIANGLES);
+	    stream->color4f (1.0, 1.0, 1.0, alpha);
 	    stream->addVertices (vertices.size () / 3, &vertices[0]);
 	    stream->addTexCoords (0, coords.size () / 2, &coords[0]);
 	    if (stream->end ())
@@ -420,6 +420,7 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    vertices[17] = 0;
 
 	    stream->begin (GL_TRIANGLES);
+	    stream->color4f (1.0, 1.0, 1.0, alpha);
 	    stream->addVertices (6, vertices);
 	    stream->addTexCoords (0, 6, coords);
 	    if (stream->end ())
@@ -433,7 +434,6 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     glDisable (GL_BLEND);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    stream->colorDefault ();
     return status;
 }
 
