@@ -1,3 +1,21 @@
+compiz (1:0.9.9~daily13.02.07-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * [regression][GLES] gears plugin does not build any more (LP:
+    #1020822)
+  * Cube Gears plugin: Cylinders inside the gears are not rendered
+    correctly (LP: #1117311)
+  * compiz-profile-active-Default.convert and compiz-profile-active-
+    Default.convert are referring to refres_rate and detect_refres_rate
+    (LP: #1115243)
+  * cppcheck static code analysis reveals some true positives (LP:
+    #1114525)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3599
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 07 Feb 2013 06:19:48 +0000
+
 compiz (1:0.9.9~daily13.02.04-0ubuntu1) raring; urgency=low
 
   [ Marco Trevisan (Treviño) ]
