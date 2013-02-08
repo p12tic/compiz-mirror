@@ -1,3 +1,15 @@
+compiz (1:0.9.9~daily13.02.08-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * thumbnail.xml.in needs some love (LP: #1113459)
+  * Thumbnail plugin: Window title text is rendered into transparency
+    and glow/background are too large (LP: #1099100)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3601
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 08 Feb 2013 04:01:47 +0000
+
 compiz (1:0.9.9~daily13.02.07-0ubuntu1) raring; urgency=low
 
   [ MC Return ]
