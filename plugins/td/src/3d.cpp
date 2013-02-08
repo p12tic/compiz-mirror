@@ -488,11 +488,9 @@ TdScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &attrib,
 				   CompOutput		     *outputPtr,
 				   PaintOrder		     order)
 {
-    bool rv = false;
-
     CUBE_SCREEN (screen);
 
-    rv = cs->cubeShouldPaintViewport (attrib, transform, outputPtr, order);
+    bool rv = cs->cubeShouldPaintViewport (attrib, transform, outputPtr, order);
 
     if (mActive)
     {
@@ -595,6 +593,7 @@ TdWindow::TdWindow (CompWindow *window) :
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
     mIs3D (false),
+    mFtb (false),
     mDepth (0.0f)
 {
     GLWindowInterface::setHandler (gWindow, false);
