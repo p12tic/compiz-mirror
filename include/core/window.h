@@ -43,6 +43,7 @@
 #include <core/region.h>
 #include <core/windowgeometry.h>
 #include <core/windowextents.h>
+#include <core/servergrab.h>
 
 #include <core/wrapsystem.h>
 
@@ -433,8 +434,12 @@ class CompWindow :
 	void moveInputFocusToOtherWindow ();
 
 	/* wraps XConfigureWindow and updates serverGeometry */
-	void configureXWindow (unsigned int valueMask,
+	void configureXWindow (unsigned int   valueMask,
 			       XWindowChanges *xwc);
+
+	void restackAndConfigureXWindow (unsigned int     valueMask,
+					 XWindowChanges   *xwc,
+					 const ServerLock &lock);
 
 	void moveResize (XWindowChanges *xwc,
 			 unsigned int   xwcm,
