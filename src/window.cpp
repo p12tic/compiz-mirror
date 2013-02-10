@@ -2555,11 +2555,62 @@ CompWindow::moveInputFocusToOtherWindow ()
     }
 }
 
+namespace
+{
+/* There is a race condition where we can request to restack
+ * a window relative to a sibling that's been destroyed on
+ * the server side, but not yet on the client side (eg DestroyNotify).
+ * In that case the server will report a BadWindow error and refuse
+ * to process the ConfigureRequest event. This leaves
+ * serverWindows in an indeterminate state, because we've
+ * effectively recorded that we successfully put the window
+ * in a new stack position, even though it will fail later on
+ * and leave the window in the same stack position. That leaves
+ * the door open for cascading errors, where other windows successfully
+ * stack on top of the window which was not successfully restacked, so
+ * they will all receive invalid stack positions.
+ *
+ * In order to alleviate that condition, we need to hold a server grab to
+ * ensure that the window cannot be destroyed while we are stacking another
+ * window relative to it, or, if it was destroyed to ensure that querying
+ * whether or not it exists will return a useful value
+ *
+ * Any function which walks the window stack to determine an appropriate
+ * sibling should always employ this as the last check before returning
+ * that sibling or considering other windows. It is never a good idea
+ * to restack relative to a sibling that could have been destroyed. As
+ * a side effect of this function requiring a ServerLock, any other function
+ * that uses this one will also require one, and the caller should keep
+ * the same ServerLock aliver when calling through to
+ * CompWindow::restackAndConfigureXWindow
+ */
+bool existsOnServer (CompWindow       *window,
+		     const ServerLock &lock)
+{
+    /* We only stack relative to frame windows, and we know
+     * whether or not they exist on the server side, don't
+     * query whether or not they do */
+    if (window->frame ())
+	return true;
+    else
+    {
+	XWindowAttributes attrib;
+	if (!XGetWindowAttributes (screen->dpy (),
+				   ROOTPARENT (window),
+				   &attrib))
+	    return false;
+    }
+
+    return true;
+}
+}
+
 
 bool
-PrivateWindow::stackLayerCheck (CompWindow *w,
-				Window	    clientLeader,
-				CompWindow *below)
+PrivateWindow::stackLayerCheck (CompWindow       *w,
+				Window	         clientLeader,
+				CompWindow       *below,
+				const ServerLock &lock)
 {
     if (isAncestorTo (w, below))
 	return true;
@@ -2589,7 +2640,8 @@ PrivateWindow::stackLayerCheck (CompWindow *w,
 }
 
 bool
-PrivateWindow::avoidStackingRelativeTo (CompWindow *w)
+PrivateWindow::avoidStackingRelativeTo (CompWindow       *w,
+					const ServerLock &lock)
 {
     if (w->overrideRedirect ())
 	return true;
@@ -2614,8 +2666,9 @@ PrivateWindow::avoidStackingRelativeTo (CompWindow *w)
    stack above, normal windows can be stacked above fullscreen windows
    (and fullscreen windows over others in their layer) if aboveFs is true. */
 CompWindow *
-PrivateWindow::findSiblingBelow (CompWindow *w,
-				 bool       aboveFs)
+PrivateWindow::findSiblingBelow (CompWindow       *w,
+				 bool             aboveFs,
+				 const ServerLock &lock)
 {
     CompWindow   *below;
     CompWindow   *t = screen->findWindow (w->transientFor ());
@@ -2648,7 +2701,7 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
     for (below = screen->serverWindows ().back (); below;
 	 below = below->serverPrev)
     {
-	if (below == w || avoidStackingRelativeTo (below))
+	if (below == w || avoidStackingRelativeTo (below, lock))
 	    continue;
 
 	/* always above desktop windows */
@@ -2668,8 +2721,9 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 	    if (below->priv->type & (CompWindowTypeFullscreenMask |
 			       CompWindowTypeDockMask))
 	    {
-		if (stackLayerCheck (w, clientLeader, below))
-		    return below;
+		if (stackLayerCheck (w, clientLeader, below, lock))
+		    if (existsOnServer (below, lock))
+			return below;
 	    }
 	    else
 	    {
@@ -2697,8 +2751,9 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 	    /* fullscreen and normal layer */
 	    if (allowedRelativeToLayer)
 	    {
-		if (stackLayerCheck (w, clientLeader, below))
-		    return below;
+		if (stackLayerCheck (w, clientLeader, below, lock))
+		    if (existsOnServer (below, lock))
+			return below;
 	    }
 	    break;
 	}
@@ -2711,7 +2766,8 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 /* goes through the stack, top-down and returns the lowest window we
    can stack above. */
 CompWindow *
-PrivateWindow::findLowestSiblingBelow (CompWindow *w)
+PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
+				       const ServerLock &lock)
 {
     CompWindow   *below, *lowest = screen->serverWindows ().back ();
     CompWindow   *t = screen->findWindow (w->transientFor ());
@@ -2739,12 +2795,13 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
     for (below = screen->serverWindows ().back (); below;
 	 below = below->serverPrev)
     {
-	if (below == w || avoidStackingRelativeTo (below))
+	if (below == w || avoidStackingRelativeTo (below, lock))
 	    continue;
 
 	/* always above desktop windows */
 	if (below->priv->type & CompWindowTypeDesktopMask)
-	    return below;
+	    if (existsOnServer (below, lock))
+		return below;
 
 	switch (type) {
 	case CompWindowTypeDesktopMask:
@@ -2758,12 +2815,14 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 	    if (below->priv->type & (CompWindowTypeFullscreenMask |
 			       CompWindowTypeDockMask))
 	    {
-		if (!stackLayerCheck (below, clientLeader, w))
-		    return lowest;
+		if (!stackLayerCheck (below, clientLeader, w, lock))
+		    if (existsOnServer (lowest, lock))
+			return lowest;
 	    }
 	    else
 	    {
-		return lowest;
+		if (existsOnServer (lowest, lock))
+		    return lowest;
 	    }
 	    break;
 	default:
@@ -2783,8 +2842,9 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 	    /* fullscreen and normal layer */
 	    if (allowedRelativeToLayer)
 	    {
-		if (!stackLayerCheck (below, clientLeader, w))
-		    return lowest;
+		if (!stackLayerCheck (below, clientLeader, w, lock))
+		    if (existsOnServer (lowest, lock))
+			return lowest;
 	    }
 	    break;
 	}
@@ -2793,12 +2853,20 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 	lowest = below;
     }
 
-    return lowest;
+    if (existsOnServer (lowest, lock))
+	return lowest;
+    else
+    {
+	compLogMessage ("core", CompLogLevelDebug,
+			"couldn't find window to stack above");
+	return NULL;
+    }
 }
 
 bool
-PrivateWindow::validSiblingBelow (CompWindow *w,
-				  CompWindow *sibling)
+PrivateWindow::validSiblingBelow (CompWindow       *w,
+				  CompWindow       *sibling,
+				  const ServerLock &lock)
 {
     CompWindow   *t = screen->findWindow (w->transientFor ());
     Window	 clientLeader = w->priv->clientLeader;
@@ -2822,7 +2890,7 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    if (sibling == w || avoidStackingRelativeTo (sibling))
+    if (sibling == w || avoidStackingRelativeTo (sibling, lock))
 	return false;
 
     /* always above desktop windows */
@@ -2839,12 +2907,14 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
 	if (sibling->priv->type & (CompWindowTypeFullscreenMask |
 			     CompWindowTypeDockMask))
 	{
-	    if (stackLayerCheck (w, clientLeader, sibling))
-		return true;
+	    if (stackLayerCheck (w, clientLeader, sibling, lock))
+		if (existsOnServer (sibling, lock))
+		    return true;
 	}
 	else
 	{
-	    return true;
+	    if (existsOnServer (sibling, lock))
+		return true;
 	}
 	break;
     default:
@@ -2864,8 +2934,9 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
 	/* fullscreen and normal layer */
 	if (allowedRelativeToLayer)
 	{
-	    if (stackLayerCheck (w, clientLeader, sibling))
-		return true;
+	    if (stackLayerCheck (w, clientLeader, sibling, lock))
+		if (existsOnServer (sibling, lock))
+		    return true;
 	}
 	break;
     }
@@ -3328,10 +3399,11 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 }
 
 bool
-PrivateWindow::stackDocks (CompWindow     *w,
-                           CompWindowList &updateList,
-                           XWindowChanges *xwc,
-                           unsigned int   *mask)
+PrivateWindow::stackDocks (CompWindow       *w,
+			   CompWindowList   &updateList,
+			   XWindowChanges   *xwc,
+			   unsigned int     *mask,
+			   const ServerLock &lock)
 {
     CompWindow *firstFullscreenWindow = NULL;
     CompWindow *belowDocks = NULL;
@@ -3343,15 +3415,20 @@ PrivateWindow::stackDocks (CompWindow     *w,
         {
 	    /* If there is another toplevel window above the fullscreen one
 	     * then we need to stack above that */
-	    if ((dw->priv->managed && !dw->priv->unmanaging) &&
-		!(dw->priv->state & CompWindowStateHiddenMask) &&
-                !PrivateWindow::isAncestorTo (w, dw) &&
-                !(dw->type () & (CompWindowTypeFullscreenMask |
-                                 CompWindowTypeDockMask)) &&
+	    bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
+	    bool visible = !(dw->state () & CompWindowStateHiddenMask);
+	    bool ancestorToClient = PrivateWindow::isAncestorTo (w, dw);
+	    bool acceptableType = !(dw->type () & (CompWindowTypeFullscreenMask |
+						   CompWindowTypeDockMask));
+	    if (currentlyManaged &&
+		visible &&
+		acceptableType &&
+		!ancestorToClient &&
 		!dw->overrideRedirect () &&
 		dw->isViewable ())
             {
-                belowDocks = dw;
+		if (existsOnServer (dw, lock))
+		    belowDocks = dw;
             }
         }
         else if (dw->type () & CompWindowTypeFullscreenMask)
@@ -3362,15 +3439,21 @@ PrivateWindow::stackDocks (CompWindow     *w,
             firstFullscreenWindow = dw;
 	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
             {
-		if ((dw->priv->managed && !dw->priv->unmanaging) &&
-		    !(dw->priv->state & CompWindowStateHiddenMask) &&
-		    !(dww->type () & (CompWindowTypeFullscreenMask |
-                                      CompWindowTypeDockMask)) &&
+		bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
+		bool visible = !(dw->priv->state & CompWindowStateHiddenMask);
+		bool acceptableType = !(dww->type () & (CompWindowTypeFullscreenMask |
+							CompWindowTypeDockMask));
+		if (currentlyManaged &&
+		    visible &&
+		    acceptableType &&
 		    !dww->overrideRedirect () &&
 		    dww->isViewable ())
                 {
-                    belowDocks = dww;
-                    break;
+		    if (existsOnServer (dww, lock))
+		    {
+			belowDocks = dww;
+			break;
+		    }
                 }
             }
         }
@@ -3393,10 +3476,11 @@ PrivateWindow::stackDocks (CompWindow     *w,
 }
 
 bool
-PrivateWindow::stackTransients (CompWindow	*w,
-				CompWindow	*avoid,
-				XWindowChanges *xwc,
-				CompWindowList &updateList)
+PrivateWindow::stackTransients (CompWindow	 *w,
+				CompWindow	 *avoid,
+				XWindowChanges   *xwc,
+				CompWindowList   &updateList,
+				const ServerLock &lock)
 {
     CompWindow *t;
     Window     clientLeader = w->priv->clientLeader;
@@ -3412,7 +3496,7 @@ PrivateWindow::stackTransients (CompWindow	*w,
 	if (t->priv->transientFor == w->priv->id ||
 	    t->priv->isGroupTransient (clientLeader))
 	{
-	    if (!stackTransients (t, avoid, xwc, updateList))
+	    if (!stackTransients (t, avoid, xwc, updateList, lock))
 		return false;
 
 	    if (xwc->sibling == t->priv->id ||
@@ -3420,7 +3504,10 @@ PrivateWindow::stackTransients (CompWindow	*w,
 		return false;
 
 	    if (t->priv->mapNum || t->priv->pendingMaps)
-		updateList.push_back (t);
+	    {
+		if (existsOnServer (t, lock))
+		    updateList.push_back (t);
+	    }
 	}
     }
 
@@ -3428,9 +3515,10 @@ PrivateWindow::stackTransients (CompWindow	*w,
 }
 
 void
-PrivateWindow::stackAncestors (CompWindow     *w,
-			       XWindowChanges *xwc,
-			       CompWindowList &updateList)
+PrivateWindow::stackAncestors (CompWindow       *w,
+			       XWindowChanges   *xwc,
+			       CompWindowList   &updateList,
+			       const ServerLock &lock)
 {
     CompWindow *transient = NULL;
 
@@ -3446,7 +3534,7 @@ PrivateWindow::stackAncestors (CompWindow     *w,
 	ancestor = screen->findWindow (w->priv->transientFor);
 	if (ancestor)
 	{
-	    if (!stackTransients (ancestor, w, xwc, updateList))
+	    if (!stackTransients (ancestor, w, xwc, updateList, lock))
 		return;
 
 	    if (ancestor->priv->type & CompWindowTypeDesktopMask)
@@ -3457,9 +3545,10 @@ PrivateWindow::stackAncestors (CompWindow     *w,
 		    return;
 
 	    if (ancestor->priv->mapNum || ancestor->priv->pendingMaps)
-		updateList.push_back (ancestor);
+		if (existsOnServer (ancestor, lock))
+		    updateList.push_back (ancestor);
 
-	    stackAncestors (ancestor, xwc, updateList);
+	    stackAncestors (ancestor, xwc, updateList, lock);
 	}
     }
     else if (w->priv->isGroupTransient (w->priv->clientLeader))
@@ -3476,7 +3565,7 @@ PrivateWindow::stackAncestors (CompWindow     *w,
 		    (a->priv->serverFrame && xwc->sibling == a->priv->serverFrame))
 		    break;
 
-		if (!stackTransients (a, w, xwc, updateList))
+		if (!stackTransients (a, w, xwc, updateList, lock))
 		    break;
 
 		if (a->priv->type & CompWindowTypeDesktopMask)
@@ -3487,15 +3576,34 @@ PrivateWindow::stackAncestors (CompWindow     *w,
 			break;
 
 		if (a->priv->mapNum || a->priv->pendingMaps)
-		    updateList.push_back (a);
+		    if (existsOnServer (a, lock))
+			updateList.push_back (a);
 	    }
 	}
     }
 }
 
 void
-CompWindow::configureXWindow (unsigned int valueMask,
+CompWindow::configureXWindow (unsigned int   valueMask,
 			      XWindowChanges *xwc)
+{
+    if (valueMask & (CWSibling | CWStackMode))
+	compLogMessage ("core", CompLogLevelWarn,
+			"use CompWindow::restackAndConfigureXWindow " \
+			"while holding a ServerLock from the time the "\
+			"sibling is determined to the end of that operation "\
+			"to avoid race conditions when restacking relative "\
+			"to destroyed windows for which we have not yet "\
+			"received a DestroyNotify for");
+
+    if (priv->id)
+	priv->reconfigureXWindow (valueMask, xwc);
+}
+
+void
+CompWindow::restackAndConfigureXWindow (unsigned int     valueMask,
+					XWindowChanges   *xwc,
+					const ServerLock &lock)
 {
     if (priv->managed && (valueMask & (CWSibling | CWStackMode)))
     {
@@ -3511,13 +3619,13 @@ CompWindow::configureXWindow (unsigned int valueMask,
 	   have to restack all the windows again. */
 
 	/* transient children above */
-	if (PrivateWindow::stackTransients (this, NULL, xwc, transients))
+	if (PrivateWindow::stackTransients (this, NULL, xwc, transients, lock))
 	{
 	    /* ancestors, siblings and sibling transients below */
-	    PrivateWindow::stackAncestors (this, xwc, ancestors);
+	    PrivateWindow::stackAncestors (this, xwc, ancestors, lock);
 
 	    for (CompWindowList::reverse_iterator w = ancestors.rbegin ();
-		 w != ancestors.rend (); w++)
+		 w != ancestors.rend (); ++w)
 	    {
 		(*w)->priv->reconfigureXWindow (CWSibling | CWStackMode, xwc);
 		xwc->sibling = ROOTPARENT (*w);
@@ -3527,13 +3635,13 @@ CompWindow::configureXWindow (unsigned int valueMask,
 	    xwc->sibling = ROOTPARENT (this);
 
 	    for (CompWindowList::reverse_iterator w = transients.rbegin ();
-		 w != transients.rend (); w++)
+		 w != transients.rend (); ++w)
 	    {
 		(*w)->priv->reconfigureXWindow (CWSibling | CWStackMode, xwc);
 		xwc->sibling = ROOTPARENT (*w);
 	    }
 
-	    if (PrivateWindow::stackDocks (this, docks, xwc, &valueMask))
+	    if (PrivateWindow::stackDocks (this, docks, xwc, &valueMask, lock))
 	    {
 		Window sibling = xwc->sibling;
 		xwc->stack_mode = Above;
@@ -4024,8 +4132,9 @@ PrivateWindow::updateSize ()
 }
 
 int
-PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
-				      CompWindow     *sibling)
+PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
+				      CompWindow       *sibling,
+				      const ServerLock &lock)
 {
     int	mask = 0;
 
@@ -4115,11 +4224,13 @@ CompWindow::raise ()
 	}
     }
 
+    ServerLock lock (screen->serverGrabInterface ());
+
     mask = priv->addWindowStackChanges (&xwc,
-	PrivateWindow::findSiblingBelow (this, aboveFs));
+	PrivateWindow::findSiblingBelow (this, aboveFs, lock), lock);
 
     if (mask)
-	configureXWindow (mask, &xwc);
+	restackAndConfigureXWindow (mask, &xwc, lock);
 }
 
 CompWindow *
@@ -4130,7 +4241,7 @@ CompScreenImpl::focusTopMostWindow ()
     CompWindow  *focus = NULL;
     WindowManager::reverse_iterator it = windowManager.rbegin ();
 
-    for (; it != windowManager.rend (); it++)
+    for (; it != windowManager.rend (); ++it)
     {
 	CompWindow *w = *it;
 
@@ -4162,10 +4273,12 @@ CompWindow::lower ()
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
     int		   mask;
 
+    ServerLock lock (screen->serverGrabInterface ());
+
     mask = priv->addWindowStackChanges (&xwc,
-	PrivateWindow::findLowestSiblingBelow (this));
+	PrivateWindow::findLowestSiblingBelow (this, lock), lock);
     if (mask)
-	configureXWindow (mask, &xwc);
+	restackAndConfigureXWindow (mask, &xwc, lock);
 
     /* when lowering a window, focus the topmost window if
        the click-to-focus option is on */
@@ -4186,8 +4299,10 @@ CompWindow::lower ()
 void
 CompWindow::restackAbove (CompWindow *sibling)
 {
+    ServerLock lock (screen->serverGrabInterface ());
+
     for (; sibling; sibling = sibling->serverNext)
-	if (PrivateWindow::validSiblingBelow (this, sibling))
+	if (PrivateWindow::validSiblingBelow (this, sibling, lock))
 	    break;
 
     if (sibling)
@@ -4195,16 +4310,17 @@ CompWindow::restackAbove (CompWindow *sibling)
 	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	int	       mask;
 
-	mask = priv->addWindowStackChanges (&xwc, sibling);
+	mask = priv->addWindowStackChanges (&xwc, sibling, lock);
 	if (mask)
-	    configureXWindow (mask, &xwc);
+	    restackAndConfigureXWindow (mask, &xwc, lock);
     }
 }
 
 /* finds the highest window under sibling we can stack above */
 CompWindow *
-PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
-					   CompWindow *sibling)
+PrivateWindow::findValidStackSiblingBelow (CompWindow       *w,
+					   CompWindow       *sibling,
+					   const ServerLock &lock)
 {
     CompWindow *lowest, *last, *p;
 
@@ -4215,16 +4331,16 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
 
     for (p = sibling; p; p = p->serverNext)
     {
-	if (!avoidStackingRelativeTo (p))
+	if (!avoidStackingRelativeTo (p, lock))
 	{
-	    if (!validSiblingBelow (p, w))
+	    if (!validSiblingBelow (p, w, lock))
 		return NULL;
 	    break;
 	}
     }
 
     /* get lowest sibling we're allowed to stack above */
-    lowest = last = findLowestSiblingBelow (w);
+    lowest = last = findLowestSiblingBelow (w, lock);
 
     /* walk from bottom up */
     for (p = screen->serverWindows ().front (); p; p = p->serverNext)
@@ -4235,10 +4351,10 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
 	    return lowest;
 
 	/* skip windows that we should avoid */
-	if (w == p || avoidStackingRelativeTo (p))
+	if (w == p || avoidStackingRelativeTo (p, lock))
 	    continue;
 
-	if (validSiblingBelow (w, p))
+	if (validSiblingBelow (w, p, lock))
 	{
 	    /* update lowest as we find windows below sibling that we're
 	       allowed to stack above. last window must be equal to the
@@ -4261,11 +4377,35 @@ CompWindow::restackBelow (CompWindow *sibling)
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   mask;
 
+    ServerLock lock (screen->serverGrabInterface ());
+
     mask = priv->addWindowStackChanges (&xwc,
-	PrivateWindow::findValidStackSiblingBelow (this, sibling));
+	PrivateWindow::findValidStackSiblingBelow (this, sibling, lock), lock);
 
     if (mask)
-	configureXWindow (mask, &xwc);
+	restackAndConfigureXWindow (mask, &xwc, lock);
+}
+
+namespace
+{
+void addSizeChangesSyncAndReconfigure (PrivateWindow        *priv,
+				       XWindowChanges       &xwc,
+				       unsigned int         mask,
+				       ServerLock           *lock)
+{
+    mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
+
+    if (priv->mapNum && (mask & (CWWidth | CWHeight)))
+	priv->window->sendSyncRequest ();
+
+    if (mask)
+    {
+	if (lock)
+	    priv->window->restackAndConfigureXWindow (mask, &xwc, *lock);
+	else
+	    priv->window->configureXWindow (mask, &xwc);
+    }
+}
 }
 
 void
@@ -4311,7 +4451,9 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	if (stackingMode == CompStackingUpdateModeInitialMap)
 	    aboveFs = true;
 
-	sibling = PrivateWindow::findSiblingBelow (this, aboveFs);
+	ServerLock lock (screen->serverGrabInterface ());
+
+	sibling = PrivateWindow::findSiblingBelow (this, aboveFs, lock);
 
 	if (sibling &&
 	    (stackingMode == CompStackingUpdateModeInitialMapDeniedFocus))
@@ -4326,9 +4468,9 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	     * assuing that is allowed (if, for example, our window has
 	     * the "above" state, then lowering beneath the active
 	     * window may not be allowed). */
-	    if (p && PrivateWindow::validSiblingBelow (p, this))
+	    if (p && PrivateWindow::validSiblingBelow (p, this, lock))
 	    {
-		p = PrivateWindow::findValidStackSiblingBelow (this, p);
+		p = PrivateWindow::findValidStackSiblingBelow (this, p, lock);
 
 		/* if we found a valid sibling under the active window, it's
 		   our new sibling we want to stack above */
@@ -4339,16 +4481,17 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 
 	/* If sibling is NULL, then this window will go on the bottom
 	 * of the stack */
-	mask |= priv->addWindowStackChanges (&xwc, sibling);
+	mask |= priv->addWindowStackChanges (&xwc, sibling, lock);
+	addSizeChangesSyncAndReconfigure (priv,
+					  xwc,
+					  mask,
+					  &lock);
     }
-
-    mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
-
-    if (priv->mapNum && (mask & (CWWidth | CWHeight)))
-	sendSyncRequest ();
-
-    if (mask)
-	configureXWindow (mask, &xwc);
+    else
+	addSizeChangesSyncAndReconfigure (priv,
+					  xwc,
+					  mask,
+					  NULL);
 }
 
 void
@@ -5582,6 +5725,15 @@ PrivateWindow::processMap ()
  * for buttons that we don't actually need at that point
  * anyways)
  */
+class DummyServerGrab :
+    public ServerGrabInterface
+{
+    public:
+
+	void grabServer () {}
+	void syncServer () {}
+	void ungrabServer () {}
+};
 
 void
 PrivateWindow::updatePassiveButtonGrabs ()
@@ -5605,8 +5757,13 @@ PrivateWindow::updatePassiveButtonGrabs ()
     {
 	if (screen->getCoreOptions().optionGetRaiseOnClick ())
 	{
+	    /* We do not actually need a server grab here since
+	     * there is no risk to our internal state */
+	    DummyServerGrab grab;
+	    ServerLock lock (&grab);
+
 	    CompWindow *highestSibling =
-		    PrivateWindow::findSiblingBelow (window, true);
+		    PrivateWindow::findSiblingBelow (window, true, lock);
 
 	    /* Check if this window is permitted to be raised */
 	    for (CompWindow *above = window->serverNext;

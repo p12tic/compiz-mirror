@@ -224,7 +224,6 @@ void
 TrailfocusScreen::refillList ()
 {
     CompWindowList         activeList = screen->windows ();
-    TfWindowList::iterator iter;
     unsigned int           winMax = optionGetWindowsCount ();
 
     activeList.sort (compareActiveness);

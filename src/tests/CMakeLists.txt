@@ -10,6 +10,7 @@ include_directories (
     ${COMPIZ_MAIN_SOURCE_DIR}/pluginclasshandler/include
     ${COMPIZ_MAIN_SOURCE_DIR}/window/geometry/include
     ${COMPIZ_MAIN_SOURCE_DIR}/window/extents/include
+    ${COMPIZ_MAIN_SOURCE_DIR}/servergrab/include
     ${COMPIZ_INCLUDE_DIRS}
 )
 

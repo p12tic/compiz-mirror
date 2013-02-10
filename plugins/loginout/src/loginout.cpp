@@ -245,7 +245,7 @@ LoginoutScreen::LoginoutScreen (CompScreen *screen) :
      * ourselves.
      */
 
-    sprintf (buf, "WM_S%d", scr);
+    snprintf (buf, 128, "WM_S%d", scr);
 
     wmSnSelectionWindow = XInternAtom (screen->dpy (), buf, 0);
 
@@ -267,7 +267,7 @@ LoginoutScreen::~LoginoutScreen ()
     char buf[128];
     int  scr = DefaultScreen (screen->dpy ());
 
-    sprintf (buf, "WM_S%d", scr);
+    snprintf (buf, 128, "WM_S%d", scr);
 
     XDeleteProperty (screen->dpy (), wmSnSelectionWindow,
 		     kdeLogoutInfoAtom);

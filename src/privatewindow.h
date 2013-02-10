@@ -167,19 +167,23 @@ class PrivateWindow :
 
 	bool isInvisible() const;
 
-	static bool stackLayerCheck (CompWindow *w,
-				     Window     clientLeader,
-				     CompWindow *below);
+	static bool stackLayerCheck (CompWindow       *w,
+				     Window           clientLeader,
+				     CompWindow       *below,
+				     const ServerLock &lock);
 
-	static bool avoidStackingRelativeTo (CompWindow *w);
+	static bool avoidStackingRelativeTo (CompWindow *w, const ServerLock &lock);
 
-	static CompWindow * findSiblingBelow (CompWindow *w,
-					      bool       aboveFs);
+	static CompWindow * findSiblingBelow (CompWindow       *w,
+					      bool             aboveFs,
+					      const ServerLock &lock);
 
-	static CompWindow * findLowestSiblingBelow (CompWindow *w);
+	static CompWindow * findLowestSiblingBelow (CompWindow       *w,
+						    const ServerLock &lock);
 
-	static bool validSiblingBelow (CompWindow *w,
-				       CompWindow *sibling);
+	static bool validSiblingBelow (CompWindow       *w,
+				       CompWindow       *sibling,
+				       const ServerLock &lock);
 
 	void saveGeometry (int mask);
 
@@ -188,19 +192,22 @@ class PrivateWindow :
 	void reconfigureXWindow (unsigned int   valueMask,
 				 XWindowChanges *xwc);
 
-	static bool stackDocks (CompWindow     *w,
-				CompWindowList &updateList,
-				XWindowChanges *xwc,
-				unsigned int   *mask);
+	static bool stackDocks (CompWindow       *w,
+				CompWindowList   &updateList,
+				XWindowChanges   *xwc,
+				unsigned int     *mask,
+				const ServerLock &lock);
 
-	static bool stackTransients (CompWindow     *w,
-				     CompWindow     *avoid,
-				     XWindowChanges *xwc,
-				     CompWindowList &updateList);
+	static bool stackTransients (CompWindow       *w,
+				     CompWindow       *avoid,
+				     XWindowChanges   *xwc,
+				     CompWindowList   &updateList,
+				     const ServerLock &lock);
 
-	static void stackAncestors (CompWindow *w,
-				    XWindowChanges *xwc,
-				    CompWindowList &updateList);
+	static void stackAncestors (CompWindow       *w,
+				    XWindowChanges   *xwc,
+				    CompWindowList   &updateList,
+				    const ServerLock &lock);
 
 	static bool isAncestorTo (CompWindow *transient,
 				  CompWindow *ancestor);
@@ -212,11 +219,13 @@ class PrivateWindow :
 	int addWindowSizeChanges (XWindowChanges *xwc,
 				  CompWindow::Geometry old);
 
-	int addWindowStackChanges (XWindowChanges *xwc,
-				   CompWindow     *sibling);
+	int addWindowStackChanges (XWindowChanges   *xwc,
+				   CompWindow       *sibling,
+				   const ServerLock &lock);
 
 	static CompWindow * findValidStackSiblingBelow (CompWindow *w,
-							CompWindow *sibling);
+							CompWindow *sibling,
+							const ServerLock &lock);
 
 	void ensureWindowVisibility ();
 
