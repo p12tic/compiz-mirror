@@ -2367,7 +2367,14 @@ DecorScreen::handleEvent (XEvent *event)
 	    {
 		w = screen->findWindow (event->xclient.window);
 		if (w)
-		    DecorWindow::get (w)->update (true);
+		{
+		    DecorWindow *dw = DecorWindow::get (w);
+
+		    /* Set the frameExtentsRequested flag so that we know to
+		     * at least update _NET_WM_FRAME_EXTENTS (LP: #1110138) */
+		    dw->frameExtentsRequested = true;
+		    dw->update (true);
+		}
 	    }
 	    /* A decoration is pending creation, allow it to be created */
 	    if (event->xclient.message_type == decorPendingAtom)
