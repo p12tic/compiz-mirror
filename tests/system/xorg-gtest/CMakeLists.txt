@@ -2,7 +2,7 @@ include (FindPkgConfig)
 
 pkg_check_modules (XORG_SERVER xorg-gtest xorg-server x11)
 
-option (BUILD_XORG_GTEST "Build Xorg GTest integration tests" OFF)
+option (BUILD_XORG_GTEST "Build Xorg GTest integration tests" ON)
 
 if (XORG_SERVER_FOUND AND BUILD_XORG_GTEST)
 
@@ -27,7 +27,7 @@ if (XORG_SERVER_FOUND AND BUILD_XORG_GTEST)
 
 else (XORG_SERVER_FOUND AND BUILD_XORG_GTEST)
 
-    message (WARNING "Could not found xorg-gtest, not building system tests")
+    message (WARNING "Not building xorg-gtest tests")
     set (BUILD_XORG_GTEST OFF)
 
 endif (XORG_SERVER_FOUND AND BUILD_XORG_GTEST)
