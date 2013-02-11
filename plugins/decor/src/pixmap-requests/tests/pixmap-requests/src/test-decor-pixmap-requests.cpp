@@ -268,7 +268,7 @@ TEST_F (DecorPendingMessageHandler, NoPendingIfNotFound)
     EXPECT_CALL (mockRequestorFind, findRequestor (mockWindow)).WillOnce (ReturnNull ());
 
     long data = 1;
-    pendingHandler.handleMessage(&data);
+    pendingHandler.handleMessage (mockWindow, &data);
 }
 
 TEST_F (DecorPendingMessageHandler, PendingIfFound)
@@ -278,5 +278,5 @@ TEST_F (DecorPendingMessageHandler, PendingIfFound)
     EXPECT_CALL (mockRequestor, handlePending (Pointee (data)));
     EXPECT_CALL (mockRequestorFind, findRequestor (mockWindow)).WillOnce (Return (&mockRequestor));
 
-    pendingHandler.handleMessage (&data);
+    pendingHandler.handleMessage (mockWindow, &data);
 }

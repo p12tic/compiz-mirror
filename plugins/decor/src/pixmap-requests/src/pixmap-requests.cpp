@@ -137,8 +137,12 @@ cd::PendingHandler::PendingHandler (const cd::RequestorForWindow &requestorForWi
 }
 
 void
-cd::PendingHandler::handleMessage (long *)
+cd::PendingHandler::handleMessage (Window window, long *data)
 {
+    DecorPixmapRequestorInterface *requestor = mRequestorForWindow (window);
+
+    if (requestor)
+	requestor->handlePending (data);
 }
 
 cd::UnusedHandler::UnusedHandler (const cd::DecorListForWindow &listForWindow,
@@ -151,7 +155,7 @@ cd::UnusedHandler::UnusedHandler (const cd::DecorListForWindow &listForWindow,
 }
 
 void
-cd::UnusedHandler::handleMessage (Pixmap)
+cd::UnusedHandler::handleMessage (Window, Pixmap)
 {
 }
 

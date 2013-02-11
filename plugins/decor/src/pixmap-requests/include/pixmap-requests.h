@@ -194,7 +194,7 @@ class PendingHandler
 
 	PendingHandler (const RequestorForWindow &);
 
-	void handleMessage (long *);
+	void handleMessage (Window window, long *data);
 
     private:
 
@@ -209,7 +209,7 @@ class UnusedHandler
 		       const UnusedPixmapQueue::Ptr &,
 		       const PixmapReleasePool::FreePixmapFunc &);
 
-	void handleMessage (Pixmap);
+	void handleMessage (Window, Pixmap);
 
     private:
 
@@ -220,8 +220,8 @@ class UnusedHandler
 
 namespace protocol
 {
-typedef boost::function <void (long *)> PendingMessage;
-typedef boost::function <void (Pixmap)> PixmapUnusedMessage;
+typedef boost::function <void (Window, long *)> PendingMessage;
+typedef boost::function <void (Window, Pixmap)> PixmapUnusedMessage;
 
 class Communicator
 {
