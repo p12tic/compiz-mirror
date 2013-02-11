@@ -45,6 +45,7 @@ namespace ct = compiz::testing;
 namespace cd = compiz::decor;
 namespace cdp = compiz::decor::protocol;
 
+using ::testing::AtLeast;
 using ::testing::ReturnNull;
 using ::testing::Return;
 using ::testing::MatcherInterface;
@@ -161,7 +162,7 @@ bool PixmapValid (Display *d, Pixmap p)
 
     XErrorTracker tracker;
 
-    EXPECT_CALL (tracker, errorHandler (BadDrawable));
+    EXPECT_CALL (tracker, errorHandler (BadDrawable)).Times (AtLeast (0));
 
     bool success = XGetGeometry (d, p, &root, &x, &y,
 				 &width, &height, &border, &depth);
@@ -302,7 +303,9 @@ class DecorPixmapProtocolEndToEnd :
 			   releasePool,
 			   boost::bind (&XFreePixmapWrapper::FreePixmap,
 					&freePixmap,
-					_1))
+					_1)),
+	    stubDecoration (new StubDecoration ()),
+	    pixmap (0)
 	{
 	}
 
@@ -321,6 +324,25 @@ class DecorPixmapProtocolEndToEnd :
 						 &unusedHandler,
 						 _1,
 						 _2)));
+
+	    ::Display *d = Display ();
+
+	    pixmap = XCreatePixmap (d,
+				   DefaultRootWindow (d),
+				   1,
+				   1,
+				   DefaultDepth (d,
+						 DefaultScreen (d)));
+
+	    decor_post_delete_pixmap (d,
+				      MOCK_WINDOW,
+				      pixmap);
+	}
+
+	void TearDown ()
+	{
+	    if (PixmapValid (Display (), pixmap))
+		XFreePixmap (Display (), pixmap);
 	}
 
 	::Display *
@@ -338,26 +360,14 @@ class DecorPixmapProtocolEndToEnd :
 	MockFindRequestor        mockFindRequestor;
 	StubDecoration::Ptr      stubDecoration;
 	MockDecorPixmapRequestor mockRequestor;
+	MockDecorationListFindMatching mockFindMatching;
+	Pixmap                   pixmap;
 
 };
 
 TEST_F (DecorPixmapProtocolEndToEnd, TestFreeNotFoundWindowPixmapImmediately)
 {
     ::Display *d = Display ();
-
-    XSynchronize (d, 1);
-
-    Pixmap pixmap = XCreatePixmap (d,
-				   DefaultRootWindow (d),
-				   1,
-				   1,
-				   DefaultDepth (d,
-						 DefaultScreen (d)));
-
-    /* We are done with this pixmap */
-    decor_post_delete_pixmap (d,
-			      MOCK_WINDOW,
-			      pixmap);
 
     EXPECT_CALL (mockFindList, findList (MOCK_WINDOW)).WillOnce (ReturnNull ());
 
@@ -369,5 +379,46 @@ TEST_F (DecorPixmapProtocolEndToEnd, TestFreeNotFoundWindowPixmapImmediately)
 						     _1));
 
     /* Check if the pixmap is still valid */
+    EXPECT_FALSE (PixmapValid (d, pixmap));
+}
+
+TEST_F (DecorPixmapProtocolEndToEnd, TestFreeUnusedPixmapImmediately)
+{
+    ::Display *d = Display ();
+
+    EXPECT_CALL (mockFindMatching, findMatchingDecoration (pixmap)).WillOnce (Return (DecorationInterface::Ptr ()));
+    EXPECT_CALL (mockFindList, findList (MOCK_WINDOW)).WillOnce (Return (&mockFindMatching));
+    /* Deliver it to the communicator */
+    WaitForClientMessageOnAndDeliverTo (MOCK_WINDOW,
+					deletePixmapMessage,
+					boost::bind (&cdp::Communicator::handleClientMessage,
+						     communicator.get (),
+						     _1));
+
+    /* Check if the pixmap is still valid */
+    EXPECT_FALSE (PixmapValid (d, pixmap));
+}
+
+TEST_F (DecorPixmapProtocolEndToEnd, TestQueuePixmapIfUsed)
+{
+    ::Display *d = Display ();
+
+    EXPECT_CALL (mockFindMatching, findMatchingDecoration (pixmap)).WillOnce (Return (stubDecoration));
+    EXPECT_CALL (mockFindList, findList (MOCK_WINDOW)).WillOnce (Return (&mockFindMatching));
+    /* Deliver it to the communicator */
+    WaitForClientMessageOnAndDeliverTo (MOCK_WINDOW,
+					deletePixmapMessage,
+					boost::bind (&cdp::Communicator::handleClientMessage,
+						     communicator.get (),
+						     _1));
+
+    /* Check if the pixmap is still valid */
+    EXPECT_TRUE (PixmapValid (d, pixmap));
+
+    /* Call postDeletePixmap on the release pool, it should release
+     * the pixmap which was otherwise unused */
+    releasePool->postDeletePixmap (pixmap);
+
+    /* Pixmap should now be invalid */
     EXPECT_FALSE (PixmapValid (d, pixmap));
 }
