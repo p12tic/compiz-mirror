@@ -166,7 +166,7 @@ class DecorPixmapRequestorInterface
 					 unsigned int frameState,
 					 unsigned int frameActions) = 0;
 
-	virtual void handlePending (long *data) = 0;
+	virtual void handlePending (const long *data) = 0;
 };
 
 class DecorationListFindMatchingInterface
@@ -194,7 +194,7 @@ class PendingHandler
 
 	PendingHandler (const RequestorForWindow &);
 
-	void handleMessage (Window window, long *data);
+	void handleMessage (Window window, const long *data);
 
     private:
 
@@ -220,7 +220,7 @@ class UnusedHandler
 
 namespace protocol
 {
-typedef boost::function <void (Window, long *)> PendingMessage;
+typedef boost::function <void (Window, const long *)> PendingMessage;
 typedef boost::function <void (Window, Pixmap)> PixmapUnusedMessage;
 
 class Communicator
@@ -236,6 +236,8 @@ class Communicator
 
     private:
 
+	Atom           mPendingMsgAtom;
+	Atom           mUnusedMsgAtom;
 	PendingMessage mPendingHandler;
 	PixmapUnusedMessage mPixmapUnusedHander;
 };
@@ -256,7 +258,7 @@ class X11DecorPixmapRequestor :
 				 unsigned int frameState,
 				 unsigned int frameActions);
 
-	void handlePending (long *data);
+	void handlePending (const long *data);
 
     private:
 

@@ -81,7 +81,7 @@ X11DecorPixmapRequestor::postGenerateRequest (unsigned int frameType,
 }
 
 void
-X11DecorPixmapRequestor::handlePending (long *data)
+X11DecorPixmapRequestor::handlePending (const long *data)
 {
     DecorationInterface::Ptr d = mListFinder->findMatchingDecoration (static_cast <unsigned int> (data[0]),
 								      static_cast <unsigned int> (data[1]),
@@ -137,7 +137,7 @@ cd::PendingHandler::PendingHandler (const cd::RequestorForWindow &requestorForWi
 }
 
 void
-cd::PendingHandler::handleMessage (Window window, long *data)
+cd::PendingHandler::handleMessage (Window window, const long *data)
 {
     DecorPixmapRequestorInterface *requestor = mRequestorForWindow (window);
 
@@ -179,6 +179,8 @@ cdp::Communicator::Communicator (Atom                           pendingMsg,
 				 Atom                           unusedMsg,
 				 const cdp::PendingMessage      &pending,
 				 const cdp::PixmapUnusedMessage &pixmapUnused) :
+    mPendingMsgAtom (pendingMsg),
+    mUnusedMsgAtom (unusedMsg),
     mPendingHandler (pending),
     mPixmapUnusedHander (pixmapUnused)
 {
@@ -187,4 +189,8 @@ cdp::Communicator::Communicator (Atom                           pendingMsg,
 void
 cdp::Communicator::handleClientMessage (const XClientMessageEvent &xce)
 {
+    if (xce.message_type == mPendingMsgAtom)
+	mPendingHandler (xce.window, xce.data.l);
+    else if (xce.message_type == mUnusedMsgAtom)
+	mPixmapUnusedHander (xce.window, xce.data.l[0]);
 }

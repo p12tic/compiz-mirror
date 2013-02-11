@@ -84,7 +84,7 @@ class MockDecorPixmapRequestor :
     public:
 
 	MOCK_METHOD3 (postGenerateRequest, int (unsigned int, unsigned int, unsigned int));
-	MOCK_METHOD1 (handlePending, void (long *));
+	MOCK_METHOD1 (handlePending, void (const long *));
 };
 
 TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
@@ -411,7 +411,7 @@ class MockProtocolDispatchFuncs
 {
     public:
 
-	MOCK_METHOD2 (handlePending, void (Window, long *));
+	MOCK_METHOD2 (handlePending, void (Window, const long *));
 	MOCK_METHOD2 (handleUnused, void (Window, Pixmap));
 };
 
@@ -501,7 +501,7 @@ TEST_F (DecorProtocolCommunicator, TestDispatchToUnusedHandler)
     XClientMessageEvent ev;
     ClientMessageData (ev,
 		       mockWindow,
-		       pendingMsg,
+		       unusedMsg,
 		       mockPixmap,
 		       0,
 		       0,
