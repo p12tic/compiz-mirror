@@ -213,13 +213,15 @@ class UnusedHandler :
     public:
 
 	UnusedHandler (const DecorationListFindMatchingInterface &,
-		       const UnusedPixmapQueue::Ptr &);
+		       const UnusedPixmapQueue::Ptr &,
+		       const PixmapReleasePool::FreePixmapFunc &);
 
     private:
 
 	void handleMessage (Pixmap);
 
 	UnusedPixmapQueue::Ptr mQueue;
+	PixmapReleasePool::FreePixmapFunc mFreePixmap;
 };
 
 namespace protocol

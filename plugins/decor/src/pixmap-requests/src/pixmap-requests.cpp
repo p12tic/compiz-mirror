@@ -134,9 +134,11 @@ cd::PendingHandler::handleMessage (unsigned int frameType,
 }
 
 cd::UnusedHandler::UnusedHandler (const DecorationListFindMatchingInterface &fm,
-				  const UnusedPixmapQueue::Ptr &queue) :
+				  const UnusedPixmapQueue::Ptr &queue,
+				  const FreePixmapFunc         &freePixmap) :
     IterationHandlerBase (fm),
-    mQueue (queue)
+    mQueue (queue),
+    mFreePixmap (freePixmap)
 {
 }
 
