@@ -304,8 +304,7 @@ class DecorPixmapProtocolEndToEnd :
 			   boost::bind (&XFreePixmapWrapper::FreePixmap,
 					&freePixmap,
 					_1)),
-	    stubDecoration (new StubDecoration ()),
-	    pixmap (0)
+	    stubDecoration (new StubDecoration ())
 	{
 	}
 
@@ -324,6 +323,35 @@ class DecorPixmapProtocolEndToEnd :
 						 &unusedHandler,
 						 _1,
 						 _2)));
+	}
+
+	::Display *
+	Display () const
+	{
+	    return DecorPixmapProtocol::Display ();
+	}
+
+	XFreePixmapWrapper       freePixmap;
+	PixmapReleasePool::Ptr   releasePool;
+	cd::PendingHandler       pendingHandler;
+	cd::UnusedHandler        unusedHandler;
+	boost::shared_ptr <cdp::Communicator> communicator;
+	MockFindList             mockFindList;
+	MockFindRequestor        mockFindRequestor;
+	StubDecoration::Ptr      stubDecoration;
+	MockDecorPixmapRequestor mockRequestor;
+	MockDecorationListFindMatching mockFindMatching;
+
+};
+
+class DecorPixmapProtocolDeleteEndToEnd :
+    public DecorPixmapProtocolEndToEnd
+{
+    public:
+
+	void SetUp ()
+	{
+	    DecorPixmapProtocolEndToEnd::SetUp ();
 
 	    ::Display *d = Display ();
 
@@ -345,27 +373,12 @@ class DecorPixmapProtocolEndToEnd :
 		XFreePixmap (Display (), pixmap);
 	}
 
-	::Display *
-	Display () const
-	{
-	    return DecorPixmapProtocol::Display ();
-	}
+    protected:
 
-	XFreePixmapWrapper       freePixmap;
-	PixmapReleasePool::Ptr   releasePool;
-	cd::PendingHandler       pendingHandler;
-	cd::UnusedHandler        unusedHandler;
-	boost::shared_ptr <cdp::Communicator> communicator;
-	MockFindList             mockFindList;
-	MockFindRequestor        mockFindRequestor;
-	StubDecoration::Ptr      stubDecoration;
-	MockDecorPixmapRequestor mockRequestor;
-	MockDecorationListFindMatching mockFindMatching;
 	Pixmap                   pixmap;
-
 };
 
-TEST_F (DecorPixmapProtocolEndToEnd, TestFreeNotFoundWindowPixmapImmediately)
+TEST_F (DecorPixmapProtocolDeleteEndToEnd, TestFreeNotFoundWindowPixmapImmediately)
 {
     ::Display *d = Display ();
 
@@ -382,7 +395,7 @@ TEST_F (DecorPixmapProtocolEndToEnd, TestFreeNotFoundWindowPixmapImmediately)
     EXPECT_FALSE (PixmapValid (d, pixmap));
 }
 
-TEST_F (DecorPixmapProtocolEndToEnd, TestFreeUnusedPixmapImmediately)
+TEST_F (DecorPixmapProtocolDeleteEndToEnd, TestFreeUnusedPixmapImmediately)
 {
     ::Display *d = Display ();
 
@@ -399,7 +412,7 @@ TEST_F (DecorPixmapProtocolEndToEnd, TestFreeUnusedPixmapImmediately)
     EXPECT_FALSE (PixmapValid (d, pixmap));
 }
 
-TEST_F (DecorPixmapProtocolEndToEnd, TestQueuePixmapIfUsed)
+TEST_F (DecorPixmapProtocolDeleteEndToEnd, TestQueuePixmapIfUsed)
 {
     ::Display *d = Display ();
 
@@ -421,4 +434,50 @@ TEST_F (DecorPixmapProtocolEndToEnd, TestQueuePixmapIfUsed)
 
     /* Pixmap should now be invalid */
     EXPECT_FALSE (PixmapValid (d, pixmap));
+}
+
+class DecorPixmapProtocolPendingEndToEnd :
+    public DecorPixmapProtocolEndToEnd
+{
+    public:
+
+	DecorPixmapProtocolPendingEndToEnd () :
+	    frameType (1),
+	    frameState (2),
+	    frameActions (3)
+	{
+	}
+
+	void SetUp ()
+	{
+	    DecorPixmapProtocolEndToEnd::SetUp ();
+
+	    ::Display *d = Display ();
+
+	    decor_post_pending (d, MOCK_WINDOW, frameState, frameType, frameActions);
+	}
+
+    protected:
+
+	unsigned int frameType, frameState, frameActions;
+};
+
+MATCHER_P3 (MatchArrayValues3, v1, v2, v3, "Matches three array values")
+{
+    return arg[0] == v1 &&
+	    arg[1] == v2 &&
+	    arg[2] == v3;
+}
+
+TEST_F (DecorPixmapProtocolPendingEndToEnd, TestPostPendingMarksAsPendingOnClient)
+{
+    EXPECT_CALL (mockFindRequestor, findRequestor (MOCK_WINDOW)).WillOnce (Return (&mockRequestor));
+    EXPECT_CALL (mockRequestor, handlePending (MatchArrayValues3 (frameType, frameState, frameActions)));
+
+    /* Deliver it to the communicator */
+    WaitForClientMessageOnAndDeliverTo (MOCK_WINDOW,
+					pendingMessage,
+					boost::bind (&cdp::Communicator::handleClientMessage,
+						     communicator.get (),
+						     _1));
 }
