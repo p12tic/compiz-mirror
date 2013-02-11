@@ -392,6 +392,7 @@ typedef struct _decor {
     event_window      button_windows[BUTTON_NUM];
     Box		      *last_pos_entered;
     guint	      button_states[BUTTON_NUM];
+    Pixmap            x11Pixmap;
     GdkPixmap	      *pixmap;
     GdkPixmap	      *buffer_pixmap;
     GdkWindow	      *frame_window;
@@ -799,6 +800,11 @@ GdkPixmap *
 create_pixmap (int	 w,
 	       int	 h,
 	       GtkWidget *parent_style_window);
+
+GdkPixmap *
+create_native_pixmap_and_wrap (int	  w,
+			       int	  h,
+			       GtkWidget *parent_style_window);
 
 GdkPixmap *
 pixmap_new_from_pixbuf (GdkPixbuf *pixbuf, GtkWidget *parent);

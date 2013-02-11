@@ -92,6 +92,21 @@ get_format_for_drawable (decor_t *d, GdkDrawable *drawable)
 }
 
 GdkPixmap *
+create_native_pixmap_and_wrap (int	  w,
+			       int	  h,
+			       GtkWidget *parent_style_window)
+{
+    GdkWindow *window;
+
+    if (w == 0 || h == 0)
+	abort ();
+
+    window = gtk_widget_get_window (parent_style_window);
+    return gdk_pixmap_foreign_new (XCreatePixmap (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
+						  GDK_WINDOW_XID (window), w, h, CopyFromParent));
+}
+
+GdkPixmap *
 create_pixmap (int	  w,
 	       int	  h,
 	       GtkWidget *parent_style_window)
