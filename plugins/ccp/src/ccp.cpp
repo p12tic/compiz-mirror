@@ -463,22 +463,22 @@ CcpScreen::setOptionForPlugin (const char *plugin,
 			       CompOption::Value &v)
 {
     bool status;
+    CompPlugin *p;
+    CompOption *o;
+
+    p = CompPlugin::find (plugin);
+    if (p)
+    {
+	o = CompOption::findOption (p->vTable->getOptions (), name);
+	if (o && (o->value () == v))
+	    o = NULL;
+    }
 
     status = screen->setOptionForPlugin (plugin, name, v);
 
-    if (status && !mApplyingSettings && !mReloadTimer.active ())
+    if (o && status && !mApplyingSettings && !mReloadTimer.active ())
     {
-	CompPlugin *p;
-
-	p = CompPlugin::find (plugin);
-	if (p)
-	{
-	    CompOption *o;
-
-	    o = CompOption::findOption (p->vTable->getOptions (), name);
-	    if (o && (o->value () != v))
-		setContextFromOption (o, p->vTable->name ().c_str ());
-	}
+	setContextFromOption (o, p->vTable->name ().c_str ());
     }
 
     return status;
