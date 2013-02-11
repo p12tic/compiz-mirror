@@ -27,6 +27,8 @@
 #include <gmock/gmock.h>
 #include <boost/bind.hpp>
 #include <iostream>
+
+#include <X11/Xlib.h>
 #include "pixmap-requests.h"
 
 using ::testing::AtLeast;
@@ -403,4 +405,111 @@ TEST_F (DecorUnusedMessageHandler, AddToQueueIfInUse)
 	.WillByDefault (Return (mockDecoration));
 
     unusedHandler.handleMessage (mockWindow, mockPixmap);
+}
+
+class MockProtocolDispatchFuncs
+{
+    public:
+
+	MOCK_METHOD2 (handlePending, void (Window, long *));
+	MOCK_METHOD2 (handleUnused, void (Window, Pixmap));
+};
+
+namespace
+{
+Atom pendingMsg = 3;
+Atom unusedMsg = 4;
+}
+
+class DecorProtocolCommunicator :
+    public ::testing::Test
+{
+    public:
+
+	DecorProtocolCommunicator () :
+	    handlePendingFunc (boost::bind (&MockProtocolDispatchFuncs::handlePending,
+					    &mockProtoDispatch,
+					    _1,
+					    _2)),
+	    handleUnusedFunc (boost::bind (&MockProtocolDispatchFuncs::handleUnused,
+					   &mockProtoDispatch,
+					   _1,
+					   _2)),
+	    protocolCommunicator (pendingMsg,
+				  unusedMsg,
+				  handlePendingFunc,
+				  handleUnusedFunc)
+	{
+	}
+
+	void ClientMessageData (XClientMessageEvent &msg,
+				Window              window,
+				Atom                atom,
+				long                l1,
+				long                l2,
+				long                l3,
+				long                l4)
+	{
+	    msg.window = window;
+	    msg.message_type = atom;
+	    msg.data.l[0] = l1;
+	    msg.data.l[1] = l2;
+	    msg.data.l[2] = l3;
+	    msg.data.l[3] = l4;
+	}
+
+	MockProtocolDispatchFuncs mockProtoDispatch;
+	cdp::PendingMessage       handlePendingFunc;
+	cdp::PixmapUnusedMessage  handleUnusedFunc;
+
+	cdp::Communicator protocolCommunicator;
+};
+
+MATCHER_P (MatchArray3, v, "Contains values")
+{
+    return arg[0] == v[0] &&
+	    arg[1] == v[1] &&
+	    arg[2] == v[2];
+}
+
+TEST_F (DecorProtocolCommunicator, TestDispatchToPendingHandler)
+{
+    long data[3];
+
+    data[0] = 1;
+    data[1] = 2;
+    data[2] = 3;
+
+    XClientMessageEvent ev;
+    ClientMessageData (ev,
+		       mockWindow,
+		       pendingMsg,
+		       data[0],
+		       data[1],
+		       data[2],
+		       0);
+
+    EXPECT_CALL (mockProtoDispatch, handlePending (mockWindow,
+						   MatchArray3 (data)))
+	.Times (1);
+
+    protocolCommunicator.handleClientMessage (ev);
+}
+
+TEST_F (DecorProtocolCommunicator, TestDispatchToUnusedHandler)
+{
+    XClientMessageEvent ev;
+    ClientMessageData (ev,
+		       mockWindow,
+		       pendingMsg,
+		       mockPixmap,
+		       0,
+		       0,
+		       0);
+
+    EXPECT_CALL (mockProtoDispatch, handleUnused (mockWindow,
+						  mockPixmap))
+	.Times (1);
+
+    protocolCommunicator.handleClientMessage (ev);
 }

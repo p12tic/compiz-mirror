@@ -227,7 +227,9 @@ class Communicator
 {
     public:
 
-	Communicator (const PendingMessage &,
+	Communicator (Atom pendingMsg,
+		      Atom unusedMsg,
+		      const PendingMessage &,
 		      const PixmapUnusedMessage &);
 
 	void handleClientMessage (const XClientMessageEvent &);

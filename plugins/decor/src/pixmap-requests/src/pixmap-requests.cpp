@@ -175,7 +175,9 @@ cd::UnusedHandler::handleMessage (Window window, Pixmap pixmap)
     mFreePixmap (pixmap);
 }
 
-cdp::Communicator::Communicator (const cdp::PendingMessage      &pending,
+cdp::Communicator::Communicator (Atom                           pendingMsg,
+				 Atom                           unusedMsg,
+				 const cdp::PendingMessage      &pending,
 				 const cdp::PixmapUnusedMessage &pixmapUnused) :
     mPendingHandler (pending),
     mPixmapUnusedHander (pixmapUnused)
