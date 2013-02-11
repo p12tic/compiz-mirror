@@ -13,3 +13,5 @@ target_link_libraries (compiz_test_decor_pixmap_requests
                        )
 
 compiz_discover_tests (compiz_test_decor_pixmap_requests COVERAGE compiz_decor_pixmap_requests)
+
+add_subdirectory (integration)
