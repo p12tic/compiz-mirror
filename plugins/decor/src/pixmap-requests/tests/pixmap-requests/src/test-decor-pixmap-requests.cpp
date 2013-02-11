@@ -29,6 +29,7 @@
 #include <iostream>
 #include "pixmap-requests.h"
 
+using ::testing::AtLeast;
 using ::testing::Pointee;
 using ::testing::Return;
 using ::testing::ReturnNull;
@@ -279,4 +280,127 @@ TEST_F (DecorPendingMessageHandler, PendingIfFound)
     EXPECT_CALL (mockRequestorFind, findRequestor (mockWindow)).WillOnce (Return (&mockRequestor));
 
     pendingHandler.handleMessage (mockWindow, &data);
+}
+
+class MockFindList
+{
+    public:
+
+	MOCK_METHOD1 (findList, DecorationListFindMatchingInterface * (Window));
+};
+
+class MockUnusedPixmapQueue :
+    public UnusedPixmapQueue
+{
+    public:
+
+	typedef boost::shared_ptr <MockUnusedPixmapQueue> Ptr;
+
+	MOCK_METHOD1 (markUnused, void (Pixmap));
+};
+
+class StubReceiver :
+    public DecorPixmapReceiverInterface
+{
+    public:
+
+	void pending () {}
+	void update () {}
+};
+
+class StubDecoration :
+    public DecorationInterface
+{
+    public:
+
+	DecorPixmapReceiverInterface & receiverInterface ()
+	{
+	    return mReceiver;
+	}
+
+	unsigned int getFrameType  () const { return 0; }
+	unsigned int getFrameState () const { return 0; }
+	unsigned int getFrameActions () const { return 0; }
+
+    private:
+
+	StubReceiver mReceiver;
+};
+
+class DecorUnusedMessageHandler :
+    public ::testing::Test
+{
+    public:
+
+	DecorUnusedMessageHandler () :
+	    mockUnusedPixmapQueue (new MockUnusedPixmapQueue ()),
+	    unusedHandler (boost::bind (&MockFindList::findList,
+					&mockListFind,
+					_1),
+			   mockUnusedPixmapQueue,
+			   boost::bind (&XlibPixmapMock::freePixmap,
+					&xlibPixmapMock,
+					_1))
+	{
+	}
+
+	MockFindList mockListFind;
+	MockDecorationListFindMatching mockListFinder;
+	MockUnusedPixmapQueue::Ptr     mockUnusedPixmapQueue;
+	XlibPixmapMock                 xlibPixmapMock;
+
+	cd::UnusedHandler unusedHandler;
+};
+
+namespace
+{
+Pixmap mockPixmap = 2;
+}
+
+TEST_F (DecorUnusedMessageHandler, FreeImmediatelyWindowNotFound)
+{
+    /* Don't verify calls to mockListFind */
+    EXPECT_CALL (mockListFind, findList (_)).Times (0);
+
+    /* Just free the pixmap immediately if no window was found */
+    EXPECT_CALL (xlibPixmapMock, freePixmap (mockPixmap)).Times (1);
+
+    ON_CALL (mockListFind, findList (mockWindow)).WillByDefault (ReturnNull ());
+    unusedHandler.handleMessage (mockWindow, mockPixmap);
+}
+
+TEST_F (DecorUnusedMessageHandler, FreeImmediatelyIfNoDecorationFound)
+{
+    /* Don't verify calls to mockListFind or mockListFinder */
+    EXPECT_CALL (mockListFind, findList (_)).Times (AtLeast (0));
+    EXPECT_CALL (mockListFinder, findMatchingDecoration (_)).Times (AtLeast (0));
+
+    EXPECT_CALL (xlibPixmapMock, freePixmap (mockPixmap)).Times (1);
+
+    ON_CALL (mockListFind, findList (mockWindow))
+	.WillByDefault (Return (&mockListFinder));
+    ON_CALL (mockListFinder, findMatchingDecoration (mockPixmap))
+	.WillByDefault (Return (DecorationInterface::Ptr ()));
+
+    unusedHandler.handleMessage (mockWindow, mockPixmap);
+}
+
+TEST_F (DecorUnusedMessageHandler, AddToQueueIfInUse)
+{
+    /* Don't verify calls to mockListFind or mockListFinder */
+    EXPECT_CALL (mockListFind, findList (_)).Times (AtLeast (0));
+    EXPECT_CALL (mockListFinder, findMatchingDecoration (_)).Times (AtLeast (0));
+
+    DecorationInterface::Ptr mockDecoration (new StubDecoration ());
+
+    /* Do not immediately free the pixmap */
+    EXPECT_CALL (xlibPixmapMock, freePixmap (mockPixmap)).Times (0);
+    EXPECT_CALL (*mockUnusedPixmapQueue, markUnused (mockPixmap)).Times (1);
+
+    ON_CALL (mockListFind, findList (mockWindow))
+	.WillByDefault (Return (&mockListFinder));
+    ON_CALL (mockListFinder, findMatchingDecoration (mockPixmap))
+	.WillByDefault (Return (mockDecoration));
+
+    unusedHandler.handleMessage (mockWindow, mockPixmap);
 }
