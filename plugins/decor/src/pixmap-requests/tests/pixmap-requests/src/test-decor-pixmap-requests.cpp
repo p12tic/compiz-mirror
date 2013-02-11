@@ -215,3 +215,13 @@ TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnusedOnceOnly)
     releasePool.postDeletePixmap (static_cast <Pixmap> (1));
     releasePool.postDeletePixmap (static_cast <Pixmap> (1));
 }
+
+TEST_F (DecorPixmapReleasePool, UnusedUniqueness)
+{
+    EXPECT_CALL (xlibPixmapMock, freePixmap (1)).Times (1);
+
+    releasePool.markUnused (static_cast <Pixmap> (1));
+    releasePool.markUnused (static_cast <Pixmap> (1));
+    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+}

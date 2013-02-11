@@ -105,11 +105,26 @@ PixmapReleasePool::PixmapReleasePool (const FreePixmapFunc &freePixmap) :
 void
 PixmapReleasePool::markUnused (Pixmap pixmap)
 {
+    mPendingUnusedNotificationPixmaps.push_back (pixmap);
+    mPendingUnusedNotificationPixmaps.unique ();
 }
 
 int
 PixmapReleasePool::postDeletePixmap (Pixmap pixmap)
 {
+    std::list <Pixmap>::iterator it =
+	std::find (mPendingUnusedNotificationPixmaps.begin (),
+		   mPendingUnusedNotificationPixmaps.end (),
+		   pixmap);
+
+    if (it != mPendingUnusedNotificationPixmaps.end ())
+    {
+	Pixmap pixmap (*it);
+	mPendingUnusedNotificationPixmaps.erase (it);
+
+	mFreePixmap (pixmap);
+    }
+
     return 0;
 }
 
