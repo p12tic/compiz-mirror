@@ -185,8 +185,8 @@ namespace compiz
 {
 namespace decor
 {
-typedef boost::function <const DecorationListFindMatchingInterface & (Window)> DecorListForWindow;
-typedef boost::function <DecorPixmapRequestorInterface & (Window)> RequestorForWindow;
+typedef boost::function <DecorationListFindMatchingInterface * (Window)> DecorListForWindow;
+typedef boost::function <DecorPixmapRequestorInterface * (Window)> RequestorForWindow;
 
 class PendingHandler
 {
@@ -194,9 +194,9 @@ class PendingHandler
 
 	PendingHandler (const RequestorForWindow &);
 
-    private:
-
 	void handleMessage (long *);
+
+    private:
 
 	RequestorForWindow     mRequestorForWindow;
 };
@@ -209,9 +209,9 @@ class UnusedHandler
 		       const UnusedPixmapQueue::Ptr &,
 		       const PixmapReleasePool::FreePixmapFunc &);
 
-    private:
-
 	void handleMessage (Pixmap);
+
+    private:
 
 	DecorListForWindow mListForWindow;
 	UnusedPixmapQueue::Ptr mQueue;

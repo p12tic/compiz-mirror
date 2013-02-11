@@ -29,7 +29,9 @@
 #include <iostream>
 #include "pixmap-requests.h"
 
+using ::testing::Pointee;
 using ::testing::Return;
+using ::testing::ReturnNull;
 using ::testing::IsNull;
 using ::testing::_;
 
@@ -234,7 +236,7 @@ class MockFindRequestor
 {
     public:
 
-	MOCK_METHOD1 (findRequestor, DecorPixmapRequestorInterface & (Window));
+	MOCK_METHOD1 (findRequestor, DecorPixmapRequestorInterface * (Window));
 };
 
 class DecorPendingMessageHandler :
@@ -250,6 +252,31 @@ class DecorPendingMessageHandler :
 	}
 
 	MockFindRequestor              mockRequestorFind;
+	MockDecorPixmapRequestor       mockRequestor;
 
 	cd::PendingHandler             pendingHandler;
 };
+
+namespace
+{
+Window mockWindow = 1;
+}
+
+TEST_F (DecorPendingMessageHandler, NoPendingIfNotFound)
+{
+    EXPECT_CALL (mockRequestor, handlePending (_)).Times (0);
+    EXPECT_CALL (mockRequestorFind, findRequestor (mockWindow)).WillOnce (ReturnNull ());
+
+    long data = 1;
+    pendingHandler.handleMessage(&data);
+}
+
+TEST_F (DecorPendingMessageHandler, PendingIfFound)
+{
+    long data = 1;
+
+    EXPECT_CALL (mockRequestor, handlePending (Pointee (data)));
+    EXPECT_CALL (mockRequestorFind, findRequestor (mockWindow)).WillOnce (Return (&mockRequestor));
+
+    pendingHandler.handleMessage (&data);
+}
