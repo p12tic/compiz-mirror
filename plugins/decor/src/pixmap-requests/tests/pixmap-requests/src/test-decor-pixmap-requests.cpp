@@ -25,15 +25,13 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <boost/bind.hpp>
 #include <iostream>
 #include "pixmap-requests.h"
 
 using ::testing::Return;
-
-class DecorPixmapRequestsTest :
-    public ::testing::Test
-{
-};
+using ::testing::IsNull;
+using ::testing::_;
 
 class MockDecorPixmapDeletor :
     public PixmapDestroyQueue
@@ -157,4 +155,63 @@ TEST(DecorPixmapRequestsTest, TestUpdateGeneratesNoRequestIfNoNewOnePending)
 
     receiver.pending ();
     receiver.update ();
+}
+
+class XlibPixmapMock
+{
+    public:
+
+	MOCK_METHOD1(freePixmap, int (Pixmap));
+};
+
+class DecorPixmapReleasePool :
+    public ::testing::Test
+{
+    public:
+
+	DecorPixmapReleasePool () :
+	    mockFreeFunc (boost::bind (&XlibPixmapMock::freePixmap,
+				       &xlibPixmapMock,
+				       _1)),
+	    releasePool (mockFreeFunc)
+	{
+	}
+
+	XlibPixmapMock xlibPixmapMock;
+	PixmapReleasePool::FreePixmapFunc mockFreeFunc;
+
+	PixmapReleasePool releasePool;
+};
+
+TEST_F (DecorPixmapReleasePool, MarkUnusedNoFree)
+{
+    /* Never free pixmaps on markUnused */
+
+    EXPECT_CALL (xlibPixmapMock, freePixmap (_)).Times (0);
+
+    releasePool.markUnused (static_cast <Pixmap> (1));
+}
+
+TEST_F (DecorPixmapReleasePool, NoFreeOnPostDeleteIfNotInList)
+{
+    EXPECT_CALL (xlibPixmapMock, freePixmap (_)).Times (0);
+
+    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+}
+
+TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnused)
+{
+    EXPECT_CALL (xlibPixmapMock, freePixmap (1)).Times (1);
+
+    releasePool.markUnused (static_cast <Pixmap> (1));
+    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+}
+
+TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnusedOnceOnly)
+{
+    EXPECT_CALL (xlibPixmapMock, freePixmap (1)).Times (1);
+
+    releasePool.markUnused (static_cast <Pixmap> (1));
+    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
 }

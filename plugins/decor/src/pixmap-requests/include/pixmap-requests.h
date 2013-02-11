@@ -103,7 +103,7 @@ class PixmapReleasePool :
 {
     public:
 
-	typedef boost::function <int (Display *, Pixmap)> FreePixmapFunc;
+	typedef boost::function <int (Pixmap)> FreePixmapFunc;
 
 	typedef boost::shared_ptr <PixmapReleasePool> Ptr;
 
