@@ -155,8 +155,24 @@ cd::UnusedHandler::UnusedHandler (const cd::DecorListForWindow &listForWindow,
 }
 
 void
-cd::UnusedHandler::handleMessage (Window, Pixmap)
+cd::UnusedHandler::handleMessage (Window window, Pixmap pixmap)
 {
+    DecorationListFindMatchingInterface *findMatching = mListForWindow (window);
+
+    if (findMatching)
+    {
+	DecorationInterface::Ptr decoration (findMatching->findMatchingDecoration (pixmap));
+
+	if (decoration)
+	{
+	    mQueue->markUnused (pixmap);
+	    return;
+	}
+    }
+
+   /* If a decoration was not found, then this pixmap is no longer in use
+    * and we should free it */
+    mFreePixmap (pixmap);
 }
 
 cdp::Communicator::Communicator (const cdp::PendingMessage      &pending,

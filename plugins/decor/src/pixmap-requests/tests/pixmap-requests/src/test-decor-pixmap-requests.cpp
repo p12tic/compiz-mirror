@@ -360,7 +360,7 @@ Pixmap mockPixmap = 2;
 TEST_F (DecorUnusedMessageHandler, FreeImmediatelyWindowNotFound)
 {
     /* Don't verify calls to mockListFind */
-    EXPECT_CALL (mockListFind, findList (_)).Times (0);
+    EXPECT_CALL (mockListFind, findList (_)).Times (AtLeast (0));
 
     /* Just free the pixmap immediately if no window was found */
     EXPECT_CALL (xlibPixmapMock, freePixmap (mockPixmap)).Times (1);
