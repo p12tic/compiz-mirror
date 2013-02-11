@@ -267,9 +267,9 @@ main (int argc, char *argv[])
     net_wm_state_atom = XInternAtom (xdisplay,"_NET_WM_STATE", 0);
     net_wm_state_modal_atom = XInternAtom (xdisplay, "_NET_WM_STATE_MODAL", 0);
 
-    decor_request_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_REQUEST", 0);
-    decor_pending_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_PENDING", 0);
-    decor_delete_pixmap_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_DELETE_PIXMAP", 0);
+    decor_request_atom = XInternAtom (xdisplay, DECOR_REQUEST_PIXMAP_ATOM_NAME, 0);
+    decor_pending_atom = XInternAtom (xdisplay, DECOR_PIXMAP_PENDING_ATOM_NAME, 0);
+    decor_delete_pixmap_atom = XInternAtom (xdisplay, DECOR_DELETE_PIXMAP_ATOM_NAME, 0);
 
     status = decor_acquire_dm_session (xdisplay,
 				       gdk_screen_get_number (gdkscreen),

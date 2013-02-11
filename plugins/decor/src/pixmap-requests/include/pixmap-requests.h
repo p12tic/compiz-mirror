@@ -131,7 +131,9 @@ class X11PixmapDeletor :
 	{
 	}
 
-	int postDeletePixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay, pixmap); }
+	int postDeletePixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay,
+										0,
+										pixmap); }
 
     private:
 

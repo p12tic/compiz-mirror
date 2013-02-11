@@ -3038,9 +3038,9 @@ DecorScreen::DecorScreen (CompScreen *s) :
     decorSwitchWindowAtom =
 	XInternAtom (s->dpy (), DECOR_SWITCH_WINDOW_ATOM_NAME, 0);
     decorPendingAtom =
-	XInternAtom (s->dpy (), "_COMPIZ_DECOR_PENDING", 0);
+	XInternAtom (s->dpy (), DECOR_PIXMAP_PENDING_ATOM_NAME, 0);
     decorRequestAtom =
-	XInternAtom (s->dpy (), "_COMPIZ_DECOR_REQUEST", 0);
+	XInternAtom (s->dpy (), DECOR_REQUEST_PIXMAP_ATOM_NAME, 0);
     requestFrameExtentsAtom =
         XInternAtom (s->dpy (), "_NET_REQUEST_FRAME_EXTENTS", 0);
     shadowColorAtom =

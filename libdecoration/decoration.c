@@ -2896,7 +2896,7 @@ decor_post_pending (Display *xdisplay,
 {
     XEvent event;
 
-    Atom   decor_pending  = XInternAtom (xdisplay, "_COMPIZ_DECOR_PENDING", FALSE);
+    Atom   decor_pending  = XInternAtom (xdisplay, DECOR_PIXMAP_PENDING_ATOM_NAME, FALSE);
 
     /* Send a client message indicating that a new
      * decoration can be generated for this window
@@ -2926,7 +2926,7 @@ decor_post_generate_request (Display *xdisplay,
 {
     XEvent event;
 
-    Atom   decor_request  = XInternAtom (xdisplay, "_COMPIZ_DECOR_REQUEST", FALSE);
+    Atom   decor_request  = XInternAtom (xdisplay, DECOR_REQUEST_PIXMAP_ATOM_NAME, FALSE);
 
     /* Send a client message indicating that a new
      * decoration can be generated for this window
@@ -2949,17 +2949,18 @@ decor_post_generate_request (Display *xdisplay,
 
 int
 decor_post_delete_pixmap (Display *xdisplay,
+			  Window window,
 			  Pixmap  pixmap)
 {
     XEvent event;
 
-    Atom   decor_delete_pixmap  = XInternAtom (xdisplay, "_COMPIZ_DECOR_DELETE_PIXMAP", FALSE);
+    Atom   decor_delete_pixmap  = XInternAtom (xdisplay, DECOR_DELETE_PIXMAP_ATOM_NAME, FALSE);
 
-    /* Send a client message indicating that a new
-     * decoration can be generated for this window
+    /* Send a client message indicating that this
+     * pixmap is no longer in use and can be removed
      */
     event.xclient.type	       = ClientMessage;
-    event.xclient.window       = DefaultRootWindow (xdisplay);
+    event.xclient.window       = window;
     event.xclient.message_type = decor_delete_pixmap;
     event.xclient.format       = 32;
     event.xclient.data.l[0]    = pixmap;
@@ -2973,6 +2974,7 @@ decor_post_delete_pixmap (Display *xdisplay,
 
     return 1;
 }
+
 int
 decor_acquire_dm_session (Display    *xdisplay,
 			  int	     screen,
