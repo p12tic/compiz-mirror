@@ -38,6 +38,7 @@
 #include <compiz-xorg-gtest.h>
 
 #include "pixmap-requests.h"
+#include "compiz_decor_pixmap_requests_mock.h"
 
 namespace xt = xorg::testing;
 namespace ct = compiz::testing;
@@ -64,6 +65,7 @@ class DecorPixmapProtocol :
     protected:
 
 	Atom deletePixmapMessage;
+	Atom pendingMessage;
 };
 
 namespace
@@ -94,6 +96,7 @@ DecorPixmapProtocol::SetUp ()
 		  StructureNotifyMask);
 
     deletePixmapMessage = XInternAtom (Display (), DECOR_DELETE_PIXMAP_ATOM_NAME, 0);
+    pendingMessage = XInternAtom (Display (), DECOR_PIXMAP_PENDING_ATOM_NAME, 0);
 }
 
 class DeliveryMatcher :
@@ -162,5 +165,32 @@ TEST_F (DecorPixmapProtocol, PostDeleteCausesClientMessage)
 					deletePixmapMessage,
 					boost::bind (&MockClientMessageReceiver::receiveMsg,
 						     &receiver,
+						     _1));
+}
+
+TEST_F (DecorPixmapProtocol, PostDeleteDispatchesClientMessageToReceiver)
+{
+    MockProtocolDispatchFuncs dispatch;
+    cdp::Communicator         communicator (pendingMessage,
+					    deletePixmapMessage,
+					    boost::bind (&MockProtocolDispatchFuncs::handlePending,
+							 &dispatch,
+							 _1,
+							 _2),
+					    boost::bind (&MockProtocolDispatchFuncs::handleUnused,
+							 &dispatch,
+							 _1,
+							 _2));
+
+    decor_post_delete_pixmap (Display (),
+			      MOCK_WINDOW,
+			      MOCK_PIXMAP);
+
+    EXPECT_CALL (dispatch, handleUnused (MOCK_WINDOW, MOCK_PIXMAP)).Times (1);
+
+    WaitForClientMessageOnAndDeliverTo (MOCK_WINDOW,
+					deletePixmapMessage,
+					boost::bind (&cdp::Communicator::handleClientMessage,
+						     &communicator,
 						     _1));
 }

@@ -30,6 +30,7 @@
 
 #include <X11/Xlib.h>
 #include "pixmap-requests.h"
+#include "compiz_decor_pixmap_requests_mock.h"
 
 using ::testing::AtLeast;
 using ::testing::Pointee;
@@ -40,52 +41,6 @@ using ::testing::_;
 
 namespace cd = compiz::decor;
 namespace cdp = compiz::decor::protocol;
-
-class MockDecorPixmapDeletor :
-    public PixmapDestroyQueue
-{
-    public:
-
-	MOCK_METHOD1 (postDeletePixmap, int (Pixmap p));
-};
-
-class MockDecorPixmapReceiver :
-    public DecorPixmapReceiverInterface
-{
-    public:
-
-	MOCK_METHOD0 (pending, void ());
-	MOCK_METHOD0 (update, void ());
-};
-
-class MockDecoration :
-    public DecorationInterface
-{
-    public:
-
-	MOCK_METHOD0 (receiverInterface, DecorPixmapReceiverInterface & ());
-	MOCK_CONST_METHOD0 (getFrameType, unsigned int ());
-	MOCK_CONST_METHOD0 (getFrameState, unsigned int ());
-	MOCK_CONST_METHOD0 (getFrameActions, unsigned int ());
-};
-
-class MockDecorationListFindMatching :
-    public DecorationListFindMatchingInterface
-{
-    public:
-
-	MOCK_CONST_METHOD3 (findMatchingDecoration, DecorationInterface::Ptr (unsigned int, unsigned int, unsigned int));
-	MOCK_CONST_METHOD1 (findMatchingDecoration, DecorationInterface::Ptr (Pixmap));
-};
-
-class MockDecorPixmapRequestor :
-    public DecorPixmapRequestorInterface
-{
-    public:
-
-	MOCK_METHOD3 (postGenerateRequest, int (unsigned int, unsigned int, unsigned int));
-	MOCK_METHOD1 (handlePending, void (const long *));
-};
 
 TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
 {
@@ -166,13 +121,6 @@ TEST(DecorPixmapRequestsTest, TestUpdateGeneratesNoRequestIfNoNewOnePending)
     receiver.update ();
 }
 
-class XlibPixmapMock
-{
-    public:
-
-	MOCK_METHOD1(freePixmap, int (Pixmap));
-};
-
 class DecorPixmapReleasePool :
     public ::testing::Test
 {
@@ -235,13 +183,6 @@ TEST_F (DecorPixmapReleasePool, UnusedUniqueness)
     releasePool.postDeletePixmap (static_cast <Pixmap> (1));
 }
 
-class MockFindRequestor
-{
-    public:
-
-	MOCK_METHOD1 (findRequestor, DecorPixmapRequestorInterface * (Window));
-};
-
 class DecorPendingMessageHandler :
     public ::testing::Test
 {
@@ -283,51 +224,6 @@ TEST_F (DecorPendingMessageHandler, PendingIfFound)
 
     pendingHandler.handleMessage (mockWindow, &data);
 }
-
-class MockFindList
-{
-    public:
-
-	MOCK_METHOD1 (findList, DecorationListFindMatchingInterface * (Window));
-};
-
-class MockUnusedPixmapQueue :
-    public UnusedPixmapQueue
-{
-    public:
-
-	typedef boost::shared_ptr <MockUnusedPixmapQueue> Ptr;
-
-	MOCK_METHOD1 (markUnused, void (Pixmap));
-};
-
-class StubReceiver :
-    public DecorPixmapReceiverInterface
-{
-    public:
-
-	void pending () {}
-	void update () {}
-};
-
-class StubDecoration :
-    public DecorationInterface
-{
-    public:
-
-	DecorPixmapReceiverInterface & receiverInterface ()
-	{
-	    return mReceiver;
-	}
-
-	unsigned int getFrameType  () const { return 0; }
-	unsigned int getFrameState () const { return 0; }
-	unsigned int getFrameActions () const { return 0; }
-
-    private:
-
-	StubReceiver mReceiver;
-};
 
 class DecorUnusedMessageHandler :
     public ::testing::Test
@@ -406,14 +302,6 @@ TEST_F (DecorUnusedMessageHandler, AddToQueueIfInUse)
 
     unusedHandler.handleMessage (mockWindow, mockPixmap);
 }
-
-class MockProtocolDispatchFuncs
-{
-    public:
-
-	MOCK_METHOD2 (handlePending, void (Window, const long *));
-	MOCK_METHOD2 (handleUnused, void (Window, Pixmap));
-};
 
 namespace
 {

@@ -21,6 +21,7 @@ if (BUILD_XORG_GTEST)
          xorg_gtest_main
          compiz_xorg_gtest_system_test
          compiz_decor_pixmap_requests
+         compiz_decor_pixmap_requests_mock
          decoration
          ${GMOCK_LIBRARY}
          ${GMOCK_MAIN_LIBRARY}
