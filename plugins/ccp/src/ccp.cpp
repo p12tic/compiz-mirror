@@ -463,20 +463,26 @@ CcpScreen::setOptionForPlugin (const char *plugin,
 			       CompOption::Value &v)
 {
     bool status;
+    bool can_save;
     CompPlugin *p;
-    CompOption *o;
+    CompOption *o = NULL;
 
-    p = CompPlugin::find (plugin);
-    if (p)
+    can_save = (!mApplyingSettings && !mReloadTimer.active ());
+
+    if (can_save)
     {
-	o = CompOption::findOption (p->vTable->getOptions (), name);
-	if (o && (o->value () == v))
-	    o = NULL;
+	p = CompPlugin::find (plugin);
+	if (p)
+	{
+	    o = CompOption::findOption (p->vTable->getOptions (), name);
+	    if (o && (o->value () == v))
+		o = NULL;
+	}
     }
 
     status = screen->setOptionForPlugin (plugin, name, v);
 
-    if (o && status && !mApplyingSettings && !mReloadTimer.active ())
+    if (o && status && can_save)
     {
 	setContextFromOption (o, p->vTable->name ().c_str ());
     }
