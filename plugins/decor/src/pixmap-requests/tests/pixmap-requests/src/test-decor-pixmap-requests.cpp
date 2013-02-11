@@ -36,7 +36,7 @@ class DecorPixmapRequestsTest :
 };
 
 class MockDecorPixmapDeletor :
-    public DecorPixmapDeletionInterface
+    public PixmapDestroyQueue
 {
     public:
 
@@ -83,7 +83,7 @@ class MockDecorPixmapRequestor :
 TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
 {
     boost::shared_ptr <MockDecorPixmapDeletor> mockDeletor = boost::make_shared <MockDecorPixmapDeletor> ();
-    DecorPixmap pm (1, boost::shared_static_cast<DecorPixmapDeletionInterface> (mockDeletor));
+    DecorPixmap pm (1, boost::shared_static_cast<PixmapDestroyQueue> (mockDeletor));
 
     EXPECT_CALL (*(mockDeletor.get ()), postDeletePixmap (1)).WillOnce (Return (1));
 }

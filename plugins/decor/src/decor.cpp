@@ -391,7 +391,6 @@ DecorScreen::getTexture (Pixmap pixmap)
 	    return t;
 	}
 
-    X11PixmapDeletor::Ptr dl = boost::make_shared <X11PixmapDeletor> (screen->dpy ());
     DecorPixmap::Ptr pm = boost::make_shared <DecorPixmap> (pixmap, dl);
 
     DecorTexture *texture = new DecorTexture (boost::shared_static_cast <DecorPixmapInterface> (pm));
@@ -3003,7 +3002,8 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   screen->root (),
 				   NULL)),
     mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=PopupMenu")),
-    mRequestor (screen->dpy (), screen->root (), &(decor[DECOR_ACTIVE]))
+    mRequestor (screen->dpy (), screen->root (), &(decor[DECOR_ACTIVE])),
+    dl (boost::make_shared <X11PixmapDeletor> (screen->dpy ()))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);

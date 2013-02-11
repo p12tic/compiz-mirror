@@ -6,7 +6,7 @@
 #define foreach BOOST_FOREACH
 #endif
 
-DecorPixmap::DecorPixmap (Pixmap pixmap, DecorPixmapDeletionInterface::Ptr d) :
+DecorPixmap::DecorPixmap (Pixmap pixmap, PixmapDestroyQueue::Ptr d) :
     mPixmap (pixmap),
     mDeletor (d)
 {

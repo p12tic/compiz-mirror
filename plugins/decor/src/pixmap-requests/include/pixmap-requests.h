@@ -71,19 +71,19 @@ class DecorationInterface
 	virtual unsigned int getFrameActions () const = 0;
 };
 
-class DecorPixmapDeletionInterface
+class PixmapDestroyQueue
 {
     public:
 
-	typedef boost::shared_ptr <DecorPixmapDeletionInterface> Ptr;
+	typedef boost::shared_ptr <PixmapDestroyQueue> Ptr;
 
-	virtual ~DecorPixmapDeletionInterface () {}
+	virtual ~PixmapDestroyQueue () {}
 
 	virtual int postDeletePixmap (Pixmap pixmap) = 0;
 };
 
 class X11PixmapDeletor :
-    public DecorPixmapDeletionInterface
+    public PixmapDestroyQueue
 {
     public:
 
@@ -108,7 +108,7 @@ class DecorPixmap :
 
 	typedef boost::shared_ptr <DecorPixmap> Ptr;
 
-	DecorPixmap (Pixmap p, DecorPixmapDeletionInterface::Ptr deletor);
+	DecorPixmap (Pixmap p, PixmapDestroyQueue::Ptr deletor);
 	~DecorPixmap ();
 
 	Pixmap getPixmap ();
@@ -116,7 +116,7 @@ class DecorPixmap :
     private:
 
 	Pixmap mPixmap;
-	DecorPixmapDeletionInterface::Ptr mDeletor;
+	PixmapDestroyQueue::Ptr mDeletor;
 };
 
 class DecorPixmapRequestorInterface

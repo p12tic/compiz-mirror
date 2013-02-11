@@ -159,9 +159,9 @@ class DecorationList :
 {
     public:
 	bool updateDecoration  (Window id, Atom decorAtom, DecorPixmapRequestorInterface *requestor);
-	DecorationInterface::Ptr findMatchingDecoration(unsigned int frameType,
-								 unsigned int frameState,
-								 unsigned int frameActions);
+	DecorationInterface::Ptr findMatchingDecoration (unsigned int frameType,
+							 unsigned int frameState,
+							 unsigned int frameActions);
 	const Decoration::Ptr & findMatchingDecoration (CompWindow *w, bool sizeCheck);
         void clear ()
         {
@@ -255,6 +255,7 @@ class DecorScreen :
 
 	MatchedDecorClipGroup mMenusClipGroup;
 	X11DecorPixmapRequestor   mRequestor;
+	X11PixmapDeletor::Ptr dl;
 };
 
 class DecorWindow :
