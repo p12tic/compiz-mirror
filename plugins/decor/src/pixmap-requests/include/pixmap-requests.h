@@ -26,9 +26,13 @@
 #ifndef _COMPIZ_DECOR_PIXMAP_REQUESTS_H
 #define _COMPIZ_DECOR_PIXMAP_REQUESTS_H
 
+#include <list>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
 #include <decoration.h>
 
 #include <X11/Xlib.h>
@@ -80,6 +84,39 @@ class PixmapDestroyQueue
 	virtual ~PixmapDestroyQueue () {}
 
 	virtual int postDeletePixmap (Pixmap pixmap) = 0;
+};
+
+class UnusedPixmapQueue
+{
+    public:
+
+	typedef boost::shared_ptr <UnusedPixmapQueue> Ptr;
+
+	virtual ~UnusedPixmapQueue () {}
+
+	virtual void markUnused (Pixmap pixmap) = 0;
+};
+
+class PixmapReleasePool :
+    public PixmapDestroyQueue,
+    public UnusedPixmapQueue
+{
+    public:
+
+	typedef boost::function <int (Display *, Pixmap)> FreePixmapFunc;
+
+	typedef boost::shared_ptr <PixmapReleasePool> Ptr;
+
+	PixmapReleasePool (const FreePixmapFunc &freePixmap);
+
+	void markUnused (Pixmap pixmap);
+	int postDeletePixmap (Pixmap pixmap);
+
+    private:
+
+	std::list <Pixmap> mPendingUnusedNotificationPixmaps;
+	FreePixmapFunc     mFreePixmap;
+
 };
 
 class X11PixmapDeletor :
@@ -140,8 +177,75 @@ class DecorationListFindMatchingInterface
 
 	virtual DecorationInterface::Ptr findMatchingDecoration (unsigned int frameType,
 								 unsigned int frameState,
-								 unsigned int frameActions) = 0;
+								 unsigned int frameActions) const = 0;
+	virtual DecorationInterface::Ptr findMatchingDecoration (Pixmap pixmap) const = 0;
 };
+
+namespace compiz
+{
+namespace decor
+{
+class IterationHandlerBase :
+    boost::noncopyable
+{
+    protected:
+
+	IterationHandlerBase (const DecorationListFindMatchingInterface &);
+
+	const DecorationListFindMatchingInterface &listFinder;
+};
+
+class PendingHandler :
+    public IterationHandlerBase
+{
+    public:
+
+	PendingHandler (const DecorationListFindMatchingInterface &);
+
+    private:
+
+	void handleMessage (unsigned int, unsigned int, unsigned int);
+};
+
+class UnusedHandler :
+    public IterationHandlerBase
+{
+    public:
+
+	UnusedHandler (const DecorationListFindMatchingInterface &,
+		       const UnusedPixmapQueue::Ptr &);
+
+    private:
+
+	void handleMessage (Pixmap);
+
+	UnusedPixmapQueue::Ptr mQueue;
+};
+
+namespace protocol
+{
+typedef boost::function <void (unsigned int,
+			       unsigned int,
+			       unsigned int)> PendingMessage;
+typedef boost::function <void (Pixmap)> PixmapUnusedMessage;
+
+class Communicator
+{
+    public:
+
+	Communicator (const PendingMessage &,
+		      const PixmapUnusedMessage &);
+
+	void handleClientMessage (const XClientMessageEvent &);
+
+    private:
+
+	PendingMessage mPendingHandler;
+	PixmapUnusedMessage mPixmapUnusedHander;
+};
+}
+}
+}
 
 class X11DecorPixmapRequestor :
     public DecorPixmapRequestorInterface

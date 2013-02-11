@@ -1284,7 +1284,7 @@ DecorWindow::matchActions (CompWindow   *w,
 DecorationInterface::Ptr
 DecorationList::findMatchingDecoration (unsigned int frameType,
 					unsigned int frameState,
-					unsigned int frameActions)
+					unsigned int frameActions) const
 {
     foreach (const Decoration::Ptr &d, mList)
     {
@@ -1292,6 +1292,18 @@ DecorationList::findMatchingDecoration (unsigned int frameType,
 	    d->frameState == frameState &&
 	    d->frameActions == frameActions)
 	    return boost::shared_static_cast <DecorationInterface> (d);
+    }
+
+    return DecorationInterface::Ptr ();
+}
+
+DecorationInterface::Ptr
+DecorationList::findMatchingDecoration (Pixmap p) const
+{
+    foreach (const Decoration::Ptr &d, mList)
+    {
+	if (d->texture->pixmap->getPixmap () == p)
+	    return d;
     }
 
     return DecorationInterface::Ptr ();

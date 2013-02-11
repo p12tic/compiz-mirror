@@ -91,3 +91,68 @@ X11DecorPixmapRequestor::handlePending (long *data)
 			     static_cast <unsigned int> (data[1]),
 			     static_cast <unsigned int> (data[2]));
 }
+
+namespace
+{
+typedef PixmapReleasePool::FreePixmapFunc FreePixmapFunc;
+}
+
+PixmapReleasePool::PixmapReleasePool (const FreePixmapFunc &freePixmap) :
+    mFreePixmap (freePixmap)
+{
+}
+
+void
+PixmapReleasePool::markUnused (Pixmap pixmap)
+{
+}
+
+int
+PixmapReleasePool::postDeletePixmap (Pixmap pixmap)
+{
+    return 0;
+}
+
+namespace cd = compiz::decor;
+namespace cdp = compiz::decor::protocol;
+
+cd::IterationHandlerBase::IterationHandlerBase (const DecorationListFindMatchingInterface &fm) :
+    listFinder (fm)
+{
+}
+
+cd::PendingHandler::PendingHandler (const DecorationListFindMatchingInterface &fm) :
+    IterationHandlerBase (fm)
+{
+}
+
+void
+cd::PendingHandler::handleMessage (unsigned int frameType,
+				   unsigned int frameState,
+				   unsigned int frameActions)
+{
+}
+
+cd::UnusedHandler::UnusedHandler (const DecorationListFindMatchingInterface &fm,
+				  const UnusedPixmapQueue::Ptr &queue) :
+    IterationHandlerBase (fm),
+    mQueue (queue)
+{
+}
+
+void
+cd::UnusedHandler::handleMessage (Pixmap)
+{
+}
+
+cdp::Communicator::Communicator (const PendingMessage      &pending,
+				 const PixmapUnusedMessage &pixmapUnused) :
+    mPendingHandler (pending),
+    mPixmapUnusedHander (pixmapUnused)
+{
+}
+
+void
+cdp::Communicator::handleClientMessage (const XClientMessageEvent &xce)
+{
+}

@@ -161,7 +161,8 @@ class DecorationList :
 	bool updateDecoration  (Window id, Atom decorAtom, DecorPixmapRequestorInterface *requestor);
 	DecorationInterface::Ptr findMatchingDecoration (unsigned int frameType,
 							 unsigned int frameState,
-							 unsigned int frameActions);
+							 unsigned int frameActions) const;
+	DecorationInterface::Ptr findMatchingDecoration (Pixmap p) const;
 	const Decoration::Ptr & findMatchingDecoration (CompWindow *w, bool sizeCheck);
         void clear ()
         {
