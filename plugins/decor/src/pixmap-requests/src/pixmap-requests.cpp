@@ -6,6 +6,9 @@
 #define foreach BOOST_FOREACH
 #endif
 
+namespace cd = compiz::decor;
+namespace cdp = compiz::decor::protocol;
+
 DecorPixmap::DecorPixmap (Pixmap pixmap, PixmapDestroyQueue::Ptr d) :
     mPixmap (pixmap),
     mDeletor (d)
@@ -128,30 +131,20 @@ PixmapReleasePool::postDeletePixmap (Pixmap pixmap)
     return 0;
 }
 
-namespace cd = compiz::decor;
-namespace cdp = compiz::decor::protocol;
-
-cd::IterationHandlerBase::IterationHandlerBase (const DecorationListFindMatchingInterface &fm) :
-    listFinder (fm)
-{
-}
-
-cd::PendingHandler::PendingHandler (const DecorationListFindMatchingInterface &fm) :
-    IterationHandlerBase (fm)
+cd::PendingHandler::PendingHandler (const cd::RequestorForWindow &requestorForWindow) :
+    mRequestorForWindow (requestorForWindow)
 {
 }
 
 void
-cd::PendingHandler::handleMessage (unsigned int frameType,
-				   unsigned int frameState,
-				   unsigned int frameActions)
+cd::PendingHandler::handleMessage (long *)
 {
 }
 
-cd::UnusedHandler::UnusedHandler (const DecorationListFindMatchingInterface &fm,
+cd::UnusedHandler::UnusedHandler (const cd::DecorListForWindow &listForWindow,
 				  const UnusedPixmapQueue::Ptr &queue,
 				  const FreePixmapFunc         &freePixmap) :
-    IterationHandlerBase (fm),
+    mListForWindow (listForWindow),
     mQueue (queue),
     mFreePixmap (freePixmap)
 {
@@ -162,8 +155,8 @@ cd::UnusedHandler::handleMessage (Pixmap)
 {
 }
 
-cdp::Communicator::Communicator (const PendingMessage      &pending,
-				 const PixmapUnusedMessage &pixmapUnused) :
+cdp::Communicator::Communicator (const cdp::PendingMessage      &pending,
+				 const cdp::PixmapUnusedMessage &pixmapUnused) :
     mPendingHandler (pending),
     mPixmapUnusedHander (pixmapUnused)
 {

@@ -33,6 +33,9 @@ using ::testing::Return;
 using ::testing::IsNull;
 using ::testing::_;
 
+namespace cd = compiz::decor;
+namespace cdp = compiz::decor::protocol;
+
 class MockDecorPixmapDeletor :
     public PixmapDestroyQueue
 {
@@ -66,7 +69,8 @@ class MockDecorationListFindMatching :
 {
     public:
 
-	MOCK_METHOD3 (findMatchingDecoration, DecorationInterface::Ptr (unsigned int, unsigned int, unsigned int));
+	MOCK_CONST_METHOD3 (findMatchingDecoration, DecorationInterface::Ptr (unsigned int, unsigned int, unsigned int));
+	MOCK_CONST_METHOD1 (findMatchingDecoration, DecorationInterface::Ptr (Pixmap));
 };
 
 class MockDecorPixmapRequestor :
@@ -225,3 +229,27 @@ TEST_F (DecorPixmapReleasePool, UnusedUniqueness)
     releasePool.postDeletePixmap (static_cast <Pixmap> (1));
     releasePool.postDeletePixmap (static_cast <Pixmap> (1));
 }
+
+class MockFindRequestor
+{
+    public:
+
+	MOCK_METHOD1 (findRequestor, DecorPixmapRequestorInterface & (Window));
+};
+
+class DecorPendingMessageHandler :
+    public ::testing::Test
+{
+    public:
+
+	DecorPendingMessageHandler () :
+	    pendingHandler (boost::bind (&MockFindRequestor::findRequestor,
+					 &mockRequestorFind,
+					 _1))
+	{
+	}
+
+	MockFindRequestor              mockRequestorFind;
+
+	cd::PendingHandler             pendingHandler;
+};

@@ -185,34 +185,27 @@ namespace compiz
 {
 namespace decor
 {
-class IterationHandlerBase :
-    boost::noncopyable
-{
-    protected:
+typedef boost::function <const DecorationListFindMatchingInterface & (Window)> DecorListForWindow;
+typedef boost::function <DecorPixmapRequestorInterface & (Window)> RequestorForWindow;
 
-	IterationHandlerBase (const DecorationListFindMatchingInterface &);
-
-	const DecorationListFindMatchingInterface &listFinder;
-};
-
-class PendingHandler :
-    public IterationHandlerBase
+class PendingHandler
 {
     public:
 
-	PendingHandler (const DecorationListFindMatchingInterface &);
+	PendingHandler (const RequestorForWindow &);
 
     private:
 
-	void handleMessage (unsigned int, unsigned int, unsigned int);
+	void handleMessage (long *);
+
+	RequestorForWindow     mRequestorForWindow;
 };
 
-class UnusedHandler :
-    public IterationHandlerBase
+class UnusedHandler
 {
     public:
 
-	UnusedHandler (const DecorationListFindMatchingInterface &,
+	UnusedHandler (const DecorListForWindow &,
 		       const UnusedPixmapQueue::Ptr &,
 		       const PixmapReleasePool::FreePixmapFunc &);
 
@@ -220,15 +213,14 @@ class UnusedHandler :
 
 	void handleMessage (Pixmap);
 
+	DecorListForWindow mListForWindow;
 	UnusedPixmapQueue::Ptr mQueue;
 	PixmapReleasePool::FreePixmapFunc mFreePixmap;
 };
 
 namespace protocol
 {
-typedef boost::function <void (unsigned int,
-			       unsigned int,
-			       unsigned int)> PendingMessage;
+typedef boost::function <void (long *)> PendingMessage;
 typedef boost::function <void (Pixmap)> PixmapUnusedMessage;
 
 class Communicator
