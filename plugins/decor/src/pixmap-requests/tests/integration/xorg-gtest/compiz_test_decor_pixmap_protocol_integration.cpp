@@ -45,6 +45,8 @@ namespace ct = compiz::testing;
 namespace cd = compiz::decor;
 namespace cdp = compiz::decor::protocol;
 
+using ::testing::ReturnNull;
+using ::testing::Return;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::_;
@@ -84,6 +86,88 @@ class MockClientMessageReceiver
 
 	MOCK_METHOD1 (receiveMsg, void (const XClientMessageEvent &));
 };
+
+class DisplayFetch
+{
+    public:
+
+	virtual ~DisplayFetch () {}
+
+	virtual ::Display * Display () const = 0;
+};
+
+class XFreePixmapWrapper
+{
+    public:
+
+	XFreePixmapWrapper (const DisplayFetch &df) :
+	    mDisplayFetch (df)
+	{
+	}
+
+	int FreePixmap (Pixmap pixmap)
+	{
+	    return XFreePixmap (mDisplayFetch.Display (), pixmap);
+	}
+
+    private:
+
+	const DisplayFetch &mDisplayFetch;
+};
+
+class XErrorTracker
+{
+    public:
+
+	XErrorTracker ();
+	~XErrorTracker ();
+
+	MOCK_METHOD1 (errorHandler, void (int));
+
+    private:
+
+	XErrorHandler handler;
+
+	static int handleXError (Display *dpy, XErrorEvent *ev);
+	static XErrorTracker *tracker;
+};
+
+XErrorTracker * XErrorTracker::tracker = NULL;
+
+XErrorTracker::XErrorTracker ()
+{
+    tracker = this;
+    handler = XSetErrorHandler (handleXError);
+}
+
+XErrorTracker::~XErrorTracker ()
+{
+    tracker = NULL;
+    XSetErrorHandler (handler);
+}
+
+int
+XErrorTracker::handleXError (Display *dpy, XErrorEvent *ev)
+{
+    tracker->errorHandler (ev->error_code);
+    return 0;
+}
+
+bool PixmapValid (Display *d, Pixmap p)
+{
+    Window root;
+    unsigned int width, height, border, depth;
+    int x, y;
+
+    XErrorTracker tracker;
+
+    EXPECT_CALL (tracker, errorHandler (BadDrawable));
+
+    bool success = XGetGeometry (d, p, &root, &x, &y,
+				 &width, &height, &border, &depth);
+
+    return success;
+}
 }
 
 void
@@ -193,4 +277,97 @@ TEST_F (DecorPixmapProtocol, PostDeleteDispatchesClientMessageToReceiver)
 					boost::bind (&cdp::Communicator::handleClientMessage,
 						     &communicator,
 						     _1));
+}
+
+/* Test end to end. Post the delete message and cause the pixmap to be freed */
+
+class DecorPixmapProtocolEndToEnd :
+    public DecorPixmapProtocol,
+    public DisplayFetch
+{
+    public:
+
+	DecorPixmapProtocolEndToEnd () :
+	    freePixmap (*this),
+	    releasePool (new PixmapReleasePool (
+			     boost::bind (&XFreePixmapWrapper::FreePixmap,
+				      &freePixmap,
+				      _1))),
+	    pendingHandler (boost::bind (&MockFindRequestor::findRequestor,
+					 &mockFindRequestor,
+					 _1)),
+	    unusedHandler (boost::bind (&MockFindList::findList,
+					&mockFindList,
+					_1),
+			   releasePool,
+			   boost::bind (&XFreePixmapWrapper::FreePixmap,
+					&freePixmap,
+					_1))
+	{
+	}
+
+	void SetUp ()
+	{
+	    DecorPixmapProtocol::SetUp ();
+
+	    communicator.reset (new cdp::Communicator (
+				    pendingMessage,
+				    deletePixmapMessage,
+				    boost::bind (&cd::PendingHandler::handleMessage,
+						 &pendingHandler,
+						 _1,
+						 _2),
+				    boost::bind (&cd::UnusedHandler::handleMessage,
+						 &unusedHandler,
+						 _1,
+						 _2)));
+	}
+
+	::Display *
+	Display () const
+	{
+	    return DecorPixmapProtocol::Display ();
+	}
+
+	XFreePixmapWrapper       freePixmap;
+	PixmapReleasePool::Ptr   releasePool;
+	cd::PendingHandler       pendingHandler;
+	cd::UnusedHandler        unusedHandler;
+	boost::shared_ptr <cdp::Communicator> communicator;
+	MockFindList             mockFindList;
+	MockFindRequestor        mockFindRequestor;
+	StubDecoration::Ptr      stubDecoration;
+	MockDecorPixmapRequestor mockRequestor;
+
+};
+
+TEST_F (DecorPixmapProtocolEndToEnd, TestFreeNotFoundWindowPixmapImmediately)
+{
+    ::Display *d = Display ();
+
+    XSynchronize (d, 1);
+
+    Pixmap pixmap = XCreatePixmap (d,
+				   DefaultRootWindow (d),
+				   1,
+				   1,
+				   DefaultDepth (d,
+						 DefaultScreen (d)));
+
+    /* We are done with this pixmap */
+    decor_post_delete_pixmap (d,
+			      MOCK_WINDOW,
+			      pixmap);
+
+    EXPECT_CALL (mockFindList, findList (MOCK_WINDOW)).WillOnce (ReturnNull ());
+
+    /* Deliver it to the communicator */
+    WaitForClientMessageOnAndDeliverTo (MOCK_WINDOW,
+					deletePixmapMessage,
+					boost::bind (&cdp::Communicator::handleClientMessage,
+						     communicator.get (),
+						     _1));
+
+    /* Check if the pixmap is still valid */
+    EXPECT_FALSE (PixmapValid (d, pixmap));
 }
