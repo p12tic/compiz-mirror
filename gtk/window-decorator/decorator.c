@@ -615,15 +615,6 @@ request_update_window_decoration_size (WnckWindow *win)
     return TRUE;
 }
 
-void
-destroy_old_pixmap (gpointer pixmap)
-{
-    GdkPixmap *pm = (GdkPixmap *) pixmap;
-    XFreePixmap (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
-		 GDK_PIXMAP_XID (pm));
-    g_object_unref (pm);
-}
-
 /*
  * update_window_decoration_size
  * Returns: FALSE for failure, TRUE for success
@@ -695,16 +686,12 @@ update_window_decoration_size (WnckWindow *win)
 
     /* Destroy the old pixmaps and pictures */
     if (d->pixmap)
-    {
-	gpointer key = GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap));
+	g_object_unref (d->pixmap);
 
-	if (d->old_pixmaps == NULL)
-	    d->old_pixmaps = g_hash_table_new_full (NULL, NULL, NULL,
-						    destroy_old_pixmap);
-
-	g_hash_table_insert (destroyed_pixmaps_table, key, d);
-	g_hash_table_insert (d->old_pixmaps, key, d->pixmap);
-    }
+    if (d->x11Pixmap)
+	decor_post_delete_pixmap (xdisplay,
+				  wnck_window_get_xid (d->win),
+				  d->x11Pixmap);
 
     if (d->buffer_pixmap)
 	g_object_unref (G_OBJECT (d->buffer_pixmap));

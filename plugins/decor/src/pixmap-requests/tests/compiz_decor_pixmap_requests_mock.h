@@ -41,7 +41,7 @@ class MockDecorPixmapDeletor :
 	MockDecorPixmapDeletor ();
 	~MockDecorPixmapDeletor ();
 
-	MOCK_METHOD1 (postDeletePixmap, int (Pixmap p));
+	MOCK_METHOD1 (destroyUnusedPixmap, int (Pixmap p));
 };
 
 class MockDecorPixmapReceiver :

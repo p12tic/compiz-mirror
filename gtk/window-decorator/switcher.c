@@ -487,8 +487,9 @@ update_switcher_window (Window     popup,
 	g_object_unref (G_OBJECT (d->pixmap));
 
     if (d->x11Pixmap)
-	XFreePixmap (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
-		     d->x11Pixmap);
+	decor_post_delete_pixmap (xdisplay,
+				  wnck_window_get_xid (d->win),
+				  d->x11Pixmap);
 
     if (d->buffer_pixmap)
 	g_object_unref (G_OBJECT (d->buffer_pixmap));

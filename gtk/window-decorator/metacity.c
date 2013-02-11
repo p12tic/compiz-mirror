@@ -616,15 +616,6 @@ meta_draw_window_decoration (decor_t *d)
     if (!d->pixmap || !d->picture)
 	return;
 
-    if (d->frame_window)
-    {
-	GdkColormap *cmap;
-	
-	cmap = get_colormap_for_drawable (GDK_DRAWABLE (d->pixmap));
-	gdk_drawable_set_colormap (GDK_DRAWABLE (d->pixmap), cmap);
-	gdk_drawable_set_colormap (GDK_DRAWABLE (d->buffer_pixmap), cmap);
-    }
-
     if (decoration_alpha == 1.0)
 	alpha = 1.0;
 
@@ -692,13 +683,7 @@ meta_draw_window_decoration (decor_t *d)
 	XRenderPictFormat *format;
 
 	if (d->frame_window)
-	{
-	    GdkColormap *cmap;
-
-	    cmap   = get_colormap_for_drawable (GDK_DRAWABLE (d->pixmap));
 	    pixmap = create_pixmap (rect.width, size, d->frame->style_window_rgb);
-	    gdk_drawable_set_colormap (GDK_DRAWABLE (pixmap), cmap);
-	}
 	else
 	    pixmap = create_pixmap (rect.width, size, d->frame->style_window_rgba);
 

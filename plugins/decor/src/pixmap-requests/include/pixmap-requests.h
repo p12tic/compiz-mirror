@@ -83,7 +83,7 @@ class PixmapDestroyQueue
 
 	virtual ~PixmapDestroyQueue () {}
 
-	virtual int postDeletePixmap (Pixmap pixmap) = 0;
+	virtual int destroyUnusedPixmap (Pixmap pixmap) = 0;
 };
 
 class UnusedPixmapQueue
@@ -110,7 +110,7 @@ class PixmapReleasePool :
 	PixmapReleasePool (const FreePixmapFunc &freePixmap);
 
 	void markUnused (Pixmap pixmap);
-	int postDeletePixmap (Pixmap pixmap);
+	int destroyUnusedPixmap (Pixmap pixmap);
 
     private:
 
@@ -131,7 +131,7 @@ class X11PixmapDeletor :
 	{
 	}
 
-	int postDeletePixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay,
+	int destroyUnusedPixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay,
 										0,
 										pixmap); }
 

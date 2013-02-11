@@ -428,9 +428,9 @@ TEST_F (DecorPixmapProtocolDeleteEndToEnd, TestQueuePixmapIfUsed)
     /* Check if the pixmap is still valid */
     EXPECT_TRUE (PixmapValid (d, pixmap));
 
-    /* Call postDeletePixmap on the release pool, it should release
+    /* Call destroyUnusedPixmap on the release pool, it should release
      * the pixmap which was otherwise unused */
-    releasePool->postDeletePixmap (pixmap);
+    releasePool->destroyUnusedPixmap (pixmap);
 
     /* Pixmap should now be invalid */
     EXPECT_FALSE (PixmapValid (d, pixmap));
@@ -454,7 +454,7 @@ class DecorPixmapProtocolPendingEndToEnd :
 
 	    ::Display *d = Display ();
 
-	    decor_post_pending (d, MOCK_WINDOW, frameState, frameType, frameActions);
+	    decor_post_pending (d, MOCK_WINDOW, frameType, frameState, frameActions);
 	}
 
     protected:

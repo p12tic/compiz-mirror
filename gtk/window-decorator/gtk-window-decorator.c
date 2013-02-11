@@ -136,7 +136,6 @@ char *program_name;
 GtkWidget     *switcher_label;
 
 GHashTable    *frame_table;
-GHashTable    *destroyed_pixmaps_table;
 GtkWidget     *action_menu = NULL;
 gboolean      action_menu_mapped = FALSE;
 decor_color_t _title_color[2];
@@ -343,7 +342,6 @@ main (int argc, char *argv[])
     xformat_rgb  = XRenderFindStandardFormat (xdisplay, PictStandardRGB24);
 
     frame_table = g_hash_table_new (NULL, NULL);
-    destroyed_pixmaps_table = g_hash_table_new (NULL, NULL);
 
     if (!create_tooltip_window ())
     {

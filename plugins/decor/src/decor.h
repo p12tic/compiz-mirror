@@ -221,6 +221,11 @@ class DecorScreen :
 	bool registerPaintHandler (compiz::composite::PaintHandler *pHnd);
 	void unregisterPaintHandler ();
 
+    private:
+
+	DecorPixmapRequestorInterface * findWindowRequestor (Window);
+	DecorationListFindMatchingInterface * findWindowDecorations (Window);
+
     public:
 
 	CompositeScreen *cScreen;
@@ -256,7 +261,11 @@ class DecorScreen :
 
 	MatchedDecorClipGroup mMenusClipGroup;
 	X11DecorPixmapRequestor   mRequestor;
-	X11PixmapDeletor::Ptr dl;
+	PixmapReleasePool::Ptr    mReleasePool;
+	PendingHandler            mPendingHandler;
+	UnusedHandler             mUnusedHandler;
+	protocol::Communicator    mCommunicator;
+	X11PixmapDeletor::Ptr     dl;
 };
 
 class DecorWindow :

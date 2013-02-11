@@ -391,7 +391,7 @@ DecorScreen::getTexture (Pixmap pixmap)
 	    return t;
 	}
 
-    DecorPixmap::Ptr pm = boost::make_shared <DecorPixmap> (pixmap, dl);
+    DecorPixmap::Ptr pm = boost::make_shared <DecorPixmap> (pixmap, mReleasePool);
 
     DecorTexture *texture = new DecorTexture (boost::shared_static_cast <DecorPixmapInterface> (pm));
 
@@ -2345,6 +2345,42 @@ DecorWindow::updateSwitcher ()
     isSwitcher = false;
 }
 
+DecorPixmapRequestorInterface *
+DecorScreen::findWindowRequestor (Window window)
+{
+    if (window == screen->root ())
+    {
+	return &mRequestor;
+    }
+    else
+    {
+	CompWindow *w = screen->findWindow (window);
+
+	if (w)
+	    return &(DecorWindow::get (w)->mRequestor);
+
+	return NULL;
+    }
+}
+
+DecorationListFindMatchingInterface *
+DecorScreen::findWindowDecorations (Window window)
+{
+    if (window == screen->root ())
+    {
+	return &decor[DECOR_ACTIVE];
+    }
+    else
+    {
+	CompWindow *w = screen->findWindow (window);
+
+	if (w)
+	    return &(DecorWindow::get (w)->decor);
+
+	return NULL;
+    }
+}
+
 
 /*
  * DecorScreen::handleEvent
@@ -2380,18 +2416,8 @@ DecorScreen::handleEvent (XEvent *event)
 		if (w)
 		    DecorWindow::get (w)->update (true);
 	    }
-	    /* A decoration is pending creation, allow it to be created */
-	    if (event->xclient.message_type == decorPendingAtom)
-	    {
-		CompWindow *w = screen->findWindow (event->xclient.window);
 
-		if (w)
-		{
-		    DecorWindow *dw = DecorWindow::get (w);
-
-		    dw->mRequestor.handlePending (event->xclient.data.l);
-		}
-	    }
+	    mCommunicator.handleClientMessage (event->xclient);
 	    break;
 	default:
 	    /* Check for damage events. If the output or input window
@@ -3015,7 +3041,30 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   NULL)),
     mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=PopupMenu")),
     mRequestor (screen->dpy (), screen->root (), &(decor[DECOR_ACTIVE])),
-    dl (boost::make_shared <X11PixmapDeletor> (screen->dpy ()))
+    mReleasePool (new PixmapReleasePool (
+		      boost::bind (XFreePixmap,
+				   screen->dpy (),
+				   _1))),
+    mPendingHandler (boost::bind (&DecorScreen::findWindowRequestor,
+				  this,
+				  _1)),
+    mUnusedHandler (boost::bind (&DecorScreen::findWindowDecorations,
+				 this,
+				 _1),
+		    mReleasePool,
+		    boost::bind (XFreePixmap,
+				 screen->dpy (),
+				 _1)),
+    mCommunicator (XInternAtom (screen->dpy (), DECOR_PIXMAP_PENDING_ATOM_NAME, FALSE),
+		   XInternAtom (screen->dpy (), DECOR_DELETE_PIXMAP_ATOM_NAME, FALSE),
+		   boost::bind (&PendingHandler::handleMessage,
+				&mPendingHandler,
+				_1,
+				_2),
+		   boost::bind (&UnusedHandler::handleMessage,
+				&mUnusedHandler,
+				_1,
+				_2))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);

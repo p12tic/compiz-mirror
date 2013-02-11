@@ -47,7 +47,7 @@ TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
     boost::shared_ptr <MockDecorPixmapDeletor> mockDeletor = boost::make_shared <MockDecorPixmapDeletor> ();
     DecorPixmap pm (1, boost::shared_static_cast<PixmapDestroyQueue> (mockDeletor));
 
-    EXPECT_CALL (*(mockDeletor.get ()), postDeletePixmap (1)).WillOnce (Return (1));
+    EXPECT_CALL (*(mockDeletor.get ()), destroyUnusedPixmap (1)).WillOnce (Return (1));
 }
 
 TEST(DecorPixmapRequestsTest, TestPendingGeneratesRequest)
@@ -153,7 +153,7 @@ TEST_F (DecorPixmapReleasePool, NoFreeOnPostDeleteIfNotInList)
 {
     EXPECT_CALL (xlibPixmapMock, freePixmap (_)).Times (0);
 
-    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+    releasePool.destroyUnusedPixmap (static_cast <Pixmap> (1));
 }
 
 TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnused)
@@ -161,7 +161,7 @@ TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnused)
     EXPECT_CALL (xlibPixmapMock, freePixmap (1)).Times (1);
 
     releasePool.markUnused (static_cast <Pixmap> (1));
-    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+    releasePool.destroyUnusedPixmap (static_cast <Pixmap> (1));
 }
 
 TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnusedOnceOnly)
@@ -169,8 +169,8 @@ TEST_F (DecorPixmapReleasePool, FreeOnPostDeleteIfMarkedUnusedOnceOnly)
     EXPECT_CALL (xlibPixmapMock, freePixmap (1)).Times (1);
 
     releasePool.markUnused (static_cast <Pixmap> (1));
-    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
-    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+    releasePool.destroyUnusedPixmap (static_cast <Pixmap> (1));
+    releasePool.destroyUnusedPixmap (static_cast <Pixmap> (1));
 }
 
 TEST_F (DecorPixmapReleasePool, UnusedUniqueness)
@@ -179,8 +179,8 @@ TEST_F (DecorPixmapReleasePool, UnusedUniqueness)
 
     releasePool.markUnused (static_cast <Pixmap> (1));
     releasePool.markUnused (static_cast <Pixmap> (1));
-    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
-    releasePool.postDeletePixmap (static_cast <Pixmap> (1));
+    releasePool.destroyUnusedPixmap (static_cast <Pixmap> (1));
+    releasePool.destroyUnusedPixmap (static_cast <Pixmap> (1));
 }
 
 class DecorPendingMessageHandler :

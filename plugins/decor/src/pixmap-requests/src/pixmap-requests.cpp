@@ -17,7 +17,7 @@ DecorPixmap::DecorPixmap (Pixmap pixmap, PixmapDestroyQueue::Ptr d) :
 
 DecorPixmap::~DecorPixmap ()
 {
-    mDeletor->postDeletePixmap (mPixmap);
+    mDeletor->destroyUnusedPixmap (mPixmap);
 }
 
 Pixmap
@@ -113,7 +113,7 @@ PixmapReleasePool::markUnused (Pixmap pixmap)
 }
 
 int
-PixmapReleasePool::postDeletePixmap (Pixmap pixmap)
+PixmapReleasePool::destroyUnusedPixmap (Pixmap pixmap)
 {
     std::list <Pixmap>::iterator it =
 	std::find (mPendingUnusedNotificationPixmaps.begin (),
