@@ -961,12 +961,13 @@ AnnoScreen::handleMotionEvent (int	  xRoot,
 void
 AnnoScreen::handleEvent (XEvent      *event)
 {
-    switch (event->type) {
+    switch (event->type)
+    {
     case MotionNotify:
-	handleMotionEvent (pointerX, pointerY);
     case EnterNotify:
     case LeaveNotify:
 	handleMotionEvent (pointerX, pointerY);
+	break;
     default:
 	if (event->type == cScreen->damageEvent () + XDamageNotify)
 	{

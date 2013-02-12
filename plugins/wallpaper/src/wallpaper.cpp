@@ -416,7 +416,8 @@ WallpaperScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 }
 
 void
-WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
+WallpaperWindow::drawBackgrounds (const GLMatrix &transform,
+				  const GLWindowPaintAttrib &attrib,
 				  const CompRegion &region,
 				  unsigned int mask,
 				  WallpaperBackgrounds& bg,
@@ -428,11 +429,12 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
     GLTexture::Matrix   matrix;
     GLTexture::MatrixList tmpMatrixList;
     WallpaperBackground *back = ws->getBackgroundForViewport (bg);
-	GLFragment::Attrib tmpAttrib = attrib;
+    GLWindowPaintAttrib tmpAttrib = attrib;
 
     tmpMatrixList.push_back (matrix);
 
-    gWindow->geometry().reset();
+    GLVertexBuffer *vb = gWindow->vertexBuffer ();
+    vb->begin ();
 
     tmpMatrixList[0] = back->fillTexMatrix[0];
 
@@ -451,17 +453,14 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
 
     if (ws->optionGetCycleWallpapers ())
     {
-	if (fadingIn)
-	    tmpAttrib.setOpacity ((OPAQUE * (1.0f - ws->alpha)) * (attrib.getOpacity () / (float)OPAQUE));
-	else
-	    tmpAttrib.setOpacity ((OPAQUE * ws->alpha) * (attrib.getOpacity () / (float)OPAQUE));
+	tmpAttrib.opacity *= fadingIn ? (1.0f - ws->alpha) : ws->alpha;
     }
 
-    if (tmpAttrib.getOpacity () != OPAQUE)
+    if (tmpAttrib.opacity != OPAQUE)
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
-    if (gWindow->geometry ().vCount)
-	gWindow->glDrawTexture(back->fillTex[0], tmpAttrib, mask);
+    if (vb->end ())
+	gWindow->glDrawTexture(back->fillTex[0], transform, tmpAttrib, mask);
 
     if (back->imgSize.width () && back->imgSize.height ())
     {
@@ -469,7 +468,7 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
 	float  s1, s2;
 	int    x, y;
 
-	gWindow->geometry ().vCount = gWindow->geometry ().indexCount = 0;
+	vb->begin ();
 	tmpMatrixList[0] = back->imgTex[0]->matrix ();
 
 	if (back->imagePos == WallpaperOptions::BgImagePosScaleAndCrop)
@@ -558,21 +557,23 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
 	    gWindow->glAddGeometry (tmpMatrixList, reg, region);
 	}
 
-	if (gWindow->geometry ().vCount)
-	    gWindow->glDrawTexture (back->imgTex[0], tmpAttrib, mask | PAINT_WINDOW_BLEND_MASK);
+	if (vb->end ())
+	    gWindow->glDrawTexture (back->imgTex[0], transform, tmpAttrib, mask | PAINT_WINDOW_BLEND_MASK);
     }
 }
 
 bool
 WallpaperWindow::glDraw (const GLMatrix &transform,
-			 GLFragment::Attrib &attrib,
+			 const GLWindowPaintAttrib &attrib,
 			 const CompRegion &region,
 			 unsigned int mask)
 {
     WALLPAPER_SCREEN (screen);
 
+    bool ret = gWindow->glDraw (transform, attrib, region, mask);
+
     if ((!ws->desktop || ws->desktop == window) && !ws->backgroundsPrimary.empty() &&
-	window->alpha () && window->type () & CompWindowTypeDesktopMask)
+	window->type () & CompWindowTypeDesktopMask)
     {
 	int filterIdx;
 	GLTexture::Filter   saveFilter;
@@ -588,18 +589,17 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 	ws->gScreen->setFilter (filterIdx, GLTexture::Good);
 
 	if (ws->optionGetCycleWallpapers () && ws->rotateTimer.active ())
-	    drawBackgrounds (attrib, region, mask,
+	    drawBackgrounds (transform, attrib, region, mask,
 			     ws->backgroundsSecondary, true);
-	drawBackgrounds (attrib, region, mask,
+	drawBackgrounds (transform, attrib, region, mask,
 			 ws->backgroundsPrimary, false);
 
 	ws->gScreen->setFilter (filterIdx, saveFilter);
 
 	ws->desktop = window;
-	attrib.setOpacity (OPAQUE);
     }
 
-    return gWindow->glDraw (transform, attrib, region, mask);
+    return ret;
 }
 
 bool

@@ -905,7 +905,8 @@ PrivateWindow::updateRegion ()
 
     priv->region = priv->inputRegion = emptyRegion;
 
-    if (screen->XShape ())
+    bool useXShape = screen->XShape ();
+    if (useXShape)
     {
 	int order;
 
@@ -929,7 +930,7 @@ PrivateWindow::updateRegion ()
 	nBounding = 1;
     }
 
-    if (nInput < 1)
+    if (!useXShape)
     {
 	inputShapeRects = &r;
 	nInput = 1;
@@ -3445,7 +3446,7 @@ CompWindow::configureXWindow (unsigned int valueMask,
 	    PrivateWindow::stackAncestors (this, xwc, ancestors);
 
 	    for (CompWindowList::reverse_iterator w = ancestors.rbegin ();
-		 w != ancestors.rend (); w++)
+		 w != ancestors.rend (); ++w)
 	    {
 		(*w)->priv->reconfigureXWindow (CWSibling | CWStackMode, xwc);
 		xwc->sibling = ROOTPARENT (*w);
@@ -3455,7 +3456,7 @@ CompWindow::configureXWindow (unsigned int valueMask,
 	    xwc->sibling = ROOTPARENT (this);
 
 	    for (CompWindowList::reverse_iterator w = transients.rbegin ();
-		 w != transients.rend (); w++)
+		 w != transients.rend (); ++w)
 	    {
 		(*w)->priv->reconfigureXWindow (CWSibling | CWStackMode, xwc);
 		xwc->sibling = ROOTPARENT (*w);
@@ -4058,7 +4059,7 @@ CompScreenImpl::focusTopMostWindow ()
     CompWindow  *focus = NULL;
     WindowManager::reverse_iterator it = windowManager.rbegin ();
 
-    for (; it != windowManager.rend (); it++)
+    for (; it != windowManager.rend (); ++it)
     {
 	CompWindow *w = *it;
 
@@ -5428,6 +5429,9 @@ PrivateWindow::processMap ()
 	xwc.height = 0;
 
 	xwcm = adjustConfigureRequestForGravity (&xwc, CWX | CWY, gravity, 1);
+
+	xwc.width = priv->serverGeometry.width ();
+	xwc.height = priv->serverGeometry.height ();
 
 	window->validateResizeRequest (xwcm, &xwc, ClientTypeApplication);
 

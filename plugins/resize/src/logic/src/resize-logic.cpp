@@ -141,6 +141,9 @@ ResizeLogic::handleEvent (XEvent *event)
 		    w = mScreen->findWindow (event->xclient.window);
 		    if (w)
 		    {
+			mScreen->freeWindowInterface (w);
+			w = NULL;
+
 			CompOption::Vector o (0);
 
 			o.push_back (CompOption ("window",
@@ -593,6 +596,7 @@ ResizeLogic::finishResizing ()
 
     resizeInformationAtom->deleteProperty (w->id ());
 
+    mScreen->freeWindowInterface (w);
     w = NULL;
 }
 
@@ -1236,22 +1240,22 @@ ResizeLogic::initiateResize (CompAction		*action,
 	       just prevent input to the window */
 
 	    if (!mask)
+	    {
+		mScreen->freeWindowInterface (w);
 		return true;
+	    }
 	}
 
-	if (mScreen->otherGrabExist ("resize", NULL))
+	if (mScreen->otherGrabExist ("resize", NULL) ||
+	    this->w ||
+	    (w->type () & (CompWindowTypeDesktopMask |
+	                   CompWindowTypeDockMask |
+	                   CompWindowTypeFullscreenMask)) ||
+	    w->overrideRedirect ())
+	{
+	    mScreen->freeWindowInterface (w);
 	    return false;
-
-	if (this->w)
-	    return false;
-
-	if (w->type () & (CompWindowTypeDesktopMask |
-		          CompWindowTypeDockMask	 |
-		          CompWindowTypeFullscreenMask))
-	    return false;
-
-	if (w->overrideRedirect ())
-	    return false;
+	}
 
 	if (state & CompAction::StateInitButton)
 	    action->setState (action->state () | CompAction::StateTermButton);
@@ -1355,7 +1359,7 @@ ResizeLogic::initiateResize (CompAction		*action,
 	    if (sourceExternalApp)
 	    {
 		int output = w->outputDevice ();
-		int lco, tco, bco, rco;
+
 		bool sl = mScreen->outputDevs ().at (output).workArea ().left () >
 			  w->serverGeometry ().left ();
 		bool sr = mScreen->outputDevs ().at (output).workArea ().right () <
@@ -1365,17 +1369,15 @@ ResizeLogic::initiateResize (CompAction		*action,
 		bool sb = mScreen->outputDevs ().at (output).workArea ().bottom () <
 			  w->serverGeometry ().bottom ();
 
-		lco = tco = bco = rco = output;
-
 		/* Prevent resizing beyond work area edges when resize is
 		   initiated externally (e.g. with window frame or menu)
 		   and not with a key (e.g. alt+button) */
 		offWorkAreaConstrained = true;
 
-		lco = getOutputForEdge (output, TOUCH_RIGHT, sl);
-		rco = getOutputForEdge (output, TOUCH_LEFT, sr);
-		tco = getOutputForEdge (output, TOUCH_BOTTOM, st);
-		bco = getOutputForEdge (output, TOUCH_TOP, sb);
+		int lco = getOutputForEdge (output, TOUCH_RIGHT, sl);
+		int rco = getOutputForEdge (output, TOUCH_LEFT, sr);
+		int tco = getOutputForEdge (output, TOUCH_BOTTOM, st);
+		int bco = getOutputForEdge (output, TOUCH_TOP, sb);
 
 		/* Now we need to form one big rect which describes
 		 * the available workarea */
@@ -1407,6 +1409,8 @@ ResizeLogic::initiateResize (CompAction		*action,
 
         maximized_vertically = false;
     }
+    else if (w)
+	mScreen->freeWindowInterface (w);
 
     return false;
 }
@@ -1549,6 +1553,8 @@ ResizeLogic::initiateResizeDefaultMode (CompAction	    *action,
 	mode = ResizeOptions::ModeRectangle;
     if (w->evaluate (this->options->optionGetStretchMatch ()))
 	mode = ResizeOptions::ModeStretch;
+
+    mScreen->freeWindowInterface (w);
 
     return initiateResize (action, state, options, mode);
 }

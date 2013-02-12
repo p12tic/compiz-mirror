@@ -608,6 +608,10 @@ WallWindow::activate ()
 	dx       = viewport.x ();
 	dy       = viewport.y ();
 
+	/* Handle negative value */
+	dx = (unsigned int) dx % screen->vpSize ().width ();
+	dy = (unsigned int) dy % screen->vpSize ().height ();
+
 	dx -= screen->vp ().x ();
 	dy -= screen->vp ().y ();
 
@@ -637,8 +641,8 @@ WallWindow::activate ()
 	    mask |= d.x () !=0 ? CWX : 0;
 	    mask |= d.y () !=0 ? CWY : 0;
 
-	    xwc.x = window->serverGeometry ().x () + dx;
-	    xwc.y = window->serverGeometry ().y () + dy;
+	    xwc.x = window->serverGeometry ().x () + d.x ();
+	    xwc.y = window->serverGeometry ().y () + d.y ();
 
 	    window->configureXWindow (mask, &xwc);
 	}

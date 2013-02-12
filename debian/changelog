@@ -1,3 +1,284 @@
+compiz (1:0.9.9~daily13.02.08-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * thumbnail.xml.in needs some love (LP: #1113459)
+  * Thumbnail plugin: Window title text is rendered into transparency
+    and glow/background are too large (LP: #1099100)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3601
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 08 Feb 2013 04:01:47 +0000
+
+compiz (1:0.9.9~daily13.02.07-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * [regression][GLES] gears plugin does not build any more (LP:
+    #1020822)
+  * Cube Gears plugin: Cylinders inside the gears are not rendered
+    correctly (LP: #1117311)
+  * compiz-profile-active-Default.convert and compiz-profile-active-
+    Default.convert are referring to refres_rate and detect_refres_rate
+    (LP: #1115243)
+  * cppcheck static code analysis reveals some true positives (LP:
+    #1114525)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3599
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 07 Feb 2013 06:19:48 +0000
+
+compiz (1:0.9.9~daily13.02.04-0ubuntu1) raring; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * Spread - Window glow is incorrectly painted in the screen when
+    switching spreaded application (LP: #1109805)
+
+  [ MC Return ]
+  * Coverity MISSING_BREAK - CID 12463 (LP: #1101561)
+  * Thumbnail plugin: Window title text is rendered into transparency
+    and glow/background are too large (LP: #1099100)
+  * Showmouse plugin code: Needs cleanup (LP: #1105969)
+  * Coverity SECURE_CODING - CID 10019 (LP: #957582)
+  * Coverity SECURE_CODING - CID 12511 (LP: #1101605)
+  * Coverity SECURE_CODING - CID 12512 (LP: #1101571)
+  * Keyboard shortcut overlay says Ctrl+Super+Down "minimises" the
+    current window, but it doesn't (LP: #966099)
+  * Coverity SECURE_CODING - CID 10020 (LP: #957587)
+  * Coverity SECURE_CODING - CID 12529 (LP: #1101641)
+  * Coverity MISSING_BREAK - CID 12464 (LP: #1101549)
+  * Coverity SECURE_CODING - CID 12519 (LP: #1101565)
+  * Coverity SECURE_CODING - CID 12516 (LP: #1101499)
+  * [GLES] Showmouse plugin needs port to OpenGL|ES (LP: #1106270)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3594
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 04 Feb 2013 04:01:58 +0000
+
+compiz (1:0.9.9~daily13.01.25-0ubuntu1) raring; urgency=low
+
+  [ Didier Roche ]
+  * Really take default patched hsize and vsize and don't override them
+    to fix (LP: #868423)
+
+  [ sampo555 ]
+  * [regression] Window resize granularity is lost when restored after
+    using Grid (LP: #925867)
+  * Window management - Restoring a grid-placed window by dragging the
+    title bar downwards does not restore the original window width (LP:
+    #878516)
+
+  [ Daniel van Vugt ]
+  * Several memory leaks in
+    google::protobuf::DescriptorPool::InternalAddGeneratedFile() from
+    google::protobuf::protobuf_AddDesc_*() (LP: #1102829)
+  * Several leaks in g_settings_new() [g_object_new()] from
+    ccsGSettingsNewNoPath() [ccs_gsettings_interface_wrapper.c:184] (LP:
+    #1097649)
+  * Several memory leaks in g_signal_new() ... from
+    ccsGSettingsWrapperNewForSchema()
+    [ccs_gsettings_interface_wrapper.c:184] from initBackend()
+    [gsettings.c:468] (LP: #1102822)
+
+  [ Sam Spilsbury ]
+  * Several memory leaks in strdup() from
+    ccsGSettingsIntegratedSettingReadValue() from
+    ccsGNOMEIntegrationBackendReadISAndSetSettingForType() from
+    ccsGNOMEIntegrationBackendReadOptionIntoSetting() (LP: #1100564)
+
+  [ MC Return ]
+  * Coverity MISSING_BREAK - CID 12468 (LP: #1101430)
+  * Coverity MISSING_BREAK - CID 12466 (LP: #1101558)
+  * Coverity MISSING_BREAK - CID 12467 (LP: #1101465)
+  * Showmouse plugin: Possible values of the particle life setting can
+    destroy the plugin's functionality (LP: #1098877)
+  * Coverity MISSING_BREAK - CID 12465 (LP: #1101557)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3582
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 25 Jan 2013 04:03:43 +0000
+
+compiz (1:0.9.9~daily13.01.21-0ubuntu1) raring; urgency=low
+
+  [ Brandon Schaefer ]
+  * Window Management - Implement maximize and semi-maximise transitions
+    (LP: #689792)
+
+  [ Sam Spilsbury ]
+  * Several memory leaks in ccsIntegratedSettingListAppend() from
+    ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPredicate()
+    from
+    ccsIntegratedSettingsStorageDefaultFindMatchingSettingsByPluginAndSe
+    ttingName() (LP: #1100539)
+  * Several leaks in g_settings_new() [g_object_new()] from
+    ccsGSettingsNewNoPath() [ccs_gsettings_interface_wrapper.c:184] (LP:
+    #1097649)
+  * Compiz reports incorrect _NET_DESKTOP_GEOMETRY until first viewport
+    switch (LP: #1096455)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3569
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 21 Jan 2013 04:01:41 +0000
+
+compiz (1:0.9.9~daily13.01.17-0ubuntu1) raring; urgency=low
+
+  [ Didier Roche ]
+  * Launcher - Workspace switcher should not be in the Launcher by
+    default (LP: #868423)
+
+  [ MC Return ]
+  * Workspacenames plugin: Requires text plugin to work (LP: #1100172)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3564
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 17 Jan 2013 07:03:41 +0000
+
+compiz (1:0.9.9~daily13.01.14-0ubuntu1) raring; urgency=low
+
+  [ sampo555 ]
+  * compiz crashed with SIGSEGV in DodgeAnim::applyDodgeTransform() (LP:
+    #1048840)
+  * compiz crashing if window un-/minimize animation is "Random" (LP:
+    #1098185)
+
+  [ Daniel van Vugt ]
+  * Several leaks in new GLProgram from compileProgram() from
+    GLScreen::getProgram() from GLWindowAutoProgram::getProgram() (LP:
+    #1097644)
+
+  [ Sam Spilsbury ]
+  * Several leaks in ccsIntegratedSettingListAppend() ... from
+    ccsGNOMEIntegrationBackendGetIntegratedSetting() from readSetting
+    (gsettings.c:375) (LP: #1097661)
+
+  [ MC Return ]
+  * Thumbnail Window Previews: Flickering of background/glow and window
+    title text (LP: #1098758)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3561
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 14 Jan 2013 04:03:09 +0000
+
+compiz (1:0.9.9~daily13.01.11-0ubuntu1) raring; urgency=low
+
+  [ Jussi Pakkanen ]
+  * Build warning "multiple rules generate gtk/gnome/compiz.desktop.
+    build will not be correct; continuing anyway" (LP: #1086789)
+  * Build uses pyrexc without checking that it exists (LP: #1086704)
+
+  [ Iven Hsu ]
+  * KWD: Appmenu always pops up at top-left corner of the screen (LP:
+    #1089863)
+
+  [ Matija Skala ]
+  * findcompiz_install doesn't work (LP: #1051595)
+
+  [ Michail Bitzes ]
+  * [regression-r3320] firepaint doesn't paint any fire any more (LP:
+    #1048505)
+
+  [ Timo Jyrinki ]
+  * Default blacklist string shouldn't contain double escape (LP:
+    #1091103)
+
+  [ Scott Moreau <oreaus@gmail.com>, MC Return <mc.return@gmx.net>, Sam Spilsbury ]
+  * [needs-packaging] Wishlist: Missing plug-In: Wizard (LP: #1012330)
+
+  [ Brandon Schaefer ]
+  * Window management - When a monitor is disconnected, the windows do
+    not move to the remaining monitor and the Launcher pips do not
+    update (LP: #1002246)
+
+  [ MC Return ]
+  * [regression] thumbnail plugin does not build any more (LP: #1020825)
+  * [regression-r3320][GLES]: showmouse plugin does not work anymore at
+    all (LP: #1048267)
+
+  [ Robert M <osfan6313@gmail.com>, Sam Spilsbury ]
+  * CCSM segfaults if no settings found (LP: #1092651)
+
+  [ Daniel van Vugt ]
+  * [regression] Window resize granularity is lost when restored after
+    using Grid (LP: #925867)
+  * compiz_test_resize_logic: Multiple errors: Conditional jump or move
+    depends on uninitialised value(s) (LP: #1097179)
+  * Add support for blacklisting some drivers from using unredirected
+    fullscreen windows (LP: #1089246)
+  * [regression] compiz spends 31% of its CPU time in regexec() (LP:
+    #1095001)
+  * GLShaderCache::priv [PrivateShaderCache] is leaked (LP: #1097664)
+  * [regression] r3523: Restored windows' contents are offset from (not
+    aligned with) their frames (LP: #1089279)
+  * On ARM lp:compiz defaults to GL instead of GLES and FTBFS unless you
+    -DBUILD_GLES=ON (LP: #1088414)
+  * [regression][GLES] wallpaper plugin does not build any more (LP:
+    #1020830)
+  * [regression-r3320] firepaint doesn't paint any fire any more (LP:
+    #1048505)
+  * findcompiz_install doesn't work (LP: #1051595)
+  * [Regression] Minimizing a window creates an input-insensitive area
+    if you have unityshell loaded (LP: #1089811)
+  * [clang] lp:compiz r3523 FTBFS: unused function
+    'ListValueToSettingValueList' [-Werror,-Wunused-function]  (LP:
+    #1089250)
+  * compiz fails to configure on arm with -DCOMPIZ_BUILD_TESTING=ON
+    [package 'gl' not found] (LP: #1088419)
+  * PrivateGLScreen::projection is leaked (LP: #1097657)
+  * [clang] Multiple segfaults in test: SetSemantics (LP: #1089251)
+  * Plugin names are not sorted (they're shown in directory order) when
+    cmake is run (LP: #1096780)
+  * Windows don't respond to input (mouse clicks) if XShape is disabled
+    or unavailable (LP: #1087193)
+  * cmake suggests (kind of) expo is disabled but it still builds
+    correctly. (LP: #1083027)
+  * EGL/GLES compiz builds do a eglWaitGL (synchronous wait) on every
+    frame, likely to slow things down (LP: #1086779)
+  * Incorrect detection of shader support on fglrx (LP: #1026920)
+  * 1:0.9.8+bzr3319-0ubuntu1 regression: keeps setting gsettings keys to
+    wrong values (LP: #1063617)
+  * resize leaks memory in multiple locations calling
+    resize::CompScreenImpl::findWindow() -> operator new() (LP:
+    #1097126)
+
+  [ Andrea Azzarone ]
+  * Modal dialogs don't appear on the same workspace/monitor as their
+    parent window (LP: #754508)
+  * Multimonitor: New windows open on the wrong monitor, Place Plugin
+    settings silently ignored (LP: #874146)
+
+  [ Sam Spilsbury ]
+  * [regression][GLES] cubeaddon plugin does not build any more (LP:
+    #1020823)
+  * [regression-r3320] Animations and modules/plugins missing in Ubuntu
+    12.10 and 13.04 (LP: #1069112)
+  * [nvidia] Moving or resizing windows freezes and stutters on nvidia
+    (especially if some other window is redrawing). (LP: #1027211)
+  * Clicking on semi-maximized windows in a different workspace fails to
+    switch to the correct workspace (LP: #1037164)
+  * CCSM segfaults if no settings found (LP: #1092651)
+  * Building compiz with clang++ on raring fails to build libgtest (LP:
+    #1095906)
+  * Using grid-resize prevents windows from maximizing correctly (LP:
+    #1093757)
+  * 1:0.9.8+bzr3319-0ubuntu1 regression: keeps setting gsettings keys to
+    wrong values (LP: #1063617)
+  * ccp can fail to compile, as CompizPlugin is not included (LP:
+    #1090845)
+  * opengl plugin FTBFS with clang (LP: #1095915)
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * FTBFS after python2.7 upgrade - missing pyconfig.h (LP: #1088996)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3554
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 11 Jan 2013 04:03:03 +0000
+
 compiz (1:0.9.9~daily12.12.05-0ubuntu2) raring; urgency=low
 
   * Backport a tentative fix from rev 3387 for LP: #1060327

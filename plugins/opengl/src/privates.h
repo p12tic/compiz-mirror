@@ -160,6 +160,8 @@ class PrivateGLScreen :
 
 	void updateView ();
 
+	bool driverIsBlacklisted (const char *regex) const;
+
     public:
 
 	GLScreen        *gScreen;
@@ -218,6 +220,11 @@ class PrivateGLScreen :
 
 	Pixmap rootPixmapCopy;
 	CompSize rootPixmapSize;
+
+	const char *glVendor, *glRenderer, *glVersion;
+
+	mutable CompString prevRegex;
+	mutable bool       prevBlacklisted;
 };
 
 class PrivateGLWindow :

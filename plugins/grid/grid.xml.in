@@ -539,6 +539,17 @@
 			<_long>Draw Window Resize Indicator</_long>
 			<default>true</default>
 		</option>
+		<option name="draw_stretched_window" type="bool">
+			<_short>Draw Stretched Window</_short>
+			<_long>Draw stretched window animation</_long>
+			<default>true</default>
+		</option>
+		<option name="animation_duration" type="int">
+			<_short>Animation Duration</_short>
+			<_long>Grid animation duration (in ms)</_long>
+			<default>350</default>
+			<min>0</min>
+		</option>
 		<option name="outline_color" type="color">
 			<_short>Outline Color</_short>
 			<_long>Color of the resize indicator outline</_long>
