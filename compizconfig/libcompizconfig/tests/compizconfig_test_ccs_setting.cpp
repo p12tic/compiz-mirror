@@ -500,7 +500,11 @@ class CopyRawValue <const char *> :
 
 	ReturnType operator () ()
 	{
-	    return strdup (Parent::mValue);
+	    /* Passing an illegal value is okay */
+	    if (Parent::mValue)
+		return strdup (Parent::mValue);
+	    else
+		return NULL;
 	}
 
     private:
@@ -524,8 +528,11 @@ class CopyRawValue <cci::SettingValueListWrapper::Ptr> :
 
 	ReturnType operator () ()
 	{
-	    return ccsCopyList (*Parent::mValue,
-				Parent::mValue->setting ().get ());
+	    if (Parent::mValue)
+		return ccsCopyList (*Parent::mValue,
+				    Parent::mValue->setting ().get ());
+	    else
+		return NULL;
 	}
 };
 
