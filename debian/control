@@ -54,6 +54,7 @@ Build-Depends: cmake (>= 2.6),
                python-pyrex,
                gnome-control-center-dev,
                gsettings-desktop-schemas-dev,
+               libxorg-gtest-dev,
 Standards-Version: 3.9.3
 # If you aren't a member of ~compiz-team but need to upload packaging changes,
 # just go ahead.  ~compiz-team will notice and sync up the code again.
