@@ -186,6 +186,7 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		       	     unsigned int mask)
 {
     GLMatrix sTransform = transform;
+    GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
 
     bool status = true;
 
@@ -208,12 +209,8 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-    glPushMatrix ();
-    glLoadMatrixf (sTransform.getMatrix ());
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f (1.0, 1.0, 1.0, alpha);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     if (back_img.size ())
     {
@@ -229,7 +226,6 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		mesh[x][y][1] =
 		    (y / (MESH_H - 1.0) ) +
 		    (0.02 * sin ( (mesh[x][y][0] * 8) + mMove) );
-		;
 	    }
 	}
 
@@ -256,11 +252,15 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    GLTexture::Matrix mat = tex->matrix ();
 
-	    glTranslatef (x, y, 0);
+	    sTransform.translate (x, y, 0);
 
 	    float cx1, cx2, cy1, cy2;
 
-	    glBegin (GL_QUADS);
+	    std::vector<GLfloat> coords;
+	    std::vector<GLfloat> vertices;
+
+	    coords.reserve (12 * (MESH_W - 1) * (MESH_H - 1));
+	    vertices.reserve (18 * (MESH_W - 1) * (MESH_H - 1));
 
 	    for (x = 0; x < MESH_W - 1; x++)
 	    {
@@ -271,30 +271,56 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		    cy1 = (y / (MESH_H - 1.0) ) * backSize.height ();
 		    cy2 = ( (y + 1) / (MESH_H - 1.0) ) * backSize.height ();
 
-		    glTexCoord2f (COMP_TEX_COORD_X (mat, cx1),
-				  COMP_TEX_COORD_Y (mat, cy1) );
-		    glVertex2f (mesh[x][y][0] *
-			        backSize.width (),
-			        mesh[x][y][1] * backSize.height ());
-		    glTexCoord2f (COMP_TEX_COORD_X (mat, cx1),
-				  COMP_TEX_COORD_Y (mat, cy2) );
-		    glVertex2f (mesh[x][y + 1][0] *
-				backSize.width (),
-				mesh[x][y + 1][1] * backSize.height ());
-		    glTexCoord2f (COMP_TEX_COORD_X (mat, cx2),
-				  COMP_TEX_COORD_Y (mat, cy2) );
-		    glVertex2f (mesh[x + 1][y + 1][0] *
-				backSize.width (),
-				mesh[x + 1][y + 1][1] * backSize.height ());
-		    glTexCoord2f (COMP_TEX_COORD_X (mat, cx2),
-				  COMP_TEX_COORD_Y (mat, cy1) );
-		    glVertex2f (mesh[x + 1][y][0] *
-				backSize.width (),
-				mesh[x + 1][y][1] * backSize.height ());
+		    coords.push_back (COMP_TEX_COORD_X (mat, cx1));
+		    coords.push_back (COMP_TEX_COORD_Y (mat, cy1));
+
+		    coords.push_back (COMP_TEX_COORD_X (mat, cx1));
+		    coords.push_back (COMP_TEX_COORD_Y (mat, cy2));
+
+		    coords.push_back (COMP_TEX_COORD_X (mat, cx2));
+		    coords.push_back (COMP_TEX_COORD_Y (mat, cy2));
+
+		    coords.push_back (COMP_TEX_COORD_X (mat, cx2));
+		    coords.push_back (COMP_TEX_COORD_Y (mat, cy2));
+
+		    coords.push_back (COMP_TEX_COORD_X (mat, cx2));
+		    coords.push_back (COMP_TEX_COORD_Y (mat, cy1));
+
+		    coords.push_back (COMP_TEX_COORD_X (mat, cx1));
+		    coords.push_back (COMP_TEX_COORD_Y (mat, cy1));
+
+		    vertices.push_back (mesh[x][y][0] * backSize.width ());
+		    vertices.push_back (mesh[x][y][1] * backSize.height ());
+		    vertices.push_back (0.0f);
+
+		    vertices.push_back (mesh[x][y + 1][0] * backSize.width ());
+		    vertices.push_back (mesh[x][y + 1][1] * backSize.height ());
+		    vertices.push_back (0.0f);
+
+		    vertices.push_back (mesh[x + 1][y + 1][0] * backSize.width ());
+		    vertices.push_back (mesh[x + 1][y + 1][1] * backSize.height ());
+		    vertices.push_back (0.0f);
+
+		    vertices.push_back (mesh[x + 1][y + 1][0] * backSize.width ());
+		    vertices.push_back (mesh[x + 1][y + 1][1] * backSize.height ());
+		    vertices.push_back (0.0f);
+
+		    vertices.push_back (mesh[x + 1][y][0] * backSize.width ());
+		    vertices.push_back (mesh[x + 1][y][1] * backSize.height ());
+		    vertices.push_back (0.0f);
+
+		    vertices.push_back (mesh[x][y][0] * backSize.width ());
+		    vertices.push_back (mesh[x][y][1] * backSize.height ());
+		    vertices.push_back (0.0f);
 		}
 	    }
 
-	    glEnd ();
+	    stream->begin (GL_TRIANGLES);
+	    stream->color4f (1.0, 1.0, 1.0, alpha);
+	    stream->addVertices (vertices.size () / 3, &vertices[0]);
+	    stream->addTexCoords (0, coords.size () / 2, &coords[0]);
+	    if (stream->end ())
+		stream->render (sTransform);
 
 	    if (screen->outputDevs ().size () > 1)
 	    {
@@ -313,7 +339,7 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		y = (screen->height () - backSize.height ()) / 2;
 	    }
 
-	    glTranslatef (-x, -y, 0);
+	    sTransform.translate (-x, -y, 0);
 
 	    tex->disable ();
 
@@ -346,34 +372,68 @@ SplashScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    GLTexture::Matrix mat = tex->matrix ();
 
-	    glTranslatef (x, y, 0);
+	    sTransform.translate (x, y, 0);
 
-	    glBegin (GL_QUADS);
-	    glTexCoord2f (COMP_TEX_COORD_X (mat, 0), COMP_TEX_COORD_Y (mat, 0) );
-	    glVertex2f (0, 0);
-	    glTexCoord2f (COMP_TEX_COORD_X (mat, 0),
-			  COMP_TEX_COORD_Y (mat, logoSize.height ()) );
-	    glVertex2f (0, logoSize.height ());
-	    glTexCoord2f (COMP_TEX_COORD_X (mat, logoSize.width ()),
-			  COMP_TEX_COORD_Y (mat, logoSize.height ()) );
-	    glVertex2f (logoSize.width (), logoSize.height ());
-	    glTexCoord2f (COMP_TEX_COORD_X (mat, logoSize.width ()),
-			  COMP_TEX_COORD_Y (mat, 0) );
-	    glVertex2f (logoSize.width (), 0);
-	    glEnd ();
+	    GLfloat coords[12];
+	    GLfloat vertices[18];
 
-	    glTranslatef (-x, -y, 0);
+	    coords[0] = COMP_TEX_COORD_X (mat, 0);
+	    coords[1] = COMP_TEX_COORD_Y (mat, 0);
+
+	    coords[2] = COMP_TEX_COORD_X (mat, 0);
+	    coords[3] = COMP_TEX_COORD_Y (mat, logoSize.height ());
+
+	    coords[4] = COMP_TEX_COORD_X (mat, logoSize.width ());
+	    coords[5] = COMP_TEX_COORD_Y (mat, logoSize.height ());
+
+	    coords[6] = COMP_TEX_COORD_X (mat, logoSize.width ());
+	    coords[7] = COMP_TEX_COORD_Y (mat, logoSize.height ());
+
+	    coords[8] = COMP_TEX_COORD_X (mat, logoSize.width ());
+	    coords[9] = COMP_TEX_COORD_Y (mat, 0);
+
+	    coords[10] = COMP_TEX_COORD_X (mat, 0);
+	    coords[11] = COMP_TEX_COORD_Y (mat, 0);
+
+	    vertices[0] = 0;
+	    vertices[1] = 0;
+	    vertices[2] = 0;
+
+	    vertices[3] = 0;
+	    vertices[4] = logoSize.height ();
+	    vertices[5] = 0;
+
+	    vertices[6] = logoSize.width ();
+	    vertices[7] = logoSize.height ();
+	    vertices[8] = 0;
+
+	    vertices[9] = logoSize.width ();
+	    vertices[10] = logoSize.height ();
+	    vertices[11] = 0;
+
+	    vertices[12] = logoSize.width ();
+	    vertices[13] = 0;
+	    vertices[14] = 0;
+
+	    vertices[15] = 0;
+	    vertices[16] = 0;
+	    vertices[17] = 0;
+
+	    stream->begin (GL_TRIANGLES);
+	    stream->color4f (1.0, 1.0, 1.0, alpha);
+	    stream->addVertices (6, vertices);
+	    stream->addTexCoords (0, 6, coords);
+	    if (stream->end ())
+		stream->render (sTransform);
+
+	    sTransform.translate (-x, -y, 0);
 
 	    tex->disable ();
 	}
     }
 
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
     glDisable (GL_BLEND);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4usv (defaultColor);
-    glPopMatrix ();
     return status;
 }
 
