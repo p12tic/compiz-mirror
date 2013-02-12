@@ -22,6 +22,10 @@ include (CompizPackage)
 # GSettings schema recompilation
 include (CompizGSettings)
 
+# Google Test and Xorg-GTest
+include (GoogleTest)
+include (XorgGTest)
+
 include (cmake/base.cmake)
 # Check if specific function is present in library.
 include (CheckFunctionExists)
@@ -137,45 +141,33 @@ install (
 
 if (COMPIZ_BUILD_TESTING)
 
-    # Build Google Test and make its headers known
-    find_package (GTest)
+    find_package (GoogleTest)
 
-    if (NOT GTEST_FOUND)
+    if (GOOGLE_TEST_AND_MOCK_FOUND)
 
-	# Check for google test and build it locally
-	set (GTEST_ROOT_DIR
-	     "/usr/src/gtest" # Default value, adjustable by user with e.g., ccmake
-	     CACHE
-	     PATH
-	     "Path to Google Test srcs"
-	     FORCE
-	)
+	build_google_test_locally (${CMAKE_BINARY_DIR}/__gtest)
 
-	find_path (GTEST_INCLUDE_DIR gtest/gtest.h)
+	if (BUILD_XORG_GTEST)
 
-	if (GTEST_INCLUDE_DIR)
-	    add_subdirectory (${GTEST_ROOT_DIR}
-			     gtest)
-	endif (GTEST_INCLUDE_DIR)
+	    find_package (XorgGTest)
 
-	set (GTEST_BOTH_LIBRARIES gtest gtest_main)
-	set (GTEST_FOUND TRUE)
+	    if (XORG_GTEST_FOUND)
 
-    endif (NOT GTEST_FOUND)
+		build_xorg_gtest_locally (${CMAKE_BINARY_DIR}/__xorg_gtest)
 
-    find_library (GMOCK_LIBRARY gmock)
-    find_library (GMOCK_MAIN_LIBRARY gmock_main)
+	    else (XORG_GTEST_FOUND)
 
-    if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+		set (BUILD_XORG_GTEST FALSE)
 
-	message ("Google Mock and Google Test not found - cannot build tests!")
-	set (COMPIZ_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+	    endif (XORG_GTEST_FOUND)
 
-    else (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+	endif (BUILD_XORG_GTEST)
 
-	include_directories (${GTEST_INCLUDE_DIRS})
+    else (GOOGLE_TEST_AND_MOCK_FOUND)
 
-    endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+	set (COMPIZ_BUILD_TESTING OFF CACHE "" FORCE)
+
+    endif (GOOGLE_TEST_AND_MOCK_FOUND)
 
 endif (COMPIZ_BUILD_TESTING)
 
