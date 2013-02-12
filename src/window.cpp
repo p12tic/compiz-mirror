@@ -2797,7 +2797,7 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 
 	/* always above desktop windows */
 	if ((below->priv->type & CompWindowTypeDesktopMask) &&
-	    existsOnServer (below, lock)
+	    existsOnServer (below, lock))
 	    return below;
 
 	switch (type) {
@@ -2813,7 +2813,7 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 			       CompWindowTypeDockMask))
 	    {
 		if (!stackLayerCheck (below, clientLeader, w, lock) &&
-		    existsOnServer (lowest, lock)
+		    existsOnServer (lowest, lock))
 		    return lowest;
 	    }
 	    else if (existsOnServer (lowest, lock))
