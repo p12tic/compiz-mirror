@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+/* XXX: including core.h means that we pull in
+ * both window.h and screen.h which are cascading
+ * includes. We should eliminate this dependency
+ */
 #include "core/core.h"
 #include "core/action.h"
 #include "core/match.h"
