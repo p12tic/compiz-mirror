@@ -5,7 +5,11 @@
 # XORG_SERVER_GTEST_SRC
 
 # xorg-gtest
-pkg_check_modules (XORG_SERVER xorg-gtest xorg-server x11 xi)
+pkg_check_modules (XORG_SERVER
+		   xorg-gtest>=0.7.0
+		   xorg-server
+		   x11
+		   xi)
 
 if (XORG_SERVER_FOUND)
 
