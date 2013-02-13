@@ -958,7 +958,7 @@ CCSSetStatus performSet (const SettingValueType                                 
 	    return performValueSet (rawValue, info, type, setting);
 	    break;
 	default:
-	    throw std::runtime_error ("called PerfomSet with unknown SetMethod");
+	    throw std::runtime_error ("called perfomSet with unknown SetMethod");
     }
 
     throw std::runtime_error ("Unreachable");
