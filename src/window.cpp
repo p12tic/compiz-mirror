@@ -2581,7 +2581,7 @@ namespace
  * to restack relative to a sibling that could have been destroyed. As
  * a side effect of this function requiring a ServerLock, any other function
  * that uses this one will also require one, and the caller should keep
- * the same ServerLock aliver when calling through to
+ * the same ServerLock alive when calling through to
  * CompWindow::restackAndConfigureXWindow
  */
 bool existsOnServer (CompWindow       *window,
@@ -2721,9 +2721,9 @@ PrivateWindow::findSiblingBelow (CompWindow       *w,
 	    if (below->priv->type & (CompWindowTypeFullscreenMask |
 			       CompWindowTypeDockMask))
 	    {
-		if (stackLayerCheck (w, clientLeader, below, lock))
-		    if (existsOnServer (below, lock))
-			return below;
+		if (stackLayerCheck (w, clientLeader, below, lock) &&
+		    existsOnServer (below, lock))
+		    return below;
 	    }
 	    else
 	    {
@@ -2751,9 +2751,9 @@ PrivateWindow::findSiblingBelow (CompWindow       *w,
 	    /* fullscreen and normal layer */
 	    if (allowedRelativeToLayer)
 	    {
-		if (stackLayerCheck (w, clientLeader, below, lock))
-		    if (existsOnServer (below, lock))
-			return below;
+		if (stackLayerCheck (w, clientLeader, below, lock) &&
+		    existsOnServer (below, lock))
+		    return below;
 	    }
 	    break;
 	}
@@ -2799,9 +2799,9 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 	    continue;
 
 	/* always above desktop windows */
-	if (below->priv->type & CompWindowTypeDesktopMask)
-	    if (existsOnServer (below, lock))
-		return below;
+	if ((below->priv->type & CompWindowTypeDesktopMask) &&
+	    existsOnServer (below, lock))
+	    return below;
 
 	switch (type) {
 	case CompWindowTypeDesktopMask:
@@ -2815,15 +2815,12 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 	    if (below->priv->type & (CompWindowTypeFullscreenMask |
 			       CompWindowTypeDockMask))
 	    {
-		if (!stackLayerCheck (below, clientLeader, w, lock))
-		    if (existsOnServer (lowest, lock))
-			return lowest;
-	    }
-	    else
-	    {
-		if (existsOnServer (lowest, lock))
+		if (!stackLayerCheck (below, clientLeader, w, lock) &&
+		    existsOnServer (lowest, lock))
 		    return lowest;
 	    }
+	    else if (existsOnServer (lowest, lock))
+		return lowest;
 	    break;
 	default:
 	{
@@ -2842,9 +2839,9 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 	    /* fullscreen and normal layer */
 	    if (allowedRelativeToLayer)
 	    {
-		if (!stackLayerCheck (below, clientLeader, w, lock))
-		    if (existsOnServer (lowest, lock))
-			return lowest;
+		if (!stackLayerCheck (below, clientLeader, w, lock) &&
+		    existsOnServer (lowest, lock))
+		    return lowest;
 	    }
 	    break;
 	}
@@ -2907,15 +2904,12 @@ PrivateWindow::validSiblingBelow (CompWindow       *w,
 	if (sibling->priv->type & (CompWindowTypeFullscreenMask |
 			     CompWindowTypeDockMask))
 	{
-	    if (stackLayerCheck (w, clientLeader, sibling, lock))
-		if (existsOnServer (sibling, lock))
-		    return true;
-	}
-	else
-	{
-	    if (existsOnServer (sibling, lock))
+	    if (stackLayerCheck (w, clientLeader, sibling, lock) &&
+		existsOnServer (sibling, lock))
 		return true;
 	}
+	else if (existsOnServer (sibling, lock))
+	    return true;
 	break;
     default:
     {
@@ -2934,9 +2928,9 @@ PrivateWindow::validSiblingBelow (CompWindow       *w,
 	/* fullscreen and normal layer */
 	if (allowedRelativeToLayer)
 	{
-	    if (stackLayerCheck (w, clientLeader, sibling, lock))
-		if (existsOnServer (sibling, lock))
-		    return true;
+	    if (stackLayerCheck (w, clientLeader, sibling, lock) &&
+		existsOnServer (sibling, lock))
+		return true;
 	}
 	break;
     }
