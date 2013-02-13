@@ -46,4 +46,6 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 
     compiz_discover_tests (compiz_xorg_gtest_test_ewmh)
 
+    add_subdirectory (plugins)
+
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)
