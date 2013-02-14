@@ -12,7 +12,9 @@ include_directories (${COMPIZ_XORG_SYSTEM_TEST_INCLUDE_DIR}
 		     ${GTEST_INCLUDE_DIRS}
 		     ${XORG_SERVER_INCLUDE_XORG_GTEST}
 		     ${XORG_SERVER_GTEST_SRC}
-		     ${CMAKE_CURRENT_BINARY_DIR})
+                     ${CMAKE_CURRENT_BINARY_DIR}
+                     ${COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR}
+                     ${compiz_SOURCE_DIR}/tests/shared)
 
 link_directories (${XORG_SERVER_LIBRARY_DIRS})
 
@@ -48,4 +50,5 @@ target_link_libraries (compiz_xorg_gtest_system_test
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${XORG_SERVER_LIBRARIES}
-		       ${X11_XI_LIBRARIES})
+                       ${X11_XI_LIBRARIES}
+                       ${COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY})

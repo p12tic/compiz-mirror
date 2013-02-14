@@ -23,6 +23,7 @@
 * Author: Sam Spilsbury <smspillaz@gmail.com>
 */
 
+#include <cstdio>
 #include <cstring>
 #include <map>
 #include <string>
@@ -77,7 +78,7 @@ ct::MessageAtoms::MessageAtoms (Display *display) :
     priv (new ct::MessageAtoms::Private)
 {
     int  nAtoms = sizeof (ctmi::messages) / sizeof (const char *);
-    Atom *atoms = NULL;
+    Atom atoms[nAtoms];
 
     if (!XInternAtoms (display,
 		       const_cast <char **> (ctmi::messages),
@@ -88,8 +89,6 @@ ct::MessageAtoms::MessageAtoms (Display *display) :
 
     for (int i = 0; i < nAtoms; ++i)
 	priv->atoms[ctmi::messages[i]] = atoms[i];
-
-    XFree (atoms);
 }
 
 Atom
@@ -172,6 +171,6 @@ ct::SendClientMessage (Display *display,
     XSendEvent (display,
 		destination,
 		0,
-		SubstructureNotifyMask,
+		StructureNotifyMask,
 		&event);
 };

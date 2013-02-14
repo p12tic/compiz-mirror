@@ -2,18 +2,24 @@ pkg_check_modules (X11_XI x11 xi)
 
 if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 
+    add_subdirectory (plugins)
+
     include_directories (${compiz_SOURCE_DIR}/tests/shared
                          ${COMPIZ_XORG_SYSTEM_TEST_INCLUDE_DIR}
 			 ${X11_INCLUDE_DIRS}
 			 ${XORG_SERVER_INCLUDE_XORG_GTEST}
 			 ${XORG_SERVER_GTEST_SRC}
-			 ${GTEST_INCLUDE_DIRS})
+                         ${GTEST_INCLUDE_DIRS}
+                         ${COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR})
 
     link_directories (${X11_XI_LIBRARY_DIRS}
                       ${compiz_BINARY_DIR}/tests/shared/src)
 
     add_executable (compiz_xorg_gtest_test_window_stacking
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_test_window_stacking.cpp)
+
+    add_executable (compiz_xorg_gtest_test_configure_window
+                    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_configure_window.cpp)
 
     add_executable (compiz_xorg_gtest_test_icccm
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_icccm.cpp)
@@ -46,14 +52,9 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 
     compiz_discover_tests (compiz_xorg_gtest_test_ewmh)
 
-    set (COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR
-         ${CMAKE_CURRENT_SOURCE_DIR}/communicator/)
-    set (COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY_DIR
-         ${CMAKE_CURRENT_BINARY_DIR}/communicator)
-    set (COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY
-         compiz_xorg_gtest_communicator)
+    target_link_libraries (compiz_xorg_gtest_test_configure_window
+			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    add_subdirectory (communicator)
-    add_subdirectory (plugins)
+    compiz_discover_tests (compiz_xorg_gtest_test_configure_window)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)

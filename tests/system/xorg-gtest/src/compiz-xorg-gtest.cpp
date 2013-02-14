@@ -26,8 +26,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <boost/shared_ptr.hpp>
+#include <gtest_shared_tmpenv.h>
+#include <gtest_shared_characterwrapper.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
+#include <compiz_xorg_gtest_communicator.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
@@ -220,6 +223,54 @@ class StartupClientMessageMatcher :
 };
 }
 
+class ct::PrivateClientMessageXEventMatcher
+{
+    public:
+
+	PrivateClientMessageXEventMatcher (Display *display,
+					   Atom    message,
+					   Window  target) :
+	    display (display),
+	    message (message),
+	    target (target)
+	{
+	}
+
+	Display *display;
+	Atom    message;
+	Window  target;
+};
+
+ct::ClientMessageXEventMatcher::ClientMessageXEventMatcher (Display *display,
+							    Atom    message,
+							    Window  target) :
+    priv (new ct::PrivateClientMessageXEventMatcher (display, message, target))
+{
+}
+
+bool
+ct::ClientMessageXEventMatcher::MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+{
+    const XClientMessageEvent *xce = reinterpret_cast <const XClientMessageEvent *> (&event);
+
+    if (xce->message_type == priv->message &&
+	xce->window == priv->target)
+	return true;
+
+    return false;
+}
+
+void
+ct::ClientMessageXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    CharacterWrapper name (XGetAtomName (priv->display,
+					 priv->message));
+    *os << "matches ClientMessage with type " << name
+	<< " on window "
+	<< std::hex << static_cast <long> (priv->target)
+	<< std::dec << std::endl;
+}
+
 class ct::PrivatePropertyNotifyXEventMatcher
 {
     public:
@@ -377,9 +428,10 @@ ct::PrivateCompizProcess::WaitForStartupMessage (Display                        
     XSelectInput (dpy, root, attrib.your_event_mask);
 }
 
-ct::CompizProcess::CompizProcess (::Display                       *dpy,
-				  ct::CompizProcess::StartupFlags flags,
-				  unsigned int                    waitTimeout) :
+ct::CompizProcess::CompizProcess (::Display                           *dpy,
+				  ct::CompizProcess::StartupFlags     flags,
+				  const ct::CompizProcess::PluginList &plugins,
+				  unsigned int                        waitTimeout) :
     priv (new PrivateCompizProcess (flags))
 {
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
@@ -390,6 +442,12 @@ ct::CompizProcess::CompizProcess (::Display                       *dpy,
 	args.push_back ("--replace");
 
     args.push_back ("--send-startup-message");
+
+    /* Copy in plugin list */
+    for (ct::CompizProcess::PluginList::const_iterator it = plugins.begin ();
+	 it != plugins.end ();
+	 ++it)
+	args.push_back (*it);
 
     priv->mProcess.Start (compizBinaryPath, args);
     EXPECT_EQ (priv->mProcess.GetState (), xorg::testing::Process::RUNNING);
@@ -451,16 +509,107 @@ ct::CompizXorgSystemTest::CompizProcessState ()
 }
 
 void
-ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags flags)
+ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags     flags,
+				       const ct::CompizProcess::PluginList &plugins)
 {
-    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, 3000));
+    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, plugins, 3000));
+}
+
+class ct::PrivateAutostartCompizXorgSystemTest
+{
+    public:
+
+	PrivateAutostartCompizXorgSystemTest () :
+	    overridePluginDirEnv ("COMPIZ_PLUGIN_DIR", compizOverridePluginPath.c_str ())
+	{
+	}
+
+	TmpEnv overridePluginDirEnv;
+};
+
+ct::AutostartCompizXorgSystemTest::AutostartCompizXorgSystemTest () :
+    priv (new ct::PrivateAutostartCompizXorgSystemTest ())
+{
+}
+
+ct::CompizProcess::StartupFlags
+ct::AutostartCompizXorgSystemTest::GetStartupFlags ()
+{
+    return static_cast <ct::CompizProcess::StartupFlags> (
+		ct::CompizProcess::ReplaceCurrentWM |
+		ct::CompizProcess::WaitForStartupMessage);
+}
+
+int
+ct::AutostartCompizXorgSystemTest::GetEventMask ()
+{
+    return 0;
+}
+
+ct::CompizProcess::PluginList
+ct::AutostartCompizXorgSystemTest::GetPluginList ()
+{
+    return ct::CompizProcess::PluginList ();
 }
 
 void
 ct::AutostartCompizXorgSystemTest::SetUp ()
 {
     ct::CompizXorgSystemTest::SetUp ();
-    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
-		     ct::CompizProcess::ReplaceCurrentWM |
-		     ct::CompizProcess::WaitForStartupMessage));
+
+    ::Display *display = Display ();
+    XSelectInput (display, DefaultRootWindow (display),
+		  GetEventMask ());
+
+    StartCompiz (GetStartupFlags (),
+		 GetPluginList ());
+}
+
+class ct::PrivateAutostartCompizXorgSystemTestWithTestHelper
+{
+    public:
+
+	std::auto_ptr <ct::MessageAtoms> mMessages;
+};
+
+ct::AutostartCompizXorgSystemTestWithTestHelper::AutostartCompizXorgSystemTestWithTestHelper () :
+    priv (new ct::PrivateAutostartCompizXorgSystemTestWithTestHelper)
+{
+}
+
+int
+ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask ()
+{
+    return AutostartCompizXorgSystemTest::GetEventMask () |
+	   StructureNotifyMask;
+}
+
+void
+ct::AutostartCompizXorgSystemTestWithTestHelper::SetUp ()
+{
+    ct::AutostartCompizXorgSystemTest::SetUp ();
+    priv->mMessages.reset (new ct::MessageAtoms (Display ()));
+
+    ::Display *dpy = Display ();
+    Window root = DefaultRootWindow (dpy);
+
+    Atom    ready = priv->mMessages->FetchForString (ct::messages::TEST_HELPER_READY_MSG);
+    ct::ClientMessageXEventMatcher matcher (dpy, ready, root);
+
+    ASSERT_TRUE (ct::AdvanceToNextEventOnSuccess (
+		     dpy,
+		     ct::WaitForEventOfTypeOnWindowMatching (dpy,
+							     root,
+							     ClientMessage,
+							     -1,
+							     -1,
+							     matcher)));
+}
+
+ct::CompizProcess::PluginList
+ct::AutostartCompizXorgSystemTestWithTestHelper::GetPluginList ()
+{
+    ct::CompizProcess::PluginList list;
+    list.push_back ("testhelper");
+    return list;
 }

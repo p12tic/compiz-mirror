@@ -101,6 +101,7 @@ TEST_F (XorgAcceptance, SIGINTClosesDown)
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
     ProcessPtr compiz (boost::make_shared <ct::CompizProcess> (Display (),
 							       ct::CompizProcess::WaitForStartupMessage,
+							       ct::CompizProcess::PluginList (),
 							       3000));
 
     pid_t firstProcessPid = compiz->Pid ();
@@ -130,6 +131,7 @@ TEST_F (XorgAcceptance, ReplaceOtherWMFast)
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
     ProcessPtr firstCompiz (boost::make_shared <ct::CompizProcess> (Display (),
 								    ct::CompizProcess::WaitForStartupMessage,
+								    ct::CompizProcess::PluginList (),
 								    3000));
 
     /* Expect it to exit */
@@ -142,6 +144,7 @@ TEST_F (XorgAcceptance, ReplaceOtherWMFast)
 								     static_cast <ct::CompizProcess::StartupFlags> (
 									ct::CompizProcess::WaitForStartupMessage |
 									ct::CompizProcess::ReplaceCurrentWM),
+								     ct::CompizProcess::PluginList (),
 								     maximumWaitTime));
 
     if (!task->ReadMsgFromTask (PROCESS_EXITED_MSG, maximumWaitTime))
@@ -223,6 +226,7 @@ TEST_F (XorgAcceptance, ReplaceOtherWMSlow)
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
     ProcessPtr firstCompiz (boost::make_shared <ct::CompizProcess> (dpy,
 								    ct::CompizProcess::WaitForStartupMessage,
+								    ct::CompizProcess::PluginList (),
 								    3000));
 
     SlowDownTask::GetProcessState procState (boost::bind (&ct::CompizProcess::State,
@@ -244,6 +248,7 @@ TEST_F (XorgAcceptance, ReplaceOtherWMSlow)
 								     static_cast <ct::CompizProcess::StartupFlags> (
 									ct::CompizProcess::ReplaceCurrentWM |
 									ct::CompizProcess::WaitForStartupMessage),
+								     ct::CompizProcess::PluginList (),
 								     maximumWaitTime));
 
     /* Wait until the first one goes away */
