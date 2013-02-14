@@ -183,6 +183,11 @@ namespace compiz
 
 		virtual CompizProcess::PluginList GetPluginList ();
 
+	    protected:
+
+		Atom FetchAtom (const char *);
+		void WaitForWindowCreation (Window w);
+
 	    private:
 
 		virtual int  GetEventMask ();

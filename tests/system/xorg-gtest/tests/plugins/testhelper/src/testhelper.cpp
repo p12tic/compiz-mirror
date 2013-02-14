@@ -94,12 +94,82 @@ TestHelperScreen::removeMessageWatch (Atom message)
 	mMessageHandlers.erase (it);
 }
 
+Atom
+TestHelperScreen::fetchAtom (const char *message)
+{
+    return mAtomStore.FetchForString (message);
+}
+
+void
+TestHelperWindow::configureAndReport (long *data)
+{
+    XWindowChanges xwc;
+
+    xwc.x = data[0];
+    xwc.y = data[1];
+    xwc.width = data[2];
+    xwc.height = data[3];
+    int mask = data[4];
+
+    window->configureXWindow (mask, &xwc);
+
+    std::vector <long> response;
+
+    response.push_back (xwc.x);
+    response.push_back (xwc.y);
+    response.push_back (xwc.width);
+    response.push_back (xwc.height);
+
+    TestHelperScreen *ts = TestHelperScreen::get (screen);
+    const Atom       atom = ts->fetchAtom (ctm::TEST_HELPER_WINDOW_CONFIGURE_PROCESSED);
+
+    ct::SendClientMessage (screen->dpy (),
+			   atom,
+			   screen->root (),
+			   window->id (),
+			   response);
+}
+
+void
+TestHelperWindow::setFrameExtentsAndReport (long *data)
+{
+    CompWindowExtents input;
+
+    input.left = data[0];
+    input.right = data[1];
+    input.top = data[2];
+    input.bottom = data[3];
+
+    window->setWindowFrameExtents (&input, &input);
+
+    std::vector <long> response;
+
+    TestHelperScreen *ts = TestHelperScreen::get (screen);
+    const Atom       atom = ts->fetchAtom (ctm::TEST_HELPER_FRAME_EXTENTS_CHANGED);
+
+    ct::SendClientMessage (screen->dpy (),
+			   atom,
+			   screen->root (),
+			   window->id (),
+			   response);
+}
+
 TestHelperWindow::TestHelperWindow (CompWindow *w) :
     PluginClassHandler <TestHelperWindow, CompWindow> (w),
     window (w),
     configureLock ()
 {
     WindowInterface::setHandler (w);
+
+    TestHelperScreen *ts = TestHelperScreen::get (screen);
+
+    std::vector <long> data;
+    data.push_back (static_cast <long> (window->id ()));
+    ct::SendClientMessage (screen->dpy (),
+			   ts->fetchAtom (ctm::TEST_HELPER_WINDOW_READY),
+			   screen->root (),
+			   screen->root (),
+			   data);
 }
 
 TestHelperScreen::TestHelperScreen (CompScreen *s) :
@@ -108,6 +178,12 @@ TestHelperScreen::TestHelperScreen (CompScreen *s) :
     mAtomStore (s->dpy ())
 {
     ScreenInterface::setHandler (s);
+
+    /* Register the message handlers on each window */
+    watchForMessage (fetchAtom (ctm::TEST_HELPER_CONFIGURE_WINDOW),
+		     &TestHelperWindow::configureAndReport);
+    watchForMessage (fetchAtom (ctm::TEST_HELPER_CHANGE_FRAME_EXTENTS),
+		     &TestHelperWindow::setFrameExtentsAndReport);
 
     ct::SendClientMessage (s->dpy (),
 			   mAtomStore.FetchForString (ctm::TEST_HELPER_READY_MSG),

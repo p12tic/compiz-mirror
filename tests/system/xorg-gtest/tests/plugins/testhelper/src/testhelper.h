@@ -56,6 +56,8 @@ class TestHelperScreen :
 	void watchForMessage (Atom, ClientMessageHandler);
 	void removeMessageWatch (Atom);
 
+	Atom fetchAtom (const char *);
+
 
     private:
 
@@ -71,6 +73,9 @@ class TestHelperWindow :
     public:
 
 	TestHelperWindow (CompWindow *);
+
+	void configureAndReport (long *);
+	void setFrameExtentsAndReport (long *);
 
     private:
 

@@ -572,6 +572,35 @@ class ct::PrivateAutostartCompizXorgSystemTestWithTestHelper
 	std::auto_ptr <ct::MessageAtoms> mMessages;
 };
 
+void
+ct::AutostartCompizXorgSystemTestWithTestHelper::WaitForWindowCreation (Window w)
+{
+    ::Display *dpy = Display ();
+
+    XEvent event;
+
+    bool requestAcknowledged = false;
+    while (ct::ReceiveMessage (dpy,
+			       FetchAtom (ct::messages::TEST_HELPER_WINDOW_READY),
+			       event))
+    {
+	requestAcknowledged =
+	    w == static_cast <unsigned long> (event.xclient.data.l[0]);
+
+	if (requestAcknowledged)
+	    break;
+
+    }
+
+    ASSERT_TRUE (requestAcknowledged);
+}
+
+Atom
+ct::AutostartCompizXorgSystemTestWithTestHelper::FetchAtom (const char *message)
+{
+    return priv->mMessages->FetchForString (message);
+}
+
 ct::AutostartCompizXorgSystemTestWithTestHelper::AutostartCompizXorgSystemTestWithTestHelper () :
     priv (new ct::PrivateAutostartCompizXorgSystemTestWithTestHelper)
 {

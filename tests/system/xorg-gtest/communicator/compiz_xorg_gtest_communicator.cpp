@@ -49,7 +49,8 @@ const char *messages[] =
     "_COMPIZ_TEST_HELPER_CHANGE_FRAME_EXTENTS",
     "_COMPIZ_TEST_HELPER_FRAME_EXTENTS_CHANGED",
     "_COMPIZ_TEST_HELPER_CONFIGURE_WINDOW",
-    "_COMPIZ_TEST_HELPER_WINDOW_CONFIGURE_PROCESSED"
+    "_COMPIZ_TEST_HELPER_WINDOW_CONFIGURE_PROCESSED",
+    "_COMPIZ_TEST_HELPER_WINDOW_READY"
 };
 }
 
@@ -60,6 +61,7 @@ const char *TEST_HELPER_CHANGE_FRAME_EXTENTS = internal::messages[3];
 const char *TEST_HELPER_FRAME_EXTENTS_CHANGED = internal::messages[4];
 const char *TEST_HELPER_CONFIGURE_WINDOW = internal::messages[5];
 const char *TEST_HELPER_WINDOW_CONFIGURE_PROCESSED = internal::messages[6];
+const char *TEST_HELPER_WINDOW_READY = internal::messages[7];
 }
 }
 }
@@ -107,16 +109,39 @@ ct::MessageAtoms::FetchForString (const char *message)
     return it->second;
 }
 
+namespace
+{
+bool FindClientMessage (Display *display,
+			XEvent  &event,
+			Atom    message)
+{
+    while (XPending (display))
+    {
+	XNextEvent (display, &event);
+
+	if (event.type == ClientMessage)
+	{
+	    if (event.xclient.message_type == message)
+		return true;
+	}
+    }
+
+    return false;
+}
+}
+
 bool
 ct::ReceiveMessage (Display *display,
 		    Atom    message,
 		    XEvent  &event,
 		    int     timeout)
 {
-    bool found = false;
-
-    while (!found)
+    if (FindClientMessage (display, event, message))
+	return true;
+    else
     {
+	XSync (display, false);
+
 	struct pollfd pfd;
 	pfd.events = POLLIN | POLLHUP | POLLERR;
 	pfd.revents = 0;
@@ -128,17 +153,13 @@ ct::ReceiveMessage (Display *display,
 	if ((pfd.revents & POLLIN) &&
 	    !(pfd.revents & (POLLHUP | POLLERR)))
 	{
-	    XNextEvent (display, &event);
-
-	    if (event.type == ClientMessage)
-		if (event.xclient.message_type == message)
-		    found = true;
+	    return ReceiveMessage (display, message, event, timeout);
 	}
 	else
 	    return false;
     }
 
-    return true;
+    return false;
 }
 
 void
@@ -165,8 +186,11 @@ ct::SendClientMessage (Display *display,
     event.xclient.window = target;
     event.xclient.format = 32;
 
-    if (!data.empty ())
-	memcpy (event.xclient.data.l, &data[0], data.size ());
+    int count = 0;
+    for (std::vector <long>::const_iterator it = data.begin ();
+	 it != data.end ();
+	 ++it)
+	event.xclient.data.l[count++] = *it;
 
     XSendEvent (display,
 		destination,
