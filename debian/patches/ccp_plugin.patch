@@ -1,7 +1,7 @@
 Index: compiz.fix_1120009/src/main.cpp
 ===================================================================
---- compiz.fix_1120009.orig/src/main.cpp	2013-02-14 12:41:55.389902417 +0800
-+++ compiz.fix_1120009/src/main.cpp	2013-02-14 12:43:31.150377272 +0800
+--- compiz.fix_1120009.orig/src/main.cpp	2013-02-14 12:48:07.439747312 +0800
++++ compiz.fix_1120009/src/main.cpp	2013-02-14 12:48:07.439747312 +0800
 @@ -38,6 +38,11 @@
  #include "privatescreen.h"
  #include "privatestackdebugger.h"
@@ -64,3 +64,15 @@ Index: compiz.fix_1120009/src/main.cpp
  
      if (!screen->init (displayName))
  	return false;
+Index: compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
+===================================================================
+--- compiz.fix_1120009.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-14 12:40:34.298043000 +0800
++++ compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-14 12:48:58.900002488 +0800
+@@ -389,6 +389,7 @@
+     if (flags & ct::CompizProcess::ReplaceCurrentWM)
+ 	args.push_back ("--replace");
+ 
++    args.push_back ("--no-auto-add-ccp");
+     args.push_back ("--send-startup-message");
+ 
+     priv->mProcess.Start (compizBinaryPath, args);

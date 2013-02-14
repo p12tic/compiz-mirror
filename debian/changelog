@@ -1,3 +1,10 @@
+compiz (1:0.9.9~daily12.12.05-0ubuntu4) raring; urgency=low
+
+  * debian/ccp_plugin.patch:
+    - Also adjust test framework to pass the new option
+
+ -- Sam Spilsbury <smspillaz@interpol>  Thu, 14 Feb 2013 12:49:11 +0800
+
 compiz (1:0.9.9~daily12.12.05-0ubuntu3) raring; urgency=low
 
   * debian/control:
