@@ -145,17 +145,24 @@ TEST(PluginTest, load_plugin_from_COMPIZ_PLUGIN_DIR_env_succeeds)
 
     using namespace testing;
 
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("dummy"))).
-	WillOnce(Return(false));
-
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(PLUGINDIR), StrEq("dummy"))).
-	WillOnce(Return(false));
-
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(COMPIZ_PLUGIN_DIR_VALUE), StrEq("dummy"))).
 	WillOnce(Return(true));
 
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("dummy"))).
+	Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(PLUGINDIR), StrEq("dummy"))).
+	Times(AtMost(0));
+
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), Eq((void*)0), StrEq("dummy"))).
-	    Times(AtMost(0));;
+	    Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
+
+    CompPlugin* cp = CompPlugin::load("dummy");
+    ASSERT_NE((void*)0, cp);
+
+    CompPlugin::unload(cp);
 }
 
 TEST(PluginTest, load_plugin_from_void_succeeds)
