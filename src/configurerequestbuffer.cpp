@@ -22,6 +22,7 @@
  *
  * Authored by: Sam Spilsbury <smspillaz@gmail.com>
  */
+#include <cstdio>
 #include <cassert>
 #include <boost/foreach.hpp>
 #include <boost/weak_ptr.hpp>

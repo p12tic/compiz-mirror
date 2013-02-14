@@ -30,6 +30,8 @@
 #include <stdexcept>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
 #include <compiz_xorg_gtest_communicator.h>
@@ -128,6 +130,32 @@ bool WaitForReparentAndMap (Display *dpy,
     return true;
 }
 
+struct ReparentedWindow
+{
+    Window client;
+    Window frame;
+};
+
+typedef boost::function <void (Window)> CreateWaitFunc;
+
+ReparentedWindow
+GetNewWindowAndFrame (Display *dpy, const CreateWaitFunc &waitForCreation)
+{
+    ReparentedWindow w;
+
+    w.client = ct::CreateNormalWindow (dpy);
+    waitForCreation (w.client);
+
+    XMapRaised (dpy, w.client);
+    WaitForReparentAndMap (dpy, w.client);
+
+    w.frame = GetTopParent (dpy, w.client);
+
+    XSelectInput (dpy, w.frame, StructureNotifyMask);
+
+    return w;
+}
+
 }
 
 class CompizXorgSystemConfigureWindowTest :
@@ -143,12 +171,14 @@ class CompizXorgSystemConfigureWindowTest :
 
 	void SendConfigureRequest (Window w, int x, int y, int width, int height, int mask);
 	void SendSetFrameExtentsRequest (Window w, int left, int right, int top, int bottom);
+	void SendConfigureLockRequest (Window w, bool lockRequests);
 	bool VerifyConfigureResponse (Window w, int x, int y, int width, int height);
 	bool VerifySetFrameExtentsResponse (Window w, int left, int right, int top, int bottom);
 	bool VerifyWindowSize (Window w, int x, int y, int width, int height);
 
     protected:
 
+	ReparentedWindow CreateWindow (::Display *);
 	int GetEventMask ();
 
     private:
@@ -178,7 +208,7 @@ CompizXorgSystemConfigureWindowTest::SendConfigureRequest (Window w,
     data.push_back (y);
     data.push_back (width);
     data.push_back (height);
-    data.push_back (CWX | CWY | CWWidth | CWHeight);
+    data.push_back (mask);
 
     ct::SendClientMessage (dpy,
 			   FetchAtom (ct::messages::TEST_HELPER_CONFIGURE_WINDOW),
@@ -204,6 +234,22 @@ CompizXorgSystemConfigureWindowTest::SendSetFrameExtentsRequest (Window w,
 
     ct::SendClientMessage (dpy,
 			   FetchAtom (ct::messages::TEST_HELPER_CHANGE_FRAME_EXTENTS),
+			   DefaultRootWindow (dpy),
+			   w,
+			   data);
+}
+
+void
+CompizXorgSystemConfigureWindowTest::SendConfigureLockRequest (Window w,
+							       bool   lockRequests)
+{
+    ::Display *dpy = Display ();
+
+    std::vector <long> data;
+    data.push_back (lockRequests ? 1 : 0);
+
+    ct::SendClientMessage (dpy,
+			   FetchAtom (ct::messages::TEST_HELPER_LOCK_CONFIGURE_REQUESTS),
 			   DefaultRootWindow (dpy),
 			   w,
 			   data);
@@ -287,6 +333,15 @@ CompizXorgSystemConfigureWindowTest::VerifyWindowSize (Window w,
     return true;
 }
 
+ReparentedWindow
+CompizXorgSystemConfigureWindowTest::CreateWindow (::Display *dpy)
+{
+    return GetNewWindowAndFrame (dpy,
+				 boost::bind (&CompizXorgSystemConfigureWindowTest::WaitForWindowCreation,
+					      this,
+					      _1));
+}
+
 TEST_F (CompizXorgSystemConfigureWindowTest, ConfigureAndReponseUnlocked)
 {
     ::Display *dpy = Display ();
@@ -297,25 +352,15 @@ TEST_F (CompizXorgSystemConfigureWindowTest, ConfigureAndReponseUnlocked)
     int height = 200;
     int mask = CWX | CWY | CWWidth | CWHeight;
 
-    Window w = ct::CreateNormalWindow (dpy);
-    WaitForWindowCreation (w);
+    ReparentedWindow w = CreateWindow (dpy);
 
-    XMapRaised (dpy, w);
-    WaitForReparentAndMap (dpy, w);
-
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,
-							       w,
-							       ReparentNotify,
-							       -1,
-							       -1)));
-
-    SendConfigureRequest (w, x, y, width, height, mask);
+    SendConfigureRequest (w.client, x, y, width, height, mask);
 
     /* Wait for a response */
-    ASSERT_TRUE (VerifyConfigureResponse (w, x, y, width, height));
+    ASSERT_TRUE (VerifyConfigureResponse (w.client, x, y, width, height));
 
     /* Query the window size again */
-    ASSERT_TRUE (VerifyWindowSize (w, x, y, width, height));
+    ASSERT_TRUE (VerifyWindowSize (w.frame, x, y, width, height));
 
 }
 
@@ -328,23 +373,19 @@ TEST_F (CompizXorgSystemConfigureWindowTest, FrameExtentsAndReponseUnlocked)
     int top = 3;
     int bottom = 4;
 
-    Window w = ct::CreateNormalWindow (dpy);
-    WaitForWindowCreation (w);
-
-    XMapRaised (dpy, w);
-    WaitForReparentAndMap (dpy, w);
+    ReparentedWindow w = CreateWindow (dpy);
 
     int x, y;
     unsigned int width, height;
-    ASSERT_TRUE (QueryGeometry (dpy, w, x, y, width, height));
+    ASSERT_TRUE (QueryGeometry (dpy, w.client, x, y, width, height));
 
-    SendSetFrameExtentsRequest (w, left, right, top, bottom);
+    SendSetFrameExtentsRequest (w.client, left, right, top, bottom);
 
     /* Wait for a response */
-    ASSERT_TRUE (VerifySetFrameExtentsResponse (w, left, right, top, bottom));
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (w.client, left, right, top, bottom));
 
     /* Client geometry is always unchanged */
-    ASSERT_TRUE (VerifyWindowSize (w, x, y, width, height));
+    ASSERT_TRUE (VerifyWindowSize (w.client, x, y, width, height));
 
     /* Frame geometry is frame geometry offset by extents */
     x -= left;
@@ -352,6 +393,53 @@ TEST_F (CompizXorgSystemConfigureWindowTest, FrameExtentsAndReponseUnlocked)
     width += left + right;
     height += top + bottom;
 
-    Window frame = GetTopParent (dpy, w);
-    ASSERT_TRUE (VerifyWindowSize (frame, x, y, width, height));
+    ASSERT_TRUE (VerifyWindowSize (w.frame, x, y, width, height));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, MoveFrameLocked)
+{
+    ::Display *dpy = Display ();
+
+    int x = 1;
+    int y = 1;
+    int width = 0; int height = 0;
+    int mask = CWX | CWY;
+
+    ReparentedWindow w = CreateWindow (dpy);
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				w.frame,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    SendConfigureLockRequest (w.client, true);
+    SendConfigureRequest (w.client, x, y, width, height, mask);
+
+    /* Wait for a response */
+    ASSERT_TRUE (VerifyConfigureResponse (w.client, x, y, width, height));
+
+    /* Query the window size again - it should be the same */
+    ASSERT_TRUE (VerifyWindowSize (w.frame,
+				   currentX,
+				   currentY,
+				   currentWidth,
+				   currentHeight));
+
+
+    SendConfigureLockRequest (w.client, false);
+
+    /* Expect buffer to be released */
+    ct::ConfigureNotifyXEventMatcher matcher (0, 0, x, y, 0, 0,
+					      CWX | CWY);
+
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       w.frame,
+								       ConfigureNotify,
+								       -1,
+								       -1,
+								       matcher)));
 }

@@ -76,6 +76,7 @@ class TestHelperWindow :
 
 	void configureAndReport (long *);
 	void setFrameExtentsAndReport (long *);
+	void setConfigureLock (long *);
 
     private:
 

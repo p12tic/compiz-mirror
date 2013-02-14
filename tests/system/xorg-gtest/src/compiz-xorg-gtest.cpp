@@ -22,6 +22,7 @@
  */
 #include <list>
 #include <stdexcept>
+#include <sstream>
 #include <iomanip>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -142,6 +143,10 @@ ct::WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 
 	return true;
     }
+
+    std::stringstream ss;
+    matcher.DescribeTo (&ss);
+    ADD_FAILURE () << "Expected event matching: " << ss.str ();
 
     return false;
 }
@@ -317,13 +322,15 @@ class ct::PrivateConfigureNotifyXEventMatcher
 					     int          x,
 					     int          y,
 					     unsigned int width,
-					     unsigned int height) :
+					     unsigned int height,
+					     unsigned int mask) :
 	    mAbove (above),
 	    mBorder (border),
 	    mX (x),
 	    mY (y),
 	    mWidth (width),
-	    mHeight (height)
+	    mHeight (height),
+	    mMask (mask)
 	{
 	}
 
@@ -333,6 +340,7 @@ class ct::PrivateConfigureNotifyXEventMatcher
 	int          mY;
 	int          mWidth;
 	int          mHeight;
+	unsigned int mMask;
 };
 
 ct::ConfigureNotifyXEventMatcher::ConfigureNotifyXEventMatcher (Window       above,
@@ -340,13 +348,15 @@ ct::ConfigureNotifyXEventMatcher::ConfigureNotifyXEventMatcher (Window       abo
 								int          x,
 								int          y,
 								unsigned int width,
-								unsigned int height) :
+								unsigned int height,
+								unsigned int mask) :
     priv (new ct::PrivateConfigureNotifyXEventMatcher (above,
 						       border,
 						       x,
 						       y,
 						       width,
-						       height))
+						       height,
+						       mask))
 {
 }
 
@@ -355,24 +365,58 @@ ct::ConfigureNotifyXEventMatcher::MatchAndExplain (const XEvent &event, MatchRes
 {
     const XConfigureEvent *ce = reinterpret_cast <const XConfigureEvent *> (&event);
 
-    return ce->above == priv->mAbove &&
-	   ce->border_width == priv->mBorder &&
-	   ce->x == priv->mX &&
-	   ce->y == priv->mY &&
-	   ce->width == priv->mWidth &&
-	   ce->height == priv->mHeight;
+    if (priv->mMask & CWSibling)
+	if (ce->above != priv->mAbove)
+	    return false;
+
+    if (priv->mMask & CWBorderWidth)
+	if (ce->border_width != priv->mBorder)
+	    return false;
+
+    if (priv->mMask & CWX)
+	if (ce->x != priv->mX)
+	    return false;
+
+    if (priv->mMask & CWY)
+	if (ce->y != priv->mY)
+	    return false;
+
+    if (priv->mMask & CWWidth)
+	if (ce->width != priv->mWidth)
+	    return false;
+
+    if (priv->mMask & CWHeight)
+	if (ce->height != priv->mHeight)
+	    return false;
+
+    return true;
 }
 
 void
 ct::ConfigureNotifyXEventMatcher::DescribeTo (std::ostream *os) const
 {
+    std::stringstream x, y, width, height, border, sibling;
+
+    if (priv->mMask & CWX)
+	x << " x: " << priv->mX;
+
+    if (priv->mMask & CWY)
+	y << " y: " << priv->mY;
+
+    if (priv->mMask & CWWidth)
+	width << " width: " << priv->mWidth;
+
+    if (priv->mMask & CWHeight)
+	height << " height: " << priv->mHeight;
+
+    if (priv->mMask & CWBorderWidth)
+	border << " border: " << priv->mBorder;
+
+    if (priv->mMask & CWSibling)
+	sibling << " above: " << std::hex << priv->mAbove << std::dec;
+
     *os << "Matches ConfigureNotify with parameters : " << std::endl <<
-	   " x: " << priv->mX <<
-	   " y: " << priv->mY <<
-	   " width: " << priv->mWidth <<
-	   " height: " << priv->mHeight <<
-	   " border: " << priv->mBorder <<
-	   " above: " << std::hex << priv->mAbove << std::dec;
+	   x.str () << y.str () << width.str () << height.str () << border.str () << sibling.str ();
 }
 
 class ct::PrivateCompizProcess

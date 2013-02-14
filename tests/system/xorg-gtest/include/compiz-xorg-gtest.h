@@ -83,7 +83,8 @@ namespace compiz
 					      int          x,
 					      int          y,
 					      unsigned int width,
-					      unsigned int height);
+					      unsigned int height,
+					      unsigned int mask);
 
 		virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const;
 		virtual void DescribeTo (std::ostream *os) const;

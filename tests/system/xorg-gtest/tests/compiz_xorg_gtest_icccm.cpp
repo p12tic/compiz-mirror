@@ -235,7 +235,9 @@ TEST_F (AutostartCompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConf
 						       REQUEST_X,
 						       REQUEST_Y,
 						       REQUEST_WIDTH,
-						       REQUEST_HEIGHT);
+						       REQUEST_HEIGHT,
+						       configureRequestEvent->value_mask &
+						       ~(CWSibling | CWStackMode));
 
     /* Should get a ConfigureNotify with the right parameters */
     EXPECT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,

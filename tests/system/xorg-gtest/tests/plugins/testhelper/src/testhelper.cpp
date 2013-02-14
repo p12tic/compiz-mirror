@@ -104,6 +104,7 @@ void
 TestHelperWindow::configureAndReport (long *data)
 {
     XWindowChanges xwc;
+    XWindowChanges saved;
 
     xwc.x = data[0];
     xwc.y = data[1];
@@ -111,7 +112,14 @@ TestHelperWindow::configureAndReport (long *data)
     xwc.height = data[3];
     int mask = data[4];
 
+    /* configureXWindow has a nasty side-effect of
+     * changing xwc to the client-window co-ordinates,
+     * so we should back it up first */
+    saved = xwc;
+
     window->configureXWindow (mask, &xwc);
+
+    xwc = saved;
 
     std::vector <long> response;
 
@@ -159,6 +167,20 @@ TestHelperWindow::setFrameExtentsAndReport (long *data)
 			   response);
 }
 
+void
+TestHelperWindow::setConfigureLock (long *data)
+{
+    bool enabled = data[0] ? true : false;
+
+    if (enabled && !configureLock)
+	configureLock = window->obtainLockOnConfigureRequests ();
+    else if (!enabled && configureLock)
+    {
+	configureLock->release ();
+	configureLock.reset ();
+    }
+}
+
 TestHelperWindow::TestHelperWindow (CompWindow *w) :
     PluginClassHandler <TestHelperWindow, CompWindow> (w),
     window (w),
@@ -189,6 +211,8 @@ TestHelperScreen::TestHelperScreen (CompScreen *s) :
 		     &TestHelperWindow::configureAndReport);
     watchForMessage (fetchAtom (ctm::TEST_HELPER_CHANGE_FRAME_EXTENTS),
 		     &TestHelperWindow::setFrameExtentsAndReport);
+    watchForMessage (fetchAtom (ctm::TEST_HELPER_LOCK_CONFIGURE_REQUESTS),
+		     &TestHelperWindow::setConfigureLock);
 
     ct::SendClientMessage (s->dpy (),
 			   mAtomStore.FetchForString (ctm::TEST_HELPER_READY_MSG),
