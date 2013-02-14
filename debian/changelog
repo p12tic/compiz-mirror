@@ -1,3 +1,16 @@
+compiz (1:0.9.9~daily12.12.05-0ubuntu3) raring; urgency=low
+
+  * debian/control:
+    - Add xorg-gtest, xserver-xorg-dev, libxi-dev as build-deps
+  * debian/ubuntu_config.patch:
+    - Adjust EWMH test for new value
+  * debian/ccp_plugin.patch:
+    - Added new option --no-auto-load-ccp to prevent the ccp
+      plugin from autoloading. Useful for tests where having
+      this behaviour just causes problems from unwanted side-effects
+
+ -- Sam Spilsbury <smspillaz@gmail.com>  Thu, 14 Feb 2013 12:45:17 +0800
+
 compiz (1:0.9.9~daily12.12.05-0ubuntu2) raring; urgency=low
 
   * Backport a tentative fix from rev 3387 for LP: #1060327

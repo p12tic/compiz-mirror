@@ -1,8 +1,8 @@
 === modified file 'metadata/core.xml.in'
-Index: new/metadata/core.xml.in
+Index: compiz.fix_1120009/metadata/core.xml.in
 ===================================================================
---- old/metadata/core.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/metadata/core.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/metadata/core.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/metadata/core.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -139,7 +139,7 @@
  			<option name="focus_prevention_match" type="match">
  			<_short>Focus Prevention Windows</_short>
@@ -70,10 +70,10 @@ Index: new/metadata/core.xml.in
  			<min>1</min>
  			<max>32</max>
  			</option>
-Index: new/plugins/animation/animation.xml.in
+Index: compiz.fix_1120009/plugins/animation/animation.xml.in
 ===================================================================
---- old/plugins/animation/animation.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/animation/animation.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/animation/animation.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/animation/animation.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -36,7 +36,7 @@
  	    <extensible/>
  	    <sort start="2"/>
@@ -212,10 +212,10 @@ Index: new/plugins/animation/animation.xml.in
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
-Index: new/plugins/decor/decor.xml.in
+Index: compiz.fix_1120009/plugins/decor/decor.xml.in
 ===================================================================
---- old/plugins/decor/decor.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/decor/decor.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/decor/decor.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/decor/decor.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -31,7 +31,7 @@
  		<option name="active_shadow_opacity" type="float">
  		    <_short>Shadow Opacity</_short>
@@ -252,10 +252,10 @@ Index: new/plugins/decor/decor.xml.in
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
-Index: new/plugins/expo/expo.xml.in
+Index: compiz.fix_1120009/plugins/expo/expo.xml.in
 ===================================================================
---- old/plugins/expo/expo.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/expo/expo.xml.in	2012-11-23 18:55:22.875064959 +0800
+--- compiz.fix_1120009.orig/plugins/expo/expo.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/expo/expo.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -367,10 +367,10 @@ Index: new/plugins/expo/expo.xml.in
  			<min>0.0</min>
  			<max>2.0</max>
  			<precision>0.01</precision>
-Index: new/plugins/ezoom/ezoom.xml.in
+Index: compiz.fix_1120009/plugins/ezoom/ezoom.xml.in
 ===================================================================
---- old/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/ezoom/ezoom.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/ezoom/ezoom.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/ezoom/ezoom.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -29,7 +29,6 @@
  		<option type="button" name="zoom_in_button">
  		    <_short>Zoom In</_short>
@@ -404,10 +404,10 @@ Index: new/plugins/ezoom/ezoom.xml.in
  		    </option>
  		</subgroup>
  	    </group>
-Index: new/plugins/fade/fade.xml.in
+Index: compiz.fix_1120009/plugins/fade/fade.xml.in
 ===================================================================
---- old/plugins/fade/fade.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/fade/fade.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/fade/fade.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/fade/fade.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -10,6 +10,7 @@
  	    </requirement>
  	    <relation type="after">
@@ -425,10 +425,10 @@ Index: new/plugins/fade/fade.xml.in
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
-Index: new/plugins/gnomecompat/gnomecompat.xml.in
+Index: compiz.fix_1120009/plugins/gnomecompat/gnomecompat.xml.in
 ===================================================================
---- old/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/gnomecompat/gnomecompat.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/gnomecompat/gnomecompat.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/gnomecompat/gnomecompat.xml.in	2013-02-14 12:40:51.061583436 +0800
 @@ -53,6 +53,7 @@
  		<option name="run_command_terminal_key" type="key">
  		    <_short>Open a terminal</_short>
@@ -437,10 +437,10 @@ Index: new/plugins/gnomecompat/gnomecompat.xml.in
  		</option>
  	    </group>
  	</options>
-Index: new/plugins/grid/grid.xml.in
+Index: compiz.fix_1120009/plugins/grid/grid.xml.in
 ===================================================================
---- old/plugins/grid/grid.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/grid/grid.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/grid/grid.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/grid/grid.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -23,17 +23,16 @@
  		<option name="put_center_key" type="key">
  		    <_short>Put Center</_short>
@@ -469,10 +469,10 @@ Index: new/plugins/grid/grid.xml.in
  		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
-Index: new/plugins/place/place.xml.in
+Index: compiz.fix_1120009/plugins/place/place.xml.in
 ===================================================================
---- old/plugins/place/place.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/place/place.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/place/place.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/place/place.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -20,8 +20,8 @@
  	    <option name="mode" type="int">
  		<_short>Placement Mode</_short>
@@ -484,10 +484,10 @@ Index: new/plugins/place/place.xml.in
  		<max>5</max>
  		<desc>
  		    <value>0</value>
-Index: new/plugins/resize/resize.xml.in
+Index: compiz.fix_1120009/plugins/resize/resize.xml.in
 ===================================================================
---- old/plugins/resize/resize.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/resize/resize.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/resize/resize.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/resize/resize.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -28,7 +28,7 @@
  	    <option name="mode" type="int">
  		<_short>Default Resize Mode</_short>
@@ -532,10 +532,10 @@ Index: new/plugins/resize/resize.xml.in
  		</default>
  	    </option>
  	    <subgroup>
-Index: new/plugins/scale/scale.xml.in
+Index: compiz.fix_1120009/plugins/scale/scale.xml.in
 ===================================================================
---- old/plugins/scale/scale.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/scale/scale.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/scale/scale.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/scale/scale.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -19,14 +19,14 @@
  			<option name="spacing" type="int">
  				<_short>Spacing</_short>
@@ -624,10 +624,10 @@ Index: new/plugins/scale/scale.xml.in
  			</option>
  	    </group>
  	</options>
-Index: new/plugins/staticswitcher/staticswitcher.xml.in
+Index: compiz.fix_1120009/plugins/staticswitcher/staticswitcher.xml.in
 ===================================================================
---- old/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/staticswitcher/staticswitcher.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/staticswitcher/staticswitcher.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/staticswitcher/staticswitcher.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -11,7 +11,6 @@
  	    <relation type="after">
  		<plugin>composite</plugin>
@@ -704,10 +704,10 @@ Index: new/plugins/staticswitcher/staticswitcher.xml.in
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
-Index: new/plugins/vpswitch/vpswitch.xml.in
+Index: compiz.fix_1120009/plugins/vpswitch/vpswitch.xml.in
 ===================================================================
---- old/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/vpswitch/vpswitch.xml.in	2012-11-23 18:54:59.307064517 +0800
+--- compiz.fix_1120009.orig/plugins/vpswitch/vpswitch.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/vpswitch/vpswitch.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -95,13 +95,11 @@
  				<option name="next_button" type="button">
  					<_short>Move Next</_short>
@@ -722,10 +722,10 @@ Index: new/plugins/vpswitch/vpswitch.xml.in
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
-Index: new/plugins/wall/wall.xml.in
+Index: compiz.fix_1120009/plugins/wall/wall.xml.in
 ===================================================================
---- old/plugins/wall/wall.xml.in	2012-11-23 18:54:15.673949000 +0800
-+++ new/plugins/wall/wall.xml.in	2012-11-23 18:54:59.311064517 +0800
+--- compiz.fix_1120009.orig/plugins/wall/wall.xml.in	2013-02-14 12:40:51.101583627 +0800
++++ compiz.fix_1120009/plugins/wall/wall.xml.in	2013-02-14 12:40:51.065583451 +0800
 @@ -31,12 +31,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
@@ -873,3 +873,16 @@ Index: new/plugins/wall/wall.xml.in
  				</option>
  				<option name="edgeflip_dnd" type="bool">
  					<_short>Edge Flip DnD</_short>
+Index: compiz.fix_1120009/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
+===================================================================
+--- compiz.fix_1120009.orig/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2013-02-10 12:56:08.078356000 +0800
++++ compiz.fix_1120009/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2013-02-14 12:41:35.665804612 +0800
+@@ -46,7 +46,7 @@
+ 
+ namespace
+ {
+-unsigned int DEFAULT_VIEWPORT_WIDTH = 4;
++unsigned int DEFAULT_VIEWPORT_WIDTH = 1;
+ unsigned int DEFAULT_VIEWPORT_HEIGHT = 1;
+ 
+ bool Advance (Display *d, bool r)

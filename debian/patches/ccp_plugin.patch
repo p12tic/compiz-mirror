@@ -1,8 +1,39 @@
-Index: compiz-0.9.8/src/main.cpp
+Index: compiz.fix_1120009/src/main.cpp
 ===================================================================
---- compiz-0.9.8.orig/src/main.cpp	2012-05-29 12:09:56.000000000 +0200
-+++ compiz-0.9.8/src/main.cpp	2012-05-30 16:29:24.940570174 +0200
-@@ -146,23 +146,25 @@
+--- compiz.fix_1120009.orig/src/main.cpp	2013-02-14 12:41:55.389902417 +0800
++++ compiz.fix_1120009/src/main.cpp	2013-02-14 12:43:31.150377272 +0800
+@@ -38,6 +38,11 @@
+ #include "privatescreen.h"
+ #include "privatestackdebugger.h"
+ 
++namespace
++{
++bool autoAddCCP = true;
++}
++
+ void
+ CompManager::usage ()
+ {
+@@ -52,6 +57,7 @@
+             "  --debug               Enable debug mode\n"
+             "  --version             Show the program version\n"
+             "  --help                Show this summary\n"
++	    "  --no-auto-add-ccp     Do not automatically load the ccp plugin\n"
+             , programName);
+ }
+ 
+@@ -116,6 +122,10 @@
+ 	    if (i + 1 < argc)
+ 		clientId = argv[++i];
+ 	}
++	else if (!strcmp (argv[i], "--no-auto-add-ccp"))
++	{
++	    autoAddCCP = false;
++	}
+ 	else if (*argv[i] == '-')
+ 	{
+ 	    compLogMessage ("core", CompLogLevelWarn,
+@@ -151,23 +161,25 @@
  
      modHandler = new ModifierHandler ();
  
@@ -22,7 +53,7 @@ Index: compiz-0.9.8/src/main.cpp
  	    list.push_back (value);
  	}
 +    }
-+    else
++    else if (autoAddCCP)
 +	list.push_back ("ccp");
  
  	value.set (CompOption::TypeString, list);
