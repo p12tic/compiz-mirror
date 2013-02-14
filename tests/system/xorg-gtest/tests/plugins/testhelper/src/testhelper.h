@@ -25,12 +25,20 @@
 #ifndef _COMPIZ_TESTHELPER_H
 #define _COMPIZ_TESTHELPER_H
 
+#include <map>
+#include <boost/function.hpp>
+
 #include <X11/Xatom.h>
 
 #include <core/core.h>
 #include <core/pluginclasshandler.h>
+#include <core/configurerequestbuffer.h>
+
+#include <compiz_xorg_gtest_communicator.h>
 
 #include "testhelper_options.h"
+
+class TestHelperWindow;
 
 class TestHelperScreen :
     public PluginClassHandler <TestHelperScreen, CompScreen>,
@@ -39,13 +47,21 @@ class TestHelperScreen :
 {
     public:
 
+	typedef void (TestHelperWindow::*ClientMessageHandler) (long *);
+
 	TestHelperScreen (CompScreen *);
 
 	void handleEvent (XEvent *event);
 
+	void watchForMessage (Atom, ClientMessageHandler);
+	void removeMessageWatch (Atom);
+
+
     private:
 
 	CompScreen *screen;
+	compiz::testing::MessageAtoms         mAtomStore;
+	std::map <Atom, ClientMessageHandler> mMessageHandlers;
 };
 
 class TestHelperWindow :
@@ -56,11 +72,10 @@ class TestHelperWindow :
 
 	TestHelperWindow (CompWindow *);
 
-	void handleEvent (XEvent *event);
-
     private:
 
-	CompWindow *window;
+	CompWindow                                         *window;
+	compiz::window::configure_buffers::Releasable::Ptr configureLock;
 };
 
 class TestHelperPluginVTable :

@@ -46,6 +46,14 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 
     compiz_discover_tests (compiz_xorg_gtest_test_ewmh)
 
+    set (COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR
+         ${CMAKE_CURRENT_SOURCE_DIR}/communicator/)
+    set (COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY_DIR
+         ${CMAKE_CURRENT_BINARY_DIR}/communicator)
+    set (COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY
+         compiz_xorg_gtest_communicator)
+
+    add_subdirectory (communicator)
     add_subdirectory (plugins)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)

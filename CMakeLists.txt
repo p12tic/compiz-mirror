@@ -196,8 +196,6 @@ set (COMPIZ_INTERNAL_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/window/constrainment/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logmessage/include)
 
-find_package (Threads REQUIRED)
-
 # Add the rest of compiz
 add_subdirectory (cmake)
 add_subdirectory (include)

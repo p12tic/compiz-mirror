@@ -5,6 +5,7 @@ include_directories(
 
   ${compiz_SOURCE_DIR}/include
   ${compiz_SOURCE_DIR}/src
+  ${compiz_SOURCE_DIR}/tests/shared
 )
 
 add_definitions (

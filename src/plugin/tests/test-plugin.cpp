@@ -9,6 +9,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest_shared_tmpenv.h>
 
 namespace {
 
@@ -134,6 +135,27 @@ TEST(PluginTest, load_plugin_from_PLUGINDIR_succeeds)
     ASSERT_NE((void*)0, cp);
 
     CompPlugin::unload(cp);
+}
+
+TEST(PluginTest, load_plugin_from_COMPIZ_PLUGIN_DIR_env_succeeds)
+{
+    const char *COMPIZ_PLUGIN_DIR_VALUE = "/path/to/plugin/dir";
+    TmpEnv env ("COMPIZ_PLUGIN_DIR", COMPIZ_PLUGIN_DIR_VALUE);
+    MockPluginFilesystem mockfs;
+
+    using namespace testing;
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("dummy"))).
+	WillOnce(Return(false));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(PLUGINDIR), StrEq("dummy"))).
+	WillOnce(Return(false));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(COMPIZ_PLUGIN_DIR_VALUE), StrEq("dummy"))).
+	WillOnce(Return(true));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), Eq((void*)0), StrEq("dummy"))).
+	    Times(AtMost(0));;
 }
 
 TEST(PluginTest, load_plugin_from_void_succeeds)
