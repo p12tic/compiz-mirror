@@ -188,9 +188,10 @@ namespace compiz
 		Atom FetchAtom (const char *);
 		void WaitForWindowCreation (Window w);
 
+		virtual int  GetEventMask ();
+
 	    private:
 
-		virtual int  GetEventMask ();
 		virtual void SetUp ();
 
 		std::auto_ptr <PrivateAutostartCompizXorgSystemTestWithTestHelper> priv;

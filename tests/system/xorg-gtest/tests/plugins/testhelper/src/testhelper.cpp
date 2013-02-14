@@ -144,6 +144,11 @@ TestHelperWindow::setFrameExtentsAndReport (long *data)
 
     std::vector <long> response;
 
+    response.push_back (input.left);
+    response.push_back (input.right);
+    response.push_back (input.top);
+    response.push_back (input.bottom);
+
     TestHelperScreen *ts = TestHelperScreen::get (screen);
     const Atom       atom = ts->fetchAtom (ctm::TEST_HELPER_FRAME_EXTENTS_CHANGED);
 

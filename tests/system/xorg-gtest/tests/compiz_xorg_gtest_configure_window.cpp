@@ -53,6 +53,81 @@ bool Advance (Display *d, bool r)
     return ct::AdvanceToNextEventOnSuccess (d, r);
 }
 
+Window GetTopParent (Display *display,
+		     Window w)
+{
+    Window rootReturn;
+    Window parentReturn = w;
+    Window *childrenReturn;
+    unsigned int nChildrenReturn;
+
+    Window lastParent = 0;
+
+    do
+    {
+	lastParent = parentReturn;
+
+	XQueryTree (display,
+		    lastParent,
+		    &rootReturn,
+		    &parentReturn,
+		    &childrenReturn,
+		    &nChildrenReturn);
+	XFree (childrenReturn);
+    } while (parentReturn != rootReturn);
+
+    return lastParent;
+}
+
+bool QueryGeometry (Display *dpy,
+		    Window w,
+		    int &x,
+		    int &y,
+		    unsigned int &width,
+		    unsigned int &height)
+{
+    Window rootRet;
+    unsigned int  depth, border;
+
+    if (!XGetGeometry (dpy,
+		       w,
+		       &rootRet,
+		       &x,
+		       &y,
+		       &width,
+		       &height,
+		       &depth,
+		       &border))
+	return false;
+
+    return true;
+}
+
+bool WaitForReparentAndMap (Display *dpy,
+			    Window w)
+{
+    bool ret = Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,
+							     w,
+							     ReparentNotify,
+							     -1,
+							     -1));
+    EXPECT_TRUE (ret);
+    if (!ret)
+	return false;
+
+
+    ret = Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,
+							w,
+							MapNotify,
+							-1,
+							-1));
+    EXPECT_TRUE (ret);
+    if (!ret)
+	return false;
+
+    return true;
+}
+
 }
 
 class CompizXorgSystemConfigureWindowTest :
@@ -67,11 +142,26 @@ class CompizXorgSystemConfigureWindowTest :
 	}
 
 	void SendConfigureRequest (Window w, int x, int y, int width, int height, int mask);
+	void SendSetFrameExtentsRequest (Window w, int left, int right, int top, int bottom);
 	bool VerifyConfigureResponse (Window w, int x, int y, int width, int height);
+	bool VerifySetFrameExtentsResponse (Window w, int left, int right, int top, int bottom);
 	bool VerifyWindowSize (Window w, int x, int y, int width, int height);
+
+    protected:
+
+	int GetEventMask ();
+
+    private:
 
 	TmpEnv env;
 };
+
+int
+CompizXorgSystemConfigureWindowTest::GetEventMask ()
+{
+    return ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () |
+	    SubstructureNotifyMask;
+}
 
 void
 CompizXorgSystemConfigureWindowTest::SendConfigureRequest (Window w,
@@ -92,6 +182,28 @@ CompizXorgSystemConfigureWindowTest::SendConfigureRequest (Window w,
 
     ct::SendClientMessage (dpy,
 			   FetchAtom (ct::messages::TEST_HELPER_CONFIGURE_WINDOW),
+			   DefaultRootWindow (dpy),
+			   w,
+			   data);
+}
+
+void
+CompizXorgSystemConfigureWindowTest::SendSetFrameExtentsRequest (Window w,
+								 int    left,
+								 int    right,
+								 int    top,
+								 int    bottom)
+{
+    ::Display *dpy = Display ();
+
+    std::vector <long> data;
+    data.push_back (left);
+    data.push_back (right);
+    data.push_back (top);
+    data.push_back (bottom);
+
+    ct::SendClientMessage (dpy,
+			   FetchAtom (ct::messages::TEST_HELPER_CHANGE_FRAME_EXTENTS),
 			   DefaultRootWindow (dpy),
 			   w,
 			   data);
@@ -126,6 +238,34 @@ CompizXorgSystemConfigureWindowTest::VerifyConfigureResponse (Window w,
 }
 
 bool
+CompizXorgSystemConfigureWindowTest::VerifySetFrameExtentsResponse (Window w,
+								    int left,
+								    int right,
+								    int top,
+								    int bottom)
+{
+    ::Display *dpy = Display ();
+    XEvent event;
+
+    while (ct::ReceiveMessage (dpy,
+			       FetchAtom (ct::messages::TEST_HELPER_FRAME_EXTENTS_CHANGED),
+			       event))
+    {
+	bool requestAcknowledged =
+		left == event.xclient.data.l[0] &&
+		right == event.xclient.data.l[1] &&
+		top == event.xclient.data.l[2] &&
+		bottom == event.xclient.data.l[3];
+
+	if (requestAcknowledged)
+	    return true;
+
+    }
+
+    return false;
+}
+
+bool
 CompizXorgSystemConfigureWindowTest::VerifyWindowSize (Window w,
 						       int x,
 						       int y,
@@ -134,18 +274,9 @@ CompizXorgSystemConfigureWindowTest::VerifyWindowSize (Window w,
 {
     ::Display *dpy = Display ();
 
-    Window       rootRet;
     int          xRet, yRet;
-    unsigned int widthRet, heightRet, depth, border;
-    if (!XGetGeometry (dpy,
-		       w,
-		       &rootRet,
-		       &xRet,
-		       &yRet,
-		       &widthRet,
-		       &heightRet,
-		       &depth,
-		       &border))
+    unsigned int widthRet, heightRet;
+    if (!QueryGeometry (dpy, w, xRet, yRet, widthRet, heightRet))
 	return false;
 
     EXPECT_EQ (x, xRet);
@@ -169,6 +300,15 @@ TEST_F (CompizXorgSystemConfigureWindowTest, ConfigureAndReponseUnlocked)
     Window w = ct::CreateNormalWindow (dpy);
     WaitForWindowCreation (w);
 
+    XMapRaised (dpy, w);
+    WaitForReparentAndMap (dpy, w);
+
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,
+							       w,
+							       ReparentNotify,
+							       -1,
+							       -1)));
+
     SendConfigureRequest (w, x, y, width, height, mask);
 
     /* Wait for a response */
@@ -177,4 +317,41 @@ TEST_F (CompizXorgSystemConfigureWindowTest, ConfigureAndReponseUnlocked)
     /* Query the window size again */
     ASSERT_TRUE (VerifyWindowSize (w, x, y, width, height));
 
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, FrameExtentsAndReponseUnlocked)
+{
+    ::Display *dpy = Display ();
+
+    int left = 1;
+    int right = 2;
+    int top = 3;
+    int bottom = 4;
+
+    Window w = ct::CreateNormalWindow (dpy);
+    WaitForWindowCreation (w);
+
+    XMapRaised (dpy, w);
+    WaitForReparentAndMap (dpy, w);
+
+    int x, y;
+    unsigned int width, height;
+    ASSERT_TRUE (QueryGeometry (dpy, w, x, y, width, height));
+
+    SendSetFrameExtentsRequest (w, left, right, top, bottom);
+
+    /* Wait for a response */
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (w, left, right, top, bottom));
+
+    /* Client geometry is always unchanged */
+    ASSERT_TRUE (VerifyWindowSize (w, x, y, width, height));
+
+    /* Frame geometry is frame geometry offset by extents */
+    x -= left;
+    y -= top;
+    width += left + right;
+    height += top + bottom;
+
+    Window frame = GetTopParent (dpy, w);
+    ASSERT_TRUE (VerifyWindowSize (frame, x, y, width, height));
 }

@@ -51,7 +51,6 @@ const unsigned int WINDOW_DEPTH = CopyFromParent;
 const unsigned int WINDOW_CLASS = InputOutput;
 Visual             *WINDOW_VISUAL = CopyFromParent;
 
-
 const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
 
 void RemoveEventFromQueue (Display *dpy)
