@@ -95,6 +95,12 @@ class CompizXorgSystemICCCM :
 {
     public:
 
+	CompizXorgSystemICCCM () :
+	    /* See note in the acceptance tests about this */
+	    env ("XORG_GTEST_CHILD_STDOUT", "1")
+	{
+	}
+
 	virtual void SetUp ()
 	{
 	    ct::CompizXorgSystemTest::SetUp ();
@@ -109,6 +115,8 @@ class CompizXorgSystemICCCM :
 	}
 
     private:
+
+	TmpEnv env;
 };
 
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)

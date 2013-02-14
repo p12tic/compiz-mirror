@@ -156,6 +156,28 @@ GetNewWindowAndFrame (Display *dpy, const CreateWaitFunc &waitForCreation)
     return w;
 }
 
+bool
+WaitForConfigureNotify (Display *dpy,
+			Window  w,
+			int     x,
+			int     y,
+			int     width,
+			int     height,
+			int     border,
+			Window  above,
+			unsigned int mask)
+{
+    ct::ConfigureNotifyXEventMatcher matcher (above, border, x, y, width, height,
+					      mask);
+
+    return Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								 w,
+								 ConfigureNotify,
+								 -1,
+								 -1,
+								 matcher));
+}
+
 }
 
 class CompizXorgSystemConfigureWindowTest :
@@ -433,13 +455,113 @@ TEST_F (CompizXorgSystemConfigureWindowTest, MoveFrameLocked)
     SendConfigureLockRequest (w.client, false);
 
     /* Expect buffer to be released */
-    ct::ConfigureNotifyXEventMatcher matcher (0, 0, x, y, 0, 0,
-					      CWX | CWY);
+    ASSERT_TRUE (WaitForConfigureNotify (dpy,
+					 w.frame,
+					 x,
+					 y,
+					 0,
+					 0,
+					 0,
+					 0,
+					 mask));
 
-    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
-								       w.frame,
-								       ConfigureNotify,
-								       -1,
-								       -1,
-								       matcher)));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, ResizeFrameLocked)
+{
+    ::Display *dpy = Display ();
+
+    int x = 0;
+    int y = 0;
+    int width = 200; int height = 300;
+    int mask = CWWidth | CWHeight;
+
+    ReparentedWindow w = CreateWindow (dpy);
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				w.frame,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    SendConfigureLockRequest (w.client, true);
+    SendConfigureRequest (w.client, x, y, width, height, mask);
+
+    /* Expect buffer to be released immediately */
+    ASSERT_TRUE (WaitForConfigureNotify (dpy,
+					 w.frame,
+					 0,
+					 0,
+					 width,
+					 height,
+					 0,
+					 0,
+					 mask));
+
+    /* Wait for a response */
+    ASSERT_TRUE (VerifyConfigureResponse (w.client, x, y, width, height));
+
+    SendConfigureLockRequest (w.client, false);
+
+    /* Query the window size again - it should be the same */
+    ASSERT_TRUE (VerifyWindowSize (w.frame,
+				   currentX,
+				   currentY,
+				   width,
+				   height));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsLocked)
+{
+    ::Display *dpy = Display ();
+
+    /* Give the client window a 1px border, this will cause
+     * the client to move within the frame window by 1, 1 ,
+     * the frame window to move by -1, -1  and resize by 2, 2 */
+    int left = 1;
+    int right = 1;
+    int top = 1;
+    int bottom = 1;
+    int frameMask = CWX | CWY | CWWidth | CWHeight;
+
+    ReparentedWindow w = CreateWindow (dpy);
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				w.frame,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    SendConfigureLockRequest (w.client, true);
+    SendSetFrameExtentsRequest (w.client, left, right, top, bottom);
+
+    /* Expect buffer to be released immediately */
+    ASSERT_TRUE (WaitForConfigureNotify (dpy,
+					 w.frame,
+					 currentX - left,
+					 currentY - top,
+					 currentWidth + (left + right),
+					 currentHeight + (top + bottom),
+					 0,
+					 0,
+					 frameMask));
+
+
+    /* Wait for a response */
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (w.client, left, right, top, bottom));
+
+    SendConfigureLockRequest (w.client, false);
+
+    /* Query the window size again - it should be the same */
+    ASSERT_TRUE (VerifyWindowSize (w.frame,
+				   currentX - left,
+				   currentY - top,
+				   currentWidth + (left + right),
+				   currentHeight + (top + bottom)));
 }
