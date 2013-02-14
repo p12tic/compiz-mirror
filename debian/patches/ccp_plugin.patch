@@ -1,7 +1,5 @@
-Index: compiz.fix_1120009/src/main.cpp
-===================================================================
---- compiz.fix_1120009.orig/src/main.cpp	2013-02-14 12:48:07.439747312 +0800
-+++ compiz.fix_1120009/src/main.cpp	2013-02-14 12:48:07.439747312 +0800
+--- a/src/main.cpp
++++ b/src/main.cpp
 @@ -38,6 +38,11 @@
  #include "privatescreen.h"
  #include "privatestackdebugger.h"
@@ -64,10 +62,9 @@ Index: compiz.fix_1120009/src/main.cpp
  
      if (!screen->init (displayName))
  	return false;
-Index: compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
-===================================================================
---- compiz.fix_1120009.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-14 12:40:34.298043000 +0800
-+++ compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-14 12:48:58.900002488 +0800
+
+--- a/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
++++ b/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
 @@ -389,6 +389,7 @@
      if (flags & ct::CompizProcess::ReplaceCurrentWM)
  	args.push_back ("--replace");

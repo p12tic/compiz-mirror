@@ -266,6 +266,7 @@ ccpInitValue (CCSSettingValue   *value,
 		value->value.asKey.keysym = 0;
 		value->value.asKey.keyModMask = 0;
 	    }
+	    break;
 	case TypeButton:
 	    if (from->action ().type () & CompAction::BindingTypeButton)
 	    {
@@ -462,22 +463,28 @@ CcpScreen::setOptionForPlugin (const char *plugin,
 			       CompOption::Value &v)
 {
     bool status;
+    bool can_save;
+    CompPlugin *p;
+    CompOption *o = NULL;
 
-    status = screen->setOptionForPlugin (plugin, name, v);
+    can_save = (!mApplyingSettings && !mReloadTimer.active ());
 
-    if (status && !mApplyingSettings && !mReloadTimer.active ())
+    if (can_save)
     {
-	CompPlugin *p;
-
 	p = CompPlugin::find (plugin);
 	if (p)
 	{
-	    CompOption *o;
-
 	    o = CompOption::findOption (p->vTable->getOptions (), name);
-	    if (o && (o->value () != v))
-		setContextFromOption (o, p->vTable->name ().c_str ());
+	    if (o && (o->value () == v))
+		o = NULL;
 	}
+    }
+
+    status = screen->setOptionForPlugin (plugin, name, v);
+
+    if (o && status && can_save)
+    {
+	setContextFromOption (o, p->vTable->name ().c_str ());
     }
 
     return status;
