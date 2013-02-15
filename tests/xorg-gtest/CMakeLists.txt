@@ -30,6 +30,9 @@ add_library (xorg_gtest_main STATIC
 add_library (compiz_xorg_gtest_system_test STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/src/compiz-xorg-gtest.cpp)
 
+add_executable (xorg_gtest_wrapper
+		${CMAKE_CURRENT_SOURCE_DIR}/src/xorg_gtest_wrapper.cpp)
+
 target_link_libraries (xorg_gtest_all
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${CMAKE_THREAD_LIBS_INIT}

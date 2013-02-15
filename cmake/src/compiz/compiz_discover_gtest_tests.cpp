@@ -6,19 +6,33 @@
 #include <fstream>
 #include <iterator>
 #include <iostream>
+#include <sstream>
 #include <libgen.h>
 
 using namespace std;
 
+int usage ()
+{
+    cout << "Usage: PATH_TO_TEST_BINARY --gtest_list_tests | ./build_test_cases PATH_TO_TEST_BINARY --wrapper PATH_TO_WRAPPER";
+    return 1;
+}
+
 int main (int argc, char **argv)
 {
+    string testBinary;
+    string wrapperBinary;
     cin >> noskipws;
 
-    if (argc < 2)
+    if (argc == 2)
+	testBinary = string (argv[1]);
+    else if (argc == 4 &&
+	     string (argv[2]) == "--wrapper")
     {
-	cout << "Usage: PATH_TO_TEST_BINARY --gtest_list_tests | ./build_test_cases PATH_TO_TEST_BINARY";
-	return 1;
+	testBinary = string (argv[1]);
+	wrapperBinary = string (argv[3]);
     }
+    else
+	return usage ();
 
     map<string, vector<string> > testCases;
     string line;
@@ -50,12 +64,21 @@ int main (int argc, char **argv)
 	    {
 		if (testfilecmake.good ())
 		{
-		    string addTest ("ADD_TEST (");
-		    string testExec (" \"" + string (argv[1]) + "\"");
-		    string gTestFilter ("\"--gtest_filter=");
-		    string endParen ("\")");
+		    stringstream addTest, testExec, gTestFilter, endParen;
 
-		    testfilecmake << addTest << *jt << testExec << gTestFilter << *jt << endParen << endl;
+		    addTest << "ADD_TEST (";
+		    testExec << " \"" << wrapperBinary << "\"" << " \"" << testBinary << "\"";
+		    gTestFilter << " \"--gtest_filter=";
+		    endParen << "\")";
+
+		    testfilecmake <<
+			addTest.str () <<
+			*jt <<
+			testExec.str () <<
+			gTestFilter.str () <<
+			*jt <<
+			endParen.str () <<
+			endl;
 		}
 	    }
 	}

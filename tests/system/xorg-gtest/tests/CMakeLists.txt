@@ -33,17 +33,17 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     target_link_libraries (compiz_xorg_gtest_test_window_stacking
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_window_stacking)
+    compiz_discover_tests (compiz_xorg_gtest_test_window_stacking WITH_XORG_GTEST)
 
     target_link_libraries (compiz_xorg_gtest_test_icccm
                            compiz_gtest_shared_async_task
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_icccm)
+    compiz_discover_tests (compiz_xorg_gtest_test_icccm WITH_XORG_GTEST)
 
     target_link_libraries (compiz_xorg_gtest_test_ewmh
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_ewmh)
+    compiz_discover_tests (compiz_xorg_gtest_test_ewmh WITH_XORG_GTEST)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)

@@ -421,13 +421,7 @@ class ct::PrivateCompizXorgSystemTest
 {
     public:
 
-	PrivateCompizXorgSystemTest () :
-	    mStdoutEnv ("XORG_GTEST_CHILD_STDOUT", "1")
-	{
-	}
-
 	boost::shared_ptr <ct::CompizProcess> mProcess;
-	TmpEnv                                mStdoutEnv;
 };
 
 ct::CompizXorgSystemTest::CompizXorgSystemTest () :

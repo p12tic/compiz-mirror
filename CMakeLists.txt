@@ -151,6 +151,9 @@ if (COMPIZ_BUILD_TESTING)
 
 	    find_package (XorgGTest)
 
+	    set (COMPIZ_XORG_GTEST_DIR ${CMAKE_BINARY_DIR}/__xorg_gtest CACHE PATH "Path to Xorg GTest build dir" FORCE)
+	    set (COMPIZ_XORG_GTEST_WRAPPER ${COMPIZ_XORG_GTEST_DIR}/xorg_gtest_wrapper CACHE PATH "Path to Xorg GTest wrapper" FORCE)
+
 	    if (XORG_GTEST_FOUND)
 
 		build_xorg_gtest_locally (${CMAKE_BINARY_DIR}/__xorg_gtest)
