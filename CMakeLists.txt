@@ -179,8 +179,6 @@ if (COMPIZ_BUILD_TESTING)
 
 endif (COMPIZ_BUILD_TESTING)
 
-find_package (Threads REQUIRED)
-
 # Add the rest of compiz
 add_subdirectory (cmake)
 add_subdirectory (include)
