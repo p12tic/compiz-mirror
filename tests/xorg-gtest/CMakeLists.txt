@@ -8,7 +8,8 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/compiz-xorg-gtest-config.h.in
 include_directories (${XORG_SERVER_INCLUDE_XORG_GTEST}
 		     ${XORG_SERVER_GTEST_INCLUDES}
                      ${COMPIZ_XORG_SYSTEM_TEST_INCLUDE_DIR}
-		     ${CMAKE_CURRENT_BINARY_DIR}/src)
+                     ${CMAKE_CURRENT_BINARY_DIR}/src
+                     ${compiz_SOURCE_DIR}/tests/shared)
 
 link_directories (${XORG_SERVER_LIBRARY_DIRS})
 

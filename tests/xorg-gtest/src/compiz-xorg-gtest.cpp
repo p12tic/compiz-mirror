@@ -28,6 +28,7 @@
 #include <boost/shared_ptr.hpp>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
+#include <gtest_shared_tmpenv.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
@@ -420,7 +421,13 @@ class ct::PrivateCompizXorgSystemTest
 {
     public:
 
+	PrivateCompizXorgSystemTest () :
+	    mStdoutEnv ("XORG_GTEST_CHILD_STDOUT", "1")
+	{
+	}
+
 	boost::shared_ptr <ct::CompizProcess> mProcess;
+	TmpEnv                                mStdoutEnv;
 };
 
 ct::CompizXorgSystemTest::CompizXorgSystemTest () :
