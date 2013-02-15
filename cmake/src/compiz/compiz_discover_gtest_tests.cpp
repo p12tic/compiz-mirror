@@ -64,10 +64,14 @@ int main (int argc, char **argv)
 	    {
 		if (testfilecmake.good ())
 		{
-		    stringstream addTest, testExec, gTestFilter, endParen;
+		    stringstream addTest, escapedWrapper, escapedTest, testExec, gTestFilter, endParen;
 
 		    addTest << "ADD_TEST (";
-		    testExec << " \"" << wrapperBinary << "\"" << " \"" << testBinary << "\"";
+		    if (wrapperBinary.size ())
+			escapedWrapper << " \"" << wrapperBinary << "\"";
+
+		    escapedTest << " \"" << testBinary << "\"";
+		    testExec << escapedWrapper.str () << escapedTest.str ();
 		    gTestFilter << " \"--gtest_filter=";
 		    endParen << "\")";
 
