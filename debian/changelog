@@ -1,3 +1,13 @@
+compiz (1:0.9.9~daily13.02.08-0ubuntu2) UNRELEASED; urgency=low
+
+  * debian/patches/100_workaround_virtualbox_hang.patch
+    - VirtualBox uses a shared-memory texture_from_pixmap_implementation
+    which is not compatible with our server grab usage, so force
+    a different bind method when running with virtualbox and binding
+    an externally managed texture
+
+ -- Sam Spilsbury <smspillaz@gmail.com>  Sun, 17 Feb 2013 10:26:40 +0800
+
 compiz (1:0.9.9~daily13.02.08-0ubuntu1) raring; urgency=low
 
   [ MC Return ]
