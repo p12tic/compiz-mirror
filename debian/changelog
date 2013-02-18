@@ -1,3 +1,13 @@
+compiz (1:0.9.9~daily13.02.08-0ubuntu2) raring; urgency=low
+
+  * debian/ccp_plugin.patch:
+    - Fix typo
+  * debian/rules:
+    - We already auto-load the ccp plugin, no need to add it to the
+    default plugins.
+
+ -- Sam Spilsbury <smspillaz@interpol>  Mon, 18 Feb 2013 09:51:41 +0800
+
 compiz (1:0.9.9~daily13.02.08-0ubuntu1) raring; urgency=low
 
   * debian/ccp_plugin.patch:

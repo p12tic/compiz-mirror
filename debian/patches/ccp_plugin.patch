@@ -1,7 +1,7 @@
 Index: compiz.fix_1120009/src/main.cpp
 ===================================================================
---- compiz.fix_1120009.orig/src/main.cpp	2013-02-16 07:24:30.941138049 +0800
-+++ compiz.fix_1120009/src/main.cpp	2013-02-16 07:25:16.549364207 +0800
+--- compiz.fix_1120009.orig/src/main.cpp	2013-02-18 09:51:18.091750164 +0800
++++ compiz.fix_1120009/src/main.cpp	2013-02-18 09:51:27.495796797 +0800
 @@ -38,6 +38,11 @@
  #include "privatescreen.h"
  #include "privatestackdebugger.h"
@@ -28,7 +28,7 @@ Index: compiz.fix_1120009/src/main.cpp
  	}
 +	else if (!strcmp (argv[i], "--no-auto-add-ccp"))
 +	{
-+	    compLogMessage ("core", CompLogLevelInfo, "running the ccp plugin, no settings will be loaded");
++	    compLogMessage ("core", CompLogLevelInfo, "running without the ccp plugin, no settings will be loaded");
 +	    autoAddCCP = false;
 +	}
  	else if (*argv[i] == '-')
@@ -67,9 +67,9 @@ Index: compiz.fix_1120009/src/main.cpp
  	return false;
 Index: compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
 ===================================================================
---- compiz.fix_1120009.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-16 07:24:30.941138049 +0800
-+++ compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-16 07:24:30.941138049 +0800
-@@ -390,6 +390,7 @@
+--- compiz.fix_1120009.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-18 09:51:18.091750164 +0800
++++ compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-18 09:51:18.087750118 +0800
+@@ -389,6 +389,7 @@
      if (flags & ct::CompizProcess::ReplaceCurrentWM)
  	args.push_back ("--replace");
  
