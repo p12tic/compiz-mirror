@@ -1,3 +1,101 @@
+compiz (1:0.9.9~daily13.02.08-0ubuntu5) raring; urgency=low
+
+  * debian/ccp_plugin.patch:
+    - Fix typo
+  * debian/rules:
+    - We already auto-load the ccp plugin, no need to add it to the
+    default plugins.
+
+ -- Sam Spilsbury <smspillaz@interpol>  Mon, 18 Feb 2013 09:51:41 +0800
+
+compiz (1:0.9.9~daily13.02.08-0ubuntu4) raring; urgency=low
+
+  * debian/ccp_plugin.patch:
+    - Also adjust test framework to pass the new option
+
+ -- Sam Spilsbury <smspillaz@interpol>  Thu, 14 Feb 2013 12:49:11 +0800
+
+compiz (1:0.9.9~daily13.02.08-0ubuntu3) raring; urgency=low
+
+  * debian/control:
+    - Add xorg-gtest, xserver-xorg-dev, libxi-dev as build-deps
+  * debian/ubuntu_config.patch:
+    - Adjust EWMH test for new value
+  * debian/ccp_plugin.patch:
+    - Added new option --no-auto-load-ccp to prevent the ccp
+      plugin from autoloading. Useful for tests where having
+      this behaviour just causes problems from unwanted side-effects
+
+ -- Sam Spilsbury <smspillaz@gmail.com>  Thu, 14 Feb 2013 12:45:17 +0800
+
+compiz (1:0.9.9~daily13.02.08-0ubuntu2) UNRELEASED; urgency=low
+
+  * debian/patches/100_workaround_virtualbox_hang.patch
+    - VirtualBox uses a shared-memory texture_from_pixmap_implementation
+    which is not compatible with our server grab usage, so force
+    a different bind method when running with virtualbox and binding
+    an externally managed texture
+
+ -- Sam Spilsbury <smspillaz@gmail.com>  Sun, 17 Feb 2013 10:26:40 +0800
+
+compiz (1:0.9.9~daily13.02.08-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * thumbnail.xml.in needs some love (LP: #1113459)
+  * Thumbnail plugin: Window title text is rendered into transparency
+    and glow/background are too large (LP: #1099100)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3601
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 08 Feb 2013 04:01:47 +0000
+
+compiz (1:0.9.9~daily13.02.07-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * [regression][GLES] gears plugin does not build any more (LP:
+    #1020822)
+  * Cube Gears plugin: Cylinders inside the gears are not rendered
+    correctly (LP: #1117311)
+  * compiz-profile-active-Default.convert and compiz-profile-active-
+    Default.convert are referring to refres_rate and detect_refres_rate
+    (LP: #1115243)
+  * cppcheck static code analysis reveals some true positives (LP:
+    #1114525)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3599
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 07 Feb 2013 06:19:48 +0000
+
+compiz (1:0.9.9~daily13.02.04-0ubuntu1) raring; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * Spread - Window glow is incorrectly painted in the screen when
+    switching spreaded application (LP: #1109805)
+
+  [ MC Return ]
+  * Coverity MISSING_BREAK - CID 12463 (LP: #1101561)
+  * Thumbnail plugin: Window title text is rendered into transparency
+    and glow/background are too large (LP: #1099100)
+  * Showmouse plugin code: Needs cleanup (LP: #1105969)
+  * Coverity SECURE_CODING - CID 10019 (LP: #957582)
+  * Coverity SECURE_CODING - CID 12511 (LP: #1101605)
+  * Coverity SECURE_CODING - CID 12512 (LP: #1101571)
+  * Keyboard shortcut overlay says Ctrl+Super+Down "minimises" the
+    current window, but it doesn't (LP: #966099)
+  * Coverity SECURE_CODING - CID 10020 (LP: #957587)
+  * Coverity SECURE_CODING - CID 12529 (LP: #1101641)
+  * Coverity MISSING_BREAK - CID 12464 (LP: #1101549)
+  * Coverity SECURE_CODING - CID 12519 (LP: #1101565)
+  * Coverity SECURE_CODING - CID 12516 (LP: #1101499)
+  * [GLES] Showmouse plugin needs port to OpenGL|ES (LP: #1106270)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3594
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Mon, 04 Feb 2013 04:01:58 +0000
+
 compiz (1:0.9.9~daily13.01.25-0ubuntu1) raring; urgency=low
 
   [ Didier Roche ]

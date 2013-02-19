@@ -25,6 +25,11 @@
 #include <core/output.h>
 #include <core/rect.h>
 #include <core/region.h>
+
+/* XXX: Including screen.h includes window.h and other unnecessary
+ * headers which cause cascading header dependencies. We should seek to
+ * eliminate this dependency
+ */
 #include <core/screen.h>
 
 namespace compiz

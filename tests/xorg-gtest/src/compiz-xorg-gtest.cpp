@@ -30,6 +30,7 @@
 #include <compiz-xorg-gtest.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/extensions/shape.h>
 
 #include "compiz-xorg-gtest-config.h"
 
@@ -39,10 +40,10 @@ using ::testing::MatcherInterface;
 namespace ct = compiz::testing;
 namespace
 {
-const int          WINDOW_X = 0;
-const int          WINDOW_Y = 0;
-const unsigned int WINDOW_WIDTH = 640;
-const unsigned int WINDOW_HEIGHT = 480;
+const int          WINDOW_X = ct::WINDOW_X;
+const int          WINDOW_Y = ct::WINDOW_Y;
+const unsigned int WINDOW_WIDTH = ct::WINDOW_HEIGHT;
+const unsigned int WINDOW_HEIGHT = ct::WINDOW_HEIGHT;
 const unsigned int WINDOW_BORDER = 0;
 const unsigned int WINDOW_DEPTH = CopyFromParent;
 const unsigned int WINDOW_CLASS = InputOutput;
@@ -325,6 +326,78 @@ ct::ConfigureNotifyXEventMatcher::DescribeTo (std::ostream *os) const
 	   " above: " << std::hex << priv->mAbove << std::dec;
 }
 
+class ct::PrivateShapeNotifyXEventMatcher
+{
+    public:
+
+	PrivateShapeNotifyXEventMatcher (int          kind,
+					 int          x,
+					 int          y,
+					 unsigned int width,
+					 unsigned int height,
+					 Bool         shaped) :
+	    mKind (kind),
+	    mX (x),
+	    mY (y),
+	    mWidth (width),
+	    mHeight (height),
+	    mShaped (shaped)
+	{
+	}
+
+	int          mKind;
+	int          mX;
+	int          mY;
+	unsigned int mWidth;
+	unsigned int mHeight;
+	Bool         mShaped;
+};
+
+bool
+ct::ShapeNotifyXEventMatcher::MatchAndExplain (const XEvent        &event,
+					       MatchResultListener *listener) const
+{
+    const XShapeEvent *sev = reinterpret_cast <const XShapeEvent *> (&event);
+
+    return sev->kind   == priv->mKind &&
+	   sev->x      == priv->mX &&
+	   sev->y      == priv->mY &&
+	   sev->width  == priv->mWidth &&
+	   sev->height == priv->mHeight &&
+	   sev->shaped == priv->mShaped;
+}
+
+void
+ct::ShapeNotifyXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    std::string kindStr (priv->mKind == ShapeBounding ?
+			     " ShapeBounding " :
+			     " ShapeInput ");
+
+    *os << " Matches ShapeNotify with parameters : " << std::endl <<
+	   " kind : " << kindStr <<
+	   " x : " << priv->mX <<
+	   " y : " << priv->mY <<
+	   " width: " << priv->mWidth <<
+	   " height: " << priv->mHeight <<
+	   " shaped: " << priv->mShaped;
+}
+
+ct::ShapeNotifyXEventMatcher::ShapeNotifyXEventMatcher (int          kind,
+							int          x,
+							int          y,
+							unsigned int width,
+							unsigned int height,
+							Bool         shaped) :
+    priv (new ct::PrivateShapeNotifyXEventMatcher (kind,
+						   x,
+						   y,
+						   width,
+						   height,
+						   shaped))
+{
+}
+
 class ct::PrivateCompizProcess
 {
     public:
@@ -431,7 +504,54 @@ ct::CompizXorgSystemTest::CompizXorgSystemTest () :
 void
 ct::CompizXorgSystemTest::SetUp ()
 {
-    xorg::testing::Test::SetUp ();
+    const unsigned int MAX_CONNECTION_ATTEMPTS = 10;
+    const unsigned int USEC_TO_MSEC = 1000;
+    const unsigned int SLEEP_TIME = 50 * USEC_TO_MSEC;
+
+    unsigned int connectionAttemptsRemaining = MAX_CONNECTION_ATTEMPTS;
+
+    /* Work around an inherent race condition in XOpenDisplay
+     *
+     * All xorg::testing::Test::SetUp does is call XOpenDisplay
+     * and assign a display string, the former before the latter.
+     * The current X Error handler will throw an exception if
+     * an X error occurrs.
+     *
+     * Unfortunately there's an inherent race condition in spawning
+     * a new server and using XOpenDisplay to connect to it - we
+     * simply don't know when the new server will be ready, and even
+     * watching its socket with inotify will be racey too. The only
+     * solution would be a handshake process where we pass the server
+     * a socket or pipe and it writes to it indicating that it is ready
+     * to accept connections. There isn't such a thing. As such, we need
+     * to work around that by simply re-trying our connection to the server
+     * once every 50ms or so, and we're trying about 10 times before giving up
+     * and assuming there is a problem with the server.
+     */
+    while (connectionAttemptsRemaining--)
+    {
+	try
+	{
+	    xorg::testing::Test::SetUp ();
+	    break;
+	}
+	catch (std::runtime_error &exception)
+	{
+	    usleep (SLEEP_TIME);
+	}
+    }
+
+    if (!connectionAttemptsRemaining)
+    {
+	throw std::runtime_error ("Failed to connect to X Server. "\
+                                  "Check the logs by setting "\
+                                  "XORG_GTEST_CHILD_STDOUT=1 to see if "\
+                                  "there are any startup errors. Otherwise "\
+                                  "if you suspect the server is running "\
+                                  "particularly slowly, try bumping up the "\
+                                  "maximum number of connection attempts in "\
+                                  "compiz-xorg-gtest.cpp");
+    }
 }
 
 void

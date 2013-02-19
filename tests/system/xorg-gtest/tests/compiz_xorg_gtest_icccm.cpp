@@ -113,13 +113,6 @@ class CompizXorgSystemICCCM :
 
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
 {
-    /* XXX: This is a bit stupid, but we have to do it.
-     * It seems as though closing the child stdout or
-     * stderr will cause the client to hang indefinitely
-     * when the child calls XSync (and that can happen
-     * implicitly, eg XCloseDisplay) */
-    TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
-
     StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
 		     ct::CompizProcess::ExpectStartupFailure |
 		     ct::CompizProcess::ReplaceCurrentWM |
