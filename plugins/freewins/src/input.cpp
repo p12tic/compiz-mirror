@@ -1,7 +1,7 @@
 /**
  * Compiz Fusion Freewins plugin
  *
- * input.c
+ * input.cpp
  *
  * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
  *

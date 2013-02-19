@@ -1,7 +1,7 @@
 /**
  * Compiz Fusion Freewins plugin
  *
- * events.c
+ * events.cpp
  *
  * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
  *

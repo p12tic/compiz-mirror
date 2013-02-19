@@ -1,7 +1,7 @@
 /**
  * Compiz Fusion Freewins plugin
  *
- * util.c
+ * util.cpp
  *
  * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
  *
