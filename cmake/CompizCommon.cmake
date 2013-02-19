@@ -31,6 +31,7 @@ option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
 option (COMPIZ_BUILD_TESTING "Build Unit Tests" ON)
+option (BUILD_XORG_GTEST "Build Xorg GTest integration tests" ON)
 
 set (COMPIZ_DATADIR ${CMAKE_INSTALL_PREFIX}/share)
 set (COMPIZ_METADATADIR ${CMAKE_INSTALL_PREFIX}/share/compiz)
@@ -240,9 +241,25 @@ function (compiz_discover_tests EXECUTABLE)
 	endforeach ()
     endif (${COVERAGE_BUILD_TYPE} MATCHES "coverage")
 
+    set (XORG_GTEST_WRAPPER_REQUIRED 0)
+
+    foreach (ARG ${ARGN})
+	if (${ARG} STREQUAL "WITH_XORG_GTEST")
+	    set (XORG_GTEST_WRAPPER_REQUIRED 1)
+	endif (${ARG} STREQUAL "WITH_XORG_GTEST")
+    endforeach ()
+
+    set (COMPIZ_DISCOVER_TESTS_CMD
+	 ${CMAKE_BINARY_DIR}/compiz_gtest/compiz_discover_gtest_tests ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE})
+
+    if (XORG_GTEST_WRAPPER_REQUIRED)
+	set (COMPIZ_DISCOVER_TESTS_CMD ${COMPIZ_DISCOVER_TESTS_CMD} --wrapper ${COMPIZ_XORG_GTEST_WRAPPER})
+    endif (XORG_GTEST_WRAPPER_REQUIRED)
+
     add_custom_command (TARGET ${EXECUTABLE}
 			POST_BUILD
-			COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE} --gtest_list_tests | ${CMAKE_BINARY_DIR}/compiz_gtest/compiz_discover_gtest_tests ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE}
+			COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${EXECUTABLE}
+			--gtest_list_tests | ${COMPIZ_DISCOVER_TESTS_CMD}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMENT "Discovering Tests in ${EXECUTABLE}"
 			VERBATIM)

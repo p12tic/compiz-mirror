@@ -22,6 +22,10 @@ include (CompizPackage)
 # GSettings schema recompilation
 include (CompizGSettings)
 
+# Google Test and Xorg-GTest
+include (GoogleTest)
+include (XorgGTest)
+
 include (cmake/base.cmake)
 # Check if specific function is present in library.
 include (CheckFunctionExists)
@@ -137,45 +141,41 @@ install (
 
 if (COMPIZ_BUILD_TESTING)
 
-    # Build Google Test and make its headers known
-    find_package (GTest)
+    find_package (GoogleTest)
 
-    if (NOT GTEST_FOUND)
+    if (GOOGLE_TEST_AND_MOCK_FOUND)
 
-	# Check for google test and build it locally
-	set (GTEST_ROOT_DIR
-	     "/usr/src/gtest" # Default value, adjustable by user with e.g., ccmake
-	     CACHE
-	     PATH
-	     "Path to Google Test srcs"
-	     FORCE
-	)
+	build_google_test_locally (${CMAKE_BINARY_DIR}/__gtest)
 
-	find_path (GTEST_INCLUDE_DIR gtest/gtest.h)
+	if (BUILD_XORG_GTEST)
 
-	if (GTEST_INCLUDE_DIR)
-	    add_subdirectory (${GTEST_ROOT_DIR}
-			     gtest)
-	endif (GTEST_INCLUDE_DIR)
+	    find_package (XorgGTest)
 
-	set (GTEST_BOTH_LIBRARIES gtest gtest_main)
-	set (GTEST_FOUND TRUE)
+	    set (COMPIZ_XORG_GTEST_DIR ${CMAKE_BINARY_DIR}/__xorg_gtest CACHE PATH "Path to Xorg GTest build dir" FORCE)
+	    set (COMPIZ_XORG_GTEST_WRAPPER ${COMPIZ_XORG_GTEST_DIR}/xorg_gtest_wrapper CACHE PATH "Path to Xorg GTest wrapper" FORCE)
 
-    endif (NOT GTEST_FOUND)
+	    if (XORG_GTEST_FOUND)
 
-    find_library (GMOCK_LIBRARY gmock)
-    find_library (GMOCK_MAIN_LIBRARY gmock_main)
+		build_xorg_gtest_locally (${CMAKE_BINARY_DIR}/__xorg_gtest)
 
-    if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+	    else (XORG_GTEST_FOUND)
 
-	message ("Google Mock and Google Test not found - cannot build tests!")
+		set (BUILD_XORG_GTEST FALSE)
+
+	    endif (XORG_GTEST_FOUND)
+
+	endif (BUILD_XORG_GTEST)
+
+    else (GOOGLE_TEST_AND_MOCK_FOUND)
+
 	set (COMPIZ_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+	set (BUILD_XORG_GTEST OFF CACHE BOOL "" FORCE)
 
-    else (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+    endif (GOOGLE_TEST_AND_MOCK_FOUND)
 
-	include_directories (${GTEST_INCLUDE_DIRS})
+else (COMPIZ_BUILD_TESTING)
 
-    endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+    set (BUILD_XORG_GTEST OFF CACHE BOOL "" FORCE)
 
 endif (COMPIZ_BUILD_TESTING)
 
