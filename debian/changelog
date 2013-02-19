@@ -1,3 +1,21 @@
+compiz (1:0.9.9~daily13.02.19-0ubuntu2) UNRELEASED; urgency=low
+
+  * debian/ccp_plugin.patch:
+    - Added new option --no-auto-load-ccp to prevent the ccp
+      plugin from autoloading. Useful for tests where having
+      this behaviour just causes problems from unwanted side-effects
+    - Also adjust test framework to pass the new option
+    - Fix typo
+  * debian/rules:
+    - We already auto-load the ccp plugin, no need to add it to the
+      default plugins.
+  * debian/control:
+    - Add xorg-gtest, xserver-xorg-dev, libxi-dev as build-deps
+  * debian/ubuntu_config.patch:
+    - Adjust EWMH test for new value
+
+ -- Sam Spilsbury <smspillaz@interpol>  Mon, 18 Feb 2013 09:51:41 +0800
+
 compiz (1:0.9.9~daily13.02.19-0ubuntu1) raring; urgency=low
 
   [ Sam Spilsbury ]
@@ -33,36 +51,6 @@ compiz (1:0.9.9~daily13.02.19-0ubuntu1) raring; urgency=low
   * Automatic snapshot from revision 3611
 
  -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Tue, 19 Feb 2013 08:46:08 +0000
-
-compiz (1:0.9.9~daily13.02.08-0ubuntu5) raring; urgency=low
-
-  * debian/ccp_plugin.patch:
-    - Fix typo
-  * debian/rules:
-    - We already auto-load the ccp plugin, no need to add it to the
-    default plugins.
-
- -- Sam Spilsbury <smspillaz@interpol>  Mon, 18 Feb 2013 09:51:41 +0800
-
-compiz (1:0.9.9~daily13.02.08-0ubuntu4) raring; urgency=low
-
-  * debian/ccp_plugin.patch:
-    - Also adjust test framework to pass the new option
-
- -- Sam Spilsbury <smspillaz@interpol>  Thu, 14 Feb 2013 12:49:11 +0800
-
-compiz (1:0.9.9~daily13.02.08-0ubuntu3) raring; urgency=low
-
-  * debian/control:
-    - Add xorg-gtest, xserver-xorg-dev, libxi-dev as build-deps
-  * debian/ubuntu_config.patch:
-    - Adjust EWMH test for new value
-  * debian/ccp_plugin.patch:
-    - Added new option --no-auto-load-ccp to prevent the ccp
-      plugin from autoloading. Useful for tests where having
-      this behaviour just causes problems from unwanted side-effects
-
- -- Sam Spilsbury <smspillaz@gmail.com>  Thu, 14 Feb 2013 12:45:17 +0800
 
 compiz (1:0.9.9~daily13.02.08-0ubuntu1) raring; urgency=low
 
