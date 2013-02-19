@@ -1,4 +1,4 @@
-pkg_check_modules (X11_XI x11 xi)
+pkg_check_modules (X11_XI x11 xi xext)
 
 if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 
