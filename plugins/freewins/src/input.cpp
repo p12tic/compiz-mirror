@@ -50,6 +50,7 @@
 #include "freewins.h"
 #include <cairo/cairo-xlib.h>
 
+
 /* ------ Input Prevention -------------------------------------------*/
 
 /* Shape the IPW

@@ -49,6 +49,7 @@
 
 #include "freewins.h"
 
+
 /* ------ Window and Output Painting ------------------------------------*/
 
 /* Damage util function */

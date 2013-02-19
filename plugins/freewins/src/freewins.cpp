@@ -216,7 +216,7 @@ FWScreen::FWScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen);
     GLScreenInterface::setHandler (gScreen);
 
-    /* TODO: warning about shape!*/
+    /* TODO: warning about shape! */
 
     /* BCOP Action initiation */
     optionSetInitiateRotationButtonInitiate (boost::bind (&FWScreen::initiateFWRotate, this, _1, _2, _3));

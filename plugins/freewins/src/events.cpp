@@ -152,7 +152,6 @@ FWWindow::handleIPWResizeMotionEvent (unsigned int x,
 
 }
 
-
 /* Handle Rotation */
 void
 FWWindow::handleRotateMotionEvent (float dx,
@@ -539,7 +538,6 @@ FWWindow::handleLeaveNotify (XEvent *xev)
     //XSendEvent (screen->dpy (), window->id (), FALSE,
     //            LeaveWindowMask, &LeaveNotifyEvent);
 }
-
 
 /* X Event Handler */
 void

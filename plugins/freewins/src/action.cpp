@@ -1,7 +1,7 @@
 /**
  * Compiz Fusion Freewins plugin
  *
- * action.c
+ * action.cpp
  *
  * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
  *
@@ -76,7 +76,7 @@ FWScreen::initiateFWRotate (CompAction         *action,
 	{
 	    if (info->ipw)
 		if (w->id () == info->ipw)
-		    /* The window we just grabbed was actually
+		/* The window we just grabbed was actually
 		 * an IPW, get the real window instead
 		 */
 		    useW = getRealWindow (w);
@@ -136,16 +136,20 @@ FWScreen::initiateFWRotate (CompAction         *action,
 	    {
 		case ZAxisRotationAlways3d:
 		    fww->mCan3D = TRUE;
-		    fww->mCan2D = FALSE; break;
+		    fww->mCan2D = FALSE;
+		    break;
 		case ZAxisRotationAlways2d:
 		    fww->mCan3D = FALSE;
-		    fww->mCan2D = TRUE; break;
+		    fww->mCan2D = TRUE;
+		    break;
 		case ZAxisRotationDetermineOnClick:
 		case ZAxisRotationSwitch:
-		    fww->determineZAxisClick (pointerX, pointerY, FALSE); break;
+		    fww->determineZAxisClick (pointerX, pointerY, FALSE);
+		    break;
 		case ZAxisRotationInterchangeable:
 		    fww->mCan3D = TRUE;
-		    fww->mCan2D = TRUE;  break;
+		    fww->mCan2D = TRUE;
+		    break;
 		default:
 		    break;
 	    }
@@ -178,11 +182,10 @@ FWScreen::initiateFWRotate (CompAction         *action,
 	    }
 
 	    /* Announce that we grabbed the window */
-
 	    useW->grabNotify (x, y, mods,  CompWindowGrabMoveMask |
 			      CompWindowGrabButtonMask);
 
-	    /* Shape the window beforehand and avoid a stale grab*/
+	    /* Shape the window beforehand and avoid a stale grab */
 	    if (fww->canShape ())
 		if (fww->handleWindowInputInfo ())
 		    fww->adjustIPW ();
@@ -294,7 +297,7 @@ FWScreen::initiateFWScale (CompAction         *action,
 	{
 	    if (info->ipw)
 		if (w->id () == info->ipw)
-		    /* The window we just grabbed was actually
+		/* The window we just grabbed was actually
 		 * an IPW, get the real window instead
 		 */
 		    useW = getRealWindow (w);
@@ -354,9 +357,9 @@ FWScreen::initiateFWScale (CompAction         *action,
 		    fww->calculateOutputOrigin(WIN_OUTPUT_X (useW) + WIN_OUTPUT_W (useW) / 2.0f,
 					       WIN_OUTPUT_Y (useW) + WIN_OUTPUT_H (useW) / 2.0f);
 		    break;
-		    /**
-		  *Experimental scale to corners mode
-		  */
+		/*
+		 *Experimental scale to corners mode
+		 */
 		case ScaleModeToOppositeCorner:
 		    switch (fww->mCorner)
 		    {
@@ -387,13 +390,12 @@ FWScreen::initiateFWScale (CompAction         *action,
 	    fww->mGrab = grabScale;
 
 	    /* Announce that we grabbed the window */
-
 	    useW->grabNotify (x, y, mods,  CompWindowGrabMoveMask |
 			      CompWindowGrabButtonMask);
 
 	    cScreen->damageScreen ();
 
-	    /* Shape the window beforehand and avoid a stale grab*/
+	    /* Shape the window beforehand and avoid a stale grab */
 	    if (fww->canShape ())
 		if (fww->handleWindowInputInfo ())
 		    fww->adjustIPW ();
@@ -759,4 +761,3 @@ FWScreen::toggleFWAxis (CompAction         *action,
 
     return TRUE;
 }
-
