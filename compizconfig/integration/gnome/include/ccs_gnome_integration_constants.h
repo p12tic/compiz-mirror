@@ -131,7 +131,7 @@ struct _CCSGNOMEIntegratedSettingNames
     CCSSettingIntegratedSettingPair CORE_RAISE_WINDOW_KEY;
     CCSSettingIntegratedSettingPair CORE_MAXIMIZE_WINDOW_VERTICALLY_KEY;
     CCSSettingIntegratedSettingPair CORE_MAXIMIZE_WINDOW_HORIZONTALLY_KEY;
-    CCSSettingIntegratedSettingPair CORE_UNMAXIMIZE_WINDOW_KEY;
+    CCSSettingIntegratedSettingPair CORE_UNMAXIMIZE_OR_MINIMIZE_WINDOW_KEY;
     CCSSettingIntegratedSettingPair CORE_MAXIMIZE_WINDOW_KEY;
     CCSSettingIntegratedSettingPair CORE_MINIMIZE_WINDOW_KEY;
     CCSSettingIntegratedSettingPair CORE_TOGGLE_WINDOW_MAXIMIZED_KEY;

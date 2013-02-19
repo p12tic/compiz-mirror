@@ -204,6 +204,7 @@
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
+
 --- a/plugins/decor/decor.xml.in
 +++ b/plugins/decor/decor.xml.in
 @@ -31,7 +31,7 @@
@@ -242,6 +243,7 @@
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
+
 --- a/plugins/expo/expo.xml.in
 +++ b/plugins/expo/expo.xml.in
 @@ -17,6 +17,7 @@
@@ -355,6 +357,7 @@
  			<min>0.0</min>
  			<max>2.0</max>
  			<precision>0.01</precision>
+
 --- a/plugins/ezoom/ezoom.xml.in
 +++ b/plugins/ezoom/ezoom.xml.in
 @@ -29,7 +29,6 @@
@@ -390,6 +393,7 @@
  		    </option>
  		</subgroup>
  	    </group>
+
 --- a/plugins/fade/fade.xml.in
 +++ b/plugins/fade/fade.xml.in
 @@ -10,6 +10,7 @@
@@ -409,6 +413,7 @@
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
+
 --- a/plugins/gnomecompat/gnomecompat.xml.in
 +++ b/plugins/gnomecompat/gnomecompat.xml.in
 @@ -53,6 +53,7 @@
@@ -419,6 +424,7 @@
  		</option>
  	    </group>
  	</options>
+
 --- a/plugins/grid/grid.xml.in
 +++ b/plugins/grid/grid.xml.in
 @@ -23,17 +23,16 @@
@@ -449,6 +455,7 @@
  		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
+
 --- a/plugins/place/place.xml.in
 +++ b/plugins/place/place.xml.in
 @@ -20,8 +20,8 @@
@@ -462,6 +469,7 @@
  		<max>5</max>
  		<desc>
  		    <value>0</value>
+
 --- a/plugins/resize/resize.xml.in
 +++ b/plugins/resize/resize.xml.in
 @@ -28,7 +28,7 @@
@@ -508,6 +516,7 @@
  		</default>
  	    </option>
  	    <subgroup>
+
 --- a/plugins/scale/scale.xml.in
 +++ b/plugins/scale/scale.xml.in
 @@ -19,14 +19,14 @@
@@ -598,6 +607,7 @@
  			</option>
  	    </group>
  	</options>
+
 --- a/plugins/staticswitcher/staticswitcher.xml.in
 +++ b/plugins/staticswitcher/staticswitcher.xml.in
 @@ -11,7 +11,6 @@
@@ -676,6 +686,7 @@
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
+
 --- a/plugins/vpswitch/vpswitch.xml.in
 +++ b/plugins/vpswitch/vpswitch.xml.in
 @@ -95,13 +95,11 @@
@@ -692,6 +703,7 @@
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
+
 --- a/plugins/wall/wall.xml.in
 +++ b/plugins/wall/wall.xml.in
 @@ -31,12 +31,12 @@
@@ -841,3 +853,15 @@
  				</option>
  				<option name="edgeflip_dnd" type="bool">
  					<_short>Edge Flip DnD</_short>
+
+--- a/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
++++ b/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
+@@ -46,7 +46,7 @@
+ 
+ namespace
+ {
+-unsigned int DEFAULT_VIEWPORT_WIDTH = 4;
++unsigned int DEFAULT_VIEWPORT_WIDTH = 1;
+ unsigned int DEFAULT_VIEWPORT_HEIGHT = 1;
+ 
+ bool Advance (Display *d, bool r)
