@@ -373,3 +373,59 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateRelativeToDestroyedWindowFindsAn
     EXPECT_EQ (w3, (*it++));
     EXPECT_EQ (dock, (*it++));
 }
+
+TEST_F(CompizXorgSystemStackingTest, TestWindowsDontStackAboveTransientForWindows)
+{
+    /* Here we are testing if new windows are being stacked above transientFor
+     * windows. A problem is if a window is set to transientFor on a dock type
+     * then a new window is mapped it set to be lower or above the transientFor
+     * window causing it to be above the dock type window int the stack (which
+     * is incorrect behavior)
+     */
+    ::Display *dpy = Display ();
+    ct::PropertyNotifyXEventMatcher matcher (dpy, "_NET_CLIENT_LIST_STACKING");
+
+    Window dock = ct::CreateNormalWindow (dpy);
+    MakeDock (dpy, dock);
+
+    XMapRaised (dpy, dock);
+
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+
+    Window w1 = ct::CreateNormalWindow (dpy);
+    Window w2 = ct::CreateNormalWindow (dpy);
+
+    XSetTransientForHint(dpy, w1, dock);
+
+    XMapRaised (dpy, w1);
+    XMapRaised (dpy, w2);
+
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+    ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
+								       DefaultRootWindow (dpy),
+								       PropertyNotify,
+								       -1,
+								       -1,
+								       matcher)));
+
+
+    std::list <Window> clientList = ct::NET_CLIENT_LIST_STACKING (dpy);
+    std::list <Window>::iterator it = clientList.begin ();
+
+    /* Assert,  w1 > dock > w2 */
+    EXPECT_EQ (3, clientList.size ());
+
+    EXPECT_EQ (w2, (*it++));
+    EXPECT_EQ (dock, (*it++));
+    EXPECT_EQ (w1, (*it++));
+}

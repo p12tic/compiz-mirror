@@ -94,6 +94,33 @@ namespace compiz
 		std::auto_ptr <PrivateConfigureNotifyXEventMatcher> priv;
 	};
 
+	class PrivateShapeNotifyXEventMatcher;
+	class ShapeNotifyXEventMatcher :
+	    public compiz::testing::XEventMatcher
+	{
+	    public:
+
+		ShapeNotifyXEventMatcher (int          kind,
+					  int          x,
+					  int          y,
+					  unsigned int width,
+					  unsigned int height,
+					  Bool         shaped);
+
+		virtual bool MatchAndExplain (const XEvent &event,
+					      MatchResultListener *listener) const;
+		virtual void DescribeTo (std::ostream *os) const;
+
+	    private:
+
+		std::auto_ptr <PrivateShapeNotifyXEventMatcher> priv;
+	};
+
+	const int          WINDOW_X = 0;
+	const int          WINDOW_Y = 0;
+	const unsigned int WINDOW_WIDTH = 640;
+	const unsigned int WINDOW_HEIGHT = 480;
+
 	Window CreateNormalWindow (Display *dpy);
 
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);

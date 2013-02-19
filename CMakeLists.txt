@@ -181,7 +181,6 @@ endif (COMPIZ_BUILD_TESTING)
 
 set (COMPIZ_INTERNAL_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-  
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/string/include

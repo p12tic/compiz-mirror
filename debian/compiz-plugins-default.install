@@ -1,6 +1,7 @@
 debian/tmp/usr/*/compiz/*animation.*
 debian/tmp/usr/*/compiz/*compiztoolbox.*
 debian/tmp/usr/*/compiz/*composite.*
+debian/tmp/usr/*/compiz/*copytex.*
 debian/tmp/usr/*/compiz/*decor.*
 debian/tmp/usr/*/compiz/*expo.*
 debian/tmp/usr/*/compiz/*ezoom.*

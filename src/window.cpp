@@ -923,12 +923,16 @@ PrivateWindow::updateRegion ()
 	/* We should update the server here */
 	XSync (screen->dpy (), false);
 
-	boundingShapeRects = priv->queryShapeRectangles (ShapeBounding,
-							 &nBounding,
-							 &order);
-	inputShapeRects = priv->queryShapeRectangles (ShapeInput,
-						      &nInput,
-						      &order);
+	boundingShapeRects = XShapeGetRectangles (screen->dpy (),
+						  priv->id,
+						  ShapeBounding,
+						  &nBounding,
+						  &order);
+	inputShapeRects = XShapeGetRectangles (screen->dpy (),
+					       priv->id,
+					       ShapeInput,
+					       &nInput,
+					       &order);
     }
     else
     {
