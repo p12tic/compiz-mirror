@@ -53,12 +53,24 @@ llvmpipe
  RESOLVED. WORKAROUND: detect when llvmpipe is active and force the usage
  of glXSwapBuffers on every frame
 
+ 2. llvmpipe will crash when a pixmap does not exist on the server
+ side and glXBindTexImageEXT is used on it.
+
+ RESOLVED. WORKAROUND: grab the server, query the server as to
+ whether or not the pixmap exists, call glXBindTexImageEXT and
+ then release the server grab. This will ensure we never call
+ glXBindTexImageEXT on a destroyed pixmap.
+
 virtualbox
 ==========
 
- 1. vboxdrv may open a new X Server connection on the first call to
-    glXBindTexImageEXT. If compiz has a server grab during this time
-    (see the GLX_EXT_texture_from_pixmap spec s. 5) then compiz
-    will deadlock
+ 1. vboxdrv requires the usage of a second X Server connection
+    inside of glXBindTexImageEXT. If compiz requires a server
+    grab at this time (eg, the pixmap may not have its lifetime
+    managed by us, see issue #2 in llvmpipe), then the driver
+    will hang in glXBindTexImageEXT as it must use this connection
+    in order to listen for any new damage events.
 
- RESOLVED. WORKAROUND: don't implement this part of the spec for now
+ RESOLVED. WORKAROUND: force the usage of the copy-to-texture path
+ when using this driver ("Chromium") and binding an externally
+ managed pixmap to a texture

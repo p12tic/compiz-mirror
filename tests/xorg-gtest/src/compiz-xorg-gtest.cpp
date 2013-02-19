@@ -30,6 +30,7 @@
 #include <compiz-xorg-gtest.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/extensions/shape.h>
 
 #include "compiz-xorg-gtest-config.h"
 
@@ -39,10 +40,10 @@ using ::testing::MatcherInterface;
 namespace ct = compiz::testing;
 namespace
 {
-const int          WINDOW_X = 0;
-const int          WINDOW_Y = 0;
-const unsigned int WINDOW_WIDTH = 640;
-const unsigned int WINDOW_HEIGHT = 480;
+const int          WINDOW_X = ct::WINDOW_X;
+const int          WINDOW_Y = ct::WINDOW_Y;
+const unsigned int WINDOW_WIDTH = ct::WINDOW_HEIGHT;
+const unsigned int WINDOW_HEIGHT = ct::WINDOW_HEIGHT;
 const unsigned int WINDOW_BORDER = 0;
 const unsigned int WINDOW_DEPTH = CopyFromParent;
 const unsigned int WINDOW_CLASS = InputOutput;
@@ -323,6 +324,78 @@ ct::ConfigureNotifyXEventMatcher::DescribeTo (std::ostream *os) const
 	   " height: " << priv->mHeight <<
 	   " border: " << priv->mBorder <<
 	   " above: " << std::hex << priv->mAbove << std::dec;
+}
+
+class ct::PrivateShapeNotifyXEventMatcher
+{
+    public:
+
+	PrivateShapeNotifyXEventMatcher (int          kind,
+					 int          x,
+					 int          y,
+					 unsigned int width,
+					 unsigned int height,
+					 Bool         shaped) :
+	    mKind (kind),
+	    mX (x),
+	    mY (y),
+	    mWidth (width),
+	    mHeight (height),
+	    mShaped (shaped)
+	{
+	}
+
+	int          mKind;
+	int          mX;
+	int          mY;
+	unsigned int mWidth;
+	unsigned int mHeight;
+	Bool         mShaped;
+};
+
+bool
+ct::ShapeNotifyXEventMatcher::MatchAndExplain (const XEvent        &event,
+					       MatchResultListener *listener) const
+{
+    const XShapeEvent *sev = reinterpret_cast <const XShapeEvent *> (&event);
+
+    return sev->kind   == priv->mKind &&
+	   sev->x      == priv->mX &&
+	   sev->y      == priv->mY &&
+	   sev->width  == priv->mWidth &&
+	   sev->height == priv->mHeight &&
+	   sev->shaped == priv->mShaped;
+}
+
+void
+ct::ShapeNotifyXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    std::string kindStr (priv->mKind == ShapeBounding ?
+			     " ShapeBounding " :
+			     " ShapeInput ");
+
+    *os << " Matches ShapeNotify with parameters : " << std::endl <<
+	   " kind : " << kindStr <<
+	   " x : " << priv->mX <<
+	   " y : " << priv->mY <<
+	   " width: " << priv->mWidth <<
+	   " height: " << priv->mHeight <<
+	   " shaped: " << priv->mShaped;
+}
+
+ct::ShapeNotifyXEventMatcher::ShapeNotifyXEventMatcher (int          kind,
+							int          x,
+							int          y,
+							unsigned int width,
+							unsigned int height,
+							Bool         shaped) :
+    priv (new ct::PrivateShapeNotifyXEventMatcher (kind,
+						   x,
+						   y,
+						   width,
+						   height,
+						   shaped))
+{
 }
 
 class ct::PrivateCompizProcess

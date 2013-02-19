@@ -905,33 +905,34 @@ PrivateWindow::updateRegion ()
 
     priv->region = priv->inputRegion = emptyRegion;
 
-    bool useXShape = screen->XShape ();
-    if (useXShape)
+    r.x      = -geom.border ();
+    r.y      = -geom.border ();
+    r.width  = geom.widthIncBorders ();
+    r.height = geom.heightIncBorders ();
+
+    if (screen->XShape ())
     {
 	int order;
 
 	/* We should update the server here */
 	XSync (screen->dpy (), false);
 
-	boundingShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
-					 	  ShapeBounding, &nBounding, &order);
-	inputShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
-					       ShapeInput, &nInput, &order);
+	boundingShapeRects = XShapeGetRectangles (screen->dpy (),
+						  priv->id,
+						  ShapeBounding,
+						  &nBounding,
+						  &order);
+	inputShapeRects = XShapeGetRectangles (screen->dpy (),
+					       priv->id,
+					       ShapeInput,
+					       &nInput,
+					       &order);
     }
-
-    r.x      = -geom.border ();
-    r.y      = -geom.border ();
-    r.width  = geom.widthIncBorders ();
-    r.height = geom.heightIncBorders ();
-
-    if (nBounding < 1)
+    else
     {
 	boundingShapeRects = &r;
 	nBounding = 1;
-    }
 
-    if (!useXShape)
-    {
 	inputShapeRects = &r;
 	nInput = 1;
     }
