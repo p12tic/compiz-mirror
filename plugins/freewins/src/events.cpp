@@ -391,11 +391,13 @@ FWWindow::handleScaleMotionEvent (float dx,
     {
 	case CornerTopLeft:
 
+	    // Check X Direction
 	    if (x < oldX)
 		scaleX -= dx;
 	    else if (x > oldX)
 		scaleX -= dx;
 
+	    // Check Y Direction
 	    if (y < oldY)
 		scaleY -= dy;
 	    else if (y > oldY)
@@ -405,9 +407,10 @@ FWWindow::handleScaleMotionEvent (float dx,
 
 	case CornerTopRight:
 
+	    // Check X Direction
 	    if (x < oldX)
 		scaleX += dx;
-	    else if (y > oldX)
+	    else if (x > oldX)
 		scaleX += dx;
 
 	    // Check Y Direction
