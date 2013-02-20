@@ -321,6 +321,12 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 		    if (!olv)
 		    {
 			count++;
+
+			/* Before we do that, make sure that the setting parent
+			 * is set to the real setting, so that it behaves
+			 * correctly later on */
+			l->data->parent = setting;
+
 			nl = ccsSettingValueListAppend (nl, l->data);
 		    }
 
