@@ -276,7 +276,6 @@ FWScreen::terminateFWRotate (CompAction          *action,
 	syncWindowPosition (w);
 }*/
 
-
 /* Initiate Scaling */
 bool
 FWScreen::initiateFWScale (CompAction         *action,
