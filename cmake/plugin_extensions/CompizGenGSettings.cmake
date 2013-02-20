@@ -37,9 +37,9 @@ if (USE_GSETTINGS)
 	 ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.${COMPIZ_CURRENT_PLUGIN}.gschema.xml)
 
     set (_install_gsettings_schema )
-    if (_install_plugin_${plugin})
+    if (NOT _install_plugin_${COMPIZ_CURRENT_PLUGIN})
 	set (_install_gsettings_schema NOINSTALL)
-    endif ()
+    endif (NOT _install_plugin_${COMPIZ_CURRENT_PLUGIN})
 
     compiz_gsettings_schema (${COMPIZ_CURRENT_PLUGIN}
 			     ${COMPIZ_CURRENT_XML_FILE}
