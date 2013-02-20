@@ -856,7 +856,7 @@ DecorationList::updateDecoration (Window   id,
 	    /* Creating a new decoration failed ... see if we can use
 	     * the old one */
 
-	    unsigned int    frameType, frameState, frameActions;
+	    unsigned int    frameType, frameState, frameActions = 0;
 	    Pixmap	    pixmap = None;
 	    decor_extents_t border;
 	    decor_extents_t input;
@@ -2367,7 +2367,14 @@ DecorScreen::handleEvent (XEvent *event)
 	    {
 		w = screen->findWindow (event->xclient.window);
 		if (w)
-		    DecorWindow::get (w)->update (true);
+		{
+		    DecorWindow *dw = DecorWindow::get (w);
+
+		    /* Set the frameExtentsRequested flag so that we know to
+		     * at least update _NET_WM_FRAME_EXTENTS (LP: #1110138) */
+		    dw->frameExtentsRequested = true;
+		    dw->update (true);
+		}
 	    }
 	    /* A decoration is pending creation, allow it to be created */
 	    if (event->xclient.message_type == decorPendingAtom)

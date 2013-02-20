@@ -3,7 +3,6 @@ debian/tmp/usr/*/compiz/*annotate.*
 debian/tmp/usr/*/compiz/*bench.*
 debian/tmp/usr/*/compiz/*clone.*
 debian/tmp/usr/*/compiz/*commands.*
-debian/tmp/usr/*/compiz/*copytex.*
 debian/tmp/usr/*/compiz/*crashhandler.*
 debian/tmp/usr/*/compiz/*cube.*
 debian/tmp/usr/*/compiz/*cubeaddon.*
@@ -12,6 +11,7 @@ debian/tmp/usr/*/compiz/*dbus.*
 debian/tmp/usr/*/compiz/*extrawm.*
 debian/tmp/usr/*/compiz/*fadedesktop.*
 debian/tmp/usr/*/compiz/*firepaint.*
+debian/tmp/usr/*/compiz/*gears.*
 debian/tmp/usr/*/compiz/*imgjpeg.*
 debian/tmp/usr/*/compiz/*imgsvg.*
 debian/tmp/usr/*/compiz/*inotify.*

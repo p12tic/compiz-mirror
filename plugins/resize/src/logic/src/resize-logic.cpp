@@ -1359,7 +1359,7 @@ ResizeLogic::initiateResize (CompAction		*action,
 	    if (sourceExternalApp)
 	    {
 		int output = w->outputDevice ();
-		int lco, tco, bco, rco;
+
 		bool sl = mScreen->outputDevs ().at (output).workArea ().left () >
 			  w->serverGeometry ().left ();
 		bool sr = mScreen->outputDevs ().at (output).workArea ().right () <
@@ -1369,17 +1369,15 @@ ResizeLogic::initiateResize (CompAction		*action,
 		bool sb = mScreen->outputDevs ().at (output).workArea ().bottom () <
 			  w->serverGeometry ().bottom ();
 
-		lco = tco = bco = rco = output;
-
 		/* Prevent resizing beyond work area edges when resize is
 		   initiated externally (e.g. with window frame or menu)
 		   and not with a key (e.g. alt+button) */
 		offWorkAreaConstrained = true;
 
-		lco = getOutputForEdge (output, TOUCH_RIGHT, sl);
-		rco = getOutputForEdge (output, TOUCH_LEFT, sr);
-		tco = getOutputForEdge (output, TOUCH_BOTTOM, st);
-		bco = getOutputForEdge (output, TOUCH_TOP, sb);
+		int lco = getOutputForEdge (output, TOUCH_RIGHT, sl);
+		int rco = getOutputForEdge (output, TOUCH_LEFT, sr);
+		int tco = getOutputForEdge (output, TOUCH_BOTTOM, st);
+		int bco = getOutputForEdge (output, TOUCH_TOP, sb);
 
 		/* Now we need to form one big rect which describes
 		 * the available workarea */

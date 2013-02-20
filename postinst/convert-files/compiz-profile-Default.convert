@@ -26,8 +26,8 @@ window-menu-key = /apps/compizconfig-1/profiles/Default/plugins/core/screen0/opt
 
 
 [org.compiz.composite:/org/compiz/profiles/Default/plugins/composite/]
-detect-refresh-rate = /apps/compizconfig-1/profiles/Default/plugins/composite/screen0/options/detect_refres_rate
-refresh-rate = /apps/compizconfig-1/profiles/Default/plugins/composite/screen0/options/refres_rate
+detect-refresh-rate = /apps/compizconfig-1/profiles/Default/plugins/composite/screen0/options/detect_refresh_rate
+refresh-rate = /apps/compizconfig-1/profiles/Default/plugins/composite/screen0/options/refresh_rate
 
 
 [org.compiz.opengl:/org/compiz/profiles/Default/plugins/opengl/]

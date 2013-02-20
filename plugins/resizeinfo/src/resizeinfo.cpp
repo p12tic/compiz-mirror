@@ -135,7 +135,7 @@ InfoLayer::renderText ()
     cairo_restore (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-    snprintf (info, 50, "%d x %d", xv, yv);
+    snprintf (info, 50, "%u x %u", xv, yv);
 
     font = pango_font_description_new ();
     layout = pango_cairo_create_layout (is->textLayer.cr);
