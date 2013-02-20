@@ -89,7 +89,6 @@ FWScreen::initiateFWRotate (CompAction         *action,
 	    {
 		mGrabIndex = screen->pushGrab (0, "freewins");
 	    }
-
     }
 
     if (useW)
@@ -138,18 +137,22 @@ FWScreen::initiateFWRotate (CompAction         *action,
 		    fww->mCan3D = TRUE;
 		    fww->mCan2D = FALSE;
 		    break;
+
 		case ZAxisRotationAlways2d:
 		    fww->mCan3D = FALSE;
 		    fww->mCan2D = TRUE;
 		    break;
+
 		case ZAxisRotationDetermineOnClick:
 		case ZAxisRotationSwitch:
 		    fww->determineZAxisClick (pointerX, pointerY, FALSE);
 		    break;
+
 		case ZAxisRotationInterchangeable:
 		    fww->mCan3D = TRUE;
 		    fww->mCan2D = TRUE;
 		    break;
+
 		default:
 		    break;
 	    }
@@ -169,10 +172,12 @@ FWScreen::initiateFWRotate (CompAction         *action,
 						WIN_OUTPUT_Y (mGrabWindow) +
 						WIN_OUTPUT_H (mGrabWindow) / 2.0f);
 		    break;
+
 		case RotationAxisClickPoint:
 		    fww->calculateInputOrigin (mClick_root_x, mClick_root_y);
 		    fww->calculateOutputOrigin (mClick_root_x, mClick_root_y);
 		    break;
+
 		case RotationAxisOppositeToClick:
 		    fww->calculateInputOrigin (useW->x () + useW->width () - mClick_root_x,
 					       useW->y () + useW->height () - mClick_root_y);
@@ -253,7 +258,6 @@ FWScreen::terminateFWRotate (CompAction          *action,
 	    mGrabIndex = 0;
 	    mGrabWindow = NULL;
 	    fww->mGrab = grabNone;
-
 	}
     }
 
@@ -307,7 +311,6 @@ FWScreen::initiateFWScale (CompAction         *action,
 	if (!screen->otherGrabExist ("freewins", 0))
 	    if (!mGrabIndex)
 		mGrabIndex = screen->pushGrab (mRotateCursor, "freewins");
-
     }
 
     if (useW)
@@ -367,16 +370,19 @@ FWScreen::initiateFWScale (CompAction         *action,
 			    //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW), fww->inputRect.y1 - WIN_REAL_Y (useW));
 			    fww->calculateInputOrigin (WIN_REAL_X (useW), WIN_REAL_Y (useW));
 			    break;
+
 			case CornerBottomLeft:
 			    /* Translate origin to the top right of the window */
 			    //FWMoveWindowToCorrectPosition (w, fww->inputRect.x2 - (WIN_REAL_X (useW) + WIN_REAL_W (useW)), fww->inputRect.y1 - WIN_REAL_Y (useW));
 			    fww->calculateInputOrigin (WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW));
 			    break;
+
 			case CornerTopRight:
 			    /* Translate origin to the bottom left of the window */
 			    //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
 			    fww->calculateInputOrigin (WIN_REAL_X (useW), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
 			    break;
+
 			case CornerTopLeft:
 			    /* Translate origin to the bottom right of the window */
 			    //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 -(WIN_REAL_X (useW) + WIN_REAL_W (useW)) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
@@ -402,7 +408,6 @@ FWScreen::initiateFWScale (CompAction         *action,
 
 	    if (state & CompAction::StateInitButton)
 		action->setState (action->state () | CompAction::StateTermButton);
-
 	}
     }
 
@@ -442,6 +447,7 @@ FWScreen::terminateFWScale (CompAction         *action,
 						WIN_OUTPUT_H (mGrabWindow) / 2.0f);
 
 		    break;
+
 		default:
 		    break;
 
@@ -459,7 +465,6 @@ FWScreen::terminateFWScale (CompAction         *action,
 
     return FALSE;
 }
-
 
 /* Repetitive Stuff */
 

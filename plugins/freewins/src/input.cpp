@@ -54,9 +54,9 @@
 /* ------ Input Prevention -------------------------------------------*/
 
 /* Shape the IPW
-  * Thanks to Joel Bosveld (b0le)
-  * for helping me with this section
-  */
+ * Thanks to Joel Bosveld (b0le)
+ * for helping me with this section
+ */
 void
 FWWindow::shapeIPW ()
 {
@@ -88,7 +88,7 @@ FWWindow::shapeIPW ()
 	    cairo_paint (cr);
 	    cairo_restore (cr);
 
-	    /* Move to our first corner (TopLeft)  */
+	    /* Move to our first corner (TopLeft) */
 
 	    cairo_move_to (cr,
 			   mOutput.shapex1 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
@@ -112,7 +112,7 @@ FWWindow::shapeIPW ()
 			   mOutput.shapex3 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
 			   mOutput.shapey3 - MIN(mInputRect.y1 (), mInputRect.y2 ()));
 
-	    /* Line to TopLeft*/
+	    /* Line to TopLeft */
 
 	    cairo_line_to (cr,
 			   mOutput.shapex1 - MIN(mInputRect.x1 (), mInputRect.x2 ()),
@@ -128,11 +128,11 @@ FWWindow::shapeIPW ()
 	    cairo_fill (cr);
 
 	    /* This takes the bitmap we just drew with cairo
-	      * and scans out the white bits (You can see these)
-	      * if you uncomment the following line after this
-	      * comment. Then, all the bits we drew on are clickable,
-	      * leaving us with a nice and neat window shape. Yummy.
-	      */
+	     * and scans out the white bits (You can see these)
+	     * if you uncomment the following line after this
+	     * comment. Then, all the bits we drew on are clickable,
+	     * leaving us with a nice and neat window shape. Yummy.
+	     */
 
 	    /* XWriteBitmapFile (ipw->screen->display->display,
 								 "/path/to/your/image.bmp",
@@ -184,7 +184,6 @@ FWWindow::saveInputShape (XRectangle **retRects,
     *retOrdering = ordering;
 }
 
-
 void
 FWScreen::addWindowToList (FWWindowInputInfo *info)
 {
@@ -197,8 +196,7 @@ FWScreen::removeWindowFromList (FWWindowInputInfo *info)
     mTransformedWindows.remove (info);
 }
 
-/* Adjust size and location of the input prevention window
- */
+/* Adjust size and location of the input prevention window */
 void
 FWWindow::adjustIPW ()
 {
@@ -227,7 +225,6 @@ FWWindow::adjustIPW ()
 		      &xwc);
 
     shapeIPW ();
-
 }
 
 void
@@ -289,7 +286,6 @@ FWWindowInputInfo::FWWindowInputInfo (CompWindow *window) :
 FWWindowInputInfo::~FWWindowInputInfo ()
 {
 }
-
 
 bool
 FWWindow::handleWindowInputInfo ()

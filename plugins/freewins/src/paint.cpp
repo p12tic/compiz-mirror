@@ -64,8 +64,7 @@ FWWindow::damageArea ()
 void
 FWScreen::preparePaint (int	      ms)
 {
-    /* FIXME: should only loop over all windows if at least one animation
-       is running */
+    /* FIXME: should only loop over all windows if at least one animation is running */
     foreach (CompWindow *w, screen->windows ())
     {
 	FREEWINS_WINDOW (w);
@@ -178,9 +177,7 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	calculateOutputRect ();
 
 	/* Prepare for transformation by
-	 * doing any necessary adjustments
-	 */
-
+	 * doing any necessary adjustments */
 	float autoScaleX = 1.0f;
 	float autoScaleY = 1.0f;
 
@@ -200,9 +197,7 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    autoScaleX = autoScaleY = (autoScaleX + autoScaleY) / 2;
 
 	    /* Because we modified the scale after calculating
-	     * the output rect, we need to recalculate again
-	     */
-
+	     * the output rect, we need to recalculate again */
 	    calculateOutputRect ();
 
 	}
@@ -210,12 +205,11 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	float scaleX = autoScaleX - (1 - mTransform.scaleX);
 	float scaleY = autoScaleY - (1 - mTransform.scaleY);
 	*/
-	/* Actually Transform the window */
 
+	/* Actually Transform the window */
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 	/* Adjust the window in the matrix to prepare for transformation */
-	
 	if (mGrab != grabRotate && mGrab != grabScale)
 	{
 
@@ -225,10 +219,8 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 				   WIN_OUTPUT_Y (window) + WIN_OUTPUT_H (window) / 2.0f);
 	}
 
-	float adjustX, adjustY;
-
-	adjustX = 0.0f;
-	adjustY = 0.0f;
+	float adjustX = 0.0f;
+	float adjustY = 0.0f;
 	fws->modifyMatrix (wTransform,
 			   mTransform.angX,
 			   mTransform.angY,
@@ -238,14 +230,10 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			   mTransform.scaleY,
 			   1.0f, adjustX, adjustY, TRUE);
 
-	/* Create rects for input after we've dealt
-	 * with output
-	 */
-
+	/* Create rects for input after we've dealt with output */
 	calculateInputRect ();
 
 	/* Determine if the window is inverted */
-
 	Bool xInvert = FALSE;
 	Bool yInvert = FALSE;
 
@@ -276,7 +264,6 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	status = gWindow->glPaint (attrib, wTransform, region, mask);
     }
 
-    
     // Check if there are rotated windows
     if (!((mTransform.angX >= 0.0f - 0.05 &&
 	   mTransform.angX <= 0.0f + 0.05 ) &&
@@ -291,7 +278,7 @@ FWWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	mTransformed = TRUE;
     else if (mTransformed)
 	mTransformed = FALSE;
-    
+
     /* There is still animation to be done */
     if (!(((mTransform.angX >= mAnimate.destAngX - 0.05 &&
 	    mTransform.angX <= mAnimate.destAngX + 0.05 ) &&
@@ -379,7 +366,6 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	}
 
 	/* Draw the 'gizmo' */
-
 	if (optionGetShowGizmo ())
 	{
 	    glPushMatrix ();
@@ -393,6 +379,7 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glRotatef (fww->mTransform.angZ, 0.0f, 0.0f, 1.0f);
 
 	    glLineWidth (4.0f);
+
 	    for (int i = 0; i < 3; i++)
 	    {
 		glPushMatrix ();
@@ -408,14 +395,11 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    glPopMatrix ();
 	    glColor4usv (defaultColor);
-
 	}
 
 	/* Draw the bounding box */
-
 	if (optionGetShowRegion ())
 	{
-
 	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	    glEnable (GL_BLEND);
 	    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
@@ -430,7 +414,6 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glColor4usv (defaultColor);
 	    glDisable (GL_BLEND);
 	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
 	}
 
 	if (optionGetShowCross ())
@@ -448,10 +431,8 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glEnd ();
 
 	    /* Move to our first corner (TopLeft)  */
-
 	    if (fww->mInput)
 	    {
-
 		glBegin(GL_LINES);
 		glVertex3f(fww->mOutput.shapex1, fww->mOutput.shapey1, 0.0f);
 		glVertex3f(fww->mOutput.shapex2, fww->mOutput.shapey2, 0.0f);
@@ -471,11 +452,8 @@ FWScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		glVertex3f(fww->mOutput.shapex3, fww->mOutput.shapey3, 0.0f);
 		glVertex3f(fww->mOutput.shapex1, fww->mOutput.shapey1, 0.0f);
 		glEnd ();
-
 	    }
-
 	}
-
 	if (wasCulled)
 	    glEnable(GL_CULL_FACE);
 

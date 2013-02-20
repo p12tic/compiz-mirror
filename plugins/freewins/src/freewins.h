@@ -213,7 +213,6 @@ class FWTransformedWindowInfo
 
 	float unsnapScaleX;
 	float unsnapScaleY;
-
 };
 
 class FWAnimationInfo
@@ -396,7 +395,6 @@ class FWScreen :
 
 	CompWindow *
 	getRealWindow (CompWindow *w);
-
 };
 
 /* Freewins Window Structure */

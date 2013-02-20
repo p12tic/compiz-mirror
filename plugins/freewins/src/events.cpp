@@ -578,7 +578,6 @@ FWScreen::handleEvent (XEvent *ev)
     switch(ev->type)
     {
 	case EnterNotify:
-	{
 	    CompWindow *btnW;
 	    btnW = screen->findWindow (ev->xbutton.subwindow);
 
@@ -603,12 +602,9 @@ FWScreen::handleEvent (XEvent *ev)
 		    mHoverWindow = btnW;
 		fww->handleEnterNotify (ev);
 	    }
-	    
-	}
 	    break;
 
 	case LeaveNotify:
-	{
 	    CompWindow *btnW;
 	    btnW = screen->findWindow (ev->xbutton.subwindow);
 
@@ -623,11 +619,9 @@ FWScreen::handleEvent (XEvent *ev)
 
 	    if (btnW)
 		FWWindow::get (btnW)->handleLeaveNotify (ev);
-	}
 	    break;
 
 	case MotionNotify:
-	    
 	    if (mGrabWindow)
 	    {
 		FREEWINS_WINDOW (mGrabWindow);
@@ -647,8 +641,8 @@ FWScreen::handleEvent (XEvent *ev)
 			{
 			    if (mGrabWindow->id () == info->ipw)
 				/* The window we just grabbed was actually
-			     * an IPW, get the real window instead
-			      */
+				 * an IPW, get the real window instead
+				 */
 				w = getRealWindow (mGrabWindow);
 			}
 		    }
@@ -680,7 +674,6 @@ FWScreen::handleEvent (XEvent *ev)
 
 	/* Button Press and Release */
 	case ButtonPress:
-	{
 	    CompWindow *btnW;
 	    btnW = screen->findWindow (ev->xbutton.subwindow);
 
@@ -703,9 +696,13 @@ FWScreen::handleEvent (XEvent *ev)
 		    switch (ev->xbutton.button)
 		    {
 			case Button1:
-			    fww->handleIPWMoveInitiate (); break;
+			    fww->handleIPWMoveInitiate ();
+			    break;
+
 			case Button3:
-			    fww->handleIPWResizeInitiate (); break;
+			    fww->handleIPWResizeInitiate ();
+			    break;
+
 			default:
 			    break;
 		    }
@@ -713,12 +710,9 @@ FWScreen::handleEvent (XEvent *ev)
 
 	    mClick_root_x = ev->xbutton.x_root;
 	    mClick_root_y = ev->xbutton.y_root;
-
-	}
 	    break;
 
 	case ButtonRelease:
-	{
 	    if (mGrabWindow)
 	    {
 		FREEWINS_WINDOW (mGrabWindow);
@@ -730,7 +724,6 @@ FWScreen::handleEvent (XEvent *ev)
 			mGrabWindow = 0;
 		    }
 	    }
-	}
 	    break;
 
 	case ConfigureNotify:

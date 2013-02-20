@@ -62,9 +62,9 @@ FWScreen::rotateProjectVector (GLVector &vector,
 {
     vector = transform * vector;
 
-    GLint viewport[4]; // Viewport
-    GLdouble modelview[16]; // Modelview Matrix
-    GLdouble projection[16]; // Projection Matrix
+    GLint viewport[4];		// Viewport
+    GLdouble modelview[16];	// Modelview Matrix
+    GLdouble projection[16];	// Projection Matrix
 
     glGetIntegerv (GL_VIEWPORT, viewport);
     glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
@@ -78,10 +78,10 @@ FWScreen::rotateProjectVector (GLVector &vector,
     *resultY = screen->height () - *resultY;
 }
 
-// Scales z by 0 and does perspective distortion so that it
-// looks the same wherever on the screen
-
-/* This code taken from animation.c,
+/* Scales z by 0 and does perspective distortion so that it
+ * looks the same wherever on the screen
+ *
+ * This code taken from animation.c,
  * Copyright (c) 2006 Erkin Bahceci
  */
 void
@@ -111,7 +111,6 @@ FWScreen::modifyMatrix  (GLMatrix &transform,
 			 float adjustX, float adjustY, bool paint)
 {
     /* Create our transformation Matrix */
-    
     transform.translate (tX, tY, 0.0);
     if (paint)
 	perspectiveDistortAndResetZ (transform);
@@ -128,8 +127,8 @@ FWScreen::modifyMatrix  (GLMatrix &transform,
 /*
 static float det3(float m00, float m01, float m02,
 		 float m10, float m11, float m12,
-		 float m20, float m21, float m22){
-
+		 float m20, float m21, float m22)
+{
     float ret = 0.0;
 
     ret += m00 * m11 * m22 - m21 * m12 * m00;
@@ -139,7 +138,8 @@ static float det3(float m00, float m01, float m02,
     return ret;
 }
 
-static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
+static void FWFindInverseMatrix(CompTransform *m, CompTransform *r)
+{
     float *mm = m->m;
     float d, c[16];
 
@@ -211,7 +211,6 @@ static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
 		  mm[4], mm[5], mm[6],
 		  mm[8], mm[9], mm[10]);
 
-
     r->m[0] = c[0] / d;
     r->m[1] = c[4] / d;
     r->m[2] = c[8] / d;
@@ -247,11 +246,8 @@ FWScreen::createSizedRect (float xScreen1,
 			   float yScreen3,
 			   float yScreen4)
 {
-    float leftmost, rightmost, topmost, bottommost;
-
     /* Left most point */
-
-    leftmost = xScreen1;
+    float leftmost = xScreen1;
 
     if (xScreen2 <= leftmost)
 	leftmost = xScreen2;
@@ -263,8 +259,7 @@ FWScreen::createSizedRect (float xScreen1,
 	leftmost = xScreen4;
 
     /* Right most point */
-
-    rightmost = xScreen1;
+    float rightmost = xScreen1;
 
     if (xScreen2 >= rightmost)
 	rightmost = xScreen2;
@@ -276,8 +271,7 @@ FWScreen::createSizedRect (float xScreen1,
 	rightmost = xScreen4;
 
     /* Top most point */
-
-    topmost = yScreen1;
+    float topmost = yScreen1;
 
     if (yScreen2 <= topmost)
 	topmost = yScreen2;
@@ -289,8 +283,7 @@ FWScreen::createSizedRect (float xScreen1,
 	topmost = yScreen4;
 
     /* Bottom most point */
-
-    bottommost = yScreen1;
+    float bottommost = yScreen1;
 
     if (yScreen2 >= bottommost)
 	bottommost = yScreen2;
@@ -317,7 +310,6 @@ FWWindow::calculateWindowRect (GLVector c1,
 			       GLVector c4)
 {
     FREEWINS_SCREEN (screen);
-
 
     GLMatrix transform;
     GLdouble xScreen1 = 0.0f, yScreen1 = 0.0f, zScreen1 = 0.0f;
@@ -353,7 +345,6 @@ FWWindow::calculateWindowRect (GLVector c1,
 
     return fws->createSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
 				yScreen1, yScreen2, yScreen3, yScreen4);
-
 }
 
 void
@@ -376,7 +367,6 @@ FWWindow::calculateInputRect ()
     GLVector corner4 = GLVector (WIN_REAL_X (window) + WIN_REAL_W (window), WIN_REAL_Y (window) + WIN_REAL_H (window), 1.0f, 1.0f);
 
     mInputRect = calculateWindowRect (corner1, corner2, corner3, corner4);
-
 }
 
 void
@@ -463,7 +453,6 @@ FWWindow::determineZAxisClick (int px,
 
     if (directionChange)
     {
-
 	float clickRadiusFromCenter;
 
 	int x = (WIN_REAL_X(window) + WIN_REAL_W(window)/2.0);
