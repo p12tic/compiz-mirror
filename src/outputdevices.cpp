@@ -65,7 +65,7 @@ OutputDevices::adoptDevices(unsigned int nOutput, CompSize* screen)
     /* set name, width, height and update rect pointers in all regions */
     for (unsigned int i = 0; i < nOutput; i++)
     {
-	snprintf(str, 10, "Output %d", i);
+	snprintf(str, 10, "Output %u", i);
 	outputDevs[i].setId(str, i);
     }
     overlappingOutputs = false;

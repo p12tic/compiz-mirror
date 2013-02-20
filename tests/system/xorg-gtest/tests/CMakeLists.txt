@@ -1,8 +1,6 @@
-pkg_check_modules (X11_XI x11 xi)
+pkg_check_modules (X11_XI x11 xi xext)
 
 if (BUILD_XORG_GTEST AND X11_XI_FOUND)
-
-    add_subdirectory (plugins)
 
     include_directories (${compiz_SOURCE_DIR}/tests/shared
                          ${COMPIZ_XORG_SYSTEM_TEST_INCLUDE_DIR}
@@ -42,27 +40,29 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     target_link_libraries (compiz_xorg_gtest_test_window_stacking
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_window_stacking)
+    compiz_discover_tests (compiz_xorg_gtest_test_window_stacking WITH_XORG_GTEST)
 
     target_link_libraries (compiz_xorg_gtest_test_icccm
                            compiz_gtest_shared_async_task
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_icccm)
+    compiz_discover_tests (compiz_xorg_gtest_test_icccm WITH_XORG_GTEST)
 
     target_link_libraries (compiz_xorg_gtest_test_ewmh
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_ewmh)
+    compiz_discover_tests (compiz_xorg_gtest_test_ewmh WITH_XORG_GTEST)
 
     target_link_libraries (compiz_xorg_gtest_test_shape_handling
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling)
+    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling WITH_XORG_GTEST)
 
     target_link_libraries (compiz_xorg_gtest_test_configure_window
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_configure_window)
+    add_dependencies (compiz_xorg_gtest_test_configure_window testhelper)
+
+    compiz_discover_tests (compiz_xorg_gtest_test_configure_window WITH_XORG_GTEST)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)

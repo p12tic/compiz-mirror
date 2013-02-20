@@ -605,7 +605,57 @@ ct::CompizXorgSystemTest::CompizXorgSystemTest () :
 void
 ct::CompizXorgSystemTest::SetUp ()
 {
-    xorg::testing::Test::SetUp ();
+    const unsigned int MAX_CONNECTION_ATTEMPTS = 10;
+    const unsigned int USEC_TO_MSEC = 1000;
+    const unsigned int SLEEP_TIME = 50 * USEC_TO_MSEC;
+
+    int connectionAttemptsRemaining = MAX_CONNECTION_ATTEMPTS;
+
+    /* Work around an inherent race condition in XOpenDisplay
+     *
+     * All xorg::testing::Test::SetUp does is call XOpenDisplay
+     * and assign a display string, the former before the latter.
+     * The current X Error handler will throw an exception if
+     * an X error occurrs.
+     *
+     * Unfortunately there's an inherent race condition in spawning
+     * a new server and using XOpenDisplay to connect to it - we
+     * simply don't know when the new server will be ready, and even
+     * watching its socket with inotify will be racey too. The only
+     * solution would be a handshake process where we pass the server
+     * a socket or pipe and it writes to it indicating that it is ready
+     * to accept connections. There isn't such a thing. As such, we need
+     * to work around that by simply re-trying our connection to the server
+     * once every 50ms or so, and we're trying about 10 times before giving up
+     * and assuming there is a problem with the server.
+     *
+     * The predecrement here is so that connectionAttemptsRemaining will be 0
+     * on failure
+     */
+    while (--connectionAttemptsRemaining)
+    {
+	try
+	{
+	    xorg::testing::Test::SetUp ();
+	    break;
+	}
+	catch (std::runtime_error &exception)
+	{
+	    usleep (SLEEP_TIME);
+	}
+    }
+
+    if (!connectionAttemptsRemaining)
+    {
+	throw std::runtime_error ("Failed to connect to X Server. "\
+                                  "Check the logs by setting "\
+                                  "XORG_GTEST_CHILD_STDOUT=1 to see if "\
+                                  "there are any startup errors. Otherwise "\
+                                  "if you suspect the server is running "\
+                                  "particularly slowly, try bumping up the "\
+                                  "maximum number of connection attempts in "\
+                                  "compiz-xorg-gtest.cpp");
+    }
 }
 
 void
