@@ -139,6 +139,22 @@ install (
     DESTINATION ${libdir}/pkgconfig
 )
 
+set (COMPIZ_INTERNAL_INCLUDES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/string/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pluginclasshandler/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/point/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rect/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/servergrab/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/region/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/geometry/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/geometry-saver/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/extents/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/constrainment/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/logmessage/include)
+
 if (COMPIZ_BUILD_TESTING)
 
     find_package (GoogleTest)
@@ -178,22 +194,6 @@ else (COMPIZ_BUILD_TESTING)
     set (BUILD_XORG_GTEST OFF CACHE BOOL "" FORCE)
 
 endif (COMPIZ_BUILD_TESTING)
-
-set (COMPIZ_INTERNAL_INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/string/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pluginclasshandler/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/point/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rect/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/servergrab/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/region/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/geometry/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/geometry-saver/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/extents/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/constrainment/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/logmessage/include CACHE STRING "" FORCE)
 
 # Add the rest of compiz
 add_subdirectory (cmake)
