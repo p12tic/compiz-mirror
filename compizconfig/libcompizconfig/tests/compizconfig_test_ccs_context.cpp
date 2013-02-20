@@ -13,7 +13,7 @@ class CCSContextTest :
 {
 };
 
-TEST(CCSContextTest, TestMock)
+TEST_F(CCSContextTest, TestMock)
 {
     CCSContext *context = ccsMockContextNew ();
     CCSContextGMock *mock = (CCSContextGMock *) ccsObjectGetPrivate (context);
