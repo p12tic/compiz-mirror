@@ -36,10 +36,16 @@ if (USE_GSETTINGS)
     set (PLUGIN_GSETTINGS_SCHEMA_DST
 	 ${CMAKE_BINARY_DIR}/generated/glib-2.0/schemas/org.compiz.${COMPIZ_CURRENT_PLUGIN}.gschema.xml)
 
+    set (_install_gsettings_schema )
+    if (_install_plugin_${plugin})
+	set (_install_gsettings_schema NOINSTALL)
+    endif ()
+
     compiz_gsettings_schema (${COMPIZ_CURRENT_PLUGIN}
 			     ${COMPIZ_CURRENT_XML_FILE}
 			     ${PLUGIN_GSETTINGS_SCHEMA_DST}
-			     ${PLUGIN_SCHEMADIR})
+			     ${PLUGIN_SCHEMADIR}
+			     ${_install_gsettings_schema})
     list (APPEND COMPIZ_CURRENT_SOURCES_ADDS ${PLUGIN_GSETTINGS_SCHEMA_DST})
 
 endif (USE_GSETTINGS)

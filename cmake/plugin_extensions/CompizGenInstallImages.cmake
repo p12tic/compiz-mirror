@@ -17,9 +17,11 @@ endmacro (compiz_images_prepare_dirs)
 # install plugin data files
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/images)
     compiz_images_prepare_dirs ()
-    install (
-	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
-	DESTINATION ${PLUGIN_IMAGEDIR}
-    )
+    if (_install_plugin_${plugin})
+	install (
+	    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
+	    DESTINATION ${PLUGIN_IMAGEDIR}
+	)
+    endif (_install_plugin_${plugin})
     list (APPEND COMPIZ_DEFINITIONS_ADD "-DIMAGEDIR='\"${PLUGIN_IMAGEDIR}\"'")
 endif ()

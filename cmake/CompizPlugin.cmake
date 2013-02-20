@@ -250,11 +250,13 @@ macro (_build_compiz_plugin plugin)
 
 	if (_translated_xml)
 
-	    # install xml
-	    install (
-		FILES ${_translated_xml}
-		DESTINATION $ENV{DESTDIR}${PLUGIN_XMLDIR}
-	    )
+	    if (_install_plugin_${plugin})
+		# install xml
+		install (
+		    FILES ${_translated_xml}
+		    DESTINATION $ENV{DESTDIR}${PLUGIN_XMLDIR}
+		)
+	    endif (_install_plugin_${plugin})
 	endif (_translated_xml)
 
 	find_file (
