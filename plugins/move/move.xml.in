@@ -42,7 +42,7 @@
 	    <option name="lazy_positioning" type="bool">
 		<_short>Lazy Positioning</_short>
 		<_long>Do not update the server-side position of windows until finished moving</_long>
-                <default>false</default>
+		<default>false</default>
 	    </option>
 	</options>
     </plugin>
