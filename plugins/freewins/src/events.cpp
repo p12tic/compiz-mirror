@@ -578,6 +578,7 @@ FWScreen::handleEvent (XEvent *ev)
     switch(ev->type)
     {
 	case EnterNotify:
+	{
 	    CompWindow *btnW;
 	    btnW = screen->findWindow (ev->xbutton.subwindow);
 
@@ -602,9 +603,11 @@ FWScreen::handleEvent (XEvent *ev)
 		    mHoverWindow = btnW;
 		fww->handleEnterNotify (ev);
 	    }
+	}
 	    break;
 
 	case LeaveNotify:
+	{
 	    CompWindow *btnW;
 	    btnW = screen->findWindow (ev->xbutton.subwindow);
 
@@ -619,9 +622,11 @@ FWScreen::handleEvent (XEvent *ev)
 
 	    if (btnW)
 		FWWindow::get (btnW)->handleLeaveNotify (ev);
+	}
 	    break;
 
 	case MotionNotify:
+	{
 	    if (mGrabWindow)
 	    {
 		FREEWINS_WINDOW (mGrabWindow);
@@ -670,10 +675,12 @@ FWScreen::handleEvent (XEvent *ev)
 		//if(dx != 0.0 || dy != 0.0)
 		//    fww->damageArea ();
 	    }
+	}
 	    break;
 
 	/* Button Press and Release */
 	case ButtonPress:
+	{
 	    CompWindow *btnW;
 	    btnW = screen->findWindow (ev->xbutton.subwindow);
 
@@ -710,9 +717,11 @@ FWScreen::handleEvent (XEvent *ev)
 
 	    mClick_root_x = ev->xbutton.x_root;
 	    mClick_root_y = ev->xbutton.y_root;
+	}
 	    break;
 
 	case ButtonRelease:
+	{
 	    if (mGrabWindow)
 	    {
 		FREEWINS_WINDOW (mGrabWindow);
@@ -724,9 +733,11 @@ FWScreen::handleEvent (XEvent *ev)
 			mGrabWindow = 0;
 		    }
 	    }
+	}
 	    break;
 
 	case ConfigureNotify:
+	{
 	    w = screen->findWindow (ev->xconfigure.window);
 	    if (w)
 	    {
@@ -738,10 +749,12 @@ FWScreen::handleEvent (XEvent *ev)
 		fww->mWinH = WIN_REAL_H (w);
 		fww->mWinW = WIN_REAL_W (w);
 	    }
+	}
 	    break;
 
 #if 0
 	case ClientMessage:
+	{
 	    if (ev->xclient.message_type == Atoms::desktopViewport)
 	    {
 		/* Viewport change occurred, or something like that - adjust the IPW's */
@@ -784,6 +797,7 @@ FWScreen::handleEvent (XEvent *ev)
 		    }
 		}
 	    }
+	}
 	    break;
 #endif
 	default:
@@ -822,6 +836,7 @@ FWScreen::handleEvent (XEvent *ev)
     switch (ev->type)
     {
 	case ConfigureNotify:
+	{
 	    w = screen->findWindow (ev->xconfigure.window);
 	    if (w)
 	    {
@@ -833,6 +848,7 @@ FWScreen::handleEvent (XEvent *ev)
 		    adjustIPWStacking ();
 		}
 	    }
+	}
 	    break;
     }
 }
