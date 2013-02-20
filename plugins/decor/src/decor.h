@@ -265,7 +265,6 @@ class DecorScreen :
 	PendingHandler            mPendingHandler;
 	UnusedHandler             mUnusedHandler;
 	protocol::Communicator    mCommunicator;
-	X11PixmapDeletor::Ptr     dl;
 };
 
 class DecorWindow :

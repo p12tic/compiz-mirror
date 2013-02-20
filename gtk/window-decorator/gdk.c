@@ -98,7 +98,7 @@ create_native_pixmap_and_wrap (int	  w,
 {
     GdkWindow *window;
 
-    if (w == 0 || h == 0)
+    if (w < 0 || h < 0)
 	abort ();
 
     window = gtk_widget_get_window (parent_style_window);

@@ -464,9 +464,9 @@ class DecorPixmapProtocolPendingEndToEnd :
 
 MATCHER_P3 (MatchArrayValues3, v1, v2, v3, "Matches three array values")
 {
-    return arg[0] == v1 &&
-	    arg[1] == v2 &&
-	    arg[2] == v3;
+    return static_cast <unsigned int> (arg[0]) == v1 &&
+	   static_cast <unsigned int> (arg[1]) == v2 &&
+	   static_cast <unsigned int> (arg[2]) == v3;
 }
 
 TEST_F (DecorPixmapProtocolPendingEndToEnd, TestPostPendingMarksAsPendingOnClient)

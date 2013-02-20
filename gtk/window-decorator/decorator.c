@@ -1432,7 +1432,9 @@ update_default_decorations (GdkScreen *screen)
         extents.top += frame->titlebar_height;
 
         default_frames[i].d->draw = theme_draw_window_decoration;
-	default_frames[i].d->pixmap = create_native_pixmap_and_wrap (default_frames[i].d->width, default_frames[i].d->height, frame->style_window_rgba);
+	default_frames[i].d->pixmap = create_native_pixmap_and_wrap (default_frames[i].d->width,
+								     default_frames[i].d->height,
+								     frame->style_window_rgba);
 
 	unsigned int j, k;
 

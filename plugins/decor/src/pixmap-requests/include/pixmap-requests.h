@@ -37,7 +37,8 @@
 
 #include <X11/Xlib.h>
 
-class DecorPixmapInterface
+class DecorPixmapInterface :
+    boost::noncopyable
 {
     public:
 
@@ -48,7 +49,8 @@ class DecorPixmapInterface
 	virtual Pixmap getPixmap () = 0;
 };
 
-class DecorPixmapReceiverInterface
+class DecorPixmapReceiverInterface :
+    boost::noncopyable
 {
     public:
 
@@ -61,7 +63,8 @@ class DecorPixmapReceiverInterface
 /* So far, nothing particularly interesting here
  * we just need a way to pass around pointers for
  * testing */
-class DecorationInterface
+class DecorationInterface :
+    boost::noncopyable
 {
     public:
 
@@ -75,7 +78,8 @@ class DecorationInterface
 	virtual unsigned int getFrameActions () const = 0;
 };
 
-class PixmapDestroyQueue
+class PixmapDestroyQueue :
+    boost::noncopyable
 {
     public:
 
@@ -86,7 +90,8 @@ class PixmapDestroyQueue
 	virtual int destroyUnusedPixmap (Pixmap pixmap) = 0;
 };
 
-class UnusedPixmapQueue
+class UnusedPixmapQueue :
+    boost::noncopyable
 {
     public:
 
@@ -119,27 +124,6 @@ class PixmapReleasePool :
 
 };
 
-class X11PixmapDeletor :
-    public PixmapDestroyQueue
-{
-    public:
-
-	typedef boost::shared_ptr <X11PixmapDeletor> Ptr;
-
-	X11PixmapDeletor (Display *dpy) :
-	    mDisplay (dpy)
-	{
-	}
-
-	int destroyUnusedPixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay,
-										0,
-										pixmap); }
-
-    private:
-
-	Display *mDisplay;
-};
-
 class DecorPixmap :
     public DecorPixmapInterface
 {
@@ -158,7 +142,8 @@ class DecorPixmap :
 	PixmapDestroyQueue::Ptr mDeletor;
 };
 
-class DecorPixmapRequestorInterface
+class DecorPixmapRequestorInterface :
+    boost::noncopyable
 {
     public:
 
@@ -190,7 +175,8 @@ namespace decor
 typedef boost::function <DecorationListFindMatchingInterface * (Window)> DecorListForWindow;
 typedef boost::function <DecorPixmapRequestorInterface * (Window)> RequestorForWindow;
 
-class PendingHandler
+class PendingHandler :
+    virtual boost::noncopyable
 {
     public:
 
@@ -203,7 +189,8 @@ class PendingHandler
 	RequestorForWindow     mRequestorForWindow;
 };
 
-class UnusedHandler
+class UnusedHandler :
+    virtual boost::noncopyable
 {
     public:
 
@@ -225,7 +212,8 @@ namespace protocol
 typedef boost::function <void (Window, const long *)> PendingMessage;
 typedef boost::function <void (Window, Pixmap)> PixmapUnusedMessage;
 
-class Communicator
+class Communicator :
+    virtual boost::noncopyable
 {
     public:
 

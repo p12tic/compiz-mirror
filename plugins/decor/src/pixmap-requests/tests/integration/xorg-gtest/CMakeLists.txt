@@ -34,7 +34,7 @@ if (BUILD_XORG_GTEST)
     target_link_libraries (compiz_test_decor_pixmap_protocol_integration
                            ${COMPIZ_DECOR_PIXMAP_PROTOCOL_XORG_INTEGRATION_TEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_test_decor_pixmap_protocol_integration COVERAGE
+    compiz_discover_tests (compiz_test_decor_pixmap_protocol_integration WITH_XORG_GTEST COVERAGE
                            compiz_decor_pixmap_requests)
 
 endif (BUILD_XORG_GTEST)
