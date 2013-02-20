@@ -52,6 +52,6 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     target_link_libraries (compiz_xorg_gtest_test_shape_handling
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling)
+    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling WITH_XORG_GTEST)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)
