@@ -36,6 +36,7 @@
 # LIBRARIES  = libraries added to link command
 # LIBDIRS    = additional link directories
 # INCDIRS    = additional include directories
+# NOINSTALL  = do not install this plugin
 #
 # The following variables will be used by this macro:
 #
@@ -185,6 +186,14 @@ macro (_build_compiz_plugin plugin)
 	)
     endif (COMPIZ_PLUGIN_INSTALL_TYPE)
 
+    set (_install_plugin_${plugin} ON)
+
+    foreach (ARG ${ARGN})
+	if (${ARG} STREQUAL "NOINSTALL")
+	    set (_install_plugin_${plugin} OFF)
+	endif (${ARG} STREQUAL "NOINSTALL")
+    endforeach ()
+
     _get_parameters (${_PLUGIN} ${ARGN})
     _prepare_directories ()
 
@@ -287,14 +296,16 @@ macro (_build_compiz_plugin plugin)
 		    PKGCONFIG_LIBS
 		)
 
-		install (
-		    FILES ${CMAKE_BINARY_DIR}/generated/compiz-${plugin}.pc
-		    DESTINATION ${PLUGIN_PKGDIR}
-		)
-		install (
-		    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${plugin}
-		    DESTINATION ${PLUGIN_INCDIR}/compiz
-		)
+		if (_install_plugin_${plugin})
+		    install (
+			FILES ${CMAKE_BINARY_DIR}/generated/compiz-${plugin}.pc
+			DESTINATION ${PLUGIN_PKGDIR}
+		    )
+		    install (
+			DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${plugin}
+			DESTINATION ${PLUGIN_INCDIR}/compiz
+		    )
+		endif ()
 	    endif ()
 	endif ()
 
@@ -412,16 +423,18 @@ macro (_build_compiz_plugin plugin)
 		      compiz_core
 	)
 
-	install (
-	    TARGETS ${plugin}
-	    LIBRARY DESTINATION ${PLUGIN_LIBDIR}
-	)
+	if (_install_plugin_${plugin})
+	    install (
+		TARGETS ${plugin}
+		LIBRARY DESTINATION ${PLUGIN_LIBDIR}
+	    )
+	endif (_install_plugin_${plugin})
 
-	if (NOT _COMPIZ_INTERNAL)
+	if (NOT _COMPIZ_INTERNAL AND _install_plugin_${plugin})
 
 	    compiz_add_uninstall ()
 
-	endif (NOT _COMPIZ_INTERNAL)
+	endif (NOT _COMPIZ_INTERNAL AND _install_plugin_${plugin})
 
 	if (NOT COMPIZ_PLUGIN_PACK_BUILD)
 		set (CMAKE_PROJECT_NAME plugin-${plugin})

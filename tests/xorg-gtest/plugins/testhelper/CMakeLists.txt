@@ -4,4 +4,4 @@ include (CompizPlugin)
 
 include_directories (${COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR})
 
-compiz_plugin (testhelper LIBRARIES ${COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY})
+compiz_plugin (testhelper LIBRARIES ${COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY} NOINSTALL)
