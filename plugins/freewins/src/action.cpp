@@ -636,11 +636,9 @@ FWScreen::rotateAction (CompAction         *action,
     {
 	FREEWINS_WINDOW (w);
 
-	float x, y, z;
-
-	y = CompOption::getFloatOptionNamed(options, "x", 0.0f);
-	x = CompOption::getFloatOptionNamed(options, "y", 0.0f);
-	z = CompOption::getFloatOptionNamed(options, "z", 0.0f);
+	float x = CompOption::getFloatOptionNamed(options, "x", 0.0f);
+	float y = CompOption::getFloatOptionNamed(options, "y", 0.0f);
+	float z = CompOption::getFloatOptionNamed(options, "z", 0.0f);
 
 	fww->setPrepareRotation (x - fww->mAnimate.destAngX,
 				 y - fww->mAnimate.destAngY,
@@ -675,11 +673,9 @@ FWScreen::incrementRotateAction (CompAction         *action,
     {
 	FREEWINS_WINDOW (w);
 
-	float x, y, z;
-
-	y = CompOption::getFloatOptionNamed(options, "x", 0.0f);
-	x = CompOption::getFloatOptionNamed(options, "y", 0.0f);
-	z = CompOption::getFloatOptionNamed(options, "z", 0.0f);
+	float x = CompOption::getFloatOptionNamed(options, "x", 0.0f);
+	float y = CompOption::getFloatOptionNamed(options, "y", 0.0f);
+	float z = CompOption::getFloatOptionNamed(options, "z", 0.0f);
 
 	fww->setPrepareRotation (x,
 				 y,
