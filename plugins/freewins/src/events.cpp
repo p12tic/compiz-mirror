@@ -149,7 +149,6 @@ FWWindow::handleIPWResizeMotionEvent (unsigned int x,
 
 	window->configureXWindow (mask, &xwc);
     }
-
 }
 
 /* Handle Rotation */
@@ -272,61 +271,58 @@ FWWindow::handleRotateMotionEvent (float dx,
 	{
 	    case CornerTopRight:
 
-		if ((x) < oldX)
+		if (x < oldX)
 		    angZ -= dx * zX;
-		else if ((x) > oldX)
+		else if (x > oldX)
 		    angZ += dx * zX;
 
-
-		if ((y) < oldY)
+		if (y < oldY)
 		    angZ -= dy * zY;
-		else if ((y) > oldY)
+		else if (y > oldY)
 		    angZ += dy * zY;
 
 		break;
 
 	    case CornerTopLeft:
 
-		if ((x) < oldX)
+		if (x < oldX)
 		    angZ -= dx * zX;
-		else if ((x) > oldX)
+		else if (x > oldX)
 		    angZ += dx * zX;
 
-
-		if ((y) < oldY)
+		if (y < oldY)
 		    angZ += dy * zY;
-		else if ((y) > oldY)
+		else if (y > oldY)
 		    angZ -= dy * zY;
 
 		break;
 
 	    case CornerBottomLeft:
 
-		if ((x) < oldX)
+		if (x < oldX)
 		    angZ += dx * zX;
-		else if ((x) > oldX)
+		else if (x > oldX)
 		    angZ -= dx * zX;
 
-
-		if ((y) < oldY)
+		if (y < oldY)
 		    angZ += dy * zY;
-		else if ((y) > oldY)
+		else if (y > oldY)
 		    angZ -= dy * zY;
 
 		break;
 
 	    case CornerBottomRight:
 
-		if ((x) < oldX)
+		if (x < oldX)
 		    angZ += dx * zX;
-		else if ((x) > oldX)
+		else if (x > oldX)
 		    angZ -= dx * zX;
 
-
-		if ((y) < oldY)
+		if (y < oldY)
 		    angZ -= dy * zY;
-		else if ((y) > oldY)
+		else if (y > oldY)
 		    angZ += dy * zY;
+
 		break;
 	}
     }
@@ -339,13 +335,12 @@ FWWindow::handleRotateMotionEvent (float dx,
 	    percentFromYAxis = 0.0f;
 	}
 
-
 	angX -= dy * (1 - percentFromXAxis);
 	angY += dx * (1 - percentFromYAxis);
     }
-    
+
     /* Restore angles */
-    
+
     if (fws->optionGetSnap () || fws->mSnap)
     {
 	mTransform.unsnapAngX = angX;
@@ -394,32 +389,31 @@ FWWindow::handleScaleMotionEvent (float dx,
 
     switch (mCorner)
     {
-
 	case CornerTopLeft:
 
-	    if ((x) < oldX)
+	    if (x < oldX)
 		scaleX -= dx;
-	    else if ((x) > oldX)
+	    else if (x > oldX)
 		scaleX -= dx;
 
-	    if ((y) < oldY)
+	    if (y < oldY)
 		scaleY -= dy;
-	    else if ((y) > oldY)
+	    else if (y > oldY)
 		scaleY -= dy;
+
 	    break;
 
 	case CornerTopRight:
 
-	    if ((x) < oldX)
+	    if (x < oldX)
 		scaleX += dx;
-	    else if ((y) > oldX)
+	    else if (y > oldX)
 		scaleX += dx;
-
 
 	    // Check Y Direction
-	    if ((y) < oldY)
+	    if (y < oldY)
 		scaleY -= dy;
-	    else if ((y) > oldY)
+	    else if (y > oldY)
 		scaleY -= dy;
 
 	    break;
@@ -427,15 +421,15 @@ FWWindow::handleScaleMotionEvent (float dx,
 	case CornerBottomLeft:
 
 	    // Check X Direction
-	    if ((x) < oldX)
+	    if (x < oldX)
 		scaleX -= dx;
-	    else if ((y) > oldX)
+	    else if (y > oldX)
 		scaleX -= dx;
 
 	    // Check Y Direction
-	    if ((y) < oldY)
+	    if (y < oldY)
 		scaleY += dy;
-	    else if ((y) > oldY)
+	    else if (y > oldY)
 		scaleY += dy;
 
 	    break;
@@ -443,16 +437,17 @@ FWWindow::handleScaleMotionEvent (float dx,
 	case CornerBottomRight:
 
 	    // Check X Direction
-	    if ((x) < oldX)
+	    if (x < oldX)
 		scaleX += dx;
-	    else if ((x) > oldX)
+	    else if (x > oldX)
 		scaleX += dx;
 
 	    // Check Y Direction
-	    if ((y) < oldY)
+	    if (y < oldY)
 		scaleY += dy;
-	    else if ((y) > oldY)
+	    else if (y > oldY)
 		scaleY += dy;
+
 	    break;
     }
     
@@ -516,7 +511,7 @@ FWWindow::handleEnterNotify (XEvent *xev)
 
     memcpy (&EnterNotifyEvent.xcrossing, &xev->xcrossing,
 	    sizeof (XCrossingEvent));
-    /*
+/*
     if (window)
     {
 	EnterNotifyEvent.xcrossing.window = window->id ();
@@ -579,7 +574,6 @@ FWScreen::handleEvent (XEvent *ev)
 
     switch(ev->type)
     {
-
 	case EnterNotify:
 	{
 	    CompWindow *btnW;
@@ -609,7 +603,6 @@ FWScreen::handleEvent (XEvent *ev)
 	    
 	}
 	    break;
-
 
 	case LeaveNotify:
 	{
@@ -682,7 +675,7 @@ FWScreen::handleEvent (XEvent *ev)
 	    }
 	    break;
 
-	    /* Button Press and Release */
+	/* Button Press and Release */
 	case ButtonPress:
 	{
 	    CompWindow *btnW;
@@ -736,6 +729,7 @@ FWScreen::handleEvent (XEvent *ev)
 	    }
 	}
 	    break;
+
 	case ConfigureNotify:
 	    w = screen->findWindow (ev->xconfigure.window);
 	    if (w)
