@@ -554,6 +554,7 @@ profileNameFilter (const struct dirent *item)
     int len = strlen (item->d_name);
     const char *lastEight = item->d_name + (len - 8);
     const char *lastFour = item->d_name + (len - 4);
+
     if (strcmp (lastFour, ".ini") == 0)
 	return 1;
 
@@ -584,7 +585,7 @@ scanDirectoryForProfiles (const char *directory)
 	    ccsStringRef (string);
 
 	    string->value = strdup (nameList[i]->d_name);
-	    ccsStringListAppend (list, string);
+	    list = ccsStringListAppend (list, string);
 
 	    free (nameList[i]);
 	}
@@ -3328,6 +3329,10 @@ ccsSetPluginListAutoSort (CCSContext *context, Bool value)
 void
 ccsSetProfileDefault (CCSContext * context, const char *name)
 {
+    const char *globalProfileDir = SYSCONFDIR "/compizconfig";
+    CCSStringList availableInBackend = NULL;
+    CCSStringList availableInSysconfDir = NULL;
+
     if (!name)
 	name = "";
 
@@ -3336,6 +3341,15 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
     /* no action required if profile stays the same */
     if (cPrivate->profile && (strcmp (cPrivate->profile, name) == 0))
 	return;
+
+    /* Check what profiles are available before changing it so that we
+     * know what the backends need to know */
+    if (cPrivate->backend &&
+	cPrivate->scanForProfiles)
+    {
+	availableInSysconfDir = (*cPrivate->scanForProfiles) (globalProfileDir);
+	availableInBackend = ccsBackendGetExistingProfiles ((CCSBackend *) cPrivate->backend, context);
+    }
 
     if (cPrivate->profile)
 	free (cPrivate->profile);
@@ -3349,12 +3363,8 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
      * it if available */
     const char *importProfileName = NULL;
 
-    if (cPrivate->backend &&
-	cPrivate->scanForProfiles)
+    if (availableInSysconfDir)
     {
-	CCSStringList availableInSysconfDir = (*cPrivate->scanForProfiles) (SYSCONFDIR "/compizconfig");
-	CCSStringList availableInBackend = ccsBackendGetExistingProfiles ((CCSBackend *) cPrivate->backend, context);
-
 	CCSStringList sysconfProfile = availableInSysconfDir;
 
 	while (sysconfProfile)
@@ -3407,14 +3417,20 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
 	}
 
 	if (importProfileName)
-	    (*cPrivate->importFromFile) (context, importProfileName, TRUE);
-
-	if (availableInSysconfDir)
-	    ccsStringListFree (availableInSysconfDir, TRUE);
-
-	if (availableInBackend)
-	    ccsStringListFree (availableInBackend, TRUE);
+	{
+            size_t importProfilePathLength = strlen (importProfileName) + strlen (globalProfileDir) + 2;
+	    char *importProfilePath = calloc (1, sizeof (char) * importProfilePathLength); 
+            snprintf (importProfilePath, importProfilePathLength, "%s/%s", globalProfileDir, importProfileName);
+	    (*cPrivate->importFromFile) (context, importProfilePath, TRUE);
+	    free (importProfilePath);
+	}
     }
+
+    if (availableInSysconfDir)
+	ccsStringListFree (availableInSysconfDir, TRUE);
+
+    if (availableInBackend)
+	ccsStringListFree (availableInBackend, TRUE);
 
     ccsConfigFileWriteConfigOption (cPrivate->configFile, OptionProfile, cPrivate->profile);
 }
@@ -4949,6 +4965,7 @@ ccsImportFromFileDefault (CCSContext *context,
     if (!importFile)
 	return FALSE;
 
+    ccsLoadPlugins (context);
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
     for (p = cPrivate->plugins; p; p = p->next)
@@ -5086,6 +5103,10 @@ ccsImportFromFileDefault (CCSContext *context,
 	    free (keyName);
 	}
     }
+
+    /* We might be doing this from within compiz so make sure
+     * to write out the new values */
+    ccsWriteChangedSettings (context);
 
     ccsIniClose (importFile);
 
