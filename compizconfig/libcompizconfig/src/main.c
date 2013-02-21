@@ -3342,6 +3342,80 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
 
     cPrivate->profile = strdup (name);
 
+    /* We may need to force-import this profile. Have a look
+     * in SYSCONFDIR/compizconfig/ for profiles with this name
+     * and see if the backend knows about it. If the backend
+     * doesn't know about it, then we'll need to force import
+     * it if available */
+    const char *importProfileName = NULL;
+
+    if (cPrivate->backend &&
+	cPrivate->scanForProfiles)
+    {
+	CCSStringList availableInSysconfDir = (*cPrivate->scanForProfiles) (SYSCONFDIR "/compizconfig");
+	CCSStringList availableInBackend = ccsBackendGetExistingProfiles ((CCSBackend *) cPrivate->backend, context);
+
+	CCSStringList sysconfProfile = availableInSysconfDir;
+
+	while (sysconfProfile)
+	{
+	    char *sysconfProfileFullCopy;
+	    char *sysconfProfileFull = sysconfProfileFullCopy = strdup (sysconfProfile->data->value);
+	    char *sysconfProfileBasename = basename (sysconfProfileFullCopy);
+	    char *sysconfProfileBase = NULL;
+
+	    if (strlen (sysconfProfileBasename))
+	    {
+		if (strstr (sysconfProfileBasename, ".ini"))
+		    sysconfProfileBase = strndup (sysconfProfileBasename, strlen (sysconfProfileBasename) - 4);
+		else if (strstr (sysconfProfileBasename, ".profile"))
+		    sysconfProfileBase = strndup (sysconfProfileBasename, strlen (sysconfProfileBasename) - 8);
+		else
+		    sysconfProfileBase = strdup (sysconfProfileBasename);
+	    }
+	    else
+		sysconfProfileBase = strdup (sysconfProfileFull);
+
+	    /* We found this profile in SYSCONFDIR. We will need to import
+	     * it if it is not also available in the backend */
+	    if (strcmp (sysconfProfileBase, cPrivate->profile) == 0)
+	    {
+		importProfileName = sysconfProfile->data->value;
+
+		CCSStringList backendProfile = availableInBackend;
+		while (backendProfile)
+		{
+		    if (strcmp (sysconfProfileBase, backendProfile->data->value) == 0)
+		    {
+			importProfileName = NULL;
+			break;
+		    }
+
+		    backendProfile = backendProfile->next;
+		}
+
+		free (sysconfProfileFull);
+		free (sysconfProfileBase);
+
+		break;
+	    }
+
+	    free (sysconfProfileFull);
+	    free (sysconfProfileBase);
+
+	    sysconfProfile = sysconfProfile->next;
+	}
+
+	if (importProfileName)
+	    (*cPrivate->importFromFile) (context, importProfileName, TRUE);
+
+	if (availableInSysconfDir)
+	    ccsStringListFree (availableInSysconfDir, TRUE);
+
+	if (availableInBackend)
+	    ccsStringListFree (availableInBackend, TRUE);
+    }
+
     ccsConfigFileWriteConfigOption (cPrivate->configFile, OptionProfile, cPrivate->profile);
 }
 

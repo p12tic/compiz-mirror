@@ -207,7 +207,7 @@ class CCSContextTestWithMockedBackendProfile :
 		CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
 		ccsStringRef (string);
 		string->value = strdup (it->c_str ());
-		ccsStringListAppend (list, string);
+		list = ccsStringListAppend (list, string);
 	    }
 
 	    return list;
