@@ -3326,7 +3326,7 @@ ccsSetPluginListAutoSort (CCSContext *context, Bool value)
 }
 
 void
-ccsSetProfileDefault (CCSContext * context, char *name)
+ccsSetProfileDefault (CCSContext * context, const char *name)
 {
     if (!name)
 	name = "";
@@ -3346,7 +3346,7 @@ ccsSetProfileDefault (CCSContext * context, char *name)
 }
 
 void
-ccsSetProfile (CCSContext *context, char *name)
+ccsSetProfile (CCSContext *context, const char *name)
 {
     (*(GET_INTERFACE (CCSContextInterface, context))->contextSetProfile) (context, name);
 }

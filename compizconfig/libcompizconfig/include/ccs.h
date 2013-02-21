@@ -135,7 +135,7 @@ typedef CCSStringList (*CCSContextGetSortedPluginStringList) (CCSContext *contex
 typedef Bool (*CCSContextSetBackend) (CCSContext *context, char *name);
 typedef const char * (*CCSContextGetBackend) (CCSContext *context);
 typedef void (*CCSContextSetIntegrationEnabled) (CCSContext *context, Bool value);
-typedef void (*CCSContextSetProfile) (CCSContext *context, char *name);
+typedef void (*CCSContextSetProfile) (CCSContext *context, const char *name);
 typedef void (*CCSContextSetPluginListAutoSort) (CCSContext *context, Bool value);
 typedef const char * (*CCSContextGetProfile) (CCSContext *context);
 typedef Bool (*CCSContextGetIntegrationEnabled) (CCSContext *context);
@@ -872,7 +872,7 @@ void ccsSetIntegrationEnabled (CCSContext *context,
 
 /* Sets the profile for a context. */
 void ccsSetProfile (CCSContext *context,
-		    char       *name);
+		    const char *name);
 
 /* Set plugin list autosort for a context. */
 void ccsSetPluginListAutoSort (CCSContext *context,

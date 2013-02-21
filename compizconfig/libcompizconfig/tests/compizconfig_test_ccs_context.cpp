@@ -134,7 +134,9 @@ class CCSContextTestWithMockedBackendProfile :
 	    mockLoader (reinterpret_cast <CCSBackendLoaderGMock *> (ccsObjectGetPrivate (loader))),
 	    mockConfig (reinterpret_cast <CCSConfigFileGMock *> (ccsObjectGetPrivate (config))),
 	    mockBackend (reinterpret_cast <CCSBackendGMock *> (ccsObjectGetPrivate (backend.get ()))),
-	    mockBackendStr ("mock")
+	    mockBackendStr ("mock"),
+	    availableProfileStr ("available"),
+	    unavailableProfileStr ("unavailable")
 	{
 	    inst = this;
 
@@ -248,6 +250,8 @@ class CCSContextTestWithMockedBackendProfile :
 	    return inst->backend.get ();
 	}
 
+    protected:
+
 	MOCK_METHOD3 (ImportProfileVerify, Bool (CCSContext *, const char*, Bool));
 
 	CCSBackendLoader *loader;
@@ -260,16 +264,19 @@ class CCSContextTestWithMockedBackendProfile :
 	CCSConfigFileGMock    *mockConfig;
 	CCSBackendGMock       *mockBackend;
 	const std::string mockBackendStr;
+	const std::string availableProfileStr;
+	const std::string unavailableProfileStr;
 
 	CCSDynamicBackendInterface stubDynamicBackend;
-
-    public:
 
 	boost::shared_ptr <CCSContext> context;
 
     private:
 
 	std::vector <std::string> availableProfiles;
+
+    protected:
+
 	static CCSContextTestWithMockedBackendProfile *inst;
 };
 
@@ -278,4 +285,26 @@ CCSContextTestWithMockedBackendProfile::inst = NULL;
 
 TEST_F (CCSContextTestWithMockedBackendProfile, TestSetup)
 {
+}
+
+/* We should always import any new profiles that we encounter which are not
+ * available from the backend. The reason for this being that we don't want to
+ * just load the profile and end up with an empty config */
+TEST_F (CCSContextTestWithMockedBackendProfile, ImportProfileIfNotAvailableInBackend)
+{
+    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
+
+    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+    string->value = strdup (availableProfileStr.c_str ());
+    ccsStringRef (string);
+
+    CCSStringList existing (ccsStringListAppend (NULL, string));
+    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
+
+    AddAvailableSysconfProfile (unavailableProfileStr);
+
+    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (unavailableProfileStr), _))
+	.WillOnce (Return (TRUE));
+
+    ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
 }
