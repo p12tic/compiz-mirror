@@ -1,7 +1,7 @@
 Index: compiz.fix_dist_upgrade/src/main.cpp
 ===================================================================
---- compiz.fix_dist_upgrade.orig/src/main.cpp	2013-02-21 23:23:11.420127639 +0800
-+++ compiz.fix_dist_upgrade/src/main.cpp	2013-02-21 23:24:03.704386899 +0800
+--- compiz.fix_dist_upgrade.orig/src/main.cpp	2013-02-22 01:06:33.342881314 +0800
++++ compiz.fix_dist_upgrade/src/main.cpp	2013-02-22 01:07:03.283029785 +0800
 @@ -38,6 +38,11 @@
  #include "privatescreen.h"
  #include "privatestackdebugger.h"
@@ -34,36 +34,20 @@ Index: compiz.fix_dist_upgrade/src/main.cpp
  	else if (*argv[i] == '-')
  	{
  	    compLogMessage ("core", CompLogLevelWarn,
-@@ -151,23 +162,8 @@
+@@ -151,6 +162,9 @@
  
      modHandler = new ModifierHandler ();
  
--    if (!initialPlugins.empty ())
--    {
--	CompOption::Value::Vector list;
--        CompOption::Value         value;
--	CompOption                *o = screen->getOption ("active_plugins");
--
--	foreach (CompString &str, initialPlugins)
--	{
--	    value.set (str);
--	    list.push_back (value);
--	}
--
--	value.set (CompOption::TypeString, list);
--
--	if (o)
--	    o->set (value);
--    }
 +    if (initialPlugins.empty () && autoAddCCP)
 +	initialPlugins.push_back ("ccp");
- 
++
      if (!screen->init (displayName))
  	return false;
+ 
 Index: compiz.fix_dist_upgrade/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
 ===================================================================
---- compiz.fix_dist_upgrade.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-21 23:23:11.420127639 +0800
-+++ compiz.fix_dist_upgrade/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-21 23:23:11.420127639 +0800
+--- compiz.fix_dist_upgrade.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-22 01:06:33.342881314 +0800
++++ compiz.fix_dist_upgrade/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-22 01:06:33.342881314 +0800
 @@ -462,6 +462,7 @@
      if (flags & ct::CompizProcess::ReplaceCurrentWM)
  	args.push_back ("--replace");
