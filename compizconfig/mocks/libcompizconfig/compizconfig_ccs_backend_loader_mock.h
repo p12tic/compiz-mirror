@@ -20,8 +20,8 @@
  * Authored By:
  * Sam Spilsbury <smspillaz@gmail.com>
  */
-#ifndef COMPIZCONFIG_CCS_CONFIG_FILE_MOCK_H
-#define COMPIZCONFIG_CCS_CONFIG_FILE_MOCK_H
+#ifndef COMPIZCONFIG_CCS_BACKEND_LOADER_MOCK_H
+#define COMPIZCONFIG_CCS_BACKEND_LOADER_MOCK_H
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

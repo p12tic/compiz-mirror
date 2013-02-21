@@ -1,12 +1,31 @@
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <ccs.h>
 
+#include <gtest_shared_autodestroy.h>
+
+#include "ccs_backend_loader_interface.h"
+#include "ccs_backend_loader.h"
+
+#include "ccs_config_file_interface.h"
+#include "ccs_config_file.h"
+
+#include "ccs-backend.h"
+#include "ccs-private.h"
+
+#include "compizconfig_ccs_config_file_mock.h"
+#include "compizconfig_ccs_backend_loader_mock.h"
+#include "compizconfig_ccs_backend_mock.h"
 #include "compizconfig_ccs_context_mock.h"
 
 using ::testing::_;
+using ::testing::AtLeast;
+using ::testing::SetArgPointee;
 using ::testing::Return;
+using ::testing::DoAll;
+using ::testing::Eq;
 
 class CCSContextTest :
     public ::testing::Test
@@ -91,4 +110,172 @@ TEST_F(CCSContextTest, TestMock)
     free (bar);
 
     ccsFreeContext (context);
+}
+
+const CCSInterfaceTable ccsMockInterfaceTable =
+{
+    &ccsDefaultContextInterface,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+class CCSContextTestWithMockedBackendProfile :
+    public ::testing::Test
+{
+    public:
+
+	CCSContextTestWithMockedBackendProfile () :
+	    loader (ccsMockBackendLoaderNew (&ccsDefaultObjectAllocator)),
+	    config (ccsMockConfigFileNew (&ccsDefaultObjectAllocator)),
+	    backend (AutoDestroy (ccsMockBackendNew (),
+				  ccsFreeMockBackend)),
+	    mockLoader (reinterpret_cast <CCSBackendLoaderGMock *> (ccsObjectGetPrivate (loader))),
+	    mockConfig (reinterpret_cast <CCSConfigFileGMock *> (ccsObjectGetPrivate (config))),
+	    mockBackend (reinterpret_cast <CCSBackendGMock *> (ccsObjectGetPrivate (backend.get ()))),
+	    mockBackendStr ("mock")
+	{
+	    inst = this;
+
+	    /* Insert a stub dynamic backend interface into the mock backend */
+	    CCSDynamicBackendInterface backendIface =
+	    {
+		CCSContextTestWithMockedBackendProfile::GetMockBackendName,
+		CCSContextTestWithMockedBackendProfile::GetMockBackendSupportRead,
+		CCSContextTestWithMockedBackendProfile::GetMockBackendSupportWrite,
+		CCSContextTestWithMockedBackendProfile::GetMockBackendSupportProfiles,
+		CCSContextTestWithMockedBackendProfile::GetMockBackendSupportIntegration,
+		CCSContextTestWithMockedBackendProfile::GetMockBackendSupportRaw
+	    };
+	    stubDynamicBackend = backendIface;
+
+	    ccsObjectAddInterface (backend.get (),
+				   (const CCSInterface *) &stubDynamicBackend,
+				   GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
+
+	    char       *mockBackendCopy = strdup (mockBackendStr.c_str ());
+	    EXPECT_CALL (*mockConfig, readConfigOption (_, _)).Times (AtLeast (0));
+	    EXPECT_CALL (*mockConfig, writeConfigOption (_, _)).Times (AtLeast (0));
+	    EXPECT_CALL (*mockConfig, setConfigWatchCallback (_, _)).Times (AtLeast (0));
+	    EXPECT_CALL (*mockLoader, loadBackend (_, _, _)).Times (AtLeast (0));
+	    EXPECT_CALL (*mockBackend, init (_)).Times (AtLeast (0));
+
+	    ON_CALL (*mockConfig, readConfigOption (OptionBackend, _))
+		.WillByDefault (DoAll (SetArgPointee <1> (mockBackendCopy),
+				       Return (1)));
+
+	    ON_CALL (*mockLoader, loadBackend (_, _, Eq (mockBackendStr)))
+		.WillByDefault (Return (backend.get ()));
+
+	    /* We are using ccsFreeContext instead of ccsContextDestroy as that does not
+	     * free the backend as well */
+	    context = AutoDestroy (ccsEmptyContextNew (0,
+						       CCSContextTestWithMockedBackendProfile::ImportProfile,
+						       CCSContextTestWithMockedBackendProfile::AvailableProfiles,
+						       loader,
+						       config,
+						       &ccsMockInterfaceTable),
+				   ccsFreeContext);
+	}
+
+	~CCSContextTestWithMockedBackendProfile ()
+	{
+	    inst = NULL;
+	}
+
+    protected:
+
+	void AddAvailableSysconfProfile (const std::string &profile)
+	{
+	    availableProfiles.push_back (profile);
+	}
+
+    private:
+
+	static CCSStringList AvailableProfiles (const char *directory)
+	{
+	    CCSStringList list = NULL;
+
+
+	    for (std::vector <std::string>::iterator it = inst->availableProfiles.begin ();
+		 it != inst->availableProfiles.end ();
+		 ++it)
+	    {
+		CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+		ccsStringRef (string);
+		string->value = strdup (it->c_str ());
+		ccsStringListAppend (list, string);
+	    }
+
+	    return list;
+	}
+
+	static Bool ImportProfile (CCSContext *context,
+				   const char *fileName,
+				   Bool       overwriteNonDefault)
+	{
+	    return inst->ImportProfileVerify (context, fileName, overwriteNonDefault);
+	}
+
+	static const char * GetMockBackendName (CCSDynamicBackend *backend)
+	{
+	    return inst->mockBackendStr.c_str ();
+	}
+
+	static Bool GetMockBackendSupportRead (CCSDynamicBackend *backend)
+	{
+	    return TRUE;
+	}
+
+	static Bool GetMockBackendSupportWrite (CCSDynamicBackend *backend)
+	{
+	    return TRUE;
+	}
+
+	static Bool GetMockBackendSupportIntegration (CCSDynamicBackend *backend)
+	{
+	    return FALSE;
+	}
+
+	static Bool GetMockBackendSupportProfiles (CCSDynamicBackend *backend)
+	{
+	    return TRUE;
+	}
+
+	static CCSBackend * GetMockBackendSupportRaw (CCSDynamicBackend *backend)
+	{
+	    return inst->backend.get ();
+	}
+
+	MOCK_METHOD3 (ImportProfileVerify, Bool (CCSContext *, const char*, Bool));
+
+	CCSBackendLoader *loader;
+	CCSConfigFile    *config;
+
+	/* This is not managed by the context */
+	boost::shared_ptr <CCSBackend> backend;
+
+	CCSBackendLoaderGMock *mockLoader;
+	CCSConfigFileGMock    *mockConfig;
+	CCSBackendGMock       *mockBackend;
+	const std::string mockBackendStr;
+
+	CCSDynamicBackendInterface stubDynamicBackend;
+
+    public:
+
+	boost::shared_ptr <CCSContext> context;
+
+    private:
+
+	std::vector <std::string> availableProfiles;
+	static CCSContextTestWithMockedBackendProfile *inst;
+};
+
+CCSContextTestWithMockedBackendProfile *
+CCSContextTestWithMockedBackendProfile::inst = NULL;
+
+TEST_F (CCSContextTestWithMockedBackendProfile, TestSetup)
+{
 }

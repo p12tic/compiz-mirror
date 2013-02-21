@@ -311,6 +311,8 @@ configChangeNotify (unsigned int watchId, void *closure)
 
 CCSContext *
 ccsEmptyContextNew (unsigned int screenNum,
+		    CCSContextImportFromFile importFromFile,
+		    CCSScanForProfilesProc   scanForProfiles,
 		    CCSBackendLoader *loader,
 		    CCSConfigFile    *config,
 		    const CCSInterfaceTable *object_interfaces)
@@ -334,6 +336,9 @@ ccsEmptyContextNew (unsigned int screenNum,
     ccsObjectSetPrivate (context, (CCSPrivate *) ccsPrivate);
 
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
+
+    cPrivate->importFromFile = importFromFile;
+    cPrivate->scanForProfiles = scanForProfiles;
 
     cPrivate->object_interfaces = object_interfaces;
     cPrivate->screenNum = screenNum;
@@ -543,6 +548,55 @@ ccsSetActivePluginList (CCSContext * context, CCSStringList list)
     }
 }
 
+static int
+profileNameFilter (const struct dirent *item)
+{
+    int len = strlen (item->d_name);
+    const char *lastEight = item->d_name + (len - 8);
+    const char *lastFour = item->d_name + (len - 4);
+    if (strcmp (lastFour, ".ini") == 0)
+	return 1;
+
+    if (strcmp (lastEight, item->d_name) == 0)
+	return 1;
+
+    return 0;
+}
+
+static CCSStringList
+scanDirectoryForProfiles (const char *directory)
+{
+    struct dirent **nameList;
+    int num = scandir (directory, &nameList, profileNameFilter, alphasort);
+
+    if (num == -1)
+	ccsError ("error occurred during scandir: %s", strerror (errno));
+    else if (num == 0)
+	return NULL;
+    else if (num > 0)
+    {
+	CCSStringList list = NULL;
+	int i = 0;
+
+	for (; i < num; ++i)
+	{
+	    CCSString     *string = calloc (1, sizeof (CCSString));
+	    ccsStringRef (string);
+
+	    string->value = strdup (nameList[i]->d_name);
+	    ccsStringListAppend (list, string);
+
+	    free (nameList[i]);
+	}
+
+	free (nameList);
+
+	return list;
+    }
+
+    return NULL;
+}
+
 CCSContext *
 ccsContextNew (unsigned int screenNum, const CCSInterfaceTable *iface)
 {
@@ -554,7 +608,12 @@ ccsContextNew (unsigned int screenNum, const CCSInterfaceTable *iface)
 
     CCSConfigFile *config = ccsInternalConfigFileNew (&ccsDefaultObjectAllocator);
 
-    CCSContext *context = ccsEmptyContextNew (screenNum, loader, config, iface);
+    CCSContext *context = ccsEmptyContextNew (screenNum,
+					      ccsImportFromFile,
+					      scanDirectoryForProfiles,
+					      loader,
+					      config,
+					      iface);
     if (!context)
 	return NULL;
 
@@ -762,6 +821,9 @@ ccsFreeContextDefault (CCSContext * c)
 
     if (cPrivate->backendLoader)
 	ccsBackendLoaderUnref (cPrivate->backendLoader);
+
+    if (cPrivate->configFile)
+	ccsConfigFileUnref (cPrivate->configFile);
 
     ccsPluginListFree (cPrivate->plugins, TRUE);
 
@@ -5820,7 +5882,7 @@ static  const CCSPluginInterface ccsDefaultPluginInterface =
     ccsFreePluginDefault
 };
 
-static const CCSContextInterface ccsDefaultContextInterface =
+const CCSContextInterface ccsDefaultContextInterface =
 {
     ccsContextGetPluginsDefault,
     ccsContextGetCategoriesDefault,

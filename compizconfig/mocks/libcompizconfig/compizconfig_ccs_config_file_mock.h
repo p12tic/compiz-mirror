@@ -49,7 +49,7 @@ class CCSConfigFileGMockInterface
 	virtual ~CCSConfigFileGMockInterface () {}
 	virtual Bool readConfigOption (ConfigOption, char **) = 0;
 	virtual Bool writeConfigOption (ConfigOption, const char *) = 0;
-	virtual void setConfigWatchCallback (ConfigChangeCallbackProc, void *closure);
+	virtual void setConfigWatchCallback (ConfigChangeCallbackProc, void *closure) = 0;
 };
 
 class CCSConfigFileGMock :

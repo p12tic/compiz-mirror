@@ -1,3 +1,6 @@
+#ifndef _COMPIZCONFIG_CCS_CONTEXT_MOCK_H
+#define _COMPIZCONFIG_CCS_CONTEXT_MOCK_H
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -356,3 +359,5 @@ class CCSContextGMock :
 };
 
 extern CCSContextInterface CCSContextGMockInterface;
+
+#endif

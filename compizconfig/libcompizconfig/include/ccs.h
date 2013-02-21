@@ -700,9 +700,20 @@ void ccsSetBasicMetadata (Bool value);
    All plugin settings are automatically enumerated. */
 CCSContext* ccsContextNew (unsigned int screenNum, const CCSInterfaceTable *);
 
+/* Function pointers for the input/export functions. Usually you
+ * should just provide ccsImportFromFile and ccsExportToFile
+ *
+ * TODO: Using this as a crutch to isolate testing is not great
+ * we should really replace it with a real separate class in future
+ * but that is a lot of work and not really worth it for our purposes
+ */
+typedef CCSStringList (*CCSScanForProfilesProc) (const char *directory);
+
 /* Creates a new context without auto-enumerating any plugin or setting.
    Behaves otherwise exactly like ccsContextNew. */
 CCSContext* ccsEmptyContextNew (unsigned int            screenNum,
+				CCSContextImportFromFile importFromFile,
+				CCSScanForProfilesProc  scanForProfiles,
 				CCSBackendLoader        *loader,
 				CCSConfigFile           *config,
 				const CCSInterfaceTable *);

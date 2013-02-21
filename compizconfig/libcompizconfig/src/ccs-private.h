@@ -33,6 +33,11 @@ extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate
 {
+    /* Some helper function pointers that can be replaced
+     * in a test scenario */
+    CCSContextImportFromFile importFromFile;
+    CCSScanForProfilesProc scanForProfiles;
+
     CCSBackendLoader    *backendLoader;
     CCSDynamicBackend  *backend;
     CCSPluginList     plugins;         /* list of plugins settings
@@ -162,6 +167,8 @@ ccsAddStringToKeybindingMask (unsigned int *bindingMask,
 			      const char   *bindingString,
 			      unsigned int addBindingMask,
 			      const char   *addBindingString);
+
+extern const CCSContextInterface ccsDefaultContextInterface;
 
 COMPIZCONFIG_END_DECLS
 
