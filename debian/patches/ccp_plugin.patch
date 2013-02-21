@@ -1,7 +1,7 @@
-Index: compiz.fix_1120009/src/main.cpp
+Index: compiz.fix_dist_upgrade/src/main.cpp
 ===================================================================
---- compiz.fix_1120009.orig/src/main.cpp	2013-02-18 09:51:18.091750164 +0800
-+++ compiz.fix_1120009/src/main.cpp	2013-02-18 09:51:27.495796797 +0800
+--- compiz.fix_dist_upgrade.orig/src/main.cpp	2013-02-21 23:23:11.420127639 +0800
++++ compiz.fix_dist_upgrade/src/main.cpp	2013-02-21 23:24:03.704386899 +0800
 @@ -38,6 +38,11 @@
  #include "privatescreen.h"
  #include "privatestackdebugger.h"
@@ -34,7 +34,7 @@ Index: compiz.fix_1120009/src/main.cpp
  	else if (*argv[i] == '-')
  	{
  	    compLogMessage ("core", CompLogLevelWarn,
-@@ -151,23 +162,25 @@
+@@ -151,23 +162,8 @@
  
      modHandler = new ModifierHandler ();
  
@@ -42,34 +42,29 @@ Index: compiz.fix_1120009/src/main.cpp
 -    {
 -	CompOption::Value::Vector list;
 -        CompOption::Value         value;
-+    CompOption::Value::Vector list;
-+    CompOption::Value         value;
- 	CompOption                *o = screen->getOption ("active_plugins");
- 
-+    if (!initialPlugins.empty ())
-+    {
- 	foreach (CompString &str, initialPlugins)
- 	{
- 	    value.set (str);
- 	    list.push_back (value);
- 	}
-+    }
-+    else if (autoAddCCP)
-+	list.push_back ("ccp");
- 
- 	value.set (CompOption::TypeString, list);
- 
- 	if (o)
- 	    o->set (value);
+-	CompOption                *o = screen->getOption ("active_plugins");
+-
+-	foreach (CompString &str, initialPlugins)
+-	{
+-	    value.set (str);
+-	    list.push_back (value);
+-	}
+-
+-	value.set (CompOption::TypeString, list);
+-
+-	if (o)
+-	    o->set (value);
 -    }
++    if (initialPlugins.empty () && autoAddCCP)
++	initialPlugins.push_back ("ccp");
  
      if (!screen->init (displayName))
  	return false;
-Index: compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
+Index: compiz.fix_dist_upgrade/tests/xorg-gtest/src/compiz-xorg-gtest.cpp
 ===================================================================
---- compiz.fix_1120009.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-18 09:51:18.091750164 +0800
-+++ compiz.fix_1120009/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-18 09:51:18.087750118 +0800
-@@ -389,6 +389,7 @@
+--- compiz.fix_dist_upgrade.orig/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-21 23:23:11.420127639 +0800
++++ compiz.fix_dist_upgrade/tests/xorg-gtest/src/compiz-xorg-gtest.cpp	2013-02-21 23:23:11.420127639 +0800
+@@ -462,6 +462,7 @@
      if (flags & ct::CompizProcess::ReplaceCurrentWM)
  	args.push_back ("--replace");
  
