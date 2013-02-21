@@ -526,14 +526,6 @@ unsigned int ccsCCSDynamicBackendInterfaceGetType ();
 void ccsFreeDynamicBackend (CCSDynamicBackend *);
 
 /**
- * @brief ccsOpenBackend
- * @param name the name of the backend to open
- * @param interface storage for this backend's interface
- * @return a dlopen handle for this backend
- */
-CCSBackend * ccsOpenBackend (const CCSInterfaceTable *, CCSContext *context, const char *name);
-
-/**
  * @brief ccsBackendNewWithDynamicInterface
  * @param context
  * @param interface

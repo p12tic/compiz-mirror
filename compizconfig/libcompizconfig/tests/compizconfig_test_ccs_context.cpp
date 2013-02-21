@@ -162,6 +162,7 @@ class CCSContextTestWithMockedBackendProfile :
 	    EXPECT_CALL (*mockConfig, setConfigWatchCallback (_, _)).Times (AtLeast (0));
 	    EXPECT_CALL (*mockLoader, loadBackend (_, _, _)).Times (AtLeast (0));
 	    EXPECT_CALL (*mockBackend, init (_)).Times (AtLeast (0));
+	    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
 
 	    ON_CALL (*mockConfig, readConfigOption (OptionBackend, _))
 		.WillByDefault (DoAll (SetArgPointee <1> (mockBackendCopy),
@@ -191,6 +192,16 @@ class CCSContextTestWithMockedBackendProfile :
 	void AddAvailableSysconfProfile (const std::string &profile)
 	{
 	    availableProfiles.push_back (profile);
+	}
+
+	void ExistingProfile (const std::string &profile)
+	{
+	    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+	    string->value = strdup (profile.c_str ());
+	    ccsStringRef (string);
+
+	    CCSStringList existing (ccsStringListAppend (NULL, string));
+	    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
 	}
 
     private:
@@ -292,18 +303,38 @@ TEST_F (CCSContextTestWithMockedBackendProfile, TestSetup)
  * just load the profile and end up with an empty config */
 TEST_F (CCSContextTestWithMockedBackendProfile, ImportProfileIfNotAvailableInBackend)
 {
-    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
+    const std::string sysconfProfile (std::string (SYSCONFDIR) + "/compizconfig/" + unavailableProfileStr);
 
-    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
-    string->value = strdup (availableProfileStr.c_str ());
-    ccsStringRef (string);
+    ExistingProfile (availableProfileStr);
+    AddAvailableSysconfProfile (sysconfProfile);
 
-    CCSStringList existing (ccsStringListAppend (NULL, string));
-    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
+    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (sysconfProfile), _))
+	.WillOnce (Return (TRUE));
 
-    AddAvailableSysconfProfile (unavailableProfileStr);
+    ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
+}
 
-    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (unavailableProfileStr), _))
+TEST_F (CCSContextTestWithMockedBackendProfile, ImportProfileDotIni)
+{
+    const std::string sysconfProfile (std::string (SYSCONFDIR) + "/compizconfig/" + unavailableProfileStr + ".ini");
+
+    ExistingProfile (availableProfileStr);
+    AddAvailableSysconfProfile (sysconfProfile);
+
+    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (sysconfProfile), _))
+	.WillOnce (Return (TRUE));
+
+    ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
+}
+
+TEST_F (CCSContextTestWithMockedBackendProfile, ImportProfileDotProfile)
+{
+    const std::string sysconfProfile (std::string (SYSCONFDIR) + "/compizconfig/" + unavailableProfileStr + ".profile");
+
+    ExistingProfile (availableProfileStr);
+    AddAvailableSysconfProfile (sysconfProfile);
+
+    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (sysconfProfile), _))
 	.WillOnce (Return (TRUE));
 
     ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
@@ -312,18 +343,10 @@ TEST_F (CCSContextTestWithMockedBackendProfile, ImportProfileIfNotAvailableInBac
 /* Not when available in both */
 TEST_F (CCSContextTestWithMockedBackendProfile, NoImportProfileIfAvailableInBackend)
 {
-    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
-
-    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
-    string->value = strdup (availableProfileStr.c_str ());
-    ccsStringRef (string);
-
-    CCSStringList existing (ccsStringListAppend (NULL, string));
-    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
-
+    ExistingProfile (availableProfileStr);
     AddAvailableSysconfProfile (availableProfileStr);
 
-    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (unavailableProfileStr), _)).Times (0);
+    EXPECT_CALL (*this, ImportProfileVerify (_, _, _)).Times (0);
 
     ccsSetProfile (context.get (), availableProfileStr.c_str ());
 }
@@ -331,18 +354,10 @@ TEST_F (CCSContextTestWithMockedBackendProfile, NoImportProfileIfAvailableInBack
 /* Not when ther selected profile isn't in sysconfdir */
 TEST_F (CCSContextTestWithMockedBackendProfile, NoImportProfileIfNotInDir)
 {
-    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
-
-    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
-    string->value = strdup (unavailableProfileStr.c_str ());
-    ccsStringRef (string);
-
-    CCSStringList existing (ccsStringListAppend (NULL, string));
-    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
-
+    ExistingProfile (availableProfileStr);
     AddAvailableSysconfProfile (availableProfileStr);
 
-    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (unavailableProfileStr), _)).Times (0);
+    EXPECT_CALL (*this, ImportProfileVerify (_, _, _)).Times (0);
 
     ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
 }

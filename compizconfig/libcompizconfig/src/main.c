@@ -1180,13 +1180,6 @@ ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterfac
     return backend;
 }
 
-CCSBackend *
-ccsOpenBackend (const CCSInterfaceTable *interfaces, CCSContext *context, const char *name)
-{
-    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
-    return ccsBackendLoaderLoadBackend (cPrivate->backendLoader, interfaces, context, name);
-}
-
 Bool
 ccsSetBackendDefault (CCSContext * context, char *name)
 {
@@ -1204,13 +1197,19 @@ ccsSetBackendDefault (CCSContext * context, char *name)
 	cPrivate->backend = NULL;
     }
 
-    CCSBackend *backend = ccsOpenBackend (cPrivate->object_interfaces, context, name);
+    CCSBackend *backend = ccsBackendLoaderLoadBackend (cPrivate->backendLoader,
+						       cPrivate->object_interfaces,
+						       context,
+						       name);
 
     if (!backend)
     {
 	ccsWarning ("unable to open backend %s, falling back to ini", name);
 
-	backend = ccsOpenBackend (cPrivate->object_interfaces, context, "ini");
+	backend = ccsBackendLoaderLoadBackend (cPrivate->backendLoader,
+					       cPrivate->object_interfaces,
+					       context,
+					       "ini");
 	if (!backend)
 	{
 	    ccsError ("failed to open any backends, aborting");
@@ -3361,7 +3360,7 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
      * and see if the backend knows about it. If the backend
      * doesn't know about it, then we'll need to force import
      * it if available */
-    const char *importProfileName = NULL;
+    char *importProfileName = NULL;
 
     if (availableInSysconfDir)
     {
@@ -3374,29 +3373,29 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
 	    char *sysconfProfileBasename = basename (sysconfProfileFullCopy);
 	    char *sysconfProfileBase = NULL;
 
-	    if (strlen (sysconfProfileBasename))
-	    {
-		if (strstr (sysconfProfileBasename, ".ini"))
-		    sysconfProfileBase = strndup (sysconfProfileBasename, strlen (sysconfProfileBasename) - 4);
-		else if (strstr (sysconfProfileBasename, ".profile"))
-		    sysconfProfileBase = strndup (sysconfProfileBasename, strlen (sysconfProfileBasename) - 8);
-		else
-		    sysconfProfileBase = strdup (sysconfProfileBasename);
-	    }
+	    /* No preceeding path */
+	    if (!strlen (sysconfProfileBasename))
+		sysconfProfileBasename = sysconfProfileFullCopy;
+
+	    if (strstr (sysconfProfileBasename, ".ini"))
+		sysconfProfileBase = strndup (sysconfProfileBasename, strlen (sysconfProfileBasename) - 4);
+	    else if (strstr (sysconfProfileBasename, ".profile"))
+		sysconfProfileBase = strndup (sysconfProfileBasename, strlen (sysconfProfileBasename) - 8);
 	    else
-		sysconfProfileBase = strdup (sysconfProfileFull);
+		sysconfProfileBase = strdup (sysconfProfileBasename);
 
 	    /* We found this profile in SYSCONFDIR. We will need to import
 	     * it if it is not also available in the backend */
 	    if (strcmp (sysconfProfileBase, cPrivate->profile) == 0)
 	    {
-		importProfileName = sysconfProfile->data->value;
+		importProfileName = strdup (sysconfProfileBasename);
 
 		CCSStringList backendProfile = availableInBackend;
 		while (backendProfile)
 		{
 		    if (strcmp (sysconfProfileBase, backendProfile->data->value) == 0)
 		    {
+			free (importProfileName);
 			importProfileName = NULL;
 			break;
 		    }
@@ -3418,11 +3417,13 @@ ccsSetProfileDefault (CCSContext * context, const char *name)
 
 	if (importProfileName)
 	{
+	    /* Add path */
             size_t importProfilePathLength = strlen (importProfileName) + strlen (globalProfileDir) + 2;
 	    char *importProfilePath = calloc (1, sizeof (char) * importProfilePathLength); 
             snprintf (importProfilePath, importProfilePathLength, "%s/%s", globalProfileDir, importProfileName);
 	    (*cPrivate->importFromFile) (context, importProfilePath, TRUE);
 	    free (importProfilePath);
+	    free (importProfileName);
 	}
     }
 
