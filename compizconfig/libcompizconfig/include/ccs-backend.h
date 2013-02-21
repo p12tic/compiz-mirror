@@ -323,8 +323,6 @@ void ccsFreeIntegration (CCSIntegration *integration);
 CCSIntegration *
 ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai);
 
-typedef struct _CCSBackendInterface               CCSBackendInterface;
-
 /**
  * @brief CCSBackend
  *
@@ -349,8 +347,6 @@ struct _CCSBackendInfo
     Bool profileSupport;     /* does the backend support profiles? */
     unsigned int refCount;   /* reference count */
 };
-
-typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
 typedef void (*CCSBackendExecuteEventsFunc) (CCSBackend *backend, unsigned int flags);
 

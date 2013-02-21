@@ -33,6 +33,7 @@ extern Bool basicMetadata;
 
 typedef struct _CCSContextPrivate
 {
+    CCSBackendLoader    *backendLoader;
     CCSDynamicBackend  *backend;
     CCSPluginList     plugins;         /* list of plugins settings
                                           were loaded for */
@@ -43,13 +44,14 @@ typedef struct _CCSContextPrivate
     Bool	      deIntegration;
     Bool              pluginListAutoSort;
 
-    unsigned int      configWatchId;
+    CCSConfigFile     *configFile;
 
     CCSSettingList    changedSettings; /* list of settings changed since last
                                           settings write */
 
     unsigned int screenNum; /* screen number this context is assigned to */
     const CCSInterfaceTable *object_interfaces;
+
 } CCSContextPrivate;
 
 typedef struct _CCSPluginPrivate
@@ -147,20 +149,6 @@ Bool ccsLoadPluginDefault (CCSContext *context, char *name);
 void ccsLoadPluginsDefault (CCSContext *context);
 
 void ccsCheckFileWatches (void);
-
-typedef enum {
-    OptionProfile,
-    OptionBackend,
-    OptionIntegration,
-    OptionAutoSort
-} ConfigOption;
-
-Bool ccsReadConfig (ConfigOption option,
-		    char         **value);
-Bool ccsWriteConfig (ConfigOption option,
-		     char         *value);
-unsigned int ccsAddConfigWatch (CCSContext            *context,
-				FileWatchCallbackProc callback);
 
 void
 ccsAddKeybindingMaskToString (char         **bindingString,

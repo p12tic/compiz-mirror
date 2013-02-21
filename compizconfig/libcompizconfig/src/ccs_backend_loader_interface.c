@@ -1,8 +1,9 @@
 /*
  * Compiz configuration system library
  *
- * Copyright (C) 2007  Dennis Kasprzyk <onestone@opencompositing.org>
- * Copyright (C) 2007  Danny Baumann <maniac@opencompositing.org>
+ * ccs_backend_loader_interface.c
+ *
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,23 +18,30 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Authored By:
+ * Sam Spilsbury <sam.spilsbury@canonical.com>
  */
-#ifndef COMPIZCONFIG_CCS_CONFIG_PRIVATE_H
-#define COMPIZCONFIG_CCS_CONFIG_PRIVATE_H
 
 #include <ccs-defs.h>
+#include <ccs-object.h>
+#include <ccs_backend_loader_interface.h>
+#include <ccs_backend_loader.h>
 
-COMPIZCONFIG_BEGIN_DECLS
+INTERFACE_TYPE (CCSBackendLoaderInterface);
+CCSREF_OBJ (BackendLoader, CCSBackendLoader);
 
-char * getSectionName (void);
+CCSBackend *
+ccsBackendLoaderLoadBackend (CCSBackendLoader *loader,
+			     const CCSInterfaceTable *interfaces,
+			     CCSContext *context,
+			     const char *name)
+{
+    return (*(GET_INTERFACE (CCSBackendLoaderInterface, loader))->loadBackend) (loader, interfaces, context, name);
+}
 
-typedef enum {
-    OptionProfile,
-    OptionBackend,
-    OptionIntegration,
-    OptionAutoSort
-} ConfigOption;
-
-COMPIZCONFIG_END_DECLS
-
-#endif
+void
+ccsFreeBackendLoader (CCSBackendLoader *file)
+{
+    return (*(GET_INTERFACE (CCSBackendLoaderInterface, file))->free) (file);
+}

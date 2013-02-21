@@ -92,6 +92,7 @@ CCSREF_HDR (Plugin, CCSPlugin)
 CCSREF_HDR (Setting, CCSSetting)
 CCSREF_HDR (String, CCSString)
 CCSREF_HDR (Backend, CCSBackend)
+CCSREF_HDR (DynamicBackend, CCSDynamicBackend)
 CCSREF_HDR (Group, CCSGroup)
 CCSREF_HDR (SubGroup, CCSSubGroup)
 CCSREF_HDR (SettingValue, CCSSettingValue)
@@ -701,7 +702,10 @@ CCSContext* ccsContextNew (unsigned int screenNum, const CCSInterfaceTable *);
 
 /* Creates a new context without auto-enumerating any plugin or setting.
    Behaves otherwise exactly like ccsContextNew. */
-CCSContext* ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *);
+CCSContext* ccsEmptyContextNew (unsigned int            screenNum,
+				CCSBackendLoader        *loader,
+				CCSConfigFile           *config,
+				const CCSInterfaceTable *);
 
 /* Destroys the allocated context. */
 void ccsContextDestroy (CCSContext * context);
@@ -1052,7 +1056,7 @@ Bool ccsIniGetList (IniDictionary       *dictionary,
 void ccsIniSetString (IniDictionary *dictionary,
 		      const char    *section,
 		      const char    *entry,
-		      char          *value);
+		      const char    *value);
 void ccsIniSetInt (IniDictionary *dictionary,
 		   const char    *section,
 		   const char    *entry,

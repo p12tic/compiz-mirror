@@ -42,6 +42,10 @@
 #include "ccs_settings_upgrade_internal.h"
 #include "ccs_text_file_interface.h"
 #include "ccs_text_file.h"
+#include "ccs_backend_loader_interface.h"
+#include "ccs_backend_loader.h"
+#include "ccs_config_file_interface.h"
+#include "ccs_config_file.h"
 
 static void * wrapRealloc (void *o, void *a , size_t b)
 {
@@ -259,9 +263,11 @@ ccsSetBasicMetadata (Bool value)
 static void
 initGeneralOptions (CCSContext * context)
 {
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
+
     char *val;
 
-    if (ccsReadConfig (OptionBackend, &val))
+    if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionBackend, &val))
     {
 	ccsSetBackend (context, val);
 	free (val);
@@ -269,7 +275,7 @@ initGeneralOptions (CCSContext * context)
     else
 	ccsSetBackend (context, "ini");
 
-    if (ccsReadConfig (OptionProfile, &val))
+    if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionProfile, &val))
     {
 	ccsSetProfile (context, val);
 	free (val);
@@ -277,7 +283,7 @@ initGeneralOptions (CCSContext * context)
     else
 	ccsSetProfile (context, "");
 
-    if (ccsReadConfig (OptionIntegration, &val))
+    if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionIntegration, &val))
     {
 	ccsSetIntegrationEnabled (context, !strcasecmp (val, "true"));
 	free (val);
@@ -285,7 +291,7 @@ initGeneralOptions (CCSContext * context)
     else
 	ccsSetIntegrationEnabled (context, TRUE);
 
-    if (ccsReadConfig (OptionAutoSort, &val))
+    if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionAutoSort, &val))
     {
 	ccsSetPluginListAutoSort (context, !strcasecmp (val, "true"));
 	free (val);
@@ -304,7 +310,10 @@ configChangeNotify (unsigned int watchId, void *closure)
 }
 
 CCSContext *
-ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_interfaces)
+ccsEmptyContextNew (unsigned int screenNum,
+		    CCSBackendLoader *loader,
+		    CCSConfigFile    *config,
+		    const CCSInterfaceTable *object_interfaces)
 {
     CCSContext *context;
 
@@ -329,10 +338,13 @@ ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *object_inte
     cPrivate->object_interfaces = object_interfaces;
     cPrivate->screenNum = screenNum;
 
+    cPrivate->backendLoader = loader;
+    cPrivate->configFile = config;
+
     ccsObjectAddInterface (context, (CCSInterface *) object_interfaces->contextInterface, GET_INTERFACE_TYPE (CCSContextInterface));
 
     initGeneralOptions (context);
-    cPrivate->configWatchId = ccsAddConfigWatch (context, configChangeNotify);
+    ccsSetConfigWatchCallback (cPrivate->configFile, configChangeNotify, context);
 
     if (cPrivate->backend)
 	ccsInfo ("Backend     : %s", ccsDynamicBackendGetBackendName (cPrivate->backend));
@@ -535,7 +547,14 @@ CCSContext *
 ccsContextNew (unsigned int screenNum, const CCSInterfaceTable *iface)
 {
     CCSPlugin  *p;
-    CCSContext *context = ccsEmptyContextNew (screenNum, iface);
+    CCSBackendLoader *loader = ccsSharedLibBackendLoaderNew (&ccsDefaultObjectAllocator);
+
+    if (!loader)
+	return NULL;
+
+    CCSConfigFile *config = ccsInternalConfigFileNew (&ccsDefaultObjectAllocator);
+
+    CCSContext *context = ccsEmptyContextNew (screenNum, loader, config, iface);
     if (!context)
 	return NULL;
 
@@ -738,11 +757,11 @@ ccsFreeContextDefault (CCSContext * c)
     if (cPrivate->profile)
 	free (cPrivate->profile);
 
-    if (cPrivate->configWatchId)
-	ccsRemoveFileWatch (cPrivate->configWatchId);
-
     if (cPrivate->changedSettings)
 	cPrivate->changedSettings = ccsSettingListFree (cPrivate->changedSettings, FALSE);
+
+    if (cPrivate->backendLoader)
+	ccsBackendLoaderUnref (cPrivate->backendLoader);
 
     ccsPluginListFree (cPrivate->plugins, TRUE);
 
@@ -1063,62 +1082,6 @@ CCSREF_OBJ (IntegratedSettingInfo, CCSIntegratedSettingInfo);
 CCSREF_OBJ (IntegratedSettingFactory, CCSIntegratedSettingFactory);
 CCSREF_OBJ (IntegratedSettingsStorage, CCSIntegratedSettingsStorage);
 
-static void *
-openBackend (const char *backend)
-{
-    char *home = getenv ("HOME");
-    char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
-    void *dlhand = NULL;
-    char *dlname = NULL;
-    char *err = NULL;
-
-    if (override_backend && strlen (override_backend))
-    {
-	if (asprintf (&dlname, "%s/lib%s.so",
-		      override_backend, backend) == -1)
-	    dlname = NULL;
-
-	dlerror ();
-	dlhand = dlopen (dlname, RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
-	err = dlerror ();
-    }
-
-    if (!dlhand && home && strlen (home))
-    {
-	if (dlname)
-	    free (dlname);
-
-	if (asprintf (&dlname, "%s/.compizconfig/backends/lib%s.so",
-		      home, backend) == -1)
-	    dlname = NULL;
-
-	dlerror ();
-	dlhand = dlopen (dlname, RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
-	err = dlerror ();
-    }
-
-    if (!dlhand)
-    {
-	if (dlname)
-	    free (dlname);
-
-	if (asprintf (&dlname, "%s/compizconfig/backends/lib%s.so",
-		      LIBDIR, backend) == -1)
-	    dlname = NULL;
-	dlhand = dlopen (dlname, RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
-	err = dlerror ();
-    }
-
-    free (dlname);
-
-    if (err)
-    {
-	ccsError ("dlopen: %s", err);
-    }
-
-    return dlhand;
-}
-
 void
 ccsFreeBackend (CCSBackend *backend)
 {
@@ -1154,77 +1117,11 @@ ccsBackendNewWithDynamicInterface (CCSContext *context, const CCSBackendInterfac
     return backend;
 }
 
-CCSDynamicBackend *
-ccsDynamicBackendWrapLoadedBackend (const CCSInterfaceTable *interfaces, CCSBackend *backend, void *dlhand)
-{
-    CCSDynamicBackend *dynamicBackend = calloc (1, sizeof (CCSDynamicBackend));
-    CCSDynamicBackendPrivate *dbPrivate = NULL;
-
-    if (!dynamicBackend)
-	return NULL;
-
-    ccsObjectInit (dynamicBackend, &ccsDefaultObjectAllocator);
-    ccsDynamicBackendRef (dynamicBackend);
-
-    dbPrivate = calloc (1, sizeof (CCSDynamicBackendPrivate));
-
-    if (!dbPrivate)
-    {
-	ccsDynamicBackendUnref (dynamicBackend);
-	return NULL;
-    }
-
-    dbPrivate->dlhand = dlhand;
-    dbPrivate->backend = backend;
-
-    ccsObjectSetPrivate (dynamicBackend, (CCSPrivate *) dbPrivate);
-    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendWrapperInterface, GET_INTERFACE_TYPE (CCSBackendInterface));
-    ccsObjectAddInterface (dynamicBackend, (CCSInterface *) interfaces->dynamicBackendInterface, GET_INTERFACE_TYPE (CCSDynamicBackendInterface));
-
-    return dynamicBackend;
-}
-
 CCSBackend *
 ccsOpenBackend (const CCSInterfaceTable *interfaces, CCSContext *context, const char *name)
 {
-    CCSBackendInterface *vt;
-    void *dlhand = openBackend (name);
-
-    if (!dlhand)
-	return NULL;
-
-    BackendGetInfoProc getInfo = dlsym (dlhand, "getBackendInfo");
-    if (!getInfo)
-    {
-	dlclose (dlhand);
-	return NULL;
-    }
-
-    vt = getInfo ();
-    if (!vt)
-    {
-	dlclose (dlhand);
-	return NULL;
-    }
-
-    CCSBackend *backend = ccsBackendNewWithDynamicInterface (context, vt);
-
-    if (!backend)
-    {
-	dlclose (dlhand);
-	return NULL;
-    }
-
-    CCSDynamicBackend *backendWrapper = ccsDynamicBackendWrapLoadedBackend (interfaces, backend, dlhand);
-
-    if (!backendWrapper)
-    {
-	dlclose (dlhand);
-	ccsBackendUnref (backend);
-	return NULL;
-    }
-
-    return (CCSBackend *) backendWrapper;
+    CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
+    return ccsBackendLoaderLoadBackend (cPrivate->backendLoader, interfaces, context, name);
 }
 
 Bool
@@ -1267,10 +1164,8 @@ ccsSetBackendDefault (CCSContext * context, char *name)
     if (backendInit)
 	(*backendInit) ((CCSBackend *) cPrivate->backend, context);
 
-    ccsDisableFileWatch (cPrivate->configWatchId);
     if (!fallbackMode)
-	ccsWriteConfig (OptionBackend, name);
-    ccsEnableFileWatch (cPrivate->configWatchId);
+	ccsConfigFileWriteConfigOption (cPrivate->configFile, OptionBackend, name);
 
     return TRUE;
 }
@@ -3309,9 +3204,7 @@ ccsSetIntegrationEnabledDefault (CCSContext * context, Bool value)
 
     cPrivate->deIntegration = value;
 
-    ccsDisableFileWatch (cPrivate->configWatchId);
-    ccsWriteConfig (OptionIntegration, (value) ? "true" : "false");
-    ccsEnableFileWatch (cPrivate->configWatchId);
+    ccsConfigFileWriteConfigOption (cPrivate->configFile, OptionIntegration, (value) ? "true" : "false");
 }
 
 void
@@ -3358,9 +3251,7 @@ ccsSetPluginListAutoSortDefault (CCSContext * context, Bool value)
 
     cPrivate->pluginListAutoSort = value;
 
-    ccsDisableFileWatch (cPrivate->configWatchId);
-    ccsWriteConfig (OptionAutoSort, (value) ? "true" : "false");
-    ccsEnableFileWatch (cPrivate->configWatchId);
+    ccsConfigFileWriteConfigOption (cPrivate->configFile,OptionAutoSort, (value) ? "true" : "false");
 
     if (value)
 	ccsWriteAutoSortedPluginList (context);
@@ -3389,9 +3280,7 @@ ccsSetProfileDefault (CCSContext * context, char *name)
 
     cPrivate->profile = strdup (name);
 
-    ccsDisableFileWatch (cPrivate->configWatchId);
-    ccsWriteConfig (OptionProfile, cPrivate->profile);
-    ccsEnableFileWatch (cPrivate->configWatchId);
+    ccsConfigFileWriteConfigOption (cPrivate->configFile, OptionProfile, cPrivate->profile);
 }
 
 void
