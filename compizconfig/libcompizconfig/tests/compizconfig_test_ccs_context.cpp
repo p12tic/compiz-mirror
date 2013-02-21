@@ -308,3 +308,41 @@ TEST_F (CCSContextTestWithMockedBackendProfile, ImportProfileIfNotAvailableInBac
 
     ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
 }
+
+/* Not when available in both */
+TEST_F (CCSContextTestWithMockedBackendProfile, NoImportProfileIfAvailableInBackend)
+{
+    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
+
+    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+    string->value = strdup (availableProfileStr.c_str ());
+    ccsStringRef (string);
+
+    CCSStringList existing (ccsStringListAppend (NULL, string));
+    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
+
+    AddAvailableSysconfProfile (availableProfileStr);
+
+    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (unavailableProfileStr), _)).Times (0);
+
+    ccsSetProfile (context.get (), availableProfileStr.c_str ());
+}
+
+/* Not when ther selected profile isn't in sysconfdir */
+TEST_F (CCSContextTestWithMockedBackendProfile, NoImportProfileIfNotInDir)
+{
+    EXPECT_CALL (*mockBackend, getExistingProfiles (_)).Times (AtLeast (0));
+
+    CCSString *string = reinterpret_cast <CCSString *> (calloc (1, sizeof (CCSString)));
+    string->value = strdup (unavailableProfileStr.c_str ());
+    ccsStringRef (string);
+
+    CCSStringList existing (ccsStringListAppend (NULL, string));
+    ON_CALL (*mockBackend, getExistingProfiles (_)).WillByDefault (Return (existing));
+
+    AddAvailableSysconfProfile (availableProfileStr);
+
+    EXPECT_CALL (*this, ImportProfileVerify (_, Eq (unavailableProfileStr), _)).Times (0);
+
+    ccsSetProfile (context.get (), unavailableProfileStr.c_str ());
+}
