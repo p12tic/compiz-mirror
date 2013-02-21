@@ -199,9 +199,9 @@ ccsIniConfigFileWriteConfigOption (CCSConfigFile *config, ConfigOption option, c
     CCSIniConfigFilePrivate *priv = GET_PRIVATE (CCSIniConfigFilePrivate, config);
     IniDictionary *iniFile;
     char          *entry = NULL;
-    char          *section;
-    char          *fileName;
-    char          *curVal;
+    char          *section = NULL;
+    char          *fileName = NULL;
+    char          *curVal = NULL;
     Bool          changed = TRUE;
 
     ccsDisableFileWatch (priv->configWatch);
@@ -210,7 +210,8 @@ ccsIniConfigFileWriteConfigOption (CCSConfigFile *config, ConfigOption option, c
     if (ccsIniConfigFileReadConfigOption (config, option, &curVal))
     {
 	changed = (strcmp (value, curVal) != 0);
-	free (curVal);
+	if (curVal)
+	    free (curVal);
     }
 
     if (!changed)

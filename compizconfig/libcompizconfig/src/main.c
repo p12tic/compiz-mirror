@@ -265,12 +265,13 @@ initGeneralOptions (CCSContext * context)
 {
     CCSContextPrivate *cPrivate = GET_PRIVATE (CCSContextPrivate, context);
 
-    char *val;
+    char *val = NULL;
 
     if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionBackend, &val))
     {
 	ccsSetBackend (context, val);
-	free (val);
+	if (val)
+	    free (val);
     }
     else
 	ccsSetBackend (context, "ini");
@@ -278,7 +279,8 @@ initGeneralOptions (CCSContext * context)
     if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionProfile, &val))
     {
 	ccsSetProfile (context, val);
-	free (val);
+	if (val)
+	    free (val);
     }
     else
 	ccsSetProfile (context, "");
@@ -286,7 +288,8 @@ initGeneralOptions (CCSContext * context)
     if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionIntegration, &val))
     {
 	ccsSetIntegrationEnabled (context, !strcasecmp (val, "true"));
-	free (val);
+	if (val)
+	    free (val);
     }
     else
 	ccsSetIntegrationEnabled (context, TRUE);
@@ -294,7 +297,8 @@ initGeneralOptions (CCSContext * context)
     if (ccsConfigFileReadConfigOption (cPrivate->configFile, OptionAutoSort, &val))
     {
 	ccsSetPluginListAutoSort (context, !strcasecmp (val, "true"));
-	free (val);
+	if (val)
+	    free (val);
     }
     else
 	ccsSetPluginListAutoSort (context, TRUE);
