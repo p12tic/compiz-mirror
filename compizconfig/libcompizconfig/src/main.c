@@ -4194,8 +4194,8 @@ CCSBackendInfoList
 ccsGetExistingBackends (CCSContext *context)
 {
     CCSBackendInfoList rv = NULL;
-    char *home = getenv ("HOME");
-    char *overrideBackend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
+    const char *home = getenv ("HOME");
+    const char *overrideBackend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
     char *backenddir;
     const char *currentBackend = ccsGetBackend (context);
 
@@ -4904,7 +4904,7 @@ ccsCheckForSettingsUpgradeDefault (CCSContext *context)
     const char	  	   *path = CCS_UPGRADE_PATH;
     CCSTextFile		   *completedUpgrades;
     char		   *cuBuffer = NULL;
-    char		   *home = getenv ("HOME");
+    const char		   *home = getenv ("HOME");
 
     if (!home)
 	return FALSE;

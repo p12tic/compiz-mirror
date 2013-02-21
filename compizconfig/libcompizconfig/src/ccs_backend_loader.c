@@ -47,8 +47,8 @@ struct _CCSShraedLibBackendLoaderPrivate
 static void *
 openBackend (const char *backend)
 {
-    char *home = getenv ("HOME");
-    char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
+    const char *home = getenv ("HOME");
+    const char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
     void *dlhand = NULL;
     char *dlname = NULL;
     char *err = NULL;

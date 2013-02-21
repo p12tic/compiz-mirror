@@ -30,7 +30,7 @@
 char *
 getSectionName (void)
 {
-    char *profile;
+    const char *profile;
     char *section;
 
     profile = getenv ("COMPIZ_CONFIG_PROFILE");
