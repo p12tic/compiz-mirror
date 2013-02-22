@@ -56,6 +56,7 @@ using ::testing::Matcher;
 using ::testing::MakeMatcher;
 using ::testing::MatcherInterface;
 using ::testing::Pointee;
+using ::testing::PrintToString;
 
 namespace cc = compiz::config;
 namespace cci = compiz::config::impl;
@@ -357,6 +358,12 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestClearValuesInListNonListTypeN
     ccsUpgradeClearValues (*list);
 }
 
+/* This actually copies the value, but its harmless */
+MATCHER_P (CheckValueParent, expectedParent, std::string ("Value parent is ") + PrintToString (expectedParent))
+{
+    return arg.parent == expectedParent;
+}
+
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestNoAddValuesSettingNotFound)
 {
     MockedSetting settingOne (SpawnSetting (CCS_SETTINGS_UPGRADE_TEST_MOCK_SETTING_NAME_ONE,
@@ -587,6 +594,7 @@ namespace
     }
 }
 
+/* TODO: These tests need to be cleaned up. There are multiple asserts per-test here */
 TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListAppendsValuesToListFromList)
 {
     const std::string valueOne ("value_one");
@@ -648,7 +656,8 @@ TEST_F (CCSSettingsUpgradeTestWithMockContext, TestAddValuesInListAppendsValuesT
 
     EXPECT_CALL (Mock (settingToAppendValuesTo), setList (
 		     IsSettingValueInSettingValueCCSList (
-			    SettingValueMatch (appendedStringInListValue, TypeString, &info)), IsTrue ()));
+			    AllOf (SettingValueMatch (appendedStringInListValue, TypeString, &info),
+				   CheckValueParent (Real (settingToAppendValuesTo)))), IsTrue ()));
 
     ccsUpgradeAddValues (*list);
 }

@@ -1,8 +1,9 @@
 /*
  * Compiz configuration system library
  *
- * Copyright (C) 2007  Dennis Kasprzyk <onestone@opencompositing.org>
- * Copyright (C) 2007  Danny Baumann <maniac@opencompositing.org>
+ * ccs_backend_loader.h
+ *
+ * Copyright (C) 2013 Sam Spilsbury
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,22 +18,21 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Authored By:
+ * Sam Spilsbury <smspillaz@gmail.com>
  */
-#ifndef COMPIZCONFIG_CCS_CONFIG_PRIVATE_H
-#define COMPIZCONFIG_CCS_CONFIG_PRIVATE_H
+#ifndef CCS_BACKEND_LOADER_H
+#define CCS_BACKEND_LOADER_H
 
 #include <ccs-defs.h>
+#include <ccs-object.h>
+#include "ccs_backend_loader_interface.h"
 
 COMPIZCONFIG_BEGIN_DECLS
 
-char * getSectionName (void);
-
-typedef enum {
-    OptionProfile,
-    OptionBackend,
-    OptionIntegration,
-    OptionAutoSort
-} ConfigOption;
+CCSBackendLoader *
+ccsSharedLibBackendLoaderNew (CCSObjectAllocationInterface *ai);
 
 COMPIZCONFIG_END_DECLS
 

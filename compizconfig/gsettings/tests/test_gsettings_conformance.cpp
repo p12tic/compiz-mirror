@@ -29,6 +29,8 @@
 #include "gsettings-mock-schemas-config.h"
 
 #include <ccs.h>
+#include <ccs_backend_loader_interface.h>
+#include <ccs_backend_loader.h>
 #include <compizconfig_backend_concept_test.h>
 
 #include <gsettings_util.h>
@@ -63,6 +65,8 @@ class CCSGSettingsBackendEnv :
     public:
 
 	CCSGSettingsBackendEnv () :
+	    mLoader (AutoDestroy (ccsSharedLibBackendLoaderNew (&ccsDefaultObjectAllocator),
+				  ccsBackendLoaderUnref)),
 	    pluginToMatch ("mock")
 	{
 	}
@@ -88,7 +92,10 @@ class CCSGSettingsBackendEnv :
 
 	    std::string path ("gsettings");
 
-	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsOpenBackend (&ccsDefaultInterfaceTable, mContext, path.c_str ()));
+	    mBackend = reinterpret_cast <CCSDynamicBackend *> (ccsBackendLoaderLoadBackend (mLoader.get (),
+											    &ccsDefaultInterfaceTable,
+											    mContext,
+											    path.c_str ()));
 
 	    EXPECT_TRUE (mBackend);
 
@@ -427,6 +434,7 @@ class CCSGSettingsBackendEnv :
 
     private:
 
+	boost::shared_ptr <CCSBackendLoader> mLoader;
 	CCSGSettingsWrapper  *mSettings;
 	boost::shared_ptr <CCSGSettingsStorageEnv> mStorage;
 	CCSContext *mContext;

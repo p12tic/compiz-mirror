@@ -323,8 +323,6 @@ void ccsFreeIntegration (CCSIntegration *integration);
 CCSIntegration *
 ccsNullIntegrationBackendNew (CCSObjectAllocationInterface *ai);
 
-typedef struct _CCSBackendInterface               CCSBackendInterface;
-
 /**
  * @brief CCSBackend
  *
@@ -349,8 +347,6 @@ struct _CCSBackendInfo
     Bool profileSupport;     /* does the backend support profiles? */
     unsigned int refCount;   /* reference count */
 };
-
-typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
 typedef void (*CCSBackendExecuteEventsFunc) (CCSBackend *backend, unsigned int flags);
 
@@ -528,14 +524,6 @@ CCSBackend * ccsDynamicBackendGetRawBackend (CCSDynamicBackend *);
 unsigned int ccsCCSDynamicBackendInterfaceGetType ();
 
 void ccsFreeDynamicBackend (CCSDynamicBackend *);
-
-/**
- * @brief ccsOpenBackend
- * @param name the name of the backend to open
- * @param interface storage for this backend's interface
- * @return a dlopen handle for this backend
- */
-CCSBackend * ccsOpenBackend (const CCSInterfaceTable *, CCSContext *context, const char *name);
 
 /**
  * @brief ccsBackendNewWithDynamicInterface

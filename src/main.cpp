@@ -151,24 +151,6 @@ CompManager::init ()
 
     modHandler = new ModifierHandler ();
 
-    if (!initialPlugins.empty ())
-    {
-	CompOption::Value::Vector list;
-        CompOption::Value         value;
-	CompOption                *o = screen->getOption ("active_plugins");
-
-	foreach (CompString &str, initialPlugins)
-	{
-	    value.set (str);
-	    list.push_back (value);
-	}
-
-	value.set (CompOption::TypeString, list);
-
-	if (o)
-	    o->set (value);
-    }
-
     if (!screen->init (displayName))
 	return false;
 

@@ -92,6 +92,7 @@ CCSREF_HDR (Plugin, CCSPlugin)
 CCSREF_HDR (Setting, CCSSetting)
 CCSREF_HDR (String, CCSString)
 CCSREF_HDR (Backend, CCSBackend)
+CCSREF_HDR (DynamicBackend, CCSDynamicBackend)
 CCSREF_HDR (Group, CCSGroup)
 CCSREF_HDR (SubGroup, CCSSubGroup)
 CCSREF_HDR (SettingValue, CCSSettingValue)
@@ -134,7 +135,7 @@ typedef CCSStringList (*CCSContextGetSortedPluginStringList) (CCSContext *contex
 typedef Bool (*CCSContextSetBackend) (CCSContext *context, char *name);
 typedef const char * (*CCSContextGetBackend) (CCSContext *context);
 typedef void (*CCSContextSetIntegrationEnabled) (CCSContext *context, Bool value);
-typedef void (*CCSContextSetProfile) (CCSContext *context, char *name);
+typedef void (*CCSContextSetProfile) (CCSContext *context, const char *name);
 typedef void (*CCSContextSetPluginListAutoSort) (CCSContext *context, Bool value);
 typedef const char * (*CCSContextGetProfile) (CCSContext *context);
 typedef Bool (*CCSContextGetIntegrationEnabled) (CCSContext *context);
@@ -699,9 +700,23 @@ void ccsSetBasicMetadata (Bool value);
    All plugin settings are automatically enumerated. */
 CCSContext* ccsContextNew (unsigned int screenNum, const CCSInterfaceTable *);
 
+/* Function pointers for the input/export functions. Usually you
+ * should just provide ccsImportFromFile and ccsExportToFile
+ *
+ * TODO: Using this as a crutch to isolate testing is not great
+ * we should really replace it with a real separate class in future
+ * but that is a lot of work and not really worth it for our purposes
+ */
+typedef CCSStringList (*CCSScanForProfilesProc) (const char *directory);
+
 /* Creates a new context without auto-enumerating any plugin or setting.
    Behaves otherwise exactly like ccsContextNew. */
-CCSContext* ccsEmptyContextNew (unsigned int screenNum, const CCSInterfaceTable *);
+CCSContext* ccsEmptyContextNew (unsigned int            screenNum,
+				CCSContextImportFromFile importFromFile,
+				CCSScanForProfilesProc  scanForProfiles,
+				CCSBackendLoader        *loader,
+				CCSConfigFile           *config,
+				const CCSInterfaceTable *);
 
 /* Destroys the allocated context. */
 void ccsContextDestroy (CCSContext * context);
@@ -857,7 +872,7 @@ void ccsSetIntegrationEnabled (CCSContext *context,
 
 /* Sets the profile for a context. */
 void ccsSetProfile (CCSContext *context,
-		    char       *name);
+		    const char *name);
 
 /* Set plugin list autosort for a context. */
 void ccsSetPluginListAutoSort (CCSContext *context,
@@ -1052,7 +1067,7 @@ Bool ccsIniGetList (IniDictionary       *dictionary,
 void ccsIniSetString (IniDictionary *dictionary,
 		      const char    *section,
 		      const char    *entry,
-		      char          *value);
+		      const char    *value);
 void ccsIniSetInt (IniDictionary *dictionary,
 		   const char    *section,
 		   const char    *entry,
