@@ -547,7 +547,7 @@ ct::PrivateCompizProcess::WaitForStartupMessage (Display                        
 ct::CompizProcess::CompizProcess (::Display                           *dpy,
 				  ct::CompizProcess::StartupFlags     flags,
 				  const ct::CompizProcess::PluginList &plugins,
-				  unsigned int                        waitTimeout) :
+				  int                                 waitTimeout) :
     priv (new PrivateCompizProcess (flags))
 {
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
