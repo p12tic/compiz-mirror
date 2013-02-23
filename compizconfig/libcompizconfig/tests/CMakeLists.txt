@@ -11,6 +11,8 @@ link_directories (${CMAKE_CURRENT_BINARY_DIR}/../src/)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
+add_definitions (-DSYSCONFDIR=\\\"${COMPIZ_SYSCONFDIR}\\\")
+
 add_executable (compizconfig_test_ccs_object
 		${CMAKE_CURRENT_SOURCE_DIR}/compizconfig_test_ccs_object.cpp)
 
@@ -61,7 +63,10 @@ target_link_libraries (compizconfig_test_ccs_context
 		       compizconfig
 		       compizconfig_ccs_context_mock
 		       compizconfig_ccs_plugin_mock
-		       compizconfig_ccs_setting_mock)
+		       compizconfig_ccs_setting_mock
+		       compizconfig_ccs_config_file_mock
+                       compizconfig_ccs_backend_loader_mock
+                       compizconfig_ccs_backend_mock)
 
 target_link_libraries (compizconfig_test_ccs_plugin
 		       ${GTEST_BOTH_LIBRARIES}

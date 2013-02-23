@@ -16,6 +16,10 @@ set (LIBCOMPIZCONFIG_FILES
     lists.c
     main.c
     log.c
+    ccs_config_file.c
+    ccs_config_file_interface.c
+    ccs_backend_loader.c
+    ccs_backend_loader_interface.c
 )
 
 add_definitions (
@@ -88,6 +92,7 @@ target_link_libraries (
     compizconfig
     ${LIBCOMPIZCONFIG_LIBRARIES}
     m
+    pthread
     dl
     ccs_settings_upgrade_internal
     ccs_text_file

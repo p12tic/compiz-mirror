@@ -594,7 +594,7 @@ void
 ccsIniSetString (IniDictionary * dictionary,
 		 const char    * section,
 		 const char    * entry,
-		 char          * value)
+		 const char    * value)
 {
     setIniString (dictionary, section, entry, value);
 }

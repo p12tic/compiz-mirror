@@ -6,6 +6,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../testenvironments
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../src
+                     ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/src
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../../libcompizconfig/tests
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../../mocks/libcompizconfig
 		     ${CMAKE_CURRENT_SOURCE_DIR}/../../tests
@@ -77,6 +78,7 @@ if (COMPIZCONFIG_TEST_GSETTINGS_FOUND)
 			   compizconfig_ccs_setting_value_operators
 			   compizconfig_ccs_test_value_combinations
 			   compizconfig_ccs_integration_mock
+                           compizconfig
 			   ${COMPIZCONFIG_TEST_GSETTINGS_LIBRARIES}
 			   ${GTEST_BOTH_LIBRARIES}
 			   ${GMOCK_MAIN_LIBRARY})

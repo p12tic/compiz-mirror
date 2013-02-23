@@ -49,6 +49,10 @@ GVariant *
 getVariantForCCSSetting (CCSBackend *backend, CCSSetting *setting)
 {
     CCSGSettingsWrapper  *settings = getSettingsObjectForCCSSetting (backend, setting);
+
+    if (!settings)
+	return NULL;
+
     char *cleanSettingName = getNameForCCSSetting (setting);
     gchar *pathName = makeSettingPath (ccsGSettingsBackendGetCurrentProfile (backend), setting);
     GVariant *gsettingsValue = getVariantAtKey (settings,
@@ -82,6 +86,9 @@ readOption (CCSBackend *backend, CCSSetting * setting)
 	return FALSE;
 
     gsettingsValue = getVariantForCCSSetting (backend, setting);
+
+    if (!gsettingsValue)
+	return FALSE;
 
     switch (ccsSettingGetType (setting))
     {
