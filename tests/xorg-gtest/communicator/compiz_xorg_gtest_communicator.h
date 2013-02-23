@@ -59,7 +59,7 @@ class MessageAtoms
 	std::auto_ptr <Private> priv;
 };
 
-bool ReceiveMessage (Display *, Atom, XEvent &, int timeout = 1000);
+bool ReceiveMessage (Display *, Atom, XEvent &, int timeout = -1);
 void SendClientMessage (Display *, Atom, Window, Window, const std::vector <long> &data);
 }
 }

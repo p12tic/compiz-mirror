@@ -156,7 +156,7 @@ namespace compiz
 		CompizProcess (Display *dpy,
 			       StartupFlags,
 			       const PluginList &plugins,
-			       unsigned int waitTimeout);
+			       int timeout = 0);
 		~CompizProcess ();
 		xorg::testing::Process::State State ();
 		pid_t Pid ();

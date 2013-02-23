@@ -136,12 +136,13 @@ ct::ReceiveMessage (Display *display,
 		    XEvent  &event,
 		    int     timeout)
 {
+    /* Ensure the event queue is fully flushed */
+    XFlush (display);
+
     if (FindClientMessage (display, event, message))
 	return true;
     else
     {
-	XSync (display, false);
-
 	struct pollfd pfd;
 	pfd.events = POLLIN | POLLHUP | POLLERR;
 	pfd.revents = 0;
@@ -197,4 +198,5 @@ ct::SendClientMessage (Display *display,
 		0,
 		StructureNotifyMask,
 		&event);
+    XFlush (display);
 };

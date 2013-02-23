@@ -101,8 +101,7 @@ TEST_F (XorgAcceptance, SIGINTClosesDown)
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
     ProcessPtr compiz (boost::make_shared <ct::CompizProcess> (Display (),
 							       ct::CompizProcess::WaitForStartupMessage,
-							       ct::CompizProcess::PluginList (),
-							       3000));
+							       ct::CompizProcess::PluginList ()));
 
     pid_t firstProcessPid = compiz->Pid ();
 
@@ -131,8 +130,7 @@ TEST_F (XorgAcceptance, ReplaceOtherWMFast)
     TmpEnv env ("XORG_GTEST_CHILD_STDOUT", "1");
     ProcessPtr firstCompiz (boost::make_shared <ct::CompizProcess> (Display (),
 								    ct::CompizProcess::WaitForStartupMessage,
-								    ct::CompizProcess::PluginList (),
-								    3000));
+								    ct::CompizProcess::PluginList ()));
 
     /* Expect it to exit */
     WaitForSuccessDeathTask::GetProcessState procState (boost::bind (&ct::CompizProcess::State,
