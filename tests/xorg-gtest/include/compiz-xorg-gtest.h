@@ -131,14 +131,14 @@ namespace compiz
 					 int     type,
 					 int     ext,
 					 int     extType,
-					 int     timeout = 1000);
+					 int     timeout = 0);
 	bool WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 						 Window              w,
 						 int                 type,
 						 int                 ext,
 						 int                 extType,
 						 const XEventMatcher &matcher,
-						 int                 timeout = 1000);
+						 int                 timeout = 0);
 
 	class PrivateCompizProcess;
 	class CompizProcess
