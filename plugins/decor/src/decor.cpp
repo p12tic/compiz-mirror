@@ -940,6 +940,7 @@ WindowDecoration *
 WindowDecoration::create (const Decoration::Ptr &d)
 {
     WindowDecoration *wd;
+    unsigned int     nQuad = d->numQuads;
 
     wd = new WindowDecoration ();
     if (!wd)
@@ -947,7 +948,7 @@ WindowDecoration::create (const Decoration::Ptr &d)
 
     if (d->type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-	wd->quad = new ScaledQuad[d->nQuad];
+	wd->quad = new ScaledQuad[nQuad];
 
 	if (!wd->quad)
 	{
@@ -956,12 +957,15 @@ WindowDecoration::create (const Decoration::Ptr &d)
 	}
     }
     else
+    {
+	nQuad = 0;
 	wd->quad = NULL;
+    }
 
     d->refCount++;
 
     wd->decor = d;
-    wd->nQuad = d->nQuad;
+    wd->nQuad = nQuad;
 
     return wd;
 }
