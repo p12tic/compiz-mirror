@@ -6,7 +6,6 @@ debian/tmp/usr/*/compiz/*decor.*
 debian/tmp/usr/*/compiz/*expo.*
 debian/tmp/usr/*/compiz/*ezoom.*
 debian/tmp/usr/*/compiz/*fade.*
-debian/tmp/usr/*/compiz/*freewins.*
 debian/tmp/usr/*/compiz/*gnomecompat.*
 debian/tmp/usr/*/compiz/*grid.*
 debian/tmp/usr/*/compiz/*imgpng.*
