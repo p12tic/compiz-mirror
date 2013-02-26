@@ -158,6 +158,14 @@ moveInitiate (CompAction      *action,
 		if (mw->gWindow)
 		mw->gWindow->glPaintSetEnabled (mw, true);
 	    }
+
+	    if (ms->optionGetLazyPositioning ())
+	    {
+		MOVE_WINDOW (w);
+
+		if (mw->gWindow)
+		    mw->releasable = w->obtainLockOnConfigureRequests ();
+	    }
 	}
     }
 
@@ -173,6 +181,8 @@ moveTerminate (CompAction      *action,
 
     if (ms->w)
     {
+	MOVE_WINDOW (ms->w);
+
 	if (state & CompAction::StateCancel)
 	    ms->w->move (ms->savedX - ms->w->geometry ().x (),
 			 ms->savedY - ms->w->geometry ().y (), false);
@@ -194,13 +204,13 @@ moveTerminate (CompAction      *action,
 
 	if (ms->moveOpacity != OPAQUE)
 	{
-	    MOVE_WINDOW (ms->w);
-
 	    if (mw->cWindow)
 		mw->cWindow->addDamage ();
 	    if (mw->gWindow)
 		mw->gWindow->glPaintSetEnabled (mw, false);
 	}
+
+	mw->releasable.reset ();
 
 	ms->w             = 0;
 	ms->releaseButton = 0;
@@ -488,9 +498,6 @@ moveHandleMotionEvent (CompScreen *s,
 	{
 	    w->move (wX + dx - w->geometry ().x (),
 		     wY + dy - w->geometry ().y (), false);
-
-	    if (!ms->optionGetLazyPositioning ())
-		w->syncPosition ();
 
 	    ms->x -= dx;
 	    ms->y -= dy;

@@ -205,7 +205,18 @@ function (compiz_gsettings_schema _name _src _dst _inst)
 	add_custom_target (${_name}_gsettings_schema
 			   DEPENDS ${_dst})
 
-	compiz_install_gsettings_schema (${_dst} ${_inst})
+	set (_install_gsettings_schema ON)
+
+	foreach (ARG ${ARGN})
+	    if (${ARG} STREQUAL "NOINSTALL")
+		set (_install_gsettings_schema OFF)
+	    endif (${ARG} STREQUAL "NOINSTALL")
+	endforeach ()
+
+	if (_install_gsettings_schema)
+	    compiz_install_gsettings_schema (${_dst} ${_inst})
+	endif (_install_gsettings_schema)
+
 	add_gsettings_schema_to_recompilation_list (${_name}_gsettings_schema)
     endif ()
 endfunction ()

@@ -37,6 +37,24 @@ namespace compiz
     {
 	typedef  ::testing::MatcherInterface <const XEvent &> XEventMatcher;
 
+	class PrivateClientMessageXEventMatcher;
+	class ClientMessageXEventMatcher :
+	    public compiz::testing::XEventMatcher
+	{
+	    public:
+
+		ClientMessageXEventMatcher (Display *display,
+					    Atom    message,
+					    Window  target);
+
+		virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const;
+		virtual void DescribeTo (std::ostream *os) const;
+
+	    private:
+
+		std::auto_ptr <PrivateClientMessageXEventMatcher> priv;
+	};
+
 	class PrivatePropertyNotifyXEventMatcher;
 	class PropertyNotifyXEventMatcher :
 	    public compiz::testing::XEventMatcher
@@ -65,7 +83,8 @@ namespace compiz
 					      int          x,
 					      int          y,
 					      unsigned int width,
-					      unsigned int height);
+					      unsigned int height,
+					      unsigned int mask);
 
 		virtual bool MatchAndExplain (const XEvent &event, MatchResultListener *listener) const;
 		virtual void DescribeTo (std::ostream *os) const;
@@ -112,14 +131,14 @@ namespace compiz
 					 int     type,
 					 int     ext,
 					 int     extType,
-					 int     timeout = 1000);
+					 int     timeout = 0);
 	bool WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 						 Window              w,
 						 int                 type,
 						 int                 ext,
 						 int                 extType,
 						 const XEventMatcher &matcher,
-						 int                 timeout = 1000);
+						 int                 timeout = 0);
 
 	class PrivateCompizProcess;
 	class CompizProcess
@@ -132,7 +151,12 @@ namespace compiz
 		    ExpectStartupFailure = (1 << 2)
 		} StartupFlags;
 
-		CompizProcess (Display *dpy, StartupFlags, unsigned int waitTimeout);
+		typedef std::vector <std::string> PluginList;
+
+		CompizProcess (Display *dpy,
+			       StartupFlags,
+			       const PluginList &plugins,
+			       int timeout = 0);
 		~CompizProcess ();
 		xorg::testing::Process::State State ();
 		pid_t Pid ();
@@ -153,18 +177,52 @@ namespace compiz
 		virtual void TearDown ();
 
 		xorg::testing::Process::State CompizProcessState ();
-		void StartCompiz (CompizProcess::StartupFlags flags);
+		void StartCompiz (CompizProcess::StartupFlags     flags,
+				  const CompizProcess::PluginList &plugins);
 
 	    private:
 		std::auto_ptr <PrivateCompizXorgSystemTest> priv;
 	};
 
+	class PrivateAutostartCompizXorgSystemTest;
 	class AutostartCompizXorgSystemTest :
 	    public CompizXorgSystemTest
 	{
 	    public:
 
+		AutostartCompizXorgSystemTest ();
+
+		virtual CompizProcess::StartupFlags GetStartupFlags ();
+		virtual int GetEventMask ();
+		virtual CompizProcess::PluginList GetPluginList ();
 		virtual void SetUp ();
+
+	    private:
+		std::auto_ptr <PrivateAutostartCompizXorgSystemTest> priv;
+	};
+
+	class PrivateAutostartCompizXorgSystemTestWithTestHelper;
+	class AutostartCompizXorgSystemTestWithTestHelper :
+	    public AutostartCompizXorgSystemTest
+	{
+	    public:
+
+		AutostartCompizXorgSystemTestWithTestHelper ();
+
+		virtual CompizProcess::PluginList GetPluginList ();
+
+	    protected:
+
+		Atom FetchAtom (const char *);
+		void WaitForWindowCreation (Window w);
+
+		virtual int  GetEventMask ();
+
+	    private:
+
+		virtual void SetUp ();
+
+		std::auto_ptr <PrivateAutostartCompizXorgSystemTestWithTestHelper> priv;
 	};
     }
 }
