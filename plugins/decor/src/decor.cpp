@@ -940,7 +940,7 @@ WindowDecoration *
 WindowDecoration::create (const Decoration::Ptr &d)
 {
     WindowDecoration *wd;
-    unsigned int     nQuad = d->numQuads;
+    unsigned int     nQuad = d->nQuads;
 
     wd = new WindowDecoration ();
     if (!wd)
