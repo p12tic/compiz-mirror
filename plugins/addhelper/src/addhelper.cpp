@@ -202,10 +202,13 @@ AddWindow::AddWindow (CompWindow *window) :
 
     GLWindowInterface::setHandler (gWindow, false);
 
-    if (as->isToggle &&
-	window->id () != screen->activeWindow () &&
+    if (as->isToggle)
+    {
+	if (window->id () != screen->activeWindow () &&
 	!window->overrideRedirect ())
-	dim = true;
+	    dim = true;
+	gWindow->glPaintSetEnabled (this, true);
+    }
 }
 
 AddWindow::~AddWindow ()
