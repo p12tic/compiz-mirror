@@ -398,6 +398,7 @@ CompPlugin::unload (CompPlugin *p)
 CompPlugin *
 CompPlugin::load (const char *name)
 {
+    char *compiz_plugin_dir_override = getenv ("COMPIZ_PLUGIN_DIR");
     std::auto_ptr<CompPlugin>p(new CompPlugin ());
 
     p->devPrivate.uval = 0;
@@ -405,6 +406,12 @@ CompPlugin::load (const char *name)
     p->vTable	       = 0;
 
     compLogMessage (here, CompLogLevelInfo, "Loading plugin: %s", name);
+
+    if (compiz_plugin_dir_override)
+    {
+	if (loaderLoadPlugin (p.get (), compiz_plugin_dir_override, name))
+	    return p.release ();
+    }
 
     if (char* home = getenv ("HOME"))
     {

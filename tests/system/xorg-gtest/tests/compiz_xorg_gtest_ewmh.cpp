@@ -94,7 +94,8 @@ TEST_F (CompizXorgSystemEWMH, InitialViewportGeometry)
 {
     ::Display *dpy = Display ();
     StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
-		     ct::CompizProcess::ReplaceCurrentWM));
+		     ct::CompizProcess::ReplaceCurrentWM),
+		 ct::CompizProcess::PluginList ());
 
     ct::PropertyNotifyXEventMatcher desktopHintsProperty (dpy,
 							  "_NET_DESKTOP_GEOMETRY");

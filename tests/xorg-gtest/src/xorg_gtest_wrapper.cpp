@@ -89,5 +89,5 @@ int main (int argc, char **argv)
 	}
     } while (!WIFEXITED (status) && !WIFSIGNALED (status));
 
-   return 0;
+   return WEXITSTATUS (status);
 }

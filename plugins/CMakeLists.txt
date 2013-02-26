@@ -7,23 +7,7 @@ set (COMPIZ_FOUND "true")
 
 add_definitions ( -DHAVE_CONFIG_H)
 
-include_directories( 
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/timer/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/string/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/pluginclasshandler/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/point/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/rect/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/servergrab/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/region/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry-saver/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/extents/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/constrainment/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../logmessage/include
-)
+include_directories (${COMPIZ_INTERNAL_INCLUDES})
 
 # temporarily disable plugins that aren't ported yet
 set (COMPIZ_DISABLE_PLUGIN_ANIMATIONADDON ON)
