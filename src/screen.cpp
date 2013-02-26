@@ -2697,7 +2697,7 @@ CompScreenImpl::focusDefaultWindow ()
     {
 	/* Traverse down the stack */
 	for (cps::WindowManager::reverse_iterator rit = windowManager.rbegin();
-	     rit != windowManager.rend(); rit++)
+	     rit != windowManager.rend(); ++rit)
 	{
 	    w = (*rit);
 
@@ -4490,6 +4490,7 @@ CompScreenImpl::init (const char *name)
 	privateScreen.optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
 
 	privateScreen.optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+	privateScreen.optionSetUnmaximizeOrMinimizeWindowKeyInitiate (CompScreenImpl::unmaximizeOrMinimizeWin);
 
 	privateScreen.optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
 	privateScreen.optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);

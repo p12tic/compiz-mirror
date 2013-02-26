@@ -261,7 +261,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 
     x1 = WIN_REAL_X (w) - glowSize + glowOffset;
     y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    x2 = WIN_REAL_X (w) + glowOffset;
+    /* x2 = WIN_REAL_X (w) + glowOffset; */
     y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
 
     /* 2x2 Matrix here, adjust both x and y scale factors

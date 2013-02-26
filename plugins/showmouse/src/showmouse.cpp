@@ -368,10 +368,10 @@ ShowmouseScreen::genNewParticles (int f_time)
     unsigned int i, j;
 
     float pos[10][2];
-    int nE       = MIN (10, optionGetEmitters ());
+    unsigned int nE = optionGetEmitters ();
     float rA     = (2 * M_PI) / nE;
     int radius   = optionGetRadius ();
-    for (i = 0; i < (unsigned int) nE; i++)
+    for (i = 0; i < nE; i++)
     {
 	pos[i][0]  = sin (rot + (i * rA)) * radius;
 	pos[i][0] += mousePos.x ();
@@ -392,7 +392,6 @@ ShowmouseScreen::genNewParticles (int f_time)
 	    // set size
 	    part.width = partw;
 	    part.height = parth;
-	    rVal = (float)(random() & 0xff) / 255.0;
 	    part.w_mod = part.h_mod = -1;
 
 	    // choose random position

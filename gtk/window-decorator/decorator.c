@@ -649,9 +649,9 @@ update_window_decoration_size (WnckWindow *win)
     /* Get the correct depth for the frame window in reparenting mode, otherwise
      * enforce 32 */
     if (d->frame_window)
-	pixmap = create_pixmap (d->width, d->height, d->frame->style_window_rgb);
+	pixmap = create_native_pixmap_and_wrap (d->width, d->height, d->frame->style_window_rgb);
     else
-	pixmap = create_pixmap (d->width, d->height, d->frame->style_window_rgba);
+	pixmap = create_native_pixmap_and_wrap (d->width, d->height, d->frame->style_window_rgba);
 
     gdk_flush ();
 
@@ -686,16 +686,12 @@ update_window_decoration_size (WnckWindow *win)
 
     /* Destroy the old pixmaps and pictures */
     if (d->pixmap)
-    {
-	gpointer key = GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap));
+	g_object_unref (d->pixmap);
 
-	if (d->old_pixmaps == NULL)
-	    d->old_pixmaps = g_hash_table_new_full (NULL, NULL, NULL,
-	                                            g_object_unref);
-
-	g_hash_table_insert (destroyed_pixmaps_table, key, d);
-	g_hash_table_insert (d->old_pixmaps, key, d->pixmap);
-    }
+    if (d->x11Pixmap)
+	decor_post_delete_pixmap (xdisplay,
+				  wnck_window_get_xid (d->win),
+				  d->x11Pixmap);
 
     if (d->buffer_pixmap)
 	g_object_unref (G_OBJECT (d->buffer_pixmap));
@@ -708,6 +704,7 @@ update_window_decoration_size (WnckWindow *win)
 
     /* Assign new pixmaps and pictures */
     d->pixmap	     = pixmap;
+    d->x11Pixmap     = GDK_PIXMAP_XID (d->pixmap);
     d->buffer_pixmap = buffer_pixmap;
     d->cr	     = gdk_cairo_create (pixmap);
 
@@ -1435,7 +1432,9 @@ update_default_decorations (GdkScreen *screen)
         extents.top += frame->titlebar_height;
 
         default_frames[i].d->draw = theme_draw_window_decoration;
-        default_frames[i].d->pixmap = create_pixmap (default_frames[i].d->width, default_frames[i].d->height, frame->style_window_rgba);
+	default_frames[i].d->pixmap = create_native_pixmap_and_wrap (default_frames[i].d->width,
+								     default_frames[i].d->height,
+								     frame->style_window_rgba);
 
 	unsigned int j, k;
 

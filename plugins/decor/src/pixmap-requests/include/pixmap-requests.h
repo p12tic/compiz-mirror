@@ -26,14 +26,19 @@
 #ifndef _COMPIZ_DECOR_PIXMAP_REQUESTS_H
 #define _COMPIZ_DECOR_PIXMAP_REQUESTS_H
 
+#include <list>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
 #include <decoration.h>
 
 #include <X11/Xlib.h>
 
-class DecorPixmapInterface
+class DecorPixmapInterface :
+    boost::noncopyable
 {
     public:
 
@@ -44,7 +49,8 @@ class DecorPixmapInterface
 	virtual Pixmap getPixmap () = 0;
 };
 
-class DecorPixmapReceiverInterface
+class DecorPixmapReceiverInterface :
+    boost::noncopyable
 {
     public:
 
@@ -57,7 +63,8 @@ class DecorPixmapReceiverInterface
 /* So far, nothing particularly interesting here
  * we just need a way to pass around pointers for
  * testing */
-class DecorationInterface
+class DecorationInterface :
+    boost::noncopyable
 {
     public:
 
@@ -71,34 +78,50 @@ class DecorationInterface
 	virtual unsigned int getFrameActions () const = 0;
 };
 
-class DecorPixmapDeletionInterface
+class PixmapDestroyQueue :
+    boost::noncopyable
 {
     public:
 
-	typedef boost::shared_ptr <DecorPixmapDeletionInterface> Ptr;
+	typedef boost::shared_ptr <PixmapDestroyQueue> Ptr;
 
-	virtual ~DecorPixmapDeletionInterface () {}
+	virtual ~PixmapDestroyQueue () {}
 
-	virtual int postDeletePixmap (Pixmap pixmap) = 0;
+	virtual int destroyUnusedPixmap (Pixmap pixmap) = 0;
 };
 
-class X11PixmapDeletor :
-    public DecorPixmapDeletionInterface
+class UnusedPixmapQueue :
+    boost::noncopyable
 {
     public:
 
-	typedef boost::shared_ptr <X11PixmapDeletor> Ptr;
+	typedef boost::shared_ptr <UnusedPixmapQueue> Ptr;
 
-	X11PixmapDeletor (Display *dpy) :
-	    mDisplay (dpy)
-	{
-	}
+	virtual ~UnusedPixmapQueue () {}
 
-	int postDeletePixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay, pixmap); }
+	virtual void markUnused (Pixmap pixmap) = 0;
+};
+
+class PixmapReleasePool :
+    public PixmapDestroyQueue,
+    public UnusedPixmapQueue
+{
+    public:
+
+	typedef boost::function <int (Pixmap)> FreePixmapFunc;
+
+	typedef boost::shared_ptr <PixmapReleasePool> Ptr;
+
+	PixmapReleasePool (const FreePixmapFunc &freePixmap);
+
+	void markUnused (Pixmap pixmap);
+	int destroyUnusedPixmap (Pixmap pixmap);
 
     private:
 
-	Display *mDisplay;
+	std::list <Pixmap> mPendingUnusedNotificationPixmaps;
+	FreePixmapFunc     mFreePixmap;
+
 };
 
 class DecorPixmap :
@@ -108,7 +131,7 @@ class DecorPixmap :
 
 	typedef boost::shared_ptr <DecorPixmap> Ptr;
 
-	DecorPixmap (Pixmap p, DecorPixmapDeletionInterface::Ptr deletor);
+	DecorPixmap (Pixmap p, PixmapDestroyQueue::Ptr deletor);
 	~DecorPixmap ();
 
 	Pixmap getPixmap ();
@@ -116,10 +139,11 @@ class DecorPixmap :
     private:
 
 	Pixmap mPixmap;
-	DecorPixmapDeletionInterface::Ptr mDeletor;
+	PixmapDestroyQueue::Ptr mDeletor;
 };
 
-class DecorPixmapRequestorInterface
+class DecorPixmapRequestorInterface :
+    boost::noncopyable
 {
     public:
 
@@ -129,7 +153,7 @@ class DecorPixmapRequestorInterface
 					 unsigned int frameState,
 					 unsigned int frameActions) = 0;
 
-	virtual void handlePending (long *data) = 0;
+	virtual void handlePending (const long *data) = 0;
 };
 
 class DecorationListFindMatchingInterface
@@ -140,8 +164,76 @@ class DecorationListFindMatchingInterface
 
 	virtual DecorationInterface::Ptr findMatchingDecoration (unsigned int frameType,
 								 unsigned int frameState,
-								 unsigned int frameActions) = 0;
+								 unsigned int frameActions) const = 0;
+	virtual DecorationInterface::Ptr findMatchingDecoration (Pixmap pixmap) const = 0;
 };
+
+namespace compiz
+{
+namespace decor
+{
+typedef boost::function <DecorationListFindMatchingInterface * (Window)> DecorListForWindow;
+typedef boost::function <DecorPixmapRequestorInterface * (Window)> RequestorForWindow;
+
+class PendingHandler :
+    virtual boost::noncopyable
+{
+    public:
+
+	PendingHandler (const RequestorForWindow &);
+
+	void handleMessage (Window window, const long *data);
+
+    private:
+
+	RequestorForWindow     mRequestorForWindow;
+};
+
+class UnusedHandler :
+    virtual boost::noncopyable
+{
+    public:
+
+	UnusedHandler (const DecorListForWindow &,
+		       const UnusedPixmapQueue::Ptr &,
+		       const PixmapReleasePool::FreePixmapFunc &);
+
+	void handleMessage (Window, Pixmap);
+
+    private:
+
+	DecorListForWindow mListForWindow;
+	UnusedPixmapQueue::Ptr mQueue;
+	PixmapReleasePool::FreePixmapFunc mFreePixmap;
+};
+
+namespace protocol
+{
+typedef boost::function <void (Window, const long *)> PendingMessage;
+typedef boost::function <void (Window, Pixmap)> PixmapUnusedMessage;
+
+class Communicator :
+    virtual boost::noncopyable
+{
+    public:
+
+	Communicator (Atom pendingMsg,
+		      Atom unusedMsg,
+		      const PendingMessage &,
+		      const PixmapUnusedMessage &);
+
+	void handleClientMessage (const XClientMessageEvent &);
+
+    private:
+
+	Atom           mPendingMsgAtom;
+	Atom           mUnusedMsgAtom;
+	PendingMessage mPendingHandler;
+	PixmapUnusedMessage mPixmapUnusedHander;
+};
+}
+}
+}
 
 class X11DecorPixmapRequestor :
     public DecorPixmapRequestorInterface
@@ -156,7 +248,7 @@ class X11DecorPixmapRequestor :
 				 unsigned int frameState,
 				 unsigned int frameActions);
 
-	void handlePending (long *data);
+	void handlePending (const long *data);
 
     private:
 

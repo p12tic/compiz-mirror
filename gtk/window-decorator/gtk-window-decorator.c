@@ -136,7 +136,6 @@ char *program_name;
 GtkWidget     *switcher_label;
 
 GHashTable    *frame_table;
-GHashTable    *destroyed_pixmaps_table;
 GtkWidget     *action_menu = NULL;
 gboolean      action_menu_mapped = FALSE;
 decor_color_t _title_color[2];
@@ -267,9 +266,9 @@ main (int argc, char *argv[])
     net_wm_state_atom = XInternAtom (xdisplay,"_NET_WM_STATE", 0);
     net_wm_state_modal_atom = XInternAtom (xdisplay, "_NET_WM_STATE_MODAL", 0);
 
-    decor_request_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_REQUEST", 0);
-    decor_pending_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_PENDING", 0);
-    decor_delete_pixmap_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_DELETE_PIXMAP", 0);
+    decor_request_atom = XInternAtom (xdisplay, DECOR_REQUEST_PIXMAP_ATOM_NAME, 0);
+    decor_pending_atom = XInternAtom (xdisplay, DECOR_PIXMAP_PENDING_ATOM_NAME, 0);
+    decor_delete_pixmap_atom = XInternAtom (xdisplay, DECOR_DELETE_PIXMAP_ATOM_NAME, 0);
 
     status = decor_acquire_dm_session (xdisplay,
 				       gdk_screen_get_number (gdkscreen),
@@ -343,7 +342,6 @@ main (int argc, char *argv[])
     xformat_rgb  = XRenderFindStandardFormat (xdisplay, PictStandardRGB24);
 
     frame_table = g_hash_table_new (NULL, NULL);
-    destroyed_pixmaps_table = g_hash_table_new (NULL, NULL);
 
     if (!create_tooltip_window ())
     {

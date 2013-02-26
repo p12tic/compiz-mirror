@@ -48,6 +48,21 @@ gear (GLfloat inner_radius,
 
     da = 2.0 * M_PI / teeth / 4.0;
 
+    glShadeModel (GL_SMOOTH);
+
+    /* draw inside radius cylinder */
+    glBegin (GL_QUAD_STRIP);
+
+    for (i = 0; i <= teeth; i++)
+    {
+	angle = i * 2.0 * M_PI / teeth;
+	glNormal3f (-cos (angle), -sin (angle), 0.0);
+	glVertex3f (r0 * cos (angle), r0 * sin (angle), -width * 0.5);
+	glVertex3f (r0 * cos (angle), r0 * sin (angle), width * 0.5);
+    }
+
+    glEnd();
+
     glShadeModel (GL_FLAT);
 
     glNormal3f (0.0, 0.0, 1.0);
@@ -172,21 +187,6 @@ gear (GLfloat inner_radius,
     glVertex3f (r1 * cos (0), r1 * sin (0), -width * 0.5);
 
     glEnd();
-
-    glShadeModel (GL_SMOOTH);
-
-    /* draw inside radius cylinder */
-    glBegin (GL_QUAD_STRIP);
-
-    for (i = 0; i <= teeth; i++)
-    {
-	angle = i * 2.0 * M_PI / teeth;
-	glNormal3f (-cos (angle), -sin (angle), 0.0);
-	glVertex3f (r0 * cos (angle), r0 * sin (angle), -width * 0.5);
-	glVertex3f (r0 * cos (angle), r0 * sin (angle), width * 0.5);
-    }
-
-    glEnd();
 }
 
 void
@@ -202,7 +202,8 @@ GearsScreen::cubeClearTargetOutput (float      xRotate,
 void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 			           const GLMatrix            &transform,
 				   CompOutput                *output,
-				   int                       size)
+				   int                       size,
+				   const GLVector            &normal)
 {
 //    CUBE_SCREEN (screen);
 
@@ -290,7 +291,7 @@ void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 
     damage = true;
 
-    csScreen->cubePaintInside (sAttrib, transform, output, size);
+    csScreen->cubePaintInside (sAttrib, transform, output, size, normal);
 }
 void
 GearsScreen::preparePaint (int ms)

@@ -391,8 +391,7 @@ DecorScreen::getTexture (Pixmap pixmap)
 	    return t;
 	}
 
-    X11PixmapDeletor::Ptr dl = boost::make_shared <X11PixmapDeletor> (screen->dpy ());
-    DecorPixmap::Ptr pm = boost::make_shared <DecorPixmap> (pixmap, dl);
+    DecorPixmap::Ptr pm = boost::make_shared <DecorPixmap> (pixmap, mReleasePool);
 
     DecorTexture *texture = new DecorTexture (boost::shared_static_cast <DecorPixmapInterface> (pm));
 
@@ -856,7 +855,7 @@ DecorationList::updateDecoration (Window   id,
 	    /* Creating a new decoration failed ... see if we can use
 	     * the old one */
 
-	    unsigned int    frameType, frameState, frameActions;
+	    unsigned int    frameType, frameState, frameActions = 0;
 	    Pixmap	    pixmap = None;
 	    decor_extents_t border;
 	    decor_extents_t input;
@@ -1285,7 +1284,7 @@ DecorWindow::matchActions (CompWindow   *w,
 DecorationInterface::Ptr
 DecorationList::findMatchingDecoration (unsigned int frameType,
 					unsigned int frameState,
-					unsigned int frameActions)
+					unsigned int frameActions) const
 {
     foreach (const Decoration::Ptr &d, mList)
     {
@@ -1293,6 +1292,18 @@ DecorationList::findMatchingDecoration (unsigned int frameType,
 	    d->frameState == frameState &&
 	    d->frameActions == frameActions)
 	    return boost::shared_static_cast <DecorationInterface> (d);
+    }
+
+    return DecorationInterface::Ptr ();
+}
+
+DecorationInterface::Ptr
+DecorationList::findMatchingDecoration (Pixmap p) const
+{
+    foreach (const Decoration::Ptr &d, mList)
+    {
+	if (d->texture->pixmap->getPixmap () == p)
+	    return d;
     }
 
     return DecorationInterface::Ptr ();
@@ -2334,6 +2345,42 @@ DecorWindow::updateSwitcher ()
     isSwitcher = false;
 }
 
+DecorPixmapRequestorInterface *
+DecorScreen::findWindowRequestor (Window window)
+{
+    if (window == screen->root ())
+    {
+	return &mRequestor;
+    }
+    else
+    {
+	CompWindow *w = screen->findWindow (window);
+
+	if (w)
+	    return &(DecorWindow::get (w)->mRequestor);
+
+	return NULL;
+    }
+}
+
+DecorationListFindMatchingInterface *
+DecorScreen::findWindowDecorations (Window window)
+{
+    if (window == screen->root ())
+    {
+	return &decor[DECOR_ACTIVE];
+    }
+    else
+    {
+	CompWindow *w = screen->findWindow (window);
+
+	if (w)
+	    return &(DecorWindow::get (w)->decor);
+
+	return NULL;
+    }
+}
+
 
 /*
  * DecorScreen::handleEvent
@@ -2367,20 +2414,17 @@ DecorScreen::handleEvent (XEvent *event)
 	    {
 		w = screen->findWindow (event->xclient.window);
 		if (w)
-		    DecorWindow::get (w)->update (true);
-	    }
-	    /* A decoration is pending creation, allow it to be created */
-	    if (event->xclient.message_type == decorPendingAtom)
-	    {
-		CompWindow *w = screen->findWindow (event->xclient.window);
-
-		if (w)
 		{
 		    DecorWindow *dw = DecorWindow::get (w);
 
-		    dw->mRequestor.handlePending (event->xclient.data.l);
+		    /* Set the frameExtentsRequested flag so that we know to
+		     * at least update _NET_WM_FRAME_EXTENTS (LP: #1110138) */
+		    dw->frameExtentsRequested = true;
+		    dw->update (true);
 		}
 	    }
+
+	    mCommunicator.handleClientMessage (event->xclient);
 	    break;
 	default:
 	    /* Check for damage events. If the output or input window
@@ -3003,7 +3047,31 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   screen->root (),
 				   NULL)),
     mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=PopupMenu")),
-    mRequestor (screen->dpy (), screen->root (), &(decor[DECOR_ACTIVE]))
+    mRequestor (screen->dpy (), screen->root (), &(decor[DECOR_ACTIVE])),
+    mReleasePool (new PixmapReleasePool (
+		      boost::bind (XFreePixmap,
+				   screen->dpy (),
+				   _1))),
+    mPendingHandler (boost::bind (&DecorScreen::findWindowRequestor,
+				  this,
+				  _1)),
+    mUnusedHandler (boost::bind (&DecorScreen::findWindowDecorations,
+				 this,
+				 _1),
+		    mReleasePool,
+		    boost::bind (XFreePixmap,
+				 screen->dpy (),
+				 _1)),
+    mCommunicator (XInternAtom (screen->dpy (), DECOR_PIXMAP_PENDING_ATOM_NAME, FALSE),
+		   XInternAtom (screen->dpy (), DECOR_DELETE_PIXMAP_ATOM_NAME, FALSE),
+		   boost::bind (&PendingHandler::handleMessage,
+				&mPendingHandler,
+				_1,
+				_2),
+		   boost::bind (&UnusedHandler::handleMessage,
+				&mUnusedHandler,
+				_1,
+				_2))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);
@@ -3026,9 +3094,9 @@ DecorScreen::DecorScreen (CompScreen *s) :
     decorSwitchWindowAtom =
 	XInternAtom (s->dpy (), DECOR_SWITCH_WINDOW_ATOM_NAME, 0);
     decorPendingAtom =
-	XInternAtom (s->dpy (), "_COMPIZ_DECOR_PENDING", 0);
+	XInternAtom (s->dpy (), DECOR_PIXMAP_PENDING_ATOM_NAME, 0);
     decorRequestAtom =
-	XInternAtom (s->dpy (), "_COMPIZ_DECOR_REQUEST", 0);
+	XInternAtom (s->dpy (), DECOR_REQUEST_PIXMAP_ATOM_NAME, 0);
     requestFrameExtentsAtom =
         XInternAtom (s->dpy (), "_NET_REQUEST_FRAME_EXTENTS", 0);
     shadowColorAtom =

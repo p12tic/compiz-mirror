@@ -392,13 +392,13 @@ typedef struct _decor {
     event_window      button_windows[BUTTON_NUM];
     Box		      *last_pos_entered;
     guint	      button_states[BUTTON_NUM];
+    Pixmap            x11Pixmap;
     GdkPixmap	      *pixmap;
     GdkPixmap	      *buffer_pixmap;
     GdkWindow	      *frame_window;
     GtkWidget         *decor_window;
     GtkWidget	      *decor_event_box;
     GtkWidget         *decor_image;
-    GHashTable        *old_pixmaps;
     cairo_t	      *cr;
     decor_layout_t    border_layout;
     decor_context_t   *context;
@@ -470,7 +470,6 @@ extern char *program_name;
 
 /* list of all decorations */
 extern GHashTable    *frame_table;
-extern GHashTable    *destroyed_pixmaps_table;
 
 /* action menu */
 extern GtkWidget     *action_menu;
@@ -799,6 +798,11 @@ GdkPixmap *
 create_pixmap (int	 w,
 	       int	 h,
 	       GtkWidget *parent_style_window);
+
+GdkPixmap *
+create_native_pixmap_and_wrap (int	  w,
+			       int	  h,
+			       GtkWidget *parent_style_window);
 
 GdkPixmap *
 pixmap_new_from_pixbuf (GdkPixbuf *pixbuf, GtkWidget *parent);
