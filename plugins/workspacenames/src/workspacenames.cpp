@@ -163,7 +163,7 @@ void
 WSNamesScreen::donePaint ()
 {
     /* FIXME: better only damage paint region */
-	cScreen->damageScreen ();
+    cScreen->damageScreen ();
 
     cScreen->donePaint ();
 }
