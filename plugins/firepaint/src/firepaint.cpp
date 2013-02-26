@@ -23,6 +23,18 @@
 
 COMPIZ_PLUGIN_20090315 (firepaint, FirePluginVTable);
 
+/* 3 vertices per triangle, 2 triangles per particle */
+const unsigned short CACHESIZE_FACTOR = 3 * 2;
+
+/* 2 coordinates, x and y */
+const unsigned short COORD_COMPONENTS = CACHESIZE_FACTOR * 2;
+
+/* each vertex is stored as 3 GLfloats */
+const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
+
+/* 4 colors, RGBA */
+const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
+
 Particle::Particle () :
     life (0),
     fade (0),
@@ -98,18 +110,18 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
     int i, j, k, l;
 
     /* Check that the cache is big enough */
-    if (vertices_cache.size () < particles.size () * 6 * 3)
-	vertices_cache.resize (particles.size () * 6 * 3);
+    if (vertices_cache.size () < particles.size () * VERTEX_COMPONENTS)
+	vertices_cache.resize (particles.size () * VERTEX_COMPONENTS);
 
-    if (coords_cache.size () < particles.size () * 6 * 2)
-	coords_cache.resize (particles.size () * 6 * 2);
+    if (coords_cache.size () < particles.size () * COORD_COMPONENTS)
+	coords_cache.resize (particles.size () * COORD_COMPONENTS);
 
-    if (colors_cache.size () < particles.size () * 6 * 4)
-	colors_cache.resize (particles.size () * 6 * 4);
+    if (colors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	colors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     if (darken > 0)
-	if (dcolors_cache.size () < particles.size () * 6 * 4)
-	    dcolors_cache.resize (particles.size () * 6 * 4);
+	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     glEnable (GL_BLEND);
 
@@ -359,7 +371,6 @@ FireScreen::fireAddPoint (int        x,
 
 }
 
-
 bool
 FireScreen::addParticle (CompAction         *action,
 			 CompAction::State  state,
@@ -376,7 +387,6 @@ FireScreen::addParticle (CompAction         *action,
 
     return true;
 }
-
 
 bool
 FireScreen::initiate (CompAction         *action,
@@ -418,7 +428,6 @@ FireScreen::terminate (CompAction         *action,
     return false;
 }
 
-
 bool
 FireScreen::clear (CompAction         *action,
 		   CompAction::State  state,
@@ -427,7 +436,6 @@ FireScreen::clear (CompAction         *action,
     points.clear ();
     return true;
 }
-
 
 void
 FireScreen::preparePaint (int      time)
@@ -590,8 +598,8 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	if (brightness < 1.0)
 	{
 	    /* cover the screen with a rectangle and darken it
-	    (coded as two GL_TRIANGLES for GLES compatibility)
-	    */
+	     * (coded as two GL_TRIANGLES for GLES compatibility)
+	     */
 
 	    GLfloat vertices[18];
 	    GLushort colors[24];
@@ -647,8 +655,6 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     return status;
 }
-
-
 
 void
 FireScreen::donePaint ()
