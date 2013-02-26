@@ -180,7 +180,7 @@ operator<< (std::ostream &os, const CCSSettingValue &v)
 
     for (unsigned int i = 0; i < finalType; ++i)
     {
-	/* We cannot print list values as there's no guaruntee
+	/* We cannot print list values as there's no guarantee
 	 * this is actually a list */
 	if (static_cast <CCSSettingType> (i) == TypeList)
 	    os << "A list value" << std::endl;
@@ -199,7 +199,7 @@ operator<< (std::ostream &os, CCSSettingValueList l)
 
     for (unsigned int i = 0; i < finalType; ++i)
     {
-	/* We cannot print list values as there's no guaruntee
+	/* We cannot print list values as there's no guarantee
 	 * this is actually a list */
 	if (static_cast <CCSSettingType> (i) == TypeList)
 	    os << "A list value" << std::endl;

@@ -63,7 +63,7 @@ set (CMAKE_SHARED_LIBRARY_PREFIX "")
 # is by using add_custom_command to "generate" it into existence.
 # Unfortunately this has drawbacks. Namely, it is not possible for
 # add_custom_command to depend on library targets. Because of that, there's
-# no way that we can guaruntee that libcompizconfig.so will be linked
+# no way that we can guarantee that libcompizconfig.so will be linked
 # before compizconfig.so (which is required). The best that we can do
 # there is to use add_custom_target, and make that target depend on the
 # file, 
