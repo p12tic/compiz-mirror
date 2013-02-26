@@ -3056,12 +3056,10 @@ int
 PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc,
 					 unsigned int valueMask)
 {
-    int ret = XConfigureWindow (screen->dpy (),
-				id,
-				valueMask,
-				const_cast <XWindowChanges *> (&xwc));
-
-    return ret;
+    return XConfigureWindow (screen->dpy (),
+			     id,
+			     valueMask,
+			     const_cast <XWindowChanges *> (&xwc));
 }
 
 int

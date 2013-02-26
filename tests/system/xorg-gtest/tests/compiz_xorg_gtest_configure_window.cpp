@@ -268,7 +268,7 @@ CompizXorgSystemConfigureWindowTest::SendConfigureLockRequest (Window w,
     ::Display *dpy = Display ();
 
     std::vector <long> data;
-    data.push_back (lockRequests ? 1 : 0);
+    data.push_back (lockRequests);
 
     ct::SendClientMessage (dpy,
 			   FetchAtom (ct::messages::TEST_HELPER_LOCK_CONFIGURE_REQUESTS),
