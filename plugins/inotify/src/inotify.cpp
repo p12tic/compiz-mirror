@@ -94,7 +94,7 @@ InotifyScreen::processEvents ()
 
 	    if (iter != watches.end ())
 	    {
-		for (wIter = list.begin (); wIter != list.end (); ++iter)
+		for (wIter = list.begin (); wIter != list.end (); ++wIter)
 		    if ((*iter).handle == (*wIter)->handle)
 			break;
 
