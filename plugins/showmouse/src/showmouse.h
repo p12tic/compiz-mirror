@@ -30,6 +30,11 @@
 #include "showmouse_options.h"
 #include "showmouse_tex.h"
 
+extern const unsigned short CACHESIZE_FACTOR;
+extern const unsigned short COORD_COMPONENTS;
+extern const unsigned short VERTEX_COMPONENTS;
+extern const unsigned short COLOR_COMPONENTS;
+
 /* =====================  Particle engine  ========================= */
 
 class Particle
