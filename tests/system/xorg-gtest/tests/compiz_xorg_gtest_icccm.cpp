@@ -95,6 +95,12 @@ class CompizXorgSystemICCCM :
 {
     public:
 
+	CompizXorgSystemICCCM () :
+	    /* See note in the acceptance tests about this */
+	    env ("XORG_GTEST_CHILD_STDOUT", "1")
+	{
+	}
+
 	virtual void SetUp ()
 	{
 	    ct::CompizXorgSystemTest::SetUp ();
@@ -109,6 +115,8 @@ class CompizXorgSystemICCCM :
 	}
 
     private:
+
+	TmpEnv env;
 };
 
 TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
@@ -116,7 +124,8 @@ TEST_F (CompizXorgSystemICCCM, SomeoneElseHasSubstructureRedirectMask)
     StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
 		     ct::CompizProcess::ExpectStartupFailure |
 		     ct::CompizProcess::ReplaceCurrentWM |
-		     ct::CompizProcess::WaitForStartupMessage));
+		     ct::CompizProcess::WaitForStartupMessage),
+		 ct::CompizProcess::PluginList ());
 
     WaitForSuccessDeathTask::GetProcessState processState (boost::bind (&CompizXorgSystemICCCM::CompizProcessState,
 								 this));
@@ -152,7 +161,8 @@ class AutostartCompizXorgSystemICCCM :
 
 	    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
 			     ct::CompizProcess::ReplaceCurrentWM |
-			     ct::CompizProcess::WaitForStartupMessage));
+			     ct::CompizProcess::WaitForStartupMessage),
+			  ct::CompizProcess::PluginList ());
 	}
 };
 
@@ -233,7 +243,9 @@ TEST_F (AutostartCompizXorgSystemICCCM, ConfigureRequestSendsBackAppropriateConf
 						       REQUEST_X,
 						       REQUEST_Y,
 						       REQUEST_WIDTH,
-						       REQUEST_HEIGHT);
+						       REQUEST_HEIGHT,
+						       configureRequestEvent->value_mask &
+						       ~(CWSibling | CWStackMode));
 
     /* Should get a ConfigureNotify with the right parameters */
     EXPECT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindowMatching (dpy,
