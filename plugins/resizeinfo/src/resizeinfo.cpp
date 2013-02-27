@@ -2,7 +2,7 @@
  *
  * Compiz metacity like info during resize
  *
- * resizeinfo.c
+ * resizeinfo.cpp
  *
  * Copyright (c) 2007 Robert Carr <racarr@opencompositing.org>
  *

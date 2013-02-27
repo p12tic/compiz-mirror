@@ -2,7 +2,7 @@
  *
  * Compiz magnifier plugin
  *
- * mag.c
+ * mag.cpp
  *
  * Copyright : (C) 2008 by Dennis Kasprzyk
  * E-mail    : onestone@opencompositing.org

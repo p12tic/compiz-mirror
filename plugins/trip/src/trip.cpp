@@ -2,7 +2,7 @@
  *
  * Compiz trip plugin
  *
- * trip.c
+ * trip.cpp
  *
  * Copyright : (C) 2010 by Scott Moreau
  * E-mail    : oreaus@gmail.com

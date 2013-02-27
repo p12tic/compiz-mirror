@@ -2,7 +2,7 @@
  *
  * Compiz session plugin
  *
- * session.c
+ * session.cpp
  *
  * Copyright (c) 2008 Travis Watkins <amaranth@ubuntu.com>
  * Copyright (c) 2008 Danny Baumann <maniac@opencompositing.org>

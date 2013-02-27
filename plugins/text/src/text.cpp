@@ -2,7 +2,7 @@
  * Compiz text plugin
  * Description: Adds text to pixmap support to Compiz.
  *
- * text.c
+ * text.cpp
  *
  * Copyright: (C) 2006-2007 Patrick Niklaus, Danny Baumann, Dennis Kasprzyk
  * Authors: Patrick Niklaus <marex@opencompsiting.org>

@@ -1,7 +1,7 @@
 /*
  * Compiz fire effect plugin
  *
- * firepaint.c
+ * firepaint.cpp
  *
  * Copyright : (C) 2007 by Dennis Kasprzyk
  * E-mail    : onestone@beryl-project.org
