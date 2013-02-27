@@ -4235,9 +4235,9 @@ CompScreenImpl::focusTopMostWindow ()
     using ::compiz::private_screen::WindowManager;
 
     CompWindow  *focus = NULL;
-    WindowManager::reverse_iterator it = windowManager.rbegin ();
+    WindowManager::reverse_iterator it = windowManager.rserverBegin ();
 
-    for (; it != windowManager.rend (); ++it)
+    for (; it != windowManager.rserverEnd (); ++it)
     {
 	CompWindow *w = *it;
 
