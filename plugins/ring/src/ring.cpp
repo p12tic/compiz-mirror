@@ -264,7 +264,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    GLWindowPaintAttrib wAttrib (gWindow->lastPaintAttrib ());
 	    GLMatrix           wTransform = transform;
 
-	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
+	    if (mask & PAINT_WINDOW_NO_DRAW_MASKS)
 		return false;
 
 	    if (mSlot)

@@ -163,7 +163,7 @@ TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
     glGetIntegerv (GL_CULL_FACE_MODE, &cull);
     cullInv = (cull == GL_BACK)? GL_FRONT : GL_BACK;
 
-    if (ww && wh && !(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK) &&
+    if (ww && wh && !(mask & PAINT_WINDOW_NO_DRAW_MASKS) &&
 	((cs->paintOrder () == FTB && mFtb) ||
 	(cs->paintOrder () == BTF && !mFtb)))
     {

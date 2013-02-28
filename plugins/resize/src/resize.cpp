@@ -257,7 +257,7 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	float	       xScale, yScale;
 	int            x, y;
 
-	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
+	if (mask & PAINT_WINDOW_NO_DRAW_MASKS)
 	    return false;
 
 	status = gWindow->glPaint (attrib, transform, region,

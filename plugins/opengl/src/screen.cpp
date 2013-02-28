@@ -186,6 +186,7 @@ namespace GL {
     bool  vboEnabled = false;
     bool  shaders = false;
     GLint maxTextureUnits = 1;
+    bool  bufferAge = false;
 
     bool canDoSaturated = false;
     bool canDoSlightlySaturated = false;
@@ -301,6 +302,52 @@ public:
 
 #ifndef USE_GLES
 
+class BufferAgeFrameProvider :
+    public FrameProvider
+{
+    public:
+
+	BufferAgeFrameProvider (Display     *disp,
+				GLXDrawable drawable) :
+	    mDisplay (disp),
+	    mDrawable (drawable)
+	{
+	}
+
+	unsigned int getCurrentFrame ()
+	{
+	    unsigned int age = 0;
+	    (*GL::queryDrawable) (mDisplay,
+				  mDrawable,
+				  GLX_BACK_BUFFER_AGE_EXT,
+				  &age);
+	    return age;
+	}
+
+	void endFrame ()
+	{
+	}
+
+	void invalidateAll ()
+	{
+	}
+
+	bool providesPersistence ()
+	{
+	    return true;
+	}
+
+	bool alwaysPostprocess ()
+	{
+	    return false;
+	}
+
+    private:
+
+	Display *mDisplay;
+	GLXDrawable mDrawable;
+};
+
 namespace compiz
 {
 namespace opengl
@@ -357,6 +404,137 @@ int waitVSyncEGL (int wait,
 }
 
 #endif
+
+class UndefinedFrameProvider :
+    public FrameProvider
+{
+    public:
+
+	unsigned int getCurrentFrame ()
+	{
+	    return 0;
+	}
+
+	void endFrame ()
+	{
+	}
+
+	void invalidateAll ()
+	{
+	}
+
+	bool providesPersistence ()
+	{
+	    return false;
+	}
+
+	bool alwaysPostprocess ()
+	{
+	    return false;
+	}
+};
+
+class PostprocessFrameProvider :
+    public FrameProvider
+{
+    public:
+
+	PostprocessFrameProvider (GLFramebufferObject *object) :
+	    mObject (object),
+	    mAge (0)
+	{
+	}
+
+	unsigned int getCurrentFrame ()
+	{
+	    /* We are now using this buffer, reset
+	     * age back to zero */
+	    unsigned int lastAge = mAge;
+	    mAge = 0;
+
+	    return lastAge;
+	}
+
+	void endFrame ()
+	{
+	    ++mAge;
+	}
+
+	void invalidateAll ()
+	{
+	    mAge = 0;
+	}
+
+	bool providesPersistence ()
+	{
+	    return true;
+	}
+
+	bool alwaysPostprocess ()
+	{
+	    return true;
+	}
+
+    private:
+
+	GLFramebufferObject *mObject;
+	unsigned int        mAge;
+};
+
+class OptionalPostprocessFrameProvider :
+    public FrameProvider
+{
+    public:
+
+	typedef boost::function <bool ()> PostprocessRequired;
+
+	OptionalPostprocessFrameProvider (const FrameProvider::Ptr  &backbuffer,
+					  const FrameProvider::Ptr  &scratchbuffer,
+					  const PostprocessRequired &ppRequired) :
+	    mBackbuffer (backbuffer),
+	    mScratchbuffer (scratchbuffer),
+	    mPPRequired (ppRequired)
+	{
+	}
+
+	unsigned int getCurrentFrame ()
+	{
+	    if (mPPRequired ())
+		return mScratchbuffer->getCurrentFrame ();
+	    else
+		return mBackbuffer->getCurrentFrame ();
+	}
+
+	void endFrame ()
+	{
+	    mScratchbuffer->endFrame ();
+	}
+
+	void invalidateAll ()
+	{
+	    mScratchbuffer->invalidateAll ();
+	}
+
+	bool providesPersistence ()
+	{
+	    /* We are only as good as the backbuffer is */
+	    return mBackbuffer->providesPersistence ();
+	}
+
+	bool alwaysPostprocess ()
+	{
+	    if (mPPRequired ())
+		return mScratchbuffer->alwaysPostprocess ();
+	    else
+		return mBackbuffer->alwaysPostprocess ();
+	}
+
+    private:
+
+	FrameProvider::Ptr mBackbuffer;
+	FrameProvider::Ptr mScratchbuffer;
+	PostprocessRequired mPPRequired;
+};
 
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
@@ -592,6 +770,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	registerBindPixmap (EglTexture::bindPixmapToTexture);
 
     priv->incorrectRefreshRate = false;
+
+    priv->frameProvider.reset (new PostprocessFrameProvider ());
 
     #else
 
@@ -899,11 +1079,16 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::fboSupported)
     {
-	priv->scratchFbo = new GLFramebufferObject;
+	priv->scratchFbo.reset (new GLFramebufferObject ());
 	priv->scratchFbo->allocate (*screen, NULL, GL_BGRA);
     }
 
     GLVertexBuffer::streamingBuffer ()->setAutoProgram (priv->autoProgram);
+
+    /* We need scratchFbo to be set before doing this, and it is common
+     * to both the GLES and non-GLES codepaths, so using another #ifdef
+     */
+    priv->updateFrameProvider ();
 
     return true;
 }
@@ -991,6 +1176,13 @@ GLScreen::GLScreen (CompScreen *s) :
 	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
 	setFailed ();
 	return;
+    }
+
+    if (strstr (glxExtensions, "GLX_EXT_buffer_age"))
+    {
+	compLogMessage ("opengl", CompLogLevelInfo,
+			"GLX_EXT_buffer_age is supported");
+	GL::bufferAge = true;
     }
 
     priv->getProcAddress = (GL::GLXGetProcAddressProc)
@@ -1209,9 +1401,6 @@ GLScreen::~GLScreen ()
 	glXDestroyContext (screen->dpy (), priv->ctx);
     #endif
 
-    if (priv->scratchFbo)
-	delete priv->scratchFbo;
-
     delete priv;
 }
 
@@ -1233,7 +1422,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     ctx (EGL_NO_CONTEXT),
     doubleBuffer (screen->dpy (), *screen, surface),
     #endif
-    scratchFbo (NULL),
+    scratchFbo (),
     outputRegion (),
     refreshSubBuffer (false),
     lastMask (0),
@@ -1246,13 +1435,16 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     autoProgram (new GLScreenAutoProgram(gs)),
     rootPixmapCopy (None),
     rootPixmapSize (),
+    frameProvider (),
     glVendor (NULL),
     glRenderer (NULL),
     glVersion (NULL),
+    postprocessingRequired (false),
     prevRegex (),
     prevBlacklisted (false)
 {
     ScreenInterface::setHandler (screen);
+    CompositeScreenInterface::setHandler (cScreen);
 }
 
 PrivateGLScreen::~PrivateGLScreen ()
@@ -1443,8 +1635,11 @@ PrivateGLScreen::outputChangeNotify ()
 {
     screen->outputChangeNotify ();
 
+    frameProvider->invalidateAll ();
+
     if (scratchFbo)
 	scratchFbo->allocate (*screen, NULL, GL_BGRA);
+
     updateView ();
 }
 
@@ -1668,6 +1863,10 @@ GLScreenInterface::glDisableOutputClipping ()
 GLMatrix *
 GLScreenInterface::projectionMatrix ()
     WRAPABLE_DEF (projectionMatrix)
+
+bool
+GLScreenInterface::glPaintCompositedOutputRequired ()
+    WRAPABLE_DEF (glPaintCompositedOutputRequired)
 
 void
 GLScreenInterface::glPaintCompositedOutput (const CompRegion    &region,
@@ -1977,18 +2176,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     glDepthMask (GL_FALSE);
     glStencilMask (0);
 
-    GLFramebufferObject *oldFbo = NULL;
-    bool useFbo = false;
-
-    /* Clear the color buffer where appropriate */
-    if (GL::fboEnabled && scratchFbo)
-    {
-	oldFbo = scratchFbo->bind ();
-	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
-	if (!useFbo)
-	    GLFramebufferObject::rebind (oldFbo);
-    }
-
 #ifdef UNSAFE_ARM_SGX_FIXME
     refreshSubBuffer = ((lastMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                         !(mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
@@ -2006,8 +2193,21 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
 #endif
 
-    CompRegion tmpRegion = (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) ?
-                           screen->region () : region;
+    CompRegion paintRegion ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) ?
+			     screen->region () : region);
+    bool useFbo = false;
+    GLFramebufferObject *oldFbo = NULL;
+
+    postprocessingRequired = gScreen->glPaintCompositedOutputRequired ();
+    postprocessingRequired |= frameProvider->alwaysPostprocess ();
+
+    /* Clear the color buffer where appropriate */
+    if ((GL::fboEnabled && postprocessRequiredForCurrentFrame ()))
+    {
+	oldFbo = scratchFbo->bind ();
+	if (scratchFbo->checkStatus ())
+	    useFbo = true;
+    }
 
     foreach (CompOutput *output, outputs)
     {
@@ -2034,7 +2234,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
 	    gScreen->glPaintOutput (defaultScreenPaintAttrib,
 				    identity,
-				    CompRegion (*output), output,
+				    CompRegion (*output),
+				    output,
 				    PAINT_SCREEN_REGION_MASK |
 				    PAINT_SCREEN_FULL_MASK);
 	}
@@ -2057,7 +2258,9 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 		tmpRegion = CompRegion (*output);
 #endif
 
-	    outputRegion = tmpRegion & CompRegion (*output);
+	    /* Clip current paint region to output extents */
+	    CompRegionRef wholeOutput (output->region ());
+	    outputRegion = (paintRegion & wholeOutput);
 
 	    if (!gScreen->glPaintOutput (defaultScreenPaintAttrib,
 					 identity,
@@ -2068,10 +2271,11 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
 		gScreen->glPaintOutput (defaultScreenPaintAttrib,
 					identity,
-					CompRegion (*output), output,
+					wholeOutput, output,
 					PAINT_SCREEN_FULL_MASK);
 
-		tmpRegion += *output;
+		paintRegion += wholeOutput;
+		cScreen->addOverdrawDamageRegion (wholeOutput);
 	    }
 	}
     }
@@ -2082,12 +2286,17 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     if (useFbo)
     {
-	GLFramebufferObject::rebind (oldFbo);
-
 	// FIXME: does not work if screen dimensions exceed max texture size
 	//        We should try to use glBlitFramebuffer instead.
-	gScreen->glPaintCompositedOutput (screen->region (), scratchFbo, mask);
+	GLFramebufferObject::rebind (oldFbo);
+	/* If we must always postprocess, then we don't have any
+	 * "real" backbuffer persistence, redraw the whole thing */
+	gScreen->glPaintCompositedOutput (frameProvider->alwaysPostprocess () ?
+					      screen->region () :
+					      paintRegion, scratchFbo.get (), mask);
     }
+
+    frameProvider->endFrame ();
 
     if (cScreen->outputWindowChanged ())
     {
@@ -2100,18 +2309,25 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	return;
     }
 
+    bool persistence = frameProvider->providesPersistence ();
     bool alwaysSwap = optionGetAlwaysSwapBuffers ();
-    bool fullscreen = useFbo ||
+    bool fullscreen = persistence ||
                       alwaysSwap ||
                       ((mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                        commonFrontbuffer);
 
     doubleBuffer.set (DoubleBuffer::VSYNC, optionGetSyncToVblank ());
-    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, useFbo);
+    doubleBuffer.set (DoubleBuffer::HAVE_PERSISTENT_BACK_BUFFER, persistence);
     doubleBuffer.set (DoubleBuffer::NEED_PERSISTENT_BACK_BUFFER, alwaysSwap);
-    doubleBuffer.render (tmpRegion, fullscreen);
+    doubleBuffer.render (paintRegion, fullscreen);
 
     lastMask = mask;
+}
+
+unsigned int
+PrivateGLScreen::getFrameAge ()
+{
+    return frameProvider->getCurrentFrame ();
 }
 
 bool
@@ -2138,6 +2354,13 @@ PrivateGLScreen::compositingActive ()
 }
 
 void
+PrivateGLScreen::damageCutoff ()
+{
+    cScreen->applyDamageForFrameAge (frameProvider->getCurrentFrame ());
+    cScreen->damageCutoff ();
+}
+
+void
 PrivateGLScreen::updateRenderMode ()
 {
 #ifndef USE_GLES
@@ -2147,12 +2370,54 @@ PrivateGLScreen::updateRenderMode ()
 }
 
 void
+PrivateGLScreen::updateFrameProvider ()
+{
+#ifndef USE_GLES
+    const Window outputWindow = CompositeScreen::get (screen)->output ();
+
+    if (GL::fboEnabled)
+    {
+	if (GL::bufferAge)
+	{
+	    FrameProvider::Ptr back (new BufferAgeFrameProvider (screen->dpy (),
+								 outputWindow));
+	    FrameProvider::Ptr scratch (new PostprocessFrameProvider (scratchFbo.get ()));
+	    OptionalPostprocessFrameProvider::PostprocessRequired ppReq
+		    (boost::bind (&PrivateGLScreen::postprocessRequiredForCurrentFrame,
+				  this));
+	    frameProvider.reset (new OptionalPostprocessFrameProvider (back,
+								       scratch,
+								       ppReq));
+	}
+	else
+	{
+	    /* Prefer using FBO's instead of switching between a defined/undefined backbuffer */
+	    frameProvider.reset (new PostprocessFrameProvider (scratchFbo.get ()));
+	}
+    }
+    else
+    {
+	if (GL::bufferAge)
+	    frameProvider.reset (new BufferAgeFrameProvider (screen->dpy (),
+								   outputWindow));
+	else
+	    frameProvider.reset (new UndefinedFrameProvider ());
+    }
+#else
+    frameProvider.reset (new PostprocessFrameProvider (scratchFbo.get ()));
+#endif
+}
+
+void
 PrivateGLScreen::prepareDrawing ()
 {
     bool wasFboEnabled = GL::fboEnabled;
     updateRenderMode ();
     if (wasFboEnabled != GL::fboEnabled)
+    {
+	updateFrameProvider ();
 	CompositeScreen::get (screen)->damageScreen ();
+    }
 }
 
 bool
@@ -2168,6 +2433,12 @@ PrivateGLScreen::driverIsBlacklisted (const char *regex) const
 	prevRegex = regex;
     }
     return prevBlacklisted;
+}
+
+bool
+PrivateGLScreen::postprocessRequiredForCurrentFrame ()
+{
+    return postprocessingRequired;
 }
 
 GLTexture::BindPixmapHandle
@@ -2198,7 +2469,7 @@ GLScreen::unregisterBindPixmap (GLTexture::BindPixmapHandle hnd)
 GLFramebufferObject *
 GLScreen::fbo ()
 {
-    return priv->scratchFbo;
+    return priv->scratchFbo.get ();
 }
 
 GLTexture *

@@ -1246,7 +1246,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	const CompWindow::Geometry &g = window->geometry ();
 
-	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK ||
+	if (mask & PAINT_WINDOW_NO_DRAW_MASKS ||
 	    sScreen->ignoreSwitcher)
 	    return false;
 
