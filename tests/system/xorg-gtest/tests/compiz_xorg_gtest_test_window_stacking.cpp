@@ -329,7 +329,7 @@ TEST_F (CompizXorgSystemStackingTest, TestCreateRelativeToDestroyedWindowFindsAn
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy,w1, ReparentNotify, -1, -1)));
     ASSERT_TRUE (Advance (dpy, ct::WaitForEventOfTypeOnWindow (dpy, w1, MapNotify, -1, -1)));
 
-    /* Grab the server so that we can guaruntee that all of these requests
+    /* Grab the server so that we can guarantee that all of these requests
      * happen before compiz gets them */
     XGrabServer (dpy);
     XSync (dpy, false);

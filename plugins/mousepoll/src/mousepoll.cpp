@@ -2,7 +2,7 @@
  *
  * Compiz mouse position polling plugin
  *
- * mousepoll.c
+ * mousepoll.cpp
  *
  * Copyright : (C) 2008 by Dennis Kasprzyk
  * E-mail    : onestone@opencompositing.org

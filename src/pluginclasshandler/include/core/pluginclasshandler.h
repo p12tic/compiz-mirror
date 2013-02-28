@@ -34,7 +34,7 @@
 #include <core/pluginclasses.h>
 
 /* Continuously increments every time a new
- * plugin class is added, guarunteed to be
+ * plugin class is added, guaranteed to be
  * the same as the pcIndex of the most up-to-date
  * PluginClassHandler index. Any index that
  * hold the same value this value is safe to

@@ -2,7 +2,7 @@
  *
  * Compiz expo plugin
  *
- * expo.c
+ * expo.cpp
  *
  * Copyright (c) 2011 Linaro Limited
  * Copyright (c) 2008 Dennis Kasprzyk <racarr@opencompositing.org>
