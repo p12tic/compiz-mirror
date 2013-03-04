@@ -732,34 +732,43 @@ GridScreen::handleEvent (XEvent *event)
                    screen->outputDeviceForPoint (CompPoint (pointerX, pointerY)));
 
     /* Detect corners first */
+
     /* Bottom Left */
-    if (pointerY > (out.y () + out.height () - optionGetBottomEdgeThreshold()) &&
-        pointerX < out.x () + optionGetLeftEdgeThreshold())
+    if (pointerY > (out.y () + out.height () - optionGetBottomEdgeThreshold ()) &&
+	pointerX < (out.x () + optionGetLeftEdgeThreshold ()))
 	edge = BottomLeft;
+
     /* Bottom Right */
-    else if (pointerY > (out.y () + out.height () - optionGetBottomEdgeThreshold()) &&
-             pointerX > (out.x () + out.width () - optionGetRightEdgeThreshold()))
+    else if (pointerY > (out.y () + out.height () - optionGetBottomEdgeThreshold ()) &&
+	     pointerX > (out.x () + out.width () - optionGetRightEdgeThreshold ()))
 	edge = BottomRight;
+
     /* Top Left */
-    else if (pointerY < optionGetTopEdgeThreshold() &&
-	    pointerX < optionGetLeftEdgeThreshold())
+    else if (pointerY < (out.y () + optionGetTopEdgeThreshold ()) &&
+	     pointerX < (out.x () + optionGetLeftEdgeThreshold ()))
 	edge = TopLeft;
+
     /* Top Right */
-    else if (pointerY < out.y () + optionGetTopEdgeThreshold() &&
-             pointerX > (out.x () + out.width () - optionGetRightEdgeThreshold()))
+    else if (pointerY < (out.y () + optionGetTopEdgeThreshold ()) &&
+	     pointerX > (out.x () + out.width () - optionGetRightEdgeThreshold ()))
 	edge = TopRight;
+
     /* Left */
-    else if (pointerX < out.x () + optionGetLeftEdgeThreshold())
+    else if (pointerX < (out.x () + optionGetLeftEdgeThreshold ()))
 	edge = Left;
+
     /* Right */
-    else if (pointerX > (out.x () + out.width () - optionGetRightEdgeThreshold()))
+    else if (pointerX > (out.x () + out.width () - optionGetRightEdgeThreshold ()))
 	edge = Right;
+
     /* Top */
-    else if (pointerY < out.y () + optionGetTopEdgeThreshold())
+    else if (pointerY < (out.y () + optionGetTopEdgeThreshold ()))
 	edge = Top;
+
     /* Bottom */
-    else if (pointerY > (out.y () + out.height () - optionGetBottomEdgeThreshold()))
+    else if (pointerY > (out.y () + out.height () - optionGetBottomEdgeThreshold ()))
 	edge = Bottom;
+
     /* No Edge */
     else
 	edge = NoEdge;
