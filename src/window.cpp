@@ -3330,11 +3330,19 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (lastServerInput.top != serverInput.top)
 	    valueMask |= CWY;
 
-	if (lastServerInput.right - lastServerInput.left !=
-	    serverInput.right - serverInput.left)
+	/* Calculate frame extents and protect against underflow */
+	const unsigned int lastWrapperWidth = std::max (0, serverFrameGeometry.width () -
+							   (lastServerInput.right + lastServerInput.left));
+	const unsigned int lastWrapperHeight = std::max (0, serverFrameGeometry.height () -
+							    (lastServerInput.bottom + lastServerInput.top));
+	const unsigned int wrapperWidth = std::max (0, serverFrameGeometry.width () -
+						       (serverInput.right + serverInput.left));
+	const unsigned int wrapperHeight = std::max (0, serverFrameGeometry.height () -
+						        (serverInput.bottom + serverInput.top));
+
+	if (lastWrapperWidth != wrapperWidth)
 	    valueMask |= CWWidth;
-	if (lastServerInput.bottom - lastServerInput.top !=
-	    serverInput.bottom - serverInput.top)
+	if (lastWrapperHeight != wrapperHeight)
 	    valueMask |= CWHeight;
 
 	if (valueMask)

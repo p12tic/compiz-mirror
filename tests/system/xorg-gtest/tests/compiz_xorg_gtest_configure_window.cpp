@@ -565,3 +565,39 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsLocked)
 				   currentWidth + (left + right),
 				   currentHeight + (top + bottom)));
 }
+
+/* Check that changing the frame extents by one on each side
+ * adjusts the wrapper window appropriately */
+TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsAdjWrapperWindow)
+{
+    ::Display *dpy = Display ();
+
+    ReparentedWindow w = CreateWindow (dpy);
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				w.frame,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    /* Set frame extents and get a response */
+    int left = 1;
+    int right = 1;
+    int top = 1;
+    int bottom = 1;
+
+    SendSetFrameExtentsRequest (w.client, left, right, top, bottom);
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (w.client, left, right, top, bottom));
+
+    /* Wrapper geometry is extents.xy, size.wh */
+    Window root;
+    Window wrapper = GetImmediateParent (dpy, w.client, root);
+    ASSERT_TRUE (VerifyWindowSize (wrapper,
+				   left,
+				   top,
+				   currentWidth,
+				   currentHeight));
+}
