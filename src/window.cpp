@@ -807,12 +807,11 @@ CompWindow::recalcType ()
     priv->type = type;
 }
 
-
-void
+bool
 PrivateWindow::updateFrameWindow ()
 {
     if (!serverFrame)
-	return;
+	return false;
 
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
@@ -826,6 +825,8 @@ PrivateWindow::updateFrameWindow ()
     window->configureXWindow (valueMask, &xwc);
     window->windowNotify (CompWindowNotifyFrameUpdate);
     window->recalcActions ();
+
+    return true;
 }
 
 
@@ -4117,11 +4118,11 @@ CompWindow::moveResize (XWindowChanges *xwc,
 	priv->placed = true;
 }
 
-void
+bool
 PrivateWindow::updateSize ()
 {
     if (window->overrideRedirect () || !managed)
-	return;
+	return false;
 
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
@@ -4132,7 +4133,10 @@ PrivateWindow::updateSize ()
 	    window->sendSyncRequest ();
 
 	window->configureXWindow (mask, &xwc);
+	return true;
     }
+
+    return false;
 }
 
 int
@@ -6788,8 +6792,10 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 	recalcActions ();
 
-	priv->updateSize ();
-	priv->updateFrameWindow ();
+	bool sizeUpdated = false;
+
+	sizeUpdated |= priv->updateSize ();
+	sizeUpdated |= priv->updateFrameWindow ();
 
 	/* Always send a moveNotify
 	 * whenever the frame extents update
@@ -6797,7 +6803,8 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	moveNotify (0, 0, true);
 
 	/* Once we have updated everything, re-set lastServerInput */
-	priv->lastServerInput = priv->serverInput;
+	if (sizeUpdated)
+	    priv->lastServerInput = priv->serverInput;
     }
 
     /* Use b for _NET_WM_FRAME_EXTENTS here because
@@ -6917,6 +6924,9 @@ PrivateWindow::reparent ()
      * but that's all */
     XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
 
+    /* Gravity here is assumed to be SouthEast, clients can update
+     * that if need be */
+
     /* Awaiting a new frame to be given to us */
     frame = None;
     serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
@@ -6926,9 +6936,16 @@ PrivateWindow::reparent ()
     /* Do not get any events from here on */
     XSelectInput (dpy, screen->root (), NoEventMask);
 
-    wrapper = XCreateWindow (dpy, serverFrame, 0, 0,
-			    wa.width, wa.height, 0, wa.depth,
+    /* If we have some frame extents, we should apply them here and
+     * set lastFrameExtents */
+    wrapper = XCreateWindow (dpy, serverFrame,
+			    serverInput.left, serverInput.top,
+			    wa.width - (serverInput.left + serverInput.right),
+			    wa.height - (serverInput.top + serverInput.bottom),
+			    0, wa.depth,
 			    InputOutput, visual, mask, &attr);
+
+    lastServerInput = serverInput;
 
     xwc.stack_mode = Above;
 
