@@ -155,7 +155,7 @@ class PrivateWindow :
 
 	void recalcNormalHints ();
 
-	void updateFrameWindow ();
+	bool updateFrameWindow ();
 
 	void setWindowMatrix ();
 
@@ -302,7 +302,7 @@ class PrivateWindow :
 						       int            gravity,
 						       int	      direction);
 
-	void updateSize ();
+	bool updateSize ();
 
 	bool getUserTime (Time& time);
 	void setUserTime (Time time);
