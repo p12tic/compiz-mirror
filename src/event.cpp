@@ -1297,7 +1297,6 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	wa.width = event->xcreatewindow.width;
 	wa.height = event->xcreatewindow.height;
 	wa.border_width = event->xcreatewindow.border_width;
-	wa.override_redirect = event->xcreatewindow.override_redirect;
 
 	foreach (CompWindow *w, screen->windows ())
 	{
