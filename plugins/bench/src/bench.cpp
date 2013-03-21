@@ -2,7 +2,7 @@
  *
  * Compiz benchmark plugin
  *
- * bench.c
+ * bench.cpp
  *
  * Copyright : (C) 2006 by Dennis Kasprzyk
  * E-mail    : onestone@beryl-project.org

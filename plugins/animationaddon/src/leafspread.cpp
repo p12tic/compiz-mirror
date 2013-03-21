@@ -1,7 +1,7 @@
 /*
  * Animation plugin for compiz/beryl
  *
- * animation.c
+ * leafspread.cpp
  *
  * Copyright : (C) 2006 Erkin Bahceci
  * E-mail    : erkinbah@gmail.com

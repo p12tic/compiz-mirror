@@ -210,7 +210,7 @@ add_subdirectory (xslt)
 add_subdirectory (plugins)
 add_subdirectory (tests)
 
-# Leave last - the cmake_install.cmake script is guarunteed
+# Leave last - the cmake_install.cmake script is guaranteed
 # to run in a single job, and we need to force GSettings
 # schema recompilation to happen after all other install
 # targets (there is no way to set install target dependencies)

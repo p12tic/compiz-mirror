@@ -317,9 +317,7 @@ CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
 					  CompOutput                *output,
 					  PaintOrder                order)
 {
-    bool rv = false;
-
-    rv = cubeScreen->cubeShouldPaintViewport (sAttrib, transform,
+    bool rv = cubeScreen->cubeShouldPaintViewport (sAttrib, transform,
 					      output, order);
 
     if (rv || cubeScreen->unfolded ())

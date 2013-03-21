@@ -1585,35 +1585,44 @@ DecorWindow::update (bool allowDecoration)
      */
     if (decoration)
     {
-	wd = WindowDecoration::create (decoration);
-	if (!wd)
-	    return false;
-
 	/* Set extents based on maximize/unmaximize state
 	 * FIXME: With the new type system, this should be
 	 * removed */
 	if ((window->state () & MAXIMIZE_STATE))
-	    window->setWindowFrameExtents (&wd->decor->maxBorder,
-					   &wd->decor->maxInput);
+	    window->setWindowFrameExtents (&decoration->maxBorder,
+					   &decoration->maxInput);
 	else if (!window->hasUnmapReference ())
-	    window->setWindowFrameExtents (&wd->decor->border,
-					   &wd->decor->input);
+	    window->setWindowFrameExtents (&decoration->border,
+					   &decoration->input);
 
-	movement = compiz::window::extents::shift (window->border (), window->sizeHints ().win_gravity);
-	movement -= oldShift;
-
-	/* Update the input and output frame */
+	/* We actually need to decorate this window */
 	if (decorate)
-	    updateFrame ();
-	window->updateWindowOutputExtents ();
+	{
+	    wd = WindowDecoration::create (decoration);
+	    if (!wd)
+	    {
+		/* Error condition, reset frame extents */
+		CompWindowExtents emptyExtents;
+		memset (&emptyExtents, 0, sizeof (CompWindowExtents));
+		window->setWindowFrameExtents (&emptyExtents, &emptyExtents);
+		return false;
+	    }
 
-	updateReg = true;
-	updateMatrix = true;
-	mOutputRegion = CompRegion (window->outputRect ());
-	updateGroupShadows ();
-	if (dScreen->cmActive)
-	    cWindow->damageOutputExtents ();
-	updateDecorationScale ();
+	    movement = compiz::window::extents::shift (window->border (), window->sizeHints ().win_gravity);
+	    movement -= oldShift;
+
+	    /* Update the input and output frame */
+	    updateFrame ();
+	    window->updateWindowOutputExtents ();
+
+	    updateReg = true;
+	    updateMatrix = true;
+	    mOutputRegion = CompRegion (window->outputRect ());
+	    updateGroupShadows ();
+	    if (dScreen->cmActive)
+		cWindow->damageOutputExtents ();
+	    updateDecorationScale ();
+	}
     }
     else
     {
