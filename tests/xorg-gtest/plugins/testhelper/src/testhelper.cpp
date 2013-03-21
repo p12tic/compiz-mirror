@@ -192,6 +192,7 @@ TestHelperWindow::TestHelperWindow (CompWindow *w) :
 
     std::vector <long> data;
     data.push_back (static_cast <long> (window->id ()));
+    data.push_back (static_cast <long> (window->overrideRedirect ()));
     ct::SendClientMessage (screen->dpy (),
 			   ts->fetchAtom (ctm::TEST_HELPER_WINDOW_READY),
 			   screen->root (),

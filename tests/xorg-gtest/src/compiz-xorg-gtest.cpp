@@ -738,7 +738,7 @@ class ct::PrivateAutostartCompizXorgSystemTestWithTestHelper
 	std::auto_ptr <ct::MessageAtoms> mMessages;
 };
 
-void
+std::vector <long>
 ct::AutostartCompizXorgSystemTestWithTestHelper::WaitForWindowCreation (Window w)
 {
     ::Display *dpy = Display ();
@@ -759,6 +759,18 @@ ct::AutostartCompizXorgSystemTestWithTestHelper::WaitForWindowCreation (Window w
     }
 
     ASSERT_TRUE (requestAcknowledged);
+
+    std::vector <long> data();
+    for (int i = 0; i < 5; ++i)
+	data.push_back(event.xclient.data.l[i]);
+
+    return data;
+}
+
+bool
+ct::AutostartCompizXorgSystemTestWithTestHelper::IsOverrideRedirect (std::vector <long> &data)
+{
+    return (data[1] > 0) ? true : false;
 }
 
 Atom

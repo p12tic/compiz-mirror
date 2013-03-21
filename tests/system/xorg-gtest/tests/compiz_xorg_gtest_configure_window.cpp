@@ -714,3 +714,5 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 				   currentWidth,
 				   currentHeight));
 }
+
+TEST_F (CompizXorgSystemConfigureWindowTest, )
