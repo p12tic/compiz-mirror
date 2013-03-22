@@ -1,3 +1,4 @@
+ubuntu_super_p.patch
 ubuntu-config.patch
 ccp_plugin.patch
 ccsm_remove_redundant_sliders.patch
