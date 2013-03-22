@@ -119,12 +119,12 @@ GridScreen::setCurrentRect (Animation &anim)
 }
 
 bool
-GridScreen::initiateCommon (CompAction         *action,
-			    CompAction::State  state,
-			    CompOption::Vector &option,
-			    unsigned int                where,
-			    bool               resize,
-			    bool	       key)
+GridScreen::initiateCommon (CompAction		*action,
+			    CompAction::State	state,
+			    CompOption::Vector	&option,
+			    unsigned int	where,
+			    bool		resize,
+			    bool		key)
 {
     CompWindow *cw = 0;
 
@@ -214,15 +214,14 @@ GridScreen::initiateCommon (CompAction         *action,
 	desiredSlot.setY (workarea.y () + props.gravityDown *
 			  (workarea.height () / props.numCellsY));
 	desiredSlot.setHeight (workarea.height () / props.numCellsY);
+
 	desiredSlot.setX (workarea.x () + props.gravityRight *
 			  (workarea.width () / props.numCellsX));
 	desiredSlot.setWidth (workarea.width () / props.numCellsX);
 
 	/* Adjust for constraints and decorations */
 	if (where & ~(GridMaximize | GridLeft | GridRight))
-	{
 	    desiredRect = constrainSize (cw, desiredSlot);
-	}
 	else
 	    desiredRect = slotToRect (cw, desiredSlot);
 
@@ -829,8 +828,8 @@ GridScreen::handleEvent (XEvent *event)
 	     gw->pointerBufDy > SNAPOFF_THRESHOLD ||
 	     gw->pointerBufDx < -SNAPOFF_THRESHOLD ||
 	     gw->pointerBufDy < -SNAPOFF_THRESHOLD) &&
-	    gw->isGridResized &&
-	    optionGetSnapbackWindows ())
+	     gw->isGridResized &&
+	     optionGetSnapbackWindows ())
 	    restoreWindow (0, 0, o);
     }
 }
@@ -1132,7 +1131,6 @@ Animation::Animation ()
     fadingOut = false;
     window = 0;
 }
-
 
 GridScreen::GridScreen (CompScreen *screen) :
     PluginClassHandler<GridScreen, CompScreen> (screen),
