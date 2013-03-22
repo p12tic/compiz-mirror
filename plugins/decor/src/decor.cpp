@@ -1595,8 +1595,10 @@ DecorWindow::update (bool allowDecoration)
 	    window->setWindowFrameExtents (&decoration->border,
 					   &decoration->input);
 
-	/* We actually need to decorate this window */
-	if (decorate)
+	/* This window actually needs its decoration contents updated
+	 * as it was actually visible */
+	if (decorate ||
+	    shadowOnly)
 	{
 	    wd = WindowDecoration::create (decoration);
 	    if (!wd)
