@@ -31,12 +31,15 @@ unsigned int clampGeometryToViewport = (1 << 1);
 }
 }
 
+namespace cp = compiz::place;
+namespace cw = compiz::window;
+
 void
-compiz::place::clampGeometryToWorkArea (compiz::window::Geometry &g,
-					const CompRect           &workArea,
-					const CompWindowExtents  &border,
-					unsigned int             flags,
-					const CompSize           &screenSize)
+cp::clampGeometryToWorkArea (cw::Geometry            &g,
+			     const CompRect          &workArea,
+			     const CompWindowExtents &border,
+			     unsigned int            flags,
+			     const CompSize          &screenSize)
 {
     int	     x, y, left, right, bottom, top;
 
@@ -133,4 +136,58 @@ compiz::place::clampGeometryToWorkArea (compiz::window::Geometry &g,
 	if (top != y)
 	    g.setY (g.y () + top - y);
     }
+}
+
+CompPoint &
+cp::constrainPositionToWorkArea (CompPoint               &pos,
+			         const cw::Geometry      &serverGeometry,
+			         const CompWindowExtents &border,
+			         const CompRect          &workArea,
+			         bool                    staticGravity)
+{
+    CompWindowExtents extents;
+    int               delta;
+
+    CompWindowExtents effectiveBorders = border;
+
+    /* Ignore borders in the StaticGravity case for placement
+     * because the window intended to be placed as if it didn't
+     * have them */
+    if (staticGravity)
+    {
+	effectiveBorders.left = 0;
+	effectiveBorders.right = 0;
+	effectiveBorders.top = 0;
+	effectiveBorders.bottom = 0;
+    }
+
+    extents.left   = pos.x () - effectiveBorders.left;
+    extents.top    = pos.y () - effectiveBorders.top;
+    extents.right  = extents.left + serverGeometry.widthIncBorders () +
+		     (effectiveBorders.left +
+		      effectiveBorders.right);
+    extents.bottom = extents.top + serverGeometry.heightIncBorders () +
+		     (effectiveBorders.top +
+		      effectiveBorders.bottom);
+
+    delta = workArea.right () - extents.right;
+    if (delta < 0)
+	extents.left += delta;
+
+    delta = workArea.left () - extents.left;
+    if (delta > 0)
+	extents.left += delta;
+
+    delta = workArea.bottom () - extents.bottom;
+    if (delta < 0)
+	extents.top += delta;
+
+    delta = workArea.top () - extents.top;
+    if (delta > 0)
+	extents.top += delta;
+
+    pos.setX (extents.left + effectiveBorders.left);
+    pos.setY (extents.top  + effectiveBorders.top);
+
+    return pos;
 }
