@@ -625,7 +625,7 @@ PlaceWindow::doPlacement (CompPoint &pos)
 	}
 
 	switch (mode) {
-	    case PlaceOptions::ModeCascade:
+	case PlaceOptions::ModeCascade:
 	    placeCascade (workArea, pos);
 	    break;
 	case PlaceOptions::ModeCentered:
@@ -1206,14 +1206,27 @@ PlaceWindow::constrainToWorkarea (const CompRect &workArea,
     CompWindowExtents extents;
     int               delta;
 
-    extents.left   = pos.x () - window->border ().left;
-    extents.top    = pos.y () - window->border ().top;
+    CompWindowExtents effectiveBorders = window->border ();
+
+    /* Ignore borders in the StaticGravity case for placement
+     * because the window intended to be placed as if it didn't
+     * have them */
+    if (window->sizeHints ().win_gravity & StaticGravity)
+    {
+	effectiveBorders.left = 0;
+	effectiveBorders.right = 0;
+	effectiveBorders.top = 0;
+	effectiveBorders.bottom = 0;
+    }
+
+    extents.left   = pos.x () - effectiveBorders.left;
+    extents.top    = pos.y () - effectiveBorders.top;
     extents.right  = extents.left + window->serverGeometry ().widthIncBorders () +
-		     (window->border ().left +
-		      window->border ().right);
+		     (effectiveBorders.left +
+		      effectiveBorders.right);
     extents.bottom = extents.top + window->serverGeometry ().heightIncBorders () +
-		     (window->border ().top +
-		      window->border ().bottom);
+		     (effectiveBorders.top +
+		      effectiveBorders.bottom);
 
     delta = workArea.right () - extents.right;
     if (delta < 0)
@@ -1231,8 +1244,8 @@ PlaceWindow::constrainToWorkarea (const CompRect &workArea,
     if (delta > 0)
 	extents.top += delta;
 
-    pos.setX (extents.left + window->border ().left);
-    pos.setY (extents.top  + window->border ().top);
+    pos.setX (extents.left + effectiveBorders.left);
+    pos.setY (extents.top  + effectiveBorders.top);
 
 }
 
