@@ -3046,7 +3046,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   0,
 				   0,
 				   None,
-				   boost::shared_array <decor_quad_t> (NULL),
+				   boost::shared_array <decor_quad_t> (static_cast <decor_quad_t *> (NULL)),
 				   0,
 				   screen->root (),
 				   NULL)),
