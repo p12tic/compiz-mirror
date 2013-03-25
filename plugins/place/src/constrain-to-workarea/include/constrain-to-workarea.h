@@ -41,6 +41,12 @@ void clampGeometryToWorkArea (compiz::window::Geometry &g,
 			      const CompWindowExtents &border,
 			      unsigned int flags,
 			      const CompSize &screenSize);
+
+CompPoint & constrainPositionToWorkArea (CompPoint                      &pos,
+				         const compiz::window::Geometry &serverGeometry,
+                                         const CompWindowExtents        &border,
+                                         const CompRect                 &workArea,
+                                         bool                           staticGravity);
 }
 }
 
