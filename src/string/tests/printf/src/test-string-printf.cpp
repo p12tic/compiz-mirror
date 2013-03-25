@@ -94,17 +94,17 @@ CompString get_format (const CompString &fmt, Value::Ptr v)
 {
     if (fmt == "%i" || fmt == "%d")
 	return compPrintf(fmt.c_str(),
-		(boost::shared_static_cast<TValue<int> >(v))->value());
+		(boost::static_pointer_cast<TValue<int> >(v))->value());
     if (fmt == "%f")
 	return compPrintf(fmt.c_str(),
-		(boost::shared_static_cast<TValue<float> >(v))->value());
+		(boost::static_pointer_cast<TValue<float> >(v))->value());
     if (fmt == "%s")
 	return compPrintf(
 		fmt.c_str(),
-		(boost::shared_static_cast<TValue<std::string> >(v))->value().c_str());
+		(boost::static_pointer_cast<TValue<std::string> >(v))->value().c_str());
     if (fmt == "%x")
 	return compPrintf(fmt.c_str(),
-		(boost::shared_static_cast<TValue<int> >(v))->value());
+		(boost::static_pointer_cast<TValue<int> >(v))->value());
 
     return "not_reached";
 }

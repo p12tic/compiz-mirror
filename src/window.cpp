@@ -3024,7 +3024,7 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
 static bool isPendingRestack (const compiz::X11::PendingEvent::Ptr &p)
 {
     compiz::X11::PendingConfigureEvent::Ptr pc =
-	boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+	boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchVM (CWStackMode | CWSibling);
 }
@@ -3034,7 +3034,7 @@ static bool isExistingRequest (const compiz::X11::PendingEvent::Ptr &p,
 			       unsigned int valueMask)
 {
     compiz::X11::PendingConfigureEvent::Ptr pc =
-	    boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+	    boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchRequest (xwc, valueMask);
 }
