@@ -684,6 +684,7 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 				currentHeight));
 
     SendSetFrameExtentsRequest (client, left, right, top, bottom);
+    
     ASSERT_TRUE (VerifySetFrameExtentsResponse (client, left, right, top, bottom));
 
     /* Map the window */
@@ -715,4 +716,29 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 				   currentHeight));
 }
 
-TEST_F (CompizXorgSystemConfigureWindowTest, )
+TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectTrue)
+{
+    ::Display *dpy = Display ();
+    XGrabServer (dpy);
+
+    XSetWindowAttributes attr;
+    memset(&attr, 0, sizeof(attr));
+
+    attr.override_redirect = true;
+
+    Window w = XCreateWindow (dpy, DefaultRootWindow (dpy),
+			      0, 0, 100, 100, 0, CopyFromParent,
+			      InputOutput, CopyFromParent, 0,
+			      &attr);
+
+    XDestroyWindow (dpy, w);
+
+    XSync (dpy,false);
+
+    XUngrabServer (dpy);
+
+    XSync (dpy, false);
+
+    std::vector <long> data = WaitForWindowCreation (w);
+    EXPECT_TRUE (IsOverrideRedirect (data));
+}
