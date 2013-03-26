@@ -520,7 +520,7 @@ GroupSelection::resizeWindows (CompWindow *top)
 	    }
 	    if (GroupWindow::get (top)->mNeedsPosSync)
 	    {
-		cw->syncPosition ();
+//		cw->syncPosition ();
 		gwtt->mNeedsPosSync = false;
 	    }
 	    gwtt->enqueueUngrabNotify ();

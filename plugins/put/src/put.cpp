@@ -328,7 +328,6 @@ PutScreen::finishWindowMovement (CompWindow *w)
     w->move (pw->targetX - w->x (),
 	     pw->targetY - w->y (),
 	     true);
-    w->syncPosition ();
 
     if (w->state () & (MAXIMIZE_STATE | CompWindowStateFullscreenMask))
 	w->updateAttributes (CompStackingUpdateModeNone);

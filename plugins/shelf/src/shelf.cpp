@@ -534,7 +534,6 @@ ShelfScreen::handleMotionEvent (unsigned int x,
     dy = y - lastPointerY;
 
     w->move (dx, dy, true);
-    w->syncPosition ();
 
     lastPointerX += dx;
     lastPointerY += dy;

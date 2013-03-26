@@ -2169,11 +2169,6 @@ compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
 {
 }
 
-void
-CompWindow::syncPosition ()
-{
-}
-
 bool
 CompWindow::focus ()
 {
