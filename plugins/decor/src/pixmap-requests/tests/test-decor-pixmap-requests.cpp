@@ -45,7 +45,7 @@ namespace cdp = compiz::decor::protocol;
 TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
 {
     boost::shared_ptr <MockDecorPixmapDeletor> mockDeletor = boost::make_shared <MockDecorPixmapDeletor> ();
-    DecorPixmap pm (1, boost::shared_static_cast<PixmapDestroyQueue> (mockDeletor));
+    DecorPixmap pm (1, mockDeletor);
 
     EXPECT_CALL (*(mockDeletor.get ()), destroyUnusedPixmap (1)).WillOnce (Return (1));
 }
