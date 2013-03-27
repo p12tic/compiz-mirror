@@ -84,7 +84,6 @@ GroupScreen::dequeueSyncs (GroupWindow::PendingSyncs *syncs)
 	GROUP_WINDOW (sync->w);
 	if (gw->mNeedsPosSync)
 	{
-	//    sync->w->syncPosition ();
 	    gw->mNeedsPosSync = false;
 	}
 
