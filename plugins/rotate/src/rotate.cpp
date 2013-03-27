@@ -112,8 +112,6 @@ RotateScreen::adjustVelocity (int size, int invert)
 void
 RotateScreen::releaseMoveWindow ()
 {
-    CompWindow *w = screen->findWindow (mMoveWindow);
-
     mMoveWindow = None;
 }
 
