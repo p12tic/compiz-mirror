@@ -1181,10 +1181,18 @@ PutScreen::toViewport (CompAction         *action,
 		       CompOption::Vector &option,
 		       int vp)
 {
-    int last = option.size ();
-    option.resize(last+1);
-    option[last].setName ("viewport",CompOption::TypeInt);
-    option[last].value ().set (vp-1);
+    unsigned int index;
+    if (CompOption::findOption (option, "viewport", &index) == NULL)
+    {
+	int last = option.size ();
+	option.resize(last+1);
+	option[last].setName ("viewport",CompOption::TypeInt);
+	option[last].value ().set (vp-1);
+    }
+    else
+    {
+	option[index].value ().set (vp-1);
+    }
 
     return initiateCommon (action, state, option, (PutType) PutViewport);
 }
