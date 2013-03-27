@@ -108,7 +108,6 @@ FWWindow::handleIPWMoveMotionEvent (unsigned int x,
 	return;
 
     window->move (dx, dy, fws->optionGetImmediateMoves ());
-    window->syncPosition ();
 
 }
 

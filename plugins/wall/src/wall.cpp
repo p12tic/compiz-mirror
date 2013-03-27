@@ -352,12 +352,6 @@ WallScreen::checkDestination (unsigned int destX,
 void
 WallScreen::releaseMoveWindow ()
 {
-    CompWindow *window;
-
-    window = screen->findWindow (moveWindow);
-    if (window)
-	window->syncPosition ();
-
     moveWindow = 0;
 }
 

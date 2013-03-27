@@ -440,8 +440,6 @@ class CompWindow :
 
 	void move (int dx, int dy, bool immediate = true);
 
-	void syncPosition ();
-
 	void moveInputFocusTo ();
 
 	void moveInputFocusToOtherWindow ();
