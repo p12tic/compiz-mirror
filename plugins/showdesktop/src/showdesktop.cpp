@@ -105,6 +105,9 @@ ShowdesktopWindow::repositionPlacer (int oldState)
     if (!placer)
 	return;
 
+    /* generate a random value in the range 0-2 */
+    short rVal = rand() % 3;
+
     SD_SCREEN (screen);
 
     if (oldState == SD_STATE_OFF)
@@ -181,6 +184,55 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 							+ OFF_BOTTOM (window) -
 		     		     ss->optionGetWindowPartSize ();
 	break;
+	case ShowdesktopOptions::DirectionRandom:
+
+	    /* move to corners */
+	    if (rVal==0)
+	    {
+		if (MOVE_LEFT (window))
+		    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
+					 ss->optionGetWindowPartSize ();
+		else
+		    placer->offScreenX = screen->workArea ().x () +
+					 screen->workArea ().width ()
+							    + OFF_RIGHT (window) -
+					 ss->optionGetWindowPartSize ();
+		if (MOVE_UP(window))
+		    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
+					 ss->optionGetWindowPartSize ();
+		else
+		    placer->offScreenY = screen->workArea ().y () +
+					 screen->workArea ().height ()
+							    + OFF_BOTTOM (window) -
+					 ss->optionGetWindowPartSize ();
+	    }
+	    /* move up/down */
+	    else if (rVal==1)
+	    {
+		placer->offScreenX = window->x ();
+		if (MOVE_UP (window))
+		    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
+					     ss->optionGetWindowPartSize ();
+		else
+		    placer->offScreenY = screen->workArea ().y () +
+					     screen->workArea ().height ()
+								+ OFF_BOTTOM (window) -
+					     ss->optionGetWindowPartSize ();
+	    }
+	    /* move left/right */
+	    else if (rVal==2)
+	    {
+		placer->offScreenY = window->y ();
+		if (MOVE_LEFT (window))
+		    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
+					     ss->optionGetWindowPartSize ();
+		else
+		    placer->offScreenX = screen->workArea ().x () +
+					     screen->workArea ().width ()
+								+ OFF_RIGHT (window) -
+					     ss->optionGetWindowPartSize ();
+	    }
+	    break;
     default:
 	break;
     }
@@ -220,6 +272,8 @@ ShowdesktopScreen::prepareWindows (int oldState)
 	w->move (sw->placer->offScreenX - w->x (),
 		 sw->placer->offScreenY - w->y (),
 		 true);
+
+	w->syncPosition ();
 
 	count++;
     }
@@ -523,6 +577,7 @@ ShowdesktopScreen::leaveShowDesktopMode (CompWindow *w)
 		cw->move   (sw->placer->onScreenX - cw->x (),
 			    sw->placer->onScreenY - cw->y (),
 			    true);
+		cw->syncPosition ();
 
 		sw->setHints (false);
 		cw->setShowDesktopMode (false);
@@ -538,12 +593,10 @@ ShowdesktopScreen::leaveShowDesktopMode (CompWindow *w)
 bool
 ShowdesktopWindow::focus ()
 {
-    bool ret;
-
 /*    if (sw->showdesktoped)
 	w->managed = sw->wasManaged;*/
 
-    ret = window->focus ();
+    bool ret = window->focus ();
 
 /*    if (sw->showdesktoped)
 	w->managed = false; */

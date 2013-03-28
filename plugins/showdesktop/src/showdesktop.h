@@ -112,9 +112,6 @@ class ShowdesktopScreen :
 
 	int
 	prepareWindows (int oldState);
-
-
-
 };
 
 class ShowdesktopWindow:

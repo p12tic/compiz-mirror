@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
   <plugin name="showdesktop" useBcop="true">
-    <_short>Show desktop</_short>
+    <_short>Show Desktop</_short>
     <_long>Access your desktop easily</_long>
     <category>Desktop</category>
     <feature>showdesktop</feature>
@@ -41,7 +41,7 @@
           <_long>Direction of window movement</_long>
 		  <default>6</default>
 		  <min>0</min>
-		  <max>6</max>
+		  <max>7</max>
 		  <desc>
 			  <value>0</value>
 			  <_name>Up</_name>
@@ -69,6 +69,10 @@
 		  <desc>
 			  <value>6</value>
 			  <_name>To Corners</_name>
+		  </desc>
+		  <desc>
+			  <value>7</value>
+			  <_name>Random</_name>
 		  </desc>
         </option>
         <option name="window_match" type="match">
