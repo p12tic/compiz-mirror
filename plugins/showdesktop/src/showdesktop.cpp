@@ -105,13 +105,10 @@ ShowdesktopWindow::repositionPlacer (int oldState)
     if (!placer)
 	return;
 
-    /* generate a random value in the range 0-2, which represents
-     * the allowed direction for intelligent random direction mode */
-    IRDirection rValIR = static_cast<IRDirection>(rand () % 3);
-
-    /* generate a random value in the range 0-7, which represents
-     * the allowed direction for fully random direction mode */
-    FRDirection rValFR = static_cast<FRDirection>(rand () % 8);
+    /* Initialize the enums containing allowed directions
+     * for intelligent random and fully random direction modes */
+    IRDirection rValIR;
+    FRDirection rValFR;
 
     SD_SCREEN (screen);
 
@@ -231,6 +228,11 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 	/* One of 3 random directions per window */
 
 	case ShowdesktopOptions::DirectionIntelligentRandom:
+
+	    /* generate a random value in the range 0-2, which represents
+	     * the allowed direction for intelligent random direction mode */
+	    rValIR = static_cast<IRDirection>(rand () % 3);
+
 	    /* move to corners */
 	    if (rValIR == toCorners)
 	    {
@@ -278,6 +280,11 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 	/* One of 8 random directions per window */
 
 	case ShowdesktopOptions::DirectionFullyRandom:
+
+	    /* generate a random value in the range 0-7, which represents
+	     * the allowed direction for fully random direction mode */
+	    rValFR = static_cast<FRDirection>(rand () % 8);
+
 	    /* move up */
 	    if (rValFR == up)
 	    {
