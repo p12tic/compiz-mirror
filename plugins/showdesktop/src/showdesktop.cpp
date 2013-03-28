@@ -273,8 +273,6 @@ ShowdesktopScreen::prepareWindows (int oldState)
 		 sw->placer->offScreenY - w->y (),
 		 true);
 
-	w->syncPosition ();
-
 	count++;
     }
 
@@ -577,7 +575,6 @@ ShowdesktopScreen::leaveShowDesktopMode (CompWindow *w)
 		cw->move   (sw->placer->onScreenX - cw->x (),
 			    sw->placer->onScreenY - cw->y (),
 			    true);
-		cw->syncPosition ();
 
 		sw->setHints (false);
 		cw->setShowDesktopMode (false);
