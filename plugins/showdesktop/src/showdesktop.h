@@ -59,6 +59,25 @@ extern const unsigned short SD_STATE_ACTIVATING;
 extern const unsigned short SD_STATE_ON;
 extern const unsigned short SD_STATE_DEACTIVATING;
 
+enum IRDirection
+{
+    toCorners,
+    upDown,
+    leftRight
+};
+
+enum FRDirection
+{
+    up,
+    down,
+    left,
+    right,
+    topLeft,
+    bottomLeft,
+    topRight,
+    bottomRight
+};
+
 class ShowdesktopPlacer
 {
     public:

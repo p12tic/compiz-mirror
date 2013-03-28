@@ -105,11 +105,13 @@ ShowdesktopWindow::repositionPlacer (int oldState)
     if (!placer)
 	return;
 
-    /* generate a random value in the range 0-2 */
-    short rVal = rand() % 3;
+    /* generate a random value in the range 0-2, which represents
+     * the allowed direction for intelligent random direction mode */
+    IRDirection rValIR = static_cast<IRDirection>(rand () % 3);
 
-    /* generate a random value in the range 0-7 */
-    short rVal2 = rand() % 8;
+    /* generate a random value in the range 0-7, which represents
+     * the allowed direction for fully random direction mode */
+    FRDirection rValFR = static_cast<FRDirection>(rand () % 8);
 
     SD_SCREEN (screen);
 
@@ -230,7 +232,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 
 	case ShowdesktopOptions::DirectionIntelligentRandom:
 	    /* move to corners */
-	    if (rVal==0)
+	    if (rValIR == toCorners)
 	    {
 		if (MOVE_LEFT (window))
 		    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
@@ -248,7 +250,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 					 ss->optionGetWindowPartSize ();
 	    }
 	    /* move up/down */
-	    else if (rVal==1)
+	    else if (rValIR == upDown)
 	    {
 		placer->offScreenX = window->x ();
 		if (MOVE_UP (window))
@@ -260,7 +262,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 					 ss->optionGetWindowPartSize ();
 	    }
 	    /* move left/right */
-	    else if (rVal==2)
+	    else if (rValIR == leftRight)
 	    {
 		placer->offScreenY = window->y ();
 		if (MOVE_LEFT (window))
@@ -277,14 +279,14 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 
 	case ShowdesktopOptions::DirectionFullyRandom:
 	    /* move up */
-	    if (rVal2==0)
+	    if (rValFR == up)
 	    {
 		placer->offScreenX = window->x ();
 		placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
 				     ss->optionGetWindowPartSize ();
 	    }
 	    /* move down */
-	    else if (rVal2==1)
+	    else if (rValFR == down)
 	    {
 		placer->offScreenX = window->x ();
 		placer->offScreenY = screen->workArea ().y () +
@@ -292,14 +294,14 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 				     ss->optionGetWindowPartSize ();
 	    }
 	    /* move left */
-	    else if (rVal2==2)
+	    else if (rValFR == left)
 	    {
 		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
 				     ss->optionGetWindowPartSize ();
 		placer->offScreenY = window->y ();
 	    }
 	    /* move right */
-	    else if (rVal2==3)
+	    else if (rValFR == right)
 	    {
 		placer->offScreenX = screen->workArea ().x () +
 				     screen->workArea ().width () + OFF_RIGHT (window) -
@@ -307,7 +309,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		placer->offScreenY = window->y ();
 	    }
 	    /* move topleft */
-	    else if (rVal2==4)
+	    else if (rValFR == topLeft)
 	    {
 		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
 				     ss->optionGetWindowPartSize ();
@@ -315,7 +317,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 				     ss->optionGetWindowPartSize ();
 	    }
 	    /* move bottomleft */
-	    else if (rVal2==5)
+	    else if (rValFR == bottomLeft)
 	    {
 		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
 				     ss->optionGetWindowPartSize ();
@@ -324,7 +326,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 				     ss->optionGetWindowPartSize ();
 	    }
 	    /* move topright */
-	    else if (rVal2==6)
+	    else if (rValFR == topRight)
 	    {
 		placer->offScreenX = screen->workArea ().x () +
 				     screen->workArea ().width () + OFF_RIGHT (window) -
@@ -333,7 +335,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 				     ss->optionGetWindowPartSize ();
 	    }
 	    /* move bottomright */
-	    else if (rVal2==7)
+	    else if (rValFR == bottomRight)
 	    {
 		placer->offScreenX = screen->workArea ().x () +
 				     screen->workArea ().width () + OFF_RIGHT (window) -
@@ -389,7 +391,6 @@ ShowdesktopScreen::prepareWindows (int oldState)
 
     return count;
 }
-
 
 int
 ShowdesktopWindow::adjustVelocity ()
