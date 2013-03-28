@@ -59,6 +59,9 @@ extern const unsigned short SD_STATE_ACTIVATING;
 extern const unsigned short SD_STATE_ON;
 extern const unsigned short SD_STATE_DEACTIVATING;
 
+/* Initialize the enums containing allowed directions
+ * for intelligent random and fully random direction modes */
+
 enum IRDirection
 {
     toCorners,
