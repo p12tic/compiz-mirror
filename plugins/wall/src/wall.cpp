@@ -814,9 +814,6 @@ WallScreen::initiateFlip (Direction         direction,
     {
 	if (!optionGetEdgeflipDnd ())
 	    return false;
-
-	if (screen->otherGrabExist ("wall", 0))
-	    return false;
     }
     else if (screen->grabExist ("move"))
     {
