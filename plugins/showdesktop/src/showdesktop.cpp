@@ -123,67 +123,68 @@ ShowdesktopWindow::repositionPlacer (int oldState)
     case ShowdesktopOptions::DirectionUp:
 	placer->offScreenX = window->x ();
 	placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-	                         ss->optionGetWindowPartSize ();
+			     ss->optionGetWindowPartSize ();
 	break;
+
     case ShowdesktopOptions::DirectionDown:
 	placer->offScreenX = window->x ();
 	placer->offScreenY = screen->workArea ().y () +
-	                         screen->workArea ().height ()
-							+ OFF_BOTTOM (window) -
-				 ss->optionGetWindowPartSize ();
+			     screen->workArea ().height () + OFF_BOTTOM (window) -
+			     ss->optionGetWindowPartSize ();
 	break;
+
     case ShowdesktopOptions::DirectionLeft:
 	placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-	                         ss->optionGetWindowPartSize ();
+			     ss->optionGetWindowPartSize ();
 	placer->offScreenY = window->y ();
 	break;
+
     case ShowdesktopOptions::DirectionRight:
 	placer->offScreenX = screen->workArea ().x () +
-	                         screen->workArea ().width ()
-							+ OFF_RIGHT (window) -
-				 ss->optionGetWindowPartSize ();
+			     screen->workArea ().width () + OFF_RIGHT (window) -
+			     ss->optionGetWindowPartSize ();
 	placer->offScreenY = window->y ();
 	break;
+
     case ShowdesktopOptions::DirectionUpDown:
 	placer->offScreenX = window->x ();
 	if (MOVE_UP (window))
-    	    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-		                     ss->optionGetWindowPartSize ();
+	    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
+				 ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenY = screen->workArea ().y () +
-		                     screen->workArea ().height ()
-							+ OFF_BOTTOM (window) -
-				     ss->optionGetWindowPartSize ();
+				 screen->workArea ().height () + OFF_BOTTOM (window) -
+				 ss->optionGetWindowPartSize ();
 	break;
+
     case ShowdesktopOptions::DirectionLeftRight:
 	placer->offScreenY = window->y ();
 	if (MOVE_LEFT (window))
-    	    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-		                     ss->optionGetWindowPartSize ();
+	    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
+				 ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenX = screen->workArea ().x () +
-		                     screen->workArea ().width ()
-							+ OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
+				 screen->workArea ().width () + OFF_RIGHT (window) -
+				 ss->optionGetWindowPartSize ();
 	break;
+
     case ShowdesktopOptions::DirectionToCorners:
 	if (MOVE_LEFT (window))
 	    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-		                     ss->optionGetWindowPartSize ();
+				 ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenX = screen->workArea ().x () +
-		                     screen->workArea ().width ()
-							+ OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
+				 screen->workArea ().width () + OFF_RIGHT (window) -
+				 ss->optionGetWindowPartSize ();
 	if (MOVE_UP(window))
 	    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-		                     ss->optionGetWindowPartSize ();
+				 ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenY = screen->workArea ().y () +
-		                     screen->workArea ().height ()
-							+ OFF_BOTTOM (window) -
-		     		     ss->optionGetWindowPartSize ();
+				 screen->workArea ().height () + OFF_BOTTOM (window) -
+				 ss->optionGetWindowPartSize ();
 	break;
+
 	case ShowdesktopOptions::DirectionRandom:
 
 	    /* move to corners */
@@ -194,16 +195,14 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 					 ss->optionGetWindowPartSize ();
 		else
 		    placer->offScreenX = screen->workArea ().x () +
-					 screen->workArea ().width ()
-							    + OFF_RIGHT (window) -
+					 screen->workArea ().width () + OFF_RIGHT (window) -
 					 ss->optionGetWindowPartSize ();
 		if (MOVE_UP(window))
 		    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
 					 ss->optionGetWindowPartSize ();
 		else
 		    placer->offScreenY = screen->workArea ().y () +
-					 screen->workArea ().height ()
-							    + OFF_BOTTOM (window) -
+					 screen->workArea ().height () + OFF_BOTTOM (window) -
 					 ss->optionGetWindowPartSize ();
 	    }
 	    /* move up/down */
@@ -212,12 +211,11 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		placer->offScreenX = window->x ();
 		if (MOVE_UP (window))
 		    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-					     ss->optionGetWindowPartSize ();
+					 ss->optionGetWindowPartSize ();
 		else
 		    placer->offScreenY = screen->workArea ().y () +
-					     screen->workArea ().height ()
-								+ OFF_BOTTOM (window) -
-					     ss->optionGetWindowPartSize ();
+					 screen->workArea ().height () + OFF_BOTTOM (window) -
+					 ss->optionGetWindowPartSize ();
 	    }
 	    /* move left/right */
 	    else if (rVal==2)
@@ -225,14 +223,14 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		placer->offScreenY = window->y ();
 		if (MOVE_LEFT (window))
 		    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-					     ss->optionGetWindowPartSize ();
+					 ss->optionGetWindowPartSize ();
 		else
 		    placer->offScreenX = screen->workArea ().x () +
-					     screen->workArea ().width ()
-								+ OFF_RIGHT (window) -
-					     ss->optionGetWindowPartSize ();
+					 screen->workArea ().width () + OFF_RIGHT (window) -
+					 ss->optionGetWindowPartSize ();
 	    }
-	    break;
+	break;
+
     default:
 	break;
     }
