@@ -39,9 +39,9 @@
         <option name="direction" type="int">
           <_short>Movement Direction</_short>
           <_long>Direction of window movement</_long>
-		  <default>6</default>
+		  <default>10</default>
 		  <min>0</min>
-		  <max>7</max>
+		  <max>12</max>
 		  <desc>
 			  <value>0</value>
 			  <_name>Up</_name>
@@ -60,19 +60,39 @@
 		  </desc>
 		  <desc>
 			  <value>4</value>
-			  <_name>Up/Down</_name>
+			  <_name>Top Left Corner</_name>
 		  </desc>
 		  <desc>
 			  <value>5</value>
-			  <_name>Left/Right</_name>
+			  <_name>Bottom Left Corner</_name>
 		  </desc>
 		  <desc>
 			  <value>6</value>
-			  <_name>To Corners</_name>
+			  <_name>Top Right Corner</_name>
 		  </desc>
 		  <desc>
 			  <value>7</value>
-			  <_name>Random</_name>
+			  <_name>Bottom Right Corner</_name>
+		  </desc>
+		  <desc>
+			  <value>8</value>
+			  <_name>Up/Down</_name>
+		  </desc>
+		  <desc>
+			  <value>9</value>
+			  <_name>Left/Right</_name>
+		  </desc>
+		  <desc>
+			  <value>10</value>
+			  <_name>To Corners</_name>
+		  </desc>
+		  <desc>
+			  <value>11</value>
+			  <_name>Intelligent Random</_name>
+		  </desc>
+		  <desc>
+			  <value>12</value>
+			  <_name>Fully Random</_name>
 		  </desc>
         </option>
         <option name="window_match" type="match">
