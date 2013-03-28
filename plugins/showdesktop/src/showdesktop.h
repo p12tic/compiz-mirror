@@ -64,7 +64,7 @@ enum IRDirection
     toCorners,
     upDown,
     leftRight
-};
+}rValIR;
 
 enum FRDirection
 {
@@ -76,7 +76,7 @@ enum FRDirection
     bottomLeft,
     topRight,
     bottomRight
-};
+}rValFR;
 
 class ShowdesktopPlacer
 {

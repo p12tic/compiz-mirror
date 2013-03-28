@@ -105,11 +105,6 @@ ShowdesktopWindow::repositionPlacer (int oldState)
     if (!placer)
 	return;
 
-    /* Initialize the enums containing allowed directions
-     * for intelligent random and fully random direction modes */
-    IRDirection rValIR;
-    FRDirection rValFR;
-
     SD_SCREEN (screen);
 
     if (oldState == SD_STATE_OFF)
