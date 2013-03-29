@@ -352,12 +352,6 @@ WallScreen::checkDestination (unsigned int destX,
 void
 WallScreen::releaseMoveWindow ()
 {
-    CompWindow *window;
-
-    window = screen->findWindow (moveWindow);
-    if (window)
-	window->syncPosition ();
-
     moveWindow = 0;
 }
 
@@ -819,9 +813,6 @@ WallScreen::initiateFlip (Direction         direction,
     if (state & CompAction::StateInitEdgeDnd)
     {
 	if (!optionGetEdgeflipDnd ())
-	    return false;
-
-	if (screen->otherGrabExist ("wall", 0))
 	    return false;
     }
     else if (screen->grabExist ("move"))
