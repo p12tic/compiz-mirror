@@ -542,8 +542,6 @@ ShowdesktopScreen::donePaint ()
 	else
 	    state = SD_STATE_OFF;
     }
-
-    cScreen->damageScreen ();
     cScreen->donePaint ();
 }
 
