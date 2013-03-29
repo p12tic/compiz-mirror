@@ -397,7 +397,7 @@ ShowdesktopScreen::prepareWindows (int oldState)
 int
 ShowdesktopWindow::adjustVelocity ()
 {
-    float dx, dy, adjust, amount;
+    float adjust, amount;
     float x1, y1;
     float baseX, baseY;
 
@@ -420,7 +420,7 @@ ShowdesktopWindow::adjustVelocity ()
 	baseY = placer->offScreenY;
     }
 
-    dx = x1 - (baseX + tx);
+    float dx = x1 - (baseX + tx);
 
     adjust = dx * 0.15f;
     amount = fabs (dx) * 1.5f;
@@ -431,7 +431,7 @@ ShowdesktopWindow::adjustVelocity ()
 
     xVelocity = (amount * xVelocity + adjust) / (amount + 1.0f);
 
-    dy = y1 - (baseY + ty);
+    float dy = y1 - (baseY + ty);
 
     adjust = dy * 0.15f;
     amount = fabs (dy) * 1.5f;
@@ -561,14 +561,12 @@ ShowdesktopWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (adjust)
 	{
-	    float offsetX, offsetY;
-
-	    offsetX = (ss->state == SD_STATE_DEACTIVATING) ?
-		      (placer->offScreenX - placer->onScreenX) :
-		      (placer->onScreenX - placer->offScreenX);
-	    offsetY = (ss->state == SD_STATE_DEACTIVATING) ?
-		      (placer->offScreenY - placer->onScreenY) :
-		      (placer->onScreenY - placer->offScreenY);
+	    float offsetX = (ss->state == SD_STATE_DEACTIVATING) ?
+			    (placer->offScreenX - placer->onScreenX) :
+			    (placer->onScreenX - placer->offScreenX);
+	    float offsetY = (ss->state == SD_STATE_DEACTIVATING) ?
+			    (placer->offScreenY - placer->onScreenY) :
+			    (placer->onScreenY - placer->offScreenY);
 
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
@@ -586,14 +584,12 @@ ShowdesktopWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (window->inShowDesktopMode ())
 	    wAttrib.opacity = wAttrib.opacity *
-		              ss->optionGetWindowOpacity ();
+			      ss->optionGetWindowOpacity ();
 
 	return gWindow->glPaint (wAttrib, transform, region, mask);
     }
     else
-    {
 	return gWindow->glPaint (attrib, transform, region, mask);
-    }
 }
 
 void
@@ -608,9 +604,7 @@ ShowdesktopScreen::handleEvent (XEvent *event)
 
 	    if ((ss->state == SD_STATE_ON) ||
 		(ss->state == SD_STATE_ACTIVATING))
-	    {
 		screen->leaveShowDesktopMode (NULL);
-	    }
 	}
 	break;
     }
@@ -654,7 +648,7 @@ ShowdesktopScreen::leaveShowDesktopMode (CompWindow *w)
 	{
 	    SD_WINDOW (cw);
 
-    	    if (w && (w->id () != cw->id ()))
+	    if (w && (w->id () != cw->id ()))
 		continue;
 
 	    if (sw->placer && sw->placer->placed)
