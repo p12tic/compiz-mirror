@@ -514,46 +514,36 @@ ShowdesktopScreen::donePaint ()
 {
     if (moreAdjust)
 	cScreen->damageScreen ();
-    else
+    else if (state == SD_STATE_ACTIVATING)
+	state = SD_STATE_ON;
+    else if (state == SD_STATE_DEACTIVATING)
     {
-	if ((state == SD_STATE_ACTIVATING) ||
-	    (state == SD_STATE_DEACTIVATING))
+	bool inSDMode = false;
+
+	foreach (CompWindow *w, screen->windows ())
 	{
-	    if (state == SD_STATE_ACTIVATING)
-	    {
-		state = SD_STATE_ON;
-	    }
+	    if (w->inShowDesktopMode ())
+		inSDMode = true;
 	    else
-    	    {
-		bool inSDMode = false;
-
-		foreach (CompWindow *w, screen->windows ())
+	    {
+		SD_WINDOW (w);
+		if (sw->placer)
 		{
-		    if (w->inShowDesktopMode ())
-			inSDMode = true;
-		    else
-		    {
-			SD_WINDOW (w);
-			if (sw->placer)
-			{
-			    delete sw->placer;
-			    sw->placer = NULL;
-			    sw->tx     = 0;
-			    sw->ty     = 0;
-			}
-		    }
+		    delete sw->placer;
+		    sw->placer = NULL;
+		    sw->tx     = 0;
+		    sw->ty     = 0;
 		}
-
-		if (inSDMode)
-		    state = SD_STATE_ON;
-		else
-		    state = SD_STATE_OFF;
 	    }
-
-	    cScreen->damageScreen ();
 	}
+
+	if (inSDMode)
+	    state = SD_STATE_ON;
+	else
+	    state = SD_STATE_OFF;
     }
 
+    cScreen->damageScreen ();
     cScreen->donePaint ();
 }
 
@@ -638,7 +628,6 @@ ShowdesktopWindow::getAllowedActions (unsigned int &setActions,
 
     clearActions |= notAllowedMask;
 }
-
 
 void
 ShowdesktopScreen::enterShowDesktopMode ()
