@@ -722,9 +722,7 @@ TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirect
     XGrabServer (dpy);
 
     XSetWindowAttributes attr;
-    memset(&attr, 0, sizeof(attr));
-
-    attr.override_redirect = true;
+    attr.override_redirect = 1;
 
     Window w = XCreateWindow (dpy, DefaultRootWindow (dpy),
 			      0, 0, 100, 100, 0, CopyFromParent,
@@ -733,7 +731,7 @@ TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirect
 
     XDestroyWindow (dpy, w);
 
-    XSync (dpy,false);
+    XSync (dpy, false);
 
     XUngrabServer (dpy);
 
@@ -741,4 +739,29 @@ TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirect
 
     std::vector <long> data = WaitForWindowCreation (w);
     EXPECT_TRUE (IsOverrideRedirect (data));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectFalse)
+{
+    ::Display *dpy = Display ();
+    XGrabServer (dpy);
+
+    XSetWindowAttributes attr;
+    attr.override_redirect = 0;
+
+    Window w = XCreateWindow (dpy, DefaultRootWindow (dpy),
+			      0, 0, 100, 100, 0, CopyFromParent,
+			      InputOutput, CopyFromParent, 0,
+			      &attr);
+
+    XDestroyWindow (dpy, w);
+
+    XSync (dpy, false);
+
+    XUngrabServer (dpy);
+
+    XSync (dpy, false);
+
+    std::vector <long> data = WaitForWindowCreation (w);
+    EXPECT_FALSE (IsOverrideRedirect (data));
 }

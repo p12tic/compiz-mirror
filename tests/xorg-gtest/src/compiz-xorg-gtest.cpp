@@ -758,11 +758,11 @@ ct::AutostartCompizXorgSystemTestWithTestHelper::WaitForWindowCreation (Window w
 
     }
 
-    ASSERT_TRUE (requestAcknowledged);
+    EXPECT_TRUE (requestAcknowledged);
 
-    std::vector <long> data();
+    std::vector <long> data;
     for (int i = 0; i < 5; ++i)
-	data.push_back(event.xclient.data.l[i]);
+	data.push_back(static_cast <long> (event.xclient.data.l[i]));
 
     return data;
 }
