@@ -362,7 +362,7 @@ void ShowdesktopPlacer::partRandom (const CompRect     &workArea,
 {
     /* generate a random value in the range 0-2, which represents
      * the allowed direction for intelligent random direction mode */
-    randomMode = static_cast<IRDirection>(rand () % 3);
+    IRDirection randomMode = static_cast<IRDirection>(rand () % 3);
 
     /* move to corners */
     switch (randomMode)
@@ -386,7 +386,7 @@ void ShowdesktopPlacer::random (const CompRect     &workArea,
 {
     /* generate a random value in the range 0-7, which represents
      * the allowed direction for fully random direction mode */
-    randomDirection = static_cast<FRDirection>(rand () % 8);
+    FRDirection randomDirection = static_cast<FRDirection>(rand () % 8);
 
     switch (randomDirection)
     {
