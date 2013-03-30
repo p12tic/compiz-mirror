@@ -348,46 +348,23 @@ PlaceWindow::place (CompPoint &pos)
 CompRect
 PlaceWindow::doValidateResizeRequest (unsigned int &mask,
 				      XWindowChanges *xwc,
-				      bool	   sizeOnly,
+				      bool	   onlyValidateSize,
 				      bool	   clampToViewport)
 {
-    CompRect workArea;
-    int	     x, y, left, right, bottom, top;
-    CompWindow::Geometry geom;
-    int      output;
-
-    geom.set (xwc->x, xwc->y, xwc->width, xwc->height,
-	      window->serverGeometry ().border ());
+    CompWindow::Geometry geom (xwc->x, xwc->y, xwc->width, xwc->height,
+			       window->serverGeometry ().border ());
+    CompPoint pos (geom.pos ());
 
     if (clampToViewport)
-    {
-	/* left, right, top, bottom target coordinates, clamed to viewport
-	 * sizes as we don't need to validate movements to other viewports;
-	 * we are only interested in inner-viewport movements */
+	pos = cp::getViewportRelativeCoordinates(geom, *screen);
 
-	x = geom.x () % screen->width ();
-	if ((geom.x2 ()) < 0)
-	    x += screen->width ();
+    CompWindowExtents edgePositions = cp::getWindowEdgePositions (pos,
+								  geom,
+								  window->border (),
+								  window->sizeHints ().win_gravity);
 
-	y = geom.y () % screen->height ();
-	if ((geom.y2 ()) < 0)
-	    y += screen->height ();
-    }
-    else
-    {
-	x = geom.x ();
-	y = geom.y ();
-    }
-
-    left   = x - window->border ().left;
-    right  = left + geom.widthIncBorders () +  (window->border ().left +
-						window->border ().right);
-    top    = y - window->border ().top;
-    bottom = top + geom.heightIncBorders () + (window->border ().top +
-					       window->border ().bottom);
-
-    output   = screen->outputDeviceForGeometry (geom);
-    workArea = screen->getWorkareaForOutput (output);
+    int      output   = screen->outputDeviceForGeometry (geom);
+    CompRect workArea = screen->getWorkareaForOutput (output);
 
     if (clampToViewport &&
     	xwc->width >= workArea.width () &&
@@ -401,82 +378,41 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
 	}
     }
 
-    if ((right - left) > workArea.width ())
-    {
-	left  = workArea.left ();
-	right = workArea.right ();
-    }
-    else
-    {
-	if (left < workArea.left ())
-	{
-	    right += workArea.left () - left;
-	    left  = workArea.left ();
-	}
-
-	if (right > workArea.right ())
-	{
-	    left -= right - workArea.right ();
-	    right = workArea.right ();
-	}
-    }
-
-    if ((bottom - top) > workArea.height ())
-    {
-	top    = workArea.top ();
-	bottom = workArea.bottom ();
-    }
-    else
-    {
-	if (top < workArea.top ())
-	{
-	    bottom += workArea.top () - top;
-	    top    = workArea.top ();
-	}
-
-	if (bottom > workArea.bottom ())
-	{
-	    top   -= bottom - workArea.bottom ();
-	    bottom = workArea.bottom ();
-	}
-    }
+    cp::clampHorizontalEdgePositionsToWorkArea (edgePositions, workArea);
+    cp::clampVerticalEdgePositionsToWorkArea (edgePositions, workArea);
 
     /* bring left/right/top/bottom to actual window coordinates */
-    left   += window->border ().left;
-    right  -= window->border ().right + 2 * window->serverGeometry ().border ();
-    top    += window->border ().top;
-    bottom -= window->border ().bottom + 2 * window->serverGeometry ().border ();
+    cp::subtractBordersFromEdgePositions (edgePositions,
+					  window->border (),
+					  geom.border (),
+					  window->sizeHints ().win_gravity);
 
     /* always validate position if the application changed only its size,
      * as it might become partially offscreen because of that */
-    if (!(mask) & (CWX | CWY) && (mask & (CWWidth | CWHeight)))
-	sizeOnly = false;
+    if (cp::onlySizeChanged (mask))
+	onlyValidateSize = false;
 
-    if ((right - left) != xwc->width)
-    {
-	xwc->width = right - left;
-	mask       |= CWWidth;
-	sizeOnly   = false;
-    }
+    if (cp::applyWidthChange(edgePositions,
+			     *xwc,
+			     mask))
+	onlyValidateSize = false;
 
-    if ((bottom - top) != xwc->height)
-    {
-	xwc->height = bottom - top;
-	mask        |= CWHeight;
-	sizeOnly    = false;
-    }
+    if (cp::applyHeightChange(edgePositions,
+			      *xwc,
+			      mask))
+	onlyValidateSize = false;
 
-    if (!sizeOnly)
+    if (!onlyValidateSize)
     {
-	if (left != x)
+	if (edgePositions.left != pos.x ())
 	{
-	    xwc->x += left - x;
+	    xwc->x += edgePositions.left - pos.x ();
 	    mask   |= CWX;
 	}
 
-	if (top != y)
+	if (edgePositions.top != pos.y ())
 	{
-	    xwc->y += top - y;
+	    xwc->y += edgePositions.top - pos.y ();
 	    mask   |= CWY;
 	}
     }

@@ -191,3 +191,154 @@ cp::constrainPositionToWorkArea (CompPoint               &pos,
 
     return pos;
 }
+
+CompPoint cp::getViewportRelativeCoordinates (const cw::Geometry &geom,
+					      const CompSize     &screen)
+{
+
+    /* left, right, top, bottom target coordinates, clamed to viewport
+     * sizes as we don't need to validate movements to other viewports;
+     * we are only interested in inner-viewport movements */
+
+    int x = geom.x () % screen.width ();
+    if ((geom.x2 ()) < 0)
+	x += screen.width ();
+
+    int y = geom.y () % screen.height ();
+    if ((geom.y2 ()) < 0)
+	y += screen.height ();
+
+    return CompPoint (x, y);
+}
+
+CompWindowExtents cp::getWindowEdgePositions (const CompPoint         &position,
+					      const cw::Geometry      &geom,
+					      const CompWindowExtents &border,
+					      unsigned int            gravity)
+{
+    CompWindowExtents edgePositions;
+    CompWindowExtents effectiveBorder (border);
+
+    if (gravity & StaticGravity)
+	effectiveBorder = CompWindowExtents (0, 0, 0, 0);
+
+    edgePositions.left   = position.x () - effectiveBorder.left;
+    edgePositions.right  = edgePositions.left +
+			   geom.widthIncBorders () +  (effectiveBorder.left +
+						       effectiveBorder.right);
+    edgePositions.top    = position.y () - effectiveBorder.top;
+    edgePositions.bottom = edgePositions.top +
+			   geom.heightIncBorders () + (effectiveBorder.top +
+						       effectiveBorder.bottom);
+
+    return edgePositions;
+}
+
+void cp::clampHorizontalEdgePositionsToWorkArea (CompWindowExtents &edgePositions,
+						 const CompRect    &workArea)
+{
+    if ((edgePositions.right - edgePositions.left) > workArea.width ())
+    {
+	edgePositions.left  = workArea.left ();
+	edgePositions.right = workArea.right ();
+    }
+    else
+    {
+	if (edgePositions.left < workArea.left ())
+	{
+	    edgePositions.right += workArea.left () - edgePositions.left;
+	    edgePositions.left  = workArea.left ();
+	}
+
+	if (edgePositions.right > workArea.right ())
+	{
+	    edgePositions.left -= edgePositions.right - workArea.right ();
+	    edgePositions.right = workArea.right ();
+	}
+    }
+
+}
+
+void cp::clampVerticalEdgePositionsToWorkArea (CompWindowExtents &edgePositions,
+					       const CompRect    &workArea)
+{
+    if ((edgePositions.bottom - edgePositions.top) > workArea.height ())
+    {
+	edgePositions.top    = workArea.top ();
+	edgePositions.bottom = workArea.bottom ();
+    }
+    else
+    {
+	if (edgePositions.top < workArea.top ())
+	{
+	    edgePositions.bottom += workArea.top () - edgePositions.top;
+	    edgePositions.top    = workArea.top ();
+	}
+
+	if (edgePositions.bottom > workArea.bottom ())
+	{
+	    edgePositions.top   -= edgePositions.bottom - workArea.bottom ();
+	    edgePositions.bottom = workArea.bottom ();
+	}
+    }
+}
+
+void cp::subtractBordersFromEdgePositions (CompWindowExtents       &edgePositions,
+					   const CompWindowExtents &border,
+					   unsigned int            legacyBorder,
+					   unsigned int            gravity)
+{
+    const unsigned int doubleBorder = 2 * legacyBorder;
+    CompWindowExtents  effectiveBorder = border;
+
+    if (gravity & StaticGravity)
+	effectiveBorder = CompWindowExtents (0, 0, 0, 0);
+
+    edgePositions.left   += effectiveBorder.left;
+    edgePositions.right  -= effectiveBorder.right + doubleBorder;
+    edgePositions.top    += effectiveBorder.top;
+    edgePositions.bottom -= effectiveBorder.bottom + doubleBorder;
+}
+
+bool cp::onlySizeChanged (unsigned int mask)
+{
+    return (!(mask & (CWX | CWY)) && (mask & (CWWidth | CWHeight)));
+}
+
+bool cp::applyWidthChange (const CompWindowExtents &edgePositions,
+			   XWindowChanges          &xwc,
+			   unsigned int            &mask)
+{
+    bool alreadySet = mask & CWWidth;
+
+    if (alreadySet)
+	alreadySet = edgePositions.right - edgePositions.left == xwc.width;
+
+    if (!alreadySet)
+    {
+	xwc.width = edgePositions.right - edgePositions.left;
+	mask       |= CWWidth;
+	return true;
+    }
+
+    return false;
+}
+
+bool cp::applyHeightChange (const CompWindowExtents &edgePositions,
+			    XWindowChanges          &xwc,
+			    unsigned int            &mask)
+{
+    bool alreadySet = mask & CWHeight;
+
+    if (alreadySet)
+	alreadySet = edgePositions.bottom - edgePositions.top == xwc.height;
+
+    if (!alreadySet)
+    {
+	xwc.height = edgePositions.bottom - edgePositions.top;
+	mask        |= CWHeight;
+	return true;
+    }
+
+    return false;
+}
