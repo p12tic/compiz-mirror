@@ -26,7 +26,7 @@
 
 namespace
 {
-    const float TEXT_BORDER = 10.0f;
+    const unsigned short TEXT_BORDER = 2;
 }
 
 
