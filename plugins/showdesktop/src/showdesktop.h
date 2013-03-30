@@ -41,19 +41,6 @@
 
 #include "showdesktop_options.h"
 
-#define WIN_X(w) ((w)->x () - (w)->border ().left)
-#define WIN_Y(w) ((w)->y () - (w)->border ().top)
-#define WIN_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
-#define WIN_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
-
-#define OFF_LEFT(w) ((w)->width () + (w)->border ().right)
-#define OFF_RIGHT(w) ((w)->border ().left)
-#define OFF_TOP(w) ((w)->height () + (w)->border ().bottom)
-#define OFF_BOTTOM(w) ((w)->border ().top)
-
-#define MOVE_LEFT(w) ((WIN_X (w) + (WIN_W (w) / 2)) < (screen->width () / 2))
-#define MOVE_UP(w) ((WIN_Y (w) + (WIN_H (w) / 2)) < (screen->height () / 2))
-
 extern const unsigned short SD_STATE_OFF;
 extern const unsigned short SD_STATE_ACTIVATING;
 extern const unsigned short SD_STATE_ON;
@@ -64,27 +51,96 @@ extern const unsigned short SD_STATE_DEACTIVATING;
 
 enum IRDirection
 {
-    toCorners,
-    upDown,
-    leftRight
-}rValIR;
+    IntelligentRandomToCorners,
+    IntelligentRandomUpDown,
+    IntelligentRandomLeftRight
+};
 
 enum FRDirection
 {
-    up,
-    down,
-    left,
-    right,
-    topLeft,
-    bottomLeft,
-    topRight,
-    bottomRight
-}rValFR;
+    FullRandomUp,
+    FullRandomDown,
+    FullRandomLeft,
+    FullRandomRight,
+    FullRandomTopLeft,
+    FullRandomBottomLeft,
+    FullRandomTopRight,
+    FullRandomBottomRight
+};
 
 class ShowdesktopPlacer
 {
     public:
 	ShowdesktopPlacer ();
+
+	void up (const CompRect                         &workArea,
+		 const compiz::window::Geometry         &geometry,
+		 const compiz::window::extents::Extents &border,
+		 int                                    partSize);
+
+	void down (const CompRect                         &workArea,
+		   const compiz::window::Geometry         &geometry,
+		   const compiz::window::extents::Extents &border,
+		   int                                    partSize);
+
+	void left (const CompRect                         &workArea,
+		   const compiz::window::Geometry         &geometry,
+		   const compiz::window::extents::Extents &border,
+		   int                                    partSize);
+
+	void right (const CompRect                         &workArea,
+		    const compiz::window::Geometry         &geometry,
+		    const compiz::window::extents::Extents &border,
+		    int                                    partSize);
+
+	void topLeft (const CompRect                         &workArea,
+		      const compiz::window::Geometry         &geometry,
+		      const compiz::window::extents::Extents &border,
+		      int                                    partSize);
+
+	void topRight (const CompRect                         &workArea,
+		       const compiz::window::Geometry         &geometry,
+		       const compiz::window::extents::Extents &border,
+		       int                                    partSize);
+
+	void bottomLeft (const CompRect                         &workArea,
+			 const compiz::window::Geometry         &geometry,
+			 const compiz::window::extents::Extents &border,
+			 int                                    partSize);
+
+	void bottomRight (const CompRect                         &workArea,
+			  const compiz::window::Geometry         &geometry,
+			  const compiz::window::extents::Extents &border,
+			  int                                    partSize);
+
+	void upOrDown (const CompRect                         &workArea,
+		       const compiz::window::Geometry         &geometry,
+		       const compiz::window::extents::Extents &border,
+		       const CompSize                         &screen,
+		       int                                    partSize);
+
+	void leftOrRight (const CompRect                         &workArea,
+			  const compiz::window::Geometry         &geometry,
+			  const compiz::window::extents::Extents &border,
+			  const CompSize                         &screen,
+			  int                                    partSize);
+
+	void closestCorner (const CompRect                         &workArea,
+			    const compiz::window::Geometry         &geometry,
+			    const compiz::window::extents::Extents &border,
+			    const CompSize                         &screen,
+			    int                                    partSize);
+
+	void partRandom (const CompRect                         &workArea,
+			 const compiz::window::Geometry         &geometry,
+			 const compiz::window::extents::Extents &border,
+			 const CompSize                         &screen,
+			 int                                    partSize);
+
+	void random (const CompRect                         &workArea,
+		     const compiz::window::Geometry         &geometry,
+		     const compiz::window::extents::Extents &border,
+		     int                                    partSize);
 
 	int placed;
 	int onScreenX, onScreenY;

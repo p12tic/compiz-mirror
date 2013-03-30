@@ -37,6 +37,75 @@
 
 COMPIZ_PLUGIN_20090315 (showdesktop, ShowdesktopPluginVTable);
 
+namespace cw = compiz::window;
+namespace cwe = compiz::window::extents;
+
+namespace
+{
+int windowBorderX (const cw::Geometry &geometry,
+		   const cwe::Extents &border)
+{
+    return geometry.x () - border.left;
+}
+
+int windowBorderY (const cw::Geometry &geometry,
+		   const cwe::Extents &border)
+{
+    return geometry.y () - border.top;
+}
+
+int windowBorderWidth (const cw::Geometry &geometry,
+		       const cwe::Extents &border)
+{
+    return geometry.width () + border.left + border.right;
+}
+
+int windowBorderHeight (const cw::Geometry &geometry,
+			const cwe::Extents &border)
+{
+    return geometry.height () + border.top + border.bottom;
+}
+
+int widthAndRightBorder (const cw::Geometry &geometry,
+			 const cwe::Extents &border)
+{
+    return geometry.width () + border.left + border.right;
+}
+
+int leftBorder (const cwe::Extents &border)
+{
+    return border.left;
+}
+
+int widthAndBottomBorder (const cw::Geometry &geometry,
+			  const cwe::Extents &border)
+{
+    return geometry.height () + border.bottom;
+}
+
+int topBorder (const cwe::Extents &border)
+{
+    return border.top;
+}
+
+bool centerOfWindowIsOnLeftHalf (const cw::Geometry &geometry,
+				 const cwe::Extents &border,
+				 const CompSize     &screen)
+{
+    return (windowBorderX (geometry, border)
+	    + (windowBorderWidth (geometry, border) / 2)) <
+		(screen.width () / 2);
+}
+
+bool centerOfWindowIsOnTopHalf (const cw::Geometry &geometry,
+				const cwe::Extents &border,
+				const CompSize     &screen)
+{
+    return (windowBorderY (geometry, border) +
+	    (windowBorderHeight (geometry, border) / 2)) <
+		(screen.height () / 2);
+}
+}
 const unsigned short SD_STATE_OFF          = 0;
 const unsigned short SD_STATE_ACTIVATING   = 1;
 const unsigned short SD_STATE_ON           = 2;
@@ -99,6 +168,255 @@ ShowdesktopWindow::setHints (bool enterSDMode)
     }
 }
 
+namespace
+{
+    int topOffscreenPosition (const CompRect     &workArea,
+			      const cw::Geometry &geometry,
+			      const cwe::Extents &border,
+			      int                partSize)
+    {
+	return workArea.y () - widthAndBottomBorder (geometry, border) +
+		partSize;
+    }
+
+    int bottomOffscreenPosition (const CompRect     &workArea,
+				 const cw::Geometry &geometry,
+				 const cwe::Extents &border,
+				 int                partSize)
+    {
+	return workArea.y () +
+		workArea.height () + topBorder (border) -
+		partSize;
+    }
+
+    int leftOffscreenPosition (const CompRect     &workArea,
+			       const cw::Geometry &geometry,
+			       const cwe::Extents &border,
+			       int                partSize)
+    {
+	return workArea.x () - widthAndRightBorder (geometry, border) +
+		partSize;
+    }
+
+    int rightOffscreenPosition (const CompRect     &workArea,
+				const cw::Geometry &geometry,
+				const cwe::Extents &border,
+				int                partSize)
+    {
+	return workArea.x () +
+		workArea.width () + leftBorder (border) -
+		partSize;
+    }
+}
+
+void
+ShowdesktopPlacer::up (const CompRect     &workArea,
+		       const cw::Geometry &geometry,
+		       const cwe::Extents &border,
+		       int                partSize)
+{
+    offScreenX = geometry.x ();
+    offScreenY = topOffscreenPosition (workArea, geometry,
+				       border, partSize);
+}
+
+void
+ShowdesktopPlacer::down (const CompRect     &workArea,
+			 const cw::Geometry &geometry,
+			 const cwe::Extents &border,
+			 int                partSize)
+{
+    offScreenX = geometry.x ();
+    offScreenY = bottomOffscreenPosition (workArea, geometry,
+					  border, partSize);
+}
+
+void
+ShowdesktopPlacer::left (const CompRect     &workArea,
+			 const cw::Geometry &geometry,
+			 const cwe::Extents &border,
+			 int                partSize)
+{
+    offScreenX = leftOffscreenPosition (workArea, geometry,
+					border, partSize);
+    offScreenY = geometry.y ();
+}
+
+void ShowdesktopPlacer::right (const CompRect     &workArea,
+			       const cw::Geometry &geometry,
+			       const cwe::Extents &border,
+			       int                partSize)
+{
+    offScreenX = rightOffscreenPosition (workArea, geometry,
+					 border, partSize);
+    offScreenY = geometry.y ();
+}
+
+void ShowdesktopPlacer::topLeft (const CompRect     &workArea,
+				 const cw::Geometry &geometry,
+				 const cwe::Extents &border,
+				 int                partSize)
+{
+    offScreenX = leftOffscreenPosition (workArea, geometry,
+					border, partSize);
+    offScreenY = topOffscreenPosition (workArea, geometry,
+				       border, partSize);
+}
+
+void ShowdesktopPlacer::topRight (const CompRect     &workArea,
+				  const cw::Geometry &geometry,
+				  const cwe::Extents &border,
+				  int                partSize)
+{
+    offScreenX = rightOffscreenPosition (workArea, geometry,
+					 border, partSize);
+    offScreenY = topOffscreenPosition (workArea, geometry,
+				       border, partSize);
+}
+
+void ShowdesktopPlacer::bottomLeft (const CompRect     &workArea,
+				    const cw::Geometry &geometry,
+				    const cwe::Extents &border,
+				    int                partSize)
+{
+    offScreenX = leftOffscreenPosition (workArea, geometry,
+					border, partSize);
+    offScreenY = topOffscreenPosition (workArea, geometry,
+				       border, partSize);
+}
+
+void ShowdesktopPlacer::bottomRight (const CompRect     &workArea,
+				     const cw::Geometry &geometry,
+				     const cwe::Extents &border,
+				     int                partSize)
+{
+    offScreenX = rightOffscreenPosition (workArea, geometry,
+					 border, partSize);
+    offScreenY = bottomOffscreenPosition (workArea, geometry,
+					  border, partSize);
+}
+
+void ShowdesktopPlacer::leftOrRight (const CompRect     &workArea,
+				     const cw::Geometry &geometry,
+				     const cwe::Extents &border,
+				     const CompSize     &screen,
+				     int                partSize)
+{
+    offScreenY = geometry.y ();
+    if (centerOfWindowIsOnLeftHalf (geometry,
+				    border,
+				    screen))
+	offScreenX = leftOffscreenPosition (workArea, geometry,
+					    border, partSize);
+    else
+	offScreenX = rightOffscreenPosition (workArea, geometry,
+					     border, partSize);
+}
+
+void ShowdesktopPlacer::upOrDown (const CompRect     &workArea,
+				  const cw::Geometry &geometry,
+				  const cwe::Extents &border,
+				  const CompSize     &screen,
+				  int                partSize)
+{
+    offScreenX = geometry.x ();
+    if (centerOfWindowIsOnTopHalf (geometry,
+				   border,
+				   screen))
+	offScreenY = topOffscreenPosition (workArea, geometry,
+					   border, partSize);
+    else
+	offScreenY = bottomOffscreenPosition (workArea, geometry,
+					      border, partSize);
+}
+
+void ShowdesktopPlacer::closestCorner (const CompRect     &workArea,
+				       const cw::Geometry &geometry,
+				       const cwe::Extents &border,
+				       const CompSize     &screen,
+				       int                partSize)
+{
+    if (centerOfWindowIsOnLeftHalf (geometry,
+				    border,
+				    screen))
+	offScreenX = leftOffscreenPosition (workArea, geometry,
+					    border, partSize);
+    else
+	offScreenX = rightOffscreenPosition (workArea, geometry,
+					     border, partSize);
+    if (centerOfWindowIsOnTopHalf (geometry,
+				   border,
+				   screen))
+	offScreenY = topOffscreenPosition (workArea, geometry,
+					   border, partSize);
+    else
+	offScreenY = bottomOffscreenPosition (workArea, geometry,
+					      border, partSize);
+}
+
+void ShowdesktopPlacer::partRandom (const CompRect     &workArea,
+				    const cw::Geometry &geometry,
+				    const cwe::Extents &border,
+				    const CompSize     &screen,
+				    int                partSize)
+{
+    /* generate a random value in the range 0-2, which represents
+     * the allowed direction for intelligent random direction mode */
+    IRDirection randomMode = static_cast<IRDirection>(rand () % 3);
+
+    /* move to corners */
+    switch (randomMode)
+    {
+	case IntelligentRandomToCorners:
+	    closestCorner (workArea, geometry, border, screen, partSize);
+	    break;
+	case IntelligentRandomLeftRight:
+	    leftOrRight (workArea, geometry, border, screen, partSize);
+	    break;
+	case IntelligentRandomUpDown:
+	    upOrDown (workArea, geometry, border, screen, partSize);
+	    break;
+    }
+}
+
+void ShowdesktopPlacer::random (const CompRect     &workArea,
+				const cw::Geometry &geometry,
+				const cwe::Extents &border,
+				int                partSize)
+{
+    /* generate a random value in the range 0-7, which represents
+     * the allowed direction for fully random direction mode */
+    FRDirection randomDirection = static_cast<FRDirection>(rand () % 8);
+
+    switch (randomDirection)
+    {
+	case FullRandomUp:
+	    up (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomDown:
+	    down (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomLeft:
+	    left (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomRight:
+	    right (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomTopLeft:
+	    topLeft (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomTopRight:
+	    topRight (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomBottomLeft:
+	    bottomLeft (workArea, geometry, border, partSize);
+	    break;
+	case FullRandomBottomRight:
+	    bottomRight (workArea, geometry, border, partSize);
+	    break;
+    }
+}
+
 void
 ShowdesktopWindow::repositionPlacer (int oldState)
 {
@@ -115,237 +433,68 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 	placer->origViewportY = screen->vp ().y ();
     }
 
+    const int          partSize = ss->optionGetWindowPartSize ();
+    const CompRect     &workArea = screen->workArea ();
+    const cw::Geometry &geometry = window->geometry ();
+    const cwe::Extents &border = window->border ();
+
     switch (ss->optionGetDirection ())
     {
 	/* Single directions */
-
 	case ShowdesktopOptions::DirectionUp:
-	    placer->offScreenX = window->x ();
-	    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				 ss->optionGetWindowPartSize ();
+	    placer->up (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionDown:
-	    placer->offScreenX = window->x ();
-	    placer->offScreenY = screen->workArea ().y () +
-				 screen->workArea ().height () + OFF_BOTTOM (window) -
-				 ss->optionGetWindowPartSize ();
+	    placer->down (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionLeft:
-	    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				 ss->optionGetWindowPartSize ();
-	    placer->offScreenY = window->y ();
+	    placer->left (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionRight:
-	    placer->offScreenX = screen->workArea ().x () +
-				 screen->workArea ().width () + OFF_RIGHT (window) -
-				 ss->optionGetWindowPartSize ();
-	    placer->offScreenY = window->y ();
+	    placer->right (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionTopLeftCorner:
-	    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				 ss->optionGetWindowPartSize ();
-	    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				 ss->optionGetWindowPartSize ();
+	    placer->topLeft (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionBottomLeftCorner:
-	    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				 ss->optionGetWindowPartSize ();
-	    placer->offScreenY = screen->workArea ().y () +
-				 screen->workArea ().height () + OFF_BOTTOM (window) -
-				 ss->optionGetWindowPartSize ();
+	    placer->bottomLeft (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionTopRightCorner:
-	    placer->offScreenX = screen->workArea ().x () +
-				 screen->workArea ().width () + OFF_RIGHT (window) -
-				 ss->optionGetWindowPartSize ();
-	    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				 ss->optionGetWindowPartSize ();
+	    placer->topRight (workArea, geometry, border, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionBottomRightCorner:
-	    placer->offScreenX = screen->workArea ().x () +
-				 screen->workArea ().width () + OFF_RIGHT (window) -
-				 ss->optionGetWindowPartSize ();
-	    placer->offScreenY = screen->workArea ().y () +
-				 screen->workArea ().height () + OFF_BOTTOM (window) -
-				 ss->optionGetWindowPartSize ();
+	    placer->bottomRight (workArea, geometry, border, partSize);
 	    break;
 
 	/* Dual directions */
-
 	case ShowdesktopOptions::DirectionUpDown:
-	    placer->offScreenX = window->x ();
-	    if (MOVE_UP (window))
-		placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				     ss->optionGetWindowPartSize ();
-	    else
-		placer->offScreenY = screen->workArea ().y () +
-				     screen->workArea ().height () + OFF_BOTTOM (window) -
-				     ss->optionGetWindowPartSize ();
+	    placer->upOrDown (workArea, geometry, border, *screen, partSize);
 	    break;
 
 	case ShowdesktopOptions::DirectionLeftRight:
-	    placer->offScreenY = window->y ();
-	    if (MOVE_LEFT (window))
-		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				     ss->optionGetWindowPartSize ();
-	    else
-		placer->offScreenX = screen->workArea ().x () +
-				     screen->workArea ().width () + OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
+	    placer->leftOrRight (workArea, geometry, border, *screen, partSize);
 	    break;
 
 	/* Quad directions */
-
 	case ShowdesktopOptions::DirectionToCorners:
-	    if (MOVE_LEFT (window))
-		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				     ss->optionGetWindowPartSize ();
-	    else
-		placer->offScreenX = screen->workArea ().x () +
-				     screen->workArea ().width () + OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
-	    if (MOVE_UP(window))
-		placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				     ss->optionGetWindowPartSize ();
-	    else
-		placer->offScreenY = screen->workArea ().y () +
-				     screen->workArea ().height () + OFF_BOTTOM (window) -
-				     ss->optionGetWindowPartSize ();
+	    placer->closestCorner (workArea, geometry, border, *screen, partSize);
 	    break;
 
 	/* One of 3 random directions per window */
-
 	case ShowdesktopOptions::DirectionIntelligentRandom:
-
-	    /* generate a random value in the range 0-2, which represents
-	     * the allowed direction for intelligent random direction mode */
-	    rValIR = static_cast<IRDirection>(rand () % 3);
-
-	    /* move to corners */
-	    if (rValIR == toCorners)
-	    {
-		if (MOVE_LEFT (window))
-		    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-					 ss->optionGetWindowPartSize ();
-		else
-		    placer->offScreenX = screen->workArea ().x () +
-					 screen->workArea ().width () + OFF_RIGHT (window) -
-					 ss->optionGetWindowPartSize ();
-		if (MOVE_UP(window))
-		    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-					 ss->optionGetWindowPartSize ();
-		else
-		    placer->offScreenY = screen->workArea ().y () +
-					 screen->workArea ().height () + OFF_BOTTOM (window) -
-					 ss->optionGetWindowPartSize ();
-	    }
-	    /* move up/down */
-	    else if (rValIR == upDown)
-	    {
-		placer->offScreenX = window->x ();
-		if (MOVE_UP (window))
-		    placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-					 ss->optionGetWindowPartSize ();
-		else
-		    placer->offScreenY = screen->workArea ().y () +
-					 screen->workArea ().height () + OFF_BOTTOM (window) -
-					 ss->optionGetWindowPartSize ();
-	    }
-	    /* move left/right */
-	    else if (rValIR == leftRight)
-	    {
-		placer->offScreenY = window->y ();
-		if (MOVE_LEFT (window))
-		    placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-					 ss->optionGetWindowPartSize ();
-		else
-		    placer->offScreenX = screen->workArea ().x () +
-					 screen->workArea ().width () + OFF_RIGHT (window) -
-					 ss->optionGetWindowPartSize ();
-	    }
+	    placer->partRandom (workArea, geometry, border, *screen, partSize);
 	    break;
 
 	/* One of 8 random directions per window */
-
 	case ShowdesktopOptions::DirectionFullyRandom:
-
-	    /* generate a random value in the range 0-7, which represents
-	     * the allowed direction for fully random direction mode */
-	    rValFR = static_cast<FRDirection>(rand () % 8);
-
-	    /* move up */
-	    if (rValFR == up)
-	    {
-		placer->offScreenX = window->x ();
-		placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				     ss->optionGetWindowPartSize ();
-	    }
-	    /* move down */
-	    else if (rValFR == down)
-	    {
-		placer->offScreenX = window->x ();
-		placer->offScreenY = screen->workArea ().y () +
-				     screen->workArea ().height () + OFF_BOTTOM (window) -
-				     ss->optionGetWindowPartSize ();
-	    }
-	    /* move left */
-	    else if (rValFR == left)
-	    {
-		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				     ss->optionGetWindowPartSize ();
-		placer->offScreenY = window->y ();
-	    }
-	    /* move right */
-	    else if (rValFR == right)
-	    {
-		placer->offScreenX = screen->workArea ().x () +
-				     screen->workArea ().width () + OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
-		placer->offScreenY = window->y ();
-	    }
-	    /* move topleft */
-	    else if (rValFR == topLeft)
-	    {
-		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				     ss->optionGetWindowPartSize ();
-		placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				     ss->optionGetWindowPartSize ();
-	    }
-	    /* move bottomleft */
-	    else if (rValFR == bottomLeft)
-	    {
-		placer->offScreenX = screen->workArea ().x () - OFF_LEFT (window) +
-				     ss->optionGetWindowPartSize ();
-		placer->offScreenY = screen->workArea ().y () +
-				     screen->workArea ().height () + OFF_BOTTOM (window) -
-				     ss->optionGetWindowPartSize ();
-	    }
-	    /* move topright */
-	    else if (rValFR == topRight)
-	    {
-		placer->offScreenX = screen->workArea ().x () +
-				     screen->workArea ().width () + OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
-		placer->offScreenY = screen->workArea ().y () - OFF_TOP (window) +
-				     ss->optionGetWindowPartSize ();
-	    }
-	    /* move bottomright */
-	    else if (rValFR == bottomRight)
-	    {
-		placer->offScreenX = screen->workArea ().x () +
-				     screen->workArea ().width () + OFF_RIGHT (window) -
-				     ss->optionGetWindowPartSize ();
-		placer->offScreenY = screen->workArea ().y () +
-				     screen->workArea ().height () + OFF_BOTTOM (window) -
-				     ss->optionGetWindowPartSize ();
-	    }
+	    placer->random (workArea, geometry, border, partSize);
 	    break;
 
 	default:
