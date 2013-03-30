@@ -24,6 +24,8 @@
 
 COMPIZ_PLUGIN_20090315 (place, PlacePluginVTable)
 
+namespace cp = compiz::place;
+
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 PlaceScreen::PlaceScreen (CompScreen *screen) :
@@ -1203,50 +1205,13 @@ void
 PlaceWindow::constrainToWorkarea (const CompRect &workArea,
 				  CompPoint      &pos)
 {
-    CompWindowExtents extents;
-    int               delta;
+    bool staticGravity = window->sizeHints ().win_gravity & StaticGravity;
 
-    CompWindowExtents effectiveBorders = window->border ();
-
-    /* Ignore borders in the StaticGravity case for placement
-     * because the window intended to be placed as if it didn't
-     * have them */
-    if (window->sizeHints ().win_gravity & StaticGravity)
-    {
-	effectiveBorders.left = 0;
-	effectiveBorders.right = 0;
-	effectiveBorders.top = 0;
-	effectiveBorders.bottom = 0;
-    }
-
-    extents.left   = pos.x () - effectiveBorders.left;
-    extents.top    = pos.y () - effectiveBorders.top;
-    extents.right  = extents.left + window->serverGeometry ().widthIncBorders () +
-		     (effectiveBorders.left +
-		      effectiveBorders.right);
-    extents.bottom = extents.top + window->serverGeometry ().heightIncBorders () +
-		     (effectiveBorders.top +
-		      effectiveBorders.bottom);
-
-    delta = workArea.right () - extents.right;
-    if (delta < 0)
-	extents.left += delta;
-
-    delta = workArea.left () - extents.left;
-    if (delta > 0)
-	extents.left += delta;
-
-    delta = workArea.bottom () - extents.bottom;
-    if (delta < 0)
-	extents.top += delta;
-
-    delta = workArea.top () - extents.top;
-    if (delta > 0)
-	extents.top += delta;
-
-    pos.setX (extents.left + effectiveBorders.left);
-    pos.setY (extents.top  + effectiveBorders.top);
-
+    pos = cp::constrainPositionToWorkArea (pos,
+                                           window->serverGeometry (),
+                                           window->border (),
+                                           workArea,
+                                           staticGravity);
 }
 
 bool

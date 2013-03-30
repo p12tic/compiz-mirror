@@ -112,10 +112,6 @@ RotateScreen::adjustVelocity (int size, int invert)
 void
 RotateScreen::releaseMoveWindow ()
 {
-    CompWindow *w = screen->findWindow (mMoveWindow);
-    if (w)
-	w->syncPosition ();
-
     mMoveWindow = None;
 }
 
@@ -228,7 +224,6 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 			if (w)
 			{
 			    w->move (mMoveWindowX - w->x (), 0);
-			    w->syncPosition ();
 			}
 		    }
 		    /* only focus default window if switcher isn't active */

@@ -38,6 +38,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/pointer_cast.hpp>
 
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -2169,11 +2170,6 @@ compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
 {
 }
 
-void
-CompWindow::syncPosition ()
-{
-}
-
 bool
 CompWindow::focus ()
 {
@@ -3021,16 +3017,20 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
     return m;
 }
 
-static bool isPendingRestack (compiz::X11::PendingEvent::Ptr p)
+static bool isPendingRestack (const compiz::X11::PendingEvent::Ptr &p)
 {
-    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+    compiz::X11::PendingConfigureEvent::Ptr pc =
+	boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchVM (CWStackMode | CWSibling);
 }
 
-static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges &xwc, unsigned int valueMask)
+static bool isExistingRequest (const compiz::X11::PendingEvent::Ptr &p,
+			       XWindowChanges &xwc,
+			       unsigned int valueMask)
 {
-    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+    compiz::X11::PendingConfigureEvent::Ptr pc =
+	    boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchRequest (xwc, valueMask);
 }
@@ -3331,11 +3331,19 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (lastServerInput.top != serverInput.top)
 	    valueMask |= CWY;
 
-	if (lastServerInput.right - lastServerInput.left !=
-	    serverInput.right - serverInput.left)
+	/* Calculate frame extents and protect against underflow */
+	const unsigned int lastWrapperWidth = std::max (0, serverFrameGeometry.width () -
+							   (lastServerInput.right + lastServerInput.left));
+	const unsigned int lastWrapperHeight = std::max (0, serverFrameGeometry.height () -
+							    (lastServerInput.bottom + lastServerInput.top));
+	const unsigned int wrapperWidth = std::max (0, serverFrameGeometry.width () -
+						       (serverInput.right + serverInput.left));
+	const unsigned int wrapperHeight = std::max (0, serverFrameGeometry.height () -
+						        (serverInput.bottom + serverInput.top));
+
+	if (lastWrapperWidth != wrapperWidth)
 	    valueMask |= CWWidth;
-	if (lastServerInput.bottom - lastServerInput.top !=
-	    serverInput.bottom - serverInput.top)
+	if (lastWrapperHeight != wrapperHeight)
 	    valueMask |= CWHeight;
 
 	if (valueMask)
@@ -4153,10 +4161,8 @@ PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
 
 		if (serverFrame)
 		{
-		    compiz::X11::PendingEvent::Ptr pc =
-			    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-										      new compiz::X11::PendingConfigureEvent (
-											  screen->dpy (), serverFrame, valueMask, &lxwc)));
+		    compiz::X11::PendingEvent::Ptr pc (new compiz::X11::PendingConfigureEvent (
+							screen->dpy (), serverFrame, valueMask, &lxwc));
 
 		    pendingConfigures.add (pc);
 		}

@@ -993,7 +993,6 @@ GroupSelection::finishTabbing ()
 	w->move (gw->mDestination.x () - WIN_X (w),
 		 gw->mDestination.y () - WIN_Y (w), true);
 	gs->mQueued = false;
-	w->syncPosition ();
 
 	if (mUngroupState == UngroupSingle &&
 	    (gw->mAnimateState & IS_UNGROUPING))
@@ -1935,7 +1934,6 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 
 	    mQueued = true;
 	    w->move (dx, dy, false);
-	    w->syncPosition ();
 	    mQueued = false;
 	}
 

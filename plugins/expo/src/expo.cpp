@@ -247,7 +247,6 @@ ExpoScreen::moveFocusViewport (int dx,
 void
 ExpoScreen::finishWindowMovement ()
 {
-    dndWindow->syncPosition ();
     dndWindow->ungrabNotify ();
 
     screen->moveViewport (screen->vp ().x () - selectedVp.x (),

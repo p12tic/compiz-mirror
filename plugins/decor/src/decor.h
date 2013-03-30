@@ -152,6 +152,13 @@ class Decoration :
 
 	unsigned int              updateState;
 	X11DecorPixmapReceiver    mPixmapReceiver;
+
+    private:
+
+	bool            bareDecorationOnly ();
+        Decoration::Ptr findRealDecoration ();
+        Decoration::Ptr findBareDecoration ();
+        void            moveDecoratedWindowBy (const CompPoint &movement);
 };
 
 class DecorationList :
@@ -372,6 +379,14 @@ class DecorWindow :
 	CompRegion              mInputRegion;
 
 	X11DecorPixmapRequestor   mRequestor;
+
+    private:
+
+	bool            bareDecorationOnly ();
+	Decoration::Ptr findRealDecoration ();
+	Decoration::Ptr findBareDecoration ();
+	void            moveDecoratedWindowBy (const CompPoint &movement,
+					       bool instant);
 };
 
 class DecorPluginVTable :
