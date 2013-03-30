@@ -54,7 +54,7 @@ enum IRDirection
     IntelligentRandomToCorners,
     IntelligentRandomUpDown,
     IntelligentRandomLeftRight
-}randomMode;
+};
 
 enum FRDirection
 {
@@ -66,7 +66,7 @@ enum FRDirection
     FullRandomBottomLeft,
     FullRandomTopRight,
     FullRandomBottomRight
-}randomDirection;
+};
 
 class ShowdesktopPlacer
 {
