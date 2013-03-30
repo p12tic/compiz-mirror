@@ -234,7 +234,6 @@ FWScreen::terminateFWRotate (CompAction          *action,
 			     WIN_REAL_H (mGrabWindow) / 2.0f);
 
 		    mGrabWindow->move (distX, distY, true);
-		    mGrabWindow->syncPosition ();
 
 		    fww->calculateInputOrigin (WIN_REAL_X (mGrabWindow) +
 					       WIN_REAL_W (mGrabWindow) / 2.0f,
@@ -435,7 +434,6 @@ FWScreen::terminateFWScale (CompAction         *action,
 		    distY = (fww->mOutputRect.y1 () + (fww->mOutputRect.width () / 2.0f) - (WIN_REAL_Y (mGrabWindow) + WIN_REAL_H (mGrabWindow) / 2.0f));
 
 		    mGrabWindow->move (distX, distY, true);
-		    mGrabWindow->syncPosition ();
 
 		    fww->calculateInputOrigin (WIN_REAL_X (mGrabWindow) +
 					       WIN_REAL_W (mGrabWindow) / 2.0f,

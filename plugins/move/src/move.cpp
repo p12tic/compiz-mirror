@@ -187,8 +187,6 @@ moveTerminate (CompAction      *action,
 	    ms->w->move (ms->savedX - ms->w->geometry ().x (),
 			 ms->savedY - ms->w->geometry ().y (), false);
 
-	ms->w->syncPosition ();
-
 	/* update window attributes as window constraints may have
 	   changed - needed e.g. if a maximized window was moved
 	   to another output device */
@@ -445,11 +443,6 @@ moveHandleMotionEvent (CompScreen *s,
 			if (!s->otherGrabExist ("move", NULL))
 			{
 			    int wy;
-
-			    /* update server position before maximizing
-			       window again so that it is maximized on
-			       correct output */
-			    w->syncPosition ();
 
 			    w->maximize (ms->origState);
 

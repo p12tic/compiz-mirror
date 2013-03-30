@@ -38,6 +38,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/pointer_cast.hpp>
 
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -2169,11 +2170,6 @@ compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
 {
 }
 
-void
-CompWindow::syncPosition ()
-{
-}
-
 bool
 CompWindow::focus ()
 {
@@ -3021,16 +3017,20 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
     return m;
 }
 
-static bool isPendingRestack (compiz::X11::PendingEvent::Ptr p)
+static bool isPendingRestack (const compiz::X11::PendingEvent::Ptr &p)
 {
-    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+    compiz::X11::PendingConfigureEvent::Ptr pc =
+	boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchVM (CWStackMode | CWSibling);
 }
 
-static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges &xwc, unsigned int valueMask)
+static bool isExistingRequest (const compiz::X11::PendingEvent::Ptr &p,
+			       XWindowChanges &xwc,
+			       unsigned int valueMask)
 {
-    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+    compiz::X11::PendingConfigureEvent::Ptr pc =
+	    boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchRequest (xwc, valueMask);
 }
@@ -4161,10 +4161,8 @@ PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
 
 		if (serverFrame)
 		{
-		    compiz::X11::PendingEvent::Ptr pc =
-			    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-										      new compiz::X11::PendingConfigureEvent (
-											  screen->dpy (), serverFrame, valueMask, &lxwc)));
+		    compiz::X11::PendingEvent::Ptr pc (new compiz::X11::PendingConfigureEvent (
+							screen->dpy (), serverFrame, valueMask, &lxwc));
 
 		    pendingConfigures.add (pc);
 		}
