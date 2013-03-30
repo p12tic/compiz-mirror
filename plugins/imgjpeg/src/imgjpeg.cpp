@@ -1,4 +1,6 @@
 /*
+ * jpeg.cpp
+ * based on:
  * beryl-plugins::jpeg.c - adds JPEG image support to beryl.
  * Copyright: (C) 2006 Nicholas Thomas
  *		       Danny Baumann (JPEG writing, option stuff)

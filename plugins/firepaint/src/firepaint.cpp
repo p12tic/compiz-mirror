@@ -1,7 +1,7 @@
 /*
  * Compiz fire effect plugin
  *
- * firepaint.c
+ * firepaint.cpp
  *
  * Copyright : (C) 2007 by Dennis Kasprzyk
  * E-mail    : onestone@beryl-project.org
@@ -22,6 +22,18 @@
 #include "firepaint.h"
 
 COMPIZ_PLUGIN_20090315 (firepaint, FirePluginVTable);
+
+/* 3 vertices per triangle, 2 triangles per particle */
+const unsigned short CACHESIZE_FACTOR = 3 * 2;
+
+/* 2 coordinates, x and y */
+const unsigned short COORD_COMPONENTS = CACHESIZE_FACTOR * 2;
+
+/* each vertex is stored as 3 GLfloats */
+const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
+
+/* 4 colors, RGBA */
+const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
 
 Particle::Particle () :
     life (0),
@@ -98,18 +110,18 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
     int i, j, k, l;
 
     /* Check that the cache is big enough */
-    if (particles.size () * 6 * 3 > vertices_cache.size ())
-	vertices_cache.resize (particles.size() * 6 * 3);
+    if (vertices_cache.size () < particles.size () * VERTEX_COMPONENTS)
+	vertices_cache.resize (particles.size () * VERTEX_COMPONENTS);
 
-    if (particles.size () * 6 * 2 > coords_cache.size ())
-	coords_cache.resize (particles.size() * 6 * 2);
+    if (coords_cache.size () < particles.size () * COORD_COMPONENTS)
+	coords_cache.resize (particles.size () * COORD_COMPONENTS);
 
-    if (particles.size () * 6 * 4 > colors_cache.size ())
-	colors_cache.resize (particles.size() * 6 * 4);
+    if (colors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	colors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     if (darken > 0)
-	if (particles.size () * 6 * 4 > dcolors_cache.size ())
-	    dcolors_cache.resize (particles.size() * 6 * 4);
+	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     glEnable (GL_BLEND);
 
@@ -141,119 +153,119 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	    h += (h * part.h_mod) * part.life;
 
 	    //first triangle
-	    vertices_cache[i+ 0] = part.x - w;
-	    vertices_cache[i+ 1] = part.y - h;
-	    vertices_cache[i+ 2] = part.z;
+	    vertices_cache[i + 0] = part.x - w;
+	    vertices_cache[i + 1] = part.y - h;
+	    vertices_cache[i + 2] = part.z;
 
-	    vertices_cache[i+ 3] = part.x - w;
-	    vertices_cache[i+ 4] = part.y + h;
-	    vertices_cache[i+ 5] = part.z;
+	    vertices_cache[i + 3] = part.x - w;
+	    vertices_cache[i + 4] = part.y + h;
+	    vertices_cache[i + 5] = part.z;
 
-	    vertices_cache[i+ 6] = part.x + w;
-	    vertices_cache[i+ 7] = part.y + h;
-	    vertices_cache[i+ 8] = part.z;
+	    vertices_cache[i + 6] = part.x + w;
+	    vertices_cache[i + 7] = part.y + h;
+	    vertices_cache[i + 8] = part.z;
 
 	    //second triangle
-	    vertices_cache[i+ 9] = part.x + w;
-	    vertices_cache[i+10] = part.y + h;
-	    vertices_cache[i+11] = part.z;
+	    vertices_cache[i + 9] = part.x + w;
+	    vertices_cache[i + 10] = part.y + h;
+	    vertices_cache[i + 11] = part.z;
 
-	    vertices_cache[i+12] = part.x + w;
-	    vertices_cache[i+13] = part.y - h;
-	    vertices_cache[i+14] = part.z;
+	    vertices_cache[i + 12] = part.x + w;
+	    vertices_cache[i + 13] = part.y - h;
+	    vertices_cache[i + 14] = part.z;
 
-	    vertices_cache[i+15] = part.x - w;
-	    vertices_cache[i+16] = part.y - h;
-	    vertices_cache[i+17] = part.z;
+	    vertices_cache[i + 15] = part.x - w;
+	    vertices_cache[i + 16] = part.y - h;
+	    vertices_cache[i + 17] = part.z;
 
 	    i += 18;
 
-	    coords_cache[j+ 0] = 0.0;
-	    coords_cache[j+ 1] = 0.0;
+	    coords_cache[j + 0] = 0.0;
+	    coords_cache[j + 1] = 0.0;
 
-	    coords_cache[j+ 2] = 0.0;
-	    coords_cache[j+ 3] = 1.0;
+	    coords_cache[j + 2] = 0.0;
+	    coords_cache[j + 3] = 1.0;
 
-	    coords_cache[j+ 4] = 1.0;
-	    coords_cache[j+ 5] = 1.0;
+	    coords_cache[j + 4] = 1.0;
+	    coords_cache[j + 5] = 1.0;
 
 	    //second
-	    coords_cache[j+ 6] = 1.0;
-	    coords_cache[j+ 7] = 1.0;
+	    coords_cache[j + 6] = 1.0;
+	    coords_cache[j + 7] = 1.0;
 
-	    coords_cache[j+ 8] = 1.0;
-	    coords_cache[j+ 9] = 0.0;
+	    coords_cache[j + 8] = 1.0;
+	    coords_cache[j + 9] = 0.0;
 	    
-	    coords_cache[j+10] = 0.0;
-	    coords_cache[j+11] = 0.0;
+	    coords_cache[j + 10] = 0.0;
+	    coords_cache[j + 11] = 0.0;
 
 	    j += 12;
 
-	    colors_cache[k+ 0] = r;
-	    colors_cache[k+ 1] = g;
-	    colors_cache[k+ 2] = b;
-	    colors_cache[k+ 3] = a;
+	    colors_cache[k + 0] = r;
+	    colors_cache[k + 1] = g;
+	    colors_cache[k + 2] = b;
+	    colors_cache[k + 3] = a;
 
-	    colors_cache[k+ 4] = r;
-	    colors_cache[k+ 5] = g;
-	    colors_cache[k+ 6] = b;
-	    colors_cache[k+ 7] = a;
+	    colors_cache[k + 4] = r;
+	    colors_cache[k + 5] = g;
+	    colors_cache[k + 6] = b;
+	    colors_cache[k + 7] = a;
 
-	    colors_cache[k+ 8] = r;
-	    colors_cache[k+ 9] = g;
-	    colors_cache[k+10] = b;
-	    colors_cache[k+11] = a;
+	    colors_cache[k + 8] = r;
+	    colors_cache[k + 9] = g;
+	    colors_cache[k + 10] = b;
+	    colors_cache[k + 11] = a;
 
 	    //second
-	    colors_cache[k+12] = r;
-	    colors_cache[k+13] = g;
-	    colors_cache[k+14] = b;
-	    colors_cache[k+15] = a;
+	    colors_cache[k + 12] = r;
+	    colors_cache[k + 13] = g;
+	    colors_cache[k + 14] = b;
+	    colors_cache[k + 15] = a;
 
-	    colors_cache[k+16] = r;
-	    colors_cache[k+17] = g;
-	    colors_cache[k+18] = b;
-	    colors_cache[k+19] = a;
+	    colors_cache[k + 16] = r;
+	    colors_cache[k + 17] = g;
+	    colors_cache[k + 18] = b;
+	    colors_cache[k + 19] = a;
 
-	    colors_cache[k+20] = r;
-	    colors_cache[k+21] = g;
-	    colors_cache[k+22] = b;
-	    colors_cache[k+23] = a;
+	    colors_cache[k + 20] = r;
+	    colors_cache[k + 21] = g;
+	    colors_cache[k + 22] = b;
+	    colors_cache[k + 23] = a;
 
 	    k += 24;
 
 	    if(darken > 0)
 	    {
-		dcolors_cache[l+ 0] = r;
-		dcolors_cache[l+ 1] = g;
-		dcolors_cache[l+ 2] = b;
-		dcolors_cache[l+ 3] = dark_a;
+		dcolors_cache[l + 0] = r;
+		dcolors_cache[l + 1] = g;
+		dcolors_cache[l + 2] = b;
+		dcolors_cache[l + 3] = dark_a;
 
-		dcolors_cache[l+ 4] = r;
-		dcolors_cache[l+ 5] = g;
-		dcolors_cache[l+ 6] = b;
-		dcolors_cache[l+ 7] = dark_a;
+		dcolors_cache[l + 4] = r;
+		dcolors_cache[l + 5] = g;
+		dcolors_cache[l + 6] = b;
+		dcolors_cache[l + 7] = dark_a;
 
-		dcolors_cache[l+ 8] = r;
-		dcolors_cache[l+ 9] = g;
-		dcolors_cache[l+10] = b;
-		dcolors_cache[l+11] = dark_a;
+		dcolors_cache[l + 8] = r;
+		dcolors_cache[l + 9] = g;
+		dcolors_cache[l + 10] = b;
+		dcolors_cache[l + 11] = dark_a;
 
 		//second
-		dcolors_cache[l+12] = r;
-		dcolors_cache[l+13] = g;
-		dcolors_cache[l+14] = b;
-		dcolors_cache[l+15] = dark_a;
+		dcolors_cache[l + 12] = r;
+		dcolors_cache[l + 13] = g;
+		dcolors_cache[l + 14] = b;
+		dcolors_cache[l + 15] = dark_a;
 
-		dcolors_cache[l+16] = r;
-		dcolors_cache[l+17] = g;
-		dcolors_cache[l+18] = b;
-		dcolors_cache[l+19] = dark_a;
+		dcolors_cache[l + 16] = r;
+		dcolors_cache[l + 17] = g;
+		dcolors_cache[l + 18] = b;
+		dcolors_cache[l + 19] = dark_a;
 
-		dcolors_cache[l+20] = r;
-		dcolors_cache[l+21] = g;
-		dcolors_cache[l+22] = b;
-		dcolors_cache[l+23] = dark_a;
+		dcolors_cache[l + 20] = r;
+		dcolors_cache[l + 21] = g;
+		dcolors_cache[l + 22] = b;
+		dcolors_cache[l + 23] = dark_a;
 
 		l += 24;
 	    }
@@ -359,7 +371,6 @@ FireScreen::fireAddPoint (int        x,
 
 }
 
-
 bool
 FireScreen::addParticle (CompAction         *action,
 			 CompAction::State  state,
@@ -376,7 +387,6 @@ FireScreen::addParticle (CompAction         *action,
 
     return true;
 }
-
 
 bool
 FireScreen::initiate (CompAction         *action,
@@ -418,7 +428,6 @@ FireScreen::terminate (CompAction         *action,
     return false;
 }
 
-
 bool
 FireScreen::clear (CompAction         *action,
 		   CompAction::State  state,
@@ -427,7 +436,6 @@ FireScreen::clear (CompAction         *action,
     points.clear ();
     return true;
 }
-
 
 void
 FireScreen::preparePaint (int      time)
@@ -590,8 +598,8 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	if (brightness < 1.0)
 	{
 	    /* cover the screen with a rectangle and darken it
-	    (coded as two GL_TRIANGLES for GLES compatibility)
-	    */
+	     * (coded as two GL_TRIANGLES for GLES compatibility)
+	     */
 
 	    GLfloat vertices[18];
 	    GLushort colors[24];
@@ -647,8 +655,6 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     return status;
 }
-
-
 
 void
 FireScreen::donePaint ()

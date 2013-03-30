@@ -2,7 +2,7 @@
  *
  * Compiz widget handling plugin
  *
- * widget.c
+ * widget.cpp
  *
  * Copyright : (C) 2007 by Danny Baumann
  * E-mail    : maniac@opencompositing.org

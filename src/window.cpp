@@ -38,6 +38,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/pointer_cast.hpp>
 
 #include <core/icon.h>
 #include <core/atoms.h>
@@ -807,12 +808,11 @@ CompWindow::recalcType ()
     priv->type = type;
 }
 
-
-void
+bool
 PrivateWindow::updateFrameWindow ()
 {
     if (!serverFrame)
-	return;
+	return false;
 
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
@@ -826,6 +826,8 @@ PrivateWindow::updateFrameWindow ()
     window->configureXWindow (valueMask, &xwc);
     window->windowNotify (CompWindowNotifyFrameUpdate);
     window->recalcActions ();
+
+    return true;
 }
 
 
@@ -2168,11 +2170,6 @@ compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
 {
 }
 
-void
-CompWindow::syncPosition ()
-{
-}
-
 bool
 CompWindow::focus ()
 {
@@ -3020,16 +3017,20 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
     return m;
 }
 
-static bool isPendingRestack (compiz::X11::PendingEvent::Ptr p)
+static bool isPendingRestack (const compiz::X11::PendingEvent::Ptr &p)
 {
-    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+    compiz::X11::PendingConfigureEvent::Ptr pc =
+	boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchVM (CWStackMode | CWSibling);
 }
 
-static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges &xwc, unsigned int valueMask)
+static bool isExistingRequest (const compiz::X11::PendingEvent::Ptr &p,
+			       XWindowChanges &xwc,
+			       unsigned int valueMask)
 {
-    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+    compiz::X11::PendingConfigureEvent::Ptr pc =
+	    boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
 
     return pc->matchRequest (xwc, valueMask);
 }
@@ -3330,11 +3331,19 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (lastServerInput.top != serverInput.top)
 	    valueMask |= CWY;
 
-	if (lastServerInput.right - lastServerInput.left !=
-	    serverInput.right - serverInput.left)
+	/* Calculate frame extents and protect against underflow */
+	const unsigned int lastWrapperWidth = std::max (0, serverFrameGeometry.width () -
+							   (lastServerInput.right + lastServerInput.left));
+	const unsigned int lastWrapperHeight = std::max (0, serverFrameGeometry.height () -
+							    (lastServerInput.bottom + lastServerInput.top));
+	const unsigned int wrapperWidth = std::max (0, serverFrameGeometry.width () -
+						       (serverInput.right + serverInput.left));
+	const unsigned int wrapperHeight = std::max (0, serverFrameGeometry.height () -
+						        (serverInput.bottom + serverInput.top));
+
+	if (lastWrapperWidth != wrapperWidth)
 	    valueMask |= CWWidth;
-	if (lastServerInput.bottom - lastServerInput.top !=
-	    serverInput.bottom - serverInput.top)
+	if (lastWrapperHeight != wrapperHeight)
 	    valueMask |= CWHeight;
 
 	if (valueMask)
@@ -4109,11 +4118,11 @@ CompWindow::moveResize (XWindowChanges *xwc,
 	priv->placed = true;
 }
 
-void
+bool
 PrivateWindow::updateSize ()
 {
     if (window->overrideRedirect () || !managed)
-	return;
+	return false;
 
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
@@ -4124,7 +4133,10 @@ PrivateWindow::updateSize ()
 	    window->sendSyncRequest ();
 
 	window->configureXWindow (mask, &xwc);
+	return true;
     }
+
+    return false;
 }
 
 int
@@ -4149,10 +4161,8 @@ PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
 
 		if (serverFrame)
 		{
-		    compiz::X11::PendingEvent::Ptr pc =
-			    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-										      new compiz::X11::PendingConfigureEvent (
-											  screen->dpy (), serverFrame, valueMask, &lxwc)));
+		    compiz::X11::PendingEvent::Ptr pc (new compiz::X11::PendingConfigureEvent (
+							screen->dpy (), serverFrame, valueMask, &lxwc));
 
 		    pendingConfigures.add (pc);
 		}
@@ -4235,9 +4245,9 @@ CompScreenImpl::focusTopMostWindow ()
     using ::compiz::private_screen::WindowManager;
 
     CompWindow  *focus = NULL;
-    WindowManager::reverse_iterator it = windowManager.rbegin ();
+    WindowManager::reverse_iterator it = windowManager.rserverBegin ();
 
-    for (; it != windowManager.rend (); ++it)
+    for (; it != windowManager.rserverEnd (); ++it)
     {
 	CompWindow *w = *it;
 
@@ -6780,8 +6790,10 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 	recalcActions ();
 
-	priv->updateSize ();
-	priv->updateFrameWindow ();
+	bool sizeUpdated = false;
+
+	sizeUpdated |= priv->updateSize ();
+	sizeUpdated |= priv->updateFrameWindow ();
 
 	/* Always send a moveNotify
 	 * whenever the frame extents update
@@ -6789,7 +6801,8 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	moveNotify (0, 0, true);
 
 	/* Once we have updated everything, re-set lastServerInput */
-	priv->lastServerInput = priv->serverInput;
+	if (sizeUpdated)
+	    priv->lastServerInput = priv->serverInput;
     }
 
     /* Use b for _NET_WM_FRAME_EXTENTS here because
@@ -6909,6 +6922,9 @@ PrivateWindow::reparent ()
      * but that's all */
     XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
 
+    /* Gravity here is assumed to be SouthEast, clients can update
+     * that if need be */
+
     /* Awaiting a new frame to be given to us */
     frame = None;
     serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
@@ -6918,9 +6934,16 @@ PrivateWindow::reparent ()
     /* Do not get any events from here on */
     XSelectInput (dpy, screen->root (), NoEventMask);
 
-    wrapper = XCreateWindow (dpy, serverFrame, 0, 0,
-			    wa.width, wa.height, 0, wa.depth,
+    /* If we have some frame extents, we should apply them here and
+     * set lastFrameExtents */
+    wrapper = XCreateWindow (dpy, serverFrame,
+			    serverInput.left, serverInput.top,
+			    wa.width - (serverInput.left + serverInput.right),
+			    wa.height - (serverInput.top + serverInput.bottom),
+			    0, wa.depth,
 			    InputOutput, visual, mask, &attr);
+
+    lastServerInput = serverInput;
 
     xwc.stack_mode = Above;
 

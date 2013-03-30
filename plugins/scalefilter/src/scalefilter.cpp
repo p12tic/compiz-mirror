@@ -2,7 +2,7 @@
  *
  * Compiz scale window title filter plugin
  *
- * scalefilter.c
+ * scalefilter.cpp
  *
  * Copyright : (C) 2007 by Danny Baumann
  * E-mail    : maniac@opencompositing.org

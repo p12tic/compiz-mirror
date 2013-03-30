@@ -414,14 +414,14 @@ class GroupWindow :
 	void
 	computeGlowQuads (GLTexture::Matrix *matrix);
 
-	/* paint.c */
+	/* paint.cpp */
 
 	void
 	getStretchRectangle (CompRect &box,
 			     float  &xScaleRet,
 			     float  &yScaleRet);
 
-	/* queues.c */
+	/* queues.cpp */
 
 	void
 	enqueueMoveNotify (int  dx,
@@ -438,13 +438,13 @@ class GroupWindow :
 	void
 	enqueueUngrabNotify ();
 
-	/* selection.c */
+	/* selection.cpp */
 
 	bool
 	windowInRegion (CompRegion src,
 			  float  precision);
 
-	/* group.c */
+	/* group.cpp */
 
 	bool
 	isGroupWindow ();
@@ -593,12 +593,12 @@ class GroupScreen :
 	bool
 	applyInitialActions ();
 
-	/* cairo.c */
+	/* cairo.cpp */
 
 	void
 	damagePaintRectangle (const CompRect &box);
 
-	/* queues.c */
+	/* queues.cpp */
 
 	void
 	dequeueSyncs (GroupWindow::PendingSyncs *);
@@ -615,7 +615,7 @@ class GroupScreen :
 	bool
 	dequeueTimer ();
 
-	/* selection.c */
+	/* selection.cpp */
 
 	bool
 	selectSingle (CompAction         *action,
@@ -631,7 +631,7 @@ class GroupScreen :
 			   CompAction::State  state,
 			   CompOption::Vector options);
 
-	/* group.c */
+	/* group.cpp */
 
 	void
 	grabScreen (GroupScreen::GrabState newState);
@@ -681,7 +681,7 @@ class GroupScreen :
 	handleMotionEvent (int xRoot,
 			     int yRoot);
 
-	/* tab.c */
+	/* tab.cpp */
 
 	bool
 	getCurrentMousePosition (int &x, int &y);

@@ -28,6 +28,18 @@
 
 COMPIZ_PLUGIN_20090315 (showmouse, ShowmousePluginVTable);
 
+/* 3 vertices per triangle, 2 triangles per particle */
+const unsigned short CACHESIZE_FACTOR = 3 * 2;
+
+/* 2 coordinates, x and y */
+const unsigned short COORD_COMPONENTS = CACHESIZE_FACTOR * 2;
+
+/* each vertex is stored as 3 GLfloats */
+const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
+
+/* 4 colors, RGBA */
+const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
+
 Particle::Particle () :
     life (0),
     fade (0),
@@ -103,18 +115,18 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
     int i, j, k, l;
 
     /* Check that the cache is big enough */
-    if (vertices_cache.size () < particles.size () * 6 * 3)
-	vertices_cache.resize (particles.size () * 6 * 3);
+    if (vertices_cache.size () < particles.size () * VERTEX_COMPONENTS)
+	vertices_cache.resize (particles.size () * VERTEX_COMPONENTS);
 
-    if (coords_cache.size () < particles.size () * 6 * 2)
-	coords_cache.resize (particles.size () * 6 * 2);
+    if (coords_cache.size () < particles.size () * COORD_COMPONENTS)
+	coords_cache.resize (particles.size () * COORD_COMPONENTS);
 
-    if (colors_cache.size () < particles.size () * 6 * 4)
-	colors_cache.resize (particles.size () * 6 * 4);
+    if (colors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	colors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     if (darken > 0)
-	if (dcolors_cache.size () < particles.size () * 6 * 4)
-	    dcolors_cache.resize (particles.size () * 6 * 4);
+	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     glEnable (GL_BLEND);
 
@@ -443,7 +455,6 @@ ShowmouseScreen::genNewParticles (int f_time)
 
 }
 
-
 void
 ShowmouseScreen::doDamageRegion ()
 {
@@ -478,7 +489,6 @@ ShowmouseScreen::positionUpdate (const CompPoint &p)
 {
     mousePos = p;
 }
-
 
 void
 ShowmouseScreen::preparePaint (int f_time)

@@ -728,11 +728,10 @@ addOptionFromPB (CCSPlugin * plugin,
 		 const OptionMetadata & option)
 {
     const char *name;
-    Bool readonly = FALSE;
 
     name = option.name ().c_str ();
 
-    readonly = option.has_read_only () && option.read_only ();
+    Bool readonly = option.has_read_only () && option.read_only ();
 
     if (!strlen (name) || readonly)
 	return;

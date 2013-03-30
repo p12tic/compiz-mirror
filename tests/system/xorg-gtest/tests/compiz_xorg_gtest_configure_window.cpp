@@ -55,27 +55,41 @@ bool Advance (Display *d, bool r)
     return ct::AdvanceToNextEventOnSuccess (d, r);
 }
 
-Window GetTopParent (Display *display,
-		     Window w)
+Window GetImmediateParent (Display *display,
+			   Window  w,
+			   Window  &rootReturn)
 {
-    Window rootReturn;
     Window parentReturn = w;
     Window *childrenReturn;
     unsigned int nChildrenReturn;
 
+    XQueryTree (display,
+		w,
+		&rootReturn,
+		&parentReturn,
+		&childrenReturn,
+		&nChildrenReturn);
+    XFree (childrenReturn);
+
+    return parentReturn;
+}
+
+
+Window GetTopParent (Display *display,
+		     Window w)
+{
+    Window rootReturn = 0;
+    Window parentReturn = w;
     Window lastParent = 0;
 
     do
     {
 	lastParent = parentReturn;
 
-	XQueryTree (display,
-		    lastParent,
-		    &rootReturn,
-		    &parentReturn,
-		    &childrenReturn,
-		    &nChildrenReturn);
-	XFree (childrenReturn);
+	parentReturn = GetImmediateParent (display,
+					   lastParent,
+					   rootReturn);
+	
     } while (parentReturn != rootReturn);
 
     return lastParent;
@@ -564,4 +578,175 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsLocked)
 				   currentY - top,
 				   currentWidth + (left + right),
 				   currentHeight + (top + bottom)));
+}
+
+/* Check that changing the frame extents by one on each side
+ * adjusts the wrapper window appropriately */
+TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsAdjWrapperWindow)
+{
+    ::Display *dpy = Display ();
+
+    ReparentedWindow w = CreateWindow (dpy);
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				w.frame,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    /* Set frame extents and get a response */
+    int left = 1;
+    int right = 1;
+    int top = 1;
+    int bottom = 1;
+
+    SendSetFrameExtentsRequest (w.client, left, right, top, bottom);
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (w.client, left, right, top, bottom));
+
+    /* Wrapper geometry is extents.xy, size.wh */
+    Window root;
+    Window wrapper = GetImmediateParent (dpy, w.client, root);
+    ASSERT_TRUE (VerifyWindowSize (wrapper,
+				   left,
+				   top,
+				   currentWidth,
+				   currentHeight));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsUnmapped)
+{
+    ::Display *dpy = Display ();
+
+    Window client = ct::CreateNormalWindow (dpy);
+    WaitForWindowCreation (client);
+
+    /* Set frame extents and get a response */
+    int left = 1;
+    int right = 1;
+    int top = 1;
+    int bottom = 1;
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				client,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    /* We should get a response with our frame extents but it shouldn't actually
+     * do anything to the client as it is unmapped */
+    SendSetFrameExtentsRequest (client, left, right, top, bottom);
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (client, left, right, top, bottom));
+
+    ASSERT_TRUE (VerifyWindowSize (client,
+				   currentX,
+				   currentY,
+				   currentWidth,
+				   currentHeight));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsCorrectMapBehaviour)
+{
+    ::Display *dpy = Display ();
+
+    Window client = ct::CreateNormalWindow (dpy);
+    WaitForWindowCreation (client);
+
+    /* Set frame extents and get a response */
+    int left = 1;
+    int right = 1;
+    int top = 1;
+    int bottom = 1;
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				client,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    SendSetFrameExtentsRequest (client, left, right, top, bottom);
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (client, left, right, top, bottom));
+
+    /* Map the window */
+    XMapRaised (dpy, client);
+    WaitForReparentAndMap (dpy, client);
+
+    /* Check the geometry of the frame */
+    Window frame = GetTopParent (dpy, client);
+    ASSERT_TRUE (VerifyWindowSize (frame,
+				   currentX,
+				   currentY,
+				   currentWidth + (left + right),
+				   currentHeight + (top + bottom)));
+
+    /* Wrapper geometry is extents.xy, size.wh */
+    Window root;
+    Window wrapper = GetImmediateParent (dpy, client, root);
+    ASSERT_TRUE (VerifyWindowSize (wrapper,
+				   left,
+				   top,
+				   currentWidth,
+				   currentHeight));
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourAfterMap)
+{
+    ::Display *dpy = Display ();
+
+    Window client = ct::CreateNormalWindow (dpy);
+    WaitForWindowCreation (client);
+
+    /* Set frame extents and get a response */
+    int left = 1;
+    int right = 1;
+    int top = 1;
+    int bottom = 1;
+
+    int currentX, currentY;
+    unsigned int currentWidth, currentHeight;
+    ASSERT_TRUE (QueryGeometry (dpy,
+				client,
+				currentX,
+				currentY,
+				currentWidth,
+				currentHeight));
+
+    SendSetFrameExtentsRequest (client, left, right, top, bottom);
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (client, left, right, top, bottom));
+
+    /* Map the window */
+    XMapRaised (dpy, client);
+    WaitForReparentAndMap (dpy, client);
+
+    /* Send it another frame extents request */
+    right = right + 1;
+    bottom = bottom + 1;
+
+    SendSetFrameExtentsRequest (client, left, right, top, bottom);
+    ASSERT_TRUE (VerifySetFrameExtentsResponse (client, left, right, top, bottom));
+
+    /* Check the geometry of the frame */
+    Window frame = GetTopParent (dpy, client);
+    ASSERT_TRUE (VerifyWindowSize (frame,
+				   currentX,
+				   currentY,
+				   currentWidth + (left + right),
+				   currentHeight + (top + bottom)));
+
+    /* Wrapper geometry is extents.xy, size.wh */
+    Window root;
+    Window wrapper = GetImmediateParent (dpy, client, root);
+    ASSERT_TRUE (VerifyWindowSize (wrapper,
+				   left,
+				   top,
+				   currentWidth,
+				   currentHeight));
 }

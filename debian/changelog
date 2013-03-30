@@ -1,3 +1,34 @@
+compiz (1:0.9.9~daily13.02.28-0ubuntu1) raring; urgency=low
+
+  [ Sam Spilsbury ]
+  * [nvidia] Moving windows freezes and stutters on nvidia (especially
+    if some other window is redrawing). (LP: #1027211)
+
+  [ Brandon Schaefer ]
+  * [Regression] Lowering window by middle click doesn't switch focus to
+    raised window (LP: #1034616)
+
+  [ Sam Spilsbury ]
+  * compiz crashed with SIGSEGV in DecorWindow::moveNotify()
+    [decor.cpp:2791] (LP: #1056409)
+  * [regression] r3523: Restored windows' contents are offset from (not
+    aligned with) their frames (LP: #1089279)
+  * Creating windows above just-destroyed windows causes newly created
+    windows to receive invalid stack positions (LP: #1088399)
+
+  [ Paul Donohue ]
+  * Dim Inactive plugin disabled by default although stated  as enabled
+    (LP: #808909)
+
+  [ MC Return ]
+  * Dim Inactive plugin disabled by default although stated  as enabled
+    (LP: #808909)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3627
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 28 Feb 2013 04:02:37 +0000
+
 compiz (1:0.9.9~daily13.02.26-0ubuntu1) raring; urgency=low
 
   [ Sam Spilsbury ]

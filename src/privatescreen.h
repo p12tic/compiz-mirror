@@ -177,6 +177,11 @@ class WindowManager : boost::noncopyable
 	reverse_iterator rbegin() const { return windows.rbegin(); }
 	reverse_iterator rend() const { return windows.rend(); }
 
+	iterator serverBegin() const { return serverWindows.begin(); }
+	iterator serverEnd() const { return serverWindows.end(); }
+	reverse_iterator rserverBegin() const { return serverWindows.rbegin(); }
+	reverse_iterator rserverEnd() const { return serverWindows.rend(); }
+
 	void clearFullscreenHints() const;
 	void showOrHideForDesktop(unsigned int desktop) const;
 	void setWindowActiveness(::compiz::private_screen::History& history) const;

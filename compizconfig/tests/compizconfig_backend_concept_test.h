@@ -90,7 +90,7 @@ class CCSBackendConceptTestEnvironmentFactory :
 	CCSBackendConceptTestEnvironmentInterface::Ptr
 	ConstructTestEnv ()
 	{
-	    return boost::shared_static_cast <I> (boost::make_shared <I> ());
+	    return boost::make_shared <I> ();
 	}
 };
 
