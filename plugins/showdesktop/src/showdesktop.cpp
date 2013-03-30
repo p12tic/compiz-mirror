@@ -281,8 +281,8 @@ void ShowdesktopPlacer::bottomLeft (const CompRect     &workArea,
 {
     offScreenX = leftOffscreenPosition (workArea, geometry,
 					border, partSize);
-    offScreenY = topOffscreenPosition (workArea, geometry,
-				       border, partSize);
+    offScreenY = bottomOffscreenPosition (workArea, geometry,
+					  border, partSize);
 }
 
 void ShowdesktopPlacer::bottomRight (const CompRect     &workArea,
