@@ -167,7 +167,6 @@ CubeaddonScreen::changeCap (bool top, int change)
 bool
 CubeaddonScreen::setOption (const CompString &name, CompOption::Value &value)
 {
-
     unsigned int index;
 
     bool rv = CubeaddonOptions::setOption (name, value);
@@ -206,11 +205,9 @@ CubeaddonScreen::setOption (const CompString &name, CompOption::Value &value)
 void
 CubeaddonScreen::drawBasicGround ()
 {
-    float i;
-
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    i = optionGetIntensity () * 2;
+    float i = optionGetIntensity () * 2;
 
     GLMatrix transform;
     transform.translate (0.0f, 0.0f, -DEFAULT_Z_CAMERA);
@@ -272,10 +269,8 @@ CubeaddonScreen::cubeCheckOrientation (const GLScreenPaintAttrib &sAttrib,
 				       CompOutput                *output,
 				       std::vector<GLVector>     &points)
 {
-    bool status;
-
-    status = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-					       output, points);
+    bool status = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						    output, points);
 
     if (mReflection)
 	return !status;
@@ -318,7 +313,7 @@ CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
 					  PaintOrder                order)
 {
     bool rv = cubeScreen->cubeShouldPaintViewport (sAttrib, transform,
-					      output, order);
+						   output, order);
 
     if (rv || cubeScreen->unfolded ())
 	return rv;
@@ -406,7 +401,6 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 {
     GLScreenPaintAttrib sa;
     GLMatrix            sTransform;
-    int                 i, l, opacity;
     int                 cullNorm, cullInv;
     bool                wasCulled = glIsEnabled (GL_CULL_FACE);
     float               cInv = (top) ? 1.0: -1.0;
@@ -416,12 +410,13 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 
     glGetIntegerv (GL_CULL_FACE_MODE, &cullNorm);
     cullInv   = (cullNorm == GL_BACK)? GL_FRONT : GL_BACK;
+
     if (top)
 	color = cubeScreen->topColor ();
     else
 	color = cubeScreen->bottomColor ();
 
-    opacity = cubeScreen->desktopOpacity () * color[3] / 0xffff;
+    int opacity = cubeScreen->desktopOpacity () * color[3] / 0xffff;
 
     glEnable (GL_BLEND);
 
@@ -438,11 +433,11 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 
     glEnable(GL_CULL_FACE);
 
-    for (l = 0; l < ((cubeScreen->invert () == 1) ? 2 : 1); l++)
+    for (int l = 0; l < ((cubeScreen->invert () == 1) ? 2 : 1); l++)
     {
 	glCullFace(((l == 1) ^ top) ? cullInv : cullNorm);
 
-	for (i = 0; i < size; i++)
+	for (int i = 0; i < size; i++)
 	{
 	    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
@@ -688,17 +683,21 @@ CubeaddonScreen::cubePaintTop (const GLScreenPaintAttrib &sAttrib,
 			       int                       size,
 			       const GLVector            &normal)
 {
-    if ((!optionGetDrawBottom () && cubeScreen->invert () == -1) ||
-        (!optionGetDrawTop () && cubeScreen->invert () == 1))
+    if (((!optionGetDrawBottom () && cubeScreen->invert () == -1) ||
+	 (!optionGetDrawTop () && cubeScreen->invert () == 1)) &&
+	/* the original top cap will work for the cube only */
+	(optionGetDeformation () == DeformationNone))
     {
 	cubeScreen->cubePaintTop (sAttrib, transform, output, size, normal);
     }
-
+    else
+    {
     if (!optionGetDrawTop ())
-        return;
+	return;
 
     paintCap (sAttrib, transform, output, size,
 	      true, optionGetAdjustTop ());
+    }
 }
 
 void 
@@ -708,17 +707,21 @@ CubeaddonScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
 				  int                       size,
 				  const GLVector            &normal)
 {
-    if ((!optionGetDrawBottom () && cubeScreen->invert () == 1) ||
-        (!optionGetDrawTop () && cubeScreen->invert () == -1))
+    if (((!optionGetDrawBottom () && cubeScreen->invert () == 1) ||
+	 (!optionGetDrawTop () && cubeScreen->invert () == -1)) &&
+	/* the original bottom cap will work for the cube only */
+	(optionGetDeformation () == DeformationNone))
     {
 	cubeScreen->cubePaintBottom (sAttrib, transform, output, size, normal);
     }
-
+    else
+    {
     if (!optionGetDrawBottom ())
-        return;
+	return;
 
     paintCap (sAttrib, transform, output, size,
 	      false, optionGetAdjustBottom ());
+    }
 }
 
 void 
@@ -911,7 +914,6 @@ CubeaddonWindow::glDraw (const GLMatrix            &transform,
     if (!(mask & PAINT_WINDOW_TRANSFORMED_MASK) && caScreen->mDeform)
     {
 	CompPoint offset;
-	int x1, x2;
 
 	if (!window->onAllViewports ())
 	{
@@ -919,8 +921,8 @@ CubeaddonWindow::glDraw (const GLMatrix            &transform,
 	    offset = window->getMovementForOffset (offset);
 	}
 	
-	x1 = window->x () - window->output ().left + offset.x ();
-	x2 = window->x () + window->width () + window->output ().right + offset.x ();
+	int x1 = window->x () - window->output ().left + offset.x ();
+	int x2 = window->x () + window->width () + window->output ().right + offset.x ();
 	if (x1 < 0 && x2 < 0)
 	    return false;
 	if (x1 > screen->width () && x2 > screen->width ())
@@ -941,16 +943,15 @@ CubeaddonWindow::glDrawTexture (GLTexture                 *texture,
 	int       i;
 	int       sx1, sx2, sw, sy1, sy2, sh;
 	int       offX = 0, offY = 0;
-	float     x, y, ym;
+	float     x, y;
 	GLfloat   *v, *n;
-	float     inv;
 	
 	GLVertexBuffer               *vb = gWindow->vertexBuffer ();
 	CubeScreen::MultioutputMode  cMOM = cubeScreen->multioutputMode ();
 	float                        cDist = cubeScreen->distance ();
 
-	inv = (cubeScreen->invert () == 1) ? 1.0: -1.0;
-	ym  = (caScreen->optionGetDeformation () == CubeaddonScreen::DeformationCylinder) ? 0.0 : 1.0;
+	float inv = (cubeScreen->invert () == 1) ? 1.0: -1.0;
+	float ym  = (caScreen->optionGetDeformation () == CubeaddonScreen::DeformationCylinder) ? 0.0 : 1.0;
 	
 	int vertexCount = vb->countVertices ();
 
