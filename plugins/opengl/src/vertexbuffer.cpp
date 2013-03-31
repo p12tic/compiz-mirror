@@ -523,7 +523,7 @@ int PrivateVertexBuffer::render (const GLMatrix            *projection,
     // set per-plugin uniforms
     for (unsigned int i = 0; i < uniforms.size (); i++)
     {
-	uniforms[i]->set (program);
+	uniforms[i]->set (tmpProgram);
     }
 
     //convert paint attribs to 0-1 range
