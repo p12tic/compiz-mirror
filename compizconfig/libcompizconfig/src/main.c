@@ -4342,6 +4342,8 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 	if (!newSetting)
 	{
 	    free (sectionName);
+	    free (keyName);
+	    free (iniValue);
 	    return FALSE;
 	}
 
@@ -4447,6 +4449,8 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 	    {
 		free (newSetting);
 		free (sectionName);
+		free (keyName);
+		free (iniValue);
 		return FALSE;
 	    }
 	}
@@ -4477,10 +4481,11 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
 	
 	return TRUE;
     }
-    
+
     free (keyName);
     free (sectionName);
-    
+    free (iniValue);
+
     return FALSE;
 }
 
@@ -4509,6 +4514,8 @@ ccsProcessSettingMinus (IniDictionary      *dict,
 	if (!newSetting)
 	{
 	    free (sectionName);
+	    free (keyName);
+	    free (iniValue);
 	    return FALSE;
 	}
 
@@ -4614,6 +4621,8 @@ ccsProcessSettingMinus (IniDictionary      *dict,
 	    {
 		free (newSetting);
 		free (sectionName);
+		free (keyName);
+		free (iniValue);
 		return FALSE;
 	    }
 	}
@@ -4647,6 +4656,7 @@ ccsProcessSettingMinus (IniDictionary      *dict,
     
     free (keyName);
     free (sectionName);
+    free (iniValue);
 
     return FALSE;
 }
