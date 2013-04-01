@@ -86,7 +86,8 @@ PrivateGLWindow::PrivateGLWindow (CompWindow *w,
     bindFailed (false),
     vertexBuffer (new GLVertexBuffer ()),
     autoProgram(new GLWindowAutoProgram(this)),
-    icons ()
+    icons (),
+    configureLock (w->obtainLockOnConfigureRequests ())
 {
     paint.xScale	= 1.0f;
     paint.yScale	= 1.0f;

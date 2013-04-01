@@ -1398,7 +1398,6 @@ WobblyScreen::preparePaint (int msSinceLastPaint)
 				     w->output ().top -
 				     w->geometry ().y (),
 				     true);
-			    w->syncPosition ();
 			}
 
 			ww->model = model;

@@ -27,6 +27,13 @@ COMPIZCONFIG_BEGIN_DECLS
 
 char * getSectionName (void);
 
+typedef enum {
+    OptionProfile,
+    OptionBackend,
+    OptionIntegration,
+    OptionAutoSort
+} ConfigOption;
+
 COMPIZCONFIG_END_DECLS
 
 #endif

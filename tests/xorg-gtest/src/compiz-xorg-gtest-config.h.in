@@ -25,8 +25,9 @@
 
 namespace
 {
-    const std::string compizLDLibraryPath ("@COMPIZ_LD_LIBRARY_PATH@");//("/home/smspillaz/Source/Compiz/dev/dev/merges/compiz/proposed/compiz/build/src/");
-    const std::string compizBinaryPath ("@COMPIZ_BINARY@");//("/home/smspillaz/Source/Compiz/dev/dev/merges/compiz/proposed/compiz/build/src/compiz");
+    const std::string compizLDLibraryPath ("@COMPIZ_LD_LIBRARY_PATH@");
+    const std::string compizBinaryPath ("@COMPIZ_BINARY@");
+    const std::string compizOverridePluginPath ("@COMPIZ_OVERRIDE_PLUGIN_PATH@");
 }
 
 #endif

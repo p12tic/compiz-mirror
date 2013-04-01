@@ -1,7 +1,7 @@
 /*
  * Animation plugin for compiz/beryl
  *
- * airplane3d.c
+ * airplane.cpp (based on airplane3d.c)
  *
  * Copyright : (C) 2006 Erkin Bahceci
  * E-mail    : erkinbah@gmail.com

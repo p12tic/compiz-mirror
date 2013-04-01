@@ -79,6 +79,16 @@ class WSNamesScreen :
 
 	void
 	handleEvent (XEvent *);
+
+	CompPoint
+	getTextPlacementPosition ();
+
+	void
+	damageTextArea ();
+
+    private:
+
+	bool shouldDrawText ();
 };
 
 class WorkspacenamesPluginVTable :

@@ -74,6 +74,8 @@ if (XSLTPROC_EXECUTABLE)
 	DEPENDS ${COMPIZ_CURRENT_XML_FILE}
     )
 
-    compiz_install_gconf_schema ("${CMAKE_BINARY_DIR}/generated/compiz-${COMPIZ_CURRENT_PLUGIN}.schemas" ${PLUGIN_SCHEMADIR})
+    if (_install_plugin_${COMPIZ_CURRENT_PLUGIN})
+        compiz_install_gconf_schema ("${CMAKE_BINARY_DIR}/generated/compiz-${COMPIZ_CURRENT_PLUGIN}.schemas" ${PLUGIN_SCHEMADIR})
+    endif (_install_plugin_${COMPIZ_CURRENT_PLUGIN})
     list (APPEND COMPIZ_CURRENT_SOURCES_ADDS ${CMAKE_BINARY_DIR}/generated/compiz-${COMPIZ_CURRENT_PLUGIN}.schemas)
 endif ()

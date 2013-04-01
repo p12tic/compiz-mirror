@@ -40,7 +40,7 @@ ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...)
 
     if (minLevel == _ccsLogLevels)
     {
-        char *env = getenv ("CCS_LOG_LEVEL");
+        const char *env = getenv ("CCS_LOG_LEVEL");
         minLevel = ccsLogInfo;
         if (env != NULL)
         {

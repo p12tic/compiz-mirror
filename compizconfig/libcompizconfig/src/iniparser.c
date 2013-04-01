@@ -1,4 +1,5 @@
 /*
+ Modified for libcompizconfig usage, by Sam Spilsbury (smspillaz@gmail.com)
  Based upon libiniparser, by Nicolas Devillard
  Hacked into 1 file (m-iniparser) by Freek/2005
  Original terms following:
@@ -32,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <ccs.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -844,12 +847,13 @@ iniparser_new (char *ininame)
 
     lock = ini_file_lock (ininame, FALSE);
     if (!lock)
-	return NULL;
+	ccsWarning ("unable to lock file %s, reads may conflict", ininame);
 
     ini = fopen (ininame, "r");
     if (!ini)
     {
-	ini_file_unlock (lock );
+	if (lock)
+	    ini_file_unlock (lock );
 	return NULL;
     }
 
@@ -903,7 +907,8 @@ iniparser_new (char *ininame)
     }
 
     fclose (ini);
-    ini_file_unlock (lock );
+    if (lock)
+	ini_file_unlock (lock );
 
     return d;
 }

@@ -54,13 +54,26 @@ class CompIcon;
 class PrivateWindow;
 struct CompStartupSequence;
 
-namespace compiz { namespace private_screen {
-    class Ping;
-    class GrabManager;
-    class OutputDevices;
-    class WindowManager;
-    class StartupSequence;
-}}
+namespace compiz
+{
+namespace window
+{
+namespace configure_buffers
+{
+class Releasable;
+typedef boost::shared_ptr <Releasable> ReleasablePtr;
+}
+}
+
+namespace private_screen
+{
+class Ping;
+class GrabManager;
+class OutputDevices;
+class WindowManager;
+class StartupSequence;
+}
+}
 
 #define ROOTPARENT(x) (((x)->frame ()) ? (x)->frame () : (x)->id ())
 
@@ -427,8 +440,6 @@ class CompWindow :
 
 	void move (int dx, int dy, bool immediate = true);
 
-	void syncPosition ();
-
 	void moveInputFocusTo ();
 
 	void moveInputFocusToOtherWindow ();
@@ -528,6 +539,12 @@ class CompWindow :
 
 	bool updateStruts ();
 	const CompStruts *struts () const;
+
+	bool queryAttributes (XWindowAttributes &);
+	bool queryFrameAttributes (XWindowAttributes &);
+
+	compiz::window::configure_buffers::ReleasablePtr
+	obtainLockOnConfigureRequests ();
 
 	WRAPABLE_HND (0, WindowInterface, void, getOutputExtents,
 		      CompWindowExtents&);

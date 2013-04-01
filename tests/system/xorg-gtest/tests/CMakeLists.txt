@@ -7,13 +7,17 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
 			 ${X11_INCLUDE_DIRS}
 			 ${XORG_SERVER_INCLUDE_XORG_GTEST}
 			 ${XORG_SERVER_GTEST_SRC}
-			 ${GTEST_INCLUDE_DIRS})
+                         ${GTEST_INCLUDE_DIRS}
+                         ${COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR})
 
     link_directories (${X11_XI_LIBRARY_DIRS}
                       ${compiz_BINARY_DIR}/tests/shared/src)
 
     add_executable (compiz_xorg_gtest_test_window_stacking
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_test_window_stacking.cpp)
+
+    add_executable (compiz_xorg_gtest_test_configure_window
+                    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_configure_window.cpp)
 
     add_executable (compiz_xorg_gtest_test_icccm
 		    ${CMAKE_CURRENT_SOURCE_DIR}/compiz_xorg_gtest_icccm.cpp)
@@ -52,6 +56,13 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     target_link_libraries (compiz_xorg_gtest_test_shape_handling
 			   ${COMPIZ_XORG_GTEST_LIBRARIES})
 
-    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling)
+    compiz_discover_tests (compiz_xorg_gtest_test_shape_handling WITH_XORG_GTEST)
+
+    target_link_libraries (compiz_xorg_gtest_test_configure_window
+			   ${COMPIZ_XORG_GTEST_LIBRARIES})
+
+    add_dependencies (compiz_xorg_gtest_test_configure_window testhelper)
+
+    compiz_discover_tests (compiz_xorg_gtest_test_configure_window WITH_XORG_GTEST)
 
 endif (BUILD_XORG_GTEST AND X11_XI_FOUND)

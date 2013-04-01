@@ -139,6 +139,22 @@ install (
     DESTINATION ${libdir}/pkgconfig
 )
 
+set (COMPIZ_INTERNAL_INCLUDES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/string/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pluginclasshandler/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/point/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rect/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/servergrab/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/region/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/geometry/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/geometry-saver/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/extents/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window/constrainment/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/logmessage/include)
+
 if (COMPIZ_BUILD_TESTING)
 
     find_package (GoogleTest)
@@ -194,7 +210,7 @@ add_subdirectory (xslt)
 add_subdirectory (plugins)
 add_subdirectory (tests)
 
-# Leave last - the cmake_install.cmake script is guarunteed
+# Leave last - the cmake_install.cmake script is guaranteed
 # to run in a single job, and we need to force GSettings
 # schema recompilation to happen after all other install
 # targets (there is no way to set install target dependencies)

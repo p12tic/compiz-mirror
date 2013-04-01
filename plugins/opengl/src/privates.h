@@ -33,6 +33,7 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <core/atoms.h>
+#include <core/configurerequestbuffer.h>
 
 #ifdef USE_GLES
 #include <opengl/framebufferobject.h>
@@ -283,6 +284,8 @@ class PrivateGLWindow :
 	GLVertexBuffer::AutoProgram *autoProgram;
 
 	std::list<GLIcon> icons;
+
+	compiz::window::configure_buffers::Releasable::Ptr configureLock;
 };
 
 #endif

@@ -33,7 +33,10 @@ typedef struct _CCSPlugin                    CCSPlugin;
 typedef struct _CCSContext	             CCSContext;
 typedef struct _CCSBackend	             CCSBackend;
 typedef struct _CCSBackendInfo               CCSBackendInfo;
+typedef struct _CCSBackendInterface          CCSBackendInterface;
+typedef struct _CCSBackendLoader             CCSBackendLoader;
 typedef struct _CCSDynamicBackend	     CCSDynamicBackend;
+typedef struct _CCSConfigFile                CCSConfigFile;
 typedef struct _CCSIntegration               CCSIntegration;
 typedef struct _CCSSettingValue              CCSSettingValue;
 typedef struct _CCSIntegratedSettingInfo     CCSIntegratedSettingInfo;
@@ -41,6 +44,8 @@ typedef struct _CCSIntegratedSetting         CCSIntegratedSetting;
 typedef struct _CCSIntegratedSettingFactory  CCSIntegratedSettingFactory;
 typedef struct _CCSIntegratedSettingsStorage CCSIntegratedSettingsStorage;
 typedef struct _CCSInterfaceTable            CCSInterfaceTable;
+
+typedef CCSBackendInterface * (*BackendGetInfoProc) (void);
 
 COMPIZCONFIG_END_DECLS
 

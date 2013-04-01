@@ -1,3 +1,6 @@
+#ifndef _COMPIZCONFIG_CCS_CONTEXT_MOCK_H
+#define _COMPIZCONFIG_CCS_CONTEXT_MOCK_H
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -29,7 +32,7 @@ class CCSContextGMockInterface
 	virtual const char * getBackend () = 0;
 	virtual Bool setBackend (char *name) = 0;
 	virtual void setIntegrationEnabled (Bool value) = 0;
-	virtual void setProfile (char *name) = 0;
+	virtual void setProfile (const char *name) = 0;
 	virtual void setPluginListAutoSort (Bool value) = 0;
 	virtual const char * getProfile () = 0;
 	virtual Bool getIntegrationEnabled () = 0;
@@ -77,7 +80,7 @@ class CCSContextGMock :
 	MOCK_METHOD0 (getBackend, const char * ());
 	MOCK_METHOD1 (setBackend, Bool (char *));
 	MOCK_METHOD1 (setIntegrationEnabled, void (Bool));
-	MOCK_METHOD1 (setProfile, void (char *));
+	MOCK_METHOD1 (setProfile, void (const char *));
 	MOCK_METHOD1 (setPluginListAutoSort, void (Bool));
 	MOCK_METHOD0 (getProfile, const char * ());
 	MOCK_METHOD0 (getIntegrationEnabled, Bool ());
@@ -232,7 +235,7 @@ class CCSContextGMock :
 	}
 
 	static void
-	ccsSetProfile (CCSContext *context, char *name)
+	ccsSetProfile (CCSContext *context, const char *name)
 	{
 	    ((CCSContextGMock *) ccsObjectGetPrivate (context))->setProfile (name);
 	}
@@ -356,3 +359,5 @@ class CCSContextGMock :
 };
 
 extern CCSContextInterface CCSContextGMockInterface;
+
+#endif

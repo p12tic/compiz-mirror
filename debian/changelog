@@ -1,5 +1,37 @@
-compiz (1:0.9.9~daily13.02.19-0ubuntu2) UNRELEASED; urgency=low
+compiz (1:0.9.9~daily13.02.28-0ubuntu1) raring; urgency=low
 
+  [ Sam Spilsbury ]
+  * [nvidia] Moving windows freezes and stutters on nvidia (especially
+    if some other window is redrawing). (LP: #1027211)
+
+  [ Brandon Schaefer ]
+  * [Regression] Lowering window by middle click doesn't switch focus to
+    raised window (LP: #1034616)
+
+  [ Sam Spilsbury ]
+  * compiz crashed with SIGSEGV in DecorWindow::moveNotify()
+    [decor.cpp:2791] (LP: #1056409)
+  * [regression] r3523: Restored windows' contents are offset from (not
+    aligned with) their frames (LP: #1089279)
+  * Creating windows above just-destroyed windows causes newly created
+    windows to receive invalid stack positions (LP: #1088399)
+
+  [ Paul Donohue ]
+  * Dim Inactive plugin disabled by default although stated  as enabled
+    (LP: #808909)
+
+  [ MC Return ]
+  * Dim Inactive plugin disabled by default although stated  as enabled
+    (LP: #808909)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3627
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Thu, 28 Feb 2013 04:02:37 +0000
+
+compiz (1:0.9.9~daily13.02.26-0ubuntu1) raring; urgency=low
+
+  [ Sam Spilsbury ]
   * debian/ccp_plugin.patch:
     - Added new option --no-auto-load-ccp to prevent the ccp
       plugin from autoloading. Useful for tests where having
@@ -14,7 +46,26 @@ compiz (1:0.9.9~daily13.02.19-0ubuntu2) UNRELEASED; urgency=low
   * debian/ubuntu_config.patch:
     - Adjust EWMH test for new value
 
- -- Sam Spilsbury <smspillaz@interpol>  Mon, 18 Feb 2013 09:51:41 +0800
+  [ Sam Spilsbury <sam.spilsbury@canonical.com>, Brandon Schaefer ]
+  * [2013/02/20] compiz/unity don't run, just loading cpp (LP: #1130679)
+
+  [ Sam Spilsbury ]
+  * Unity: wrong window dimensions / location in Java applications (LP:
+    #1110138)
+  * Add copytex to default/unity profiles (LP: #1130160)
+  * Closing windows sometimes shows black areas using Nvidia 313.x
+    drivers (LP: #1119608)
+  * [2013/02/20] compiz/unity don't run, just loading cpp (LP: #1130679)
+  * Run xorg-gtest tests in CI (LP: #1120009)
+
+  [ MC Return ]
+  * CCSM: No icons and text in main screen, submenus of the plugins work
+    normally (LP: #1130941)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3621
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Tue, 26 Feb 2013 04:02:36 +0000
 
 compiz (1:0.9.9~daily13.02.19-0ubuntu1) raring; urgency=low
 

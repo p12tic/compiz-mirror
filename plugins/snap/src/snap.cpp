@@ -52,8 +52,6 @@ SnapWindow::move (int dx, int dy, bool sync)
     window->move (dx, dy, true);
     /* warp the pointer in the case of
      * snap release */
-    if (sync)
-	window->syncPosition ();
     skipNotify = false;
 }
 

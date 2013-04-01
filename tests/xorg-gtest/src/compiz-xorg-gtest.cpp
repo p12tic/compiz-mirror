@@ -22,12 +22,16 @@
  */
 #include <list>
 #include <stdexcept>
+#include <sstream>
 #include <iomanip>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <boost/shared_ptr.hpp>
+#include <gtest_shared_tmpenv.h>
+#include <gtest_shared_characterwrapper.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
+#include <compiz_xorg_gtest_communicator.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
@@ -48,7 +52,6 @@ const unsigned int WINDOW_BORDER = 0;
 const unsigned int WINDOW_DEPTH = CopyFromParent;
 const unsigned int WINDOW_CLASS = InputOutput;
 Visual             *WINDOW_VISUAL = CopyFromParent;
-
 
 const long                 WINDOW_ATTRIB_VALUE_MASK = 0;
 
@@ -142,6 +145,10 @@ ct::WaitForEventOfTypeOnWindowMatching (Display             *dpy,
 	return true;
     }
 
+    std::stringstream ss;
+    matcher.DescribeTo (&ss);
+    ADD_FAILURE () << "Expected event matching: " << ss.str ();
+
     return false;
 }
 
@@ -221,6 +228,54 @@ class StartupClientMessageMatcher :
 };
 }
 
+class ct::PrivateClientMessageXEventMatcher
+{
+    public:
+
+	PrivateClientMessageXEventMatcher (Display *display,
+					   Atom    message,
+					   Window  target) :
+	    display (display),
+	    message (message),
+	    target (target)
+	{
+	}
+
+	Display *display;
+	Atom    message;
+	Window  target;
+};
+
+ct::ClientMessageXEventMatcher::ClientMessageXEventMatcher (Display *display,
+							    Atom    message,
+							    Window  target) :
+    priv (new ct::PrivateClientMessageXEventMatcher (display, message, target))
+{
+}
+
+bool
+ct::ClientMessageXEventMatcher::MatchAndExplain (const XEvent &event, MatchResultListener *listener) const
+{
+    const XClientMessageEvent *xce = reinterpret_cast <const XClientMessageEvent *> (&event);
+
+    if (xce->message_type == priv->message &&
+	xce->window == priv->target)
+	return true;
+
+    return false;
+}
+
+void
+ct::ClientMessageXEventMatcher::DescribeTo (std::ostream *os) const
+{
+    CharacterWrapper name (XGetAtomName (priv->display,
+					 priv->message));
+    *os << "matches ClientMessage with type " << name
+	<< " on window "
+	<< std::hex << static_cast <long> (priv->target)
+	<< std::dec << std::endl;
+}
+
 class ct::PrivatePropertyNotifyXEventMatcher
 {
     public:
@@ -268,13 +323,15 @@ class ct::PrivateConfigureNotifyXEventMatcher
 					     int          x,
 					     int          y,
 					     unsigned int width,
-					     unsigned int height) :
+					     unsigned int height,
+					     unsigned int mask) :
 	    mAbove (above),
 	    mBorder (border),
 	    mX (x),
 	    mY (y),
 	    mWidth (width),
-	    mHeight (height)
+	    mHeight (height),
+	    mMask (mask)
 	{
 	}
 
@@ -284,6 +341,7 @@ class ct::PrivateConfigureNotifyXEventMatcher
 	int          mY;
 	int          mWidth;
 	int          mHeight;
+	unsigned int mMask;
 };
 
 ct::ConfigureNotifyXEventMatcher::ConfigureNotifyXEventMatcher (Window       above,
@@ -291,13 +349,15 @@ ct::ConfigureNotifyXEventMatcher::ConfigureNotifyXEventMatcher (Window       abo
 								int          x,
 								int          y,
 								unsigned int width,
-								unsigned int height) :
+								unsigned int height,
+								unsigned int mask) :
     priv (new ct::PrivateConfigureNotifyXEventMatcher (above,
 						       border,
 						       x,
 						       y,
 						       width,
-						       height))
+						       height,
+						       mask))
 {
 }
 
@@ -306,24 +366,58 @@ ct::ConfigureNotifyXEventMatcher::MatchAndExplain (const XEvent &event, MatchRes
 {
     const XConfigureEvent *ce = reinterpret_cast <const XConfigureEvent *> (&event);
 
-    return ce->above == priv->mAbove &&
-	   ce->border_width == priv->mBorder &&
-	   ce->x == priv->mX &&
-	   ce->y == priv->mY &&
-	   ce->width == priv->mWidth &&
-	   ce->height == priv->mHeight;
+    if (priv->mMask & CWSibling)
+	if (ce->above != priv->mAbove)
+	    return false;
+
+    if (priv->mMask & CWBorderWidth)
+	if (ce->border_width != priv->mBorder)
+	    return false;
+
+    if (priv->mMask & CWX)
+	if (ce->x != priv->mX)
+	    return false;
+
+    if (priv->mMask & CWY)
+	if (ce->y != priv->mY)
+	    return false;
+
+    if (priv->mMask & CWWidth)
+	if (ce->width != priv->mWidth)
+	    return false;
+
+    if (priv->mMask & CWHeight)
+	if (ce->height != priv->mHeight)
+	    return false;
+
+    return true;
 }
 
 void
 ct::ConfigureNotifyXEventMatcher::DescribeTo (std::ostream *os) const
 {
+    std::stringstream x, y, width, height, border, sibling;
+
+    if (priv->mMask & CWX)
+	x << " x: " << priv->mX;
+
+    if (priv->mMask & CWY)
+	y << " y: " << priv->mY;
+
+    if (priv->mMask & CWWidth)
+	width << " width: " << priv->mWidth;
+
+    if (priv->mMask & CWHeight)
+	height << " height: " << priv->mHeight;
+
+    if (priv->mMask & CWBorderWidth)
+	border << " border: " << priv->mBorder;
+
+    if (priv->mMask & CWSibling)
+	sibling << " above: " << std::hex << priv->mAbove << std::dec;
+
     *os << "Matches ConfigureNotify with parameters : " << std::endl <<
-	   " x: " << priv->mX <<
-	   " y: " << priv->mY <<
-	   " width: " << priv->mWidth <<
-	   " height: " << priv->mHeight <<
-	   " border: " << priv->mBorder <<
-	   " above: " << std::hex << priv->mAbove << std::dec;
+	   x.str () << y.str () << width.str () << height.str () << border.str () << sibling.str ();
 }
 
 class ct::PrivateShapeNotifyXEventMatcher
@@ -450,9 +544,10 @@ ct::PrivateCompizProcess::WaitForStartupMessage (Display                        
     XSelectInput (dpy, root, attrib.your_event_mask);
 }
 
-ct::CompizProcess::CompizProcess (::Display                       *dpy,
-				  ct::CompizProcess::StartupFlags flags,
-				  unsigned int                    waitTimeout) :
+ct::CompizProcess::CompizProcess (::Display                           *dpy,
+				  ct::CompizProcess::StartupFlags     flags,
+				  const ct::CompizProcess::PluginList &plugins,
+				  int                                 waitTimeout) :
     priv (new PrivateCompizProcess (flags))
 {
     xorg::testing::Process::SetEnv ("LD_LIBRARY_PATH", compizLDLibraryPath, true);
@@ -463,6 +558,12 @@ ct::CompizProcess::CompizProcess (::Display                       *dpy,
 	args.push_back ("--replace");
 
     args.push_back ("--send-startup-message");
+
+    /* Copy in plugin list */
+    for (ct::CompizProcess::PluginList::const_iterator it = plugins.begin ();
+	 it != plugins.end ();
+	 ++it)
+	args.push_back (*it);
 
     priv->mProcess.Start (compizBinaryPath, args);
     EXPECT_EQ (priv->mProcess.GetState (), xorg::testing::Process::RUNNING);
@@ -508,7 +609,7 @@ ct::CompizXorgSystemTest::SetUp ()
     const unsigned int USEC_TO_MSEC = 1000;
     const unsigned int SLEEP_TIME = 50 * USEC_TO_MSEC;
 
-    unsigned int connectionAttemptsRemaining = MAX_CONNECTION_ATTEMPTS;
+    int connectionAttemptsRemaining = MAX_CONNECTION_ATTEMPTS;
 
     /* Work around an inherent race condition in XOpenDisplay
      *
@@ -527,8 +628,11 @@ ct::CompizXorgSystemTest::SetUp ()
      * to work around that by simply re-trying our connection to the server
      * once every 50ms or so, and we're trying about 10 times before giving up
      * and assuming there is a problem with the server.
+     *
+     * The predecrement here is so that connectionAttemptsRemaining will be 0
+     * on failure
      */
-    while (connectionAttemptsRemaining--)
+    while (--connectionAttemptsRemaining)
     {
 	try
 	{
@@ -571,16 +675,136 @@ ct::CompizXorgSystemTest::CompizProcessState ()
 }
 
 void
-ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags flags)
+ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags     flags,
+				       const ct::CompizProcess::PluginList &plugins)
 {
-    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, 3000));
+    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, plugins, 3000));
+}
+
+class ct::PrivateAutostartCompizXorgSystemTest
+{
+    public:
+
+	PrivateAutostartCompizXorgSystemTest () :
+	    overridePluginDirEnv ("COMPIZ_PLUGIN_DIR", compizOverridePluginPath.c_str ())
+	{
+	}
+
+	TmpEnv overridePluginDirEnv;
+};
+
+ct::AutostartCompizXorgSystemTest::AutostartCompizXorgSystemTest () :
+    priv (new ct::PrivateAutostartCompizXorgSystemTest ())
+{
+}
+
+ct::CompizProcess::StartupFlags
+ct::AutostartCompizXorgSystemTest::GetStartupFlags ()
+{
+    return static_cast <ct::CompizProcess::StartupFlags> (
+		ct::CompizProcess::ReplaceCurrentWM |
+		ct::CompizProcess::WaitForStartupMessage);
+}
+
+int
+ct::AutostartCompizXorgSystemTest::GetEventMask ()
+{
+    return 0;
+}
+
+ct::CompizProcess::PluginList
+ct::AutostartCompizXorgSystemTest::GetPluginList ()
+{
+    return ct::CompizProcess::PluginList ();
 }
 
 void
 ct::AutostartCompizXorgSystemTest::SetUp ()
 {
     ct::CompizXorgSystemTest::SetUp ();
-    StartCompiz (static_cast <ct::CompizProcess::StartupFlags> (
-		     ct::CompizProcess::ReplaceCurrentWM |
-		     ct::CompizProcess::WaitForStartupMessage));
+
+    ::Display *display = Display ();
+    XSelectInput (display, DefaultRootWindow (display),
+		  GetEventMask ());
+
+    StartCompiz (GetStartupFlags (),
+		 GetPluginList ());
+}
+
+class ct::PrivateAutostartCompizXorgSystemTestWithTestHelper
+{
+    public:
+
+	std::auto_ptr <ct::MessageAtoms> mMessages;
+};
+
+void
+ct::AutostartCompizXorgSystemTestWithTestHelper::WaitForWindowCreation (Window w)
+{
+    ::Display *dpy = Display ();
+
+    XEvent event;
+
+    bool requestAcknowledged = false;
+    while (ct::ReceiveMessage (dpy,
+			       FetchAtom (ct::messages::TEST_HELPER_WINDOW_READY),
+			       event))
+    {
+	requestAcknowledged =
+	    w == static_cast <unsigned long> (event.xclient.data.l[0]);
+
+	if (requestAcknowledged)
+	    break;
+
+    }
+
+    ASSERT_TRUE (requestAcknowledged);
+}
+
+Atom
+ct::AutostartCompizXorgSystemTestWithTestHelper::FetchAtom (const char *message)
+{
+    return priv->mMessages->FetchForString (message);
+}
+
+ct::AutostartCompizXorgSystemTestWithTestHelper::AutostartCompizXorgSystemTestWithTestHelper () :
+    priv (new ct::PrivateAutostartCompizXorgSystemTestWithTestHelper)
+{
+}
+
+int
+ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask ()
+{
+    return AutostartCompizXorgSystemTest::GetEventMask () |
+	   StructureNotifyMask;
+}
+
+void
+ct::AutostartCompizXorgSystemTestWithTestHelper::SetUp ()
+{
+    ct::AutostartCompizXorgSystemTest::SetUp ();
+    priv->mMessages.reset (new ct::MessageAtoms (Display ()));
+
+    ::Display *dpy = Display ();
+    Window root = DefaultRootWindow (dpy);
+
+    Atom    ready = priv->mMessages->FetchForString (ct::messages::TEST_HELPER_READY_MSG);
+    ct::ClientMessageXEventMatcher matcher (dpy, ready, root);
+
+    ASSERT_TRUE (ct::AdvanceToNextEventOnSuccess (
+		     dpy,
+		     ct::WaitForEventOfTypeOnWindowMatching (dpy,
+							     root,
+							     ClientMessage,
+							     -1,
+							     -1,
+							     matcher)));
+}
+
+ct::CompizProcess::PluginList
+ct::AutostartCompizXorgSystemTestWithTestHelper::GetPluginList ()
+{
+    ct::CompizProcess::PluginList list;
+    list.push_back ("testhelper");
+    return list;
 }

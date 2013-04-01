@@ -152,6 +152,13 @@ class Decoration :
 
 	unsigned int              updateState;
 	X11DecorPixmapReceiver    mPixmapReceiver;
+
+    private:
+
+	bool            bareDecorationOnly ();
+        Decoration::Ptr findRealDecoration ();
+        Decoration::Ptr findBareDecoration ();
+        void            moveDecoratedWindowBy (const CompPoint &movement);
 };
 
 class DecorationList :
@@ -159,9 +166,10 @@ class DecorationList :
 {
     public:
 	bool updateDecoration  (Window id, Atom decorAtom, DecorPixmapRequestorInterface *requestor);
-	DecorationInterface::Ptr findMatchingDecoration(unsigned int frameType,
-								 unsigned int frameState,
-								 unsigned int frameActions);
+	DecorationInterface::Ptr findMatchingDecoration (unsigned int frameType,
+							 unsigned int frameState,
+							 unsigned int frameActions) const;
+	DecorationInterface::Ptr findMatchingDecoration (Pixmap p) const;
 	const Decoration::Ptr & findMatchingDecoration (CompWindow *w, bool sizeCheck);
         void clear ()
         {
@@ -220,6 +228,11 @@ class DecorScreen :
 	bool registerPaintHandler (compiz::composite::PaintHandler *pHnd);
 	void unregisterPaintHandler ();
 
+    private:
+
+	DecorPixmapRequestorInterface * findWindowRequestor (Window);
+	DecorationListFindMatchingInterface * findWindowDecorations (Window);
+
     public:
 
 	CompositeScreen *cScreen;
@@ -255,6 +268,10 @@ class DecorScreen :
 
 	MatchedDecorClipGroup mMenusClipGroup;
 	X11DecorPixmapRequestor   mRequestor;
+	PixmapReleasePool::Ptr    mReleasePool;
+	PendingHandler            mPendingHandler;
+	UnusedHandler             mUnusedHandler;
+	protocol::Communicator    mCommunicator;
 };
 
 class DecorWindow :
@@ -362,6 +379,14 @@ class DecorWindow :
 	CompRegion              mInputRegion;
 
 	X11DecorPixmapRequestor   mRequestor;
+
+    private:
+
+	bool            bareDecorationOnly ();
+	Decoration::Ptr findRealDecoration ();
+	Decoration::Ptr findBareDecoration ();
+	void            moveDecoratedWindowBy (const CompPoint &movement,
+					       bool instant);
 };
 
 class DecorPluginVTable :

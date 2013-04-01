@@ -2,7 +2,7 @@
  *
  * Compiz wall plugin
  *
- * offset-movement.c
+ * offset-movement.cpp
  *
  * Copyright (c) 2006 Robert Carr <racarr@beryl-project.org>
  *
