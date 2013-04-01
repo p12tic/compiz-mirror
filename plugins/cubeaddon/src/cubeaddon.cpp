@@ -44,9 +44,6 @@ CubeaddonScreen::CubeCap::CubeCap ()
 void
 CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
 {
-    if (mFiles.empty ())
-	return;
-
     CompSize tSize;
     float    xScale, yScale;
 
@@ -57,7 +54,6 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
     mLoaded = false;
 
     mCurrent = mCurrent % mFiles.size ();
-
 
     CompString imgName = mFiles[mCurrent].s ();
     CompString pname = "cubeaddon";
@@ -147,6 +143,7 @@ CubeaddonScreen::changeCap (bool top, int change)
     {
 	int count = cap->mFiles.size ();
 	cap->mCurrent = (cap->mCurrent + change + count) % count;
+
 	if (top)
 	{
 	    cap->load (optionGetTopScale (), optionGetTopAspect (),
@@ -158,9 +155,15 @@ CubeaddonScreen::changeCap (bool top, int change)
 		       optionGetBottomClamp ());
 	    cap->mTexMat.scale (1.0, -1.0, 1.0);
 	}
-	cScreen->damageScreen ();
     }
-
+    /* we need to clear the texture if no texture files are specified */
+    else if (cap->mFiles.empty ())
+    {
+	cap->mTexture.clear ();
+	cap->mLoaded = false;
+	cap->mCurrent = 0;
+	cap->mTexMat.reset ();
+    }
     return false;
 }
 
@@ -683,21 +686,18 @@ CubeaddonScreen::cubePaintTop (const GLScreenPaintAttrib &sAttrib,
 			       int                       size,
 			       const GLVector            &normal)
 {
-    if (((!optionGetDrawBottom () && cubeScreen->invert () == -1) ||
-	 (!optionGetDrawTop () && cubeScreen->invert () == 1)) &&
-	/* the original top cap will work for the cube only */
-	(optionGetDeformation () == DeformationNone))
-    {
-	cubeScreen->cubePaintTop (sAttrib, transform, output, size, normal);
-    }
-    else
-    {
+    /* we do not want to draw anything if this option is disabled */
     if (!optionGetDrawTop ())
 	return;
 
-    paintCap (sAttrib, transform, output, size,
-	      true, optionGetAdjustTop ());
-    }
+    if (((!optionGetDrawBottom () && cubeScreen->invert () == -1) ||
+	 (!optionGetDrawTop () && cubeScreen->invert () == 1)) &&
+	/* the original top cap will work for the non-deformed cube only */
+	(optionGetDeformation () == DeformationNone))
+	cubeScreen->cubePaintTop (sAttrib, transform, output, size, normal);
+    else
+	paintCap (sAttrib, transform, output, size,
+		  true, optionGetAdjustTop ());
 }
 
 void 
@@ -707,21 +707,18 @@ CubeaddonScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
 				  int                       size,
 				  const GLVector            &normal)
 {
-    if (((!optionGetDrawBottom () && cubeScreen->invert () == 1) ||
-	 (!optionGetDrawTop () && cubeScreen->invert () == -1)) &&
-	/* the original bottom cap will work for the cube only */
-	(optionGetDeformation () == DeformationNone))
-    {
-	cubeScreen->cubePaintBottom (sAttrib, transform, output, size, normal);
-    }
-    else
-    {
+    /* we do not want to draw anything if this option is disabled */
     if (!optionGetDrawBottom ())
 	return;
 
-    paintCap (sAttrib, transform, output, size,
+    if (((!optionGetDrawBottom () && cubeScreen->invert () == 1) ||
+	 (!optionGetDrawTop () && cubeScreen->invert () == -1)) &&
+	/* the original bottom cap will work for the non-deformed cube only */
+	(optionGetDeformation () == DeformationNone))
+	cubeScreen->cubePaintBottom (sAttrib, transform, output, size, normal);
+    else
+	paintCap (sAttrib, transform, output, size,
 	      false, optionGetAdjustBottom ());
-    }
 }
 
 void 
@@ -1517,7 +1514,6 @@ CubeaddonScreen::donePaint ()
     cScreen->donePaint ();
 }
 
-
 CubeaddonScreen::CubeaddonScreen (CompScreen *s) :
     PluginClassHandler<CubeaddonScreen, CompScreen> (s),
     CubeaddonOptions (),
@@ -1609,4 +1605,3 @@ CubeaddonPluginVTable::init ()
 
     return true;
 }
-
