@@ -168,7 +168,7 @@ GridScreen::initiateCommon (CompAction		*action,
 	    if (props.numCellsX == 1)
 		centerCheck = true;
 
-	    if (!gw->isGridResized)
+	    if (!gw->isGridResized && !gw->isGridHorzMaximized && !gw->isGridVertMaximized)
 		/* Store size not including borders when using a keybinding */
 		gw->originalSize = slotToRect(cw, cw->serverBorderRect ());
 	}
@@ -219,7 +219,8 @@ GridScreen::initiateCommon (CompAction		*action,
 	desiredSlot.setWidth (workarea.width () / props.numCellsX);
 
 	/* Adjust for constraints and decorations */
-	if (where & ~(GridMaximize | GridLeft | GridRight))
+	if (where & ~(GridMaximize |
+		      GridLeft | GridRight | GridTop | GridBottom))
 	    desiredRect = constrainSize (cw, desiredSlot);
 	else
 	    desiredRect = slotToRect (cw, desiredSlot);
@@ -231,7 +232,9 @@ GridScreen::initiateCommon (CompAction		*action,
 
 	if (desiredRect.y () == currentRect.y () &&
 	    desiredRect.height () == currentRect.height () &&
-	    where & ~(GridMaximize | GridLeft | GridRight) && gw->lastTarget & where)
+	    where & ~(GridMaximize |
+		      GridLeft | GridRight | GridTop | GridBottom) &&
+	    gw->lastTarget & where)
 	{
 	    int slotWidth25  = workarea.width () / 4;
 	    int slotWidth33  = (workarea.width () / 3) + cw->border ().left;
@@ -365,9 +368,6 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
-		gw->isGridVertMaximized = true;
-		gw->isGridResized = false;
-
 		/* Semi-maximize the window vertically */
 		cw->maximize (CompWindowStateMaximizedVertMask);
 
@@ -377,6 +377,10 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->sizeHintsFlags |= PResizeInc;
 		    gw->window->sizeHints ().flags &= ~(PResizeInc);
 		}
+
+		gw->isGridVertMaximized = true;
+		gw->isGridHorzMaximized = false;
+		gw->isGridResized = false;
 	    }
 	    /* Special case for top and bottom, actually horizontally maximize
 	     * the window */
@@ -392,9 +396,6 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
-		gw->isGridHorzMaximized = true;
-		gw->isGridResized = false;
-
 		/* Semi-maximize the window horizontally */
 		cw->maximize (CompWindowStateMaximizedHorzMask);
 
@@ -404,6 +405,10 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->sizeHintsFlags |= PResizeInc;
 		    gw->window->sizeHints ().flags &= ~(PResizeInc);
 		}
+
+		gw->isGridHorzMaximized = true;
+		gw->isGridVertMaximized = false;
+		gw->isGridResized = false;
 	    }
 	    else
 	    {
