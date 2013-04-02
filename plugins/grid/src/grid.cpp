@@ -63,7 +63,6 @@ GridScreen::constrainSize (CompWindow      *w,
 			   const CompRect& slot)
 {
     int      cw, ch;
-
     CompRect result = slotToRect (w, slot);
 
     if (w->constrainNewWindowSize (result.width (), result.height (), &cw, &ch))
@@ -198,6 +197,7 @@ GridScreen::initiateCommon (CompAction		*action,
 	    gw->isGridResized = false;
 	    gw->isGridHorzMaximized = false;
 	    gw->isGridVertMaximized = false;
+
 	    for (unsigned int i = 0; i < animations.size (); i++)
 		animations.at (i).fadingOut = true;
 	    return true;
@@ -368,7 +368,7 @@ GridScreen::initiateCommon (CompAction		*action,
 		gw->isGridVertMaximized = true;
 		gw->isGridResized = false;
 
-		/* Maximize the window */
+		/* Semi-maximize the window vertically */
 		cw->maximize (CompWindowStateMaximizedVertMask);
 
 		/* Be evil */
@@ -395,7 +395,7 @@ GridScreen::initiateCommon (CompAction		*action,
 		gw->isGridHorzMaximized = true;
 		gw->isGridResized = false;
 
-		/* Maximize the window */
+		/* Semi-maximize the window horizontally */
 		cw->maximize (CompWindowStateMaximizedHorzMask);
 
 		/* Be evil */
@@ -870,7 +870,7 @@ GridWindow::validateResizeRequest (unsigned int &xwcm,
 
     /* Don't allow non-pagers to change
      * the size of the window, the user
-     * specified this size, thank-you */
+     * specified this size */
     if (isGridHorzMaximized || isGridVertMaximized)
 	if (source != ClientTypePager)
 	    xwcm = 0;
@@ -896,7 +896,8 @@ GridWindow::grabNotify (int          x,
 	grabMask = mask;
 
 	if (!isGridResized &&
-	    !isGridHorzMaximized && !isGridVertMaximized &&
+	    !isGridHorzMaximized &&
+	    !isGridVertMaximized &&
 	    gScreen->optionGetSnapbackWindows ())
 	    /* Store size not including borders when grabbing with cursor */
 	    originalSize = gScreen->slotToRect(window,
@@ -965,9 +966,10 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	!(window->state () & MAXIMIZE_STATE))
     {
 	lastTarget = GridUnknown;
-	if ((isGridHorzMaximized ||
-	     isGridVertMaximized) &&
-	    (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedVertMask)
+	if ((isGridHorzMaximized &&
+	     (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedHorzMask) ||
+	    (isGridHorzMaximized &&
+	     (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedVertMask))
 	    gScreen->restoreWindow(0, 0, gScreen->o);
     }
     else if (!(lastState & MAXIMIZE_STATE) &&
@@ -1004,7 +1006,8 @@ GridScreen::restoreWindow (CompAction         *action,
     GRID_WINDOW (cw);
 
     if (!gw->isGridResized &&
-	(!gw->isGridHorzMaximized || !gw->isGridVertMaximized))
+	!gw->isGridHorzMaximized &&
+	!gw->isGridVertMaximized)
     {
 	/* Grid hasn't touched this window or has maximized it. If it's
 	 * maximized, unmaximize it and get out. */
@@ -1012,9 +1015,19 @@ GridScreen::restoreWindow (CompAction         *action,
 	    cw->maximize(0);
 	return true;
     }
-
     else if (!gw->isGridResized &&
-	     !gw->isGridHorzMaximized && gw->isGridVertMaximized)
+	     gw->isGridHorzMaximized &&
+	     !gw->isGridVertMaximized)
+    {
+	/* Window has been horizontally maximized by grid. We only need
+	 * to restore Y and height - core handles X and width. */
+	if (gw->sizeHintsFlags)
+	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
+	xwcm |=  CWY | CWHeight;
+    }
+    else if (!gw->isGridResized &&
+	     !gw->isGridHorzMaximized &&
+	     gw->isGridVertMaximized)
     {
 	/* Window has been vertically maximized by grid. We only need
 	 * to restore X and width - core handles Y and height. */
@@ -1022,17 +1035,9 @@ GridScreen::restoreWindow (CompAction         *action,
 	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
 	xwcm |= CWX | CWWidth;
     }
-    else if (!gw->isGridResized &&
-	     gw->isGridHorzMaximized && !gw->isGridVertMaximized)
-    {
-	/* Window has been horizontally maximized by grid. We only need
-	 * to restore Y and height - core handles X and width. */
-	if (gw->sizeHintsFlags)
-	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
-	xwcm |= CWY | CWHeight;
-    }
     else if (gw->isGridResized &&
-	     !gw->isGridHorzMaximized && !gw->isGridVertMaximized)
+	     !gw->isGridHorzMaximized &&
+	     !gw->isGridVertMaximized)
 	/* Window is just gridded (center, corners).
 	 * We need to handle everything. */
 	xwcm |= CWX | CWY | CWWidth | CWHeight;
