@@ -975,7 +975,7 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	lastTarget = GridUnknown;
 	if ((isGridHorzMaximized &&
 	     (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedHorzMask) ||
-	    (isGridHorzMaximized &&
+	    (isGridVertMaximized &&
 	     (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedVertMask))
 	    gScreen->restoreWindow(0, 0, gScreen->o);
     }
