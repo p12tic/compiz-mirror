@@ -155,6 +155,7 @@ CubeaddonScreen::changeCap (bool top, int change)
 		       optionGetBottomClamp ());
 	    cap->mTexMat.scale (1.0, -1.0, 1.0);
 	}
+	cScreen->damageScreen ();
     }
     /* we need to clear the texture if no texture files are specified */
     else if (cap->mFiles.empty ())
