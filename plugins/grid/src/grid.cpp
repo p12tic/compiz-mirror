@@ -354,8 +354,9 @@ GridScreen::initiateCommon (CompAction		*action,
 
 	    gw->sizeHintsFlags = 0;
 
-	    /* Special case for left and right, actually vertically maximize
-	     * the window */
+	    /* Special case for left and right,
+	     * actually vertically maximize the window
+	     */
 	    if (where & GridLeft || where & GridRight)
 	    {
 		/* First restore the window to its original size */
@@ -368,6 +369,10 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
+		gw->isGridVertMaximized = true;
+		gw->isGridHorzMaximized = false;
+		gw->isGridResized = false;
+
 		/* Semi-maximize the window vertically */
 		cw->maximize (CompWindowStateMaximizedVertMask);
 
@@ -377,13 +382,10 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->sizeHintsFlags |= PResizeInc;
 		    gw->window->sizeHints ().flags &= ~(PResizeInc);
 		}
-
-		gw->isGridVertMaximized = true;
-		gw->isGridHorzMaximized = false;
-		gw->isGridResized = false;
 	    }
-	    /* Special case for top and bottom, actually horizontally maximize
-	     * the window */
+	    /* Special case for top and bottom,
+	     * actually horizontally maximize the window
+	     */
 	    else if (where & GridTop || where & GridBottom)
 	    {
 		/* First restore the window to its original size */
@@ -396,6 +398,10 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
+		gw->isGridHorzMaximized = true;
+		gw->isGridVertMaximized = false;
+		gw->isGridResized = false;
+
 		/* Semi-maximize the window horizontally */
 		cw->maximize (CompWindowStateMaximizedHorzMask);
 
@@ -405,10 +411,6 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->sizeHintsFlags |= PResizeInc;
 		    gw->window->sizeHints ().flags &= ~(PResizeInc);
 		}
-
-		gw->isGridHorzMaximized = true;
-		gw->isGridVertMaximized = false;
-		gw->isGridResized = false;
 	    }
 	    else
 	    {
