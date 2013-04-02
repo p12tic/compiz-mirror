@@ -212,11 +212,13 @@ class CompizXorgSystemConfigureWindowTest :
 	bool VerifySetFrameExtentsResponse (Window w, int left, int right, int top, int bottom);
 	bool VerifyWindowSize (Window w, int x, int y, int width, int height);
 
-	/* Helper function for the Create*WindowOverrideRedirect* tests */
-	void CreateWithAttrAndTest(int overrideCreate, 
-				   bool shouldChangeOverride, 
-				   int overrideChange, 
-				   bool overrideAssert);
+	/* Helper functions for the Create*WindowOverrideRedirect* tests */
+	Window GrabAndCreateWindowWithAttrs (::Display *dpy,
+					     XSetWindowAttributes &attr);
+	void UngrabSyncAndTestOverride (::Display *dpy,
+					Window w,
+					bool overrideAssert);
+
 
     protected:
 
@@ -722,38 +724,26 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 				   currentHeight));
 }
 
-void
-CompizXorgSystemConfigureWindowTest::CreateWithAttrAndTest(int overrideCreate, 
-							   bool shouldChangeOverride, 
-							   int overrideChange, 
-							   bool overrideAssert)
+
+Window
+CompizXorgSystemConfigureWindowTest::GrabAndCreateWindowWithAttrs (::Display *dpy,
+								   XSetWindowAttributes &attr)
 {
-    ::Display *dpy = Display ();
+    /* NOTE: We need to ungrab the server after this function */
     XGrabServer (dpy);
 
-    /* Create window attributes, set override as overrideCreate */
-    XSetWindowAttributes attr;
-    attr.override_redirect = overrideCreate;
-
     /* Create a window with our custom attributes */
-    unsigned int mask = CWOverrideRedirect;
-    Window w = XCreateWindow (dpy, DefaultRootWindow (dpy),
-			      0, 0, 100, 100, 0, CopyFromParent,
-			      InputOutput, CopyFromParent, mask,
-			      &attr);
+    return XCreateWindow (dpy, DefaultRootWindow (dpy),
+			  0, 0, 100, 100, 0, CopyFromParent,
+			  InputOutput, CopyFromParent, CWOverrideRedirect,
+			  &attr);
+}
 
-    if (shouldChangeOverride) 
-    {
-	/* If we test the case of a attribute change, we don't destroy the window */
-	attr.override_redirect = overrideChange;
-	XChangeWindowAttributes (dpy, w, mask, &attr);
-    }
-    else 
-    {
-	/* ...otherwise, destroy it serwer-side */
-	XDestroyWindow (dpy, w);
-    }
-
+void
+CompizXorgSystemConfigureWindowTest::UngrabSyncAndTestOverride (::Display *dpy,
+								Window w,
+								bool overrideAssert)
+{
     XSync (dpy, false);
 
     XUngrabServer (dpy);
@@ -763,36 +753,63 @@ CompizXorgSystemConfigureWindowTest::CreateWithAttrAndTest(int overrideCreate,
     /* Check if the created window had the attributes passed correctly */
     std::vector <long> data = WaitForWindowCreation (w);
     EXPECT_EQ (overrideAssert, IsOverrideRedirect (data));
-
-    /* In case we didn't do this before, destroy the window now */
-    if (shouldChangeOverride)
-	XDestroyWindow (dpy, w);
 }
+
 
 TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectTrue)
 {
-    /* Create window with override_redirect = 1, destroy the window and check the
-     * override */
-    CreateWithAttrAndTest(1, false, 0, true);
+    ::Display *dpy = Display ();
+    XSetWindowAttributes attr;
+    attr.override_redirect = 1;
+
+    Window w = GrabAndCreateWindowWithAttrs (dpy, attr);
+
+    XDestroyWindow (dpy, w);
+
+    UngrabSyncAndTestOverride (dpy, w, true);
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectFalse)
 {
-    /* Create window with override_redirect = 0, destroy the window and check the
-     * override */
-    CreateWithAttrAndTest(0, false, 0, false);
+    ::Display *dpy = Display ();
+    XSetWindowAttributes attr;
+    attr.override_redirect = 0;
+
+    Window w = GrabAndCreateWindowWithAttrs (dpy, attr);
+
+    XDestroyWindow (dpy, w);
+
+    UngrabSyncAndTestOverride (dpy, w, false);
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, CreateChangeWindowOverrideRedirectTrue)
 {
-    /* Create window with override_redirect = 0, change the attributes after creation
-     * to override_redirect = 1 and assert the override */
-    CreateWithAttrAndTest(0, true, 1, true);
+    ::Display *dpy = Display ();
+    XSetWindowAttributes attr;
+    attr.override_redirect = 0;
+
+    Window w = GrabAndCreateWindowWithAttrs (dpy, attr);
+
+    attr.override_redirect = 1;
+    XChangeWindowAttributes (dpy, w, CWOverrideRedirect, &attr);
+
+    UngrabSyncAndTestOverride (dpy, w, true);
+
+    XDestroyWindow (dpy, w);
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, CreateChangeWindowOverrideRedirectFalse)
 {
-    /* Create window with override_redirect = 1, change the attributes after creation
-     * to override_redirect = 0 and assert the override */
-    CreateWithAttrAndTest(1, true, 0, false);
+    ::Display *dpy = Display ();
+    XSetWindowAttributes attr;
+    attr.override_redirect = 1;
+
+    Window w = GrabAndCreateWindowWithAttrs (dpy, attr);
+
+    attr.override_redirect = 0;
+    XChangeWindowAttributes (dpy, w, CWOverrideRedirect, &attr);
+
+    UngrabSyncAndTestOverride (dpy, w, false);
+
+    XDestroyWindow (dpy, w);
 }
