@@ -1,4 +1,4 @@
-compiz (1:0.9.9~daily13.02.28-0ubuntu1~test1) raring; urgency=low
+compiz (1:0.9.9~daily13.02.28-0ubuntu1) raring; urgency=low
 
   [ Sam Spilsbury ]
   * [nvidia] Moving windows freezes and stutters on nvidia (especially
