@@ -212,6 +212,12 @@ class CompizXorgSystemConfigureWindowTest :
 	bool VerifySetFrameExtentsResponse (Window w, int left, int right, int top, int bottom);
 	bool VerifyWindowSize (Window w, int x, int y, int width, int height);
 
+	/* Helper function for the Create*WindowOverrideRedirect* tests */
+	void CreateWithAttrAndTest(int overrideCreate, 
+				   bool shouldChangeOverride, 
+				   int overrideChange, 
+				   bool overrideAssert);
+
     protected:
 
 	ReparentedWindow CreateWindow (::Display *);
@@ -716,14 +722,18 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 				   currentHeight));
 }
 
-TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectTrue)
+void
+CompizXorgSystemConfigureWindowTest::CreateWithAttrAndTest(int overrideCreate, 
+							   bool shouldChangeOverride, 
+							   int overrideChange, 
+							   bool overrideAssert)
 {
     ::Display *dpy = Display ();
     XGrabServer (dpy);
 
-    /* Create window attributes, set override as true */
+    /* Create window attributes, set override as overrideCreate */
     XSetWindowAttributes attr;
-    attr.override_redirect = 1;
+    attr.override_redirect = overrideCreate;
 
     /* Create a window with our custom attributes */
     unsigned int mask = CWOverrideRedirect;
@@ -732,8 +742,17 @@ TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirect
 			      InputOutput, CopyFromParent, mask,
 			      &attr);
 
-    /* ...destroy it server-side */
-    XDestroyWindow (dpy, w);
+    if (shouldChangeOverride) 
+    {
+	/* If we test the case of a attribute change, we don't destroy the window */
+	attr.override_redirect = overrideChange;
+	XChangeWindowAttributes (dpy, w, mask, &attr);
+    }
+    else 
+    {
+	/* ...otherwise, destroy it serwer-side */
+	XDestroyWindow (dpy, w);
+    }
 
     XSync (dpy, false);
 
@@ -743,35 +762,37 @@ TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirect
 
     /* Check if the created window had the attributes passed correctly */
     std::vector <long> data = WaitForWindowCreation (w);
-    EXPECT_TRUE (IsOverrideRedirect (data));
+    EXPECT_EQ (overrideAssert, IsOverrideRedirect (data));
+
+    /* In case we didn't do this before, destroy the window now */
+    if (shouldChangeOverride)
+	XDestroyWindow (dpy, w);
+}
+
+TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectTrue)
+{
+    /* Create window with override_redirect = 1, destroy the window and check the
+     * override */
+    CreateWithAttrAndTest(1, false, 0, true);
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, CreateDestroyWindowOverrideRedirectFalse)
 {
-    ::Display *dpy = Display ();
-    XGrabServer (dpy);
+    /* Create window with override_redirect = 0, destroy the window and check the
+     * override */
+    CreateWithAttrAndTest(0, false, 0, false);
+}
 
-    /* Create window attributes, set override as false */
-    XSetWindowAttributes attr;
-    attr.override_redirect = 0;
+TEST_F (CompizXorgSystemConfigureWindowTest, CreateChangeWindowOverrideRedirectTrue)
+{
+    /* Create window with override_redirect = 0, change the attributes after creation
+     * to override_redirect = 1 and assert the override */
+    CreateWithAttrAndTest(0, true, 1, true);
+}
 
-    /* Create a window with our custom attributes */
-    unsigned int mask = CWOverrideRedirect;
-    Window w = XCreateWindow (dpy, DefaultRootWindow (dpy),
-			      0, 0, 100, 100, 0, CopyFromParent,
-			      InputOutput, CopyFromParent, mask,
-			      &attr);
-
-    /* ...destroy it server-side */
-    XDestroyWindow (dpy, w);
-
-    XSync (dpy, false);
-
-    XUngrabServer (dpy);
-
-    XSync (dpy, false);
-
-    /* Check if the created window had the attributes passed correctly */
-    std::vector <long> data = WaitForWindowCreation (w);
-    EXPECT_FALSE (IsOverrideRedirect (data));
+TEST_F (CompizXorgSystemConfigureWindowTest, CreateChangeWindowOverrideRedirectFalse)
+{
+    /* Create window with override_redirect = 1, change the attributes after creation
+     * to override_redirect = 0 and assert the override */
+    CreateWithAttrAndTest(1, true, 0, false);
 }
