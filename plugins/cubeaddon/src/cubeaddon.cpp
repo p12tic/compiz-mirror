@@ -44,6 +44,16 @@ CubeaddonScreen::CubeCap::CubeCap ()
 void
 CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
 {
+    /* we need to clear the texture, if no texture files are specified */
+    if (mFiles.empty ())
+    {
+	mTexture.clear ();
+	mLoaded = false;
+	mCurrent = 0;
+
+	return;
+    }
+
     CompSize tSize;
     float    xScale, yScale;
 
@@ -52,8 +62,6 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
     mTexture.clear ();
 
     mLoaded = false;
-
-    mCurrent = mCurrent % mFiles.size ();
 
     CompString imgName = mFiles[mCurrent].s ();
     CompString pname = "cubeaddon";
@@ -139,32 +147,26 @@ bool
 CubeaddonScreen::changeCap (bool top, int change)
 {
     CubeCap *cap = (top)? &mTopCap : &mBottomCap;
-    if (cap->mFiles.size ())
-    {
-	int count = cap->mFiles.size ();
+
+    int count = cap->mFiles.size ();
+
+    /* mCurrent just changes in this case */
+    if (count && change)
 	cap->mCurrent = (cap->mCurrent + change + count) % count;
 
-	if (top)
-	{
-	    cap->load (optionGetTopScale (), optionGetTopAspect (),
-		       optionGetTopClamp ());
-	}
-	else
-	{
-	    cap->load (optionGetBottomScale (), optionGetBottomAspect (),
-		       optionGetBottomClamp ());
-	    cap->mTexMat.scale (1.0, -1.0, 1.0);
-	}
-	cScreen->damageScreen ();
-    }
-    /* we need to clear the texture if no texture files are specified */
-    else if (cap->mFiles.empty ())
+    if (top)
     {
-	cap->mTexture.clear ();
-	cap->mLoaded = false;
-	cap->mCurrent = 0;
-	cap->mTexMat.reset ();
+	cap->load (optionGetTopScale (), optionGetTopAspect (),
+		   optionGetTopClamp ());
     }
+    else
+    {
+	cap->load (optionGetBottomScale (), optionGetBottomAspect (),
+		   optionGetBottomClamp ());
+	cap->mTexMat.scale (1.0, -1.0, 1.0);
+    }
+    cScreen->damageScreen ();
+
     return false;
 }
 
