@@ -1285,19 +1285,20 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	 * the window to the window list as we might get configure requests
 	 * which require us to stack other windows relative to it. Setting
 	 * some default values if this is the case. */
-	if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa))
+	if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa)) {
 	    privateScreen.setDefaultWindowAttributes (&wa);
 
-	/* That being said, we should store as much information as possible
-	 * about it. There may be requests relative to this window that could
-	 * use the data in the XCreateWindowEvent structure, especially the
-	 * override redirect state */
-	wa.x = event->xcreatewindow.x;
-	wa.y = event->xcreatewindow.y;
-	wa.width = event->xcreatewindow.width;
-	wa.height = event->xcreatewindow.height;
-	wa.border_width = event->xcreatewindow.border_width;
-	wa.override_redirect = event->xcreatewindow.override_redirect;
+	    /* That being said, we should store as much information as possible
+	     * about it. There may be requests relative to this window that could
+	     * use the data in the XCreateWindowEvent structure, especially the
+	     * override redirect state */
+	    wa.x = event->xcreatewindow.x;
+	    wa.y = event->xcreatewindow.y;
+	    wa.width = event->xcreatewindow.width;
+	    wa.height = event->xcreatewindow.height;
+	    wa.border_width = event->xcreatewindow.border_width;
+	    wa.override_redirect = event->xcreatewindow.override_redirect;
+	}
 
 	foreach (CompWindow *w, screen->windows ())
 	{
@@ -1475,16 +1476,17 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		 * the window to the window list as we might get configure requests
 		 * which require us to stack other windows relative to it. Setting
 		 * some default values if this is the case. */
-		if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa))
+		if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa)) {
 		    privateScreen.setDefaultWindowAttributes (&wa);
 
-		/* That being said, we should store as much information as possible
-		 * about it. There may be requests relative to this window that could
-		 * use the data in the XCreateWindowEvent structure, especially the
-		 * override redirect state */
-		wa.x = event->xreparent.x;
-		wa.y = event->xreparent.y;
-		wa.override_redirect = event->xreparent.override_redirect;
+		    /* That being said, we should store as much information as possible
+		     * about it. There may be requests relative to this window that could
+		     * use the data in the XCreateWindowEvent structure, especially the
+		     * override redirect state */
+		    wa.x = event->xreparent.x;
+		    wa.y = event->xreparent.y;
+		    wa.override_redirect = event->xreparent.override_redirect;
+		}
 
 		PrivateWindow::createCompWindow (getTopWindow ()->id (), getTopServerWindow ()->id (), wa, event->xreparent.window);
 		break;
