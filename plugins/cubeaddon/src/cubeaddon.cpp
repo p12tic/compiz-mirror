@@ -312,7 +312,7 @@ CubeaddonScreen::cubeClearTargetOutput (float xRotate, float vRotate)
 	glCullFace (GL_FRONT);
 }
 
-bool 
+bool
 CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
 					  const GLMatrix            &transform,
 					  CompOutput                *output,
@@ -327,15 +327,14 @@ CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
     if (mDeform > 0.0 && optionGetDeformation () == DeformationCylinder)
     {
 	float z[3];
-	bool  ftb1, ftb2, ftb3;
 
 	z[0] = cubeScreen->invert () * cubeScreen->distance ();
 	z[1] = z[0] + (0.25 / cubeScreen->distance ());
-	z[2] = cubeScreen->invert () * 
+	z[2] = cubeScreen->invert () *
 	       sqrtf (0.25 + (cubeScreen->distance () * cubeScreen->distance ()));
 
 	std::vector<GLVector> vPoints[3];
-	
+
 	vPoints[0].push_back (GLVector (-0.5,  0.0, z[0], 1.0));
 	vPoints[0].push_back (GLVector ( 0.0,  0.5, z[1], 1.0));
 	vPoints[0].push_back (GLVector ( 0.0,  0.0, z[1], 1.0));
@@ -346,12 +345,12 @@ CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
 	vPoints[2].push_back (GLVector ( 0.0,  0.5, z[2], 1.0));
 	vPoints[2].push_back (GLVector ( 0.0,  0.0, z[2], 1.0));
 
-	ftb1 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-					         output, vPoints[0]);
-	ftb2 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-					         output, vPoints[1]);
-	ftb3 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-					         output, vPoints[2]);
+	bool ftb1 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[0]);
+	bool ftb2 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[1]);
+	bool ftb3 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[2]);
 
 	rv = (order == FTB && (ftb1 || ftb2 || ftb3)) ||
 	     (order == BTF && (!ftb1 || !ftb2 || !ftb3));
@@ -359,15 +358,14 @@ CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
     else if (mDeform > 0.0 && optionGetDeformation () == DeformationSphere)
     {
 	float z[4];
-	bool  ftb1, ftb2, ftb3, ftb4;
 
 	z[0] = sqrtf (0.5 + (cubeScreen->distance () * cubeScreen->distance ()));
 	z[1] = z[0] + (0.25 / cubeScreen->distance ());
 	z[2] = sqrtf (0.25 + (cubeScreen->distance () * cubeScreen->distance ()));
 	z[3] = z[2] + 0.5;
-	
+
 	std::vector<GLVector> vPoints[4];
-	
+
 	vPoints[0].push_back (GLVector ( 0.0,  0.0, z[3], 1.0));
 	vPoints[0].push_back (GLVector (-0.5,  0.5, z[2], 1.0));
 	vPoints[0].push_back (GLVector ( 0.0,  0.5, z[2], 1.0));
@@ -381,14 +379,14 @@ CubeaddonScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &sAttrib,
 	vPoints[3].push_back (GLVector ( 0.5,  0.5, z[0], 1.0));
 	vPoints[3].push_back (GLVector ( 0.5,  0.0, z[0], 1.0));
 
-	ftb1 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-						 output, vPoints[0]);
-	ftb2 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-						 output, vPoints[1]);
-	ftb3 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-						 output, vPoints[2]);
-	ftb4 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
-						 output, vPoints[3]);
+	bool ftb1 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[0]);
+	bool ftb2 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[1]);
+	bool ftb3 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[2]);
+	bool ftb4 = cubeScreen->cubeCheckOrientation (sAttrib, transform,
+						      output, vPoints[3]);
 
 	rv = (order == FTB && (ftb1 || ftb2 || ftb3 || ftb4)) ||
 	     (order == BTF && (!ftb1 || !ftb2 || !ftb3 || !ftb4));
@@ -1160,7 +1158,6 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	}
 	else
 	{
-	    int i;
 	    float w;
 	    rS = cDist2 + 0.5;
 
@@ -1171,7 +1168,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	    mCapFillNorm[1] = -1.0;
 	    mCapFillNorm[2] = 0.0;
 
-	    for (i = 0; i < CAP_ELEMENTS; i++)
+	    for (int i = 0; i < CAP_ELEMENTS; i++)
 	    {
 		w = (float)(i + 1) / (float)CAP_ELEMENTS;
 
@@ -1282,20 +1279,18 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 		    mYTrans    = 0.0;
 		    if (optionGetDeformation () == DeformationSphere &&
 			optionGetDeformCaps () && optionGetDrawBottom ())
-		    {
 			rYTrans = sqrt (0.5 + cDist2) * -2.0;
-		    }
 		    else
-		    {
 			rYTrans = point[1] * 2.0;
-		    }
+
 		    break;
+
 		case ModeDistance:
 		    mYTrans = 0.0;
 		    rYTrans = sqrt (0.5 + cDist2) * -2.0;
 		    break;
-		default:
 
+		default:
 		    if (optionGetDeformation () == DeformationSphere &&
 			optionGetDeformCaps () && optionGetDrawBottom ())
 		    {
@@ -1316,13 +1311,10 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 		    break;
 	    }
 
-
 	    if (!optionGetAutoZoom () ||
 		((cubeScreen->rotationState () != CubeScreen::RotationManual) &&
 		 optionGetZoomManualOnly ()))
-	    {
 		mZTrans = 0.0;
-	    }
 	    else
 		mZTrans = -point2[2] + cDist;
 
@@ -1378,8 +1370,6 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 	    if (optionGetMode () == ModeAbove && mVRot > 0.0)
 	    {
-		int   j;
-		float i, c;
 		float v = MIN (1.0, mVRot / 30.0);
 		unsigned short col1[4], col2[4];
 
@@ -1392,8 +1382,8 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 		gTransform.translate (0, 0, -DEFAULT_Z_CAMERA);
 
-		i = optionGetIntensity () * 2;
-		c = optionGetIntensity ();
+		float i = optionGetIntensity () * 2;
+		float c = optionGetIntensity ();
 
 		GLfloat vertices[] =
 		{
@@ -1420,7 +1410,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 		if (streamingBuffer->end ())
 		    streamingBuffer->render (gTransform);
 
-		for (j = 0; j < 4; j++)
+		for (int j = 0; j < 4; j++)
 		{
 		    col1[j] = (1.0 - v) * optionGetGroundColor1 () [j] +
 			      (v * (optionGetGroundColor1 () [j] +
@@ -1538,7 +1528,6 @@ CubeaddonScreen::CubeaddonScreen (CompScreen *s) :
 
     idx = mCapFillIdx;
     for (int i = 0; i < CAP_ELEMENTS - 1; i++)
-    {
 	for (int j = 0; j < CAP_ELEMENTS; j++)
 	{
 	    idx[0] = 1 + (i * (CAP_ELEMENTS + 1)) + j;
@@ -1547,7 +1536,6 @@ CubeaddonScreen::CubeaddonScreen (CompScreen *s) :
 	    idx[3] = 2 + (i * (CAP_ELEMENTS + 1)) + j;
 	    idx += 4;
 	}
-    }
 
     mTopCap.mFiles = optionGetTopImages ();
     mBottomCap.mFiles = optionGetBottomImages ();
