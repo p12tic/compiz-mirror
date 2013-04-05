@@ -112,6 +112,9 @@ moveInitiate (CompAction      *action,
 
 	workArea = s->getWorkareaForOutput (w->outputDevice ());
 
+	ms->snapBackX = w->serverGeometry ().x () - workArea.x ();
+	ms->snapOffX  = x - workArea.x ();
+
 	ms->snapBackY = w->serverGeometry ().y () - workArea.y ();
 	ms->snapOffY  = y - workArea.y ();
 
@@ -431,6 +434,32 @@ moveHandleMotionEvent (CompScreen *s,
 			    w->maximize (0);
 
 			    ms->snapOffY = ms->snapBackY;
+
+			    return;
+			}
+		    }
+		}
+		else if (w->state () & CompWindowStateMaximizedHorzMask)
+		{
+		    if (abs (xRoot - workArea.x () - ms->snapOffX) >= SNAP_OFF)
+		    {
+			if (!s->otherGrabExist ("move", NULL))
+			{
+			    int width = w->serverGeometry ().width ();
+
+			    w->saveMask () |= CWX | CWY;
+
+			    if (w->saveMask ()& CWWidth)
+				width = w->saveWc ().width;
+
+			    w->saveWc ().x = xRoot - (width >> 1);
+			    w->saveWc ().y = yRoot + (w->border ().top >> 1);
+
+			    ms->x = ms->y = 0;
+
+			    w->maximize (0);
+
+			    ms->snapOffX = ms->snapBackX;
 
 			    return;
 			}
