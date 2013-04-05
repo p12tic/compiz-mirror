@@ -354,10 +354,11 @@ GridScreen::initiateCommon (CompAction		*action,
 
 	    gw->sizeHintsFlags = 0;
 
-	    /* Special case for left and right,
-	     * actually vertically maximize the window
+	    /* Special cases for left/right and top/bottom gridded windows, where we
+	     * actually vertically respective horizontally semi-maximize the window
 	     */
-	    if (where & GridLeft || where & GridRight)
+	    if (where & GridLeft || where & GridRight ||
+		where & GridTop || where & GridBottom)
 	    {
 		/* First restore the window to its original size */
 		XWindowChanges rwc;
@@ -369,12 +370,24 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
-		gw->isGridVertMaximized = true;
-		gw->isGridHorzMaximized = false;
-		gw->isGridResized = false;
+		if (where & GridLeft || where & GridRight)
+		{
+		    gw->isGridVertMaximized = true;
+		    gw->isGridHorzMaximized = false;
+		    gw->isGridResized = false;
 
-		/* Semi-maximize the window vertically */
-		cw->maximize (CompWindowStateMaximizedVertMask);
+		    /* Semi-maximize the window vertically */
+		    cw->maximize (CompWindowStateMaximizedVertMask);
+		}
+		else /* GridTop || GridBottom */
+		{
+		    gw->isGridHorzMaximized = true;
+		    gw->isGridVertMaximized = false;
+		    gw->isGridResized = false;
+
+		    /* Semi-maximize the window horizontally */
+		    cw->maximize (CompWindowStateMaximizedHorzMask);
+		}
 
 		/* Be evil */
 		if (cw->sizeHints ().flags & PResizeInc)
@@ -383,36 +396,7 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->window->sizeHints ().flags &= ~(PResizeInc);
 		}
 	    }
-	    /* Special case for top and bottom,
-	     * actually horizontally maximize the window
-	     */
-	    else if (where & GridTop || where & GridBottom)
-	    {
-		/* First restore the window to its original size */
-		XWindowChanges rwc;
-
-		rwc.x = gw->originalSize.x ();
-		rwc.y = gw->originalSize.y ();
-		rwc.width = gw->originalSize.width ();
-		rwc.height = gw->originalSize.height ();
-
-		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
-
-		gw->isGridHorzMaximized = true;
-		gw->isGridVertMaximized = false;
-		gw->isGridResized = false;
-
-		/* Semi-maximize the window horizontally */
-		cw->maximize (CompWindowStateMaximizedHorzMask);
-
-		/* Be evil */
-		if (cw->sizeHints ().flags & PResizeInc)
-		{
-		    gw->sizeHintsFlags |= PResizeInc;
-		    gw->window->sizeHints ().flags &= ~(PResizeInc);
-		}
-	    }
-	    else
+	    else /* GridCorners || GridCenter */
 	    {
 		gw->isGridResized = true;
 		gw->isGridHorzMaximized = false;
