@@ -911,6 +911,13 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 
     if (isGridResized && !isGridSemiMaximized && !GridScreen::get (screen)->mSwitchingVp)
     {
+	if (window->grabbed () && screen->grabExist ("expo"))
+	{
+	    /* Window is being dragged in expo. Restore the original geometry
+	     * right away to avoid any confusion. */
+	    gScreen->restoreWindow (0, 0, gScreen->o);
+	    return;
+	}
 	if (window->grabbed () && (grabMask & CompWindowGrabMoveMask))
 	{
 	    pointerBufDx += dx;
@@ -1003,6 +1010,16 @@ GridScreen::restoreWindow (CompAction         *action,
     {
 	xwc.x = pointerX - (gw->originalSize.width () / 2);
 	xwc.y = pointerY + (cw->border ().top / 2);
+    }
+    else if (cw->grabbed () && screen->grabExist ("expo"))
+    {
+	/* We're restoring a window inside expo by dragging. This is a bit
+	 * tricky. Pointer location is absolute to the screen, not relative
+	 * to expo viewport. So we can't use pointer location to calculate
+	 * the position of the restore window.
+	 *
+	 * The best solution is to resize it in place. */
+	xwcm = CWWidth | CWHeight;
     }
     else
     {
