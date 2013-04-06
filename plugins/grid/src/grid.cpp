@@ -168,6 +168,7 @@ GridScreen::initiateCommon (CompAction		*action,
 	    if (props.numCellsX == 1)
 		centerCheck = true;
 
+	    /* Do not overwrite the original size if we already have been gridded */
 	    if (!gw->isGridResized && !gw->isGridHorzMaximized && !gw->isGridVertMaximized)
 		/* Store size not including borders when using a keybinding */
 		gw->originalSize = slotToRect(cw, cw->serverBorderRect ());
@@ -230,6 +231,15 @@ GridScreen::initiateCommon (CompAction		*action,
 				 cw->serverWidth (),
 				 cw->serverHeight ());
 
+	/* We do not want to allow cycling through sizes */
+	if (desiredRect.y () == currentRect.y () &&
+	    desiredRect.height () == currentRect.height () &&
+	    desiredRect.x () == currentRect.x () &&
+	    desiredRect.width () == currentRect.width () &&
+	    gw->lastTarget == where &&
+	    (gw->isGridResized || gw->isGridHorzMaximized || gw->isGridVertMaximized))
+	    return false;
+
 	if (desiredRect.y () == currentRect.y () &&
 	    desiredRect.height () == currentRect.height () &&
 	    where & ~(GridMaximize |
@@ -287,7 +297,6 @@ GridScreen::initiateCommon (CompAction		*action,
 	    }
 	    else /* keys (2, 5, 8) */
 	    {
-
 		if ((currentRect.width () == desiredRect.width () &&
 		     currentRect.x () == desiredRect.x ()) ||
 		    (gw->resizeCount < 1) || (gw->resizeCount > 5))
@@ -712,7 +721,6 @@ GridScreen::edgeToGridType ()
 void
 GridScreen::handleEvent (XEvent *event)
 {
-    CompOutput out;
     CompWindow *w;
 
     screen->handleEvent (event);
@@ -724,6 +732,7 @@ GridScreen::handleEvent (XEvent *event)
 
     currentWorkarea = screen->getWorkareaForOutput
 		      (screen->outputDeviceForPoint (pointerX, pointerY));
+
     if (lastWorkarea != currentWorkarea)
     {
 	lastWorkarea = currentWorkarea;
@@ -737,7 +746,7 @@ GridScreen::handleEvent (XEvent *event)
 	    cScreen->damageRegion (desiredSlot);
     }
 
-    out = screen->outputDevs ().at (
+    CompOutput out = screen->outputDevs ().at (
 	      screen->outputDeviceForPoint (CompPoint (pointerX, pointerY)));
 
     /* Detect corners first */
