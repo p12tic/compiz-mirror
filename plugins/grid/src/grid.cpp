@@ -219,12 +219,23 @@ GridScreen::initiateCommon (CompAction		*action,
 			  (workarea.width () / props.numCellsX));
 	desiredSlot.setWidth (workarea.width () / props.numCellsX);
 
-	/* Adjust for constraints and decorations */
-	if (where & ~(GridMaximize |
-		      GridLeft | GridRight | GridTop | GridBottom))
-	    desiredRect = constrainSize (cw, desiredSlot);
-	else
-	    desiredRect = slotToRect (cw, desiredSlot);
+	if (!optionGetCycleSizes ())
+	{
+	    /* Adjust for constraints and decorations */
+	    if (where & ~(GridMaximize |
+			  GridLeft | GridRight | GridTop | GridBottom))
+		desiredRect = constrainSize (cw, desiredSlot);
+	    else
+		desiredRect = slotToRect (cw, desiredSlot);
+	}
+	else /* (optionGetCycleSizes ()) */
+	{
+	    /* Adjust for constraints and decorations */
+	    if (where & ~GridMaximize)
+		desiredRect = constrainSize (cw, desiredSlot);
+	    else
+		desiredRect = slotToRect (cw, desiredSlot);
+	}
 
 	/* Get current rect not including decorations */
 	currentRect.setGeometry (cw->serverX (), cw->serverY (),
@@ -232,16 +243,21 @@ GridScreen::initiateCommon (CompAction		*action,
 				 cw->serverHeight ());
 
 	/* We do not want to allow cycling through sizes,
-	 * unless the user explicitely specified that in CCSM */
+	 * unless the user explicitely specified that in CCSM
+	 */
 	if (gw->lastTarget == where &&
 	    gw->isGridResized &&
 	    !optionGetCycleSizes ())
 	    return false;
 
+	/* Grid Left/Right/Top/Bottom are only valid here, if
+	 * cycling through sizes is disabled also
+	 */
 	if (desiredRect.y () == currentRect.y () &&
 	    desiredRect.height () == currentRect.height () &&
-	    where & ~(GridMaximize |
-		      GridLeft | GridRight | GridTop | GridBottom) &&
+	    (where & ~(GridMaximize) ||
+	     (where & ~(GridLeft | GridRight | GridTop | GridBottom) &&
+	      !optionGetCycleSizes ())) &&
 	    gw->lastTarget & where)
 	{
 	    int slotWidth25  = workarea.width () / 4;
@@ -258,8 +274,8 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->resizeCount = 3;
 
 		/* tricky, have to allow for window constraints when
-		 * computing what the 33% and 66% offsets would be
-		 */
+		     * computing what the 33% and 66% offsets would be
+		     */
 		switch (gw->resizeCount)
 		{
 		    case 1:
@@ -322,7 +338,8 @@ GridScreen::initiateCommon (CompAction		*action,
 			break;
 		    case 4:
 			desiredSlot.setWidth (slotWidth33 -
-					      (cw->border ().left + cw->border ().right));
+					      (cw->border ().left +
+					       cw->border ().right));
 			desiredSlot.setX (workarea.x () + slotWidth33);
 			gw->resizeCount++;
 			break;
@@ -361,49 +378,58 @@ GridScreen::initiateCommon (CompAction		*action,
 
 	    gw->sizeHintsFlags = 0;
 
-	    /* Special cases for left/right and top/bottom gridded windows, where we
-	     * actually vertically respective horizontally semi-maximize the window
-	     */
-	    if (where & GridLeft || where & GridRight ||
-		where & GridTop || where & GridBottom)
+	    if (!optionGetCycleSizes ())
 	    {
-		/* First restore the window to its original size */
-		XWindowChanges rwc;
-
-		rwc.x = gw->originalSize.x ();
-		rwc.y = gw->originalSize.y ();
-		rwc.width = gw->originalSize.width ();
-		rwc.height = gw->originalSize.height ();
-
-		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
-
-		if (where & GridLeft || where & GridRight)
+		/* Special cases for left/right and top/bottom gridded windows, where we
+		 * actually vertically respective horizontally semi-maximize the window
+		 */
+		if (where & GridLeft || where & GridRight ||
+		    where & GridTop || where & GridBottom)
 		{
-		    gw->isGridVertMaximized = true;
+		    /* First restore the window to its original size */
+		    XWindowChanges rwc;
+
+		    rwc.x = gw->originalSize.x ();
+		    rwc.y = gw->originalSize.y ();
+		    rwc.width = gw->originalSize.width ();
+		    rwc.height = gw->originalSize.height ();
+
+		    cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
+
+		    if (where & GridLeft || where & GridRight)
+		    {
+			gw->isGridVertMaximized = true;
+			gw->isGridHorzMaximized = false;
+			gw->isGridResized = false;
+
+			/* Semi-maximize the window vertically */
+			cw->maximize (CompWindowStateMaximizedVertMask);
+		    }
+		    else /* GridTop || GridBottom */
+		    {
+			gw->isGridHorzMaximized = true;
+			gw->isGridVertMaximized = false;
+			gw->isGridResized = false;
+
+			/* Semi-maximize the window horizontally */
+			cw->maximize (CompWindowStateMaximizedHorzMask);
+		    }
+
+		    /* Be evil */
+		    if (cw->sizeHints ().flags & PResizeInc)
+		    {
+			gw->sizeHintsFlags |= PResizeInc;
+			gw->window->sizeHints ().flags &= ~(PResizeInc);
+		    }
+		}
+		else /* GridCorners || GridCenter */
+		{
+		    gw->isGridResized = true;
 		    gw->isGridHorzMaximized = false;
-		    gw->isGridResized = false;
-
-		    /* Semi-maximize the window vertically */
-		    cw->maximize (CompWindowStateMaximizedVertMask);
-		}
-		else /* GridTop || GridBottom */
-		{
-		    gw->isGridHorzMaximized = true;
 		    gw->isGridVertMaximized = false;
-		    gw->isGridResized = false;
-
-		    /* Semi-maximize the window horizontally */
-		    cw->maximize (CompWindowStateMaximizedHorzMask);
-		}
-
-		/* Be evil */
-		if (cw->sizeHints ().flags & PResizeInc)
-		{
-		    gw->sizeHintsFlags |= PResizeInc;
-		    gw->window->sizeHints ().flags &= ~(PResizeInc);
 		}
 	    }
-	    else /* GridCorners || GridCenter */
+	    else /* if (optionGetCycleSizes ()) */
 	    {
 		gw->isGridResized = true;
 		gw->isGridHorzMaximized = false;
