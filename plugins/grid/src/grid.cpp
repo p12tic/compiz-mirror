@@ -231,9 +231,11 @@ GridScreen::initiateCommon (CompAction		*action,
 				 cw->serverWidth (),
 				 cw->serverHeight ());
 
-	/* We do not want to allow cycling through sizes */
+	/* We do not want to allow cycling through sizes,
+	 * unless the user explicitely specified that in CCSM */
 	if (gw->lastTarget == where &&
-	    gw->isGridResized)
+	    gw->isGridResized &&
+	    !optionGetCycleSizes ())
 	    return false;
 
 	if (desiredRect.y () == currentRect.y () &&
