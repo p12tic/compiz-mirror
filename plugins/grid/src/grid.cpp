@@ -232,12 +232,8 @@ GridScreen::initiateCommon (CompAction		*action,
 				 cw->serverHeight ());
 
 	/* We do not want to allow cycling through sizes */
-	if (desiredRect.y () == currentRect.y () &&
-	    desiredRect.height () == currentRect.height () &&
-	    desiredRect.x () == currentRect.x () &&
-	    desiredRect.width () == currentRect.width () &&
-	    gw->lastTarget == where &&
-	    (gw->isGridResized || gw->isGridHorzMaximized || gw->isGridVertMaximized))
+	if (gw->lastTarget == where &&
+	    gw->isGridResized)
 	    return false;
 
 	if (desiredRect.y () == currentRect.y () &&
