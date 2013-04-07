@@ -368,7 +368,7 @@ TEST_F(CompPlaceScreenSizeChangeTestScreenSizeChange, TestScreenChangeWindowsOnP
     g.setPos (CompPoint (-300, 200));
     ms.setGeometry (g);
 
-    expected = compiz::window::Geometry (-300, 200, 300, 400, 0);
+    expected = g;
 
     /* Unplug the right "monitor" */
     old = current;
