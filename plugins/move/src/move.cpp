@@ -45,30 +45,24 @@ moveInitiate (CompAction      *action,
 	      CompOption::Vector &options)
 {
     CompWindow *w;
-    Window     xid;
 
     MOVE_SCREEN (screen);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
+    Window xid = CompOption::getIntOptionNamed (options, "window");
 
     w = screen->findWindow (xid);
     if (w && (w->actions () & CompWindowActionMoveMask))
     {
-	CompRect     workArea;
-	unsigned int mods;
-	int          x, y, button;
-	bool         sourceExternalApp;
-
 	CompScreen *s = screen;
 
-	mods = CompOption::getIntOptionNamed (options, "modifiers", 0);
+	unsigned int mods = CompOption::getIntOptionNamed (options, "modifiers", 0);
 
-	x = CompOption::getIntOptionNamed (options, "x", w->geometry ().x () +
-					   (w->size ().width () / 2));
-	y = CompOption::getIntOptionNamed (options, "y", w->geometry ().y () +
-					   (w->size ().height () / 2));
+	int x = CompOption::getIntOptionNamed (options, "x", w->geometry ().x () +
+					       (w->size ().width () / 2));
+	int y = CompOption::getIntOptionNamed (options, "y", w->geometry ().y () +
+					       (w->size ().height () / 2));
 
-	button = CompOption::getIntOptionNamed (options, "button", -1);
+	int button = CompOption::getIntOptionNamed (options, "button", -1);
 
 	if (s->otherGrabExist ("move", NULL))
 	    return false;
@@ -104,13 +98,13 @@ moveInitiate (CompAction      *action,
 	lastPointerX = x;
 	lastPointerY = y;
 
-	sourceExternalApp =
+	bool sourceExternalApp =
 	    CompOption::getBoolOptionNamed (options, "external", false);
 	ms->yConstrained = sourceExternalApp && ms->optionGetConstrainY ();
 
 	ms->origState = w->state ();
 
-	workArea = s->getWorkareaForOutput (w->outputDevice ());
+	CompRect workArea = s->getWorkareaForOutput (w->outputDevice ());
 
 	ms->snapBackY = w->serverGeometry ().y () - workArea.y ();
 	ms->snapOffY  = y - workArea.y ();
@@ -226,12 +220,11 @@ static Region
 moveGetYConstrainRegion (CompScreen *s)
 {
     CompWindow   *w;
-    Region       region;
     REGION       r;
     CompRect     workArea;
     BoxRec       extents;
 
-    region = XCreateRegion ();
+    Region region = XCreateRegion ();
     if (!region)
 	return NULL;
 
@@ -320,16 +313,14 @@ moveHandleMotionEvent (CompScreen *s,
     if (ms->grab)
     {
 	int	     dx, dy;
-	int	     wX, wY;
-	int          wWidth, wHeight;
 	CompWindow   *w;
 
 	w = ms->w;
 
-	wX      = w->geometry ().x ();
-	wY      = w->geometry ().y ();
-	wWidth  = w->geometry ().widthIncBorders ();
-	wHeight = w->geometry ().heightIncBorders ();
+	int wX      = w->geometry ().x ();
+	int wY      = w->geometry ().y ();
+	int wWidth  = w->geometry ().widthIncBorders ();
+	int wHeight = w->geometry ().heightIncBorders ();
 
 	ms->x += xRoot - lastPointerX;
 	ms->y += yRoot - lastPointerY;
@@ -340,13 +331,12 @@ moveHandleMotionEvent (CompScreen *s,
 	}
 	else
 	{
-	    CompRect workArea;
 	    int	     min, max;
 
 	    dx = ms->x;
 	    dy = ms->y;
 
-	    workArea = s->getWorkareaForOutput (w->outputDevice ());
+	    CompRect workArea = s->getWorkareaForOutput (w->outputDevice ());
 
 	    if (ms->yConstrained)
 	    {
@@ -358,17 +348,14 @@ moveHandleMotionEvent (CompScreen *s,
 		   region */
 		if (ms->region)
 		{
-		    int x, y, width, height;
-		    int status;
+		    int x	   = wX + dx - w->border ().left;
+		    int y	   = wY + dy - w->border ().top;
+		    int width  = wWidth + w->border ().left + w->border ().right;
+		    int height = w->border ().top ? w->border ().top : 1;
 
-		    x	   = wX + dx - w->border ().left;
-		    y	   = wY + dy - w->border ().top;
-		    width  = wWidth + w->border ().left + w->border ().right;
-		    height = w->border ().top ? w->border ().top : 1;
-
-		    status = XRectInRegion (ms->region, x, y,
-					    (unsigned int) width,
-					    (unsigned int) height);
+		    int status = XRectInRegion (ms->region, x, y,
+						(unsigned int) width,
+						(unsigned int) height);
 
 		    /* only constrain movement if previous position was valid */
 		    if (ms->status == RectangleIn)
@@ -641,7 +628,6 @@ MoveWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		     unsigned int              mask)
 {
     GLWindowPaintAttrib sAttrib = attrib;
-    bool                status;
 
     MOVE_SCREEN (screen);
 
@@ -654,7 +640,7 @@ MoveWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	}
     }
 
-    status = gWindow->glPaint (sAttrib, transform, region, mask);
+    bool status = gWindow->glPaint (sAttrib, transform, region, mask);
 
     return status;
 }
