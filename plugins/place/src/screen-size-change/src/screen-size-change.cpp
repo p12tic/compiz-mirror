@@ -40,8 +40,6 @@ compiz::place::ScreenSizeChangeObject::adjustForSize (const CompSize &oldSize,
     int            vpX, vpY;
     compiz::window::Geometry g, vpRelRect;
     int		   pivotX, pivotY;
-    int		   curVpOffsetX = getViewport ().x () * newSize.width ();
-    int		   curVpOffsetY = getViewport ().y () * newSize.height ();
 
     g = getGeometry ();
     compiz::window::Geometry og (g);
@@ -112,19 +110,18 @@ compiz::place::ScreenSizeChangeObject::adjustForSize (const CompSize &oldSize,
 	g.setHeight (vpRelRect.height ());
     }
 
-    /* Handle non-(0,0) current viewport by shifting by curVpOffsetX,Y,
-       and bring window to (0,0) by shifting by minus its vp offset */
+    /* Bring window to (0,0) by shifting by minus its vp offset */
 
-    g.setX (g.x () + curVpOffsetX - (getViewport ().x () + vpX) * newSize.width ());
-    g.setY (g.y () + curVpOffsetY - (getViewport ().y () + vpY) * newSize.height ());
+    g.setX (g.x () - vpX * newSize.width ());
+    g.setY (g.y () - vpY * newSize.height ());
 
     unsigned int flags = 0;
     const CompRect &workArea = getWorkarea (g);
 
     compiz::place::clampGeometryToWorkArea (g, workArea, getExtents (), flags, newSize);
 
-    g.setX (g.x () - curVpOffsetX + (getViewport ().x () + vpX) * newSize.width ());
-    g.setY (g.y () - curVpOffsetY + (getViewport ().y () + vpY) * newSize.height ());
+    g.setX (g.x () + vpX * newSize.width ());
+    g.setY (g.y () + vpY * newSize.height ());
 
     if (!mask)
     {
