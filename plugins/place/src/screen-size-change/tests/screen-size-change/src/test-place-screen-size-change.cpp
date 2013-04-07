@@ -57,6 +57,9 @@ class MockScreenSizeChangeObject :
 			 unsigned int bottom);
 
 	void setGeometry (const compiz::window::Geometry &g);
+	compiz::window::Geometry sizeAdjustTest (const CompSize &oldSize,
+						 const CompSize &newSize,
+						 CompRect &workArea);
 
     private:
 
@@ -162,10 +165,26 @@ reserveStruts (CompRect &workArea)
     workArea.setBottom (workArea.bottom () - 24);
 }
 
+compiz::window::Geometry
+MockScreenSizeChangeObject::sizeAdjustTest (const CompSize &oldSize,
+					    const CompSize &newSize,
+					    CompRect &workArea)
+{
+    reserveStruts (workArea);
+
+    setWorkArea (workArea);
+
+    compiz::window::Geometry g = adjustForSize (oldSize, newSize);
+
+    return g;
+}
+
+
 TEST_F(CompPlaceScreenSizeChangeTestScreenSizeChange, TestScreenSizeChange)
 {
     CompSize		     current, old;
     compiz::window::Geometry g (200, 250, 300, 400, 0);
+    compiz::window::Geometry expected;
 
     MockScreenSizeChangeObject ms (g);
 
@@ -174,9 +193,6 @@ TEST_F(CompPlaceScreenSizeChangeTestScreenSizeChange, TestScreenSizeChange)
     /* Reserve top, bottom and left parts of the screen for
      * fake "24px" panels */
     CompRect workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
-
-    ms.setWorkArea (workArea);
 
     /* First test that changing the screen size
      * to something smaller here doesn't cause our
@@ -184,114 +200,102 @@ TEST_F(CompPlaceScreenSizeChangeTestScreenSizeChange, TestScreenSizeChange)
 
     old = current;
     current = CompSize (1024, 768);
-
     workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
 
-    ms.setWorkArea (workArea);
+    expected = compiz::window::Geometry (200, 250, 300, 400, 0);
 
-    g = ms.adjustForSize (old, current);
+    g = ms.sizeAdjustTest (old, current, workArea);
 
-    EXPECT_EQ (g, compiz::window::Geometry (200, 250, 300, 400, 0));
+    EXPECT_EQ (expected, g);
 
     /* Making the screen size bigger with no
      * saved geometry should cause the window not to move */
-
     old = current;
     current = CompSize (2048, 768);
-
     workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
 
-    ms.setWorkArea (workArea);
+    g = ms.sizeAdjustTest (old, current, workArea);
 
-    g = ms.adjustForSize (old, current);
-
-    EXPECT_EQ (g, compiz::window::Geometry (200, 250, 300, 400, 0));
+    EXPECT_EQ (expected, g);
 
     /* Move the window to the other "monitor" */
-
     ms.setGeometry (compiz::window::Geometry (1025, 250, 300, 400, 0));
 
-    old = current;
-
     /* Unplug a "monitor" */
-    current = CompSize (1024, 768);
-
-    workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
-
-    ms.setWorkArea (workArea);
-
-    g = ms.adjustForSize (old, current);
-
-    EXPECT_EQ (g, compiz::window::Geometry (724, 250, 300, 400, 0));
-
     old = current;
+    current = CompSize (1024, 768);
+    workArea = CompRect (0, 0, current.width (), current.height ());
+
+    expected = compiz::window::Geometry (724, 250, 300, 400, 0);
+
+    g = ms.sizeAdjustTest (old, current, workArea);
+
+    EXPECT_EQ (expected, g);
 
     /* Re-plug the monitor - window should go back
      * to the same position */
-    current = CompSize (2048, 768);
-
-    workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
-
-    ms.setWorkArea (workArea);
-
-    g = ms.adjustForSize (old, current);
-
-    EXPECT_EQ (g, compiz::window::Geometry (1025, 250, 300, 400, 0));
-
     old = current;
+    current = CompSize (2048, 768);
+    workArea = CompRect (0, 0, current.width (), current.height ());
+
+    expected = compiz::window::Geometry (1025, 250, 300, 400, 0);
+
+    g = ms.sizeAdjustTest (old, current, workArea);
+
+    EXPECT_EQ (expected, g);
 
     /* Plug 2 monitors downwards, no change */
+    old = current;
     current = CompSize (2048, 1536);
-
     workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
 
-    ms.setWorkArea (workArea);
+    g = ms.sizeAdjustTest (old, current, workArea);
 
-    g = ms.adjustForSize (old, current);
-
-    EXPECT_EQ (g, compiz::window::Geometry (1025, 250, 300, 400, 0));
+    EXPECT_EQ (expected, g);
 
     /* Move the window to the bottom "monitor" */
-
     ms.setGeometry (compiz::window::Geometry (1025, 791, 300, 400, 0));
 
-    old = current;
-
     /* Unplug bottom "monitor" */
-    current = CompSize (2048, 768);
-
-    workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
-
-    ms.setWorkArea (workArea);
-
-    g = ms.adjustForSize (old, current);
-
-    EXPECT_EQ (g, compiz::window::Geometry (1025, 344, 300, 400, 0));
-
     old = current;
+    current = CompSize (2048, 768);
+    workArea = CompRect (0, 0, current.width (), current.height ());
+
+    expected = compiz::window::Geometry (1025, 344, 300, 400, 0);
+
+    g = ms.sizeAdjustTest (old, current, workArea);
+
+    EXPECT_EQ (expected, g);
 
     /* Re-plug bottom "monitor" */
+    old = current;
+    current = CompSize (2048, 1356);
+    workArea = CompRect (0, 0, current.width (), current.height ());
+
+    expected = compiz::window::Geometry (1025, 791, 300, 400, 0);
+
+    g = ms.sizeAdjustTest (old, current, workArea);
+
+    EXPECT_EQ (expected, g);
+
+}
+
+TEST_F(CompPlaceScreenSizeChangeTestScreenSizeChange, TestScreenChangeOnSecondViewport)
+{
+    CompSize		     current, old;
+    compiz::window::Geometry g (1025, 791, 300, 400, 0);
+    compiz::window::Geometry expected;
+
+    MockScreenSizeChangeObject ms (g);
+
     current = CompSize (2048, 1356);
 
-    workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
-
-    ms.setWorkArea (workArea);
-
-    g = ms.adjustForSize (old, current);
-
-    EXPECT_EQ (g, compiz::window::Geometry (1025, 791, 300, 400, 0));
+    /* Reserve top, bottom and left parts of the screen for
+     * fake "24px" panels */
+    CompRect workArea = CompRect (0, 0, current.width (), current.height ());
 
     /* Move the entire window right a viewport */
-
     g.setPos (g.pos () + CompPoint (current.width (), 0));
-
     ms.setGeometry (g);
 
     /* Now change the screen resolution again - the window should
@@ -301,14 +305,13 @@ TEST_F(CompPlaceScreenSizeChangeTestScreenSizeChange, TestScreenSizeChange)
     /* Unplug a "monitor" */
     old = current;
     current = CompSize (1024, 1356);
-
     workArea = CompRect (0, 0, current.width (), current.height ());
-    reserveStruts (workArea);
 
-    ms.setWorkArea (workArea);
+    expected = compiz::window::Geometry (current.width () + 724, 791, 300, 400, 0);
 
-    g = ms.adjustForSize (old, current);
+    g = ms.sizeAdjustTest (old, current, workArea);
 
-    EXPECT_EQ (g, compiz::window::Geometry (current.width () + 724, 791, 300, 400, 0));
+    EXPECT_EQ (expected, g);
+
 }
 
