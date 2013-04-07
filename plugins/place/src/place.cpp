@@ -202,7 +202,9 @@ void
 PlaceScreen::handleEvent (XEvent *event)
 {
     if (event->type == ConfigureNotify &&
-	event->xconfigure.window == screen->root ())
+	event->xconfigure.window == screen->root () &&
+	(event->xconfigure.width != screen->width () ||
+	 event->xconfigure.height != screen->height ()))
     {
 	mPrevSize.setWidth (screen->width ());
 	mPrevSize.setHeight (screen->height ());
