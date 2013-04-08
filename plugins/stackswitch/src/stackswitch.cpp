@@ -86,14 +86,14 @@ StackswitchWindow::isStackswitchable ()
 void
 StackswitchScreen::renderWindowTitle ()
 {
-    CompText::Attrib tA;
-    bool           showViewport;
-
     if (!textAvailable)
 	return;
 
     if (!optionGetWindowTitle ())
 	return;
+
+    CompText::Attrib tA;
+    bool           showViewport;
 
     CompRect oe = screen->getCurrentOutputExtents ();
 
@@ -127,6 +127,12 @@ void
 StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 				    CompWindow *w)
 {
+    if (!textAvailable)
+	return;
+
+    if (!optionGetWindowTitle ())
+	return;
+
     GLboolean     wasBlend;
     GLint         oldBlendSrc, oldBlendDst;
     GLMatrix      wTransform (transform), mvp;
