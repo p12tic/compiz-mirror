@@ -40,8 +40,8 @@ const unsigned short SNAP_BACK = 20;
 const unsigned short SNAP_OFF  = 100;
 
 static bool
-moveInitiate (CompAction      *action,
-	      CompAction::State state,
+moveInitiate (CompAction         *action,
+	      CompAction::State  state,
 	      CompOption::Vector &options)
 {
     CompWindow *w;
@@ -104,7 +104,7 @@ moveInitiate (CompAction      *action,
 
 	ms->origState = w->state ();
 
-	CompRect workArea = s->getWorkareaForOutput (w->outputDevice ());
+	CompRect workArea (s->getWorkareaForOutput (w->outputDevice ()));
 
 	ms->snapBackX = w->serverGeometry ().x () - workArea.x ();
 	ms->snapOffX  = x - workArea.x ();
@@ -138,10 +138,8 @@ moveInitiate (CompAction      *action,
 
 	    if (state & CompAction::StateInitKey)
 	    {
-		int xRoot, yRoot;
-
-		xRoot = w->geometry ().x () + (w->size ().width () / 2);
-		yRoot = w->geometry ().y () + (w->size ().height () / 2);
+		int xRoot = w->geometry ().x () + (w->size ().width () / 2);
+		int yRoot = w->geometry ().y () + (w->size ().height () / 2);
 
 		s->warpPointer (xRoot - pointerX, yRoot - pointerY);
 	    }
@@ -153,7 +151,7 @@ moveInitiate (CompAction      *action,
 		if (mw->cWindow)
 		    mw->cWindow->addDamage ();
 		if (mw->gWindow)
-		mw->gWindow->glPaintSetEnabled (mw, true);
+		    mw->gWindow->glPaintSetEnabled (mw, true);
 	    }
 
 	    if (ms->optionGetLazyPositioning ())
@@ -170,8 +168,8 @@ moveInitiate (CompAction      *action,
 }
 
 static bool
-moveTerminate (CompAction      *action,
-	       CompAction::State state,
+moveTerminate (CompAction         *action,
+	       CompAction::State  state,
 	       CompOption::Vector &options)
 {
     MOVE_SCREEN (screen);
@@ -275,10 +273,8 @@ moveGetYConstrainRegion (CompScreen *s)
 		    r.extents.y2 = extents.y2;
 
 		if (r.extents.x1 < r.extents.x2 && r.extents.y1 < r.extents.y2)
-		{
 		    if (r.extents.y2 <= workArea.y ())
 			XSubtractRegion (region, &r, region);
-		}
 
 		r.extents.x1 = w->struts ()->bottom.x;
 		r.extents.y1 = w->struts ()->bottom.y;
@@ -295,10 +291,8 @@ moveGetYConstrainRegion (CompScreen *s)
 		    r.extents.y2 = extents.y2;
 
 		if (r.extents.x1 < r.extents.x2 && r.extents.y1 < r.extents.y2)
-		{
 		    if (r.extents.y1 >= workArea.bottom ())
 			XSubtractRegion (region, &r, region);
-		}
 	    }
 	}
     }
@@ -353,8 +347,8 @@ moveHandleMotionEvent (CompScreen *s,
 		{
 		    int x	   = wX + dx - w->border ().left;
 		    int y	   = wY + dy - w->border ().top;
-		    int width  = wWidth + w->border ().left + w->border ().right;
-		    int height = w->border ().top ? w->border ().top : 1;
+		    int width	   = wWidth + w->border ().left + w->border ().right;
+		    int height	   = w->border ().top ? w->border ().top : 1;
 
 		    int status = XRectInRegion (ms->region, x, y,
 						(unsigned int) width,
@@ -392,9 +386,7 @@ moveHandleMotionEvent (CompScreen *s,
 			}
 		    }
 		    else
-		    {
 			ms->status = status;
-		    }
 		}
 	    }
 
@@ -403,14 +395,13 @@ moveHandleMotionEvent (CompScreen *s,
 		if (w->state () & CompWindowStateMaximizedVertMask)
 		{
 		    if (abs (yRoot - workArea.y () - ms->snapOffY) >= SNAP_OFF)
-		    {
 			if (!s->otherGrabExist ("move", NULL))
 			{
 			    int width = w->serverGeometry ().width ();
 
 			    w->saveMask () |= CWX | CWY;
 
-			    if (w->saveMask ()& CWWidth)
+			    if (w->saveMask () & CWWidth)
 				width = w->saveWc ().width;
 
 			    w->saveWc ().x = xRoot - (width >> 1);
@@ -424,19 +415,17 @@ moveHandleMotionEvent (CompScreen *s,
 
 			    return;
 			}
-		    }
 		}
 		else if (w->state () & CompWindowStateMaximizedHorzMask)
 		{
 		    if (abs (xRoot - workArea.x () - ms->snapOffX) >= SNAP_OFF)
-		    {
 			if (!s->otherGrabExist ("move", NULL))
 			{
 			    int width = w->serverGeometry ().width ();
 
 			    w->saveMask () |= CWX | CWY;
 
-			    if (w->saveMask ()& CWWidth)
+			    if (w->saveMask () & CWWidth)
 				width = w->saveWc ().width;
 
 			    w->saveWc ().x = xRoot - (width >> 1);
@@ -450,26 +439,21 @@ moveHandleMotionEvent (CompScreen *s,
 
 			    return;
 			}
-		    }
 		}
 		else if (ms->origState & CompWindowStateMaximizedVertMask)
 		{
 		    if (abs (yRoot - workArea.y () - ms->snapBackY) < SNAP_BACK)
-		    {
 			if (!s->otherGrabExist ("move", NULL))
 			{
-			    int wy;
-
 			    w->maximize (ms->origState);
 
-			    wy  = workArea.y () + (w->border ().top >> 1);
-			    wy += w->sizeHints ().height_inc >> 1;
+			    int wy  = workArea.y () + (w->border ().top >> 1);
+			    wy	   += w->sizeHints ().height_inc >> 1;
 
 			    s->warpPointer (0, wy - pointerY);
 
 			    return;
 			}
-		    }
 		}
 	    }
 
@@ -517,30 +501,23 @@ moveHandleMotionEvent (CompScreen *s,
 void
 MoveScreen::handleEvent (XEvent *event)
 {
-    switch (event->type) {
+    switch (event->type)
+    {
 	case ButtonPress:
 	case ButtonRelease:
 	    if (event->xbutton.root == screen->root ())
-	    {
 		if (grab)
-		{
 		    if (releaseButton == -1 ||
 			releaseButton == (int) event->xbutton.button)
-		    {
 			moveTerminate (&optionGetInitiateButton (),
 				       CompAction::StateTermButton,
 				       noOptions ());
-		    }
-		}
-	    }
 	    break;
+
 	case KeyPress:
 	    if (event->xkey.root == screen->root ())
-	    {
 		if (grab)
-		{
 		    for (unsigned int i = 0; i < NUM_KEYS; i++)
-		    {
 			if (event->xkey.keycode == key[i])
 			{
 			    XWarpPointer (screen->dpy (), None, None,
@@ -549,19 +526,20 @@ MoveScreen::handleEvent (XEvent *event)
 					  mKeys[i].dy * KEY_MOVE_INC);
 			    break;
 			}
-		    }
-		}
-	    }
 	    break;
+
 	case MotionNotify:
 	    if (event->xmotion.root == screen->root ())
 		moveHandleMotionEvent (screen, pointerX, pointerY);
+
 	    break;
+
 	case EnterNotify:
 	case LeaveNotify:
 	    if (event->xcrossing.root == screen->root ())
 		moveHandleMotionEvent (screen, pointerX, pointerY);
 	    break;
+
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::wmMoveResize)
 	    {
@@ -586,13 +564,10 @@ MoveScreen::handleEvent (XEvent *event)
 			o[1].value ().set (true);
 
 			if (event->xclient.data.l[2] == WmMoveResizeMoveKeyboard)
-			{
 			    moveInitiate (&optionGetInitiateKey (),
 					  CompAction::StateInitKey, o);
-			}
 			else
 			{
-
 			    /* TODO: not only button 1 */
 			    if (pointerMods & Button1Mask)
 			    {
@@ -618,7 +593,6 @@ MoveScreen::handleEvent (XEvent *event)
 		    }
 		}
 		else if (ms->w && type == WmMoveResizeCancel)
-		{
 		    if (ms->w->id () == event->xclient.window)
 		    {
 			moveTerminate (&optionGetInitiateButton (),
@@ -627,9 +601,9 @@ MoveScreen::handleEvent (XEvent *event)
 				       CompAction::StateCancel, noOptions ());
 
 		    }
-		}
 	    }
 	    break;
+
 	case DestroyNotify:
 	    if (w && w->id () == event->xdestroywindow.window)
 	    {
@@ -637,12 +611,15 @@ MoveScreen::handleEvent (XEvent *event)
 		moveTerminate (&optionGetInitiateKey (), 0, noOptions ());
 	    }
 	    break;
+
 	case UnmapNotify:
 	    if (w && w->id () == event->xunmap.window)
 	    {
 		moveTerminate (&optionGetInitiateButton (), 0, noOptions ());
 		moveTerminate (&optionGetInitiateKey (), 0, noOptions ());
 	    }
+	    break;
+
 	default:
 	    break;
     }
@@ -661,13 +638,9 @@ MoveWindow::glPaint (const GLWindowPaintAttrib &attrib,
     MOVE_SCREEN (screen);
 
     if (ms->grab)
-    {
 	if (ms->w == window && ms->moveOpacity != OPAQUE)
-	{
 	    /* modify opacity of windows that are not active */
 	    sAttrib.opacity = (sAttrib.opacity * ms->moveOpacity) >> 16;
-	}
-    }
 
     bool status = gWindow->glPaint (sAttrib, transform, region, mask);
 
@@ -748,4 +721,3 @@ MovePluginVTable::init ()
 
     return true;
 }
-
