@@ -24,13 +24,25 @@
 		<max>5000</max>
 	    </option>
 	    <option name="always_show" type="bool">
-		<_short>Show resize info for all windows</_short>
-		<_long>Show resize info for all windows as opposed to just for windows with a resize increment of greater than 1.</_long>
+		<_short>Show Resizeinfo For All Windows</_short>
+		<_long>Show resize info for all windows as opposed to just for text based windows like terminals.</_long>
 		<default>false</default>
+	    </option>
+	    <option name="resizeinfo_font_bold" type="bool">
+		<_short>Bold Font</_short>
+		<_long>Render the resize info's size display with a bold font.</_long>
+		<default>true</default>
+	    </option>
+	    <option name="resizeinfo_font_size" type="int">
+		<_short>Font Size</_short>
+		<_long>Font size of the resize info's display.</_long>
+		<default>12</default>
+		<min>10</min>
+		<max>14</max>
 	    </option>
 	    <option name="text_color" type="color">
 		<_short>Text Color</_short>
-		<_long>Color of the resize popup's text.</_long>
+		<_long>Color and opacity of the resize popup's text.</_long>
 		<default>
 		    <red>0x0000</red>
 		    <blue>0x0000</blue>
@@ -40,7 +52,7 @@
 	    </option>
 	    <option name="gradient_1" type="color">
 		<_short>Gradient Color 1</_short>
-		<_long>Color on the left side of the gradient background.</_long>
+		<_long>Color and opacity on the left side of the gradient background.</_long>
 		<default>
 		    <red>0xcccc</red>
 		    <green>0xcccc</green>
@@ -50,7 +62,7 @@
 	    </option>
 	    <option name="gradient_2" type="color">
 		<_short>Gradient Color 2</_short>
-		<_long>Color in the center of the gradient background.</_long>
+		<_long>Color and opacity in the center of the gradient background.</_long>
 		<default>
 		    <red>0xf332</red>
 		    <green>0xf332</green>
@@ -60,7 +72,7 @@
 	    </option>
 	    <option name="gradient_3" type="color">
 		<_short>Gradient Color 3</_short>
-		<_long>Color on the right side of the gradient background.</_long>
+		<_long>Color and opacity on the right side of the gradient background.</_long>
 		<default>
 		    <red>0xd998</red>
 		    <green>0xd998</green>
@@ -70,7 +82,7 @@
 	    </option>
 	    <option name="outline_color" type="color">
 		<_short>Outline Color</_short>
-		<_long>Color of the background's outline.</_long>
+		<_long>Color and opacity of the background's outline.</_long>
 		<default>
 		    <red>0xe665</red>
 		    <green>0xe665</green>
