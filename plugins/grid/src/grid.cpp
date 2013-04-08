@@ -184,6 +184,7 @@ GridScreen::initiateCommon (CompAction		*action,
 	    /* move the window to the correct output */
 	    if (cw == mGrabWindow)
 	    {
+		/* TODO: Remove these magic numbers */
 		xwc.x = workarea.x () + 50;
 		xwc.y = workarea.y () + 50;
 		xwc.width = workarea.width ();
@@ -274,8 +275,8 @@ GridScreen::initiateCommon (CompAction		*action,
 		    gw->resizeCount = 3;
 
 		/* tricky, have to allow for window constraints when
-		     * computing what the 33% and 66% offsets would be
-		     */
+		 * computing what the 33% and 66% offsets would be
+		 */
 		switch (gw->resizeCount)
 		{
 		    case 1:
@@ -284,27 +285,32 @@ GridScreen::initiateCommon (CompAction		*action,
 					  props.gravityRight * slotWidth33);
 			gw->resizeCount++;
 			break;
+
 		    case 2:
 			gw->resizeCount++;
 			break;
+
 		    case 3:
 			desiredSlot.setWidth (slotWidth33);
 			desiredSlot.setX (workarea.x () +
 					  props.gravityRight * slotWidth66);
 			gw->resizeCount++;
 			break;
+
 		    case 4:
 			desiredSlot.setWidth (slotWidth25);
 			desiredSlot.setX (workarea.x () +
 					  props.gravityRight * slotWidth75);
 			gw->resizeCount++;
 			break;
+
 		    case 5:
 			desiredSlot.setWidth (slotWidth75);
 			desiredSlot.setX (workarea.x () +
 					  props.gravityRight * slotWidth25);
 			gw->resizeCount++;
 			break;
+
 		    default:
 			break;
 		}
@@ -324,6 +330,7 @@ GridScreen::initiateCommon (CompAction		*action,
 			desiredSlot.setX (workarea.x () + slotWidth17);
 			gw->resizeCount++;
 			break;
+
 		    case 2:
 			desiredSlot.setWidth ((slotWidth25 * 2) +
 					      (slotWidth17 * 2));
@@ -331,11 +338,13 @@ GridScreen::initiateCommon (CompAction		*action,
 					  (slotWidth25 - slotWidth17));
 			gw->resizeCount++;
 			break;
+
 		    case 3:
 			desiredSlot.setWidth ((slotWidth25 * 2));
 			desiredSlot.setX (workarea.x () + slotWidth25);
 			gw->resizeCount++;
 			break;
+
 		    case 4:
 			desiredSlot.setWidth (slotWidth33 -
 					      (cw->border ().left +
@@ -343,9 +352,11 @@ GridScreen::initiateCommon (CompAction		*action,
 			desiredSlot.setX (workarea.x () + slotWidth33);
 			gw->resizeCount++;
 			break;
+
 		    case 5:
 			gw->resizeCount++;
 			break;
+
 		    default:
 			break;
 		}
@@ -708,31 +719,40 @@ GridScreen::edgeToGridType ()
 {
     int ret;
 
-    switch (edge) {
+    switch (edge)
+    {
 	case Left:
 	    ret = (int) optionGetLeftEdgeAction ();
 	    break;
+
 	case Right:
 	    ret = (int) optionGetRightEdgeAction ();
 	    break;
+
 	case Top:
 	    ret = (int) optionGetTopEdgeAction ();
 	    break;
+
 	case Bottom:
 	    ret = (int) optionGetBottomEdgeAction ();
 	    break;
+
 	case TopLeft:
 	    ret = (int) optionGetTopLeftCornerAction ();
 	    break;
+
 	case TopRight:
 	    ret = (int) optionGetTopRightCornerAction ();
 	    break;
+
 	case BottomLeft:
 	    ret = (int) optionGetBottomLeftCornerAction ();
 	    break;
+
 	case BottomRight:
 	    ret = (int) optionGetBottomRightCornerAction ();
 	    break;
+
 	case NoEdge:
 	default:
 	    ret = -1;
