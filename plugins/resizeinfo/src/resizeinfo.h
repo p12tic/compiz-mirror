@@ -58,8 +58,8 @@ class InfoLayer
 	cairo_t           *cr;
 
 	void draw (const GLMatrix &transform,
-	           int             x,
-	 	   int y);
+		   int            x,
+		   int            y);
 
 	void renderBackground ();
 	void renderText ();
@@ -123,9 +123,9 @@ class InfoWindow :
 
 	void
 	grabNotify (int,
-	      	    int,
-	      	    unsigned int,
-	      	    unsigned int);
+		    int,
+		    unsigned int,
+		    unsigned int);
 
 	void
 	ungrabNotify ();
