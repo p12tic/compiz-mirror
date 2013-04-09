@@ -247,10 +247,13 @@ ExpoScreen::moveFocusViewport (int dx,
 void
 ExpoScreen::finishWindowMovement ()
 {
+    CompOption::Vector o(0);
     dndWindow->ungrabNotify ();
 
+    screen->handleCompizEvent ("expo", "start_viewport_switch", o);
     screen->moveViewport (screen->vp ().x () - selectedVp.x (),
 			  screen->vp ().y () - selectedVp.y (), true);
+    screen->handleCompizEvent ("expo", "end_viewport_switch", o);
 
     /* update saved window attributes in case we moved the
        window to a new viewport */
@@ -486,6 +489,8 @@ ExpoScreen::paint (CompOutput::ptrList& outputs,
 void
 ExpoScreen::donePaint ()
 {
+    CompOption::Vector o(0);
+    screen->handleCompizEvent ("expo", "start_viewport_switch", o);
     switch (vpUpdateMode) {
     case VPUpdateMouseOver:
 	screen->moveViewport (screen->vp ().x () - selectedVp.x (),
@@ -504,6 +509,7 @@ ExpoScreen::donePaint ()
     default:
 	break;
     }
+    screen->handleCompizEvent ("expo", "end_viewport_switch", o);
 
     if ((expoCam > 0.0f && expoCam < 1.0f) || dndState != DnDNone)
 	cScreen->damageScreen ();
