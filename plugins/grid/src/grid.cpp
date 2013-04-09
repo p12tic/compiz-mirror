@@ -136,6 +136,12 @@ GridScreen::initiateCommon (CompAction		*action,
 	bool maximizeH = where & (GridBottom | GridTop | GridMaximize);
 	bool maximizeV = where & (GridLeft | GridRight | GridMaximize);
 
+	bool horzMaximizedGridPosition = where & (GridTop | GridBottom);
+	bool vertMaximizedGridPosition = where & (GridLeft | GridRight);
+	bool  anyMaximizedGridPosition = horzMaximizedGridPosition ||
+					 vertMaximizedGridPosition ||
+					 where & GridMaximize;
+
 	if (!(cw->actions () & CompWindowActionResizeMask))
 	    return false;
 
@@ -223,8 +229,7 @@ GridScreen::initiateCommon (CompAction		*action,
 	if (!optionGetCycleSizes ())
 	{
 	    /* Adjust for constraints and decorations */
-	    if (where & ~(GridMaximize |
-			  GridLeft | GridRight | GridTop | GridBottom))
+	    if (!anyMaximizedGridPosition)
 		desiredRect = constrainSize (cw, desiredSlot);
 	    else
 		desiredRect = slotToRect (cw, desiredSlot);
@@ -251,13 +256,11 @@ GridScreen::initiateCommon (CompAction		*action,
 	    !optionGetCycleSizes ())
 	    return false;
 
-	/* Grid Left/Right/Top/Bottom are only valid here, if
+	/* !(Grid Left/Right/Top/Bottom) are only valid here, if
 	 * cycling through sizes is disabled also
 	 */
-	if (desiredRect.y () == currentRect.y () &&
-	    desiredRect.height () == currentRect.height () &&
-	    (where & ~(GridMaximize) ||
-	     (where & ~(GridLeft | GridRight | GridTop | GridBottom) &&
+	if ((where & ~(GridMaximize) ||
+	     ((!horzMaximizedGridPosition || !vertMaximizedGridPosition) &&
 	      !optionGetCycleSizes ())) &&
 	    gw->lastTarget & where)
 	{
@@ -394,8 +397,7 @@ GridScreen::initiateCommon (CompAction		*action,
 		/* Special cases for left/right and top/bottom gridded windows, where we
 		 * actually vertically respective horizontally semi-maximize the window
 		 */
-		if (where & GridLeft || where & GridRight ||
-		    where & GridTop || where & GridBottom)
+		if (horzMaximizedGridPosition || vertMaximizedGridPosition)
 		{
 		    /* First restore the window to its original size */
 		    XWindowChanges rwc;
@@ -407,7 +409,8 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		    cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
 
-		    if (where & GridLeft || where & GridRight)
+		    /* GridLeft || GridRight */
+		    if (vertMaximizedGridPosition)
 		    {
 			gw->isGridVertMaximized = true;
 			gw->isGridHorzMaximized = false;
@@ -416,7 +419,8 @@ GridScreen::initiateCommon (CompAction		*action,
 			/* Semi-maximize the window vertically */
 			cw->maximize (CompWindowStateMaximizedVertMask);
 		    }
-		    else /* GridTop || GridBottom */
+		    /* GridTop || GridBottom */
+		    else /* (horzMaximizedGridPosition) */
 		    {
 			gw->isGridHorzMaximized = true;
 			gw->isGridVertMaximized = false;
