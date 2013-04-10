@@ -165,9 +165,7 @@ WobblyWindow::findNextEastEdge (Object *object)
 		    window->output ().bottom;
 	    }
 	    else
-	    {
 		continue;
-	    }
 
 	    if (s > object->position.y &&
 		s < end)
@@ -930,22 +928,20 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.x += object->velocity.x;
 
 		    if (object->velocity.x < 0.0f &&
-			object->position.x < object->vertEdge.attract)
+			object->position.x < object->vertEdge.attract &&
+			object->position.x < object->vertEdge.next)
 		    {
-			if (object->position.x < object->vertEdge.next)
-			{
-			    object->vertEdge.snapped = true;
-			    object->position.x = object->vertEdge.next;
-			    object->velocity.x = 0.0f;
+			object->vertEdge.snapped = true;
+			object->position.x = object->vertEdge.next;
+			object->velocity.x = 0.0f;
 
-			    model->snapCnt[West]++;
+			model->snapCnt[West]++;
 
-			    updateModelSnapping ();
-			}
-			else
-			    object->velocity.x -=
-				object->vertEdge.attract - object->position.x;
+			updateModelSnapping ();
 		    }
+		    else
+			object->velocity.x -=
+			    object->vertEdge.attract - object->position.x;
 
 		    if (object->position.x > object->vertEdge.prev)
 			findNextWestEdge (object);
@@ -963,22 +959,20 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.x += object->velocity.x;
 
 		    if (object->velocity.x > 0.0f &&
-			object->position.x > object->vertEdge.attract)
+			object->position.x > object->vertEdge.attract &&
+			object->position.x > object->vertEdge.next)
 		    {
-			if (object->position.x > object->vertEdge.next)
-			{
-			    object->vertEdge.snapped = true;
-			    object->position.x = object->vertEdge.next;
-			    object->velocity.x = 0.0f;
+			object->vertEdge.snapped = true;
+			object->position.x = object->vertEdge.next;
+			object->velocity.x = 0.0f;
 
-			    model->snapCnt[East]++;
+			model->snapCnt[East]++;
 
-			    updateModelSnapping ();
-			}
-			else
-			    object->velocity.x =
-				object->position.x - object->vertEdge.attract;
+			updateModelSnapping ();
 		    }
+		    else
+			object->velocity.x =
+			    object->position.x - object->vertEdge.attract;
 
 		    if (object->position.x < object->vertEdge.prev)
 			findNextEastEdge (object);
@@ -999,22 +993,20 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.y += object->velocity.y;
 
 		    if (object->velocity.y < 0.0f &&
-			object->position.y < object->horzEdge.attract)
+			object->position.y < object->horzEdge.attract &&
+			object->position.y < object->horzEdge.next)
 		    {
-			if (object->position.y < object->horzEdge.next)
-			{
-			    object->horzEdge.snapped = true;
-			    object->position.y = object->horzEdge.next;
-			    object->velocity.y = 0.0f;
+			object->horzEdge.snapped = true;
+			object->position.y = object->horzEdge.next;
+			object->velocity.y = 0.0f;
 
-			    model->snapCnt[North]++;
+			model->snapCnt[North]++;
 
-			    updateModelSnapping ();
-			}
-			else
-			    object->velocity.y -=
-				object->horzEdge.attract - object->position.y;
+			updateModelSnapping ();
 		    }
+		    else
+			object->velocity.y -=
+			    object->horzEdge.attract - object->position.y;
 
 		    if (object->position.y > object->horzEdge.prev)
 			findNextNorthEdge (object);
@@ -1032,22 +1024,20 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.y += object->velocity.y;
 
 		    if (object->velocity.y > 0.0f &&
-			object->position.y > object->horzEdge.attract)
+			object->position.y > object->horzEdge.attract &&
+			object->position.y > object->horzEdge.next)
 		    {
-			if (object->position.y > object->horzEdge.next)
-			{
-			    object->horzEdge.snapped = true;
-			    object->position.y = object->horzEdge.next;
-			    object->velocity.y = 0.0f;
+			object->horzEdge.snapped = true;
+			object->position.y = object->horzEdge.next;
+			object->velocity.y = 0.0f;
 
-			    model->snapCnt[South]++;
+			model->snapCnt[South]++;
 
-			    updateModelSnapping ();
-			}
-			else
-			    object->velocity.y =
-				object->position.y - object->horzEdge.attract;
+			updateModelSnapping ();
 		    }
+		    else
+			object->velocity.y =
+			    object->position.y - object->horzEdge.attract;
 
 		    if (object->position.y < object->horzEdge.prev)
 			findNextSouthEdge (object);
