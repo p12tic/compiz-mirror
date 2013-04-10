@@ -72,7 +72,7 @@ WorkaroundsWindow::clearInputShape (HideInfo *hideInfo)
     XShapeCombineRectangles (screen->dpy (), xid, ShapeInput, 0, 0,
 			     NULL, 0, ShapeSet, 0);
 
-    XShapeSelectInput (screen->dpy (), xid, ShapeNotify);
+    XShapeSelectInput (screen->dpy (), xid, ShapeNotifyMask);
 }
 
 /*
