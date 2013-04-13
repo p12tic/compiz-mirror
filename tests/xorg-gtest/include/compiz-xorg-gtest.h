@@ -214,7 +214,8 @@ namespace compiz
 	    protected:
 
 		Atom FetchAtom (const char *);
-		void WaitForWindowCreation (Window w);
+		std::vector <long> WaitForWindowCreation (Window w);
+		bool IsOverrideRedirect (std::vector <long> &data);
 
 		virtual int  GetEventMask ();
 

@@ -75,8 +75,16 @@ compiz::window::extents::Extents::Extents (int left, int right, int top, int bot
 {
 }
 
+/* Just here to keep ABI compatability */
 bool
 compiz::window::extents::Extents::operator== (const Extents &other)
+{
+    const Extents &self = const_cast <const Extents &> (*this);
+    return self == other;
+}
+
+bool
+compiz::window::extents::Extents::operator== (const Extents &other) const
 {
     return this->left == other.left &&
 	   this->right == other.right &&
@@ -84,8 +92,16 @@ compiz::window::extents::Extents::operator== (const Extents &other)
 	   this->bottom == other.bottom;
 }
 
+/* Just here to keep ABI compatability */
 bool
 compiz::window::extents::Extents::operator!= (const Extents &other)
+{
+    const Extents &self = const_cast <const Extents &> (*this);
+    return self != other;
+}
+
+bool
+compiz::window::extents::Extents::operator!= (const Extents &other) const
 {
     return !(*this == other);
 }
