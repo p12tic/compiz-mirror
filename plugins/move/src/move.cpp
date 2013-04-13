@@ -458,13 +458,18 @@ moveHandleMotionEvent (CompScreen *s,
 		else if (ms->origState & CompWindowStateMaximizedHorzMask &&
 			 ms->optionGetSnapbackSemimaximized ())
 		{
-		    if (abs (xRoot - workArea.x () - ms->snapBackX) < snapbackDistance) /* ||
-			abs (workArea.width () - workArea.x () - xRoot) < snapbackDistance) */
+		    /* TODO: Snapping back horizontally just works for the left side
+		     * of the screen for now
+		     */
+		    if (abs (xRoot - workArea.x () - ms->snapBackX) < snapbackDistance)
 		    {
 			if (!s->otherGrabExist ("move", NULL))
 			{
 			    w->maximize (ms->origState);
-			//    s->warpPointer (workArea.width () / 2 - snapbackDistance, 0);
+			/* TODO: Here we should warp the pointer back, but this somehow interrupts
+			 * the horizontal maximizing, we should fix it and reenable this warp:
+			 * s->warpPointer (workArea.width () / 2 - snapbackDistance, 0);
+			 */
 
 			    return;
 			}
