@@ -29,6 +29,14 @@
 		<min>1</min>
 		<max>100</max>
 	    </option>
+	    <option name="key_move_inc" type="int">
+		<_short>Keyboard Move Increment</_short>
+		<_long>Move the window by this amount of pixels for every press on one of the cursor keys.</_long>
+		<default>24</default>
+		<min>1</min>
+		<max>250</max>
+		<precision>5</precision>
+	    </option>
 	    <option name="constrain_y" type="bool">
 		<_short>Constrain Y</_short>
 		<_long>Constrain y-coordinate to workspace area.</_long>
