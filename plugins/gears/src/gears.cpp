@@ -250,6 +250,7 @@ void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
 
     glEnable (GL_DEPTH_TEST);
     glDepthMask (GL_TRUE);
+    glDepthFunc (GL_LESS);
     glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     glPushMatrix();
