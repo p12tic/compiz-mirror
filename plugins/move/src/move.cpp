@@ -536,10 +536,12 @@ MoveScreen::handleEvent (XEvent *event)
 		for (unsigned int i = 0; i < NUM_KEYS; i++)
 		    if (event->xkey.keycode == key[i])
 		    {
+			int moveIncrement = optionGetKeyMoveInc ();
+
 			XWarpPointer (screen->dpy (), None, None,
 				      0, 0, 0, 0,
-				      mKeys[i].dx * optionGetKeyMoveInc (),
-				      mKeys[i].dy * optionGetKeyMoveInc ());
+				      mKeys[i].dx * moveIncrement,
+				      mKeys[i].dy * moveIncrement);
 			break;
 		    }
 	    break;
