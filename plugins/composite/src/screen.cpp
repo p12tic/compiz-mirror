@@ -848,11 +848,13 @@ CompositeScreen::handlePaintTimeout ()
 	priv->outputShapeChanged = false;
 
 	foreach (CompWindow *w, screen->windows ())
+	{
 	    if (w->destroyed ())
 	    {
 		CompositeWindow::get (w)->addDamage ();
 		break;
 	    }
+	}
     }
 
     priv->lastRedraw = tv;
@@ -899,12 +901,14 @@ CompositeScreen::getWindowPaintList ()
 	foreach (CompWindow *w, screen->windows ())
 	{
 	    foreach (CompWindow *dw, screen->destroyedWindows ())
+	    {
 		if (dw->next == w)
 		{
 		    priv->withDestroyedWindows.push_back (dw);
 		    destroyedWindows.remove (dw);
 		    break;
 		}
+	    }
 
 	    priv->withDestroyedWindows.push_back (w);
 	}
