@@ -940,7 +940,9 @@ PrivateCompositeScreen::handleExposeEvent (XExposeEvent *event)
 	CompRect rect;
 
 	foreach (CompRect rect, exposeRects)
+	{
 	    cScreen->damageRegion (CompRegion (rect));
+	}
 
 	exposeRects.clear ();
     }
