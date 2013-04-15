@@ -899,8 +899,10 @@ ShiftScreen::switchToWindow (bool	   toNext)
 	return;
 
     for (cur = 0; cur < mNWindows; cur++)
+    {
 	if (mWindows[cur]->id () == mSelectedWindow)
 	    break;
+    }
 
     if (cur == mNWindows)
 	return;
@@ -935,8 +937,10 @@ ShiftScreen::countWindows ()
     int count = 0;
 
     foreach (CompWindow *w, screen->windows ())
+    {
 	if (ShiftWindow::get (w)->isShiftable ())
 	    count++;
+    }
 
     return count;
 }
