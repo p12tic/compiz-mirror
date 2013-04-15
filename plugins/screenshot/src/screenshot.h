@@ -40,6 +40,7 @@ class ShotScreen :
     public ScreenshotOptions
 {
     public:
+
 	ShotScreen (CompScreen *screen);
 
 	bool initiate (CompAction            *action,
@@ -64,7 +65,7 @@ class ShotScreen :
 	GLScreen        *gScreen;
 
 	CompScreen::GrabHandle mGrabIndex;
-	Bool                   mGrab;
+	bool                   mGrab;
 
 	int  mX1, mY1, mX2, mY2;
 };
@@ -76,4 +77,3 @@ class ShotPluginVTable :
 
 	bool init ();
 };
-
