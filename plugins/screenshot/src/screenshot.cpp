@@ -34,8 +34,6 @@
   #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const void*,const void*))(d));
 #endif
 
-
-
 COMPIZ_PLUGIN_20090315 (screenshot, ShotPluginVTable)
 
 bool
@@ -154,12 +152,10 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 
     if (mGrab)
     {
-	int x1, x2, y1, y2;
-
-	x1 = MIN (mX1, mX2);
-	y1 = MIN (mY1, mY2);
-	x2 = MAX (mX1, mX2);
-	y2 = MAX (mY1, mY2);
+	int x1 = MIN (mX1, mX2);
+	int y1 = MIN (mY1, mY2);
+	int x2 = MAX (mX1, mX2);
+	int y2 = MAX (mY1, mY2);
 
 	if (!mGrabIndex)
 	{
@@ -176,6 +172,7 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 		    dir = getXDGUserDir (XDGUserDirDesktop);
 
 		buffer = (GLubyte *)malloc (sizeof (GLubyte) * w * h * 4);
+
 		if (buffer)
 		{
 		    struct dirent **namelist;
@@ -238,6 +235,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GLMatrix        transform (matrix);
     GLfloat         vertexData[12];
     GLushort        colorData[4];
+    GLushort       *color;
 
     bool status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
@@ -248,8 +246,21 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	int x2 = MAX (mX1, mX2);
 	int y2 = MAX (mY1, mY2);
 
-	if (mGrabIndex)
+	if (mGrabIndex &&
+	    optionGetDrawSelectionIndicator ())
 	{
+#ifndef USE_GLES
+	    glEnable (GL_BLEND);
+#endif
+	    /* draw filled rectangle */
+	    float alpha = ((float) optionGetFillColorAlpha () / 65535.0f);
+	    color = optionGetFillColor ();
+
+	    colorData[0] = alpha * color[0];
+	    colorData[1] = alpha * color[1];
+	    colorData[2] = alpha * color[2];
+	    colorData[3] = alpha * 65535.0f;
+
 	    vertexData[0]  = x1;
 	    vertexData[1]  = y1;
 	    vertexData[2]  = 0.0f;
@@ -263,12 +274,6 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    vertexData[10] = y2;
 	    vertexData[11] = 0.0f;
 
-	    colorData[0] = 0x2fff;
-	    colorData[1] = 0x2fff;
-	    colorData[2] = 0x4fff;
-	    colorData[3] = 0x4fff;
-
-
 	    transform.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
 	    transform.scale (1.0f / output->width (),
 			     -1.0f / output->height (),
@@ -277,9 +282,6 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 				 -output->region ()->extents.y2,
 				 0.0f);
 
-#ifndef USE_GLES
-	    glEnable (GL_BLEND);
-#endif
 	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
 	    streamingBuffer->addColors (1, colorData);
@@ -288,22 +290,33 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->end ();
 	    streamingBuffer->render (transform);
 
-	    streamingBuffer->begin (GL_LINE_LOOP);
+	    /* draw outline */
+	    alpha = ((float) optionGetOutlineColorAlpha () / 65535.0f);
+	    color = optionGetOutlineColor ();
+
+	    colorData[0] = alpha * color[0];
+	    colorData[1] = alpha * color[1];
+	    colorData[2] = alpha * color[2];
+	    colorData[3] = alpha * 65535.0f;
 
 	    vertexData[6]  = x2;
 	    vertexData[7]  = y2;
 	    vertexData[9]  = x2;
 	    vertexData[10] = y1;
-	    colorData [3]  = 0x9fff;
+
+	    glLineWidth (2.0);
+
+	    streamingBuffer->begin (GL_LINE_LOOP);
 
 	    streamingBuffer->addColors (1, colorData);
 	    streamingBuffer->addVertices (4, vertexData);
 
 	    streamingBuffer->end ();
+	    streamingBuffer->render (transform);
+
 #ifndef USE_GLES
 	    glDisable (GL_BLEND);
 #endif
-	    streamingBuffer->render (transform);
 	}
     }
 
@@ -369,9 +382,9 @@ ShotScreen::ShotScreen (CompScreen *screen) :
     mGrab (false)
 {
     optionSetInitiateButtonInitiate (boost::bind (&ShotScreen::initiate, this,
-    						  _1, _2, _3));
+						  _1, _2, _3));
     optionSetInitiateButtonTerminate (boost::bind (&ShotScreen::terminate, this,
-    						   _1, _2, _3));
+						   _1, _2, _3));
 
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
