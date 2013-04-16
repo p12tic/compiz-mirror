@@ -264,7 +264,7 @@ StubScreenSizeChangeObject::sizeAdjustTest (const CompSize &oldSize,
     return g;
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWidthNoMovement)
+TEST_F (PlaceScreenSizeChange, NoMovementOnSmallerWidth)
 {
     SetInitialScreenSize (CompSize (WIDESCREEN_MONITOR_WIDTH,
 				    MONITOR_HEIGHT));
@@ -287,7 +287,7 @@ TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWidthNoMovement)
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenSmallerHeightNoMovement)
+TEST_F (PlaceScreenSizeChange, NoMovementOnSmallerHeight)
 {
     SetInitialScreenSize (CompSize (MONITOR_WIDTH,
 				    TALLER_MONITOR_HEIGHT));
@@ -310,7 +310,7 @@ TEST_F (PlaceScreenSizeChange, MakeScreenSmallerHeightNoMovement)
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenLargerNoMovement)
+TEST_F (PlaceScreenSizeChange, NoMovementOnLargerSize)
 {
     SetInitialScreenSize (CompSize (MONITOR_WIDTH,
 				    MONITOR_HEIGHT));
@@ -332,7 +332,7 @@ TEST_F (PlaceScreenSizeChange, MakeScreenLargerNoMovement)
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWindowPlacedAtEdgeToFit)
+TEST_F (PlaceScreenSizeChange, MovedToEdgeOfRemainingMonitorOnUnplug)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -357,7 +357,7 @@ TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWindowPlacedAtEdgeToFit)
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MonitorRepluggedWindowReturnsToOriginalPosition)
+TEST_F (PlaceScreenSizeChange, MovedBackToOriginalPositionOnReplug)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH, MONITOR_HEIGHT));
     /* Move the window to the other "monitor" */
@@ -384,7 +384,7 @@ TEST_F (PlaceScreenSizeChange, MonitorRepluggedWindowReturnsToOriginalPosition)
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MonitorRepluggedAndExpandedNoChangeFromInitial)
+TEST_F (PlaceScreenSizeChange, MovedBackToOriginalPositionOnExpansion)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    MONITOR_HEIGHT));
@@ -415,7 +415,7 @@ TEST_F (PlaceScreenSizeChange, MonitorRepluggedAndExpandedNoChangeFromInitial)
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWindowPlacedAtBottomEdgeTakesIntoAccountStruts)
+TEST_F (PlaceScreenSizeChange, NoOverlapStrutsOnRePlacement)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    MONITOR_HEIGHT));
@@ -450,7 +450,7 @@ TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWindowPlacedAtBottomEdgeTakesInt
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, ReplugBottomMonitorWindowReturnsToOriginalPosition)
+TEST_F (PlaceScreenSizeChange, MovedToOriginalPositionOnPerpendicularExpansion)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -487,7 +487,7 @@ TEST_F (PlaceScreenSizeChange, ReplugBottomMonitorWindowReturnsToOriginalPositio
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWindowOnSecondViewportOnFirstMonitorSecondViewport)
+TEST_F (PlaceScreenSizeChange, RemainOnSecondViewportWhenConstraineToFirst)
 {
     /* Unplug a "monitor" */
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
@@ -518,7 +518,7 @@ TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWindowOnSecondViewportOnFirstMon
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, ReplugMonitorWindowOnSecondViewportInitialPositionOnSecondViewport)
+TEST_F (PlaceScreenSizeChange, RemainOnSecondViewportAfterMovedToOriginalPosition)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -550,7 +550,7 @@ TEST_F (PlaceScreenSizeChange, ReplugMonitorWindowOnSecondViewportInitialPositio
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, UnplugMonitorWindowOnSecondViewportFirstMonitorStaysOnFirstMonitor)
+TEST_F (PlaceScreenSizeChange, RemainAtOriginalPositionOnSecondViewportUnplug)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -572,7 +572,7 @@ TEST_F (PlaceScreenSizeChange, UnplugMonitorWindowOnSecondViewportFirstMonitorSt
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, ReplugMonitorWindowOnSecondViewportFirstMonitorStaysOnFirstMonitor)
+TEST_F (PlaceScreenSizeChange, RemainAtOriginalPositionOnSecondViewportReplug)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -595,7 +595,7 @@ TEST_F (PlaceScreenSizeChange, ReplugMonitorWindowOnSecondViewportFirstMonitorSt
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportSecondMonitorStaysOnPreviousViewport)
+TEST_F (PlaceScreenSizeChange, RemainOnPreviousViewportWhenMovedToFirstMonitor)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -622,7 +622,7 @@ TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportSecondMonitorStaysOnPrevi
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportSecondMonitorStaysOnPreviousViewportWhenReplugged)
+TEST_F (PlaceScreenSizeChange, RemainOnPreviousViewportWhenRestored)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -649,7 +649,7 @@ TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportSecondMonitorStaysOnPrevi
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportFirstMonitorStaysOnPreviousViewport)
+TEST_F (PlaceScreenSizeChange, RemainOnPreviousViewportFirstMonitor)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
@@ -675,7 +675,7 @@ TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportFirstMonitorStaysOnPrevio
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
-TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportFirstMonitorStaysOnPreviousViewportWhenReplugged)
+TEST_F (PlaceScreenSizeChange, RemainOnPreviousViewportFirstMonitorWhenRestored)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
 				    DUAL_MONITOR_HEIGHT));
