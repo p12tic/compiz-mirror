@@ -85,6 +85,7 @@ class StubScreenSizeChangeObject :
 const unsigned int MOCK_STRUT_SIZE = 24;
 
 const unsigned int WIDESCREEN_MONITOR_WIDTH = 1280;
+const unsigned int TALLER_MONITOR_HEIGHT = 1050;
 const unsigned int MONITOR_WIDTH = 1024;
 const unsigned int MONITOR_HEIGHT = 768;
 
@@ -263,10 +264,33 @@ StubScreenSizeChangeObject::sizeAdjustTest (const CompSize &oldSize,
     return g;
 }
 
-TEST_F (PlaceScreenSizeChange, MakeScreenSmallerNoMovement)
+TEST_F (PlaceScreenSizeChange, MakeScreenSmallerWidthNoMovement)
 {
     SetInitialScreenSize (CompSize (WIDESCREEN_MONITOR_WIDTH,
 				    MONITOR_HEIGHT));
+    SetWindowGeometry (cw::Geometry (WINDOW_X,
+				     WINDOW_Y,
+				     WINDOW_WIDTH,
+				     WINDOW_HEIGHT,
+				     0));
+
+    /* First test that changing the screen size
+     * to something smaller here doesn't cause our
+     * (small) window to be moved */
+    cw::Geometry expectedWindowGeometryAfterChange =
+	GetInitialWindowGeometry ();
+
+    cw::Geometry windowGeometryAfterChange =
+	ChangeScreenSizeAndAdjustWindow (CompSize (MONITOR_WIDTH,
+						   MONITOR_HEIGHT));
+
+    EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
+}
+
+TEST_F (PlaceScreenSizeChange, MakeScreenSmallerHeightNoMovement)
+{
+    SetInitialScreenSize (CompSize (MONITOR_WIDTH,
+				    TALLER_MONITOR_HEIGHT));
     SetWindowGeometry (cw::Geometry (WINDOW_X,
 				     WINDOW_Y,
 				     WINDOW_WIDTH,
@@ -526,6 +550,28 @@ TEST_F (PlaceScreenSizeChange, ReplugMonitorWindowOnSecondViewportInitialPositio
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
 
+TEST_F (PlaceScreenSizeChange, UnplugMonitorWindowOnSecondViewportFirstMonitorStaysOnFirstMonitor)
+{
+    SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
+				    DUAL_MONITOR_HEIGHT));
+    SetWindowGeometry (cw::Geometry (DUAL_MONITOR_WIDTH + WINDOW_X,
+				     MONITOR_HEIGHT + WINDOW_Y,
+				     WINDOW_WIDTH,
+				     WINDOW_HEIGHT,
+				     0));
+
+    cw::Geometry windowGeometryAfterChange =
+	ChangeScreenSizeAndAdjustWindow (CompSize (MONITOR_WIDTH,
+						   DUAL_MONITOR_HEIGHT));
+
+    cw::Geometry expectedWindowGeometryAfterChange (MONITOR_WIDTH + WINDOW_X,
+						    MONITOR_HEIGHT + WINDOW_Y,
+						    WINDOW_WIDTH,
+						    WINDOW_HEIGHT,
+						    0);
+    EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
+}
+
 TEST_F (PlaceScreenSizeChange, ReplugMonitorWindowOnSecondViewportFirstMonitorStaysOnFirstMonitor)
 {
     SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
@@ -557,8 +603,34 @@ TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportSecondMonitorStaysOnPrevi
     /* Deal with the case where the position is negative, which means
      * it's actually wrapped around to the rightmost viewport
      */
-    SetWindowGeometry (cw::Geometry (-(MONITOR_WIDTH -
-				       WINDOW_X),
+    SetWindowGeometry (cw::Geometry (WINDOW_X - MONITOR_WIDTH,
+				     WINDOW_Y,
+				     WINDOW_WIDTH,
+				     WINDOW_HEIGHT,
+				     0));
+
+    /* Unplug the right "monitor" */
+    cw::Geometry windowGeometryAfterChange =
+	ChangeScreenSizeAndAdjustWindow (CompSize (MONITOR_WIDTH,
+						   DUAL_MONITOR_HEIGHT));
+
+    cw::Geometry expectedWindowGeometryAfterChange (-WINDOW_WIDTH,
+						    WINDOW_Y,
+						    WINDOW_WIDTH,
+						    WINDOW_HEIGHT,
+						    0);
+    EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
+}
+
+TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportSecondMonitorStaysOnPreviousViewportWhenReplugged)
+{
+    SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
+				    DUAL_MONITOR_HEIGHT));
+
+    /* Deal with the case where the position is negative, which means
+     * it's actually wrapped around to the rightmost viewport
+     */
+    SetWindowGeometry (cw::Geometry (WINDOW_X - MONITOR_WIDTH,
 				     WINDOW_Y,
 				     WINDOW_WIDTH,
 				     WINDOW_HEIGHT,
@@ -585,8 +657,33 @@ TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportFirstMonitorStaysOnPrevio
     /* Move the window to the left monitor, verify that it survives an
      * unplug/plug cycle
      */
-    SetWindowGeometry (cw::Geometry (-(DUAL_MONITOR_WIDTH -
-				       WINDOW_X),
+    SetWindowGeometry (cw::Geometry (WINDOW_X - DUAL_MONITOR_WIDTH,
+				     WINDOW_Y,
+				     WINDOW_WIDTH,
+				     WINDOW_HEIGHT,
+				     0));
+
+    cw::Geometry windowGeometryAfterChange =
+	ChangeScreenSizeAndAdjustWindow (CompSize (MONITOR_WIDTH,
+						   DUAL_MONITOR_HEIGHT));
+
+    cw::Geometry expectedWindowGeometryAfterChange (WINDOW_X - MONITOR_WIDTH,
+						    WINDOW_Y,
+						    WINDOW_WIDTH,
+						    WINDOW_HEIGHT,
+						    0);
+    EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
+}
+
+TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportFirstMonitorStaysOnPreviousViewportWhenReplugged)
+{
+    SetInitialScreenSize (CompSize (DUAL_MONITOR_WIDTH,
+				    DUAL_MONITOR_HEIGHT));
+
+    /* Move the window to the left monitor, verify that it survives an
+     * unplug/plug cycle
+     */
+    SetWindowGeometry (cw::Geometry (WINDOW_X - DUAL_MONITOR_WIDTH,
 				     WINDOW_Y,
 				     WINDOW_WIDTH,
 				     WINDOW_HEIGHT,
@@ -599,11 +696,7 @@ TEST_F (PlaceScreenSizeChange, WindowOnPreviousViewportFirstMonitorStaysOnPrevio
 	ChangeScreenSizeAndAdjustWindow (CompSize (DUAL_MONITOR_WIDTH,
 						   DUAL_MONITOR_HEIGHT));
 
-    cw::Geometry expectedWindowGeometryAfterChange (-(DUAL_MONITOR_WIDTH -
-						      WINDOW_X),
-						    WINDOW_Y,
-						    WINDOW_WIDTH,
-						    WINDOW_HEIGHT,
-						    0);
+    cw::Geometry expectedWindowGeometryAfterChange
+	= GetInitialWindowGeometry ();
     EXPECT_EQ (expectedWindowGeometryAfterChange, windowGeometryAfterChange);
 }
