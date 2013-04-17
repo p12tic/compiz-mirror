@@ -33,7 +33,7 @@
 
 
 class CompositePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<CompositeScreen, CompositeWindow>
+    public CompPlugin::VTableForScreenAndWindow<CompositeScreen, CompositeWindow, COMPIZ_COMPOSITE_ABI>
 {
     public:
 

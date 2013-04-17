@@ -79,7 +79,7 @@ PrivateGLScreen::setOption (const CompString  &name,
 }
 
 class OpenglPluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<GLScreen, GLWindow>
+    public CompPlugin::VTableForScreenAndWindow<GLScreen, GLWindow, COMPIZ_OPENGL_ABI>
 {
     public:
 

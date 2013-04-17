@@ -39,7 +39,7 @@
 #define EDGE_STATE (CompAction::StateInitEdge)
 
 class ScalePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<ScaleScreen, ScaleWindow>
+    public CompPlugin::VTableForScreenAndWindow<ScaleScreen, ScaleWindow, COMPIZ_SCALE_ABI>
 {
     public:
 
