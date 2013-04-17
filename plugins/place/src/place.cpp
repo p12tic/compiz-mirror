@@ -344,8 +344,6 @@ PlaceWindow::place (CompPoint &pos)
 	pos.setY (y + (viewport.y () - screen->vp ().y ()) * screen->height ());
     }
 
-    printf ("window 0x%x placed at %i %i: ext: %i %i\n", (unsigned int) window->id (), pos.x (), pos.y (), window->border ().left, window->border ().top);
-
     return true;
 }
 
