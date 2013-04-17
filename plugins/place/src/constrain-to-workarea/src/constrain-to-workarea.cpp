@@ -140,35 +140,21 @@ cp::clampGeometryToWorkArea (cw::Geometry            &g,
 
 CompPoint &
 cp::constrainPositionToWorkArea (CompPoint               &pos,
-			         const cw::Geometry      &serverGeometry,
-			         const CompWindowExtents &border,
-			         const CompRect          &workArea,
-			         bool                    staticGravity)
+				 const cw::Geometry      &serverGeometry,
+				 const CompWindowExtents &border,
+				 const CompRect          &workArea)
 {
     CompWindowExtents extents;
     int               delta;
 
-    CompWindowExtents effectiveBorders = border;
-
-    /* Ignore borders in the StaticGravity case for placement
-     * because the window intended to be placed as if it didn't
-     * have them */
-    if (staticGravity)
-    {
-	effectiveBorders.left = 0;
-	effectiveBorders.right = 0;
-	effectiveBorders.top = 0;
-	effectiveBorders.bottom = 0;
-    }
-
-    extents.left   = pos.x () - effectiveBorders.left;
-    extents.top    = pos.y () - effectiveBorders.top;
+    extents.left   = pos.x () - border.left;
+    extents.top    = pos.y () - border.top;
     extents.right  = extents.left + serverGeometry.widthIncBorders () +
-		     (effectiveBorders.left +
-		      effectiveBorders.right);
+		     (border.left +
+		      border.right);
     extents.bottom = extents.top + serverGeometry.heightIncBorders () +
-		     (effectiveBorders.top +
-		      effectiveBorders.bottom);
+		     (border.top +
+		      border.bottom);
 
     delta = workArea.right () - extents.right;
     if (delta < 0)
@@ -186,8 +172,8 @@ cp::constrainPositionToWorkArea (CompPoint               &pos,
     if (delta > 0)
 	extents.top += delta;
 
-    pos.setX (extents.left + effectiveBorders.left);
-    pos.setY (extents.top  + effectiveBorders.top);
+    pos.setX (extents.left + border.left);
+    pos.setY (extents.top  + border.top);
 
     return pos;
 }
@@ -213,23 +199,18 @@ CompPoint cp::getViewportRelativeCoordinates (const cw::Geometry &geom,
 
 CompWindowExtents cp::getWindowEdgePositions (const CompPoint         &position,
 					      const cw::Geometry      &geom,
-					      const CompWindowExtents &border,
-					      unsigned int            gravity)
+					      const CompWindowExtents &border)
 {
     CompWindowExtents edgePositions;
-    CompWindowExtents effectiveBorder (border);
 
-    if (gravity & StaticGravity)
-	effectiveBorder = CompWindowExtents (0, 0, 0, 0);
-
-    edgePositions.left   = position.x () - effectiveBorder.left;
+    edgePositions.left   = position.x () - border.left;
     edgePositions.right  = edgePositions.left +
-			   geom.widthIncBorders () +  (effectiveBorder.left +
-						       effectiveBorder.right);
-    edgePositions.top    = position.y () - effectiveBorder.top;
+			   geom.widthIncBorders () +  (border.left +
+						       border.right);
+    edgePositions.top    = position.y () - border.top;
     edgePositions.bottom = edgePositions.top +
-			   geom.heightIncBorders () + (effectiveBorder.top +
-						       effectiveBorder.bottom);
+			   geom.heightIncBorders () + (border.top +
+						       border.bottom);
 
     return edgePositions;
 }
@@ -285,19 +266,14 @@ void cp::clampVerticalEdgePositionsToWorkArea (CompWindowExtents &edgePositions,
 
 void cp::subtractBordersFromEdgePositions (CompWindowExtents       &edgePositions,
 					   const CompWindowExtents &border,
-					   unsigned int            legacyBorder,
-					   unsigned int            gravity)
+					   unsigned int            legacyBorder)
 {
     const unsigned int doubleBorder = 2 * legacyBorder;
-    CompWindowExtents  effectiveBorder = border;
 
-    if (gravity & StaticGravity)
-	effectiveBorder = CompWindowExtents (0, 0, 0, 0);
-
-    edgePositions.left   += effectiveBorder.left;
-    edgePositions.right  -= effectiveBorder.right + doubleBorder;
-    edgePositions.top    += effectiveBorder.top;
-    edgePositions.bottom -= effectiveBorder.bottom + doubleBorder;
+    edgePositions.left   += border.left;
+    edgePositions.right  -= border.right + doubleBorder;
+    edgePositions.top    += border.top;
+    edgePositions.bottom -= border.bottom + doubleBorder;
 }
 
 bool cp::onlySizeChanged (unsigned int mask)
