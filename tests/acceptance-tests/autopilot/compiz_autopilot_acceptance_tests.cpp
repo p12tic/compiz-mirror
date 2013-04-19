@@ -31,6 +31,7 @@
 #endif
 
 #include <unistd.h>
+#include <sys/poll.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -41,39 +42,130 @@ using ::testing::WithParamInterface;
 
 namespace
 {
-    int launchBinary (const std::string         &executable,
-		      const char                **argv,
-		      int                       &stderrWriteEnd,
-		      int                       &stdoutWriteEnd)
+    class Pipe
     {
-	/* Save stderr */
-	int stderr = dup (STDERR_FILENO);
+	public:
 
-	if (stderr == -1)
-	    throw std::runtime_error (strerror (errno));
+	    Pipe ()
+	    {
+		if (pipe2 (mPipe, O_CLOEXEC) == -1)
+		    throw std::runtime_error (strerror (errno));
+	    }
 
-	/* Save stdout */
-	int stdout = dup (STDOUT_FILENO);
+	    ~Pipe ()
+	    {
+		if (mPipe[0] &&
+		    close (mPipe[0]) == -1)
+		    std::cerr << "mPipe[0] " << strerror (errno) << std::endl;
 
-	if (stdout == -1)
-	    throw std::runtime_error (strerror (errno));
+		if (mPipe[1] &&
+		    close (mPipe[1]) == -1)
+		    std::cerr << "mPipe[0] " << strerror (errno) << std::endl;
+	    }
 
-	/* Drop reference */
+	    /* Read end descriptor is read-only */
+	    int ReadEnd ()
+	    {
+		return mPipe[0];
+	    }
+
+	    /* Write end descriptor is writable, we need to close it
+	     * from other objects */
+	    int & WriteEnd ()
+	    {
+		return mPipe[1];
+	    }
+
+	private:
+
+	    int mPipe[2];
+    };
+
+    class FileDescriptorBackup
+    {
+	public:
+
+	    FileDescriptorBackup (int fd) :
+		mOriginalFd (fd),
+		mBackupFd (0)
+	    {
+		mBackupFd = dup (mOriginalFd);
+
+		/* Save original */
+		if (mBackupFd == -1)
+		    throw std::runtime_error (strerror (errno));
+	    }
+
+	    ~FileDescriptorBackup ()
+	    {
+		/* Redirect backed up fd to old fd location*/
+		if (mBackupFd &&
+		    dup2 (mBackupFd, mOriginalFd) == -1)
+		    std::cerr << "Failed to restore file descriptor "
+			      << strerror (errno) << std::endl;
+	    }
+
+	private:
+
+	    int mOriginalFd;
+	    int mBackupFd;
+    };
+
+    class RedirectedFileDescriptor
+    {
+	public:
+
+	    RedirectedFileDescriptor (int from,
+				      int &to) :
+		mFromFd (from),
+		mToFd (to)
+	    {
+		/* Make 'to' take the old file descriptor's place */
+		if (dup2 (to, from) == -1)
+		    throw std::runtime_error (strerror (errno));
+	    }
+
+	    ~RedirectedFileDescriptor ()
+	    {
+		if (mToFd &&
+		    close (mToFd) == -1)
+		    std::cerr << "Failed to close redirect-to file descriptor "
+			      << strerror (errno) << std::endl;
+
+		mToFd = 0;
+	    }
+
+	private:
+
+	    int mFromFd;
+	    int &mToFd;
+    };
+
+    pid_t launchBinary (const std::string &executable,
+			const char        **argv,
+			int               &stderrWriteEnd,
+			int               &stdoutWriteEnd)
+    {
+	FileDescriptorBackup stderr (STDERR_FILENO);
+	FileDescriptorBackup stdout (STDOUT_FILENO);
+
+	/* Close the originals once they have been backed up */
 	if (close (STDERR_FILENO) == -1)
 	    throw std::runtime_error (strerror (errno));
 
-	/* Drop reference */
 	if (close (STDOUT_FILENO) == -1)
 	    throw std::runtime_error (strerror (errno));
 
-	/* Make the pipe write end our stderr */
-	if (dup2 (stderrWriteEnd, STDERR_FILENO) == -1)
-	    throw std::runtime_error (strerror (errno));
+	/* Replace the current process stderr and stdout with the write end
+	 * of the pipes. Now when someone tries to write to stderr or stdout
+	 * they'll write to our pipes instead */
+	RedirectedFileDescriptor pipedStderr (STDERR_FILENO, stderrWriteEnd);
+	RedirectedFileDescriptor pipedStdout (STDOUT_FILENO, stdoutWriteEnd);
 
-	/* Make the pipe write end our stdout */
-	if (dup2 (stdoutWriteEnd, STDOUT_FILENO) == -1)
-	    throw std::runtime_error (strerror (errno));
-
+	/* Fork process, child gets a copy of the pipe write ends
+	 * - the original pipe write ends will be closed on exec
+	 * but the duplicated write ends now taking the place of
+	 * stderr and stdout will not be */
 	pid_t child = fork ();
 
 	/* Child process */
@@ -89,7 +181,7 @@ namespace
 			  << " - binary "
 			  << executable
 			  << std::endl;
-			  abort ();
+		abort ();
 	    }
 	}
 	/* Parent process - error */
@@ -97,52 +189,51 @@ namespace
 	{
 	    throw std::runtime_error (strerror (errno));
 	}
-	else
+
+	/* The old file descriptors for the stderr and stdout
+	 * are put back in place, and pipe write ends closed
+	 * as the child is using them at return*/
+
+	return child;
+    }
+
+    int launchBinaryAndWaitForReturn (const std::string &executable,
+				      const char        **argv,
+				      int               &stderrWriteEnd,
+				      int               &stdoutWriteEnd)
+    {
+	int status = 0;
+	pid_t child = launchBinary (executable,
+				    argv,
+				    stderrWriteEnd,
+				    stdoutWriteEnd);
+
+	do
 	{
-	    /* Redirect old stderr back to stderr */
-	    if (dup2 (stderr, STDERR_FILENO) == -1)
-		throw std::runtime_error (strerror (errno));
-
-	    /* Redirect old stderr back to stderr */
-	    if (dup2 (stdout, STDOUT_FILENO) == -1)
-		throw std::runtime_error (strerror (errno));
-
-	    /* Close the write end of the pipe - its being
-	     * used by the child */
-	    if (close (stderrWriteEnd) == -1)
-		throw std::runtime_error (strerror (errno));
-
-	    /* Close the write end of the pipe - its being
-	     * used by the child */
-	    if (close (stdoutWriteEnd) == -1)
-		throw std::runtime_error (strerror (errno));
-
-	    stderrWriteEnd = 0;
-	    stdoutWriteEnd = 0;
-
-	    int status = 0;
-
-	    do
+	    /* Wait around for the child to get a signal */
+	    pid_t waitChild = waitpid (child, &status, 0);
+	    if (waitChild == child)
 	    {
-		pid_t waitChild = waitpid (child, &status, 0);
-		if (waitChild == child)
+		/* If it died unexpectedly, say so */
+		if (WIFSIGNALED (status))
 		{
-                    if (WIFSIGNALED (status))
-                    {
-                        std::stringstream ss;
-                        ss << "child killed by signal "
-                           << WTERMSIG (status);
-                        throw std::runtime_error (ss.str ());
-                    }
+		    std::stringstream ss;
+		    ss << "child killed by signal "
+		       << WTERMSIG (status);
+		    throw std::runtime_error (ss.str ());
 		}
-		else
-		    throw std::runtime_error (strerror (errno));
-	    } while (!WIFEXITED (status) && !WIFSIGNALED (status));
+	    }
+	    else
+	    {
+		/* waitpid () failed */
+		throw std::runtime_error (strerror (errno));
+	    }
 
-	    return WEXITSTATUS (status);
-	}
+	    /* Keep going until it exited */
+	} while (!WIFEXITED (status) && !WIFSIGNALED (status));
 
-	throw std::logic_error ("unreachable section");
+	/* Return the exit code */
+	return WEXITSTATUS (status);
     }
 
     const char *autopilot = "/usr/bin/autopilot";
@@ -157,7 +248,6 @@ class CompizAutopilotAcceptanceTest :
     public:
 
 	CompizAutopilotAcceptanceTest ();
-	~CompizAutopilotAcceptanceTest ();
 	const char ** GetAutopilotArgv ();
 	void PrintChildStderr ();
 	void PrintChildStdout ();
@@ -165,46 +255,17 @@ class CompizAutopilotAcceptanceTest :
     protected:
 
 	std::vector <const char *> autopilotArgv;
-	int                        childStdoutPipe[2];
-	int                        childStderrPipe[2];
+	Pipe                       childStdoutPipe;
+	Pipe			   childStderrPipe;
 };
 
 CompizAutopilotAcceptanceTest::CompizAutopilotAcceptanceTest ()
 {
-    if (pipe2 (childStderrPipe, O_CLOEXEC) == -1)
-    {
-	throw std::runtime_error (strerror (errno));
-    }
-
-    if (pipe2 (childStdoutPipe, O_CLOEXEC) == -1)
-    {
-	throw std::runtime_error (strerror (errno));
-    }
-
     autopilotArgv.push_back (autopilot);
     autopilotArgv.push_back (runOpt);
     autopilotArgv.push_back (dashV);
     autopilotArgv.push_back (GetParam ());
     autopilotArgv.push_back (NULL);
-}
-
-CompizAutopilotAcceptanceTest::~CompizAutopilotAcceptanceTest ()
-{
-    if (childStderrPipe[0] &&
-	close (childStderrPipe[0]) == -1)
-	std::cerr << "childStderrPipe[0] " << strerror (errno) << std::endl;
-
-    if (childStderrPipe[1] &&
-	close (childStderrPipe[1]) == -1)
-	std::cerr << "childStderrPipe[1] " << strerror (errno) << std::endl;
-
-    if (childStdoutPipe[0] &&
-	close (childStdoutPipe[0]) == -1)
-	std::cerr << "childStdoutPipe[0] " << strerror (errno) << std::endl;
-
-    if (childStdoutPipe[1] &&
-	close (childStdoutPipe[1]) == -1)
-	std::cerr << "childStdoutPipe[1] " << strerror (errno) << std::endl;
 }
 
 const char **
@@ -226,13 +287,39 @@ namespace
 
 	do
 	{
-	    count = read (fd, (void *) buffer, bufferSize - 1);
-	    if (count == -1)
+	    struct pollfd pfd;
+	    pfd.events = POLLIN | POLLERR | POLLHUP;
+	    pfd.revents = 0;
+	    pfd.fd = fd;
+
+	    /* Check for 10ms if there's anything waiting to be read */
+	    int nfds = poll (&pfd, 1, 10);
+
+	    if (nfds == -1)
 		throw std::runtime_error (strerror (errno));
 
-	    buffer[count] = '\0';
+	    if (nfds)
+	    {
+		/* Read as much as we have allocated for */
+		count = read (fd, (void *) buffer, bufferSize - 1);
 
-	    output += buffer;
+		/* Something failed, bail */
+		if (count == -1)
+		    throw std::runtime_error (strerror (errno));
+
+		/* Always nul-terminate */
+		buffer[count] = '\0';
+
+		/* Add it to the output */
+		output += buffer;
+	    }
+	    else
+	    {
+		/* There's nothing on the pipe, assume EOF */
+		count = 0;
+	    }
+
+	    /* Keep going until there's nothing left */
 	} while (count != 0);
 
 	return output;
@@ -242,7 +329,7 @@ namespace
 void
 CompizAutopilotAcceptanceTest::PrintChildStderr ()
 {
-    std::string output = FdToString (childStderrPipe[0]);
+    std::string output = FdToString (childStderrPipe.ReadEnd ());
 
     std::cout << "[== TEST ERRORS ==]" << std::endl
 	      << output
@@ -252,7 +339,7 @@ CompizAutopilotAcceptanceTest::PrintChildStderr ()
 void
 CompizAutopilotAcceptanceTest::PrintChildStdout ()
 {
-    std::string output = FdToString (childStdoutPipe[0]);
+    std::string output = FdToString (childStdoutPipe.ReadEnd ());
 
     std::cout << "[== TEST MESSAGES ==]" << std::endl
 	      << output
@@ -264,10 +351,10 @@ TEST_P (CompizAutopilotAcceptanceTest, AutopilotTest)
     std::string scopedTraceMsg ("Running Autopilot Test");
     scopedTraceMsg += GetParam ();
 
-    int status = launchBinary (std::string (autopilot),
-			       GetAutopilotArgv (),
-			       childStderrPipe[1],
-			       childStdoutPipe[1]);
+    int status = launchBinaryAndWaitForReturn (std::string (autopilot),
+					       GetAutopilotArgv (),
+					       childStderrPipe.WriteEnd (),
+					       childStdoutPipe.WriteEnd ());
 
     EXPECT_EQ (status, 0) << "expected exit status of 0";
 
@@ -277,7 +364,10 @@ TEST_P (CompizAutopilotAcceptanceTest, AutopilotTest)
 	PrintChildStderr ();
     }
     else
+    {
+	/* Extra space here to align with gtest output */
 	std::cout << "[AUTOPILOT ] Pass test " << GetParam () << std::endl;
+    }
 }
 
 namespace
