@@ -835,10 +835,12 @@ CompositeScreen::handlePaintTimeout ()
 
 	if (priv->optionGetForceIndependentOutputPainting () ||
 	    !screen->hasOverlappingOutputs ())
+	{
 	    foreach (CompOutput &o, screen->outputDevs ())
 	    {
 		outputs.push_back (&o);
 	    }
+	}
 	else
 	    outputs.push_back (&screen->fullscreenOutput ());
 
