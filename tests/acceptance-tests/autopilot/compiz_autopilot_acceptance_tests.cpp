@@ -22,9 +22,7 @@
  */
 
 #include <stdexcept>
-
-#include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/iostreams/stream.hpp>
+#include <boost/noncopyable.hpp>
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -42,7 +40,8 @@ using ::testing::WithParamInterface;
 
 namespace
 {
-    class Pipe
+    class Pipe :
+	boost::noncopyable
     {
 	public:
 
@@ -81,7 +80,8 @@ namespace
 	    int mPipe[2];
     };
 
-    class FileDescriptorBackup
+    class FileDescriptorBackup :
+	boost::noncopyable
     {
 	public:
 
@@ -111,7 +111,8 @@ namespace
 	    int mBackupFd;
     };
 
-    class RedirectedFileDescriptor
+    class RedirectedFileDescriptor :
+	boost::noncopyable
     {
 	public:
 
