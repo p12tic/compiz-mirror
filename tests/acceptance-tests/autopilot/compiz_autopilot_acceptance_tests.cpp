@@ -150,7 +150,14 @@ namespace
 	FileDescriptorBackup stderr (STDERR_FILENO);
 	FileDescriptorBackup stdout (STDOUT_FILENO);
 
-	/* Close the originals once they have been backed up */
+	/* Close the originals once they have been backed up
+	 * We have to do this here and not in the FileDescriptorBackup
+	 * constructors because of an order-of-operations issue -
+	 * namely if we close an original file descriptor name
+	 * before duplicating another one, then there's a possibility
+	 * that the duplicated other one will get the same name as
+	 * the one we just closed, making us unable to restore
+	 * the closed one properly */
 	if (close (STDERR_FILENO) == -1)
 	    throw std::runtime_error (strerror (errno));
 
