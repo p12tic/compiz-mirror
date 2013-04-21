@@ -29,16 +29,13 @@
 COMPIZ_PLUGIN_20090315 (showmouse, ShowmousePluginVTable);
 
 /* 3 vertices per triangle, 2 triangles per particle */
-const unsigned short CACHESIZE_FACTOR = 3 * 2;
-
+const unsigned short CACHESIZE_FACTOR  = 3 * 2;
 /* 2 coordinates, x and y */
-const unsigned short COORD_COMPONENTS = CACHESIZE_FACTOR * 2;
-
+const unsigned short COORD_COMPONENTS  = CACHESIZE_FACTOR * 2;
 /* each vertex is stored as 3 GLfloats */
 const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
-
 /* 4 colors, RGBA */
-const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
+const unsigned short COLOR_COMPONENTS  = CACHESIZE_FACTOR * 4;
 
 Particle::Particle () :
     life (0),
@@ -133,14 +130,13 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
     if (tex)
     {
 	glBindTexture (GL_TEXTURE_2D, tex);
-	glEnable (GL_TEXTURE_2D);
+//	glEnable (GL_TEXTURE_2D);
     }
 
     i = j = k = l = 0;
 
     /* use 2 triangles per particle */
     foreach (Particle &part, particles)
-    {
 	if (part.life > 0.0f)
 	{
 	    float w = part.width / 2;
@@ -274,7 +270,6 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
 
 		l += 24;
 	    }
-	}
     }
 
     GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
@@ -303,8 +298,8 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
 	stream->render (transform);
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable (GL_TEXTURE_2D);
-    glDisable (GL_BLEND);
+//    glDisable (GL_TEXTURE_2D);
+//    glDisable (GL_BLEND);
 }
 
 void
@@ -316,7 +311,6 @@ ParticleSystem::updateParticles (float          time)
     active = false;
 
     foreach (Particle &part, particles)
-    {
 	if (part.life > 0.0f)
 	{
 	    // move particle
@@ -333,7 +327,6 @@ ParticleSystem::updateParticles (float          time)
 	    part.life -= part.fade * speed;
 	    active = true;
 	}
-    }
 }
 
 void
@@ -407,7 +400,6 @@ ShowmouseScreen::genNewParticles (int f_time)
 	    part.w_mod = part.h_mod = -1;
 
 	    // choose random position
-
 	    j        = random() % nE;
 	    part.x  = pos[j][0];
 	    part.y  = pos[j][1];
@@ -458,12 +450,12 @@ ShowmouseScreen::genNewParticles (int f_time)
 void
 ShowmouseScreen::doDamageRegion ()
 {
-    float        w, h, x1, x2, y1, y2;
+    float w, h;
 
-    x1 = screen->width ();
-    x2 = 0;
-    y1 = screen->height ();
-    y2 = 0;
+    float x1 = screen->width ();
+    float x2 = 0;
+    float y1 = screen->height ();
+    float y2 = 0;
 
     foreach (Particle &p, ps.particles)
     {
@@ -541,9 +533,7 @@ ShowmouseScreen::donePaint ()
 	doDamageRegion ();
 
     if (!active && pollHandle.active ())
-    {
 	pollHandle.stop ();
-    }
 
     if (!active && !ps.active)
     {
@@ -561,11 +551,9 @@ ShowmouseScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 				CompOutput		  *output,
 				unsigned int		  mask)
 {
+    GLMatrix sTransform = transform;
 
-    bool           status;
-    GLMatrix       sTransform = transform;
-
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if (!ps.active)
 	return status;
