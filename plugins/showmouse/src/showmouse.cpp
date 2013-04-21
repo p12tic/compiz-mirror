@@ -380,6 +380,7 @@ ShowmouseScreen::genNewParticles (int f_time)
     unsigned int nE = optionGetEmitters ();
     float rA     = (2 * M_PI) / nE;
     int radius   = optionGetRadius ();
+
     for (i = 0; i < nE; i++)
     {
 	pos[i][0]  = sin (rot + (i * rA)) * radius;
@@ -448,7 +449,6 @@ ShowmouseScreen::genNewParticles (int f_time)
 	    max_new   -= 1;
 	}
     }
-
 }
 
 void
