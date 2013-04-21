@@ -137,6 +137,7 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
 
     /* use 2 triangles per particle */
     foreach (Particle &part, particles)
+    {
 	if (part.life > 0.0f)
 	{
 	    float w = part.width / 2;
@@ -270,6 +271,7 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
 
 		l += 24;
 	    }
+	}
     }
 
     GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
@@ -311,6 +313,7 @@ ParticleSystem::updateParticles (float          time)
     active = false;
 
     foreach (Particle &part, particles)
+    {
 	if (part.life > 0.0f)
 	{
 	    // move particle
@@ -327,6 +330,7 @@ ParticleSystem::updateParticles (float          time)
 	    part.life -= part.fade * speed;
 	    active = true;
 	}
+    }
 }
 
 void
