@@ -851,14 +851,14 @@ EZoomScreen::ensureVisibilityArea (int         x1,
     int        out;
     CompOutput *o;
 
-    out = screen->outputDeviceForPoint (x1 + (x2-x1/2), y1 + (y2-y1/2));
+    out = screen->outputDeviceForPoint (x1 + (x2 - x1 / 2), y1 + (y2 - y1 / 2));
     o = &screen->outputDevs ().at (out);
 
-#define WIDTHOK (float)(x2-x1) / (float)o->width () < zooms.at (out).newZoom
-#define HEIGHTOK (float)(y2-y1) / (float)o->height () < zooms.at (out).newZoom
+    bool widthOkay  = (float)(x2-x1) / (float)o->width () < zooms.at (out).newZoom;
+    bool heightOkay = (float)(y2-y1) / (float)o->height () < zooms.at (out).newZoom;
 
-    if (WIDTHOK &&
-	HEIGHTOK)
+    if (widthOkay &&
+	heightOkay)
     {
 	ensureVisibility (x1, y1, margin);
 	ensureVisibility (x2, y2, margin);
@@ -871,12 +871,12 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 	    targetX = x1;
 	    targetY = y1;
 
-	    if (WIDTHOK)
+	    if (widthOkay)
 		targetW = x2 - x1;
 	    else
 		targetW = o->width () * zooms.at (out).newZoom;
 
-	    if (HEIGHTOK)
+	    if (heightOkay)
 		targetH = y2 - y1;
 	    else
 		targetH = o->height () * zooms.at (out).newZoom;
@@ -886,7 +886,7 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 	case NORTHEAST:
 	    targetY = y1;
 
-	    if (WIDTHOK)
+	    if (widthOkay)
 	    {
 		targetX = x1;
 		targetW = x2-x1;
@@ -897,7 +897,7 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 		targetW = o->width () * zooms.at (out).newZoom;
 	    }
 
-	    if (HEIGHTOK)
+	    if (heightOkay)
 		targetH = y2-y1;
 	    else
 		targetH = o->height () * zooms.at (out).newZoom;
@@ -907,12 +907,12 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 	case SOUTHWEST:
 	    targetX = x1;
 
-	    if (WIDTHOK)
+	    if (widthOkay)
 		targetW = x2-x1;
 	    else
 		targetW = o->width () * zooms.at (out).newZoom;
 
-	    if (HEIGHTOK)
+	    if (heightOkay)
 	    {
 		targetY = y1;
 		targetH = y2-y1;
@@ -926,7 +926,7 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 	    break;
 
 	case SOUTHEAST:
-	    if (WIDTHOK)
+	    if (widthOkay)
 	    {
 		targetX = x1;
 		targetW = x2-x1;
@@ -937,7 +937,7 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 		targetX = x2 - targetW;
 	    }
 
-	    if (HEIGHTOK)
+	    if (heightOkay)
 	    {
 		targetY = y1;
 		targetH = y2 - y1;
