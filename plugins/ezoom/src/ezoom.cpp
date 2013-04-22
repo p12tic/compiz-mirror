@@ -358,11 +358,13 @@ EZoomScreen::donePaint ()
     if (grabbed)
     {
 	for (unsigned int out = 0; out < zooms.size (); out++)
+	{
 	    if (isInMovement (out) && isActive (out))
 	    {
 		cScreen->damageScreen ();
 		break;
 	    }
+	}
     }
     else if (grabIndex)
 	cScreen->damageScreen ();
@@ -1362,15 +1364,17 @@ EZoomScreen::setZoomAreaAction (CompAction         *action,
 	y2 = y1 + 1;
 
     int out = screen->outputDeviceForPoint (x1, y1);
-#define WIDTH (x2 - x1)
-#define HEIGHT (y2 - y1)
-    setZoomArea (x1, y1, WIDTH, HEIGHT, false);
+
+    int width  = x2 - x1;
+    int height = y2 - y1;
+
+    setZoomArea (x1, y1, width, height, false);
     o = &screen->outputDevs (). at(out);
-    if (scale && WIDTH && HEIGHT)
-	setScaleBigger (out, (float) WIDTH / o->width (),
-			(float) HEIGHT / o->height ());
-#undef WIDTH
-#undef HEIGHT
+
+    if (scale && width && height)
+	setScaleBigger (out, (float) width / o->width (),
+			(float) height / o->height ());
+
 	if (restrain)
 	    restrainCursor (out);
 
