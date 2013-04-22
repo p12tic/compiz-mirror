@@ -21,7 +21,7 @@ if (NOT GTEST_FOUND)
 
     find_path (GTEST_INCLUDE_DIR gtest/gtest.h)
 
-    set (GTEST_BOTH_LIBRARIES gtest gtest_main)
+    set (GTEST_BOTH_LIBRARIES gtest gtest_main ${CMAKE_THREAD_LIBS_INIT})
     set (GTEST_FOUND TRUE)
     set (GTEST_LOCAL_BUILD_REQUIRED TRUE)
 

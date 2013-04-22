@@ -12,8 +12,6 @@ add_executable (compiz_test_expo_wall_offset
 
 target_link_libraries (compiz_test_expo_wall_offset
 		       compiz_expo_wall_offset
-		       ${GTEST_BOTH_LIBRARIES}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
-                       )
+		       ${GTEST_BOTH_LIBRARIES})
 
 compiz_discover_tests (compiz_test_expo_wall_offset COVERAGE compiz_expo_wall_offset)
