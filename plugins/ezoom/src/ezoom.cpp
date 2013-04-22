@@ -377,14 +377,14 @@ EZoomScreen::donePaint ()
 /* Draws a box from the screen coordinates inx1, iny1 to inx2, iny2 */
 void
 EZoomScreen::drawBox (const GLMatrix &transform,
-		      CompOutput          *output,
-		      CompRect             box)
+		      CompOutput     *output,
+		      CompRect       box)
 {
-    GLMatrix	   zTransform (transform);
-    int		   inx1, inx2, iny1, iny2;
-    int		   out = output->id ();
-    GLushort	   colorData[4];
-    GLfloat	   vertexData[12];
+    GLMatrix       zTransform (transform);
+    int            inx1, inx2, iny1, iny2;
+    int            out = output->id ();
+    GLushort       colorData[4];
+    GLfloat        vertexData[12];
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     zTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
@@ -456,10 +456,10 @@ EZoomScreen::drawBox (const GLMatrix &transform,
  */
 bool
 EZoomScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-			    const GLMatrix	     &transform,
-			    const CompRegion	     &region,
-			    CompOutput 		     *output,
-			    unsigned int		     mask)
+			    const GLMatrix            &transform,
+			    const CompRegion          &region,
+			    CompOutput                *output,
+			    unsigned int              mask)
 {
     bool status;
     int	 out = output->id ();
@@ -1012,9 +1012,9 @@ EZoomScreen::restrainCursor (int out)
 
     if (abs(diffX)*z > 0  || abs(diffY)*z > 0)
 	screen->warpPointer ((int) (mouse.x () - pointerX) -
-						      (int) ((float)diffX * z),
+				 (int) ((float)diffX * z),
 			     (int) (mouse.y () - pointerY) -
-						      (int) ((float)diffY * z));
+				 (int) ((float)diffY * z));
 }
 
 /* Check if the cursor is still visible.
