@@ -8,6 +8,7 @@
 # GMOCK_MAIN_LIBRARY
 
 find_package (GTest)
+find_package (Threads REQUIRED)
 
 if (NOT GTEST_FOUND)
 
