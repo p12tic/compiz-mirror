@@ -23,12 +23,14 @@ Actions:
 
 Expected Result:
   The QML window should have its decorations visible and
-  be contained in the top right hand corner of the work area
+  be contained in the top left hand corner of the work area
 
 _NET_REQUEST_FRAME_EXTENTS handling
 -----------------------------------
 Setup:
-# Install any sun-awt application
+# Install any sun-awt application - examples:
+  1. netbeans
+  2. ecplise
 
 Actions:
 # Run the application
