@@ -253,7 +253,7 @@ EZoomScreen::adjustZoomVelocity (int out, float chunk)
     }
     else
 	zooms.at (out).currentZoom += (zooms.at (out).zVelocity * chunk) /
-	    cScreen->redrawTime ();
+				      cScreen->redrawTime ();
 }
 
 /* Adjust the X/Y velocity based on target translation and real
