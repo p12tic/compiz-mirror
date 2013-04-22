@@ -60,7 +60,7 @@ class PluginKey;
  * as instantiatable as we can't really inject the interface
  * from PluginClassHandler to do that anywhere. We also can't
  * forward declare a nested class declaration, but we can forward
- * declare PluginKey, which  users should inherit from and take
+ * declare PluginKey, which users should inherit from and take
  * it by reference. If the class we're depending on can only be
  * defined in one other place along with a private constructor
  * accessible only to a friend it means that we've effectively

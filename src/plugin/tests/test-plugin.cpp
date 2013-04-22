@@ -28,6 +28,7 @@ namespace
 class PluginFilesystem
 {
     public:
+
 	virtual bool
 	LoadPlugin(CompPlugin *p, const char *path, const char *name) const = 0;
 
@@ -37,6 +38,7 @@ class PluginFilesystem
 	static PluginFilesystem const* instance;
 
     protected:
+
 	PluginFilesystem();
 	virtual ~PluginFilesystem() {}
 };
@@ -44,6 +46,7 @@ class PluginFilesystem
 class MockPluginFilesystem : public PluginFilesystem
 {
     public:
+
 	MOCK_CONST_METHOD3(LoadPlugin, bool (CompPlugin *, const char *, const char *));
 
 	MOCK_CONST_METHOD1(UnloadPlugin, void (CompPlugin *p));
@@ -621,6 +624,7 @@ TYPED_TEST (PluginClassIntegrationTest, plugin_class_destroyed_when_vtable_is)
 
     typename TypeParam::Base base;
     typedef boost::shared_ptr <typename TypeParam::Plugin> PluginPtr;
+
     /* Because CompScreen is not available, we just need to delete
      * the plugin structure ourselves */
     PluginPtr p (TypeParam::Plugin::get (&base));
