@@ -128,10 +128,7 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
     glEnable (GL_BLEND);
 
     if (tex)
-    {
 	glBindTexture (GL_TEXTURE_2D, tex);
-//	glEnable (GL_TEXTURE_2D);
-    }
 
     i = j = k = l = 0;
 
@@ -300,8 +297,7 @@ ParticleSystem::drawParticles (const GLMatrix    &transform)
 	stream->render (transform);
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-//    glDisable (GL_TEXTURE_2D);
-//    glDisable (GL_BLEND);
+    glDisable (GL_BLEND);
 }
 
 void
