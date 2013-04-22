@@ -1138,7 +1138,6 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	int y = -cursor.hotY;
 
 	glEnable (GL_BLEND);
-//	glEnable (GL_TEXTURE_2D);
 	glBindTexture (GL_TEXTURE_2D, cursor.texture);
 
 	streamingBuffer->begin (GL_TRIANGLE_STRIP);
@@ -1173,8 +1172,7 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	streamingBuffer->render (sTransform);
 
 	glBindTexture (GL_TEXTURE_2D, 0);
-//	glDisable (GL_TEXTURE_2D);
-//	glDisable (GL_BLEND);
+	glDisable (GL_BLEND);
     }
 }
 
