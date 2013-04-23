@@ -119,7 +119,7 @@ shotFilter (const struct dirent *d)
 	int nDigits = 0;
 
 	for (; number > 0; number /= 10)
-	    nDigits++;
+	    ++nDigits;
 
 	// Make sure there are no trailing characters in the name
 	if ((int) strlen (d->d_name) == 14 + nDigits)
@@ -193,7 +193,7 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 				    "screenshot%d.png",
 				    &number);
 
-			number++;
+			++number;
 
 			if (n)
 			    free (namelist);
@@ -235,7 +235,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GLMatrix        transform (matrix);
     GLfloat         vertexData[12];
     GLushort        colorData[4];
-    GLushort       *color;
+    GLushort        *color;
 
     bool status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
@@ -253,8 +253,8 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glEnable (GL_BLEND);
 #endif
 	    /* draw filled rectangle */
-	    float alpha = ((float) optionGetFillColorAlpha () / 65535.0f);
-	    color = optionGetFillColor ();
+	    float alpha = optionGetSelectionFillColorAlpha () / 65535.0f;
+	    color = optionGetSelectionFillColor ();
 
 	    colorData[0] = alpha * color[0];
 	    colorData[1] = alpha * color[1];
@@ -291,8 +291,8 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->render (transform);
 
 	    /* draw outline */
-	    alpha = ((float) optionGetOutlineColorAlpha () / 65535.0f);
-	    color = optionGetOutlineColor ();
+	    alpha = optionGetSelectionOutlineColorAlpha () / 65535.0f;
+	    color = optionGetSelectionOutlineColor ();
 
 	    colorData[0] = alpha * color[0];
 	    colorData[1] = alpha * color[1];
