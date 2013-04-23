@@ -48,7 +48,8 @@
 
 #include "shift_options.h"
 
-typedef enum {
+typedef enum
+{
     ShiftStateNone = 0,
     ShiftStateOut,
     ShiftStateSwitching,
@@ -56,13 +57,15 @@ typedef enum {
     ShiftStateIn
 } ShiftState;
 
-typedef enum {
+typedef enum
+{
     ShiftTypeNormal = 0,
     ShiftTypeGroup,
     ShiftTypeAll
 } ShiftType;
 
-typedef struct _ShiftSlot {
+typedef struct _ShiftSlot
+{
     int   x, y;            /* thumb center coordinates */
     float z;
     float scale;           /* size scale (fit to maximal thumb size */
@@ -76,7 +79,8 @@ typedef struct _ShiftSlot {
 
 } ShiftSlot;
 
-typedef struct _ShiftDrawSlot {
+typedef struct _ShiftDrawSlot
+{
     CompWindow *w;
     ShiftSlot  *slot;
     float      distance;
@@ -312,7 +316,6 @@ extern const double PI;
 
 #define SHIFT_SCREEN(s)							      \
     ShiftScreen *ss = ShiftScreen::get (s)
-
 
 class ShiftPluginVTable :
     public CompPlugin::VTableForScreenAndWindow <ShiftScreen, ShiftWindow>
