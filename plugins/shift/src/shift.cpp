@@ -82,10 +82,8 @@ ShiftWindow::isShiftable ()
 {
     SHIFT_SCREEN (screen);
 
-    if (window->overrideRedirect ())
-	return false;
-
-    if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
+    if (window->overrideRedirect () ||
+	(window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask)))
 	return false;
 
     if (!window->mapNum () || !window->isViewable ())
@@ -104,26 +102,21 @@ ShiftWindow::isShiftable ()
 	if (!window->mapNum () || !window->isViewable ())
 	{
 	    if (window->serverGeometry ().x () + window->serverGeometry ().width () <= 0    ||
-		window->serverGeometry ().y () + window->serverGeometry ().height () <= 0    ||
-		window->serverGeometry ().x () >= screen->width () ||
+		window->serverGeometry ().y () + window->serverGeometry ().height () <= 0   ||
+		window->serverGeometry ().x () >= screen->width ()			    ||
 		window->serverGeometry ().y () >= screen->height ())
 		return false;
 	}
-	else
-	{
-	    if (!window->focus ())
-		return false;
-	}
+	else if (!window->focus ())
+	    return false;
     }
-    else if (ss->mType == ShiftTypeGroup &&
-	     ss->mClientLeader != window->clientLeader () &&
+    else if (ss->mType == ShiftTypeGroup		    &&
+	     ss->mClientLeader != window->clientLeader ()   &&
 	     ss->mClientLeader != window->id ())
 	return false;
 
-    if (window->state () & CompWindowStateSkipTaskbarMask)
-	return false;
-
-    if (ss->mCurrentMatch && !ss->mCurrentMatch->evaluate (window))
+    if (window->state () & CompWindowStateSkipTaskbarMask   ||
+	(ss->mCurrentMatch && !ss->mCurrentMatch->evaluate (window)))
 	return false;
 
     return true;
@@ -162,6 +155,7 @@ ShiftScreen::renderWindowTitle ()
     tA.color[3] = optionGetTitleFontColorAlpha ();
 
     tA.flags = CompText::WithBackground | CompText::Ellipsized;
+
     if (optionGetTitleFontBold ())
 	tA.flags |= CompText::StyleBold;
 
@@ -182,11 +176,11 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
     if (!textAvailable || !optionGetWindowTitle ())
 	return;
 
-    float width, height, border = 10.0f;
+    float border = 10.0f;
     CompRect oe;
 
-    width = text.getWidth ();
-    height = text.getHeight ();
+    float width = text.getWidth ();
+    float height = text.getHeight ();
 
     if (optionGetMultioutputMode () == MultioutputModeOneBigSwitcher)
 	oe.setGeometry (0, 0, screen->width (), screen->height ());
@@ -208,10 +202,9 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 	{
 	    CompRect workArea = screen->currentOutputDev ().workArea ();
 
-	    if (optionGetTitleTextPlacement () ==
-		TitleTextPlacementAbove)
+	    if (optionGetTitleTextPlacement () == TitleTextPlacementAbove)
 		y = oe.y1 () + workArea.y1 () + 2 * border + height;
-	    else
+	    else /* TitleTextPlacementBelow */
 		y = oe.y1 () + workArea.y2 () - 2 * border;
 	}
 	    break;
@@ -224,10 +217,10 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 }
 
 bool
-ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
-		      const GLMatrix		&transform,
-		      const CompRegion		&region,
-		      unsigned int		mask)
+ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
+		      const GLMatrix            &transform,
+		      const CompRegion          &region,
+		      unsigned int              mask)
 {
     bool status;
 
@@ -240,9 +233,9 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 	GLWindowPaintAttrib sAttrib = attrib;
 	bool		    scaled  = false;
 
-	if (window->mapNum ())
-	    if (gWindow->textures ().empty ())
-		gWindow->bind ();
+	if (window->mapNum () &&
+	    gWindow->textures ().empty ())
+	    gWindow->bind ();
 
 	if (mActive)
 	    scaled = (ss->mActiveSlot != NULL);
@@ -259,7 +252,6 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 	    ((unsigned int) ss->mOutput->id () == (unsigned int) ss->mUsedOutput ||
 	     (unsigned int) ss->mOutput->id () == (unsigned int) ~0))
 	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
-
 
 	status = gWindow->glPaint (sAttrib, transform, region, mask);
 
@@ -296,7 +288,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 	    wAttrib.opacity = (float)wAttrib.opacity * sopacity;
 	    wAttrib.brightness = (float)wAttrib.brightness *
-				    ss->mReflectBrightness;
+				 ss->mReflectBrightness;
 
 	    if (window->alpha () || wAttrib.opacity != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
@@ -304,7 +296,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 	    wTransform.translate (sx, sy, sz);
 
 	    wTransform.translate (window->x () + (window->width () * sscale / 2),
-				  window->y () + (window->height () * sscale / 2.0),
+				  window->y () + (window->height () * sscale / 2),
 				  0.0f);
 
 	    wTransform.scale (ss->mOutput->width (), -ss->mOutput->height (),
@@ -344,7 +336,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 		float sx       = ss->mAnim * slot->tx;
 		float sy       = ss->mAnim * slot->ty;
 		float sz       = ss->mAnim * slot->z;
-		float srot     = (ss->mAnim * slot->rotation);
+		float srot     = ss->mAnim * slot->rotation;
 		float sopacity = ss->mAnim * slot->opacity;
 
 		float sscale;
@@ -373,6 +365,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 			icon for a minimized window */
 			if (!gWindow->textures ().empty ())
 			    sAttrib.opacity /= 3;
+
 			scale = MIN (((float) scaledWinWidth / icon->width ()),
 				    ((float) scaledWinHeight / icon->height ()));
 			break;
@@ -431,7 +424,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 		    wTransform.translate (window->x () +
 					  (window->width ()  * sscale / 2),
 					  window->y () +
-					  (window->height ()  * sscale / 2.0),
+					  (window->height ()  * sscale / 2),
 					  0.0f);
 
 		    wTransform.scale (ss->mOutput->width (),
@@ -443,7 +436,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 				      -1.0f / ss->mOutput->height (), 1.0f);
 
 		    wTransform.translate (x - (window->width () * sscale / 2),
-					  y - (window->height () * sscale / 2.0), 0.0f);
+					  y - (window->height () * sscale / 2), 0.0f);
 
 		    wTransform.scale (scale, scale, 1.0f);
 
@@ -493,6 +486,7 @@ compareWindows (const void *elem1,
     {
 	if (w == w2)
 	    return 1;
+
 	w = w->next;
     }
     return -1;
@@ -539,7 +533,7 @@ ShiftScreen::layoutThumbsCover ()
     int maxThumbWidth  = oe.width () * optionGetSize () / 100;
     int maxThumbHeight = oe.height () * optionGetSize () / 100;
 
-    for (int index = 0; index < mNWindows; index++)
+    for (int index = 0; index < mNWindows; ++index)
     {
 	w = mWindows[index];
 	SHIFT_WINDOW (w);
@@ -567,7 +561,7 @@ ShiftScreen::layoutThumbsCover ()
 	space *= 2;
 	//space += (space / sin (PI / 4)) - space;
 
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 2; ++i)
 	{
 	    if (mInvert ^ (i == 0))
 	    {
@@ -675,7 +669,7 @@ ShiftScreen::layoutThumbsFlip ()
 
     int slotNum = 0;
 
-    for (int index = 0; index < mNWindows; index++)
+    for (int index = 0; index < mNWindows; ++index)
     {
 	w = mWindows[index];
 	SHIFT_WINDOW (w);
@@ -695,7 +689,7 @@ ShiftScreen::layoutThumbsFlip ()
 
 	angle = optionGetFlipRotation () * PI / 180.0;
 
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 2; ++i)
 	{
 	    if (mInvert ^ (i == 0))
 		distance = mMvTarget - index;
@@ -711,8 +705,7 @@ ShiftScreen::layoutThumbsFlip ()
 	    else
 	    {
 		if (distance < -(mNWindows - 1))
-		    sw->mSlots[i].opacity = MAX (0.0, mNWindows +
-						distance);
+		    sw->mSlots[i].opacity = MAX (0.0, mNWindows + distance);
 		else
 		    sw->mSlots[i].opacity = 1.0;
 	    }
@@ -726,8 +719,8 @@ ShiftScreen::layoutThumbsFlip ()
 	    sw->mSlots[i].scale   = MIN (xScale, yScale);
 
 	    sw->mSlots[i].y = centerY + (maxThumbHeight / 2.0) -
-				(((w->height () / 2.0) + w->border ().bottom) *
-				sw->mSlots[i].scale);
+			      (((w->height () / 2.0) + w->border ().bottom) *
+			       sw->mSlots[i].scale);
 
 	    sw->mSlots[i].x  = sin(angle) * distance * (maxThumbWidth / 2);
 
@@ -750,7 +743,7 @@ ShiftScreen::layoutThumbsFlip ()
 		mDrawSlots[slotNum].w     = w;
 		mDrawSlots[slotNum].slot  = &sw->mSlots[i];
 		mDrawSlots[slotNum].distance = -distance;
-		slotNum++;
+		++slotNum;
 	    }
 	}
     }
@@ -762,7 +755,6 @@ ShiftScreen::layoutThumbsFlip ()
 
     return true;
 }
-
 
 bool
 ShiftScreen::layoutThumbs ()
@@ -788,7 +780,6 @@ ShiftScreen::layoutThumbs ()
 
     return result;
 }
-
 
 void
 ShiftScreen::addWindowToList (CompWindow *w)
@@ -831,12 +822,12 @@ ShiftScreen::updateWindowList ()
     mMvAdjust = 0;
     mMvVelocity = 0;
 
-    for (int i = 0; i < mNWindows; i++)
+    for (int i = 0; i < mNWindows; ++i)
     {
 	if (mWindows[i]->id () == mSelectedWindow)
 	    break;
 
-	mMvTarget++;
+	++mMvTarget;
     }
 
     if (mMvTarget == mNWindows)
@@ -854,7 +845,7 @@ ShiftScreen::updateWindowList ()
 
 	memcpy(wins, mWindows, mNWindows * sizeof (CompWindow *));
 
-	for (int i = 0; i < mNWindows; i++)
+	for (int i = 0; i < mNWindows; ++i)
 	{
 	    idx = ceil (i * 0.5);
 	    idx *= (i & 1) ? 1 : -1;
@@ -879,6 +870,7 @@ ShiftScreen::createWindowList ()
     foreach (CompWindow *w, screen->windows ())
     {
 	SHIFT_WINDOW (w);
+
 	if (sw->isShiftable ())
 	{
 	    addWindowToList (w);
@@ -898,7 +890,7 @@ ShiftScreen::switchToWindow (bool	   toNext)
     if (!mGrabIndex)
 	return;
 
-    for (cur = 0; cur < mNWindows; cur++)
+    for (cur = 0; cur < mNWindows; ++cur)
     {
 	if (mWindows[cur]->id () == mSelectedWindow)
 	    break;
@@ -939,7 +931,7 @@ ShiftScreen::countWindows ()
     foreach (CompWindow *w, screen->windows ())
     {
 	if (ShiftWindow::get (w)->isShiftable ())
-	    count++;
+	    ++count;
     }
 
     return count;
@@ -971,9 +963,9 @@ ShiftScreen::adjustShiftMovement (float chunk)
 
     float change = mMvVelocity * chunk;
 
-    if (!change)
-	if (mMvVelocity)
-	    change = (mMvAdjust > 0) ? 0.01 : -0.01;
+    if (!change &&
+	mMvVelocity)
+	change = (mMvAdjust > 0) ? 0.01 : -0.01;
 
     mMvAdjust -= change;
     mMvTarget += change;
@@ -1004,15 +996,18 @@ ShiftWindow::adjustShiftAttribs (float chunk)
     SHIFT_SCREEN (screen);
 
     if ((mActive && ss->mState != ShiftStateIn &&
-	ss->mState != ShiftStateNone) ||
-	(ss->optionGetHideAll () && !(window->type () & CompWindowTypeDesktopMask) &&
-	(ss->mState == ShiftStateOut || ss->mState == ShiftStateSwitching ||
+	ss->mState != ShiftStateNone)			||
+	(ss->optionGetHideAll ()			&&
+	 !(window->type () & CompWindowTypeDesktopMask) &&
+	(ss->mState == ShiftStateOut	    ||
+	 ss->mState == ShiftStateSwitching  ||
 	 ss->mState == ShiftStateFinish)))
 	opacity = 0.0;
     else
 	opacity = 1.0;
 
-    if (ss->mState == ShiftStateIn || ss->mState == ShiftStateNone)
+    if (ss->mState == ShiftStateIn ||
+	ss->mState == ShiftStateNone)
 	brightness = 1.0;
     else
 	brightness = ss->optionGetBackgroundIntensity ();
@@ -1026,8 +1021,7 @@ ShiftWindow::adjustShiftAttribs (float chunk)
     else if (amount > 0.15f)
 	amount = 0.15f;
 
-    mOpacityVelocity = (amount * mOpacityVelocity + adjust) /
-	(amount + 1.0f);
+    mOpacityVelocity = (amount * mOpacityVelocity + adjust) / (amount + 1.0f);
 
     float db = brightness - mBrightness;
     adjust = db * 0.1f;
@@ -1039,7 +1033,7 @@ ShiftWindow::adjustShiftAttribs (float chunk)
 	amount = 0.15f;
 
     mBrightnessVelocity = (amount * mBrightnessVelocity + adjust) /
-	(amount + 1.0f);
+			  (amount + 1.0f);
 
     /* FIXME: There is a possible floating point overflow here,
      * can be worked-around but not particularly nice */
@@ -1093,10 +1087,10 @@ ShiftScreen::adjustShiftAnimationAttribs (float chunk)
 
 bool
 ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-			    const GLMatrix	      &transform,
-			    const CompRegion	      &region,
-			    CompOutput		      *output,
-			    unsigned int	      mask)
+			    const GLMatrix            &transform,
+			    const CompRegion          &region,
+			    CompOutput                *output,
+			    unsigned int              mask)
 {
     if (mState != ShiftStateNone)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
@@ -1152,7 +1146,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    mReflectActive = true;
 	    mReflectBrightness = optionGetIntensity ();
 
-	    for (i = 0; i < mNSlots; i++)
+	    for (i = 0; i < mNSlots; ++i)
 	    {
 		w = mDrawSlots[i].w;
 
@@ -1245,7 +1239,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	mReflectBrightness = 1.0;
 	mReflectActive     = false;
 
-	for (i = 0; i < mNSlots; i++)
+	for (i = 0; i < mNSlots; ++i)
 	{
 	    w = mDrawSlots[i].w;
 
@@ -1274,18 +1268,19 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    for (; w; w = w->next)
 	    {
-		if (w->destroyed ())
-		    continue;
-
-		if (!w->shaded () &&
-		    (!w->isViewable () || !CompositeWindow::get (w)->damaged ()))
+		if (w->destroyed () ||
+		    (!w->shaded () &&
+		     (!w->isViewable () ||
+		      !CompositeWindow::get (w)->damaged ())))
 		    continue;
 
 		found = false;
 
-		for (i = 0; i < mNWindows; i++)
+		for (i = 0; i < mNWindows; ++i)
+		{
 		    if (mWindows[i] == w)
 			found = true;
+		}
 
 		if (found)
 		    continue;
@@ -1338,6 +1333,7 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
 	while (steps--)
 	{
 	    mMoveAdjust = adjustShiftMovement (chunk);
+
 	    if (!mMoveAdjust)
 		break;
 	}
@@ -1359,7 +1355,7 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
 		SHIFT_WINDOW (w);
 
 		mMoreAdjust |= sw->adjustShiftAttribs (chunk);
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 2; ++i)
 		{
 		    ShiftSlot *slot = &sw->mSlots[i];
 
@@ -1381,11 +1377,9 @@ ShiftScreen::preparePaint (int	msSinceLastPaint)
 bool
 ShiftWindow::canStackRelativeTo ()
 {
-    if (window->overrideRedirect ())
-	return false;
-
-    if (!window->shaded () && !window->pendingMaps () &&
-	(!window->isViewable () || window->mapNum () == 0))
+    if (window->overrideRedirect () ||
+	(!window->shaded () && !window->pendingMaps () &&
+	 (!window->isViewable () || window->mapNum () == 0)))
 	return false;
 
     return true;
@@ -1431,7 +1425,7 @@ ShiftScreen::donePaint ()
 		{
 		    CompWindow *pw = NULL;
 
-		    for (int i = 0; i < mNSlots; i++)
+		    for (int i = 0; i < mNSlots; ++i)
 		    {
 			w = mDrawSlots[i].w;
 
@@ -1441,6 +1435,7 @@ ShiftScreen::donePaint ()
 			{
 			    if (pw)
 				w->restackAbove (pw);
+
 			    pw = w;
 			}
 		    }
@@ -1449,6 +1444,7 @@ ShiftScreen::donePaint ()
 		if (!mCancelled && mSelectedWindow)
 		{
 		    w = screen->findWindow (mSelectedWindow);
+
 		    if (w)
 			screen->sendWindowActivationRequest (mSelectedWindow);
 		}
@@ -1491,7 +1487,7 @@ ShiftScreen::term (bool cancel)
 
 bool
 ShiftScreen::terminate (CompAction         *action,
-			CompAction::State	   state,
+			CompAction::State  state,
 			CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -1545,13 +1541,13 @@ ShiftScreen::initiateScreen (CompAction         *action,
 	if (!createWindowList ())
 	    return false;
 
-    	mSelectedWindow = mWindows[0]->id ();
+	mSelectedWindow = mWindows[0]->id ();
 	renderWindowTitle ();
 	mMvTarget = 0;
 	mMvAdjust = 0;
 	mMvVelocity = 0;
 
-    	mMoreAdjust = true;
+	mMoreAdjust = true;
 	cScreen->damageScreen ();
     }
 
@@ -1564,10 +1560,10 @@ ShiftScreen::initiateScreen (CompAction         *action,
 
 bool
 ShiftScreen::doSwitch (CompAction         *action,
-		       CompAction::State    state,
+		       CompAction::State  state,
 		       CompOption::Vector &options,
-		       bool		  nextWindow,
-		       ShiftType	  type)
+		       bool               nextWindow,
+		       ShiftType          type)
 {
     bool       ret = true;
     bool       initial = false;
@@ -1622,7 +1618,7 @@ ShiftScreen::doSwitch (CompAction         *action,
 
 bool
 ShiftScreen::initiate (CompAction         *action,
-		       CompAction::State    state,
+		       CompAction::State  state,
 		       CompOption::Vector &options)
 {
     bool ret = true;
@@ -1646,7 +1642,7 @@ ShiftScreen::initiate (CompAction         *action,
 
 bool
 ShiftScreen::initiateAll (CompAction         *action,
-			  CompAction::State    state,
+			  CompAction::State  state,
 			  CompOption::Vector &options)
 {
     bool ret = true;
@@ -1702,13 +1698,13 @@ ShiftScreen::windowRemove (Window id)
 		    mSelectedWindow = selected;
 		}
 
-		mNWindows--;
+		--mNWindows;
 
-		for (j = i; j < mNWindows; j++)
+		for (j = i; j < mNWindows; ++j)
 		    mWindows[j] = mWindows[j + 1];
 	    }
 	    else
-		i++;
+		++i;
 	}
 
 	if (!inList)
@@ -1806,118 +1802,118 @@ ShiftScreen::handleEvent (XEvent      *event)
 	    break;
 
 	case ButtonRelease:
-	    if (mState == ShiftStateSwitching || mState == ShiftStateOut)
-		if (event->xbutton.button == Button1 && mButtonPressed)
+	    if ((mState == ShiftStateSwitching || mState == ShiftStateOut) &&
+		event->xbutton.button == Button1 && mButtonPressed)
+	    {
+		int iNew;
+
+		if ((int)(event->xbutton.time - mButtonPressTime) <
+		    optionGetClickDuration ())
+		    term (false);
+
+		mButtonPressTime = 0;
+		mButtonPressed   = false;
+
+		if (mMvTarget - floor (mMvTarget) >= 0.5)
 		{
-		    int iNew;
-
-		    if ((int)(event->xbutton.time - mButtonPressTime) <
-			optionGetClickDuration ())
-			term (false);
-
-		    mButtonPressTime = 0;
-		    mButtonPressed   = false;
-
-		    if (mMvTarget - floor (mMvTarget) >= 0.5)
-		    {
-			mMvAdjust = ceil(mMvTarget) - mMvTarget;
-			iNew = ceil(mMvTarget);
-		    }
-		    else
-		    {
-			mMvAdjust = floor(mMvTarget) - mMvTarget;
-			iNew = floor(mMvTarget);
-		    }
-
-		    while (iNew < 0)
-			iNew += mNWindows;
-
-		    iNew = iNew % mNWindows;
-
-		    mSelectedWindow = mWindows[iNew]->id ();
-
-		    renderWindowTitle ();
-		    mMoveAdjust = true;
-		    cScreen->damageScreen ();
+		    mMvAdjust = ceil(mMvTarget) - mMvTarget;
+		    iNew = ceil(mMvTarget);
 		}
+		else
+		{
+		    mMvAdjust = floor(mMvTarget) - mMvTarget;
+		    iNew = floor(mMvTarget);
+		}
+
+		while (iNew < 0)
+		    iNew += mNWindows;
+
+		iNew = iNew % mNWindows;
+
+		mSelectedWindow = mWindows[iNew]->id ();
+
+		renderWindowTitle ();
+		mMoveAdjust = true;
+		cScreen->damageScreen ();
+	    }
 
 	    break;
 
 	case MotionNotify:
-	    if (mState == ShiftStateSwitching || mState == ShiftStateOut)
-		if (mButtonPressed)
+	    if ((mState == ShiftStateSwitching || mState == ShiftStateOut) &&
+		mButtonPressed)
+	    {
+		CompRect oe = screen->outputDevs ()[mUsedOutput];
+		float div = 0;
+		int   wx  = 0;
+		int   wy  = 0;
+		int   iNew;
+
+		switch (optionGetMode ())
 		{
-		    CompRect oe = screen->outputDevs ()[mUsedOutput];
-		    float div = 0;
-		    int   wx  = 0;
-		    int   wy  = 0;
-		    int   iNew;
+		    case ShiftOptions::ModeCover:
+			div = event->xmotion.x_root - mStartX;
+			div /= oe.width () / optionGetMouseSpeed ();
+			break;
 
-		    switch (optionGetMode ())
-		    {
-			case ShiftOptions::ModeCover:
-			    div = event->xmotion.x_root - mStartX;
-			    div /= oe.width () / optionGetMouseSpeed ();
-			    break;
-
-			case ShiftOptions::ModeFlip:
-			    div = event->xmotion.y_root - mStartY;
-			    div /= oe.height () / optionGetMouseSpeed ();
-			    break;
-		    }
-
-		    mMvTarget = mStartTarget + div - mMvAdjust;
-		    mMoveAdjust = true;
-
-		    while (mMvTarget >= mNWindows)
-		    {
-			mMvTarget -= mNWindows;
-			mInvert = !mInvert;
-		    }
-
-		    while (mMvTarget < 0)
-		    {
-			mMvTarget += mNWindows;
-			mInvert = !mInvert;
-		    }
-
-		    if (mMvTarget - floor (mMvTarget) >= 0.5)
-			iNew = ceil(mMvTarget);
-		    else
-			iNew = floor(mMvTarget);
-
-		    while (iNew < 0)
-			iNew += mNWindows;
-
-		    iNew = iNew % mNWindows;
-
-		    if (mSelectedWindow != mWindows[iNew]->id ())
-		    {
-			mSelectedWindow = mWindows[iNew]->id ();
-			renderWindowTitle ();
-		    }
-
-		    if (event->xmotion.x_root < 50)
-			wx = 50;
-
-		    if (screen->width () - event->xmotion.x_root < 50)
-			wx = -50;
-
-		    if (event->xmotion.y_root < 50)
-			wy = 50;
-
-		    if (screen->height () - event->xmotion.y_root < 50)
-			wy = -50;
-
-		    if (wx != 0 || wy != 0)
-		    {
-			screen->warpPointer (wx, wy);
-			mStartX += wx;
-			mStartY += wy;
-		    }
-
-		    cScreen->damageScreen ();
+		    case ShiftOptions::ModeFlip:
+			div = event->xmotion.y_root - mStartY;
+			div /= oe.height () / optionGetMouseSpeed ();
+			break;
 		}
+
+		mMvTarget = mStartTarget + div - mMvAdjust;
+		mMoveAdjust = true;
+
+		while (mMvTarget >= mNWindows)
+		{
+		    mMvTarget -= mNWindows;
+		    mInvert = !mInvert;
+		}
+
+		while (mMvTarget < 0)
+		{
+		    mMvTarget += mNWindows;
+		    mInvert = !mInvert;
+		}
+
+		if (mMvTarget - floor (mMvTarget) >= 0.5)
+		    iNew = ceil(mMvTarget);
+		else
+		    iNew = floor(mMvTarget);
+
+		while (iNew < 0)
+		    iNew += mNWindows;
+
+		iNew = iNew % mNWindows;
+
+		if (mSelectedWindow != mWindows[iNew]->id ())
+		{
+		    mSelectedWindow = mWindows[iNew]->id ();
+		    renderWindowTitle ();
+		}
+
+		if (event->xmotion.x_root < 50)
+		    wx = 50;
+
+		if (screen->width () - event->xmotion.x_root < 50)
+		    wx = -50;
+
+		if (event->xmotion.y_root < 50)
+		    wy = 50;
+
+		if (screen->height () - event->xmotion.y_root < 50)
+		    wy = -50;
+
+		if (wx != 0 || wy != 0)
+		{
+		    screen->warpPointer (wx, wy);
+		    mStartX += wx;
+		    mStartY += wy;
+		}
+
+		cScreen->damageScreen ();
+	    }
 
 	    break;
     }
@@ -1936,6 +1932,7 @@ ShiftWindow::damageRect (bool initial,
 	if (ss->mGrabIndex && isShiftable ())
 	{
 	    ss->addWindowToList (window);
+
 	    if (ss->updateWindowList ())
 	    {
 		mActive = true;
