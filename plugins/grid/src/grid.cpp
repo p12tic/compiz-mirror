@@ -1060,16 +1060,12 @@ GridScreen::restoreWindow (CompAction         *action,
 
     GRID_WINDOW (cw);
 
+    /* We have nothing to do here */
     if (!gw->isGridResized &&
-	!gw->isGridHorzMaximized &&
-	!gw->isGridVertMaximized)
-    {
-	/* Grid hasn't touched this window or has maximized it. If it's
-	 * maximized, unmaximize it and get out. */
-	if (cw->state () & MAXIMIZE_STATE)
-	    cw->maximize(0);
-	return true;
-    }
+	!gw->isGridVertMaximized &&
+	!gw->isGridHorzMaximized)
+	return false;
+
     else if (!gw->isGridResized &&
 	     gw->isGridHorzMaximized &&
 	     !gw->isGridVertMaximized)
