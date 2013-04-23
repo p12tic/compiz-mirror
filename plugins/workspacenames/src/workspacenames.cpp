@@ -24,27 +24,24 @@
 
 #include "workspacenames.h"
 
-namespace
-{
-    const unsigned short TEXT_BORDER = 2;
-}
-
-
 CompString
 WSNamesScreen::getCurrentWSName ()
 {
-    CompString	ret;
+    CompString ret;
 
     CompOption::Value::Vector vpNumbers = optionGetViewports ();
     CompOption::Value::Vector names     = optionGetNames ();
 
     int currentVp = screen->vp ().y () * screen->vpSize ().width () +
-		screen->vp ().x () + 1;
+		    screen->vp ().x () + 1;
+
     int listSize  = MIN (vpNumbers.size (), names.size ());
 
-    for (int i = 0; i < listSize; i++)
+    for (int i = 0; i < listSize; ++i)
+    {
 	if (vpNumbers[i].i () == currentVp)
 	    return names[i].s ();
+    }
 
     return ret;
 }
@@ -74,6 +71,7 @@ WSNamesScreen::renderNameText ()
     attrib.color[3] = optionGetFontColorAlpha ();
 
     attrib.flags = CompText::WithBackground | CompText::Ellipsized;
+
     if (optionGetBoldText ())
 	attrib.flags |= CompText::StyleBold;
 
@@ -93,27 +91,29 @@ WSNamesScreen::getTextPlacementPosition ()
     CompRect oe = screen->getCurrentOutputExtents ();
     float x = oe.centerX () - textData.getWidth () / 2;
     float y = 0;
-    const float border = TEXT_BORDER;
+    unsigned short vertical_offset = optionGetVerticalOffset ();
 
     switch (optionGetTextPlacement ())
     {
 	case WorkspacenamesOptions::TextPlacementCenteredOnScreen:
 	    y = oe.centerY () + textData.getHeight () / 2;
 	    break;
-	case WorkspacenamesOptions::TextPlacementTopOfScreen:
-	case WorkspacenamesOptions::TextPlacementBottomOfScreen:
+
+	case WorkspacenamesOptions::TextPlacementTopOfScreenMinusOffset:
+	case WorkspacenamesOptions::TextPlacementBottomOfScreenPlusOffset:
 	    {
 		CompRect workArea = screen->currentOutputDev ().workArea ();
 
 		if (optionGetTextPlacement () ==
-		    WorkspacenamesOptions::TextPlacementTopOfScreen)
+		    WorkspacenamesOptions::TextPlacementTopOfScreenMinusOffset)
 		    y = oe.y1 () + workArea.y () +
-			(2 * border) + textData.getHeight ();
-		else
+			vertical_offset + textData.getHeight ();
+		else /* TextPlacementBottomOfScreenPlusOffset */
 		    y = oe.y1 () + workArea.y () +
-			workArea.height () - (2 * border);
+			workArea.height () - vertical_offset;
 	    }
 	    break;
+
 	default:
 	    return CompPoint (floor (x),
 			      oe.centerY () - textData.getHeight () / 2);
@@ -130,10 +130,10 @@ WSNamesScreen::damageTextArea ()
 
     /* The placement position is from the lower corner, so we
      * need to move it back up by height */
-    CompRect        area (pos.x () - TEXT_BORDER,
-			  pos.y () - TEXT_BORDER - textData.getHeight () ,
-			  textData.getWidth () + TEXT_BORDER * 2,
-			  textData.getHeight () + TEXT_BORDER * 2);
+    CompRect        area (pos.x (),
+			  pos.y () - textData.getHeight (),
+			  textData.getWidth (),
+			  textData.getHeight ());
 
     cScreen->damageRegion (area);
 }
@@ -161,11 +161,11 @@ WSNamesScreen::shouldDrawText ()
 }
 
 bool
-WSNamesScreen::glPaintOutput (const GLScreenPaintAttrib	&attrib,
-			      const GLMatrix		&transform,
-			      const CompRegion		&region,
-			      CompOutput		*output,
-			      unsigned int		mask)
+WSNamesScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
+			      const GLMatrix            &transform,
+			      const CompRegion          &region,
+			      CompOutput                *output,
+			      unsigned int              mask)
 {
     bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
@@ -236,6 +236,7 @@ WSNamesScreen::handleEvent (XEvent *event)
 	int timeout = optionGetDisplayTime () * 1000;
 
 	timer = 0;
+
 	if (timeoutHandle.active ())
 	    timeoutHandle.stop ();
 
@@ -267,9 +268,9 @@ WSNamesScreen::~WSNamesScreen ()
 bool
 WorkspacenamesPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		||
+	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
+	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return false;
 
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
