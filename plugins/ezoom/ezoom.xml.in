@@ -50,7 +50,7 @@
 		    <_long>Define a rectangle area and zoom into it.</_long>
 		    <default>&lt;Super&gt;Button2</default>
 		</option>
-		<option name="outline_color" type="color">
+		<option name="zoom_box_outline_color" type="color">
 			<_short>Zoom Box Outline Color</_short>
 			<_long>Color and opacity of the zoom box outline.</_long>
 			<default>
@@ -60,7 +60,7 @@
 			    <alpha>0x9fff</alpha>
 			</default>
 		</option>
-		<option name="fill_color" type="color">
+		<option name="zoom_box_fill_color" type="color">
 			<_short>Zoom Box Fill Color</_short>
 			<_long>Fill color and opacity of the zoom box.</_long>
 			<default>

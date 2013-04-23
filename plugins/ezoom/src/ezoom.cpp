@@ -400,8 +400,8 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     glEnable (GL_BLEND);
 
     /* draw filled rectangle */
-    float alpha = optionGetFillColorAlpha () / 65535.0f;
-    color = optionGetFillColor ();
+    float alpha = optionGetZoomBoxFillColorAlpha () / 65535.0f;
+    color = optionGetZoomBoxFillColor ();
 
     colorData[0] = alpha * color[0];
     colorData[1] = alpha * color[1];
@@ -430,8 +430,8 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     streamingBuffer->render (zTransform);
 
     /* draw outline */
-    alpha = optionGetOutlineColorAlpha () / 65535.0f;
-    color = optionGetOutlineColor ();
+    alpha = optionGetZoomBoxOutlineColorAlpha () / 65535.0f;
+    color = optionGetZoomBoxOutlineColor ();
 
     colorData[0] = alpha * color[0];
     colorData[1] = alpha * color[1];
