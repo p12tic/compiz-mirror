@@ -67,17 +67,21 @@ PrivateCompositeScreen::setOption (const CompString  &name,
     if (!rv || !CompOption::findOption (getOptions (), name, &index))
 	return false;
 
-    switch (index) {
+    switch (index)
+    {
 	case CompositeOptions::DetectRefreshRate:
 	    if (optionGetDetectRefreshRate ())
 		detectRefreshRate ();
 	    break;
+
 	case CompositeOptions::RefreshRate:
 	    if (optionGetDetectRefreshRate ())
 		return false;
+
 	    redrawTime = 1000 / optionGetRefreshRate ();
 	    optimalRedrawTime = redrawTime;
 	    break;
+
 	default:
 	    break;
     }
