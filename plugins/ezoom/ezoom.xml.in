@@ -6,6 +6,7 @@
 		<plugin>opengl</plugin>
 		<plugin>expo</plugin>
 		<plugin>decor</plugin>
+		<plugin>mousepoll</plugin>
 	    </relation>
 	    <relation type="before">
 		<plugin>staticswitcher</plugin>
@@ -27,27 +28,47 @@
 		<option type="action" name="ensure_visibility">
 		</option>
 		<option type="button" name="zoom_in_button">
-		    <_short>Zoom In</_short>
-		    <_long>Zoom In</_long>
+		    <_short>Zoom In Button</_short>
+		    <_long>Mouse button shortcut to invoke zooming in.</_long>
 		    <default>&lt;Super&gt;Button4</default>
 		</option>
 		<option type="key" name="zoom_in_key">
-		    <_short>Zoom In</_short>
-		    <_long>Zoom In</_long>
+		    <_short>Zoom In Key</_short>
+		    <_long>Key shortcut to invoke zooming in.</_long>
 		</option>
 		<option type="button" name="zoom_out_button">
-		    <_short>Zoom Out</_short>
-		    <_long>Zoom Out</_long>
+		    <_short>Zoom Out Button</_short>
+		    <_long>Mouse button shortcut to invoke zooming out.</_long>
 		    <default>&lt;Super&gt;Button5</default>
 		</option>
 		<option type="key" name="zoom_out_key">
-		    <_short>Zoom Out</_short>
-		    <_long>Zoom Out</_long>
+		    <_short>Zoom Out Key</_short>
+		    <_long>Key shortcut to invoke zooming in.</_long>
 		</option>
 		<option type="button" name="zoom_box_button">
-		    <_short>Zoom Box</_short>
-		    <_long>Zoom in on a boxed area</_long>
+		    <_short>Invoke Zoom Box Button</_short>
+		    <_long>Define a rectangle area and zoom into it.</_long>
 		    <default>&lt;Super&gt;Button2</default>
+		</option>
+		<option name="outline_color" type="color">
+			<_short>Zoom Box Outline Color</_short>
+			<_long>Color and opacity of the zoom box outline.</_long>
+			<default>
+			    <red>0x2fff</red>
+			    <green>0x2fff</green>
+			    <blue>0x4fff</blue>
+			    <alpha>0x9fff</alpha>
+			</default>
+		</option>
+		<option name="fill_color" type="color">
+			<_short>Zoom Box Fill Color</_short>
+			<_long>Fill color and opacity of the zoom box.</_long>
+			<default>
+			    <red>0x2fff</red>
+			    <green>0x2fff</green>
+			    <blue>0x2fff</blue>
+			    <alpha>0x4fff</alpha>
+			</default>
 		</option>
 	    </group>
 	    <group>

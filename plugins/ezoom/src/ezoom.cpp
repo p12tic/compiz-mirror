@@ -384,6 +384,7 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     int            inx1, inx2, iny1, iny2;
     int            out = output->id ();
     GLushort       colorData[4];
+    GLushort       *color;
     GLfloat        vertexData[12];
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
@@ -396,14 +397,16 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     int x2 = MAX (inx1, inx2);
     int y2 = MAX (iny1, iny2);
 
-    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+    glEnable (GL_BLEND);
 
-    colorData[0] = 0x2fff;
-    colorData[1] = 0x2fff;
-    colorData[2] = 0x2fff;
-    colorData[3] = 0x4fff;
+    /* draw filled rectangle */
+    float alpha = ((float) optionGetFillColorAlpha () / 65535.0f);
+    color = optionGetFillColor ();
 
-    streamingBuffer->addColors (1, colorData);
+    colorData[0] = alpha * color[0];
+    colorData[1] = alpha * color[1];
+    colorData[2] = alpha * color[2];
+    colorData[3] = alpha * 65535.0f;
 
     vertexData[0]  = x1;
     vertexData[1]  = y1;
@@ -418,19 +421,22 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     vertexData[10] = y2;
     vertexData[11] = 0.0f;
 
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    streamingBuffer->addColors (1, colorData);
     streamingBuffer->addVertices (4, vertexData);
 
     streamingBuffer->end ();
     streamingBuffer->render (zTransform);
 
-    streamingBuffer->begin (GL_LINE_LOOP);
+    /* draw outline */
+    alpha = ((float) optionGetOutlineColorAlpha () / 65535.0f);
+    color = optionGetOutlineColor ();
 
-    colorData[0] = 0x2fff;
-    colorData[1] = 0x2fff;
-    colorData[2] = 0x4fff;
-    colorData[3] = 0x9fff;
-
-    streamingBuffer->addColors (1, colorData);
+    colorData[0] = alpha * color[0];
+    colorData[1] = alpha * color[1];
+    colorData[2] = alpha * color[2];
+    colorData[3] = alpha * 65535.0f;
 
     vertexData[0]  = x1;
     vertexData[1]  = y1;
@@ -445,10 +451,17 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     vertexData[10] = y2;
     vertexData[11] = 0.0f;
 
+    glLineWidth (2.0);
+
+    streamingBuffer->begin (GL_LINE_LOOP);
+
+    streamingBuffer->addColors (1, colorData);
     streamingBuffer->addVertices (4, vertexData);
 
     streamingBuffer->end ();
     streamingBuffer->render (zTransform);
+
+    glDisable (GL_BLEND);
 }
 
 /* Apply the zoom if we are grabbed.
@@ -488,7 +501,7 @@ EZoomScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     }
     else
 	status = gScreen->glPaintOutput (attrib, transform, region, output,
-									mask);
+					 mask);
 
     if (grabIndex)
 	drawBox (transform, output, box);
@@ -1190,7 +1203,6 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
 	cursor->isSet = true;
 	cursor->screen = screen;
 
-//	glEnable (GL_TEXTURE_2D);
 	glGenTextures (1, &cursor->texture);
 	glBindTexture (GL_TEXTURE_2D, cursor->texture);
 
@@ -1201,8 +1213,6 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 			 gScreen->textureFilter ());
     }
-//    else
-//	glEnable (GL_TEXTURE_2D);
 
     XFixesCursorImage *ci = XFixesGetCursorImage (dpy);
 
@@ -1261,8 +1271,7 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, cursor->width,
 		  cursor->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
     glBindTexture (GL_TEXTURE_2D, 0);
-//    glDisable (GL_TEXTURE_2D);
-	
+
     free (pixels);
 }
 
@@ -1370,8 +1379,8 @@ EZoomScreen::setZoomAreaAction (CompAction         *action,
     o = &screen->outputDevs (). at(out);
 
     if (scale && width && height)
-	setScaleBigger (out, (float) width / o->width (),
-			(float) height / o->height ());
+	setScaleBigger (out, width / static_cast <float> (o->width ()),
+			height / static_cast <float> (o->height ()));
 
 	if (restrain)
 	    restrainCursor (out);
@@ -1420,13 +1429,12 @@ EZoomScreen::ensureVisibilityAction (CompAction         *action,
 
     o = &screen->outputDevs (). at(out);
 
-#define WIDTH (x2 - x1)
-#define HEIGHT (y2 - y1)
-    if (scale && WIDTH && HEIGHT)
-	setScaleBigger (out, (float) WIDTH / o->width (),
-			(float) HEIGHT / o->height ());
-#undef WIDTH
-#undef HEIGHT
+    int width  = x2 - x1;
+    int height = y2 - y1;
+
+    if (scale && width && height)
+	setScaleBigger (out, width / static_cast <float> (o->width ()),
+			height / static_cast <float> (o->height ()));
 
     if (restrain)
 	restrainCursor (out);
@@ -1493,8 +1501,8 @@ EZoomScreen::zoomBoxDeactivate (CompAction         *action,
 
 	int out = screen->outputDeviceForGeometry (outGeometry);
 	o = &screen->outputDevs (). at (out);
-	setScaleBigger (out, (float) width / o->width (), (float)
-			height / o->height ());
+	setScaleBigger (out, width / static_cast <float> (o->width ()),
+			height / static_cast <float> (o->height ()));
 	setZoomArea (x, y, width, height, false);
     }
 
@@ -1620,8 +1628,8 @@ EZoomScreen::zoomToWindow (CompAction         *action,
     int height = w->height () + w->border ().top + w->border ().bottom;
     int out = screen->outputDeviceForGeometry (w->geometry ());
     o = &screen->outputDevs ().at (out);
-    setScaleBigger (out, (float) width/o->width (),
-		    (float) height/o->height ());
+    setScaleBigger (out, width / static_cast <float> (o->width ()),
+		    height / static_cast <float> (o->height ()));
     areaToWindow (w);
     toggleFunctions (true);
 
@@ -1812,11 +1820,11 @@ EZoomScreen::focusTrack (XEvent *event)
     {
 	int width = w->width () + w->border ().left + w->border ().right;
 	int height = w->height () + w->border ().top + w->border ().bottom;
-	float scale = MAX ((float) width / screen->outputDevs ().at(out).width (),
-			   (float) height / screen->outputDevs ().at (out).height ());
+	float scale = MAX (width / static_cast <float> (screen->outputDevs ().at(out).width ()),
+			   height / static_cast <float> (screen->outputDevs ().at (out).height ()));
 
 	if (scale > optionGetAutoscaleMin ())
-		setScale (out, scale);
+	    setScale (out, scale);
     }
 
     areaToWindow (w);
