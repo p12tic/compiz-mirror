@@ -589,13 +589,13 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     if (!animating)
     {
 	/* draw filled rectangle */
-	float alpha = optionGetFillColorAlpha () / 65535.0f;
+	float alpha = optionGetFillColorAlpha () / MaxUShortFloat;
 	color = optionGetFillColor ();
 
 	colorData[0] = alpha * color[0];
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
-	colorData[3] = alpha * 65535.0f;
+	colorData[3] = alpha * MaxUShortFloat;
 
 	vertexData[0]  = rect.x1 ();
 	vertexData[1]  = rect.y1 ();
@@ -624,13 +624,13 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 			  rect.height () - 2);
 
 	/* draw outline */
-	alpha = optionGetOutlineColorAlpha () / 65535.0f;
+	alpha = optionGetOutlineColorAlpha () / MaxUShortFloat;
 	color = optionGetOutlineColor ();
 
 	colorData[0] = alpha * color[0];
 	colorData[1] = alpha * color[1];
 	colorData[2] = alpha * color[2];
-	colorData[3] = alpha * 65535.0f;
+	colorData[3] = alpha * MaxUShortFloat;
 
 	vertexData[0]  = rect.x1 ();
 	vertexData[1]  = rect.y1 ();
