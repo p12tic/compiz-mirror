@@ -249,17 +249,16 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	if (mGrabIndex &&
 	    optionGetDrawSelectionIndicator ())
 	{
-#ifndef USE_GLES
-	    glEnable (GL_BLEND);
-#endif
+	    const float MaxUShortFloat = std::numeric_limits <unsigned short>::max ();
+
 	    /* draw filled rectangle */
-	    float alpha = optionGetSelectionFillColorAlpha () / 65535.0f;
+	    float alpha = optionGetSelectionFillColorAlpha () / MaxUShortFloat;
 	    color = optionGetSelectionFillColor ();
 
 	    colorData[0] = alpha * color[0];
 	    colorData[1] = alpha * color[1];
 	    colorData[2] = alpha * color[2];
-	    colorData[3] = alpha * 65535.0f;
+	    colorData[3] = alpha * MaxUShortFloat;
 
 	    vertexData[0]  = x1;
 	    vertexData[1]  = y1;
@@ -282,6 +281,8 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 				 -output->region ()->extents.y2,
 				 0.0f);
 
+	    glEnable (GL_BLEND);
+
 	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
 	    streamingBuffer->addColors (1, colorData);
@@ -291,7 +292,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->render (transform);
 
 	    /* draw outline */
-	    alpha = optionGetSelectionOutlineColorAlpha () / 65535.0f;
+	    alpha = optionGetSelectionOutlineColorAlpha () / MaxUShortFloat;
 	    color = optionGetSelectionOutlineColor ();
 
 	    colorData[0] = alpha * color[0];
@@ -314,9 +315,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->end ();
 	    streamingBuffer->render (transform);
 
-#ifndef USE_GLES
 	    glDisable (GL_BLEND);
-#endif
 	}
     }
 
