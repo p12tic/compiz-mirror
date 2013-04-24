@@ -177,6 +177,12 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 		{
 		    struct dirent **namelist;
 
+		    /* If we have fbos enabled we
+		     * need to clear the overlay
+		     * before reading the pixels */
+		    if (GL::fboEnabled)
+			glReadBuffer (GL_FRONT);
+
 		    glReadPixels (x1, ::screen->height () - y2, w, h,
 				  GL_RGBA, GL_UNSIGNED_BYTE,
 				  (GLvoid *) buffer);
