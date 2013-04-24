@@ -72,8 +72,8 @@
 		</option>
 		<option name="put_restore_key" type="key">
 		    <_short>Restore</_short>
-		    <_long>Restores grid-resized, semi-maximized and maximized windows to their original size and position.</_long>
-		    <default>&lt;Control&gt;&lt;Alt&gt;r</default>
+		    <_long>Restore window to it's original size. Note: Use the same shortcut you are using to unmaximize a window to be able to restore grid-maximized windows.</_long>
+		    <default>&lt;Alt&gt;F5</default>
 		</option>
 	    </group>
 	    <group>
