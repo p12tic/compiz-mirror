@@ -91,7 +91,7 @@ WSNamesScreen::getTextPlacementPosition ()
     CompRect oe = screen->getCurrentOutputExtents ();
     float x = oe.centerX () - textData.getWidth () / 2;
     float y = 0;
-    unsigned short vertical_offset = optionGetVerticalOffset ();
+    unsigned short verticalOffset = optionGetVerticalOffset ();
 
     switch (optionGetTextPlacement ())
     {
@@ -107,10 +107,10 @@ WSNamesScreen::getTextPlacementPosition ()
 		if (optionGetTextPlacement () ==
 		    WorkspacenamesOptions::TextPlacementTopOfScreenMinusOffset)
 		    y = oe.y1 () + workArea.y () +
-			vertical_offset + textData.getHeight ();
+			verticalOffset + textData.getHeight ();
 		else /* TextPlacementBottomOfScreenPlusOffset */
 		    y = oe.y1 () + workArea.y () +
-			workArea.height () - vertical_offset;
+			workArea.height () - verticalOffset;
 	    }
 	    break;
 
