@@ -863,8 +863,6 @@ CompositeScreen::handlePaintTimeout ()
 
     if (priv->damageMask)
     {
-	int         timeDiff;
-
 	/* Damage that accumulates here does not require a repaint reschedule
 	 * as it will end up on this frame */
 	priv->damageRequiresRepaintReschedule = false;
