@@ -35,16 +35,13 @@
 
 #define NUM_KEYS (sizeof (mKeys) / sizeof (mKeys[0]))
 
-extern const unsigned short KEY_MOVE_INC;
-
-extern const unsigned short SNAP_BACK;
-extern const unsigned short SNAP_OFF;
-
-struct _MoveKeys {
+struct _MoveKeys
+{
     const char *name;
     int        dx;
     int        dy;
-} mKeys[] = {
+} mKeys[] =
+{
     { "Left",  -1,  0 },
     { "Right",  1,  0 },
     { "Up",     0, -1 },
@@ -88,6 +85,9 @@ class MoveScreen :
 	Cursor moveCursor;
 
 	unsigned int origState;
+
+	int	snapOffX;
+	int	snapBackX;
 
 	int	snapOffY;
 	int	snapBackY;

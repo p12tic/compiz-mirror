@@ -58,8 +58,8 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 {
     CompWindow      *w;
 
-    switch (event->type) {
-
+    switch (event->type)
+    {
 	case CreateNotify:
 	    if (screen->root () == event->xcreatewindow.parent)
 	    {
@@ -71,6 +71,7 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		    return;
 	    }
 	    break;
+
 	case PropertyNotify:
 	    if (event->xproperty.atom == Atoms::winOpacity)
 	    {
@@ -91,18 +92,15 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		    CompositeWindow::get (w)->updateSaturation ();
 	    }
 	    break;
+
 	default:
 	    if (shapeExtension &&
 		event->type == shapeEvent + ShapeNotify)
 	    {
 		w = screen->findWindow (((XShapeEvent *) event)->window);
-		if (w)
-		{
-		    if (w->mapNum ())
-		    {
-		        CompositeWindow::get (w)->addDamage ();
-		    }
-		}
+		if (w &&
+		    w->mapNum ())
+		    CompositeWindow::get (w)->addDamage ();
 	    }
 	    else if (event->type == damageEvent + XDamageNotify)
 	    {
@@ -114,10 +112,12 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 
     screen->handleEvent (event);
 
-    switch (event->type) {
+    switch (event->type)
+    {
 	case Expose:
 	    handleExposeEvent (&event->xexpose);
 	break;
+
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::winOpacity)
 	    {
@@ -130,8 +130,7 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 			Atoms::winOpacity, opacity);
 		}
 	    }
-	    else if (event->xclient.message_type ==
-		     Atoms::winBrightness)
+	    else if (event->xclient.message_type == Atoms::winBrightness)
 	    {
 		w = screen->findWindow (event->xclient.window);
 		if (w)
@@ -142,8 +141,7 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 			Atoms::winBrightness, brightness);
 		}
 	    }
-	    else if (event->xclient.message_type ==
-		     Atoms::winSaturation)
+	    else if (event->xclient.message_type == Atoms::winSaturation)
 	    {
 		w = screen->findWindow (event->xclient.window);
 		if (w)
@@ -155,15 +153,14 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		}
 	    }
 	    break;
+
 	default:
 	    if (event->type == damageEvent + XDamageNotify)
 	    {
 		XDamageNotifyEvent *de = (XDamageNotifyEvent *) event;
 
 		if (lastDamagedWindow && de->drawable == lastDamagedWindow->id ())
-		{
 		    w = lastDamagedWindow;
-		}
 		else
 		{
 		    w = screen->findWindow (de->drawable);
@@ -178,13 +175,9 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		     event->type == shapeEvent + ShapeNotify)
 	    {
 		w = screen->findWindow (((XShapeEvent *) event)->window);
-		if (w)
-		{
-		    if (w->mapNum ())
-		    {
-		        CompositeWindow::get (w)->addDamage ();
-		    }
-		}
+
+		if (w && w->mapNum ())
+		    CompositeWindow::get (w)->addDamage ();
 	    }
 	    else if (randrExtension &&
 		     event->type == randrEvent + RRScreenChangeNotify)
@@ -205,7 +198,6 @@ CompositeScreen::damageEvent ()
 {
     return priv->damageEvent;
 }
-
 
 template class PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>;
 
@@ -264,10 +256,7 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
     priv->slowAnimations = false;
 
     if (!priv->init ())
-    {
-        setFailed ();
-    }
-
+	setFailed ();
 }
 
 CompositeScreen::~CompositeScreen ()
@@ -352,39 +341,35 @@ PrivateCompositeScreen::init ()
     Time                 cmSnTimestamp = 0;
     XEvent               event;
     XSetWindowAttributes attr;
-    Window               currentCmSnOwner;
     char                 buf[128];
 
     snprintf (buf, 128, "_NET_WM_CM_S%d", screen->screenNum ());
     cmSnAtom = XInternAtom (dpy, buf, 0);
 
-    currentCmSnOwner = XGetSelectionOwner (dpy, cmSnAtom);
+    Window currentCmSnOwner = XGetSelectionOwner (dpy, cmSnAtom);
 
-    if (currentCmSnOwner != None)
+    if (currentCmSnOwner != None &&
+	!replaceCurrentWm)
     {
-	if (!replaceCurrentWm)
-	{
-	    compLogMessage (
-		"composite", CompLogLevelError,
-		"Screen %d on display \"%s\" already has a compositing "
-		"manager (%x); try using the --replace option to replace "
-		"the current compositing manager.",
-		screen->screenNum (), DisplayString (dpy), currentCmSnOwner);
+	compLogMessage (
+		    "composite", CompLogLevelError,
+		    "Screen %d on display \"%s\" already has a compositing "
+		    "manager (%x); try using the --replace option to replace "
+		    "the current compositing manager.",
+		    screen->screenNum (), DisplayString (dpy), currentCmSnOwner);
 
-	    return false;
-	}
+	return false;
     }
 
     attr.override_redirect = true;
     attr.event_mask        = PropertyChangeMask;
 
-    newCmSnOwner =
-	XCreateWindow (dpy, screen->root (),
-		       -100, -100, 1, 1, 0,
-		       CopyFromParent, CopyFromParent,
-		       CopyFromParent,
-		       CWOverrideRedirect | CWEventMask,
-		       &attr);
+    newCmSnOwner = XCreateWindow (dpy, screen->root (),
+				  -100, -100, 1, 1, 0,
+				  CopyFromParent, CopyFromParent,
+				  CopyFromParent,
+				  CWOverrideRedirect | CWEventMask,
+				  &attr);
 
     XChangeProperty (dpy, newCmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
 		     PropModeReplace, (unsigned char *) PACKAGE,
@@ -421,7 +406,6 @@ PrivateCompositeScreen::init ()
 
     return true;
 }
-
 
 bool
 CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
@@ -552,7 +536,6 @@ CompositeScreen::damageScreen ()
      * Call through damageRegion since plugins listening for incoming damage
      * may need to know that the whole screen was redrawn
      */
-
     if (!alreadyDamaged)
     {
 	damageRegion (CompRegion (0, 0, screen->width (), screen->height ()));
@@ -581,10 +564,11 @@ CompositeScreen::damageRegion (const CompRegion &region)
     const CompRegion *currentDamage = priv->damageTrackedBuffer (region);
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_REGION_MASK;
 
-    /* if the number of damage rectangles grows two much between repaints,
-       we have a lot of overhead just for doing the damage tracking -
-       in order to make sure we're not having too much overhead, damage
-       the whole screen if we have a lot of damage rects */
+    /* If the number of damage rectangles grows two much between repaints,
+     * we have a lot of overhead just for doing the damage tracking -
+     * in order to make sure we're not having too much overhead, damage
+     * the whole screen if we have a lot of damage rects
+     */
 
     if (currentDamage->numRects () > 100)
 	damageScreen ();
@@ -680,9 +664,7 @@ void
 CompositeScreen::hideOutputWindow ()
 {
     Display       *dpy = screen->dpy ();
-    XserverRegion region;
-
-    region = XFixesCreateRegion (dpy, NULL, 0);
+    XserverRegion region = XFixesCreateRegion (dpy, NULL, 0);
 
     XFixesSetWindowShapeRegion (dpy,
 				priv->output,
@@ -705,9 +687,7 @@ CompositeScreen::updateOutputWindow ()
 	     screen->windows ().rbegin ();
 	     rit != screen->windows ().rend (); ++rit)
 	    if (CompositeWindow::get (*rit)->overlayWindow ())
-	    {
 		tmpRegion -= (*rit)->region ();
-	    }
 
 	XShapeCombineRegion (dpy, priv->output, ShapeBounding,
 			     0, 0, tmpRegion.handle (), ShapeSet);
@@ -724,7 +704,6 @@ CompositeScreen::updateOutputWindow ()
 
 	priv->outputShapeChanged = true;
     }
-
 }
 
 bool
@@ -840,18 +819,19 @@ PrivateCompositeScreen::scheduleRepaint ()
     scheduled = true;
 
     int delay;
+
     if (FPSLimiterMode == CompositeFPSLimiterModeVSyncLike ||
 	(pHnd && pHnd->hasVSync ()))
-    {
 	delay = 1;
-    }
     else
     {
 	struct timeval now;
 	gettimeofday (&now, 0);
 	int elapsed = compiz::core::timer::timeval_diff (&now, &lastRedraw);
+
 	if (elapsed < 0)
 	    elapsed = 0;
+
  	delay = elapsed < optimalRedrawTime ? optimalRedrawTime - elapsed : 1;
     }
 
@@ -892,7 +872,7 @@ CompositeScreen::handlePaintTimeout ()
 	if (priv->pHnd)
 	    priv->pHnd->prepareDrawing ();
 
-	timeDiff = compiz::core::timer::timeval_diff (&tv, &priv->lastRedraw);
+	int timeDiff = compiz::core::timer::timeval_diff (&tv, &priv->lastRedraw);
 
 	/* handle clock rollback */
 	if (timeDiff < 0)
@@ -943,14 +923,13 @@ CompositeScreen::handlePaintTimeout ()
 	priv->tmpRegion = (priv->roster.currentFrameDamage () + priv->lastFrameDamage) & screen->region ();
 	priv->currentlyTrackingDamage = DamageFinalPaintRegion;
 
-	if (priv->damageMask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK)
-	{
-	    if (priv->tmpRegion == screen->region ())
+	if (priv->damageMask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK &&
+	    priv->tmpRegion == screen->region ())
 		damageScreen ();
-	}
 
 	Display *dpy = screen->dpy ();
 	std::map<Damage, XRectangle>::iterator d = priv->damages.begin ();
+
 	for (; d != priv->damages.end (); ++d)
 	{
 	    XserverRegion sub = XFixesCreateRegion (dpy, &d->second, 1);
@@ -960,6 +939,7 @@ CompositeScreen::handlePaintTimeout ()
 		XFixesDestroyRegion (dpy, sub);
 	    }
 	}
+
 	XSync (dpy, False);
 	priv->damages.clear ();
 
@@ -972,11 +952,13 @@ CompositeScreen::handlePaintTimeout ()
 
 	CompOutput::ptrList outputs (0);
 
-	if (priv->optionGetForceIndependentOutputPainting ()
-	    || !screen->hasOverlappingOutputs ())
+	if (priv->optionGetForceIndependentOutputPainting () ||
+	    !screen->hasOverlappingOutputs ())
 	{
 	    foreach (CompOutput &o, screen->outputDevs ())
+	    {
 		outputs.push_back (&o);
+	    }
 	}
 	else
 	    outputs.push_back (&screen->fullscreenOutput ());
@@ -1010,8 +992,6 @@ CompositeScreen::handlePaintTimeout ()
 
     return false;
 }
-
-
 
 void
 CompositeScreen::preparePaint (int msSinceLastPaint)
@@ -1085,10 +1065,12 @@ PrivateCompositeScreen::handleExposeEvent (XExposeEvent *event)
     if (event->count == 0)
     {
 	CompRect rect;
+
 	foreach (CompRect rect, exposeRects)
 	{
 	    cScreen->damageRegion (CompRegion (rect));
 	}
+
 	exposeRects.clear ();
     }
 }
@@ -1108,12 +1090,12 @@ CompositeScreen::toggleSlowAnimations (CompAction         *action,
 				       CompOption::Vector &options)
 {
     CompositeScreen *cs = CompositeScreen::get (screen);
+
     if (cs)
 	cs->priv->slowAnimations = !cs->priv->slowAnimations;
 
     return true;
 }
-
 
 void
 CompositeScreenInterface::preparePaint (int msSinceLastPaint)

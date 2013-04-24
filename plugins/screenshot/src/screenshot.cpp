@@ -43,14 +43,10 @@ ShotScreen::initiate (CompAction            *action,
 		      CompAction::State     state,
 		      CompOption::Vector    &options)
 {
-    Window     xid;
+    Window xid = CompOption::getIntOptionNamed (options, "root");
 
-    xid = CompOption::getIntOptionNamed (options, "root");
-
-    if (xid != ::screen->root ())
-	return false;
-
-    if (::screen->otherGrabExist ("screenshot", NULL))
+    if (xid != ::screen->root () ||
+	::screen->otherGrabExist ("screenshot", NULL))
 	return false;
 
     if (!mGrabIndex)
@@ -79,9 +75,7 @@ ShotScreen::terminate (CompAction            *action,
 		       CompAction::State     state,
 		       CompOption::Vector    &options)
 {
-    Window     xid;
-
-    xid = CompOption::getIntOptionNamed (options, "root");
+    Window xid = CompOption::getIntOptionNamed (options, "root");
 
     if (xid && xid != ::screen->root ())
 	return false;
@@ -110,7 +104,7 @@ ShotScreen::terminate (CompAction            *action,
     }
 
     action->setState (action->state () & ~(CompAction::StateTermKey |
-    					   CompAction::StateTermButton));
+					   CompAction::StateTermButton));
 
     gScreen->glPaintOutputSetEnabled (this, false);
 
@@ -143,8 +137,8 @@ shotSort (const void *_a,
 {
     struct dirent **a = (struct dirent **) _a;
     struct dirent **b = (struct dirent **) _b;
-    int		  al = strlen ((*a)->d_name);
-    int		  bl = strlen ((*b)->d_name);
+    int		  al  = strlen ((*a)->d_name);
+    int		  bl  = strlen ((*b)->d_name);
 
     if (al == bl)
 	return strcoll ((*a)->d_name, (*b)->d_name);
@@ -177,23 +171,21 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 		GLubyte *buffer;
 		CompString dir (optionGetDirectory ());
 
+		/* If dir is empty, use user's desktop directory instead */
 		if (dir.length () == 0)
-		{
-		    // If dir is empty, use user's desktop directory instead
 		    dir = getXDGUserDir (XDGUserDirDesktop);
-		}
 
 		buffer = (GLubyte *)malloc (sizeof (GLubyte) * w * h * 4);
 		if (buffer)
 		{
 		    struct dirent **namelist;
-		    int		  n;
 
 		    glReadPixels (x1, ::screen->height () - y2, w, h,
 				  GL_RGBA, GL_UNSIGNED_BYTE,
 				  (GLvoid *) buffer);
 
-		    n = scandir (dir.c_str (), &namelist, shotFilter, shotSort);
+		    int n = scandir (dir.c_str (), &namelist, shotFilter, shotSort);
+
 		    if (n >= 0)
 		    {
 			char name[256];
@@ -217,25 +209,18 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 
 			if (!::screen->writeImageToFile (path, "png",
 							 imageSize, buffer))
-			{
 			    compLogMessage ("screenshot", CompLogLevelError,
 					    "failed to write screenshot image");
-			}
 			else if (app.length () > 0)
-			{
 			    ::screen->runCommand (app + " " + path);
-			}
 		    }
 		    else
-		    {
 			perror (dir.c_str ());
-		    }
 
 		    free (buffer);
 		}
 	    }
-
-	    // Disable screen capture
+	    /* Disable screen capture */
 	    cScreen->paintSetEnabled (this, false);
 	    mGrab = false;
 	}
@@ -253,18 +238,15 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GLMatrix        transform (matrix);
     GLfloat         vertexData[12];
     GLushort        colorData[4];
-    bool status;
 
-    status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
+    bool status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
     if (status && mGrab)
     {
-	int x1, x2, y1, y2;
-
-	x1 = MIN (mX1, mX2);
-	y1 = MIN (mY1, mY2);
-	x2 = MAX (mX1, mX2);
-	y2 = MAX (mY1, mY2);
+	int x1 = MIN (mX1, mX2);
+	int y1 = MIN (mY1, mY2);
+	int x2 = MAX (mX1, mX2);
+	int y2 = MAX (mY1, mY2);
 
 	if (mGrabIndex)
 	{
@@ -289,11 +271,11 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    transform.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
 	    transform.scale (1.0f / output->width (),
-	    	      -1.0f / output->height (),
-	    	      1.0f);
+			     -1.0f / output->height (),
+			     1.0f);
 	    transform.translate (-output->region ()->extents.x1,
-	    		  -output->region ()->extents.y2,
-	    		  0.0f);
+				 -output->region ()->extents.y2,
+				 0.0f);
 
 #ifndef USE_GLES
 	    glEnable (GL_BLEND);
@@ -333,15 +315,12 @@ ShotScreen::handleMotionEvent (int xRoot,
 			       int yRoot)
 {
     /* update screenshot rectangle size */
-
     if (mGrabIndex)
     {
-	int x1, x2, y1, y2;
-
-	x1 = MIN (mX1, mX2) - 1;
-	y1 = MIN (mY1, mY2) - 1;
-	x2 = MAX (mX1, mX2) + 1;
-	y2 = MAX (mY1, mY2) + 1;
+	int x1 = MIN (mX1, mX2) - 1;
+	int y1 = MIN (mY1, mY2) - 1;
+	int x2 = MAX (mX1, mX2) + 1;
+	int y2 = MAX (mY1, mY2) + 1;
 
 	cScreen->damageRegion (CompRegion (x1, y1, x2 - x1, y2 - y1));
 
@@ -362,15 +341,19 @@ ShotScreen::handleMotionEvent (int xRoot,
 void
 ShotScreen::handleEvent (XEvent *event)
 {
-    switch (event->type) {
+    switch (event->type)
+    {
 	case MotionNotify:
 	    if (event->xmotion.root == screen->root ())
 		handleMotionEvent (pointerX, pointerY);
 	    break;
+
 	case EnterNotify:
 	case LeaveNotify:
 	    if (event->xcrossing.root == screen->root ())
 		handleMotionEvent (pointerX, pointerY);
+	    break;
+
 	default:
 	    break;
     }
@@ -399,11 +382,10 @@ bool
 ShotPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-        !CompPlugin::checkPluginABI ("compiztoolbox", COMPIZ_COMPIZTOOLBOX_ABI))
+	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
+	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
+	!CompPlugin::checkPluginABI ("compiztoolbox", COMPIZ_COMPIZTOOLBOX_ABI))
 	 return false;
 
     return true;
 }
-
