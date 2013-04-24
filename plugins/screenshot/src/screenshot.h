@@ -66,6 +66,7 @@ class ShotScreen :
 
 	CompScreen::GrabHandle mGrabIndex;
 	bool                   mGrab;
+	bool                   selectionSizeChanged;
 
 	int  mX1, mY1, mX2, mY2;
 };

@@ -56,7 +56,7 @@ ShotScreen::initiate (CompAction            *action,
     if (state & CompAction::StateInitButton)
 	action->setState (action->state () | CompAction::StateTermButton);
 
-    /* start selection screenshot rectangle */
+    /* Start selection screenshot rectangle */
 
     mX1 = mX2 = pointerX;
     mY1 = mY2 = pointerY;
@@ -80,7 +80,7 @@ ShotScreen::terminate (CompAction            *action,
 
     if (mGrabIndex)
     {
-	// Enable screen capture
+	/* Enable screen capture */
 	cScreen->paintSetEnabled (this, true);
 	::screen->removeGrab (mGrabIndex, 0);
 	mGrabIndex = 0;
@@ -121,7 +121,7 @@ shotFilter (const struct dirent *d)
 	for (; number > 0; number /= 10)
 	    ++nDigits;
 
-	// Make sure there are no trailing characters in the name
+	/* Make sure there are no trailing characters in the name */
 	if ((int) strlen (d->d_name) == 14 + nDigits)
 	    return 1;
     }
@@ -152,13 +152,13 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 
     if (mGrab)
     {
-	int x1 = MIN (mX1, mX2);
-	int y1 = MIN (mY1, mY2);
-	int x2 = MAX (mX1, mX2);
-	int y2 = MAX (mY1, mY2);
-
 	if (!mGrabIndex)
 	{
+	    int x1 = MIN (mX1, mX2);
+	    int y1 = MIN (mY1, mY2);
+	    int x2 = MAX (mX1, mX2);
+	    int y2 = MAX (mY1, mY2);
+
 	    int w = x2 - x1;
 	    int h = y2 - y1;
 
@@ -241,14 +241,19 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     if (status && mGrab)
     {
-	int x1 = MIN (mX1, mX2);
-	int y1 = MIN (mY1, mY2);
-	int x2 = MAX (mX1, mX2);
-	int y2 = MAX (mY1, mY2);
+	/* We just want to draw the screenshot selection box if
+	 * we are grabbed, the size has changed and the CCSM
+	 * option to draw it is enabled. */
 
 	if (mGrabIndex &&
+	    selectionSizeChanged &&
 	    optionGetDrawSelectionIndicator ())
 	{
+	    int x1 = MIN (mX1, mX2);
+	    int y1 = MIN (mY1, mY2);
+	    int x2 = MAX (mX1, mX2);
+	    int y2 = MAX (mY1, mY2);
+
 	    const float MaxUShortFloat = std::numeric_limits <unsigned short>::max ();
 
 	    /* draw filled rectangle */
@@ -298,7 +303,7 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    colorData[0] = alpha * color[0];
 	    colorData[1] = alpha * color[1];
 	    colorData[2] = alpha * color[2];
-	    colorData[3] = alpha * 65535.0f;
+	    colorData[3] = alpha * MaxUShortFloat;
 
 	    vertexData[6]  = x2;
 	    vertexData[7]  = y2;
@@ -316,6 +321,10 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->render (transform);
 
 	    glDisable (GL_BLEND);
+
+	    /* we finished painting the selection box,
+	     * reset selectionSizeChanged now */
+	    selectionSizeChanged = false;
 	}
     }
 
@@ -327,8 +336,12 @@ ShotScreen::handleMotionEvent (int xRoot,
 			       int yRoot)
 {
     /* update screenshot rectangle size */
-    if (mGrabIndex)
+    if (mGrabIndex &&
+	(mX2 != xRoot || mY2 != yRoot))
     {
+	/* the size has changed now */
+	selectionSizeChanged = true;
+
 	int x1 = MIN (mX1, mX2) - 1;
 	int y1 = MIN (mY1, mY2) - 1;
 	int x2 = MAX (mX1, mX2) + 1;
@@ -345,9 +358,9 @@ ShotScreen::handleMotionEvent (int xRoot,
 	y2 = MAX (mY1, mY2) + 1;
 
 	cScreen->damageRegion (CompRegion (x1, y1, x2 - x1, y2 - y1));
-
-	cScreen->damageScreen ();
     }
+
+    cScreen->damageScreen ();
 }
 
 void
@@ -378,7 +391,8 @@ ShotScreen::ShotScreen (CompScreen *screen) :
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mGrabIndex (0),
-    mGrab (false)
+    mGrab (false),
+    selectionSizeChanged (false)
 {
     optionSetInitiateButtonInitiate (boost::bind (&ShotScreen::initiate, this,
 						  _1, _2, _3));
