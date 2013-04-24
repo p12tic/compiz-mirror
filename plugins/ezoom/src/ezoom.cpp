@@ -321,7 +321,7 @@ EZoomScreen::preparePaint (int msSinceLastPaint)
 
 	while (steps--)
 	{
-	    for (unsigned int out = 0; out < zooms.size (); out++)
+	    for (unsigned int out = 0; out < zooms.size (); ++out)
 	    {
 		if (!isInMovement (out) || !isActive (out))
 		    continue;
@@ -357,7 +357,7 @@ EZoomScreen::donePaint ()
 {
     if (grabbed)
     {
-	for (unsigned int out = 0; out < zooms.size (); out++)
+	for (unsigned int out = 0; out < zooms.size (); ++out)
 	{
 	    if (isInMovement (out) && isActive (out))
 	    {
@@ -397,16 +397,18 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     int x2 = MAX (inx1, inx2);
     int y2 = MAX (iny1, iny2);
 
+    const float MaxUShortFloat = std::numeric_limits <unsigned short>::max ();
+
     glEnable (GL_BLEND);
 
     /* draw filled rectangle */
-    float alpha = optionGetZoomBoxFillColorAlpha () / 65535.0f;
+    float alpha = optionGetZoomBoxFillColorAlpha () / MaxUShortFloat;
     color = optionGetZoomBoxFillColor ();
 
     colorData[0] = alpha * color[0];
     colorData[1] = alpha * color[1];
     colorData[2] = alpha * color[2];
-    colorData[3] = alpha * 65535.0f;
+    colorData[3] = alpha * MaxUShortFloat;
 
     vertexData[0]  = x1;
     vertexData[1]  = y1;
@@ -430,13 +432,13 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     streamingBuffer->render (zTransform);
 
     /* draw outline */
-    alpha = optionGetZoomBoxOutlineColorAlpha () / 65535.0f;
+    alpha = optionGetZoomBoxOutlineColorAlpha () / MaxUShortFloat;
     color = optionGetZoomBoxOutlineColor ();
 
     colorData[0] = alpha * color[0];
     colorData[1] = alpha * color[1];
     colorData[2] = alpha * color[2];
-    colorData[3] = alpha * 65535.0f;
+    colorData[3] = alpha * MaxUShortFloat;
 
     vertexData[0]  = x1;
     vertexData[1]  = y1;
@@ -517,7 +519,7 @@ constrainZoomTranslate ()
 {
     ZOOM_SCREEN (screen);
 
-    for (unsigned int out = 0; out < zs->zooms.size (); out++)
+    for (unsigned int out = 0; out < zs->zooms.size (); ++out)
     {
 	if (zs->zooms.at (out).xTranslate > 0.5f)
 	    zs->zooms.at (out).xTranslate = 0.5f;
@@ -627,7 +629,7 @@ EZoomScreen::areaToWindow (CompWindow *w)
 void
 EZoomScreen::panZoom (int xvalue, int yvalue)
 {
-    for (unsigned int out = 0; out < zooms.size (); out++)
+    for (unsigned int out = 0; out < zooms.size (); ++out)
     {
 	zooms.at (out).xTranslate +=
 	    optionGetPanFactor () * xvalue *
@@ -1230,7 +1232,7 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
 	    return;
 	}
 
-	for (i = 0; i < ci->width * ci->height; i++)
+	for (i = 0; i < ci->width * ci->height; ++i)
 	{
 	    unsigned long pix = ci->pixels[i];
 	    pixels[i * 4] = pix & 0xff;
@@ -1255,7 +1257,7 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
 	if (!pixels)
 	    return;
 
-	for (i = 0; i < cursor->width * cursor->height; i++)
+	for (i = 0; i < cursor->width * cursor->height; ++i)
 	{
 	    unsigned long pix = 0x00ffffff;
 	    pixels[i * 4] = pix & 0xff;
@@ -1923,7 +1925,7 @@ EZoomScreen::EZoomScreen (CompScreen *screen) :
 
     n = screen->outputDevs ().size ();
 
-    for (unsigned int i = 0; i < n; i++)
+    for (unsigned int i = 0; i < n; ++i)
     {
 	/* zs->grabbed is a mask ... Thus this limit */
 	if (i > sizeof (long int) * 8)
