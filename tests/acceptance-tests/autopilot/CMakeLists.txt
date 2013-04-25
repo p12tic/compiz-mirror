@@ -7,3 +7,6 @@ set (COMPIZ_AUTOPILOT_ACCEPTANCE_TEST_LIBRARIES
 
 target_link_libraries (compiz_autopilot_acceptance_tests
                        ${COMPIZ_AUTOPILOT_ACCEPTANCE_TEST_LIBRARIES})
+
+install (TARGETS compiz_autopilot_acceptance_tests
+         RUNTIME DESTINATION ${exec_prefix})
