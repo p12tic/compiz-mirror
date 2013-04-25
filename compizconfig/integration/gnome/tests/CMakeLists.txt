@@ -25,7 +25,6 @@ target_link_libraries (compizconfig_test_ccs_gnome_integration
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_ccs_context_mock

@@ -11,8 +11,6 @@ target_link_libraries (compiz_test_window_geometry
                        compiz_window_geometry 
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
-                       )
+		       ${GMOCK_MAIN_LIBRARY})
 
 compiz_discover_tests (compiz_test_window_geometry COVERAGE compiz_window_geometry)

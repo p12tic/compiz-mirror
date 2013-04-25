@@ -50,7 +50,6 @@ target_link_libraries(
   
   ${GTEST_BOTH_LIBRARIES}
   ${GMOCK_LIBRARY}
-  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
 compiz_discover_tests (compiz_privatescreen_test COVERAGE compiz_core)

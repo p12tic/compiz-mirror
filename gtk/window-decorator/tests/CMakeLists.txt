@@ -104,7 +104,6 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
 			   ${COMPIZ_TEST_GWD_SETTINGS_ADDITIONAL_LIBRARIES}
 			   decoration
 			   ${COMPIZ_TEST_GTK_WINDOW_DECORATOR_LIBRARIES}
-			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 			   ${GTEST_BOTH_LIBRARIES}
 			   ${GMOCK_LIBRARY}
 		       	   ${GMOCK_MAIN_LIBRARY})
@@ -119,7 +118,6 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
     target_link_libraries (compiz_test_gwd_cairo_decorations
 			   gtk_window_decorator_cairo_window_decoration_util
 			   ${COMPIZ_TEST_GTK_WINDOW_DECORATOR_LIBRARIES}
-			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 			   ${GTEST_BOTH_LIBRARIES}
 			   ${GMOCK_LIBRARY}
 		       	   ${GMOCK_MAIN_LIBRARY}
@@ -134,7 +132,6 @@ if (COMPIZ_TEST_GTK_WINDOW_DECORATOR_FOUND)
     target_link_libraries (compiz_test_gwd_metacity_decorations
 			   gtk_window_decorator_metacity_window_decoration_util
 			   ${COMPIZ_TEST_GTK_WINDOW_DECORATOR_LIBRARIES}
-			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 			   ${GTEST_BOTH_LIBRARIES}
 			   ${GMOCK_LIBRARY}
 		       	   ${GMOCK_MAIN_LIBRARY}
