@@ -59,7 +59,7 @@ endif
 	rm -f debian/tmp/usr/lib/*.a
 
         # remove acceptance test binary
-        rm -f debian/tmp/usr/bin/compiz_autopilot_acceptance_tests
+	rm -f debian/tmp/usr/bin/compiz_autopilot_acceptance_tests
 
 	# remove gconf schema files
 	#rm -rf debian/tmp/usr/share/gconf/schemas/
