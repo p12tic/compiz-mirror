@@ -771,8 +771,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     priv->incorrectRefreshRate = false;
 
-    priv->frameProvider.reset (new PostprocessFrameProvider ());
-
     #else
 
     Display		 *dpy = screen->dpy ();
