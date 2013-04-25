@@ -17,8 +17,6 @@ target_link_libraries (compiz_test_composite_backbuffertracking
                        compiz_composite_backbuffertracking
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
-                       )
+                       ${GMOCK_MAIN_LIBRARY})
 
 compiz_discover_tests (compiz_test_composite_backbuffertracking COVERAGE compiz_composite_backbuffertracking)

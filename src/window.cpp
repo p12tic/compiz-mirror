@@ -3222,7 +3222,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (serverFrameGeometry.y () == xwc->y - serverGeometry.border () - serverInput.top)
 	frameValueMask &= ~(CWY);
 
-    if (serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
+   if (serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
 				      + serverInput.left + serverInput.right)
 	frameValueMask &= ~(CWWidth);
 
@@ -6922,7 +6922,7 @@ PrivateWindow::reparent ()
      * but that's all */
     XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
 
-    /* Gravity here is assumed to be NorthWest, clients can update
+    /* Gravity here is assumed to be SouthEast, clients can update
      * that if need be */
 
     /* Awaiting a new frame to be given to us */

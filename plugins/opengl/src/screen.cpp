@@ -1075,6 +1075,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
 #endif
 
+    /* Scratch framebuffer must be allocated before updating
+     * the backbuffer provider */
     if (GL::fboSupported)
     {
 	priv->scratchFbo.reset (new GLFramebufferObject ());
@@ -1082,10 +1084,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     }
 
     GLVertexBuffer::streamingBuffer ()->setAutoProgram (priv->autoProgram);
-
-    /* We need scratchFbo to be set before doing this, and it is common
-     * to both the GLES and non-GLES codepaths, so using another #ifdef
-     */
     priv->updateFrameProvider ();
 
     return true;
@@ -2200,7 +2198,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     postprocessingRequired |= frameProvider->alwaysPostprocess ();
 
     /* Clear the color buffer where appropriate */
-    if ((GL::fboEnabled && postprocessRequiredForCurrentFrame ()))
+    if (GL::fboEnabled && postprocessRequiredForCurrentFrame ())
     {
 	oldFbo = scratchFbo->bind ();
 	if (scratchFbo->checkStatus ())

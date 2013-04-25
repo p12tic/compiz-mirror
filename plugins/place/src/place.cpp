@@ -565,7 +565,7 @@ PlaceWindow::doPlacement (CompPoint &pos)
 	}
 
 	switch (mode) {
-	case PlaceOptions::ModeCascade:
+	    case PlaceOptions::ModeCascade:
 	    placeCascade (workArea, pos);
 	    break;
 	case PlaceOptions::ModeCentered:
@@ -1150,6 +1150,7 @@ PlaceWindow::constrainToWorkarea (const CompRect &workArea,
                                            window->border (),
                                            workArea,
                                            staticGravity);
+
 }
 
 bool
