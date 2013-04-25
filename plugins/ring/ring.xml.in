@@ -192,12 +192,12 @@
 				<_short>Window Title Display</_short>
 				<option name="window_title" type="bool">
 					<_short>Show Window Title</_short>
-					<_long>Show window title of the currently selected window.</_long>
+					<_long>Show the window title of the currently selected window.</_long>
 					<default>true</default>
 				</option>
 				<option name="title_font_bold" type="bool">
 					<_short>Bold Font</_short>
-					<_long>Selects if the window title should be displayed in bold font or not.</_long>
+					<_long>Render the window title using a bold font.</_long>
 					<default>false</default>
 				</option>
 				<option name="title_font_size" type="int">
@@ -209,7 +209,7 @@
 				</option>
 				<option name="title_back_color" type="color">
 					<_short>Background Color</_short>
-					<_long>Background color and opacity of the window title background.</_long>
+					<_long>Color and opacity of the window title background.</_long>
 					<default>
 						<red>0x0000</red>
 						<green>0x0000</green>
