@@ -2,7 +2,7 @@
 <compiz>
 	<plugin name="workspacenames" useBcop="true">
 		<_short>Workspace Naming</_short>
-		<_long>Allows assigning descriptions to workspaces</_long>
+		<_long>Assign descriptions to workspaces and automagically display those when changing the viewport</_long>
 		<category>Window Management</category>
 		<deps>
 			<relation type="after">
@@ -22,7 +22,7 @@
 					<_short>Workspace Names</_short>
 					<option name="viewports" type="list">
 						<_short>Viewport</_short>
-						<_long>Number of viewport to be named</_long>
+						<_long>Number of viewport to be named.</_long>
 						<type>int</type>
 						<min>1</min>
 						<max>50</max>
@@ -35,7 +35,7 @@
 					</option>
 					<option name="names" type="list">
 						<_short>Name</_short>
-						<_long>Viewport name</_long>
+						<_long>The name of the workspace.</_long>
 						<type>string</type>
 						<default>
 							<value>Viewport 1</value>
@@ -50,7 +50,7 @@
 				<_short>Appearance</_short>
 				<option name="display_time" type="float">
 					<_short>Display Time</_short>
-					<_long>Timeout (in s) of the name display</_long>
+					<_long>Timeout of the workspacename display (in seconds).</_long>
 					<min>0.1</min>
 					<max>5.0</max>
 					<precision>0.05</precision>
@@ -58,7 +58,7 @@
 				</option>
 				<option name="fade_time" type="float">
 					<_short>Fade Time</_short>
-					<_long>Time (in s) the name display fades out after being shown.</_long>
+					<_long>Time the workspacename display uses for the fade-out (in seconds).</_long>
 					<min>0.0</min>
 					<max>5.0</max>
 					<precision>0.05</precision>
@@ -68,12 +68,12 @@
 					<_short>Text Display</_short>
 					<option name="bold_text" type="bool">
 						<_short>Bold Font</_short>
-						<_long>Selects if the text should be displayed in bold font or not.</_long>
+						<_long>Render the workspacename using a bold font.</_long>
 						<default>true</default>
 					</option>
 					<option name="text_font_size" type="int">
 						<_short>Font Size</_short>
-						<_long>Font size for the text display.</_long>
+						<_long>Font size for the text display (in pixel).</_long>
 						<default>24</default>
 						<min>6</min>
 						<max>96</max>
@@ -99,7 +99,7 @@
 					</option>
 					<option name="vertical_offset" type="int">
 						<_short>Vertical Offset</_short>
-						<_long>Workspacenames vertical offset from top or bottom of the screen (in pixel).</_long>
+						<_long>Vertical offset from top or bottom of the screen (in pixel).</_long>
 						<default>50</default>
 						<min>0</min>
 						<max>500</max>
