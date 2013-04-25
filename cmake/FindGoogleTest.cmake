@@ -30,6 +30,9 @@ else (NOT GTEST_FOUND)
 
     set (GTEST_LOCAL_BUILD_REQUIRED FALSE)
 
+    # We found gtest. Append CMAKE_THREAD_LIBS_INIT to the provided libraries.
+    set (GTEST_BOTH_LIBRARIES ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
 endif (NOT GTEST_FOUND)
 
 find_library (GMOCK_LIBRARY gmock)
