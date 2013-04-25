@@ -1,3 +1,9 @@
+compiz (1:0.9.10-0ubuntu1) raring; urgency=low
+
+  * Bump version to 0.9.10
+
+ -- Sam Spilsbury <smspillaz@interpol>  Thu, 25 Apr 2013 11:13:32 +0800
+
 compiz (1:0.9.9~daily13.02.28-0ubuntu1) raring; urgency=low
 
   [ Sam Spilsbury ]
