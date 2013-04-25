@@ -2,7 +2,7 @@
 <compiz>
 	<plugin name="ring" useBcop="true">
 		<_short>Ring Switcher</_short>
-		<_long>Ring Switcher</_long>
+		<_long>Use a circular representation of open windows to switch focus between them</_long>
 		<category>Window Management</category>
 		<deps>
 			<relation type="after">
@@ -17,93 +17,70 @@
 		</deps>
 		<options>
 			<group>
-				<_short>Key bindings</_short>
+				<_short>Bindings</_short>
 				<option name="next_key" type="key">
-					<_short>Next Window</_short>
-					<_long>Show switcher if not visible and select next window.</_long>
+					<_short>Next Window Key</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the next window on the current workspace. Release to focus the selected window.</_long>
 					<default>&lt;Super&gt;Tab</default>
 				</option>
 				<option name="next_button" type="button">
-					<_short>Next Window</_short>
-					<_long>Show switcher if not visible and select next window.</_long>
+					<_short>Next Window Button</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the next window on the current workspace. Release to focus the selected window.</_long>
 				</option>
 				<option name="prev_key" type="key">
-					<_short>Previous Window</_short>
-					<_long>Show switcher if not visible and select previous window.</_long>
+					<_short>Previous Window Key</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the previous window on the current workspace. Release to focus the selected window.</_long>
 					<default>&lt;Super&gt;&lt;Shift&gt;Tab</default>
 				</option>
 				<option name="prev_button" type="button">
-					<_short>Previous Window</_short>
-					<_long>Show switcher if not visible and select previous window.</_long>
+					<_short>Previous Window Button</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the previous window on the current workspace. Release to switch focus to the selected window.</_long>
 				</option>
 				<option name="next_all_key" type="key">
-					<_short>Next Window (All Workspaces)</_short>
-					<_long>Show switcher if not visible and select next window out of all windows.</_long>
+					<_short>Next Window Key (All Workspaces)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the next window, taking into account all workspaces. Release to focus the selected window.</_long>
 					<default>&lt;Super&gt;&lt;Alt&gt;Tab</default>
 				</option>
 				<option name="next_all_button" type="button">
-					<_short>Next Window (All Workspaces)</_short>
-					<_long>Show switcher if not visible and select next window out of all windows.</_long>
+					<_short>Next Window Button (All Workspaces)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the next window, taking into account all workspaces. Release to focus the selected window.</_long>
 				</option>
 				<option name="prev_all_key" type="key">
-					<_short>Previous Window (All Workspaces)</_short>
-					<_long>Show switcher if not visible and select previous window out of all windows.</_long>
+					<_short>Previous Window Key (All Workspaces)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the previous window, taking into account all workspaces. Release to focus the selected window.</_long>
 					<default>&lt;Super&gt;&lt;Shift&gt;&lt;Alt&gt;Tab</default>
 				</option>
 				<option name="prev_all_button" type="button">
-					<_short>Previous Window (All Workspaces)</_short>
-					<_long>Show switcher if not visible and select previous window out of all windows.</_long>
+					<_short>Previous Window Button (All Workspaces)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the previous window, taking into account all workspaces. Release to focus the selected window.</_long>
 				</option>
 				<option name="next_group_key" type="key">
-					<_short>Next Window (Group)</_short>
-					<_long>Show switcher if not visible and select next window of the current application.</_long>
+					<_short>Next Window Key (Group)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the next window of the currently selected application. Release to focus the selected window.</_long>
 				</option>
 				<option name="next_group_button" type="button">
-					<_short>Next Window (Group)</_short>
-					<_long>Show switcher if not visible and select next window of the current application.</_long>
+					<_short>Next Window Button (Group)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the next window of the currently selected application. Release to focus the selected window.</_long>
 				</option>
 				<option name="prev_group_key" type="key">
-					<_short>Previous Window (Group)</_short>
-					<_long>Show switcher if not visible and select previous window of the current application.</_long>
+					<_short>Previous Window Key (Group)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the previous window of the currently selected application. Release to focus the selected window.</_long>
 				</option>
 				<option name="prev_group_button" type="button">
-					<_short>Previous Window (Group)</_short>
-					<_long>Show switcher if not visible and select previous window of the current application.</_long>
+					<_short>Previous Window Button (Group)</_short>
+					<_long>Reveals the ring switcher, if not visible and selects the previous window of the currently selected application. Release to focus the selected window.</_long>
 				</option>
 			</group>
 			<group>
-				<_short>Misc. Options</_short>
-				<option name="speed" type="float">
-					<_short>Speed</_short>
-					<_long>Ring speed</_long>
-					<default>1.5</default>
-					<min>0.1</min>
-					<max>50.0</max>
-					<precision>0.1</precision>
-				</option>
-				<option name="timestep" type="float">
-					<_short>Timestep</_short>
-					<_long>Ring timestep</_long>
-					<default>1.2</default>
-					<min>0.1</min>
-					<max>50.0</max>
-					<precision>0.1</precision>
-				</option>
-				<option name="inactive_opacity" type="int">
-					<_short>Inactive Window Opacity</_short>
-					<_long>Amount of opacity (in percent) for windows in the ring which are not selected</_long>
-					<default>100</default>
-					<min>1</min>
-					<max>100</max>
-				</option>
+				<_short>General Options</_short>
 				<option name="window_match" type="match">
 					<_short>Ring Windows</_short>
-					<_long>Windows that should be shown in ring</_long>
+					<_long>Windows that should be shown in the ring.</_long>
 					<default>Normal | Dialog | ModalDialog | Utility | Unknown</default>
 				</option>
 				<option name="overlay_icon" type="int">
 					<_short>Overlay Icon</_short>
-					<_long>Overlay an icon on windows in the ring</_long>
+					<_long>Which type of icon overlay to draw on windows in the ring.</_long>
 					<default>1</default>
 					<min>0</min>
 					<max>2</max>
@@ -120,14 +97,37 @@
 						<_name>Big</_name>
 					</desc>
 				</option>
+				<option name="speed" type="float">
+					<_short>Speed</_short>
+					<_long>The ring movement speed.</_long>
+					<default>1.5</default>
+					<min>0.1</min>
+					<max>50.0</max>
+					<precision>0.1</precision>
+				</option>
+				<option name="timestep" type="float">
+					<_short>Timestep</_short>
+					<_long>Ring switcher timestep.</_long>
+					<default>1.2</default>
+					<min>0.1</min>
+					<max>50.0</max>
+					<precision>0.1</precision>
+				</option>
+				<option name="inactive_opacity" type="int">
+					<_short>Inactive Window Opacity</_short>
+					<_long>Opacity (in percent) of unselected windows in the ring.</_long>
+					<default>100</default>
+					<min>1</min>
+					<max>100</max>
+				</option>
 				<option name="darken_back" type="bool">
 					<_short>Darken Background</_short>
-					<_long>Darken background when showing the ring</_long>
+					<_long>Darken background when showing the ring.</_long>
 					<default>true</default>
 				</option>
 				<option name="minimized" type="bool">
 					<_short>Show Minimized</_short>
-					<_long>Show windows that are minimized, shaded or in show desktop mode.</_long>
+					<_long>Show windows that are minimized, shaded or in show-desktop mode.</_long>
 					<default>true</default>
 				</option>
 				<option name="select_with_mouse" type="bool">
@@ -137,43 +137,43 @@
 				</option>
 			</group>
 			<group>
-				<_short>Ring appearance</_short>
+				<_short>Ring Appearance</_short>
 				<option name="ring_clockwise" type="bool">
-					<_short>Rotate Ring Clockwise on Next</_short>
-					<_long>Rotate ring clockwise for next window instead of counterclockwise</_long>
+					<_short>Rotate Ring Clockwise On Next</_short>
+					<_long>Rotate the ring clockwise for the next window instead of counterclockwise.</_long>
 					<default>false</default>
 				</option>
 				<option name="ring_width" type="int">
 					<_short>Ring Width</_short>
-					<_long>Ring width (in percent of the screen width)</_long>
+					<_long>Ring width (in percent of the screen width).</_long>
 					<default>70</default>
 					<min>1</min>
 					<max>100</max>
 				</option>
 				<option name="ring_height" type="int">
 					<_short>Ring Height</_short>
-					<_long>Ring height (in percent of the screen height)</_long>
+					<_long>Ring height (in percent of the screen height).</_long>
 					<default>60</default>
 					<min>1</min>
 					<max>100</max>
 				</option>
 				<option name="thumb_width" type="int">
 					<_short>Thumbnail Width</_short>
-					<_long>Maximum horizontal size of a thumbnail in the ring</_long>
+					<_long>Maximum horizontal size of a thumbnail in the ring.</_long>
 					<default>350</default>
 					<min>10</min>
 					<max>1024</max>
 				</option>
 				<option name="thumb_height" type="int">
 					<_short>Thumbnail Height</_short>
-					<_long>Maximum vertical size of a thumbnail in the ring</_long>
+					<_long>Maximum vertical size of a thumbnail in the ring.</_long>
 					<default>250</default>
 					<min>10</min>
 					<max>1024</max>
 				</option>
 				<option name="min_brightness" type="float">
 					<_short>Minimum Brightness Factor</_short>
-					<_long>Changes the minimum brightness factor for windows in the ring. The farer away windows are, the less bright are they.</_long>
+					<_long>Changes the minimum brightness factor for windows in the ring. The further away windows are, the less bright they are.</_long>
 					<default>0.5</default>
 					<min>0.1</min>
 					<max>1.0</max>
@@ -181,7 +181,7 @@
 				</option>
 				<option name="min_scale" type="float">
 					<_short>Minimum Scale Factor</_short>
-					<_long>Changes the minimum scale factor for windows in the ring. The farer away windows are, the smaller are they.</_long>
+					<_long>Changes the minimum scale factor for windows in the ring. The further away the windows are, the smaller they are.</_long>
 					<default>0.4</default>
 					<min>0.1</min>
 					<max>1.0</max>
@@ -189,10 +189,10 @@
 				</option>
 			</group>
 			<group>
-				<_short>Window title display</_short>
+				<_short>Window Title Display</_short>
 				<option name="window_title" type="bool">
 					<_short>Show Window Title</_short>
-					<_long>Show window title of currently selected window.</_long>
+					<_long>Show window title of the currently selected window.</_long>
 					<default>true</default>
 				</option>
 				<option name="title_font_bold" type="bool">
@@ -202,14 +202,14 @@
 				</option>
 				<option name="title_font_size" type="int">
 					<_short>Font Size</_short>
-					<_long>Font size for the window title</_long>
+					<_long>Font size of the window title text (in pixel).</_long>
 					<default>16</default>
 					<min>6</min>
 					<max>96</max>
 				</option>
 				<option name="title_back_color" type="color">
 					<_short>Background Color</_short>
-					<_long>Background color for the window title</_long>
+					<_long>Background color and opacity of the window title background.</_long>
 					<default>
 						<red>0x0000</red>
 						<green>0x0000</green>
@@ -219,7 +219,7 @@
 				</option>
 				<option name="title_font_color" type="color">
 					<_short>Font Color</_short>
-					<_long>Font color for the window title</_long>
+					<_long>Font color and opacity of the window title.</_long>
 					<default>
 						<red>0xffff</red>
 						<green>0xffff</green>
