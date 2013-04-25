@@ -256,7 +256,6 @@ class ShiftScreen :
 
 	void
 	windowRemove (Window id);
-
 };
 
 class ShiftWindow :
@@ -295,11 +294,11 @@ class ShiftWindow :
 	float		mBrightnessVelocity;
 	
 	bool		mActive;
-    
+
     public:
 
 	bool
-        adjustShiftAttribs (float chunk);
+	adjustShiftAttribs (float chunk);
 
 	bool
 	canStackRelativeTo ();
