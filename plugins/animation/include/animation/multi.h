@@ -47,7 +47,7 @@ public:
 			Animation (w, curWindowEvent, duration, info, icon),
 			currentAnim (0)
 	{
-	    for (unsigned int i = 0; i < num; i++)
+	    for (unsigned int i = 0; i < num; ++i)
 		animList.push_back (new SingleAnim (w,
 						    curWindowEvent,
 						    duration,
@@ -68,7 +68,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->init ();
 	    }
 	}
@@ -81,7 +81,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->cleanUp (closing,
 			   destructing);
 		delete a;
@@ -100,7 +100,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		skip |= a->shouldSkipFrame (msSinceLastPaintActual);
 	    }
 	    return skip;
@@ -116,7 +116,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		advance |= a->advanceTime (msSinceLastPaint);
 	    }
 	    return advance;
@@ -129,7 +129,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->step ();
 	    }
 	}
@@ -143,7 +143,7 @@ public:
 		GLWindowPaintAttrib attr (attrib);
 		a->updateAttrib (attr);
 		mGlPaintAttribs.at (count) = attr;
-		count++;
+		++count;
 	    }
 	}
 
@@ -157,7 +157,7 @@ public:
 		GLMatrix mat (transform);
 		a->updateTransform (mat);
 		mGlPaintTransforms.at (count) = mat;
-		count++;
+		++count;
 	    }
 	}
 
@@ -167,7 +167,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->prePaintWindow ();
 	    }
 	}
@@ -178,7 +178,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->postPaintWindow ();
 	    }
 	}
@@ -190,7 +190,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		used |= a->postPaintWindowUsed ();
 	    }
 	    return used;
@@ -204,7 +204,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		inProgress |= a->prePreparePaint (msSinceLastPaint);
 	    }
 	    return inProgress;
@@ -216,7 +216,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->postPreparePaint ();
 	    }
 	}
@@ -230,7 +230,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->updateBB (out);
 	    }
 	}
@@ -242,7 +242,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		used |= a->updateBBUsed ();
 	    }
 	    return used;
@@ -257,7 +257,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		used |= a->stepRegionUsed ();
 	    }
 	    return used;
@@ -270,7 +270,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		should |= a->shouldDamageWindowOnStart ();
 	    }
 	    return should;
@@ -283,7 +283,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		should |= a->shouldDamageWindowOnStart ();
 	    }
 	    return should;
@@ -297,7 +297,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		update |= a->moveUpdate (dx, dy);
 	    }
 	    return update;
@@ -312,7 +312,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		update |= a->resizeUpdate (dx, dy, dwidth, dheight);
 	    }
 	    return update;
@@ -324,7 +324,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->adjustPointerIconSize ();
 	    }
 	}
@@ -352,7 +352,7 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 		a->paintWindowUsed ();
 	    }
 	    /* Always return true because we need to take over painting */
@@ -374,7 +374,7 @@ public:
 		GLMatrix wTransform (mGlPaintTransforms.at (currentAnim));
 
 		setCurrAnimNumber (mAWindow, count);
-		count++;
+		++count;
 
 		if (animList.at (currentAnim)->paintWindowUsed ())
 		    status |= animList.at (currentAnim)->paintWindow

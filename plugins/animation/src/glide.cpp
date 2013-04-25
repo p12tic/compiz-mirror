@@ -109,6 +109,7 @@ GlideAnim::applyTransform ()
     getParams (&finalDistFac, &finalRotAng, &thickness);
 
     float forwardProgress;
+
     if (zoomToIcon ())
 	getZoomProgress (&forwardProgress, 0, true);
     else
@@ -190,4 +191,3 @@ Glide2Anim::zoomToIcon ()
 	     mCurWindowEvent == WindowEventUnminimize) &&
 	    optValB (AnimationOptions::Glide2ZoomToTaskbar));
 }
-

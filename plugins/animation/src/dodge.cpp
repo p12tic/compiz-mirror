@@ -517,7 +517,7 @@ DodgeAnim::processCandidate (CompWindow *candidateWin,
 	    AnimEffectDodge)
 	    nonMatching = true;
 
-	numSelectedCandidates++;
+	++numSelectedCandidates;
 	DodgePersistentData *data = static_cast<DodgePersistentData *>
 	    (aCandidateWin->persistentData["dodge"]);
 	data->dodgeOrder = numSelectedCandidates;
@@ -696,14 +696,14 @@ DodgeAnim::calculateDodgeAmounts ()
 
 	int dodgeAmount[4];
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; ++i)
 	    dodgeAmount[i] =
 		DodgeAnim::getDodgeAmount (subjectRect, dw, (DodgeDirection)i);
 
 	int amountMinActual = dodgeAmount[0];
 	int amountMinAbs = abs (amountMinActual);
 	int iMin = 0;
-	for (int i=1; i<4; i++)
+	for (int i=1; i < 4; ++i)
 	{
 	    int absAmount = abs (dodgeAmount[i]);
 	    if (amountMinAbs > absAmount)
