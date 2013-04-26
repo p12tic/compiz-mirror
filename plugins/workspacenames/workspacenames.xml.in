@@ -90,19 +90,26 @@
 						</desc>
 						<desc>
 							<value>1</value>
-							<_name>Top of screen</_name>
+							<_name>Top of screen minus offset</_name>
 						</desc>
 						<desc>
 							<value>2</value>
-							<_name>Bottom of screen</_name>
+							<_name>Bottom of screen plus offset</_name>
 						</desc>
+					</option>
+					<option name="vertical_offset" type="int">
+						<_short>Vertical Offset</_short>
+						<_long>Workspacenames vertical offset from top or bottom of the screen (in pixel).</_long>
+						<default>50</default>
+						<min>0</min>
+						<max>500</max>
 					</option>
 				</subgroup>
 				<subgroup>
 					<_short>Colors</_short>
 					<option name="back_color" type="color">
 						<_short>Background Color</_short>
-						<_long>Background color for the text display.</_long>
+						<_long>Background color and opacity of the workspacename display.</_long>
 						<default>
 							<red>0x0000</red>
 							<green>0x0000</green>
@@ -112,7 +119,7 @@
 					</option>
 					<option name="font_color" type="color">
 						<_short>Font Color</_short>
-						<_long>Font color for the text display.</_long>
+						<_long>Font color and opacity of the workspacename display.</_long>
 						<default>
 							<red>0xffff</red>
 							<green>0xffff</green>

@@ -34,8 +34,6 @@
   #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const void*,const void*))(d));
 #endif
 
-
-
 COMPIZ_PLUGIN_20090315 (screenshot, ShotPluginVTable)
 
 bool
@@ -58,7 +56,7 @@ ShotScreen::initiate (CompAction            *action,
     if (state & CompAction::StateInitButton)
 	action->setState (action->state () | CompAction::StateTermButton);
 
-    /* start selection screenshot rectangle */
+    /* Start selection screenshot rectangle */
 
     mX1 = mX2 = pointerX;
     mY1 = mY2 = pointerY;
@@ -82,7 +80,7 @@ ShotScreen::terminate (CompAction            *action,
 
     if (mGrabIndex)
     {
-	// Enable screen capture
+	/* Enable screen capture */
 	cScreen->paintSetEnabled (this, true);
 	::screen->removeGrab (mGrabIndex, 0);
 	mGrabIndex = 0;
@@ -121,9 +119,9 @@ shotFilter (const struct dirent *d)
 	int nDigits = 0;
 
 	for (; number > 0; number /= 10)
-	    nDigits++;
+	    ++nDigits;
 
-	// Make sure there are no trailing characters in the name
+	/* Make sure there are no trailing characters in the name */
 	if ((int) strlen (d->d_name) == 14 + nDigits)
 	    return 1;
     }
@@ -154,15 +152,13 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 
     if (mGrab)
     {
-	int x1, x2, y1, y2;
-
-	x1 = MIN (mX1, mX2);
-	y1 = MIN (mY1, mY2);
-	x2 = MAX (mX1, mX2);
-	y2 = MAX (mY1, mY2);
-
 	if (!mGrabIndex)
 	{
+	    int x1 = MIN (mX1, mX2);
+	    int y1 = MIN (mY1, mY2);
+	    int x2 = MAX (mX1, mX2);
+	    int y2 = MAX (mY1, mY2);
+
 	    int w = x2 - x1;
 	    int h = y2 - y1;
 
@@ -176,6 +172,7 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 		    dir = getXDGUserDir (XDGUserDirDesktop);
 
 		buffer = (GLubyte *)malloc (sizeof (GLubyte) * w * h * 4);
+
 		if (buffer)
 		{
 		    struct dirent **namelist;
@@ -196,7 +193,7 @@ ShotScreen::paint (CompOutput::ptrList &outputs,
 				    "screenshot%d.png",
 				    &number);
 
-			number++;
+			++number;
 
 			if (n)
 			    free (namelist);
@@ -238,18 +235,36 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GLMatrix        transform (matrix);
     GLfloat         vertexData[12];
     GLushort        colorData[4];
+    GLushort        *color;
 
     bool status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
     if (status && mGrab)
     {
-	int x1 = MIN (mX1, mX2);
-	int y1 = MIN (mY1, mY2);
-	int x2 = MAX (mX1, mX2);
-	int y2 = MAX (mY1, mY2);
+	/* We just want to draw the screenshot selection box if
+	 * we are grabbed, the size has changed and the CCSM
+	 * option to draw it is enabled. */
 
-	if (mGrabIndex)
+	if (mGrabIndex &&
+	    selectionSizeChanged &&
+	    optionGetDrawSelectionIndicator ())
 	{
+	    int x1 = MIN (mX1, mX2);
+	    int y1 = MIN (mY1, mY2);
+	    int x2 = MAX (mX1, mX2);
+	    int y2 = MAX (mY1, mY2);
+
+	    const float MaxUShortFloat = std::numeric_limits <unsigned short>::max ();
+
+	    /* draw filled rectangle */
+	    float alpha = optionGetSelectionFillColorAlpha () / MaxUShortFloat;
+	    color = optionGetSelectionFillColor ();
+
+	    colorData[0] = alpha * color[0];
+	    colorData[1] = alpha * color[1];
+	    colorData[2] = alpha * color[2];
+	    colorData[3] = alpha * MaxUShortFloat;
+
 	    vertexData[0]  = x1;
 	    vertexData[1]  = y1;
 	    vertexData[2]  = 0.0f;
@@ -263,12 +278,6 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    vertexData[10] = y2;
 	    vertexData[11] = 0.0f;
 
-	    colorData[0] = 0x2fff;
-	    colorData[1] = 0x2fff;
-	    colorData[2] = 0x4fff;
-	    colorData[3] = 0x4fff;
-
-
 	    transform.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
 	    transform.scale (1.0f / output->width (),
 			     -1.0f / output->height (),
@@ -277,9 +286,8 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 				 -output->region ()->extents.y2,
 				 0.0f);
 
-#ifndef USE_GLES
 	    glEnable (GL_BLEND);
-#endif
+
 	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
 	    streamingBuffer->addColors (1, colorData);
@@ -288,22 +296,35 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->end ();
 	    streamingBuffer->render (transform);
 
-	    streamingBuffer->begin (GL_LINE_LOOP);
+	    /* draw outline */
+	    alpha = optionGetSelectionOutlineColorAlpha () / MaxUShortFloat;
+	    color = optionGetSelectionOutlineColor ();
+
+	    colorData[0] = alpha * color[0];
+	    colorData[1] = alpha * color[1];
+	    colorData[2] = alpha * color[2];
+	    colorData[3] = alpha * MaxUShortFloat;
 
 	    vertexData[6]  = x2;
 	    vertexData[7]  = y2;
 	    vertexData[9]  = x2;
 	    vertexData[10] = y1;
-	    colorData [3]  = 0x9fff;
+
+	    glLineWidth (2.0);
+
+	    streamingBuffer->begin (GL_LINE_LOOP);
 
 	    streamingBuffer->addColors (1, colorData);
 	    streamingBuffer->addVertices (4, vertexData);
 
 	    streamingBuffer->end ();
-#ifndef USE_GLES
-	    glDisable (GL_BLEND);
-#endif
 	    streamingBuffer->render (transform);
+
+	    glDisable (GL_BLEND);
+
+	    /* we finished painting the selection box,
+	     * reset selectionSizeChanged now */
+	    selectionSizeChanged = false;
 	}
     }
 
@@ -315,8 +336,12 @@ ShotScreen::handleMotionEvent (int xRoot,
 			       int yRoot)
 {
     /* update screenshot rectangle size */
-    if (mGrabIndex)
+    if (mGrabIndex &&
+	(mX2 != xRoot || mY2 != yRoot))
     {
+	/* the size has changed now */
+	selectionSizeChanged = true;
+
 	int x1 = MIN (mX1, mX2) - 1;
 	int y1 = MIN (mY1, mY2) - 1;
 	int x2 = MAX (mX1, mX2) + 1;
@@ -333,8 +358,6 @@ ShotScreen::handleMotionEvent (int xRoot,
 	y2 = MAX (mY1, mY2) + 1;
 
 	cScreen->damageRegion (CompRegion (x1, y1, x2 - x1, y2 - y1));
-
-	cScreen->damageScreen ();
     }
 }
 
@@ -366,12 +389,13 @@ ShotScreen::ShotScreen (CompScreen *screen) :
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mGrabIndex (0),
-    mGrab (false)
+    mGrab (false),
+    selectionSizeChanged (false)
 {
     optionSetInitiateButtonInitiate (boost::bind (&ShotScreen::initiate, this,
-    						  _1, _2, _3));
+						  _1, _2, _3));
     optionSetInitiateButtonTerminate (boost::bind (&ShotScreen::terminate, this,
-    						   _1, _2, _3));
+						   _1, _2, _3));
 
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);

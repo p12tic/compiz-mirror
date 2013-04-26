@@ -40,6 +40,7 @@ using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
 using ::testing::Not;
+using ::testing::NotNull;
 using ::testing::Matcher;
 using ::testing::Eq;
 using ::testing::NiceMock;
@@ -847,7 +848,7 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
     CCSSettingList filteredList = filterAllSettingsMatchingType (TypeInt, settingList);
 
     /* Needs to be expressed in terms of a boolean expression */
-    ASSERT_TRUE (filteredList);
+    ASSERT_THAT (filteredList, NotNull ());
     EXPECT_EQ (ccsSettingListLength (filteredList), 1);
     EXPECT_EQ (filteredList->data, s1);
     EXPECT_NE (filteredList->data, s2);
@@ -876,11 +877,11 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPart
     CCSSettingList filteredList = filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase ("foo-bar-baz",
 													 settingList);
 
-    ASSERT_TRUE (filteredList);
+    ASSERT_THAT (filteredList, NotNull ());
     ASSERT_EQ (ccsSettingListLength (filteredList), 2);
     EXPECT_EQ (filteredList->data, s1);
     EXPECT_NE (filteredList->data, s3);
-    ASSERT_TRUE (filteredList->next);
+    ASSERT_THAT (filteredList->next, NotNull ());
     EXPECT_EQ (filteredList->next->data, s2);
     EXPECT_NE (filteredList->data, s3);
     EXPECT_EQ (NULL, filteredList->next->next);

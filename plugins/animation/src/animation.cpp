@@ -217,11 +217,11 @@ void
 PrivateAnimScreen::updateAllEventEffects ()
 {
     // for each anim event
-    for (int e = 0; e < AnimEventNum; e++)
+    for (int e = 0; e < AnimEventNum; ++e)
 	updateEventEffects ((AnimEvent)e, false);
 
     // for each anim event except focus
-    for (int e = 0; e < AnimEventNum - 1; e++)
+    for (int e = 0; e < AnimEventNum - 1; ++e)
 	updateEventEffects ((AnimEvent)e, true);
 }
 
@@ -229,7 +229,7 @@ bool
 PrivateAnimScreen::isAnimEffectInList (AnimEffect theEffect,
 				       EffectSet &effectList)
 {
-    for (unsigned int i = 0; i < effectList.effects.size (); i++)
+    for (unsigned int i = 0; i < effectList.effects.size (); ++i)
 	if (effectList.effects[i] == theEffect)
 	    return true;
     return false;
@@ -241,7 +241,7 @@ PrivateAnimScreen::isAnimEffectPossibleForEvent (AnimEffect theEffect,
 {
     // Check all rows to see if the effect is chosen there
     unsigned int nRows = mEventEffects[event].effects.size ();
-    for (unsigned int i = 0; i < nRows; i++)
+    for (unsigned int i = 0; i < nRows; ++i)
     {
 	AnimEffect chosenEffect = mEventEffects[event].effects[i];
 	// if chosen directly
@@ -259,7 +259,7 @@ PrivateAnimScreen::isAnimEffectPossibleForEvent (AnimEffect theEffect,
 bool
 PrivateAnimScreen::isAnimEffectPossible (AnimEffect theEffect)
 {
-    for (int e = 0; e < AnimEventNum; e++)
+    for (int e = 0; e < AnimEventNum; ++e)
 	if (isAnimEffectPossibleForEvent (theEffect, (AnimEvent)e))
 	    return true;
     return false;
@@ -271,7 +271,7 @@ PrivateAnimScreen::isRestackAnimPossible ()
     // Check all rows to see if the chosen effect is a restack animation
     unsigned int nRows = mEventEffects[AnimEventFocus].effects.size ();
 
-    for (unsigned int i = 0; i < nRows; i++)
+    for (unsigned int i = 0; i < nRows; ++i)
     {
 	AnimEffect chosenEffect = mEventEffects[(unsigned)AnimEventFocus].
 	    effects[i];
@@ -308,12 +308,12 @@ PrivateAnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo,
 
     // Put this plugin's effects into mEventEffects and
     // mEventEffectsAllowed
-    for (unsigned int j = 0; j < nPluginEffects; j++)
+    for (unsigned int j = 0; j < nPluginEffects; ++j)
     {
 	const AnimEffect effect = extensionPluginInfo->effects[j];
 
 	// Update allowed effects for each event
-	for (int e = 0; e < AnimEventNum; e++)
+	for (int e = 0; e < AnimEventNum; ++e)
 	{
 	    if (effect->usedForEvents[e])
 	    {
@@ -323,7 +323,7 @@ PrivateAnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo,
 	}
     }
 
-    for (int e = 0; e < AnimEventNum; e++)
+    for (int e = 0; e < AnimEventNum; ++e)
 	if (eventEffectsNeedUpdate[e])
 	{
 	    updateEventEffects ((AnimEvent)e, false, false);
@@ -383,7 +383,7 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 
     // Also delete the "allowed effect" entries for that plugin
 
-    for (int e = 0; e < AnimEventNum; e++)
+    for (int e = 0; e < AnimEventNum; ++e)
     {
 	AnimEffectVector &eventEffectsAllowed = mEventEffectsAllowed[e];
 
@@ -585,7 +585,7 @@ PrivateAnimScreen::getMatchingAnimSelection (CompWindow *w,
     }
 
     // Find the first row that matches this window for this event
-    for (unsigned int i = 0; i < nRows; i++)
+    for (unsigned int i = 0; i < nRows; ++i)
     {
 	if (!valMatch.list ()[i].match ().evaluate (w))
 	    continue;
@@ -831,7 +831,7 @@ project (float objx, float objy, float objz,
     in[2] = objz;
     in[3] = 1.0;
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; ++i) {
 	out[i] = 
 	    in[0] * modelview[i] +
 	    in[1] * modelview[4  + i] +
@@ -839,7 +839,7 @@ project (float objx, float objy, float objz,
 	    in[3] * modelview[12 + i];
     }
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; ++i) {
 	in[i] = 
 	    out[0] * projection[i] +
 	    out[1] * projection[4  + i] +
@@ -902,7 +902,7 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
     else // use grid model objects
     {
 	GridAnim::GridModel::GridObject *object = objects;
-	for (; nPoints; nPoints--, object++)
+	for (; nPoints; --nPoints, ++object)
 	{
 	    if (!project (object->position ().x (),
 	                  object->position ().y (),
@@ -1119,7 +1119,7 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 	while (mUnmapCnt > 0)
 	{
 	    mWindow->unmap ();
-	    mUnmapCnt--;
+	    --mUnmapCnt;
 	}
 	if (mUnmapCnt < 0)
 	    mUnmapCnt = 0;
@@ -1129,7 +1129,7 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
     while (mDestroyCnt)
     {
 	mWindow->destroy ();
-	mDestroyCnt--;
+	--mDestroyCnt;
     }
     mFinishingAnim = false;
 
@@ -1251,7 +1251,7 @@ PrivateAnimWindow::notifyAnimation (bool activation)
 bool
 PrivateAnimScreen::otherPluginsActive ()
 {
-    for (int i = 0; i < WatchedScreenPluginNum; i++)
+    for (int i = 0; i < WatchedScreenPluginNum; ++i)
 	if (mPluginActive[i])
 	    return true;
     return false;
@@ -1285,7 +1285,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
     // Check and update "switcher post wait" counter
     if (mSwitcherPostWait > 0)
     {
-	mSwitcherPostWait++;
+	++mSwitcherPostWait;
+
 	if (mSwitcherPostWait > 5) // wait over
 	{
 	    mSwitcherPostWait = 0;
@@ -1421,7 +1422,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
     if (mStartCountdown)
     {
-	mStartCountdown--;
+	--mStartCountdown;
 	if (!mStartCountdown)
 	{
 	    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
@@ -1698,25 +1699,25 @@ PrivateAnimScreen::pushLockedPaintList ()
 
 	if (!mGetWindowPaintListEnableCnt)
 	{
-	    mGetWindowPaintListEnableCnt++;
+	    ++mGetWindowPaintListEnableCnt;
 	    cScreen->getWindowPaintListSetEnabled (this, true);
 	}
     }
 
-    mLockedPaintListCnt++;
+    ++mLockedPaintListCnt;
     return *mLockedPaintList;
 }
 
 void
 PrivateAnimScreen::popLockedPaintList ()
 {
-    mLockedPaintListCnt--;
+    --mLockedPaintListCnt;
 
     if (!mLockedPaintListCnt)
     {
 	mLockedPaintList = NULL;
 
-	mGetWindowPaintListEnableCnt--;
+	--mGetWindowPaintListEnableCnt;
 
 	if (!mGetWindowPaintListEnableCnt)
 	    cScreen->getWindowPaintListSetEnabled (this, false);
@@ -1759,13 +1760,13 @@ PrivateAnimScreen::pushPaintList ()
     if (!mGetWindowPaintListEnableCnt)
 	cScreen->getWindowPaintListSetEnabled (this, true);
 
-    mGetWindowPaintListEnableCnt++;
+    ++mGetWindowPaintListEnableCnt;
 }
 
 void
 PrivateAnimScreen::popPaintList ()
 {
-    mGetWindowPaintListEnableCnt--;
+    --mGetWindowPaintListEnableCnt;
 
     if (!mGetWindowPaintListEnableCnt)
 	cScreen->getWindowPaintListSetEnabled (this, false);
@@ -1801,7 +1802,7 @@ PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 {
     ::screen->handleCompizEvent (pluginName, eventName, options);
 
-    for (int i = 0; i < WatchedScreenPluginNum; i++)
+    for (int i = 0; i < WatchedScreenPluginNum; ++i)
 	if (strcmp (pluginName, watchedScreenPlugins[i].pluginName) == 0)
 	{
 	    if (strcmp (eventName, 
@@ -1822,7 +1823,7 @@ PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 	    break;
 	}
 
-    for (int i = 0; i < WatchedWindowPluginNum; i++)
+    for (int i = 0; i < WatchedWindowPluginNum; ++i)
 	if (strcmp (pluginName,
 		    watchedWindowPlugins[i].pluginName) == 0)
 	{
@@ -1855,7 +1856,7 @@ PrivateAnimScreen::shouldIgnoreWindowForAnim (CompWindow *w, bool checkPixmap)
 {
     AnimWindow *aw = AnimWindow::get (w);
 
-    for (int i = 0; i < WatchedWindowPluginNum; i++)
+    for (int i = 0; i < WatchedWindowPluginNum; ++i)
 	if (aw->priv->mPluginActive[i])
 	    return true;
 
@@ -1872,7 +1873,7 @@ PrivateAnimWindow::reverseAnimation ()
     while (mUnmapCnt > 0)
     {
 	mWindow->unmap ();
-	mUnmapCnt--;
+	--mUnmapCnt;
     }
     if (mUnmapCnt < 0)
 	mUnmapCnt = 0;
@@ -1949,9 +1950,9 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 
 	// Increment 3 times to make sure close animation works
 	// (e.g. for popup menus).
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; ++i)
 	{
-	    aw->mUnmapCnt++;
+	    ++aw->mUnmapCnt;
 	    w->incrementUnmapReference ();
 	}
 	cScreen->damagePending ();
@@ -1978,7 +1979,7 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 	activateEvent (w->screen, true);
 	aw->com.curWindowEvent = WindowEventClose;
 
-	aw->mUnmapCnt++;
+	++aw->mUnmapCnt;
 	w->incrementUnmapRefCnt ();
 
 	damagePendingOnScreen (w->screen);
@@ -2147,7 +2148,7 @@ PrivateAnimScreen::initiateShadeAnim (PrivateAnimWindow *aw)
 	activateEvent (true);
 	aw->notifyAnimation (true);
 
-	aw->mUnmapCnt++;
+	++aw->mUnmapCnt;
 	w->incrementUnmapReference ();
 
 	cScreen->damagePending ();
@@ -2627,7 +2628,7 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     mLockedPaintListCnt (0),
     mGetWindowPaintListEnableCnt (0)
 {
-    for (int i = 0; i < WatchedScreenPluginNum; i++)
+    for (int i = 0; i < WatchedScreenPluginNum; ++i)
 	mPluginActive[i] = false;
 
     // Never animate screen-dimming layer of logout window and gksu.
@@ -2684,7 +2685,7 @@ PrivateAnimScreen::~PrivateAnimScreen ()
     if (mAnimInProgress)
 	activateEvent (false);
 
-    for (int i = 0; i < NUM_EFFECTS; i++)
+    for (int i = 0; i < NUM_EFFECTS; ++i)
 	delete animEffects[i];
 }
 
@@ -2780,7 +2781,7 @@ PrivateAnimScreen::initAnimationList ()
     // Extends itself with the basic set of animation effects.
     addExtension (&animExtensionPluginInfo, false);
 
-    for (int e = 0; e < AnimEventNum; e++) // for each anim event
+    for (int e = 0; e < AnimEventNum; ++e) // for each anim event
 	updateOptionSets ((AnimEvent)e);
 
     updateAllEventEffects ();
@@ -2808,7 +2809,7 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
     mBB.x1 = mBB.y1 = MAXSHORT;
     mBB.x2 = mBB.y2 = MINSHORT;
 
-    for (int i = 0; i < WatchedWindowPluginNum; i++)
+    for (int i = 0; i < WatchedWindowPluginNum; ++i)
 	mPluginActive[i] = false;
 
     if (w->minimized ())
@@ -2893,7 +2894,7 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	case CompWindowNotifyBeforeUnmap:
 	    if (mCurAnimation && mCurAnimation->curWindowEvent () == WindowEventMinimize)
 	    {
-		mUnmapCnt++;
+		++mUnmapCnt;
 		mWindow->incrementUnmapReference ();
 	    }
 	    break;
@@ -2908,7 +2909,7 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 		if (!mCurAnimation)
 		    break;
 
-		mDestroyCnt++;
+		++mDestroyCnt;
 		mWindow->incrementDestroyReference ();
 	    }
 	    break;

@@ -187,18 +187,19 @@ namespace compizconfig
     }
 }
 
+using ::testing::AtLeast;
+using ::testing::DoAll;
 using ::testing::Eq;
 using ::testing::IsNull;
-using ::testing::SetArgPointee;
-using ::testing::DoAll;
-using ::testing::Return;
-using ::testing::ReturnNull;
 using ::testing::MakeMatcher;
 using ::testing::Matcher;
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
-using ::testing::AtLeast;
 using ::testing::NiceMock;
+using ::testing::NotNull;
+using ::testing::Return;
+using ::testing::ReturnNull;
+using ::testing::SetArgPointee;
 
 namespace cci = compiz::config::impl;
 namespace cc  = compiz::config;
@@ -350,7 +351,7 @@ class CCSBackendConformanceSpawnObjectsTestFixtureBase
 	    CCSPluginGMock *gmockPlugin = (CCSPluginGMock *) ccsObjectGetPrivate (plugin.get ());
 
 	    ASSERT_FALSE (name.empty ());
-	    ASSERT_TRUE (context.get ());
+	    ASSERT_THAT (context.get (), NotNull ());
 
 	    ON_CALL (*gmockPlugin, getName ()).WillByDefault (Return ((char *) name.c_str ()));
 	    ON_CALL (*gmockPlugin, getContext ()).WillByDefault (Return (context.get ()));
@@ -369,7 +370,7 @@ class CCSBackendConformanceSpawnObjectsTestFixtureBase
 
 	    ASSERT_FALSE (name.empty ());
 	    ASSERT_NE (type, TypeNum);
-	    ASSERT_TRUE (plugin);
+	    ASSERT_THAT (plugin.get (), NotNull ());
 
 	    ON_CALL (*gmockSetting, getName ()).WillByDefault (Return ((char *) name.c_str ()));
 	    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (type));

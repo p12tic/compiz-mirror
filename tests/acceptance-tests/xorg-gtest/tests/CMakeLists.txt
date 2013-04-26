@@ -9,7 +9,6 @@ set (COMPIZ_XORG_ACCEPTANCE_TEST_LIBRARIES
      xorg_gtest_all
      xorg_gtest_main
      ${GTEST_BOTH_LIBRARIES}
-     ${CMAKE_THREAD_LIBS_INIT}
      ${XORG_SERVER_LIBRARIES}
      ${X11_XI_LIBRARIES})
 

@@ -2,7 +2,7 @@
 <compiz>
 	<plugin name="cubeaddon" useBcop="true">
 		<_short>Cube Reflection and Deformation</_short>
-		<_long>Compiz cube reflection and deformation</_long>
+		<_long>Adds a reflection to the desktop cube and deformes it to a cylinder or sphere</_long>
 		<category>Effects</category>
 		<deps>
 		<relation type="after">
@@ -21,49 +21,49 @@
 		</deps>
 		<options>
 			<group>
-				<_short>Cube caps</_short>
+				<_short>Cube Caps</_short>
 				<subgroup>
 					<_short>Bindings</_short>
 					<option name="top_next_key" type="key">
-						<_short>Next top image</_short>
-						<_long>Advance to next image for top face of the cube</_long>
+						<_short>Next Top Image Key</_short>
+						<_long>Advance to the next image on the top face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 						<default>space</default>
 					</option>
 					<option name="top_next_button" type="button">
-						<_short>Next top image</_short>
-						<_long>Advance to next image for top face of the cube</_long>
+						<_short>Next Top Image Button</_short>
+						<_long>Advance to the next image on the top face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 					</option>
 					<option name="top_prev_key" type="key">
-						<_short>Prev top image</_short>
-						<_long>Go back to previous image for top face of the cube</_long>
+						<_short>Previous Top Image Key</_short>
+						<_long>Go back to the previous image on the top face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 						<default>Backspace</default>
 					</option>
 					<option name="top_prev_button" type="button">
-						<_short>Prev top image</_short>
-						<_long>Go back to previous image for top face of the cube</_long>
+						<_short>Previous Top Image Button</_short>
+						<_long>Go back to the previous image on the top face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 					</option>
 					<option name="bottom_next_key" type="key">
-						<_short>Next bottom image</_short>
-						<_long>Advance to next image for bottom face of the cube</_long>
+						<_short>Next Bottom Image Key</_short>
+						<_long>Advance to the next image on the bottom face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 					</option>
 					<option name="bottom_next_button" type="button">
-						<_short>Next bottom image</_short>
-						<_long>Advance to next image for bottom face of the cube</_long>
+						<_short>Next Bottom Image Button</_short>
+						<_long>Advance to the next image on the bottom face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 					</option>
 					<option name="bottom_prev_key" type="key">
-						<_short>Prev bottom image</_short>
-						<_long>Go back to previous image for bottom face of the cube</_long>
+						<_short>Previous Bottom Image Key</_short>
+						<_long>Go back to the previous image on the bottom face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 					</option>
 					<option name="bottom_prev_button" type="button">
-						<_short>Prev bottom image</_short>
-						<_long>Go back to previous image for bottom face of the cube</_long>
+						<_short>Previous Bottom Image Button</_short>
+						<_long>Go back to the previous image on the bottom face of the cube.</_long>
 						<passive_grab>false</passive_grab>
 					</option>
 				</subgroup>
@@ -72,11 +72,11 @@
 				<_short>Reflection</_short>
 				<option name="reflection" type="bool">
 					<_short>Enabled</_short>
-					<_long>Give cube a reflective ground.</_long>
+					<_long>Render a reflective ground below the desktop cube.</_long>
 					<default>true</default>
 				</option>
 				<option name="ground_color1" type="color">
-					<_short>Ground color(near)</_short>
+					<_short>Ground Color (near)</_short>
 					<_long>Color of the ground (near).</_long>
 					<default>
 						<red>0xb333</red>
@@ -86,7 +86,7 @@
 					</default>
 				</option>
 				<option name="ground_color2" type="color">
-					<_short>Ground color(far)</_short>
+					<_short>Ground Color (far)</_short>
 					<_long>Color of the ground (far).</_long>
 					<default>
 						<red>0xb333</red>
@@ -96,8 +96,8 @@
 					</default>
 				</option>
 				<option name="ground_size" type="float">
-					<_short>Reflection ground size</_short>
-					<_long>Reflection ground size.</_long>
+					<_short>Reflection Ground Size</_short>
+					<_long>Size of the ground the reflection is rendered on.</_long>
 					<default>0.5</default>
 					<min>0.0</min>
 					<max>1.0</max>
@@ -105,25 +105,25 @@
 				</option>
 				<option name="intensity" type="float">
 					<_short>Intensity</_short>
-					<_long>Reflection intensity</_long>
+					<_long>The intensity of the reflection.</_long>
 					<default>0.4</default>
 					<min>0.0</min>
 					<max>1.0</max>
 					<precision>0.01</precision>
 				</option>
 				<option name="auto_zoom" type="bool">
-					<_short>Auto zoom</_short>
-					<_long>Zoom out automatically to make the cube fit to the screen.</_long>
+					<_short>Auto Zoom</_short>
+					<_long>Zoom out automatically to make the cube fit the screen.</_long>
 					<default>true</default>
 				</option>
 				<option name="zoom_manual_only" type="bool">
-					<_short>Auto zoom only on Mouse Rotate</_short>
-					<_long>Zoom out automatically only on mouse rotate.</_long>
+					<_short>Mouse Rotate Auto Zoom Only</_short>
+					<_long>Zoom out automatically on mouse rotate only.</_long>
 					<default>true</default>
 				</option>
 				<option name="mode" type="int">
-					<_short>Reflection mode</_short>
-					<_long>Reflection mode.</_long>
+					<_short>Reflection Mode</_short>
+					<_long>The mode of the reflection.</_long>
 					<default>0</default>
 					<min>0</min>
 					<max>3</max>
@@ -149,7 +149,7 @@
 				<_short>Deformation</_short>
 				<option name="deformation" type="int">
 					<_short>Deformation</_short>
-					<_long>Deformation mode.</_long>
+					<_long>The deformation mode.</_long>
 					<default>1</default>
 					<min>0</min>
 					<max>2</max>
@@ -167,25 +167,25 @@
 					</desc>
 				</option>
 				<option name="unfold_deformation" type="bool">
-					<_short>Unfold cube deformation</_short>
-					<_long>Deformation in unfold cube mode.</_long>
+					<_short>Unfold Cube Deformation</_short>
+					<_long>Apply the deformation in unfold cube mode.</_long>
 					<default>true</default>
 				</option>
 				<option name="cylinder_manual_only" type="bool">
-					<_short>Deform only on mouse rotate</_short>
+					<_short>Mouse Rotate Deformation Only</_short>
 					<_long>Initiates cube cylinder deformation only if rotation is mouse driven.</_long>
 					<default>false</default>
 				</option>
 				<subgroup>
 					<_short>Sphere</_short>
 					<option name="deform_caps" type="bool">
-						<_short>Deform caps</_short>
-						<_long>Deform cube caps.</_long>
+						<_short>Deform Caps</_short>
+						<_long>Deform the cube caps also.</_long>
 						<default>true</default>
 					</option>
 					<option name="sphere_aspect" type="float">
-						<_short>Aspect ratio</_short>
-						<_long>Aspect ratio of the deformed cube</_long>
+						<_short>Aspect Ratio</_short>
+						<_long>The aspect ratio of the deformed cube.</_long>
 						<min>0.0</min>
 						<max>1.0</max>
 						<precision>0.1</precision>
@@ -194,57 +194,57 @@
 				</subgroup>
 			</group>
 			<group>
-				<_short>Cube caps</_short>
+				<_short>Cube Caps</_short>
 				<subgroup>
 					<_short>Behaviour</_short>
 					<option name="draw_top" type="bool">
-						<_short>Draw top face</_short>
-						<_long>Draw top face of the cube</_long>
+						<_short>Draw Top Face</_short>
+						<_long>Draw the top face of the cube.</_long>
 						<default>true</default>
 					</option>
 					<option name="draw_bottom" type="bool">
-						<_short>Draw bottom face</_short>
-						<_long>Draw bottom face of the cube</_long>
+						<_short>Draw Bottom Face</_short>
+						<_long>Draw the bottom face of the cube.</_long>
 						<default>true</default>
 					</option>
 					<option name="adjust_top" type="bool">
-						<_short>Adjust top image</_short>
-						<_long>Adjust top face image to rotation</_long>
+						<_short>Adjust Top Image</_short>
+						<_long>Adjust the top face image to the rotation.</_long>
 						<default>false</default>
 					</option>
 					<option name="adjust_bottom" type="bool">
-						<_short>Adjust bottom image</_short>
-						<_long>Adjust bottom face image to rotation</_long>
+						<_short>Adjust Bottom Image</_short>
+						<_long>Adjust the bottom face image to the rotation.</_long>
 						<default>false</default>
 					</option>
 					<option name="top_scale" type="bool">
-						<_short>Scale top image</_short>
-						<_long>Scale image to cover top face of cube</_long>
+						<_short>Scale Top Image</_short>
+						<_long>Scale the image to cover the top face of cube.</_long>
 						<default>true</default>
 					</option>
 					<option name="bottom_scale" type="bool">
-						<_short>Scale bottom image</_short>
-						<_long>Scale image to cover bottom face of cube</_long>
+						<_short>Scale Bottom Image</_short>
+						<_long>Scale the image to cover the bottom face of cube.</_long>
 						<default>true</default>
 					</option>
 					<option name="top_aspect" type="bool">
-						<_short>Maintain top aspect ratio</_short>
+						<_short>Maintain Top Image Aspect Ratio</_short>
 						<_long>Maintain top cap image aspect ratio.</_long>
 						<default>true</default>
 					</option>
 					<option name="bottom_aspect" type="bool">
-						<_short>Maintain bottom aspect ratio</_short>
+						<_short>Maintain Bottom Image Aspect Ratio</_short>
 						<_long>Maintain bottom cap image aspect ratio.</_long>
 						<default>true</default>
 					</option>
 					<option name="top_clamp" type="bool">
-						<_short>Clamp top face image to border</_short>
-						<_long>Clamp top face image to border. This is often the best if your image doesn't fit the size of the cube or if it's transparent. It can lead to some ugly dotted lines when enabled (especially with large enough images) though.</_long>
+						<_short>Clamp Top Face Image To Border</_short>
+						<_long>Clamp the top face image to the border. This is often the best, if your image doesn't fit the size of the cube or if it's transparent. It can lead to some ugly dotted lines when enabled (especially with large enough images) though.</_long>
 						<default>true</default>
 					</option>
 					<option name="bottom_clamp" type="bool">
 						<_short>Clamp bottom face image to border</_short>
-						<_long>Clamp bottom face image to border. This is often the best if your image doesn't fit the size of the cube or if it's transparent. It can lead to some ugly dotted lines when enabled (especially with large enough images) though.</_long>
+						<_long>Clamp the bottom face image to the border. This is often the best, if your image doesn't fit the size of the cube or if it's transparent. It can lead to some ugly dotted lines when enabled (especially with large enough images) though.</_long>
 						<default>true</default>
 					</option>
 				</subgroup>
@@ -252,7 +252,7 @@
 					<_short>Top</_short>
 					<option name="top_images" type="list">
 						<_short>Image files</_short>
-						<_long>List of PNG and SVG files that should be rendered on top face of cube</_long>
+						<_long>List of .png and .svg files that should be rendered on the top face of the cube.</_long>
 						<type>string</type>
 						<hints>file;image;</hints>
 						<default>
@@ -265,7 +265,7 @@
 					<_short>Bottom</_short>
 					<option name="bottom_images" type="list">
 						<_short>Image files</_short>
-						<_long>List of PNG and SVG files that should be rendered on bottom face of cube</_long>
+						<_long>List of .png and .svg files that should be rendered on the bottom face of the cube.</_long>
 						<type>string</type>
 						<hints>file;image;</hints>
 						<default>
