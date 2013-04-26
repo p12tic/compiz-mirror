@@ -514,63 +514,14 @@ WallScreen::handleEvent (XEvent *event)
 	break;
 
 	case ConfigureNotify:
+	break;
 
-	     if (event->xconfigure.window == screen->root ())
-		updateScreenEdgeRegions ();
-
+	default:
 	break;
     }
 
     screen->handleEvent (event);
 }
-
-/*
- * Borrowed this from PrivateScreen::updateScreenEdges
- *
- */
-
-#define SCREEN_EDGE_NUM		8
-
-void
-WallScreen::updateScreenEdgeRegions ()
-{
-    edgeRegion = CompRegion (0, 0, screen->width (), screen->height ());
-    noEdgeRegion = CompRegion (0, 0, screen->width (), screen->height ());
-
-    struct screenEdgeGeometry {
-	int xw, x0;
-	int yh, y0;
-	int ww, w0;
-	int hh, h0;
-    } geometry[SCREEN_EDGE_NUM] = {
-	{ 0,  0,   0,  2,   0,  2,   1, -4 }, /* left */
-	{ 1, -2,   0,  2,   0,  2,   1, -4 }, /* right */
-	{ 0,  2,   0,  0,   1, -4,   0,  2 }, /* top */
-	{ 0,  2,   1, -2,   1, -4,   0,  2 }, /* bottom */
-	{ 0,  0,   0,  0,   0,  2,   0,  2 }, /* top-left */
-	{ 1, -2,   0,  0,   0,  2,   0,  2 }, /* top-right */
-	{ 0,  0,   1, -2,   0,  2,   0,  2 }, /* bottom-left */
-	{ 1, -2,   1, -2,   0,  2,   0,  2 }  /* bottom-right */
-    };
-
-    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
-    {
-	CompRegion edge (geometry[i].xw * screen->width () +
-			 geometry[i].x0,
-			 geometry[i].yh * screen->height () +
-			 geometry[i].y0,
-			 geometry[i].ww * screen->width () +
-			 geometry[i].w0,
-			 geometry[i].hh * screen->height () +
-			 geometry[i].h0);
-
-	noEdgeRegion -= edgeRegion;
-    }
-
-    edgeRegion -= noEdgeRegion;
-}
-
-#undef SCREEN_EDGE_NUM
 
 void
 WallScreen::positionUpdate (const CompPoint &pos)
@@ -1749,8 +1700,6 @@ WallScreen::WallScreen (CompScreen *screen) :
     setNotify (ArrowShadowColor);
     setNotify (NoSlideMatch);
     setNotify (EdgeflipPointer);
-
-    updateScreenEdgeRegions ();
 
     poller.setCallback (boost::bind (&WallScreen::positionUpdate, this,
 				     _1));

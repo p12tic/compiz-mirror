@@ -124,7 +124,6 @@ class WallScreen :
 	void toggleEdges (bool);
 
 	void positionUpdate (const CompPoint &pos);
-	void updateScreenEdgeRegions ();
 
 	CompositeScreen *cScreen;
 	GLScreen        *glScreen;
