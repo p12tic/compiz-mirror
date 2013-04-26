@@ -98,7 +98,7 @@ namespace
 
 	    ~FileDescriptorBackup ()
 	    {
-		/* Redirect backed up fd to old fd location*/
+		/* Redirect backed up fd to old fd location */
 		if (mBackupFd &&
 		    dup2 (mBackupFd, mOriginalFd) == -1)
 		    std::cerr << "Failed to restore file descriptor "
@@ -194,13 +194,11 @@ namespace
 	}
 	/* Parent process - error */
 	else if (child == -1)
-	{
 	    throw std::runtime_error (strerror (errno));
-	}
 
 	/* The old file descriptors for the stderr and stdout
 	 * are put back in place, and pipe write ends closed
-	 * as the child is using them at return*/
+	 * as the child is using them at return */
 
 	return child;
     }
@@ -315,7 +313,7 @@ namespace
 		if (count == -1)
 		    throw std::runtime_error (strerror (errno));
 
-		/* Always nul-terminate */
+		/* Always null-terminate */
 		buffer[count] = '\0';
 
 		/* Add it to the output */
