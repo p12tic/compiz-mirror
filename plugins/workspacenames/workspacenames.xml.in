@@ -2,7 +2,7 @@
 <compiz>
 	<plugin name="workspacenames" useBcop="true">
 		<_short>Workspace Naming</_short>
-		<_long>Assign descriptions to workspaces and automagically display those when changing the viewport</_long>
+		<_long>Assign names to viewports and display them upon viewport switches</_long>
 		<category>Window Management</category>
 		<deps>
 			<relation type="after">
@@ -73,7 +73,7 @@
 					</option>
 					<option name="text_font_size" type="int">
 						<_short>Font Size</_short>
-						<_long>Font size for the text display (in pixel).</_long>
+						<_long>Font size for the text display (in pixels).</_long>
 						<default>24</default>
 						<min>6</min>
 						<max>96</max>
@@ -99,7 +99,7 @@
 					</option>
 					<option name="vertical_offset" type="int">
 						<_short>Vertical Offset</_short>
-						<_long>Vertical offset from top or bottom of the screen (in pixel).</_long>
+						<_long>Vertical offset from top or bottom of the screen (in pixels).</_long>
 						<default>50</default>
 						<min>0</min>
 						<max>500</max>
