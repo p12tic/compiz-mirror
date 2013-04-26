@@ -804,6 +804,8 @@ bool
 WallScreen::initiateFlip (Direction         direction,
 			  CompAction::State state)
 {
+    CompOption::Vector o (0);
+
     int dx, dy;
     int amountX, amountY;
 
