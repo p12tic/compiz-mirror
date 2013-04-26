@@ -2,7 +2,7 @@
 <compiz>
     <plugin name="cube" useBcop="true">
 	<_short>Desktop Cube</_short>
-	<_long>Place your windows and viewports on a cube</_long>
+	<_long>Place windows and viewports on a cube</_long>
 	<category>Desktop</category>
 	<feature>largedesktop</feature>
 	<deps>
@@ -25,7 +25,7 @@
 	    </option>
 	    <option name="mipmap" type="bool">
 		<_short>Mipmap</_short>
-		<_long>Generate mipmaps for higher quality scaling, if possible.</_long>
+		<_long>Generate mipmaps for higher quality scaling.</_long>
 		<default>true</default>
 	    </option>
 	    <option name="multioutput_mode" type="int">
@@ -159,7 +159,7 @@
 			</option>
 			<option name="transparent_manual_only" type="bool">
 			<_short>Transparency Only On Mouse Rotate</_short>
-			<_long>Initiates Cube transparency only if rotation is mouse driven.</_long>
+			<_long>Initiates cube transparency only, if the rotation is mouse driven.</_long>
 			<default>true</default>
 			</option>
 	    </group>
