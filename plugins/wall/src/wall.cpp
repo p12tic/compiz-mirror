@@ -807,7 +807,7 @@ WallScreen::initiateFlip (Direction         direction,
     int dx, dy;
     int amountX, amountY;
 
-    if (screen->otherGrabExist ("wall", "move", "group-drag", 0))
+    if (screen->otherGrabExist ("wall", "move", "group-drag", NULL))
 	return false;
 
     if (state & CompAction::StateInitEdgeDnd)
@@ -832,21 +832,31 @@ WallScreen::initiateFlip (Direction         direction,
 	return false;
     }
 
-    switch (direction) {
+    switch (direction)
+    {
     case Left:
-	dx = -1; dy = 0;
+	dx = -1;
+	dy = 0;
 	break;
+
     case Right:
-	dx = 1; dy = 0;
+	dx = 1;
+	dy = 0;
 	break;
+
     case Up:
-	dx = 0; dy = -1;
+	dx = 0;
+	dy = -1;
 	break;
+
     case Down:
-	dx = 0; dy = 1;
+	dx = 0;
+	dy = 1;
 	break;
+
     default:
-	dx = 0; dy = 0;
+	dx = 0;
+	dy = 0;
 	break;
     }
 
