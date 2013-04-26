@@ -152,8 +152,8 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 
     while ((pairToken = strchr (pairToken, betweenPairs[0])))
     {
-	pairToken++; // skip delimiter
-	nPairs++;
+	++pairToken; // skip delimiter
+	++nPairs;
     }
 
     os->pairs.clear ();
@@ -164,7 +164,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 
     int errorNo = -1;
     unsigned int i;
-    for (i = 0; name && i < nPairs; i++)
+    for (i = 0; name && i < nPairs; ++i)
     {
 	errorNo = 0;
 	if (strchr (name, betweenPairs[0])) // handle "a, b=4" case
@@ -197,7 +197,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	{
 	    unsigned int nOptions = extensionPlugin->effectOptions->size ();
 	    for (optId = (int)extensionPlugin->firstEffectOptionIndex;
-		 optId < (int)nOptions; optId++)
+		 optId < (int)nOptions; ++optId)
 	    {
 		o = &(*extensionPlugin->effectOptions)[(unsigned)optId];
 
@@ -278,7 +278,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	    if (valueRead == 4)
 	    {
 		CompOption::Value *pairVal = &pair->value;
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < 4; ++j)
 		    vc[j] = vc[j] << 8 | vc[j];
 		pairVal->set (vc);
 	    }
@@ -352,7 +352,7 @@ PrivateAnimScreen::updateOptionSets (AnimEvent e)
     oss->sets.clear ();
     oss->sets.reserve (n);
 
-    for (unsigned int i = 0; i < n; i++)
+    for (unsigned int i = 0; i < n; ++i)
     {
 	oss->sets.push_back (OptionSet ());
 	updateOptionSet (&oss->sets[i], (*listVal)[i].s ().c_str ());
