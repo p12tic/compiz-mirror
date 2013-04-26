@@ -7,6 +7,7 @@
 		<deps>
 			<relation type="before">
 				<plugin>fade</plugin>
+				<plugin>obs</plugin>
 			</relation>
 			<relation type="after">
 				<plugin>composite</plugin>
@@ -23,28 +24,28 @@
 				<_short>Bindings</_short>
 				<option name="initiate_key" type="key">
 					<_short>Initiate Key</_short>
-					<_long>Initiate the shift switcher via keyboard shortcut.</_long>
+					<_long>Initiate the shift switcher view via keyboard shortcut.</_long>
 					<default>&lt;Super&gt;&lt;Shift&gt;s</default>
 				</option>
 				<option name="initiate_button" type="button">
 					<_short>Initiate Button</_short>
-					<_long>Initiate the shift switcher via mouse button.</_long>
+					<_long>Initiate the shift switcher view via mouse button.</_long>
 				</option>
 				<option name="initiate_edge" type="edge">
 					<_short>Initiate Screen Corner / Edge</_short>
-					<_long>Initiate the shift switcher via screen corner or edge.</_long>
+					<_long>Initiate the shift switcher view via screen corner or edge.</_long>
 				</option>
 				<option name="initiate_all_key" type="key">
 					<_short>Initiate Key (All Workspaces)</_short>
-					<_long>Initiate the shift switcher via keyboard shortcut, taking into account all windows on all workspaces.</_long>
+					<_long>Initiate the shift switcher view via keyboard shortcut, taking into account all windows on all workspaces.</_long>
 				</option>
 				<option name="initiate_all_button" type="button">
 					<_short>Initiate Button (All Workspaces)</_short>
-					<_long>Initiate the shift switcher via mouse button, taking into account all windows on all workspaces.</_long>
+					<_long>Initiate the shift switcher view via mouse button, taking into account all windows on all workspaces.</_long>
 				</option>
 				<option name="initiate_all_edge" type="edge">
 					<_short>Initiate Screen Corner / Edge (All Workspaces)</_short>
-					<_long>Initiate the shift switcher via screen corner or edge, taking into account all windows on all workspaces.</_long>
+					<_long>Initiate the shift switcher view via screen corner or edge, taking into account all windows on all workspaces.</_long>
 				</option>
 				<option name="next_key" type="key">
 					<_short>Next Window Key</_short>
@@ -270,8 +271,8 @@
 			<group>
 				<_short>Shift Mode</_short>
 				<option name="mode" type="int">
-					<_short>Switcher Mode</_short>
-					<_long>Choose between Cover or Flip mode.</_long>
+					<_short>Shift Switcher Mode</_short>
+					<_long>The selected shift switcher mode.</_long>
 					<default>0</default>
 					<min>0</min>
 					<max>1</max>
@@ -285,7 +286,7 @@
 					</desc>
 				</option>
 				<subgroup>
-					<_short>Flip Mode Settings</_short>
+					<_short>Flip Mode</_short>
 					<option name="flip_rotation" type="int">
 						<_short>Flip Angle</_short>
 						<_long>Rotation angle of the flip animation (in degrees).</_long>
@@ -295,7 +296,7 @@
 					</option>
 				</subgroup>
 				<subgroup>
-					<_short>Cover Mode Settings</_short>
+					<_short>Cover Mode</_short>
 					<option name="cover_offset" type="float">
 						<_short>Cover Offset</_short>
 						<_long>Cover movement offset.</_long>
