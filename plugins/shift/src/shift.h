@@ -66,11 +66,11 @@ typedef enum
 
 typedef struct _ShiftSlot
 {
-    int   x, y;            /* thumb center coordinates */
-    float z;
-    float scale;           /* size scale (fit to maximal thumb size */
-    float opacity;
-    float rotation;
+    int     x, y;            /* thumb center coordinates */
+    float   z;
+    float   scale;           /* size scale (fits to maximal thumb size) */
+    float   opacity;
+    float   rotation;
 
     GLfloat tx;
     GLfloat ty;
@@ -101,7 +101,7 @@ class ShiftScreen :
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 	CompText	text;
-    
+
     public:
 
 	void
@@ -112,11 +112,13 @@ class ShiftScreen :
 	
 	void
 	paint (CompOutput::ptrList &,
-	       unsigned int);
+	       unsigned int          );
 	
 	bool glPaintOutput (const GLScreenPaintAttrib &,
-			    const GLMatrix &, const CompRegion &,
-			    CompOutput *, unsigned int);
+			    const GLMatrix            &,
+			    const CompRegion          &,
+			    CompOutput                *,
+			    unsigned int                );
 	
 	void
 	donePaint ();
@@ -127,58 +129,58 @@ class ShiftScreen :
 	KeyCode mRightKey;
 	KeyCode mUpKey;
 	KeyCode mDownKey;
-    
+
 	CompScreen::GrabHandle mGrabIndex;
 	
-	ShiftState	mState;
-	ShiftType	mType;
+	ShiftState      mState;
+	ShiftType       mType;
 	
-	bool		mMoreAdjust;
-	bool		mMoveAdjust;
+	bool            mMoreAdjust;
+	bool            mMoveAdjust;
 	
-	float		mMvTarget;
-	float		mMvAdjust;
-	float		mMvVelocity;
-	bool		mInvert;
+	float           mMvTarget;
+	float           mMvAdjust;
+	float           mMvVelocity;
+	bool            mInvert;
 	
-	Cursor		mCursor;
+	Cursor          mCursor;
 	
 	/* only used for sorting */
-	CompWindow	**mWindows;
-	int		mNWindows;
-	int		mWindowsSize;
+	CompWindow      **mWindows;
+	int             mNWindows;
+	int             mWindowsSize;
 
 	
-	ShiftDrawSlot	*mDrawSlots;
-	int		mNSlots;
-	int		mSlotsSize;
-	ShiftDrawSlot	*mActiveSlot;
+	ShiftDrawSlot   *mDrawSlots;
+	int             mNSlots;
+	int             mSlotsSize;
+	ShiftDrawSlot   *mActiveSlot;
 	
-	Window		mClientLeader;
-	Window		mSelectedWindow;
+	Window          mClientLeader;
+	Window          mSelectedWindow;
 	
-	CompMatch	mMatch;
-	CompMatch	*mCurrentMatch;
+	CompMatch       mMatch;
+	CompMatch       *mCurrentMatch;
 	
-	CompOutput	*mOutput;
-	int		mUsedOutput;
+	CompOutput      *mOutput;
+	int             mUsedOutput;
 	
-	float		mReflectBrightness;
-	bool		mReflectActive;
+	float           mReflectBrightness;
+	bool            mReflectActive;
 	
-	float		mAnim;
-	float		mAnimVelocity;
+	float           mAnim;
+	float           mAnimVelocity;
 	
-	int		mButtonPressTime;
-	bool		mButtonPressed;
-	int		mStartX;
-	int		mStartY;
-	float		mStartTarget;
-	float		mLastTitle;
+	int             mButtonPressTime;
+	bool            mButtonPressed;
+	int             mStartX;
+	int             mStartY;
+	float           mStartTarget;
+	float           mLastTitle;
 	
-	bool		mPaintingAbove;
+	bool            mPaintingAbove;
 	
-	bool		mCancelled;
+	bool            mCancelled;
 
     public:
 
@@ -228,7 +230,7 @@ class ShiftScreen :
 	term (bool cancel);
 
 	bool
-	terminate (CompAction         *action,
+	terminate (CompAction          *action,
 		    CompAction::State  aState,
 		    CompOption::Vector &options);
 
@@ -238,19 +240,19 @@ class ShiftScreen :
 			CompOption::Vector &options);
 
 	bool
-	doSwitch (CompAction         *action,
+	doSwitch (CompAction           *action,
 		    CompAction::State  aState,
 		    CompOption::Vector &options,
-		    bool            nextWindow,
-		    ShiftType       type);
+		    bool               nextWindow,
+		    ShiftType          type);
 
 	bool
 	initiate (CompAction         *action,
-		  CompAction::State    state,
+		  CompAction::State  state,
 		  CompOption::Vector &options);
 
 	bool
-	initiateAll (CompAction         *action,
+	initiateAll (CompAction            *action,
 			CompAction::State  aState,
 			CompOption::Vector &options);
 
@@ -269,9 +271,9 @@ class ShiftWindow :
 	ShiftWindow (CompWindow *);
 	~ShiftWindow ();
 	
-	CompWindow *window;
+	CompWindow      *window;
 	CompositeWindow *cWindow;
-	GLWindow	*gWindow;
+	GLWindow        *gWindow;
 
     public:
 
@@ -282,18 +284,18 @@ class ShiftWindow :
 		 unsigned int		     );
 		 
 	bool
-	damageRect (bool	initial,
+	damageRect (bool           initial,
 		    const CompRect &rect);
 
     public:
 	
-	ShiftSlot	mSlots[2];
-	float		mOpacity;
-	float		mBrightness;
-	float		mOpacityVelocity;
-	float		mBrightnessVelocity;
-	
-	bool		mActive;
+	ShiftSlot       mSlots[2];
+	float           mOpacity;
+	float           mBrightness;
+	float           mOpacityVelocity;
+	float           mBrightnessVelocity;
+
+	bool            mActive;
 
     public:
 
