@@ -39,7 +39,7 @@
         <option name="direction" type="int">
           <_short>Movement Direction</_short>
           <_long>The direction in which the windows move.</_long>
-		  <default>12</default>
+		  <default>10</default>
 		  <min>0</min>
 		  <max>12</max>
 		  <desc>
