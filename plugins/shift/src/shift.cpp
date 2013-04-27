@@ -62,7 +62,7 @@ setFunctions (bool enabled)
 }
 
 void
-ShiftScreen::activateEvent (bool	activating)
+ShiftScreen::activateEvent (bool        activating)
 {
     CompOption::Vector o;
 
@@ -176,7 +176,6 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
     if (!textAvailable || !optionGetWindowTitle ())
 	return;
 
-    float border = 10.0f;
     CompRect oe;
 
     float width = text.getWidth ();
@@ -190,6 +189,8 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
     float x = oe.centerX () - width / 2;
     float y;
 
+    unsigned short verticalOffset = optionGetVerticalOffset ();
+
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTitleTextPlacement ())
     {
@@ -197,15 +198,15 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 	    y = oe.centerY () + height / 2;
 	    break;
 
-	case TitleTextPlacementAbove:
-	case TitleTextPlacementBelow:
+	case TitleTextPlacementTopOfScreenMinusOffset:
+	case TitleTextPlacementBottomOfScreenPlusOffset:
 	{
 	    CompRect workArea = screen->currentOutputDev ().workArea ();
 
-	    if (optionGetTitleTextPlacement () == TitleTextPlacementAbove)
-		y = oe.y1 () + workArea.y1 () + 2 * border + height;
-	    else /* TitleTextPlacementBelow */
-		y = oe.y1 () + workArea.y2 () - 2 * border;
+	    if (optionGetTitleTextPlacement () == TitleTextPlacementTopOfScreenMinusOffset)
+		y = oe.y1 () + workArea.y1 () + height + verticalOffset;
+	    else /* TitleTextPlacementBottomOfScreenPlusOffset */
+		y = oe.y1 () + workArea.y2 () - height - verticalOffset;
 	}
 	    break;
 
@@ -315,12 +316,13 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			     mask | PAINT_WINDOW_TRANSFORMED_MASK);
 	}
 
-	if (scaled && ((ss->optionGetOverlayIcon () != ShiftOptions::OverlayIconNone) ||
-		       gWindow->textures ().empty ()))
+	if (scaled &&
+	    ((ss->optionGetOverlayIcon () != ShiftOptions::OverlayIconNone) ||
+	     gWindow->textures ().empty ()))
 	{
 	    GLTexture *icon;
 
-	    icon = gWindow->getIcon (96, 96);
+	    icon = gWindow->getIcon (256, 256);
 
 	    if (!icon)
 		icon = ss->gScreen->defaultIcon ();
@@ -352,7 +354,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		if (gWindow->textures ().empty ())
 		    iconOverlay = ShiftOptions::OverlayIconBig;
 
-	    	switch (iconOverlay)
+		switch (iconOverlay)
 		{
 		    case ShiftOptions::OverlayIconNone:
 		    case ShiftOptions::OverlayIconEmblem:
