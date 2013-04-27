@@ -2,7 +2,7 @@
 <compiz>
   <plugin name="showdesktop" useBcop="true">
     <_short>Show Desktop</_short>
-    <_long>Access the desktop easily by using fancy ways to move windows out of view</_long>
+    <_long>Access the desktop easily by using variable ways to move windows out of view</_long>
     <category>Desktop</category>
     <feature>showdesktop</feature>
     <deps>
@@ -113,7 +113,7 @@
         </option>
         <option name="window_part_size" type="int">
           <_short>Window Part Size</_short>
-          <_long>The size of the window part that will remain on screen when showdesktop'd (in pixel).</_long>
+          <_long>The size of the window part that will remain on screen when showdesktop'd (in pixels).</_long>
           <default>20</default>
           <min>0</min>
           <max>300</max>
