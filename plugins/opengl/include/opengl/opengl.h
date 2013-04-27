@@ -456,6 +456,8 @@ namespace GL {
     /* OpenGL|ES does not support different draw/read framebuffers */
     static const GLenum 		    DRAW_FRAMEBUFFER = GL_FRAMEBUFFER;
     static const GLenum 		    READ_FRAMEBUFFER = GL_FRAMEBUFFER;
+    static const GLenum	                    DRAW_FRAMEBUFFER_BINDING = FRAMEBUFFER_BINDING;
+    static const GLenum	                    READ_FRAMEBUFFER_BINDING = FRAMEBUFFER_BINDING;
 
     static const GLenum 		    FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE;
     static const GLenum 		    FRAMEBUFFER_UNDEFINED = 0;
@@ -491,6 +493,8 @@ namespace GL {
 
     static const GLenum 		  DRAW_FRAMEBUFFER = GL_DRAW_FRAMEBUFFER_EXT;
     static const GLenum 		  READ_FRAMEBUFFER = GL_READ_FRAMEBUFFER_EXT;
+    static const GLenum	                  DRAW_FRAMEBUFFER_BINDING = GL_DRAW_FRAMEBUFFER_BINDING_EXT;
+    static const GLenum	                  READ_FRAMEBUFFER_BINDING = GL_READ_FRAMEBUFFER_BINDING_EXT;
     static const GLenum 		  FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE_EXT;
     static const GLenum 		  FRAMEBUFFER_UNDEFINED = GL_FRAMEBUFFER_UNDEFINED;
     static const GLenum 		  FRAMEBUFFER_INCOMPLETE_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
