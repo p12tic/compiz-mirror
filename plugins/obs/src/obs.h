@@ -34,7 +34,7 @@
 extern const unsigned short MODIFIER_OPACITY;
 extern const unsigned short MODIFIER_SATURATION;
 extern const unsigned short MODIFIER_BRIGHTNESS;
-#define MODIFIER_COUNT 3
+       const unsigned short MODIFIER_COUNT = 3;
 
 class ObsScreen :
     public ScreenInterface,
@@ -42,6 +42,7 @@ class ObsScreen :
     public ObsOptions
 {
     public:
+
 	ObsScreen (CompScreen *);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
@@ -59,15 +60,19 @@ class ObsWindow :
     public PluginClassHandler<ObsWindow, CompWindow>
 {
     public:
+
 	ObsWindow (CompWindow *);
 	~ObsWindow ();
 
-	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
-		      const CompRegion &, unsigned int);
+	bool glPaint (const GLWindowPaintAttrib &,
+		      const GLMatrix            &,
+		      const CompRegion          &,
+		      unsigned int                );
+
 	void glDrawTexture (GLTexture                 *texture,
-	                    const GLMatrix            &transform,
-	                    const GLWindowPaintAttrib &attrib,
-	                    unsigned int              mask);
+			    const GLMatrix            &transform,
+			    const GLWindowPaintAttrib &attrib,
+			    unsigned int              mask);
 
 	void changePaintModifier (unsigned int, int);
 	void updatePaintModifier (unsigned int);
@@ -75,6 +80,7 @@ class ObsWindow :
 	bool updateTimeout ();
 
     private:
+
 	CompWindow      *window;
 	CompositeWindow *cWindow;
 	GLWindow        *gWindow;

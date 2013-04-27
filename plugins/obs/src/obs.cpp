@@ -35,19 +35,13 @@ void
 ObsWindow::changePaintModifier (unsigned int modifier,
 				int          direction)
 {
-    int value, step;
-
-    if (window->overrideRedirect ())
+    if (window->overrideRedirect () ||
+	(modifier == MODIFIER_OPACITY &&
+	 (window->type () & CompWindowTypeDesktopMask)))
 	return;
 
-    if (modifier == MODIFIER_OPACITY &&
-	(window->type () & CompWindowTypeDesktopMask))
-    {
-	return;
-    }
-
-    step   = oScreen->stepOptions[modifier]->value ().i ();
-    value  = customFactor[modifier] + (step * direction);
+    int step   = oScreen->stepOptions[modifier]->value ().i ();
+    int value  = customFactor[modifier] + (step * direction);
 
     value = MAX (MIN (value, 100), step);
 
@@ -61,9 +55,7 @@ ObsWindow::changePaintModifier (unsigned int modifier,
 void
 ObsWindow::updatePaintModifier (unsigned int modifier)
 {
-    int lastFactor;
-
-    lastFactor = customFactor[modifier];
+    int lastFactor = customFactor[modifier];
 
     if (modifier == MODIFIER_OPACITY &&
 	(window->type ()& CompWindowTypeDesktopMask))
@@ -73,17 +65,16 @@ ObsWindow::updatePaintModifier (unsigned int modifier)
     }
     else
     {
-	int                       i, min, lastMatchFactor;
 	CompOption::Value::Vector *matches, *values;
 
 	matches = &oScreen->matchOptions[modifier]->value ().list ();
 	values  = &oScreen->valueOptions[modifier]->value ().list ();
-	min     = MIN (matches->size (), values->size ());
+	int min = MIN (matches->size (), values->size ());
 
-	lastMatchFactor       = matchFactor[modifier];
+	int lastMatchFactor   = matchFactor[modifier];
 	matchFactor[modifier] = 100;
 
-	for (i = 0; i < min; i++)
+	for (int i = 0; i < min; ++i)
 	{
 	    if (matches->at (i).match ().evaluate (window))
 	    {
@@ -108,12 +99,14 @@ ObsWindow::modifierChanged (unsigned int modifier)
     if (modifier == MODIFIER_OPACITY)
 	gWindow->glPaintSetEnabled (this, customFactor[modifier] != 100);
 
-    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
+    {
 	if (customFactor[i] != 100)
 	{
 	    hasCustom = true;
 	    break;
 	}
+    }
 
     gWindow->glDrawTextureSetEnabled (this, hasCustom);
     cWindow->addDamage ();
@@ -127,10 +120,9 @@ alterPaintModifier (CompAction          *action,
 		    int                 direction)
 {
     CompWindow *w;
-    Window     xid;
 
-    xid = CompOption::getIntOptionNamed (options, "window", 0);
-    w   = screen->findTopLevelWindow (xid);
+    Window xid = CompOption::getIntOptionNamed (options, "window", 0);
+    w          = screen->findTopLevelWindow (xid);
 
     if (w)
 	ObsWindow::get (w)->changePaintModifier (modifier, direction);
@@ -156,14 +148,14 @@ ObsWindow::glPaint (const GLWindowPaintAttrib& attrib,
 
 void
 ObsWindow::glDrawTexture (GLTexture                 *texture,
-                          const GLMatrix            &transform,
-                          const GLWindowPaintAttrib &attrib,
-                          unsigned int              mask)
+			  const GLMatrix            &transform,
+			  const GLWindowPaintAttrib &attrib,
+			  unsigned int              mask)
 {
     GLWindowPaintAttrib wAttrib (attrib);
-    int factor;
 
-    factor = customFactor[MODIFIER_OPACITY];
+    int factor = customFactor[MODIFIER_OPACITY];
+
     if (factor != 100)
     {
 	wAttrib.opacity = factor * wAttrib.opacity / 100;
@@ -171,10 +163,12 @@ ObsWindow::glDrawTexture (GLTexture                 *texture,
     }
 
     factor = customFactor[MODIFIER_BRIGHTNESS];
+
     if (factor != 100)
 	wAttrib.brightness = factor * wAttrib.brightness / 100;
 
     factor = customFactor[MODIFIER_SATURATION];
+
     if (factor != 100)
 	wAttrib.saturation = factor * wAttrib.saturation / 100;
 
@@ -189,16 +183,20 @@ ObsScreen::matchExpHandlerChanged ()
     /* match options are up to date after the call to matchExpHandlerChanged */
     foreach (CompWindow *w, screen->windows ())
     {
-	for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
+	for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
+	{
 	    ObsWindow::get (w)->updatePaintModifier (i);
+	}
     }
 }
 
 void
 ObsScreen::matchPropertyChanged (CompWindow  *w)
 {
-    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
+    {
 	ObsWindow::get (w)->updatePaintModifier (i);
+    }
 
     screen->matchPropertyChanged (w);
 }
@@ -209,11 +207,9 @@ ObsScreen::matchPropertyChanged (CompWindow  *w)
 ObsScreen::ObsScreen (CompScreen *s) :
     PluginClassHandler<ObsScreen, CompScreen> (s)
 {
-    unsigned int mod;
-
     ScreenInterface::setHandler (screen);
 
-    mod = MODIFIER_OPACITY;
+    unsigned int mod = MODIFIER_OPACITY;
     stepOptions[mod]  = &mOptions[ObsOptions::OpacityStep];
     matchOptions[mod] = &mOptions[ObsOptions::OpacityMatches];
     valueOptions[mod] = &mOptions[ObsOptions::OpacityValues];
@@ -247,8 +243,10 @@ ObsScreen::ObsScreen (CompScreen *s) :
 bool
 ObsWindow::updateTimeout ()
 {
-    for (int i = 0; i < MODIFIER_COUNT; i++)
+    for (int i = 0; i < MODIFIER_COUNT; ++i)
+    {
 	updatePaintModifier (i);
+    }
 
     return false;
 }
@@ -263,15 +261,18 @@ ObsScreen::setOption (const CompString  &name,
 	return false;
 
     o = CompOption::findOption (getOptions (), name, NULL);
-    if (!o)
-        return false;
 
-    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
+    if (!o)
+	return false;
+
+    for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
     {
 	if (o == matchOptions[i] || o == valueOptions[i])
 	{
 	    foreach (CompWindow *w, screen->windows ())
+	    {
 		ObsWindow::get (w)->updatePaintModifier (i);
+	    }
 	}
     }
 
@@ -287,7 +288,7 @@ ObsWindow::ObsWindow (CompWindow *w) :
 {
     GLWindowInterface::setHandler (gWindow, false);
 
-    for (unsigned int i = 0; i < MODIFIER_COUNT; i++)
+    for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
     {
 	customFactor[i] = 100;
 	matchFactor[i]  = 100;
@@ -308,12 +309,10 @@ ObsWindow::~ObsWindow ()
 bool
 ObsPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    {
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		||
+	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
+	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	 return false;
-    }
 
     return true;
 }
