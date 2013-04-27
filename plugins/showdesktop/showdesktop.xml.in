@@ -2,7 +2,7 @@
 <compiz>
   <plugin name="showdesktop" useBcop="true">
     <_short>Show Desktop</_short>
-    <_long>Access your desktop easily by using fancy ways to move windows out of view</_long>
+    <_long>Access the desktop easily by using fancy ways to move windows out of view</_long>
     <category>Desktop</category>
     <feature>showdesktop</feature>
     <deps>
@@ -19,7 +19,7 @@
     </deps>
     <options>
       <group>
-        <_short>General Options</_short>
+        <_short>General</_short>
         <option name="speed" type="float">
           <_short>Speed</_short>
           <_long>The speed of the window movement.</_long>
