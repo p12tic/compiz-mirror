@@ -303,9 +303,9 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	else if (ss->mState != StackswitchStateIn &&
 		 ss->optionGetDarkenBack ())
 	{
-		GLWindowPaintAttrib sAttrib (attrib);
-		/* modify brightness of the other windows */
-		sAttrib.brightness = sAttrib.brightness / 2;
+	    GLWindowPaintAttrib sAttrib (attrib);
+	    /* modify brightness of the other windows */
+	    sAttrib.brightness = sAttrib.brightness / 2;
 	}
 
 	status = gWindow->glPaint (attrib, transform, region, mask);
