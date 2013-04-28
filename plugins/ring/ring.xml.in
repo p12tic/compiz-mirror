@@ -20,55 +20,55 @@
 				<_short>Bindings</_short>
 				<option name="next_key" type="key">
 					<_short>Next Window Key</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the next window on the current workspace. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the next window on the current workspace.</_long>
 					<default>&lt;Super&gt;Tab</default>
 				</option>
 				<option name="next_button" type="button">
 					<_short>Next Window Button</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the next window on the current workspace. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the next window on the current workspace.</_long>
 				</option>
 				<option name="prev_key" type="key">
 					<_short>Previous Window Key</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the previous window on the current workspace. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the previous window on the current workspace.</_long>
 					<default>&lt;Super&gt;&lt;Shift&gt;Tab</default>
 				</option>
 				<option name="prev_button" type="button">
 					<_short>Previous Window Button</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the previous window on the current workspace. Release to switch focus to the selected window.</_long>
+					<_long>Reveals the ring and selects the previous window on the current workspace.</_long>
 				</option>
 				<option name="next_all_key" type="key">
 					<_short>Next Window Key (All Workspaces)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the next window, taking into account all workspaces. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the next window, taking into account all workspaces.</_long>
 					<default>&lt;Super&gt;&lt;Alt&gt;Tab</default>
 				</option>
 				<option name="next_all_button" type="button">
 					<_short>Next Window Button (All Workspaces)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the next window, taking into account all workspaces. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the next window, taking into account all workspaces.</_long>
 				</option>
 				<option name="prev_all_key" type="key">
 					<_short>Previous Window Key (All Workspaces)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the previous window, taking into account all workspaces. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the previous window, taking into account all workspaces.</_long>
 					<default>&lt;Super&gt;&lt;Shift&gt;&lt;Alt&gt;Tab</default>
 				</option>
 				<option name="prev_all_button" type="button">
 					<_short>Previous Window Button (All Workspaces)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the previous window, taking into account all workspaces. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the previous window, taking into account all workspaces.</_long>
 				</option>
 				<option name="next_group_key" type="key">
 					<_short>Next Window Key (Group)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the next window of the currently selected application. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the next window of the currently focused application.</_long>
 				</option>
 				<option name="next_group_button" type="button">
 					<_short>Next Window Button (Group)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the next window of the currently selected application. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the next window of the currently focuse application.</_long>
 				</option>
 				<option name="prev_group_key" type="key">
 					<_short>Previous Window Key (Group)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the previous window of the currently selected application. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the previous window of the currently focused application.</_long>
 				</option>
 				<option name="prev_group_button" type="button">
 					<_short>Previous Window Button (Group)</_short>
-					<_long>Reveals the ring switcher, if not visible and selects the previous window of the currently selected application. Release to focus the selected window.</_long>
+					<_long>Reveals the ring and selects the previous window of the currently focused application.</_long>
 				</option>
 			</group>
 			<group>
