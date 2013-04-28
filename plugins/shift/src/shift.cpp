@@ -206,7 +206,7 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 	    if (optionGetTitleTextPlacement () == TitleTextPlacementTopOfScreenMinusOffset)
 		y = oe.y1 () + workArea.y1 () + height + verticalOffset;
 	    else /* TitleTextPlacementBottomOfScreenPlusOffset */
-		y = oe.y1 () + workArea.y2 () - height - verticalOffset;
+		y = oe.y1 () + workArea.y2 () - verticalOffset;
 	}
 	    break;
 
@@ -553,10 +553,8 @@ ShiftScreen::layoutThumbsCover ()
 	else
 	    yScale = 1.0f;
 
-
 	float val1 = floor((float) MIN (mNWindows,
 					optionGetCoverMaxVisibleWindows ()) / 2.0);
-
 	float pos;
 	float space = (maxThumbWidth / 2);
 	space *= cos (sin (PI / 4) * PI / 3);
@@ -585,8 +583,8 @@ ShiftScreen::layoutThumbsCover ()
 	    sw->mSlots[i].scale   = MIN (xScale, yScale);
 
 	    sw->mSlots[i].y = centerY + (maxThumbHeight / 2.0) -
-				(((w->height () / 2.0) + w->border ().bottom) *
-				sw->mSlots[i].scale);
+			      (((w->height () / 2.0) + w->border ().bottom) *
+			       sw->mSlots[i].scale);
 
 	    if (fabs(distance) < 1.0)
 	    {
@@ -789,7 +787,7 @@ ShiftScreen::addWindowToList (CompWindow *w)
     if (mWindowsSize <= mNWindows)
     {
 	mWindows = (CompWindow **) realloc (mWindows,
-			       sizeof (CompWindow *) * (mNWindows + 32));
+					    sizeof (CompWindow *) * (mNWindows + 32));
 	if (!mWindows)
 	    return;
 
@@ -799,8 +797,8 @@ ShiftScreen::addWindowToList (CompWindow *w)
     if (mSlotsSize <= mNWindows * 2)
     {
 	mDrawSlots = (ShiftDrawSlot *) realloc (mDrawSlots,
-				 sizeof (ShiftDrawSlot) *
-				 ((mNWindows * 2) + 64));
+						sizeof (ShiftDrawSlot) *
+						((mNWindows * 2) + 64));
 	if (!mDrawSlots)
 	{
 	    free (mDrawSlots);
