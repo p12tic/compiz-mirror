@@ -142,7 +142,7 @@ GridScreen::initiateCommon (CompAction		*action,
 					 vertMaximizedGridPosition ||
 					 where & GridMaximize;
 
-	if (!(cw->actions () & CompWindowActionResizeMask) ||
+	if (!(cw->actions () & CompWindowActionResizeMask)			||
 	    (maximizeH && !(cw->actions () & CompWindowActionMaximizeHorzMask)) ||
 	    (maximizeV && !(cw->actions () & CompWindowActionMaximizeVertMask)) ||
 	    where & GridUnknown)
@@ -202,6 +202,7 @@ GridScreen::initiateCommon (CompAction		*action,
 
 	    for (unsigned int i = 0; i < animations.size (); ++i)
 		animations.at (i).fadingOut = true;
+
 	    return true;
 	}
 
@@ -469,10 +470,8 @@ GridScreen::initiateCommon (CompAction		*action,
 	 */
 	if (centerCheck)
 	{
-	    if ((cw->serverBorderRect ().width () >
-		 desiredSlot.width ()) ||
-		cw->serverBorderRect ().width () <
-		desiredSlot.width ())
+	    if (cw->serverBorderRect ().width () > desiredSlot.width () ||
+		cw->serverBorderRect ().width () < desiredSlot.width ())
 	    {
 		wc.x = (workarea.width () >> 1) -
 		       ((cw->serverBorderRect ().width () >> 1) -
@@ -706,6 +705,7 @@ GridScreen::typeToMask (int t)
     for (unsigned int i = 0; i < type.size (); ++i)
     {
 	GridTypeMask &tm = type[i];
+
 	if (tm.type == t)
 	    return tm.mask;
     }
@@ -721,35 +721,35 @@ GridScreen::edgeToGridType ()
     switch (edge)
     {
 	case Left:
-	    ret = (int) optionGetLeftEdgeAction ();
+	    ret = optionGetLeftEdgeAction ();
 	    break;
 
 	case Right:
-	    ret = (int) optionGetRightEdgeAction ();
+	    ret = optionGetRightEdgeAction ();
 	    break;
 
 	case Top:
-	    ret = (int) optionGetTopEdgeAction ();
+	    ret = optionGetTopEdgeAction ();
 	    break;
 
 	case Bottom:
-	    ret = (int) optionGetBottomEdgeAction ();
+	    ret = optionGetBottomEdgeAction ();
 	    break;
 
 	case TopLeft:
-	    ret = (int) optionGetTopLeftCornerAction ();
+	    ret = optionGetTopLeftCornerAction ();
 	    break;
 
 	case TopRight:
-	    ret = (int) optionGetTopRightCornerAction ();
+	    ret = optionGetTopRightCornerAction ();
 	    break;
 
 	case BottomLeft:
-	    ret = (int) optionGetBottomLeftCornerAction ();
+	    ret = optionGetBottomLeftCornerAction ();
 	    break;
 
 	case BottomRight:
-	    ret = (int) optionGetBottomRightCornerAction ();
+	    ret = optionGetBottomRightCornerAction ();
 	    break;
 
 	case NoEdge:
@@ -982,9 +982,9 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 {
     window->moveNotify (dx, dy, immediate);
 
-    if (isGridResized &&
-	!isGridHorzMaximized &&
-	!isGridVertMaximized &&
+    if (isGridResized		&&
+	!isGridHorzMaximized	&&
+	!isGridVertMaximized	&&
 	!GridScreen::get (screen)->mSwitchingVp)
     {
 	if (window->grabbed () && screen->grabExist ("expo"))
@@ -996,6 +996,7 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 	    gScreen->restoreWindow (0, 0, gScreen->o);
 	    return;
 	}
+
 	if (window->grabbed () && (grabMask & CompWindowGrabMoveMask))
 	{
 	    pointerBufDx += dx;
@@ -1058,13 +1059,13 @@ GridScreen::restoreWindow (CompAction         *action,
     GRID_WINDOW (cw);
 
     /* We have nothing to do here */
-    if (!gw->isGridResized &&
-	!gw->isGridVertMaximized &&
+    if (!gw->isGridResized		&&
+	!gw->isGridVertMaximized	&&
 	!gw->isGridHorzMaximized)
 	return false;
 
-    else if (!gw->isGridResized &&
-	     gw->isGridHorzMaximized &&
+    else if (!gw->isGridResized		&&
+	     gw->isGridHorzMaximized	&&
 	     !gw->isGridVertMaximized)
     {
 	/* Window has been horizontally maximized by grid. We only need
@@ -1073,8 +1074,8 @@ GridScreen::restoreWindow (CompAction         *action,
 	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
 	xwcm |=  CWY | CWHeight;
     }
-    else if (!gw->isGridResized &&
-	     !gw->isGridHorzMaximized &&
+    else if (!gw->isGridResized		&&
+	     !gw->isGridHorzMaximized	&&
 	     gw->isGridVertMaximized)
     {
 	/* Window has been vertically maximized by grid. We only need
@@ -1083,8 +1084,8 @@ GridScreen::restoreWindow (CompAction         *action,
 	    gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
 	xwcm |= CWX | CWWidth;
     }
-    else if (gw->isGridResized &&
-	     !gw->isGridHorzMaximized &&
+    else if (gw->isGridResized		&&
+	     !gw->isGridHorzMaximized	&&
 	     !gw->isGridVertMaximized)
 	/* Window is just gridded (center, corners).
 	 * We need to handle everything. */
@@ -1093,7 +1094,7 @@ GridScreen::restoreWindow (CompAction         *action,
     {
 	/* This should never happen. But if it does, just bail out
 	 * gracefully. */
-	assert (gw->isGridResized &&
+	assert (gw->isGridResized	&&
 		(gw->isGridHorzMaximized || gw->isGridVertMaximized));
 	return false;
     }
