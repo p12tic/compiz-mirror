@@ -2,7 +2,7 @@
 <compiz>
     <plugin name="obs" useBcop="true">
 	<_short>Opacity, Brightness and Saturation</_short>
-	<_long>Opacity, Brightness and Saturation per window adjustments</_long>
+	<_long>Per window adjustments of opacity, brightness and saturation</_long>
 	<category>Accessibility</category>
 	<deps>
 	    <requirement>
