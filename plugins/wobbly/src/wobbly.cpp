@@ -438,7 +438,7 @@ Model::calcBounds ()
 
     Object *object = objects;
 
-    for (int i = 0; i < numObjects; i++, object++)
+    for (int i = 0; i < numObjects; ++i, ++object)
     {
 	if (topLeft.x > object->position.x)
 	    topLeft.x = object->position.x;
@@ -461,7 +461,7 @@ Model::addSpring (Object *a,
     Spring *spring;
 
     spring = &springs[numSprings];
-    numSprings++;
+    ++numSprings;
 
     spring->init (a, b, offsetX, offsetY);
 }
@@ -582,8 +582,8 @@ Model::adjustObjectPosition (Object *object,
     Object *o;
     int	   i = 0;
 
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, i++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++i)
 	{
 	    o = &objects[i];
 	    if (o == object)
@@ -607,8 +607,8 @@ Model::initObjects (int	x,
 
     Object *object = objects;
 
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, object++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    object->init (x + (gridX * width) / gw,
 			  y + (gridY * height) / gh,
@@ -636,7 +636,7 @@ WobblyWindow::updateModelSnapping ()
 	edgeMask &= ~WestEdgeMask;
 
     Object *object = model->objects;
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
     {
 	if (gridY == 0)
 	    gridMask = edgeMask & NorthEdgeMask;
@@ -645,7 +645,7 @@ WobblyWindow::updateModelSnapping ()
 	else
 	    gridMask = 0;
 
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, object++)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    mask = gridMask;
 
@@ -685,8 +685,8 @@ Model::reduceEdgeEscapeVelocity ()
 {
     Object *object = objects;
 
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, object++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    if (object->vertEdge.snapped)
 		object->vertEdge.velocity *= drand48 () * 0.25f;
@@ -703,8 +703,8 @@ Model::disableSnapping ()
 
     Object *object = objects;
 
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, object++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    if (object->vertEdge.snapped ||
 		object->horzEdge.snapped)
@@ -734,8 +734,8 @@ Model::adjustObjectsForShiver (int   x,
     float h = height;
 
     Object *object = objects;
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, object++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    if (!object->immobile)
 	    {
@@ -766,9 +766,9 @@ Model::initSprings (int   x,
     float hpad = ((float) width) / (GRID_WIDTH  - 1);
     float vpad = ((float) height) / (GRID_HEIGHT - 1);
 
-    for (int gridY = 0; gridY < GRID_HEIGHT; gridY++)
+    for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
     {
-	for (int gridX = 0; gridX < GRID_WIDTH; gridX++, i++)
+	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++i)
 	{
 	    if (gridX > 0)
 		addSpring (&objects[i - 1],
@@ -788,7 +788,7 @@ Model::move (float tx,
 	     float ty)
 {
     Object *object = objects;
-    for (int i = 0; i < numObjects; i++, object++)
+    for (int i = 0; i < numObjects; ++i, ++object)
     {
 	object->position.x += tx;
 	object->position.y += ty;
@@ -849,7 +849,7 @@ WobblyWindow::objectReleaseWestEastEdge (Object	*object,
     {
 	object->position.x += object->velocity.x * 2.0f;
 
-	model->snapCnt[dir]--;
+	--model->snapCnt[dir];
 
 	object->vertEdge.snapped = false;
 	object->edgeMask = 0;
@@ -872,7 +872,7 @@ WobblyWindow::objectReleaseNorthSouthEdge (Object    *object,
     {
 	object->position.y += object->velocity.y * 2.0f;
 
-	model->snapCnt[dir]--;
+	--model->snapCnt[dir];
 
 	object->horzEdge.snapped = false;
 	object->edgeMask = 0;
@@ -935,7 +935,7 @@ WobblyWindow::modelStepObject (Object *object,
 			object->position.x = object->vertEdge.next;
 			object->velocity.x = 0.0f;
 
-			model->snapCnt[West]++;
+			++model->snapCnt[West];
 
 			updateModelSnapping ();
 		    }
@@ -966,7 +966,7 @@ WobblyWindow::modelStepObject (Object *object,
 			object->position.x = object->vertEdge.next;
 			object->velocity.x = 0.0f;
 
-			model->snapCnt[East]++;
+			++model->snapCnt[East];
 
 			updateModelSnapping ();
 		    }
@@ -1000,7 +1000,7 @@ WobblyWindow::modelStepObject (Object *object,
 			object->position.y = object->horzEdge.next;
 			object->velocity.y = 0.0f;
 
-			model->snapCnt[North]++;
+			++model->snapCnt[North];
 
 			updateModelSnapping ();
 		    }
@@ -1031,7 +1031,7 @@ WobblyWindow::modelStepObject (Object *object,
 			object->position.y = object->horzEdge.next;
 			object->velocity.y = 0.0f;
 
-			model->snapCnt[South]++;
+			++model->snapCnt[South];
 
 			updateModelSnapping ();
 		    }
@@ -1077,12 +1077,12 @@ WobblyWindow::modelStep (float friction,
     if (!steps)
 	return WobblyInitialMask;
 
-    for (int j = 0; j < steps; j++)
+    for (int j = 0; j < steps; ++j)
     {
-	for (int i = 0; i < model->numSprings; i++)
+	for (int i = 0; i < model->numSprings; ++i)
 	    model->springs[i].exertForces (k);
 
-	for (int i = 0; i < model->numObjects; i++)
+	for (int i = 0; i < model->numObjects; ++i)
 	{
 	    velocitySum += modelStepObject (&model->objects[i],
 					    friction,
@@ -1123,8 +1123,8 @@ Model::bezierPatchEvaluate (float u,
     float x = 0.0f;
     float y = 0.0f;
 
-    for (int i = 0; i < 4; i++)
-	for (int j = 0; j < 4; j++)
+    for (int i = 0; i < 4; ++i)
+	for (int j = 0; j < 4; ++j)
 	{
 	    x += coeffsU[i] * coeffsV[j] *
 		objects[j * GRID_WIDTH + i].position.x;
@@ -1178,7 +1178,7 @@ Model::findNearestObject (float x,
     Object *object = &objects[0];
     float  distance, minDistance = 0.0;
 
-    for (int i = 0; i < numObjects; i++)
+    for (int i = 0; i < numObjects; ++i)
     {
 	distance = objects[i].distanceToPoint (x, y);
 	if (i == 0 || distance < minDistance)
@@ -1264,7 +1264,7 @@ WobblyScreen::preparePaint (int msSinceLastPaint)
 			    float topmostYPos    = MAXSHORT;
 			    float bottommostYPos = MINSHORT;
 
-			    for (int i = 0; i < GRID_WIDTH; i++)
+			    for (int i = 0; i < GRID_WIDTH; ++i)
 			    {
 				int modelY = model->objects[i].position.y;
 
@@ -1822,7 +1822,7 @@ WobblyWindow::moveNotify (int  dx,
 	    {
 		Object *object = model->objects;
 
-		for (int i = 0; i < model->numObjects; i++, object++)
+		for (int i = 0; i < model->numObjects; ++i, ++object)
 		    if (object->immobile)
 		    {
 			object->position.x += dx;
@@ -1858,9 +1858,9 @@ WobblyWindow::grabNotify (int          x,
 
     wScreen->moveWindow = false;
 
-    if (mask & (CompWindowGrabButtonMask) &&
-	mask & (CompWindowGrabMoveMask) &&
-	wScreen->optionGetMoveWindowMatch ().evaluate (window) &&
+    if (mask & (CompWindowGrabButtonMask)			&&
+	mask & (CompWindowGrabMoveMask)				&&
+	wScreen->optionGetMoveWindowMatch ().evaluate (window)	&&
 	isWobblyWin ())
     {
 	wScreen->moveWindow = true;
@@ -1928,7 +1928,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetGrabWindowMatch ().evaluate (window))
 	    {
-		for (int i = 0; i < model->numSprings; i++)
+		for (int i = 0; i < model->numSprings; ++i)
 		{
 		    s = &model->springs[i];
 

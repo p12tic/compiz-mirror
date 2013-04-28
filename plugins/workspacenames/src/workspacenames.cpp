@@ -29,7 +29,6 @@ namespace
     const unsigned short TEXT_BORDER = 2;
 }
 
-
 CompString
 WSNamesScreen::getCurrentWSName ()
 {
@@ -39,7 +38,7 @@ WSNamesScreen::getCurrentWSName ()
     CompOption::Value::Vector names     = optionGetNames ();
 
     int currentVp = screen->vp ().y () * screen->vpSize ().width () +
-		screen->vp ().x () + 1;
+		    screen->vp ().x () + 1;
     int listSize  = MIN (vpNumbers.size (), names.size ());
 
     for (int i = 0; i < listSize; i++)
@@ -65,20 +64,21 @@ WSNamesScreen::renderNameText ()
     attrib.maxWidth  = screen->getCurrentOutputExtents ().width () * 3 / 4;
     attrib.maxHeight = 100;
 
-    attrib.family = "Sans";
-    attrib.size = optionGetTextFontSize ();
+    attrib.family    = "Sans";
+    attrib.size      = optionGetTextFontSize ();
 
-    attrib.color[0] = optionGetFontColorRed ();
-    attrib.color[1] = optionGetFontColorGreen ();
-    attrib.color[2] = optionGetFontColorBlue ();
-    attrib.color[3] = optionGetFontColorAlpha ();
+    attrib.color[0]  = optionGetFontColorRed ();
+    attrib.color[1]  = optionGetFontColorGreen ();
+    attrib.color[2]  = optionGetFontColorBlue ();
+    attrib.color[3]  = optionGetFontColorAlpha ();
 
-    attrib.flags = CompText::WithBackground | CompText::Ellipsized;
+    attrib.flags     = CompText::WithBackground | CompText::Ellipsized;
+
     if (optionGetBoldText ())
 	attrib.flags |= CompText::StyleBold;
 
-    attrib.bgHMargin = 15;
-    attrib.bgVMargin = 15;
+    attrib.bgHMargin  = 15;
+    attrib.bgVMargin  = 15;
     attrib.bgColor[0] = optionGetBackColorRed ();
     attrib.bgColor[1] = optionGetBackColorGreen ();
     attrib.bgColor[2] = optionGetBackColorBlue ();
@@ -100,6 +100,7 @@ WSNamesScreen::getTextPlacementPosition ()
 	case WorkspacenamesOptions::TextPlacementCenteredOnScreen:
 	    y = oe.centerY () + textData.getHeight () / 2;
 	    break;
+
 	case WorkspacenamesOptions::TextPlacementTopOfScreen:
 	case WorkspacenamesOptions::TextPlacementBottomOfScreen:
 	    {
@@ -114,6 +115,7 @@ WSNamesScreen::getTextPlacementPosition ()
 			workArea.height () - (2 * border);
 	    }
 	    break;
+
 	default:
 	    return CompPoint (floor (x),
 			      oe.centerY () - textData.getHeight () / 2);
@@ -236,6 +238,7 @@ WSNamesScreen::handleEvent (XEvent *event)
 	int timeout = optionGetDisplayTime () * 1000;
 
 	timer = 0;
+
 	if (timeoutHandle.active ())
 	    timeoutHandle.stop ();
 
@@ -268,8 +271,8 @@ bool
 WorkspacenamesPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
+	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return false;
 
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
