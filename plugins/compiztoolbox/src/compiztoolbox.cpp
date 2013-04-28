@@ -29,8 +29,8 @@
 #include <core/abiversion.h>
 #include <core/propertywriter.h>
 
-const unsigned short ICON_SIZE = 48;
-const unsigned int MAX_ICON_SIZE = 256;
+const unsigned short ICON_SIZE = 256;
+const unsigned int MAX_ICON_SIZE = 512;
 
 bool openGLAvailable;
 

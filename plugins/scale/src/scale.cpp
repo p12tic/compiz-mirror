@@ -137,7 +137,7 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	GLWindowPaintAttrib sAttrib (attrib);
 	GLTexture           *icon;
 
-	icon = priv->gWindow->getIcon (96, 96);
+	icon = priv->gWindow->getIcon (256, 256);
 	if (!icon)
 	    icon = priv->spScreen->gScreen->defaultIcon ();
 

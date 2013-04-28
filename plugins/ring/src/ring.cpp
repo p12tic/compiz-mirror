@@ -33,7 +33,7 @@ COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
 const double PI = 3.14159265359f;
 
-const unsigned short ICON_SIZE = 64;
+const unsigned short ICON_SIZE = 256;
 
 bool textAvailable;
 

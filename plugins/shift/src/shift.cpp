@@ -320,7 +320,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	{
 	    GLTexture *icon;
 
-	    icon = gWindow->getIcon (96, 96);
+	    icon = gWindow->getIcon (256, 256);
 
 	    if (!icon)
 		icon = ss->gScreen->defaultIcon ();
