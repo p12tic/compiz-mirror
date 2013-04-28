@@ -202,7 +202,7 @@
 				</option>
 				<option name="title_font_size" type="int">
 					<_short>Font Size</_short>
-					<_long>Font size of the window title text (in pixel).</_long>
+					<_long>Font size of the window title text (in pixels).</_long>
 					<default>16</default>
 					<min>6</min>
 					<max>96</max>
