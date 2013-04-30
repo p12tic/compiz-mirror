@@ -950,7 +950,6 @@ GridWindow::grabNotify (int          x,
     else if (gwHandler.resetResize ())
     {
 	isGridResized = false;
-
 	resizeCount = 0;
     }
 
