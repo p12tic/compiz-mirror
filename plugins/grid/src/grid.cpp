@@ -1132,14 +1132,14 @@ GridScreen::restoreWindow (CompAction         *action,
     }
 
     /* We just need the original size, if
-     * "Snap back windows to original size" is
-     * enabled */
-    if (optionGetSnapbackWindows ())
+     * this option is enabled or we are not grabbed */
+    if (optionGetSnapbackWindows () ||
+	!(cw == mGrabWindow))
     {
 	xwc.width  = gw->originalSize.width ();
 	xwc.height = gw->originalSize.height ();
     }
-    else /* we do not want to snap off to original size */
+    else
     {
 	/* the current size is also our new size */
 	xwc.width  = gw->currentSize.width ();
