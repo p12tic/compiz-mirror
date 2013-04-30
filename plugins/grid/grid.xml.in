@@ -21,479 +21,474 @@
 	    <group>
 		<_short>Bindings</_short>
 		<option name="put_center_key" type="key">
-		    <_short>Put Center</_short>
-		    <_long>Move window to the center</_long>
+		    <_short>Put Center Key</_short>
+		    <_long>Move window to the center.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_5</default>
 		</option>
 		<option name="put_left_key" type="key">
-		    <_short>Put Left</_short>
-		    <_long>Move window to the left edge</_long>
+		    <_short>Put Left Key</_short>
+		    <_long>Move window to the left edge.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_4</default>
 		</option>
 		<option name="put_right_key" type="key">
-		    <_short>Put Right</_short>
-		    <_long>Move window to the right edge</_long>
+		    <_short>Put Right Key</_short>
+		    <_long>Move window to the right edge.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_6</default>
 		</option>
 		<option name="put_top_key" type="key">
-		    <_short>Put Top</_short>
-		    <_long>Move window to the top edge</_long>
+		    <_short>Put Top Key</_short>
+		    <_long>Move window to the top edge.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_8</default>
 		</option>
 		<option name="put_bottom_key" type="key">
-		    <_short>Put Bottom</_short>
-		    <_long>Move window to the bottom edge</_long>
+		    <_short>Put Bottom Key</_short>
+		    <_long>Move window to the bottom edge.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_2</default>
 		</option>
 		<option name="put_topleft_key" type="key">
-		    <_short>Put Top Left</_short>
-		    <_long>Move window to the top left corner</_long>
+		    <_short>Put Top Left Key</_short>
+		    <_long>Move window to the top left corner.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_7</default>
 		</option>
 		<option name="put_topright_key" type="key">
-		    <_short>Put Top Right</_short>
-		    <_long>Move window to the top right corner</_long>
+		    <_short>Put Top Right Key</_short>
+		    <_long>Move window to the top right corner.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_9</default>
 		</option>
 		<option name="put_bottomleft_key" type="key">
-		    <_short>Put Bottom Left</_short>
-		    <_long>Move window to the bottom left corner</_long>
+		    <_short>Put Bottom Left Key</_short>
+		    <_long>Move window to the bottom left corner.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_1</default>
 		</option>
 		<option name="put_bottomright_key" type="key">
-		    <_short>Put Bottom Right</_short>
-		    <_long>Move window to the bottom right corner</_long>
+		    <_short>Put Bottom Right Key</_short>
+		    <_long>Move window to the bottom right corner.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_3</default>
 		</option>
 		<option name="put_maximize_key" type="key">
-		    <_short>Maximize</_short>
-		    <_long>Maximize window</_long>
+		    <_short>Maximize Key</_short>
+		    <_long>Maximize window.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;KP_0</default>
 		</option>
 		<option name="put_restore_key" type="key">
 		    <_short>Restore</_short>
-		    <_long>Restores grid-resized, semi-maximized and maximized windows to their original size and position.</_long>
-		    <default>&lt;Control&gt;&lt;Alt&gt;r</default>
+		    <_long>Restore window to it's original size. Note: Use the same shortcut you are using to unmaximize a window to be able to restore grid-maximized windows.</_long>
+		    <default>&lt;Alt&gt;F5</default>
 		</option>
 	    </group>
 	    <group>
-		<_short>Edges</_short>
-		<subgroup>
-			<_short>Resize Actions</_short>
-			<_long>Window resize action</_long>
-			<option name="top_left_corner_action" type="int">
-			    <_short>Upper Left Corner</_short>
-			    <_long>Action to be performed when window is dropped on the top left corner.</_long>
-			    <default>4</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="top_edge_action" type="int">
-			    <_short>Top Edge</_short>
-			    <_long>Action to be performed when window is dropped on the top edge.</_long>
-			    <default>10</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="top_right_corner_action" type="int">
-			    <_short>Upper Right Corner</_short>
-			    <_long>Action to be performed when window is dropped on the top right corner.</_long>
-			    <default>6</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="left_edge_action" type="int">
-			    <_short>Left Edge</_short>
-			    <_long>Action to be performed when window is dropped on the left edge.</_long>
-			    <default>4</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="right_edge_action" type="int">
-			    <_short>Right Edge</_short>
-			    <_long>Action to be performed when window is dropped on the right edge.</_long>
-			    <default>6</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="bottom_left_corner_action" type="int">
-			    <_short>Bottom Left Corner</_short>
-			    <_long>Action to be performed when window is dropped on the bottom left corner.</_long>
-			    <default>4</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="bottom_edge_action" type="int">
-			    <_short>Bottom Edge</_short>
-			    <_long>Action to be performed when window is dropped on the bottom edge.</_long>
-			    <default>0</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="bottom_right_corner_action" type="int">
-			    <_short>Bottom Right Corner</_short>
-			    <_long>Action to be performed when window is dropped on the bottom right corner.</_long>
-			    <default>6</default>
-			    <min>0</min>
-			    <max>10</max>
-			    <desc>
-				<value>0</value>
-				<_name>None</_name>
-			    </desc>
-			    <desc>
-				<value>1</value>
-				<_name>Bottom Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>2</value>
-				<_name>Bottom Half</_name>
-			    </desc>
-			    <desc>
-				<value>3</value>
-				<_name>Bottom Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>4</value>
-				<_name>Left Half</_name>
-			    </desc>
-			    <desc>
-				<value>5</value>
-				<_name>Fill Screen</_name>
-			    </desc>
-			    <desc>
-				<value>6</value>
-				<_name>Right Half</_name>
-			    </desc>
-			    <desc>
-				<value>7</value>
-				<_name>Top Left Corner</_name>
-			    </desc>
-			    <desc>
-				<value>8</value>
-				<_name>Top Half</_name>
-			    </desc>
-			    <desc>
-				<value>9</value>
-				<_name>Top Right Corner</_name>
-			    </desc>
-			    <desc>
-				<value>10</value>
-				<_name>Maximize</_name>
-			    </desc>
-			</option>
-			<option name="snapoff_maximized" type="bool">
-				<_short>Snapoff Maximized/Semi-maximized Windows</_short>
-				<_long>Snapoff maximized and vertically maximized windows by dragging them up or down and horizontally maximized ones by dragging them left or right.</_long>
-				<default>false</default>
-			</option>
+		<_short>Corners / Edges</_short>
+		<option name="top_left_corner_action" type="int">
+		    <_short>Upper Left Corner</_short>
+		    <_long>Action to be performed when window is dropped on the top left corner.</_long>
+		    <default>4</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="top_edge_action" type="int">
+		    <_short>Top Edge</_short>
+		    <_long>Action to be performed when window is dropped on the top edge.</_long>
+		    <default>10</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="top_right_corner_action" type="int">
+		    <_short>Upper Right Corner</_short>
+		    <_long>Action to be performed when window is dropped on the top right corner.</_long>
+		    <default>6</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="left_edge_action" type="int">
+		    <_short>Left Edge</_short>
+		    <_long>Action to be performed when window is dropped on the left edge.</_long>
+		    <default>4</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="right_edge_action" type="int">
+		    <_short>Right Edge</_short>
+		    <_long>Action to be performed when window is dropped on the right edge.</_long>
+		    <default>6</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="bottom_left_corner_action" type="int">
+		    <_short>Bottom Left Corner</_short>
+		    <_long>Action to be performed when window is dropped on the bottom left corner.</_long>
+		    <default>4</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="bottom_edge_action" type="int">
+		    <_short>Bottom Edge</_short>
+		    <_long>Action to be performed when window is dropped on the bottom edge.</_long>
+		    <default>0</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+		<option name="bottom_right_corner_action" type="int">
+		    <_short>Bottom Right Corner</_short>
+		    <_long>Action to be performed when window is dropped on the bottom right corner.</_long>
+		    <default>6</default>
+		    <min>0</min>
+		    <max>10</max>
+		    <desc>
+			<value>0</value>
+			<_name>None</_name>
+		    </desc>
+		    <desc>
+			<value>1</value>
+			<_name>Bottom Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>2</value>
+			<_name>Bottom Half</_name>
+		    </desc>
+		    <desc>
+			<value>3</value>
+			<_name>Bottom Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>4</value>
+			<_name>Left Half</_name>
+		    </desc>
+		    <desc>
+			<value>5</value>
+			<_name>Fill Screen</_name>
+		    </desc>
+		    <desc>
+			<value>6</value>
+			<_name>Right Half</_name>
+		    </desc>
+		    <desc>
+			<value>7</value>
+			<_name>Top Left Corner</_name>
+		    </desc>
+		    <desc>
+			<value>8</value>
+			<_name>Top Half</_name>
+		    </desc>
+		    <desc>
+			<value>9</value>
+			<_name>Top Right Corner</_name>
+		    </desc>
+		    <desc>
+			<value>10</value>
+			<_name>Maximize</_name>
+		    </desc>
+		</option>
+	    </group>
+	    <group>
+		<_short>Resize Actions</_short>
 			<option name="snapback_windows" type="bool">
 				<_short>Snap Windows Back To Original Size</_short>
 				<_long>Snaps windows back to their original size if dragged away from their gridded position.</_long>
@@ -504,9 +499,8 @@
 				<_long>Cycle through multiple different sizes by using the same keyboard shortcut multiple times in a row.</_long>
 				<default>false</default>
 			</option>
-		</subgroup>
 		<subgroup>
-			<_short>Thresholds</_short>
+			<_short>Grid Snapback Thresholds</_short>
 			<option name="left_edge_threshold" type="int">
 				<_short>Left Edge</_short>
 				<_long>Maximum number of pixels from the left edge a window can be dropped.</_long>
@@ -532,6 +526,16 @@
 				<_short>Bottom Edge</_short>
 				<_long>Maximum number of pixels from the bottom edge a window can be dropped.</_long>
 				<default>5</default>
+				<min>0</min>
+				<max>500</max>
+			</option>
+		</subgroup>
+		<subgroup>
+			<_short>Grid Snapoff Threshold</_short>
+			<option name="snapoff_threshold" type="int">
+				<_short>Left Edge</_short>
+				<_long>The pixels to drag until a grid-resized window snaps off.</_long>
+				<default>50</default>
 				<min>0</min>
 				<max>500</max>
 			</option>

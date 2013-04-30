@@ -36,8 +36,8 @@ static std::map <unsigned int, GridProps> gridProps;
 static int const CURVE_ANIMATION = 35;
 
 void
-GridScreen::handleCompizEvent(const char*    plugin,
-			      const char*    event,
+GridScreen::handleCompizEvent(const char           *plugin,
+			      const char           *event,
 			      CompOption::Vector&  o)
 {
     if (strcmp(event, "start_viewport_switch") == 0)
@@ -118,12 +118,12 @@ GridScreen::setCurrentRect (Animation &anim)
 }
 
 bool
-GridScreen::initiateCommon (CompAction		*action,
-			    CompAction::State	state,
-			    CompOption::Vector	&option,
-			    unsigned int	where,
-			    bool		resize,
-			    bool		key)
+GridScreen::initiateCommon (CompAction          *action,
+			    CompAction::State   state,
+			    CompOption::Vector  &option,
+			    unsigned int        where,
+			    bool                resize,
+			    bool                key)
 {
     CompWindow *cw = 0;
 
@@ -174,9 +174,8 @@ GridScreen::initiateCommon (CompAction		*action,
 		gw->originalSize = slotToRect(cw, cw->serverBorderRect ());
 	}
 
-	if ((cw->state () & MAXIMIZE_STATE) &&
-	    (resize || optionGetSnapoffMaximized ()))
-	    /* maximized state interferes with us, clear it */
+	if ((cw->state () & MAXIMIZE_STATE) && resize)
+	    // maximized state interferes with us, clear it
 	    cw->maximize (0);
 
 	if ((where & GridMaximize) && resize)
@@ -184,13 +183,15 @@ GridScreen::initiateCommon (CompAction		*action,
 	    /* move the window to the correct output */
 	    if (cw == mGrabWindow)
 	    {
-		/* TODO: Remove these magic numbers */
-		xwc.x = workarea.x () + 50;
-		xwc.y = workarea.y () + 50;
+		int snapoffThreshold = optionGetSnapoffThreshold ();
+
+		xwc.x = workarea.x () + snapoffThreshold;
+		xwc.y = workarea.y () + snapoffThreshold;
 		xwc.width = workarea.width ();
 		xwc.height = workarea.height ();
 		cw->configureXWindow (CWX | CWY, &xwc);
 	    }
+
 	    cw->maximize (MAXIMIZE_STATE);
 	    /* Core can handle fully maximized windows so we don't
 	     * have to worry about them. Don't mark the window as a
@@ -247,12 +248,12 @@ GridScreen::initiateCommon (CompAction		*action,
 	 * unless the user explicitely specified that in CCSM
 	 */
 	if (gw->lastTarget == where &&
-	    gw->isGridResized &&
+	    gw->isGridResized	    &&
 	    !optionGetCycleSizes ())
 	    return false;
 
-	/* !(Grid Left/Right/Top/Bottom) are only valid here, if
-	 * cycling through sizes is disabled also
+	/* !(Grid Left/Right/Top/Bottom) are only valid here,
+	 * if cycling through sizes is disabled also
 	 */
 	if ((where & ~(GridMaximize) ||
 	     ((!horzMaximizedGridPosition || !vertMaximizedGridPosition) &&
@@ -399,7 +400,7 @@ GridScreen::initiateCommon (CompAction		*action,
 
 		    rwc.x = gw->originalSize.x ();
 		    rwc.y = gw->originalSize.y ();
-		    rwc.width = gw->originalSize.width ();
+		    rwc.width  = gw->originalSize.width ();
 		    rwc.height = gw->originalSize.height ();
 
 		    cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
@@ -491,13 +492,13 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 			      const GLMatrix            &transform,
 			      CompOutput                *output)
 {
-    CompRect rect;
-    GLMatrix sTransform (transform);
+    CompRect        rect;
+    GLMatrix        sTransform (transform);
     std::vector<Animation>::iterator iter;
-    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLVertexBuffer  *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     GLfloat         vertexData[12];
     GLushort        colorData[4];
-    GLushort       *color;
+    GLushort        *color;
     GLboolean       isBlendingEnabled;
 
     const float MaxUShortFloat = std::numeric_limits <unsigned short>::max ();
@@ -701,7 +702,6 @@ GridScreen::typeToMask (int t)
     type.push_back (GridTypeMask (GridWindowType::GridTopRight, 9));
     type.push_back (GridTypeMask (GridWindowType::GridMaximize, 10));
 
-
     for (unsigned int i = 0; i < type.size (); ++i)
     {
 	GridTypeMask &tm = type[i];
@@ -862,6 +862,7 @@ GridScreen::handleEvent (XEvent *event)
 	    if (edge != NoEdge && check)
 	    {
 		CompWindow *cw = screen->findWindow (screen->activeWindow ());
+
 		if (cw)
 		{
 		    animations.push_back (Animation ());
@@ -894,12 +895,13 @@ GridScreen::handleEvent (XEvent *event)
     {
 	GRID_WINDOW (w);
 
-	if ((gw->pointerBufDx > SNAPOFF_THRESHOLD ||
-	     gw->pointerBufDy > SNAPOFF_THRESHOLD ||
-	     gw->pointerBufDx < -SNAPOFF_THRESHOLD ||
-	     gw->pointerBufDy < -SNAPOFF_THRESHOLD) &&
-	     gw->isGridResized &&
-	     optionGetSnapbackWindows ())
+	int snapoffThreshold = optionGetSnapoffThreshold ();
+
+	if ((gw->pointerBufDx > snapoffThreshold   ||
+	     gw->pointerBufDy > snapoffThreshold   ||
+	     gw->pointerBufDx < -snapoffThreshold  ||
+	     gw->pointerBufDy < -snapoffThreshold) &&
+	     gw->isGridResized)
 	    restoreWindow (0, 0, o);
     }
 }
@@ -938,13 +940,12 @@ GridWindow::grabNotify (int          x,
 	pointerBufDx = pointerBufDy = 0;
 	grabMask = mask;
 
-	if (!isGridResized &&
-	    !isGridHorzMaximized &&
-	    !isGridVertMaximized &&
+	if (!isGridResized	    &&
+	    !isGridHorzMaximized    &&
+	    !isGridVertMaximized    &&
 	    gScreen->optionGetSnapbackWindows ())
 	    /* Store size not including borders when grabbing with cursor */
-	    originalSize = gScreen->slotToRect(window,
-					       window->serverBorderRect ());
+	    originalSize = gScreen->slotToRect (window, window->serverBorderRect ());
     }
     else if (gwHandler.resetResize ())
     {
@@ -1050,8 +1051,8 @@ GridScreen::restoreWindow (CompAction         *action,
 			   CompOption::Vector &option)
 {
     XWindowChanges xwc;
-    int xwcm = 0;
-    CompWindow *cw = screen->findWindow (screen->activeWindow ());
+    int            xwcm = 0;
+    CompWindow     *cw = screen->findWindow (screen->activeWindow ());
 
     if (!cw)
 	return false;
@@ -1101,8 +1102,12 @@ GridScreen::restoreWindow (CompAction         *action,
 
     if (cw == mGrabWindow)
     {
-	xwc.x = pointerX - (gw->originalSize.width () / 2);
-	xwc.y = pointerY + (cw->border ().top / 2);
+	if (optionGetSnapbackWindows ())
+	    xwc.x = pointerX - (gw->originalSize.width () / 2);
+	else
+	    xwc.x = pointerX - (gw->currentSize.width () / 2);
+
+	xwc.y = pointerY + (cw->border ().top / 2) + gw->pointerBufDy;
     }
     else if (cw->grabbed () && screen->grabExist ("expo"))
     {
@@ -1120,19 +1125,30 @@ GridScreen::restoreWindow (CompAction         *action,
 	xwc.y = gw->originalSize.y ();
     }
 
-    xwc.width  = gw->originalSize.width ();
-    xwc.height = gw->originalSize.height ();
+    /* Just if "Snap back windows to original size" is
+     * enabled, we need the original size */
+    if (optionGetSnapbackWindows ())
+    {
+	xwc.width  = gw->originalSize.width ();
+	xwc.height = gw->originalSize.height ();
+    }
+    else
+    {
+	xwc.width  = gw->currentSize.width ();
+	xwc.height = gw->currentSize.height ();
+    }
 
     if (cw->mapNum() && xwcm)
 	cw->sendSyncRequest();
 
     cw->configureXWindow (xwcm, &xwc);
-    gw->currentSize = CompRect ();
-    gw->pointerBufDx = 0;
-    gw->pointerBufDy = 0;
+
+    gw->currentSize         = CompRect ();
+    gw->pointerBufDx        = 0;
+    gw->pointerBufDy        = 0;
     gw->isGridHorzMaximized = false;
     gw->isGridVertMaximized = false;
-    gw->isGridResized = false;
+    gw->isGridResized       = false;
 
     if (cw->state () & MAXIMIZE_STATE)
 	cw->maximize(0);
@@ -1141,18 +1157,6 @@ GridScreen::restoreWindow (CompAction         *action,
     gw->lastTarget = GridUnknown;
 
     return true;
-}
-
-void
-GridScreen::snapbackOptionChanged (CompOption *option,
-				   Options    num)
-{
-    GRID_WINDOW (screen->findWindow
-		 (CompOption::getIntOptionNamed (o, "window")));
-    gw->isGridResized = false;
-    gw->isGridHorzMaximized = false;
-    gw->isGridVertMaximized = false;
-    gw->resizeCount = 0;
 }
 
 void
@@ -1271,6 +1275,7 @@ GridScreen::GridScreen (CompScreen *screen) :
     edge = lastEdge = lastResizeEdge = NoEdge;
     currentWorkarea = lastWorkarea = screen->getWorkareaForOutput
 				     (screen->outputDeviceForPoint (pointerX, pointerY));
+
     gridProps[GridUnknown] = GridProps (0,1, 1,1);
     gridProps[GridBottomLeft]  = GridProps (0,1, 2,2);
     gridProps[GridBottom]  = GridProps (0,1, 1,2);
@@ -1301,9 +1306,6 @@ GridScreen::GridScreen (CompScreen *screen) :
     GRIDSET (PutMaximizeKey, GridWindowType::GridMaximize, true, true);
 
 #undef GRIDSET
-
-    optionSetSnapbackWindowsNotify (boost::bind (&GridScreen::
-						 snapbackOptionChanged, this, _1, _2));
 
     optionSetPutRestoreKeyInitiate (boost::bind (&GridScreen::
 						 restoreWindow, this, _1, _2, _3));
@@ -1381,7 +1383,6 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
 	    wTransform.translate (translateX / scaleX - window->x (),
 				  translateY / scaleY - window->y (), 0.0f);
 
-
 	    gWindow->glPaint (wAttrib, wTransform, region, wMask);
 	}
     }
@@ -1395,8 +1396,8 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
 bool
 GridPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
 
-    return true;
+    return false;
 }
