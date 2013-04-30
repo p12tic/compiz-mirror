@@ -181,6 +181,7 @@ GridScreen::initiateCommon (CompAction          *action,
 	if ((where & GridMaximize) && resize)
 	{
 	    /* move the window to the correct output */
+/*
 	    if (cw == mGrabWindow)
 	    {
 		int snapoffThreshold = optionGetSnapoffThreshold ();
@@ -191,7 +192,7 @@ GridScreen::initiateCommon (CompAction          *action,
 		xwc.height = workarea.height ();
 		cw->configureXWindow (CWX | CWY, &xwc);
 	    }
-
+*/
 	    cw->maximize (MAXIMIZE_STATE);
 	    /* Core can handle fully maximized windows so we don't
 	     * have to worry about them. Don't mark the window as a
@@ -1038,8 +1039,7 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	    lastTarget = GridMaximize;
 
 	if (window->grabbed ())
-	    originalSize = gScreen->slotToRect (window,
-						window->serverBorderRect ());
+	    originalSize = gScreen->slotToRect (window, window->serverBorderRect ());
     }
 
     window->stateChangeNotify (lastState);
@@ -1104,11 +1104,16 @@ GridScreen::restoreWindow (CompAction         *action,
     {
 	/* The windows x-center is different in this case. */
 	if (optionGetSnapbackWindows ())
+	{
 	    xwc.x = pointerX - (gw->originalSize.width () / 2);
-	else
-	    xwc.x = pointerX - (gw->currentSize.width () / 2);
-
-	xwc.y = pointerY + (cw->border ().top / 2);
+	    xwc.y = pointerY + (cw->border ().top / 2);
+	}
+	else /* the user does not want the original size back */
+	{
+	    /* this one is quite tricky to get right */
+	    xwc.x = pointerX - gw->pointerBufDx - gw->currentSize.width () / 2;
+	    xwc.y = pointerY - gw->pointerBufDy + cw->border ().top / 2;
+	}
     }
     else if (cw->grabbed () && screen->grabExist ("expo"))
     {
@@ -1126,15 +1131,17 @@ GridScreen::restoreWindow (CompAction         *action,
 	xwc.y = gw->originalSize.y ();
     }
 
-    /* Just if "Snap back windows to original size" is
-     * enabled, we need the original size */
+    /* We just need the original size, if
+     * "Snap back windows to original size" is
+     * enabled */
     if (optionGetSnapbackWindows ())
     {
 	xwc.width  = gw->originalSize.width ();
 	xwc.height = gw->originalSize.height ();
     }
-    else
+    else /* we do not want to snap off to original size */
     {
+	/* the current size is also our new size */
 	xwc.width  = gw->currentSize.width ();
 	xwc.height = gw->currentSize.height ();
     }
