@@ -897,6 +897,7 @@ GridScreen::handleEvent (XEvent *event)
 
 	int snapoffThreshold = optionGetSnapoffThreshold ();
 
+	/* we just care about snapping of grid-resized windows */
 	if ((gw->pointerBufDx > snapoffThreshold   ||
 	     gw->pointerBufDy > snapoffThreshold   ||
 	     gw->pointerBufDx < -snapoffThreshold  ||
@@ -942,14 +943,14 @@ GridWindow::grabNotify (int          x,
 
 	if (!isGridResized	    &&
 	    !isGridHorzMaximized    &&
-	    !isGridVertMaximized    &&
-	    gScreen->optionGetSnapbackWindows ())
+	    !isGridVertMaximized)
 	    /* Store size not including borders when grabbing with cursor */
 	    originalSize = gScreen->slotToRect (window, window->serverBorderRect ());
     }
     else if (gwHandler.resetResize ())
     {
 	isGridResized = false;
+
 	resizeCount = 0;
     }
 
@@ -1102,12 +1103,13 @@ GridScreen::restoreWindow (CompAction         *action,
 
     if (cw == mGrabWindow)
     {
+	/* The windows x-center is different in this case. */
 	if (optionGetSnapbackWindows ())
 	    xwc.x = pointerX - (gw->originalSize.width () / 2);
 	else
 	    xwc.x = pointerX - (gw->currentSize.width () / 2);
 
-	xwc.y = pointerY + (cw->border ().top / 2) + gw->pointerBufDy;
+	xwc.y = pointerY + (cw->border ().top / 2);
     }
     else if (cw->grabbed () && screen->grabExist ("expo"))
     {
