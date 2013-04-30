@@ -533,7 +533,7 @@
 		<subgroup>
 			<_short>Grid Snapoff Threshold</_short>
 			<option name="snapoff_threshold" type="int">
-				<_short>Left Edge</_short>
+				<_short>General Size</_short>
 				<_long>The pixels to drag until a grid-resized window snaps off.</_long>
 				<default>50</default>
 				<min>0</min>
