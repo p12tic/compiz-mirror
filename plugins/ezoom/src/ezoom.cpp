@@ -392,6 +392,8 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     convertToZoomed (out, box.x1 (), box.y1 (), &inx1, &iny1);
     convertToZoomed (out, box.x2 (), box.y2 (), &inx2, &iny2);
 
+    /* We can move in both directions from our starting point
+     * so we need to calculate the right coordinates first */
     int x1 = MIN (inx1, inx2);
     int y1 = MIN (iny1, iny2);
     int x2 = MAX (inx1, inx2);
@@ -401,7 +403,7 @@ EZoomScreen::drawBox (const GLMatrix &transform,
 
     glEnable (GL_BLEND);
 
-    /* draw filled rectangle */
+    /* Draw filled rectangle */
     float alpha = optionGetZoomBoxFillColorAlpha () / MaxUShortFloat;
     color = optionGetZoomBoxFillColor ();
 
@@ -431,7 +433,7 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     streamingBuffer->end ();
     streamingBuffer->render (zTransform);
 
-    /* draw outline */
+    /* Draw outline */
     alpha = optionGetZoomBoxOutlineColorAlpha () / MaxUShortFloat;
     color = optionGetZoomBoxOutlineColor ();
 
@@ -464,6 +466,12 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     streamingBuffer->render (zTransform);
 
     glDisable (GL_BLEND);
+
+    /* Damage the zoom selection box region during draw */
+    cScreen->damageRegion (CompRegion (x1 - 1,
+				       y1 - 1,
+				       x2 - x1 + 1,
+				       y2 - y1 + 1));
 }
 
 /* Apply the zoom if we are grabbed.
@@ -1133,7 +1141,7 @@ EZoomScreen::drawCursor (CompOutput          *output,
 	 * XXX: expo knows how to handle mouse when zoomed, so we back off
 	 * when expo is active.
 	 */
-	if (screen->grabExist ( "expo"))
+	if (screen->grabExist ("expo"))
 	{
 	    cursorZoomInactive ();
 	    return;
@@ -2004,11 +2012,11 @@ EZoomScreen::~EZoomScreen ()
 bool
 ZoomPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-	!CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)	&&
+	CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
