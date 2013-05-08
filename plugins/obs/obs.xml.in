@@ -22,7 +22,7 @@
 		</option>
 		<option name="opacity_increase_button" type="button">
 		    <_short>Increase Opacity Button</_short>
-		    <_long>Increase the opacity of the window the mousepointer hovers.</_long>
+		    <_long>Increase the opacity of the window the pointer hovers.</_long>
 		    <default>&lt;Alt&gt;Button4</default>
 		</option>
 		<option name="opacity_decrease_key" type="key">
@@ -32,12 +32,12 @@
 		</option>
 		<option name="opacity_decrease_button" type="button">
 		    <_short>Decrease Opacity Button</_short>
-		    <_long>Decrease the opacity of the window the mousepointer hovers.</_long>
+		    <_long>Decrease the opacity of the window the pointer hovers.</_long>
 		    <default>&lt;Alt&gt;Button5</default>
 		</option>
 		<option name="opacity_step" type="int">
 		    <_short>Step Size</_short>
-		    <_long>Opacity de- and increase step size (in percent).</_long>
+		    <_long>Opacity increment and decrement amount (in percent).</_long>
 		    <min>1</min>
 		    <max>10</max>
 		    <default>5</default>
@@ -71,7 +71,7 @@
 		</option>
 		<option name="brightness_increase_button" type="button">
 		    <_short>Increase Brightness Button</_short>
-		    <_long>Increase the brightness of the window the mousepointer hovers.</_long>
+		    <_long>Increase the brightness of the window the pointer hovers.</_long>
 		    <default/>
 		</option>
 		<option name="brightness_decrease_key" type="key">
@@ -81,12 +81,12 @@
 		</option>
 		<option name="brightness_decrease_button" type="button">
 		    <_short>Decrease Brightness Button</_short>
-		    <_long>Decrease the brightness of the window the mousepointer hovers.</_long>
+		    <_long>Decrease the brightness of the window the pointer hovers.</_long>
 		    <default/>
 		</option>
 		<option name="brightness_step" type="int">
 		    <_short>Step Size</_short>
-		    <_long>Brightness de- and increase step size (in percent).</_long>
+		    <_long>Brightness increment and decrement amount (in percent).</_long>
 		    <min>1</min>
 		    <max>10</max>
 		    <default>5</default>
@@ -120,7 +120,7 @@
 		</option>
 		<option name="saturation_increase_button" type="button">
 		    <_short>Increase Saturation Button</_short>
-		    <_long>Increase the saturation of the window the mousepointer hovers.</_long>
+		    <_long>Increase the saturation of the window the pointer hovers.</_long>
 		    <default/>
 		</option>
 		<option name="saturation_decrease_key" type="key">
@@ -130,12 +130,12 @@
 		</option>
 		<option name="saturation_decrease_button" type="button">
 		    <_short>Decrease Saturation Button</_short>
-		    <_long>Decrease the saturation of the window the mousepointer hovers.</_long>
+		    <_long>Decrease the saturation of the window the pointer hovers.</_long>
 		    <default/>
 		</option>
 		<option type="int" name="saturation_step">
 		    <_short>Step Size</_short>
-		    <_long>Saturation de- and increase step size (in percent).</_long>
+		    <_long>Saturation increment and decrement amount (in percent).</_long>
 		    <min>1</min>
 		    <max>10</max>
 		    <default>5</default>
