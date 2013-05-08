@@ -410,12 +410,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
     /* Unredirect any redirected fullscreen windows */
     foreach (CompWindow *fullscreenWindow, unredirected)
-    {
-        if (!fullscreenWindow->minimized())
-        {
-	    CompositeWindow::get (fullscreenWindow)->unredirect ();
-        }
-    }
+	CompositeWindow::get (fullscreenWindow)->unredirect ();
 
     if (!(mask & PAINT_SCREEN_NO_BACKGROUND_MASK))
 	paintBackground (transform,
