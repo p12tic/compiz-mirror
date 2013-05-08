@@ -34,7 +34,7 @@
 extern const unsigned short MODIFIER_OPACITY;
 extern const unsigned short MODIFIER_SATURATION;
 extern const unsigned short MODIFIER_BRIGHTNESS;
-       const unsigned short MODIFIER_COUNT = 3;
+const unsigned short        MODIFIER_COUNT = 3;
 
 class ObsScreen :
     public ScreenInterface,
