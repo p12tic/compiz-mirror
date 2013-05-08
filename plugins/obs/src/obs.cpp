@@ -184,9 +184,7 @@ ObsScreen::matchExpHandlerChanged ()
     foreach (CompWindow *w, screen->windows ())
     {
 	for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
-	{
 	    ObsWindow::get (w)->updatePaintModifier (i);
-	}
     }
 }
 
@@ -194,9 +192,7 @@ void
 ObsScreen::matchPropertyChanged (CompWindow  *w)
 {
     for (unsigned int i = 0; i < MODIFIER_COUNT; ++i)
-    {
 	ObsWindow::get (w)->updatePaintModifier (i);
-    }
 
     screen->matchPropertyChanged (w);
 }
@@ -244,9 +240,7 @@ bool
 ObsWindow::updateTimeout ()
 {
     for (int i = 0; i < MODIFIER_COUNT; ++i)
-    {
 	updatePaintModifier (i);
-    }
 
     return false;
 }
@@ -270,9 +264,7 @@ ObsScreen::setOption (const CompString  &name,
 	if (o == matchOptions[i] || o == valueOptions[i])
 	{
 	    foreach (CompWindow *w, screen->windows ())
-	    {
 		ObsWindow::get (w)->updatePaintModifier (i);
-	    }
 	}
     }
 
@@ -309,10 +301,10 @@ ObsWindow::~ObsWindow ()
 bool
 ObsPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
