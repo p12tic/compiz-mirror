@@ -95,17 +95,3 @@ Actions:
 
 Expected Result:
   Windows get scaled and you can see both the Chrome and Terminal windows.
-
-
-Minimizing an unredirect window (LP: #1053895)
-----------------------------------------------
-Setup:
-#. Create a LibreOffice Impress slide.
-
-Actions:
-#. Put slide into Slide Show mode (F5).
-#. Observe slide is now full screen.
-#. Minimize slide show (Ctrl-Alt-0).
-
-Expected Result:
-  Slide show should minimize and you will see Impress.
