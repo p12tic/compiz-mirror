@@ -168,8 +168,10 @@ GridScreen::initiateCommon (CompAction          *action,
 	    if (props.numCellsX == 1)
 		centerCheck = true;
 
-	    /* Do not overwrite the original size if we already have been gridded */
-	    if (!gw->isGridResized && !gw->isGridHorzMaximized && !gw->isGridVertMaximized)
+	    /* Do not overwrite the original size if we already have been gridded or
+	     * have been grid-maximized */
+	    if (!gw->isGridResized && !gw->isGridHorzMaximized && !gw->isGridVertMaximized &&
+		!(cw->state () & MAXIMIZE_STATE))
 		/* Store size not including borders when using a keybinding */
 		gw->originalSize = slotToRect(cw, cw->serverBorderRect ());
 	}
@@ -180,19 +182,6 @@ GridScreen::initiateCommon (CompAction          *action,
 
 	if ((where & GridMaximize) && resize)
 	{
-	    /* move the window to the correct output */
-/*
-	    if (cw == mGrabWindow)
-	    {
-		int snapoffThreshold = optionGetSnapoffThreshold ();
-
-		xwc.x = workarea.x () + snapoffThreshold;
-		xwc.y = workarea.y () + snapoffThreshold;
-		xwc.width = workarea.width ();
-		xwc.height = workarea.height ();
-		cw->configureXWindow (CWX | CWY, &xwc);
-	    }
-*/
 	    cw->maximize (MAXIMIZE_STATE);
 	    /* Core can handle fully maximized windows so we don't
 	     * have to worry about them. Don't mark the window as a
