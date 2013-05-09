@@ -682,21 +682,29 @@ WobblyWindow::updateModelSnapping ()
 	    {
 		object->edgeMask = mask;
 
-		if (mask & WestEdgeMask &&
-		    !object->vertEdge.snapped)
-		    findNextWestEdge (object);
-		else if (mask & EastEdgeMask &&
-			 !object->vertEdge.snapped)
-		    findNextEastEdge (object);
+		if (mask & WestEdgeMask)
+		{
+		    if (!object->vertEdge.snapped)
+			findNextWestEdge (object);
+		}
+		else if (mask & EastEdgeMask)
+		{
+		    if (!object->vertEdge.snapped)
+			findNextEastEdge (object);
+		}
 		else
 		    object->vertEdge.snapped = false;
 
-		if (mask & NorthEdgeMask &&
-		    !object->horzEdge.snapped)
-		    findNextNorthEdge (object);
-		else if (mask & SouthEdgeMask &&
-			 !object->horzEdge.snapped)
-		    findNextSouthEdge (object);
+		if (mask & NorthEdgeMask)
+		{
+		    if (!object->horzEdge.snapped)
+			findNextNorthEdge (object);
+		}
+		else if (mask & SouthEdgeMask)
+		{
+		    if (!object->horzEdge.snapped)
+			findNextSouthEdge (object);
+		}
 		else
 		    object->horzEdge.snapped = false;
 	    }
