@@ -1394,8 +1394,8 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
 bool
 GridPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
 
-    return true;
+    return false;
 }

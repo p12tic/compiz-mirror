@@ -1219,22 +1219,19 @@ ThumbWindow::~ThumbWindow ()
 	ts->pointedWin = NULL;
 }
 
-
 bool
 ThumbPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
-	return false;
-    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
-    if (!CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
-	return false;
     if (CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
 	textPluginLoaded = true;
     else
 	textPluginLoaded = false;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)	&&
+	CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
+	return true;
+
+    return false;
 }

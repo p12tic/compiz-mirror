@@ -1193,12 +1193,11 @@ SwitchWindow::SwitchWindow (CompWindow *window) :
 bool
 SwitchPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-        !CompPlugin::checkPluginABI ("compiztoolbox", COMPIZ_COMPIZTOOLBOX_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)			&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)		&&
+	CompPlugin::checkPluginABI ("compiztoolbox", COMPIZ_COMPIZTOOLBOX_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
-

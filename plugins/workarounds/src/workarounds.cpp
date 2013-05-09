@@ -1167,14 +1167,14 @@ WorkaroundsWindow::~WorkaroundsWindow ()
 bool
 WorkaroundsPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-
-    if ((CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)) &&
-        (CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)))
+    if (CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) &&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	haveOpenGL = true;
     else
 	haveOpenGL = false;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
+
+    return false;
 }
