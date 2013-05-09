@@ -37,7 +37,8 @@ public:
     typedef enum
     {
 	Desktop = 1,
-	Alpha = 2
+	Alpha = 2,
+	NoOcclusionDetection = 3
     } WinFlag;
 
     typedef unsigned int WinFlags;
