@@ -78,12 +78,16 @@ WobblyWindow::findNextWestEdge (Object *object)
 	    else
 		continue;
 
-	    if (s > object->position.y &&
-		s < end)
-		end = s;
-	    else if (e < object->position.y &&
-		     e > start)
-		start = e;
+	    if (s > object->position.y)
+	    {
+		if (s < end)
+		    end = s;
+	    }
+	    else if (e < object->position.y)
+	    {
+		if (e > start)
+		    start = e;
+	    }
 	    else
 	    {
 		if (s > start)
@@ -98,9 +102,11 @@ WobblyWindow::findNextWestEdge (Object *object)
 		    v = p->geometry ().x () + p->width () +
 			p->border ().right;
 
-		if (v <= x &&
-		    v > v1)
-		    v1 = v;
+		if (v <= x)
+		{
+		    if (v > v1)
+			v1 = v;
+		}
 		else if (v < v2)
 		    v2 = v;
 	    }
@@ -167,12 +173,16 @@ WobblyWindow::findNextEastEdge (Object *object)
 	    else
 		continue;
 
-	    if (s > object->position.y &&
-		s < end)
-		end = s;
-	    else if (e < object->position.y &&
-		     e > start)
-		start = e;
+	    if (s > object->position.y)
+	    {
+		if (s < end)
+		    end = s;
+	    }
+	    else if (e < object->position.y)
+	    {
+		    if (e > start)
+			start = e;
+	    }
 	    else
 	    {
 		if (s > start)
@@ -186,9 +196,11 @@ WobblyWindow::findNextEastEdge (Object *object)
 		else
 		    v = p->geometry ().x () - p->border ().left;
 
-		if (v >= x &&
-		    v < v1)
-		    v1 = v;
+		if (v >= x)
+		{
+		    if (v < v1)
+			v1 = v;
+		}
 		else if (v > v2)
 		    v2 = v;
 	    }
@@ -255,12 +267,16 @@ WobblyWindow::findNextNorthEdge (Object *object)
 	    else
 		continue;
 
-	    if (s > object->position.x &&
-		s < end)
-		end = s;
-	    else if (e < object->position.x &&
-		     e > start)
-		start = e;
+	    if (s > object->position.x)
+	    {
+		if (s < end)
+		    end = s;
+	    }
+	    else if (e < object->position.x)
+	    {
+		if (e > start)
+		    start = e;
+	    }
 	    else
 	    {
 		if (s > start)
@@ -274,9 +290,11 @@ WobblyWindow::findNextNorthEdge (Object *object)
 		else
 		    v = p->geometry ().y () + p->height () + p->border ().bottom;
 
-		if (v <= y &&
-		    v > v1)
-		    v1 = v;
+		if (v <= y)
+		{
+		    if (v > v1)
+			v1 = v;
+		}
 		else if (v < v2)
 		    v2 = v;
 	    }
@@ -343,12 +361,16 @@ WobblyWindow::findNextSouthEdge (Object *object)
 	    else
 		continue;
 
-	    if (s > object->position.x &&
-		s < end)
-		end = s;
-	    else if (e < object->position.x &&
-		     e > start)
-		start = e;
+	    if (s > object->position.x)
+	    {
+		if (s < end)
+		    end = s;
+	    }
+	    else if (e < object->position.x)
+	    {
+		if (e > start)
+		    start = e;
+	    }
 	    else
 	    {
 		if (s > start)
@@ -362,9 +384,11 @@ WobblyWindow::findNextSouthEdge (Object *object)
 		else
 		    v = p->geometry ().y () - p->border ().top;
 
-		if (v >= y &&
-		    v < v1)
-		    v1 = v;
+		if (v >= y)
+		{
+		    if (v < v1)
+			v1 = v;
+		}
 		else if (v > v2)
 		    v2 = v;
 	    }
@@ -928,20 +952,24 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.x += object->velocity.x;
 
 		    if (object->velocity.x < 0.0f &&
-			object->position.x < object->vertEdge.attract &&
-			object->position.x < object->vertEdge.next)
+			object->position.x < object->vertEdge.attract)
 		    {
-			object->vertEdge.snapped = true;
-			object->position.x = object->vertEdge.next;
-			object->velocity.x = 0.0f;
+			if (object->position.x < object->vertEdge.next)
+			{
+			    object->vertEdge.snapped = true;
+			    object->position.x = object->vertEdge.next;
+			    object->velocity.x = 0.0f;
 
-			++model->snapCnt[West];
+			    ++model->snapCnt[West];
 
-			updateModelSnapping ();
+			    updateModelSnapping ();
+			}
+			else
+			{
+			    object->velocity.x -=
+				object->vertEdge.attract - object->position.x;
+			}
 		    }
-		    else
-			object->velocity.x -=
-			    object->vertEdge.attract - object->position.x;
 
 		    if (object->position.x > object->vertEdge.prev)
 			findNextWestEdge (object);
@@ -959,20 +987,24 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.x += object->velocity.x;
 
 		    if (object->velocity.x > 0.0f &&
-			object->position.x > object->vertEdge.attract &&
-			object->position.x > object->vertEdge.next)
+			object->position.x > object->vertEdge.attract)
 		    {
-			object->vertEdge.snapped = true;
-			object->position.x = object->vertEdge.next;
-			object->velocity.x = 0.0f;
+			if (object->position.x > object->vertEdge.next)
+			{
+			    object->vertEdge.snapped = true;
+			    object->position.x = object->vertEdge.next;
+			    object->velocity.x = 0.0f;
 
-			++model->snapCnt[East];
+			    ++model->snapCnt[East];
 
-			updateModelSnapping ();
+			    updateModelSnapping ();
+			}
+			else
+			{
+			    object->velocity.x =
+				object->position.x - object->vertEdge.attract;
+			}
 		    }
-		    else
-			object->velocity.x =
-			    object->position.x - object->vertEdge.attract;
 
 		    if (object->position.x < object->vertEdge.prev)
 			findNextEastEdge (object);
@@ -993,20 +1025,24 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.y += object->velocity.y;
 
 		    if (object->velocity.y < 0.0f &&
-			object->position.y < object->horzEdge.attract &&
-			object->position.y < object->horzEdge.next)
+			object->position.y < object->horzEdge.attract)
 		    {
-			object->horzEdge.snapped = true;
-			object->position.y = object->horzEdge.next;
-			object->velocity.y = 0.0f;
+			if (object->position.y < object->horzEdge.next)
+			{
+			    object->horzEdge.snapped = true;
+			    object->position.y = object->horzEdge.next;
+			    object->velocity.y = 0.0f;
 
-			++model->snapCnt[North];
+			    ++model->snapCnt[North];
 
-			updateModelSnapping ();
+			    updateModelSnapping ();
+			}
+			else
+			{
+			    object->velocity.y -=
+				object->horzEdge.attract - object->position.y;
+			}
 		    }
-		    else
-			object->velocity.y -=
-			    object->horzEdge.attract - object->position.y;
 
 		    if (object->position.y > object->horzEdge.prev)
 			findNextNorthEdge (object);
@@ -1024,20 +1060,24 @@ WobblyWindow::modelStepObject (Object *object,
 		    object->position.y += object->velocity.y;
 
 		    if (object->velocity.y > 0.0f &&
-			object->position.y > object->horzEdge.attract &&
-			object->position.y > object->horzEdge.next)
+			object->position.y > object->horzEdge.attract)
 		    {
-			object->horzEdge.snapped = true;
-			object->position.y = object->horzEdge.next;
-			object->velocity.y = 0.0f;
+			if (object->position.y > object->horzEdge.next)
+			{
+			    object->horzEdge.snapped = true;
+			    object->position.y = object->horzEdge.next;
+			    object->velocity.y = 0.0f;
 
-			++model->snapCnt[South];
+			    ++model->snapCnt[South];
 
-			updateModelSnapping ();
+			    updateModelSnapping ();
+			}
+			else
+			{
+			    object->velocity.y =
+				object->position.y - object->horzEdge.attract;
+			}
 		    }
-		    else
-			object->velocity.y =
-			    object->position.y - object->horzEdge.attract;
 
 		    if (object->position.y < object->horzEdge.prev)
 			findNextSouthEdge (object);
@@ -2090,10 +2130,10 @@ Model::~Model ()
 bool
 WobblyPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) |
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) |
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
