@@ -20,7 +20,6 @@ target_link_libraries (compizconfig_test_ccs_gnome_gsettings_integrated_setting
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_gsettings_settings_test_env

@@ -21,9 +21,7 @@ if (COMPIZ_GLIB_INTEGRATION_TEST_FOUND)
 			   ${COMPIZ_GLIB_INTEGRATION_TEST_LIBRARIES}
 			   ${GTEST_BOTH_LIBRARIES}
 			   ${GMOCK_LIBRARY}
-			   ${GMOCK_MAIN_LIBRARY}
-			   ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
-			   )
+			   ${GMOCK_MAIN_LIBRARY})
 
     compiz_discover_tests (compiz_glib_integration_test COVERAGE compiz_core)
 

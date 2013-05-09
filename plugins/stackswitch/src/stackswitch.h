@@ -35,25 +35,29 @@
 
 #include "stackswitch_options.h"
 
-typedef enum {
+typedef enum
+{
     StackswitchStateNone = 0,
     StackswitchStateOut,
     StackswitchStateSwitching,
     StackswitchStateIn
 } StackswitchState;
 
-typedef enum {
+typedef enum
+{
     StackswitchTypeNormal = 0,
     StackswitchTypeGroup,
     StackswitchTypeAll
 } StackswitchType;
 
-typedef struct _StackswitchSlot {
+typedef struct _StackswitchSlot
+{
     int   x, y;            /* thumb center coordinates */
     float scale;           /* size scale (fit to maximal thumb size) */
 } StackswitchSlot;
 
-typedef struct _StackswitchDrawSlot {
+typedef struct _StackswitchDrawSlot
+{
     CompWindow      *w;
     StackswitchSlot **slot;
 } StackswitchDrawSlot;
@@ -73,7 +77,7 @@ class StackswitchScreen:
     public:
 
 	CompositeScreen *cScreen;
-	GLScreen	*gScreen;
+	GLScreen        *gScreen;
 
     public:
 
@@ -88,10 +92,10 @@ class StackswitchScreen:
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
-		       const GLMatrix		 &,
-		       const CompRegion		 &,
-		       CompOutput		 *,
-		       unsigned int		   );
+		       const GLMatrix            &,
+		       const CompRegion          &,
+		       CompOutput                *,
+		       unsigned int                );
 
     public:
 
@@ -126,12 +130,12 @@ class StackswitchScreen:
 	terminate (CompAction *action,
 		   CompAction::State state,
 		   CompOption::Vector options);
-				      
+
 	bool
 	initiate (CompAction         *action,
 		  CompAction::State  state,
 		   CompOption::Vector options);
-				     
+
 	bool
 	doSwitch (CompAction         *action,
 		  CompAction::State  state,
@@ -192,9 +196,9 @@ class StackswitchWindow:
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
-		 const GLMatrix		   &,
-		 const CompRegion	   &,
-		 unsigned int		     );
+		 const GLMatrix            &,
+		 const CompRegion          &,
+		 unsigned int                );
 
 	bool
 	damageRect (bool,

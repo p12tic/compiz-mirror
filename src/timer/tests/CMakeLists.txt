@@ -20,36 +20,28 @@ target_link_libraries (compiz_timer_callbacks
                        compiz_timer 
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
-                       )
+		       ${GMOCK_MAIN_LIBRARY})
 
 target_link_libraries (compiz_timer_diffs
                        compiz_timer_test
                        compiz_timer 
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
-                       )
+		       ${GMOCK_MAIN_LIBRARY})
 
 target_link_libraries (compiz_timer_set-values
                        compiz_timer_test
                        compiz_timer 
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
-                       )
+		       ${GMOCK_MAIN_LIBRARY})
 
 target_link_libraries (compiz_timer_while-calling
                        compiz_timer_test
                        compiz_timer 
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
-		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
-                       )
+		       ${GMOCK_MAIN_LIBRARY})
 
 compiz_discover_tests (compiz_timer_callbacks COVERAGE compiz_timer)
 compiz_discover_tests (compiz_timer_diffs COVERAGE compiz_timer)

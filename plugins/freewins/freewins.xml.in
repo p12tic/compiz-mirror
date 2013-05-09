@@ -173,7 +173,7 @@
 		    <option type="bool" name="snap">
 				    <_short>Snap By Default</_short>
 				    <_long>Snap to common points by default.</_long>
-				    <default>False</default>
+				    <default>false</default>
 		    </option>
 		<option type="int" name="snap_threshold">
 				    <_short>Snap Threshold</_short>
@@ -207,12 +207,12 @@
 			<option type="bool" name="allow_negative">
 				    <_short>Allow Negative</_short>
 				    <_long>Allow negative scaling</_long>
-				    <default>True</default>
+				    <default>true</default>
 			</option>
 			<option type="bool" name="scale_uniform">
 				    <_short>Maintain Aspect Ratio</_short>
 				    <_long>Keep the aspect ratio of the window constant when scaling.</_long>
-				    <default>True</default>
+				    <default>true</default>
 			</option>
 			<option type="float" name="min_scale">
 				    <_short>Minimum scale</_short>
@@ -277,12 +277,12 @@
 			<option type="bool" name="auto_zoom">
 				    <_short>Auto-Zoom</_short>
 				    <_long>Auto-Zoom when rotating so that windows do not get too large.</_long>
-				    <default>False</default>
+				    <default>false</default>
 			</option>
 			<option type="bool" name="disable_on_transformed_screen">
 				    <_short>Disable On Transformed Screen</_short>
 				    <_long>Disable the rotation on a transformed screen. This prevents ugly looking clipped windows when the screen is transformed.</_long>
-				    <default>False</default>
+				    <default>false</default>
 			</option>
 		</subgroup>
 		<subgroup>
@@ -331,12 +331,12 @@
 		<option type="bool" name="do_shape_input">
 			    <_short>Prevent Input</_short>
 			    <_long>Prevent input for transformed windows.</_long>
-			    <default>True</default>
+			    <default>true</default>
 		    </option>
 		<option type="bool" name="immediate_moves">
 		    <_short>Immediate Moves</_short>
 		    <_long>Don't allow plugins like wobbly to manipulate the transformed window while it's being moved.</_long>
-		    <default>True</default>
+		    <default>true</default>
 		</option>
 		</subgroup>
 	       <subgroup>
@@ -374,22 +374,22 @@
 		<option type="bool" name="show_circle">
 			    <_short>Show 3D Rotation Circle</_short>
 			    <_long>Show the click area for 3D rotation.</_long>
-			    <default>True</default>
+			    <default>true</default>
 		    </option>
 		<option type="bool" name="show_gizmo">
 			    <_short>Show Rotation Gizmo</_short>
 			    <_long>Show the rotation axis info.</_long>
-			    <default>True</default>
+			    <default>true</default>
 		    </option>
 		<option type="bool" name="show_cross">
 			    <_short>Show Crosshair</_short>
 			    <_long>Show the crosshair for scaling click regions.</_long>
-			    <default>True</default>
+			    <default>true</default>
 		    </option>
 		<option type="bool" name="show_region">
 			    <_short>Show Input Regions</_short>
 			    <_long>Show the input region rectangle.</_long>
-			    <default>True</default>
+			    <default>true</default>
 		    </option>
 		</subgroup>
 		</group>

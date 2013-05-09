@@ -72,7 +72,7 @@
 		</option>
 		<option name="put_restore_key" type="key">
 		    <_short>Restore</_short>
-		    <_long>Restore window to it's original size</_long>
+		    <_long>Restores grid-resized, semi-maximized and maximized windows to their original size and position.</_long>
 		    <default>&lt;Control&gt;&lt;Alt&gt;r</default>
 		</option>
 	    </group>
