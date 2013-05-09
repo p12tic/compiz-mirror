@@ -827,11 +827,21 @@ WaterScreen::~WaterScreen ()
 bool
 WaterPluginVTable::init ()
 {
-    /* Water needs enabled VBOs to run */
+    const char *missing = NULL;
+
+    if (!GL::fboSupported)
+	missing = "framebuffer objects";
+
     if (!GL::vboSupported)
+	missing = "vertexbuffer objects";
+
+    if (!GL::shaders)
+	missing = "GLSL";
+
+    if (missing)
     {
 	compLogMessage ("water", CompLogLevelError,
-			"Missing support for vertexbuffer objects, please enable VBOs in the OpenGL plugin");
+			"Missing hardware support for %s", missing);
 	return false;
     }
 
