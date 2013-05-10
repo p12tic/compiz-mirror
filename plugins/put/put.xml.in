@@ -283,6 +283,14 @@
 		    <_short>Put To Next Output</_short>
 		    <_long>Move window to the next output device</_long>
 		</option>
+		<option name="put_previous_output_key" type="key">
+		    <_short>Put To Previous Output</_short>
+		    <_long>Move window to the previous output device</_long>
+		</option>
+		<option name="put_previous_output_button" type="button">
+		    <_short>Put To Previous Output</_short>
+		    <_long>Move window to the previous output device</_long>
+		</option>
 		<option name="put_put" type="action">
 		    <_short>Put</_short>
 		    <_long>Move window arbitrarily by passing x, y and type.</_long>

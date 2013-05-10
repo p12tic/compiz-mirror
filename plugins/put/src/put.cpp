@@ -637,6 +637,36 @@ PutScreen::getDistance (CompWindow         *w,
 	dx = 0;
 	dy = (s->vp ().y () < s->vpSize ().height ()-1) ? s->height () : 0;
 	break;
+    case PutPreviousOutput:
+        {
+            int        outputNum, currentNum;
+            int        nOutputDev = s->outputDevs ().size ();
+            CompOutput *currentOutput, *newOutput;
+
+            if (nOutputDev < 2)
+                return result;
+
+            currentNum = getOutputForWindow (w);
+            outputNum  = (currentNum + 1) % nOutputDev;
+            outputNum  = CompOption::getIntOptionNamed (option,"output",
+                                                        outputNum);
+
+            if (outputNum >= nOutputDev)
+                return result;
+
+            currentOutput = &s->outputDevs ().at(currentNum);
+            newOutput     = &s->outputDevs ().at(outputNum);
+
+            /* move by the distance of the output center points */
+            dx = (newOutput->x1 () + newOutput->width () / 2) -
+                 (currentOutput->x1 () + currentOutput->width () / 2);
+            dy = (newOutput->y1 () + newOutput->height () / 2) -
+                 (currentOutput->y1 () + currentOutput->height () / 2);
+
+            /* update work area for new output */
+            workArea = newOutput->workArea ();
+        }
+        break;
     case PutNextOutput:
 	{
 	    int        outputNum, currentNum;
@@ -1030,7 +1060,7 @@ PutScreen::initiateCommon (CompAction         *action,
 	    return false;
 
 	/* only allow movement of fullscreen windows to next output */
-	if (type != PutNextOutput &&
+	if ((type != PutNextOutput && type != PutPreviousOutput) &&
 	    (w->type () & CompWindowTypeFullscreenMask))
 	{
 	    return false;
@@ -1111,6 +1141,8 @@ PutScreen::typeFromString (const CompString &type)
 	return PutViewportUp;
     else if (type == "viewportdown")
 	return PutViewportDown;
+    else if (type == "previousoutput")
+	return PutPreviousOutput;
     else if (type == "nextoutput")
 	return PutNextOutput;
     else if (type == "restore")
@@ -1227,6 +1259,7 @@ PutScreen::PutScreen (CompScreen *screen) :
     setAction (PutRestore, PutRestore);
     setAction (PutPointer, PutPointer);
     setAction (PutNextOutput, PutNextOutput);
+    setAction (PutPreviousOutput, PutPreviousOutput);
     setAction (PutCenter, PutCenter);
     setAction (PutEmptyCenter, PutEmptyCenter);
     setAction (PutLeft, PutLeft);
