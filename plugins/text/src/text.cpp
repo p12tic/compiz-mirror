@@ -606,14 +606,16 @@ PrivateTextScreen::~PrivateTextScreen ()
 bool
 TextPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+    {
+	CompPrivate p;
+	p.uval = COMPIZ_TEXT_ABI;
+	screen->storeValue ("text_ABI", p);
 
-    CompPrivate p;
-    p.uval = COMPIZ_TEXT_ABI;
-    screen->storeValue ("text_ABI", p);
+	return true;
+    }
 
-    return true;
+    return false;
 }
 
 void

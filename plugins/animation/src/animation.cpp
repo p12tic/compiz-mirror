@@ -3078,16 +3078,17 @@ AnimWindow::~AnimWindow ()
 bool
 AnimPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) |
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) |
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+    {
+	CompPrivate p;
+	p.uval = ANIMATION_ABI;
+	::screen->storeValue ("animation_ABI", p);
+	return true;
+    }
 
-    CompPrivate p;
-    p.uval = ANIMATION_ABI;
-    ::screen->storeValue ("animation_ABI", p);
-
-    return true;
+    return false;
 }
 
 void
@@ -3095,4 +3096,3 @@ AnimPluginVTable::fini ()
 {
     ::screen->eraseValue ("animation_ABI");
 }
-
