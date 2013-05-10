@@ -62,21 +62,21 @@ WSNamesScreen::renderNameText ()
     attrib.maxWidth  = screen->getCurrentOutputExtents ().width () * 3 / 4;
     attrib.maxHeight = 100;
 
-    attrib.family    = "Sans";
-    attrib.size      = optionGetTextFontSize ();
+    attrib.family = "Sans";
+    attrib.size = optionGetTextFontSize ();
 
-    attrib.color[0]  = optionGetFontColorRed ();
-    attrib.color[1]  = optionGetFontColorGreen ();
-    attrib.color[2]  = optionGetFontColorBlue ();
-    attrib.color[3]  = optionGetFontColorAlpha ();
+    attrib.color[0] = optionGetFontColorRed ();
+    attrib.color[1] = optionGetFontColorGreen ();
+    attrib.color[2] = optionGetFontColorBlue ();
+    attrib.color[3] = optionGetFontColorAlpha ();
 
-    attrib.flags     = CompText::WithBackground | CompText::Ellipsized;
+    attrib.flags = CompText::WithBackground | CompText::Ellipsized;
 
     if (optionGetBoldText ())
 	attrib.flags |= CompText::StyleBold;
 
-    attrib.bgHMargin  = 15;
-    attrib.bgVMargin  = 15;
+    attrib.bgHMargin = 15;
+    attrib.bgVMargin = 15;
     attrib.bgColor[0] = optionGetBackColorRed ();
     attrib.bgColor[1] = optionGetBackColorGreen ();
     attrib.bgColor[2] = optionGetBackColorBlue ();

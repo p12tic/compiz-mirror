@@ -180,8 +180,8 @@ WobblyWindow::findNextEastEdge (Object *object)
 	    }
 	    else if (e < object->position.y)
 	    {
-		    if (e > start)
-			start = e;
+		if (e > start)
+		    start = e;
 	    }
 	    else
 	    {
@@ -610,6 +610,7 @@ Model::adjustObjectPosition (Object *object,
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++i)
 	{
 	    o = &objects[i];
+
 	    if (o == object)
 	    {
 		o->position.x = x + (gridX * width) / (GRID_WIDTH - 1);
@@ -660,6 +661,7 @@ WobblyWindow::updateModelSnapping ()
 	edgeMask &= ~WestEdgeMask;
 
     Object *object = model->objects;
+
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
     {
 	if (gridY == 0)
@@ -766,6 +768,7 @@ Model::adjustObjectsForShiver (int   x,
     float h = height;
 
     Object *object = objects;
+
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
