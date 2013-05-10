@@ -52,9 +52,10 @@ class XorgEnvironment :
 	    while (serverRunningOnDisplay &&
 		   displayNumber < MaxConnections)
 	    {
-		std::stringstream ss;
+		std::stringstream 
 		ss << ":" << displayNumber;
-		Display *check = XOpenDisplay (ss.str ().c_str ());
+		Display *check = XOpenDisplay (ss.str ().c_
+
 		if (!check)
 		    serverRunningOnDisplay = false;
 		else
@@ -89,53 +90,53 @@ namespace
 
 void SignalHandler (int signum)
 {
-  if (environment)
-    environment->Kill ();
+    if (environment)
+	environment->Kill ();
 
-  /* This will call the default handler because we used SA_RESETHAND */
-  raise (signum);
+    /* This will call the default handler because we used SA_RESETHAND */
+    raise (signum);
 }
 
 void SetupSignalHandlers ()
 {
-  static const int signals[] =
-  {
-    SIGHUP,
-    SIGTERM,
-    SIGQUIT,
-    SIGILL,
-    SIGABRT,
-    SIGFPE,
-    SIGSEGV,
-    SIGPIPE,
-    SIGALRM,
-    SIGTERM,
-    SIGUSR1,
-    SIGUSR2,
-    SIGBUS,
-    SIGPOLL,
-    SIGPROF,
-    SIGSYS,
-    SIGTRAP,
-    SIGVTALRM,
-    SIGXCPU,
-    SIGXFSZ,
-    SIGIOT,
-    SIGSTKFLT,
-    SIGIO,
-    SIGPWR,
-    SIGUNUSED,
-  };
+    static const int signals[] =
+    {
+	SIGHUP,
+	SIGTERM,
+	SIGQUIT,
+	SIGILL,
+	SIGABRT,
+	SIGFPE,
+	SIGSEGV,
+	SIGPIPE,
+	SIGALRM,
+	SIGTERM,
+	SIGUSR1,
+	SIGUSR2,
+	SIGBUS,
+	SIGPOLL,
+	SIGPROF,
+	SIGSYS,
+	SIGTRAP,
+	SIGVTALRM,
+	SIGXCPU,
+	SIGXFSZ,
+	SIGIOT,
+	SIGSTKFLT,
+	SIGIO,
+	SIGPWR,
+	SIGUNUSED,
+    };
 
-  struct sigaction action;
-  action.sa_handler = SignalHandler;
-  sigemptyset(&action.sa_mask);
-  action.sa_flags = SA_RESETHAND;
+    struct sigaction action;
+    action.sa_handler = SignalHandler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = SA_RESETHAND;
 
-  for (unsigned i = 0; i < sizeof(signals) / sizeof(signals[0]); ++i)
-    if (sigaction(signals[i], &action, NULL))
-      std::cerr << "Warning: Failed to set signal handler for signal "
-		<< signals[i] << "\n";
+    for (unsigned i = 0; i < sizeof(signals) / sizeof(signals[0]); ++i)
+	if (sigaction(signals[i], &action, NULL))
+	    std::cerr << "Warning: Failed to set signal handler for signal "
+		      << signals[i] << "\n";
 }
 }
 
