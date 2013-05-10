@@ -33,7 +33,7 @@ COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
 const double PI = 3.14159265359f;
 
-const unsigned short ICON_SIZE = 64;
+const unsigned short ICON_SIZE = 256;
 
 bool textAvailable;
 
@@ -76,56 +76,46 @@ RingScreen::switchActivateEvent (bool activating)
 bool
 RingWindow::is (bool removing)
 {
+    if ((!removing && window->destroyed ()) ||
+	window->overrideRedirect ()	    ||
+	window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
+	return false;
+
     RING_SCREEN (screen);
-
-    if (!removing && window->destroyed ())
-	return false;
-
-    if (window->overrideRedirect ())
-	return false;
-
-    if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
-	return false;
 
     if (!removing && (!window->mapNum () || !window->isViewable ()))
     {
 	if (rs->optionGetMinimized ())
 	{
-	    if (!window->minimized () && !window->inShowDesktopMode () &&
-	        !window->shaded ())
+	    if (!window->minimized ()		&&
+		!window->inShowDesktopMode ()	&&
+		!window->shaded ())
 		return false;
 	}
 	else
-    	    return false;
+	    return false;
     }
 
     if (!removing && rs->mType == RingScreen::RingTypeNormal)
     {
 	if (!window->mapNum () || !window->isViewable ())
 	{
-	    if (window->serverX () + window->width ()  <= 0    ||
-		window->serverY () + window->height () <= 0    ||
-		window->serverX () >= screen->width () ||
+	    if (window->serverX () + window->width ()  <= 0	||
+		window->serverY () + window->height () <= 0	||
+		window->serverX () >= screen->width ()		||
 		window->serverY () >= screen->height ())
 		return false;
 	}
-	else
-	{
-	    if (!window->focus ())
-		return false;
-	}
+	else if (!window->focus ())
+	    return false;
     }
-    else if (rs->mType == RingScreen::RingTypeGroup &&
-	     rs->mClientLeader != window->clientLeader () &&
+    else if (rs->mType == RingScreen::RingTypeGroup		&&
+	     rs->mClientLeader != window->clientLeader ()	&&
 	     rs->mClientLeader != window->id ())
-    {
-	return false;
-    }
-
-    if (window->state () & CompWindowStateSkipTaskbarMask)
 	return false;
 
-    if (!rs->mCurrentMatch.evaluate (window))
+    if (window->state () & CompWindowStateSkipTaskbarMask	||
+	!rs->mCurrentMatch.evaluate (window))
 	return false;
 
     return true;
@@ -139,21 +129,17 @@ RingScreen::freeWindowTitle ()
 void
 RingScreen::renderWindowTitle ()
 {
-    if (!textAvailable)
+    if (!textAvailable || !optionGetWindowTitle ())
 	return;
 
     CompText::Attrib attrib;
-    CompRect         oe;
 
     freeWindowTitle ();
 
     if (!mSelectedWindow)
 	return;
 
-    if (!optionGetWindowTitle ())
-	return;
-
-    oe = screen->getCurrentOutputExtents ();
+    CompRect oe = screen->getCurrentOutputExtents ();
 
     /* 75% of the output device as maximum width */
     attrib.maxWidth = oe.width () * 3 / 4;
@@ -165,8 +151,10 @@ RingScreen::renderWindowTitle ()
     attrib.color[2] = optionGetTitleFontColorBlue ();
     attrib.color[3] = optionGetTitleFontColorAlpha ();
     attrib.flags = CompText::WithBackground | CompText::Ellipsized;
+
     if (optionGetTitleFontBold ())
 	attrib.flags |= CompText::StyleBold;
+
     attrib.family = "Sans";
     attrib.bgHMargin = 15;
     attrib.bgVMargin = 15;
@@ -176,22 +164,22 @@ RingScreen::renderWindowTitle ()
     attrib.bgColor[3] = optionGetTitleBackColorAlpha ();
 
     mText.renderWindowTitle (mSelectedWindow->id (),
-                            mType == RingScreen::RingTypeAll,
-                            attrib);
+			     mType == RingScreen::RingTypeAll,
+			     attrib);
 }
 
 void
 RingScreen::drawWindowTitle (const GLMatrix &transform)
 {
-    if (!textAvailable)
+    if (!textAvailable || !optionGetWindowTitle ())
 	return;
 
-    float      x, y;
-    CompRect   oe;
+    CompRect oe = screen->getCurrentOutputExtents ();
 
-    oe = screen->getCurrentOutputExtents ();
+    float x = oe.centerX () - mText.getWidth () / 2;
+    float y;
 
-    x = oe.centerX () - mText.getWidth () / 2;
+    unsigned short verticalOffset = optionGetVerticalOffset ();
 
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTitleTextPlacement ())
@@ -199,18 +187,20 @@ RingScreen::drawWindowTitle (const GLMatrix &transform)
 	case RingOptions::TitleTextPlacementCenteredOnScreen:
 	    y = oe.centerY () + mText.getHeight () / 2;
 	    break;
-	case RingOptions::TitleTextPlacementAboveRing:
-	case RingOptions::TitleTextPlacementBelowRing:
+
+	case RingOptions::TitleTextPlacementTopOfScreenMinusOffset:
+	case RingOptions::TitleTextPlacementBottomOfScreenPlusOffset:
 	    {
 		CompRect workArea = screen->currentOutputDev ().workArea ();
 
-	    	if (optionGetTitleTextPlacement () ==
-		    RingOptions::TitleTextPlacementAboveRing)
-    		    y = oe.y1 () + workArea.y () + mText.getHeight ();
-		else
-		    y = oe.y1 () + workArea.y2 ();
+		if (optionGetTitleTextPlacement () ==
+		    RingOptions::TitleTextPlacementTopOfScreenMinusOffset)
+		    y = oe.y1 () + workArea.y () + mText.getHeight () + verticalOffset;
+		else /* TitleTextPlacementBottomOfScreenPlusOffset */
+		    y = oe.y1 () + workArea.y2 () - verticalOffset;
 	    }
 	    break;
+
 	default:
 	    return;
 	    break;
@@ -222,12 +212,12 @@ RingScreen::drawWindowTitle (const GLMatrix &transform)
 bool
 RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		     const GLMatrix            &transform,
-		     const CompRegion	       &region,
-		     unsigned int	       mask)
+		     const CompRegion          &region,
+		     unsigned int              mask)
 {
-    bool       status;
-
     RING_SCREEN (screen);
+
+    bool status;
 
     if (rs->mState != RingScreen::RingStateNone)
     {
@@ -235,10 +225,10 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	bool scaled = false;
 	bool pixmap = true;
 
-    	if (window->mapNum ())
+	if (window->mapNum () &&
+	    gWindow->textures ().empty ())
 	{
-	    if (gWindow->textures ().empty ())
-		gWindow->bind ();
+	    gWindow->bind ();
 	}
 
 	if (mAdjust || mSlot)
@@ -249,10 +239,8 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	else if (rs->mState != RingScreen::RingStateIn)
 	{
 	    if (rs->optionGetDarkenBack ())
-	    {
 		/* modify brightness of the other windows */
 		sAttrib.brightness = sAttrib.brightness / 2;
-	    }
 	}
 
 	status = gWindow->glPaint (sAttrib, transform, region, mask);
@@ -262,19 +250,18 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (scaled && pixmap)
 	{
 	    GLWindowPaintAttrib wAttrib (gWindow->lastPaintAttrib ());
-	    GLMatrix           wTransform = transform;
+	    GLMatrix            wTransform = transform;
 
 	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 		return false;
 
 	    if (mSlot)
 	    {
-    		wAttrib.brightness = (float)wAttrib.brightness *
-		                                         mSlot->depthBrightness;
+		wAttrib.brightness = (float)wAttrib.brightness * mSlot->depthBrightness;
 
 		if (window != rs->mSelectedWindow)
 		    wAttrib.opacity = (float)wAttrib.opacity *
-		                          rs->optionGetInactiveOpacity () / 100;
+				      rs->optionGetInactiveOpacity () / 100;
 	    }
 
 	    if (window->alpha () || wAttrib.opacity != OPAQUE)
@@ -283,8 +270,8 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    wTransform.translate (window->x (), window->y (), 0.0f);
 	    wTransform.scale (mScale, mScale, 1.0f);
 	    wTransform.translate (mTx / mScale - window->x (),
-			          mTy / mScale - window->y (),
-			          0.0f);
+				  mTy / mScale - window->y (),
+				  0.0f);
 
 	    gWindow->glDraw (wTransform, wAttrib, region,
 			     mask | PAINT_WINDOW_TRANSFORMED_MASK);
@@ -297,22 +284,21 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    GLTexture *icon;
 
 	    icon = gWindow->getIcon (256, 256);
+
 	    if (!icon)
 		icon = rs->gScreen->defaultIcon ();
 
 	    if (icon)
 	    {
-		GLTexture::Matrix        matrix;
-		GLTexture::MatrixList	 matricies;
-		float                    scale;
-		float                    x, y;
-		int                      width, height;
-		int                      scaledWinWidth, scaledWinHeight;
+		GLTexture::Matrix     matrix;
+		GLTexture::MatrixList matricies;
+		float                 scale;
+		float                 x, y;
 
-		enum RingOptions::OverlayIcon  iconOverlay;
+		enum RingOptions::OverlayIcon iconOverlay;
 
-		scaledWinWidth  = window->width () * mScale;
-		scaledWinHeight = window->height () * mScale;
+		int scaledWinWidth  = window->width () * mScale;
+		int scaledWinHeight = window->height () * mScale;
 
 		if (!pixmap)
 		    iconOverlay = RingOptions::OverlayIconBig;
@@ -320,35 +306,42 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		    iconOverlay = (enum RingOptions::OverlayIcon)
 						    rs->optionGetOverlayIcon ();
 
-	    	switch (iconOverlay) {
-    		case RingOptions::OverlayIconNone:
+		switch (iconOverlay)
+		{
+		case RingOptions::OverlayIconNone:
 		case RingOptions::OverlayIconEmblem:
 		    scale = (mSlot) ? mSlot->depthScale : 1.0f;
-		    if (icon->width () > ICON_SIZE ||
-			 icon->height () > ICON_SIZE)
+
+		    if (icon->width ()  > ICON_SIZE ||
+			icon->height () > ICON_SIZE)
 			scale = MIN ((scale * ICON_SIZE / icon->width ()),
 				     (scale * ICON_SIZE / icon->height ()));
+
 		    break;
+
 		case RingOptions::OverlayIconBig:
 		default:
 		    /* only change opacity if not painting an
 		       icon for a minimized window */
 		    if (pixmap)
 			sAttrib.opacity /= 3;
+
 		    scale = MIN (((float) scaledWinWidth / icon->width ()),
 				 ((float) scaledWinHeight / icon->height ()));
 		    break;
 		}
 
-		width  = icon->width ()  * scale;
-		height = icon->height () * scale;
+		int width  = icon->width ()  * scale;
+		int height = icon->height () * scale;
 
-	    	switch (iconOverlay) {
+		switch (iconOverlay)
+		{
 		case RingOptions::OverlayIconNone:
 		case RingOptions::OverlayIconEmblem:
 		    x = window->x () + scaledWinWidth - width;
 		    y = window->y () + scaledWinHeight - height;
 		    break;
+
 		case RingOptions::OverlayIconBig:
 		default:
 		    x = window->x () + scaledWinWidth / 2 - width / 2;
@@ -377,23 +370,24 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 		gWindow->vertexBuffer ()->begin ();
 		gWindow->glAddGeometry (matricies, iconReg, iconReg);
+
 		if (gWindow->vertexBuffer ()->end ())
 		{
 		    GLWindowPaintAttrib wAttrib (sAttrib);
-		    GLMatrix	       wTransform = transform;
+		    GLMatrix            wTransform = transform;
 
 		    if (!pixmap)
 			sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
 		    if (mSlot)
-		        wAttrib.brightness = (float)wAttrib.brightness *
-		                             mSlot->depthBrightness;
+			wAttrib.brightness = (float)wAttrib.brightness *
+					     mSlot->depthBrightness;
 
 		    wTransform.translate (window->x (), window->y (), 0.0f);
 		    wTransform.scale (scale, scale, 1.0f);
 		    wTransform.translate ((x - window->x ()) / scale - window->x (),
-		                          (y - window->y ()) / scale - window->y (),
-				          0.0f);
+					  (y - window->y ()) / scale - window->y (),
+					  0.0f);
 
 		    gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
 		}
@@ -401,17 +395,17 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	}
     }
     else
-    {
 	status = gWindow->glPaint (attrib, transform, region, mask);
-    }
 
     return status;
 }
 
 static inline float
 ringLinearInterpolation (float valX,
-			 float minX, float maxX,
-			 float minY, float maxY)
+			 float minX,
+			 float maxX,
+			 float minY,
+			 float maxY)
 {
     double factor = (maxY - minY) / (maxX - minX);
     return (minY + (factor * (valX - minX)));
@@ -434,41 +428,35 @@ bool
 RingWindow::compareRingWindowDepth (RingScreen::RingDrawSlot e1,
 				    RingScreen::RingDrawSlot e2)
 {
-    RingScreen::RingSlot *a1   = (*(e1.slot));
-    RingScreen::RingSlot *a2   = (*(e2.slot));
+    RingScreen::RingSlot *a1 = (*(e1.slot));
+    RingScreen::RingSlot *a2 = (*(e2.slot));
 
     if (a1->y < a2->y)
 	return true;
-    else if (a1->y > a2->y)
-	return false;
-    else
+    else /* if (a1->y >= a2->y) */
 	return false;
 }
 
 bool
 RingScreen::layoutThumbs ()
 {
-    float      baseAngle, angle;
+    float      angle;
     int        index = 0;
-    int        ww, wh;
     float      xScale, yScale;
-    int        centerX, centerY;
-    int        ellipseA, ellipseB;
-    CompRect   oe;
 
     if ((mState == RingStateNone) || (mState == RingStateIn))
 	return false;
 
-    baseAngle = (2 * PI * mRotTarget) / 3600;
+    float baseAngle = (2 * PI * mRotTarget) / 3600;
 
-    oe = screen->getCurrentOutputExtents ();
+    CompRect oe = screen->getCurrentOutputExtents ();
 
     /* the center of the ellipse is in the middle
        of the used output device */
-    centerX  = oe.centerX ();
-    centerY  = oe.centerY ();
-    ellipseA = oe.width () * optionGetRingWidth () / 200;
-    ellipseB = oe.height () * optionGetRingHeight () / 200;
+    int centerX  = oe.centerX ();
+    int centerY  = oe.centerY ();
+    int ellipseA = oe.width () * optionGetRingWidth () / 200;
+    int ellipseB = oe.height () * optionGetRingHeight () / 200;
 
     mDrawSlots.resize (mWindows.size ());
 
@@ -487,11 +475,11 @@ RingScreen::layoutThumbs ()
 	angle = baseAngle - (index * (2 * PI / mWindows.size ()));
 
 	rw->mSlot->x = centerX + (optionGetRingClockwise () ? -1 : 1) *
-	                        ((float) ellipseA * sin (angle));
+		       ((float) ellipseA * sin (angle));
 	rw->mSlot->y = centerY + ((float) ellipseB * cos (angle));
 
-	ww = w->width ()  + w->input ().left + w->input ().right;
-	wh = w->height () + w->input ().top  + w->input ().bottom;
+	int ww = w->width ()  + w->input ().left + w->input ().right;
+	int wh = w->height () + w->input ().top  + w->input ().bottom;
 
 	if (ww > optionGetThumbWidth ())
 	    xScale = (float)(optionGetThumbWidth ()) / (float) ww;
@@ -522,7 +510,7 @@ RingScreen::layoutThumbs ()
 	mDrawSlots.at (index).w    = w;
 	mDrawSlots.at (index).slot = &rw->mSlot;
 
-	index++;
+	++index;
     }
 
     /* sort the draw list so that the windows with the
@@ -547,6 +535,7 @@ RingScreen::updateWindowList ()
     sort (mWindows.begin (), mWindows.end (), RingWindow::compareWindows);
 
     mRotTarget = 0;
+
     foreach (CompWindow *w, mWindows)
     {
 	if (w == mSelectedWindow)
@@ -566,6 +555,7 @@ RingScreen::createWindowList ()
     foreach (CompWindow *w, screen->windows ())
     {
 	RING_WINDOW (w);
+
 	if (rw->is ())
 	{
 	    addWindowToList (w);
@@ -589,7 +579,8 @@ RingScreen::switchToWindow (bool	   toNext)
     {
 	if (w == mSelectedWindow)
 	    break;
-	cur++;
+
+	++cur;
     }
 
     if (cur == mWindows.size ())
@@ -605,6 +596,7 @@ RingScreen::switchToWindow (bool	   toNext)
 	CompWindow *old = mSelectedWindow;
 
 	mSelectedWindow = w;
+
 	if (old != w)
 	{
 	    if (toNext)
@@ -623,14 +615,14 @@ RingScreen::switchToWindow (bool	   toNext)
 int
 RingScreen::countWindows ()
 {
-    int	       count = 0;
+    int count = 0;
 
     foreach (CompWindow *w, screen->windows ())
     {
 	RING_WINDOW (w);
 
 	if (rw->is ())
-	    count++;
+	    ++count;
     }
 
     return count;
@@ -639,13 +631,11 @@ RingScreen::countWindows ()
 int
 RingScreen::adjustRingRotation (float      chunk)
 {
-    float dx, adjust, amount;
-    int   change;
+    float dx = mRotAdjust;
 
-    dx = mRotAdjust;
+    float adjust = dx * 0.15f;
+    float amount = fabs (dx) * 1.5f;
 
-    adjust = dx * 0.15f;
-    amount = fabs (dx) * 1.5f;
     if (amount < 0.2f)
 	amount = 0.2f;
     else if (amount > 2.0f)
@@ -661,7 +651,8 @@ RingScreen::adjustRingRotation (float      chunk)
 	return 0;
     }
 
-    change = mRVelocity * chunk;
+    int change = mRVelocity * chunk;
+
     if (!change)
     {
 	if (mRVelocity)
@@ -680,7 +671,6 @@ RingScreen::adjustRingRotation (float      chunk)
 int
 RingWindow::adjustVelocity ()
 {
-    float dx, dy, ds, adjust, amount;
     float x1, y1, scale;
 
     if (mSlot)
@@ -696,10 +686,11 @@ RingWindow::adjustVelocity ()
 	y1 = window->y ();
     }
 
-    dx = x1 - (window->x () + mTx);
+    float dx = x1 - (window->x () + mTx);
 
-    adjust = dx * 0.15f;
-    amount = fabs (dx) * 1.5f;
+    float adjust = dx * 0.15f;
+    float amount = fabs (dx) * 1.5f;
+
     if (amount < 0.5f)
 	amount = 0.5f;
     else if (amount > 5.0f)
@@ -707,10 +698,11 @@ RingWindow::adjustVelocity ()
 
     mXVelocity = (amount * mXVelocity + adjust) / (amount + 1.0f);
 
-    dy = y1 - (window->y () + mTy);
+    float dy = y1 - (window->y () + mTy);
 
     adjust = dy * 0.15f;
     amount = fabs (dy) * 1.5f;
+
     if (amount < 0.5f)
 	amount = 0.5f;
     else if (amount > 5.0f)
@@ -718,16 +710,16 @@ RingWindow::adjustVelocity ()
 
     mYVelocity = (amount * mYVelocity + adjust) / (amount + 1.0f);
 
-    ds = scale - mScale;
+    float ds = scale - mScale;
     adjust = ds * 0.1f;
     amount = fabs (ds) * 7.0f;
+
     if (amount < 0.01f)
 	amount = 0.01f;
     else if (amount > 0.15f)
 	amount = 0.15f;
 
-    mScaleVelocity = (amount * mScaleVelocity + adjust) /
-	(amount + 1.0f);
+    mScaleVelocity = (amount * mScaleVelocity + adjust) / (amount + 1.0f);
 
     if (fabs (dx) < 0.1f && fabs (mXVelocity) < 0.2f &&
 	fabs (dy) < 0.1f && fabs (mYVelocity) < 0.2f &&
@@ -746,19 +738,17 @@ RingWindow::adjustVelocity ()
 
 bool
 RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-			   const GLMatrix	     &transform,
-			   const CompRegion	     &region,
-			   CompOutput		     *output,
-			   unsigned int		     mask)
+			   const GLMatrix            &transform,
+			   const CompRegion          &region,
+			   CompOutput                *output,
+			   unsigned int              mask)
 {
-    bool status;
-
     if (mState != RingStateNone)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     //mask |= PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK;
 
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if (mState != RingStateNone)
     {
@@ -770,7 +760,6 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (mState == RingScreen::RingStateSwitching ||
 	    mState == RingScreen::RingStateOut)
-	{
 	    for (std::vector <RingDrawSlot>::iterator it = mDrawSlots.begin ();
 		 it != mDrawSlots.end (); ++it)
 	    {
@@ -779,9 +768,8 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		RING_WINDOW (w);
 
 		status |= rw->gWindow->glPaint (rw->gWindow->paintAttrib (),
-					   sTransform, infiniteRegion, 0);
+						sTransform, infiniteRegion, 0);
 	    }
-	}
 
 	if (mState != RingStateIn)
 	    drawWindowTitle (sTransform);
@@ -795,15 +783,12 @@ RingScreen::preparePaint (int msSinceLastPaint)
 {
     if (mState != RingStateNone && (mMoreAdjust || mRotateAdjust))
     {
-	int        steps;
-	float      amount, chunk;
-
-	amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
-	steps  = amount / (0.5f * optionGetTimestep ());
+	float amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
+	int   steps  = amount / (0.5f * optionGetTimestep ());
 
 	if (!steps)
 	    steps = 1;
-	chunk  = amount / (float) steps;
+	float chunk  = amount / (float) steps;
 
 	while (steps--)
 	{
@@ -851,9 +836,7 @@ RingScreen::donePaint ()
     if (mState != RingStateNone)
     {
 	if (mMoreAdjust)
-	{
 	    cScreen->damageScreen ();
-	}
 	else
 	{
 	    if (mRotateAdjust)
@@ -879,38 +862,36 @@ RingScreen::terminate (CompAction         *action,
 {
     if (mGrabIndex)
     {
-        screen->removeGrab (mGrabIndex, 0);
-        mGrabIndex = 0;
+	screen->removeGrab (mGrabIndex, 0);
+	mGrabIndex = 0;
     }
 
     if (mState != RingStateNone)
     {
-        foreach (CompWindow *w, screen->windows ())
-        {
+	foreach (CompWindow *w, screen->windows ())
+	{
 	    RING_WINDOW (w);
 
 	    if (rw->mSlot)
 	    {
-	        delete rw->mSlot;
-	        rw->mSlot = NULL;
+		delete rw->mSlot;
+		rw->mSlot = NULL;
 
-	        rw->mAdjust = true;
+		rw->mAdjust = true;
 	    }
-        }
-        mMoreAdjust = true;
-        mState = RingStateIn;
-        cScreen->damageScreen ();
+	}
+	mMoreAdjust = true;
+	mState = RingStateIn;
+	cScreen->damageScreen ();
 
-        if (!(state & CompAction::StateCancel) &&
-            mSelectedWindow && !mSelectedWindow->destroyed ())
-        {
-            screen->sendWindowActivationRequest (mSelectedWindow->id ());
-        }
+	if (!(state & CompAction::StateCancel) &&
+	    mSelectedWindow && !mSelectedWindow->destroyed ())
+	    screen->sendWindowActivationRequest (mSelectedWindow->id ());
     }
 
     if (action)
-	action->setState ( ~(CompAction::StateTermKey |
-			     CompAction::StateTermButton |
+	action->setState ( ~(CompAction::StateTermKey	    |
+			     CompAction::StateTermButton    |
 			     CompAction::StateTermEdge));
 
     return false;
@@ -921,25 +902,20 @@ RingScreen::initiate (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector options)
 {
-    int       count;
-
     if (screen->otherGrabExist ("ring", NULL))
 	return false;
 
     mCurrentMatch = optionGetWindowMatch ();
 
     mMatch = CompOption::getMatchOptionNamed (options, "match", CompMatch ());
-    if (!mMatch.isEmpty ())
-    {
-	mCurrentMatch = mMatch;
-    }
 
-    count = countWindows ();
+    if (!mMatch.isEmpty ())
+	mCurrentMatch = mMatch;
+
+    int count = countWindows ();
 
     if (count < 1)
-    {
 	return false;
-    }
 
     if (!mGrabIndex)
     {
@@ -960,7 +936,7 @@ RingScreen::initiate (CompAction         *action,
 	renderWindowTitle ();
 	mRotTarget = 0;
 
-    	mMoreAdjust = true;
+	mMoreAdjust = true;
 	toggleFunctions (true);
 	cScreen->damageScreen ();
 
@@ -974,46 +950,43 @@ bool
 RingScreen::doSwitch (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector options,
-		      bool		 nextWindow,
-		      RingType		 type)
+		      bool               nextWindow,
+		      RingType           type)
 {
-    bool       ret = true;
+    bool ret = true;
 
     if ((mState == RingStateNone) || (mState == RingStateIn))
     {
-        if (type == RingTypeGroup)
-        {
+	if (type == RingTypeGroup)
+	{
 	    CompWindow *w;
 	    w = screen->findWindow (CompOption::getIntOptionNamed (options,
-							           "window",
-							           0));
+								   "window", 0));
+
 	    if (w)
 	    {
-	        mType = RingTypeGroup;
-	        mClientLeader =
-		    (w->clientLeader ()) ? w->clientLeader () : w->id ();
-	        ret = initiate (action, state, options);
+		mType = RingTypeGroup;
+		mClientLeader = (w->clientLeader ()) ? w->clientLeader () : w->id ();
+		ret = initiate (action, state, options);
 	    }
-        }
-        else
-        {
+	}
+	else
+	{
 	    mType = type;
 	    ret = initiate (action, mState, options);
-        }
+	}
 
-        if (state & CompAction::StateInitKey)
+	if (state & CompAction::StateInitKey)
 	    action->setState (action->state () | CompAction::StateTermKey);
 
-        if (state & CompAction::StateInitEdge)
+	if (state & CompAction::StateInitEdge)
 	    action->setState (action->state () | CompAction::StateTermEdge);
-        else if (mState & CompAction::StateInitButton)
-	    action->setState (action->state () |
-			      CompAction::StateTermButton);
+	else if (mState & CompAction::StateInitButton)
+	    action->setState (action->state () | CompAction::StateTermButton);
     }
 
     if (ret)
-        switchToWindow (nextWindow);
-
+	switchToWindow (nextWindow);
 
     return ret;
 }
@@ -1033,9 +1006,9 @@ RingScreen::windowSelectAt (int  x,
     foreach (CompWindow *w, mWindows)
     {
 	RING_WINDOW (w);
-    	if (rw->mSlot)
-	{
-    	    if ((x >= (rw->mTx + w->x ())) &&
+
+	if (rw->mSlot)
+	    if ((x >= (rw->mTx + w->x ())) &&
 		(x <= (rw->mTx + w->x () + (w->width () * rw->mScale))) &&
 		(y >= (rw->mTy + w->y ())) &&
 		(y <= (rw->mTy + w->y () + (w->height () * rw->mScale))))
@@ -1044,7 +1017,6 @@ RingScreen::windowSelectAt (int  x,
 		selected = w;
 		break;
 	    }
-	}
     }
 
     if (selected && shouldTerminate)
@@ -1063,14 +1035,13 @@ RingScreen::windowSelectAt (int  x,
     else if (!shouldTerminate && (selected != mSelectedWindow ))
     {
 	if (!selected)
-	{
 	    freeWindowTitle ();
-	}
 	else
 	{
 	    mSelectedWindow = selected;
 	    renderWindowTitle ();
 	}
+
 	cScreen->damageScreen ();
     }
 }
@@ -1080,19 +1051,18 @@ RingScreen::windowRemove (CompWindow *w)
 {
     if (w)
     {
-	bool   inList = false;
-	CompWindow *selected;
-	CompWindowVector::iterator it = mWindows.begin ();
-
-	RING_WINDOW (w);
-
 	if (mState == RingStateNone)
 	    return;
 
-	if (!rw->is (true))
-    	    return;
+	RING_WINDOW (w);
 
+	if (!rw->is (true))
+	    return;
+
+	bool       inList = false;
+	CompWindow *selected;
 	selected = mSelectedWindow;
+	CompWindowVector::iterator it = mWindows.begin ();
 
 	while (it != mWindows.end ())
 	{
@@ -1103,10 +1073,12 @@ RingScreen::windowRemove (CompWindow *w)
 		if (w == selected)
 		{
 		    ++it;
+
 		    if (it != mWindows.end ())
 			selected = *it;
-    		    else
+		    else
 			selected = mWindows.front ();
+
 		    --it;
 
 		    mSelectedWindow = selected;
@@ -1116,6 +1088,7 @@ RingScreen::windowRemove (CompWindow *w)
 		mWindows.erase (it);
 		break;
 	    }
+
 	    ++it;
 	}
 
@@ -1156,7 +1129,8 @@ RingScreen::handleEvent (XEvent *event)
 {
     CompWindow *w = NULL;
 
-    switch (event->type) {
+    switch (event->type)
+    {
     case DestroyNotify:
 	/* We need to get the CompWindow * for event->xdestroywindow.window
 	   here because in the ::screen->handleEvent call below, that
@@ -1164,85 +1138,86 @@ RingScreen::handleEvent (XEvent *event)
 	   able to find the CompWindow after that. */
 	   w = ::screen->findWindow (event->xdestroywindow.window);
 	break;
+
     default:
 	break;
     }
 
     screen->handleEvent (event);
 
-    switch (event->type) {
-    case PropertyNotify:
-	if (event->xproperty.atom == XA_WM_NAME)
-	{
-	    w = screen->findWindow (event->xproperty.window);
-	    if (w)
+    switch (event->type)
+    {
+	case PropertyNotify:
+	    if (event->xproperty.atom == XA_WM_NAME)
 	    {
-		if (mGrabIndex && (w == mSelectedWindow))
-    		{
-    		    renderWindowTitle ();
-    		    cScreen->damageScreen ();
+		w = screen->findWindow (event->xproperty.window);
+
+		if (w &&
+		    mGrabIndex && (w == mSelectedWindow))
+		{
+		    renderWindowTitle ();
+		    cScreen->damageScreen ();
 		}
 	    }
-	}
-	break;
-    case ButtonPress:
-	if (event->xbutton.button == Button1)
-	{
+
+	    break;
+
+	case ButtonPress:
+	    if (event->xbutton.button == Button1 &&
+		mGrabIndex)
+		windowSelectAt (event->xbutton.x_root,
+				event->xbutton.y_root, true);
+
+	    break;
+
+	case MotionNotify:
 	    if (mGrabIndex)
-	        windowSelectAt (event->xbutton.x_root,
-				event->xbutton.y_root,
-				true);
-	}
-	break;
-    case MotionNotify:
-        if (mGrabIndex)
-	    windowSelectAt (event->xmotion.x_root,
-			    event->xmotion.y_root,
-			    false);
-	break;
-    case UnmapNotify:
-	w = ::screen->findWindow (event->xunmap.window);
-	windowRemove (w);
-	break;
-    case DestroyNotify:
-	windowRemove (w);
-	break;
+		windowSelectAt (event->xmotion.x_root,
+				event->xmotion.y_root, false);
+
+	    break;
+
+	case UnmapNotify:
+	    w = ::screen->findWindow (event->xunmap.window);
+	    windowRemove (w);
+	    break;
+
+	case DestroyNotify:
+	    windowRemove (w);
+	    break;
+
+	default:
+	    break;
     }
 }
 
 bool
 RingWindow::damageRect (bool     initial,
-			const CompRect &rect)
+			const    CompRect &rect)
 {
-    bool       status = false;
+    bool status = false;
 
     RING_SCREEN (screen);
 
-    if (initial)
+    if (initial &&
+	rs->mGrabIndex && is ())
     {
-	if (rs->mGrabIndex && is ())
+	rs->addWindowToList (window);
+
+	if (rs->updateWindowList ())
 	{
-	    rs->addWindowToList (window);
-	    if (rs->updateWindowList ())
-	    {
-		mAdjust = true;
-		rs->mMoreAdjust = true;
-		rs->mState = RingScreen::RingStateOut;
-		rs->cScreen->damageScreen ();
-	    }
+	    mAdjust = true;
+	    rs->mMoreAdjust = true;
+	    rs->mState = RingScreen::RingStateOut;
+	    rs->cScreen->damageScreen ();
 	}
     }
-    else if (rs->mState == RingScreen::RingStateSwitching)
+    else if (rs->mState == RingScreen::RingStateSwitching &&
+	     mSlot)
     {
-
-	if (mSlot)
-	{
-	    cWindow->damageTransformedRect (mScale, mScale,
-					    mTx, mTy,
-					    rect);
-	    status = true;
-	}
-
+	cWindow->damageTransformedRect (mScale, mScale,
+					mTx, mTy, rect);
+	status = true;
     }
 
     status |= cWindow->damageRect (initial, rect);
@@ -1304,7 +1279,6 @@ RingScreen::RingScreen (CompScreen *screen) :
     RINGTERMBIND (NextGroupButton, terminate);
     RINGTERMBIND (PrevGroupButton, terminate);
 }
-
 
 RingScreen::~RingScreen ()
 {
