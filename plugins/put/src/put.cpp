@@ -638,35 +638,6 @@ PutScreen::getDistance (CompWindow         *w,
 	dy = (s->vp ().y () < s->vpSize ().height ()-1) ? s->height () : 0;
 	break;
     case PutPreviousOutput:
-        {
-            int        outputNum, currentNum;
-            int        nOutputDev = s->outputDevs ().size ();
-            CompOutput *currentOutput, *newOutput;
-
-            if (nOutputDev < 2)
-                return result;
-
-            currentNum = getOutputForWindow (w);
-            outputNum  = (currentNum + nOutputDev - 1) % nOutputDev;
-            outputNum  = CompOption::getIntOptionNamed (option,"output",
-                                                        outputNum);
-
-            if (outputNum >= nOutputDev)
-                return result;
-
-            currentOutput = &s->outputDevs ().at(currentNum);
-            newOutput     = &s->outputDevs ().at(outputNum);
-
-            /* move by the distance of the output center points */
-            dx = (newOutput->x1 () + newOutput->width () / 2) -
-                 (currentOutput->x1 () + currentOutput->width () / 2);
-            dy = (newOutput->y1 () + newOutput->height () / 2) -
-                 (currentOutput->y1 () + currentOutput->height () / 2);
-
-            /* update work area for new output */
-            workArea = newOutput->workArea ();
-        }
-        break;
     case PutNextOutput:
 	{
 	    int        outputNum, currentNum;
@@ -677,7 +648,12 @@ PutScreen::getDistance (CompWindow         *w,
 		return result;
 
 	    currentNum = getOutputForWindow (w);
-	    outputNum  = (currentNum + 1) % nOutputDev;
+
+            if (type == PutNextOutput)
+                outputNum = (currentNum + 1) % nOutputDev;
+            else
+                outputNum = (currentNum + nOutputDev - 1) % nOutputDev;
+
 	    outputNum  = CompOption::getIntOptionNamed (option,"output",
 							outputNum);
 
