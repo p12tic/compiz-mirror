@@ -485,18 +485,15 @@ ResizeWindow::ResizeWindow (CompWindow *w) :
 	GLWindowInterface::setHandler (gWindow, false);
 }
 
-
 ResizeWindow::~ResizeWindow ()
 {
 }
 
-
 bool
 ResizePluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
 
-    return true;
+    return false;
 }
-

@@ -478,10 +478,10 @@ NegWindow::NegWindow (CompWindow *window) :
 bool
 NegPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
