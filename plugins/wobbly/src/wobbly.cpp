@@ -607,6 +607,7 @@ Model::adjustObjectPosition (Object *object,
     int	   i = 0;
 
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+    {
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++i)
 	{
 	    o = &objects[i];
@@ -619,6 +620,7 @@ Model::adjustObjectPosition (Object *object,
 		return;
 	    }
 	}
+    }
 }
 
 void
@@ -633,12 +635,14 @@ Model::initObjects (int	x,
     Object *object = objects;
 
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+    {
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    object->init (x + (gridX * width) / gw,
 			  y + (gridY * height) / gh,
 			  0, 0);
 	}
+    }
 
     setMiddleAnchor (x, y, width, height);
 }
@@ -720,6 +724,7 @@ Model::reduceEdgeEscapeVelocity ()
     Object *object = objects;
 
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+    {
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    if (object->vertEdge.snapped)
@@ -728,6 +733,7 @@ Model::reduceEdgeEscapeVelocity ()
 	    if (object->horzEdge.snapped)
 		object->horzEdge.velocity *= drand48 () * 0.25f;
 	}
+    }
 }
 
 bool
@@ -738,6 +744,7 @@ Model::disableSnapping ()
     Object *object = objects;
 
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+    {
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    if (object->vertEdge.snapped ||
@@ -749,6 +756,7 @@ Model::disableSnapping ()
 
 	    object->edgeMask = 0;
 	}
+    }
 
     memset (snapCnt, 0, sizeof (snapCnt));
 
@@ -770,6 +778,7 @@ Model::adjustObjectsForShiver (int   x,
     Object *object = objects;
 
     for (int gridY = 0; gridY < GRID_HEIGHT; ++gridY)
+    {
 	for (int gridX = 0; gridX < GRID_WIDTH; ++gridX, ++object)
 	{
 	    if (!object->immobile)
@@ -786,6 +795,7 @@ Model::adjustObjectsForShiver (int   x,
 		object->velocity.y += vY * scale;
 	    }
 	}
+    }
 }
 
 void
