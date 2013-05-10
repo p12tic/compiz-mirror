@@ -52,7 +52,7 @@ class XorgEnvironment :
 	    while (serverRunningOnDisplay &&
 		   displayNumber < MaxConnections)
 	    {
-		std::stringstream 
+		std::stringstream ss;
 		ss << ":" << displayNumber;
 		Display *check = XOpenDisplay (ss.str ().c_
 
