@@ -822,3 +822,34 @@
  unsigned int DEFAULT_VIEWPORT_HEIGHT = 1;
  
  bool Advance (Display *d, bool r)
+--- a/plugins/grid/grid.xml.in
++++ b/plugins/grid/grid.xml.in
+@@ -23,17 +23,16 @@
+ 		<option name="put_center_key" type="key">
+ 		    <_short>Put Center Key</_short>
+ 		    <_long>Move window to the center.</_long>
+-		    <default>&lt;Control&gt;&lt;Alt&gt;KP_5</default>
+ 		</option>
+ 		<option name="put_left_key" type="key">
+ 		    <_short>Put Left Key</_short>
+ 		    <_long>Move window to the left edge.</_long>
+-		    <default>&lt;Control&gt;&lt;Alt&gt;KP_4</default>
++		    <default>&lt;Control&gt;&lt;Super&gt;Left</default>
+ 		</option>
+ 		<option name="put_right_key" type="key">
+ 		    <_short>Put Right Key</_short>
+ 		    <_long>Move window to the right edge.</_long>
+-		    <default>&lt;Control&gt;&lt;Alt&gt;KP_6</default>
++		    <default>&lt;Control&gt;&lt;Super&gt;Right</default>
+ 		</option>
+ 		<option name="put_top_key" type="key">
+ 		    <_short>Put Top Key</_short>
+@@ -73,7 +72,7 @@
+ 		<option name="put_restore_key" type="key">
+ 		    <_short>Restore</_short>
+ 		    <_long>Restore window to it's original size. Note: Use the same shortcut you are using to unmaximize a window to be able to restore grid-maximized windows.</_long>
+-		    <default>&lt;Alt&gt;F5</default>
++		    <default>&lt;Control&gt;&lt;Super&gt;Down</default>
+ 		</option>
+ 	    </group>
+ 	    <group>
