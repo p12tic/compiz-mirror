@@ -649,10 +649,9 @@ PutScreen::getDistance (CompWindow         *w,
 
 	    currentNum = getOutputForWindow (w);
 
-            if (type == PutNextOutput)
-                outputNum = (currentNum + 1) % nOutputDev;
-            else
-                outputNum = (currentNum + nOutputDev - 1) % nOutputDev;
+            outputNum = (currentNum + (type == PutNextOutput ? 1 : -1)) % nOutputDev;
+            if (outputNum < 0) 
+                outputNum += nOutputDev;
 
 	    outputNum  = CompOption::getIntOptionNamed (option,"output",
 							outputNum);
