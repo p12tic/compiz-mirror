@@ -239,7 +239,7 @@ ResizeLogic::handleEvent (XEvent *event)
 		terminateResize (&options->optionGetInitiateButton (), 0, noOptions ());
 		terminateResize (&options->optionGetInitiateKey (), 0, noOptions ());
 	    }
-	    break:
+	    break;
 
 	default:
 	    break;
