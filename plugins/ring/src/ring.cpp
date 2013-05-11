@@ -33,7 +33,7 @@ COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
 const double PI = 3.14159265359f;
 
-const unsigned short ICON_SIZE = 256;
+const unsigned short ICON_SIZE = 512;
 
 bool textAvailable;
 
@@ -296,7 +296,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	{
 	    GLTexture *icon;
 
-	    icon = gWindow->getIcon (256, 256);
+	    icon = gWindow->getIcon (512, 512);
 	    if (!icon)
 		icon = rs->gScreen->defaultIcon ();
 

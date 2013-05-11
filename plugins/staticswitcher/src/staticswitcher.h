@@ -157,7 +157,7 @@ class StaticSwitchWindow :
 	StaticSwitchScreen    *sScreen;
 };
 
-#define MAX_ICON_SIZE 256
+#define MAX_ICON_SIZE 512
 
 extern const unsigned short PREVIEWSIZE;
 extern const unsigned short BORDER;
