@@ -182,9 +182,7 @@ ScaleAddonScreen::checkWindowHighlight ()
 {
     if (highlightedWindow != lastHighlightedWindow)
     {
-	CompWindow *w;
-
-	w = screen->findWindow (highlightedWindow);
+	CompWindow *w = screen->findWindow (highlightedWindow);
 
 	if (w)
 	{
@@ -214,8 +212,7 @@ ScaleAddonScreen::closeWindow (CompAction         *action,
     if (!sScreen->hasGrab ())
 	return false;
 
-    CompWindow *w;
-    w = screen->findWindow (highlightedWindow);
+    CompWindow *w = screen->findWindow (highlightedWindow);
 
     if (w)
 	w->close (screen->getCurrentTime ());
@@ -231,8 +228,7 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
     if (!sScreen->hasGrab ())
 	return false;
 
-    CompWindow *w;
-    w = screen->findWindow (highlightedWindow);
+    CompWindow *w = screen->findWindow (highlightedWindow);
 
     if (w)
     {
@@ -277,7 +273,7 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 	    /* Select this window when ending scale */
 	    aw->sWindow->scaleSelectWindow ();
 
-	    /* stop scaled window dissapearing */
+	    /* stop scaled window disappearing */
 	    pos.setX (oldPos.x () - xOffset);
 	    pos.setY (oldPos.y () - yOffset);
 
@@ -290,8 +286,38 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 		o.push_back (CompOption ("root", CompOption::TypeInt));
 		o[0].value ().set ((int) screen->root ());
 
-		opt = CompOption::findOption (sScreen->getOptions (),
-					      "initiate_key", 0);
+		opt = CompOption::findOption (sScreen->getOptions (), "initiate_key", 0);
+
+		/* If the user has no initiate_key defined we gotta continue to search
+		 * until we find a way to exit. We test them all to ensure that we always
+		 * have a exit strategy as one of the following has to be defined.
+		 */
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_edge", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_button", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_all_key", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_all_edge", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_all_button", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_group_key", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_group_edge", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_group_button", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_output_key", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_output_edge", 0);
+		if (!opt)
+		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_output_button", 0);
+
+		/* Now we can be sure that opt is not empty anymore, otherwise the user
+		 * would not have been able to enter scale mode at all */
+
 		action = &opt->value ().action ();
 
 		if (action->terminate ())
@@ -326,8 +352,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
     if (!sScreen->hasGrab ())
 	return false;
 
-    CompWindow *w;
-    w = screen->findWindow (highlightedWindow);
+    CompWindow *w = screen->findWindow (highlightedWindow);
 
     if (w)
     {
@@ -393,9 +418,8 @@ ScaleAddonScreen::handleEvent (XEvent *event)
     case PropertyNotify:
 	if (event->xproperty.atom == XA_WM_NAME && sScreen->hasGrab ())
 	{
-	    CompWindow *w;
+	    CompWindow *w = screen->findWindow (event->xproperty.window);
 
-	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 	    {
 		ADDON_WINDOW (w);
@@ -461,16 +485,10 @@ ScaleAddonScreen::donePaint ()
 
     if (state != ScaleScreen::Idle && lastState == ScaleScreen::Idle)
 	foreach (CompWindow *w, screen->windows ())
-	{
 	    ScaleAddonWindow::get (w)->renderTitle ();
-	}
     else if (state == ScaleScreen::Idle && lastState != ScaleScreen::Idle)
-    {
 	foreach (CompWindow *w, screen->windows ())
-	{
 	    ScaleAddonWindow::get (w)->text.clear ();
-	}
-    }
 
     if (state == ScaleScreen::Out && lastState != ScaleScreen::Out)
     {
@@ -969,6 +987,7 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     int                                  iterCount = 0;
 
     if (windows.size () == 1)
+    {
 	// Just move the window to its original location to save time
 	if (screen->fullscreenOutput ().workArea ().contains (windows.front ()->window->geometry ()))
 	{
@@ -976,6 +995,7 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 	    windows.front ()->setSlot (slot);
 	    return true;
 	}
+    }
 
     foreach (ScaleWindow *w, windows)
     {
