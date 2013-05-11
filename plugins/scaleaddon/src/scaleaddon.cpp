@@ -1324,20 +1324,20 @@ ScaleAddonWindow::ScaleAddonWindow (CompWindow *window) :
 bool
 ScaleAddonPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-	!CompPlugin::checkPluginABI ("scale", COMPIZ_SCALE_ABI))
-	return false;
-
-    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+    if (CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+	textAvailable = true;
+    else
     {
 	compLogMessage ("scaleaddon", CompLogLevelInfo,
 			"Text Plugin not loaded, no text will be drawn.");
 	textAvailable = false;
     }
-    else
-	textAvailable = true;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)	&&
+	CompPlugin::checkPluginABI ("scale", COMPIZ_SCALE_ABI))
+	return true;
+
+    return false;
 }

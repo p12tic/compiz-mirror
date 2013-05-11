@@ -307,9 +307,8 @@ JpegScreen::JpegScreen (CompScreen *screen) :
 bool
 JpegPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
 
-    return true;
+    return false;
 }
-

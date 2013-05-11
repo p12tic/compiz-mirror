@@ -903,12 +903,10 @@ ShowdesktopWindow::~ShowdesktopWindow ()
 bool
 ShowdesktopPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
-	return false;
-    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
