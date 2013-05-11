@@ -99,13 +99,11 @@ ResizeLogic::~ResizeLogic()
 void
 ResizeLogic::handleEvent (XEvent *event)
 {
-    switch (event->type)
-    {
+    switch (event->type) {
 	case KeyPress:
 	    if (event->xkey.root == mScreen->root ())
 		handleKeyEvent (event->xkey.keycode);
 	    break;
-
 	case ButtonRelease:
 	    if (event->xbutton.root == mScreen->root ())
 	    {
@@ -122,18 +120,15 @@ ResizeLogic::handleEvent (XEvent *event)
 		}
 	    }
 	    break;
-
 	case MotionNotify:
 	    if (event->xmotion.root == mScreen->root ())
 		handleMotionEvent (pointerX, pointerY);
 	    break;
-
 	case EnterNotify:
 	case LeaveNotify:
 	    if (event->xcrossing.root == mScreen->root ())
 		handleMotionEvent (pointerX, pointerY);
 	    break;
-
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::wmMoveResize)
 	    {
@@ -170,8 +165,7 @@ ResizeLogic::handleEvent (XEvent *event)
 			    /* TODO: not only button 1 */
 			    if (pointerMods & Button1Mask)
 			    {
-				static unsigned int mask[] =
-				{
+				static unsigned int mask[] = {
 				    ResizeUpMask | ResizeLeftMask,
 				    ResizeUpMask,
 				    ResizeUpMask | ResizeRightMask,
@@ -224,7 +218,6 @@ ResizeLogic::handleEvent (XEvent *event)
 		}
 	    }
 	    break;
-
 	case DestroyNotify:
 	    if (w && w->id () == event->xdestroywindow.window)
 	    {
@@ -232,15 +225,12 @@ ResizeLogic::handleEvent (XEvent *event)
 		terminateResize (&options->optionGetInitiateKey (), 0, noOptions ());
 	    }
 	    break;
-
 	case UnmapNotify:
 	    if (w && w->id () == event->xunmap.window)
 	    {
 		terminateResize (&options->optionGetInitiateButton (), 0, noOptions ());
 		terminateResize (&options->optionGetInitiateKey (), 0, noOptions ());
 	    }
-	    break;
-
 	default:
 	    break;
     }
@@ -352,7 +342,9 @@ ResizeLogic::handleEvent (XEvent *event)
 		    centered = true;
 	    }
 	    else
+	    {
 		centered = false;
+	    }
 	}
     }
 
@@ -377,8 +369,10 @@ ResizeLogic::handleKeyEvent (KeyCode keycode)
 {
     if (grabIndex && w)
     {
-	int widthInc  = w->sizeHints ().width_inc;
-	int heightInc = w->sizeHints ().height_inc;
+	int	   widthInc, heightInc;
+
+	widthInc  = w->sizeHints ().width_inc;
+	heightInc = w->sizeHints ().height_inc;
 
 	if (widthInc < MIN_KEY_WIDTH_INC)
 	    widthInc = MIN_KEY_WIDTH_INC;
@@ -392,20 +386,24 @@ ResizeLogic::handleKeyEvent (KeyCode keycode)
 		continue;
 
 	    if (mask & rKeys[i].warpMask)
+	    {
 		XWarpPointer (mScreen->dpy (), None, None, 0, 0, 0, 0,
 			      rKeys[i].dx * widthInc, rKeys[i].dy * heightInc);
+	    }
 	    else
 	    {
+		int x, y, left, top, width, height;
+
 		CompWindow::Geometry server = w->serverGeometry ();
 		const CompWindowExtents    &border  = w->border ();
 
-		int left   = server.x () - border.left;
-		int top    = server.y () - border.top;
-		int width  = border.left + server.width () + border.right;
-		int height = border.top  + server.height () + border.bottom;
+		left   = server.x () - border.left;
+		top    = server.y () - border.top;
+		width  = border.left + server.width () + border.right;
+		height = border.top  + server.height () + border.bottom;
 
-		int x = left + width  * (rKeys[i].dx + 1) / 2;
-		int y = top  + height * (rKeys[i].dy + 1) / 2;
+		x = left + width  * (rKeys[i].dx + 1) / 2;
+		y = top  + height * (rKeys[i].dy + 1) / 2;
 
 		mScreen->warpPointer (x - pointerX, y - pointerY);
 

@@ -209,11 +209,15 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			     CompOutput                *output,
 			     unsigned int              mask)
 {
-    if (logic.w &&
-	logic.mode == ResizeOptions::ModeStretch)
-	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+    bool status;
 
-    bool status = gScreen->glPaintOutput (sAttrib, transform, region, output, mask);
+    if (logic.w)
+    {
+	if (logic.mode == ResizeOptions::ModeStretch)
+	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+    }
+
+    status = gScreen->glPaintOutput (sAttrib, transform, region, output, mask);
 
     if (status && logic.w)
     {
@@ -222,16 +226,12 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	border = optionGetBorderColor ();
 	fill   = optionGetFillColor ();
 
-	switch (logic.mode)
-	{
+	switch (logic.mode) {
 	    case ResizeOptions::ModeOutline:
 		glPaintRectangle (sAttrib, transform, output, border, NULL);
 		break;
-
 	    case ResizeOptions::ModeRectangle:
 		glPaintRectangle (sAttrib, transform, output, border, fill);
-		break;
-
 	    default:
 		break;
 	}
@@ -253,7 +253,9 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
     {
 	GLMatrix       wTransform (transform);
 	BoxRec	       box;
+	float	       xOrigin, yOrigin;
 	float	       xScale, yScale;
+	int            x, y;
 
 	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 	    return false;
@@ -269,11 +271,11 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	rScreen->logic.getPaintRectangle (&box);
 	getStretchScale (&box, &xScale, &yScale);
 
-	int x = window->geometry (). x ();
-	int y = window->geometry (). y ();
+	x = window->geometry (). x ();
+	y = window->geometry (). y ();
 
-	float xOrigin = x - window->border ().left;
-	float yOrigin = y - window->border ().top;
+	xOrigin = x - window->border ().left;
+	yOrigin = y - window->border ().top;
 
 	wTransform.translate (xOrigin, yOrigin, 0.0f);
 	wTransform.scale (xScale, yScale, 1.0f);
@@ -285,7 +287,9 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			 mask | PAINT_WINDOW_TRANSFORMED_MASK);
     }
     else
+    {
 	status = gWindow->glPaint (attrib, transform, region, mask);
+    }
 
     return status;
 }
@@ -346,22 +350,18 @@ ResizeScreen::optionChanged (CompOption		    *option,
 	    mask = &logic.outlineMask;
 	    valueMask = optionGetOutlineModifierMask ();
 	    break;
-
 	case ResizeOptions::RectangleModifier:
 	    mask = &logic.rectangleMask;
 	    valueMask = optionGetRectangleModifierMask ();
 	    break;
-
 	case ResizeOptions::StretchModifier:
 	    mask = &logic.stretchMask;
 	    valueMask = optionGetStretchModifierMask ();
 	    break;
-
-	case ResizeOptions::CenteredModifier:
+        case ResizeOptions::CenteredModifier:
 	    mask = &logic.centeredMask;
 	    valueMask = optionGetCenteredModifierMask ();
 	    break;
-
 	default:
 	    break;
     }
