@@ -1,8 +1,6 @@
-Index: compiz/plugins/opengl/include/opengl/opengl.h
-===================================================================
---- compiz.orig/plugins/opengl/include/opengl/opengl.h	2013-02-17 10:22:08.012876000 +0800
-+++ compiz/plugins/opengl/include/opengl/opengl.h	2013-02-17 10:23:36.643958000 +0800
-@@ -578,6 +578,17 @@
+--- a/plugins/opengl/include/opengl/opengl.h
++++ b/plugins/opengl/include/opengl/opengl.h
+@@ -582,6 +582,17 @@
  
  extern GLScreenPaintAttrib defaultScreenPaintAttrib;
  
@@ -20,7 +18,7 @@ Index: compiz/plugins/opengl/include/opengl/opengl.h
  class GLScreen;
  class GLFramebufferObject;
  class GLScreenInterface;
-@@ -770,6 +781,13 @@
+@@ -774,6 +785,13 @@
  
  	bool glInitContext (XVisualInfo *);
  
@@ -34,11 +32,9 @@ Index: compiz/plugins/opengl/include/opengl/opengl.h
  	WRAPABLE_HND (0, GLScreenInterface, bool, glPaintOutput,
  		      const GLScreenPaintAttrib &, const GLMatrix &,
  		      const CompRegion &, CompOutput *, unsigned int);
-Index: compiz/plugins/opengl/src/privates.h
-===================================================================
---- compiz.orig/plugins/opengl/src/privates.h	2013-02-17 10:22:08.012876000 +0800
-+++ compiz/plugins/opengl/src/privates.h	2013-02-17 10:23:36.643958000 +0800
-@@ -46,6 +46,24 @@
+--- a/plugins/opengl/src/privates.h
++++ b/plugins/opengl/src/privates.h
+@@ -47,6 +47,24 @@
  
  extern CompOutput *targetOutput;
  
@@ -63,7 +59,7 @@ Index: compiz/plugins/opengl/src/privates.h
  class GLDoubleBuffer :
      public compiz::opengl::DoubleBuffer
  {
-@@ -122,6 +140,7 @@
+@@ -123,6 +141,7 @@
  class PrivateGLScreen :
      public ScreenInterface,
      public compiz::composite::PaintHandler,
@@ -71,7 +67,7 @@ Index: compiz/plugins/opengl/src/privates.h
      public OpenglOptions
  {
      public:
-@@ -206,6 +225,7 @@
+@@ -207,6 +226,7 @@
  	std::vector<GLTexture::BindPixmapProc> bindPixmap;
  	bool hasCompositing;
  	bool commonFrontbuffer;
@@ -79,7 +75,7 @@ Index: compiz/plugins/opengl/src/privates.h
  	bool incorrectRefreshRate; // hack for NVIDIA specifying an incorrect
  				   // refresh rate, causing us to miss vblanks
  
-@@ -225,6 +245,10 @@
+@@ -226,6 +246,10 @@
  
  	mutable CompString prevRegex;
  	mutable bool       prevBlacklisted;
@@ -90,10 +86,8 @@ Index: compiz/plugins/opengl/src/privates.h
  };
  
  class PrivateGLWindow :
-Index: compiz/plugins/opengl/src/screen.cpp
-===================================================================
---- compiz.orig/plugins/opengl/src/screen.cpp	2013-02-17 10:22:08.012876000 +0800
-+++ compiz/plugins/opengl/src/screen.cpp	2013-02-17 10:23:36.643958000 +0800
+--- a/plugins/opengl/src/screen.cpp
++++ b/plugins/opengl/src/screen.cpp
 @@ -67,6 +67,7 @@
  
  
@@ -148,10 +142,8 @@ Index: compiz/plugins/opengl/src/screen.cpp
      if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
  	GL::textureNonPowerOfTwo = true;
      GL::textureNonPowerOfTwoMipmap = GL::textureNonPowerOfTwo;
-Index: compiz/plugins/opengl/src/texture.cpp
-===================================================================
---- compiz.orig/plugins/opengl/src/texture.cpp	2013-02-17 10:22:08.012876000 +0800
-+++ compiz/plugins/opengl/src/texture.cpp	2013-02-17 10:23:36.643958000 +0800
+--- a/plugins/opengl/src/texture.cpp
++++ b/plugins/opengl/src/texture.cpp
 @@ -41,6 +41,7 @@
  #include "glx-tfp-bind.h"
  
