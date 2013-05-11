@@ -380,11 +380,10 @@ FadeWindow::~FadeWindow ()
 bool
 FadePluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)           |
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) |
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    {
-	return false;
-    }
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
+
+    return false;
 }
