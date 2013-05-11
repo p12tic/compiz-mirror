@@ -33,7 +33,7 @@ COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
 const double PI = 3.14159265359f;
 
-const unsigned short ICON_SIZE = 256;
+const unsigned short ICON_SIZE = 512;
 
 bool textAvailable;
 
@@ -1008,6 +1008,7 @@ RingScreen::windowSelectAt (int  x,
 	RING_WINDOW (w);
 
 	if (rw->mSlot)
+	{
 	    if ((x >= (rw->mTx + w->x ())) &&
 		(x <= (rw->mTx + w->x () + (w->width () * rw->mScale))) &&
 		(y >= (rw->mTy + w->y ())) &&
@@ -1017,6 +1018,7 @@ RingScreen::windowSelectAt (int  x,
 		selected = w;
 		break;
 	    }
+	}
     }
 
     if (selected && shouldTerminate)
@@ -1192,24 +1194,26 @@ RingScreen::handleEvent (XEvent *event)
 }
 
 bool
-RingWindow::damageRect (bool     initial,
-			const    CompRect &rect)
+RingWindow::damageRect (bool           initial,
+			const CompRect &rect)
 {
     bool status = false;
 
     RING_SCREEN (screen);
 
-    if (initial &&
-	rs->mGrabIndex && is ())
+    if (initial)
     {
-	rs->addWindowToList (window);
-
-	if (rs->updateWindowList ())
+	if (rs->mGrabIndex && is ())
 	{
-	    mAdjust = true;
-	    rs->mMoreAdjust = true;
-	    rs->mState = RingScreen::RingStateOut;
-	    rs->cScreen->damageScreen ();
+	    rs->addWindowToList (window);
+
+	    if (rs->updateWindowList ())
+	    {
+		mAdjust = true;
+		rs->mMoreAdjust = true;
+		rs->mState = RingScreen::RingStateOut;
+		rs->cScreen->damageScreen ();
+	    }
 	}
     }
     else if (rs->mState == RingScreen::RingStateSwitching &&
