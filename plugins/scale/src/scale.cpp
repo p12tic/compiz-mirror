@@ -1933,16 +1933,18 @@ ScaleScreen::setOption (const CompString  &name,
 bool
 ScalePluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
 
-    CompPrivate p;
-    p.uval = COMPIZ_SCALE_ABI;
-    screen->storeValue ("scale_ABI", p);
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+    {
+	CompPrivate p;
+	p.uval = COMPIZ_SCALE_ABI;
+	screen->storeValue ("scale_ABI", p);
+	return true;
+    }
 
-    return true;
+    return false;
 }
 
 void

@@ -637,6 +637,7 @@ PutScreen::getDistance (CompWindow         *w,
 	dx = 0;
 	dy = (s->vp ().y () < s->vpSize ().height ()-1) ? s->height () : 0;
 	break;
+    case PutPreviousOutput:
     case PutNextOutput:
 	{
 	    int        outputNum, currentNum;
@@ -647,7 +648,11 @@ PutScreen::getDistance (CompWindow         *w,
 		return result;
 
 	    currentNum = getOutputForWindow (w);
-	    outputNum  = (currentNum + 1) % nOutputDev;
+
+            outputNum = (currentNum + (type == PutNextOutput ? 1 : -1)) % nOutputDev;
+            if (outputNum < 0) 
+                outputNum += nOutputDev;
+
 	    outputNum  = CompOption::getIntOptionNamed (option,"output",
 							outputNum);
 
@@ -1030,7 +1035,7 @@ PutScreen::initiateCommon (CompAction         *action,
 	    return false;
 
 	/* only allow movement of fullscreen windows to next output */
-	if (type != PutNextOutput &&
+	if ((type != PutNextOutput && type != PutPreviousOutput) &&
 	    (w->type () & CompWindowTypeFullscreenMask))
 	{
 	    return false;
@@ -1111,6 +1116,8 @@ PutScreen::typeFromString (const CompString &type)
 	return PutViewportUp;
     else if (type == "viewportdown")
 	return PutViewportDown;
+    else if (type == "previousoutput")
+	return PutPreviousOutput;
     else if (type == "nextoutput")
 	return PutNextOutput;
     else if (type == "restore")
@@ -1227,6 +1234,7 @@ PutScreen::PutScreen (CompScreen *screen) :
     setAction (PutRestore, PutRestore);
     setAction (PutPointer, PutPointer);
     setAction (PutNextOutput, PutNextOutput);
+    setAction (PutPreviousOutput, PutPreviousOutput);
     setAction (PutCenter, PutCenter);
     setAction (PutEmptyCenter, PutEmptyCenter);
     setAction (PutLeft, PutLeft);
@@ -1294,12 +1302,10 @@ PutWindow::PutWindow (CompWindow *window) :
 bool
 PutPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	 return false;
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
-	 return false;
-    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }

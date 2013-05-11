@@ -48,7 +48,7 @@ FullscreenRegion::isCoveredBy (const CompRegion &region, WinFlags flags)
 {
     bool fullscreen = false;
 
-    if (!(flags & (Desktop | Alpha)) &&
+    if (!(flags & (Desktop | Alpha | NoOcclusionDetection)) &&
         region == untouched &&
         region == orig)
     {
