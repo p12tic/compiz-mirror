@@ -489,16 +489,16 @@
 	    </group>
 	    <group>
 		<_short>Resize Actions</_short>
-			<option name="snapback_windows" type="bool">
-				<_short>Snap Windows Back To Original Size</_short>
-				<_long>Snaps windows back to their original size if dragged away from their gridded position.</_long>
-				<default>true</default>
-			</option>
-			<option name="cycle_sizes" type="bool">
-				<_short>Cycle Through Multiple Sizes</_short>
-				<_long>Cycle through multiple different sizes by using the same keyboard shortcut multiple times in a row.</_long>
-				<default>false</default>
-			</option>
+		<option name="snapback_windows" type="bool">
+			<_short>Snap Windows Back To Original Size</_short>
+			<_long>Snaps windows back to their original size if dragged away from their gridded position.</_long>
+			<default>true</default>
+		</option>
+		<option name="cycle_sizes" type="bool">
+			<_short>Cycle Through Multiple Sizes</_short>
+			<_long>Cycle through multiple different sizes by using the same keyboard shortcut multiple times in a row.</_long>
+			<default>false</default>
+		</option>
 		<subgroup>
 			<_short>Grid Snapback Thresholds</_short>
 			<option name="left_edge_threshold" type="int">
