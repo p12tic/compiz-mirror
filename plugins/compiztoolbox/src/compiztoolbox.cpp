@@ -715,20 +715,21 @@ CompizToolboxScreen::CompizToolboxScreen (CompScreen *screen) :
 bool
 CompizToolboxPluginVTable::init ()
 {
-    openGLAvailable = true;
-
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+    if (CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) &&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	openGLAvailable = true;
+    else
 	openGLAvailable = false;
 
-    CompPrivate p;
-    p.uval = COMPIZ_COMPIZTOOLBOX_ABI;
-    screen->storeValue ("compiztoolbox_ABI", p);
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+    {
+	CompPrivate p;
+	p.uval = COMPIZ_COMPIZTOOLBOX_ABI;
+	screen->storeValue ("compiztoolbox_ABI", p);
+	return true;
+    }
 
-    return true;
+    return false;
 }
 
 void

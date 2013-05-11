@@ -92,14 +92,15 @@ PrivateCompositeScreen::setOption (const CompString  &name,
 bool
 CompositePluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+    {
+	CompPrivate p;
+	p.uval = COMPIZ_COMPOSITE_ABI;
+	screen->storeValue ("composite_ABI", p);
+	return true;
+    }
 
-    CompPrivate p;
-    p.uval = COMPIZ_COMPOSITE_ABI;
-    screen->storeValue ("composite_ABI", p);
-
-    return true;
+    return false;
 }
 
 void

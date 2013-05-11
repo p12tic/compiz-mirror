@@ -62,7 +62,7 @@ setFunctions (bool enabled)
 }
 
 void
-ShiftScreen::activateEvent (bool	activating)
+ShiftScreen::activateEvent (bool        activating)
 {
     CompOption::Vector o;
 
@@ -176,7 +176,6 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
     if (!textAvailable || !optionGetWindowTitle ())
 	return;
 
-    float border = 10.0f;
     CompRect oe;
 
     float width = text.getWidth ();
@@ -190,6 +189,8 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
     float x = oe.centerX () - width / 2;
     float y;
 
+    unsigned short verticalOffset = optionGetVerticalOffset ();
+
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTitleTextPlacement ())
     {
@@ -197,15 +198,15 @@ ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 	    y = oe.centerY () + height / 2;
 	    break;
 
-	case TitleTextPlacementAbove:
-	case TitleTextPlacementBelow:
+	case TitleTextPlacementTopOfScreenMinusOffset:
+	case TitleTextPlacementBottomOfScreenPlusOffset:
 	{
 	    CompRect workArea = screen->currentOutputDev ().workArea ();
 
-	    if (optionGetTitleTextPlacement () == TitleTextPlacementAbove)
-		y = oe.y1 () + workArea.y1 () + 2 * border + height;
-	    else /* TitleTextPlacementBelow */
-		y = oe.y1 () + workArea.y2 () - 2 * border;
+	    if (optionGetTitleTextPlacement () == TitleTextPlacementTopOfScreenMinusOffset)
+		y = oe.y1 () + workArea.y1 () + height + verticalOffset;
+	    else /* TitleTextPlacementBottomOfScreenPlusOffset */
+		y = oe.y1 () + workArea.y2 () - verticalOffset;
 	}
 	    break;
 
@@ -315,8 +316,9 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			     mask | PAINT_WINDOW_TRANSFORMED_MASK);
 	}
 
-	if (scaled && ((ss->optionGetOverlayIcon () != ShiftOptions::OverlayIconNone) ||
-		       gWindow->textures ().empty ()))
+	if (scaled &&
+	    ((ss->optionGetOverlayIcon () != ShiftOptions::OverlayIconNone) ||
+	     gWindow->textures ().empty ()))
 	{
 	    GLTexture *icon;
 
@@ -352,7 +354,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		if (gWindow->textures ().empty ())
 		    iconOverlay = ShiftOptions::OverlayIconBig;
 
-	    	switch (iconOverlay)
+		switch (iconOverlay)
 		{
 		    case ShiftOptions::OverlayIconNone:
 		    case ShiftOptions::OverlayIconEmblem:
@@ -551,10 +553,8 @@ ShiftScreen::layoutThumbsCover ()
 	else
 	    yScale = 1.0f;
 
-
 	float val1 = floor((float) MIN (mNWindows,
 					optionGetCoverMaxVisibleWindows ()) / 2.0);
-
 	float pos;
 	float space = (maxThumbWidth / 2);
 	space *= cos (sin (PI / 4) * PI / 3);
@@ -583,8 +583,8 @@ ShiftScreen::layoutThumbsCover ()
 	    sw->mSlots[i].scale   = MIN (xScale, yScale);
 
 	    sw->mSlots[i].y = centerY + (maxThumbHeight / 2.0) -
-				(((w->height () / 2.0) + w->border ().bottom) *
-				sw->mSlots[i].scale);
+			      (((w->height () / 2.0) + w->border ().bottom) *
+			       sw->mSlots[i].scale);
 
 	    if (fabs(distance) < 1.0)
 	    {
@@ -787,7 +787,7 @@ ShiftScreen::addWindowToList (CompWindow *w)
     if (mWindowsSize <= mNWindows)
     {
 	mWindows = (CompWindow **) realloc (mWindows,
-			       sizeof (CompWindow *) * (mNWindows + 32));
+					    sizeof (CompWindow *) * (mNWindows + 32));
 	if (!mWindows)
 	    return;
 
@@ -797,8 +797,8 @@ ShiftScreen::addWindowToList (CompWindow *w)
     if (mSlotsSize <= mNWindows * 2)
     {
 	mDrawSlots = (ShiftDrawSlot *) realloc (mDrawSlots,
-				 sizeof (ShiftDrawSlot) *
-				 ((mNWindows * 2) + 64));
+						sizeof (ShiftDrawSlot) *
+						((mNWindows * 2) + 64));
 	if (!mDrawSlots)
 	{
 	    free (mDrawSlots);
@@ -2093,19 +2093,19 @@ ShiftWindow::~ShiftWindow ()
 bool
 ShiftPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
-
-    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+    if (CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+	textAvailable = true;
+    else
     {
 	compLogMessage ("shift", CompLogLevelWarn, "No compatible text plugin"\
 			" loaded");
 	textAvailable = false;
     }
-    else
-	textAvailable = true;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
+
+    return false;
 }

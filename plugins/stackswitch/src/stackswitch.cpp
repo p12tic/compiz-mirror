@@ -1362,19 +1362,19 @@ StackswitchWindow::~StackswitchWindow ()
 bool
 StackswitchPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    	return false;
-
-    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+    if (CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+	textAvailable = true;
+    else
     {
 	compLogMessage ("stackswitch", CompLogLevelWarn, "No compatible text plugin"\
-						          " loaded");
+							  " loaded");
 	textAvailable = false;
     }
-    else
-	textAvailable = true;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
+
+    return false;
 }
