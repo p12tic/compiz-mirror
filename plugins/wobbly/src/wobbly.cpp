@@ -1185,6 +1185,7 @@ Model::bezierPatchEvaluate (float u,
     float y = 0.0f;
 
     for (int i = 0; i < 4; ++i)
+    {
 	for (int j = 0; j < 4; ++j)
 	{
 	    x += coeffsU[i] * coeffsV[j] *
@@ -1192,6 +1193,7 @@ Model::bezierPatchEvaluate (float u,
 	    y += coeffsU[i] * coeffsV[j] *
 		objects[j * GRID_WIDTH + i].position.y;
 	}
+    }
 
     *patchX = x;
     *patchY = y;
@@ -1884,11 +1886,13 @@ WobblyWindow::moveNotify (int  dx,
 		Object *object = model->objects;
 
 		for (int i = 0; i < model->numObjects; ++i, ++object)
+		{
 		    if (object->immobile)
 		    {
 			object->position.x += dx;
 			object->position.y += dy;
 		    }
+		}
 	    }
 	    else
 	    {
