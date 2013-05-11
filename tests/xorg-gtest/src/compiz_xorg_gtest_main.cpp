@@ -54,7 +54,7 @@ class XorgEnvironment :
 	    {
 		std::stringstream ss;
 		ss << ":" << displayNumber;
-		Display *check = XOpenDisplay (ss.str ().c_
+		Display *check = XOpenDisplay (ss.str ().c_str ());
 
 		if (!check)
 		    serverRunningOnDisplay = false;
