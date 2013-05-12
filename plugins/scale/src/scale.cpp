@@ -384,14 +384,12 @@ PrivateScaleWindow::glPaint (const GLWindowPaintAttrib& attrib,
 
 	status = gWindow->glPaint (sAttrib, transform, region, mask);
 
-	mask &= ~(PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
-
 	if (scaled)
 	{
 	    GLWindowPaintAttrib lastAttrib (gWindow->lastPaintAttrib ());
 	    GLMatrix           wTransform (transform);
 
-	    if (mask & PAINT_WINDOW_NO_DRAW_MASKS)
+	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 		return false;
 
 	    if (window->alpha () || lastAttrib.opacity != OPAQUE)

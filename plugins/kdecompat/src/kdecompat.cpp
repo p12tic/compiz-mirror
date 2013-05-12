@@ -196,7 +196,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
     if ((!(ks->optionGetPlasmaThumbnails () || mPreviews.empty ()) &&
         !(mSlideData || mSlideData->remaining)) ||
 	!window->mapNum ()                ||
-	(mask & PAINT_WINDOW_NO_DRAW_MASKS))
+	(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
     {
 	status = gWindow->glPaint (attrib, transform, region, mask);
 	return status;
@@ -210,7 +210,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	CompRect           clipBox (window->x (), window->y (),
 				    window->width (), window->height ());
 
-	if (mask & PAINT_WINDOW_NO_DRAW_MASKS)
+	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 	    return false;
 
 	remainder = (float) data->remaining / data->duration;

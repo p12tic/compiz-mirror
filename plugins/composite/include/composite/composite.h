@@ -339,12 +339,6 @@ class CompositeScreen :
  */
 #define PAINT_WINDOW_BLEND_MASK			(1 << 19)
 
-/**
- * flags that would indicate the window is never actually drawn
- */
-#define PAINT_WINDOW_NO_DRAW_MASKS (PAINT_WINDOW_OCCLUSION_DETECTION_MASK | \
-				    PAINT_WINDOW_NO_CORE_INSTANCE_MASK)
-
 class CompositeWindowInterface;
 extern template class WrapableInterface<CompositeWindow, CompositeWindowInterface>;
 

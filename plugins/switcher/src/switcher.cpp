@@ -971,7 +971,7 @@ SwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	const CompWindow::Geometry &g = window->geometry ();
 
-	if (mask & PAINT_WINDOW_NO_DRAW_MASKS ||
+	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK ||
 	    sScreen->ignoreSwitcher)
 	    return false;
 

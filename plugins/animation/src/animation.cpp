@@ -1618,7 +1618,7 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
     // Is this the first glPaint call this round
     // without the mask PAINT_WINDOW_OCCLUSION_DETECTION_MASK?
     if (mPAScreen->mStartingNewPaintRound &&
-	!(mask & PAINT_WINDOW_NO_DRAW_MASKS))
+	!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
     {
 	mPAScreen->mStartingNewPaintRound = false;
 
