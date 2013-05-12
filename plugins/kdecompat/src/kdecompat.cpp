@@ -288,7 +288,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	}
 	else
 	{
-	    icon = gWindow->getIcon (256, 256);
+	    icon = gWindow->getIcon (512, 512);
 	    if (!icon)
 		icon = ks->gScreen->defaultIcon ();
 
