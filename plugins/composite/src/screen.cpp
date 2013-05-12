@@ -29,6 +29,8 @@
 #  include <config.h>
 #endif
 
+#include <boost/make_shared.hpp>
+
 #include <sys/time.h>
 
 #include <X11/Xlib.h>
@@ -618,13 +620,24 @@ CompositeScreen::recordDamageOnCurrentFrame (const CompRegion &r)
 
 typedef CompositeScreen::AreaShouldBeMarkedDirty ShouldMarkDirty;
 
+namespace
+{
+    bool alwaysDirty ()
+    {
+	return true;
+    }
+}
+
 CompositeScreen::DamageQuery::Ptr
-CompositeScreen::getDamageQuery (const ShouldMarkDirty &callback)
+CompositeScreen::getDamageQuery (ShouldMarkDirty callback)
 {
     /* No initial damage */
-    return bt::FrameRoster::Ptr (new bt::FrameRoster (CompSize (),
-						      priv->ageingBuffers,
-						      callback));
+    bt::AgeingDamageBufferObserver &observer (priv->ageingBuffers);
+    return boost::make_shared <bt::FrameRoster> (*screen,
+						 boost::ref (observer),
+						 !callback.empty () ?
+						     callback :
+						     boost::bind (alwaysDirty));
 }
 
 unsigned int

@@ -239,7 +239,8 @@ class CompositeScreen :
 	typedef DamageQuery::AreaShouldBeMarkedDirty AreaShouldBeMarkedDirty;
 
 	DamageQuery::Ptr
-	getDamageQuery (const AreaShouldBeMarkedDirty &callback);
+	getDamageQuery (AreaShouldBeMarkedDirty callback =
+			    AreaShouldBeMarkedDirty ());
 	
 
 	unsigned int damageMask ();

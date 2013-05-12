@@ -49,7 +49,7 @@ class MockAgeingDamageBufferObserver :
 	MOCK_METHOD1 (unobserve, void (bt::DamageAgeTracking &));
 };
 
-bool alwaysTrackDamage (const CompRegion &)
+bool alwaysDirty ()
 {
     return true;
 }
@@ -75,8 +75,7 @@ class BackbufferTracking :
 	{
 	    roster.reset (new bt::FrameRoster (screen,
 					       niceTracker,
-					       boost::bind (alwaysTrackDamage,
-							   _1)));
+					       boost::bind (alwaysDirty)));
 	}
 
     protected:
@@ -153,7 +152,7 @@ TEST (BackbufferTrackingConstruction, CreateAddsToObserverList)
     EXPECT_CALL (mockAgeingDamageBufferObserver, unobserve (_)).Times (AtLeast (0));
     bt::FrameRoster roster (CompSize (),
 			    mockAgeingDamageBufferObserver,
-			    boost::bind (alwaysTrackDamage, _1));
+			    boost::bind (alwaysDirty));
 }
 
 TEST (BackbufferTrackingConstruction, DestroyRemovesFromObserverList)
@@ -166,7 +165,7 @@ TEST (BackbufferTrackingConstruction, DestroyRemovesFromObserverList)
     EXPECT_CALL (mockAgeingDamageBufferObserver, unobserve (_));
     bt::FrameRoster roster (CompSize (),
 			    mockAgeingDamageBufferObserver,
-			    boost::bind (alwaysTrackDamage, _1));
+			    boost::bind (alwaysDirty));
 }
 
 TEST_F (BackbufferTrackingCallbacks, TrackIntoCurrentIfCallbackTrue)
