@@ -485,11 +485,15 @@ ScaleAddonScreen::donePaint ()
     ScaleScreen::State state = sScreen->getState ();
 
     if (state != ScaleScreen::Idle && lastState == ScaleScreen::Idle)
+    {
 	foreach (CompWindow *w, screen->windows ())
 	    ScaleAddonWindow::get (w)->renderTitle ();
+    }
     else if (state == ScaleScreen::Idle && lastState != ScaleScreen::Idle)
+    {
 	foreach (CompWindow *w, screen->windows ())
 	    ScaleAddonWindow::get (w)->text.clear ();
+    }
 
     if (state == ScaleScreen::Out && lastState != ScaleScreen::Out)
     {
