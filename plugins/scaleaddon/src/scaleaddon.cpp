@@ -47,6 +47,7 @@ ScaleAddonWindow::renderTitle ()
 	!sWindow->hasSlot ()							||
 	(titleOpt == ScaleaddonOptions::WindowTitleHighlightedWindowOnly &&
 	 as->highlightedWindow != window->id ()))
+    return;
 
     text.clear ();
     CompText::Attrib attrib;
