@@ -7,7 +7,7 @@ add_executable (compiz_acceptance_test_xorg_replace_current_wm
 set (COMPIZ_XORG_ACCEPTANCE_TEST_LIBRARIES
      compiz_xorg_gtest_system_test
      xorg_gtest_all
-     xorg_gtest_main
+     compiz_xorg_gtest_main
      ${GTEST_BOTH_LIBRARIES}
      ${XORG_SERVER_LIBRARIES}
      ${X11_XI_LIBRARIES})
