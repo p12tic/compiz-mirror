@@ -354,6 +354,11 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	    if (w->alpha ())
 		flags |= FullscreenRegion::Alpha;
 	    
+	    /* Anything which was not occlusion detected is not a suitable
+	     * candidate for unredirection either */
+	    if (!status)
+		flags |= FullscreenRegion::NoOcclusionDetection;
+
 	    CompositeWindow *cw = CompositeWindow::get (w);
 
 	    /*

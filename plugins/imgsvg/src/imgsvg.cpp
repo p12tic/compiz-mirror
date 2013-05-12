@@ -625,12 +625,13 @@ SvgWindow::setSvg (CompString    &data,
 bool
 SvgPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+    {
+	rsvg_init ();
+	return true;
+    }
 
-    rsvg_init ();
-
-    return true;
+    return false;
 }
 
 void
@@ -638,4 +639,3 @@ SvgPluginVTable::fini ()
 {
     rsvg_term ();
 }
-

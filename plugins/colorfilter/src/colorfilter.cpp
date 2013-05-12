@@ -479,19 +479,15 @@ ColorfilterWindow::~ColorfilterWindow ()
 bool
 ColorfilterPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    {
-	compLogMessage ("colorfilter", CompLogLevelError, "Required plugins "\
-			"'opengl' and 'composite' are not loaded");
-	return false;
-    }
-
     if (!GL::fragmentProgram)
 	compLogMessage ("colorfilter", CompLogLevelWarn, "No fragment" \
 			"support, the plugin will continue to load but nothing"\
 			"will happen");
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
+
+    return false;
 }
