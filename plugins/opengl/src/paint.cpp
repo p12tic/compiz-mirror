@@ -633,9 +633,15 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	{
 	    if (mask & PAINT_SCREEN_FULL_MASK)
 	    {
-		glPaintTransformedOutput (sAttrib, sTransform,
-					  CompRegionRef (output->region ()), output, mask);
-		priv->cScreen->addOverdrawDamageRegion (CompRegionRef (output->region ()));
+		CompRegionRef   region (output->region ());
+		CompositeScreen *cs = priv->cScreen;
+
+		glPaintTransformedOutput (sAttrib,
+					  sTransform,
+					  region,
+					  output,
+					  mask);
+		cs->recordDamageOnCurrentFrame (region);
 		return true;
 	    }
 
@@ -665,9 +671,14 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     }
     else if (mask & PAINT_SCREEN_FULL_MASK)
     {
-        glPaintTransformedOutput (sAttrib, sTransform, CompRegionRef (output->region ()),
-				  output, mask);
-	priv->cScreen->addOverdrawDamageRegion (CompRegionRef (output->region ()));
+	CompRegionRef    region (output->region ());
+	CompositeScreen *cs = priv->cScreen;
+	glPaintTransformedOutput (sAttrib,
+				  sTransform,
+				  region,
+				  output,
+				  mask);
+	cs->recordDamageOnCurrentFrame (region);
 
 	return true;
     }

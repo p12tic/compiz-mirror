@@ -611,7 +611,7 @@ CompositeScreen::getFrameAge ()
 }
 
 void
-CompositeScreen::addOverdrawDamageRegion (const CompRegion &r)
+CompositeScreen::recordDamageOnCurrentFrame (const CompRegion &r)
 {
     priv->ageingBuffers.markAreaDirtyOnLastFrame (r);
 }

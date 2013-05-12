@@ -224,7 +224,16 @@ class CompositeScreen :
 	 */
 	void applyDamageForFrameAge (unsigned int);
 	unsigned int getFrameAge ();
-	void addOverdrawDamageRegion (const CompRegion &);
+
+	/**
+	 * @brief recordDamageOnCurrentFrame
+	 *
+	 * Causes damage to be recorded on one-frame ago. Ideally this
+	 * should be used in the case where damage was already recorded
+	 * for a frame, but due to an unforeseen circumstance at the time
+	 * additional painting area needed to be allocated at paint-time.
+	 */
+	void recordDamageOnCurrentFrame (const CompRegion &);
 
 	typedef compiz::composite::buffertracking::AgeDamageQuery DamageQuery;
 	typedef DamageQuery::AreaShouldBeMarkedDirty AreaShouldBeMarkedDirty;

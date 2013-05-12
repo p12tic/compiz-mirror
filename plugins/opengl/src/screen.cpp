@@ -2255,8 +2255,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 #endif
 
 	    /* Clip current paint region to output extents */
-	    CompRegionRef wholeOutput (output->region ());
-	    outputRegion = (paintRegion & wholeOutput);
+	    CompRegionRef outputReg (output->region ());
+	    outputRegion = (paintRegion & outputReg);
 
 	    if (!gScreen->glPaintOutput (defaultScreenPaintAttrib,
 					 identity,
@@ -2267,11 +2267,11 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
 		gScreen->glPaintOutput (defaultScreenPaintAttrib,
 					identity,
-					wholeOutput, output,
+					outputReg, output,
 					PAINT_SCREEN_FULL_MASK);
 
-		paintRegion += wholeOutput;
-		cScreen->addOverdrawDamageRegion (wholeOutput);
+		paintRegion += outputReg;
+		cScreen->recordDamageOnCurrentFrame (outputReg);
 	    }
 	}
     }
