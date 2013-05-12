@@ -319,15 +319,6 @@
  			<min>0.0</min>
  			<max>100.0</max>
  			<precision>0.1</precision>
-@@ -211,7 +209,7 @@
- 		    <option name="vp_saturation" type="float">
- 			<_short>Saturation</_short>
- 			<_long>Inactive viewport saturation.</_long>
--			<default>100.0</default>
-+			<default>40.0</default>
- 			<min>0.0</min>
- 			<max>100.0</max>
- 			<precision>0.1</precision>
 @@ -223,7 +221,7 @@
  			    <red>0xfbfb</red>
  			    <green>0x8b8b</green>
@@ -346,15 +337,6 @@
  		    </option>
  		    <option name="ground_color1" type="color">
  			<_short>Ground color(near)</_short>
-@@ -265,7 +263,7 @@
- 		    <option name="scale_factor" type="float">
- 			<_short>Reflection Scale</_short>
- 			<_long>Scale factor of the expo wall reflection</_long>
--			<default>0.75</default>
-+			<default>1.0</default>
- 			<min>0.0</min>
- 			<max>2.0</max>
- 			<precision>0.01</precision>
 --- a/plugins/ezoom/ezoom.xml.in
 +++ b/plugins/ezoom/ezoom.xml.in
 @@ -29,7 +29,6 @@
