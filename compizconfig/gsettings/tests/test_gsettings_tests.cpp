@@ -40,7 +40,6 @@ using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
 using ::testing::Not;
-using ::testing::NotNull;
 using ::testing::Matcher;
 using ::testing::Eq;
 using ::testing::NiceMock;
@@ -273,7 +272,7 @@ TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsOver)
 
     std::string keyname;
 
-    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; ++i)
 	keyname.push_back ('a');
 
     ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
@@ -291,7 +290,7 @@ TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsUnder)
 
     std::string keyname;
 
-    for (unsigned int i = 0; i <= UNDER_KEY_SIZE - 1; i++)
+    for (unsigned int i = 0; i <= UNDER_KEY_SIZE - 1; ++i)
 	keyname.push_back ('a');
 
     ASSERT_EQ (keyname.size (), UNDER_KEY_SIZE);
@@ -339,7 +338,7 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsTrunc)
     const unsigned int OVER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE + 1;
     std::string keyname;
 
-    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; ++i)
 	keyname.push_back ('a');
 
     ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
@@ -848,7 +847,7 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsByType)
     CCSSettingList filteredList = filterAllSettingsMatchingType (TypeInt, settingList);
 
     /* Needs to be expressed in terms of a boolean expression */
-    ASSERT_THAT (filteredList, NotNull ());
+    ASSERT_TRUE (filteredList);
     EXPECT_EQ (ccsSettingListLength (filteredList), 1);
     EXPECT_EQ (filteredList->data, s1);
     EXPECT_NE (filteredList->data, s2);
@@ -877,11 +876,11 @@ TEST_F(CCSGSettingsTestFindSettingLossy, TestFilterAvailableSettingsMatchingPart
     CCSSettingList filteredList = filterAllSettingsMatchingPartOfStringIgnoringDashesUnderscoresAndCase ("foo-bar-baz",
 													 settingList);
 
-    ASSERT_THAT (filteredList, NotNull ());
+    ASSERT_TRUE (filteredList);
     ASSERT_EQ (ccsSettingListLength (filteredList), 2);
     EXPECT_EQ (filteredList->data, s1);
     EXPECT_NE (filteredList->data, s3);
-    ASSERT_THAT (filteredList->next, NotNull ());
+    ASSERT_TRUE (filteredList->next);
     EXPECT_EQ (filteredList->next->data, s2);
     EXPECT_NE (filteredList->data, s3);
     EXPECT_EQ (NULL, filteredList->next->next);
@@ -1067,7 +1066,7 @@ namespace
 		GList *iterOther = other;
 		GList *iterInternal = mList;
 
-		for (unsigned int i = 0; i < numInternal; i++)
+		for (unsigned int i = 0; i < numInternal; ++i)
 		{
 		    if (static_cast <CCSSettingType> (GPOINTER_TO_INT (iterOther->data)) !=
 			static_cast <CCSSettingType> (GPOINTER_TO_INT (iterInternal->data)))

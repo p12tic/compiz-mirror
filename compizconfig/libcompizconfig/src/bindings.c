@@ -160,7 +160,7 @@ ccsModifiersToString (unsigned int modMask)
     unsigned int addedBindings = 0;
     int  i;
 
-    for (i = 0; i < ccsInternalUtilNumModifiers (); i++)
+    for (i = 0; i < ccsInternalUtilNumModifiers (); ++i)
     {
 	ccsAddKeybindingMaskToString (&binding,
 				      modMask,
@@ -178,7 +178,7 @@ ccsEdgesToModString (unsigned int edgeMask)
     char *binding = NULL;
     int  i;
 
-    for (i = 0; i < N_EDGES; i++)
+    for (i = 0; i < N_EDGES; ++i)
     {
 	if (edgeMask & edgeList[i].modifier)
 	    binding = stringAppend (binding, edgeList[i].modName);
@@ -193,7 +193,7 @@ ccsEdgesToString (unsigned int edgeMask)
     char *binding = NULL;
     int  i;
 
-    for (i = 0; i < N_EDGES; i++)
+    for (i = 0; i < N_EDGES; ++i)
     {
 	if (edgeMask & edgeList[i].modifier)
 	{
@@ -259,7 +259,7 @@ ccsStringToModifiers (const char *binding)
     unsigned int mods = 0;
     int		 i;
 
-    for (i = 0; i < ccsInternalUtilNumModifiers (); i++)
+    for (i = 0; i < ccsInternalUtilNumModifiers (); ++i)
     {
 	ccsAddStringToKeybindingMask (&mods,
 				      binding,
@@ -277,7 +277,7 @@ ccsStringToEdges (const char *binding)
     const char   *needle;
     int          i;
 
-    for (i = 0; i < N_EDGES; i++)
+    for (i = 0; i < N_EDGES; ++i)
     {
         int edgeLen = strlen (edgeList[i].name);
 
@@ -310,7 +310,7 @@ ccsModStringToEdges (const char *binding)
     unsigned int mods = 0;
     int		 i;
 
-    for (i = 0; i < N_EDGES; i++)
+    for (i = 0; i < N_EDGES; ++i)
     {
 	if (strcasestr (binding, edgeList[i].modName))
 	    mods |= edgeList[i].modifier;
@@ -343,7 +343,7 @@ ccsStringToKeyBinding (const char         *binding,
 	binding = ptr + 1;
 
     while (*binding && !isalnum (*binding))
-	binding++;
+	++binding;
 
     if (!*binding)
     {
@@ -397,7 +397,7 @@ ccsStringToButtonBinding (const char            *binding,
 	binding = ptr + 1;
 
     while (*binding && !isalnum (*binding))
-	binding++;
+	++binding;
 
     if (strncmp (binding, "Button", strlen ("Button")) == 0)
     {

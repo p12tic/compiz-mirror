@@ -199,7 +199,7 @@ ccsGSettingsNewGSettingsFuncNoAbort (const gchar                      *schema,
 {
     guint                  i = 0;
 
-    for (; schemas[i]; i++)
+    for (; schemas[i]; ++i)
 	if (g_strcmp0 (schema, schemas[i]) == 0)
 	    return (*func) (schema, data);
 

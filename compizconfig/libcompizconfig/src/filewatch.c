@@ -58,7 +58,7 @@ findDataIndexById (unsigned int watchId)
 {
     int i, index = -1;
 
-    for (i = 0; i < fwDataSize; i++)
+    for (i = 0; i < fwDataSize; ++i)
 	if (fwData[i].watchId == watchId)
 	{
 	    index = i;
@@ -86,7 +86,7 @@ void ccsCheckFileWatches (void)
     {
 	event = (struct inotify_event *) & buf[i];
 
-	for (j = 0; j < fwDataSize; j++)
+	for (j = 0; j < fwDataSize; ++j)
 	    if ((fwData[j].watchDesc == event->wd) && fwData[j].callback)
 		(*fwData[j].callback) (fwData[j].watchId, fwData[j].closure);
 
@@ -133,12 +133,12 @@ unsigned int ccsAddFileWatch (const char            *fileName,
     fwData[fwDataSize].closure   = closure;
 
     /* determine current highest ID */
-    for (i = 0; i < fwDataSize; i++)
+    for (i = 0; i < fwDataSize; ++i)
 	if (fwData[i].watchId > maxWatchId)
 	    maxWatchId = fwData[i].watchId;
 
     fwData[fwDataSize].watchId = maxWatchId + 1;
-    fwDataSize++;
+    ++fwDataSize;
 
     return (maxWatchId + 1);
 }
@@ -163,10 +163,10 @@ ccsRemoveFileWatch (unsigned int watchId)
 #endif
 
     /* shrink array */
-    for (i = selectedIndex; i < (fwDataSize - 1); i++)
+    for (i = selectedIndex; i < (fwDataSize - 1); ++i)
 	fwData[i] = fwData[i+1];
 
-    fwDataSize--;
+    --fwDataSize;
 
     if (fwDataSize > 0)
     {

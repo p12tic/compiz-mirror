@@ -114,7 +114,7 @@ translateToLowercaseForGSettings (char *name)
     unsigned int i;
 
     /* Everything must be lowercase */
-    for (i = 0; i < strlen (name); i++)
+    for (i = 0; i < strlen (name); ++i)
 	name[i] = g_ascii_tolower (name[i]);
 }
 
@@ -165,7 +165,7 @@ compizconfigTypeHasVariantType (CCSSettingType type)
 	TypeFloat
     };
 
-    for (; i < nVariantTypes; i++)
+    for (; i < nVariantTypes; ++i)
     {
 	if (variantTypes[i] == type)
 	    return TRUE;
@@ -294,7 +294,7 @@ appendToPluginsWithSetKeysList (const gchar *plugin,
     }
 
     if (!found)
-	(*newWrittenPluginsSize)++;
+	++(*newWrittenPluginsSize);
 
     *newWrittenPlugins = g_variant_dup_strv (writtenPlugins, &writtenPluginsLen);
 
@@ -591,7 +591,7 @@ readColorListValue (GVariantIter *iter, guint nItems, CCSSetting *setting, CCSOb
     {
 	ccsStringToColor (colorValue,
 			  &array[i]);
-	i++;
+	++i;
     }
 
     list = ccsGetValueListFromColorArray (array, nItems, setting);
