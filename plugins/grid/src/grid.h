@@ -30,21 +30,19 @@
 
 #include "grid_options.h"
 
-static const unsigned short SNAPOFF_THRESHOLD = 50;
-
 namespace GridWindowType
 {
-    static const unsigned int GridUnknown = (1 << 0);
+    static const unsigned int GridUnknown     = (1 << 0);
     static const unsigned int GridBottomLeft  = (1 << 1);
-    static const unsigned int GridBottom  = (1 << 2);
+    static const unsigned int GridBottom      = (1 << 2);
     static const unsigned int GridBottomRight = (1 << 3);
-    static const unsigned int GridLeft  = (1 << 4);
-    static const unsigned int GridCenter  = (1 << 5);
-    static const unsigned int GridRight  = (1 << 6);
-    static const unsigned int GridTopLeft  = (1 << 7);
-    static const unsigned int GridTop  = (1 << 8);
-    static const unsigned int GridTopRight  = (1 << 9);
-    static const unsigned int GridMaximize  = (1 << 10);
+    static const unsigned int GridLeft        = (1 << 4);
+    static const unsigned int GridCenter      = (1 << 5);
+    static const unsigned int GridRight       = (1 << 6);
+    static const unsigned int GridTopLeft     = (1 << 7);
+    static const unsigned int GridTop         = (1 << 8);
+    static const unsigned int GridTopRight    = (1 << 9);
+    static const unsigned int GridMaximize    = (1 << 10);
 };
 
 typedef unsigned int GridType;
@@ -93,16 +91,16 @@ class Animation
 
 	Animation ();
 
-	GLfloat progress;
+	GLfloat  progress;
 	CompRect fromRect;
 	CompRect targetRect;
 	CompRect currentRect;
-	GLfloat opacity;
-	GLfloat timer;
-	Window window;
-	int duration;
-	bool complete;
-	bool fadingOut;
+	GLfloat  opacity;
+	GLfloat  timer;
+	Window   window;
+	int      duration;
+	bool     complete;
+	bool     fadingOut;
 };
 
 class GridScreen :
@@ -115,56 +113,80 @@ class GridScreen :
     public:
 
 	GridScreen (CompScreen *);
-	CompositeScreen *cScreen;
-	GLScreen        *glScreen;
 
-	CompRect workarea, currentRect, desiredSlot, lastSlot,
-		 desiredRect, lastWorkarea, currentWorkarea;
-	GridProps props;
-	Edges edge, lastEdge, lastResizeEdge;
+	CompositeScreen    *cScreen;
+	GLScreen           *glScreen;
+
+	CompRect           workarea;
+	CompRect           currentRect;
+	CompRect           desiredSlot;
+	CompRect           lastSlot;
+	CompRect           desiredRect;
+	CompRect           lastWorkarea;
+	CompRect           currentWorkarea;
+
+	GridProps          props;
+
+	Edges              edge;
+	Edges              lastEdge;
+	Edges              lastResizeEdge;
+
 	CompOption::Vector o;
-	bool centerCheck;
-	CompWindow *mGrabWindow;
-	bool animating;
-	bool mSwitchingVp;
+	bool               centerCheck;
+	CompWindow         *mGrabWindow;
+	bool               animating;
+	bool               mSwitchingVp;
 
 	void getPaintRectangle (CompRect&);
 	void setCurrentRect (Animation&);
 
-	bool initiateCommon (CompAction*, CompAction::State,
-			     CompOption::Vector&, unsigned int, bool, bool);
+	bool initiateCommon (CompAction         *,
+			     CompAction::State   ,
+			     CompOption::Vector &,
+			     unsigned int        ,
+			     bool                ,
+			     bool                 );
 
-	void glPaintRectangle (const GLScreenPaintAttrib&,
-			       const GLMatrix&, CompOutput *);
+	void glPaintRectangle (const GLScreenPaintAttrib &,
+			       const GLMatrix            &,
+			       CompOutput                *);
 
 	bool glPaintOutput (const GLScreenPaintAttrib &,
-			    const GLMatrix &, const CompRegion &,
-			    CompOutput *, unsigned int);
+			    const GLMatrix            &,
+			    const CompRegion          &,
+			    CompOutput                *,
+			    unsigned int                );
 
 	void preparePaint (int msSinceLastPaint);
+
 	void donePaint ();
 
 	std::vector <Animation> animations;
 
 	int edgeToGridType ();
+
 	unsigned int typeToMask (int);
 
 	void handleEvent (XEvent *event);
-	void handleCompizEvent (const char *plugin, const char *event, CompOption::Vector &options);
 
-	bool restoreWindow (CompAction*,
-			    CompAction::State,
-			    CompOption::Vector&);
+	void handleCompizEvent (const char         *plugin,
+				const char         *event,
+				CompOption::Vector &options);
+
+	bool restoreWindow (CompAction         *,
+			    CompAction::State   ,
+			    CompOption::Vector &);
 
 	void
 	snapbackOptionChanged (CompOption *option,
-				Options    num);
+			       Options    num);
 
 	CompRect
 	slotToRect (CompWindow      *w,
 		    const CompRect& slot);
+
 	CompRect
-	constrainSize (CompWindow *w,
+	constrainSize (CompWindow      *w,
 		       const CompRect& slot);
 };
 
@@ -177,24 +199,30 @@ class GridWindow :
 
 	GridWindow (CompWindow *);
 	~GridWindow ();
-	CompWindow *window;
-    	GLWindow *gWindow;
-	GridScreen *gScreen;
 
-	bool isGridResized;
-	bool isGridHorzMaximized;
-	bool isGridVertMaximized;
+	CompWindow   *window;
+	GLWindow     *gWindow;
+	GridScreen   *gScreen;
+
+	bool         isGridResized;
+	bool         isGridHorzMaximized;
+	bool         isGridVertMaximized;
+
 	unsigned int grabMask;
-	int pointerBufDx;
-	int pointerBufDy;
-	int resizeCount;
-	CompRect currentSize;
-	CompRect originalSize;
-	GridType lastTarget;
+
+	int          pointerBufDx;
+	int          pointerBufDy;
+
+	int          resizeCount;
+	CompRect     currentSize;
+	CompRect     originalSize;
+	GridType     lastTarget;
 	unsigned int sizeHintsFlags;
 
-	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
-		      const CompRegion&, unsigned int);
+	bool glPaint (const GLWindowPaintAttrib &,
+		      const GLMatrix            &,
+		      const CompRegion          &,
+		      unsigned int                );
 
 	void grabNotify (int, int, unsigned int, unsigned int);
 
@@ -203,9 +231,10 @@ class GridWindow :
 	void moveNotify (int, int, bool);
 
 	void stateChangeNotify (unsigned int);
-	void validateResizeRequest (unsigned int &valueMask,
+
+	void validateResizeRequest (unsigned int   &valueMask,
 				    XWindowChanges *xwc,
-				    unsigned int source);
+				    unsigned int   source);
 };
 
 #define GRID_WINDOW(w) \
@@ -220,4 +249,3 @@ class GridPluginVTable :
 };
 
 COMPIZ_PLUGIN_20090315 (grid, GridPluginVTable);
-

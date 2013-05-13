@@ -315,13 +315,13 @@ ExtraWMWindow::~ExtraWMWindow ()
 bool
 ExtraWMPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
-	compositeAvailable = false;
-    else
+    if (CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
 	compositeAvailable = true;
+    else
+	compositeAvailable = false;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
+
+    return false;
 }

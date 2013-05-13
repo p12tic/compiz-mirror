@@ -33,7 +33,7 @@ COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
 const double PI = 3.14159265359f;
 
-const unsigned short ICON_SIZE = 64;
+const unsigned short ICON_SIZE = 512;
 
 bool textAvailable;
 
@@ -296,7 +296,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	{
 	    GLTexture *icon;
 
-	    icon = gWindow->getIcon (256, 256);
+	    icon = gWindow->getIcon (512, 512);
 	    if (!icon)
 		icon = rs->gScreen->defaultIcon ();
 
@@ -1339,19 +1339,19 @@ RingWindow::~RingWindow ()
 bool
 RingPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    	return false;
-
-    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+    if (CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+	textAvailable = true;
+    else
     {
 	compLogMessage ("ring", CompLogLevelWarn, "No compatible text plugin"\
 						  " loaded");
 	textAvailable = false;
     }
-    else
-	textAvailable = true;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
+
+    return false;
 }

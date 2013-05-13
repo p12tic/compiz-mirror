@@ -162,6 +162,6 @@ class BaseSwitchWindow
 };
 
 extern const unsigned short ICON_SIZE;
-extern const unsigned int MAX_ICON_SIZE;
+extern const unsigned short MAX_ICON_SIZE;
 
 #endif

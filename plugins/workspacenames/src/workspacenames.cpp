@@ -268,13 +268,14 @@ WSNamesScreen::~WSNamesScreen ()
 bool
 WorkspacenamesPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
-
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
 	compLogMessage ("workspacenames", CompLogLevelWarn,
 			"No compatible text plugin loaded");
-    return true;
+
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
+
+    return false;
 }

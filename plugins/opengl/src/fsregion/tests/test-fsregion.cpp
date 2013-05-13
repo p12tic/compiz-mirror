@@ -68,6 +68,25 @@ TEST (OpenGLFullscreenRegion, AlphaOverFullscreen)
                                        FullscreenRegion::Desktop));
 }
 
+TEST (OpenGLFullscreenRegion, NoOcclusionFullscreen)
+{
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::NoOcclusionDetection));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
+}
+
+TEST (OpenGLFullscreenRegion, NoOcclusionOverFullscreen)
+{
+    FullscreenRegion monitor (CompRect (0, 0, 1024, 768));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (50, 60, 70, 80),
+                                       FullscreenRegion::NoOcclusionDetection));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768)));
+    EXPECT_FALSE (monitor.isCoveredBy (CompRegion (0, 0, 1024, 768),
+                                       FullscreenRegion::Desktop));
+}
+
 TEST (OpenGLFullscreenRegion, NormalWindows)
 {
     FullscreenRegion monitor (CompRect (0, 0, 1024, 768));

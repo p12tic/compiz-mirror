@@ -2,7 +2,7 @@
 <compiz>
   <plugin name="showdesktop" useBcop="true">
     <_short>Show Desktop</_short>
-    <_long>Access your desktop easily</_long>
+    <_long>Access the desktop easily by using variable ways to move windows out of view</_long>
     <category>Desktop</category>
     <feature>showdesktop</feature>
     <deps>
@@ -19,10 +19,10 @@
     </deps>
     <options>
       <group>
-        <_short>Misc. Options</_short>
+        <_short>General</_short>
         <option name="speed" type="float">
           <_short>Speed</_short>
-          <_long>Window movement speed</_long>
+          <_long>The speed of the window movement.</_long>
           <default>1.2</default>
           <min>0.1</min>
           <max>50.0</max>
@@ -30,7 +30,7 @@
         </option>
         <option name="timestep" type="float">
           <_short>Timestep</_short>
-          <_long>Window movement timestep</_long>
+          <_long>The timestep of the window movement.</_long>
           <default>0.1</default>
           <min>0.1</min>
           <max>50.0</max>
@@ -38,7 +38,7 @@
         </option>
         <option name="direction" type="int">
           <_short>Movement Direction</_short>
-          <_long>Direction of window movement</_long>
+          <_long>The direction in which the windows move.</_long>
 		  <default>10</default>
 		  <min>0</min>
 		  <max>12</max>
@@ -97,7 +97,7 @@
         </option>
         <option name="window_match" type="match">
           <_short>Window Types</_short>
-          <_long>Window types that should be moved out of sight when entering showdesktop mode</_long>
+          <_long>Window types that should be moved out of sight when entering showdesktop-mode.</_long>
           <default>type=toolbar | type=utility | type=dialog | type=normal</default>
         </option>
       </group>
@@ -105,7 +105,7 @@
         <_short>Appearance</_short>
         <option name="window_opacity" type="float">
           <_short>Window Opacity</_short>
-          <_long>Window opacity when showdesktop'd</_long>
+          <_long>Windows will fade to this opacity when showdesktop'd.</_long>
           <default>0.3</default>
           <min>0.1</min>
           <max>1.0</max>
@@ -113,7 +113,7 @@
         </option>
         <option name="window_part_size" type="int">
           <_short>Window Part Size</_short>
-          <_long>Window part size when showdesktop'd</_long>
+          <_long>The size of the window part that will remain on screen when showdesktop'd (in pixels).</_long>
           <default>20</default>
           <min>0</min>
           <max>300</max>
