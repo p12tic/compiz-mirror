@@ -723,7 +723,7 @@ calc_button_size (decor_t *d)
 	button_width += 17;
 
     if (button_width)
-	button_width++;
+	++button_width;
 
     d->button_width = button_width;
 }

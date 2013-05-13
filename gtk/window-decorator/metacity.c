@@ -202,7 +202,7 @@ meta_get_top_border_region (const MetaFrameGeometry *fgeom,
 
     if (top_left_radius)
     {
-	for (i = 0; i < top_left_radius; i++)
+	for (i = 0; i < top_left_radius; ++i)
 	{
 	    w = radius_to_width (top_left_radius, i);
 
@@ -217,7 +217,7 @@ meta_get_top_border_region (const MetaFrameGeometry *fgeom,
 
     if (top_right_radius)
     {
-	for (i = 0; i < top_right_radius; i++)
+	for (i = 0; i < top_right_radius; ++i)
 	{
 	    w = radius_to_width (top_right_radius, i);
 
@@ -268,7 +268,7 @@ meta_get_bottom_border_region (const MetaFrameGeometry *fgeom,
 
     if (bottom_left_radius)
     {
-	for (i = 0; i < bottom_left_radius; i++)
+	for (i = 0; i < bottom_left_radius; ++i)
 	{
 	    w = radius_to_width (bottom_left_radius, i);
 
@@ -283,7 +283,7 @@ meta_get_bottom_border_region (const MetaFrameGeometry *fgeom,
 
     if (bottom_right_radius)
     {
-	for (i = 0; i < bottom_right_radius; i++)
+	for (i = 0; i < bottom_right_radius; ++i)
 	{
 	    w = radius_to_width (bottom_right_radius, i);
 
@@ -481,14 +481,14 @@ meta_get_decoration_geometry (decor_t		*d,
 
 	button_layout->left_buttons[0] = META_BUTTON_FUNCTION_MENU;
 
-	for (i = 1; i < MAX_BUTTONS_PER_CORNER; i++)
+	for (i = 1; i < MAX_BUTTONS_PER_CORNER; ++i)
 	    button_layout->left_buttons[i] = META_BUTTON_FUNCTION_LAST;
 
 	button_layout->right_buttons[0] = META_BUTTON_FUNCTION_MINIMIZE;
 	button_layout->right_buttons[1] = META_BUTTON_FUNCTION_MAXIMIZE;
 	button_layout->right_buttons[2] = META_BUTTON_FUNCTION_CLOSE;
 
-	for (i = 3; i < MAX_BUTTONS_PER_CORNER; i++)
+	for (i = 3; i < MAX_BUTTONS_PER_CORNER; ++i)
 	    button_layout->right_buttons[i] = META_BUTTON_FUNCTION_LAST;
     }
 
@@ -649,7 +649,7 @@ meta_draw_window_decoration (decor_t *d)
     if ((d->prop_xid || !d->buffer_pixmap) && !d->frame_window)
 	draw_shadow_background (d, cr, d->shadow, d->context);
 
-    for (i = 0; i < META_BUTTON_TYPE_LAST; i++)
+    for (i = 0; i < META_BUTTON_TYPE_LAST; ++i)
 	button_states[i] = meta_button_state_for_button_type (d, i);
 
     frame_style = meta_theme_get_frame_style (theme,
@@ -951,7 +951,7 @@ meta_calc_button_size (decor_t *d)
 	    d->context->left_space - d->context->right_space;
     min_x = width;
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
 	static guint button_actions[3] = {
 	    WNCK_WINDOW_ACTION_CLOSE,
@@ -1239,11 +1239,11 @@ meta_button_present (MetaButtonLayout   *button_layout,
 {
     int i;
 
-    for (i = 0; i < MAX_BUTTONS_PER_CORNER; i++)
+    for (i = 0; i < MAX_BUTTONS_PER_CORNER; ++i)
 	if (button_layout->left_buttons[i] == function)
 	    return TRUE;
 
-    for (i = 0; i < MAX_BUTTONS_PER_CORNER; i++)
+    for (i = 0; i < MAX_BUTTONS_PER_CORNER; ++i)
 	if (button_layout->right_buttons[i] == function)
 	    return TRUE;
 
@@ -1534,7 +1534,7 @@ meta_initialize_button_layout (MetaButtonLayout *layout)
 {
     int	i;
 
-    for (i = 0; i < MAX_BUTTONS_PER_CORNER; i++)
+    for (i = 0; i < MAX_BUTTONS_PER_CORNER; ++i)
     {
 	layout->left_buttons[i] = META_BUTTON_FUNCTION_LAST;
 	layout->right_buttons[i] = META_BUTTON_FUNCTION_LAST;
@@ -1563,7 +1563,7 @@ meta_update_button_layout (const char *value)
 	int	 b;
 	gboolean used[META_BUTTON_FUNCTION_LAST];
 
-	for (i = 0; i < META_BUTTON_FUNCTION_LAST; i++)
+	for (i = 0; i < META_BUTTON_FUNCTION_LAST; ++i)
 	   used[i] = FALSE;
 
 	buttons = g_strsplit (sides[0], ",", -1);
@@ -1601,7 +1601,7 @@ meta_update_button_layout (const char *value)
 			   "button name \"%s\"\n", program_name, buttons[b]);
 	       }
 	    }
-	    b++;
+	    ++b;
 	}
 
 	new_layout.left_buttons[i] = META_BUTTON_FUNCTION_LAST;
@@ -1610,7 +1610,7 @@ meta_update_button_layout (const char *value)
 
 	if (sides[1] != NULL)
 	{
-	    for (i = 0; i < META_BUTTON_FUNCTION_LAST; i++)
+	    for (i = 0; i < META_BUTTON_FUNCTION_LAST; ++i)
 		used[i] = FALSE;
 
 	    buttons = g_strsplit (sides[1], ",", -1);
@@ -1647,7 +1647,7 @@ meta_update_button_layout (const char *value)
 				program_name, buttons[b]);
 		   }
 	       }
-	       b++;
+	       ++b;
 	    }
 	    new_layout.right_buttons[i] = META_BUTTON_FUNCTION_LAST;
 
@@ -1667,9 +1667,9 @@ meta_update_button_layout (const char *value)
 
 	i = 0;
 	while (new_layout.left_buttons[i] != META_BUTTON_FUNCTION_LAST)
-	    i++;
+	    ++i;
 
-	for (j = 0; j < i; j++)
+	for (j = 0; j < i; ++j)
 	{
 	    rtl_layout.right_buttons[j] = new_layout.left_buttons[i - j - 1];
 #ifdef HAVE_METACITY_2_23_2
@@ -1684,9 +1684,9 @@ meta_update_button_layout (const char *value)
 
 	i = 0;
 	while (new_layout.right_buttons[i] != META_BUTTON_FUNCTION_LAST)
-	    i++;
+	    ++i;
 
-	for (j = 0; j < i; j++)
+	for (j = 0; j < i; ++j)
 	{
 	    rtl_layout.left_buttons[j] = new_layout.right_buttons[i - j - 1];
 #ifdef HAVE_METACITY_2_23_2

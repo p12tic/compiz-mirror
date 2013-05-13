@@ -69,7 +69,7 @@
     unsigned int curr = mCurrFunction[num];				\
     while (mCurrFunction[num] < mInterface.size () &&			\
            !mInterface[mCurrFunction[num]].enabled[num])		\
-        mCurrFunction[num]++;						\
+	++mCurrFunction[num];						\
     if (mCurrFunction[num] < mInterface.size ())			\
     {									\
 	mInterface[mCurrFunction[num]++].obj-> func (__VA_ARGS__);	\
@@ -90,7 +90,7 @@
     unsigned int curr = mCurrFunction[num];				\
     while (mCurrFunction[num] < mInterface.size () &&			\
            !mInterface[mCurrFunction[num]].enabled[num])		\
-        mCurrFunction[num]++;						\
+	++mCurrFunction[num];						\
     if (mCurrFunction[num] < mInterface.size ())			\
     {									\
 	rtype rv = mInterface[mCurrFunction[num]++].obj-> func (__VA_ARGS__); \

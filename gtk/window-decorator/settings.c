@@ -57,7 +57,7 @@ init_settings (GWDSettingsWritable *writable,
     gwd_connect_org_gnome_mutter_settings (mutter, storage);
     gwd_connect_org_gnome_desktop_wm_preferences_settings (gnome, storage);
 #else
-#ifdef USE_GCONF
+#ifdef USE_GSETTINGS
 #define STORAGE_USED
     storage = gwd_settings_storage_gconf_new (writable);
 #endif
