@@ -1058,7 +1058,7 @@ GLScreen::GLScreen (CompScreen *s) :
 
     for (i = 0; i <= MAX_DEPTH; i++)
     {
-	int j, db, stencil, depth, alpha, mipmap, msaa_buffers, msaa_samples, rgba;
+	int j, db, stencil, depth, alpha, mipmap, msaaBuffers, msaaSamples, rgba;
 
 	priv->glxPixmapFBConfigs[i].fbConfig       = NULL;
 	priv->glxPixmapFBConfigs[i].mipmap         = 0;
@@ -1066,13 +1066,13 @@ GLScreen::GLScreen (CompScreen *s) :
 	priv->glxPixmapFBConfigs[i].textureFormat  = 0;
 	priv->glxPixmapFBConfigs[i].textureTargets = 0;
 
-	db           = MAXSHORT;
-	stencil      = MAXSHORT;
-	depth        = MAXSHORT;
-	msaa_buffers = MAXSHORT;
-	msaa_samples = MAXSHORT;
-	mipmap       = 0;
-	rgba         = 0;
+	db          = MAXSHORT;
+	stencil     = MAXSHORT;
+	depth       = MAXSHORT;
+	msaaBuffers = MAXSHORT;
+	msaaSamples = MAXSHORT;
+	mipmap      = 0;
+	rgba        = 0;
 
 	for (j = 0; j < nElements; j++)
 	{
@@ -1149,17 +1149,17 @@ GLScreen::GLScreen (CompScreen *s) :
 
 	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
 				      GLX_SAMPLE_BUFFERS, &value);
-	    if (value > msaa_buffers)
+	    if (value > msaaBuffers)
 	        continue;
 
-	    msaa_buffers = value;
+	    msaaBuffers = value;
 
 	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
 				      GLX_SAMPLES, &value);
-	    if (value > msaa_samples)
+	    if (value > msaaSamples)
 	        continue;
 
-	    msaa_samples = value;
+	    msaaSamples = value;
 
 	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
 				      GLX_BIND_TO_MIPMAP_TEXTURE_EXT, &value);
