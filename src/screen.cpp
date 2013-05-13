@@ -52,6 +52,7 @@
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
+#include <X11/extensions/XInput2.h>
 
 #include <core/global.h>
 #include <core/screen.h>
@@ -2082,9 +2083,9 @@ cps::StartupSequenceImpl::updateStartupFeedback ()
     if (priv->initialized)
     {
 	if (!emptySequence())
-	    XDefineCursor (priv->dpy, priv->rootWindow(), priv->busyCursor);
+	    XIDefineCursor (priv->dpy, priv->clientPointerDeviceId, priv->rootWindow(), priv->busyCursor);
 	else
-	    XDefineCursor (priv->dpy, priv->rootWindow(), priv->normalCursor);
+	    XIDefineCursor (priv->dpy, priv->clientPointerDeviceId, priv->rootWindow(), priv->normalCursor);
     }
 }
 
@@ -5002,10 +5003,12 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     eventManager.setSupportingWmCheck (dpy, rootWindow());
     screen->updateSupportedWmHints ();
 
+    XIGetClientPointer (dpy, None, &clientPointerDeviceId);
+
     normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
     busyCursor   = XCreateFontCursor (dpy, XC_watch);
 
-    XDefineCursor (dpy, rootWindow(), normalCursor);
+    XIDefineCursor (dpy, clientPointerDeviceId, rootWindow(), normalCursor);
 
     /* Attempt to gain SubstructureRedirectMask */
     CompScreenImpl::checkForError (dpy);
@@ -5180,6 +5183,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen, cps::WindowManager& windowMana
     nDesktop (1),
     currentDesktop (0),
     wmSnSelectionWindow (None),
+    clientPointerDeviceId (None),
     normalCursor (None),
     busyCursor (None),
     invisibleCursor (None),

@@ -31,7 +31,7 @@ if (BUILD_XORG_GTEST AND X11_XI_FOUND)
     set (COMPIZ_XORG_GTEST_LIBRARIES
 	 compiz_xorg_gtest_system_test
 	 xorg_gtest_all
-	 xorg_gtest_main
+	 compiz_xorg_gtest_main
          ${GTEST_BOTH_LIBRARIES}
 	 ${XORG_SERVER_LIBRARIES}
 	 ${X11_XI_LIBRARIES})

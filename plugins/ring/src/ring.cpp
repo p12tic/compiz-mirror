@@ -283,7 +283,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	{
 	    GLTexture *icon;
 
-	    icon = gWindow->getIcon (256, 256);
+	    icon = gWindow->getIcon (512, 512);
 
 	    if (!icon)
 		icon = rs->gScreen->defaultIcon ();
