@@ -50,7 +50,6 @@ target_link_libraries (compizconfig_test_ccs_object
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig)
 
@@ -58,7 +57,6 @@ target_link_libraries (compizconfig_test_ccs_context
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_ccs_context_mock
@@ -72,7 +70,6 @@ target_link_libraries (compizconfig_test_ccs_plugin
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_ccs_context_mock
@@ -83,7 +80,6 @@ target_link_libraries (compizconfig_test_ccs_backend
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_ccs_context_mock
@@ -95,7 +91,6 @@ target_link_libraries (compizconfig_test_ccs_mock_backend_conformance
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_ccs_context_mock
@@ -113,7 +108,6 @@ target_link_libraries (compizconfig_test_ccs_setting
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       compizconfig
 		       compizconfig_ccs_context_mock
@@ -125,7 +119,6 @@ target_link_libraries (compizconfig_test_ccs_text_file
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${LIBCOMPIZCONFIG_LIBRARIES}
 		       ccs_text_file_interface
                        compizconfig_ccs_text_file_mock
@@ -135,7 +128,6 @@ target_link_libraries (compizconfig_test_ccs_upgrade_internal
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
                        ccs_settings_upgrade_internal
                        compizconfig
                        compizconfig_ccs_context_mock
@@ -149,7 +141,6 @@ target_link_libraries (compizconfig_test_ccs_util
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
-		       ${CMAKE_THREAD_LIBS_INIT}
                        compizconfig
 )
 
