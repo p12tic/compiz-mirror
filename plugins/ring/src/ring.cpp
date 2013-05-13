@@ -880,6 +880,7 @@ RingScreen::terminate (CompAction         *action,
 		rw->mAdjust = true;
 	    }
 	}
+
 	mMoreAdjust = true;
 	mState = RingStateIn;
 	cScreen->damageScreen ();
@@ -959,9 +960,8 @@ RingScreen::doSwitch (CompAction         *action,
     {
 	if (type == RingTypeGroup)
 	{
-	    CompWindow *w;
-	    w = screen->findWindow (CompOption::getIntOptionNamed (options,
-								   "window", 0));
+	    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
+									       "window", 0));
 
 	    if (w)
 	    {
@@ -1009,9 +1009,9 @@ RingScreen::windowSelectAt (int  x,
 
 	if (rw->mSlot)
 	{
-	    if ((x >= (rw->mTx + w->x ())) &&
+	    if ((x >= (rw->mTx + w->x ()))				&&
 		(x <= (rw->mTx + w->x () + (w->width () * rw->mScale))) &&
-		(y >= (rw->mTy + w->y ())) &&
+		(y >= (rw->mTy + w->y ()))				&&
 		(y <= (rw->mTy + w->y () + (w->height () * rw->mScale))))
 	    {
 		/* we have found one, select it */
