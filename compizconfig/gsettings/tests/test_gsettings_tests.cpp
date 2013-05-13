@@ -40,6 +40,7 @@ using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
 using ::testing::AllOf;
 using ::testing::Not;
+using ::testing::NotNull;
 using ::testing::Matcher;
 using ::testing::Eq;
 using ::testing::NiceMock;
