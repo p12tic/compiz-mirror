@@ -1475,7 +1475,7 @@ class SubGroupArea(object):
             self.Widget = gtk.Frame()
             self.Expander = gtk.Expander(name)
             self.Widget.add(self.Expander)
-            self.Expander.set_expanded(True)
+            self.Expander.set_expanded(False)
             self.Child = gtk.VBox()
             self.Expander.add(self.Child)
 
