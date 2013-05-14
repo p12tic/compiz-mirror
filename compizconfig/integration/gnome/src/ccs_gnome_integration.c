@@ -93,7 +93,7 @@ registerAllIntegratedOptions (CCSIntegration *integration)
     unsigned int i = 0;
     const CCSGNOMEIntegratedSettingsList *array = ccsGNOMEIntegratedSettingsList ();
 
-    for (; i < CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE; i++)
+    for (; i < CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE; ++i)
     {
 	CCSIntegratedSetting *setting = ccsIntegratedSettingFactoryCreateIntegratedSettingForCCSSettingNameAndType (priv->factory,
 														    integration,

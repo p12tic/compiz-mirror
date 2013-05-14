@@ -347,7 +347,7 @@ isEmptyString (char *value)
     int len, i = 0;
 
     len = strlen (value);
-    for (i = 0; i < len; i++)
+    for (i = 0; i < len; ++i)
     {
 	if (!isblank (value[i]))
 	    return FALSE;
@@ -378,7 +378,7 @@ ccsIniParseList (const char	     *str,
     while (token)
     {
 	token = strchr (token + 1, ';');
-	nItems++;
+	++nItems;
     }
 
     token = strsep (&valueString, ";");
@@ -399,7 +399,7 @@ ccsIniParseList (const char	     *str,
 
 	    list = ccsGetValueListFromStringArray ((const char **) array, nItems, parent);
 
-	    for (i = 0; i < nItems; i++)
+	    for (i = 0; i < nItems; ++i)
 		free (array[i]);
 
 	    free (array);
@@ -417,7 +417,7 @@ ccsIniParseList (const char	     *str,
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (token, &array[i]);
 		token = strsep (&valueString, ";");
-		i++;
+		++i;
 	    }
 
 	    list = ccsGetValueListFromColorArray (array, nItems, parent);

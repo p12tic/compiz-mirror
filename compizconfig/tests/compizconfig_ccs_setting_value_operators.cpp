@@ -166,7 +166,7 @@ cct::DescribeSettingListTo (std::ostream          &os,
 	os << "Item " << count << " ";
 	cct::DescribeSettingValueTo (os, type, *list->data);
 	list = list->next;
-	count++;
+	++count;
     }
 
     return os;
