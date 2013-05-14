@@ -212,7 +212,7 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     glPushMatrix ();
     glLoadMatrixf (wTransform.getMatrix ());
 
-    icon = sw->gWindow->getIcon (96, 96);
+    icon = sw->gWindow->getIcon (512, 512);
 
     if (!icon)
 	icon = gScreen->defaultIcon ();
@@ -352,7 +352,7 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (scaled && !gWindow->textures ().size ())
 	{
-	    GLTexture *icon = gWindow->getIcon (96, 96);
+	    GLTexture *icon = gWindow->getIcon (512, 512);
 
 	    if (!icon)
 		icon = ss->gScreen->defaultIcon ();

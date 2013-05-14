@@ -94,7 +94,7 @@ ccsObjectInit_(CCSObject *object, CCSObjectAllocationInterface *object_allocatio
 Bool
 ccsObjectAddInterface_(CCSObject *object, const CCSInterface *interface, int interface_type)
 {
-    object->n_interfaces++;
+    ++object->n_interfaces;
 
     if (object->n_allocated_interfaces < object->n_interfaces)
     {
@@ -111,7 +111,7 @@ ccsObjectAddInterface_(CCSObject *object, const CCSInterface *interface, int int
 	    if (iface_types)
 		(*object->object_allocation->free_) (object->object_allocation->allocator, iface_types);
 
-	    object->n_interfaces--;
+	    --object->n_interfaces;
 	    object->n_allocated_interfaces = old_allocated_interfaces;
 	    return FALSE;
 	}
@@ -139,7 +139,7 @@ ccsObjectRemoveInterface_(CCSObject *object, int interface_type)
     const CCSInterface **o = object->interfaces;
     int        *type = object->interface_types;
 
-    for (; i < object->n_interfaces; i++, o++, type++)
+    for (; i < object->n_interfaces; ++i, ++o, ++type)
     {
 	if (object->interface_types[i] == interface_type)
 	    break;
@@ -151,18 +151,18 @@ ccsObjectRemoveInterface_(CCSObject *object, int interface_type)
     /* Now clear this section and move everything back */
     object->interfaces[i] = NULL;
 
-    i++;
+    ++i;
 
     const CCSInterface **oLast = o;
     int *typeLast = type;
 
-    o++;
-    type++;
+    ++o;
+    ++type;
 
     memmove ((void *) oLast, (void *)o, (object->n_interfaces - i) * sizeof (CCSInterface *));
     memmove ((void *) typeLast, (void *) type, (object->n_interfaces - i) * sizeof (int));
 
-    object->n_interfaces--;
+    --object->n_interfaces;
 
     if (!object->n_interfaces)
     {
@@ -181,7 +181,7 @@ ccsObjectGetInterface_(CCSObject *object, int interface_type)
 {
     unsigned int i = 0;
 
-    for (; i < object->n_interfaces; i++)
+    for (; i < object->n_interfaces; ++i)
     {
 	if (object->interface_types[i] == interface_type)
 	    return object->interfaces[i];
@@ -237,7 +237,7 @@ ccsAllocateType ()
 {
     static unsigned int start = 0;
 
-    start++;
+    ++start;
 
     return start;
 }
@@ -3052,7 +3052,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 	plugins[i].after = NULL;
     }
 
-    for (i = 0; i < len; i++)
+    for (i = 0; i < len; ++i)
     {
 	CCSStringList l = ccsPluginGetLoadAfter (plugins[i].plugin);
 	while (l)
@@ -3095,7 +3095,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 	    {
 		ph = NULL;
 
-		for (j = 0; j < len; j++)
+		for (j = 0; j < len; ++j)
 		    if (p == plugins[j].plugin)
 			ph = &plugins[j];
 
@@ -3118,7 +3118,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
     {
 	found = FALSE;
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; ++i)
 	{
 	    CCSString *strPluginName;		
 		
@@ -3133,11 +3133,11 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
 		continue;
 
 	    found = TRUE;
-	    removed++;
+	    ++removed;
 	    p = plugins[i].plugin;
 	    plugins[i].plugin = NULL;
 
-	    for (j = 0; j < len; j++)
+	    for (j = 0; j < len; ++j)
 		plugins[j].after =
 		    ccsPluginListRemove (plugins[j].after, p, FALSE);
 
@@ -3157,7 +3157,7 @@ ccsGetSortedPluginStringListDefault (CCSContext * context)
     {
 	ccsError ("Unable to generate sorted plugin list");
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; ++i)
 	{
 	    ccsPluginListFree (plugins[i].after, FALSE);
 	}
@@ -4179,7 +4179,7 @@ getBackendInfoFromDir (CCSBackendInfoList * bl,
     if (nFile <= 0)
 	return;
 
-    for (i = 0; i < nFile; i++)
+    for (i = 0; i < nFile; ++i)
     {
 	if (strncmp (currentBackend, &(nameList[i]->d_name[3]), strlen (currentBackend)) == 0)
 	    continue;
@@ -4911,7 +4911,7 @@ ccsApplyUnappliedUpgrades (CCSContext    *context,
     int			   i = 0;
     const char	  	   *path = CCS_UPGRADE_PATH;
 
-    for (i = 0; i < nFile; i++)
+    for (i = 0; i < nFile; ++i)
     {
         CCSSettingsUpgrade *upgrade = NULL;
 	const char *upgradeName = nameList[i]->d_name;
