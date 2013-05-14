@@ -289,36 +289,6 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 
 		opt = CompOption::findOption (sScreen->getOptions (), "initiate_key", 0);
 
-		/* If the user has no initiate_key defined we gotta continue to search
-		 * until we find a way to exit. We test them all to ensure that we always
-		 * have a exit strategy as one of the following has to be defined.
-		 */
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_edge", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_button", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_all_key", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_all_edge", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_all_button", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_group_key", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_group_edge", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_group_button", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_output_key", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_output_edge", 0);
-		if (!opt)
-		    opt = CompOption::findOption (sScreen->getOptions (), "initiate_output_button", 0);
-
-		/* Now we can be sure that opt is not empty anymore, otherwise the user
-		 * would not have been able to enter scale mode at all */
-
 		action = &opt->value ().action ();
 
 		if (action->terminate ())
