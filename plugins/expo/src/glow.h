@@ -42,7 +42,8 @@
  * and the size of the texture
  */
 
-typedef struct _GlowTextureProperties {
+typedef struct _GlowTextureProperties
+{
     char *textureData;
     int  textureSize;
     int  glowOffset;
@@ -55,9 +56,11 @@ typedef struct _GlowTextureProperties {
  * the quad on the glow
  */
 
-class GlowQuad {
+class GlowQuad
+{
     public:
-	CompRect	  mBox;
+
+	CompRect          mBox;
 	GLTexture::Matrix mMatrix;
 };
 

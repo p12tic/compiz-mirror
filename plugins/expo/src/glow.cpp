@@ -34,7 +34,8 @@
 #define WIN_REAL_HEIGHT(w) (w->height () + 2 * w->geometry ().border () + \
 			    w->border ().top + w->border ().bottom)
 
-const GlowTextureProperties glowTextureProperties = {
+const GlowTextureProperties glowTextureProperties =
+{
     /* GlowTextureRectangular */
     glowTexRect, 32, 21
 };
@@ -50,15 +51,14 @@ const GlowTextureProperties glowTextureProperties = {
 
 void
 ExpoWindow::paintGlow (const GLMatrix            &transform,
-                       const GLWindowPaintAttrib &attrib,
-                       const CompRegion          &paintRegion,
-                       unsigned int               mask)
+		       const GLWindowPaintAttrib &attrib,
+		       const CompRegion          &paintRegion,
+		       unsigned int              mask)
 {
     CompRegion      reg;
-    int             i;
     GLushort        colorData[4];
     const GLushort *selColorData = ExpoScreen::get (screen)->optionGetSelectedColor ();
-    float           alpha = (float) selColorData[3] / 65535.0f;
+    float           alpha        = (float) selColorData[3] / 65535.0f;
 
     /* Premultiply color */
     colorData[0] = selColorData[0] * alpha;
@@ -71,7 +71,7 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
     /* There are 8 glow parts of the glow texture which we wish to paint
      * separately with different transformations
      */
-    for (i = 0; i < NUM_GLOWQUADS; i++)
+    for (int i = 0; i < NUM_GLOWQUADS; ++i)
     {
 	/* Using precalculated quads here */
 	reg = CompRegion (mGlowQuads[i].mBox);
@@ -87,8 +87,9 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
 
 	    matl.push_back (mGlowQuads[i].mMatrix);
 	    /* Add color data for all 6 vertices of the quad */
-	    for (int n = 0; n < 6; n++)
+	    for (int n = 0; n < 6; ++n)
 		gWindow->vertexBuffer ()->addColors (1, colorData);
+
 	    gWindow->glAddGeometry (matl, reg, paintRegion);
 	}
     }
@@ -153,10 +154,8 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
 void
 ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 {
-    CompRect	      *box;
-    int		      x1, x2, y1, y2;
+    CompRect          *box;
     GLTexture::Matrix *quadMatrix;
-    int               glowSize, glowOffset;
     CompWindow	      *w = window;
 
     /* Passing NULL to this function frees the glow quads
@@ -166,6 +165,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     {
 	if (!mGlowQuads)
 	    mGlowQuads = new GlowQuad[NUM_GLOWQUADS];
+
 	if (!mGlowQuads)
 	    return;
     }
@@ -179,9 +179,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 	return;
     }
 
-    glowSize = 48;
-    glowOffset = (glowSize * ExpoScreen::get (screen)->mGlowTextureProperties->glowOffset /
-		  ExpoScreen::get (screen)->mGlowTextureProperties->textureSize) + 1;
+    /* TODO: Make this configurable */
+    int glowSize   = 48;
+    int glowOffset = (glowSize * ExpoScreen::get (screen)->mGlowTextureProperties->glowOffset /
+		      ExpoScreen::get (screen)->mGlowTextureProperties->textureSize) + 1;
 
     /* Top left corner */
     box = &mGlowQuads[GLOWQUAD_TOPLEFT].mBox;
@@ -191,8 +192,8 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     /* Set the desired rect dimensions
      * for the part of the glow we are painting */
 
-    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
+    int x1 = WIN_REAL_X (w) - glowSize + glowOffset;
+    int y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -210,10 +211,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     quadMatrix->x0 = -(x1 * quadMatrix->xx);
     quadMatrix->y0 = -(y1 * quadMatrix->yy);
 
-    x2 = MIN (WIN_REAL_X (w) + glowOffset,
-	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    y2 = MIN (WIN_REAL_Y (w) + glowOffset,
-	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    int x2 = MIN (WIN_REAL_X (w) + glowOffset,
+		  WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+    int y2 = MIN (WIN_REAL_Y (w) + glowOffset,
+		  WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
 
     *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
