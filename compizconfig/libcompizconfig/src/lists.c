@@ -67,11 +67,11 @@ typedef void (*freeFunc) (void *ptr);
 	ne->next = list; \
 	if (!list || !position) \
 	    return ne; \
-	position--; \
+	--position; \
 	while (l->next && position) \
 	{ \
 	    l = l->next; \
-	    position--; \
+	    --position; \
 	} \
 	ne->next = l->next; \
 	l->next = ne; \
@@ -97,7 +97,7 @@ typedef void (*freeFunc) (void *ptr);
 	while (l) \
 	{ \
 	    l = l->next; \
-	    count++; \
+	    ++count; \
 	} \
 	return count; \
     } \
@@ -120,7 +120,7 @@ typedef void (*freeFunc) (void *ptr);
 	while (l && index) \
 	{ \
 	    l = l->next; \
-	    index--; \
+	    --index; \
 	} \
 	return l; \
     } \
@@ -252,7 +252,7 @@ CCSStringList ccsGetListFromStringArray (char ** array, int num)
     CCSStringList rv = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSString *str = calloc (1, sizeof (CCSString));
 	
@@ -399,7 +399,7 @@ CCSSettingValueList ccsGetValueListFromStringArray (const char ** array, int num
     CCSSettingValueList l = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 	if (!value)
@@ -421,7 +421,7 @@ CCSSettingValueList ccsGetValueListFromMatchArray (const char ** array, int num,
     CCSSettingValueList l = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 	if (!value)
@@ -443,7 +443,7 @@ CCSSettingValueList ccsGetValueListFromIntArray (int * array, int num,
     CCSSettingValueList l = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 	if (!value)
@@ -465,7 +465,7 @@ CCSSettingValueList ccsGetValueListFromFloatArray (float * array, int num,
     CCSSettingValueList l = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 	if (!value)
@@ -487,7 +487,7 @@ CCSSettingValueList ccsGetValueListFromBoolArray (Bool * array, int num,
     CCSSettingValueList l = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 	if (!value)
@@ -509,7 +509,7 @@ CCSSettingValueList ccsGetValueListFromColorArray (CCSSettingColorValue * array,
     CCSSettingValueList l = NULL;
     int i;
 
-    for (i = 0; i < num; i++)
+    for (i = 0; i < num; ++i)
     {
 	CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
 	if (!value)

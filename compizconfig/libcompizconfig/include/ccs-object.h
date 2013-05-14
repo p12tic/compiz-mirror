@@ -147,12 +147,12 @@ const CCSInterface * ccsObjectGetInterface_ (CCSObject *object, int interface_ty
 #define ccsObjectGetInterface(o, interface_type) (ccsObjectGetInterface_) (&(o)->object, interface_type)
 
 #define ccsObjectRef(o) \
-    do { ((o)->object).refcnt++; } while (FALSE)
+    do { ++((o)->object).refcnt; } while (FALSE)
 
 #define ccsObjectUnref(o, freeFunc) \
     do \
     { \
-	((o)->object).refcnt--; \
+	--((o)->object).refcnt; \
 	if (!((o)->object).refcnt) \
 	    freeFunc (o); \
     } while (FALSE)

@@ -273,7 +273,7 @@ TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsOver)
 
     std::string keyname;
 
-    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; ++i)
 	keyname.push_back ('a');
 
     ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
@@ -291,7 +291,7 @@ TEST_F(CCSGSettingsTestIndependent, TestTruncateKeyForGSettingsUnder)
 
     std::string keyname;
 
-    for (unsigned int i = 0; i <= UNDER_KEY_SIZE - 1; i++)
+    for (unsigned int i = 0; i <= UNDER_KEY_SIZE - 1; ++i)
 	keyname.push_back ('a');
 
     ASSERT_EQ (keyname.size (), UNDER_KEY_SIZE);
@@ -339,7 +339,7 @@ TEST_F(CCSGSettingsTestIndependent, TestTranslateKeyForGSettingsTrunc)
     const unsigned int OVER_KEY_SIZE = MAX_GSETTINGS_KEY_SIZE + 1;
     std::string keyname;
 
-    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; i++)
+    for (unsigned int i = 0; i <= OVER_KEY_SIZE - 1; ++i)
 	keyname.push_back ('a');
 
     ASSERT_EQ (keyname.size (), OVER_KEY_SIZE);
@@ -1067,7 +1067,7 @@ namespace
 		GList *iterOther = other;
 		GList *iterInternal = mList;
 
-		for (unsigned int i = 0; i < numInternal; i++)
+		for (unsigned int i = 0; i < numInternal; ++i)
 		{
 		    if (static_cast <CCSSettingType> (GPOINTER_TO_INT (iterOther->data)) !=
 			static_cast <CCSSettingType> (GPOINTER_TO_INT (iterInternal->data)))
