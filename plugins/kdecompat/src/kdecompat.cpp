@@ -288,7 +288,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	}
 	else
 	{
-	    icon = gWindow->getIcon (256, 256);
+	    icon = gWindow->getIcon (512, 512);
 	    if (!icon)
 		icon = ks->gScreen->defaultIcon ();
 
@@ -955,10 +955,10 @@ KDECompatWindow::~KDECompatWindow ()
 bool
 KDECompatPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-        return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }

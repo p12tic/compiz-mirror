@@ -24,14 +24,11 @@ add_definitions (${XORG_SERVER_GTEST_CFLAGS})
 set (_xorg_gtest_all_srcs
      ${XORG_SERVER_GTEST_SRC}/src/xorg-gtest-all.cpp)
 
-set (_xorg_gtest_main_srcs
-     ${XORG_SERVER_GTEST_SRC}/src/xorg-gtest_main.cpp)
-
 add_library (xorg_gtest_all STATIC
 	     ${_xorg_gtest_all_srcs})
 
-add_library (xorg_gtest_main STATIC
-	     ${_xorg_gtest_main_srcs})
+add_library (compiz_xorg_gtest_main STATIC
+             ${CMAKE_CURRENT_SOURCE_DIR}/src/compiz_xorg_gtest_main.cpp)
 
 add_library (compiz_xorg_gtest_system_test STATIC
 	     ${CMAKE_CURRENT_SOURCE_DIR}/src/compiz-xorg-gtest.cpp)
@@ -41,19 +38,16 @@ add_executable (xorg_gtest_wrapper
 
 target_link_libraries (xorg_gtest_all
 		       ${GTEST_BOTH_LIBRARIES}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${XORG_SERVER_GTEST_LIBRARIES})
 
-target_link_libraries (xorg_gtest_main
+target_link_libraries (compiz_xorg_gtest_main
 		       ${GTEST_BOTH_LIBRARIES}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${XORG_SERVER_GTEST_LIBRARIES})
 
 target_link_libraries (compiz_xorg_gtest_system_test
 		       xorg_gtest_all
-		       xorg_gtest_main
+		       compiz_xorg_gtest_main
 		       ${GTEST_BOTH_LIBRARIES}
-		       ${CMAKE_THREAD_LIBS_INIT}
 		       ${XORG_SERVER_LIBRARIES}
 		       ${COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY}
 		       ${X11_XI_LIBRARIES})

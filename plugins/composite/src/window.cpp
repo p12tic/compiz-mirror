@@ -37,16 +37,13 @@ CompositeWindow::CompositeWindow (CompWindow *w) :
     CompScreen *s = screen;
 
     if (w->windowClass () != InputOnly)
-    {
 	priv->damage = XDamageCreate (s->dpy (), w->id (),
 				      XDamageReportBoundingBox);
-    }
     else
-    {
 	priv->damage = None;
-    }
 
     priv->opacity = OPAQUE;
+
     if (!(w->type () & CompWindowTypeDesktopMask))
 	priv->opacity = s->getWindowProp32 (w->id (),
 					    Atoms::winOpacity, OPAQUE);
@@ -63,7 +60,6 @@ CompositeWindow::CompositeWindow (CompWindow *w) :
 
 CompositeWindow::~CompositeWindow ()
 {
-
     if (priv->damage)
 	XDamageDestroy (screen->dpy (), priv->damage);
 
@@ -129,12 +125,9 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
 
 PrivateCompositeWindow::~PrivateCompositeWindow ()
 {
-
     if (sizeDamage)
 	free (damageRects);
 }
-
-
 
 bool
 PrivateCompositeWindow::bind ()
@@ -191,7 +184,6 @@ PrivateCompositeWindow::frozen ()
      * but not yet on our side as it's pretty likely that plugins are
      * currently using it for animations
      */
-
     bool pendingUnmap = !window->mapNum () && window->isViewable ();
     bool hidden = window->state () & CompWindowStateHiddenMask;
     bool animated = window->hasUnmapReference ();
@@ -257,10 +249,8 @@ CompositeWindow::unredirect ()
 	priv->cScreen->updateOutputWindow ();
 
     XCompositeUnredirectWindow (screen->dpy (),
-                               ROOTPARENT (priv->window),
-                               CompositeRedirectManual);
-
-
+				ROOTPARENT (priv->window),
+				CompositeRedirectManual);
 }
 
 bool
@@ -288,12 +278,10 @@ CompositeWindow::damageTransformedRect (float          xScale,
 					float          yTranslate,
 					const CompRect &rect)
 {
-    int x1, x2, y1, y2;
-
-    x1 = (short) (rect.x1 () * xScale) - 1;
-    y1 = (short) (rect.y1 () * yScale) - 1;
-    x2 = (short) (rect.x2 () * xScale + 0.5f) + 1;
-    y2 = (short) (rect.y2 () * yScale + 0.5f) + 1;
+    int x1 = (short) (rect.x1 () * xScale) - 1;
+    int y1 = (short) (rect.y1 () * yScale) - 1;
+    int x2 = (short) (rect.x2 () * xScale + 0.5f) + 1;
+    int y2 = (short) (rect.y2 () * yScale + 0.5f) + 1;
 
     x1 += (short) xTranslate;
     y1 += (short) yTranslate;
@@ -322,16 +310,14 @@ CompositeWindow::damageOutputExtents ()
     if (priv->window->shaded () ||
 	(priv->window->isViewable ()))
     {
-	int x1, x2, y1, y2;
-
 	const CompWindow::Geometry &geom = priv->window->geometry ();
 	const CompWindowExtents &output  = priv->window->output ();
 
 	/* top */
-	x1 = -output.left - geom.border ();
-	y1 = -output.top - geom.border ();
-	x2 = priv->window->size ().width () + output.right;
-	y2 = -geom.border ();
+	int x1 = -output.left - geom.border ();
+	int y1 = -output.top - geom.border ();
+	int x2 = priv->window->size ().width () + output.right;
+	int y2 = -geom.border ();
 
 	if (x1 < x2 && y1 < y2)
 	    addDamageRect (CompRect (x1, y1, x2 - x1, y2 - y1));
@@ -369,10 +355,8 @@ CompositeWindow::addDamageRect (const CompRect &rect)
 
     if (!damageRect (false, rect))
     {
-	int x, y;
-
-	x = rect.x ();
-	y = rect.y ();
+	int x = rect.x ();
+	int y = rect.y ();
 
 	const CompWindow::Geometry &geom = priv->window->geometry ();
 	x += geom.x () + geom.border ();
@@ -393,7 +377,7 @@ CompositeWindow::addDamage (bool force)
     if (priv->window->shaded () || force ||
 	(priv->window->isViewable ()))
     {
-	int    border = priv->window->serverGeometry ().border ();
+	int border = priv->window->serverGeometry ().border ();
 
 	int x1 = -MAX (priv->window->output ().left,
 		       priv->window->input ().left) - border;
@@ -437,10 +421,8 @@ CompositeWindow::processDamage (XDamageNotifyEvent *de)
 	priv->nDamage++;
     }
     else
-    {
-        priv->handleDamageRect (this, de->area.x, de->area.y,
+	priv->handleDamageRect (this, de->area.x, de->area.y,
 				de->area.width, de->area.height);
-    }
 }
 
 void
@@ -453,12 +435,10 @@ PrivateCompositeWindow::handleDamageRect (CompositeWindow *w,
     if (!w->priv->redirected)
 	return;
 
-    bool   initial = false;
+    bool initial = false;
 
     if (!w->priv->damaged)
-    {
 	w->priv->damaged = initial = true;
-    }
 
     if (!w->damageRect (initial, CompRect (x, y, width, height)))
     {
@@ -467,7 +447,8 @@ PrivateCompositeWindow::handleDamageRect (CompositeWindow *w,
 	x += geom.x () + geom.border ();
 	y += geom.y () + geom.border ();
 
-	w->priv->cScreen->damageRegion (CompRegion (CompRect (x, y, width, height)));
+	w->priv->cScreen->damageRegion (CompRegion (CompRect
+						    (x, y, width, height)));
     }
 
     if (initial)
@@ -480,8 +461,9 @@ CompositeWindow::updateOpacity ()
     if (priv->window->type () & CompWindowTypeDesktopMask)
 	return;
 
-    unsigned short opacity = screen->getWindowProp32 (priv->window->id (),
-					     Atoms::winOpacity, OPAQUE);
+    unsigned short opacity =
+	screen->getWindowProp32 (priv->window->id (),
+				 Atoms::winOpacity, OPAQUE);
 
     if (opacity != priv->opacity)
     {
@@ -493,10 +475,9 @@ CompositeWindow::updateOpacity ()
 void
 CompositeWindow::updateBrightness ()
 {
-    unsigned short brightness;
-
-    brightness = screen->getWindowProp32 (priv->window->id (),
-						Atoms::winBrightness, BRIGHT);
+    unsigned short brightness =
+	screen->getWindowProp32 (priv->window->id (),
+				 Atoms::winBrightness, BRIGHT);
 
     if (brightness != priv->brightness)
     {
@@ -508,10 +489,9 @@ CompositeWindow::updateBrightness ()
 void
 CompositeWindow::updateSaturation ()
 {
-    unsigned short saturation;
-
-    saturation = screen->getWindowProp32 (priv->window->id (),
-						Atoms::winSaturation, COLOR);
+    unsigned short saturation =
+	screen->getWindowProp32 (priv->window->id (),
+				 Atoms::winSaturation, COLOR);
 
     if (saturation != priv->saturation)
     {
@@ -555,6 +535,7 @@ PrivateCompositeWindow::windowNotify (CompWindowNotify n)
 	    allowFurtherRebindAttempts ();
 	    damaged = false;
 	    break;
+
 	case CompWindowNotifyUnmap:
 	    cWindow->addDamage (true);
 	    cWindow->release ();
@@ -562,24 +543,26 @@ PrivateCompositeWindow::windowNotify (CompWindowNotify n)
 	    if (!redirected && cScreen->compositingActive ())
 		cWindow->redirect ();
 	    break;
+
 	case CompWindowNotifyRestack:
 	case CompWindowNotifyHide:
 	case CompWindowNotifyShow:
 	case CompWindowNotifyAliveChanged:
 	    cWindow->addDamage (true);
 	    break;
+
 	case CompWindowNotifyReparent:
 	case CompWindowNotifyUnreparent:
 	    if (redirected)
-	    {
 		cWindow->release ();
-	    }
 	    cScreen->damageScreen ();
 	    cWindow->addDamage (true);
 	    break;
+
 	case CompWindowNotifyFrameUpdate:
 	    cWindow->release ();
 	    break;
+
 	case CompWindowNotifySyncAlarm:
 	{
 	    XRectangle *rects;
@@ -595,6 +578,7 @@ PrivateCompositeWindow::windowNotify (CompWindowNotify n)
 	    }
 	    break;
 	}
+
 	default:
 	    break;
     }
@@ -609,17 +593,15 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 
     if (window->shaded () || (window->isViewable ()))
     {
-	int x, y, x1, x2, y1, y2;
+	int x = window->geometry ().x ();
+	int y = window->geometry ().y ();
 
-	x = window->geometry ().x ();
-	y = window->geometry ().y ();
-
-	x1 = x - window->output ().left - dx;
-	y1 = y - window->output ().top - dy;
-	x2 = x + window->size ().width () +
-	     window->output ().right - dx - dwidth;
-	y2 = y + window->size ().height () +
-	     window->output ().bottom - dy - dheight;
+	int x1 = x - window->output ().left - dx;
+	int y1 = y - window->output ().top - dy;
+	int x2 = x + window->size ().width () +
+		 window->output ().right - dx - dwidth;
+	int y2 = y + window->size ().height () +
+		 window->output ().bottom - dy - dheight;
 
 	cScreen->damageRegion (CompRegion (CompRect (x1, y1, x2 - x1, y2 - y1)));
     }
@@ -633,20 +615,19 @@ PrivateCompositeWindow::moveNotify (int dx, int dy, bool now)
 {
     if (window->shaded () || (window->isViewable ()))
     {
-	int x, y, x1, x2, y1, y2;
+	int x = window->geometry ().x ();
+	int y = window->geometry ().y ();
 
-	x = window->geometry ().x ();
-	y = window->geometry ().y ();
-
-	x1 = x - window->output ().left - dx;
-	y1 = y - window->output ().top - dy;
-	x2 = x + window->geometry ().width () +
-	     window->output ().right - dx;
-	y2 = y + window->geometry ().height () +
-	     window->output ().bottom - dy;
+	int x1 = x - window->output ().left - dx;
+	int y1 = y - window->output ().top - dy;
+	int x2 = x + window->geometry ().width () +
+		 window->output ().right - dx;
+	int y2 = y + window->geometry ().height () +
+		 window->output ().bottom - dy;
 
 	cScreen->damageRegion (CompRegion (CompRect (x1, y1, x2 - x1, y2 - y1)));
     }
+
     cWindow->addDamage ();
 
     window->moveNotify (dx, dy, now);

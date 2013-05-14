@@ -35,7 +35,6 @@ target_link_libraries(
   compiz_string 
   
   ${GTEST_BOTH_LIBRARIES}
-  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
 target_link_libraries( 
@@ -47,7 +46,6 @@ target_link_libraries(
   compiz_string 
   
   ${GTEST_BOTH_LIBRARIES}
-  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
 target_link_libraries( 
@@ -59,7 +57,6 @@ target_link_libraries(
   compiz_string 
   
   ${GTEST_BOTH_LIBRARIES}
-  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
 # Not compilable

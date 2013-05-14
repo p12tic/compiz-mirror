@@ -85,7 +85,7 @@ cctesti::getColorValueList ()
 	colorValues[1].color.green = maxD2;
 	colorValues[1].color.alpha = maxD8;
 
-	for (unsigned int i = 0; i < NUM_COLOR_VALUES; i++)
+	for (unsigned int i = 0; i < NUM_COLOR_VALUES; ++i)
 	{
 	    CharacterWrapper s (ccsColorToString (&colorValues[i]));
 

@@ -1993,7 +1993,8 @@ DbusScreen::~DbusScreen ()
 bool
 DbusPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
+
+    return false;
 }

@@ -198,9 +198,8 @@ GearsScreen::cubeClearTargetOutput (float      xRotate,
     glClear (GL_DEPTH_BUFFER_BIT);
 }
 
-
 void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
-			           const GLMatrix            &transform,
+				   const GLMatrix            &transform,
 				   CompOutput                *output,
 				   int                       size,
 				   const GLVector            &normal)
@@ -250,6 +249,8 @@ void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
     glDisable (GL_COLOR_MATERIAL);
 
     glEnable (GL_DEPTH_TEST);
+    glDepthMask (GL_TRUE);
+    glDepthFunc (GL_LESS);
     glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     glPushMatrix();
@@ -369,7 +370,6 @@ GearsScreen::GearsScreen (CompScreen *screen) :
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
     gear (1.3, 2.0, 0.5, 10, 0.7);
     glEndList();
-
 }
 
 GearsScreen::~GearsScreen ()
@@ -377,18 +377,15 @@ GearsScreen::~GearsScreen ()
     glDeleteLists (gear1, 1);
     glDeleteLists (gear2, 1);
     glDeleteLists (gear3, 1);
-
 }
 
 bool
 GearsPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	 return false;
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
-	 return false;
-    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }

@@ -225,7 +225,7 @@ decor_quads_to_property (long		 *data,
 	*data++ = quad->m.x0;
 	*data++ = quad->m.y0;
 
-	quad++;
+	++quad;
     }
 }
 
@@ -336,7 +336,7 @@ decor_pixmap_property_to_quads (long		 *data,
 
     n = *data++;
 
-    for (i = 0; i < n; i++)
+    for (i = 0; i < n; ++i)
     {
 	flags = *data++;
 
@@ -363,7 +363,7 @@ decor_pixmap_property_to_quads (long		 *data,
 	quad->m.x0 = *data++;
 	quad->m.y0 = *data++;
 
-	quad++;
+	++quad;
     }
 
     return n;
@@ -444,7 +444,7 @@ decor_match_pixmap (long		 *data,
     int n = decor_property_get_num (data);
     unsigned int i = 0;
 
-    for (; i < n; i++)
+    for (; i < n; ++i)
     {
 	Pixmap cPixmap;
 	decor_extents_t cFrame, cBorder, cMax_frame, cMax_border;
@@ -477,7 +477,7 @@ decor_match_pixmap (long		 *data,
 
 	q = 0;
 	while (q < n_quad && !decor_quad_cmp (&cQuad[q], &quad[q]))
-	    q++;
+	    ++q;
 
 	if (q < n_quad)
 	    continue;
@@ -609,7 +609,7 @@ add_blur_boxes (long   *data,
 	*data++ = x2;
 	*data++ = y2;
 
-	box++;
+	++box;
     }
 
     return n_box * 6;
@@ -757,7 +757,8 @@ decor_set_vert_quad_row (decor_quad_t *q,
 	q->m.yy	= 1.0;
     }
 
-    q++; nQuad++;
+    ++q;
+    ++nQuad;
 
     q->p1.x	  = left;
     q->p1.y	  = top_corner;
@@ -790,7 +791,8 @@ decor_set_vert_quad_row (decor_quad_t *q,
 	q->m.y0	= y0 + top + top_corner;
     }
 
-    q++; nQuad++;
+    ++q;
+    ++nQuad;
 
     q->p1.x	  = left;
     q->p1.y	  = splitY;
@@ -823,7 +825,7 @@ decor_set_vert_quad_row (decor_quad_t *q,
 	q->m.y0	= y0 + height;
     }
 
-    nQuad++;
+    ++nQuad;
 
     return nQuad;
 }
@@ -863,7 +865,8 @@ decor_set_horz_quad_line (decor_quad_t *q,
     q->m.x0	  = x0;
     q->m.y0	  = y0;
 
-    q++; nQuad++;
+    ++q;
+    ++nQuad;
 
     q->p1.x	  = left_corner;
     q->p1.y	  = top;
@@ -883,7 +886,8 @@ decor_set_horz_quad_line (decor_quad_t *q,
     q->m.x0	  = x0 + left + left_corner;
     q->m.y0	  = y0;
 
-    q++; nQuad++;
+    ++q;
+    ++nQuad;
 
     q->p1.x	  = splitX;
     q->p1.y	  = top;
@@ -903,7 +907,7 @@ decor_set_horz_quad_line (decor_quad_t *q,
     q->m.x0	  = x0 + width;
     q->m.y0	  = y0;
 
-    nQuad++;
+    ++nQuad;
 
     return nQuad;
 }
@@ -1251,7 +1255,7 @@ static int
 error_handler (Display *xdisplay,
 	       XErrorEvent *event)
 {
-    errors++;
+    ++errors;
     return 0;
 }
 
@@ -1281,7 +1285,7 @@ XRenderSetPictureFilter_wrapper (Display *dpy,
 	long *long_params = malloc (sizeof (long) * nparams);
 	int  i;
 
-	for (i = 0; i < nparams; i++)
+	for (i = 0; i < nparams; ++i)
 	    long_params[i] = params[i];
 
 	XRenderSetPictureFilter (dpy, picture, filter,
@@ -1399,7 +1403,7 @@ create_gaussian_kernel (double radius,
     i   = 0;
     sum = 0.0f;
 
-    for (x = 0; x < size; x++)
+    for (x = 0; x < size; ++x)
     {
 	fx = x_scale * (x - half_size);
 
@@ -1407,7 +1411,7 @@ create_gaussian_kernel (double radius,
 
 	sum += amp[i];
 
-	i++;
+	++i;
     }
 
     /* normalize */
@@ -1416,7 +1420,7 @@ create_gaussian_kernel (double radius,
 
     params[0] = params[1] = 0;
 
-    for (i = 2; i < n; i++)
+    for (i = 2; i < n; ++i)
 	params[i] = XDoubleToFixed (amp[i - 2] * sum);
 
     free (amp);
@@ -1549,7 +1553,7 @@ decor_shadow_create (Display		    *xdisplay,
     {
 	int i;
 
-	for (i = 0; i < filters->nfilter; i++)
+	for (i = 0; i < filters->nfilter; ++i)
 	{
 	    if (strcmp (filters->filter[i], FilterConvolution) == 0)
 	    {
@@ -1718,7 +1722,8 @@ void
 decor_shadow_destroy (Display	     *xdisplay,
 		      decor_shadow_t *shadow)
 {
-    shadow->ref_count--;
+    --shadow->ref_count;
+
     if (shadow->ref_count)
 	return;
 
@@ -1734,7 +1739,7 @@ decor_shadow_destroy (Display	     *xdisplay,
 void
 decor_shadow_reference (decor_shadow_t *shadow)
 {
-    shadow->ref_count++;
+    ++shadow->ref_count;
 }
 
 void
@@ -2306,7 +2311,7 @@ _decor_pad_border_picture (Display     *xdisplay,
 			  x1, y1 - 1,
 			  x2 - x1, 1);
 
-	y1--;
+	--y1;
     }
 
     if (box->pad & PAD_BOTTOM)
@@ -2317,7 +2322,7 @@ _decor_pad_border_picture (Display     *xdisplay,
 			  x1, y2,
 			  x2 - x1, 1);
 
-	y2++;
+	++y2;
     }
 
     if (box->pad & PAD_LEFT)
@@ -2590,7 +2595,7 @@ _decor_blend_vert_border_picture (Display	  *xdisplay,
 
 	    XUnionRectWithRegion (&rect, rotated_region, rotated_region);
 
-	    pBox++;
+	    ++pBox;
 	}
 
 	XRenderSetPictureClipRegion (xdisplay, dst, rotated_region);
@@ -3115,12 +3120,12 @@ decor_set_dm_check_hint (Display *xdisplay,
     if (supports & WINDOW_DECORATION_TYPE_PIXMAP)
     {
 	supported_deco_atoms[i] = type_pixmap_atom;
-	i++;
+	++i;
     }
     if (supports & WINDOW_DECORATION_TYPE_WINDOW)
     {
 	supported_deco_atoms[i] = type_window_atom;
-	i++;
+	++i;
     }
     XChangeProperty (xdisplay,
 		     data,

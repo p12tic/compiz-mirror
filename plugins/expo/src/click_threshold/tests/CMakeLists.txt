@@ -12,8 +12,6 @@ add_executable (compiz_test_expo_click_threshold
 
 target_link_libraries (compiz_test_expo_click_threshold
 		       compiz_expo_click_threshold
-		       ${GTEST_BOTH_LIBRARIES}
-		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
-                       )
+		       ${GTEST_BOTH_LIBRARIES})
 
 compiz_discover_tests (compiz_test_expo_click_threshold COVERAGE compiz_expo_click_threshold)

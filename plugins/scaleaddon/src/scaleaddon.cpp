@@ -38,32 +38,21 @@ bool textAvailable;
 void
 ScaleAddonWindow::renderTitle ()
 {
-    CompText::Attrib attrib;
-    float            scale;
-    int              titleOpt;
-
     ADDON_SCREEN (screen);
 
-    if (!textAvailable)
-	return;
+    int titleOpt = as->optionGetWindowTitle ();
+
+    if (!textAvailable								||
+	titleOpt == ScaleaddonOptions::WindowTitleNoDisplay			||
+	!sWindow->hasSlot ()							||
+	(titleOpt == ScaleaddonOptions::WindowTitleHighlightedWindowOnly &&
+	 as->highlightedWindow != window->id ()))
+    return;
 
     text.clear ();
+    CompText::Attrib attrib;
 
-    if (!sWindow->hasSlot ())
-	return;
-
-    titleOpt = as->optionGetWindowTitle ();
-
-    if (titleOpt == ScaleaddonOptions::WindowTitleNoDisplay)
-	return;
-
-    if (titleOpt == ScaleaddonOptions::WindowTitleHighlightedWindowOnly &&
-	as->highlightedWindow != window->id ())
-    {
-	return;
-    }
-
-    scale = sWindow->getSlot ().scale;
+    float scale = sWindow->getSlot ().scale;
     attrib.maxWidth = window->width () * scale;
     attrib.maxHeight = window->height () * scale;
 
@@ -75,6 +64,7 @@ ScaleAddonWindow::renderTitle ()
     attrib.color[3] = as->optionGetFontColorAlpha ();
 
     attrib.flags = CompText::WithBackground | CompText::Ellipsized;
+
     if (as->optionGetTitleBold ())
 	attrib.flags |= CompText::StyleBold;
 
@@ -93,15 +83,14 @@ ScaleAddonWindow::renderTitle ()
 void
 ScaleAddonWindow::drawTitle (const GLMatrix &transform)
 {
-    float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
     CompRect      geom = window->borderRect ();
 
-    width  = text.getWidth ();
-    height = text.getHeight ();
+    float width  = text.getWidth ();
+    float height = text.getHeight ();
 
-    x = pos.x () + window->x () + geom.width () * pos.scale / 2 - width / 2;
-    y = pos.y () + window->y () + geom.height () * pos.scale / 2 - height / 2;
+    float x = pos.x () + window->x () + geom.width () * pos.scale / 2 - width / 2;
+    float y = pos.y () + window->y () + geom.height () * pos.scale / 2 - height / 2;
 
     text.draw (transform, floor (x), floor (y), 1.0f);
 }
@@ -109,13 +98,15 @@ ScaleAddonWindow::drawTitle (const GLMatrix &transform)
 void
 ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
 {
-    GLint         oldBlendSrc, oldBlendDst;
-    GLushort colorData[4];
-    GLfloat  vertexData[12];
+    if (rescaled)
+	return;
+
+    GLint          oldBlendSrc, oldBlendDst;
+    GLushort       colorData[4];
+    GLfloat        vertexData[12];
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
-    float         x, y, width, height;
-    ScalePosition pos = sWindow->getCurrentPosition ();
-    CompRect      geom = window->borderRect ();
+    ScalePosition  pos = sWindow->getCurrentPosition ();
+    CompRect       geom = window->borderRect ();
 
     ADDON_SCREEN (screen);
 
@@ -123,13 +114,10 @@ ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
     GLint oldBlendSrcAlpha, oldBlendDstAlpha;
 #endif
 
-    if (rescaled)
-	return;
-
-    x      = pos.x () + window->x () - (window->border ().left * pos.scale);
-    y      = pos.y () + window->y () - (window->border ().top * pos.scale);
-    width  = geom.width () * pos.scale;
-    height = geom.height () * pos.scale;
+    float x      = pos.x () + window->x () - (window->border ().left * pos.scale);
+    float y      = pos.y () + window->y () - (window->border ().top * pos.scale);
+    float width  = geom.width () * pos.scale;
+    float height = geom.height () * pos.scale;
 
     /* we use a poor replacement for roundf()
      * (available in C99 only) here */
@@ -195,9 +183,8 @@ ScaleAddonScreen::checkWindowHighlight ()
 {
     if (highlightedWindow != lastHighlightedWindow)
     {
-	CompWindow *w;
+	CompWindow *w = screen->findWindow (highlightedWindow);
 
-	w = screen->findWindow (highlightedWindow);
 	if (w)
 	{
 	    ADDON_WINDOW (w);
@@ -206,6 +193,7 @@ ScaleAddonScreen::checkWindowHighlight ()
 	}
 
 	w = screen->findWindow (lastHighlightedWindow);
+
 	if (w)
 	{
 	    ADDON_WINDOW (w);
@@ -222,12 +210,11 @@ ScaleAddonScreen::closeWindow (CompAction         *action,
 			       CompAction::State  state,
 			       CompOption::Vector options)
 {
-    CompWindow *w;
-
     if (!sScreen->hasGrab ())
 	return false;
 
-    w = screen->findWindow (highlightedWindow);
+    CompWindow *w = screen->findWindow (highlightedWindow);
+
     if (w)
 	w->close (screen->getCurrentTime ());
 
@@ -239,24 +226,20 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 			      CompAction::State  state,
 			      CompOption::Vector options)
 {
-    CompWindow *w;
-
     if (!sScreen->hasGrab ())
 	return false;
 
-    w = screen->findWindow (highlightedWindow);
+    CompWindow *w = screen->findWindow (highlightedWindow);
+
     if (w)
     {
-	int       x, y, xOffset, yOffset;
-	CompPoint vp;
+	CompPoint vp = w->defaultViewport ();
 
-	vp = w->defaultViewport ();
+	int xOffset = (screen->vp ().x () - vp.x ()) * screen->width ();
+	int yOffset = (screen->vp ().y () - vp.y ()) * screen->height ();
 
-	xOffset = (screen->vp ().x () - vp.x ()) * screen->width ();
-	yOffset = (screen->vp ().y () - vp.y ()) * screen->height ();
-
-	x = w->x () + xOffset;
-	y = w->y () + yOffset;
+	int x = w->x () + xOffset;
+	int y = w->y () + yOffset;
 
 	if (optionGetConstrainPullToScreen ())
 	{
@@ -281,17 +264,17 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 
 	if (x != w->x () || y != w->y ())
 	{
-	    ScalePosition pos, oldPos;
+	    ScalePosition pos;
 	    ADDON_WINDOW (w);
 
-	    oldPos = aw->sWindow->getCurrentPosition ();
+	    ScalePosition oldPos = aw->sWindow->getCurrentPosition ();
 
 	    w->moveToViewportPosition (x, y, true);
 
 	    /* Select this window when ending scale */
 	    aw->sWindow->scaleSelectWindow ();
 
-	    /* stop scaled window dissapearing */
+	    /* stop scaled window disappearing */
 	    pos.setX (oldPos.x () - xOffset);
 	    pos.setY (oldPos.y () - yOffset);
 
@@ -304,8 +287,8 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 		o.push_back (CompOption ("root", CompOption::TypeInt));
 		o[0].value ().set ((int) screen->root ());
 
-		opt = CompOption::findOption (sScreen->getOptions (),
-					      "initiate_key", 0);
+		opt = CompOption::findOption (sScreen->getOptions (), "initiate_key", 0);
+
 		action = &opt->value ().action ();
 
 		if (action->terminate ())
@@ -337,24 +320,20 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 			      CompAction::State  state,
 			      CompOption::Vector options)
 {
-    CompWindow *w;
-
     if (!sScreen->hasGrab ())
 	return false;
 
-    w = screen->findWindow (highlightedWindow);
+    CompWindow *w = screen->findWindow (highlightedWindow);
+
     if (w)
     {
-	CompRect output;
-	int      head;
-
 	ADDON_WINDOW (w);
 
 	if (!aw->sWindow->hasSlot ())
 	    return false;
 
-	head   = screen->outputDeviceForPoint (aw->sWindow->getSlot ().pos ());
-	output = screen->outputDevs ()[head];
+	int      head   = screen->outputDeviceForPoint (aw->sWindow->getSlot ().pos ());
+	CompRect output = screen->outputDevs ()[head];
 
 	/* damage old rect */
 	aw->cWindow->addDamage ();
@@ -362,7 +341,6 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 	if (!aw->rescaled)
 	{
 	    ScaleSlot slot = aw->sWindow->getSlot ();
-	    int       x1, x2, y1, y2;
 	    CompRect  geom = w->borderRect ();
 
 	    aw->oldAbove = w->next;
@@ -372,10 +350,10 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 	    aw->origSlot = slot;
 	    aw->rescaled = true;
 
-	    x1 = output.centerX () - geom.width () / 2 + w->border ().left;
-	    y1 = output.centerY () - geom.height () / 2 + w->border ().top;
-	    x2 = slot.x () + geom.width ();
-	    y2 = slot.y () + geom.height ();
+	    int x1 = output.centerX () - geom.width () / 2 + w->border ().left;
+	    int y1 = output.centerY () - geom.height () / 2 + w->border ().top;
+	    int x2 = slot.x () + geom.width ();
+	    int y2 = slot.y () + geom.height ();
 
 	    slot.scale = 1.0f;
 	    slot.setGeometry (x1, y1, x2 - x1, y2 - y1);
@@ -411,9 +389,8 @@ ScaleAddonScreen::handleEvent (XEvent *event)
     case PropertyNotify:
 	if (event->xproperty.atom == XA_WM_NAME && sScreen->hasGrab ())
 	{
-	    CompWindow *w;
+	    CompWindow *w = screen->findWindow (event->xproperty.window);
 
-	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 	    {
 		ADDON_WINDOW (w);
@@ -421,7 +398,9 @@ ScaleAddonScreen::handleEvent (XEvent *event)
 		aw->cWindow->addDamage ();
 	    }
 	}
+
 	break;
+
     case MotionNotify:
 	if (sScreen->hasGrab ())
 	{
@@ -429,6 +408,7 @@ ScaleAddonScreen::handleEvent (XEvent *event)
 	    checkWindowHighlight ();
 	}
 	break;
+
     default:
 	break;
     }
@@ -449,11 +429,9 @@ ScaleAddonWindow::scalePaintDecoration (const GLWindowPaintAttrib &attrib,
 
     if (state == ScaleScreen::Wait || state == ScaleScreen::Out)
     {
-	if (as->optionGetWindowHighlight ())
-	{
-	    if (window->id () == as->highlightedWindow)
-		drawHighlight (transform);
-	}
+	if (as->optionGetWindowHighlight () &&
+	    window->id () == as->highlightedWindow)
+	    drawHighlight (transform);
 
 	if (textAvailable)
 	    drawTitle (transform);
@@ -508,8 +486,7 @@ ScaleAddonScreen::handleCompizEvent (const char         *pluginName,
     if ((strcmp (pluginName, "scale") == 0) &&
 	(strcmp (eventName, "activate") == 0))
     {
-	bool activated =
-	    CompOption::getBoolOptionNamed (options, "active", false);
+	bool activated = CompOption::getBoolOptionNamed (options, "active", false);
 
 	if (activated)
 	{
@@ -570,7 +547,6 @@ layoutOrganicCalculateOverlap (CompScreen *s,
 			       int        x,
 			       int        y)
 {
-    int    x1, y1, x2, y2;
     int    overlapX, overlapY;
     int    xMin, xMax, yMin, yMax;
     double result = -0.01;
@@ -578,12 +554,12 @@ layoutOrganicCalculateOverlap (CompScreen *s,
     SCALE_SCREEN ();
     ADDON_SCREEN ();
 
-    x1 = x;
-    y1 = y;
-    x2 = x1 + WIN_W (ss->windows[win]) * as->scale;
-    y2 = y1 + WIN_H (ss->windows[win]) * as->scale;
+    int x1 = x;
+    int y1 = y;
+    int x2 = x1 + WIN_W (ss->windows[win]) * as->scale;
+    int y2 = y1 + WIN_H (ss->windows[win]) * as->scale;
 
-    for (int i = 0; i < ss->nWindows; i++)
+    for (int i = 0; i < ss->nWindows; ++i)
     {
 	if (i == win)
 	    continue;
@@ -591,6 +567,7 @@ layoutOrganicCalculateOverlap (CompScreen *s,
 	overlapX = overlapY = 0;
 	xMax = MAX (ss->slots[i].x1, x1);
 	xMin = MIN (ss->slots[i].x1 + WIN_W (ss->windows[i]) * as->scale, x2);
+
 	if (xMax <= xMin)
 	    overlapX = xMin - xMax;
 
@@ -612,21 +589,21 @@ layoutOrganicFindBestHorizontalPosition (CompScreen *s,
 					 int        *bestX,
 					 int        areaWidth)
 {
-    int    i, y1, y2, w;
     double bestOverlap = 1e31, overlap;
 
     SCALE_SCREEN ();
     ADDON_SCREEN ();
 
-    y1 = ss->slots[win].y1;
-    y2 = ss->slots[win].y1 + WIN_H (ss->windows[win]) * as->scale;
+    int y1 = ss->slots[win].y1;
+    int y2 = ss->slots[win].y1 + WIN_H (ss->windows[win]) * as->scale;
 
-    w = WIN_W (ss->windows[win]) * as->scale;
+    int w = WIN_W (ss->windows[win]) * as->scale;
     *bestX = ss->slots[win].x1;
 
-    for (i = 0; i < ss->nWindows; i++)
+    for (int i = 0; i < ss->nWindows; ++i)
     {
 	CompWindow *lw = ss->windows[i];
+
 	if (i == win)
 	    continue;
 
@@ -635,11 +612,9 @@ layoutOrganicFindBestHorizontalPosition (CompScreen *s,
 	{
 	    if (ss->slots[i].x1 - w >= 0)
 	    {
-		double overlap;
-		
-		overlap = layoutOrganicCalculateOverlap (s, win,
-		 					 ss->slots[i].x1 - w,
-							 y1);
+		double overlap = layoutOrganicCalculateOverlap (s, win,
+								ss->slots[i].x1 - w,
+								y1);
 
 		if (overlap < bestOverlap)
 		{
@@ -647,14 +622,13 @@ layoutOrganicFindBestHorizontalPosition (CompScreen *s,
 		    bestOverlap = overlap;
 		}
 	    }
+
 	    if (WIN_W (lw) * as->scale + ss->slots[i].x1 + w < areaWidth)
 	    {
-		double overlap;
-		
-		overlap = layoutOrganicCalculateOverlap (s, win,
-		 					 ss->slots[i].x1 +
-		 					 WIN_W (lw) * as->scale,
-		 					 y1);
+		double overlap = layoutOrganicCalculateOverlap (s, win,
+								ss->slots[i].x1 +
+								WIN_W (lw) * as->scale,
+								y1);
 
 		if (overlap < bestOverlap)
 		{
@@ -666,6 +640,7 @@ layoutOrganicFindBestHorizontalPosition (CompScreen *s,
     }
 
     overlap = layoutOrganicCalculateOverlap (s, win, 0, y1);
+
     if (overlap < bestOverlap)
     {
 	*bestX = 0;
@@ -673,6 +648,7 @@ layoutOrganicFindBestHorizontalPosition (CompScreen *s,
     }
 
     overlap = layoutOrganicCalculateOverlap (s, win, areaWidth - w, y1);
+
     if (overlap < bestOverlap)
     {
 	*bestX = areaWidth - w;
@@ -688,18 +664,17 @@ layoutOrganicFindBestVerticalPosition (CompScreen *s,
 				       int        *bestY,
 				       int        areaHeight)
 {
-    int    i, x1, x2, h;
     double bestOverlap = 1e31, overlap;
 
     SCALE_SCREEN ();
     ADDON_SCREEN ();
 
-    x1 = ss->slots[win].x1;
-    x2 = ss->slots[win].x1 + WIN_W (ss->windows[win]) * as->scale;
-    h = WIN_H (ss->windows[win]) * as->scale;
+    int x1 = ss->slots[win].x1;
+    int x2 = ss->slots[win].x1 + WIN_W (ss->windows[win]) * as->scale;
+    int h = WIN_H (ss->windows[win]) * as->scale;
     *bestY = ss->slots[win].y1;
 
-    for (i = 0; i < ss->nWindows; i++)
+    for (int i = 0; i < ss->nWindows; ++i)
     {
 	CompWindow *w = ss->windows[i];
 
@@ -711,23 +686,21 @@ layoutOrganicFindBestVerticalPosition (CompScreen *s,
 	{
 	    if (ss->slots[i].y1 - h >= 0 && ss->slots[i].y1 < areaHeight)
 	    {
-		double overlap;
-		overlap = layoutOrganicCalculateOverlap (s, win, x1,
-	 						 ss->slots[i].y1 - h);
+		double overlap = layoutOrganicCalculateOverlap (s, win, x1,
+								ss->slots[i].y1 - h);
 		if (overlap < bestOverlap)
 		{
 		    *bestY = ss->slots[i].y1 - h;
 		    bestOverlap = overlap;
 		}
 	    }
+
 	    if (WIN_H (w) * as->scale + ss->slots[i].y1 > 0 &&
 		WIN_H (w) * as->scale + h + ss->slots[i].y1 < areaHeight)
 	    {
-		double overlap;
-		
-		overlap = layoutOrganicCalculateOverlap (s, win, x1,
-		 					 WIN_H (w) * as->scale +
-							 ss->slots[i].y1);
+		double overlap = layoutOrganicCalculateOverlap (s, win, x1,
+								WIN_H (w) * as->scale +
+								ss->slots[i].y1);
 
 		if (overlap < bestOverlap)
 		{
@@ -739,6 +712,7 @@ layoutOrganicFindBestVerticalPosition (CompScreen *s,
     }
 
     overlap = layoutOrganicCalculateOverlap (s, win, x1, 0);
+
     if (overlap < bestOverlap)
     {
 	*bestY = 0;
@@ -746,6 +720,7 @@ layoutOrganicFindBestVerticalPosition (CompScreen *s,
     }
 
     overlap = layoutOrganicCalculateOverlap (s, win, x1, areaHeight - h);
+
     if (overlap < bestOverlap)
     {
 	*bestY = areaHeight - h;
@@ -769,7 +744,8 @@ layoutOrganicLocalSearch (CompScreen *s,
     do
     {
 	improvement = false;
-	for (i = 0; i < ss->nWindows; i++)
+
+	for (i = 0; i < ss->nWindows; ++i)
 	{
 	    bool improved;
 
@@ -807,7 +783,8 @@ layoutOrganicLocalSearch (CompScreen *s,
     while (improvement);
 
     totalOverlap = 0.0;
-    for (i = 0; i < ss->nWindows; i++)
+
+    for (i = 0; i < ss->nWindows; ++i)
     {
 	totalOverlap += layoutOrganicCalculateOverlap (s, i,
 						       ss->slots[i].x1,
@@ -822,32 +799,28 @@ layoutOrganicRemoveOverlap (CompScreen *s,
 			    int        areaWidth,
 			    int        areaHeight)
 {
-    int        i, spacing;
     CompWindow *w;
 
     SCALE_SCREEN ();
     ADDON_SCREEN ();
 
-    spacing = ss->opt[SCALE_SCREEN_OPTION_SPACING].value.i;
+    int spacing = ss->opt[SCALE_SCREEN_OPTION_SPACING].value.i;
 
     while (layoutOrganicLocalSearch (s, areaWidth, areaHeight))
     {
-	for (i = 0; i < ss->nWindows; i++)
+	for (int i = 0; i < ss->nWindows; ++i)
 	{
-	    int centerX, centerY;
-	    int newX, newY, newWidth, newHeight;
-
 	    w = ss->windows[i];
 
-	    centerX = ss->slots[i].x1 + WIN_W (w) / 2;
-	    centerY = ss->slots[i].y1 + WIN_H (w) / 2;
+	    int centerX = ss->slots[i].x1 + WIN_W (w) / 2;
+	    int centerY = ss->slots[i].y1 + WIN_H (w) / 2;
 
-	    newWidth = (int)((1.0 - ORGANIC_STEP) *
+	    int newWidth = (int)((1.0 - ORGANIC_STEP) *
 			     (double)WIN_W (w)) - spacing / 2;
-	    newHeight = (int)((1.0 - ORGANIC_STEP) *
+	    int newHeight = (int)((1.0 - ORGANIC_STEP) *
 			      (double)WIN_H (w)) - spacing / 2;
-	    newX = centerX - (newWidth / 2);
-	    newY = centerY - (newHeight / 2);
+	    int newX = centerX - (newWidth / 2);
+	    int newY = centerY - (newHeight / 2);
 
 	    ss->slots[i].x1 = newX;
 	    ss->slots[i].y1 = newY;
@@ -862,18 +835,20 @@ static bool
 layoutOrganicThumbs (CompScreen *s)
 {
     CompWindow *w;
-    int        i, moMode;
+    int        i;
     XRectangle workArea;
 
     SCALE_SCREEN ();
     ADDON_SCREEN ();
 
-    moMode = ss->opt[SCALE_SCREEN_OPTION_MULTIOUTPUT_MODE].value.i;
+    int moMode = ss->opt[SCALE_SCREEN_OPTION_MULTIOUTPUT_MODE].value.i;
 
-    switch (moMode) {
+    switch (moMode)
+    {
     case SCALE_MOMODE_ALL:
 	workArea = s->workArea;
 	break;
+
     case SCALE_MOMODE_CURRENT:
     default:
 	workArea = s->outputDev[s->currentOutputDev].workArea;
@@ -885,7 +860,7 @@ layoutOrganicThumbs (CompScreen *s)
     qsort (ss->windows, ss->nWindows, sizeof(CompWindow *),
 	   organicCompareWindows);
 
-    for (i = 0; i < ss->nWindows; i++)
+    for (i = 0; i < ss->nWindows; ++i)
     {
 	w = ss->windows[i];
 	SCALE_WINDOW (w);
@@ -924,7 +899,7 @@ layoutOrganicThumbs (CompScreen *s)
 
     layoutOrganicRemoveOverlap (s, workArea.width - workArea.x,
 				workArea.height - workArea.y);
-    for (i = 0; i < ss->nWindows; i++)
+    for (i = 0; i < ss->nWindows; ++i)
     {
 	w = ss->windows[i];
 	SCALE_WINDOW (w);
@@ -959,12 +934,15 @@ ScaleAddonScreen::isOverlappingAny (ScaleWindow *w,
 {
     if (border.intersects (targets[w]))
 	return true;
+
     // Is there a better way to do this?
     std::map <ScaleWindow *, CompRegion>::const_iterator i;
+
     for (i = targets.begin (); i != targets.end (); ++i)
     {
 	if (w == (*i).first)
 	    continue;
+
 	if (targets[w].intersects ((*i).second))
 	    return true;
     }
@@ -974,14 +952,14 @@ ScaleAddonScreen::isOverlappingAny (ScaleWindow *w,
 bool
 ScaleAddonScreen::layoutNaturalThumbs ()
 {
-    ScaleScreen::WindowList windows = ScaleScreen::get (screen)->getWindows ();
-    bool overlapping;
-    CompRect area = screen->workArea ();
-    CompRect bounds = area;
+    ScaleScreen::WindowList              windows = ScaleScreen::get (screen)->getWindows ();
+    bool                                 overlapping;
+    CompRect                             area = screen->workArea ();
+    CompRect                             bounds = area;
     std::map <ScaleWindow *, CompRegion> targets;
-    std::map <ScaleWindow *, int> directions;
-    int				  direction = 0;
-    int				  iterCount = 0;
+    std::map <ScaleWindow *, int>        directions;
+    int                                  direction = 0;
+    int                                  iterCount = 0;
 
     if (windows.size () == 1)
     {
@@ -1001,7 +979,9 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 	// Reuse the unused "slot" as a preferred direction attribute. This is used when the window
 	// is on the edge of the screen to try to use as much screen real estate as possible.
 	directions[w] = direction;
-	direction++;
+
+	++direction;
+
 	if (direction == 4)
 	    direction = 0;
     }
@@ -1009,6 +989,7 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     do
     {
 	overlapping = false;
+
 	foreach (ScaleWindow *w, windows)
 	{
 	    foreach (ScaleWindow *e, windows)
@@ -1058,28 +1039,28 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 			    ySection = (directions[w] % 2 ? 2 : 0);
 		    }
 		    
-                    if (xSection == 0 && ySection == 0)
+		    if (xSection == 0 && ySection == 0)
 		    {
 			moveX = bounds.left () - targets[w].boundingRect ().centerX ();
 			moveY = bounds.top () - targets[w].boundingRect ().centerY ();
 		    }
-                    if (xSection == 2 && ySection == 0)
+		    if (xSection == 2 && ySection == 0)
 		    {
 			moveX = bounds.right () - targets[w].boundingRect ().centerX ();
 			moveY = bounds.top () - targets[w].boundingRect ().centerY ();
 		    }
-                    if (xSection == 2 && ySection == 2)
+		    if (xSection == 2 && ySection == 2)
 		    {
 			moveX = bounds.right () - targets[w].boundingRect ().centerX ();
 			moveY = bounds.bottom () - targets[w].boundingRect ().centerY ();
 		    }
-                    if (xSection == 0 && ySection == 2)
+		    if (xSection == 0 && ySection == 2)
 		    {
 			moveX = bounds.left () - targets[w].boundingRect ().centerX ();
 			moveY = bounds.right () - targets[w].boundingRect ().centerY ();
 		    }
-                    if (moveX != 0 || moveY != 0)
-                        targets[w].translate (moveX, moveY);
+		    if (moveX != 0 || moveY != 0)
+			targets[w].translate (moveX, moveY);
 		    */
 		}
 		
@@ -1094,29 +1075,32 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     // Work out scaling by getting the most top-left and most bottom-right window coords.
     // The 20's and 10's are so that the windows don't touch the edge of the screen.
     double scale;
+
     if (bounds == area)
-        scale = 1.0; // Don't add borders to the screen
+	scale = 1.0; // Don't add borders to the screen
     else if (area.width () / double (bounds.width ()) < area.height () / double (bounds.height ()))
-        scale = (area.width () - 20) / double (bounds.width ());
+	scale = (area.width () - 20) / double (bounds.width ());
     else
-        scale = (area.height () - 20) / double (bounds.height ());
+	scale = (area.height () - 20) / double (bounds.height ());
+
     // Make bounding rect fill the screen size for later steps
     bounds = CompRect (
-        bounds.x () - (area.width () - 20 - bounds.width () * scale ) / 2 - 10 / scale,
-        bounds.y () - (area.height () - 20 - bounds.height () * scale ) / 2 - 10 / scale,
-        area.width () / scale,
-        area.height () / scale
-        );
-    
+		 bounds.x () - (area.width () - 20 - bounds.width () * scale ) / 2 - 10 / scale,
+		 bounds.y () - (area.height () - 20 - bounds.height () * scale ) / 2 - 10 / scale,
+		 area.width () / scale,
+		 area.height () / scale
+		 );
+
     // Move all windows back onto the screen and set their scale
     foreach (ScaleWindow *w, windows)
     {
-        targets[w] = CompRect (
-            (targets[w].boundingRect ().x () - bounds.x () ) * scale + area.x (),
-	    (targets[w].boundingRect ().y () - bounds.y ()) * scale + area.y (),
-	    targets[w].boundingRect ().width () * scale,
-	    targets[w].boundingRect ().height () * scale
-            );
+	targets[w] = CompRect (
+			 (targets[w].boundingRect ().x () - bounds.x () ) * scale + area.x (),
+			 (targets[w].boundingRect ().y () - bounds.y ()) * scale + area.y (),
+			 targets[w].boundingRect ().width () * scale,
+			 targets[w].boundingRect ().height () * scale
+			 );
+
 	ScaleSlot slt (targets[w].boundingRect ());
 	slt.scale = scale;
 	slt.filled = true;
@@ -1135,20 +1119,22 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     borderRegion ^= areaRegion;
 
     bool moved = false;
+
     do
     {
 	moved = false;
+
 	foreach (ScaleWindow *w, windows)
 	{
 	    CompRegion oldRegion;
-	    
+
 	    // This may cause some slight distortion if the windows are enlarged a large amount
 	    int widthDiff = optionGetNaturalPrecision ();
 	    int heightDiff = ((w->window->height () / w->window->width ()) * 
 	    (targets[w].boundingRect ().width() + widthDiff)) - targets[w].boundingRect ().height ();
 	    int xDiff = widthDiff / 2;  // Also move a bit in the direction of the enlarge, allows the
 	    int yDiff = heightDiff / 2; // center windows to be enlarged if there is gaps on the side.
-	    
+
 	    // Attempt enlarging to the top-right
 	    oldRegion = targets[w];
 	    targets[w] = CompRegion (
@@ -1157,11 +1143,12 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 				     targets[w].boundingRect ().width () + widthDiff,
 				     targets[w].boundingRect ().height () + heightDiff
 					);
+
 	    if (isOverlappingAny (w, targets, borderRegion))
 		targets[w] = oldRegion;
 	    else
 		moved = true;
-	    
+
 	    // Attempt enlarging to the bottom-right
 	    oldRegion = targets[w];
 	    targets[w] = CompRegion(
@@ -1174,7 +1161,7 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 		targets[w] = oldRegion;
 	    else
 		moved = true;
-		
+
 	    // Attempt enlarging to the bottom-left
 	    oldRegion = targets[w];
 	    targets[w] = CompRegion (
@@ -1183,11 +1170,12 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 				    targets[w].boundingRect ().width() + widthDiff,
 				    targets[w].boundingRect ().height() + heightDiff
 				    );
+
 	    if (isOverlappingAny (w, targets, borderRegion))
 		targets[w] = oldRegion;
 	    else
 		moved = true;
-		    
+
 	    // Attempt enlarging to the top-left
 	    oldRegion = targets[w];
 	    targets[w] = CompRegion (
@@ -1196,13 +1184,14 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 				    targets[w].boundingRect ().width() + widthDiff,
 				    targets[w].boundingRect ().height() + heightDiff
 				    );
+
 	    if (isOverlappingAny (w, targets, borderRegion))
 		targets[w] = oldRegion;
 	    else
 		moved = true;
 	}
 	
-	iterCount++;
+	++iterCount;
     }
     while (moved && iterCount < 100);
 
@@ -1225,7 +1214,6 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     }
 
     return true;
-
 }
 
 bool
@@ -1238,6 +1226,7 @@ ScaleAddonScreen::layoutSlotsAndAssignWindows ()
     case LayoutModeNatural:
 	status = layoutNaturalThumbs ();
 	break;
+
     case LayoutModeNormal:
     default:
 	status = sScreen->layoutSlotsAndAssignWindows ();
@@ -1268,6 +1257,7 @@ ScaleAddonScreen::optionChanged (CompOption                 *opt,
 		}
 	    }
 	    break;
+
 	default:
 	    break;
     }
@@ -1324,20 +1314,20 @@ ScaleAddonWindow::ScaleAddonWindow (CompWindow *window) :
 bool
 ScaleAddonPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-	!CompPlugin::checkPluginABI ("scale", COMPIZ_SCALE_ABI))
-	return false;
-
-    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+    if (CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+	textAvailable = true;
+    else
     {
 	compLogMessage ("scaleaddon", CompLogLevelInfo,
 			"Text Plugin not loaded, no text will be drawn.");
 	textAvailable = false;
     }
-    else
-	textAvailable = true;
 
-    return true;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)	&&
+	CompPlugin::checkPluginABI ("scale", COMPIZ_SCALE_ABI))
+	return true;
+
+    return false;
 }

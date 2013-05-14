@@ -48,17 +48,18 @@ class ScaleAddonScreen :
     public ScaleaddonOptions
 {
     public:
+
 	ScaleAddonScreen (CompScreen *);
 
 	CompositeScreen *cScreen;
-	ScaleScreen	*sScreen;
+	ScaleScreen     *sScreen;
 
-	Window		highlightedWindow;
-	Window		lastHighlightedWindow;
+	Window          highlightedWindow;
+	Window          lastHighlightedWindow;
 
-	int		lastState;
+	int             lastState;
 
-	float		scale;
+	float           scale;
 	
 	std::vector <ScaleSlot> paintSlots;
 
@@ -67,13 +68,13 @@ class ScaleAddonScreen :
 
 	bool
 	layoutSlotsAndAssignWindows ();
-	
+
 	bool
 	layoutNaturalThumbs ();
 
 	bool
-	isOverlappingAny (ScaleWindow *w,
-			  const std::map <ScaleWindow *, CompRegion>,
+	isOverlappingAny (ScaleWindow      *w,
+			  const std::map   <ScaleWindow *, CompRegion>,
 			  const CompRegion &border);
 
 	void
@@ -115,6 +116,7 @@ class ScaleAddonWindow :
     public ScaleWindowInterface
 {
     public:
+
 	ScaleAddonWindow (CompWindow *);
 
 	CompWindow *window;
@@ -149,7 +151,6 @@ class ScaleAddonWindow :
 
 #define ADDON_WINDOW(w)				     \
      ScaleAddonWindow *aw = ScaleAddonWindow::get (w)
-
 
 class ScaleAddonPluginVTable :
     public CompPlugin::VTableForScreenAndWindow <ScaleAddonScreen,

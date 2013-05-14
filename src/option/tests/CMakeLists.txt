@@ -26,7 +26,6 @@ target_link_libraries(
   compiz_core
   
   ${GTEST_BOTH_LIBRARIES}
-  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
 )
 
 compiz_discover_tests ( compiz_option_test COVERAGE compiz_core )

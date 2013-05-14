@@ -27,6 +27,8 @@
 
 COMPIZ_PLUGIN_20090315 (staticswitcher, StaticSwitchPluginVTable)
 
+const unsigned short MAX_ICON_SIZE = 512;
+
 const unsigned short PREVIEWSIZE = 150;
 const unsigned short BORDER = 10;
 
@@ -1435,12 +1437,11 @@ StaticSwitchWindow::StaticSwitchWindow (CompWindow *window) :
 bool
 StaticSwitchPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-        !CompPlugin::checkPluginABI ("compiztoolbox", COMPIZ_COMPIZTOOLBOX_ABI))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)			&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)		&&
+	CompPlugin::checkPluginABI ("compiztoolbox", COMPIZ_COMPIZTOOLBOX_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }
-

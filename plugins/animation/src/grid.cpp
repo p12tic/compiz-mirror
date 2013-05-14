@@ -101,7 +101,7 @@ GridAnim::GridModel::initObjects (WindowEvent curWindowEvent,
 	    height - decorTopHeight - decorBottomHeight;
 
 	//Top
-	for (gridX = 0; gridX < gridWidth; gridX++)
+	for (gridX = 0; gridX < gridWidth; ++gridX)
 	{
 	    Point gridPos ((float)gridX / nGridCellsX, 0);
 
@@ -109,14 +109,14 @@ GridAnim::GridModel::initObjects (WindowEvent curWindowEvent,
 	}
 
 	// Window contents
-	for (gridY = 1; gridY < gridHeight - 1; gridY++)
+	for (gridY = 1; gridY < gridHeight - 1; ++gridY)
 	{
 	    float inWinY =
 		(gridY - 1) * winContentsHeight / nGridCellsY +
 		decorTopHeight;
 	    float gridPosY = inWinY / height;
 
-	    for (gridX = 0; gridX < gridWidth; gridX++)
+	    for (gridX = 0; gridX < gridWidth; ++gridX)
 	    {
 		Point gridPos ((float)gridX / nGridCellsX, gridPosY);
 		mObjects[gridY * gridWidth + gridX].setGridPosition (gridPos);
@@ -124,7 +124,7 @@ GridAnim::GridModel::initObjects (WindowEvent curWindowEvent,
 	}
 
 	// Bottom (gridY is gridHeight-1 now)
-	for (gridX = 0; gridX < gridWidth; gridX++)
+	for (gridX = 0; gridX < gridWidth; ++gridX)
 	{
 	    Point gridPos ((float)gridX / nGridCellsX, 1);
 	    mObjects[gridY * gridWidth + gridX].setGridPosition (gridPos);
@@ -137,15 +137,15 @@ GridAnim::GridModel::initObjects (WindowEvent curWindowEvent,
 	// number of grid cells in y direction
 	nGridCellsY = gridHeight - 1;
 
-	for (gridY = 0; gridY < gridHeight; gridY++)
+	for (gridY = 0; gridY < gridHeight; ++gridY)
 	{
-	    for (gridX = 0; gridX < gridWidth; gridX++)
+	    for (gridX = 0; gridX < gridWidth; ++gridX)
 	    {
 		// TODO Optimize
 		Point gridPos ((float)gridX / nGridCellsX,
 			       (float)gridY / nGridCellsY);
 		mObjects[objIndex].setGridPosition (gridPos);
-		objIndex++;
+		++objIndex;
 	    }
 	}
     }
@@ -156,7 +156,7 @@ GridAnim::GridModel::move (float tx,
 			   float ty)
 {
     GridObject *object = mObjects;
-    for (unsigned int i = 0; i < mNumObjects; i++, object++)
+    for (unsigned int i = 0; i < mNumObjects; ++i, ++object)
     {
 	object->mPosition.add (Point3d (tx, ty, 0));
     }
@@ -166,7 +166,7 @@ void
 GridAnim::updateBB (CompOutput &output)
 {
     GridModel::GridObject *object = mModel->mObjects;
-    for (unsigned int i = 0; i < mModel->mNumObjects; i++, object++)
+    for (unsigned int i = 0; i < mModel->mNumObjects; ++i, ++object)
     {
 	mAWindow->expandBBWithPoint (object->position ().x () + 0.5,
 				     object->position ().y () + 0.5);
@@ -321,7 +321,8 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    int topiy = (int)(topiyFloat + 1e-4);
 
 	    if (topiy == mGridHeight - 1)
-		topiy--;
+		--topiy;
+
 	    int bottomiy = topiy + 1;
 	    float iny = topiyFloat - topiy;
 	    float inyRest = 1 - iny;
@@ -339,7 +340,8 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		int leftix = (int)(leftixFloat + 1e-4);
 
 		if (leftix == mGridWidth - 1)
-		    leftix--;
+		    --leftix;
+
 		int rightix = leftix + 1;
 
 		// GridModel::GridObjects that are at top, bottom, left, right corners of quad
@@ -441,7 +443,7 @@ GridTransformAnim::updateBB (CompOutput &output)
     {
 	GridModel::GridObject *object = mModel->objects ();
 	unsigned int n = mModel->numObjects ();
-	for (unsigned int i = 0; i < n; i++, object++)
+	for (unsigned int i = 0; i < n; ++i, ++object)
 	{
 	    GLVector coords (object->mPosition.x (),
 			     object->mPosition.y (), 0, 1);
