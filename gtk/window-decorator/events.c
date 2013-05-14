@@ -686,7 +686,7 @@ find_event_callback_for_point (decor_t *d,
     int    i, j;
     BoxPtr box;
 
-    for (i = 0; i < BUTTON_NUM; i++)
+    for (i = 0; i < BUTTON_NUM; ++i)
     {
 	box = &d->button_windows[i].pos;
 	if (x >= box->x1 && x <= box->x2 &&
@@ -705,9 +705,9 @@ find_event_callback_for_point (decor_t *d,
 	}
     }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    box = &d->event_windows[i][j].pos;
 	    if (x >= box->x1 && x <= box->x2 &&
@@ -735,15 +735,15 @@ find_leave_event_callback (decor_t *d)
 {
     int i, j;
 
-    for (i = 0; i < BUTTON_NUM; i++)
+    for (i = 0; i < BUTTON_NUM; ++i)
     {
 	if (d->last_pos_entered == &d->button_windows[i].pos)
 	    return d->button_windows[i].callback;
     }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    if (d->last_pos_entered == &d->event_windows[i][j].pos)
 		return d->event_windows[i][j].callback;
@@ -1112,14 +1112,14 @@ event_filter_func (GdkXEvent *gdkxevent,
 		event_callback   cb = NULL;
 		Window           w = xevent->xany.window;
 
-		for (i = 0; i < 3; i++)
-		    for (j = 0; j < 3; j++)
+		for (i = 0; i < 3; ++i)
+		    for (j = 0; j < 3; ++j)
 			if (d->event_windows[i][j].window == w)
 			    cb = d->event_windows[i][j].callback;
 
 		if (!cb)
 		{
-		    for (i = 0; i < BUTTON_NUM; i++)
+		    for (i = 0; i < BUTTON_NUM; ++i)
 			if (d->button_windows[i].window == w)
 			    cb = d->button_windows[i].callback;
 		}
