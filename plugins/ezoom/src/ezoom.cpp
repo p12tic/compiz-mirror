@@ -79,7 +79,7 @@ COMPIZ_PLUGIN_20090315 (ezoom, ZoomPluginVTable)
 
 /*
  * This toggles paint functions. We don't need to continually run code when we
- * are not doing anything
+ * are not doing anything.
  */
 static inline void
 toggleFunctions (bool state)
@@ -122,7 +122,7 @@ isActive (int out)
 }
 
 /* Check if we are zoomed out and not going anywhere
- * (similar to isActive but based on actual zoom, not grab)
+ * (similar to isActive but based on actual zoom, not grab).
  */
 static inline bool
 isZoomed (int out)
@@ -229,7 +229,7 @@ EZoomScreen::ZoomArea::ZoomArea () :
     locked (false)
 {
 }
-/* Adjust the velocity in the z-direction.  */
+/* Adjust the velocity in the z-direction. */
 void
 EZoomScreen::adjustZoomVelocity (int out, float chunk)
 {
@@ -351,7 +351,7 @@ EZoomScreen::preparePaint (int msSinceLastPaint)
     cScreen->preparePaint (msSinceLastPaint);
 }
 
-/* Damage screen if we're still moving.  */
+/* Damage screen if we're still moving. */
 void
 EZoomScreen::donePaint ()
 {
@@ -374,7 +374,7 @@ EZoomScreen::donePaint ()
     cScreen->donePaint ();
 }
 
-/* Draws a box from the screen coordinates inx1, iny1 to inx2, iny2 */
+/* Draws a box from the screen coordinates inx1, iny1 to inx2, iny2. */
 void
 EZoomScreen::drawBox (const GLMatrix &transform,
 		      CompOutput     *output,
@@ -393,7 +393,7 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     convertToZoomed (out, box.x2 (), box.y2 (), &inx2, &iny2);
 
     /* We can move in both directions from our starting point
-     * so we need to calculate the right coordinates first */
+     * so we need to calculate the right coordinates first. */
     int x1 = MIN (inx1, inx2);
     int y1 = MIN (iny1, iny2);
     int x2 = MAX (inx1, inx2);
@@ -467,7 +467,7 @@ EZoomScreen::drawBox (const GLMatrix &transform,
 
     glDisable (GL_BLEND);
 
-    /* Damage the zoom selection box region during draw */
+    /* Damage the zoom selection box region during draw. */
     cScreen->damageRegion (CompRegion (x1 - 1,
 				       y1 - 1,
 				       x2 - x1 + 1,
@@ -521,7 +521,7 @@ EZoomScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 /* Makes sure we're not attempting to translate too far.
  * We are restricted to 0.5 to not go beyond the end
- * of the screen/head.  */
+ * of the screen/head. */
 static inline void
 constrainZoomTranslate ()
 {
@@ -741,7 +741,7 @@ EZoomScreen::syncCenterToMouse ()
     }
 }
 
-/* Convert the point X,Y to where it would be when zoomed.  */
+/* Convert the point X, Y to where it would be when zoomed. */
 void
 EZoomScreen::convertToZoomed (int        out,
 			      int        x,
@@ -775,7 +775,7 @@ EZoomScreen::convertToZoomed (int        out,
     *resultY += o->y1 ();
 }
 
-/* Same but use targeted translation, not real */
+/* Same but use targeted translation, not real one. */
 void
 EZoomScreen::convertToZoomedTarget (int	  out,
 				    int	  x,
@@ -871,11 +871,9 @@ EZoomScreen::ensureVisibilityArea (int         x1,
 				   ZoomGravity gravity)
 {
     int        targetX, targetY, targetW, targetH;
-    int        out;
-    CompOutput *o;
 
-    out = screen->outputDeviceForPoint (x1 + (x2 - x1 / 2), y1 + (y2 - y1 / 2));
-    o = &screen->outputDevs ().at (out);
+    int out = screen->outputDeviceForPoint (x1 + (x2 - x1 / 2), y1 + (y2 - y1 / 2));
+    CompOutput *o = &screen->outputDevs ().at (out);
 
     bool widthOkay  = (float)(x2-x1) / (float)o->width () < zooms.at (out).newZoom;
     bool heightOkay = (float)(y2-y1) / (float)o->height () < zooms.at (out).newZoom;
@@ -998,12 +996,12 @@ EZoomScreen::restrainCursor (int out)
     int         diffX = 0, diffY = 0;
     CompOutput  *o = &screen->outputDevs ().at (out);
 
-    float z = zooms.at (out).newZoom;
-    int margin = optionGetRestrainMargin ();
-    int north = distanceToEdge (out, NORTH);
-    int south = distanceToEdge (out, SOUTH);
-    int east  = distanceToEdge (out, EAST);
-    int west  = distanceToEdge (out, WEST);
+    float z      = zooms.at (out).newZoom;
+    int   margin = optionGetRestrainMargin ();
+    int   north  = distanceToEdge (out, NORTH);
+    int   south  = distanceToEdge (out, SOUTH);
+    int   east   = distanceToEdge (out, EAST);
+    int   west   = distanceToEdge (out, WEST);
 
     if (zooms.at (out).currentZoom == 1.0f)
     {
@@ -1123,18 +1121,18 @@ EZoomScreen::freeCursor (CursorTexture * cursor)
 
 /* Translate into place and draw the scaled cursor.  */
 void
-EZoomScreen::drawCursor (CompOutput          *output,
-	    		const GLMatrix      &transform)
+EZoomScreen::drawCursor (CompOutput    *output,
+			const GLMatrix &transform)
 {
     int out = output->id ();
 
     if (cursor.isSet)
     {
 	GLMatrix       sTransform = transform;
-	float	       scaleFactor;
-	int	       ax, ay;
-	GLfloat	       textureData[8];
-	GLfloat	       vertexData[12];
+	float          scaleFactor;
+	int            ax, ay;
+	GLfloat        textureData[8];
+	GLfloat        vertexData[12];
 	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	/*
