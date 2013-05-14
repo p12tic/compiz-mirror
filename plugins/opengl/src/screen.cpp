@@ -416,6 +416,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
+    EGLint val;
     int msaaBuffers = MAXSHORT;
     int msaaSamples = MAXSHORT;
     visualid = XVisualIDFromVisual (attr.visual);
