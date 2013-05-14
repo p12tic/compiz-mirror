@@ -239,12 +239,19 @@
 					</desc>
 					<desc>
 						<value>1</value>
-						<_name>Above ring</_name>
+						<_name>Top of screen minus offset</_name>
 					</desc>
 					<desc>
 						<value>2</value>
-						<_name>Below ring</_name>
+						<_name>Bottom of screen plus offset</_name>
 					</desc>
+				</option>
+				<option name="vertical_offset" type="int">
+					<_short>Vertical Offset</_short>
+					<_long>Vertical offset from top or bottom of the screen (in pixels).</_long>
+					<default>50</default>
+					<min>0</min>
+					<max>500</max>
 				</option>
 			</group>
 		</options>
