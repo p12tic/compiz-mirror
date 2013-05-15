@@ -495,23 +495,19 @@ WallScreen::handleEvent (XEvent *event)
 
 	    moveViewport (-dx, -dy, None);
 	}
-	if (event->xclient.message_type == Atoms::xdndEnter)
-	{
-	    toggleEdges (true);
-	    edgeDrag = true;
-	}
-	else if (event->xclient.message_type == Atoms::xdndLeave)
-	    edgeDrag = false;
 
 	break;
 
 	case FocusIn:
 	case FocusOut:
-	    if (event->xfocus.mode == NotifyGrab)
-		poller.start ();
-	    else if (event->xfocus.mode == NotifyUngrab)
-		poller.stop ();
-	break;
+	    /* Edges on when grabbed */
+	    if (!optionGetEdgeflipPointer ())
+	    {
+		if (event->xfocus.mode == NotifyGrab)
+		    toggleEdges (true);
+		else if (event->xfocus.mode == NotifyUngrab)
+		    toggleEdges (false);
+	    }
 
 	case ConfigureNotify:
 	break;
@@ -523,20 +519,33 @@ WallScreen::handleEvent (XEvent *event)
     screen->handleEvent (event);
 }
 
+/*
+ * When a dnd type window is mapped toggle edge flip dnd windows back on
+ * _NET_WM_WINDOW_TYPE_DND windows. This will not detect all dnd windows
+ * but it will detect the EWMH-compliant ones without resorting to
+ * hacks involving selection stealing.
+ */
 void
-WallScreen::positionUpdate (const CompPoint &pos)
+WallWindow::windowNotify (CompWindowNotify n)
 {
-    if (edgeDrag)
-	return;
+    WallScreen *ws = WallScreen::get (screen);
+    bool toggleOnDnd = ws->optionGetEdgeflipDnd ();
 
-    if (edgeRegion.contains (pos))
-	toggleEdges (false);
-    else if (noEdgeRegion.contains (pos))
+    switch (n)
     {
-	if (!screen->grabbed ())
-	    poller.stop ();
-	toggleEdges (true);
+	case CompWindowNotifyMap:
+	    if (window->type () & CompWindowTypeDndMask && toggleOnDnd)
+		ws->toggleEdges (true);
+	    break;
+	case CompWindowNotifyUnmap:
+	    if (window->type () & CompWindowTypeDndMask && toggleOnDnd)
+		ws->toggleEdges (false);
+	    break;
+	default:
+	    break;
     }
+
+    window->windowNotify (n);
 }
 
 void
@@ -599,19 +608,19 @@ WallWindow::activate ()
 void
 WallWindow::grabNotify (int          x,
 			int          y,
-			unsigned int width,
-			unsigned int height)
+			unsigned int state,
+			unsigned int mask)
 {
-    WallScreen::get (screen)->toggleEdges (true);
-    WallScreen::get (screen)->edgeDrag = true;
+    if (mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask))
+	WallScreen::get (screen)->windowIsDragMoved = true;
 
-    window->grabNotify (x, y, width, height);
+    window->grabNotify (x, y, state, mask);
 }
 
 void
 WallWindow::ungrabNotify ()
 {
-    WallScreen::get (screen)->edgeDrag = false;
+    WallScreen::get (screen)->windowIsDragMoved = false;
 
     window->ungrabNotify ();
 }
@@ -760,30 +769,16 @@ WallScreen::initiateFlip (Direction         direction,
     int dx, dy;
     int amountX, amountY;
 
-    if (screen->otherGrabExist ("wall", "move", "group-drag", NULL))
-	return false;
+    const bool allowFlipDnd = (state & CompAction::StateInitEdgeDnd) &&
+			      optionGetEdgeflipDnd ();
+    const bool allowFlipMove = (windowIsDragMoved &&
+				optionGetEdgeflipMove ());
+    const bool allowFlipPointer = optionGetEdgeflipPointer ();
 
-    if (state & CompAction::StateInitEdgeDnd)
-    {
-	if (!optionGetEdgeflipDnd ())
-	    return false;
-    }
-    else if (screen->grabExist ("move"))
-    {
-	if (!optionGetEdgeflipMove ())
-	    return false;
-    }
-    else if (screen->grabExist ("group-drag"))
-    {
-	if (!optionGetEdgeflipDnd ())
-	    return false;
-    }
-    else if (!optionGetEdgeflipPointer ())
-    {
-	toggleEdges (false);
-	poller.start ();
+    if (!allowFlipDnd &&
+	!allowFlipMove &&
+	!allowFlipPointer)
 	return false;
-    }
 
     switch (direction)
     {
@@ -1573,6 +1568,9 @@ WallScreen::optionChanged (CompOption           *opt,
 	    ww->isSliding = !optionGetNoSlideMatch ().evaluate (w);
 	}
 	break;
+    case WallOptions::EdgeflipPointer:
+	toggleEdges (optionGetEdgeflipPointer ());
+	break;
 
     default:
 	break;
@@ -1633,7 +1631,7 @@ WallScreen::WallScreen (CompScreen *screen) :
     moveWindow (None),
     focusDefault (true),
     transform (NoTransformation),
-    edgeDrag (false)
+    windowIsDragMoved (false)
 {
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen);
@@ -1700,9 +1698,6 @@ WallScreen::WallScreen (CompScreen *screen) :
     setNotify (ArrowShadowColor);
     setNotify (NoSlideMatch);
     setNotify (EdgeflipPointer);
-
-    poller.setCallback (boost::bind (&WallScreen::positionUpdate, this,
-				     _1));
 }
 
 WallScreen::~WallScreen ()
@@ -1731,8 +1726,7 @@ WallPluginVTable::init ()
 {
     if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
 	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
-	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)	&&
-	CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return true;
 
     return false;
