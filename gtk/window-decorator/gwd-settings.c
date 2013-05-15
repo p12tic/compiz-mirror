@@ -534,7 +534,7 @@ static void
 gwd_settings_freeze_updates (GWDSettingsWritable *writable)
 {
     GWDSettingsImplPrivate *priv = GET_PRIVATE (writable);
-    priv->freeze_count++;
+    ++priv->freeze_count;
 }
 
 static void
@@ -543,7 +543,7 @@ gwd_settings_thaw_updates (GWDSettingsWritable *writable)
     GWDSettingsImplPrivate *priv = GET_PRIVATE (writable);
 
     if (priv->freeze_count)
-	priv->freeze_count--;
+	--priv->freeze_count;
 
     release_notify_funcs (GWD_SETTINGS_IMPL (writable));
 }
@@ -915,14 +915,14 @@ gwd_settings_impl_new (gint                *blur,
     param[n_param].name = "cmdline-options";
     param[n_param].value = cmdline_opts_value;
 
-    n_param++;
+    ++n_param;
 
     g_value_set_pointer (&settings_notified_value, notified);
 
     param[n_param].name = "settings-notified";
     param[n_param].value = settings_notified_value;
 
-    n_param++;
+    ++n_param;
 
     settings = GWD_SETTINGS_INTERFACE (g_object_newv (GWD_TYPE_SETTINGS_IMPL, n_param, param));
 

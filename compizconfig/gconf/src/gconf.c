@@ -410,7 +410,7 @@ readListValue (CCSSetting *setting,
 	    if (!array)
 		break;
 
-	    for (; valueList; valueList = valueList->next, i++)
+	    for (; valueList; valueList = valueList->next, ++i)
 		array[i] =
 		    gconf_value_get_bool (valueList->data) ? TRUE : FALSE;
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
@@ -423,7 +423,7 @@ readListValue (CCSSetting *setting,
 	    if (!array)
 		break;
 
-	    for (; valueList; valueList = valueList->next, i++)
+	    for (; valueList; valueList = valueList->next, ++i)
 		array[i] = gconf_value_get_int (valueList->data);
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
@@ -435,7 +435,7 @@ readListValue (CCSSetting *setting,
 	    if (!array)
 		break;
 
-	    for (; valueList; valueList = valueList->next, i++)
+	    for (; valueList; valueList = valueList->next, ++i)
 		array[i] = gconf_value_get_float (valueList->data);
 	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
 	    free (array);
@@ -448,7 +448,7 @@ readListValue (CCSSetting *setting,
 	    if (!array)
 		break;
 
-	    for (; valueList; valueList = valueList->next, i++)
+	    for (; valueList; valueList = valueList->next, ++i)
 		array[i] = strdup (gconf_value_get_string (valueList->data));
 
 	    array[nItems] = NULL;
@@ -464,7 +464,7 @@ readListValue (CCSSetting *setting,
 	    if (!array)
 		break;
 
-	    for (; valueList; valueList = valueList->next, i++)
+	    for (; valueList; valueList = valueList->next, ++i)
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
 		ccsStringToColor (gconf_value_get_string (valueList->data),

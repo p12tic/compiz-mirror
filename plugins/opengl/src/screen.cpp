@@ -416,15 +416,31 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
+    EGLint val;
+    int msaaBuffers = MAXSHORT;
+    int msaaSamples = MAXSHORT;
     visualid = XVisualIDFromVisual (attr.visual);
     config = configs[0];
-    for (int i = 0; i < count; i++) {
-        EGLint val;
-        eglGetConfigAttrib (dpy, configs[i], EGL_NATIVE_VISUAL_ID, &val);
-        if (visualid == val) {
-            config = configs[i];
-            break;
-        }
+
+    for (int i = 0; i < count; ++i)
+    {
+	eglGetConfigAttrib (dpy, configs[i], EGL_SAMPLE_BUFFERS, &val);
+	if (val > msaaBuffers)
+	   continue;
+
+	msaaBuffers = val;
+
+	eglGetConfigAttrib (dpy, configs[i], EGL_SAMPLES, &val);
+	if (val > msaaSamples)
+	    continue;
+
+	msaaSamples = val;
+
+	eglGetConfigAttrib (dpy, configs[i], EGL_NATIVE_VISUAL_ID, &val);
+	if (val != visualid)
+	    continue;
+
+	config = configs[i];
     }
 
     overlay = CompositeScreen::get (screen)->overlay ();
@@ -1058,7 +1074,7 @@ GLScreen::GLScreen (CompScreen *s) :
 
     for (i = 0; i <= MAX_DEPTH; i++)
     {
-	int j, db, stencil, depth, alpha, mipmap, rgba;
+	int j, db, stencil, depth, alpha, mipmap, msaaBuffers, msaaSamples, rgba;
 
 	priv->glxPixmapFBConfigs[i].fbConfig       = NULL;
 	priv->glxPixmapFBConfigs[i].mipmap         = 0;
@@ -1066,11 +1082,13 @@ GLScreen::GLScreen (CompScreen *s) :
 	priv->glxPixmapFBConfigs[i].textureFormat  = 0;
 	priv->glxPixmapFBConfigs[i].textureTargets = 0;
 
-	db      = MAXSHORT;
-	stencil = MAXSHORT;
-	depth   = MAXSHORT;
-	mipmap  = 0;
-	rgba    = 0;
+	db          = MAXSHORT;
+	stencil     = MAXSHORT;
+	depth       = MAXSHORT;
+	msaaBuffers = MAXSHORT;
+	msaaSamples = MAXSHORT;
+	mipmap      = 0;
+	rgba        = 0;
 
 	for (j = 0; j < nElements; j++)
 	{
@@ -1146,7 +1164,21 @@ GLScreen::GLScreen (CompScreen *s) :
 	    depth = value;
 
 	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
-	                              GLX_BIND_TO_MIPMAP_TEXTURE_EXT, &value);
+				      GLX_SAMPLE_BUFFERS, &value);
+	    if (value > msaaBuffers)
+	        continue;
+
+	    msaaBuffers = value;
+
+	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
+				      GLX_SAMPLES, &value);
+	    if (value > msaaSamples)
+	        continue;
+
+	    msaaSamples = value;
+
+	    (*GL::getFBConfigAttrib) (dpy, fbConfigs[j],
+				      GLX_BIND_TO_MIPMAP_TEXTURE_EXT, &value);
 	    if (value < mipmap)
 		continue;
 

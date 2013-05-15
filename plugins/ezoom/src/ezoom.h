@@ -75,7 +75,8 @@ class EZoomScreen :
 
     public:
 
-	typedef enum {
+	typedef enum
+	{
 	    NORTHEAST,
 	    NORTHWEST,
 	    SOUTHEAST,
@@ -83,7 +84,8 @@ class EZoomScreen :
 	    CENTER
 	} ZoomGravity;
 
-	typedef enum {
+	typedef enum
+	{
 	    NORTH,
 	    SOUTH,
 	    EAST,
@@ -135,6 +137,7 @@ class EZoomScreen :
 		GLfloat           xtrans;
 		GLfloat           ytrans;
 		bool              locked;
+
 	    public:
 
 		ZoomArea (int out);
@@ -146,21 +149,21 @@ class EZoomScreen :
 
     public:
 
-	std::vector <ZoomArea>   zooms; // list of zooms (different zooms for
+	std::vector <ZoomArea>	zooms;	// list of zooms (different zooms for
 					// each output
-	CompPoint		 mouse; // we get this from mousepoll
-	unsigned long int	 grabbed;
-	CompScreen::GrabHandle   grabIndex; // for zoomBox
-	time_t			 lastChange;
-	CursorTexture		 cursor; // the texture for the faux-cursor
-					 // we paint to do fake input
-					 // handling
-	bool			 cursorInfoSelected;
-	bool			 cursorHidden;
-	CompRect		 box;
-	CompPoint	         clickPos;
+	CompPoint		mouse;	// we get this from mousepoll
+	unsigned long int	grabbed;
+	CompScreen::GrabHandle	grabIndex; // for zoomBox
+	time_t			lastChange;
+	CursorTexture		cursor;	// the texture for the faux-cursor
+					// we paint to do fake input
+					// handling
+	bool			cursorInfoSelected;
+	bool			cursorHidden;
+	CompRect		box;
+	CompPoint		clickPos;
 
-	MousePoller		 pollHandle; // mouse poller object
+	MousePoller		pollHandle; // mouse poller object
 
      private:
 

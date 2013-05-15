@@ -1575,7 +1575,7 @@ KWD::Window::getWindowProtocols (void)
 
     if (status)
     {
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < n; ++i)
 	{
 	    if (p[i] == Atoms::wmTakeFocus)
 		mSupportTakeFocus = true;
@@ -1644,7 +1644,7 @@ KWD::Window::handlePopupAboutToShow (void)
 	action->setChecked (winDesktop == NET::OnAllDesktops);
 	mDesktopMenu->addSeparator ();
 
-	for (int i = 1; i <= numberOfDesktops; i++)
+	for (int i = 1; i <= numberOfDesktops; ++i)
 	{
 	    QString basic_name ("%1 %2");
 	    if (i < BASE)
