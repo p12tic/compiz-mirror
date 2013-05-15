@@ -17,7 +17,6 @@
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
-				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
 		<options>
@@ -290,6 +289,7 @@
 							<edge name="Left"/>
 						</default>
 						<allowed edgednd="true"/>
+                                                <passive_grab>false</passive_grab>
 					</option>
 					<option name="flip_right_edge" type="edge">
 						<_short>Flip Right</_short>
@@ -299,6 +299,7 @@
 							<edge name="Right"/>
 						</default>
 						<allowed edgednd="true"/>
+                                                <passive_grab>false</passive_grab>
 					</option>
 					<option name="flip_up_edge" type="edge">
 						<_short>Flip Up</_short>
@@ -308,6 +309,7 @@
 							<edge name="Top"/>
 						</default>
 						<allowed edgednd="true"/>
+                                                <passive_grab>false</passive_grab>
 					</option>
 					<option name="flip_down_edge" type="edge">
 						<_short>Flip Down</_short>
@@ -317,6 +319,7 @@
 							<edge name="Bottom"/>
 						</default>
 						<allowed edgednd="true"/>
+                                                <passive_grab>false</passive_grab>
 					</option>
 				</subgroup>
 			</group>

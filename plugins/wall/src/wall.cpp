@@ -495,29 +495,24 @@ WallScreen::handleEvent (XEvent *event)
 
 	    moveViewport (-dx, -dy, None);
 	}
-	if (event->xclient.message_type == Atoms::xdndEnter)
-	{
-	    toggleEdges (true);
-	    edgeDrag = true;
-	}
-	else if (event->xclient.message_type == Atoms::xdndLeave)
-	    edgeDrag = false;
 
 	break;
 
 	case FocusIn:
 	case FocusOut:
-	    if (event->xfocus.mode == NotifyGrab)
-		poller.start ();
-	    else if (event->xfocus.mode == NotifyUngrab)
-		poller.stop ();
-	break;
+	    /* Edges on when grabbed */
+	    if (!optionGetEdgeflipPointer ())
+	    {
+		if (event->xfocus.mode == NotifyGrab)
+		    toggleEdges (true);
+		else if (event->xfocus.mode == NotifyUngrab)
+		    toggleEdges (false);
+	    }
 
 	case ConfigureNotify:
+	break;
 
-	     if (event->xconfigure.window == screen->root ())
-		updateScreenEdgeRegions ();
-
+	default:
 	break;
     }
 
@@ -525,67 +520,32 @@ WallScreen::handleEvent (XEvent *event)
 }
 
 /*
- * Borrowed this from PrivateScreen::updateScreenEdges
- *
+ * When a dnd type window is mapped toggle edge flip dnd windows back on
+ * _NET_WM_WINDOW_TYPE_DND windows. This will not detect all dnd windows
+ * but it will detect the EWMH-compliant ones without resorting to
+ * hacks involving selection stealing.
  */
-
-#define SCREEN_EDGE_NUM		8
-
 void
-WallScreen::updateScreenEdgeRegions ()
+WallWindow::windowNotify (CompWindowNotify n)
 {
-    edgeRegion = CompRegion (0, 0, screen->width (), screen->height ());
-    noEdgeRegion = CompRegion (0, 0, screen->width (), screen->height ());
+    WallScreen *ws = WallScreen::get (screen);
+    bool toggleOnDnd = ws->optionGetEdgeflipDnd ();
 
-    struct screenEdgeGeometry {
-	int xw, x0;
-	int yh, y0;
-	int ww, w0;
-	int hh, h0;
-    } geometry[SCREEN_EDGE_NUM] = {
-	{ 0,  0,   0,  2,   0,  2,   1, -4 }, /* left */
-	{ 1, -2,   0,  2,   0,  2,   1, -4 }, /* right */
-	{ 0,  2,   0,  0,   1, -4,   0,  2 }, /* top */
-	{ 0,  2,   1, -2,   1, -4,   0,  2 }, /* bottom */
-	{ 0,  0,   0,  0,   0,  2,   0,  2 }, /* top-left */
-	{ 1, -2,   0,  0,   0,  2,   0,  2 }, /* top-right */
-	{ 0,  0,   1, -2,   0,  2,   0,  2 }, /* bottom-left */
-	{ 1, -2,   1, -2,   0,  2,   0,  2 }  /* bottom-right */
-    };
-
-    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
+    switch (n)
     {
-	CompRegion edge (geometry[i].xw * screen->width () +
-			 geometry[i].x0,
-			 geometry[i].yh * screen->height () +
-			 geometry[i].y0,
-			 geometry[i].ww * screen->width () +
-			 geometry[i].w0,
-			 geometry[i].hh * screen->height () +
-			 geometry[i].h0);
-
-	noEdgeRegion -= edgeRegion;
+	case CompWindowNotifyMap:
+	    if (window->type () & CompWindowTypeDndMask && toggleOnDnd)
+		ws->toggleEdges (true);
+	    break;
+	case CompWindowNotifyUnmap:
+	    if (window->type () & CompWindowTypeDndMask && toggleOnDnd)
+		ws->toggleEdges (false);
+	    break;
+	default:
+	    break;
     }
 
-    edgeRegion -= noEdgeRegion;
-}
-
-#undef SCREEN_EDGE_NUM
-
-void
-WallScreen::positionUpdate (const CompPoint &pos)
-{
-    if (edgeDrag)
-	return;
-
-    if (edgeRegion.contains (pos))
-	toggleEdges (false);
-    else if (noEdgeRegion.contains (pos))
-    {
-	if (!screen->grabbed ())
-	    poller.stop ();
-	toggleEdges (true);
-    }
+    window->windowNotify (n);
 }
 
 void
@@ -648,19 +608,19 @@ WallWindow::activate ()
 void
 WallWindow::grabNotify (int          x,
 			int          y,
-			unsigned int width,
-			unsigned int height)
+			unsigned int state,
+			unsigned int mask)
 {
-    WallScreen::get (screen)->toggleEdges (true);
-    WallScreen::get (screen)->edgeDrag = true;
+    if (mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask))
+	WallScreen::get (screen)->windowIsDragMoved = true;
 
-    window->grabNotify (x, y, width, height);
+    window->grabNotify (x, y, state, mask);
 }
 
 void
 WallWindow::ungrabNotify ()
 {
-    WallScreen::get (screen)->edgeDrag = false;
+    WallScreen::get (screen)->windowIsDragMoved = false;
 
     window->ungrabNotify ();
 }
@@ -804,49 +764,47 @@ bool
 WallScreen::initiateFlip (Direction         direction,
 			  CompAction::State state)
 {
+    CompOption::Vector o (0);
+
     int dx, dy;
     int amountX, amountY;
 
-    if (screen->otherGrabExist ("wall", "move", "group-drag", 0))
+    const bool allowFlipDnd = (state & CompAction::StateInitEdgeDnd) &&
+			      optionGetEdgeflipDnd ();
+    const bool allowFlipMove = (windowIsDragMoved &&
+				optionGetEdgeflipMove ());
+    const bool allowFlipPointer = optionGetEdgeflipPointer ();
+
+    if (!allowFlipDnd &&
+	!allowFlipMove &&
+	!allowFlipPointer)
 	return false;
 
-    if (state & CompAction::StateInitEdgeDnd)
+    switch (direction)
     {
-	if (!optionGetEdgeflipDnd ())
-	    return false;
-    }
-    else if (screen->grabExist ("move"))
-    {
-	if (!optionGetEdgeflipMove ())
-	    return false;
-    }
-    else if (screen->grabExist ("group-drag"))
-    {
-	if (!optionGetEdgeflipDnd ())
-	    return false;
-    }
-    else if (!optionGetEdgeflipPointer ())
-    {
-	toggleEdges (false);
-	poller.start ();
-	return false;
-    }
-
-    switch (direction) {
     case Left:
-	dx = -1; dy = 0;
+	dx = -1;
+	dy = 0;
 	break;
+
     case Right:
-	dx = 1; dy = 0;
+	dx = 1;
+	dy = 0;
 	break;
+
     case Up:
-	dx = 0; dy = -1;
+	dx = 0;
+	dy = -1;
 	break;
+
     case Down:
-	dx = 0; dy = 1;
+	dx = 0;
+	dy = 1;
 	break;
+
     default:
-	dx = 0; dy = 0;
+	dx = 0;
+	dy = 0;
 	break;
     }
 
@@ -1610,6 +1568,9 @@ WallScreen::optionChanged (CompOption           *opt,
 	    ww->isSliding = !optionGetNoSlideMatch ().evaluate (w);
 	}
 	break;
+    case WallOptions::EdgeflipPointer:
+	toggleEdges (optionGetEdgeflipPointer ());
+	break;
 
     default:
 	break;
@@ -1670,7 +1631,7 @@ WallScreen::WallScreen (CompScreen *screen) :
     moveWindow (None),
     focusDefault (true),
     transform (NoTransformation),
-    edgeDrag (false)
+    windowIsDragMoved (false)
 {
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen);
@@ -1737,11 +1698,6 @@ WallScreen::WallScreen (CompScreen *screen) :
     setNotify (ArrowShadowColor);
     setNotify (NoSlideMatch);
     setNotify (EdgeflipPointer);
-
-    updateScreenEdgeRegions ();
-
-    poller.setCallback (boost::bind (&WallScreen::positionUpdate, this,
-				     _1));
 }
 
 WallScreen::~WallScreen ()
@@ -1770,8 +1726,7 @@ WallPluginVTable::init ()
 {
     if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
 	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
-	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI)	&&
-	CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return true;
 
     return false;
