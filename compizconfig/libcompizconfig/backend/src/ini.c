@@ -615,7 +615,7 @@ scanConfigDir (char * filePath)
     if (nFile <= 0)
 	return NULL;
 
-    for (i = 0; i < nFile; i++)
+    for (i = 0; i < nFile; ++i)
     {
 	pos = strrchr (nameList[i]->d_name, '.');
 	if (pos)

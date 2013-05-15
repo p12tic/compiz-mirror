@@ -546,7 +546,7 @@ WallWindow::windowNotify (CompWindowNotify n)
     }
 
     window->windowNotify (n);
- }
+}
 
 void
 WallWindow::activate ()
