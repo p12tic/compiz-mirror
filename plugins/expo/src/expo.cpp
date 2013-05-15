@@ -1214,9 +1214,15 @@ ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib& attrib,
 	mask |= PAINT_SCREEN_CLEAR_MASK;
 
     if (optionGetExpoAnimation () == ExpoScreen::ExpoAnimationZoom)
+    {
 	vpBrightness = 0.0f;
+	vpSaturation = 0.0f;
+    }
     else
+    {
 	vpBrightness = (1.0f - sigmoidProgress (expoCam));
+	vpSaturation = (1.0f - sigmoidProgress (expoCam));
+    }
 
     if (expoCam <= 0 || (expoCam > 0.0 && expoCam < 1.0 &&
 			 optionGetExpoAnimation () != ExpoAnimationZoom))

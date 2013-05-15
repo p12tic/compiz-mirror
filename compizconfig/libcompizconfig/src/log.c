@@ -46,7 +46,7 @@ ccsLog (const char *domain, CCSLogLevel level, const char *fmt, ...)
         {
             int i = 0;
             while (i < _ccsLogLevels && strcmp (levelName[i], env))
-                i++;
+		++i;
             if (i < _ccsLogLevels)
                 minLevel = (CCSLogLevel)i;
         }

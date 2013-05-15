@@ -349,7 +349,7 @@ initListValuePB (CCSSettingValue * v,
 
     if (num)
     {
-	for (int j = 0; j < num; j++)
+	for (int j = 0; j < num; ++j)
 	{
 	    CCSSettingValue *val;
 	    val = (CCSSettingValue *) calloc (1, sizeof (CCSSettingValue));
@@ -422,7 +422,7 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
     if (!basicMetadata)
     {
 	int j, num = option.int_desc_size ();
-	for (j = 0; j < num; j++)
+	for (j = 0; j < num; ++j)
 	{
 	    const OptionMetadata::IntDescription & intDescMetadata =
 		option.int_desc (j);
@@ -480,7 +480,7 @@ initStringInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 	    i->forString.sortStartsAt = option.sort_start ();
 
 	int j, num = option.str_restriction_size ();
-	for (j = 0; j < num; j++)
+	for (j = 0; j < num; ++j)
 	{
 	    const OptionMetadata::StringRestriction &
 		restrictionMetadata = option.str_restriction (j);
@@ -750,7 +750,7 @@ initOptionsFromPB (CCSPlugin * plugin,
 
 	// Screen options
 	int i, numOpt = screenPB.option_size ();
-	for (i = 0; i < numOpt; i++)
+	for (i = 0; i < numOpt; ++i)
 	    addOptionFromPB (plugin,
 			     screenPB.group_desc (),
 			     screenPB.subgroup_desc (),
@@ -805,7 +805,7 @@ addStringExtensionFromPB (CCSPlugin * plugin,
 	return;
     }
 
-    for (int j = 0; j < numRestrictions; j++)
+    for (int j = 0; j < numRestrictions; ++j)
     {
 	const OptionMetadata::StringRestriction & restrictionPB =
 	    extensionPB.str_restriction (j);
@@ -829,7 +829,7 @@ initStringExtensionsFromPB (CCSPlugin * plugin,
     int numExtensions;
 
     numExtensions = pluginPB.extension_size ();
-    for (int i = 0; i < numExtensions; i++)
+    for (int i = 0; i < numExtensions; ++i)
 	addStringExtensionFromPB (plugin, pluginPB.extension (i));
 }
 
@@ -1059,7 +1059,7 @@ getOptionType (const char *name)
 	{ "list", TypeList }
     };
 
-    for (unsigned i = 0; i < sizeof (map) / sizeof (map[0]); i++)
+    for (unsigned i = 0; i < sizeof (map) / sizeof (map[0]); ++i)
 	if (strcasecmp (name, map[i].name) == 0)
 	    return map[i].type;
 
@@ -1142,7 +1142,7 @@ getNodesFromXPath (xmlDoc * doc, xmlNode * base, const char *path, int *num)
     }
     *num = size;
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; ++i)
 	rv[i] = xpathObj->nodesetval->nodeTab[i];
 
     xmlXPathFreeObject (xpathObj);
@@ -1491,12 +1491,12 @@ initEdgeValue (CCSSettingValue * v,
 
     nodes = getNodesFromXPath (node->doc, node, "edge", &num);
 
-    for (k = 0; k < num; k++)
+    for (k = 0; k < num; ++k)
     {
 	value = getStringFromXPath (node->doc, nodes[k], "@name");
 	if (value)
 	{
-	    for (unsigned j = 0; j < sizeof (edge) / sizeof (edge[0]); j++)
+	    for (unsigned j = 0; j < sizeof (edge) / sizeof (edge[0]); ++j)
 	    {
 		if (strcasecmp ((char *) value, edge[j]) == 0)
 		    v->value.asEdge |= (1 << j);
@@ -1550,7 +1550,7 @@ initListValue (CCSSettingValue * v,
     nodes = getNodesFromXPath (node->doc, node, "value", &num);
     if (num)
     {
-	for (int j = 0; j < num; j++)
+	for (int j = 0; j < num; ++j)
 	{
 	    void *valuePBv = NULL;
 #ifdef USE_PROTOBUF
@@ -1646,7 +1646,7 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	if (num)
 	{
 	    char *name;
-	    for (int j = 0; j < num; j++)
+	    for (int j = 0; j < num; ++j)
 	    {
 		value = getStringFromXPath (node->doc, nodes[j],
 					    "value/child::text()");
@@ -1787,7 +1787,7 @@ initStringInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	if (num)
 	{
 	    char *name, *value;
-	    for (int j = 0; j < num; j++)
+	    for (int j = 0; j < num; ++j)
 	    {
 #ifdef USE_PROTOBUF
 		OptionMetadata::StringRestriction * strRestrictionPB = NULL;
@@ -2288,7 +2288,7 @@ initScreenFromRootNode (CCSPlugin * plugin,
 	 &num);
     if (num)
     {
-	for (int i = 0; i < num; i++)
+	for (int i = 0; i < num; ++i)
 	{
 	    void *optionPBv = NULL;
     #ifdef USE_PROTOBUF
@@ -2325,7 +2325,7 @@ addStringsFromPath (CCSStringList * list,
 
     if (num)
     {
-	for (int i = 0; i < num; i++)
+	for (int i = 0; i < num; ++i)
 	{
 	    char *value = stringFromNodeDef (nodes[i], "child::text()", NULL);
 
@@ -2393,7 +2393,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
 	return;
     }
 
-    for (int j = 0; j < num; j++)
+    for (int j = 0; j < num; ++j)
     {
 	value = getStringFromXPath (node->doc, nodes[j], "value/child::text()");
 	if (value)
@@ -2434,7 +2434,7 @@ initStringExtensionsFromRootNode (CCSPlugin * plugin,
     int num;
     nodes = getNodesFromXPath (node->doc, node, "/compiz/*/extension", &num);
 
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < num; ++i)
     {
 	void *extensionPBv = NULL;
 #ifdef USE_PROTOBUF
@@ -2959,7 +2959,7 @@ loadPluginsFromXMLFiles (CCSContext * context, char *path)
     if (nFile <= 0)
 	return;
 
-    for (int i = 0; i < nFile; i++)
+    for (int i = 0; i < nFile; ++i)
     {
 	loadPluginFromXMLFile (context, nameList[i]->d_name, path);
 	free (nameList[i]);
@@ -3028,7 +3028,7 @@ loadPluginsFromName (CCSContext * context, char *path)
     if (nFile <= 0)
 	return;
 
-    for (int i = 0; i < nFile; i++)
+    for (int i = 0; i < nFile; ++i)
     {
 	char name[1024];
 	sscanf (nameList[i]->d_name, "lib%s", name);

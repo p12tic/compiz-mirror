@@ -376,9 +376,9 @@ add_frame_window (WnckWindow *win,
     {
 	d->frame_window = NULL;
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; ++i)
 	{
-	    for (j = 0; j < 3; j++)
+	    for (j = 0; j < 3; ++j)
 	    {
 		d->event_windows[i][j].window =
 		XCreateWindow (xdisplay,
@@ -395,7 +395,7 @@ add_frame_window (WnckWindow *win,
 
 	attr.event_mask |= ButtonReleaseMask;
 
-	for (i = 0; i < BUTTON_NUM; i++)
+	for (i = 0; i < BUTTON_NUM; ++i)
 	{
 	    d->button_windows[i].window =
 	    XCreateWindow (xdisplay,
@@ -414,8 +414,8 @@ add_frame_window (WnckWindow *win,
 	if (get_mwm_prop (xid) & (MWM_DECOR_ALL | MWM_DECOR_TITLE))
 	    d->decorated = TRUE;
 
-	for (i = 0; i < 3; i++)
-	    for (j = 0; j < 3; j++)
+	for (i = 0; i < 3; ++i)
+	    for (j = 0; j < 3; ++j)
 	    {
 		Window win = d->event_windows[i][j].window;
 		g_hash_table_insert (frame_table,
@@ -423,7 +423,7 @@ add_frame_window (WnckWindow *win,
 				     GINT_TO_POINTER (xid));
 	    }
 
-	for (i = 0; i < BUTTON_NUM; i++)
+	for (i = 0; i < BUTTON_NUM; ++i)
 	    g_hash_table_insert (frame_table,
 				 GINT_TO_POINTER (d->button_windows[i].window),
 				 GINT_TO_POINTER (xid));
@@ -447,8 +447,8 @@ add_frame_window (WnckWindow *win,
     }
     else
     {
-	for (i = 0; i < 3; i++)
-	    for (j = 0; j < 3; j++)
+	for (i = 0; i < 3; ++i)
+	    for (j = 0; j < 3; ++j)
 		d->event_windows[i][j].window = None;
     }
 
@@ -467,16 +467,16 @@ remove_frame_window (WnckWindow *win)
     {
 	int i, j;
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; ++i)
 	{
-	    for (j = 0; j < 3; j++)
+	    for (j = 0; j < 3; ++j)
 	    {
 		XDestroyWindow (xdisplay, d->event_windows[i][j].window);
 		d->event_windows[i][j].window = None;
 	    }
 	}
 
-	for (i = 0; i < BUTTON_NUM; i++)
+	for (i = 0; i < BUTTON_NUM; ++i)
 	{
 	    XDestroyWindow (xdisplay, d->button_windows[i].window);
 	    d->button_windows[i].window = None;
@@ -799,11 +799,11 @@ window_opened (WnckScreen *screen,
     if (!d)
 	return;
 
-    for (i = 0; i < 3; i++)
-	for (j = 0; j < 3; j++)
+    for (i = 0; i < 3; ++i)
+	for (j = 0; j < 3; ++j)
 	    d->event_windows[i][j].callback = callback[i][j];
 
-    for (i = 0; i < BUTTON_NUM; i++)
+    for (i = 0; i < BUTTON_NUM; ++i)
 	d->button_windows[i].callback = button_callback[i];
 
     wnck_window_get_client_window_geometry (win, NULL, NULL,

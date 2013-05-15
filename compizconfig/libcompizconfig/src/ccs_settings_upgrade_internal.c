@@ -98,13 +98,13 @@ ccsDetokenizeUpgradeDomainAndExecuteUserFunc (const char			 *name,
 	if (!nexttok)
 	    return FALSE;
 
-	nexttok++;
+	++nexttok;
 	nextnexttok = strchr (nexttok, '.');
 
 	if (!nextnexttok)
 	    return FALSE;
 
-	nextnexttok++;
+	++nextnexttok;
 	bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
 
 	if (sscanf (bit, "%ld", &numTmp) == 1)
@@ -240,7 +240,7 @@ ccsUpgradeClearValues (CCSSettingList clearSettings)
 		    /* We found a matching value, remove it */
 		    if (olv)
 		    {
-			count++;
+			++count;
 			nl = ccsSettingValueListRemove (nl, olv->data, TRUE);
 		    }
 
@@ -320,7 +320,7 @@ ccsUpgradeAddValues (CCSSettingList addSettings)
 		     * list and we should append the value to nl */
 		    if (!olv)
 		    {
-			count++;
+			++count;
 
 			/* Before we do that, make sure that the setting parent
 			 * is set to the real setting, so that it behaves
