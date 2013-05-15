@@ -416,15 +416,31 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	return false;
     }
 
+    EGLint val;
+    int msaaBuffers = MAXSHORT;
+    int msaaSamples = MAXSHORT;
     visualid = XVisualIDFromVisual (attr.visual);
     config = configs[0];
-    for (int i = 0; i < count; i++) {
-        EGLint val;
-        eglGetConfigAttrib (dpy, configs[i], EGL_NATIVE_VISUAL_ID, &val);
-        if (visualid == val) {
-            config = configs[i];
-            break;
-        }
+
+    for (int i = 0; i < count; ++i)
+    {
+	eglGetConfigAttrib (dpy, configs[i], EGL_SAMPLE_BUFFERS, &val);
+	if (val > msaaBuffers)
+	   continue;
+
+	msaaBuffers = val;
+
+	eglGetConfigAttrib (dpy, configs[i], EGL_SAMPLES, &val);
+	if (val > msaaSamples)
+	    continue;
+
+	msaaSamples = val;
+
+	eglGetConfigAttrib (dpy, configs[i], EGL_NATIVE_VISUAL_ID, &val);
+	if (val != visualid)
+	    continue;
+
+	config = configs[i];
     }
 
     overlay = CompositeScreen::get (screen)->overlay ();
