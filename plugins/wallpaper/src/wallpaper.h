@@ -35,15 +35,15 @@
 class WallpaperBackground
 {
     public:
-	CompString     image;
-	int            imagePos;
-	int            fillType;
-	unsigned short color1[4];
-	unsigned short color2[4];
+	CompString            image;
+	int                   imagePos;
+	int                   fillType;
+	unsigned short        color1[4];
+	unsigned short        color2[4];
 
-	GLTexture::List imgTex;
-	CompSize	imgSize;
-	GLTexture::List fillTex;
+	GLTexture::List       imgTex;
+	CompSize              imgSize;
+	GLTexture::List       fillTex;
 	GLTexture::MatrixList fillTexMatrix;
 };
 
@@ -61,18 +61,22 @@ class WallpaperScreen :
 	WallpaperScreen (CompScreen *screen);
 	~WallpaperScreen ();
 
-	CompositeScreen *cScreen;
-        GLScreen        *gScreen;
+	CompositeScreen      *cScreen;
+	GLScreen             *gScreen;
 
-	bool		propSet;
-	Window		fakeDesktop;
-	CompWindow	*desktop;
-	int		numBackgrounds;
+	bool                 propSet;
+	Window               fakeDesktop;
+	CompWindow           *desktop;
+	int                  numBackgrounds;
 
-	CompTimer rotateTimer;
-	float fadeTimer, fadeTimeout, fadeDuration, alpha;
+	CompTimer            rotateTimer;
+	float                fadeTimer;
+	float                fadeTimeout;
+	float                fadeDuration;
+	float                alpha;
 
-	WallpaperBackgrounds backgroundsPrimary, backgroundsSecondary;
+	WallpaperBackgrounds backgroundsPrimary;
+	WallpaperBackgrounds backgroundsSecondary;
 
 	void createFakeDesktopWindow ();
 	void destroyFakeDesktopWindow ();
@@ -107,10 +111,10 @@ class WallpaperScreen :
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &sAttrib,
-		       const GLMatrix &transform,
-		       const CompRegion &region,
-		       CompOutput *output,
-		       unsigned int mask);
+		       const GLMatrix            &transform,
+		       const CompRegion          &region,
+		       CompOutput                *output,
+		       unsigned int              mask);
 
 	/* _COMPIZ_WALLPAPER_SUPPORTED atom is used to indicate that
 	 * the wallpaper plugin or a plugin providing similar functionality is
@@ -129,17 +133,23 @@ class WallpaperWindow :
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;
-        GLWindow        *gWindow;
+	GLWindow        *gWindow;
 
 	void
-	drawBackgrounds (const GLMatrix &, const GLWindowPaintAttrib &,
-			 const CompRegion &, unsigned int,
-			 WallpaperBackgrounds&, bool);
+	drawBackgrounds (const GLMatrix            &,
+			 const GLWindowPaintAttrib &,
+			 const CompRegion          &,
+			 unsigned int               ,
+			 WallpaperBackgrounds      &,
+			 bool                        );
 
-	bool glDraw (const GLMatrix &, const GLWindowPaintAttrib &,
-		     const CompRegion &, unsigned int);
+	bool glDraw (const GLMatrix            &,
+		     const GLWindowPaintAttrib &,
+		     const CompRegion          &,
+		     unsigned int                );
 
-	bool damageRect (bool, const CompRect &);
+	bool damageRect (bool            ,
+			 const CompRect &);
 };
 
 #define WALLPAPER_SCREEN(s)				\
