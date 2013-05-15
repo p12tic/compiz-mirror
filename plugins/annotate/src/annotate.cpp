@@ -748,20 +748,29 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->render (sTransform);
 
 	    /* draw rectangle outline */
-	    streamingBuffer->begin ();
+	    vertexData[0]  = rectangle.x1 ();
+	    vertexData[1]  = rectangle.y1 ();
+	    vertexData[2]  = 0.0f;
+	    vertexData[3]  = rectangle.x2 ();
+	    vertexData[4]  = rectangle.y1 ();
+	    vertexData[5]  = 0.0f;
+	    vertexData[6]  = rectangle.x2 ();
+	    vertexData[7]  = rectangle.y2 ();
+	    vertexData[8]  = 0.0f;
+	    vertexData[9]  = rectangle.x1 ();
+	    vertexData[10] = rectangle.y2 ();
+	    vertexData[11] = 0.0f;
+
+	    glLineWidth (optionGetStrokeWidth ());
+
+	    streamingBuffer->begin (GL_LINE_LOOP);
 
 	    streamingBuffer->addColors (1, optionGetStrokeColor ());
-
-	    vertexData[0] = rectangle.x1 () - offset;
-	    vertexData[3] = rectangle.x1 () - offset;
 	    streamingBuffer->addVertices (4, vertexData);
 
-	    glRecti (rectangle.x2 () - offset, rectangle.y2 (),
-		     rectangle.x2 () + offset, rectangle.y1 ());
-	    glRecti (rectangle.x1 () - offset, rectangle.y1 () + offset,
-		     rectangle.x2 () + offset, rectangle.y1 () - offset);
-	    glRecti (rectangle.x1 () - offset, rectangle.y2 () + offset,
-		     rectangle.x2 () + offset, rectangle.y2 () - offset);
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransform);
+
 	    break;
 
 	case EllipseMode:
@@ -916,8 +925,8 @@ AnnoScreen::handleMotionEvent (int xRoot,
 	    break;
 	}
 
-	if (cScreen && (drawMode == LineMode ||
-			drawMode == RectangleMode ||
+	if (cScreen && (drawMode == LineMode	    ||
+			drawMode == RectangleMode   ||
 			drawMode == EllipseMode))
 	{
 	    /* Add border width to the damage region */
@@ -962,6 +971,7 @@ AnnoScreen::handleEvent (XEvent *event)
 	    if (pixmap == de->drawable)
 		cScreen->damageRegion (CompRegion (CompRect (de->area)));
 	}
+
 	break;
     }
 
