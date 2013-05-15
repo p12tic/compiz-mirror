@@ -441,6 +441,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    continue;
 
 	config = configs[i];
+	break;
     }
 
     overlay = CompositeScreen::get (screen)->overlay ();
