@@ -233,12 +233,13 @@ MousepollScreen::MousepollScreen (CompScreen *screen) :
 bool
 MousepollPluginVTable::init ()
 {
-    CompPrivate p;
-    p.uval = COMPIZ_MOUSEPOLL_ABI;
-    screen->storeValue ("mousepoll_ABI", p);
-
     if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+    {
+	CompPrivate p;
+	p.uval = COMPIZ_MOUSEPOLL_ABI;
+	screen->storeValue ("mousepoll_ABI", p);
 	return true;
+    }
 
     return false;
 }
