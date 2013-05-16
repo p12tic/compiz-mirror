@@ -95,6 +95,7 @@ class EZoomScreen :
 	class CursorTexture
 	{
 	    public:
+
 		bool       isSet;
 		GLuint     texture;
 		CompScreen *screen;
@@ -102,7 +103,9 @@ class EZoomScreen :
 		int        height;
 		int        hotX;
 		int        hotY;
+
 	    public:
+
 		CursorTexture ();
 	};
 
@@ -149,27 +152,26 @@ class EZoomScreen :
 
     public:
 
-	std::vector <ZoomArea>	zooms;	// list of zooms (different zooms for
-					// each output
-	CompPoint		mouse;	// we get this from mousepoll
-	unsigned long int	grabbed;
-	CompScreen::GrabHandle	grabIndex; // for zoomBox
-	time_t			lastChange;
-	CursorTexture		cursor;	// the texture for the faux-cursor
+	std::vector <ZoomArea> zooms; // list of zooms (different zooms for each output)
+	CompPoint              mouse; // we get this from mousepoll
+	unsigned long int      grabbed;
+	CompScreen::GrabHandle grabIndex; // for zoomBox
+	time_t                 lastChange;
+	CursorTexture          cursor;	// the texture for the faux-cursor
 					// we paint to do fake input
 					// handling
-	bool			cursorInfoSelected;
-	bool			cursorHidden;
-	CompRect		box;
-	CompPoint		clickPos;
+	bool                   cursorInfoSelected;
+	bool                   cursorHidden;
+	CompRect               box;
+	CompPoint              clickPos;
 
-	MousePoller		pollHandle; // mouse poller object
+	MousePoller            pollHandle; // mouse poller object
 
      private:
 
 	bool fixesSupported;
-	int fixesEventBase;
-	int fixesErrorBase;
+	int  fixesEventBase;
+	int  fixesErrorBase;
 	bool canHideCursor;
 
      public:
@@ -179,10 +181,10 @@ class EZoomScreen :
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
-		       const GLMatrix		 &,
-		       const CompRegion		 &,
-		       CompOutput		 *,
-		       unsigned int);
+		       const GLMatrix            &,
+		       const CompRegion          &,
+		       CompOutput                *,
+		       unsigned int                );
 
 	void
 	donePaint ();
@@ -193,63 +195,72 @@ class EZoomScreen :
     public:
 
 	int
-	distanceToEdge (int out, EZoomScreen::ZoomEdge edge);
+	distanceToEdge (int                   out,
+			EZoomScreen::ZoomEdge edge);
 
 	bool
 	isInMovement (int out);
 
 	void
-	adjustZoomVelocity (int out, float chunk);
+	adjustZoomVelocity (int   out,
+			    float chunk);
 
 	void
-	adjustXYVelocity (int out, float chunk);
+	adjustXYVelocity (int   out,
+			  float chunk);
 
 	void
 	drawBox (const GLMatrix &transform,
-		 CompOutput          *output,
-		 CompRect             box);
+		 CompOutput     *output,
+		 CompRect       box);
 
 	void
-	setCenter (int x, int y, bool instant);
+	setCenter (int  x,
+		   int  y,
+		   bool instant);
 
 	void
-	setZoomArea (int        x,
-		     int        y,
-		     int        width,
-		     int        height,
-		     bool       instant);
+	setZoomArea (int  x,
+		     int  y,
+		     int  width,
+		     int  height,
+		     bool instant);
 
 	void
 	areaToWindow (CompWindow *w);
 
 	void
-	panZoom (int xvalue, int yvalue);
+	panZoom (int xvalue,
+		 int yvalue);
 
 	void
 	enableMousePolling ();
 
 	void
-	setScale (int out, float value);
+	setScale (int   out,
+		  float value);
 
 	void
 	syncCenterToMouse ();
 
 	void
-	convertToZoomed (int        out,
-			 int        x,
-			 int        y,
-			 int        *resultX,
-			 int        *resultY);
+	convertToZoomed (int out,
+			 int x,
+			 int y,
+			 int *resultX,
+			 int *resultY);
 
 	void
-	convertToZoomedTarget (int	  out,
-			       int	  x,
-			       int	  y,
-			       int	  *resultX,
-			       int	  *resultY);
+	convertToZoomedTarget (int out,
+			       int x,
+			       int y,
+			       int *resultX,
+			       int *resultY);
 
 	bool
-	ensureVisibility (int x, int y, int margin);
+	ensureVisibility (int x,
+			  int y,
+			  int margin);
 
 	void
 	ensureVisibilityArea (int         x1,
@@ -276,8 +287,8 @@ class EZoomScreen :
 	freeCursor (CursorTexture * cursor);
 
 	void
-	drawCursor (CompOutput          *output,
-		    const GLMatrix      &transform);
+	drawCursor (CompOutput     *output,
+		    const GLMatrix &transform);
 
 	void
 	updateCursor (CursorTexture * cursor);
