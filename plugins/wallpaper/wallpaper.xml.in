@@ -2,7 +2,7 @@
 <compiz>
 	<plugin name="wallpaper" useBcop="true">
 		<_short>Wallpaper</_short>
-		<_long>Draw the desktop wallpaper</_long>
+		<_long>Define individual desktop wallpapers for each viewport and cycle through them automatically</_long>
 		<category>Utility</category>
 		<deps>
 			<requirement>
@@ -19,16 +19,16 @@
 		</deps>
 		<options>
 			<subgroup>
-				<_short>Backgrounds</_short>
+				<_short>Desktop Backgrounds</_short>
 				<option name="bg_image" type="list">
 					<_short>Image</_short>
-					<_long>Image file.</_long>
+					<_long>The image file used.</_long>
 					<type>string</type>
 					<hints>file;image;</hints>
 				</option>
 				<option name="bg_image_pos" type="list">
-					<_short>Position</_short>
-					<_long>Image position.</_long>
+					<_short>Positioning</_short>
+					<_long>The image positioning if defined above.</_long>
 					<type>int</type>
 					<min>0</min>
 					<max>4</max>
@@ -54,8 +54,8 @@
 					</desc>
 				</option>
 				<option name="bg_fill_type" type="list">
-					<_short>Fill type</_short>
-					<_long>Background fill type.</_long>
+					<_short>Background Fill Type</_short>
+					<_long>The background fill type used if no image file is defined.</_long>
 					<type>int</type>
 					<min>0</min>
 					<max>2</max>
@@ -92,14 +92,14 @@
 				</option>
 				<option name="cycle_timeout" type="float">
 					<_short>Cycle Timeout (min)</_short>
-					<_long>Length of time before cycling to the next wallpaper.</_long>
+					<_long>Timeout before cycling to the next wallpaper (in minutes).</_long>
 					<default>10.0</default>
 					<min>0.15</min>
 					<max>1440.0</max>
 				</option>
 				<option name="fade_duration" type="float">
 					<_short>Fade Duration (sec)</_short>
-					<_long>Length of time to fade from one wallpaper to the next.</_long>
+					<_long>Duration of the fade from one wallpaper to the next (in seconds).</_long>
 					<default>2.0</default>
 					<min>0.05</min>
 					<max>10.0</max>
@@ -108,6 +108,3 @@
 		</options>
 	</plugin>
 </compiz>
-
-	
-	

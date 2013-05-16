@@ -134,6 +134,13 @@ close_button_event (WnckWindow *win,
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[BUTTON_CLOSE];
 
+    if (action_menu_mapped && gtkwd_type == GButtonPress)
+    {
+	gtk_object_destroy (GTK_OBJECT (action_menu));
+	action_menu_mapped = FALSE;
+	action_menu = NULL;
+    }
+
     common_button_event (win, gtkwd_event, gtkwd_type,
 			 BUTTON_CLOSE, 1, _("Close Window"));
 
@@ -155,6 +162,13 @@ max_button_event (WnckWindow *win,
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[BUTTON_MAX];
+
+    if (action_menu_mapped && gtkwd_type == GButtonPress)
+    {
+	gtk_object_destroy (GTK_OBJECT (action_menu));
+	action_menu_mapped = FALSE;
+	action_menu = NULL;
+    }
 
     if (wnck_window_is_maximized (win))
 	common_button_event (win, gtkwd_event, gtkwd_type, BUTTON_MAX,
@@ -209,6 +223,13 @@ min_button_event (WnckWindow *win,
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[BUTTON_MIN];
+
+    if (action_menu_mapped && gtkwd_type == GButtonPress)
+    {
+	gtk_object_destroy (GTK_OBJECT (action_menu));
+	action_menu_mapped = FALSE;
+	action_menu = NULL;
+    }
 
     common_button_event (win, gtkwd_event, gtkwd_type,
 			 BUTTON_MIN, 1, _("Minimize Window"));
@@ -991,9 +1012,9 @@ event_filter_func (GdkXEvent *gdkxevent,
 	    GdkScreen  *g_screen = gdk_display_get_default_screen (gdkdisplay);
 	    Window     root = GDK_WINDOW_XWINDOW (gdk_screen_get_root_window (g_screen));
 	    WnckScreen *screen;
-	    
+
 	    screen = wnck_screen_get_for_root (root);
-	    
+
 	    if (screen)
 	    {
 		if (gwd_process_decor_shadow_property_update ())

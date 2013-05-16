@@ -124,7 +124,6 @@ class WallScreen :
 	void toggleEdges (bool);
 
 	void positionUpdate (const CompPoint &pos);
-	void updateScreenEdgeRegions ();
 
 	CompositeScreen *cScreen;
 	GLScreen        *glScreen;
@@ -168,10 +167,7 @@ class WallScreen :
 	WallCairoContext highlightContext;
 	WallCairoContext arrowContext;
 
-	MousePoller	 poller;
-	bool		 edgeDrag;
-	CompRegion	 edgeRegion;
-	CompRegion	 noEdgeRegion;
+	bool             windowIsDragMoved;
 };
 
 class WallWindow :
@@ -185,6 +181,7 @@ class WallWindow :
 	virtual void activate ();
 	void grabNotify (int, int, unsigned int, unsigned int);
 	void ungrabNotify ();
+	void windowNotify (CompWindowNotify);
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, unsigned int);
 

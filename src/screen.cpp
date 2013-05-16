@@ -3487,7 +3487,8 @@ CompScreenImpl::addAction (CompAction *action)
 void
 CompScreenImpl::removeAction (CompAction *action)
 {
-    if (!(privateScreen.initialized || action->active ()))
+    if (!privateScreen.initialized ||
+        !action->active ())
 	return;
 
     grabManager.setCurrentState(action->state());
@@ -3903,6 +3904,11 @@ CompScreenImpl::sendWindowActivationRequest (Window id)
 		SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 }
 
+/* These functions do not guard against negative decrements
+ * as they are unable to determine the source of the reference
+ * and as such they should only be called by functions that
+ * actually determine the source of what was referencing the
+ * edge and can guard against multiple-references-per-owner */
 void
 PrivateScreen::enableEdge (int edge)
 {

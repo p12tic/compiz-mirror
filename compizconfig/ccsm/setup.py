@@ -36,7 +36,28 @@ class install (_install):
 
     def run (self):
         _install.run (self)
+
+        icon_prefix = '%s/share/ccsm/icons/hicolor' % prefix
+        icon_theme_cache = '%s/icon-theme.cache' % icon_prefix
+
+        print ("icon_prefix ", icon_prefix)
+        print ("icon_theme_cache ", icon_theme_cache)
+
         outputs = self.get_outputs ()
+
+        # Update icon cache
+        gtk_update_icon_cache = '''gtk-update-icon-cache -f -t \
+%s''' % icon_prefix
+        root_specified = len (filter (lambda s: s.startswith ("--root"),
+                                      sys.argv)) > 0
+        if not root_specified:
+            print "Updating Gtk icon cache."
+            os.system (gtk_update_icon_cache)
+            outputs.append (icon_theme_cache)
+        else:
+            print '''*** Icon cache not updated. After install, run this:
+***     %s''' % gtk_update_icon_cache
+
         length = 0
         if self.root:
             length += len (self.root)
@@ -216,15 +237,3 @@ setup (
      )
 
 os.remove ("ccm/Constants.py")
-
-if sys.argv[1] == "install":
-    gtk_update_icon_cache = '''gtk-update-icon-cache -f -t \
-%s/share/ccsm/icons/hicolor''' % prefix
-    root_specified = len (filter (lambda s: s.startswith ("--root"),
-                                  sys.argv)) > 0
-    if not root_specified:
-        print "Updating Gtk icon cache."
-        os.system (gtk_update_icon_cache)
-    else:
-        print '''*** Icon cache not updated. After install, run this:
-***     %s''' % gtk_update_icon_cache
