@@ -24,9 +24,6 @@
 
 COMPIZ_PLUGIN_20090315 (mousepoll, MousepollPluginVTable);
 
-const unsigned short MP_OPTION_MOUSE_POLL_INTERVAL = 0;
-const unsigned short MP_OPTION_NUM = 1;
-
 bool
 MousepollScreen::getMousePosition ()
 {
@@ -35,11 +32,10 @@ MousepollScreen::getMousePosition ()
     int          winX, winY;
     int          w = screen->width (), h = screen->height ();
     unsigned int maskReturn;
-    bool         status;
 
-    status = XQueryPointer (screen->dpy (), screen->root (),
-			    &root, &child, &rootX, &rootY,
-			    &winX, &winY, &maskReturn);
+    bool status = XQueryPointer (screen->dpy (), screen->root (),
+				 &root, &child, &rootX, &rootY,
+				 &winX, &winY, &maskReturn);
 
     if (!status || rootX > w || rootY > h || screen->root () != root)
 	return false;
@@ -56,20 +52,18 @@ MousepollScreen::getMousePosition ()
 bool
 MousepollScreen::updatePosition ()
 {
-
     if (getMousePosition ())
     {
-        std::list<MousePoller *>::iterator it;
-        for (it = pollers.begin (); it != pollers.end (); )
-        {
-            MousePoller *poller = *it;
+	for (std::list<MousePoller *>::iterator it = pollers.begin ();
+	     it != pollers.end ();)
+	{
+	    MousePoller *poller = *it;
 
-            ++it;
-            poller->mPoint = pos;
-            poller->mCallback (pos);
-        }
+	    ++it;
+	    poller->mPoint = pos;
+	    poller->mCallback (pos);
+	}
     }
-
 
     return true;
 }
@@ -77,10 +71,11 @@ MousepollScreen::updatePosition ()
 bool
 MousepollScreen::addTimer (MousePoller *poller)
 {
-    bool                               start = pollers.empty ();
-    std::list<MousePoller *>::iterator it;
+    bool start = pollers.empty ();
 
-    it = std::find (pollers.begin (), pollers.end (), poller);
+    std::list<MousePoller *>::iterator it =
+	    std::find (pollers.begin (), pollers.end (), poller);
+
     if (it != pollers.end ())
 	return false;
 
@@ -98,9 +93,9 @@ MousepollScreen::addTimer (MousePoller *poller)
 void
 MousepollScreen::removeTimer (MousePoller *poller)
 {
-    std::list<MousePoller *>::iterator it;
+    std::list<MousePoller *>::iterator it =
+	std::find (pollers.begin(), pollers.end (), poller);
 
-    it = std::find (pollers.begin(), pollers.end (), poller);
     if (it == pollers.end ())
 	return;
 
@@ -164,7 +159,6 @@ MousePoller::stop ()
 	compLogMessage ("mousepoll",
 			CompLogLevelWarn,
 			"Plugin version mismatch, can't stop mouse poller.");
-
 	return;
     }
 
@@ -187,10 +181,8 @@ MousePoller::getCurrentPosition ()
     MOUSEPOLL_SCREEN (screen);
 
     if (!ms)
-    {
 	compLogMessage ("mousepoll", CompLogLevelWarn,
 			"Plugin version mismatch, can't get mouse position.");
-    }
     else
     {
 	ms->getMousePosition ();
@@ -241,13 +233,12 @@ MousepollScreen::MousepollScreen (CompScreen *screen) :
 bool
 MousepollPluginVTable::init ()
 {
+    CompPrivate p;
+    p.uval = COMPIZ_MOUSEPOLL_ABI;
+    screen->storeValue ("mousepoll_ABI", p);
+
     if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-    {
-	CompPrivate p;
-	p.uval = COMPIZ_MOUSEPOLL_ABI;
-	screen->storeValue ("mousepoll_ABI", p);
 	return true;
-    }
 
     return false;
 }

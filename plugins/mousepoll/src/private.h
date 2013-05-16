@@ -34,9 +34,6 @@ typedef enum _MousepollOptions
     MP_DISPLAY_OPTION_NUM
 } MousepollDisplayOptions;
 
-extern const unsigned short MP_OPTION_MOUSE_POLL_INTERVAL;
-extern const unsigned short MP_OPTION_NUM;
-
 class MousepollScreen;
 extern template class PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>;
 
@@ -49,9 +46,9 @@ class MousepollScreen :
 	MousepollScreen (CompScreen *screen);
 
 	std::list<MousePoller *> pollers;
-	CompTimer		 timer;
+	CompTimer                timer;
 
-	CompPoint pos;
+	CompPoint                pos;
 
 	bool
 	updatePosition ();
@@ -81,4 +78,3 @@ class MousepollPluginVTable :
 	bool init ();
 	void fini ();
 };
-
