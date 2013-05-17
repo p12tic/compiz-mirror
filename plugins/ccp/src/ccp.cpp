@@ -407,10 +407,8 @@ CcpScreen::setOptionFromContext (CompOption *o,
 
     CCSSetting *setting = ccsFindSetting (bsp, o->name ().c_str ());
 
-    if (!setting)
-	return;
-
-    if (!ccpTypeCheck (setting, o))
+    if (!setting ||
+	!ccpTypeCheck (setting, o))
 	return;
 
     CompOption::Value value;
