@@ -432,10 +432,8 @@ CcpScreen::setContextFromOption (CompOption *o, const char *plugin)
 
     CCSSetting *setting = ccsFindSetting (bsp, o->name ().c_str ());
 
-    if (!setting)
-	return;
-
-    if (!ccpTypeCheck (setting, o))
+    if (!setting ||
+	!ccpTypeCheck (setting, o))
 	return;
 
     ccpValueToSetting (setting, &o->value ());
