@@ -377,18 +377,19 @@ CompText::renderText (CompString   text,
 	(!(attrib.flags & NoAutoBinding) && !ts->gScreen))
 	return false;
 
-    if (surface.render (attrib, text) &&
-	!(attrib.flags & NoAutoBinding))
+    if (surface.render (attrib, text))
     {
-
-	texture = GLTexture::bindPixmapToTexture (surface.mPixmap,
-						  surface.mWidth,
-						  surface.mHeight,
-						  32);
-	retval  = !texture.empty ();
+	if (!(attrib.flags & NoAutoBinding))
+	{
+	    texture = GLTexture::bindPixmapToTexture (surface.mPixmap,
+						      surface.mWidth,
+						      surface.mHeight,
+						      32);
+	    retval  = !texture.empty ();
+	}
+	else
+	    retval = true;
     }
-    else
-	retval = true;
 
     if (!retval && surface.mPixmap)
     {
@@ -410,12 +411,12 @@ CompText::renderWindowTitle (Window                 window,
 			     bool                   withViewportNumber,
 			     const CompText::Attrib &attrib)
 {
-    CompString text;
-
     TEXT_SCREEN (screen);
 
     if (!ts)
 	return false;
+
+    CompString text;
 
     if (withViewportNumber)
     {
@@ -482,15 +483,14 @@ CompText::draw (const GLMatrix &transform,
     if (texture.empty ())
 	return;
 
+    GLint          oldBlendSrc, oldBlendDst;
 #ifdef USE_GLES
-    GLint           oldBlendSrcAlpha, oldBlendDstAlpha;
+    GLint          oldBlendSrcAlpha, oldBlendDstAlpha;
     glGetIntegerv (GL_BLEND_SRC_RGB, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST_RGB, &oldBlendDst);
     glGetIntegerv (GL_BLEND_SRC_ALPHA, &oldBlendSrcAlpha);
     glGetIntegerv (GL_BLEND_DST_ALPHA, &oldBlendDstAlpha);
 #else
-    GLint          oldBlendSrc, oldBlendDst;
-
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
 
