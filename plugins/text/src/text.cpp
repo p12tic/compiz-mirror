@@ -36,14 +36,14 @@ PrivateTextScreen::getUtf8Property (Window id,
 				    Atom   atom)
 {
     Atom          type;
-    int           result, format;
+    int           format;
     unsigned long nItems, bytesAfter;
     char          *val;
     CompString    retval;
 
-    result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
-				 utf8StringAtom, &type, &format, &nItems,
-				 &bytesAfter, (unsigned char **) &val);
+    int result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
+				     utf8StringAtom, &type, &format, &nItems,
+				     &bytesAfter, (unsigned char **) &val);
 
     if (result != Success)
 	return retval;
@@ -72,19 +72,18 @@ PrivateTextScreen::getTextProperty (Window id,
     CompString    retval;
 
     text.nitems = 0;
-    if (XGetTextProperty (screen->dpy (), id, &text, atom))
+
+    if (XGetTextProperty (screen->dpy (), id, &text, atom) &&
+	text.value)
     {
-        if (text.value)
-	{
-	    char valueString[text.nitems + 1];
+	char valueString[text.nitems + 1];
 
-	    strncpy (valueString, (char *) text.value, text.nitems);
-	    valueString[text.nitems] = 0;
+	strncpy (valueString, (char *) text.value, text.nitems);
+	valueString[text.nitems] = 0;
 
-	    retval = valueString;
+	retval = valueString;
 
-	    XFree (text.value);
-	}
+	XFree (text.value);
     }
 
     return retval;
@@ -93,9 +92,7 @@ PrivateTextScreen::getTextProperty (Window id,
 CompString
 PrivateTextScreen::getWindowName (Window id)
 {
-    CompString name;
-
-    name = getUtf8Property (id, visibleNameAtom);
+    CompString name = getUtf8Property (id, visibleNameAtom);
 
     if (name.empty ())
 	name = getUtf8Property (id, wmNameAtom);
@@ -118,12 +115,10 @@ TextSurface::drawBackground (int     x,
 			     int     height,
 			     int     radius)
 {
-    int x0, y0, x1, y1;
-
-    x0 = x;
-    y0 = y;
-    x1 = x + width;
-    y1 = y + height;
+    int x0 = x;
+    int y0 = y;
+    int x1 = x + width;
+    int y1 = y + height;
 
     cairo_new_path (cr);
     cairo_arc (cr, x0 + radius, y1 - radius, radius, PI / 2, PI);
@@ -143,6 +138,7 @@ TextSurface::initCairo (int width,
     Display *dpy = screen->dpy ();
 
     mPixmap = None;
+
     if (width > 0 && height > 0)
 	mPixmap = XCreatePixmap (dpy, screen->root (), width, height, 32);
 
@@ -170,6 +166,7 @@ TextSurface::initCairo (int width,
     }
 
     cr = cairo_create (surface);
+
     if (cairo_status (cr) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("text", CompLogLevelError,
@@ -202,14 +199,11 @@ bool
 TextSurface::render (const CompText::Attrib &attrib,
 		     const CompString       &text)
 {
-    int width, height, layoutWidth;
-
     if (!valid ())
 	return false;
 
     pango_font_description_set_family (font, attrib.family);
-    pango_font_description_set_absolute_size (font,
-					      attrib.size * PANGO_SCALE);
+    pango_font_description_set_absolute_size (font, attrib.size * PANGO_SCALE);
     pango_font_description_set_style (font, PANGO_STYLE_NORMAL);
 
     if (attrib.flags & CompText::StyleBold)
@@ -226,6 +220,8 @@ TextSurface::render (const CompText::Attrib &attrib,
     pango_layout_set_auto_dir (layout, false);
     pango_layout_set_text (layout, text.c_str (), -1);
 
+    int width, height;
+
     pango_layout_get_pixel_size (layout, &width, &height);
 
     if (attrib.flags & CompText::WithBackground)
@@ -238,7 +234,8 @@ TextSurface::render (const CompText::Attrib &attrib,
     height = MIN (attrib.maxHeight, height);
 
     /* update the size of the pango layout */
-    layoutWidth = attrib.maxWidth;
+    int layoutWidth = attrib.maxWidth;
+
     if (attrib.flags & CompText::WithBackground)
 	layoutWidth -= 2 * attrib.bgHMargin;
 
@@ -292,12 +289,12 @@ TextSurface::TextSurface () :
     mWidth  (0),
     mHeight (0),
     mPixmap (None),
-    cr (NULL),
+    cr      (NULL),
     surface (NULL),
-    layout (NULL),
-    format (NULL),
-    font (NULL),
-    scrn (NULL)
+    layout  (NULL),
+    format  (NULL),
+    font    (NULL),
+    scrn    (NULL)
 {
     Display *dpy = screen->dpy ();
 
@@ -311,6 +308,7 @@ TextSurface::TextSurface () :
     }
 
     format = XRenderFindStandardFormat (dpy, PictStandardARGB32);
+
     if (!format)
     {
 	compLogMessage ("text", CompLogLevelError, "Couldn't get format.");
@@ -322,6 +320,7 @@ TextSurface::TextSurface () :
 
     /* init pango */
     layout = pango_cairo_create_layout (cr);
+
     if (!layout)
     {
 	compLogMessage ("text", CompLogLevelError,
@@ -330,6 +329,7 @@ TextSurface::TextSurface () :
     }
 
     font = pango_font_description_new ();
+
     if (!font)
     {
 	compLogMessage ("text", CompLogLevelError,
@@ -342,10 +342,13 @@ TextSurface::~TextSurface ()
 {
     if (layout)
 	g_object_unref (layout);
+
     if (surface)
 	cairo_surface_destroy (surface);
+
     if (cr)
 	cairo_destroy (cr);
+
     if (font)
 	pango_font_description_free (font);
 }
@@ -369,30 +372,23 @@ CompText::renderText (CompString   text,
 
     TEXT_SCREEN (screen);
 
-    if (!ts)
+    if (!ts		    ||
+	!surface.valid ()   ||
+	(!(attrib.flags & NoAutoBinding) && !ts->gScreen))
 	return false;
 
-    if (!surface.valid ())
-	return false;
-
-    if (!(attrib.flags & NoAutoBinding) && !ts->gScreen)
-	return false;
-
-    if (surface.render (attrib, text))
+    if (surface.render (attrib, text) &&
+	!(attrib.flags & NoAutoBinding))
     {
-	if (!(attrib.flags & NoAutoBinding))
-	{
-	    texture = GLTexture::bindPixmapToTexture (surface.mPixmap,
-						      surface.mWidth,
-						      surface.mHeight,
-						      32);
-	    retval  = !texture.empty ();
-	}
-	else
-	{
-	    retval = true;
-	}
+
+	texture = GLTexture::bindPixmapToTexture (surface.mPixmap,
+						  surface.mWidth,
+						  surface.mHeight,
+						  32);
+	retval  = !texture.empty ();
     }
+    else
+	retval = true;
 
     if (!retval && surface.mPixmap)
     {
@@ -410,9 +406,9 @@ CompText::renderText (CompString   text,
 }
 
 bool
-CompText::renderWindowTitle (Window               window,
-		             bool                 withViewportNumber,
-		             const CompText::Attrib &attrib)
+CompText::renderWindowTitle (Window                 window,
+			     bool                   withViewportNumber,
+			     const CompText::Attrib &attrib)
 {
     CompString text;
 
@@ -423,36 +419,27 @@ CompText::renderWindowTitle (Window               window,
 
     if (withViewportNumber)
     {
-	CompString title;
-    	CompPoint  winViewport;
-	CompSize   viewportSize;
+	CompString title = ts->getWindowName (window);
 
-	title = ts->getWindowName (window);
 	if (!title.empty ())
 	{
-	    CompWindow *w;
+	    CompWindow *w = screen->findWindow (window);
 
-	    w = screen->findWindow (window);
 	    if (w)
 	    {
-		int viewport;
+		CompPoint winViewport  = w->defaultViewport ();
+		CompSize  viewportSize = screen->vpSize ();
+		int viewport = winViewport.y () * viewportSize.width () +
+			       winViewport.x () + 1;
 
-		winViewport  = w->defaultViewport ();
-		viewportSize = screen->vpSize ();
-		viewport = winViewport.y () * viewportSize.width () +
-		           winViewport.x () + 1;
 		text = compPrintf ("%s -[%d]-", title.c_str (), viewport);
 	    }
 	    else
-	    {
 		text = title;
-	    }
 	}
     }
     else
-    {
 	text = ts->getWindowName (window);
-    }
 
     if (text.empty ())
 	return false;
@@ -488,16 +475,10 @@ CompText::getHeight () const
 
 void
 CompText::draw (const GLMatrix &transform,
-                float           x,
-	        float y,
-	        float alpha) const
+		float          x,
+		float          y,
+		float          alpha) const
 {
-    GLint      oldBlendSrc, oldBlendDst;
-    GLushort        colorData[4];
-    GLfloat         textureData[8];
-    GLfloat         vertexData[12];
-    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
-
     if (texture.empty ())
 	return;
 
@@ -508,23 +489,30 @@ CompText::draw (const GLMatrix &transform,
     glGetIntegerv (GL_BLEND_SRC_ALPHA, &oldBlendSrcAlpha);
     glGetIntegerv (GL_BLEND_DST_ALPHA, &oldBlendDstAlpha);
 #else
+    GLint          oldBlendSrc, oldBlendDst;
+
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
 
-    GLboolean  wasBlend;
-    wasBlend = glIsEnabled (GL_BLEND);
+    GLboolean wasBlend = glIsEnabled (GL_BLEND);
+
     if (!wasBlend)
 	glEnable (GL_BLEND);
 #endif
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
+    GLushort       colorData[4];
+    GLfloat        textureData[8];
+    GLfloat        vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+
     colorData[0] = alpha * 65535;
     colorData[1] = alpha * 65535;
     colorData[2] = alpha * 65535;
     colorData[3] = alpha * 65535;
 
-    for (unsigned int i = 0; i < texture.size (); i++)
+    for (unsigned int i = 0; i < texture.size (); ++i)
     {
 	GLTexture         *tex = texture[i];
 	GLTexture::Matrix m = tex->matrix ();
@@ -567,16 +555,17 @@ CompText::draw (const GLMatrix &transform,
 
 #ifdef USE_GLES
     glBlendFuncSeparate (oldBlendSrc, oldBlendDst,
-                         oldBlendSrcAlpha, oldBlendDstAlpha);
+			 oldBlendSrcAlpha, oldBlendDstAlpha);
 #else
     if (!wasBlend)
 	glDisable (GL_BLEND);
+
     glBlendFunc (oldBlendSrc, oldBlendDst);
 #endif
 }
 
 CompText::CompText () :
-    width (0),
+    width  (0),
     height (0),
     pixmap (None)
 {
@@ -595,8 +584,8 @@ PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     gScreen (GLScreen::get (screen))
 {
     visibleNameAtom = XInternAtom (screen->dpy (), "_NET_WM_VISIBLE_NAME", 0);
-    utf8StringAtom = XInternAtom (screen->dpy (), "UTF8_STRING", 0);
-    wmNameAtom = XInternAtom (screen->dpy (), "_NET_WM_NAME", 0);
+    utf8StringAtom  = XInternAtom (screen->dpy (), "UTF8_STRING", 0);
+    wmNameAtom      = XInternAtom (screen->dpy (), "_NET_WM_NAME", 0);
 }
 
 PrivateTextScreen::~PrivateTextScreen ()
@@ -611,7 +600,6 @@ TextPluginVTable::init ()
 	CompPrivate p;
 	p.uval = COMPIZ_TEXT_ABI;
 	screen->storeValue ("text_ABI", p);
-
 	return true;
     }
 

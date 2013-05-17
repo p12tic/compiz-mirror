@@ -56,9 +56,10 @@ class PrivateTextScreen :
 	GLScreen *gScreen;
 
     private:
-	Atom visibleNameAtom;
-	Atom utf8StringAtom;
-	Atom wmNameAtom;
+
+	Atom     visibleNameAtom;
+	Atom     utf8StringAtom;
+	Atom     wmNameAtom;
 
 	CompString getUtf8Property (Window id, Atom atom);
 	CompString getTextProperty (Window id, Atom atom);
@@ -67,6 +68,7 @@ class PrivateTextScreen :
 class TextSurface
 {
     public:
+
 	TextSurface  ();
 	~TextSurface ();
 
@@ -75,17 +77,22 @@ class TextSurface
 	bool render (const CompText::Attrib &attrib,
 		     const CompString       &text);
 
-	int          mWidth;
-	int          mHeight;
-	Pixmap       mPixmap;
+	int                  mWidth;
+	int                  mHeight;
+	Pixmap               mPixmap;
 
     private:
+
 	bool initCairo (int w,
 			int h);
+
 	bool update (int w,
 		     int h);
-	void drawBackground (int x, int y,
-			     int width, int height,
+
+	void drawBackground (int x,
+			     int y,
+			     int width,
+			     int height,
 			     int radius);
 
 	cairo_t              *cr;
