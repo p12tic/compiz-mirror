@@ -67,7 +67,7 @@ ccpSetValueToValue (CCSSettingValue   *sv,
 		    XKeysymToKeycode (screen->dpy (), sv->value.asKey.keysym);
 		
 		action.setKey (CompAction::KeyBinding (keycode,
-			       sv->value.asKey.keyModMask));
+						       sv->value.asKey.keyModMask));
 		v->set (action);
 	    }
 	    break;
@@ -99,7 +99,6 @@ ccpSetValueToValue (CCSSettingValue   *sv,
 		CompAction action;
 		
 		action.setBell (sv->value.asBell);
-
 		v->set (action);
 	    }
 	    break;
@@ -134,7 +133,6 @@ ccpCCSTypeToCompizType (CCSSettingType   st,
 	case TypeString:
 	    *ct = CompOption::TypeString;
 	    break;
-
 
 	case TypeMatch:
 	    *ct = CompOption::TypeMatch;
