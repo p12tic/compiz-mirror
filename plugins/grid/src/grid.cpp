@@ -1393,9 +1393,9 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
 bool
 GridPluginVTable::init ()
 {
-    if (CompPlugin::checkPluginABI ("composite", CORE_ABIVERSION)   &&
-	CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)	    &&
-	CompPlugin::checkPluginABI ("opengl", CORE_ABIVERSION))
+    if (CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)   &&
+	CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		 &&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return true;
 
     return false;
