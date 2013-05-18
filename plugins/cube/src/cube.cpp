@@ -291,6 +291,7 @@ PrivateCubeScreen::updateGeometry (int sides,
 void
 PrivateCubeScreen::updateOutputs ()
 {
+    CompOutput   *pBox0, *pBox1;
     unsigned int i, j;
     int          k = 0;
 
@@ -305,8 +306,8 @@ PrivateCubeScreen::updateOutputs ()
 	    screen->outputDevs ()[i].height () != screen->outputDevs ()[0].height ())
 	    continue;
 
-	CompOutput *pBox0 = &screen->outputDevs ()[0];
-	CompOutput *pBox1 = &screen->outputDevs ()[i];
+	pBox0 = &screen->outputDevs ()[0];
+	pBox1 = &screen->outputDevs ()[i];
 
 	/* top and bottom line must match first output */
 	if (pBox0->y1 () != pBox1->y1 () || pBox0->y2 () != pBox1->y2 ())
