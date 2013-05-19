@@ -1620,10 +1620,10 @@ PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
 }
 
 void
-PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
-				  const GLMatrix     &transform,
+PrivateAnimWindow::glDrawTexture (GLTexture                 *texture,
+				  const GLMatrix            &transform,
 				  const GLWindowPaintAttrib &attrib,
-				  unsigned int       mask)
+				  unsigned int              mask)
 {
     if (mCurAnimation)
 	mCurAnimation->setCurPaintAttrib (attrib);
