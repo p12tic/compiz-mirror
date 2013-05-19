@@ -126,10 +126,12 @@ RotateScreen::preparePaint (int msSinceLastPaint)
     if (mGrabIndex || mMoving)
     {
 	float amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
-	int steps  = amount / (0.5f * optionGetTimestep ());
+	int   steps  = amount / (0.5f * optionGetTimestep ());
 
-	if (!steps) steps = 1;
-	    float chunk  = amount / (float) steps;
+	if (!steps)
+	    steps = 1;
+
+	float chunk  = amount / (float) steps;
 
 	while (steps--)
 	{
@@ -139,12 +141,12 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 	    if (mXrot > 360.0f / screen->vpSize ().width ())
 	    {
 		mBaseXrot += 360.0f / screen->vpSize ().width ();
-		mXrot -= 360.0f / screen->vpSize ().width ();
+		mXrot     -= 360.0f / screen->vpSize ().width ();
 	    }
 	    else if (mXrot < 0.0f)
 	    {
 		mBaseXrot -= 360.0f / screen->vpSize ().width ();
-		mXrot += 360.0f / screen->vpSize ().width ();
+		mXrot     += 360.0f / screen->vpSize ().width ();
 	    }
 
 	    if (cubeScreen->invert () == -1)
@@ -152,12 +154,12 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 		if (mYrot > 45.0f)
 		{
 		    mYVelocity = 0.0f;
-		    mYrot = 45.0f;
+		    mYrot      = 45.0f;
 		}
 		else if (mYrot < -45.0f)
 		{
 		    mYVelocity = 0.0f;
-		    mYrot = -45.0f;
+		    mYrot      = -45.0f;
 		}
 	    }
 	    else
@@ -165,12 +167,12 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 		if (mYrot > 100.0f)
 		{
 		    mYVelocity = 0.0f;
-		    mYrot = 100.0f;
+		    mYrot      = 100.0f;
 		}
 		else if (mYrot < -100.0f)
 		{
 		    mYVelocity = 0.0f;
-		    mYrot = -100.0f;
+		    mYrot      = -100.0f;
 		}
 	    }
 
@@ -206,10 +208,8 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 
 		    screen->moveViewport (tx, 0, true);
 
-		    mXrot = 0.0f;
-		    mYrot = 0.0f;
-		    mBaseXrot = mMoveTo = 0.0f;
-		    mMoving = false;
+		    mBaseXrot = mMoveTo = mXrot = mYrot = 0.0f;
+		    mMoving   = false;
 
 		    if (mGrabIndex)
 		    {
@@ -251,17 +251,16 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 
     if (mMoving)
     {
-	if (fabs (mXrot + mBaseXrot + mMoveTo) <=
-	    (360.0 / (screen->vpSize ().width () * 2.0)))
+	if (fabs (mXrot + mBaseXrot + mMoveTo) <= 180 / screen->vpSize ().width ())
 	    mProgress = fabs (mXrot + mBaseXrot + mMoveTo) /
-			 (360.0 / (screen->vpSize ().width () * 2.0));
-	else if (fabs (mXrot + mBaseXrot) <= (360.0 / (screen->vpSize ().width () * 2.0)))
+			180 / screen->vpSize ().width ();
+	else if (fabs (mXrot + mBaseXrot) <= 180 / screen->vpSize ().width ())
 	    mProgress = fabs (mXrot + mBaseXrot) /
-			(360.0 / (screen->vpSize ().width () * 2.0));
+			180 / screen->vpSize ().width ();
 	else
 	{
 	    mProgress += fabs (mXrot + mBaseXrot - oldXrot) /
-			 (360.0 / (screen->vpSize ().width () * 2.0));
+			 180 / (screen->vpSize ().width ());
 	    mProgress = MIN (mProgress, 1.0);
 	}
     }
@@ -284,7 +283,7 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 	    else
 		dt = 0.0f - mProgress;
 
-	    float adjust = dt * 0.15f;
+	    float adjust  = dt * 0.15f;
 	    float tamount = fabs (dt) * 1.5f;
 
 	    if (tamount < 0.2f)
@@ -293,7 +292,7 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 		tamount = 2.0f;
 
 	    mProgressVelocity = (tamount * mProgressVelocity + adjust) /
-				   (tamount + 1.0f);
+				(tamount + 1.0f);
 
 	    mProgress += mProgressVelocity * chunk;
 
