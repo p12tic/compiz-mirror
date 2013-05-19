@@ -403,15 +403,17 @@ PrivateCubeScreen::updateSkydomeTexture ()
     if (optionGetSkydomeImage ().empty () ||
 	(mSky = GLTexture::readImageToTexture (imgName, pname, mSkySize)).empty ())
     {
+	GLfloat MaxUShortFloat = static_cast <GLfloat>
+				 (std::numeric_limits <unsigned short>::max ());
 	GLfloat aaafTextureData[128][128][3];
 
-	GLfloat fRStart = optionGetSkydomeGradientStartColorRed () / 0xffff;
-	GLfloat fGStart = optionGetSkydomeGradientStartColorGreen () / 0xffff;
-	GLfloat fBStart = optionGetSkydomeGradientStartColorBlue () / 0xffff;
+	GLfloat fRStart = optionGetSkydomeGradientStartColorRed () / MaxUShortFloat;
+	GLfloat fGStart = optionGetSkydomeGradientStartColorGreen () / MaxUShortFloat;
+	GLfloat fBStart = optionGetSkydomeGradientStartColorBlue () / MaxUShortFloat;
 
-	GLfloat fREnd   = optionGetSkydomeGradientEndColorRed () / 0xffff;
-	GLfloat fGEnd   = optionGetSkydomeGradientEndColorGreen () / 0xffff;
-	GLfloat fBEnd   = optionGetSkydomeGradientEndColorBlue () / 0xffff;
+	GLfloat fREnd   = optionGetSkydomeGradientEndColorRed () / MaxUShortFloat;
+	GLfloat fGEnd   = optionGetSkydomeGradientEndColorGreen () / MaxUShortFloat;
+	GLfloat fBEnd   = optionGetSkydomeGradientEndColorBlue () / MaxUShortFloat;
 
 	GLfloat fRStep  = (fREnd - fRStart) / 128.0f;
 	GLfloat fGStep  = (fGEnd - fGStart) / 128.0f;
@@ -701,12 +703,13 @@ PrivateCubeScreen::preparePaint (int msSinceLastPaint)
 
     if (mGrabIndex)
     {
-	float chunk;
 	float amount = msSinceLastPaint * 0.2f * optionGetSpeed ();
 	int   steps  = amount / (0.5f * optionGetTimestep ());
 
-	if (!steps) steps = 1;
-	    chunk  = amount / (float) steps;
+	if (!steps)
+	    steps = 1;
+
+	float chunk  = amount / (float) steps;
 
 	while (steps--)
 	{
@@ -802,8 +805,8 @@ PrivateCubeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	mask |= PAINT_SCREEN_TRANSFORMED_MASK;
     }
 
-    mSrcOutput = ((unsigned int) output->id () != (unsigned int) ~0)
-		 ? output->id () : 0;
+    mSrcOutput = ((unsigned int) output->id () != (unsigned int) ~0) ?
+		     output->id () : 0;
     /* Always use BTF painting on non-transformed screen */
     mPaintOrder = BTF;
 
@@ -896,8 +899,8 @@ PrivateCubeScreen::moveViewportAndPaint (const GLScreenPaintAttrib &sAttrib,
 					      paintOrder))
 	return;
 
-    int output = ((unsigned int) outputPtr->id () != (unsigned int) ~0)
-		 ? outputPtr->id () : 0;
+    int output = ((unsigned int) outputPtr->id () != (unsigned int) ~0) ?
+		     outputPtr->id () : 0;
 
     mPaintOrder = paintOrder;
 
@@ -1286,8 +1289,8 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 					     CompOutput                *outputPtr, 
 					     unsigned int              mask)
 {
-    int output = ((unsigned int) outputPtr->id () != (unsigned int) ~0)
-		 ? outputPtr->id () : 0;
+    int output = ((unsigned int) outputPtr->id () != (unsigned int) ~0) ?
+		     outputPtr->id () : 0;
 
     mReversedWindowList = cScreen->getWindowPaintList ();
     mReversedWindowList.reverse ();
