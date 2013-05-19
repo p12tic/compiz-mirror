@@ -445,7 +445,8 @@ RotateScreen::terminate (CompAction         *action,
 	cScreen->damageScreen ();
     }
 
-    action->setState (action->state () & ~(CompAction::StateTermButton | CompAction::StateTermKey));
+    action->setState (action->state () & ~(CompAction::StateTermButton |
+					   CompAction::StateTermKey));
 
     return false;
 }
@@ -483,7 +484,7 @@ RotateScreen::rotate (CompAction         *action,
     }
 
     mMoving  = true;
-    mMoveTo += (360.0f / screen->vpSize ().width ()) * direction;
+    mMoveTo += 360.0f / screen->vpSize ().width () * direction;
     mGrabbed = false;
 
     cScreen->damageScreen ();
@@ -542,7 +543,7 @@ RotateScreen::rotateWithWindow (CompAction         *action,
     if (mGrabIndex)
     {
 	mMoving  = true;
-	mMoveTo += (360.0f / screen->vpSize ().width ()) * direction;
+	mMoveTo += 360.0f / screen->vpSize ().width () * direction;
 	mGrabbed = false;
 
 	cScreen->damageScreen ();
@@ -640,7 +641,7 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
 	/* TODO: Eliminate those magic numbers here */
 	if (direction == -1)
 	{
-	    warpX = pointerX + screen->width ();
+	    warpX        = pointerX + screen->width ();
 	    screen->warpPointer (screen->width () - 10, 0);
 	    lastPointerX = warpX - pointerDx;
 	    rotate (NULL, 0, o, direction);
@@ -650,7 +651,7 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
 	}
 	else
 	{
-	    warpX = pointerX - screen->width ();
+	    warpX        = pointerX - screen->width ();
 	    screen->warpPointer (10 - screen->width (), 0);
 	    lastPointerX = warpX - pointerDx;
 	    rotate (NULL, 0, o, direction);
@@ -666,7 +667,7 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
 				optionGetFlipTime (), (float) optionGetFlipTime () * 1.2);
 
 	mMoving  = true;
-	mMoveTo  += 360.0f / screen->vpSize ().width () * direction;
+	mMoveTo += 360.0f / screen->vpSize ().width () * direction;
 	mSlow    = true;
 
 	if (state & CompAction::StateInitEdge)
@@ -773,6 +774,7 @@ RotateScreen::handleEvent (XEvent *event)
 		    GLfloat pointerDx = pointerX - lastPointerX;
 		    GLfloat pointerDy = pointerY - lastPointerY;
 
+		    // TODO: Eliminate magic numbers here
 		    if (event->xmotion.x_root < 50			||
 			event->xmotion.y_root < 50			||
 			event->xmotion.x_root > screen->width ()  - 50	||
@@ -838,6 +840,7 @@ RotateScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
+
 	    break;
 
 	default:
@@ -857,7 +860,7 @@ RotateWindow::activate ()
 	rScreen->mMoveTo = 0.0f;
 
 	int dx = window->defaultViewport ().x ();
-	dx -= screen->vp ().x ();
+	dx    -= screen->vp ().x ();
 
 	if (dx)
 	{
