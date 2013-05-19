@@ -42,11 +42,13 @@ RotateScreen::setOption (const CompString &name, CompOption::Value &value)
     if (!rv || !CompOption::findOption (getOptions (), name, &index))
 	return false;
 
-    switch (index) {
+    switch (index)
+    {
 	case RotateOptions::Sensitivity:
 	    mPointerSensitivity = optionGetSensitivity () *
-		    ROTATE_POINTER_SENSITIVITY_FACTOR;
+				  ROTATE_POINTER_SENSITIVITY_FACTOR;
 	    break;
+
 	default:
 	    break;
     }
@@ -57,23 +59,23 @@ RotateScreen::setOption (const CompString &name, CompOption::Value &value)
 bool
 RotateScreen::adjustVelocity (int size, int invert)
 {
-    float xrot, yrot, adjust, amount;
+    float xrot;
 
     if (mMoving)
-    {
 	xrot = mMoveTo + (mXrot + mBaseXrot);
-    }
     else
     {
 	xrot = mXrot;
+
 	if (mXrot < -180.0f / size)
 	    xrot = 360.0f / size + mXrot;
 	else if (mXrot > 180.0f / size)
 	    xrot = mXrot - 360.0f / size;
     }
 
-    adjust = -xrot * 0.05f * optionGetAcceleration ();
-    amount = fabs (xrot);
+    float adjust = -xrot * 0.05f * optionGetAcceleration ();
+    float amount = fabs (xrot);
+
     if (amount < 10.0f)
 	amount = 10.0f;
     else if (amount > 30.0f)
@@ -84,20 +86,21 @@ RotateScreen::adjustVelocity (int size, int invert)
 
     mXVelocity = (amount * mXVelocity + adjust) / (amount + 2.0f);
 
-    yrot = mYrot;
+    float yrot = mYrot;
     /* Only snap if more than 2 viewports */
     if (size > 2)
     {
-	if (mYrot > 50.0f && ((mSnapTop && invert == 1) ||
-	    (mSnapBottom && invert != 1)))
+	if (mYrot > 50.0f && ((mSnapTop    && invert == 1) ||
+			      (mSnapBottom && invert != 1)))
 	    yrot -= 90.f;
-	else if (mYrot < -50.0f && ((mSnapTop && invert != 1) ||
-	         (mSnapBottom && invert == 1)))
+	else if (mYrot < -50.0f && ((mSnapTop    && invert != 1) ||
+				    (mSnapBottom && invert == 1)))
 	    yrot += 90.f;
     }
 
     adjust = -yrot * 0.05f * optionGetAcceleration ();
     amount = fabs (mYrot);
+
     if (amount < 10.0f)
 	amount = 10.0f;
     else if (amount > 30.0f)
@@ -122,13 +125,11 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 
     if (mGrabIndex || mMoving)
     {
-	int   steps;
-	float amount, chunk;
+	float amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
+	int steps  = amount / (0.5f * optionGetTimestep ());
 
-	amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
-	steps  = amount / (0.5f * optionGetTimestep ());
 	if (!steps) steps = 1;
-	chunk  = amount / (float) steps;
+	    float chunk  = amount / (float) steps;
 
 	while (steps--)
 	{
@@ -180,6 +181,7 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 
 		if (fabs (mXVelocity) < 0.01f)
 		    mXVelocity = 0.0f;
+
 		if (fabs (mYVelocity) < 0.01f)
 		    mYVelocity = 0.0f;
 	    }
@@ -191,10 +193,9 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 		if (fabs (mYrot) < 0.1f)
 		{
 		    CompOption::Vector o (0);
-		    float xrot;
-		    int   tx;
+		    int                tx;
+		    float              xrot = mBaseXrot + mXrot;
 
-		    xrot = mBaseXrot + mXrot;
 		    if (xrot < 0.0f)
 			tx = (screen->vpSize ().width () * xrot / 360.0f) - 0.5f;
 		    else
@@ -218,13 +219,10 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 
 		    if (mMoveWindow)
 		    {
-			CompWindow *w;
+			CompWindow *w = screen->findWindow (mMoveWindow);
 
-			w = screen->findWindow (mMoveWindow);
 			if (w)
-			{
 			    w->move (mMoveWindowX - w->x (), 0);
-			}
 		    }
 		    /* only focus default window if switcher isn't active */
 		    else if (!screen->grabExist ("switcher"))
@@ -240,9 +238,8 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 
 	if (mMoveWindow)
 	{
-	    CompWindow *w;
+	    CompWindow *w = screen->findWindow (mMoveWindow);
 
-	    w = screen->findWindow (mMoveWindow);
 	    if (w)
 	    {
 		float xrot = (screen->vpSize ().width () * (mBaseXrot + mXrot)) / 360.0f;
@@ -256,15 +253,11 @@ RotateScreen::preparePaint (int msSinceLastPaint)
     {
 	if (fabs (mXrot + mBaseXrot + mMoveTo) <=
 	    (360.0 / (screen->vpSize ().width () * 2.0)))
-	{
 	    mProgress = fabs (mXrot + mBaseXrot + mMoveTo) /
 			 (360.0 / (screen->vpSize ().width () * 2.0));
-	}
 	else if (fabs (mXrot + mBaseXrot) <= (360.0 / (screen->vpSize ().width () * 2.0)))
-	{
 	    mProgress = fabs (mXrot + mBaseXrot) /
 			(360.0 / (screen->vpSize ().width () * 2.0));
-	}
 	else
 	{
 	    mProgress += fabs (mXrot + mBaseXrot - oldXrot) /
@@ -274,27 +267,26 @@ RotateScreen::preparePaint (int msSinceLastPaint)
     }
     else if (mProgress != 0.0f || mGrabbed)
     {
-	int   steps;
-	float amount, chunk;
+	float amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
+	int   steps  = amount / (0.5f * optionGetTimestep ());
 
-	amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
-	steps = amount / (0.5f * optionGetTimestep ());
 	if (!steps)
 	    steps = 1;
 
-	chunk = amount / (float) steps;
+	float chunk  = amount / (float) steps;
 
 	while (steps--)
 	{
-	    float dt, adjust, tamount;
+	    float dt;
 
 	    if (mGrabbed)
 		dt = 1.0 - mProgress;
 	    else
 		dt = 0.0f - mProgress;
 
-	    adjust = dt * 0.15f;
-	    tamount = fabs (dt) * 1.5f;
+	    float adjust = dt * 0.15f;
+	    float tamount = fabs (dt) * 1.5f;
+
 	    if (tamount < 0.2f)
 		tamount = 0.2f;
 	    else if (tamount > 2.0f)
@@ -318,13 +310,9 @@ RotateScreen::preparePaint (int msSinceLastPaint)
     }
 
     if (cubeScreen->invert () == 1 && !cubeScreen->unfolded ())
-    {
 	mZoomTranslate = optionGetZoom () * mProgress;
-    }
     else
-    {
 	mZoomTranslate = 0.0;
-    }
 
     cScreen->preparePaint (msSinceLastPaint);
 }
@@ -332,21 +320,19 @@ RotateScreen::preparePaint (int msSinceLastPaint)
 void
 RotateScreen::donePaint ()
 {
-    if (mGrabIndex || mMoving ||
-	(mProgress != 0.0 && mProgress != 1.0))
-    {
-	if ((!mGrabbed && !mSnapTop && !mSnapBottom) ||
-	    mXVelocity || mYVelocity || mProgressVelocity)
-	{
-	    cScreen->damageScreen ();
-	}
-    }
+    if ((mGrabIndex || mMoving ||
+	 (mProgress != 0.0 && mProgress != 1.0)) &&
+	((!mGrabbed && !mSnapTop && !mSnapBottom) ||
+	 mXVelocity || mYVelocity || mProgressVelocity))
+	cScreen->damageScreen ();
 
     cScreen->donePaint ();
 }
 
 void 
-RotateScreen::cubeGetRotation (float &x, float &v, float &progress)
+RotateScreen::cubeGetRotation (float &x,
+			       float &v,
+			       float &progress)
 {
     cubeScreen->cubeGetRotation (x, v, progress);
 
@@ -392,18 +378,16 @@ RotateScreen::initiate (CompAction         *action,
 	if (screen->otherGrabExist ("rotate", "move", NULL))
 	    return false;
     }
-    else
-    {
-	if (screen->otherGrabExist ("rotate", "switcher", "cube", NULL))
-	    return false;
-    }
+    else if (screen->otherGrabExist ("rotate", "switcher", "cube", NULL))
+	return false;
 
     mMoving = false;
     mSlow   = false;
 
     /* Set the rotation state for cube - if action is non-NULL,
-	we set it to manual (as we were called from the 'Initiate
-	Rotation' binding. Otherwise, we set it to Change. */
+     * we set it to manual (as we were called from the 'Initiate
+     * Rotation' binding. Otherwise, we set it to Change.
+     */
     if (action)
 	cubeScreen->rotationState (CubeScreen::RotationManual);
     else
@@ -414,12 +398,11 @@ RotateScreen::initiate (CompAction         *action,
     if (!mGrabIndex)
     {
 	mGrabIndex = screen->pushGrab (screen->invisibleCursor (), "rotate");
+
 	if (mGrabIndex)
 	{
-	    int x, y;
-
-	    x = CompOption::getIntOptionNamed (options, "x");
-	    y = CompOption::getIntOptionNamed (options, "y");
+	    int x = CompOption::getIntOptionNamed (options, "x");
+	    int y = CompOption::getIntOptionNamed (options, "y");
 
 	    mSavedPointer.set (x, y);
 	}
@@ -427,10 +410,10 @@ RotateScreen::initiate (CompAction         *action,
 
     if (mGrabIndex)
     {
-	mMoveTo = 0.0f;
+	mMoveTo     = 0.0f;
 
-	mGrabbed = true;
-	mSnapTop = optionGetSnapTop ();
+	mGrabbed    = true;
+	mSnapTop    = optionGetSnapTop ();
 	mSnapBottom = optionGetSnapBottom ();
 
 	if (state & CompAction::StateInitButton)
@@ -448,23 +431,19 @@ RotateScreen::terminate (CompAction         *action,
 			 CompAction::State  state,
 			 CompOption::Vector &options)
 {
-    Window     xid;
+    Window xid = CompOption::getIntOptionNamed (options, "root");
 
-    xid = CompOption::getIntOptionNamed (options, "root" );
-
-    if (!xid || screen->root () == xid)
+    if ((!xid || screen->root () == xid) &&
+	mGrabIndex)
     {
-	if (mGrabIndex)
+	if (!xid)
 	{
-	    if (!xid)
-	    {
-		mSnapTop = false;
-		mSnapBottom = false;
-	    }
-
-	    mGrabbed = false;
-	    cScreen->damageScreen ();
+	    mSnapTop = false;
+	    mSnapBottom = false;
 	}
+
+	mGrabbed = false;
+	cScreen->damageScreen ();
     }
 
     action->setState (action->state () & ~(CompAction::StateTermButton | CompAction::StateTermKey));
@@ -478,14 +457,10 @@ RotateScreen::rotate (CompAction         *action,
 		      CompOption::Vector &options,
 		      int                direction)
 {
-    if (screen->vpSize ().width () < 2)
-	return false;
-
-    if (screen->otherGrabExist ("rotate", "move", "switcher",
+    if (screen->vpSize ().width () < 2	||
+	!direction			||
+	screen->otherGrabExist ("rotate", "move", "switcher",
 				"group-drag", "cube", NULL))
-	return false;
-
-    if (!direction)
 	return false;
 
     if (mMoveWindow)
@@ -523,16 +498,11 @@ RotateScreen::rotateWithWindow (CompAction         *action,
 				CompOption::Vector &options,
 				int                direction)
 {
-
-    Window xid;
-
-    if (screen->vpSize ().width () < 2)
+    if (screen->vpSize ().width () < 2 ||
+	!direction)
 	return false;
 
-    if (!direction)
-	return false;
-
-    xid = (Window) CompOption::getIntOptionNamed (options, "window");
+    Window xid = CompOption::getIntOptionNamed (options, "window");
 
     if (mMoveWindow != xid)
     {
@@ -541,20 +511,16 @@ RotateScreen::rotateWithWindow (CompAction         *action,
 	if (!mGrabIndex && !mMoving)
 	{
 	    CompWindow *w = screen->findWindow (xid);
-	    if (w)
-	    {
-		if (!(w->type () & (CompWindowTypeDesktopMask |
-				    CompWindowTypeDockMask)))
-		{
-		    if (!(w->state () & CompWindowStateStickyMask))
-		    {
-			mMoveWindow  = w->id ();
-			mMoveWindowX = w->x ();
 
-			if (optionGetRaiseOnRotate ())
-			    w->raise ();
-		    }
-		}
+	if (w									    &&
+	    !(w->type () & (CompWindowTypeDesktopMask | CompWindowTypeDockMask))    &&
+	    !(w->state () & CompWindowStateStickyMask))
+	    {
+		mMoveWindow  = w->id ();
+		mMoveWindowX = w->x ();
+
+		if (optionGetRaiseOnRotate ())
+		    w->raise ();
 	    }
 	}
     }
@@ -589,21 +555,21 @@ RotateScreen::rotateWithWindow (CompAction         *action,
 bool 
 RotateScreen::rotateFlip (int direction)
 {
-
-    int                warpX;
     CompOption::Vector o (0);
 
     mMoveTo = 0.0f;
-    mSlow = false;
+    mSlow   = false;
 
     if (screen->otherGrabExist ("rotate", "move", "group-drag", NULL))
 	return false;
 
-    warpX = pointerX - (screen->width () * direction);
+    int warpX = pointerX - (screen->width () * direction);
+
     if (direction == -1)
-	screen->warpPointer (screen->width () - 10, 0);
+	screen->warpPointer (screen->width () - 1, 0);
     else
-	screen->warpPointer (10 - screen->width (), 0);
+	screen->warpPointer (1 - screen->width (), 0);
+
     lastPointerX = warpX;
 
     o.push_back (CompOption ("root", CompOption::TypeInt));
@@ -622,8 +588,6 @@ RotateScreen::rotateFlip (int direction)
     return false;
 }
 
-
-
 bool
 RotateScreen::rotateEdgeFlip (CompAction         *action,
 			      CompAction::State  state,
@@ -632,32 +596,23 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
 {
     CompOption::Vector o (0);
 
-    if (screen->vpSize ().width () < 2)
-	return false;
-
-    if (screen->otherGrabExist ("rotate", "move", "group-drag", NULL))
+    if (screen->vpSize ().width () < 2 ||
+	screen->otherGrabExist ("rotate", "move", "group-drag", NULL))
 	return false;
 
     if (state & CompAction::StateInitEdgeDnd)
     {
 	if (!optionGetEdgeFlipDnd ())
 	    return false;
-
-	if (screen->otherGrabExist ("rotate", NULL))
-	    return false;
     }
     else if (screen->otherGrabExist ("rotate", "group-drag", NULL))
     {
-	if (!optionGetEdgeFlipWindow ())
-	    return false;
-
-	if (!mGrabWindow)
-	    return false;
-
-	/* bail out if window is horizontally maximized or fullscreen,
-	 * or sticky  */
-	if (mGrabWindow->state () & (CompWindowStateMaximizedHorzMask |
-				     CompWindowStateFullscreenMask |
+	if (!optionGetEdgeFlipWindow () ||
+	    !mGrabWindow		||
+	    /* bail out if window is horizontally maximized, fullscreen
+	     * or sticky */
+	    mGrabWindow->state () & (CompWindowStateMaximizedHorzMask	|
+				     CompWindowStateFullscreenMask	|
 				     CompWindowStateStickyMask))
 	    return false;
     }
@@ -667,11 +622,8 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
 	if (!optionGetEdgeFlipWindow ())
 	    return false;
     }
-    else
-    {
-	if (!optionGetEdgeFlipPointer ())
-	    return false;
-    }
+    else if (!optionGetEdgeFlipPointer ())
+	return false;
 
     o.push_back (CompOption ("root", CompOption::TypeInt));
     o.push_back (CompOption ("x", CompOption::TypeInt));
@@ -685,7 +637,8 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
     {
 	int pointerDx = pointerX - lastPointerX;
 	int warpX;
-	
+
+	/* TODO: Eliminate those magic numbers here */
 	if (direction == -1)
 	{
 	    warpX = pointerX + screen->width ();
@@ -706,15 +659,12 @@ RotateScreen::rotateEdgeFlip (CompAction         *action,
 	    XWarpPointer (screen->dpy (), None, None, 0, 0, 0, 0, 1, 0);
 	    mSavedPointer.setX (lastPointerX + 9);
 	}
-
     }
     else
     {
 	if (!mRotateTimer.active ())
-	{
 	    mRotateTimer.start (boost::bind (&RotateScreen::rotateFlip, this, direction),
 				optionGetFlipTime (), (float) optionGetFlipTime () * 1.2);
-	}
 
 	mMoving  = true;
 	mMoveTo  += 360.0f / screen->vpSize ().width () * direction;
@@ -738,10 +688,7 @@ RotateScreen::flipTerminate (CompAction         *action,
 			     CompOption::Vector &options)
 
 {
-    Window     xid;
-
-    xid = CompOption::getIntOptionNamed (options, "root", 0);
-
+    Window xid = CompOption::getIntOptionNamed (options, "root", 0);
  
     if (xid && screen->root () != xid)
 	return false;
@@ -765,13 +712,11 @@ RotateScreen::flipTerminate (CompAction         *action,
     return false;
 }
 
-
 int 
 RotateScreen::rotateToDirection (int face)
 {
-    int delta;
+    int delta = face - screen->vp ().x () - (mMoveTo / (360.0f / screen->vpSize ().width ()));
 
-    delta = face - screen->vp ().x () - (mMoveTo / (360.0f / screen->vpSize ().width ()));
     if (delta > screen->vpSize ().width () / 2)
 	delta -= screen->vpSize ().width ();
     else if (delta < -(screen->vpSize ().width () / 2))
@@ -810,7 +755,7 @@ RotateScreen::rotateTo (CompAction         *action,
 	rotateWithWindow (NULL, 0, o, rotateToDirection (face));
     }
     else
-      rotate (NULL, 0, o, rotateToDirection (face));
+	rotate (NULL, 0, o, rotateToDirection (face));
 
     return false;
 }
@@ -818,59 +763,55 @@ RotateScreen::rotateTo (CompAction         *action,
 void 
 RotateScreen::handleEvent (XEvent *event)
 {
-    switch (event->type) {
+    switch (event->type)
+    {
 	case MotionNotify:
-	    if (screen->root () == event->xmotion.root)
+	    if (screen->root () == event->xmotion.root &&
+		mGrabIndex)
 	    {
-		if (mGrabIndex)
+		if (mGrabbed)
 		{
-		    if (mGrabbed)
-		    {
-			GLfloat pointerDx, pointerDy;
+		    GLfloat pointerDx = pointerX - lastPointerX;
+		    GLfloat pointerDy = pointerY - lastPointerY;
 
-			pointerDx = pointerX - lastPointerX;
-			pointerDy = pointerY - lastPointerY;
+		    if (event->xmotion.x_root < 50			||
+			event->xmotion.y_root < 50			||
+			event->xmotion.x_root > screen->width ()  - 50	||
+			event->xmotion.y_root > screen->height () - 50)
+			screen->warpPointer ((screen->width ()  / 2) - pointerX,
+					     (screen->height () / 2) - pointerY);
 
-			if (event->xmotion.x_root < 50	       ||
-			    event->xmotion.y_root < 50	       ||
-			    event->xmotion.x_root > screen->width () - 50 ||
-			    event->xmotion.y_root > screen->height () - 50)
-			{
-			    screen->warpPointer ((screen->width () / 2) - pointerX,
-						 (screen->height () / 2) - pointerY);
-			}
+		    if (optionGetInvertY ())
+			pointerDy = -pointerDy;
 
-			if (optionGetInvertY ())
-			    pointerDy = -pointerDy;
+		    mXVelocity += pointerDx * mPointerSensitivity *
+				  cubeScreen->invert ();
+		    mYVelocity += pointerDy * mPointerSensitivity;
 
-			mXVelocity += pointerDx * mPointerSensitivity *
-			    cubeScreen->invert ();
-			mYVelocity += pointerDy * mPointerSensitivity;
-
-			cScreen->damageScreen ();
-		    }
-		    else
-		    {
-			mSavedPointer.setX (mSavedPointer.x () + pointerX - lastPointerX);
-			mSavedPointer.setY (mSavedPointer.y () + pointerY - lastPointerY);
-		    }
+		    cScreen->damageScreen ();
+		}
+		else
+		{
+		    mSavedPointer.setX (mSavedPointer.x () + pointerX - lastPointerX);
+		    mSavedPointer.setY (mSavedPointer.y () + pointerY - lastPointerY);
 		}
 	    }
+
 	    break;
+
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::desktopViewport)
 	    {
 		if (screen->root () == event->xclient.window)
 		{
-		    int dx;
-
 		    if (screen->otherGrabExist ("rotate", "switcher", "cube", NULL))
 			break;
 
 		    /* reset movement */
 		    mMoveTo = 0.0f;
 
-		    dx = (event->xclient.data.l[0] / screen->width ()) - screen->vp ().x ();
+		    int dx = (event->xclient.data.l[0] / screen->width ()) - screen->vp ().x ();
+
 		    if (dx)
 		    {
 			Window             win;
@@ -898,6 +839,8 @@ RotateScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
+	    break;
+
 	default:
 	    break;
     }
@@ -911,13 +854,12 @@ RotateWindow::activate ()
     if (window->placed () &&
 	!screen->otherGrabExist ("rotate", "switcher", "cube", NULL))
     {
-	int dx;
-
 	/* reset movement */
 	rScreen->mMoveTo = 0.0f;
 
-	dx = window->defaultViewport ().x ();
+	int dx = window->defaultViewport ().x ();
 	dx -= screen->vp ().x ();
+
 	if (dx)
 	{
 	    Window             win;
@@ -949,7 +891,10 @@ RotateWindow::activate ()
 }
 
 void 
-RotateWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
+RotateWindow::grabNotify (int          x,
+			  int          y,
+			  unsigned int state,
+			  unsigned int mask)
 {
     if (!rScreen->mGrabWindow)
     {
@@ -998,8 +943,7 @@ RotateScreen::RotateScreen (CompScreen *s) :
     mProgressVelocity (0.0f),
     mZoomTranslate (0.0f)
 {
-    mPointerSensitivity = optionGetSensitivity () *
-	ROTATE_POINTER_SENSITIVITY_FACTOR;
+    mPointerSensitivity = optionGetSensitivity () * ROTATE_POINTER_SENSITIVITY_FACTOR;
 
 #define ROTATEBIND(name) boost::bind (&RotateScreen::name, this, _1, _2, _3)
 #define ROTATEBINDOPT(name, ...) boost::bind (&RotateScreen::name, this, _1, _2, _3, __VA_ARGS__)
