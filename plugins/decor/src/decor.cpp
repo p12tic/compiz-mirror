@@ -1514,10 +1514,25 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 				    const CompSize  &sizeDelta,
 				    bool            instant)
 {
-    /* Need to actually move the window */
-    if (window->placed () && !window->overrideRedirect () &&
-	(movement.x () || movement.y ()) &&
-	(sizeDelta.width () || sizeDelta.height ()))
+    /* movement and sizeDelta are the shift of the client window
+     * as a result of decoration from a theoretical neutral position,
+     * lastShift and lastSizeDelta are the last recorded shift 
+     * and size-change. The true difference between two decorations
+     * is movement - lastShift, sizeDelta - sizeDelta */
+
+    int dx = movement.x () - lastShift.x ();
+    int dy = movement.y () - lastShift.y ();
+    int dwidth = sizeDelta.width () - lastSizeDelta.height ();
+    int dheight = sizeDelta.height () - lastSizeDelta.height ();
+
+    /* We don't apply these rules to override-redirect windows
+     * and we need to check that both the position and of the window
+     * would change as a result of decoration in order to move it
+     * (this is usually the case because as a window is decorated
+     *  it will necessarily get bigger or smaller in order to fit
+     *  inside its decoration) */
+    if (!window->overrideRedirect () &&
+	((dx || dy) && (dwidth || dheight)))
     {
 	XWindowChanges xwc;
 	unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
@@ -1527,10 +1542,10 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 	/* Grab the geometry last sent to server at configureXWindow
 	 * time and not here since serverGeometry may be updated by
 	 * the time that we do call configureXWindow */
-	xwc.x = (movement.x () - lastShift.x ());
-	xwc.y = (movement.y () - lastShift.y ());
-	xwc.width = (sizeDelta.width () - lastSizeDelta.width ());
-	xwc.height = (sizeDelta.height () - lastSizeDelta.height ());
+	xwc.x = dx;
+	xwc.y = dy;
+	xwc.width = dwidth;
+	xwc.height = dheight;
 
 	/* Except if it's fullscreen, maximized or such */
 	if (window->state () & CompWindowStateFullscreenMask)
@@ -1554,6 +1569,11 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 	if (window->saveMask () & CWHeight)
 	    window->saveWc ().height += xwc.height;
 
+	/* If the window has not been placed, do not move it this time
+	 * but record what we would have moved it by */
+	if (!window->placed ())
+	    mask = 0;
+
 	if (mask)
 	{
 	    /* instant is only true in the case of
@@ -1571,6 +1591,12 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 		moveUpdate.start (boost::bind (decorOffsetMove, window, xwc, mask), 0);
 	}
 
+	/* Even if the window has not yet been placed, we still
+	 * need to store what we would have moved it by in order
+	 * to put it in the right position. The place plugin will
+	 * set a position that makes the most sense, but we need
+	 * to know how much to move back by should the window
+	 * become undecorated again */
 	lastShift = movement;
 	lastSizeDelta = sizeDelta;
     }
