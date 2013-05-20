@@ -42,7 +42,7 @@ class Particle
     public:
 
 	Particle ();
-    
+
 	float life;		/* particle life */
 	float fade;		/* fade speed */
 	float width;		/* particle width */
@@ -83,9 +83,9 @@ class ParticleSystem
 	float    darken;
 	GLuint   blendMode;
 
-	/* Cache used in drawParticles 
-        It's here to avoid multiple mem allocation 
-        during drawing */
+	/* Cache used in drawParticles
+	It's here to avoid multiple mem allocation
+	during drawing */
 	std::vector<GLfloat>  vertices_cache;
 	std::vector<GLfloat>  coords_cache;
 	std::vector<GLushort> colors_cache;

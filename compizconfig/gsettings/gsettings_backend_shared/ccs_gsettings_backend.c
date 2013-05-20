@@ -223,7 +223,7 @@ ccsGSettingsBackendUnsetAllChangedPluginKeysInProfileDefault (CCSBackend *backen
 	    char **key_ptr;
 
 	    /* Unset all the keys */
-	    for (key_ptr = keys; *key_ptr; key_ptr++)
+	    for (key_ptr = keys; *key_ptr; ++key_ptr)
 		ccsGSettingsWrapperResetKey (settings, *key_ptr);
 
 	    g_strfreev (keys);

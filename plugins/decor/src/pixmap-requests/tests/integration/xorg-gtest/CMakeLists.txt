@@ -18,7 +18,7 @@ if (BUILD_XORG_GTEST)
 
     set (COMPIZ_DECOR_PIXMAP_PROTOCOL_XORG_INTEGRATION_TEST_LIBRARIES
          xorg_gtest_all
-         xorg_gtest_main
+         compiz_xorg_gtest_main
          compiz_xorg_gtest_system_test
          compiz_decor_pixmap_requests
          compiz_decor_pixmap_requests_mock
@@ -26,7 +26,6 @@ if (BUILD_XORG_GTEST)
          ${GMOCK_LIBRARY}
          ${GMOCK_MAIN_LIBRARY}
          ${GTEST_BOTH_LIBRARIES}
-         ${CMAKE_THREAD_LIBS_INIT}
          ${XORG_SERVER_LIBRARIES}
          ${X11_XI_LIBRARIES}
          ${COMPIZ_DECOR_PIXMAP_PROTOCOL_INTEGRATION_LIBRARIES})

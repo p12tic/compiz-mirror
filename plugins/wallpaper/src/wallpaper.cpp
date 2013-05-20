@@ -28,30 +28,29 @@ static Visual *
 findArgbVisual (Display *dpy,
 		int     screen)
 {
-    XVisualInfo		*xvi;
-    XVisualInfo		temp;
-    int			nvi;
-    int			i;
-    XRenderPictFormat	*format;
-    Visual		*visual;
+    XVisualInfo         temp;
+    int                 nvi;
 
     temp.screen  = screen;
     temp.depth   = 32;
     temp.c_class = TrueColor;
 
-    xvi = XGetVisualInfo (dpy,
-			  VisualScreenMask |
-			  VisualDepthMask  |
-			  VisualClassMask,
-			  &temp,
-			  &nvi);
+    XVisualInfo *xvi = XGetVisualInfo (dpy,
+				       VisualScreenMask |
+				       VisualDepthMask  |
+				       VisualClassMask,
+				       &temp,
+				       &nvi);
     if (!xvi)
 	return 0;
 
-    visual = 0;
-    for (i = 0; i < nvi; i++)
+    Visual            *visual = 0;
+    XRenderPictFormat *format;
+
+    for (int i = 0; i < nvi; ++i)
     {
 	format = XRenderFindVisualFormat (dpy, xvi[i].visual);
+
 	if (format->type == PictTypeDirect && format->direct.alphaMask)
 	{
 	    visual = xvi[i].visual;
@@ -71,10 +70,10 @@ WallpaperScreen::createFakeDesktopWindow ()
     XSizeHints           xsh;
     XWMHints             xwmh;
     XSetWindowAttributes attr;
-    Visual               *visual;
     XserverRegion        region;
 
-    visual = findArgbVisual (dpy, screen->screenNum ());
+    Visual *visual = findArgbVisual (dpy, screen->screenNum ());
+
     if (!visual)
 	return;
 
@@ -89,12 +88,12 @@ WallpaperScreen::createFakeDesktopWindow ()
     attr.background_pixel = 0;
     attr.border_pixel     = 0;
     attr.colormap	  = XCreateColormap (dpy, screen->root (),
-    					     visual, AllocNone);
+					     visual, AllocNone);
 
     fakeDesktop = XCreateWindow (dpy, screen->root (), -1, -1, 1, 1, 0, 32,
-				     InputOutput, visual,
-				     CWBackPixel | CWBorderPixel | CWColormap,
-				     &attr);
+				 InputOutput, visual,
+				 CWBackPixel | CWBorderPixel | CWColormap,
+				 &attr);
 
     XSetWMProperties (dpy, fakeDesktop, NULL, NULL,
 		      programArgv, programArgc, &xsh, &xwmh, NULL);
@@ -150,8 +149,8 @@ WallpaperScreen::updateProperty ()
 static void
 initBackground (WallpaperBackground *back)
 {
-    unsigned int        c[2];
-    unsigned short      *color;
+    unsigned int   c[2];
+    unsigned short *color;
 
     if (!back->image.empty ())
     {
@@ -208,7 +207,7 @@ WallpaperScreen::blackenSecondary ()
 
     backgroundsSecondary.clear ();
 
-    for (int i = 0; i < numBackgrounds; i++)
+    for (int i = 0; i < numBackgrounds; ++i)
     {
 	backgroundsSecondary.push_back (WallpaperBackground ());
 
@@ -248,7 +247,7 @@ WallpaperScreen::updateBackgrounds ()
 
     backgroundsPrimary.clear ();
 
-    for (unsigned int i = 0; i < cBgImage.size (); i++)
+    for (unsigned int i = 0; i < cBgImage.size (); ++i)
     {
      	backgroundsPrimary.push_back (WallpaperBackground ());
 
@@ -290,6 +289,7 @@ WallpaperScreen::updateTimers ()
     fadeTimeout = (optionGetCycleTimeout () * 1000 * 60);
     fadeDuration = (optionGetFadeDuration () * 1000);
     fadeTimer = fadeDuration;
+
     if (optionGetCycleWallpapers ())
 	rotateTimer.start (fadeTimeout, fadeTimeout * 1.2);
     else
@@ -313,7 +313,7 @@ WallpaperScreen::rotateTimeout ()
 /* Installed as a handler for the images setting changing through bcop */
 void
 WallpaperScreen::wallpaperBackgroundsChanged (CompOption *o,
-			                      Options    num)
+					      Options    num)
 {
     updateBackgrounds ();
     updateProperty ();
@@ -324,7 +324,7 @@ WallpaperScreen::wallpaperBackgroundsChanged (CompOption *o,
 
 void
 WallpaperScreen::wallpaperCycleOptionChanged (CompOption *o,
-			                      Options    num)
+					      Options    num)
 {
     blackenSecondary ();
     updateTimers ();
@@ -343,22 +343,23 @@ WallpaperScreen::wallpaperToggleCycle (CompOption *o,
 WallpaperBackground *
 WallpaperScreen::getBackgroundForViewport (WallpaperBackgrounds &bg)
 {
-    CompPoint offset = cScreen->windowPaintOffset ();
-    CompPoint vp = screen->vp ();
-    CompSize  vpSize = screen->vpSize ();
+    CompPoint offset   = cScreen->windowPaintOffset ();
+    CompPoint vp       = screen->vp ();
+    CompSize  vpSize   = screen->vpSize ();
     CompRect  workarea = screen->workArea ();
-    int x, y;
 
     if (bg.empty())
 	return NULL;
 
-    x = vp.x () - (offset.x () / (int) workarea.width ());
+    int x = vp.x () - (offset.x () / (int) workarea.width ());
     x %= vpSize.width ();
+
     if (x < 0)
 	x += vpSize.width ();
 
-    y = vp.y () - (offset.y () / (int) workarea.height ());
+    int y = vp.y () - (offset.y () / (int) workarea.height ());
     y %= vpSize.height ();
+
     if (y < 0)
 	y += vpSize.height ();
 
@@ -370,11 +371,13 @@ WallpaperScreen::handleEvent (XEvent *event)
 {
     screen->handleEvent (event);
 
-    if (!screen->desktopWindowCount () && fakeDesktop == None && !backgroundsPrimary.empty())
+    if (!screen->desktopWindowCount ()	&&
+	fakeDesktop == None		&&
+	!backgroundsPrimary.empty())
 	createFakeDesktopWindow ();
 
-    if ((screen->desktopWindowCount () > 1 || backgroundsPrimary.empty())
-	&& fakeDesktop != None)
+    if ((screen->desktopWindowCount () > 1 || backgroundsPrimary.empty()) &&
+	fakeDesktop != None)
 	destroyFakeDesktopWindow ();
 }
 
@@ -382,8 +385,10 @@ void
 WallpaperScreen::preparePaint (int msSinceLastPaint)
 {
     fadeTimer -= msSinceLastPaint;
+
     if (fadeTimer < 0)
 	fadeTimer = 0;
+
     alpha = (fadeDuration - fadeTimer) / fadeDuration;
 
     cScreen->preparePaint (msSinceLastPaint);
@@ -405,10 +410,10 @@ WallpaperScreen::donePaint ()
 
 bool
 WallpaperScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
-				const GLMatrix &transform,
-				const CompRegion &region,
-				CompOutput *output,
-				unsigned int mask)
+				const GLMatrix            &transform,
+				const CompRegion          &region,
+				CompOutput                *output,
+				unsigned int              mask)
 {
     desktop = NULL;
 
@@ -416,20 +421,20 @@ WallpaperScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 }
 
 void
-WallpaperWindow::drawBackgrounds (const GLMatrix &transform,
+WallpaperWindow::drawBackgrounds (const GLMatrix            &transform,
 				  const GLWindowPaintAttrib &attrib,
-				  const CompRegion &region,
-				  unsigned int mask,
-				  WallpaperBackgrounds& bg,
-				  bool fadingIn)
+				  const CompRegion          &region,
+				  unsigned int              mask,
+				  WallpaperBackgrounds      &bg,
+				  bool                      fadingIn)
 {
     WALLPAPER_SCREEN (screen);
 
-    CompRect            tmpRect;
-    GLTexture::Matrix   matrix;
+    CompRect              tmpRect;
+    GLTexture::Matrix     matrix;
     GLTexture::MatrixList tmpMatrixList;
-    WallpaperBackground *back = ws->getBackgroundForViewport (bg);
-    GLWindowPaintAttrib tmpAttrib = attrib;
+    WallpaperBackground   *back     = ws->getBackgroundForViewport (bg);
+    GLWindowPaintAttrib   tmpAttrib = attrib;
 
     tmpMatrixList.push_back (matrix);
 
@@ -439,22 +444,16 @@ WallpaperWindow::drawBackgrounds (const GLMatrix &transform,
     tmpMatrixList[0] = back->fillTexMatrix[0];
 
     if (back->fillType == WallpaperOptions::BgFillTypeVerticalGradient)
-    {
 	tmpMatrixList[0].yy /= (float) screen->height () / 2.0;
-    }
     else if (back->fillType == WallpaperOptions::BgFillTypeHorizontalGradient)
-    {
 	tmpMatrixList[0].xx /= (float) screen->width () / 2.0;
-    }
 
     gWindow->glAddGeometry (tmpMatrixList, screen->region (),
 			    (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
 			    infiniteRegion : region);
 
     if (ws->optionGetCycleWallpapers ())
-    {
 	tmpAttrib.opacity *= fadingIn ? (1.0f - ws->alpha) : ws->alpha;
-    }
 
     if (tmpAttrib.opacity != OPAQUE)
 	mask |= PAINT_WINDOW_BLEND_MASK;
@@ -553,9 +552,7 @@ WallpaperWindow::drawBackgrounds (const GLMatrix &transform,
 	    }
 	}
 	else
-	{
 	    gWindow->glAddGeometry (tmpMatrixList, reg, region);
-	}
 
 	if (vb->end ())
 	    gWindow->glDrawTexture (back->imgTex[0], transform, tmpAttrib, mask | PAINT_WINDOW_BLEND_MASK);
@@ -563,20 +560,20 @@ WallpaperWindow::drawBackgrounds (const GLMatrix &transform,
 }
 
 bool
-WallpaperWindow::glDraw (const GLMatrix &transform,
+WallpaperWindow::glDraw (const GLMatrix            &transform,
 			 const GLWindowPaintAttrib &attrib,
-			 const CompRegion &region,
-			 unsigned int mask)
+			 const CompRegion          &region,
+			 unsigned int              mask)
 {
     WALLPAPER_SCREEN (screen);
 
     bool ret = gWindow->glDraw (transform, attrib, region, mask);
 
-    if ((!ws->desktop || ws->desktop == window) && !ws->backgroundsPrimary.empty() &&
+    if ((!ws->desktop || ws->desktop == window) &&
+	!ws->backgroundsPrimary.empty()		&&
 	window->type () & CompWindowTypeDesktopMask)
     {
 	int filterIdx;
-	GLTexture::Filter   saveFilter;
 
 	if (mask & PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK)
 	    filterIdx = SCREEN_TRANS_FILTER;
@@ -585,12 +582,13 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 	else
 	    filterIdx = NOTHING_TRANS_FILTER;
 
-	saveFilter = ws->gScreen->filter (filterIdx);
+	GLTexture::Filter saveFilter = ws->gScreen->filter (filterIdx);
 	ws->gScreen->setFilter (filterIdx, GLTexture::Good);
 
 	if (ws->optionGetCycleWallpapers () && ws->rotateTimer.active ())
 	    drawBackgrounds (transform, attrib, region, mask,
 			     ws->backgroundsSecondary, true);
+
 	drawBackgrounds (transform, attrib, region, mask,
 			 ws->backgroundsPrimary, false);
 
@@ -630,13 +628,13 @@ WallpaperScreen::WallpaperScreen (CompScreen *screen) :
     compizWallpaperAtom = XInternAtom (screen->dpy (),
 				       "_COMPIZ_WALLPAPER_SUPPORTED", 0);
 
-    propSet = false;
-    fakeDesktop = None;
-    desktop = NULL;
-    fadeTimer = 0.0f;
-    fadeTimeout = 0.0f;
+    propSet      = false;
+    fakeDesktop  = None;
+    desktop      = NULL;
+    fadeTimer    = 0.0f;
+    fadeTimeout  = 0.0f;
     fadeDuration = 0.0f;
-    alpha = 0.0f;
+    alpha        = 0.0f;
 
     optionSetBgImageNotify    (boost::bind (&WallpaperScreen::
 				wallpaperBackgroundsChanged, this, _1, _2));
@@ -688,12 +686,10 @@ WallpaperWindow::WallpaperWindow (CompWindow *window) :
 bool
 WallpaperPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-    {
-	 return false;
-    }
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }

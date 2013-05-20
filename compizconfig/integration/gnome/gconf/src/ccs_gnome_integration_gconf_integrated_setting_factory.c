@@ -93,7 +93,7 @@ finiGConfClient (GConfClient    *client,
 
     gconf_client_clear_cache (client);
 
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    for (i = 0; i < NUM_WATCHED_DIRS; ++i)
     {
 	if (gnomeGConfNotifyIds[i])
 	{
@@ -115,7 +115,7 @@ registerGConfClient (GConfClient    *client,
 {
     int i;
 
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    for (i = 0; i < NUM_WATCHED_DIRS; ++i)
 	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
 							  watchedGConfGnomeDirectories[i],
 							  func, (gpointer) data,
@@ -129,7 +129,7 @@ initGConfClient (CCSIntegratedSettingFactory *factory)
     CCSGConfIntegratedSettingFactoryPrivate *priv = (CCSGConfIntegratedSettingFactoryPrivate *) ccsObjectGetPrivate (factory);
     priv->client = gconf_client_get_default ();
 
-    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    for (i = 0; i < NUM_WATCHED_DIRS; ++i)
 	gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
 }
@@ -224,7 +224,7 @@ ccsGConfIntegratedSettingFactoryNew (GConfClient		  *client,
     {
 	int i;
 	priv->client = (GConfClient *) g_object_ref (client);
-	for (i = 0; i < NUM_WATCHED_DIRS; i++)
+	for (i = 0; i < NUM_WATCHED_DIRS; ++i)
 	    gconf_client_add_dir (priv->client, watchedGConfGnomeDirectories[i],
 				  GCONF_CLIENT_PRELOAD_NONE, NULL);
     }

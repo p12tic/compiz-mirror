@@ -30,7 +30,8 @@ class CompText
 	/**
 	 * Flags to be passed into the flags field of CompTextAttrib
 	 */
-	typedef enum {
+	typedef enum
+	{
 	    StyleBold      = (1 << 0), /**< render the text in bold */
 	    StyleItalic    = (1 << 1), /**< render the text italic */
 	    Ellipsized     = (1 << 2), /**< ellipsize the text if the
@@ -42,7 +43,8 @@ class CompText
 					   rendered text pixmap to a texture */
 	} Flags;
 
-	typedef struct {
+	typedef struct
+	{
 	    const char     *family;    /**< font family */
 	    int            size;       /**< font size in points */
 	    unsigned short color[4];   /**< font color (RGBA) */
@@ -55,7 +57,7 @@ class CompText
 					    generated pixmap */
 
 	    int            bgHMargin;  /**< horizontal margin in pixels
-		     			    (offset of text into background) */
+					    (offset of text into background) */
 	    int            bgVMargin;  /**< vertical margin */
 	    unsigned short bgColor[4]; /**< background color (RGBA) */
 	} Attrib;
@@ -83,8 +85,9 @@ class CompText
 		   float alpha) const;
 
     private:
-	int width;
-	int height;
+
+	int             width;
+	int             height;
 
 	Pixmap          pixmap;
 	GLTexture::List texture;

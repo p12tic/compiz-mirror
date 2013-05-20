@@ -112,7 +112,7 @@ MagicLampWavyAnim::MagicLampWavyAnim (CompWindow *w,
     float minHalfWidth = 0.22f;
     float maxHalfWidth = 0.38f;
 
-    for (unsigned int i = 0; i < mNumWaves; i++)
+    for (unsigned int i = 0; i < mNumWaves; ++i)
     {
 	mWaves[i].amp =
 	    ampDirection * (waveAmpMax - waveAmpMin) *
@@ -172,7 +172,7 @@ MagicLampAnim::hasMovingEnd ()
 void
 MagicLampWavyAnim::filterTargetX (float &targetX, float x)
 {
-    for (unsigned int i = 0; i < mNumWaves; i++)
+    for (unsigned int i = 0; i < mNumWaves; ++i)
     {
 	float cosx = ((x - mWaves[i].pos) /
 		       mWaves[i].halfWidth);
@@ -289,7 +289,7 @@ MagicLampAnim::step ()
     unsigned int n = mModel->numObjects ();
     float fx = 0.0f;
     GridModel::GridObject *object = mModel->objects ();
-    for (unsigned int i = 0; i < n; i++, object++)
+    for (unsigned int i = 0; i < n; ++i, ++object)
     {
 	Point3d &objPos = object->position ();
 	float objGridX = object->gridPosition ().x ();
@@ -417,7 +417,7 @@ MagicLampAnim::updateBB (CompOutput &output)
 
     GridModel::GridObject *objects = mModel->objects ();
     unsigned int n = mModel->numObjects ();
-    for (unsigned int i = 0; i < n; i++)
+    for (unsigned int i = 0; i < n; ++i)
     {
 	Point3d &objPos = objects[i].position ();
 	mAWindow->expandBBWithPoint (objPos.x () + 0.5,

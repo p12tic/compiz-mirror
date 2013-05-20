@@ -107,7 +107,7 @@ ExtensionPluginAnimation::paintShouldSkipWindow (CompWindow *w)
 	    static_cast<RestackPersistentData *> (itData->second);
 
 	// Increment (glPaint) visit count
-	data->mVisitCount++;
+	++data->mVisitCount;
 
 	// If the window is (to be) painted somewhere other than in its
 	// original stacking order, we don't need to paint it now.
@@ -350,7 +350,7 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 	int changeStart = -1;
 	int changeEnd = -1;
 
-	for (unsigned int i = 0; i < n; i++)
+	for (unsigned int i = 0; i < n; ++i)
 	{
 	    CompWindow *wi = clients[i];
 
@@ -575,7 +575,7 @@ ExtensionPluginAnimation::destroyPersistentData (AnimWindow *aw)
 void
 ExtensionPluginAnimation::incrementCurRestackAnimCount ()
 {
-    mRestackAnimCount++;
+    ++mRestackAnimCount;
 
     // Enable custom paint list when there is now a restack anim happening
     if (mRestackAnimCount == 1)
@@ -585,7 +585,7 @@ ExtensionPluginAnimation::incrementCurRestackAnimCount ()
 void
 ExtensionPluginAnimation::decrementCurRestackAnimCount ()
 {
-    mRestackAnimCount--;
+    --mRestackAnimCount;
 
     // Disable custom paint list when there is no more a restack anim happening
     if (mRestackAnimCount == 0)
@@ -763,7 +763,7 @@ ExtensionPluginAnimation::walkFirst ()
     {
 	RestackPersistentData *data = static_cast<RestackPersistentData *>
 	    (AnimWindow::get (w)->persistentData["restack"]);
-	data->mVisitCount++;
+	++data->mVisitCount;
     }
     return w;
 }
@@ -808,13 +808,9 @@ ExtensionPluginAnimation::walkNext (CompWindow *w)
 	data->mWalkerOverNewCopy = false;
 
     if (!wRet && w->next && markNewCopy (w->next))
-    {
 	wRet = w->next;
-    }
     else if (!wRet)
-    {
 	wRet = getBottommostInExtendedFocusChain (w->next);
-    }
 
     if (wRet)
     {
@@ -824,7 +820,8 @@ ExtensionPluginAnimation::walkNext (CompWindow *w)
 	// Prevent cycles, which cause freezes
 	if (dataRet->mVisitCount > 1) // each window is visited at most twice
 	    return 0;
-	dataRet->mVisitCount++;
+
+	++dataRet->mVisitCount;
     }
     return wRet;
 }

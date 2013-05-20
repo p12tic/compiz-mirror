@@ -30,7 +30,7 @@ COMPIZ_PLUGIN_20090315 (annotate, AnnoPluginVTable)
 #define DEG2RAD (M_PI / 180.0f)
 
 void
-AnnoScreen::cairoClear (cairo_t    *cr)
+AnnoScreen::cairoClear (cairo_t *cr)
 {
     cairo_save (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
@@ -47,12 +47,11 @@ AnnoScreen::cairoContext ()
     {
 	XRenderPictFormat *format;
 	Screen		  *xScreen;
-	int		  w, h;
 
 	xScreen = ScreenOfDisplay (screen->dpy (), screen->screenNum ());
 
-	w = screen->width ();
-	h = screen->height ();
+	int w = screen->width ();
+	int h = screen->height ();
 
 	format = XRenderFindStandardFormat (screen->dpy (),
 					    PictStandardARGB32);
@@ -75,10 +74,9 @@ AnnoScreen::cairoContext ()
 	damage = XDamageCreate (screen->dpy (), pixmap,
 				XDamageReportBoundingBox);
 
-	surface =
-	    cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
-							   pixmap, xScreen,
-							   format, w, h);
+	surface = cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
+								 pixmap, xScreen,
+								 format, w, h);
 
 	cairo = cairo_create (surface);
 	
@@ -91,9 +89,9 @@ AnnoScreen::cairoContext ()
 						     cairoBuffer.c_str (),
 						     CAIRO_FORMAT_ARGB32,
 						     w, h, stride);
-	    
+
 	    if (cr && raw_source)
-	    {	      
+	    {
 		cairo_set_source_surface (cr, raw_source, 0, 0);
 		cairo_paint (cr);
 		
@@ -102,7 +100,7 @@ AnnoScreen::cairoContext ()
 		cairoBuffer.clear ();
 	    }
 	}
-	else	    
+	else
 	    cairoClear (cairo);
     }
 
@@ -110,7 +108,7 @@ AnnoScreen::cairoContext ()
 }
 
 void
-AnnoScreen::setSourceColor (cairo_t	   *cr,
+AnnoScreen::setSourceColor (cairo_t        *cr,
 		    	    unsigned short *color)
 {
     cairo_set_source_rgba (cr,
@@ -121,22 +119,22 @@ AnnoScreen::setSourceColor (cairo_t	   *cr,
 }
 
 void
-AnnoScreen::drawEllipse (double		xc,
-			 double		yc,
-			 double		radiusX,
-			 double		radiusY,
-			 unsigned short	*fillColor,
-			 unsigned short	*strokeColor,
-			 double		strokeWidth)
+AnnoScreen::drawEllipse (double         xc,
+			 double         yc,
+			 double         radiusX,
+			 double         radiusY,
+			 unsigned short *fillColor,
+			 unsigned short *strokeColor,
+			 double         strokeWidth)
 {
-    cairo_t *cr;
+    cairo_t *cr = cairoContext ();
 
-    cr = cairoContext ();
     if (cr)
     {
 	setSourceColor (cr, fillColor);
 	cairo_save (cr);
 	cairo_translate (cr, xc, yc);
+
 	if (radiusX > radiusY)
 	{
 	    cairo_scale (cr, 1.0, radiusY/radiusX);
@@ -147,6 +145,7 @@ AnnoScreen::drawEllipse (double		xc,
 	    cairo_scale (cr, radiusX/radiusY, 1.0);
 	    cairo_arc (cr, 0, 0, radiusY, 0, 2 * M_PI);
 	}
+
 	cairo_restore (cr);
 	cairo_fill_preserve (cr);
 	cairo_set_line_width (cr, strokeWidth);
@@ -158,17 +157,16 @@ AnnoScreen::drawEllipse (double		xc,
 }
 
 void
-AnnoScreen::drawRectangle (double	  x,
-			   double	  y,
-			   double	  w,
-			   double	  h,
+AnnoScreen::drawRectangle (double         x,
+			   double         y,
+			   double         w,
+			   double         h,
 			   unsigned short *fillColor,
 			   unsigned short *strokeColor,
-			   double	  strokeWidth)
+			   double         strokeWidth)
 {
-    cairo_t *cr;
+    cairo_t *cr = cairoContext ();
 
-    cr = cairoContext ();
     if (cr)
     {
 	double  ex1, ey1, ex2, ey2;
@@ -186,16 +184,15 @@ AnnoScreen::drawRectangle (double	  x,
 }
 
 void
-AnnoScreen::drawLine (double	     x1,
-		      double	     y1,
-		      double	     x2,
-		      double	     y2,
-		      double	     width,
+AnnoScreen::drawLine (double         x1,
+		      double         y1,
+		      double         x2,
+		      double         y2,
+		      double         width,
 		      unsigned short *color)
 {
-    cairo_t *cr;
+    cairo_t *cr = cairoContext ();
 
-    cr = cairoContext ();
     if (cr)
     {
 	double ex1, ey1, ex2, ey2;
@@ -213,21 +210,20 @@ AnnoScreen::drawLine (double	     x1,
 }
 
 void
-AnnoScreen::drawText (double	     		     x,
-		      double	     		     y,
-		      const char	     	     *text,
-		      const char	     	     *fontFamily,
-		      double	     		     fontSize,
-		      cairo_font_slant_t	     fontSlant,
-		      cairo_font_weight_t	     fontWeight,
-		      unsigned short 		     *fillColor,
-		      unsigned short 		     *strokeColor,
-		      double	     		     strokeWidth)
+AnnoScreen::drawText (double              x,
+		      double              y,
+		      const char          *text,
+		      const char          *fontFamily,
+		      double              fontSize,
+		      cairo_font_slant_t  fontSlant,
+		      cairo_font_weight_t fontWeight,
+		      unsigned short      *fillColor,
+		      unsigned short      *strokeColor,
+		      double              strokeWidth)
 {
     REGION reg;
-    cairo_t *cr;
+    cairo_t *cr = cairoContext ();
 
-    cr = cairoContext ();
     if (cr)
     {
 	cairo_text_extents_t extents;
@@ -297,105 +293,97 @@ AnnoScreen::drawText (double	     		     x,
 bool
 AnnoScreen::draw (CompAction         *action,
 		  CompAction::State  state,
-		  CompOption::Vector& options)
+		  CompOption::Vector &options)
 {
-    cairo_t *cr;
+    cairo_t *cr = cairoContext ();
 
-    cr = cairoContext ();
     if (cr)
     {
-        const char	*tool;
-        unsigned short	*fillColor, *strokeColor;
-        double		strokeWidth;
+	const char	*tool;
+	unsigned short	*fillColor, *strokeColor;
 
-        tool =
-	 CompOption::getStringOptionNamed (options, "tool", "line").c_str ();
+	tool = CompOption::getStringOptionNamed (options, "tool", "line").c_str ();
 
-        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-        cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
+	cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+	cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
 
-        fillColor = optionGetFillColor ();
-        fillColor = CompOption::getColorOptionNamed (options, "fill_color",
-				         fillColor);
+	fillColor = optionGetFillColor ();
+	fillColor = CompOption::getColorOptionNamed (options, "fill_color",
+						     fillColor);
 
-        strokeColor = optionGetStrokeColor ();
-        strokeColor = CompOption::getColorOptionNamed (options,
-				           "stroke_color", strokeColor);
+	strokeColor = optionGetStrokeColor ();
+	strokeColor = CompOption::getColorOptionNamed (options,
+						       "stroke_color", strokeColor);
 
-        strokeWidth = optionGetStrokeWidth ();
-        strokeWidth = CompOption::getFloatOptionNamed (options, "stroke_width",
-				           strokeWidth);
+	double strokeWidth = optionGetStrokeWidth ();
+	strokeWidth = CompOption::getFloatOptionNamed (options, "stroke_width",
+						       strokeWidth);
 
-        if (strcasecmp (tool, "rectangle") == 0)
-        {
-	    double x, y, w, h;
-
-	    x = CompOption::getFloatOptionNamed (options, "x", 0);
-	    y = CompOption::getFloatOptionNamed (options, "y", 0);
-	    w = CompOption::getFloatOptionNamed (options, "w", 100);
-	    h = CompOption::getFloatOptionNamed (options, "h", 100);
+	if (strcasecmp (tool, "rectangle") == 0)
+	{
+	    double x = CompOption::getFloatOptionNamed (options, "x", 0);
+	    double y = CompOption::getFloatOptionNamed (options, "y", 0);
+	    double w = CompOption::getFloatOptionNamed (options, "w", 100);
+	    double h = CompOption::getFloatOptionNamed (options, "h", 100);
 
 	    drawRectangle (x, y, w, h, fillColor, strokeColor,
-			       strokeWidth);
-        }
-        else if (strcasecmp (tool, "ellipse") == 0)
-        {
-	    double xc, yc, xr, yr;
-
-	    xc = CompOption::getFloatOptionNamed (options, "xc", 0);
-	    yc = CompOption::getFloatOptionNamed (options, "yc", 0);
-	    xr = CompOption::getFloatOptionNamed (options, "radiusX", 100);
-	    yr = CompOption::getFloatOptionNamed (options, "radiusY", 100);
+			   strokeWidth);
+	}
+	else if (strcasecmp (tool, "ellipse") == 0)
+	{
+	    double xc = CompOption::getFloatOptionNamed (options, "xc", 0);
+	    double yc = CompOption::getFloatOptionNamed (options, "yc", 0);
+	    double xr = CompOption::getFloatOptionNamed (options, "radiusX", 100);
+	    double yr = CompOption::getFloatOptionNamed (options, "radiusY", 100);
 
 	    drawEllipse (xc, yc, xr, yr, fillColor, strokeColor,
-			    strokeWidth);
-        }
-        else if (strcasecmp (tool, "line") == 0)
-        {
-	    double x1, y1, x2, y2;
-
-	    x1 = CompOption::getFloatOptionNamed (options, "x1", 0);
-	    y1 = CompOption::getFloatOptionNamed (options, "y1", 0);
-	    x2 = CompOption::getFloatOptionNamed (options, "x2", 100);
-	    y2 = CompOption::getFloatOptionNamed (options, "y2", 100);
+			 strokeWidth);
+	}
+	else if (strcasecmp (tool, "line") == 0)
+	{
+	    double x1 = CompOption::getFloatOptionNamed (options, "x1", 0);
+	    double y1 = CompOption::getFloatOptionNamed (options, "y1", 0);
+	    double x2 = CompOption::getFloatOptionNamed (options, "x2", 100);
+	    double y2 = CompOption::getFloatOptionNamed (options, "y2", 100);
 
 	    drawLine (x1, y1, x2, y2, strokeWidth, fillColor);
-        }
-        else if (strcasecmp (tool, "text") == 0)
-        {
-	    double	     x, y, size;
-	    const char	     *text, *family;
-	    cairo_font_slant_t slant;
+	}
+	else if (strcasecmp (tool, "text") == 0)
+	{
+	    const char          *text, *family;
+	    cairo_font_slant_t  slant;
 	    cairo_font_weight_t weight;
-	    const char	     *str;
+	    const char          *str;
 
-	    str =
-	       CompOption::getStringOptionNamed (options, "slant", "").c_str ();
+	    str = CompOption::getStringOptionNamed (options, "slant", "").c_str ();
+
 	    if (strcasecmp (str, "oblique") == 0)
-	        slant = CAIRO_FONT_SLANT_OBLIQUE;
+		slant = CAIRO_FONT_SLANT_OBLIQUE;
 	    else if (strcasecmp (str, "italic") == 0)
-	        slant = CAIRO_FONT_SLANT_ITALIC;
+		slant = CAIRO_FONT_SLANT_ITALIC;
 	    else
-	        slant = CAIRO_FONT_SLANT_NORMAL;
+		slant = CAIRO_FONT_SLANT_NORMAL;
 
-	    str = 
-	      CompOption::getStringOptionNamed (options, "weight", "").c_str ();
+	    str = CompOption::getStringOptionNamed (options, "weight", "").c_str ();
+
 	    if (strcasecmp (str, "bold") == 0)
-	        weight = CAIRO_FONT_WEIGHT_BOLD;
+		weight = CAIRO_FONT_WEIGHT_BOLD;
 	    else
-	        weight = CAIRO_FONT_WEIGHT_NORMAL;
+		weight = CAIRO_FONT_WEIGHT_NORMAL;
 
-	    x      = CompOption::getFloatOptionNamed (options, "x", 0);
-	    y      = CompOption::getFloatOptionNamed (options, "y", 0);
-	    text   = 
-		CompOption::getStringOptionNamed (options, "text", "").c_str ();
+	    double x = CompOption::getFloatOptionNamed (options, "x", 0);
+	    double y = CompOption::getFloatOptionNamed (options, "y", 0);
+
+	    text = CompOption::getStringOptionNamed (options, "text", "").c_str ();
+
 	    family = CompOption::getStringOptionNamed (options, "family",
-				           "Sans").c_str ();
-	    size   = CompOption::getFloatOptionNamed (options, "size", 36.0);
+						       "Sans").c_str ();
+
+	    double size = CompOption::getFloatOptionNamed (options, "size", 36.0);
 
 	    drawText (x, y, text, family, size, slant, weight,
-		          fillColor, strokeColor, strokeWidth);
-        }
+		      fillColor, strokeColor, strokeWidth);
+	}
     }
 
     return true;
@@ -408,8 +396,8 @@ AnnoScreen::terminate (CompAction         *action,
 {
     if (grabIndex)
     {
-        screen->removeGrab (grabIndex, NULL);
-        grabIndex = 0;
+	screen->removeGrab (grabIndex, NULL);
+	grabIndex = 0;
     }
 
     action->setState (action->state () & ~(CompAction::StateTermKey |
@@ -456,19 +444,19 @@ AnnoScreen::terminate (CompAction         *action,
 bool
 AnnoScreen::initiateErase (CompAction         *action,
 		           CompAction::State  state,
-		           CompOption::Vector& options)
+			   CompOption::Vector &options)
 {
     if (screen->otherGrabExist (NULL))
-        return false;
+	return false;
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (None, "annotate");
+	grabIndex = screen->pushGrab (None, "annotate");
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     annoLastPointerX = pointerX;
     annoLastPointerY = pointerY;
@@ -483,19 +471,19 @@ AnnoScreen::initiateErase (CompAction         *action,
 bool
 AnnoScreen::initiateFreeDraw (CompAction         *action,
 			      CompAction::State  state,
-			      CompOption::Vector& options)
+			      CompOption::Vector &options)
 {
     if (screen->otherGrabExist (NULL))
-        return false;
+	return false;
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (None, "annotate");
+	grabIndex = screen->pushGrab (None, "annotate");
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     annoLastPointerX = pointerX;
     annoLastPointerY = pointerY;
@@ -510,19 +498,19 @@ AnnoScreen::initiateFreeDraw (CompAction         *action,
 bool
 AnnoScreen::initiateLine (CompAction         *action,
 			  CompAction::State  state,
-			  CompOption::Vector& options)
+			  CompOption::Vector &options)
 {
     if (screen->otherGrabExist (NULL))
-        return false;
+	return false;
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (None, "annotate");
+	grabIndex = screen->pushGrab (None, "annotate");
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     initialPointerX = pointerX;
     initialPointerY = pointerY;
@@ -537,19 +525,19 @@ AnnoScreen::initiateLine (CompAction         *action,
 bool
 AnnoScreen::initiateRectangle (CompAction         *action,
 			       CompAction::State  state,
-			       CompOption::Vector& options)
+			       CompOption::Vector &options)
 {
     if (screen->otherGrabExist (NULL))
-        return false;
+	return false;
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (None, "annotate");
+	grabIndex = screen->pushGrab (None, "annotate");
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     drawMode = RectangleMode;
 
@@ -566,19 +554,19 @@ AnnoScreen::initiateRectangle (CompAction         *action,
 bool
 AnnoScreen::initiateEllipse (CompAction         *action,
 			     CompAction::State  state,
-			     CompOption::Vector& options)
+			     CompOption::Vector &options)
 {
     if (screen->otherGrabExist (NULL))
-        return false;
+	return false;
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (None, "annotate");
+	grabIndex = screen->pushGrab (None, "annotate");
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     drawMode = EllipseMode;
 
@@ -596,17 +584,16 @@ AnnoScreen::initiateEllipse (CompAction         *action,
 bool
 AnnoScreen::clear (CompAction         *action,
 		   CompAction::State  state,
-		   CompOption::Vector& options)
+		   CompOption::Vector &options)
 {
     if (content)
     {
-        cairo_t *cr;
+	cairo_t *cr = cairoContext ();
 
-        cr = cairoContext ();
-        if (cr)
+	if (cr)
 	    cairoClear (cairo);
 
-        cScreen->damageScreen ();
+	cScreen->damageScreen ();
 
 	/* We don't need to refresh the screen or handle events anymore */
 	screen->handleEventSetEnabled (this, false);
@@ -618,28 +605,25 @@ AnnoScreen::clear (CompAction         *action,
 
 bool
 AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-			   const GLMatrix	     &transform,
-			   const CompRegion	     &region,
-			   CompOutput 		     *output,
-			   unsigned int		     mask)
+			   const GLMatrix            &transform,
+			   const CompRegion          &region,
+			   CompOutput                *output,
+			   unsigned int              mask)
 {
-    bool status;
-
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if (status)
     {
 	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 	GLfloat         vertexData[18];
 	GLfloat         textureData[12];
-	CompRect	rect;
-	GLMatrix	sTransform = transform;
-	int		numRect;
-	int		pos = 0;
-	float		offset;
-	int		angle;
+	CompRect        rect;
+	GLMatrix        sTransform = transform;
+	int             numRect;
+	int             pos = 0;
+	int             angle;
 
-	offset = optionGetStrokeWidth () / 2;
+	float offset = optionGetStrokeWidth () / 2;
 
 	/* This replaced prepareXCoords (s, output, -DEFAULT_Z_CAMERA) */
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
@@ -650,23 +634,23 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	{
 	    foreach (GLTexture *tex, texture)
 	    {
-	        CompRect::vector rect = region.rects ();
-	        numRect = region.rects ().size ();
+		CompRect::vector rect = region.rects ();
+		numRect = region.rects ().size ();
 
-	        tex->enable (GLTexture::Fast);
+		tex->enable (GLTexture::Fast);
 
-	        streamingBuffer->begin (GL_TRIANGLES);
+		streamingBuffer->begin (GL_TRIANGLES);
 
-	        while (numRect--)
-	        {
+		while (numRect--)
+		{
 		    GLfloat tx1 = COMP_TEX_COORD_X (tex->matrix (),
-		                                       rect.at (pos).x1 ());
+						    rect.at (pos).x1 ());
 		    GLfloat tx2 = COMP_TEX_COORD_X (tex->matrix (),
-		                                       rect.at (pos).x2 ());
+						    rect.at (pos).x2 ());
 		    GLfloat ty1 = COMP_TEX_COORD_Y (tex->matrix (),
-		                                       rect.at (pos).y1 ());
+						    rect.at (pos).y1 ());
 		    GLfloat ty2 = COMP_TEX_COORD_Y (tex->matrix (),
-		                                       rect.at (pos).y2 ());
+						    rect.at (pos).y2 ());
 
 		    vertexData[0]  = rect.at (pos).x1 ();
 		    vertexData[1]  = rect.at (pos).y1 ();
@@ -709,13 +693,13 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 		    streamingBuffer->addVertices (6, vertexData);
 		    streamingBuffer->addTexCoords (0, 6, textureData);
-	            pos++;
-	        }
+		    ++pos;
+		}
 
 		streamingBuffer->end ();
 		streamingBuffer->render (sTransform);
 
-	        tex->disable ();
+		tex->disable ();
 	    }
 	}
 
@@ -764,20 +748,29 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->render (sTransform);
 
 	    /* draw rectangle outline */
-/*	    streamingBuffer->begin ();
+	    vertexData[0]  = rectangle.x1 ();
+	    vertexData[1]  = rectangle.y1 ();
+	    vertexData[2]  = 0.0f;
+	    vertexData[3]  = rectangle.x2 ();
+	    vertexData[4]  = rectangle.y1 ();
+	    vertexData[5]  = 0.0f;
+	    vertexData[6]  = rectangle.x2 ();
+	    vertexData[7]  = rectangle.y2 ();
+	    vertexData[8]  = 0.0f;
+	    vertexData[9]  = rectangle.x1 ();
+	    vertexData[10] = rectangle.y2 ();
+	    vertexData[11] = 0.0f;
+
+	    glLineWidth (optionGetStrokeWidth ());
+
+	    streamingBuffer->begin (GL_LINE_LOOP);
 
 	    streamingBuffer->addColors (1, optionGetStrokeColor ());
-
-	    vertexData[0] = rectangle.x1 () - offset;
-	    vertexData[3] = rectangle.x1 () - offset;
 	    streamingBuffer->addVertices (4, vertexData);
 
-	    glRecti (rectangle.x2 () - offset, rectangle.y2 (),
-		     rectangle.x2 () + offset, rectangle.y1 ());
-	    glRecti (rectangle.x1 () - offset, rectangle.y1 () + offset,
-		     rectangle.x2 () + offset, rectangle.y1 () - offset);
-	    glRecti (rectangle.x1 () - offset, rectangle.y2 () + offset,
-		     rectangle.x2 () + offset, rectangle.y2 () - offset);*/
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransform);
+
 	    break;
 
 	case EllipseMode:
@@ -854,14 +847,15 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 }
 
 void
-AnnoScreen::handleMotionEvent (int	  xRoot,
-		       	       int	  yRoot)
+AnnoScreen::handleMotionEvent (int xRoot,
+			       int yRoot)
 {
     CompRect damageRect;
 
     if (grabIndex)
     {
 	static unsigned short clearColor[] = { 0, 0, 0, 0 };
+
 	switch (drawMode)
 	{
 	case EraseMode:
@@ -931,8 +925,8 @@ AnnoScreen::handleMotionEvent (int	  xRoot,
 	    break;
 	}
 
-	if (cScreen && (drawMode == LineMode ||
-			drawMode == RectangleMode ||
+	if (cScreen && (drawMode == LineMode	    ||
+			drawMode == RectangleMode   ||
 			drawMode == EllipseMode))
 	{
 	    /* Add border width to the damage region */
@@ -959,7 +953,7 @@ AnnoScreen::handleMotionEvent (int	  xRoot,
 }
 
 void
-AnnoScreen::handleEvent (XEvent      *event)
+AnnoScreen::handleEvent (XEvent *event)
 {
     switch (event->type)
     {
@@ -968,13 +962,16 @@ AnnoScreen::handleEvent (XEvent      *event)
     case LeaveNotify:
 	handleMotionEvent (pointerX, pointerY);
 	break;
+
     default:
 	if (event->type == cScreen->damageEvent () + XDamageNotify)
 	{
 	    XDamageNotifyEvent *de = (XDamageNotifyEvent *) event;
+
 	    if (pixmap == de->drawable)
 		cScreen->damageRegion (CompRegion (CompRect (de->area)));
 	}
+
 	break;
     }
 
@@ -1037,10 +1034,10 @@ AnnoScreen::~AnnoScreen ()
 bool
 AnnoPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-	!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return true;
 
-    return true;
+    return false;
 }

@@ -35,8 +35,6 @@
 
 #define NUM_KEYS (sizeof (mKeys) / sizeof (mKeys[0]))
 
-extern const unsigned short KEY_MOVE_INC;
-
 struct _MoveKeys
 {
     const char *name;

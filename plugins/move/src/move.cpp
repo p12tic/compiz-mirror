@@ -34,8 +34,6 @@
 
 COMPIZ_PLUGIN_20090315 (move, MovePluginVTable)
 
-const unsigned short KEY_MOVE_INC = 24;
-
 static bool
 moveInitiate (CompAction         *action,
 	      CompAction::State  state,
@@ -538,10 +536,12 @@ MoveScreen::handleEvent (XEvent *event)
 		for (unsigned int i = 0; i < NUM_KEYS; i++)
 		    if (event->xkey.keycode == key[i])
 		    {
+			int moveIncrement = optionGetKeyMoveInc ();
+
 			XWarpPointer (screen->dpy (), None, None,
 				      0, 0, 0, 0,
-				      mKeys[i].dx * KEY_MOVE_INC,
-				      mKeys[i].dy * KEY_MOVE_INC);
+				      mKeys[i].dx * moveIncrement,
+				      mKeys[i].dy * moveIncrement);
 			break;
 		    }
 	    break;
@@ -732,8 +732,8 @@ MoveScreen::~MoveScreen ()
 bool
 MovePluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	 return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return true;
 
-    return true;
+    return false;
 }

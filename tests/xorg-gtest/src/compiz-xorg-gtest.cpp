@@ -678,7 +678,7 @@ void
 ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags     flags,
 				       const ct::CompizProcess::PluginList &plugins)
 {
-    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, plugins, 3000));
+    priv->mProcess.reset (new ct::CompizProcess (Display (), flags, plugins));
 }
 
 class ct::PrivateAutostartCompizXorgSystemTest

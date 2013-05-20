@@ -141,9 +141,9 @@ KWD::Decorator::Decorator () :
 
     updateShadowProperties (QX11Info::appRootWindow ());
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    if (cursors[i][j].shape != XC_left_ptr)
 		cursors[i][j].cursor =
@@ -186,7 +186,7 @@ KWD::Decorator::~Decorator (void)
 {
     QMap <WId, KWD::Window *>::ConstIterator it;
 
-    for (it = mClients.begin (); it != mClients.end (); it++)
+    for (it = mClients.begin (); it != mClients.end (); ++it)
 	delete (*it);
 
     if (mDecorNormal)
@@ -260,7 +260,7 @@ KWD::Decorator::enableDecorations (Time timestamp)
     XQueryTree (QX11Info::display (), QX11Info::appRootWindow (),
                 &root, &parent, &children, &nchildren);
 
-    for (unsigned int i = 0; i < nchildren; i++)
+    for (unsigned int i = 0; i < nchildren; ++i)
     {
         if (KWD::readWindowProperty (children[i],
                                      Atoms::switchSelectWindow, &select))
@@ -690,7 +690,7 @@ KWD::Decorator::reconfigure (void)
 	mDecorNormal->reloadDecoration ();
 	mDecorActive->reloadDecoration ();
 
-	for (it = mClients.constBegin (); it != mClients.constEnd (); it++)
+	for (it = mClients.constBegin (); it != mClients.constEnd (); ++it)
 	    it.value ()->reloadDecoration ();
 
 	mPlugins->destroyPreviousPlugin ();
@@ -1041,7 +1041,7 @@ KWD::Decorator::clearMenus ()
 {
     QMap < WId, KWD::Window * >::ConstIterator it;
 
-    for (it = mClients.constBegin (); it != mClients.constEnd (); it++)
+    for (it = mClients.constBegin (); it != mClients.constEnd (); ++it)
 	it.value ()->setAppMenuUnavailable ();
 
     mWindowsMenu.clear ();

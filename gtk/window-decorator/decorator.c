@@ -260,7 +260,7 @@ update_event_windows (WnckWindow *win)
     gdk_error_trap_push ();
 
     /* [rtl, ru, rtr], [rl, mv, rr], [rbl, rb, rbr] */
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
 	static guint event_window_actions[3][3] = {
 	    {
@@ -278,7 +278,7 @@ update_event_windows (WnckWindow *win)
 	    }
 	};
 
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    w = 0;
 	    h = 0;
@@ -316,7 +316,7 @@ update_event_windows (WnckWindow *win)
 	actions = 0;
 
     /* Above, stick, unshade and unstick are only available in wnck => 2.18.1 */
-    for (i = 0; i < BUTTON_NUM; i++)
+    for (i = 0; i < BUTTON_NUM; ++i)
     {
 	static guint button_actions[BUTTON_NUM] = {
 	    WNCK_WINDOW_ACTION_CLOSE,
@@ -1116,7 +1116,7 @@ populate_frame_type (decor_t *d)
         {"utility", DECOR_WINDOW_TYPE_UTILITY}
     };
 
-    for (i = 0; i < n_type_strings; i++)
+    for (i = 0; i < n_type_strings; ++i)
     {
         if (strcmp (d->frame->type, type_strings[i].type) == 0)
             frame_type |= type_strings[i].flag;
@@ -1161,7 +1161,7 @@ populate_frame_state (decor_t *d)
 
     win_state = wnck_window_get_state (d->win);
 
-    for (i = 0; i < n_state_bits; i++)
+    for (i = 0; i < n_state_bits; ++i)
     {
         if (win_state & state_bits[i].wnck_flag)
             frame_state |= state_bits[i].decor_flag;
@@ -1211,7 +1211,7 @@ populate_frame_actions (decor_t *d)
         { DECOR_WINDOW_ACTION_BELOW, WNCK_WINDOW_ACTION_BELOW },
     };
 
-    for (i = 0; i < n_action_bits; i++)
+    for (i = 0; i < n_action_bits; ++i)
     {
         if (win_actions & action_bits[i].wnck_flag)
             frame_actions |= action_bits[i].decor_flag;
@@ -1402,7 +1402,7 @@ update_default_decorations (GdkScreen *screen)
     data = decor_alloc_property (WINDOW_TYPE_FRAMES_NUM * 2, WINDOW_DECORATION_TYPE_PIXMAP);
 
     /* All active states and all inactive states */
-    for (i = 0; i < WINDOW_TYPE_FRAMES_NUM * 2; i++)
+    for (i = 0; i < WINDOW_TYPE_FRAMES_NUM * 2; ++i)
     {
         frame = gwd_get_decor_frame (default_frames[i].name);
         extents = frame->win_extents;
@@ -1438,7 +1438,7 @@ update_default_decorations (GdkScreen *screen)
 
 	unsigned int j, k;
 
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    for (k = 0; k < 3; k++)
 	    {
@@ -1446,7 +1446,7 @@ update_default_decorations (GdkScreen *screen)
 	    }
 	}
 
-	for (j = 0; j < BUTTON_NUM; j++)
+	for (j = 0; j < BUTTON_NUM; ++j)
 	{
 	    default_frames[i].d->button_windows[j].window = None;
 	    default_frames[i].d->button_states[j] = 0;

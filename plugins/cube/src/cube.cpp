@@ -1759,16 +1759,17 @@ CubeScreen::setOption (const CompString  &name,
 bool
 CubePluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
+    if (CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		&&
+	CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)	&&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+    {
+	CompPrivate p;
+	p.uval = COMPIZ_CUBE_ABI;
+	screen->storeValue ("cube_ABI", p);
+	return true;
+    }
 
-    CompPrivate p;
-    p.uval = COMPIZ_CUBE_ABI;
-    screen->storeValue ("cube_ABI", p);
-
-    return true;
+    return false;
 }
 
 void
@@ -1776,4 +1777,3 @@ CubePluginVTable::fini ()
 {
     screen->eraseValue ("cube_ABI");
 }
-

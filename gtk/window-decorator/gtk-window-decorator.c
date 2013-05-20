@@ -185,7 +185,7 @@ main (int argc, char *argv[])
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
     textdomain (GETTEXT_PACKAGE);
 
-    for (i = 0; i < argc; i++)
+    for (i = 0; i < argc; ++i)
     {
 	if (strcmp (argv[i], "--minimal") == 0)
 	{
@@ -328,7 +328,7 @@ main (int argc, char *argv[])
 	return 1;
     }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
 	for (j = 0; j < 3; j++)
 	{
@@ -369,7 +369,7 @@ main (int argc, char *argv[])
 	XQueryTree (xdisplay, gdk_x11_get_default_root_xwindow (),
 		    &root_ret, &parent_ret, &children, &nchildren);
 
-	for (i = 0; i < nchildren; i++)
+	for (i = 0; i < nchildren; ++i)
 	{
 	    GdkWindow *toplevel = create_foreign_window  (children[i]);
 
