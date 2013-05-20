@@ -1373,10 +1373,10 @@ CompWindow::map ()
 
 	if (!overrideRedirect () &&
 	    priv->shaded) // been shaded
-	    {
-		priv->shaded = false;
-		priv->updateFrameWindow ();
-	    }
+	{
+	    priv->shaded = false;
+	    priv->updateFrameWindow ();
+	}
     }
 
     windowNotify (CompWindowNotifyMap);
@@ -2317,12 +2317,12 @@ PrivateWindow::getModalTransient ()
 	if (w == modalTransient || w->priv->mapNum == 0)
 	    continue;
 
-	if (w->priv->transientFor == modalTransient->priv->id)
-	    if (w->priv->state & CompWindowStateModalMask)
-	    {
-		modalTransient = w;
-		w              = screen->windows ().back ();
-	    }
+	if (w->priv->transientFor == modalTransient->priv->id &&
+	    w->priv->state & CompWindowStateModalMask)
+	{
+	    modalTransient = w;
+	    w              = screen->windows ().back ();
+	}
     }
 
     if (modalTransient == window)
@@ -2584,11 +2584,9 @@ PrivateWindow::avoidStackingRelativeTo (CompWindow       *w,
 	w->destroyed ())
 	return true;
 
-    bool allowRelativeToUnmmaped = w->priv->receivedMapRequestAndAwaitingMap	||
-				   w->priv->shaded				||
-				   w->priv->pendingMaps;
-
-    if (!allowRelativeToUnmmaped &&
+    if (!(w->priv->receivedMapRequestAndAwaitingMap	||
+	  w->priv->shaded				||
+	  w->priv->pendingMaps) && // do not allow relative to unmapped
 	(!w->isViewable () || !w->isMapped ()))
 	return true;
 
@@ -2705,7 +2703,7 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 {
     CompWindow   *below, *lowest = screen->serverWindows ().back ();
     CompWindow   *t              = screen->findWindow (w->transientFor ());
-    Window	 clientLeader    = w->priv->clientLeader;
+    Window       clientLeader    = w->priv->clientLeader;
     unsigned int type            = w->priv->type;
 
     /* normal stacking fullscreen windows with below state */
