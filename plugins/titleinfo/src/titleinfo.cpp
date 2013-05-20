@@ -31,12 +31,11 @@ COMPIZ_PLUGIN_20090315 (titleinfo, TitleinfoPluginVTable);
 void
 TitleinfoWindow::updateVisibleName ()
 {
-    CompString  text, f_machine;
-    CompString  root, f_title;
+    CompString root, text, f_machine;
 
     TITLEINFO_SCREEN (screen);
 
-    f_title = title.size () ? title : "";
+    CompString f_title = title.size () ? title : "";
 
     if (ts->optionGetShowRoot () && owner == 0)
 	root = "ROOT: ";
@@ -62,9 +61,7 @@ TitleinfoWindow::updateVisibleName ()
 	text.clear ();
     }
     else
-    {
 	XDeleteProperty (screen->dpy (), window->id (), ts->visibleNameAtom);
-    }
 }
 
 void
@@ -72,7 +69,7 @@ TitleinfoWindow::updatePid ()
 {
     int           pid = -1;
     Atom          type;
-    int           result, format;
+    int           format;
     unsigned long nItems, bytesAfter;
     unsigned char *propVal;
 
@@ -80,9 +77,9 @@ TitleinfoWindow::updatePid ()
 
     owner = -1;
 
-    result = XGetWindowProperty (screen->dpy (), window->id (), ts->wmPidAtom,
-				 0L, 1L, False, XA_CARDINAL, &type,
-				 &format, &nItems, &bytesAfter, &propVal);
+    int result = XGetWindowProperty (screen->dpy (), window->id (), ts->wmPidAtom,
+				     0L, 1L, False, XA_CARDINAL, &type,
+				     &format, &nItems, &bytesAfter, &propVal);
 
     if (result == Success && propVal)
     {
@@ -103,6 +100,7 @@ TitleinfoWindow::updatePid ()
 	struct stat fileStat;
 
 	snprintf (path, 512, "/proc/%d", pid);
+
 	if (!lstat (path, &fileStat))
 	    owner = fileStat.st_uid;
     }
@@ -112,18 +110,18 @@ TitleinfoWindow::updatePid ()
 }
 
 CompString
-TitleinfoScreen::getUtf8Property (Window      id,
-				  Atom        atom)
+TitleinfoScreen::getUtf8Property (Window id,
+				  Atom   atom)
 {
     Atom          type;
-    int           result, format;
+    int           format;
     unsigned long nItems, bytesAfter;
     char          *val = NULL,   *retval_c = NULL;
     CompString    retval;
 
-    result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
-				 Atoms::utf8String, &type, &format, &nItems,
-				 &bytesAfter, (unsigned char **) &val);
+    int result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
+				     Atoms::utf8String, &type, &format, &nItems,
+				     &bytesAfter, (unsigned char **) &val);
 
     if (result != Success)
 	return retval;
@@ -131,6 +129,7 @@ TitleinfoScreen::getUtf8Property (Window      id,
     if (type == Atoms::utf8String && format == 8 && val && nItems > 0)
     {
 	retval_c = (char *) malloc (sizeof (char) * (nItems + 1));
+
 	if (retval_c)
 	{
 	    strncpy (retval_c, val, nItems);
@@ -148,19 +147,21 @@ TitleinfoScreen::getUtf8Property (Window      id,
 }
 
 CompString
-TitleinfoScreen::getTextProperty (Window      id,
-				  Atom        atom)
+TitleinfoScreen::getTextProperty (Window id,
+				  Atom   atom)
 {
     XTextProperty text;
     char          *retval_c = NULL;
     CompString    retval;
 
     text.nitems = 0;
+
     if (XGetTextProperty (screen->dpy (), id, &text, atom))
     {
         if (text.value)
 	{
 	    retval_c = (char *) malloc (sizeof (char) * (text.nitems + 1));
+
 	    if (retval_c)
 	    {
 		strncpy (retval_c, (char *) text.value, text.nitems);
@@ -180,11 +181,9 @@ TitleinfoScreen::getTextProperty (Window      id,
 void
 TitleinfoWindow::updateTitle ()
 {
-    CompString f_title;
-
     TITLEINFO_SCREEN (screen);
 
-    f_title = ts->getUtf8Property (window->id (), Atoms::wmName);
+    CompString f_title = ts->getUtf8Property (window->id (), Atoms::wmName);
 
     if (f_title.empty ())
 	title = ts->getTextProperty (window->id (), XA_WM_NAME);\
@@ -192,7 +191,6 @@ TitleinfoWindow::updateTitle ()
     title = f_title;
     updateVisibleName ();
 }
-
 
 void
 TitleinfoWindow::updateMachine ()
@@ -213,7 +211,7 @@ void
 TitleinfoScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
     screen->addSupportedAtoms (atoms);
-    
+
     atoms.push_back (visibleNameAtom);
     atoms.push_back (wmPidAtom);
 }
@@ -221,7 +219,6 @@ TitleinfoScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 void
 TitleinfoScreen::handleEvent (XEvent *event)
 {
-
     screen->handleEvent (event);
 
     if (event->type == PropertyNotify)
@@ -231,6 +228,7 @@ TitleinfoScreen::handleEvent (XEvent *event)
 	if (event->xproperty.atom == XA_WM_CLIENT_MACHINE)
 	{
 	    w = screen->findWindow (event->xproperty.window);
+
 	    if (w)
 	    {
 		TITLEINFO_WINDOW (w);
@@ -240,6 +238,7 @@ TitleinfoScreen::handleEvent (XEvent *event)
 	else if (event->xproperty.atom == wmPidAtom)
 	{
 	    w = screen->findWindow (event->xproperty.window);
+
 	    if (w)
 	    {
 		TITLEINFO_WINDOW (w);
@@ -250,6 +249,7 @@ TitleinfoScreen::handleEvent (XEvent *event)
 		 event->xproperty.atom == XA_WM_NAME)
 	{
 	    w = screen->findWindow (event->xproperty.window);
+
 	    if (w)
 	    {
 		TITLEINFO_WINDOW (w);
@@ -265,14 +265,14 @@ TitleinfoScreen::TitleinfoScreen (CompScreen *screen) :
     wmPidAtom (XInternAtom (screen->dpy (), "_NET_WM_PID", 0))
 {
     ScreenInterface::setHandler (screen);
-    
+
     screen->updateSupportedWmHints ();
 };
 
 TitleinfoScreen::~TitleinfoScreen ()
 {
     screen->addSupportedAtomsSetEnabled (this, false);
-    
+
     screen->updateSupportedWmHints ();
 }
 

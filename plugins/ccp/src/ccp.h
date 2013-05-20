@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-extern "C" {
+extern "C"
+{
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,28 +37,33 @@ class CcpScreen :
     public PluginClassHandler<CcpScreen,CompScreen>
 {
     public:
+
 	CcpScreen (CompScreen *screen);
 	~CcpScreen ();
 
 	bool initPluginForScreen (CompPlugin *p);
 
-	bool setOptionForPlugin (const char *plugin,
-				 const char *name,
+	bool setOptionForPlugin (const char        *plugin,
+				 const char        *name,
 				 CompOption::Value &v);
 
 	bool timeout ();
 	bool reload ();
 
-	void setOptionFromContext (CompOption *o, const char *plugin);
-	void setContextFromOption (CompOption *o, const char *plugin);
+	void setOptionFromContext (CompOption *o,
+				   const char *plugin);
+
+	void setContextFromOption (CompOption *o,
+				   const char *plugin);
 
 
     public:
+
 	CCSContext  *mContext;
 	bool        mApplyingSettings;
 
-	CompTimer mTimeoutTimer;
-	CompTimer mReloadTimer;
+	CompTimer   mTimeoutTimer;
+	CompTimer   mReloadTimer;
 };
 
 class CcpPluginVTable :
