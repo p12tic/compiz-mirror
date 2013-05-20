@@ -52,7 +52,7 @@
 #include <boost/scoped_array.hpp>
 
 namespace crb = compiz::window::configure_buffers;
-namespace cw = compiz::window;
+namespace cw  = compiz::window;
 
 template class WrapableInterface<CompWindow, WindowInterface>;
 
@@ -83,11 +83,11 @@ CompWindow::freePluginClassIndex (unsigned int index)
 inline bool
 PrivateWindow::isInvisible() const
 {
-    return attrib.map_state != IsViewable ||
-     attrib.x + geometry.width ()  + output.right  <= 0 ||
-     attrib.y + geometry.height () + output.bottom <= 0 ||
-     attrib.x - output.left >= (int) screen->width () ||
-     attrib.y - output.top >= (int) screen->height ();
+    return attrib.map_state != IsViewable					    ||
+			       attrib.x + geometry.width ()  + output.right  <= 0   ||
+			       attrib.y + geometry.height () + output.bottom <= 0   ||
+			       attrib.x - output.left >= (int) screen->width ()	    ||
+			       attrib.y - output.top  >= (int) screen->height ();
 }
 
 bool
@@ -100,6 +100,7 @@ PrivateWindow::isAncestorTo (CompWindow *transient,
 	    return true;
 
 	transient = screen->findWindow (transient->priv->transientFor);
+
 	if (transient)
 	    return isAncestorTo (transient, ancestor);
     }
@@ -110,11 +111,9 @@ PrivateWindow::isAncestorTo (CompWindow *transient,
 void
 PrivateWindow::recalcNormalHints ()
 {
-    int maxSize;
-
 /* FIXME to max Texture size */
-    maxSize  = MAXSHORT;
-    maxSize -= serverGeometry.border () * 2;
+    int maxSize  = MAXSHORT;
+    maxSize     -= serverGeometry.border () * 2;
 
     sizeHints.x      = serverGeometry.x ();
     sizeHints.y      = serverGeometry.y ();
@@ -230,11 +229,9 @@ PrivateWindow::recalcNormalHints ()
 void
 PrivateWindow::updateNormalHints ()
 {
-    Status status;
     long   supplied;
-
-    status = XGetWMNormalHints (screen->dpy (), priv->id,
-				&priv->sizeHints, &supplied);
+    Status status = XGetWMNormalHints (screen->dpy (), priv->id,
+				       &priv->sizeHints, &supplied);
 
     if (!status)
 	priv->sizeHints.flags = 0;
@@ -245,16 +242,16 @@ PrivateWindow::updateNormalHints ()
 void
 PrivateWindow::updateWmHints ()
 {
-    XWMHints *newHints;
-    long     dFlags = 0;
-    bool     iconChanged = false;
+    long dFlags = 0;
+    bool iconChanged;
 
     if (hints)
 	dFlags = hints->flags;
 
     inputHint = true;
 
-    newHints = XGetWMHints (screen->dpy (), id);
+    XWMHints *newHints = XGetWMHints (screen->dpy (), id);
+
     if (newHints)
     {
 	dFlags ^= newHints->flags;
@@ -266,14 +263,10 @@ PrivateWindow::updateWmHints ()
 	{
 	    if ((newHints->flags & IconPixmapHint) &&
 		(hints->icon_pixmap != newHints->icon_pixmap))
-	    {
 		iconChanged = true;
-	    }
 	    else if ((newHints->flags & IconMaskHint) &&
 		     (hints->icon_mask != newHints->icon_mask))
-	    {
 		iconChanged = true;
-	    }
 	}
     }
 
@@ -291,9 +284,6 @@ PrivateWindow::updateWmHints ()
 void
 PrivateWindow::updateClassHints ()
 {
-    XClassHint classHint;
-    int	       status;
-
     if (priv->resName)
     {
 	free (priv->resName);
@@ -306,8 +296,10 @@ PrivateWindow::updateClassHints ()
 	priv->resClass = NULL;
     }
 
-    status = XGetClassHint (screen->dpy (),
-			    priv->id, &classHint);
+    XClassHint classHint;
+    int        status = XGetClassHint (screen->dpy (),
+				       priv->id, &classHint);
+
     if (status)
     {
 	if (classHint.res_name)
@@ -328,18 +320,16 @@ void
 PrivateWindow::updateTransientHint ()
 {
     Window transientFor;
-    Status status;
 
     priv->transientFor = None;
 
-    status = XGetTransientForHint (screen->dpy (),
-				   priv->id, &transientFor);
+    Status status = XGetTransientForHint (screen->dpy (),
+					  priv->id, &transientFor);
 
     if (status)
     {
-	CompWindow *ancestor;
+	CompWindow *ancestor = screen->findWindow (transientFor);
 
-	ancestor = screen->findWindow (transientFor);
 	if (!ancestor)
 	    return;
 
@@ -355,17 +345,17 @@ PrivateWindow::updateTransientHint ()
 void
 PrivateWindow::updateIconGeometry ()
 {
-    Atom	  actual;
-    int		  result, format;
+    Atom          actual;
+    int           format;
     unsigned long n, left;
     unsigned char *data;
 
     priv->iconGeometry.setGeometry (0, 0, 0, 0);
 
-    result = XGetWindowProperty (screen->dpy (), priv->id,
-				 Atoms::wmIconGeometry,
-				 0L, 1024L, False, XA_CARDINAL,
-				 &actual, &format, &n, &left, &data);
+    int result = XGetWindowProperty (screen->dpy (), priv->id,
+				     Atoms::wmIconGeometry,
+				     0L, 1024L, False, XA_CARDINAL,
+				     &actual, &format, &n, &left, &data);
 
     if (result == Success && data)
     {
@@ -389,6 +379,7 @@ PrivateWindow::getClientLeaderOfAncestor ()
     if (transientFor)
     {
 	CompWindow *w = screen->findWindow (transientFor);
+
 	if (w)
 	{
 	    if (w->priv->clientLeader)
@@ -404,15 +395,15 @@ PrivateWindow::getClientLeaderOfAncestor ()
 Window
 PrivateWindow::getClientLeader ()
 {
-    Atom	  actual;
-    int		  result, format;
+    Atom          actual;
+    int           format;
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (screen->dpy (), priv->id,
-				 Atoms::wmClientLeader,
-				 0L, 1L, False, XA_WINDOW, &actual, &format,
-				 &n, &left, &data);
+    int result = XGetWindowProperty (screen->dpy (), priv->id,
+				     Atoms::wmClientLeader,
+				     0L, 1L, False, XA_WINDOW, &actual, &format,
+				     &n, &left, &data);
 
     if (result == Success && data)
     {
@@ -433,17 +424,17 @@ PrivateWindow::getClientLeader ()
 char *
 PrivateWindow::getStartupId ()
 {
-    Atom	  actual;
-    int		  result, format;
+    Atom          actual;
+    int           format;
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (screen->dpy (), priv->id,
-				 Atoms::startupId,
-				 0L, 1024L, False,
-				 Atoms::utf8String,
-				 &actual, &format,
-				 &n, &left, &data);
+    int result = XGetWindowProperty (screen->dpy (), priv->id,
+				     Atoms::startupId,
+				     0L, 1024L, False,
+				     Atoms::utf8String,
+				     &actual, &format,
+				     &n, &left, &data);
 
     if (result == Success && data)
     {
@@ -451,6 +442,7 @@ PrivateWindow::getStartupId ()
 
 	if (n)
 	    id = strdup ((char *) data);
+
 	XFree ((void *) data);
 
 	return id;
@@ -463,14 +455,14 @@ void
 PrivateWindow::setFullscreenMonitors (CompFullscreenMonitorSet *monitors)
 {
     bool         hadFsMonitors = fullscreenMonitorsSet;
-    unsigned int outputs = screen->outputDevs ().size ();
+    unsigned int outputs       = screen->outputDevs ().size ();
 
     fullscreenMonitorsSet = false;
 
-    if (monitors                   &&
-	(unsigned int) monitors->left   < outputs &&
-	(unsigned int) monitors->right  < outputs &&
-	(unsigned int) monitors->top    < outputs &&
+    if (monitors				    &&
+	(unsigned int) monitors->left   < outputs   &&
+	(unsigned int) monitors->right  < outputs   &&
+	(unsigned int) monitors->top    < outputs   &&
 	(unsigned int) monitors->bottom < outputs)
     {
 	CompRect fsRect (screen->outputDevs ()[monitors->left].x1 (),
@@ -499,13 +491,11 @@ PrivateWindow::setFullscreenMonitors (CompFullscreenMonitorSet *monitors)
 			 (unsigned char *) data, 4);
     }
     else if (hadFsMonitors)
-    {
 	XDeleteProperty (screen->dpy (), id, Atoms::wmFullscreenMonitors);
-    }
 
-    if (state & CompWindowStateFullscreenMask)
-	if (fullscreenMonitorsSet || hadFsMonitors)
-	    window->updateAttributes (CompStackingUpdateModeNone);
+    if (state & CompWindowStateFullscreenMask &&
+	(fullscreenMonitorsSet || hadFsMonitors))
+	window->updateAttributes (CompStackingUpdateModeNone);
 }
 
 void
@@ -515,7 +505,7 @@ CompWindow::changeState (unsigned int newState)
 	return;
 
     unsigned int oldState = priv->state;
-    priv->state = newState;
+    priv->state           = newState;
 
     recalcType ();
     recalcActions ();
@@ -537,26 +527,37 @@ setWindowActions (CompScreen   *s,
 
     if (actions & CompWindowActionMoveMask)
 	data[i++] = Atoms::winActionMove;
+
     if (actions & CompWindowActionResizeMask)
 	data[i++] = Atoms::winActionResize;
+
     if (actions & CompWindowActionStickMask)
 	data[i++] = Atoms::winActionStick;
+
     if (actions & CompWindowActionMinimizeMask)
 	data[i++] = Atoms::winActionMinimize;
+
     if (actions & CompWindowActionMaximizeHorzMask)
 	data[i++] = Atoms::winActionMaximizeHorz;
+
     if (actions & CompWindowActionMaximizeVertMask)
 	data[i++] = Atoms::winActionMaximizeVert;
+
     if (actions & CompWindowActionFullscreenMask)
 	data[i++] = Atoms::winActionFullscreen;
+
     if (actions & CompWindowActionCloseMask)
 	data[i++] = Atoms::winActionClose;
+
     if (actions & CompWindowActionShadeMask)
 	data[i++] = Atoms::winActionShade;
+
     if (actions & CompWindowActionChangeDesktopMask)
 	data[i++] = Atoms::winActionChangeDesktop;
+
     if (actions & CompWindowActionAboveMask)
 	data[i++] = Atoms::winActionAbove;
+
     if (actions & CompWindowActionBelowMask)
 	data[i++] = Atoms::winActionBelow;
 
@@ -571,54 +572,58 @@ CompWindow::recalcActions ()
     unsigned int actions = 0;
     unsigned int setActions, clearActions;
 
-    switch (priv->type) {
-    case CompWindowTypeFullscreenMask:
-    case CompWindowTypeNormalMask:
-	actions =
-	    CompWindowActionMaximizeHorzMask |
-	    CompWindowActionMaximizeVertMask |
-	    CompWindowActionFullscreenMask   |
-	    CompWindowActionMoveMask         |
-	    CompWindowActionResizeMask       |
-	    CompWindowActionStickMask        |
-	    CompWindowActionMinimizeMask     |
-	    CompWindowActionCloseMask	     |
-	    CompWindowActionChangeDesktopMask;
-	break;
-    case CompWindowTypeUtilMask:
-    case CompWindowTypeMenuMask:
-    case CompWindowTypeToolbarMask:
-	actions =
-	    CompWindowActionMoveMask   |
-	    CompWindowActionResizeMask |
-	    CompWindowActionStickMask  |
-	    CompWindowActionCloseMask  |
-	    CompWindowActionChangeDesktopMask;
-	break;
-    case CompWindowTypeDialogMask:
-    case CompWindowTypeModalDialogMask:
-	actions =
-	    CompWindowActionMaximizeHorzMask |
-	    CompWindowActionMaximizeVertMask |
-	    CompWindowActionMoveMask         |
-	    CompWindowActionResizeMask       |
-	    CompWindowActionStickMask        |
-	    CompWindowActionCloseMask        |
-	    CompWindowActionChangeDesktopMask;
+    switch (priv->type)
+    {
+	case CompWindowTypeFullscreenMask:
+	case CompWindowTypeNormalMask:
+	    actions =
+		    CompWindowActionMaximizeHorzMask |
+		    CompWindowActionMaximizeVertMask |
+		    CompWindowActionFullscreenMask   |
+		    CompWindowActionMoveMask         |
+		    CompWindowActionResizeMask       |
+		    CompWindowActionStickMask        |
+		    CompWindowActionMinimizeMask     |
+		    CompWindowActionCloseMask        |
+		    CompWindowActionChangeDesktopMask;
+	    break;
 
-	/* allow minimization for dialog windows if they
-	   a) are not a transient (transients can be minimized
-	      with their parent)
-	   b) don't have the skip taskbar hint set (as those
-	      have no target to be minimized to)
-	*/
-	if (!priv->transientFor &&
-	    !(priv->state & CompWindowStateSkipTaskbarMask))
-	{
-	    actions |= CompWindowActionMinimizeMask;
-	}
-    default:
-	break;
+	case CompWindowTypeUtilMask:
+	case CompWindowTypeMenuMask:
+	case CompWindowTypeToolbarMask:
+	    actions =
+		    CompWindowActionMoveMask   |
+		    CompWindowActionResizeMask |
+		    CompWindowActionStickMask  |
+		    CompWindowActionCloseMask  |
+		    CompWindowActionChangeDesktopMask;
+	    break;
+
+	case CompWindowTypeDialogMask:
+	case CompWindowTypeModalDialogMask:
+	    actions =
+		    CompWindowActionMaximizeHorzMask |
+		    CompWindowActionMaximizeVertMask |
+		    CompWindowActionMoveMask         |
+		    CompWindowActionResizeMask       |
+		    CompWindowActionStickMask        |
+		    CompWindowActionCloseMask        |
+		    CompWindowActionChangeDesktopMask;
+
+	/* allow minimization for dialog windows if they:
+	 * a) are not a transient (transients can be minimized
+	 *    with their parent)
+	 * b) don't have the skip taskbar hint set (as those
+	 *    have no target to be minimized to)
+	 */
+	    if (!priv->transientFor &&
+		!(priv->state & CompWindowStateSkipTaskbarMask))
+		actions |= CompWindowActionMinimizeMask;
+
+	    break;
+
+	default:
+	    break;
     }
 
     if (priv->serverInput.top)
@@ -626,10 +631,13 @@ CompWindow::recalcActions ()
 
     actions |= (CompWindowActionAboveMask | CompWindowActionBelowMask);
 
-    switch (priv->wmType) {
+    switch (priv->wmType)
+    {
     case CompWindowTypeNormalMask:
 	actions |= CompWindowActionFullscreenMask |
 	           CompWindowActionMinimizeMask;
+	break;
+
     default:
 	break;
     }
@@ -650,13 +658,13 @@ CompWindow::recalcActions ()
 
     foreach (CompOutput &o, screen->outputDevs ())
     {
-	if (o.width () >= (priv->sizeHints.min_width + priv->border.left + priv->border.right))
+	if (o.width ()  >= (priv->sizeHints.min_width + priv->border.left + priv->border.right))
 	    foundHorz = true;
 	if (o.height () >= (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
 	    foundVert = true;
 
 	/* Fullscreen windows don't need to fit borders... */
-	if (o.width () >= priv->sizeHints.min_width &&
+	if (o.width ()  >= priv->sizeHints.min_width &&
 	    o.height () >= priv->sizeHints.min_height)
 	    foundFull = true;
     }
@@ -777,9 +785,7 @@ PrivateWindow::windowTypeFromString (const char *str)
 void
 CompWindow::recalcType ()
 {
-    unsigned int type;
-
-    type = priv->wmType;
+    unsigned int type = priv->wmType;
 
     if (!overrideRedirect () && priv->wmType == CompWindowTypeUnknownMask)
 	type = CompWindowTypeNormalMask;
@@ -787,23 +793,17 @@ CompWindow::recalcType ()
     if (priv->state & CompWindowStateFullscreenMask)
 	type = CompWindowTypeFullscreenMask;
 
-    if (type == CompWindowTypeNormalMask)
-    {
-	if (priv->transientFor)
-	    type = CompWindowTypeDialogMask;
-    }
+    if (type == CompWindowTypeNormalMask &&
+	priv->transientFor)
+	type = CompWindowTypeDialogMask;
 
     if (type == CompWindowTypeDockMask &&
 	(priv->state & CompWindowStateBelowMask))
-    {
 	type = CompWindowTypeNormalMask;
-    }
 
     if ((type & (CompWindowTypeNormalMask | CompWindowTypeDialogMask)) &&
 	(priv->state & CompWindowStateModalMask))
-    {
 	type = CompWindowTypeModalDialogMask;
-    }
 
     priv->type = type;
 }
@@ -814,13 +814,13 @@ PrivateWindow::updateFrameWindow ()
     if (!serverFrame)
 	return false;
 
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    XWindowChanges xwc       = XWINDOWCHANGES_INIT;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
 
-    xwc.x = serverGeometry.x ();
-    xwc.y = serverGeometry.y ();
-    xwc.width = serverGeometry.width ();
-    xwc.height = serverGeometry.height ();
+    xwc.x            = serverGeometry.x ();
+    xwc.y            = serverGeometry.y ();
+    xwc.width        = serverGeometry.width ();
+    xwc.height       = serverGeometry.height ();
     xwc.border_width = serverGeometry.border ();
 
     window->configureXWindow (valueMask, &xwc);
@@ -829,8 +829,6 @@ PrivateWindow::updateFrameWindow ()
 
     return true;
 }
-
-
 
 void
 CompWindow::updateWindowOutputExtents ()
@@ -862,13 +860,15 @@ CompWindow::getOutputExtents (CompWindowExtents& output)
 }
 
 CompRegion
-PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
+PrivateWindow::rectsToRegion (unsigned int n,
+			      XRectangle   *rects)
 {
-    CompRegion ret;
-    int        x1, x2, y1, y2;
-    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
+    CompRegion                 ret;
+    int                        x1, x2, y1, y2;
+    const CompWindow::Geometry &geom = attrib.override_redirect ?
+					   priv->geometry : priv->serverGeometry;
 
-    for (unsigned int i = 0; i < n; i++)
+    for (unsigned int i = 0; i < n; ++i)
     {
 	x1 = rects[i].x + geom.border ();
 	y1 = rects[i].y + geom.border ();
@@ -877,10 +877,13 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 
 	if (x1 < 0)
 	    x1 = 0;
+
 	if (y1 < 0)
 	    y1 = 0;
+
 	if (x2 > geom.width ())
 	    x2 = geom.width ();
+
 	if (y2 > geom.height ())
 	    y2 = geom.height ();
 
@@ -906,10 +909,11 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 void
 PrivateWindow::updateRegion ()
 {
-    XRectangle r, *boundingShapeRects = NULL;
-    XRectangle *inputShapeRects = NULL;
-    int	       nBounding = 0, nInput = 0;
-    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
+    XRectangle                 r, *boundingShapeRects = NULL;
+    XRectangle                 *inputShapeRects       = NULL;
+    int                        nBounding = 0, nInput  = 0;
+    const CompWindow::Geometry &geom = attrib.override_redirect ?
+					   priv->geometry : priv->serverGeometry;
 
     priv->region = priv->inputRegion = emptyRegion;
 
@@ -939,17 +943,18 @@ PrivateWindow::updateRegion ()
     else
     {
 	boundingShapeRects = &r;
-	nBounding = 1;
+	nBounding          = 1;
 
-	inputShapeRects = &r;
-	nInput = 1;
+	inputShapeRects    = &r;
+	nInput             = 1;
     }
 
-    priv->region += rectsToRegion (nBounding, boundingShapeRects);
+    priv->region      += rectsToRegion (nBounding, boundingShapeRects);
     priv->inputRegion += rectsToRegion (nInput, inputShapeRects);
 
     if (boundingShapeRects && boundingShapeRects != &r)
 	XFree (boundingShapeRects);
+
     if (inputShapeRects && inputShapeRects != &r)
 	XFree (inputShapeRects);
 
@@ -959,11 +964,11 @@ PrivateWindow::updateRegion ()
 bool
 CompWindow::updateStruts ()
 {
-    Atom	  actual;
-    int		  result, format;
+    Atom          actual;
+    int           format;
     unsigned long n, left;
     unsigned char *data;
-    bool	  hasOld, hasNew;
+    bool          hasOld;
     CompStruts    oldStrut, newStrut;
 
     if (priv->struts)
@@ -976,36 +981,34 @@ CompWindow::updateStruts ()
 	oldStrut.bottom = priv->struts->bottom;
     }
     else
-    {
 	hasOld = false;
-    }
 
-    hasNew = false;
+    bool hasNew = false;
 
-    newStrut.left.x	    = 0;
-    newStrut.left.y	    = 0;
-    newStrut.left.width  = 0;
-    newStrut.left.height = screen->height ();
+    newStrut.left.x        = 0;
+    newStrut.left.y        = 0;
+    newStrut.left.width    = 0;
+    newStrut.left.height   = screen->height ();
 
-    newStrut.right.x      = screen->width ();
-    newStrut.right.y      = 0;
-    newStrut.right.width  = 0;
-    newStrut.right.height = screen->height ();
+    newStrut.right.x       = screen->width ();
+    newStrut.right.y       = 0;
+    newStrut.right.width   = 0;
+    newStrut.right.height  = screen->height ();
 
-    newStrut.top.x	   = 0;
-    newStrut.top.y	   = 0;
-    newStrut.top.width  = screen->width ();
-    newStrut.top.height = 0;
+    newStrut.top.x         = 0;
+    newStrut.top.y         = 0;
+    newStrut.top.width     = screen->width ();
+    newStrut.top.height    = 0;
 
     newStrut.bottom.x      = 0;
     newStrut.bottom.y      = screen->height ();
     newStrut.bottom.width  = screen->width ();
     newStrut.bottom.height = 0;
 
-    result = XGetWindowProperty (screen->dpy (), priv->id,
-				 Atoms::wmStrutPartial,
-				 0L, 12L, false, XA_CARDINAL, &actual, &format,
-				 &n, &left, &data);
+    int result = XGetWindowProperty (screen->dpy (), priv->id,
+				     Atoms::wmStrutPartial,
+				     0L, 12L, false, XA_CARDINAL, &actual, &format,
+				     &n, &left, &data);
 
     if (result == Success && data)
     {
@@ -1075,8 +1078,7 @@ CompWindow::updateStruts ()
 	int x1, y1, x2, y2;
 
 	/* applications expect us to clip struts to xinerama edges */
-	for (unsigned int i = 0;
-	     i < screen->screenInfo ().size (); i++)
+	for (unsigned int i = 0; i < screen->screenInfo ().size (); ++i)
 	{
 	    x1 = screen->screenInfo ()[i].x_org;
 	    y1 = screen->screenInfo ()[i].y_org;
@@ -1134,14 +1136,14 @@ CompWindow::updateStruts ()
     }
 
     if (hasOld != hasNew ||
-	(hasNew && hasOld &&
-	 memcmp (&newStrut, &oldStrut, sizeof (CompStruts))))
+	(hasNew && hasOld && memcmp (&newStrut, &oldStrut, sizeof (CompStruts))))
     {
 	if (hasNew)
 	{
 	    if (!priv->struts)
 	    {
 		priv->struts = (CompStruts *) malloc (sizeof (CompStruts));
+
 		if (!priv->struts)
 		    return false;
 	    }
@@ -1163,7 +1165,7 @@ CompWindow::updateStruts ()
 void
 CompWindow::incrementDestroyReference ()
 {
-    priv->destroyRefCnt++;
+    ++priv->destroyRefCnt;
 }
 
 void
@@ -1171,7 +1173,6 @@ CompWindow::destroy ()
 {
     if (priv->id)
     {
-	CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
 	StackDebugger *dbg = StackDebugger::Default ();
 
 	windowNotify (CompWindowNotifyBeforeDestroy);
@@ -1183,10 +1184,10 @@ CompWindow::destroy ()
 	if (priv->wrapper)
 	    XUnmapWindow (screen->dpy (), priv->wrapper);
 
-	oldServerNext = serverNext;
-	oldServerPrev = serverPrev;
-	oldNext = next;
-	oldPrev = prev;
+	CompWindow *oldServerNext = serverNext;
+	CompWindow *oldServerPrev = serverPrev;
+	CompWindow *oldNext       = next;
+	CompWindow *oldPrev       = prev;
 
 	/* This is where things get tricky ... it is possible
 	 * to receive a ConfigureNotify relative to a frame window
@@ -1237,8 +1238,8 @@ CompWindow::destroy ()
 	 * linked list links but we don't want that so don't
 	 * do that */
 
-	next = oldNext;
-	prev = oldPrev;
+	next       = oldNext;
+	prev       = oldPrev;
 	serverNext = oldServerNext;
 	serverPrev = oldServerPrev;
 
@@ -1247,14 +1248,15 @@ CompWindow::destroy ()
 	/* We must set the xid of this window
 	 * to zero as it no longer references
 	 * a valid window */
-	priv->mapNum = 0;
-	priv->id = 0;
-	priv->frame = 0;
+	priv->mapNum      = 0;
+	priv->id          = 0;
+	priv->frame       = 0;
 	priv->serverFrame = 0;
-	priv->managed    = false;
+	priv->managed     = false;
     }
 
-    priv->destroyRefCnt--;
+    --priv->destroyRefCnt;
+
     if (priv->destroyRefCnt)
 	return;
 
@@ -1283,11 +1285,11 @@ CompWindow::sendConfigureNotify ()
     xev.event  = priv->id;
     xev.window = priv->id;
 
-    xev.x	     = priv->serverGeometry.x ();
-    xev.y	     = priv->serverGeometry.y ();
-    xev.width	     = priv->serverGeometry.width ();
-    xev.height	     = priv->serverGeometry.height ();
-    xev.border_width = priv->serverGeometry.border ();
+    xev.x                 = priv->serverGeometry.x ();
+    xev.y                 = priv->serverGeometry.y ();
+    xev.width             = priv->serverGeometry.width ();
+    xev.height            = priv->serverGeometry.height ();
+    xev.border_width      = priv->serverGeometry.border ();
     xev.override_redirect = priv->attrib.override_redirect;
 
     /* These used to be based on the actual sibling of the window
@@ -1353,7 +1355,7 @@ CompWindow::map ()
 	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
 
-	priv->lastPong = screen->lastPing ();
+	priv->lastPong   = screen->lastPing ();
 
 	priv->updateRegion ();
 	priv->updateSize ();
@@ -1369,15 +1371,12 @@ CompWindow::map ()
 	    sendConfigureNotify ();
 	}
 
-	if (!overrideRedirect ())
-	{
-	    /* been shaded */
-	    if (priv->shaded)
+	if (!overrideRedirect () &&
+	    priv->shaded) // been shaded
 	    {
 		priv->shaded = false;
 		priv->updateFrameWindow ();
 	    }
-	}
     }
 
     windowNotify (CompWindowNotifyMap);
@@ -1389,7 +1388,7 @@ CompWindow::map ()
 void
 CompWindow::incrementUnmapReference ()
 {
-    priv->unmapRefCnt++;
+    ++priv->unmapRefCnt;
 }
 
 void
@@ -1411,21 +1410,22 @@ CompWindow::unmap ()
     if (!priv->shaded)
 	XUnmapWindow (screen->dpy (), priv->serverFrame);
 
-    priv->unmapRefCnt--;
+    --priv->unmapRefCnt;
+
     if (priv->unmapRefCnt > 0)
 	return;
 
     if (priv->unmanaging)
     {
-	XWindowChanges xwc = XWINDOWCHANGES_INIT;
+	XWindowChanges xwc     = XWINDOWCHANGES_INIT;
 	unsigned int   xwcm;
-	int		   gravity = priv->sizeHints.win_gravity;
+	int            gravity = priv->sizeHints.win_gravity;
 
 	/* revert gravity adjustment made at MapNotify time */
-	xwc.x	= priv->serverGeometry.x ();
-	xwc.y	= priv->serverGeometry.y ();
-	xwc.width   = 0;
-	xwc.height  = 0;
+	xwc.x      = priv->serverGeometry.x ();
+	xwc.y      = priv->serverGeometry.y ();
+	xwc.width  = 0;
+	xwc.height = 0;
 
 	xwcm = priv->adjustConfigureRequestForGravity (&xwc,
 						       CWX | CWY,
@@ -1450,7 +1450,7 @@ CompWindow::unmap ()
 	screen->decrementDesktopWindowCount();
 
     priv->attrib.map_state = IsUnmapped;
-    priv->invisible = true;
+    priv->invisible        = true;
 
     if (priv->shaded)
 	priv->updateFrameWindow ();
@@ -1487,9 +1487,7 @@ PrivateWindow::restack (Window aboveId)
 	return false;
 
     if (aboveId && !screen->findTopLevelWindow (aboveId, true))
-    {
-        return false;
-    }
+	return false;
 
     screen->unhookWindow (window);
     screen->insertWindow (window, aboveId);
@@ -1525,11 +1523,11 @@ CompWindow::resize (XWindowAttributes attr)
 }
 
 bool
-CompWindow::resize (int          x,
-		    int          y,
-		    int          width,
-		    int          height,
-		    int          border)
+CompWindow::resize (int x,
+		    int y,
+		    int width,
+		    int height,
+		    int border)
 {
     return resize (Geometry (x, y, width, height, border));
 }
@@ -1552,12 +1550,10 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 	priv->geometry.height ()  != gm.height () ||
 	priv->geometry.border ()  != gm.border ())
     {
-	int dx, dy, dwidth, dheight;
-
-	dx      = gm.x () - priv->geometry.x ();
-	dy      = gm.y () - priv->geometry.y ();
-	dwidth  = gm.width () - priv->geometry.width ();
-	dheight = gm.height () - priv->geometry.height ();
+	int dx      = gm.x () - priv->geometry.x ();
+	int dy      = gm.y () - priv->geometry.y ();
+	int dwidth  = gm.width ()  - priv->geometry.width ();
+	int dheight = gm.height () - priv->geometry.height ();
 
 	priv->geometry.set (gm.x (), gm.y (),
 			    gm.width (), gm.height (),
@@ -1567,7 +1563,7 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 
 	if (priv->attrib.override_redirect)
 	{
-	    priv->serverGeometry = priv->geometry;
+	    priv->serverGeometry      = priv->geometry;
 	    priv->serverFrameGeometry = priv->frameGeometry;
 
 	    if (priv->mapNum)
@@ -1576,11 +1572,10 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 	    window->resizeNotify (dx, dy, dwidth, dheight);
 	}
     }
-    else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
-    {
+    else if (priv->geometry.x () != gm.x () ||
+	     priv->geometry.y () != gm.y ())
 	move (gm.x () - priv->geometry.x (),
 	      gm.y () - priv->geometry.y (), true);
-    }
 
     return true;
 }
@@ -1593,11 +1588,11 @@ PrivateWindow::resize (const XWindowAttributes &attr)
 }
 
 bool
-PrivateWindow::resize (int          x,
-		       int          y,
-		       int          width,
-		       int          height,
-		       int          border)
+PrivateWindow::resize (int x,
+		       int y,
+		       int width,
+		       int height,
+		       int border)
 {
     return resize (CompWindow::Geometry (x, y, width, height, border));
 }
@@ -1605,13 +1600,13 @@ PrivateWindow::resize (int          x,
 bool
 CompWindow::resize (CompWindow::Geometry gm)
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    XWindowChanges xwc       = XWINDOWCHANGES_INIT;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
 
-    xwc.x = gm.x ();
-    xwc.y = gm.y ();
-    xwc.width = gm.width ();
-    xwc.height = gm.height ();
+    xwc.x            = gm.x ();
+    xwc.y            = gm.y ();
+    xwc.width        = gm.width ();
+    xwc.height       = gm.height ();
     xwc.border_width = gm.border ();
 
     configureXWindow (valueMask, &xwc);
@@ -1623,7 +1618,7 @@ static void
 syncValueIncrement (XSyncValue *value)
 {
     XSyncValue one;
-    int	       overflow;
+    int        overflow;
 
     XSyncIntToValue (&one, 1);
     XSyncValueAdd (value, *value, one, &overflow);
@@ -1632,22 +1627,21 @@ syncValueIncrement (XSyncValue *value)
 bool
 PrivateWindow::initializeSyncCounter ()
 {
-    XSyncAlarmAttributes values;
-    Atom		 actual;
-    int			 result, format;
-    unsigned long	 n, left;
-    unsigned char	 *data;
-
     if (syncCounter)
 	return syncAlarm != None;
 
     if (!(protocols & CompWindowProtocolSyncRequestMask))
 	return false;
 
-    result = XGetWindowProperty (screen->dpy (), id,
-				 Atoms::wmSyncRequestCounter,
-				 0L, 1L, false, XA_CARDINAL, &actual, &format,
-				 &n, &left, &data);
+    Atom          actual;
+    int           format;
+    unsigned long n, left;
+    unsigned char *data;
+
+    int result = XGetWindowProperty (screen->dpy (), id,
+				     Atoms::wmSyncRequestCounter,
+				     0L, 1L, false, XA_CARDINAL, &actual, &format,
+				     &n, &left, &data);
 
     if (result == Success && n && data)
     {
@@ -1664,7 +1658,9 @@ PrivateWindow::initializeSyncCounter ()
 
 	syncValueIncrement (&syncValue);
 
-	values.events = true;
+	XSyncAlarmAttributes values;
+
+	values.events             = true;
 
 	values.trigger.counter    = syncCounter;
 	values.trigger.wait_value = syncValue;
@@ -1698,9 +1694,7 @@ PrivateWindow::initializeSyncCounter ()
 	syncAlarm = None;
     }
     else if (result == Success && data)
-    {
 	XFree (data);
-    }
 
     return false;
 }
@@ -1708,18 +1702,16 @@ PrivateWindow::initializeSyncCounter ()
 void
 CompWindow::sendSyncRequest ()
 {
-    if (priv->syncWait)
-	return;
-
-    if (!priv->initializeSyncCounter ())
+    if (priv->syncWait ||
+	!priv->initializeSyncCounter ())
 	return;
 
     XClientMessageEvent xev;
 
-    xev.type	     = ClientMessage;
-    xev.window	     = priv->id;
+    xev.type         = ClientMessage;
+    xev.window       = priv->id;
     xev.message_type = Atoms::wmProtocols;
-    xev.format	     = 32;
+    xev.format       = 32;
     xev.data.l[0]    = Atoms::wmSyncRequest;
     xev.data.l[1]    = CurrentTime;
     xev.data.l[2]    = XSyncValueLow32 (priv->syncValue);
@@ -1766,11 +1758,8 @@ PrivateWindow::configure (XConfigureEvent *ce)
 	if (ROOTPARENT (window->prev) != ce->above)
 	    valueMask |= CWSibling | CWStackMode;
     }
-    else
-    {
-	if (ce->above != 0)
-	    valueMask |= CWSibling | CWStackMode;
-    }
+    else if (ce->above != 0)
+	valueMask |= CWSibling | CWStackMode;
 
     priv->attrib.override_redirect = ce->override_redirect;
 
@@ -1781,9 +1770,7 @@ PrivateWindow::configure (XConfigureEvent *ce)
 	priv->syncGeometry.set (ce->x, ce->y, ce->width, ce->height,
 				ce->border_width);
     else
-    {
 	resize (ce->x, ce->y, ce->width, ce->height, ce->border_width);
-    }
 
     if (ce->event == screen->root ())
 	priv->restack (ce->above);
@@ -1795,8 +1782,8 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     if (!priv->frame)
 	return;
 
-    int x, y, width, height;
-    CompWindow	     *above;
+    int              height;
+    CompWindow       *above;
     unsigned int     valueMask = 0;
 
     /* remove configure event from pending configures */
@@ -1820,11 +1807,8 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 	if (ROOTPARENT (window->prev) != ce->above)
 	    valueMask |= CWSibling | CWStackMode;
     }
-    else
-    {
-	if (ce->above != 0)
-	    valueMask |= CWSibling | CWStackMode;
-    }
+    else if (ce->above != 0)
+	valueMask |= CWSibling | CWStackMode;
 
     if (!pendingConfigures.match ((XEvent *) ce))
     {
@@ -1843,22 +1827,24 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
      * re-sync the input extents and extents last
      * sent to server on resize () */
 
-    x      = ce->x + priv->serverInput.left;
-    y      = ce->y + priv->serverInput.top;
-    width  = ce->width - priv->serverGeometry.border () * 2 - priv->serverInput.left - priv->serverInput.right;
+    int x      = ce->x + priv->serverInput.left;
+    int y      = ce->y + priv->serverInput.top;
+    int width  = ce->width - priv->serverGeometry.border () * 2 -
+		 priv->serverInput.left - priv->serverInput.right;
 
     /* Don't use the server side frame geometry
      * to determine the geometry of shaded
      * windows since we didn't resize them
      * on configureXWindow */
     if (priv->shaded)
-	height = priv->serverGeometry.heightIncBorders () - priv->serverInput.top - priv->serverInput.bottom;
+	height = priv->serverGeometry.heightIncBorders () -
+		 priv->serverInput.top - priv->serverInput.bottom;
     else
-	height = ce->height + priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+	height = ce->height + priv->serverGeometry.border () * 2 -
+		 priv->serverInput.top - priv->serverInput.bottom;
 
     /* set the frame geometry */
     priv->frameGeometry.set (ce->x, ce->y, ce->width, ce->height, ce->border_width);
-
 
     if (priv->syncWait)
 	priv->syncGeometry.set (x, y, width, height, ce->border_width);
@@ -1897,7 +1883,7 @@ CompWindow::move (int  dx,
 {
     if (dx || dy)
     {
-	XWindowChanges xwc = XWINDOWCHANGES_INIT;
+	XWindowChanges xwc       = XWINDOWCHANGES_INIT;
 	unsigned int   valueMask = CWX | CWY;
 
 	xwc.x = priv->serverGeometry.x () + dx;
@@ -1927,6 +1913,7 @@ PrivateWindow::move (int dx,
 	    priv->serverFrameGeometry = priv->frameGeometry;
 	    priv->region.translate (dx, dy);
 	    priv->inputRegion.translate (dx, dy);
+
 	    if (!priv->frameRegion.isEmpty ())
 		priv->frameRegion.translate (dx, dy);
 
@@ -1997,10 +1984,8 @@ bool
 compiz::X11::PendingEventQueue::forEachIf (boost::function<bool (compiz::X11::PendingEvent::Ptr)> f)
 {
     foreach (compiz::X11::PendingEvent::Ptr p, mEvents)
-    {
 	if (f (p))
 	    return true;
-    }
 
     return false;
 }
@@ -2035,9 +2020,8 @@ compiz::X11::PendingEvent::getEventWindow (XEvent *event)
 bool
 compiz::X11::PendingEvent::match (XEvent *event)
 {
-    if (event->xany.serial != mSerial)
-	return false;
-    if (getEventWindow (event)!= mWindow)
+    if (event->xany.serial != mSerial ||
+	getEventWindow (event)!= mWindow)
 	return false;
 
     return true;
@@ -2068,33 +2052,18 @@ compiz::X11::PendingConfigureEvent::matchVM (unsigned int valueMask)
 }
 
 bool
-compiz::X11::PendingConfigureEvent::matchRequest (XWindowChanges &xwc, unsigned int valueMask)
+compiz::X11::PendingConfigureEvent::matchRequest (XWindowChanges &xwc,
+						  unsigned int   valueMask)
 {
     if (matchVM (valueMask))
     {
-	if (valueMask & CWX)
-	    if (xwc.x != mXwc.x)
-		return false;
-
-	if (valueMask & CWY)
-	    if (xwc.y != mXwc.y)
-		return false;
-
-	if (valueMask & CWWidth)
-	    if (xwc.width != mXwc.width)
-		return false;
-
-	if (valueMask & CWHeight)
-	    if (xwc.height != mXwc.height)
-		return false;
-
-	if (valueMask & CWBorderWidth)
-	    if (xwc.border_width != mXwc.border_width)
-		return false;
-
-	if (valueMask & (CWStackMode | CWSibling))
-	    if (xwc.sibling != mXwc.sibling)
-		return false;
+	if ((valueMask & CWX                       && xwc.x            != mXwc.x)		||
+	    (valueMask & CWY                       && xwc.y            != mXwc.y)		||
+	    (valueMask & CWWidth                   && xwc.width        != mXwc.width)		||
+	    (valueMask & CWHeight                  && xwc.height       != mXwc.height)		||
+	    (valueMask & CWBorderWidth             && xwc.border_width != mXwc.border_width)	||
+	    (valueMask & (CWStackMode | CWSibling) && xwc.sibling      != mXwc.sibling))
+	    return false;
 
 	return true;
     }
@@ -2105,20 +2074,20 @@ compiz::X11::PendingConfigureEvent::matchRequest (XWindowChanges &xwc, unsigned 
 bool
 compiz::X11::PendingConfigureEvent::match (XEvent *event)
 {
-    XConfigureEvent *ce = (XConfigureEvent *) event;
-    bool matched = true;
+    XConfigureEvent *ce     = (XConfigureEvent *) event;
+    bool            matched = true;
 
     if (!compiz::X11::PendingEvent::match (event))
 	return false;
 
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
-    xwc.x = ce->x;
-    xwc.y = ce->y;
-    xwc.width = ce->width;
-    xwc.height = ce->height;
+    xwc.x            = ce->x;
+    xwc.y            = ce->y;
+    xwc.width        = ce->width;
+    xwc.height       = ce->height;
     xwc.border_width = ce->border_width;
-    xwc.sibling = ce->above;
+    xwc.sibling      = ce->above;
 
     matched = matchRequest (xwc, mValueMask);
 
@@ -2130,16 +2099,22 @@ compiz::X11::PendingConfigureEvent::match (XEvent *event)
     {
 	compLogMessage ("core", CompLogLevelWarn, "no exact match for ConfigureNotify on 0x%x!", mWindow);
 	compLogMessage ("core", CompLogLevelWarn, "expected the following changes:");
+
 	if (mValueMask & CWX)
 	    compLogMessage ("core", CompLogLevelWarn, "x: %i", mXwc.x);
+
 	if (mValueMask & CWY)
 	    compLogMessage ("core", CompLogLevelWarn, "y: %i", mXwc.y);
+
 	if (mValueMask & CWWidth)
 	    compLogMessage ("core", CompLogLevelWarn, "width: %i", mXwc.width);
+
 	if (mValueMask & CWHeight)
 	    compLogMessage ("core", CompLogLevelWarn, "height: %i", mXwc.height);
+
 	if (mValueMask & CWBorderWidth)
 	    compLogMessage ("core", CompLogLevelWarn, "border: %i", mXwc.border_width);
+
 	if (mValueMask & (CWStackMode | CWSibling))
 	    compLogMessage ("core", CompLogLevelWarn, "sibling: 0x%x", mXwc.sibling);
 
@@ -2156,9 +2131,9 @@ compiz::X11::PendingConfigureEvent::match (XEvent *event)
     return true;
 }
 
-compiz::X11::PendingConfigureEvent::PendingConfigureEvent (Display *d,
-							   Window   w,
-							   unsigned int valueMask,
+compiz::X11::PendingConfigureEvent::PendingConfigureEvent (Display        *d,
+							   Window         w,
+							   unsigned int   valueMask,
 							   XWindowChanges *xwc) :
     compiz::X11::PendingEvent::PendingEvent (d, w),
     mValueMask (valueMask),
@@ -2175,24 +2150,15 @@ CompWindow::focus ()
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, focus)
 
-    if (overrideRedirect ())
-	return false;
-
-    if (!priv->managed || priv->unmanaging)
-	return false;
-
-    if (!onCurrentDesktop ())
-	return false;
-
-    if (priv->destroyed)
-	return false;
-
-    if (!priv->shaded && (priv->state & CompWindowStateHiddenMask))
-	return false;
-
-    if (priv->serverGeometry.x () + priv->serverGeometry.width ()  <= 0	||
+    if (overrideRedirect ()						||
+	!priv->managed							||
+	priv->unmanaging						||
+	!onCurrentDesktop ()						||
+	priv->destroyed							||
+	(!priv->shaded && (priv->state & CompWindowStateHiddenMask))	||
+	priv->serverGeometry.x () + priv->serverGeometry.width ()  <= 0	||
 	priv->serverGeometry.y () + priv->serverGeometry.height () <= 0	||
-	priv->serverGeometry.x () >= (int) screen->width ()||
+	priv->serverGeometry.x () >= (int) screen->width ()		||
 	priv->serverGeometry.y () >= (int) screen->height ())
 	return false;
 
@@ -2213,22 +2179,18 @@ CompWindow::validateResizeRequest (unsigned int   &mask,
 {
     WRAPABLE_HND_FUNCTN (validateResizeRequest, mask, xwc, source)
 
-    if (!(priv->type & (CompWindowTypeDockMask    |
-		     CompWindowTypeFullscreenMask |
-		     CompWindowTypeUnknownMask)))
+	if (!(priv->type & (CompWindowTypeDockMask       |
+			    CompWindowTypeFullscreenMask |
+			    CompWindowTypeUnknownMask)))
     {
 	if (mask & CWY)
 	{
-	    int min, max;
-
-	    min = screen->workArea ().y () + priv->input.top;
-	    max = screen->workArea ().bottom ();
+	    int min = screen->workArea ().y () + priv->input.top;
+	    int max = screen->workArea ().bottom ();
 
 	    if (priv->state & CompWindowStateStickyMask &&
-	    	 (xwc->y < min || xwc->y > max))
-	    {
+		(xwc->y < min || xwc->y > max))
 		xwc->y = priv->serverGeometry.y ();
-	    }
 	    else
 	    {
 		min -= screen->vp ().y () * screen->height ();
@@ -2244,16 +2206,12 @@ CompWindow::validateResizeRequest (unsigned int   &mask,
 
 	if (mask & CWX)
 	{
-	    int min, max;
-
-	    min = screen->workArea ().x () + priv->input.left;
-	    max = screen->workArea ().right ();
+	    int min = screen->workArea ().x () + priv->input.left;
+	    int max = screen->workArea ().right ();
 
 	    if (priv->state & CompWindowStateStickyMask &&
 		(xwc->x < min || xwc->x > max))
-	    {
 		xwc->x = priv->serverGeometry.x ();
-	    }
 	    else
 	    {
 		min -= screen->vp ().x () * screen->width ();
@@ -2287,8 +2245,8 @@ CompWindow::windowNotify (CompWindowNotify n)
     WRAPABLE_HND_FUNCTN (windowNotify, n)
 
 void
-CompWindow::grabNotify (int	     x,
-			int	     y,
+CompWindow::grabNotify (int          x,
+			int          y,
 			unsigned int state,
 			unsigned int mask)
 {
@@ -2312,15 +2270,14 @@ CompWindow::stateChangeNotify (unsigned int lastState)
     if (!(lastState & CompWindowStateStickyMask) &&
 	(priv->state & CompWindowStateStickyMask))
     {
-	CompPoint vp;   /* index of the window's vp */
-
 	/* Find which viewport the window falls in,
 	   and check if it's the current viewport */
-	vp = defaultViewport ();
+	CompPoint vp = defaultViewport (); /* index of the window's vp */
+
 	if (screen->vp () != vp)
 	{
 	    unsigned int valueMask = CWX | CWY;
-	    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+	    XWindowChanges xwc     = XWINDOWCHANGES_INIT;
 
 	    xwc.x = serverGeometry ().x () +  (screen->vp ().x () - vp.x ()) * screen->width ();
 	    xwc.y = serverGeometry ().y () +  (screen->vp ().y () - vp.y ()) * screen->height ();
@@ -2330,25 +2287,20 @@ CompWindow::stateChangeNotify (unsigned int lastState)
     }
 }
 
-
 bool
 PrivateWindow::isGroupTransient (Window clientLeader)
 {
     if (!clientLeader)
 	return false;
 
-    if (transientFor == None || transientFor == screen->root ())
-    {
-	if (type & (CompWindowTypeUtilMask    |
-		    CompWindowTypeToolbarMask |
-		    CompWindowTypeMenuMask    |
-		    CompWindowTypeDialogMask  |
-		    CompWindowTypeModalDialogMask))
-	{
-	    if (this->clientLeader == clientLeader)
-		return true;
-	}
-    }
+	if ((transientFor == None || transientFor == screen->root ())	&&
+	    (type & (CompWindowTypeUtilMask    |
+		     CompWindowTypeToolbarMask |
+		     CompWindowTypeMenuMask    |
+		     CompWindowTypeDialogMask  |
+		     CompWindowTypeModalDialogMask)			&&
+	    this->clientLeader == clientLeader))
+	return true;
 
     return false;
 }
@@ -2366,13 +2318,11 @@ PrivateWindow::getModalTransient ()
 	    continue;
 
 	if (w->priv->transientFor == modalTransient->priv->id)
-	{
 	    if (w->priv->state & CompWindowStateModalMask)
 	    {
 		modalTransient = w;
-		w = screen->windows ().back ();
+		w              = screen->windows ().back ();
 	    }
-	}
     }
 
     if (modalTransient == window)
@@ -2384,23 +2334,21 @@ PrivateWindow::getModalTransient ()
 
 	for (w = screen->windows ().back (); w; w = w->prev)
 	{
-	    if (w == modalTransient || w->priv->mapNum == 0)
+	    if (w == modalTransient	||
+		w->priv->mapNum == 0	||
+		isAncestorTo (modalTransient, w))
 		continue;
 
-	    if (isAncestorTo (modalTransient, w))
-		continue;
-
-	    if (w->priv->isGroupTransient (modalTransient->priv->clientLeader))
+	    if (w->priv->isGroupTransient (modalTransient->priv->clientLeader) &&
+		w->priv->state & CompWindowStateModalMask)
 	    {
-		if (w->priv->state & CompWindowStateModalMask)
-		{
-		    modalTransient = w;
-		    w = w->priv->getModalTransient ();
-		    if (w)
-			modalTransient = w;
+		modalTransient = w;
+		w              = w->priv->getModalTransient ();
 
-		    break;
-		}
+		if (w)
+		    modalTransient = w;
+
+		break;
 	    }
 	}
     }
@@ -2414,10 +2362,9 @@ PrivateWindow::getModalTransient ()
 void
 CompWindow::moveInputFocusTo ()
 {
-    CompScreen  *s = screen;
-    CompWindow  *modalTransient;
+    CompScreen  *s              = screen;
+    CompWindow  *modalTransient = priv->getModalTransient ();
 
-    modalTransient = priv->getModalTransient ();
     if (modalTransient)
 	return modalTransient->moveInputFocusTo ();
 
@@ -2451,10 +2398,10 @@ CompWindow::moveInputFocusTo ()
 	{
 	    XEvent ev;
 
-	    ev.type		    = ClientMessage;
-	    ev.xclient.window	    = priv->id;
+	    ev.type                 = ClientMessage;
+	    ev.xclient.window       = priv->id;
 	    ev.xclient.message_type = Atoms::wmProtocols;
-	    ev.xclient.format	    = 32;
+	    ev.xclient.format       = 32;
 	    ev.xclient.data.l[0]    = Atoms::wmTakeFocus;
 	    ev.xclient.data.l[1]    = s->getCurrentTime ();
 	    ev.xclient.data.l[2]    = 0;
@@ -2496,23 +2443,20 @@ CompWindow::moveInputFocusToOtherWindow ()
 	CompWindow *nextActive = screen->findWindow (screen->getNextActiveWindow());
 
         /* Window pending focus */
-	if (priv->id != screen->getNextActiveWindow() &&
-	    nextActive &&
+	if (priv->id != screen->getNextActiveWindow()	&&
+	    nextActive					&&
 	    nextActive->focus ())
-	{
 	    nextActive->moveInputFocusTo ();
-	}
-	else if (priv->transientFor && priv->transientFor != screen->root ())
+	else if (priv->transientFor &&
+		 priv->transientFor != screen->root ())
 	{
-	    CompWindow *ancestor;
-	    ancestor = screen->findWindow (priv->transientFor);
-	    if (ancestor &&
-		ancestor->focus () &&
+	    CompWindow *ancestor = screen->findWindow (priv->transientFor);
+
+	    if (ancestor	    &&
+		ancestor->focus ()  &&
 		!(ancestor->priv->type & (CompWindowTypeDesktopMask |
 					  CompWindowTypeDockMask)))
-	    {
 		ancestor->moveInputFocusTo ();
-	    }
 	    else
 		screen->focusDefaultWindow ();
 	}
@@ -2532,10 +2476,8 @@ CompWindow::moveInputFocusToOtherWindow ()
 			    if (a->priv->type & (CompWindowTypeNormalMask |
 						 CompWindowTypeDialogMask |
 						 CompWindowTypeModalDialogMask))
-			    {
 				if (priv->compareWindowActiveness (focus, a) < 0)
 				    focus = a;
-			    }
 			}
 			else
 			    focus = a;
@@ -2545,9 +2487,7 @@ CompWindow::moveInputFocusToOtherWindow ()
 
 	    if (focus && !(focus->priv->type & (CompWindowTypeDesktopMask |
 						CompWindowTypeDockMask)))
-	    {
 		focus->moveInputFocusTo ();
-	    }
 	    else
 		screen->focusDefaultWindow ();
 	}
@@ -2596,6 +2536,7 @@ bool existsOnServer (CompWindow       *window,
     else
     {
 	XWindowAttributes attrib;
+
 	if (!XGetWindowAttributes (screen->dpy (),
 				   ROOTPARENT (window),
 				   &attrib))
@@ -2606,10 +2547,9 @@ bool existsOnServer (CompWindow       *window,
 }
 }
 
-
 bool
 PrivateWindow::stackLayerCheck (CompWindow       *w,
-				Window	         clientLeader,
+				Window           clientLeader,
 				CompWindow       *below,
 				const ServerLock &lock)
 {
@@ -2619,23 +2559,19 @@ PrivateWindow::stackLayerCheck (CompWindow       *w,
     if (isAncestorTo (below, w))
 	return false;
 
-    if (clientLeader && below->priv->clientLeader == clientLeader)
-	if (below->priv->isGroupTransient (clientLeader))
-	    return false;
+    if (clientLeader && below->priv->clientLeader == clientLeader &&
+	below->priv->isGroupTransient (clientLeader))
+	return false;
 
     if (w->priv->state & CompWindowStateAboveMask)
-    {
 	return true;
-    }
     else if (w->priv->state & CompWindowStateBelowMask)
     {
 	if (below->priv->state & CompWindowStateBelowMask)
 	    return true;
     }
     else if (!(below->priv->state & CompWindowStateAboveMask))
-    {
 	return true;
-    }
 
     return false;
 }
@@ -2644,21 +2580,17 @@ bool
 PrivateWindow::avoidStackingRelativeTo (CompWindow       *w,
 					const ServerLock &lock)
 {
-    if (w->overrideRedirect ())
+    if (w->overrideRedirect () ||
+	w->destroyed ())
 	return true;
 
-    if (w->destroyed ())
-	return true;
-
-    bool allowRelativeToUnmmaped = w->priv->receivedMapRequestAndAwaitingMap ||
-				   w->priv->shaded ||
+    bool allowRelativeToUnmmaped = w->priv->receivedMapRequestAndAwaitingMap	||
+				   w->priv->shaded				||
 				   w->priv->pendingMaps;
 
-    if (!allowRelativeToUnmmaped)
-    {
-	if (!w->isViewable () || !w->isMapped ())
-	    return true;
-    }
+    if (!allowRelativeToUnmmaped &&
+	(!w->isViewable () || !w->isMapped ()))
+	return true;
 
     return false;
 }
@@ -2672,9 +2604,9 @@ PrivateWindow::findSiblingBelow (CompWindow       *w,
 				 const ServerLock &lock)
 {
     CompWindow   *below;
-    CompWindow   *t = screen->findWindow (w->transientFor ());
-    Window	 clientLeader = w->priv->clientLeader;
-    unsigned int type = w->priv->type;
+    CompWindow   *t           = screen->findWindow (w->transientFor ());
+    Window       clientLeader = w->priv->clientLeader;
+    unsigned int type         = w->priv->type;
     unsigned int belowMask;
 
     if (aboveFs)
@@ -2709,55 +2641,56 @@ PrivateWindow::findSiblingBelow (CompWindow       *w,
 	if (below->priv->type & CompWindowTypeDesktopMask)
 	    return below;
 
-	switch (type) {
-	case CompWindowTypeDesktopMask:
-	    /* desktop window layer */
-	    break;
-	case CompWindowTypeFullscreenMask:
-	    if (aboveFs)
-		return below;
-	    /* otherwise fall-through */
-	case CompWindowTypeDockMask:
-	    /* fullscreen and dock layer */
-	    if (below->priv->type & (CompWindowTypeFullscreenMask |
-			       CompWindowTypeDockMask))
-	    {
-		if (stackLayerCheck (w, clientLeader, below, lock) &&
-		    existsOnServer (below, lock))
-		    return below;
-	    }
-	    else
-	    {
-		return below;
-	    }
-	    break;
-	default:
+	switch (type)
 	{
-	    bool allowedRelativeToLayer = !(below->priv->type & belowMask);
+	    case CompWindowTypeDesktopMask:
+		/* desktop window layer */
+		break;
 
-	    if (aboveFs && below->priv->type & CompWindowTypeFullscreenMask)
-		if (!below->focus ())
+	    case CompWindowTypeFullscreenMask:
+		if (aboveFs)
+		    return below;
+		/* otherwise fall-through */
+	    case CompWindowTypeDockMask:
+		/* fullscreen and dock layer */
+		if (below->priv->type & (CompWindowTypeFullscreenMask |
+					 CompWindowTypeDockMask))
+		{
+		    if (stackLayerCheck (w, clientLeader, below, lock) &&
+			existsOnServer (below, lock))
+			return below;
+		}
+		else
+		    return below;
+
+		break;
+
+	    default:
+	    {
+		bool allowedRelativeToLayer = !(below->priv->type & belowMask);
+
+		if (aboveFs && below->priv->type & CompWindowTypeFullscreenMask &&
+		    !below->focus ())
 		    break;
 
-	    t = screen->findWindow (below->transientFor ());
+		t = screen->findWindow (below->transientFor ());
 
-	    while (t && allowedRelativeToLayer)
-	    {
-		/* dock stacking of transients for docks */
-		allowedRelativeToLayer = !(t->priv->type & belowMask);
+		while (t && allowedRelativeToLayer)
+		{
+		    /* dock stacking of transients for docks */
+		    allowedRelativeToLayer = !(t->priv->type & belowMask);
 
-		t = screen->findWindow (t->transientFor ());
-	    }
+		    t = screen->findWindow (t->transientFor ());
+		}
 
-	    /* fullscreen and normal layer */
-	    if (allowedRelativeToLayer)
-	    {
-		if (stackLayerCheck (w, clientLeader, below, lock) &&
+		/* fullscreen and normal layer */
+		if (allowedRelativeToLayer			    &&
+		    stackLayerCheck (w, clientLeader, below, lock)  &&
 		    existsOnServer (below, lock))
 		    return below;
+
+		break;
 	    }
-	    break;
-	}
 	}
     }
 
@@ -2771,13 +2704,13 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 				       const ServerLock &lock)
 {
     CompWindow   *below, *lowest = screen->serverWindows ().back ();
-    CompWindow   *t = screen->findWindow (w->transientFor ());
-    Window	 clientLeader = w->priv->clientLeader;
-    unsigned int type = w->priv->type;
+    CompWindow   *t              = screen->findWindow (w->transientFor ());
+    Window	 clientLeader    = w->priv->clientLeader;
+    unsigned int type            = w->priv->type;
 
     /* normal stacking fullscreen windows with below state */
-    if ((type & CompWindowTypeFullscreenMask) &&
-	(w->priv->state & CompWindowStateBelowMask))
+    if (type & CompWindowTypeFullscreenMask &&
+	w->priv->state & CompWindowStateBelowMask)
 	type = CompWindowTypeNormalMask;
 
     while (t && type != CompWindowTypeDockMask)
@@ -2789,7 +2722,6 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 	t = screen->findWindow (t->transientFor ());
     }
 
-
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
@@ -2800,52 +2732,55 @@ PrivateWindow::findLowestSiblingBelow (CompWindow       *w,
 	    continue;
 
 	/* always above desktop windows */
-	if ((below->priv->type & CompWindowTypeDesktopMask) &&
+	if (below->priv->type & CompWindowTypeDesktopMask &&
 	    existsOnServer (below, lock))
 	    return below;
 
-	switch (type) {
-	case CompWindowTypeDesktopMask:
-	    /* desktop window layer - desktop windows always should be
-	       stacked at the bottom; no other window should be below them */
-	    return NULL;
-	    break;
-	case CompWindowTypeFullscreenMask:
-	case CompWindowTypeDockMask:
-	    /* fullscreen and dock layer */
-	    if (below->priv->type & (CompWindowTypeFullscreenMask |
-			       CompWindowTypeDockMask))
-	    {
-		if (!stackLayerCheck (below, clientLeader, w, lock) &&
-		    existsOnServer (lowest, lock))
-		    return lowest;
-	    }
-	    else if (existsOnServer (lowest, lock))
-		return lowest;
-	    break;
-	default:
+	switch (type)
 	{
-	    bool allowedRelativeToLayer = !(below->priv->type & CompWindowTypeDockMask);
+	    case CompWindowTypeDesktopMask:
+		/* desktop window layer - desktop windows always should be
+	       stacked at the bottom; no other window should be below them */
+		return NULL;
+		break;
 
-	    t = screen->findWindow (below->transientFor ());
+	    case CompWindowTypeFullscreenMask:
+	    case CompWindowTypeDockMask:
+		/* fullscreen and dock layer */
+		if (below->priv->type & (CompWindowTypeFullscreenMask |
+					 CompWindowTypeDockMask))
+		{
+		    if (!stackLayerCheck (below, clientLeader, w, lock) &&
+			existsOnServer (lowest, lock))
+			return lowest;
+		}
+		else if (existsOnServer (lowest, lock))
+		    return lowest;
 
-	    while (t && allowedRelativeToLayer)
+		break;
+
+	    default:
 	    {
-		/* dock stacking of transients for docks */
-		allowedRelativeToLayer = !(t->priv->type & CompWindowTypeDockMask);
+		bool allowedRelativeToLayer = !(below->priv->type & CompWindowTypeDockMask);
 
-		t = screen->findWindow (t->transientFor ());
-	    }
+		t = screen->findWindow (below->transientFor ());
 
-	    /* fullscreen and normal layer */
-	    if (allowedRelativeToLayer)
-	    {
-		if (!stackLayerCheck (below, clientLeader, w, lock) &&
+		while (t && allowedRelativeToLayer)
+		{
+		    /* dock stacking of transients for docks */
+		    allowedRelativeToLayer = !(t->priv->type & CompWindowTypeDockMask);
+
+		    t = screen->findWindow (t->transientFor ());
+		}
+
+		/* fullscreen and normal layer */
+		if (allowedRelativeToLayer			    &&
+		    !stackLayerCheck (below, clientLeader, w, lock) &&
 		    existsOnServer (lowest, lock))
 		    return lowest;
+
+		break;
 	    }
-	    break;
-	}
 	}
 
 	lowest = below;
@@ -2866,9 +2801,9 @@ PrivateWindow::validSiblingBelow (CompWindow       *w,
 				  CompWindow       *sibling,
 				  const ServerLock &lock)
 {
-    CompWindow   *t = screen->findWindow (w->transientFor ());
-    Window	 clientLeader = w->priv->clientLeader;
-    unsigned int type = w->priv->type;
+    CompWindow   *t           = screen->findWindow (w->transientFor ());
+    Window       clientLeader = w->priv->clientLeader;
+    unsigned int type         = w->priv->type;
 
     /* normal stacking fullscreen windows with below state */
     if ((type & CompWindowTypeFullscreenMask) &&
@@ -2884,7 +2819,6 @@ PrivateWindow::validSiblingBelow (CompWindow       *w,
 	t = screen->findWindow (t->transientFor ());
     }
 
-
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
@@ -2895,46 +2829,49 @@ PrivateWindow::validSiblingBelow (CompWindow       *w,
     if (sibling->priv->type & CompWindowTypeDesktopMask)
 	return true;
 
-    switch (type) {
-    case CompWindowTypeDesktopMask:
-	/* desktop window layer */
-	break;
-    case CompWindowTypeFullscreenMask:
-    case CompWindowTypeDockMask:
-	/* fullscreen and dock layer */
-	if (sibling->priv->type & (CompWindowTypeFullscreenMask |
-			     CompWindowTypeDockMask))
-	{
-	    if (stackLayerCheck (w, clientLeader, sibling, lock) &&
-		existsOnServer (sibling, lock))
-		return true;
-	}
-	else if (existsOnServer (sibling, lock))
-	    return true;
-	break;
-    default:
+    switch (type)
     {
-	bool allowedRelativeToLayer = !(sibling->priv->type & CompWindowTypeDockMask);
+	case CompWindowTypeDesktopMask:
+	    /* desktop window layer */
+	    break;
 
-	t = screen->findWindow (sibling->transientFor ());
+	case CompWindowTypeFullscreenMask:
+	case CompWindowTypeDockMask:
+	    /* fullscreen and dock layer */
+	    if (sibling->priv->type & (CompWindowTypeFullscreenMask |
+				       CompWindowTypeDockMask))
+	    {
+		if (stackLayerCheck (w, clientLeader, sibling, lock) &&
+		    existsOnServer (sibling, lock))
+		    return true;
+	    }
+	    else if (existsOnServer (sibling, lock))
+		return true;
 
-	while (t && allowedRelativeToLayer)
+	    break;
+
+	default:
 	{
-	    /* dock stacking of transients for docks */
-	    allowedRelativeToLayer = !(t->priv->type & CompWindowTypeDockMask);
+	    bool allowedRelativeToLayer = !(sibling->priv->type & CompWindowTypeDockMask);
 
-	    t = screen->findWindow (t->transientFor ());
-	}
+	    t = screen->findWindow (sibling->transientFor ());
 
-	/* fullscreen and normal layer */
-	if (allowedRelativeToLayer)
-	{
-	    if (stackLayerCheck (w, clientLeader, sibling, lock) &&
+	    while (t && allowedRelativeToLayer)
+	    {
+		/* dock stacking of transients for docks */
+		allowedRelativeToLayer = !(t->priv->type & CompWindowTypeDockMask);
+
+		t = screen->findWindow (t->transientFor ());
+	    }
+
+	    /* fullscreen and normal layer */
+	    if (allowedRelativeToLayer				    &&
+		stackLayerCheck (w, clientLeader, sibling, lock)    &&
 		existsOnServer (sibling, lock))
 		return true;
+
+	    break;
 	}
-	break;
-    }
     }
 
     return false;
@@ -2986,10 +2923,12 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
 	/* This is not perfect but it works OK for now. If the saved width is
 	   the same as the current width then make it a little be smaller so
 	   the user can see that it changed and it also makes sure that
-	   windowResizeNotify is called and plugins are notified. */
+	   windowResizeNotify is called and plugins are notified.
+	   TODO: Eliminate these arbitrary magic numbers here */
 	if (xwc->width == (int) serverGeometry.width ())
 	{
 	    xwc->width -= 10;
+
 	    if (m & CWX)
 		xwc->x += 5;
 	}
@@ -3000,10 +2939,12 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
 	xwc->height = saveWc.height;
 
 	/* As above, if the saved height is the same as the current height
-	   then make it a little be smaller. */
+	   then make it a little be smaller.
+	   TODO: As above, find a better solution without magic numbers here */
 	if (xwc->height == (int) serverGeometry.height ())
 	{
 	    xwc->height -= 10;
+
 	    if (m & CWY)
 		xwc->y += 5;
 	}
@@ -3026,8 +2967,8 @@ static bool isPendingRestack (const compiz::X11::PendingEvent::Ptr &p)
 }
 
 static bool isExistingRequest (const compiz::X11::PendingEvent::Ptr &p,
-			       XWindowChanges &xwc,
-			       unsigned int valueMask)
+			       XWindowChanges                       &xwc,
+			       unsigned int                         valueMask)
 {
     compiz::X11::PendingConfigureEvent::Ptr pc =
 	    boost::static_pointer_cast <compiz::X11::PendingConfigureEvent> (p);
@@ -3048,14 +2989,16 @@ PrivateWindow::queryFrameAttributes (XWindowAttributes &attrib)
 }
 
 XRectangle *
-PrivateWindow::queryShapeRectangles (int kind, int *count, int *ordering)
+PrivateWindow::queryShapeRectangles (int kind,
+				     int *count,
+				     int *ordering)
 {
     return configureBuffer->queryShapeRectangles (kind, count, ordering);
 }
 
 int
 PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc,
-					 unsigned int valueMask)
+					 unsigned int         valueMask)
 {
     return XConfigureWindow (screen->dpy (),
 			     id,
@@ -3065,7 +3008,7 @@ PrivateWindow::requestConfigureOnClient (const XWindowChanges &xwc,
 
 int
 PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc,
-					  unsigned int valueMask)
+					  unsigned int         valueMask)
 {
     return XConfigureWindow (screen->dpy (),
 			     wrapper,
@@ -3075,7 +3018,7 @@ PrivateWindow::requestConfigureOnWrapper (const XWindowChanges &xwc,
 
 int
 PrivateWindow::requestConfigureOnFrame (const XWindowChanges &xwc,
-					unsigned int frameValueMask)
+					unsigned int         frameValueMask)
 {
     XWindowChanges wc = xwc;
 
@@ -3121,10 +3064,10 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     /* Remove redundant bits */
 
-    xwc->x = valueMask & CWX ? xwc->x : serverGeometry.x ();
-    xwc->y = valueMask & CWY ? xwc->y : serverGeometry.y ();
-    xwc->width = valueMask & CWWidth ? xwc->width : serverGeometry.width ();
-    xwc->height = valueMask & CWHeight ? xwc->height : serverGeometry.height ();
+    xwc->x            = valueMask & CWX           ? xwc->x            : serverGeometry.x ();
+    xwc->y            = valueMask & CWY           ? xwc->y            : serverGeometry.y ();
+    xwc->width        = valueMask & CWWidth       ? xwc->width        : serverGeometry.width ();
+    xwc->height       = valueMask & CWHeight      ? xwc->height       : serverGeometry.height ();
     xwc->border_width = valueMask & CWBorderWidth ? xwc->border_width : serverGeometry.border ();
 
     /* Don't allow anything that might generate a BadValue */
@@ -3140,9 +3083,9 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	xwc->height = 1;
     }
 
-    int dx = valueMask & CWX ? xwc->x - serverGeometry.x () : 0;
-    int dy = valueMask & CWY ? xwc->y - serverGeometry.y () : 0;
-    int dwidth = valueMask & CWWidth ? xwc->width - serverGeometry.width () : 0;
+    int dx      = valueMask & CWX      ? xwc->x - serverGeometry.x ()           : 0;
+    int dy      = valueMask & CWY      ? xwc->y - serverGeometry.y ()           : 0;
+    int dwidth  = valueMask & CWWidth  ? xwc->width  - serverGeometry.width ()  : 0;
     int dheight = valueMask & CWHeight ? xwc->height - serverGeometry.height () : 0;
 
     /* FIXME: This is a total fallacy for the reparenting case
@@ -3163,22 +3106,20 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask & CWBorderWidth && serverGeometry.border () == xwc->border_width)
 	valueMask &= ~(CWBorderWidth);
 
-    if (valueMask & CWSibling && window->serverPrev)
-    {
+    if (valueMask & CWSibling && window->serverPrev &&
 	/* check if the sibling is also pending a restack,
 	 * if not, then setting this bit is useless */
-	if (ROOTPARENT (window->serverPrev) == xwc->sibling)
-	{
-	    bool matchingRequest = priv->pendingConfigures.forEachIf (boost::bind (isExistingRequest, _1, *xwc, valueMask));
-	    bool restackPending = window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1));
-	    bool remove = matchingRequest;
+	ROOTPARENT (window->serverPrev) == xwc->sibling)
+    {
+	bool matchingRequest = priv->pendingConfigures.forEachIf (boost::bind (isExistingRequest, _1, *xwc, valueMask));
+	bool restackPending  = window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1));
+	bool remove          = matchingRequest;
 
-	    if (!remove)
-		remove = !restackPending;
+	if (!remove)
+	    remove = !restackPending;
 
-	    if (remove)
-		valueMask &= ~(CWSibling | CWStackMode);
-	}
+	if (remove)
+	    valueMask &= ~(CWSibling | CWStackMode);
     }
 
     if (valueMask & CWBorderWidth)
@@ -3222,8 +3163,8 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (serverFrameGeometry.y () == xwc->y - serverGeometry.border () - serverInput.top)
 	frameValueMask &= ~(CWY);
 
-   if (serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
-				      + serverInput.left + serverInput.right)
+   if (serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2 +
+				       serverInput.left + serverInput.right)
 	frameValueMask &= ~(CWWidth);
 
     /* shaded windows are not allowed to have their frame window
@@ -3232,21 +3173,24 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     if (shaded)
     {
-	if (serverFrameGeometry.height () == serverGeometry.border () * 2
-	    + serverInput.top + serverInput.bottom)
+	if (serverFrameGeometry.height () == serverGeometry.border () * 2 +
+	    serverInput.top + serverInput.bottom)
 	    frameValueMask &= ~(CWHeight);
     }
     else
     {
-	if (serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
-	    + serverInput.top + serverInput.bottom)
+	if (serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2 +
+	    serverInput.top + serverInput.bottom)
 	    frameValueMask &= ~(CWHeight);
     }
 
 
-    if (valueMask & CWStackMode &&
-        ((xwc->stack_mode != TopIf) && (xwc->stack_mode != BottomIf) && (xwc->stack_mode != Opposite) &&
-	 (xwc->stack_mode != Above) && (xwc->stack_mode != Below)))
+    if (valueMask & CWStackMode     &&
+	xwc->stack_mode != TopIf    &&
+	xwc->stack_mode != BottomIf &&
+	xwc->stack_mode != Opposite &&
+	xwc->stack_mode != Above    &&
+	xwc->stack_mode != Below)
     {
 	compLogMessage ("core", CompLogLevelWarn, "Invalid stack mode %i", xwc->stack_mode);
 	valueMask &= ~(CWStackMode | CWSibling);
@@ -3300,21 +3244,18 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	serverFrameGeometry.setY (xwc->y -serverGeometry.border () - serverInput.top);
 
     if (frameValueMask & CWWidth)
-	serverFrameGeometry.setWidth (xwc->width + serverGeometry.border () * 2
-				      + serverInput.left + serverInput.right);
+	serverFrameGeometry.setWidth (xwc->width + serverGeometry.border () * 2 +
+				      serverInput.left + serverInput.right);
 
     if (shaded)
     {
 	if (frameValueMask & CWHeight)
-	    serverFrameGeometry.setHeight (serverGeometry.border () * 2
-					   + serverInput.top + serverInput.bottom);
+	    serverFrameGeometry.setHeight (serverGeometry.border () * 2 +
+					   serverInput.top + serverInput.bottom);
     }
-    else
-    {
-	if (frameValueMask & CWHeight)
-	    serverFrameGeometry.setHeight (xwc->height + serverGeometry.border () * 2
-					   + serverInput.top + serverInput.bottom);
-    }
+    else if (frameValueMask & CWHeight)
+	serverFrameGeometry.setHeight (xwc->height + serverGeometry.border () * 2 +
+				       serverInput.top + serverInput.bottom);
 
     if (serverFrame)
     {
@@ -3328,21 +3269,23 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	 * update the client and wrapper position */
 	if (lastServerInput.left != serverInput.left)
 	    valueMask |= CWX;
+
 	if (lastServerInput.top != serverInput.top)
 	    valueMask |= CWY;
 
 	/* Calculate frame extents and protect against underflow */
-	const unsigned int lastWrapperWidth = std::max (0, serverFrameGeometry.width () -
-							   (lastServerInput.right + lastServerInput.left));
+	const unsigned int lastWrapperWidth  = std::max (0, serverFrameGeometry.width () -
+							 (lastServerInput.right + lastServerInput.left));
 	const unsigned int lastWrapperHeight = std::max (0, serverFrameGeometry.height () -
-							    (lastServerInput.bottom + lastServerInput.top));
-	const unsigned int wrapperWidth = std::max (0, serverFrameGeometry.width () -
-						       (serverInput.right + serverInput.left));
-	const unsigned int wrapperHeight = std::max (0, serverFrameGeometry.height () -
-						        (serverInput.bottom + serverInput.top));
+							 (lastServerInput.bottom + lastServerInput.top));
+	const unsigned int wrapperWidth      = std::max (0, serverFrameGeometry.width () -
+							 (serverInput.right + serverInput.left));
+	const unsigned int wrapperHeight     = std::max (0, serverFrameGeometry.height () -
+							 (serverInput.bottom + serverInput.top));
 
 	if (lastWrapperWidth != wrapperWidth)
 	    valueMask |= CWWidth;
+
 	if (lastWrapperHeight != wrapperHeight)
 	    valueMask |= CWHeight;
 
@@ -3373,10 +3316,13 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
      * the absolute position */
     if (dx)
 	valueMask |= CWX;
+
     if (dy)
 	valueMask |= CWY;
+
     if (dwidth)
 	valueMask |= CWWidth;
+
     if (dheight)
 	valueMask |= CWHeight;
 
@@ -3391,6 +3337,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	{
 	    region.translate (dx, dy);
 	    inputRegion.translate (dx, dy);
+
 	    if (!frameRegion.isEmpty ())
 		frameRegion.translate (dx, dy);
 
@@ -3411,89 +3358,78 @@ PrivateWindow::stackDocks (CompWindow       *w,
 			   const ServerLock &lock)
 {
     CompWindow *firstFullscreenWindow = NULL;
-    CompWindow *belowDocks = NULL;
+    CompWindow *belowDocks            = NULL;
 
     foreach (CompWindow *dw, screen->serverWindows ())
     {
-        /* fullscreen window found */
-        if (firstFullscreenWindow)
-        {
+	/* fullscreen window found */
+	if (firstFullscreenWindow)
+	{
 	    /* If there is another toplevel window above the fullscreen one
 	     * then we need to stack above that */
-	    bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
-	    bool visible = !(dw->state () & CompWindowStateHiddenMask);
-	    bool ancestorToClient = PrivateWindow::isAncestorTo (w, dw);
-	    bool acceptableType = !(dw->type () & (CompWindowTypeFullscreenMask |
-						   CompWindowTypeDockMask));
-	    if (currentlyManaged &&
-		visible &&
-		acceptableType &&
-		!ancestorToClient &&
-		!dw->overrideRedirect () &&
+	    if (dw->priv->managed && !dw->priv->unmanaging	&& // currently managed
+		!(dw->state () & CompWindowStateHiddenMask)	&& // visible
+		!(dw->type () & (CompWindowTypeDockMask |
+				 CompWindowTypeFullscreenMask)) && // acceptable type
+		!PrivateWindow::isAncestorTo (w, dw)		&& // ancestorToClient
+		!dw->overrideRedirect ()			&&
 		dw->isViewable ())
-            {
 		if (existsOnServer (dw, lock))
 		    belowDocks = dw;
-            }
-        }
-        else if (dw->type () & CompWindowTypeFullscreenMask)
-        {
+	}
+	else if (dw->type () & CompWindowTypeFullscreenMask)
+	{
 	    /* First fullscreen window found when checking up the stack
 	     * now go back down to find a suitable candidate client
 	     * window to put the docks above */
-            firstFullscreenWindow = dw;
+	    firstFullscreenWindow = dw;
+
 	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
-            {
-		bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
-		bool visible = !(dw->priv->state & CompWindowStateHiddenMask);
-		bool acceptableType = !(dww->type () & (CompWindowTypeFullscreenMask |
-							CompWindowTypeDockMask));
-		if (currentlyManaged &&
-		    visible &&
-		    acceptableType &&
-		    !dww->overrideRedirect () &&
-		    dww->isViewable ())
-                {
-		    if (existsOnServer (dww, lock))
-		    {
-			belowDocks = dww;
-			break;
-		    }
-                }
-            }
-        }
+	    {
+		if (dw->priv->managed && !dw->priv->unmanaging	    && // currently managed
+		    !(dw->state () & CompWindowStateHiddenMask)	    && // visible
+		    !(dw->type () & (CompWindowTypeDockMask |
+				     CompWindowTypeFullscreenMask)) && // acceptable type
+		    !dww->overrideRedirect ()			    &&
+		    dww->isViewable ()				    &&
+		    existsOnServer (dww, lock))
+		{
+		    belowDocks = dww;
+		    break;
+		}
+	    }
+	}
     }
 
     if (belowDocks)
     {
-        *mask = CWSibling | CWStackMode;
-        xwc->sibling = ROOTPARENT (belowDocks);
+	*mask = CWSibling | CWStackMode;
+	xwc->sibling = ROOTPARENT (belowDocks);
 
-        /* Collect all dock windows first */
+	/* Collect all dock windows first */
 	foreach (CompWindow *dw, screen->serverWindows ())
-            if (dw->priv->type & CompWindowTypeDockMask)
-                updateList.push_front (dw);
+	    if (dw->priv->type & CompWindowTypeDockMask)
+		updateList.push_front (dw);
 
-        return true;
+	return true;
     }
 
     return false;
 }
 
 bool
-PrivateWindow::stackTransients (CompWindow	 *w,
-				CompWindow	 *avoid,
+PrivateWindow::stackTransients (CompWindow       *w,
+				CompWindow       *avoid,
 				XWindowChanges   *xwc,
 				CompWindowList   &updateList,
 				const ServerLock &lock)
 {
-    CompWindow *t;
-    Window     clientLeader = w->priv->clientLeader;
+    Window clientLeader = w->priv->clientLeader;
 
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (t = screen->serverWindows ().back (); t; t = t->serverPrev)
+    for (CompWindow *t = screen->serverWindows ().back (); t; t = t->serverPrev)
     {
 	if (t == w || t == avoid)
 	    continue;
@@ -3501,18 +3437,14 @@ PrivateWindow::stackTransients (CompWindow	 *w,
 	if (t->priv->transientFor == w->priv->id ||
 	    t->priv->isGroupTransient (clientLeader))
 	{
-	    if (!stackTransients (t, avoid, xwc, updateList, lock))
-		return false;
-
-	    if (xwc->sibling == t->priv->id ||
+	    if (!stackTransients (t, avoid, xwc, updateList, lock)  ||
+		xwc->sibling == t->priv->id			    ||
 		(t->priv->serverFrame && xwc->sibling == t->priv->serverFrame))
 		return false;
 
-	    if (t->priv->mapNum || t->priv->pendingMaps)
-	    {
-		if (existsOnServer (t, lock))
-		    updateList.push_back (t);
-	    }
+	    if ((t->priv->mapNum || t->priv->pendingMaps) &&
+		existsOnServer (t, lock))
+		updateList.push_back (t);
 	}
     }
 
@@ -3534,55 +3466,45 @@ PrivateWindow::stackAncestors (CompWindow       *w,
 	xwc->sibling != transient->priv->id &&
 	(!transient->priv->serverFrame || xwc->sibling != transient->priv->serverFrame))
     {
-	CompWindow *ancestor;
+	CompWindow *ancestor = screen->findWindow (w->priv->transientFor);
 
-	ancestor = screen->findWindow (w->priv->transientFor);
 	if (ancestor)
 	{
-	    if (!stackTransients (ancestor, w, xwc, updateList, lock))
+	    if (!stackTransients (ancestor, w, xwc, updateList, lock)	||
+		ancestor->priv->type & CompWindowTypeDesktopMask	||
+		(ancestor->priv->type & CompWindowTypeDockMask && !(w->priv->type & CompWindowTypeDockMask)))
 		return;
 
-	    if (ancestor->priv->type & CompWindowTypeDesktopMask)
-		return;
-
-	    if (ancestor->priv->type & CompWindowTypeDockMask)
-		if (!(w->priv->type & CompWindowTypeDockMask))
-		    return;
-
-	    if (ancestor->priv->mapNum || ancestor->priv->pendingMaps)
-		if (existsOnServer (ancestor, lock))
-		    updateList.push_back (ancestor);
+	    if ((ancestor->priv->mapNum || ancestor->priv->pendingMaps) &&
+		existsOnServer (ancestor, lock))
+		updateList.push_back (ancestor);
 
 	    stackAncestors (ancestor, xwc, updateList, lock);
 	}
     }
     else if (w->priv->isGroupTransient (w->priv->clientLeader))
     {
-	CompWindow *a;
-
-	for (a = screen->serverWindows ().back (); a; a = a->serverPrev)
+	for (CompWindow *a = screen->serverWindows ().back (); a; a = a->serverPrev)
 	{
 	    if (a->priv->clientLeader == w->priv->clientLeader &&
 		a->priv->transientFor == None		       &&
 		!a->priv->isGroupTransient (w->priv->clientLeader))
 	    {
 		if (xwc->sibling == a->priv->id ||
-		    (a->priv->serverFrame && xwc->sibling == a->priv->serverFrame))
-		    break;
-
-		if (!stackTransients (a, w, xwc, updateList, lock))
+		    (a->priv->serverFrame && xwc->sibling == a->priv->serverFrame) ||
+		    !stackTransients (a, w, xwc, updateList, lock))
 		    break;
 
 		if (a->priv->type & CompWindowTypeDesktopMask)
 		    continue;
 
-		if (a->priv->type & CompWindowTypeDockMask)
-		    if (!(w->priv->type & CompWindowTypeDockMask))
-			break;
+		if (a->priv->type & CompWindowTypeDockMask &&
+		    !(w->priv->type & CompWindowTypeDockMask))
+		    break;
 
-		if (a->priv->mapNum || a->priv->pendingMaps)
-		    if (existsOnServer (a, lock))
-			updateList.push_back (a);
+		if ((a->priv->mapNum || a->priv->pendingMaps) &&
+		    existsOnServer (a, lock))
+		    updateList.push_back (a);
 	    }
 	}
     }
@@ -3651,42 +3573,32 @@ CompWindow::restackAndConfigureXWindow (unsigned int     valueMask,
 		Window sibling = xwc->sibling;
 		xwc->stack_mode = Above;
 
-                /* Then update the dock windows */
-                foreach (CompWindow *dw, docks)
-                {
-                    xwc->sibling = sibling;
-                    dw->priv->reconfigureXWindow (valueMask, xwc);
-                }
-            }
+		/* Then update the dock windows */
+		foreach (CompWindow *dw, docks)
+		{
+		    xwc->sibling = sibling;
+		    dw->priv->reconfigureXWindow (valueMask, xwc);
+		}
+	    }
 	}
     }
     else if (priv->id)
-    {
 	priv->reconfigureXWindow (valueMask, xwc);
-    }
 }
 
 int
 PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 				     CompWindow::Geometry old)
 {
-    CompRect  workArea;
-    int	      mask = 0;
-    int	      x, y;
-    CompOutput *output;
+    int       mask = 0;
     CompPoint viewport;
 
     screen->viewportForGeometry (old, viewport);
 
-    x = (viewport.x () - screen->vp ().x ()) * screen->width ();
-    y = (viewport.y () - screen->vp ().y ()) * screen->height ();
+    int x = (viewport.x () - screen->vp ().x ()) * screen->width ();
+    int y = (viewport.y () - screen->vp ().y ()) * screen->height ();
 
-    /* Try to select and output device that the window is on first
-     * and make sure if we are fullscreening or maximizing that the
-     * window is actually able to fit on this output ... otherwise
-     * we're going to have to use another output device which sucks
-     * but at least the user will be able to see all of the window */
-    output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
+    CompOutput *output = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
 
     /*
      * output is now the correct output for the given geometry.
@@ -3703,7 +3615,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
      * the user never asked to.
      */
 
-    workArea = output->workArea ();
+    CompRect workArea = output->workArea ();
 
     if (type & CompWindowTypeFullscreenMask)
     {
@@ -3731,6 +3643,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     else
     {
 	mask |= restoreGeometry (xwc, CWBorderWidth);
+
 	if (state & CompWindowStateMaximizedVertMask)
 	{
 	    saveGeometry (CWY | CWHeight);
@@ -3741,9 +3654,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	    mask |= CWHeight;
 	}
 	else
-	{
 	    mask |= restoreGeometry (xwc, CWY | CWHeight);
-	}
 
 	if (state & CompWindowStateMaximizedHorzMask)
 	{
@@ -3755,9 +3666,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	    mask |= CWWidth;
 	}
 	else
-	{
 	    mask |= restoreGeometry (xwc, CWX | CWWidth);
-	}
 
 	/* constrain window width if smaller than minimum width */
 	if (!(mask & CWWidth) && (int) old.width () < sizeHints.min_width)
@@ -3789,10 +3698,10 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	if (mask & (CWWidth | CWHeight))
 	{
-	    int width, height, max;
+	    int max;
 
-	    width  = (mask & CWWidth)  ? xwc->width  : old.width ();
-	    height = (mask & CWHeight) ? xwc->height : old.height ();
+	    int width   = (mask & CWWidth)  ? xwc->width  : old.width ();
+	    int height  = (mask & CWHeight) ? xwc->height : old.height ();
 
 	    xwc->width  = old.width ();
 	    xwc->height = old.height ();
@@ -3839,10 +3748,12 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			    mask |= CWY;
 			}
 			break;
-		    /* For EastGravity, WestGravity and CenterGravity we default to the top
+
+		    /* TODO: check if this is correct:
+		     * For EastGravity, WestGravity and CenterGravity we default to the top
 		     * of the window since the user should at least be able to close it
 		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
-		     * that indicates that the application has requested positioning in that area
+		     * that indicates that the application has requested positioning in that area)
 		     */
 		    case EastGravity:
 		    case WestGravity:
@@ -3867,8 +3778,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		    case SouthEastGravity:
 		    case EastGravity:
 			width = xwc->width + old.border () * 2;
-
-			max = x + workArea.right ();
+			max   = x + workArea.right ();
 
 			if (old.x () + (int) old.width () + border.right > max)
 			{
@@ -3882,10 +3792,11 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 				      border.right) / 2 + border.left;
 			    mask |= CWX;
 			}
-		    /* For NorthGravity, SouthGravity and CenterGravity we default to the top
+		    /* TODO: check if this is correct, note that there is no break here:
+		     * For NorthGravity, SouthGravity and CenterGravity we default to the top
 		     * of the window since the user should at least be able to close it
 		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
-		     * that indicates that the application has requested positioning in that area
+		     * that indicates that the application has requested positioning in that area)
 		     */
 		    case NorthGravity:
 		    case SouthGravity:
@@ -3919,81 +3830,86 @@ unsigned int
 PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 						 unsigned int   xwcm,
 						 int            gravity,
-						 int		direction)
+						 int            direction)
 {
-    int          newX, newY;
     unsigned int mask = 0;
-
-    newX = xwc->x;
-    newY = xwc->y;
+    int          newX = xwc->x;
+    int          newY = xwc->y;
 
     if (xwcm & (CWX | CWWidth))
     {
-	switch (gravity) {
-	case NorthWestGravity:
-	case WestGravity:
-	case SouthWestGravity:
-	    if (xwcm & CWX)
-		newX += priv->border.left * direction;
-	    break;
+	switch (gravity)
+	{
+	    case NorthWestGravity:
+	    case WestGravity:
+	    case SouthWestGravity:
+		if (xwcm & CWX)
+		    newX += priv->border.left * direction;
+		break;
 
-	case NorthGravity:
-	case CenterGravity:
-	case SouthGravity:
-	    if (xwcm & CWX)
-		newX -= (xwc->width / 2 - priv->border.left +
-			(priv->border.left + priv->border.right) / 2) * direction;
-	    else
-	        newX -= (xwc->width - priv->serverGeometry.width ()) * direction;
-	    break;
+	    case NorthGravity:
+	    case CenterGravity:
+	    case SouthGravity:
+		if (xwcm & CWX)
+		    newX -= (xwc->width / 2 - priv->border.left +
+			     (priv->border.left + priv->border.right) / 2) * direction;
+		else
+		    newX -= (xwc->width - priv->serverGeometry.width ()) * direction;
 
-	case NorthEastGravity:
-	case EastGravity:
-	case SouthEastGravity:
-	    if (xwcm & CWX)
-		newX -= xwc->width + priv->border.right * direction;
-	    else
-		newX -= (xwc->width - priv->serverGeometry.width ()) * direction;
-	    break;
+		break;
 
-	case StaticGravity:
-	default:
-	    break;
+	    case NorthEastGravity:
+	    case EastGravity:
+	    case SouthEastGravity:
+		if (xwcm & CWX)
+		    newX -= xwc->width + priv->border.right * direction;
+		else
+		    newX -= (xwc->width - priv->serverGeometry.width ()) * direction;
+
+		break;
+
+	    case StaticGravity:
+	    default:
+		break;
 	}
     }
 
     if (xwcm & (CWY | CWHeight))
     {
-	switch (gravity) {
-	case NorthWestGravity:
-	case NorthGravity:
-	case NorthEastGravity:
-	    if (xwcm & CWY)
-		newY = xwc->y + priv->border.top * direction;
-	    break;
+	switch (gravity)
+	{
+	    case NorthWestGravity:
+	    case NorthGravity:
+	    case NorthEastGravity:
+		if (xwcm & CWY)
+		    newY = xwc->y + priv->border.top * direction;
 
-	case WestGravity:
-	case CenterGravity:
-	case EastGravity:
-	    if (xwcm & CWY)
-		newY -= (xwc->height / 2 - priv->border.top +
-			(priv->border.top + priv->border.bottom) / 2) * direction;
-	    else
-		newY -= ((xwc->height - priv->serverGeometry.height ()) / 2) * direction;
-	    break;
+		break;
 
-	case SouthWestGravity:
-	case SouthGravity:
-	case SouthEastGravity:
-	    if (xwcm & CWY)
-		newY -= xwc->height + priv->border.bottom * direction;
-	    else
-		newY -= (xwc->height - priv->serverGeometry.height ()) * direction;
-	    break;
+	    case WestGravity:
+	    case CenterGravity:
+	    case EastGravity:
+		if (xwcm & CWY)
+		    newY -= (xwc->height / 2 - priv->border.top +
+			     (priv->border.top + priv->border.bottom) / 2) * direction;
+		else
+		    newY -= ((xwc->height - priv->serverGeometry.height ()) / 2) * direction;
 
-	case StaticGravity:
-	default:
-	    break;
+		break;
+
+	    case SouthWestGravity:
+	    case SouthGravity:
+	    case SouthEastGravity:
+		if (xwcm & CWY)
+		    newY -= xwc->height + priv->border.bottom * direction;
+		else
+		    newY -= (xwc->height - priv->serverGeometry.height ()) * direction;
+
+		break;
+
+	    case StaticGravity:
+	    default:
+		break;
 	}
     }
 
@@ -4022,19 +3938,22 @@ CompWindow::moveResize (XWindowChanges *xwc,
 
     xwcm &= (CWX | CWY | CWWidth | CWHeight | CWBorderWidth);
 
-    if (xwcm & (CWX | CWY))
-	if (priv->sizeHints.flags & (USPosition | PPosition))
-	    placed = true;
+    if (xwcm & (CWX | CWY) &&
+	priv->sizeHints.flags & (USPosition | PPosition))
+	placed = true;
 
     if (gravity == 0)
 	gravity = priv->sizeHints.win_gravity;
 
     if (!(xwcm & CWX))
 	xwc->x = priv->serverGeometry.x ();
+
     if (!(xwcm & CWY))
 	xwc->y = priv->serverGeometry.y ();
+
     if (!(xwcm & CWWidth))
-	xwc->width = priv->serverGeometry.width ();
+	xwc->width  = priv->serverGeometry.width ();
+
     if (!(xwcm & CWHeight))
 	xwc->height = priv->serverGeometry.height ();
 
@@ -4108,11 +4027,9 @@ CompWindow::moveResize (XWindowChanges *xwc,
     if (xwcm)
 	configureXWindow (xwcm, xwc);
     else
-    {
 	/* we have to send a configure notify on ConfigureRequest events if
 	   we decide not to do anything according to ICCCM 4.1.5 */
 	sendConfigureNotify ();
-    }
 
     if (placed)
 	priv->placed = true;
@@ -4124,9 +4041,9 @@ PrivateWindow::updateSize ()
     if (window->overrideRedirect () || !managed)
 	return false;
 
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    XWindowChanges xwc  = XWINDOWCHANGES_INIT;
+    int            mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
 
-    int mask = priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
     if (mask)
     {
 	if (priv->mapNum && (mask & (CWWidth | CWHeight)))
@@ -4154,7 +4071,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
 	{
 	    if (!sibling && id)
 	    {
-		XWindowChanges lxwc = XWINDOWCHANGES_INIT;
+		XWindowChanges lxwc      = XWINDOWCHANGES_INIT;
 		unsigned int   valueMask = CWStackMode;
 
 		lxwc.stack_mode = Below;
@@ -4178,8 +4095,8 @@ PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
 	    else if (sibling)
 	    {
 		bool matchingRequest = priv->pendingConfigures.forEachIf (boost::bind (isExistingRequest, _1, *xwc, (CWStackMode | CWSibling)));
-		bool restackPending = window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1));
-		bool processAnyways = restackPending;
+		bool restackPending  = window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1));
+		bool processAnyways  = restackPending;
 
 		if (matchingRequest)
 		    processAnyways = false;
@@ -4209,26 +4126,22 @@ PrivateWindow::addWindowStackChanges (XWindowChanges   *xwc,
 void
 CompWindow::raise ()
 {
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask;
-    bool	   aboveFs = false;
+    XWindowChanges xwc     = XWINDOWCHANGES_INIT;
+    int            mask;
+    bool           aboveFs = false;
 
     /* an active fullscreen window should be raised over all other
        windows in its layer */
-    if (priv->type & CompWindowTypeFullscreenMask)
-	if (priv->id == screen->activeWindow ())
-	    aboveFs = true;
+    if (priv->type & CompWindowTypeFullscreenMask &&
+	priv->id == screen->activeWindow ())
+	aboveFs = true;
 
     for (CompWindow *pw = serverPrev; pw; pw = pw->serverPrev)
-    {
-	if (pw->priv->type & CompWindowTypeFullscreenMask)
-	{
-	    if (priv->id == screen->activeWindow ())
-		aboveFs = true;
-
+	if (pw->priv->type & CompWindowTypeFullscreenMask &&
+	    priv->id == screen->activeWindow ())
+	    aboveFs = true;
+	else
 	    break;
-	}
-    }
 
     ServerLock lock (screen->serverGrabInterface ());
 
@@ -4244,8 +4157,8 @@ CompScreenImpl::focusTopMostWindow ()
 {
     using ::compiz::private_screen::WindowManager;
 
-    CompWindow  *focus = NULL;
-    WindowManager::reverse_iterator it = windowManager.rserverBegin ();
+    CompWindow                      *focus = NULL;
+    WindowManager::reverse_iterator it     = windowManager.rserverBegin ();
 
     for (; it != windowManager.rserverEnd (); ++it)
     {
@@ -4277,12 +4190,12 @@ void
 CompWindow::lower ()
 {
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask;
 
     ServerLock lock (screen->serverGrabInterface ());
 
-    mask = priv->addWindowStackChanges (&xwc,
+    int mask = priv->addWindowStackChanges (&xwc,
 	PrivateWindow::findLowestSiblingBelow (this, lock), lock);
+
     if (mask)
 	restackAndConfigureXWindow (mask, &xwc, lock);
 
@@ -4296,9 +4209,7 @@ CompWindow::lower ()
 	   give the focus back to w */
 	if (focusedWindow &&
 	    focusedWindow->type () & CompWindowTypeDesktopMask)
-	{
 	    moveInputFocusTo ();
-	}
     }
 }
 
@@ -4313,10 +4224,9 @@ CompWindow::restackAbove (CompWindow *sibling)
 
     if (sibling)
     {
-	XWindowChanges xwc = XWINDOWCHANGES_INIT;
-	int	       mask;
+	XWindowChanges xwc  = XWINDOWCHANGES_INIT;
+	int            mask = priv->addWindowStackChanges (&xwc, sibling, lock);
 
-	mask = priv->addWindowStackChanges (&xwc, sibling, lock);
 	if (mask)
 	    restackAndConfigureXWindow (mask, &xwc, lock);
     }
@@ -4336,14 +4246,11 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow       *w,
      * underneath it */
 
     for (p = sibling; p; p = p->serverNext)
-    {
-	if (!avoidStackingRelativeTo (p, lock))
-	{
-	    if (!validSiblingBelow (p, w, lock))
-		return NULL;
+	if (!avoidStackingRelativeTo (p, lock) &&
+	    !validSiblingBelow (p, w, lock))
+	    return NULL;
+	else
 	    break;
-	}
-    }
 
     /* get lowest sibling we're allowed to stack above */
     lowest = last = findLowestSiblingBelow (w, lock);
@@ -4360,15 +4267,13 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow       *w,
 	if (w == p || avoidStackingRelativeTo (p, lock))
 	    continue;
 
-	if (validSiblingBelow (w, p, lock))
-	{
+	if (validSiblingBelow (w, p, lock) &&
+	    last == lowest)
 	    /* update lowest as we find windows below sibling that we're
 	       allowed to stack above. last window must be equal to the
 	       lowest as we shouldn't update lowest if we passed an
 	       invalid window */
-	    if (last == lowest)
-		lowest = p;
-	}
+	    lowest = p;
 
 	/* update last pointer */
 	last = p;
@@ -4381,11 +4286,10 @@ void
 CompWindow::restackBelow (CompWindow *sibling)
 {
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    unsigned int   mask;
 
     ServerLock lock (screen->serverGrabInterface ());
 
-    mask = priv->addWindowStackChanges (&xwc,
+    unsigned int mask = priv->addWindowStackChanges (&xwc,
 	PrivateWindow::findValidStackSiblingBelow (this, sibling, lock), lock);
 
     if (mask)
@@ -4394,10 +4298,10 @@ CompWindow::restackBelow (CompWindow *sibling)
 
 namespace
 {
-void addSizeChangesSyncAndReconfigure (PrivateWindow        *priv,
-				       XWindowChanges       &xwc,
-				       unsigned int         mask,
-				       ServerLock           *lock)
+void addSizeChangesSyncAndReconfigure (PrivateWindow  *priv,
+				       XWindowChanges &xwc,
+				       unsigned int   mask,
+				       ServerLock     *lock)
 {
     mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
 
@@ -4420,38 +4324,32 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
     if (overrideRedirect () || !priv->managed)
 	return;
 
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-    int		   mask = 0;
+    XWindowChanges xwc  = XWINDOWCHANGES_INIT;
+    int            mask = 0;
 
     if (priv->state & CompWindowStateShadedMask && !priv->shaded)
     {
 	windowNotify (CompWindowNotifyShade);
-
 	priv->hide ();
     }
     else if (priv->shaded)
     {
 	windowNotify (CompWindowNotifyUnshade);
-
 	priv->show ();
     }
 
     if (stackingMode != CompStackingUpdateModeNone)
     {
-	bool       aboveFs;
 	CompWindow *sibling;
 
-	aboveFs = (stackingMode == CompStackingUpdateModeAboveFullscreen);
-	if (priv->type & CompWindowTypeFullscreenMask)
-	{
+	bool aboveFs = (stackingMode == CompStackingUpdateModeAboveFullscreen);
+
+	if (priv->type & CompWindowTypeFullscreenMask &&
 	    /* put active or soon-to-be-active fullscreen windows over
 	       all others in their layer */
-	    if (priv->id == screen->activeWindow () ||
-		priv->id == screen->getNextActiveWindow())
-	    {
-		aboveFs = true;
-	    }
-	}
+	    (priv->id == screen->activeWindow () ||
+	     priv->id == screen->getNextActiveWindow()))
+	    aboveFs = true;
 
 	/* put windows that are just mapped, over fullscreen windows */
 	if (stackingMode == CompStackingUpdateModeInitialMap)
@@ -4488,16 +4386,10 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	/* If sibling is NULL, then this window will go on the bottom
 	 * of the stack */
 	mask |= priv->addWindowStackChanges (&xwc, sibling, lock);
-	addSizeChangesSyncAndReconfigure (priv,
-					  xwc,
-					  mask,
-					  &lock);
+	addSizeChangesSyncAndReconfigure (priv, xwc, mask, &lock);
     }
     else
-	addSizeChangesSyncAndReconfigure (priv,
-					  xwc,
-					  mask,
-					  NULL);
+	addSizeChangesSyncAndReconfigure (priv, xwc, mask, NULL);
 }
 
 void
@@ -4506,27 +4398,28 @@ PrivateWindow::ensureWindowVisibility ()
     if (struts || attrib.override_redirect)
 	return;
 
-    if (type & (CompWindowTypeDockMask	     |
+    if (type & (CompWindowTypeDockMask       |
 		CompWindowTypeFullscreenMask |
 		CompWindowTypeUnknownMask))
 	return;
 
-    int x1 = screen->workArea ().x () - screen->width () * screen->vp ().x ();
-    int y1 = screen->workArea ().y () - screen->height () * screen->vp ().y ();
-    int x2 = x1 + screen->workArea ().width () + screen->vpSize ().width () *
-	 screen->width ();
-    int y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
-	 screen->height ();
+    int x1     = screen->workArea ().x () - screen->width ()  * screen->vp ().x ();
+    int y1     = screen->workArea ().y () - screen->height () * screen->vp ().y ();
+    int x2     = x1 + screen->workArea ().width ()  + screen->vpSize ().width ()  *
+		 screen->width ();
+    int y2     = y1 + screen->workArea ().height () + screen->vpSize ().height () *
+		 screen->height ();
 
-    int dx = 0;
-    int width = serverGeometry.widthIncBorders ();
+    int dx     = 0;
+    int width  = serverGeometry.widthIncBorders ();
 
+    // TODO: Eliminate those magic numbers below
     if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
     else if (serverGeometry.x () + width + serverInput.right <= x1)
 	dx = (x1 + 25) - (serverGeometry.x () + width);
 
-    int dy = 0;
+    int dy     = 0;
     int height = serverGeometry.heightIncBorders ();
 
     if (serverGeometry.y () - serverInput.top >= y2)
@@ -4570,8 +4463,7 @@ CompWindow::activate ()
 
     screen->setCurrentDesktop (priv->desktop);
 
-    screen->forEachWindow (
-	boost::bind (PrivateWindow::revealAncestors, _1, this));
+    screen->forEachWindow (boost::bind (PrivateWindow::revealAncestors, _1, this));
     priv->reveal ();
 
     screen->leaveShowDesktopMode (this);
@@ -4579,14 +4471,13 @@ CompWindow::activate ()
     if (priv->state & CompWindowStateHiddenMask)
     {
 	priv->state &= ~CompWindowStateShadedMask;
+
 	if (priv->shaded)
 	    priv->show ();
     }
 
-    if (priv->state & CompWindowStateHiddenMask)
-	return;
-
-    if (!onCurrentDesktop ())
+    if (priv->state & CompWindowStateHiddenMask ||
+	!onCurrentDesktop ())
 	return;
 
     priv->ensureWindowVisibility ();
@@ -4594,19 +4485,18 @@ CompWindow::activate ()
     moveInputFocusTo ();
 }
 
-
 #define PVertResizeInc (1 << 0)
 #define PHorzResizeInc (1 << 1)
 
 bool
-CompWindow::constrainNewWindowSize (int        width,
-				    int        height,
-				    int        *newWidth,
-				    int        *newHeight)
+CompWindow::constrainNewWindowSize (int width,
+				    int height,
+				    int *newWidth,
+				    int *newHeight)
 {
-    CompSize         size (width, height);
-    long	     ignoredHints = 0;
-    long	     ignoredResizeHints = 0;
+    CompSize size (width, height);
+    long     ignoredHints       = 0;
+    long     ignoredResizeHints = 0;
 
     if (screen->getCoreOptions().optionGetIgnoreHintsWhenMaximized ())
     {
@@ -4623,7 +4513,7 @@ CompWindow::constrainNewWindowSize (int        width,
 								    size,
 								    ignoredHints, ignoredResizeHints);
 
-    *newWidth = ret.width ();
+    *newWidth  = ret.width ();
     *newHeight = ret.height ();
 
     return ret != size;
@@ -4651,17 +4541,15 @@ PrivateWindow::hide ()
 
     bool onDesktop = window->onCurrentDesktop ();
 
-    if (!window->minimized () && !inShowDesktopMode &&
-	!hidden && onDesktop)
+    if (!window->minimized ()	&&
+	!inShowDesktopMode	&&
+	!hidden			&&
+	onDesktop)
     {
 	if (state & CompWindowStateShadedMask)
-	{
 	    shaded = true;
-	}
 	else
-	{
 	    return;
-	}
     }
     else
     {
@@ -4676,7 +4564,7 @@ PrivateWindow::hide ()
 
     window->windowNotify (CompWindowNotifyHide);
 
-    pendingUnmaps++;
+    ++pendingUnmaps;
 
     if (serverFrame && !shaded)
 	XUnmapWindow (screen->dpy (), serverFrame);
@@ -4698,8 +4586,7 @@ PrivateWindow::show ()
 
     bool onDesktop = window->onCurrentDesktop ();
 
-    if (minimized || inShowDesktopMode ||
-	hidden    || !onDesktop)
+    if (minimized || inShowDesktopMode || hidden || !onDesktop)
     {
 	/* no longer hidden but not on current desktop */
 	if (!minimized && !inShowDesktopMode && !hidden)
@@ -4723,7 +4610,7 @@ PrivateWindow::show ()
 
     window->windowNotify (CompWindowNotifyShow);
 
-    pendingMaps++;
+    ++pendingMaps;
 
     if (serverFrame)
     {
@@ -4743,9 +4630,7 @@ PrivateWindow::minimizeTransients (CompWindow *w,
 {
     if (w->priv->transientFor == ancestor->priv->id ||
 	w->priv->isGroupTransient (ancestor->priv->clientLeader))
-    {
 	w->minimize ();
-    }
 }
 
 void
@@ -4817,16 +4702,16 @@ CompWindow::maximize (unsigned int state)
 bool
 PrivateWindow::getUserTime (Time& time)
 {
-    Atom	  actual;
-    int		  result, format;
+    Atom          actual;
+    int           format;
     unsigned long n, left;
     unsigned char *data;
     bool          retval = false;
 
-    result = XGetWindowProperty (screen->dpy (), priv->id,
-				 Atoms::wmUserTime,
-				 0L, 1L, False, XA_CARDINAL, &actual, &format,
-				 &n, &left, &data);
+    int result = XGetWindowProperty (screen->dpy (), priv->id,
+				     Atoms::wmUserTime,
+				     0L, 1L, False, XA_CARDINAL, &actual, &format,
+				     &n, &left, &data);
 
     if (result == Success && data)
     {
@@ -4902,14 +4787,13 @@ PrivateWindow::getUsageTimestamp (Time& timestamp)
 bool
 PrivateWindow::isWindowFocusAllowed (Time timestamp)
 {
-    CompScreen   *s = screen;
+    CompScreen   *s           = screen;
     CompWindow   *active;
-    Time	 wUserTime, aUserTime;
+    Time         wUserTime, aUserTime;
     bool         gotTimestamp = false;
-    int          level;
     CompPoint    dvp;
 
-    level = s->getCoreOptions().optionGetFocusPreventionLevel ();
+    int level = s->getCoreOptions().optionGetFocusPreventionLevel ();
 
     if (level == CoreOptions::FocusPreventionLevelOff)
 	return true;
@@ -4918,33 +4802,29 @@ PrivateWindow::isWindowFocusAllowed (Time timestamp)
     {
 	/* the caller passed a timestamp, so use that
 	   instead of the window's user time */
-	wUserTime = timestamp;
+	wUserTime    = timestamp;
 	gotTimestamp = true;
     }
     else
-    {
 	gotTimestamp = getUsageTimestamp (wUserTime);
-    }
 
     /* if we got no timestamp for the window, try to get at least a timestamp
        for its transient parent, if any */
     if (!gotTimestamp && transientFor)
     {
-	CompWindow *parent;
+	CompWindow *parent = screen->findWindow (transientFor);
 
-	parent = screen->findWindow (transientFor);
 	if (parent)
 	    gotTimestamp = parent->priv->getUsageTimestamp (wUserTime);
     }
 
     if (gotTimestamp && !wUserTime)
-    {
 	/* window explicitly requested no focus */
 	return false;
-    }
 
     /* allow focus for excluded windows */
     CompMatch &match = s->getCoreOptions().optionGetFocusPreventionMatch ();
+
     if (!match.evaluate (window))
 	return true;
 
@@ -4954,21 +4834,20 @@ PrivateWindow::isWindowFocusAllowed (Time timestamp)
     active = s->findWindow (s->activeWindow ());
 
     /* no active window */
-    if (!active || (active->type () & CompWindowTypeDesktopMask))
+    if (!active || (active->type () & CompWindowTypeDesktopMask) ||
+	/* active window belongs to same application */
+	window->clientLeader () == active->clientLeader ())
 	return true;
 
-    /* active window belongs to same application */
-    if (window->clientLeader () == active->clientLeader ())
-       return true;
-
     if (level == CoreOptions::FocusPreventionLevelHigh)
-       return false;
+	return false;
 
     /* not in current viewport or desktop */
     if (!window->onCurrentDesktop ())
 	return false;
 
     dvp = window->defaultViewport ();
+
     if (dvp.x () != s->vp ().x () || dvp.y () != s->vp ().y ())
 	return false;
 
@@ -4996,28 +4875,21 @@ bool
 PrivateWindow::allowWindowFocus (unsigned int noFocusMask,
 				 Time         timestamp)
 {
-    bool retval;
-
     if (priv->id == screen->activeWindow ())
 	return true;
 
     /* do not focus windows of these types */
-    if (priv->type & noFocusMask)
+    if (priv->type & noFocusMask    ||
+	/* window doesn't take focus */
+	!(priv->inputHint	    ||
+	priv->protocols & CompWindowProtocolTakeFocusMask))
 	return false;
 
-    /* window doesn't take focus */
-    if (!priv->inputHint &&
-	!(priv->protocols & CompWindowProtocolTakeFocusMask))
-    {
-	return false;
-    }
+    bool retval = priv->isWindowFocusAllowed (timestamp);
 
-    retval = priv->isWindowFocusAllowed (timestamp);
+    /* add demands attention state if focus was prevented */
     if (!retval)
-    {
-	/* add demands attention state if focus was prevented */
 	window->changeState (priv->state | CompWindowStateDemandsAttentionMask);
-    }
 
     return retval;
 }
@@ -5027,13 +4899,11 @@ CompWindow::defaultViewport () const
 {
     CompPoint viewport;
 
-    if (priv->serverGeometry.x () < (int) screen->width ()            &&
-	priv->serverGeometry.x () + priv->serverGeometry.width () > 0 &&
-	priv->serverGeometry.y () < (int) screen->height ()           &&
-	priv->serverGeometry.y ()+ priv->serverGeometry.height () > 0)
-    {
+    if (priv->serverGeometry.x () < (int) screen->width ()		&&
+	priv->serverGeometry.y () < (int) screen->height ()		&&
+	priv->serverGeometry.x () + priv->serverGeometry.width ()  > 0	&&
+	priv->serverGeometry.y () + priv->serverGeometry.height () > 0)
 	return screen->vp ();
-    }
 
     screen->viewportForGeometry (priv->serverGeometry, viewport);
 
@@ -5049,21 +4919,20 @@ CompWindow::initialViewport () const
 void
 PrivateWindow::readIconHint ()
 {
-    XImage       *image, *maskImage = NULL;
-    Display      *dpy = screen->dpy ();
+    XImage       *maskImage = NULL;
+    Display      *dpy       = screen->dpy ();
     unsigned int width, height, dummy;
-    unsigned int i, j, k;
-    int		 iDummy;
+    unsigned int i, j;
+    int          iDummy;
     Window       wDummy;
-    CompIcon     *icon;
-    CARD32       *p;
 
     if (!XGetGeometry (dpy, hints->icon_pixmap, &wDummy, &iDummy,
 		       &iDummy, &width, &height, &dummy, &dummy))
 	return;
 
-    image = XGetImage (dpy, hints->icon_pixmap, 0, 0, width, height,
-		       AllPlanes, ZPixmap);
+    XImage *image = XGetImage (dpy, hints->icon_pixmap, 0, 0, width, height,
+			       AllPlanes, ZPixmap);
+
     if (!image)
 	return;
 
@@ -5074,9 +4943,10 @@ PrivateWindow::readIconHint ()
 	return;
     }
 
-    k = 0;
-    for (j = 0; j < height; j++)
-	for (i = 0; i < width; i++)
+    unsigned int k = 0;
+
+    for (j = 0; j < height; ++j)
+	for (i = 0; i < width; ++i)
 	    colors[k++].pixel = XGetPixel (image, i, j);
 
     for (i = 0; i < k; i += 256)
@@ -5085,22 +4955,21 @@ PrivateWindow::readIconHint ()
 
     XDestroyImage (image);
 
-    icon = new CompIcon (width, height);
+    CompIcon *icon = new CompIcon (width, height);
+
     if (!icon)
-    {
 	return;
-    }
 
     if (hints->flags & IconMaskHint)
 	maskImage = XGetImage (dpy, hints->icon_mask, 0, 0,
 			       width, height, AllPlanes, ZPixmap);
 
-    k = 0;
-    p = (CARD32 *) icon->data ();
+    k         = 0;
+    CARD32 *p = (CARD32 *) icon->data ();
 
-    for (j = 0; j < height; j++)
+    for (j = 0; j < height; ++j)
     {
-	for (i = 0; i < width; i++)
+	for (i = 0; i < width; ++i)
 	{
 	    if (maskImage && !XGetPixel (maskImage, i, j))
 		*p++ = 0;
@@ -5108,11 +4977,11 @@ PrivateWindow::readIconHint ()
 		*p++ = colors[k].pixel ? 0xffffffff : 0xff000000;
 	    else
 		*p++ = 0xff000000                             | /* alpha */
-		       (((colors[k].red >> 8) & 0xff) << 16)  | /* red */
+		       (((colors[k].red   >> 8) & 0xff) << 16)  | /* red */
 		       (((colors[k].green >> 8) & 0xff) << 8) | /* green */
-		       ((colors[k].blue >> 8) & 0xff);          /* blue */
+		       ((colors[k].blue   >> 8) & 0xff);          /* blue */
 
-	    k++;
+	    ++k;
 	}
     }
 
@@ -5135,24 +5004,25 @@ CompWindow::getIcon (int width,
     /* need to fetch icon property */
     if (priv->icons.size () == 0 && !priv->noIcons)
     {
-	Atom	      actual;
-	int	      result, format;
+	Atom          actual;
+	int           format;
 	unsigned long n, left;
 	unsigned char *data;
 
-	result = XGetWindowProperty (screen->dpy (), priv->id, Atoms::wmIcon,
-				     0L, 65536L, false, XA_CARDINAL,
-				     &actual, &format, &n, &left, &data);
+	int result = XGetWindowProperty (screen->dpy (), priv->id, Atoms::wmIcon,
+					 0L, 65536L, false, XA_CARDINAL,
+					 &actual, &format, &n, &left, &data);
 
 	if (result == Success && data)
 	{
 	    CARD32        *p;
 	    CARD32        alpha, red, green, blue;
 	    unsigned long iw, ih;
+	    unsigned long *idata;
 
 	    for (i = 0; i + 2 < n; i += iw * ih + 2)
 	    {
-		unsigned long *idata = (unsigned long *) data;
+		idata = (unsigned long *) data;
 
 		iw = idata[i];
 		ih = idata[i + 1];
@@ -5166,6 +5036,7 @@ CompWindow::getIcon (int width,
 		if (iw && ih)
 		{
 		    icon = new CompIcon (iw, ih);
+
 		    if (!icon)
 			continue;
 
@@ -5176,7 +5047,7 @@ CompWindow::getIcon (int width,
 		    /* EWMH doesn't say if icon data is premultiplied or
 		       not but most applications seem to assume data should
 		       be unpremultiplied. */
-		    for (unsigned long j = 0; j < iw * ih; j++)
+		    for (unsigned long j = 0; j < iw * ih; ++j)
 		    {
 			alpha = (idata[i + j + 2] >> 24) & 0xff;
 			red   = (idata[i + j + 2] >> 16) & 0xff;
@@ -5199,9 +5070,7 @@ CompWindow::getIcon (int width,
 	    XFree (data);
 	}
 	else if (priv->hints && (priv->hints->flags & IconPixmapHint))
-	{
 	    priv->readIconHint ();
-	}
 
 	/* don't fetch property again */
 	if (priv->icons.size () == 0)
@@ -5215,18 +5084,18 @@ CompWindow::getIcon (int width,
     icon = NULL;
     wh   = width + height;
 
-    for (i = 0; i < priv->icons.size (); i++)
+    for (i = 0; i < priv->icons.size (); ++i)
     {
 	const CompSize iconSize = *priv->icons[i];
 
-	if ((int) iconSize.width () > width ||
+	if ((int) iconSize.width ()  > width ||
 	    (int) iconSize.height () > height)
 	    continue;
 
 	if (icon)
 	{
 	    diff    = wh - (iconSize.width () + iconSize.height ());
-	    oldDiff = wh - (icon->width () + icon->height ());
+	    oldDiff = wh - (icon->width ()    + icon->height ());
 
 	    if (diff < oldDiff)
 		icon = priv->icons[i];
@@ -5247,7 +5116,7 @@ CompWindow::iconGeometry () const
 void
 PrivateWindow::freeIcons ()
 {
-    for (unsigned int i = 0; i < priv->icons.size (); i++)
+    for (unsigned int i = 0; i < priv->icons.size (); ++i)
 	delete priv->icons[i];
 
     priv->icons.resize (0);
@@ -5265,9 +5134,7 @@ CompWindow::onCurrentDesktop () const
 {
     if (priv->desktop == 0xffffffff ||
 	priv->desktop == screen->currentDesktop ())
-    {
 	return true;
-    }
 
     return false;
 }
@@ -5275,14 +5142,10 @@ CompWindow::onCurrentDesktop () const
 void
 CompWindow::setDesktop (unsigned int desktop)
 {
-    if (desktop != 0xffffffff)
-    {
-	if (priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask))
+    if (desktop != 0xffffffff &&
+	(priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask) ||
+	 desktop >= screen->nDesktop ()))
 	    return;
-
-	if (desktop >= screen->nDesktop ())
-	    return;
-    }
 
     if (desktop == priv->desktop)
 	return;
@@ -5307,10 +5170,9 @@ PrivateWindow::compareWindowActiveness (CompWindow *w1,
 					CompWindow *w2)
 {
     CompActiveWindowHistory *history = screen->currentHistory ();
-    int			    i;
 
     /* check current window history first */
-    for (i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; i++)
+    for (int i = 0; i < ACTIVE_WINDOW_HISTORY_SIZE; ++i)
     {
 	if (history->id[i] == w1->priv->id)
 	    return 1;
@@ -5328,16 +5190,10 @@ PrivateWindow::compareWindowActiveness (CompWindow *w1,
 bool
 CompWindow::onAllViewports () const
 {
-    if (overrideRedirect ())
-	return true;
-
-    if (!priv->managed && !isViewable ())
-	return true;
-
-    if (priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask))
-	return true;
-
-    if (priv->state & CompWindowStateStickyMask)
+    if (overrideRedirect ()						    ||
+	(!priv->managed && !isViewable ())				    ||
+	priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask)   ||
+	priv->state & CompWindowStateStickyMask)
 	return true;
 
     return false;
@@ -5347,24 +5203,23 @@ CompPoint
 CompWindow::getMovementForOffset (const CompPoint &offset) const
 {
     CompScreen *s = screen;
-    int         m, vWidth, vHeight;
+    int         m;
     int         offX = offset.x (), offY = offset.y ();
     CompPoint   rv;
 
-    vWidth = s->width () * s->vpSize ().width ();
-    vHeight = s->height () * s->vpSize ().height ();
+    int vWidth  = s->width ()  * s->vpSize ().width ();
+    int vHeight = s->height () * s->vpSize ().height ();
 
     offX %= vWidth;
     offY %= vHeight;
 
     /* x */
     if (s->vpSize ().width () == 1)
-    {
 	rv.setX (offX);
-    }
     else
     {
 	m = priv->serverGeometry.x () + offX;
+
 	if (m - priv->serverInput.left < (int) s->width () - vWidth)
 	    rv.setX (offX + vWidth);
 	else if (m + priv->serverGeometry.width () + priv->serverInput.right > vWidth)
@@ -5374,12 +5229,11 @@ CompWindow::getMovementForOffset (const CompPoint &offset) const
     }
 
     if (s->vpSize ().height () == 1)
-    {
 	rv.setY (offY);
-    }
     else
     {
 	m = priv->serverGeometry.y () + offY;
+
 	if (m - priv->serverInput.top < (int) s->height () - vHeight)
 	    rv.setY (offY + vHeight);
 	else if (m + priv->serverGeometry.height () + priv->serverInput.bottom > vHeight)
@@ -5537,17 +5391,13 @@ CompWindow::close (Time serverTime)
 	    XSendEvent (screen->dpy (), priv->id, false, NoEventMask, &ev);
 	}
 	else
-	{
 	    XKillClient (screen->dpy (), priv->id);
-	}
 
-	priv->closeRequests++;
+	++priv->closeRequests;
     }
     else
-    {
 	screen->toolkitAction (Atoms::toolkitActionForceQuitDialog,
 				     serverTime, priv->id, true, 0, 0);
-    }
 
     priv->lastCloseRequestTime = serverTime;
 }
@@ -5555,10 +5405,8 @@ CompWindow::close (Time serverTime)
 bool
 PrivateWindow::handlePingTimeout (unsigned int lastPing)
 {
-    if (!window->isViewable ())
-	return false;
-
-    if (!(priv->type & CompWindowTypeNormalMask))
+    if (!window->isViewable () ||
+	!(priv->type & CompWindowTypeNormalMask))
 	return false;
 
     if (priv->protocols & CompWindowProtocolPingMask)
@@ -5571,7 +5419,6 @@ PrivateWindow::handlePingTimeout (unsigned int lastPing)
 	    if (priv->alive)
 	    {
 		priv->alive = false;
-
 		window->windowNotify (CompWindowNotifyAliveChanged);
 
 		if (priv->closeRequests)
@@ -5614,19 +5461,15 @@ PrivateWindow::handlePing (int lastPing)
 void
 PrivateWindow::processMap ()
 {
-    bool                   allowFocus;
-    bool                   initiallyMinimized;
-    CompStackingUpdateMode stackingMode;
-
     priv->initialViewport = screen->vp ();
 
     priv->initialTimestampSet = false;
 
     screen->applyStartupProperties (window);
 
-    initiallyMinimized = (priv->hints &&
-			  priv->hints->initial_state == IconicState &&
-			  !window->minimized ());
+    bool initiallyMinimized = (priv->hints				    &&
+			       priv->hints->initial_state == IconicState    &&
+			       !window->minimized ());
 
     if (!serverFrame && !initiallyMinimized)
 	reparent ();
@@ -5639,7 +5482,7 @@ PrivateWindow::processMap ()
     if (!priv->placed)
     {
 	int            gravity = priv->sizeHints.win_gravity;
-	XWindowChanges xwc = XWINDOWCHANGES_INIT;
+	XWindowChanges xwc     = XWINDOWCHANGES_INIT;
 	unsigned int   xwcm;
 
 	/* adjust for gravity, but only for frame size */
@@ -5650,7 +5493,7 @@ PrivateWindow::processMap ()
 
 	xwcm = adjustConfigureRequestForGravity (&xwc, CWX | CWY, gravity, 1);
 
-	xwc.width = priv->serverGeometry.width ();
+	xwc.width  = priv->serverGeometry.width ();
 	xwc.height = priv->serverGeometry.height ();
 
 	window->validateResizeRequest (xwcm, &xwc, ClientTypeApplication);
@@ -5669,7 +5512,9 @@ PrivateWindow::processMap ()
 	priv->placed = true;
     }
 
-    allowFocus = allowWindowFocus (NO_FOCUS_MASK, 0);
+    CompStackingUpdateMode stackingMode;
+
+    bool allowFocus = allowWindowFocus (NO_FOCUS_MASK, 0);
 
     if (!allowFocus && (priv->type & ~NO_FOCUS_MASK))
 	stackingMode = CompStackingUpdateModeInitialMapDeniedFocus;
@@ -5697,6 +5542,7 @@ PrivateWindow::processMap ()
 	if (allowFocus)
 	{
 	    window->moveInputFocusTo ();
+
 	    if (!window->onCurrentDesktop ())
 		screen->setCurrentDesktop (priv->desktop);
 	}
@@ -5785,9 +5631,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
     }
 
     if (onlyActions)
-    {
-        screen->updatePassiveButtonGrabs(serverFrame);
-    }
+	screen->updatePassiveButtonGrabs(serverFrame);
     else
     {
 	/* Grab everything */
@@ -5802,7 +5646,6 @@ PrivateWindow::updatePassiveButtonGrabs ()
 		     None);
     }
 }
-
 
 const CompRegion &
 CompWindow::region () const
@@ -5928,39 +5771,34 @@ CompWindow::moveToViewportPosition (int  x,
 				    int  y,
 				    bool sync)
 {
-    int tx, ty;
-    int vWidth  = screen->width () * screen->vpSize ().width ();
+    int vWidth  = screen->width ()  * screen->vpSize ().width ();
     int vHeight = screen->height () * screen->vpSize ().height ();
 
     if (screen->vpSize ().width () != 1)
     {
 	x += screen->vp ().x () * screen->width ();
-	x = compiz::core::screen::wraparound_mod (x, vWidth);
+	x  = compiz::core::screen::wraparound_mod (x, vWidth);
 	x -= screen->vp ().x () * screen->width ();
     }
 
     if (screen->vpSize ().height () != 1)
     {
 	y += screen->vp ().y () * screen->height ();
-	y = compiz::core::screen::wraparound_mod (y, vHeight);
+	y  = compiz::core::screen::wraparound_mod (y, vHeight);
 	y -= screen->vp ().y () * screen->height ();
     }
 
-    tx = x - priv->serverGeometry.x ();
-    ty = y - priv->serverGeometry.y ();
+    int tx = x - priv->serverGeometry.x ();
+    int ty = y - priv->serverGeometry.y ();
 
     if (tx || ty)
     {
 	unsigned int   valueMask = CWX | CWY;
 	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
-	if (!priv->managed)
-	    return;
-
-	if (priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask))
-	    return;
-
-	if (priv->state & CompWindowStateStickyMask)
+	if (!priv->managed ||
+	    priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask) ||
+	    priv->state & CompWindowStateStickyMask)
 	    return;
 
 	int wx = tx;
@@ -6009,17 +5847,15 @@ CompWindow::startupId () const
 void
 PrivateWindow::applyStartupProperties (CompStartupSequence *s)
 {
-    int workspace;
-
     priv->initialViewport.setX (s->viewportX);
     priv->initialViewport.setY (s->viewportY);
 
-    workspace = sn_startup_sequence_get_workspace (s->sequence);
+    int workspace = sn_startup_sequence_get_workspace (s->sequence);
+
     if (workspace >= 0)
 	window->setDesktop (workspace);
 
-    priv->initialTimestamp    =
-	sn_startup_sequence_get_timestamp (s->sequence);
+    priv->initialTimestamp    = sn_startup_sequence_get_timestamp (s->sequence);
     priv->initialTimestampSet = true;
 }
 
@@ -6107,22 +5943,16 @@ void
 PrivateWindow::updateStartupId ()
 {
     char *oldId = startupId;
-    bool newId = true;
+    bool newId  = true;
 
     startupId = getStartupId ();
 
-    if (oldId && startupId)
-    {
-	if (strcmp (startupId, oldId) == 0)
-	    newId = false;
-    }
+    if (oldId && startupId && strcmp (startupId, oldId) == 0)
+	newId = false;
 
     if (managed && startupId && newId)
     {
 	Time       timestamp = 0;
-	CompPoint  vp, svp;
-	CompSize   size;
-	int        x, y;
 
 	initialTimestampSet = false;
 	screen->applyStartupProperties (window);
@@ -6134,18 +5964,18 @@ PrivateWindow::updateStartupId ()
 	   notification, assume the client changing the ID
 	   wanted to activate the window on the current viewport */
 
-	vp   = window->defaultViewport ();
-	svp  = screen->vp ();
-	size = *screen;
+	CompPoint vp   = window->defaultViewport ();
+	CompPoint svp  = screen->vp ();
+	CompSize size  = *screen;
 
-	x = window->serverGeometry ().x () + (svp.x () - vp.x ()) * size.width ();
-	y = window->serverGeometry ().y () + (svp.y () - vp.y ()) * size.height ();
+	int x = window->serverGeometry ().x () + (svp.x () - vp.x ()) * size.width ();
+	int y = window->serverGeometry ().y () + (svp.y () - vp.y ()) * size.height ();
 	window->moveToViewportPosition (x, y, true);
 
 	if (allowWindowFocus (0, timestamp))
 	    window->activate ();
     }
-    
+
     if (oldId)
 	free (oldId);
 }
@@ -6172,7 +6002,7 @@ CompWindow *
 PrivateWindow::createCompWindow (Window aboveId, Window aboveServerId, XWindowAttributes &wa, Window id)
 {
     PrivateWindow* priv(new PrivateWindow ());
-    priv->id = id;
+    priv->id       = id;
     priv->serverId = id;
 
     CompWindow *fw = new CompWindow (aboveId, aboveServerId, wa, priv);
@@ -6180,11 +6010,10 @@ PrivateWindow::createCompWindow (Window aboveId, Window aboveServerId, XWindowAt
     return fw;
 }
 
-
-CompWindow::CompWindow (Window aboveId,
-			Window aboveServerId,
+CompWindow::CompWindow (Window            aboveId,
+			Window            aboveServerId,
 			XWindowAttributes &wa,
-			PrivateWindow *priv) :
+			PrivateWindow     *priv) :
     PluginClassStorage (windowPluginClassIndices),
     priv (priv)
 {
@@ -6206,8 +6035,8 @@ CompWindow::CompWindow (Window aboveId,
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
 			      priv->attrib.width, priv->attrib.height,
 			      priv->attrib.border_width);
-    priv->serverFrameGeometry = priv->frameGeometry = priv->syncGeometry
-	    = priv->geometry = priv->serverGeometry;
+    priv->serverFrameGeometry = priv->frameGeometry = priv->syncGeometry =
+				priv->geometry = priv->serverGeometry;
 
     priv->sizeHints.flags = 0;
 
@@ -6230,18 +6059,16 @@ CompWindow::CompWindow (Window aboveId,
 
     if (priv->attrib.c_class != InputOnly)
     {
-	priv->region = CompRegion (priv->serverGeometry);
+	priv->region      = CompRegion (priv->serverGeometry);
 	priv->inputRegion = priv->region;
 
 	/* need to check for DisplayModal state on all windows */
-	priv->state = screen->getWindowState (priv->id);
+	priv->state       = screen->getWindowState (priv->id);
 
 	priv->updateClassHints ();
     }
     else
-    {
 	priv->attrib.map_state = IsUnmapped;
-    }
 
     priv->wmType    = screen->getWindowType (priv->id);
     priv->protocols = screen->getProtocols (priv->id);
@@ -6254,7 +6081,7 @@ CompWindow::CompWindow (Window aboveId,
 	priv->updateTransientHint ();
 
 	priv->clientLeader = priv->getClientLeader ();
-	priv->startupId = priv->getStartupId ();
+	priv->startupId    = priv->getStartupId ();
 
 	recalcType ();
 
@@ -6264,17 +6091,13 @@ CompWindow::CompWindow (Window aboveId,
 	{
 	    priv->desktop = screen->getWindowProp (priv->id, Atoms::winDesktop,
 					           priv->desktop);
-	    if (priv->desktop != 0xffffffff)
-	    {
-		if (priv->desktop >= screen->nDesktop ())
-		    priv->desktop = screen->currentDesktop ();
-	    }
+	    if (priv->desktop != 0xffffffff &&
+		priv->desktop >= screen->nDesktop ())
+		priv->desktop = screen->currentDesktop ();
 	}
     }
     else
-    {
 	recalcType ();
-    }
 
     if (priv->attrib.map_state == IsViewable)
     {
@@ -6285,6 +6108,7 @@ CompWindow::CompWindow (Window aboveId,
 	    // needs to happen right after maprequest
 	    if (!priv->serverFrame)
 		priv->reparent ();
+
 	    priv->managed = true;
 
 	    if (screen->getWmState (priv->id) == IconicState)
@@ -6298,9 +6122,7 @@ CompWindow::CompWindow (Window aboveId,
 	    {
 		if (priv->wmType & (CompWindowTypeDockMask |
 				 CompWindowTypeDesktopMask))
-		{
 		    setDesktop (0xffffffff);
-		}
 		else
 		{
 		    if (priv->desktop != 0xffffffff)
@@ -6313,18 +6135,18 @@ CompWindow::CompWindow (Window aboveId,
 	}
 
 	priv->attrib.map_state = IsUnmapped;
-	priv->pendingMaps++;
+	++priv->pendingMaps;
 
 	map ();
 
 	updateAttributes (CompStackingUpdateModeNormal);
 
 	if (priv->minimized || priv->inShowDesktopMode ||
-	    priv->hidden || priv->shaded)
+	    priv->hidden    || priv->shaded)
 	{
 	    priv->state |= CompWindowStateHiddenMask;
 
-	    priv->pendingUnmaps++;
+	    ++priv->pendingUnmaps;
 
 	    if (priv->serverFrame && !priv->shaded)
 		XUnmapWindow (screen->dpy (), priv->serverFrame);
@@ -6334,31 +6156,31 @@ CompWindow::CompWindow (Window aboveId,
 	    screen->setWindowState (priv->state, priv->id);
 	}
     }
-    else if (!overrideRedirect ())
+    else if (!overrideRedirect () &&
+	     screen->getWmState (priv->id) == IconicState)
     {
-	if (screen->getWmState (priv->id) == IconicState)
-	{
-	    // before everything else in maprequest
-	    if (!priv->serverFrame)
-		priv->reparent ();
-	    priv->managed = true;
-	    priv->placed  = true;
+	// before everything else in maprequest
+	if (!priv->serverFrame)
+	    priv->reparent ();
 
-	    if (priv->state & CompWindowStateHiddenMask)
-	    {
-		if (priv->state & CompWindowStateShadedMask)
-		    priv->shaded = true;
-		else
-		    priv->minimized = true;
-	    }
+	priv->managed = true;
+	priv->placed  = true;
+
+	if (priv->state & CompWindowStateHiddenMask)
+	{
+	    if (priv->state & CompWindowStateShadedMask)
+		priv->shaded = true;
+	    else
+		priv->minimized = true;
 	}
     }
 
     /* TODO: bailout properly when objectInitPlugins fails */
     bool init_succeeded = CompPlugin::windowInitPlugins (this);
     assert (init_succeeded);
+
     if (!init_succeeded)
-      return;
+	return;
 
     recalcActions ();
     priv->updateIconGeometry ();
@@ -6367,9 +6189,7 @@ CompWindow::CompWindow (Window aboveId,
 	priv->updateFrameWindow ();
 
     if (priv->attrib.map_state == IsViewable)
-    {
 	priv->invisible = priv->isInvisible ();
-    }
 }
 
 CompWindow::~CompWindow ()
@@ -6387,11 +6207,13 @@ CompWindow::~CompWindow ()
     {
 	if (dw->next == this)
 	    dw->next = this->next;
+
 	if (dw->prev == this)
 	    dw->prev = this->prev;
 
 	if (dw->serverNext == this)
 	    dw->serverNext = this->serverNext;
+
 	if (dw->serverPrev == this)
 	    dw->serverPrev = this->serverPrev;
     }
@@ -6416,10 +6238,8 @@ CompWindow::~CompWindow ()
 				  priv->saveMask, &priv->saveWc);
 
 	    if (!priv->hidden)
-	    {
 		if (priv->state & CompWindowStateHiddenMask)
 		    XMapWindow (screen->dpy (), priv->id);
-	    }
 	}
 
 	if (screen->XShape ())
@@ -6677,10 +6497,7 @@ CompWindow::isFocussable () const
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, isFocussable);
 
-    if (priv->inputHint)
-	return true;
-
-    if (priv->protocols & CompWindowProtocolTakeFocusMask)
+    if (priv->inputHint || priv->protocols & CompWindowProtocolTakeFocusMask)
 	return true;
 
     return false;
@@ -6726,28 +6543,25 @@ CompWindow::updateFrameRegion ()
 {
     if (priv->serverFrame)
     {
-	CompRect   r;
-	int        x, y;
-
 	priv->frameRegion = emptyRegion;
 
 	updateFrameRegion (priv->frameRegion);
 
 	if (!shaded ())
 	{
-	    r = priv->region.boundingRect ();
+	    CompRect r = priv->region.boundingRect ();
 	    priv->frameRegion -= r;
 
 	    r.setGeometry (r.x1 () - priv->serverInput.left,
-			r.y1 () - priv->serverInput.top,
-			r.width  () + priv->serverInput.right + priv->serverInput.left,
-			r.height () + priv->serverInput.bottom + priv->serverInput.top);
+			   r.y1 () - priv->serverInput.top,
+			   r.width  () + priv->serverInput.right  + priv->serverInput.left,
+			   r.height () + priv->serverInput.bottom + priv->serverInput.top);
 
 	    priv->frameRegion &= CompRegion (r);
 	}
 
-	x = priv->serverGeometry.x () - priv->serverInput.left;
-	y = priv->serverGeometry.y () - priv->serverInput.top;
+	int x = priv->serverGeometry.x () - priv->serverInput.left;
+	int y = priv->serverGeometry.y () - priv->serverInput.top;
 
 	XShapeCombineRegion (screen->dpy (), priv->serverFrame,
 			     ShapeBounding, -x, -y,
@@ -6772,21 +6586,20 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
     /* Input extents are used for frame size,
      * Border extents used for placement.
      */
-
     if (!i)
 	i = b;
 
-    if (priv->serverInput.left   != i->left ||
-	priv->serverInput.right  != i->right ||
-	priv->serverInput.top    != i->top ||
-	priv->serverInput.bottom != i->bottom ||
-	priv->border.left   != b->left ||
-	priv->border.right  != b->right ||
-	priv->border.top    != b->top ||
+    if (priv->serverInput.left   != i->left	||
+	priv->serverInput.right  != i->right	||
+	priv->serverInput.top    != i->top	||
+	priv->serverInput.bottom != i->bottom	||
+	priv->border.left   != b->left		||
+	priv->border.right  != b->right		||
+	priv->border.top    != b->top		||
 	priv->border.bottom != b->bottom)
     {
 	priv->serverInput = *i;
-	priv->border = *b;
+	priv->border      = *b;
 
 	recalcActions ();
 
@@ -6847,20 +6660,19 @@ CompWindow::updateFrameRegion (CompRegion& region)
 bool
 PrivateWindow::reparent ()
 {
-    XSetWindowAttributes attr;
-    XWindowAttributes    wa;
-    XWindowChanges       xwc = XWINDOWCHANGES_INIT;
-    int                  mask;
-    unsigned int         nchildren;
-    Window		 *children, root_return, parent_return;
-    Display              *dpy = screen->dpy ();
-    Visual		 *visual = DefaultVisual (screen->dpy (),
-						  screen->screenNum ());
-    Colormap		 cmap = DefaultColormap (screen->dpy (),
-						 screen->screenNum ());
-
     if (serverFrame)
 	return false;
+
+    XSetWindowAttributes attr;
+    XWindowAttributes    wa;
+    XWindowChanges       xwc     = XWINDOWCHANGES_INIT;
+    unsigned int         nchildren;
+    Window               *children, root_return, parent_return;
+    Display              *dpy    = screen->dpy ();
+    Visual               *visual = DefaultVisual (screen->dpy (),
+						  screen->screenNum ());
+    Colormap             cmap    = DefaultColormap (screen->dpy (),
+						    screen->screenNum ());
 
     XSync (dpy, false);
     XGrabServer (dpy);
@@ -6873,6 +6685,7 @@ PrivateWindow::reparent ()
     {
 	XUngrabServer (dpy);
 	XSync (dpy, false);
+
 	return false;
     }
 
@@ -6890,6 +6703,7 @@ PrivateWindow::reparent ()
 	XFree (children);
 	XUngrabServer (dpy);
 	XSync (dpy, false);
+
 	return false;
     }
 
@@ -6905,7 +6719,7 @@ PrivateWindow::reparent ()
 
     priv->serverGeometry.setBorder (0);
 
-    mask = CWBorderPixel | CWColormap | CWBackPixmap | CWOverrideRedirect;
+    int mask = CWBorderPixel | CWColormap | CWBackPixmap | CWOverrideRedirect;
 
     if (wa.depth == 32)
     {
@@ -6926,7 +6740,7 @@ PrivateWindow::reparent ()
      * that if need be */
 
     /* Awaiting a new frame to be given to us */
-    frame = None;
+    frame       = None;
     serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
 				 wa.width, wa.height, 0, wa.depth,
 				 InputOutput, visual, mask, &attr);
@@ -6944,8 +6758,7 @@ PrivateWindow::reparent ()
 			    InputOutput, visual, mask, &attr);
 
     lastServerInput = serverInput;
-
-    xwc.stack_mode = Above;
+    xwc.stack_mode  = Above;
 
     /* Look for the client in the current server side stacking
      * order and put the frame above what the client is above
@@ -6959,7 +6772,7 @@ PrivateWindow::reparent ()
     }
     else
     {
-	for (unsigned int i = 0; i < nchildren; i++)
+	for (unsigned int i = 0; i < nchildren; ++i)
 	{
 	    if (i < nchildren - 1)
 	    {
@@ -6994,18 +6807,18 @@ PrivateWindow::reparent ()
     /* We don't care about client events on the frame, and listening for them
      * will probably end up fighting the client anyways, so disable them */
 
-    attr.do_not_propagate_mask = KeyPressMask | KeyReleaseMask |
-				 ButtonPressMask | ButtonReleaseMask |
-				 EnterWindowMask | LeaveWindowMask |
-				 PointerMotionMask | PointerMotionHintMask |
-				 Button1MotionMask | Button2MotionMask |
-				 Button3MotionMask | Button4MotionMask |
-				 Button5MotionMask | ButtonMotionMask |
-				 KeymapStateMask | ExposureMask |
-				 VisibilityChangeMask | StructureNotifyMask |
-				 ResizeRedirectMask | SubstructureNotifyMask |
-				 SubstructureRedirectMask | FocusChangeMask |
-				 PropertyChangeMask | ColormapChangeMask |
+    attr.do_not_propagate_mask = KeyPressMask             | KeyReleaseMask	    |
+				 ButtonPressMask          | ButtonReleaseMask	    |
+				 EnterWindowMask          | LeaveWindowMask	    |
+				 PointerMotionMask        | PointerMotionHintMask   |
+				 Button1MotionMask        | Button2MotionMask	    |
+				 Button3MotionMask        | Button4MotionMask	    |
+				 Button5MotionMask        | ButtonMotionMask	    |
+				 KeymapStateMask          | ExposureMask	    |
+				 VisibilityChangeMask     | StructureNotifyMask	    |
+				 ResizeRedirectMask       | SubstructureNotifyMask  |
+				 SubstructureRedirectMask | FocusChangeMask	    |
+				 PropertyChangeMask       | ColormapChangeMask	    |
 				 OwnerGrabButtonMask;
 
     XChangeWindowAttributes (dpy, id, CWEventMask | CWDontPropagate, &attr);
@@ -7013,9 +6826,8 @@ PrivateWindow::reparent ()
     if (wa.map_state == IsViewable || shaded)
 	XMapWindow (dpy, serverFrame);
 
-    attr.event_mask = SubstructureRedirectMask |
-		      SubstructureNotifyMask | EnterWindowMask |
-		      LeaveWindowMask;
+    attr.event_mask = SubstructureRedirectMask | SubstructureNotifyMask |
+		      EnterWindowMask          | LeaveWindowMask;
 
     serverFrameGeometry = serverGeometry;
 
@@ -7050,17 +6862,17 @@ PrivateWindow::reparent ()
 void
 PrivateWindow::unreparent ()
 {
-    Display        	 *dpy = screen->dpy ();
-    XEvent         	 e;
-    bool           	 alive = true;
-    XWindowChanges 	 xwc = XWINDOWCHANGES_INIT;
-    unsigned int         nchildren;
-    Window		 *children = NULL, root_return, parent_return;
-    XWindowAttributes	 wa;
-    StackDebugger        *dbg = StackDebugger::Default ();
-
     if (!serverFrame)
 	return;
+
+    Display           *dpy      = screen->dpy ();
+    XEvent            e;
+    bool              alive     = true;
+    XWindowChanges    xwc       = XWINDOWCHANGES_INIT;
+    unsigned int      nchildren;
+    Window            *children = NULL, root_return, parent_return;
+    XWindowAttributes wa;
+    StackDebugger     *dbg      = StackDebugger::Default ();
 
     XSync (dpy, false);
 
@@ -7069,11 +6881,8 @@ PrivateWindow::unreparent ()
         XPutBackEvent (dpy, &e);
         alive = false;
     }
-    else
-    {
-	if (!XGetWindowAttributes (dpy, id, &wa))
+    else if (!XGetWindowAttributes (dpy, id, &wa))
 	    alive = false;
-    }
 
     /* Also don't reparent back into root windows that have ended up
      * reparented into other windows (and as such we are unmanaging them) */
@@ -7102,7 +6911,7 @@ PrivateWindow::unreparent ()
 
 	xwc.x = serverGeometry.xMinusBorder ();
 	xwc.y = serverGeometry.yMinusBorder ();
-	xwc.width = serverGeometry.widthIncBorders ();
+	xwc.width  = serverGeometry.widthIncBorders ();
 	xwc.height = serverGeometry.heightIncBorders ();
 
 	XConfigureWindow (dpy, serverFrame, CWX | CWY | CWWidth | CWHeight, &xwc);
@@ -7184,8 +6993,8 @@ PrivateWindow::unreparent ()
      * handle the ReparentNotify */
     pendingConfigures.clear ();
 
-    frame = None;
-    wrapper = None;
+    frame       = None;
+    wrapper     = None;
     serverFrame = None;
 
     // Finally, (i.e. after updating state) notify the change
