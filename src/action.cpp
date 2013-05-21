@@ -88,7 +88,7 @@ modifiersToString (unsigned int modMask)
 }
 
 static unsigned int
-stringToModifiers (CompString str)
+stringToModifiers (const CompString &str)
 {
     unsigned int mods = 0;
 
