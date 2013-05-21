@@ -555,20 +555,20 @@ RotateScreen::rotateWithWindow (CompAction         *action,
 bool 
 RotateScreen::rotateFlip (int direction)
 {
+    if (screen->otherGrabExist ("rotate", "move", "group-drag", NULL))
+	return false;
+
     CompOption::Vector o (0);
 
     mMoveTo = 0.0f;
     mSlow   = false;
 
-    if (screen->otherGrabExist ("rotate", "move", "group-drag", NULL))
-	return false;
-
     int warpX = pointerX - (screen->width () * direction);
 
     if (direction == -1)
-	screen->warpPointer (screen->width () - 1, 0);
+	screen->warpPointer (screen->width () - 10, 0);
     else
-	screen->warpPointer (1 - screen->width (), 0);
+	screen->warpPointer (10 - screen->width (), 0);
 
     lastPointerX = warpX;
 
