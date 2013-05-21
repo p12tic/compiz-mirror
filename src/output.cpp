@@ -56,16 +56,16 @@ CompOutput::setWorkArea (const CompRect& workarea)
 {
     mWorkArea = workarea;
 
-    if (workarea.x () < (int) x1 ())
+    if (workarea.x ()  < (int)x1 ())
 	mWorkArea.setX (x1 ());
 
-    if (workarea.y () < (int) y1 ())
+    if (workarea.y ()  < (int)y1 ())
 	mWorkArea.setY (y1 ());
 
-    if (workarea.x2 () > (int) x2 ())
-	mWorkArea.setWidth (x2 () - mWorkArea.x ());
+    if (workarea.x2 () > (int)x2 ())
+	mWorkArea.setWidth (x2 ()  - mWorkArea.x ());
 
-    if (workarea.y2 () > (int) y2 ())
+    if (workarea.y2 () > (int)y2 ())
 	mWorkArea.setHeight (y2 () - mWorkArea.y ());
 }
 
@@ -86,4 +86,3 @@ CompOutput::setId (CompString name, unsigned int id)
     mName = name;
     mId = id;
 }
-
