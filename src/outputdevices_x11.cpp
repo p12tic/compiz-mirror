@@ -98,13 +98,13 @@ OutputDevices::computeWorkAreas (CompRect             &workArea,
 {
     for (unsigned int i = 0; i < outputDevs.size(); ++i)
     {
-	CompRect oldWorkArea = outputDevs[i].workArea();
-	workArea             = computeWorkareaForBox(outputDevs[i], windows);
+	CompRect oldWorkArea = outputDevs[i].workArea ();
+	workArea             = computeWorkareaForBox (outputDevs[i], windows);
 
 	if (workArea != oldWorkArea)
 	{
 	    workAreaChanged = true;
-	    outputDevs[i].setWorkArea(workArea);
+	    outputDevs[i].setWorkArea (workArea);
 	}
 
 	allWorkArea += workArea;
@@ -115,21 +115,21 @@ void
 OutputDevices::updateOutputDevices (CoreOptions &coreOptions,
 				    CompSize    *screen)
 {
-    CompOption::Value::Vector& list    = coreOptions.optionGetOutputs();
+    CompOption::Value::Vector  &list   = coreOptions.optionGetOutputs ();
     unsigned int               nOutput = 0;
     int                        x, y, bits;
     unsigned int               uWidth, uHeight;
     int                        width, height;
     int                        x1, y1, x2, y2;
 
-    foreach (CompOption::Value & value, list)
+    foreach (CompOption::Value &value, list)
     {
 	x       = 0;
 	y       = 0;
-	uWidth  = (unsigned)screen->width  ();
+	uWidth  = (unsigned)screen->width ();
 	uHeight = (unsigned)screen->height ();
 
-	bits    = XParseGeometry(value.s().c_str(), &x, &y, &uWidth, &uHeight);
+	bits    = XParseGeometry(value.s ().c_str (), &x, &y, &uWidth, &uHeight);
 	width   = (int)uWidth;
 	height  = (int)uHeight;
 
@@ -148,19 +148,19 @@ OutputDevices::updateOutputDevices (CoreOptions &coreOptions,
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > screen->width())
-	    x2 = screen->width();
-	if (y2 > screen->height())
-	    y2 = screen->height();
+	if (x2 > screen->width ())
+	    x2 = screen->width ();
+	if (y2 > screen->height ())
+	    y2 = screen->height ();
 
 	if (x1 < x2 && y1 < y2)
 	{
-	    setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
+	    setGeometryOnDevice (nOutput, x1, y1, x2 - x1, y2 - y1);
 	    ++nOutput;
 	}
     }
 
-    adoptDevices(nOutput, screen);
+    adoptDevices (nOutput, screen);
 }
 
 }

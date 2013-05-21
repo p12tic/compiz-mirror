@@ -46,9 +46,9 @@ OutputDevices::setGeometryOnDevice(unsigned int const nOutput,
 				   const int          height)
 {
     if (outputDevs.size() < nOutput + 1)
-	outputDevs.resize(nOutput + 1);
+	outputDevs.resize (nOutput + 1);
 
-    outputDevs[nOutput].setGeometry(x, y, width, height);
+    outputDevs[nOutput].setGeometry (x, y, width, height);
 }
 
 void
@@ -58,7 +58,7 @@ OutputDevices::adoptDevices(unsigned int nOutput,
     /* make sure we have at least one output */
     if (!nOutput)
     {
-	setGeometryOnDevice(nOutput, 0, 0, screen->width(), screen->height());
+	setGeometryOnDevice (nOutput, 0, 0, screen->width(), screen->height());
 	++nOutput;
     }
 
@@ -78,7 +78,7 @@ OutputDevices::adoptDevices(unsigned int nOutput,
 
     for (unsigned int i = 0; i < nOutput - 1; ++i)
 	for (unsigned int j = i + 1; j < nOutput; ++j)
-	    if (outputDevs[i].intersects(outputDevs[j]))
+	    if (outputDevs[i].intersects (outputDevs[j]))
 		overlappingOutputs = true;
 }
 
