@@ -28,8 +28,10 @@
 static const unsigned short DND_THRESHOLD = 5;
 
 bool
-compiz::expo::clickMovementInThreshold(int previousX, int previousY,
-				       int currentX, int currentY)
+compiz::expo::clickMovementInThreshold (int previousX,
+					int previousY,
+					int currentX,
+					int currentY)
 {
     if ((abs (previousX - currentX) <= DND_THRESHOLD) &&
 	(abs (previousY - currentY) <= DND_THRESHOLD))

@@ -47,7 +47,10 @@ class ExpoScreen :
 	void handleEvent (XEvent *);
 
 	void preparePaint (int);
-	void paint (CompOutput::ptrList&, unsigned int);
+
+	void paint (CompOutput::ptrList &,
+		    unsigned int          );
+
 	void donePaint ();
 
 	bool glPaintOutput (const GLScreenPaintAttrib &,
@@ -164,7 +167,8 @@ class ExpoWindow :
 	ExpoWindow (CompWindow *);
 	~ExpoWindow ();
 
-	bool damageRect (bool, const CompRect&);
+	bool damageRect (bool           ,
+			 const CompRect  &);
 
 	bool glDraw (const GLMatrix            &,
 		     const GLWindowPaintAttrib &,
@@ -211,5 +215,6 @@ class ExpoPluginVTable :
     public CompPlugin::VTableForScreenAndWindow<ExpoScreen, ExpoWindow>
 {
     public:
+
 	bool init ();
 };
