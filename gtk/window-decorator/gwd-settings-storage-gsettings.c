@@ -453,7 +453,7 @@ get_settings_no_abort (const gchar *schema)
     g_once (&get_settings_once, list_all_schemas, NULL);
     schemas = (const gchar * const *) get_settings_once.retval;
 
-    for (; schemas[i]; i++)
+    for (; schemas[i]; ++i)
 	if (g_strcmp0 (schema, schemas[i]) == 0)
 	    return g_settings_new (schema);
 

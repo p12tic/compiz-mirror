@@ -1093,16 +1093,11 @@ GridScreen::restoreWindow (CompAction         *action,
     {
 	/* The windows x-center is different in this case. */
 	if (optionGetSnapbackWindows ())
-	{
 	    xwc.x = pointerX - (gw->originalSize.width () / 2);
-	    xwc.y = pointerY + (cw->border ().top / 2);
-	}
 	else /* the user does not want the original size back */
-	{
-	    /* this one is quite tricky to get right */
-	    xwc.x = pointerX - gw->pointerBufDx - gw->currentSize.width () / 2;
-	    xwc.y = pointerY - gw->pointerBufDy + cw->border ().top / 2;
-	}
+	    xwc.x = pointerX - gw->currentSize.width () / 2;
+
+	xwc.y = pointerY + cw->border ().top / 2;
     }
     else if (cw->grabbed () && screen->grabExist ("expo"))
     {
@@ -1138,14 +1133,18 @@ GridScreen::restoreWindow (CompAction         *action,
     if (cw->mapNum() && xwcm)
 	cw->sendSyncRequest();
 
+    /* Mark window as not gridded before configuring. If the current geometry
+     * is the same as restored geometry, moveNotify blocks the restoration
+     * movement and the pointer will detach from the window (LP: #1115344). */
+    gw->isGridHorzMaximized = false;
+    gw->isGridVertMaximized = false;
+    gw->isGridResized       = false;
+
     cw->configureXWindow (xwcm, &xwc);
 
     gw->currentSize         = CompRect ();
     gw->pointerBufDx        = 0;
     gw->pointerBufDy        = 0;
-    gw->isGridHorzMaximized = false;
-    gw->isGridVertMaximized = false;
-    gw->isGridResized       = false;
 
     if (cw->state () & MAXIMIZE_STATE)
 	cw->maximize(0);
@@ -1393,9 +1392,9 @@ GridWindow::glPaint (const GLWindowPaintAttrib& attrib, const GLMatrix& matrix,
 bool
 GridPluginVTable::init ()
 {
-    if (CompPlugin::checkPluginABI ("composite", CORE_ABIVERSION)   &&
-	CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)	    &&
-	CompPlugin::checkPluginABI ("opengl", CORE_ABIVERSION))
+    if (CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI)   &&
+	CompPlugin::checkPluginABI ("core", CORE_ABIVERSION)		 &&
+	CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return true;
 
     return false;

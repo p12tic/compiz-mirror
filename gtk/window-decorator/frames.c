@@ -109,14 +109,14 @@ gwd_get_decor_frame (const gchar *frame_name)
 decor_frame_t *
 gwd_decor_frame_ref (decor_frame_t *frame)
 {
-    frame->refcount++;
+    ++frame->refcount;
     return frame;
 }
 
 decor_frame_t *
 gwd_decor_frame_unref (decor_frame_t *frame)
 {
-    frame->refcount--;
+    --frame->refcount;
 
     if (frame->refcount == 0)
     {
@@ -172,7 +172,7 @@ gwd_process_frames (GHFunc	foreach_func,
 {
     gint   i = 0;
 
-    for (; i < frame_keys_num; i++)
+    for (; i < frame_keys_num; ++i)
     {
 	gpointer frame = g_hash_table_lookup (frames_table, frame_keys[i]);
 

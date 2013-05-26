@@ -134,6 +134,13 @@ close_button_event (WnckWindow *win,
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[BUTTON_CLOSE];
 
+    if (action_menu_mapped && gtkwd_type == GButtonPress)
+    {
+	gtk_object_destroy (GTK_OBJECT (action_menu));
+	action_menu_mapped = FALSE;
+	action_menu = NULL;
+    }
+
     common_button_event (win, gtkwd_event, gtkwd_type,
 			 BUTTON_CLOSE, 1, _("Close Window"));
 
@@ -155,6 +162,13 @@ max_button_event (WnckWindow *win,
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[BUTTON_MAX];
+
+    if (action_menu_mapped && gtkwd_type == GButtonPress)
+    {
+	gtk_object_destroy (GTK_OBJECT (action_menu));
+	action_menu_mapped = FALSE;
+	action_menu = NULL;
+    }
 
     if (wnck_window_is_maximized (win))
 	common_button_event (win, gtkwd_event, gtkwd_type, BUTTON_MAX,
@@ -209,6 +223,13 @@ min_button_event (WnckWindow *win,
 {
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[BUTTON_MIN];
+
+    if (action_menu_mapped && gtkwd_type == GButtonPress)
+    {
+	gtk_object_destroy (GTK_OBJECT (action_menu));
+	action_menu_mapped = FALSE;
+	action_menu = NULL;
+    }
 
     common_button_event (win, gtkwd_event, gtkwd_type,
 			 BUTTON_MIN, 1, _("Minimize Window"));
@@ -686,7 +707,7 @@ find_event_callback_for_point (decor_t *d,
     int    i, j;
     BoxPtr box;
 
-    for (i = 0; i < BUTTON_NUM; i++)
+    for (i = 0; i < BUTTON_NUM; ++i)
     {
 	box = &d->button_windows[i].pos;
 	if (x >= box->x1 && x <= box->x2 &&
@@ -705,9 +726,9 @@ find_event_callback_for_point (decor_t *d,
 	}
     }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    box = &d->event_windows[i][j].pos;
 	    if (x >= box->x1 && x <= box->x2 &&
@@ -735,15 +756,15 @@ find_leave_event_callback (decor_t *d)
 {
     int i, j;
 
-    for (i = 0; i < BUTTON_NUM; i++)
+    for (i = 0; i < BUTTON_NUM; ++i)
     {
 	if (d->last_pos_entered == &d->button_windows[i].pos)
 	    return d->button_windows[i].callback;
     }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
-	for (j = 0; j < 3; j++)
+	for (j = 0; j < 3; ++j)
 	{
 	    if (d->last_pos_entered == &d->event_windows[i][j].pos)
 		return d->event_windows[i][j].callback;
@@ -991,9 +1012,9 @@ event_filter_func (GdkXEvent *gdkxevent,
 	    GdkScreen  *g_screen = gdk_display_get_default_screen (gdkdisplay);
 	    Window     root = GDK_WINDOW_XWINDOW (gdk_screen_get_root_window (g_screen));
 	    WnckScreen *screen;
-	    
+
 	    screen = wnck_screen_get_for_root (root);
-	    
+
 	    if (screen)
 	    {
 		if (gwd_process_decor_shadow_property_update ())
@@ -1112,14 +1133,14 @@ event_filter_func (GdkXEvent *gdkxevent,
 		event_callback   cb = NULL;
 		Window           w = xevent->xany.window;
 
-		for (i = 0; i < 3; i++)
-		    for (j = 0; j < 3; j++)
+		for (i = 0; i < 3; ++i)
+		    for (j = 0; j < 3; ++j)
 			if (d->event_windows[i][j].window == w)
 			    cb = d->event_windows[i][j].callback;
 
 		if (!cb)
 		{
-		    for (i = 0; i < BUTTON_NUM; i++)
+		    for (i = 0; i < BUTTON_NUM; ++i)
 			if (d->button_windows[i].window == w)
 			    cb = d->button_windows[i].callback;
 		}
