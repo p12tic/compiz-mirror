@@ -866,7 +866,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
     /* zoom out */
     oScale = DEFAULT_Z_CAMERA / (cam[GLVector::z] + DEFAULT_Z_CAMERA);
     sTransform.scale (oScale, oScale, oScale);
-    glNormal3f (0.0, 0.0, -oScale);
+//    glNormal3f (0.0, 0.0, -oScale);
     sTransform.translate (-cam[GLVector::x], -cam[GLVector::y],
 			  -cam[GLVector::z] - DEFAULT_Z_CAMERA);
 
@@ -1020,7 +1020,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	sTransform.translate (0.0, -(sy + gapY), 0.0f);
     }
 
-    glNormal3f (0.0, 0.0, -1.0);
+//    glNormal3f (0.0, 0.0, -1.0);
 
     if (reflection)
     {
@@ -1286,9 +1286,9 @@ ExpoWindow::glDraw (const GLMatrix            &transform,
     bool status = gWindow->glDraw (transform, attrib, region, mask);
 
     if (window->type () & CompWindowTypeDesktopMask &&
-	eScreen->optionGetSelectedColor ()[3] &&  // colour is visible
-	mGlowQuads &&
-	eScreen->paintingVp == eScreen->selectedVp &&
+	eScreen->optionGetSelectedColor ()[3]	    &&  // colour is visible
+	mGlowQuads				    &&
+	eScreen->paintingVp == eScreen->selectedVp  &&
 	region.numRects ())
     {
 	/* reset geometry and paint */
@@ -1430,9 +1430,9 @@ ExpoWindow::glDrawTexture (GLTexture                 *texture,
     }
     else
     {
-	glEnable (GL_NORMALIZE);
+//	glEnable (GL_NORMALIZE);
 	gWindow->glDrawTexture (texture, transform, wAttrib, mask);
-	glDisable (GL_NORMALIZE);
+//	glDisable (GL_NORMALIZE);
     }
 }
 
