@@ -33,17 +33,14 @@
 
 bool
 CompScreenImpl::closeWin (CompAction         *action,
-		      CompAction::State  state,
-		      CompOption::Vector &options)
+			  CompAction::State  state,
+			  CompOption::Vector &options)
 {
-    CompWindow   *w;
-    Window       xid;
-    unsigned int time;
+    Window       xid  = CompOption::getIntOptionNamed (options, "window");
+    unsigned int time = CompOption::getIntOptionNamed (options, "time", CurrentTime);
 
-    xid  = CompOption::getIntOptionNamed (options, "window");
-    time = CompOption::getIntOptionNamed (options, "time", CurrentTime);
+    CompWindow   *w   = screen->findTopLevelWindow (xid);
 
-    w = screen->findTopLevelWindow (xid);
     if (w && (w->priv->actions  & CompWindowActionCloseMask))
 	w->close (time);
 
@@ -52,15 +49,12 @@ CompScreenImpl::closeWin (CompAction         *action,
 
 bool
 CompScreenImpl::unmaximizeWin (CompAction         *action,
-			   CompAction::State  state,
-			   CompOption::Vector &options)
+			       CompAction::State  state,
+			       CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->maximize (0);
 
@@ -72,37 +66,27 @@ CompScreenImpl::unmaximizeOrMinimizeWin (CompAction         *action,
 					 CompAction::State  state,
 					 CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
     {
 	if (w->priv->state & MAXIMIZE_STATE)
-	{
 	    w->maximize (0);
-	}
 	else if (w->actions () & CompWindowActionMinimizeMask)
-	{
 	    w->minimize ();
-	}
     }
     return true;
 }
 
 bool
 CompScreenImpl::minimizeWin (CompAction         *action,
-			 CompAction::State  state,
-			 CompOption::Vector &options)
+			     CompAction::State  state,
+			     CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w && (w->actions () & CompWindowActionMinimizeMask))
 	w->minimize ();
 
@@ -111,15 +95,12 @@ CompScreenImpl::minimizeWin (CompAction         *action,
 
 bool
 CompScreenImpl::maximizeWin (CompAction         *action,
-			 CompAction::State  state,
-			 CompOption::Vector &options)
+			     CompAction::State  state,
+			     CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->maximize (MAXIMIZE_STATE);
 
@@ -128,15 +109,12 @@ CompScreenImpl::maximizeWin (CompAction         *action,
 
 bool
 CompScreenImpl::maximizeWinHorizontally (CompAction         *action,
-				     CompAction::State  state,
-				     CompOption::Vector &options)
+					 CompAction::State  state,
+					 CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->maximize (w->state () | CompWindowStateMaximizedHorzMask);
 
@@ -145,15 +123,12 @@ CompScreenImpl::maximizeWinHorizontally (CompAction         *action,
 
 bool
 CompScreenImpl::maximizeWinVertically (CompAction         *action,
-				   CompAction::State  state,
-				   CompOption::Vector &options)
+				       CompAction::State  state,
+				       CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->maximize (w->state () | CompWindowStateMaximizedVertMask);
 
@@ -162,8 +137,8 @@ CompScreenImpl::maximizeWinVertically (CompAction         *action,
 
 bool
 CompScreenImpl::showDesktop (CompAction         *action,
-			 CompAction::State  state,
-			 CompOption::Vector &options)
+			     CompAction::State  state,
+			     CompOption::Vector &options)
 {
     if (screen->showingDesktopMask() == 0)
 	screen->enterShowDesktopMode ();
@@ -175,15 +150,12 @@ CompScreenImpl::showDesktop (CompAction         *action,
 
 bool
 CompScreenImpl::raiseWin (CompAction         *action,
-		      CompAction::State  state,
-		      CompOption::Vector &options)
+			  CompAction::State  state,
+			  CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->raise ();
 
@@ -192,15 +164,12 @@ CompScreenImpl::raiseWin (CompAction         *action,
 
 bool
 CompScreenImpl::lowerWin (CompAction         *action,
-		      CompAction::State  state,
-		      CompOption::Vector &options)
+			  CompAction::State  state,
+			  CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->lower ();
 
@@ -209,26 +178,20 @@ CompScreenImpl::lowerWin (CompAction         *action,
 
 bool
 CompScreenImpl::windowMenu (CompAction         *action,
-			CompAction::State  state,
-			CompOption::Vector &options)
+			    CompAction::State  state,
+			    CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w && screen->grabsEmpty ())
     {
-	int  x, y, button;
-	Time time;
-
-	time   = CompOption::getIntOptionNamed (options, "time", CurrentTime);
-	button = CompOption::getIntOptionNamed (options, "button", 0);
-	x      = CompOption::getIntOptionNamed (options, "x",
-						w->geometry ().x ());
-	y      = CompOption::getIntOptionNamed (options, "y",
-						w->geometry ().y ());
+	Time time  = CompOption::getIntOptionNamed (options, "time", CurrentTime);
+	int button = CompOption::getIntOptionNamed (options, "button", 0);
+	int x      = CompOption::getIntOptionNamed (options, "x",
+						    w->geometry ().x ());
+	int y      = CompOption::getIntOptionNamed (options, "y",
+						    w->geometry ().y ());
 
 	screen->toolkitAction (Atoms::toolkitActionWindowMenu,
 			       time, w->id (), button, x, y);
@@ -239,15 +202,12 @@ CompScreenImpl::windowMenu (CompAction         *action,
 
 bool
 CompScreenImpl::toggleWinMaximized (CompAction         *action,
-				CompAction::State  state,
-				CompOption::Vector &options)
+				    CompAction::State  state,
+				    CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
     {
 	if ((w->priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE)
@@ -261,15 +221,12 @@ CompScreenImpl::toggleWinMaximized (CompAction         *action,
 
 bool
 CompScreenImpl::toggleWinMaximizedHorizontally (CompAction         *action,
-					    CompAction::State  state,
-					    CompOption::Vector &options)
+						CompAction::State  state,
+						CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->maximize (w->priv->state ^ CompWindowStateMaximizedHorzMask);
 
@@ -278,15 +235,12 @@ CompScreenImpl::toggleWinMaximizedHorizontally (CompAction         *action,
 
 bool
 CompScreenImpl::toggleWinMaximizedVertically (CompAction         *action,
-					  CompAction::State  state,
-					  CompOption::Vector &options)
+					      CompAction::State  state,
+					      CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w)
 	w->maximize (w->priv->state ^ CompWindowStateMaximizedVertMask);
 
@@ -295,15 +249,12 @@ CompScreenImpl::toggleWinMaximizedVertically (CompAction         *action,
 
 bool
 CompScreenImpl::shadeWin (CompAction         *action,
-		      CompAction::State  state,
-		      CompOption::Vector &options)
+			  CompAction::State  state,
+			  CompOption::Vector &options)
 {
-    CompWindow *w;
-    Window     xid;
+    Window     xid = CompOption::getIntOptionNamed (options, "window");
+    CompWindow *w  = screen->findTopLevelWindow (xid);
 
-    xid = CompOption::getIntOptionNamed (options, "window");
-
-    w = screen->findTopLevelWindow (xid);
     if (w && (w->priv->actions & CompWindowActionShadeMask))
     {
 	w->priv->state ^= CompWindowStateShadedMask;
