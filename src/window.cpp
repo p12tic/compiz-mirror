@@ -3357,17 +3357,18 @@ PrivateWindow::stackDocks (CompWindow       *w,
 {
     CompWindow *firstFullscreenWindow = NULL;
     CompWindow *belowDocks            = NULL;
+    bool       currentlyManaged, visible, ancestorToClient, acceptableType;
 
     foreach (CompWindow *dw, screen->serverWindows ())
     {
 	/* fullscreen window found */
 	if (firstFullscreenWindow)
 	{
-	    bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
-	    bool visible          = !(dw->state () & CompWindowStateHiddenMask);
-	    bool ancestorToClient = PrivateWindow::isAncestorTo (w, dw);
-	    bool acceptableType   = !(dw->type () & (CompWindowTypeFullscreenMask |
-						     CompWindowTypeDockMask));
+	    currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
+	    visible          = !(dw->state () & CompWindowStateHiddenMask);
+	    ancestorToClient = PrivateWindow::isAncestorTo (w, dw);
+	    acceptableType   = !(dw->type () & (CompWindowTypeFullscreenMask |
+						CompWindowTypeDockMask));
 
 	    /* If there is another toplevel window above the fullscreen one
 	     * then we need to stack above that */
@@ -3389,10 +3390,10 @@ PrivateWindow::stackDocks (CompWindow       *w,
 
 	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
 	    {
-		bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
-		bool visible          = !(dw->state () & CompWindowStateHiddenMask);
-		bool acceptableType   = !(dw->type () & (CompWindowTypeFullscreenMask |
-							 CompWindowTypeDockMask));
+		currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
+		visible          = !(dw->state () & CompWindowStateHiddenMask);
+		acceptableType   = !(dw->type () & (CompWindowTypeFullscreenMask |
+						    CompWindowTypeDockMask));
 
 		if (currentlyManaged		&&
 		    visible			&&
