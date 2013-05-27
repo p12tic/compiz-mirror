@@ -322,7 +322,7 @@ ExpoScreen::handleEvent (XEvent *event)
 	    {
 		CompPoint pointer (event->xbutton.x_root, event->xbutton.y_root);
 
-		if (!screen->workArea().contains (pointer))
+		if (!screen->workArea ().contains (pointer))
 		    break;
 
 		anyClick = true;
@@ -352,7 +352,7 @@ ExpoScreen::handleEvent (XEvent *event)
 	    {
 		CompPoint pointer (event->xbutton.x_root, event->xbutton.y_root);
 
-		if (!screen->workArea().contains (pointer))
+		if (!screen->workArea ().contains (pointer))
 		    break;
 
 		if (event->xbutton.time - clickTime >
@@ -1437,10 +1437,10 @@ ExpoWindow::glDrawTexture (GLTexture                 *texture,
 }
 
 bool
-ExpoWindow::glPaint (const GLWindowPaintAttrib  &attrib,
-		     const GLMatrix             &transform,
-		     const CompRegion           &region,
-		     unsigned int               mask)
+ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
+		     const GLMatrix            &transform,
+		     const CompRegion          &region,
+		     unsigned int              mask)
 {
     if (eScreen->expoActive)
     {
