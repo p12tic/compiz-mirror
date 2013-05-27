@@ -2582,14 +2582,12 @@ bool
 PrivateWindow::avoidStackingRelativeTo (CompWindow       *w,
 					const ServerLock &lock)
 {
-    if (w->overrideRedirect () ||
-	w->destroyed ())
-	return true;
+    bool allowRelativeToUnmapped = w->priv->receivedMapRequestAndAwaitingMap	||
+				   w->priv->shaded				||
+				   w->priv->pendingMaps;
 
-    if (!(w->priv->receivedMapRequestAndAwaitingMap	||
-	  w->priv->shaded				||
-	  w->priv->pendingMaps) && // do not allow relative to unmapped
-	(!w->isViewable () || !w->isMapped ()))
+    if ((w->overrideRedirect () || w->destroyed ()) ||
+	(!allowRelativeToUnmapped && (!w->isViewable () || !w->isMapped ())))
 	return true;
 
     return false;
@@ -3106,9 +3104,9 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask & CWBorderWidth && serverGeometry.border () == xwc->border_width)
 	valueMask &= ~(CWBorderWidth);
 
+    /* check if the sibling is also pending a restack,
+     * if not, then setting this bit is useless */
     if (valueMask & CWSibling && window->serverPrev &&
-	/* check if the sibling is also pending a restack,
-	 * if not, then setting this bit is useless */
 	ROOTPARENT (window->serverPrev) == xwc->sibling)
     {
 	bool matchingRequest = priv->pendingConfigures.forEachIf (boost::bind (isExistingRequest, _1, *xwc, valueMask));
@@ -3365,17 +3363,22 @@ PrivateWindow::stackDocks (CompWindow       *w,
 	/* fullscreen window found */
 	if (firstFullscreenWindow)
 	{
+	    bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
+	    bool visible          = !(dw->state () & CompWindowStateHiddenMask);
+	    bool ancestorToClient = PrivateWindow::isAncestorTo (w, dw);
+	    bool acceptableType   = !(dw->type () & (CompWindowTypeFullscreenMask |
+						     CompWindowTypeDockMask));
+
 	    /* If there is another toplevel window above the fullscreen one
 	     * then we need to stack above that */
-	    if (dw->priv->managed && !dw->priv->unmanaging	&& // currently managed
-		!(dw->state () & CompWindowStateHiddenMask)	&& // visible
-		!(dw->type () & (CompWindowTypeDockMask |
-				 CompWindowTypeFullscreenMask)) && // acceptable type
-		!PrivateWindow::isAncestorTo (w, dw)		&& // ancestorToClient
-		!dw->overrideRedirect ()			&&
-		dw->isViewable ())
-		if (existsOnServer (dw, lock))
-		    belowDocks = dw;
+	    if (currentlyManaged	    &&
+		visible			    &&
+		acceptableType		    &&
+		!ancestorToClient	    &&
+		!dw->overrideRedirect ()    &&
+		dw->isViewable ()	    &&
+		existsOnServer (dw, lock))
+		belowDocks = dw;
 	}
 	else if (dw->type () & CompWindowTypeFullscreenMask)
 	{
@@ -3386,12 +3389,16 @@ PrivateWindow::stackDocks (CompWindow       *w,
 
 	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
 	    {
-		if (dw->priv->managed && !dw->priv->unmanaging	    && // currently managed
-		    !(dw->state () & CompWindowStateHiddenMask)	    && // visible
-		    !(dw->type () & (CompWindowTypeDockMask |
-				     CompWindowTypeFullscreenMask)) && // acceptable type
-		    !dww->overrideRedirect ()			    &&
-		    dww->isViewable ()				    &&
+		bool currentlyManaged = dw->priv->managed && !dw->priv->unmanaging;
+		bool visible          = !(dw->state () & CompWindowStateHiddenMask);
+		bool acceptableType   = !(dw->type () & (CompWindowTypeFullscreenMask |
+							 CompWindowTypeDockMask));
+
+		if (currentlyManaged		&&
+		    visible			&&
+		    acceptableType		&&
+		    !dww->overrideRedirect ()	&&
+		    dww->isViewable ()		&&
 		    existsOnServer (dww, lock))
 		{
 		    belowDocks = dww;
