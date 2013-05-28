@@ -1024,7 +1024,11 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
     if (reflection)
     {
-	glEnable (GL_BLEND);
+	GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
+
+	if (!glBlendEnabled)
+	    glEnable (GL_BLEND);
+
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (optionGetDeform () != DeformCurve)
