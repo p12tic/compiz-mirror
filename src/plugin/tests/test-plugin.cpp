@@ -585,8 +585,6 @@ TYPED_TEST (PluginClassIntegrationTest, get_plugin_structure_null_on_not_loaded)
 {
     using namespace testing;
 
-    typedef PluginClassIntegrationTest <TypeParam> TestParam;
-
     /* Can't figure out how to get this out of TestParam::base at the moment */
     typename TypeParam::Base base;
     typename TypeParam::Plugin *p = TypeParam::Plugin::get (&base);
