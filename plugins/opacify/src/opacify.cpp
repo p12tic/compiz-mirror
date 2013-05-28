@@ -35,7 +35,7 @@ setFunctions (bool enabled)
 {
     OPACIFY_SCREEN (screen);
 
-    screen->handleEventSetEnabled (os, enabled);
+    screen->handleEventSetEnabled (os, os->isToggle);
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -403,7 +403,7 @@ OpacifyWindow::OpacifyWindow (CompWindow *window) :
  */
 OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     PluginClassHandler <OpacifyScreen, CompScreen> (screen),
-    isToggle  (true),
+    isToggle  (optionGetInitToggle ()),
     newActive (NULL),
     active    (screen->activeWindow ()),
     intersect (emptyRegion),
@@ -422,9 +422,7 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     optionSetTimeoutNotify (boost::bind (&OpacifyScreen::optionChanged,
 								 this, _1, _2));
 
-    screen->handleEventSetEnabled (this, optionGetInitToggle ());
-
-    setFunctions (optionGetInitToggle ());
+    setFunctions (isToggle);
 }
 
 bool
