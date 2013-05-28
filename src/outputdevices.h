@@ -69,7 +69,7 @@ public:
     // Even better, use begin() and end() return const_iterators
     // BUT this is exported directly through API - which makes changing
     // it a PITA.
-    CompOutput::vector& getOutputDevs()
+    CompOutput::vector &getOutputDevs ()
     {
 	return outputDevs;
     }

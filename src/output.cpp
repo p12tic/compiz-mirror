@@ -52,7 +52,7 @@ CompOutput::workArea () const
 }
 
 void
-CompOutput::setWorkArea (const CompRect& workarea)
+CompOutput::setWorkArea (const CompRect &workarea)
 {
     mWorkArea = workarea;
 
