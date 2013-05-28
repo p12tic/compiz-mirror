@@ -61,14 +61,12 @@ class TitleinfoScreen :
 	addSupportedAtoms (std::vector<Atom> &atoms);
 
 	CompString
-	getUtf8Property (Window      id,
-			 Atom        atom);
+	getUtf8Property (Window id,
+			 Atom   atom);
 
 	CompString
-	getTextProperty (Window      id,
-			 Atom        atom);
-
-
+	getTextProperty (Window id,
+			 Atom   atom);
 };
 
 #define TITLEINFO_SCREEN(s)						       \
@@ -78,13 +76,14 @@ class TitleinfoWindow :
     public PluginClassHandler <TitleinfoWindow, CompWindow>
 {
     public:
+
 	TitleinfoWindow (CompWindow *);
 
 	CompWindow *window;
 
 	CompString title;
 	CompString remoteMachine;
-	int	   owner;
+	int        owner;
 
 	void
 	updateMachine ();
@@ -97,8 +96,6 @@ class TitleinfoWindow :
 
 	void
 	updateVisibleName ();
-
-
 };
 
 #define TITLEINFO_WINDOW(w)						       \

@@ -252,10 +252,10 @@ FadeWindow::glPaint (const GLWindowPaintAttrib& attrib,
 
 	    newSaturation = saturation;
 	    if (fAttrib.saturation > saturation)
-		saturation = MIN (saturation + (steps / 6),
+		newSaturation = MIN (saturation + (steps / 6),
 				  fAttrib.saturation);
 	    else if (fAttrib.saturation < saturation)
-		saturation = MAX (saturation - (steps / 6),
+		newSaturation = MAX (saturation - (steps / 6),
 				  fAttrib.saturation);
 	}
 	else if (mode == FadeOptions::FadeModeConstantTime)
