@@ -226,26 +226,13 @@ TEST_P (PlaceConstrainPositionToWorkArea, PositionConstrainedWithExtents)
     extents = WindowExtents (GetParam ());
 
     CompPoint pos = InitialPosition (GetParam ());
-    pos = cp::constrainPositionToWorkArea (pos, g, extents, WArea, false);
+    pos = cp::constrainPositionToWorkArea (pos, g, extents, WArea);
 
     const CompPoint expectedAfterExtentsAdjustment = ExpectedPosition +
 						     CompPoint (extents.left,
 								extents.top);
 
     EXPECT_EQ (expectedAfterExtentsAdjustment, pos);
-}
-
-TEST_P (PlaceConstrainPositionToWorkArea, PositionConstrainedStaticGravity)
-{
-    g = WindowGeometry (GetParam ());
-    extents = WindowExtents (GetParam ());
-
-    CompPoint pos = InitialPosition (GetParam ());
-    pos = cp::constrainPositionToWorkArea (pos, g, extents, WArea, true);
-
-    /* Do not adjust residual position for extents with windows
-     * that have a static gravity */
-    EXPECT_EQ (ExpectedPosition, pos);
 }
 
 namespace
@@ -297,7 +284,7 @@ class PlaceGetEdgePositions :
 	CompPoint    pos;
 };
 
-TEST_F (PlaceGetEdgePositions, GetEdgePositionsNWGravity)
+TEST_F (PlaceGetEdgePositions, GetEdgePositions)
 {
     int left = geom.x () - border.left;
     int right = left + (geom.widthIncBorders ()) +
@@ -309,25 +296,7 @@ TEST_F (PlaceGetEdgePositions, GetEdgePositionsNWGravity)
     const cwe::Extents ExpectedExtents (left, right, top, bottom);
     cwe::Extents actualExtents (cp::getWindowEdgePositions (pos,
 							    geom,
-							    border,
-							    NorthWestGravity));
-
-    EXPECT_EQ (ExpectedExtents, actualExtents);
-}
-
-TEST_F (PlaceGetEdgePositions, GetEdgePositionsStaticGravity)
-{
-    /* Don't count borders in validation */
-    int left = geom.x ();
-    int right = left + (geom.widthIncBorders ());
-    int top = geom.y ();
-    int bottom = top + (geom.heightIncBorders ());
-
-    const cwe::Extents ExpectedExtents (left, right, top, bottom);
-    cwe::Extents actualExtents (cp::getWindowEdgePositions (pos,
-							    geom,
-							    border,
-							    StaticGravity));
+							    border));
 
     EXPECT_EQ (ExpectedExtents, actualExtents);
 }
@@ -527,29 +496,7 @@ TEST (PlaceSubtractBordersFromEdgePositions, NormalGravity)
 
     cp::subtractBordersFromEdgePositions (modifiedEdgePositions,
 					  borders,
-					  legacyBorder,
-					  NorthWestGravity);
-
-    EXPECT_EQ (expectedEdgePositions, modifiedEdgePositions);
-}
-
-TEST (PlaceSubtractBordersFromEdgePositions, StaticGravityDefinition)
-{
-    const CompWindowExtents borders (1, 2, 3, 4);
-    const CompWindowExtents edgePositions (100, 200, 100, 200);
-    const unsigned int      legacyBorder = 1;
-
-    CompWindowExtents       expectedEdgePositions (edgePositions.left,
-						   edgePositions.right - (2 * legacyBorder),
-						   edgePositions.top,
-						   edgePositions.bottom - (2 * legacyBorder));
-
-    CompWindowExtents       modifiedEdgePositions (edgePositions);
-
-    cp::subtractBordersFromEdgePositions (modifiedEdgePositions,
-					  borders,
-					  legacyBorder,
-					  StaticGravity);
+					  legacyBorder);
 
     EXPECT_EQ (expectedEdgePositions, modifiedEdgePositions);
 }

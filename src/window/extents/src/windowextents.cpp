@@ -35,6 +35,11 @@ compiz::window::extents::shift (const CompWindowExtents &extents,
     CompPoint rv = CompPoint ();
 
     switch (gravity) {
+	/* We treat StaticGravity like NorthWestGravity here
+	 * as when decorating / undecorating the window we
+	 * really do need to move it in order to handle
+	 * any cases where it goes offscreen */
+	case StaticGravity:
 	case NorthGravity:
 	case NorthWestGravity:
 	case NorthEastGravity:
@@ -50,6 +55,11 @@ compiz::window::extents::shift (const CompWindowExtents &extents,
     }
 
     switch (gravity) {
+	/* We treat StaticGravity like NorthWestGravity here
+	 * as when decorating / undecorating the window we
+	 * really do need to move it in order to handle
+	 * any cases where it goes offscreen */
+	case StaticGravity:
 	case WestGravity:
 	case NorthWestGravity:
 	case SouthWestGravity:
