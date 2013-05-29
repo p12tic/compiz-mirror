@@ -33,7 +33,7 @@
 #include <privates.h>
 
 class CubePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<CubeScreen, PrivateCubeWindow>
+    public CompPlugin::VTableForScreenAndWindow<CubeScreen, PrivateCubeWindow, COMPIZ_CUBE_ABI>
 {
     public:
 
