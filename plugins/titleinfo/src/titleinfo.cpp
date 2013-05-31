@@ -138,7 +138,10 @@ TitleinfoScreen::getUtf8Property (Window id,
     }
 
     if (retval_c)
+    {
 	retval = CompString (retval_c);
+	free (retval_c);
+    }
 
     if (val)
 	XFree (val);
@@ -173,7 +176,10 @@ TitleinfoScreen::getTextProperty (Window id,
     }
 
     if (retval_c)
+    {
 	retval = CompString (retval_c);
+	free (retval_c);
+    }
 
     return retval;
 }

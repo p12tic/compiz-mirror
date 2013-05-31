@@ -293,6 +293,8 @@ class DecorWindow :
 
 	bool damageRect (bool, const CompRect &);
 
+	bool place (CompPoint &pos);
+
 	bool glDraw (const GLMatrix &, const GLWindowPaintAttrib &,
 		     const CompRegion &, unsigned int);
 	void glDecorate (const GLMatrix &, const GLWindowPaintAttrib &,
@@ -380,12 +382,16 @@ class DecorWindow :
 
 	X11DecorPixmapRequestor   mRequestor;
 
+	CompPoint               lastShift;
+	CompSize                lastSizeDelta;
+
     private:
 
 	bool            bareDecorationOnly ();
 	Decoration::Ptr findRealDecoration ();
 	Decoration::Ptr findBareDecoration ();
 	void            moveDecoratedWindowBy (const CompPoint &movement,
+					       const CompSize &sizeDelta,
 					       bool instant);
 };
 
