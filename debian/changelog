@@ -1,8 +1,9 @@
-compiz (1:0.9.10-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.10-0ubuntu1ppa1) UNRELEASED; urgency=low
 
-  * Bump version to 0.9.10
+  [ Nikolay Martynov ]
+  * staticswitcher: fix icon size
 
- -- Sam Spilsbury <smspillaz@interpol>  Thu, 25 Apr 2013 11:13:32 +0800
+ -- Nikolay Martynov <mar.kolya@gmail.com>  Thu, 30 May 2013 21:24:32 -0400
 
 compiz (1:0.9.9~daily13.02.28-0ubuntu1) raring; urgency=low
 
