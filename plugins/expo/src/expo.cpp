@@ -1026,6 +1026,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
     {
 	GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
 
+	/* just enable blending if it is disabled */
 	if (!glBlendEnabled)
 	    glEnable (GL_BLEND);
 
@@ -1189,7 +1190,10 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	}
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
+
+	/* just disable blending if it was disabled before */
+	if (!glBlendEnabled)
+	    glDisable (GL_BLEND);
     }
 
     expoActive = false;
