@@ -33,7 +33,7 @@
 #include "privates.h"
 
 class CubePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<CubeScreen, PrivateCubeWindow>
+    public CompPlugin::VTableForScreenAndWindow<CubeScreen, PrivateCubeWindow, COMPIZ_CUBE_ABI>
 {
     public:
 
@@ -746,11 +746,11 @@ PrivateCubeScreen::preparePaint (int msSinceLastPaint)
 
     cubeScreen->cubeGetRotation (x, x, progress);
 
-    float inactiveOpacity = optionGetInactiveOpacity ();
-
     if (mDesktopOpacity != mToOpacity ||
 	(progress > 0.0 && progress < 1.0))
     {
+	float inactiveOpacity = optionGetInactiveOpacity ();
+
 	mDesktopOpacity = (inactiveOpacity -
 			   ((inactiveOpacity - mOptions[mLastOpacityIndex].value ().f ()) *
 			    progress)) / 100.0f * OPAQUE;
@@ -823,8 +823,8 @@ CubeScreen::cubeCheckOrientation (const GLScreenPaintAttrib &sAttrib,
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, cubeCheckOrientation, sAttrib, transform, output, points)
 
-    GLMatrix sTransform = transform;
     GLMatrix pm (priv->gScreen->projectionMatrix ()->getMatrix ());
+    GLMatrix sTransform = transform;
     bool     rv         = false;
 
     priv->gScreen->glApplyTransform (sAttrib, output, &sTransform);
