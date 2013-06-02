@@ -81,7 +81,8 @@ CompOutput::setGeometry (int x,
 }
 
 void
-CompOutput::setId (CompString name, unsigned int id)
+CompOutput::setId (CompString   name,
+		   unsigned int id)
 {
     mName = name;
     mId = id;

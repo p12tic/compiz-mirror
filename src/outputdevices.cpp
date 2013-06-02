@@ -167,6 +167,7 @@ OutputDevices::outputDeviceForGeometry (const CompWindow::Geometry &gm,
 	    bestOutputSize = UINT_MAX;
 
 	for (i = 0, highest = 0; i < outputDevs.size (); ++i)
+	{
 	    if (overlapAreas[i] == highestScore)
 	    {
 		currentSize = outputDevs[i].area ();
@@ -182,6 +183,7 @@ OutputDevices::outputDeviceForGeometry (const CompWindow::Geometry &gm,
 		    bestOutputSize = currentSize;
 		}
 	    }
+	}
     }
 
     return highest;

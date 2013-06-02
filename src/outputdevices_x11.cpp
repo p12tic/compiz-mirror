@@ -134,10 +134,10 @@ OutputDevices::updateOutputDevices (CoreOptions &coreOptions,
 	height  = (int)uHeight;
 
 	if (bits & XNegative)
-	    x = screen->width()  + x - width;
+	    x = screen->width ()  + x - width;
 
 	if (bits & YNegative)
-	    y = screen->height() + y - height;
+	    y = screen->height () + y - height;
 
 	x1 = x;
 	y1 = y;
