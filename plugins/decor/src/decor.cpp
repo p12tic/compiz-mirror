@@ -1149,9 +1149,8 @@ DecorWindow::checkSize (const Decoration::Ptr &decoration)
 /*
  * decorOffsetMove
  *
- * Function called on a timer (to avoid calling configureXWindow from
- * within a ::moveNotify) which actually moves the window by the offset
- * specified in the xwc. Also sends a notification that the window
+ * Moves the window by the offset specified in the xwc.
+ * Also sends a notification that the window
  * was decorated
  *
  */
@@ -1522,7 +1521,7 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 
     int dx = movement.x () - lastShift.x ();
     int dy = movement.y () - lastShift.y ();
-    int dwidth = sizeDelta.width () - lastSizeDelta.height ();
+    int dwidth = sizeDelta.width () - lastSizeDelta.width ();
     int dheight = sizeDelta.height () - lastSizeDelta.height ();
 
     /* We don't apply these rules to override-redirect windows
@@ -1557,16 +1556,18 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 	if (window->state () & CompWindowStateMaximizedVertMask)
 	    mask &= ~(CWY | CWHeight);
 
-	if (window->saveMask () & CWX)
+	/* We don't want to make changes to the saved co-ordinates
+	 * if we're unmaximizing */
+	if ((window->saveMask () & ~mask) & CWX)
 	    window->saveWc ().x += xwc.x;
 
-	if (window->saveMask () & CWY)
+	if ((window->saveMask () & ~mask) & CWY)
 	    window->saveWc ().y += xwc.y;
 
-	if (window->saveMask () & CWWidth)
+	if ((window->saveMask () & ~mask) & CWWidth)
 	    window->saveWc ().width += xwc.width;
 
-	if (window->saveMask () & CWHeight)
+	if ((window->saveMask () & ~mask) & CWHeight)
 	    window->saveWc ().height += xwc.height;
 
 	/* If the window has not been placed, do not move it this time
@@ -1585,10 +1586,7 @@ DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
 	     * FIXME: CompTimer should really be PIMPL and allow
 	     * refcounting in case we need to keep it alive
 	     */
-	    if (instant)
-		decorOffsetMove (window, xwc, mask);
-	    else
-		moveUpdate.start (boost::bind (decorOffsetMove, window, xwc, mask), 0);
+	    decorOffsetMove (window, xwc, mask);
 	}
 
 	/* Even if the window has not yet been placed, we still
@@ -1667,6 +1665,7 @@ DecorWindow::update (bool allowDecoration)
 
     bool shadowOnly = bareDecorationOnly ();
     bool decorate = shouldDecorateWindow (window, shadowOnly, isSwitcher);
+    unsigned int decorMaximizeState = window->state () & MAXIMIZE_STATE;
 
     if (decorate || frameExtentsRequested)
     {
@@ -1689,7 +1688,8 @@ DecorWindow::update (bool allowDecoration)
     /* Don't bother going any further if
      * this window is going to get the same
      * decoration, just use the old one */
-    if (decoration == old)
+    if (decoration == old &&
+        lastMaximizedStateDecorated == decorMaximizeState)
 	return false;
 
     /* Destroy the old WindowDecoration */
@@ -1710,12 +1710,15 @@ DecorWindow::update (bool allowDecoration)
 	/* Set extents based on maximize/unmaximize state
 	 * FIXME: With the new type system, this should be
 	 * removed */
-	if ((window->state () & MAXIMIZE_STATE))
+	if (decorMaximizeState)
 	    window->setWindowFrameExtents (&decoration->maxBorder,
 					   &decoration->maxInput);
 	else if (!window->hasUnmapReference ())
 	    window->setWindowFrameExtents (&decoration->border,
 					   &decoration->input);
+
+	lastMaximizedStateDecorated = decorMaximizeState;
+
 	/* This window actually needs its decoration contents updated
 	 * as it was actually visible */
 	if (decorate ||
@@ -2978,13 +2981,7 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	shading = false;
 	unshading = false;
     }
-    /* FIXME: we should not need a timer for calling decorWindowUpdate,
-       and only call updateWindowDecorationScale if decorWindowUpdate
-       returns false. Unfortunately, decorWindowUpdate may call
-       updateWindowOutputExtents, which may call WindowResizeNotify. As
-       we never should call a wrapped function that's currently
-       processed, we need the timer for the moment. updateWindowOutputExtents
-       should be fixed so that it does not emit a resize notification. */
+
     updateMatrix = true;
     updateReg = true;
 
@@ -3009,19 +3006,7 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 void
 DecorWindow::stateChangeNotify (unsigned int lastState)
 {
-    if (wd && wd->decor)
-    {
-	if ((window->state () & MAXIMIZE_STATE))
-	    window->setWindowFrameExtents (&wd->decor->maxBorder,
-					   &wd->decor->maxInput);
-	else
-	    window->setWindowFrameExtents (&wd->decor->border,
-					   &wd->decor->input);
-
-	/* The shift will occurr in decorOffsetMove */
-
-	updateFrame ();
-    }
+    update (true);
 
     window->stateChangeNotify (lastState);
 }
@@ -3258,7 +3243,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     mClipGroup (NULL),
     mOutputRegion (window->outputRect ()),
     mInputRegion (window->inputRect ()),
-    mRequestor (screen->dpy (), w->id (), &decor)
+    mRequestor (screen->dpy (), w->id (), &decor),
+    lastMaximizedStateDecorated (0)
 {
     WindowInterface::setHandler (window);
 
