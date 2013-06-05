@@ -729,7 +729,7 @@ PrivateCubeScreen::preparePaint (int msSinceLastPaint)
 	}
     }
 
-    memset (mCleared, 0, sizeof (Bool)     * screen->outputDevs ().size ());
+    memset (mCleared,     0, sizeof (Bool) * screen->outputDevs ().size ());
     memset (mCapsPainted, 0, sizeof (Bool) * screen->outputDevs ().size ());
 
     /* Transparency handling */
@@ -1345,8 +1345,8 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
     cubeScreen->cubeGetRotation (xRotate, vRotate, progress);
 
     GLScreenPaintAttrib sa = sAttrib;
-    sa.xRotate            += xRotate;
-    sa.vRotate            += vRotate;
+    sa.xRotate += xRotate;
+    sa.vRotate += vRotate;
 
     if (!mCleared[output])
     {
@@ -1372,8 +1372,8 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 	sa.zTranslate = -mInvert * (0.5f / tanf (M_PI / size));
 
-	/* TODO: Distance we move the camera back when unfolding the cube.
-	   currently hardcoded to 1.5 but it should probably be optional. */
+	/* Distance we move the camera back when unfolding the cube.
+	   TODO: Currently hardcoded to 1.5 but it should probably be optional. */
 	sa.zCamera -= mUnfold * 1.5f;
     }
     else
