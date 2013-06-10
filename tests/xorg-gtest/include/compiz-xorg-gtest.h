@@ -213,6 +213,8 @@ namespace compiz
 
 	    protected:
 
+		virtual void SetUp ();
+
 		Atom FetchAtom (const char *);
 		std::vector <long> WaitForWindowCreation (Window w);
 		bool IsOverrideRedirect (std::vector <long> &data);
@@ -220,8 +222,6 @@ namespace compiz
 		virtual int  GetEventMask ();
 
 	    private:
-
-		virtual void SetUp ();
 
 		std::auto_ptr <PrivateAutostartCompizXorgSystemTestWithTestHelper> priv;
 	};
