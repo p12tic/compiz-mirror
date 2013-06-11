@@ -179,8 +179,24 @@ GLWindow::bind ()
 	}
 	else
 	{
+	    bool immediatelyUpdateMatricesAndRegions =
+		priv->textures.size () != textures.size ();
+
 	    priv->textures = textures;
 	    priv->needsRebind = false;
+
+	    /* If the number of textures changed, we should immediately
+	     * update the matrices and regions so that they are at least
+	     * initialized, but we'll queue another update just before
+	     * glPaint too in case the window moved or changed size */
+	    if (immediatelyUpdateMatricesAndRegions)
+	    {
+		priv->setWindowMatrix ();
+		priv->updateWindowRegions ();
+
+		priv->updateState |= PrivateGLWindow::UpdateMatrix |
+				     PrivateGLWindow::UpdateRegion;
+	    }
 	}
     }
 
