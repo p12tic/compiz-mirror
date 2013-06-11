@@ -49,13 +49,14 @@ class WidgetScreen :
 
 	enum WidgetState
 	{
-	    StateOff = 0,
-	    StateFadeIn = 1,
-	    StateOn = 2,
+	    StateOff     = 0,
+	    StateFadeIn  = 1,
+	    StateOn      = 2,
 	    StateFadeOut = 3
 	};
 
     public:
+
 	WidgetScreen (CompScreen *screen);
 	~WidgetScreen ();
 
@@ -97,16 +98,16 @@ class WidgetScreen :
 	updateStatus (CompWindow *w);
 
 	void
-	optionChanged (CompOption *,
-		       WidgetOptions::Options  num);
+	optionChanged (CompOption             *,
+		       WidgetOptions::Options num);
 
-	Window mLastActiveWindow;
-	Atom   mCompizWidgetAtom;
+	Window                 mLastActiveWindow;
+	Atom                   mCompizWidgetAtom;
 
-	WidgetState mState;
-	int	    mFadeTime;
-	CompScreen::GrabHandle  mGrabIndex;
-	Cursor	    mCursor;
+	WidgetState            mState;
+	int                    mFadeTime;
+	CompScreen::GrabHandle mGrabIndex;
+	Cursor                 mCursor;
 };
 
 #define WIDGET_SCREEN(screen)						       \
@@ -132,11 +133,13 @@ class WidgetWindow :
 	~WidgetWindow ();
 
 	CompWindow *window;
-	GLWindow *gWindow;
+	GLWindow   *gWindow;
 
 	bool
-	glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
-		 const CompRegion &, unsigned int);
+	glPaint (const GLWindowPaintAttrib &,
+		 const GLMatrix            &,
+		 const CompRegion          &,
+		 unsigned int                );
 
 	bool
 	focus ();
@@ -159,11 +162,11 @@ class WidgetWindow :
 	bool
 	managed () const;
 
-	bool mIsWidget;
-	bool mWasHidden;
-	CompWindow *mParentWidget;
-	CompTimer  mMatchUpdate;
-	CompTimer  mWidgetStatusUpdate;
+	bool                mIsWidget;
+	bool                mWasHidden;
+	CompWindow          *mParentWidget;
+	CompTimer           mMatchUpdate;
+	CompTimer           mWidgetStatusUpdate;
 	WidgetPropertyState mPropertyState;
 };
 

@@ -27,7 +27,7 @@
 
 COMPIZ_PLUGIN_20090315 (staticswitcher, StaticSwitchPluginVTable)
 
-const unsigned short MAX_ICON_SIZE = 512;
+const unsigned short ICON_SIZE = 48;
 
 const unsigned short PREVIEWSIZE = 150;
 const unsigned short BORDER = 10;

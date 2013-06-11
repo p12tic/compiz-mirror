@@ -39,29 +39,30 @@ class OpacifyScreen :
     public ScreenInterface
 {
     public:
+
 	OpacifyScreen (CompScreen *);
 
-	CompositeScreen *cScreen;
-	GLScreen	*gScreen;
+	CompositeScreen     *cScreen;
+	GLScreen            *gScreen;
 
-	bool isToggle;
+	bool                isToggle;
 
-	CompTimer timeoutHandle;
+	CompTimer           timeoutHandle;
 
-	CompWindow *newActive;
+	CompWindow          *newActive;
 
-	Window active;
+	Window              active;
 	std::vector<Window> passive;
-	CompRegion intersect;
-	unsigned short int passiveNum;
+	CompRegion          intersect;
+	unsigned short int  passiveNum;
 
-	bool justMoved;
+	bool                justMoved;
 
 	void
 	handleEvent (XEvent *);
 
 	void
-	resetWindowOpacity (Window  id);
+	resetWindowOpacity (Window id);
 
 	void
 	resetScreenOpacity ();
@@ -70,7 +71,7 @@ class OpacifyScreen :
 	clearPassive ();
 
 	int
-	passiveWindows (CompRegion     fRegion);
+	passiveWindows (CompRegion fRegion);
 
 	bool
 	handleTimeout ();
@@ -101,16 +102,16 @@ class OpacifyWindow :
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;
-	GLWindow	*gWindow;
+	GLWindow        *gWindow;
 
-	bool opacified;
-	int opacity;
+	bool            opacified;
+	int             opacity;
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
-		 const GLMatrix &,
-		 const CompRegion &,
-		 unsigned int);
+		 const GLMatrix            &,
+		 const CompRegion          &,
+		 unsigned int                );
 
 	void
 	setOpacity (int fOpacity);
@@ -120,9 +121,6 @@ class OpacifyWindow :
 
 	void
 	handleEnter ();
-
-
-
 };
 
 #define OPACIFY_SCREEN(s)						       \

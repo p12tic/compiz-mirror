@@ -56,6 +56,11 @@ if (NOT COMPIZ_UNUSED_PRIVATE_FIELD_WARNINGS)
     set (COMMON_FLAGS "${COMMON_FLAGS} -Wno-unused-private-field")
 endif ()
 
+option (COMPIZ_UNUSED_LOCAL_TYPEDEFS_WARNINGS "Warn about unused local typedefs" OFF)
+if (NOT COMPIZ_UNUSED_LOCAL_TYPEDEFS_WARNINGS)
+    set (COMMON_FLAGS "${COMMON_FLAGS} -Wno-unused-local-typedefs")
+endif (NOT COMPIZ_UNUSED_LOCAL_TYPEDEFS_WARNINGS)
+
 option (COMPIZ_DEPRECATED_WARNINGS "Warn about declarations marked deprecated" OFF)
 if (NOT COMPIZ_DEPRECATED_WARNINGS)
     set (COMMON_FLAGS "${COMMON_FLAGS} -Wno-deprecated-declarations")
