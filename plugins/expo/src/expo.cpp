@@ -36,7 +36,7 @@
 
 COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
-#define sigmoid(x) (1.0f / (1.0f + exp (-5.5f * 2 * ((x) - 0.5))))
+#define sigmoid(x) (1.0f / (1.0f + exp (-11.0f * ((x) - 0.5f))))
 #define sigmoidProgress(x) ((sigmoid (x) - sigmoid (0)) / \
 			    (sigmoid (1) - sigmoid (0)))
 
@@ -425,16 +425,14 @@ ExpoScreen::preparePaint (int msSinceLastPaint)
 	    }
 	}
 
-	float fi;
+	const float mpi = M_PI / 180.0f;
 
 	for (i = 0; i < 360; ++i)
 	{
-	    fi = (float) i;
-
-	    vpNormals[i * 3] = (-sin (fi * (M_PI / 180.0f)) / screen->width ()) *
+	    vpNormals[i * 3] = (-sin ((float)i * mpi) / screen->width ()) *
 			       expoCam;
 	    vpNormals[(i * 3) + 1] = 0.0;
-	    vpNormals[(i * 3) + 2] = (-cos (fi * (M_PI / 180.0f)) * expoCam) -
+	    vpNormals[(i * 3) + 2] = (-cos ((float)i * mpi) * expoCam) -
 				     (1 - expoCam);
 	}
     }
@@ -500,7 +498,7 @@ ExpoScreen::donePaint ()
 	    screen->moveViewport (screen->vp ().x () - origVp.x (),
 				  screen->vp ().y () - origVp.y (), true);
 	    lastSelectedVp = selectedVp;
-	    selectedVp = origVp;
+	    selectedVp     = origVp;
 	    screen->focusDefaultWindow ();
 	    vpUpdateMode = VPUpdateNone;
 	    break;
