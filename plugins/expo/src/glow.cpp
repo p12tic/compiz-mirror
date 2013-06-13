@@ -170,7 +170,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     }
 
     /* TODO: Make glowSize configurable via CCSM */
-    int glowSize   = 200;
+    int glowSize   = 48;
     int glowOffset = (glowSize * ExpoScreen::get (screen)->mGlowTextureProperties->glowOffset /
 		      ExpoScreen::get (screen)->mGlowTextureProperties->textureSize) + 1;
 
