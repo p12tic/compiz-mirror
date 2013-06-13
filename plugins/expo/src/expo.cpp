@@ -852,8 +852,21 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	    rotation = 10.0 * expoCam;
     }
 
-    if (optionGetMipmaps ()) // && TODO: priv->gscreen->filter != GL_LINEAR_MIPMAP_LINEAR
-	gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+    bool   filterChanged = false;
+    GLenum oldFilter;
+
+    if (optionGetMipmaps ())
+    {
+	/* check the actual filtering */
+	oldFilter = gScreen->textureFilter ();
+
+	/* just change the global filter if necessary */
+	if (oldFilter != GL_LINEAR_MIPMAP_LINEAR)
+	{
+	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+	    filterChanged = true;
+	}
+    }
 
     /* ALL TRANSFORMATION ARE EXECUTED FROM BOTTOM TO TOP */
 
@@ -1200,8 +1213,9 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
     gScreen->glPaintTransformedOutputSetCurrentIndex (glPaintTransformedOutputIndex);
 
-    GLenum oldFilter = gScreen->textureFilter ();
-    gScreen->setTextureFilter (oldFilter);
+    /* we just need to change the global filter state if we manipulated it before */
+    if (filterChanged)
+	gScreen->setTextureFilter (oldFilter);
 }
 
 bool
