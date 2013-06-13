@@ -316,8 +316,8 @@ ExpoScreen::handleEvent (XEvent *event)
 	    break;
 
 	case ButtonPress:
-	    if (expoMode &&
-		event->xbutton.button == Button1 &&
+	    if (expoMode			    &&
+		event->xbutton.button == Button1    &&
 		event->xbutton.root   == screen->root ())
 	    {
 		CompPoint pointer (event->xbutton.x_root, event->xbutton.y_root);
@@ -346,8 +346,8 @@ ExpoScreen::handleEvent (XEvent *event)
 	    break;
 
 	case ButtonRelease:
-	    if (expoMode &&
-		event->xbutton.button == Button1 &&
+	    if (expoMode			    &&
+		event->xbutton.button == Button1    &&
 		event->xbutton.root   == screen->root ())
 	    {
 		CompPoint pointer (event->xbutton.x_root, event->xbutton.y_root);
@@ -426,14 +426,13 @@ ExpoScreen::preparePaint (int msSinceLastPaint)
 	}
 
 	const float mpi = M_PI / 180.0f;
+	const int   scw = screen->width ();
 
 	for (i = 0; i < 360; ++i)
 	{
-	    vpNormals[i * 3] = (-sin ((float)i * mpi) / screen->width ()) *
-			       expoCam;
-	    vpNormals[(i * 3) + 1] = 0.0;
-	    vpNormals[(i * 3) + 2] = (-cos ((float)i * mpi) * expoCam) -
-				     (1 - expoCam);
+	    vpNormals[i * 3]     = (-sin (i * mpi) / scw) * expoCam;
+	    vpNormals[i * 3 + 1] = 0.0;
+	    vpNormals[i * 3 + 2] = (-cos (i * mpi) * expoCam) - (1 - expoCam);
 	}
     }
 
@@ -542,7 +541,7 @@ ExpoScreen::donePaint ()
 	}
 	    break;
 
-    case DnDStart:
+	case DnDStart:
 	{
 	    int xOffset = screen->vpSize ().width ()  * screen->width ();
 	    int yOffset = screen->vpSize ().height () * screen->height ();
@@ -610,14 +609,15 @@ ExpoScreen::donePaint ()
 
 	    prevCursor = newCursor;
 	}
-	break;
 
-    case DnDNone:
-	screen->updateGrab (grabIndex, screen->normalCursor ());
-	break;
+	    break;
 
-    default:
-	break;
+	case DnDNone:
+	    screen->updateGrab (grabIndex, screen->normalCursor ());
+	    break;
+
+	default:
+	    break;
     }
 }
 
@@ -852,7 +852,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	    rotation = 10.0 * expoCam;
     }
 
-    if (optionGetMipmaps ())
+    if (optionGetMipmaps ()) // && TODO: priv->gscreen->filter != GL_LINEAR_MIPMAP_LINEAR
 	gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
     /* ALL TRANSFORMATION ARE EXECUTED FROM BOTTOM TO TOP */
