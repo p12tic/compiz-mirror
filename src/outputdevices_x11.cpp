@@ -126,12 +126,12 @@ OutputDevices::updateOutputDevices (CoreOptions &coreOptions,
     {
 	x       = 0;
 	y       = 0;
-	uWidth  = (unsigned)screen->width ();
-	uHeight = (unsigned)screen->height ();
+	uWidth  = static_cast <unsigned int> (screen->width ());
+	uHeight = static_cast <unsigned int> (screen->height ());
 
 	bits    = XParseGeometry(value.s ().c_str (), &x, &y, &uWidth, &uHeight);
-	width   = (int)uWidth;
-	height  = (int)uHeight;
+	width   = static_cast <int> (uWidth);
+	height  = static_cast <int> (uHeight);
 
 	if (bits & XNegative)
 	    x = screen->width ()  + x - width;
