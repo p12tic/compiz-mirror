@@ -244,6 +244,7 @@ PrivateCubeScreen::updateGeometry (int sides,
     GLfloat tmps     = 2 * mps;
     GLfloat distance = 0.5f / tanf (mps);
     GLfloat radius   = 0.5f / sinf (mps);
+    GLfloat hInvert  = 0.5f * invert;
     int     i, n     = (sides + 2) * 2;
     GLfloat *v;
 
@@ -261,13 +262,13 @@ PrivateCubeScreen::updateGeometry (int sides,
 	v = mVertices;
 
     *v++ = 0.0f;
-    *v++ = 0.5 * invert;
+    *v++ = hInvert;
     *v++ = 0.0f;
 
     for (i = 0; i <= sides; ++i)
     {
 	*v++ = radius * sinf (i * tmps + mps);
-	*v++ = 0.5 * invert;
+	*v++ = hInvert;
 	*v++ = radius * cosf (i * tmps + mps);
     }
 
@@ -278,7 +279,7 @@ PrivateCubeScreen::updateGeometry (int sides,
     for (i = sides; i >= 0; --i)
     {
 	*v++ = radius * sinf (i * tmps + mps);
-	*v++ = -0.5 * invert;
+	*v++ = -hInvert;
 	*v++ = radius * cosf (i * tmps + mps);
     }
 
