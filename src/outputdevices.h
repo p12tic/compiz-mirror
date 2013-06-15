@@ -40,41 +40,64 @@ namespace core
 class OutputDevices
 {
 public:
-    OutputDevices();
 
-    void setCurrentOutput(unsigned int outputNum);
+    OutputDevices ();
 
-    CompOutput& getCurrentOutputDev() { return outputDevs[currentOutputDev]; }
+    void setCurrentOutput (unsigned int outputNum);
 
-    bool hasOverlappingOutputs() const { return overlappingOutputs; }
+    CompOutput& getCurrentOutputDev ()
+    {
+	return outputDevs[currentOutputDev];
+    }
 
-    void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
-	    CompRegion& allWorkArea, const CompWindowList& windows);
+    bool hasOverlappingOutputs () const
+    {
+	return overlappingOutputs;
+    }
 
-    const CompOutput& getOutputDev(unsigned int outputNum) const
-    { return outputDevs[outputNum]; }
+    void computeWorkAreas (CompRect             &workArea,
+			   bool                 &workAreaChanged,
+			   CompRegion           &allWorkArea,
+			   const CompWindowList &windows);
+
+    const CompOutput &getOutputDev (unsigned int outputNum) const
+    {
+	return outputDevs[outputNum];
+    }
 
     // TODO breaks encapsulation horribly ought to be const at least
     // Even better, use begin() and end() return const_iterators
     // BUT this is exported directly through API - which makes changing
     // it a PITA.
-    CompOutput::vector& getOutputDevs() { return outputDevs; }
+    CompOutput::vector &getOutputDevs ()
+    {
+	return outputDevs;
+    }
 
-    int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
-	    CompSize* screen) const;
-    void updateOutputDevices(CoreOptions& coreOptions, CompSize* screen);
+    int outputDeviceForGeometry (const CompWindow::Geometry &gm,
+				 int                        strategy,
+				 CompSize                   *screen) const;
 
-    void setGeometryOnDevice(unsigned int nOutput, int x, int y,
-	    const int width, const int height);
-    void adoptDevices(unsigned int nOutput, CompSize* screen);
+    void updateOutputDevices (CoreOptions &coreOptions,
+			      CompSize    *screen);
+
+    void setGeometryOnDevice (unsigned int nOutput,
+			      int          x,
+			      int          y,
+			      const int    width,
+			      const int    height);
+
+    void adoptDevices (unsigned int nOutput,
+		       CompSize     *screen);
 
 private:
-    static CompRect computeWorkareaForBox(const CompRect& box,
-	    const CompWindowList& windows);
+
+    static CompRect computeWorkareaForBox (const CompRect       &box,
+					   const CompWindowList &windows);
 
     CompOutput::vector outputDevs;
     bool               overlappingOutputs;
-    int	           currentOutputDev;
+    int                currentOutputDev;
 };
 
 } // namespace core
