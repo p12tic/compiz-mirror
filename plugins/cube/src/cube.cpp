@@ -1246,12 +1246,14 @@ PrivateCubeScreen::glEnableOutputClipping (const GLMatrix   &transform,
 	glTranslatef (mOutputXOffset, -mOutputYOffset, 0.0f);
 	glScalef (mOutputXScale, mOutputYScale, 1.0f);
 
+	GLdouble mDist2 = 0.5 / mDistance;
+
 	if (mInvert == 1)
 	{
-	    GLdouble clipPlane0[] = {  1.0,  0.0, 0.5 / mDistance, 0.0 };
-	    GLdouble clipPlane1[] = { -1.0,  0.0, 0.5 / mDistance, 0.0 };
-	    GLdouble clipPlane2[] = {  0.0, -1.0, 0.5 / mDistance, 0.0 };
-	    GLdouble clipPlane3[] = {  0.0,  1.0, 0.5 / mDistance, 0.0 };
+	    GLdouble clipPlane0[] = {  1.0,  0.0, mDist2, 0.0 };
+	    GLdouble clipPlane1[] = { -1.0,  0.0, mDist2, 0.0 };
+	    GLdouble clipPlane2[] = {  0.0, -1.0, mDist2, 0.0 };
+	    GLdouble clipPlane3[] = {  0.0,  1.0, mDist2, 0.0 };
 	    glClipPlane (GL_CLIP_PLANE0, clipPlane0);
 	    glClipPlane (GL_CLIP_PLANE1, clipPlane1);
 	    glClipPlane (GL_CLIP_PLANE2, clipPlane2);
@@ -1259,10 +1261,10 @@ PrivateCubeScreen::glEnableOutputClipping (const GLMatrix   &transform,
 	}
 	else
 	{
-	    GLdouble clipPlane0[] = { -1.0,  0.0, -0.5 / mDistance, 0.0 };
-	    GLdouble clipPlane1[] = {  1.0,  0.0, -0.5 / mDistance, 0.0 };
-	    GLdouble clipPlane2[] = {  0.0,  1.0, -0.5 / mDistance, 0.0 };
-	    GLdouble clipPlane3[] = {  0.0, -1.0, -0.5 / mDistance, 0.0 };
+	    GLdouble clipPlane0[] = { -1.0,  0.0, -mDist2, 0.0 };
+	    GLdouble clipPlane1[] = {  1.0,  0.0, -mDist2, 0.0 };
+	    GLdouble clipPlane2[] = {  0.0,  1.0, -mDist2, 0.0 };
+	    GLdouble clipPlane3[] = {  0.0, -1.0, -mDist2, 0.0 };
 	    glClipPlane (GL_CLIP_PLANE0, clipPlane0);
 	    glClipPlane (GL_CLIP_PLANE1, clipPlane1);
 	    glClipPlane (GL_CLIP_PLANE2, clipPlane2);
