@@ -551,6 +551,9 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 
     mSky[0]->enable (GLTexture::Good);
 
+    GLfloat mSkyWidth  = mSkySize.width ();
+    GLfloat mSkyHeight = mSkySize.height ();
+
     glBegin (GL_QUADS);
 
     for (int i = iStacksStart; i < iStacksEnd; ++i)
@@ -569,8 +572,8 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 	    y = sint1[j];
 
 	    glTexCoord2f (
-		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[3] * mSkySize.width ()),
-		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[3] * mSkySize.height ()));
+		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[3] * mSkyWidth),
+		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[3] * mSkyHeight));
 	    glVertex3f (x * r * fRadius, y * r * fRadius, z * fRadius);
 
 	    /* top-right */
@@ -580,8 +583,8 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 	    y = sint1[j];
 
 	    glTexCoord2f (
-		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[0] * mSkySize.width ()),
-		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[0] * mSkySize.height ()));
+		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[0] * mSkyWidth),
+		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[0] * mSkyHeight));
 	    glVertex3f (x * r * fRadius, y * r * fRadius, z * fRadius);
 
 	    /* top-left */
@@ -591,8 +594,8 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 	    y = sint1[j + 1];
 
 	    glTexCoord2f (
-		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[1] * mSkySize.width ()),
-		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[1] * mSkySize.height ()));
+		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[1] * mSkyWidth),
+		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[1] * mSkyHeight));
 	    glVertex3f (x * r * fRadius, y * r * fRadius, z * fRadius);
 
 	    /* bottom-left */
@@ -602,8 +605,8 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
 	    y = sint1[j + 1];
 
 	    glTexCoord2f (
-		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[2] * mSkySize.width ()),
-		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[2] * mSkySize.height ()));
+		COMP_TEX_COORD_X (mSky[0]->matrix (), afTexCoordX[2] * mSkyWidth),
+		COMP_TEX_COORD_Y (mSky[0]->matrix (), afTexCoordY[2] * mSkyHeight));
 	    glVertex3f (x * r * fRadius, y * r * fRadius, z * fRadius);
 
 	    afTexCoordX[0] -= fStepX;
