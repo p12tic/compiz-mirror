@@ -240,8 +240,10 @@ PrivateCubeScreen::updateGeometry (int sides,
 {
     sides *= mNOutput;
 
-    GLfloat distance = 0.5f / tanf (M_PI / sides);
-    GLfloat radius   = 0.5f / sinf (M_PI / sides);
+    GLfloat mps      = M_PI / sides;
+    GLfloat tmps     = 2 * mps;
+    GLfloat distance = 0.5f / tanf (mps);
+    GLfloat radius   = 0.5f / sinf (mps);
     int     i, n     = (sides + 2) * 2;
     GLfloat *v;
 
@@ -264,9 +266,9 @@ PrivateCubeScreen::updateGeometry (int sides,
 
     for (i = 0; i <= sides; ++i)
     {
-	*v++ = radius * sinf (i * 2 * M_PI / sides + M_PI / sides);
+	*v++ = radius * sinf (i * tmps + mps);
 	*v++ = 0.5 * invert;
-	*v++ = radius * cosf (i * 2 * M_PI / sides + M_PI / sides);
+	*v++ = radius * cosf (i * tmps + mps);
     }
 
     *v++ = 0.0f;
@@ -275,9 +277,9 @@ PrivateCubeScreen::updateGeometry (int sides,
 
     for (i = sides; i >= 0; --i)
     {
-	*v++ = radius * sinf (i * 2 * M_PI / sides + M_PI / sides);
+	*v++ = radius * sinf (i * tmps + mps);
 	*v++ = -0.5 * invert;
-	*v++ = radius * cosf (i * 2 * M_PI / sides + M_PI / sides);
+	*v++ = radius * cosf (i * tmps + mps);
     }
 
     mInvert   = invert;
@@ -1373,7 +1375,7 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	sa.zTranslate = -mInvert * (0.5f / tanf (M_PI / size));
 
 	/* Distance we move the camera back when unfolding the cube.
-	   TODO: Currently hardcoded to 1.5 but it should probably be optional. */
+	   TODO: Currently hardcoded to 1.5, make this configurable via CCSM. */
 	sa.zCamera -= mUnfold * 1.5f;
     }
     else
@@ -1398,8 +1400,21 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     sa.xRotate = sa.xRotate / size * hsize;
 
+    bool   filterChanged = false;
+    GLenum oldFilter;
+
     if (mGrabIndex && optionGetMipmap ())
-	gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+    {
+	/* check the actual filtering */
+	oldFilter = gScreen->textureFilter ();
+
+	/* just change the global filter if necessary */
+	if (oldFilter != GL_LINEAR_MIPMAP_LINEAR)
+	{
+	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+	    filterChanged = true;
+	}
+    }
 
     PaintOrder paintOrder;
 
@@ -1492,8 +1507,9 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     glCullFace (cullNorm);
 
-    GLenum filter = gScreen->textureFilter ();
-    gScreen->setTextureFilter (filter);
+    /* we just need to change the global filter state if we manipulated it before */
+    if (filterChanged)
+	gScreen->setTextureFilter (oldFilter);
 }
 
 bool 
