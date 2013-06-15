@@ -26,11 +26,8 @@
 #include <sstream>
 #include <vector>
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <boost/make_shared.hpp>
 
 #include <boost/bind.hpp>
 
@@ -55,8 +52,6 @@ using ::testing::MakeMatcher;
 using ::testing::StrEq;
 using ::testing::_;
 
-using ::testing::ElementsAreArray;
-
 class BaseDecorAcceptance :
     public ct::AutostartCompizXorgSystemTestWithTestHelper
 {
@@ -69,23 +64,21 @@ class BaseDecorAcceptance :
 
     protected:
 
-	Atom mUtf8StringAtom;
-	Atom mDecorationManagerNameAtom;
-
 	Window mRootWindow;
 
+	Atom   mUtf8StringAtom;
+	Atom   mDecorationManagerNameAtom;
 	Atom   mDecorationTypeAtom;
 	Atom   mDecorationTypePixmap;
 	Atom   mDecorationTypeWindow;
-
 	Atom   mDecorationInputFrameAtom;
 	Atom   mDecorationOutputFrameAtom;
 };
 
 BaseDecorAcceptance::BaseDecorAcceptance () :
+    mRootWindow (0),
     mUtf8StringAtom (0),
     mDecorationManagerNameAtom (0),
-    mRootWindow (0),
     mDecorationTypeAtom (0),
     mDecorationTypePixmap (0),
     mDecorationTypeWindow (0),
@@ -160,9 +153,7 @@ BaseDecorAcceptance::GetPluginList ()
     for (ct::CompizProcess::PluginList::iterator it = baseList.begin ();
 	 it != baseList.end ();
 	 ++it)
-    {
 	list.push_back (*it);
-    }
 
     return list;
 }
