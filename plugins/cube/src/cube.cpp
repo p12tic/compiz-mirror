@@ -520,6 +520,9 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
     GLfloat fStepX = 1.0 / (GLfloat) (iSlicesEnd - iSlicesStart);
     GLfloat fStepY = 1.0 / (GLfloat) (iStacksEnd - iStacksStart);
 
+    GLfloat oneMinusFStepX = 1.0f - fStepX;
+    GLfloat oneMinusFStepY = 1.0f - fStepY;
+
     if (!mSky.size () ||
 	!fillCircleTable (&sint1, &cost1, -iSlices))
 	return;
@@ -532,10 +535,10 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
     }
 
     afTexCoordX[0] = 1.0f;
-    afTexCoordY[0] = 1.0f - fStepY;
-    afTexCoordX[1] = 1.0f - fStepX;
-    afTexCoordY[1] = 1.0f - fStepY;
-    afTexCoordX[2] = 1.0f - fStepX;
+    afTexCoordY[0] = oneMinusFStepY;
+    afTexCoordX[1] = oneMinusFStepX;
+    afTexCoordY[1] = oneMinusFStepY;
+    afTexCoordX[2] = oneMinusFStepX;
     afTexCoordY[2] = 1.0f;
     afTexCoordX[3] = 1.0f;
     afTexCoordY[3] = 1.0f;
@@ -552,8 +555,8 @@ PrivateCubeScreen::updateSkydomeList (GLfloat fRadius)
     for (int i = iStacksStart; i < iStacksEnd; ++i)
     {
 	afTexCoordX[0] = 1.0f;
-	afTexCoordX[1] = 1.0f - fStepX;
-	afTexCoordX[2] = 1.0f - fStepX;
+	afTexCoordX[1] = oneMinusFStepX;
+	afTexCoordX[2] = oneMinusFStepX;
 	afTexCoordX[3] = 1.0f;
 
 	for (int j = iSlicesStart; j < iSlicesEnd; ++j)
@@ -1062,7 +1065,7 @@ CubeScreen::cubeClearTargetOutput (float xRotate,
 {
     WRAPABLE_HND_FUNCTN (cubeClearTargetOutput, xRotate, vRotate)
 
-    if (priv->mSky.size () > 0)
+    if (!priv->mSky.empty ())
     {
 	priv->gScreen->setLighting (false);
 #ifndef USE_GLES
@@ -1326,16 +1329,17 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     if (!mFullscreenOutput)
     {
-	mOutputXScale = (float) screen->width ()  / outputPtr->width ();
-	mOutputYScale = (float) screen->height () / outputPtr->height ();
+	float oPtrWidth  = outputPtr->width ();
+	float oPtrHeight = outputPtr->height ();
+
+	mOutputXScale = (float) screen->width ()  / oPtrWidth;
+	mOutputYScale = (float) screen->height () / oPtrHeight;
 
 	mOutputXOffset = (screen->width () / 2.0f -
-			  (outputPtr->x1 () + outputPtr->x2 ()) / 2.0f) /
-			 (float) outputPtr->width ();
+			  (outputPtr->x1 () + outputPtr->x2 ()) / 2.0f) / oPtrWidth;
 
 	mOutputYOffset = (screen->height () / 2.0f -
-			  (outputPtr->y1 () + outputPtr->y2 ()) / 2.0f) /
-			 (float) outputPtr->height ();
+			  (outputPtr->y1 () + outputPtr->y2 ()) / 2.0f) / oPtrHeight;
     }
     else
     {
