@@ -192,8 +192,8 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     int   x1                = winRealX - glowSize + glowOffset;
     int   y1                = winRealY - glowSize + glowOffset;
 
-    int   winRealWidth      = w->width ()  + 2 * w->geometry ().border () + w->border ().left + w->border ().right;
-    int   winRealHeight     = w->height () + 2 * w->geometry ().border () + w->border ().top  + w->border ().bottom;
+    int   winRealWidth      = w->geometry ().widthIncBorders ();
+    int   winRealHeight     = w->geometry ().heightIncBorders ();
 
     int   halfWinRealWidth  = winRealWidth  / 2;
     int   halfWinRealHeight = winRealHeight / 2;
