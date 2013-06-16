@@ -231,8 +231,8 @@ ExpoScreen::moveFocusViewport (int dx,
     int newX = selectedVp.x () + dx;
     int newY = selectedVp.y () + dy;
 
-    newX = MAX (0, MIN ((int) screen->vpSize ().width ()  - 1, newX));
-    newY = MAX (0, MIN ((int) screen->vpSize ().height () - 1, newY));
+    newX = MAX (0, MIN (static_cast <int> (screen->vpSize ().width ())  - 1, newX));
+    newY = MAX (0, MIN (static_cast <int> (screen->vpSize ().height ()) - 1, newY));
 
     selectedVp.set (newX, newY);
     cScreen->damageScreen ();
@@ -390,7 +390,8 @@ ExpoScreen::handleEvent (XEvent *event)
 void
 ExpoScreen::preparePaint (int msSinceLastPaint)
 {
-    float val = ((float) msSinceLastPaint / 1000.0) / optionGetZoomTime ();
+    float val = (static_cast <float> (msSinceLastPaint) / 1000.0f) /
+		optionGetZoomTime ();
 
     if (expoMode)
 	expoCam = MIN (1.0, expoCam + val);
@@ -782,9 +783,9 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
     float sy = screen->height () / static_cast <float> (output->height ());
 
     if (optionGetDeform () == DeformCurve)
-	vpCamPos[GLVector::x] = -sx * (0.5 - (((float) output->x () +
+	vpCamPos[GLVector::x] = -sx * (0.5 - ((static_cast <float> (output->x ()) +
 					       output->width () / 2.0) /
-					      (float) screen->width ()));
+					      static_cast <float> (screen->width ())));
     else
 	vpCamPos[GLVector::x] = screen->vp ().x () * sx + 0.5 +
 				output->x () / output->width () -
@@ -828,7 +829,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
     if (vpSize.x () > vpSize.y ())
     {
-	aspectY  = (float) vpSize.x () / (float) vpSize.y ();
+	aspectY  = vpSize.x () / static_cast <float> (vpSize.y ());
 	aspectY -= 1.0;
 	aspectY *= -optionGetAspectRatio () + 1.0;
 	aspectY *= progress;
@@ -836,7 +837,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
     }
     else
     {
-	aspectX  = (float) vpSize.y () / (float) vpSize.x ();
+	aspectX  = vpSize.y () / static_cast <float> (vpSize.x ());
 	aspectX -= 1.0;
 	aspectX *= -optionGetAspectRatio () + 1.0;
 	aspectX *= progress;
@@ -985,7 +986,8 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 		sTransform3.translate (-vpCamPos[GLVector::x], 0.0f,
 				       curveDistance - DEFAULT_Z_CAMERA);
 
-		rotateX = -i + interpolate (((float) vpSize.x () / 2.0) - 0.5,
+		rotateX = -i + interpolate ((static_cast <float> (vpSize.x ()) / 2.0) -
+					    0.5,
 					    screen->vp ().x (), progress);
 
 		sTransform3.rotate (curveAngle * rotateX, 0.0, 1.0, 0.0);
@@ -1005,8 +1007,10 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 		invertTransformedVertex (attrib, sTransform3,
 					 output, cursor);
 
-		if (cursor[0] > 0 && cursor[0] < (int) screen->width () &&
-		    cursor[1] > 0 && cursor[1] < (int) screen->height ())
+		if (cursor[0] > 0					&&
+		    cursor[0] < static_cast <int> (screen->width ())	&&
+		    cursor[1] > 0					&&
+		    cursor[1] < static_cast <int> (screen->height ()))
 		{
 		    newCursor.setX (i * screen->width ()  + cursor[0]);
 		    newCursor.setY (j * screen->height () + cursor[1]);
@@ -1363,7 +1367,8 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
 	    else if (v[0] + offset.x () >= -EXPO_GRID_SIZE &&
 		     v[0] + offset.x () < screen->width () + EXPO_GRID_SIZE)
 	    {
-		ang  = ((v[0] + offset.x ()) / (float) screen->width ()) - 0.5;
+		ang  = ((v[0] + offset.x ()) /
+		       static_cast <float> (screen->width ())) - 0.5;
 		ang *= ang;
 
 		if (ang < radSquare)

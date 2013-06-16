@@ -51,7 +51,7 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
     CompRegion      reg;
     GLushort        colorData[4];
     const GLushort *selColorData = ExpoScreen::get (screen)->optionGetSelectedColor ();
-    float           alpha        = (float) selColorData[3] / 65535.0f;
+    float           alpha        = static_cast <float> (selColorData[3] / 65535.0f);
 
     /* Premultiply color */
     colorData[0] = selColorData[0] * alpha;
