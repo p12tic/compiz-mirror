@@ -240,12 +240,12 @@ PrivateCubeScreen::updateGeometry (int sides,
 {
     sides *= mNOutput;
 
-    GLfloat mps      = M_PI / sides;
-    GLfloat tmps     = 2 * mps;
-    GLfloat distance = 0.5f / tanf (mps);
-    GLfloat radius   = 0.5f / sinf (mps);
-    GLfloat hInvert  = 0.5f * invert;
-    int     i, n     = (sides + 2) * 2;
+    GLfloat mps        = M_PI / sides;
+    GLfloat tmps       = 2 * mps;
+    GLfloat distance   = 0.5f / tanf (mps);
+    GLfloat radius     = 0.5f / sinf (mps);
+    GLfloat normInvert = 0.5f * invert;
+    int     i, n       = (sides + 2) * 2;
     GLfloat *v;
 
     if (mNVertices != n)
@@ -262,13 +262,13 @@ PrivateCubeScreen::updateGeometry (int sides,
 	v = mVertices;
 
     *v++ = 0.0f;
-    *v++ = hInvert;
+    *v++ = normInvert;
     *v++ = 0.0f;
 
     for (i = 0; i <= sides; ++i)
     {
 	*v++ = radius * sinf (i * tmps + mps);
-	*v++ = hInvert;
+	*v++ = normInvert;
 	*v++ = radius * cosf (i * tmps + mps);
     }
 
@@ -279,7 +279,7 @@ PrivateCubeScreen::updateGeometry (int sides,
     for (i = sides; i >= 0; --i)
     {
 	*v++ = radius * sinf (i * tmps + mps);
-	*v++ = -hInvert;
+	*v++ = -normInvert;
 	*v++ = radius * cosf (i * tmps + mps);
     }
 
@@ -1333,17 +1333,17 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     if (!mFullscreenOutput)
     {
-	float oPtrWidth  = outputPtr->width ();
-	float oPtrHeight = outputPtr->height ();
+	float outputWidth  = outputPtr->width ();
+	float outputHeight = outputPtr->height ();
 
-	mOutputXScale = (float) screen->width ()  / oPtrWidth;
-	mOutputYScale = (float) screen->height () / oPtrHeight;
+	mOutputXScale = (float) screen->width ()  / outputWidth;
+	mOutputYScale = (float) screen->height () / outputHeight;
 
 	mOutputXOffset = (screen->width () / 2.0f -
-			  (outputPtr->x1 () + outputPtr->x2 ()) / 2.0f) / oPtrWidth;
+			  (outputPtr->x1 () + outputPtr->x2 ()) / 2.0f) / outputWidth;
 
 	mOutputYOffset = (screen->height () / 2.0f -
-			  (outputPtr->y1 () + outputPtr->y2 ()) / 2.0f) / oPtrHeight;
+			  (outputPtr->y1 () + outputPtr->y2 ()) / 2.0f) / outputHeight;
     }
     else
     {
