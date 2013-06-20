@@ -32,10 +32,10 @@ namespace compiz
 			     float	     &worldScaleFactorY,
 			     float           animationProgress)
 	{
-	    const float sx = screenSize.width () / static_cast <float> (output.width ());
-	    const float sy = screenSize.height () / static_cast <float> (output.height ());
-	    offsetInWorldX = 0.0;
-	    offsetInWorldY = 0.0;
+	    const float sx    = screenSize.width ()  / static_cast <float> (output.width ());
+	    const float sy    = screenSize.height () / static_cast <float> (output.height ());
+	    offsetInWorldX    = 0.0;
+	    offsetInWorldY    = 0.0;
 	    worldScaleFactorX = 1.0f;
 	    worldScaleFactorY = 1.0f;
 
