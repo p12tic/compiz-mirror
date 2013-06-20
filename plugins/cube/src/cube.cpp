@@ -1020,8 +1020,7 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 	xMove += xMoveAdd;
 
 	sa.yRotate -= mInvert * xMoveAdd * tsSize;
-	moveViewportAndPaint (sa, transform, outputPtr, mask,
-			      paintOrder, xMove);
+	moveViewportAndPaint (sa, transform, outputPtr, mask, paintOrder, xMove);
 	sa.yRotate += mInvert * xMoveAdd * tsSize;
 
 	xMove -= xMoveAdd;
@@ -1418,12 +1417,8 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	/* check the actual filtering */
 	oldFilter = gScreen->textureFilter ();
 
-	/* just change the global filter if necessary */
-	if (oldFilter != GL_LINEAR_MIPMAP_LINEAR)
-	{
-	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-	    filterChanged = true;
-	}
+	gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+	filterChanged = true;
     }
 
     PaintOrder paintOrder;
