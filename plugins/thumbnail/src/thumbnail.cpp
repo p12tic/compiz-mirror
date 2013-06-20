@@ -862,7 +862,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail      *t,
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-	/* we disable blending only if it was disabled before */
+	/* we disable blending only, if it was disabled before */
 	if (!glBlendEnabled)
 	    glDisable (GL_BLEND);
 
@@ -890,11 +890,8 @@ ThumbScreen::thumbPaintThumb (Thumbnail      *t,
 	bool   filterChanged = false;
 
 	/* we just need to change the texture filter, if
-	 * thumbnail mipmapping is enabled and the global
-	 * filter setting is not set to GL_LINEAR_MIPMAP_LINEAR
-	 * already */
-	if (optionGetMipmap () &&
-	    filter != GL_LINEAR_MIPMAP_LINEAR)
+	 * thumbnail mipmapping is enabled */
+	if (optionGetMipmap ())
 	{
 	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 	    filterChanged = true;
