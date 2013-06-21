@@ -143,23 +143,23 @@ class ThumbScreen:
 	GLScreen        *gScreen;
 	CompositeScreen *cScreen;
 
-	CompWindow      *dock;
-	CompWindow      *pointedWin;
+	CompWindow *dock;
+	CompWindow *pointedWin;
 
-	bool            showingThumb;
-	Thumbnail       thumb;
-	Thumbnail       oldThumb;
-	bool            painted;
+	bool      showingThumb;
+	Thumbnail thumb;
+	Thumbnail oldThumb;
+	bool      painted;
 
-	CompTimer       displayTimeout;
+	CompTimer displayTimeout;
 
 	GLTexture::List glowTexture;
 	GLTexture::List windowTexture;
 
-	int             x;
-	int             y;
+	int x;
+	int y;
 
-	MousePoller     poller;
+	MousePoller poller;
 };
 
 class ThumbWindow :

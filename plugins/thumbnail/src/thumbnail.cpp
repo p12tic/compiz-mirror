@@ -86,10 +86,10 @@ ThumbScreen::renderThumbText (Thumbnail *t,
 void
 ThumbScreen::damageThumbRegion (Thumbnail  *t)
 {
-    int      x      = t->x      - t->offset;
-    int      y      = t->y      - t->offset;
-    int      width  = t->width  + t->offset * 2;
-    int      height = t->height + t->offset * 2;
+    int x      = t->x      - t->offset;
+    int y      = t->y      - t->offset;
+    int width  = t->width  + t->offset * 2;
+    int height = t->height + t->offset * 2;
 
     CompRect rect (x, y, width, height);
 
@@ -124,8 +124,8 @@ ThumbScreen::thumbUpdateThumbnail ()
 	tw = ThumbWindow::get (oldThumb.win);
 
 	/* Disable painting on the old thumb */
-	tw->cWindow->damageRectSetEnabled  (tw, false);
-	tw->gWindow->glPaintSetEnabled     (tw, false);
+	tw->cWindow->damageRectSetEnabled (tw, false);
+	tw->gWindow->glPaintSetEnabled (tw, false);
 	tw->window->resizeNotifySetEnabled (tw, false);
     }
 
@@ -144,8 +144,8 @@ ThumbScreen::thumbUpdateThumbnail ()
     CompWindow *w = thumb.win;
     tw = ThumbWindow::get (w);
 
-    tw->cWindow->damageRectSetEnabled  (tw, true);
-    tw->gWindow->glPaintSetEnabled     (tw, true);
+    tw->cWindow->damageRectSetEnabled (tw, true);
+    tw->gWindow->glPaintSetEnabled (tw, true);
     tw->window->resizeNotifySetEnabled (tw, true);
 
     float  maxSize = optionGetThumbSize ();
@@ -227,7 +227,6 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     int dockX      = dock->x () - dock->border ().left;
     int dockY      = dock->y () - dock->border ().top;
-
     int dockWidth  = dock->width ()  + dock->border ().left + dock->border ().right;
     int dockHeight = dock->height () + dock->border ().top  + dock->border ().bottom;
 
@@ -799,22 +798,22 @@ ThumbScreen::thumbPaintThumb (Thumbnail      *t,
     if (!w)
 	return;
 
-    GLushort            color[4];
-    int                 addWindowGeometryIndex;
-    int                 wx = t->x;
-    int                 wy = t->y;
+    GLWindow *gWindow = GLWindow::get (w);
+
+    GLushort color[4];
+
+    int wx = t->x;
+    int wy = t->y;
 
     GLWindowPaintAttrib sAttrib;
-    unsigned int        mask = PAINT_WINDOW_TRANSFORMED_MASK |
-			       PAINT_WINDOW_TRANSLUCENT_MASK;
-    GLWindow            *gWindow = GLWindow::get (w);
+    unsigned int mask = PAINT_WINDOW_TRANSFORMED_MASK |
+			PAINT_WINDOW_TRANSLUCENT_MASK;
 
     sAttrib = gWindow->paintAttrib ();
 
     /* Wrap drawWindowGeometry to make sure the general
        drawWindowGeometry function is used */
-    addWindowGeometryIndex =
-	    gWindow->glAddGeometryGetCurrentIndex ();
+    unsigned int addWindowGeometryIndex = gWindow->glAddGeometryGetCurrentIndex ();
 
     if (!gWindow->textures ().empty ())
     {
@@ -1091,14 +1090,14 @@ ThumbWindow::glPaint (const GLWindowPaintAttrib &attrib,
     {
 	GLMatrix sTransform = transform;
 
-	if (ts->oldThumb.opacity > 0.0	&&
-	    ts->oldThumb.win		&&
+	if (ts->oldThumb.opacity    &&
+	    ts->oldThumb.win	    &&
 	    ts->oldThumb.dock == window)
 	    ts->thumbPaintThumb (&ts->oldThumb, &sTransform);
 
 
-	if (ts->thumb.opacity > 0.0	&&
-	    ts->thumb.win		&&
+	if (ts->thumb.opacity	    &&
+	    ts->thumb.win	    &&
 	    ts->thumb.dock == window)
 	    ts->thumbPaintThumb (&ts->thumb, &sTransform);
     }
@@ -1112,10 +1111,10 @@ ThumbWindow::damageRect (bool           initial,
 {
     THUMB_SCREEN (screen);
 
-    if (ts->thumb.win    == window && ts->thumb.opacity    > 0.0)
+    if (ts->thumb.win == window && ts->thumb.opacity)
 	ts->damageThumbRegion (&ts->thumb);
 
-    if (ts->oldThumb.win == window && ts->oldThumb.opacity > 0.0)
+    if (ts->oldThumb.win == window && ts->oldThumb.opacity)
 	ts->damageThumbRegion (&ts->oldThumb);
 
     return cWindow->damageRect (initial, rect);
@@ -1123,18 +1122,18 @@ ThumbWindow::damageRect (bool           initial,
 
 ThumbScreen::ThumbScreen (CompScreen *screen) :
     PluginClassHandler <ThumbScreen, CompScreen> (screen),
-    gScreen       (GLScreen::get (screen)),
-    cScreen       (CompositeScreen::get (screen)),
-    dock          (NULL),
-    pointedWin    (NULL),
-    showingThumb  (false),
-    painted       (false),
-    glowTexture   (GLTexture::imageDataToTexture
-		   (glowTex, CompSize (32, 32), GL_RGBA, GL_UNSIGNED_BYTE)),
+    gScreen (GLScreen::get (screen)),
+    cScreen (CompositeScreen::get (screen)),
+    dock (NULL),
+    pointedWin (NULL),
+    showingThumb (false),
+    painted (false),
+    glowTexture (GLTexture::imageDataToTexture
+		 (glowTex, CompSize (32, 32), GL_RGBA, GL_UNSIGNED_BYTE)),
     windowTexture (GLTexture::imageDataToTexture
 		   (windowTex, CompSize (32, 32), GL_RGBA, GL_UNSIGNED_BYTE)),
-    x             (0),
-    y             (0)
+    x (0),
+    y (0)
 {
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen, false);
@@ -1163,13 +1162,13 @@ ThumbScreen::~ThumbScreen ()
 
 ThumbWindow::ThumbWindow (CompWindow *window) :
     PluginClassHandler <ThumbWindow, CompWindow> (window),
-    window  (window),
+    window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window))
 {
-    WindowInterface::setHandler          (window, false);
+    WindowInterface::setHandler (window, false);
     CompositeWindowInterface::setHandler (cWindow, false);
-    GLWindowInterface::setHandler        (gWindow, false);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 ThumbWindow::~ThumbWindow ()
