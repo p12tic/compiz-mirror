@@ -178,10 +178,8 @@ ThumbScreen::thumbUpdateThumbnail ()
     igMidPoint[1] = w->iconGeometry ().y () + w->iconGeometry ().height () / 2;
 
     int off  = optionGetBorder ();
-    int oDev = screen->outputDeviceForPoint (w->iconGeometry ().x () +
-					     w->iconGeometry ().width ()  / 2,
-					     w->iconGeometry ().y () +
-					     w->iconGeometry ().height () / 2);
+    int oDev = screen->outputDeviceForPoint (igMidPoint[0],
+					     igMidPoint[1]);
 
     CompRect oGeom;
 
@@ -390,15 +388,15 @@ ThumbScreen::positionUpdate (const CompPoint &p)
 	showingThumb = false;
 
 	cScreen->preparePaintSetEnabled (this, true);
-	cScreen->donePaintSetEnabled    (this, true);
+	cScreen->donePaintSetEnabled (this, true);
     }
 }
 
 void
-ThumbWindow::resizeNotify (int        dx,
-			   int        dy,
-			   int        dwidth,
-			   int        dheight)
+ThumbWindow::resizeNotify (int dx,
+			   int dy,
+			   int dwidth,
+			   int dheight)
 {
     THUMB_SCREEN (screen);
 
@@ -408,7 +406,7 @@ ThumbWindow::resizeNotify (int        dx,
 }
 
 void
-ThumbScreen::handleEvent (XEvent * event)
+ThumbScreen::handleEvent (XEvent *event)
 {
     screen->handleEvent (event);
 
@@ -513,6 +511,14 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 {
     GLfloat         textureData[8];
     GLfloat         vertexData[12];
+
+    GLfloat         wxPlusWidth    = wx + width;
+    GLfloat         wyPlusHeight   = wy + height;
+    GLfloat         wxPlusWPlusOff = wxPlusWidth  + off;
+    GLfloat         wyPlusHPlusOff = wyPlusHeight + off;
+    GLfloat         wxMinusOff     = wx - off;
+    GLfloat         wyMinusOff     = wy - off;
+
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
@@ -524,13 +530,13 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     vertexData[1]  = wy;
     vertexData[2]  = 0;
     vertexData[3]  = wx;
-    vertexData[4]  = wy + height;
+    vertexData[4]  = wyPlusHeight;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width;
+    vertexData[6]  = wxPlusWidth;
     vertexData[7]  = wy;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width;
-    vertexData[10] = wy + height;
+    vertexData[9]  = wxPlusWidth;
+    vertexData[10] = wyPlusHeight;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 1, textureData);
@@ -551,14 +557,14 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 1;
 
-    vertexData[0]  = wx - off;
-    vertexData[1]  = wy - off;
+    vertexData[0]  = wxMinusOff;
+    vertexData[1]  = wyMinusOff;
     vertexData[2]  = 0;
-    vertexData[3]  = wx - off;
+    vertexData[3]  = wxMinusOff;
     vertexData[4]  = wy;
     vertexData[5]  = 0;
     vertexData[6]  = wx;
-    vertexData[7]  = wy - off;
+    vertexData[7]  = wyMinusOff;
     vertexData[8]  = 0;
     vertexData[9]  = wx;
     vertexData[10] = wy;
@@ -582,16 +588,16 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 0;
     textureData[7] = 1;
 
-    vertexData[0]  = wx + width;
-    vertexData[1]  = wy - off;
+    vertexData[0]  = wxPlusWidth;
+    vertexData[1]  = wyMinusOff;
     vertexData[2]  = 0;
-    vertexData[3]  = wx + width;
+    vertexData[3]  = wxPlusWidth;
     vertexData[4]  = wy;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width + off;
-    vertexData[7]  = wy - off;
+    vertexData[6]  = wxPlusWPlusOff;
+    vertexData[7]  = wyMinusOff;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width + off;
+    vertexData[9]  = wxPlusWPlusOff;
     vertexData[10] = wy;
     vertexData[11] = 0;
 
@@ -613,17 +619,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 0;
 
-    vertexData[0]  = wx - off;
-    vertexData[1]  = wy + height;
+    vertexData[0]  = wxMinusOff;
+    vertexData[1]  = wyPlusHeight;
     vertexData[2]  = 0;
-    vertexData[3]  = wx - off;
-    vertexData[4]  = wy + height + off;
+    vertexData[3]  = wxMinusOff;
+    vertexData[4]  = wyPlusHPlusOff;
     vertexData[5]  = 0;
     vertexData[6]  = wx;
-    vertexData[7]  = wy + height;
+    vertexData[7]  = wyPlusHeight;
     vertexData[8]  = 0;
     vertexData[9]  = wx;
-    vertexData[10] = wy + height + off;
+    vertexData[10] = wyPlusHPlusOff;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -644,17 +650,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 0;
     textureData[7] = 0;
 
-    vertexData[0]  = wx + width;
-    vertexData[1]  = wy + height;
+    vertexData[0]  = wxPlusWidth;
+    vertexData[1]  = wyPlusHeight;
     vertexData[2]  = 0;
-    vertexData[3]  = wx + width;
-    vertexData[4]  = wy + height + off;
+    vertexData[3]  = wxPlusWidth;
+    vertexData[4]  = wyPlusHPlusOff;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width + off;
-    vertexData[7]  = wy + height;
+    vertexData[6]  = wxPlusWPlusOff;
+    vertexData[7]  = wyPlusHeight;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width + off;
-    vertexData[10] = wy + height + off;
+    vertexData[9]  = wxPlusWPlusOff;
+    vertexData[10] = wyPlusHPlusOff;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -676,15 +682,15 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[7] = 1;
 
     vertexData[0]  = wx;
-    vertexData[1]  = wy - off;
+    vertexData[1]  = wyMinusOff;
     vertexData[2]  = 0;
     vertexData[3]  = wx;
     vertexData[4]  = wy;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width;
-    vertexData[7]  = wy - off;
+    vertexData[6]  = wxPlusWidth;
+    vertexData[7]  = wyMinusOff;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width;
+    vertexData[9]  = wxPlusWidth;
     vertexData[10] = wy;
     vertexData[11] = 0;
 
@@ -707,16 +713,16 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[7] = 0;
 
     vertexData[0]  = wx;
-    vertexData[1]  = wy + height;
+    vertexData[1]  = wyPlusHeight;
     vertexData[2]  = 0;
     vertexData[3]  = wx;
-    vertexData[4]  = wy + height + off;
+    vertexData[4]  = wyPlusHPlusOff;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width;
-    vertexData[7]  = wy + height;
+    vertexData[6]  = wxPlusWidth;
+    vertexData[7]  = wyPlusHeight;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width;
-    vertexData[10] = wy + height + off;
+    vertexData[9]  = wxPlusWidth;
+    vertexData[10] = wyPlusHPlusOff;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -737,17 +743,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 1;
 
-    vertexData[0]  = wx - off;
+    vertexData[0]  = wxMinusOff;
     vertexData[1]  = wy;
     vertexData[2]  = 0;
-    vertexData[3]  = wx - off;
-    vertexData[4]  = wy + height;
+    vertexData[3]  = wxMinusOff;
+    vertexData[4]  = wyPlusHeight;
     vertexData[5]  = 0;
     vertexData[6]  = wx;
     vertexData[7]  = wy;
     vertexData[8]  = 0;
     vertexData[9]  = wx;
-    vertexData[10] = wy + height;
+    vertexData[10] = wyPlusHeight;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -768,17 +774,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 0;
     textureData[7] = 1;
 
-    vertexData[0]  = wx + width;
+    vertexData[0]  = wxPlusWidth;
     vertexData[1]  = wy;
     vertexData[2]  = 0;
-    vertexData[3]  = wx + width;
-    vertexData[4]  = wy + height;
+    vertexData[3]  = wxPlusWidth;
+    vertexData[4]  = wyPlusHeight;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width + off;
+    vertexData[6]  = wxPlusWPlusOff;
     vertexData[7]  = wy;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width + off;
-    vertexData[10] = wy + height;
+    vertexData[9]  = wxPlusWPlusOff;
+    vertexData[10] = wyPlusHeight;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
