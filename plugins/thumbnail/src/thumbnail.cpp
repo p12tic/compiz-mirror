@@ -109,7 +109,7 @@ void
 ThumbScreen::thumbUpdateThumbnail ()
 {
     if (thumb.win == pointedWin ||
-	(thumb.opacity > 0.0 && oldThumb.opacity > 0.0))
+	(thumb.opacity && oldThumb.opacity))
 	return;
 
     if (thumb.win)
@@ -297,8 +297,8 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     damageThumbRegion (&thumb);
 
-    cScreen->preparePaintSetEnabled  (this, true);
-    cScreen->donePaintSetEnabled     (this, true);
+    cScreen->preparePaintSetEnabled (this, true);
+    cScreen->donePaintSetEnabled (this, true);
     gScreen->glPaintOutputSetEnabled (this, true);
 }
 
@@ -509,15 +509,15 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 			   int            height,
 			   int            off)
 {
-    GLfloat         textureData[8];
-    GLfloat         vertexData[12];
+    GLfloat textureData[8];
+    GLfloat vertexData[12];
 
-    GLfloat         wxPlusWidth    = wx + width;
-    GLfloat         wyPlusHeight   = wy + height;
-    GLfloat         wxPlusWPlusOff = wxPlusWidth  + off;
-    GLfloat         wyPlusHPlusOff = wyPlusHeight + off;
-    GLfloat         wxMinusOff     = wx - off;
-    GLfloat         wyMinusOff     = wy - off;
+    GLfloat wxPlusWidth    = wx + width;
+    GLfloat wyPlusHeight   = wy + height;
+    GLfloat wxPlusWPlusOff = wxPlusWidth  + off;
+    GLfloat wyPlusHPlusOff = wyPlusHeight + off;
+    GLfloat wxMinusOff     = wx - off;
+    GLfloat wyMinusOff     = wy - off;
 
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
@@ -971,8 +971,8 @@ ThumbScreen::preparePaint (int ms)
 
     if (oldThumb.win == NULL && thumb.win == NULL)
     {
-	cScreen->preparePaintSetEnabled  (this, false);
-	cScreen->donePaintSetEnabled     (this, false);
+	cScreen->preparePaintSetEnabled (this, false);
+	cScreen->donePaintSetEnabled (this, false);
 	gScreen->glPaintOutputSetEnabled (this, false);
     }
 
@@ -998,7 +998,7 @@ ThumbScreen::donePaint ()
     else
     {
 	cScreen->preparePaintSetEnabled (this, false);
-	cScreen->donePaintSetEnabled    (this, false);
+	cScreen->donePaintSetEnabled (this, false);
     }
 
     cScreen->donePaint ();
@@ -1101,9 +1101,8 @@ ThumbWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    ts->oldThumb.dock == window)
 	    ts->thumbPaintThumb (&ts->oldThumb, &sTransform);
 
-
-	if (ts->thumb.opacity	    &&
-	    ts->thumb.win	    &&
+	if (ts->thumb.opacity	&&
+	    ts->thumb.win	&&
 	    ts->thumb.dock == window)
 	    ts->thumbPaintThumb (&ts->thumb, &sTransform);
     }
