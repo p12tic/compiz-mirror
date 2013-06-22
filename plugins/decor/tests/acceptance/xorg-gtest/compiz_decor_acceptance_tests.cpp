@@ -304,12 +304,13 @@ class FakePixmapTypeDecoration :
 	void changeRestoredBorder (const decor_extents_t &border);
 	void changeRestoredInput (const decor_extents_t &input);
 
+	CompPoint restoredFrameWindowOffset () const;
+	CompSize restoredDecorationSize () const;
+
     protected:
 
 	size_t propertyDataSize () const;
 	void addPropertyData (std::vector<long> &) const;
-	CompPoint restoredFrameWindowOffset () const;
-	CompSize restoredDecorationSize () const;
 
     private:
 
@@ -1025,6 +1026,7 @@ void ChangeDecorationState (Display      *display,
 			    Window       window,
 			    unsigned int decorationFlags)
 {
+    Atom          mwmHintsAtom = XInternAtom (display, "_MOTIF_WM_HINTS", 0);
     cdt::MWMHints hints;
 
     hints.flags = 1L << 1;
@@ -1032,8 +1034,8 @@ void ChangeDecorationState (Display      *display,
 
     XChangeProperty (display,
 		     window,
-		     XInternAtom (display, "_MOTIF_WM_HINTS", 0),
-		     XInternAtom (display, "_MOTIF_WM_HINTS", 0),
+		     mwmHintsAtom,
+		     mwmHintsAtom,
 		     32,
 		     PropModeReplace,
 		     reinterpret_cast <unsigned char *> (&hints),
@@ -1100,6 +1102,37 @@ void WaitForPropertyNotify (Display           *dpy,
 								  -1,
 								  -1,
 								  matcher)));
+}
+
+void WaitForConfigureOn (Display      *display,
+			 Window       window,
+			 int          x,
+			 int          y,
+			 unsigned int width,
+			 unsigned int height,
+			 unsigned int mask)
+{
+    /* Wait for the ConfigureNotify on the frame window
+     * after an offset move */
+    ct::ConfigureNotifyXEventMatcher matcher (None,
+					      0,
+					      x,
+					      y,
+					      width,
+					      height,
+					      mask);
+
+    /* The use of the timeout is currently because some functionality
+     * is broken which would cause these barrier conditions to never
+     * eventuate. For now just get to the fail condition */
+    Advance (display,
+	     ct::WaitForEventOfTypeOnWindowMatching (display,
+						     window,
+						     ConfigureNotify,
+						     -1,
+						     -1,
+						     matcher,
+						     1000));
 }
 
 void WaitForFrameExtents (Display *dpy,
@@ -1595,7 +1628,7 @@ class PixmapDecoratorAcceptance :
     public:
 
 	typedef cdt::FakeDecoration::Ptr FakeDecorPtr;
-	typedef cdt::FakeDecoration::Ptr FakePixDecorPtr;
+	typedef cdt::FakePixmapTypeDecoration::Ptr FakePixDecorPtr;
 
 	Window CreateDecoratableWindow (::Display *display);
 	Window MapAndReparent (::Display *display,
@@ -1607,9 +1640,19 @@ class PixmapDecoratorAcceptance :
 	void WaitForDecoration (::Display          *display,
 				Window             window,
 				const FakeDecorPtr &decoration);
+	void WaitForDecorationUpdate (::Display          *display,
+				      Window             window,
+				      const FakeDecorPtr &decor);
 
 	cdt::FakeDecorationList GetDecorations (Window window);
 	Window                  GetParent (Window window);
+
+	void ReconfigureDecoration (::Display             *display,
+				    Window                window,
+				    const FakePixDecorPtr &decor,
+				    cdt::FakeDecorationList &list,
+				    const decor_extents_t &border,
+				    const decor_extents_t &input);
 
 	bool DestroyWindow (::Display *display,
 			    Window    window);
@@ -1678,26 +1721,45 @@ PixmapDecoratorAcceptance::WaitForDecoration (::Display          *display,
 					      const FakeDecorPtr &decoration)
 {
     WaitForPropertyNotify (display, window, DECOR_INPUT_FRAME_ATOM_NAME);
+    WaitForDecorationUpdate (display, window, decoration);
+}
+
+void
+PixmapDecoratorAcceptance::WaitForDecorationUpdate (::Display          *display,
+						    Window             window,
+						    const FakeDecorPtr &decor)
+{
+    /* Wait for the frame extents to change */
     WaitForPropertyNotify (display, window, "_NET_FRAME_EXTENTS");
 
-    CompPoint frameOffset (decoration->restoredFrameWindowOffset ());
+    const CompPoint &framePos (decor->restoredFrameWindowOffset ());
 
-    /* Wait for the parent window to be moved to -2, -2 */
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      frameOffset.x (),
-					      frameOffset.y (),
-					      0,
-					      0,
-					      CWX | CWY);
+    /* Wait for the ConfigureNotify on the frame window
+     * after an offset move */
+    WaitForConfigureOn (display,
+			GetParent (window),
+			framePos.x (),
+			framePos.y (),
+			0,
+			0,
+			CWX | CWY);
+}
 
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     GetParent (window),
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher));
+void
+PixmapDecoratorAcceptance::ReconfigureDecoration (::Display             *display,
+						  Window                window,
+						  const FakePixDecorPtr &decor,
+						  cdt::FakeDecorationList &list,
+						  const decor_extents_t &border,
+						  const decor_extents_t &input)
+{
+    decor->changeRestoredInput (input);
+    decor->changeRestoredBorder (border);
+    list.SetPropertyOnWindow (display,
+			      window,
+			      WindowDecorationAtom);
+
+    WaitForDecorationUpdate (display, window, decor);
 }
 
 bool
@@ -2210,21 +2272,13 @@ TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_VertMaximizeFrameWindowSizeSam
 			 mTestWindow);
 
     /* Wait for the window to be maximized first */
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      0,
-					      0,
-					      0,
-					      rootAttrib.height,
-					      CWY | CWHeight);
-
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			0,
+			0,
+			0,
+			rootAttrib.height,
+			CWY | CWHeight);
 
     /* Query the window geometry and ensure that the width and
      * height have remained the same (adding on any extended borders,
@@ -2257,21 +2311,13 @@ TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_HorzMaximizeFrameWindowSizeSam
 			 mTestWindow);
 
     /* Wait for the window to be maximized first */
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      0,
-					      0,
-					      rootAttrib.width,
-					      0,
-					      CWX | CWWidth);
-
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			0,
+			0,
+			rootAttrib.width,
+			0,
+			CWX | CWWidth);
 
     /* Query the window geometry and ensure that the width and
      * height have remained the same (adding on any extended borders,
@@ -2292,23 +2338,13 @@ TEST_F (PixmapDecoratedWindowAcceptance, UndecoratedWindowExpandToOrigSize)
 {
     DisallowDecorationsOnWindow (mTestWindow);
 
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      ct::WINDOW_X,
-					      ct::WINDOW_Y,
-					      ct::WINDOW_WIDTH,
-					      ct::WINDOW_HEIGHT,
-					      CWX | CWY | CWWidth | CWHeight);
-
-    /* Wait for the frame window to revert to the size of the client */
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher,
-						     1000));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			ct::WINDOW_X,
+			ct::WINDOW_Y,
+			ct::WINDOW_WIDTH,
+			ct::WINDOW_HEIGHT,
+			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow,
 		 HasGeometry (Display (),
@@ -2335,23 +2371,13 @@ TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_UndecorateStaticGravityWindow)
     XSetWMNormalHints (Display (), mTestWindow, &hints);
     DisallowDecorationsOnWindow (mTestWindow);
 
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      ct::WINDOW_X,
-					      ct::WINDOW_Y,
-					      ct::WINDOW_WIDTH,
-					      ct::WINDOW_HEIGHT,
-					      CWX | CWY | CWWidth | CWHeight);
-
-    /* Wait for the frame window to revert to the size of the client */
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher,
-						     1000));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			ct::WINDOW_X,
+			ct::WINDOW_Y,
+			ct::WINDOW_WIDTH,
+			ct::WINDOW_HEIGHT,
+			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow,
 		 HasGeometry (Display (),
@@ -2369,7 +2395,6 @@ class PixmapDecorationAdjustment :
 {
     public:
 
-	void WaitForDecorationUpdate (const CompPoint &framePos);
 	void MaximizeWindow (Window window);
 	void RestoreWindow (Window       window,
 			    int          restoredFrameX,
@@ -2377,30 +2402,6 @@ class PixmapDecorationAdjustment :
 			    unsigned int restoredFrameWidth,
 			    unsigned int restoredFrameHeight);
 };
-
-void
-PixmapDecorationAdjustment::WaitForDecorationUpdate (const CompPoint &framePos)
-{
-    /* Wait for the frame extents to change */
-    WaitForPropertyNotify (Display (), mTestWindow, "_NET_FRAME_EXTENTS");
-
-    /* Wait for the ConfigureNotify on the frame window
-     * after an offset move */
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      framePos.x (),
-					      framePos.y (),
-					      0,
-					      0,
-					      CWX | CWY);
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher));
-}
 
 void
 PixmapDecorationAdjustment::MaximizeWindow (Window window)
@@ -2419,21 +2420,13 @@ PixmapDecorationAdjustment::MaximizeWindow (Window window)
 			 window);
 
     /* Wait for the window to be maximized first */
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      0,
-					      0,
-					      rootAttrib.width,
-					      rootAttrib.height,
-					      CWX | CWY | CWWidth | CWHeight);
-
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     GetParent (window),
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			0,
+			0,
+			rootAttrib.width,
+			rootAttrib.height,
+			CWX | CWY | CWWidth | CWHeight);
 }
 
 void
@@ -2454,41 +2447,28 @@ PixmapDecorationAdjustment::RestoreWindow (Window       window,
 			 window);
 
     /* Wait for the window to be restored first */
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      restoredFrameX,
-					      restoredFrameY,
-					      restoredFrameWidth,
-					      restoredFrameHeight,
-					      CWX | CWY | CWWidth | CWHeight);
-
-    /* FIXME: Using a timeout here as core is broken */
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     GetParent (window),
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher,
-						     1000));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			restoredFrameX,
+			restoredFrameY,
+			restoredFrameWidth,
+			restoredFrameHeight,
+			CWX | CWY | CWWidth | CWHeight);
 }
 
 TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowBorderMovesClient)
 {
-    decor_extents_t newExtents = GetParam ();
-
-    mTestWindowDecoration->changeRestoredInput (newExtents);
-    mTestWindowDecoration->changeRestoredBorder (newExtents);
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (0, 0));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   GetParam (),
+			   GetParam ());
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
-					   ct::WINDOW_X + newExtents.left,
-					   ct::WINDOW_Y + newExtents.top,
+					   ct::WINDOW_X + GetParam ().left,
+					   ct::WINDOW_Y + GetParam ().top,
 					   _,
 					   _,
 					   _));
@@ -2496,24 +2476,21 @@ TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowBorderMovesClient)
 
 TEST_P (PixmapDecorationAdjustment, DISABLED_AdjustRestoredWindowBorderShrinkClient)
 {
-    decor_extents_t newExtents = GetParam ();
-
-    mTestWindowDecoration->changeRestoredInput (newExtents);
-    mTestWindowDecoration->changeRestoredBorder (newExtents);
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (0, 0));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   GetParam (),
+			   GetParam ());
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
 					   _,
 					   _,
-					   ct::WINDOW_WIDTH - (newExtents.left +
-							       newExtents.right),
-					   ct::WINDOW_HEIGHT - (newExtents.top +
-								newExtents.bottom),
+					   ct::WINDOW_WIDTH - (GetParam ().left +
+							       GetParam ().right),
+					   ct::WINDOW_HEIGHT - (GetParam ().top +
+								GetParam ().bottom),
 					   _));
 }
 
@@ -2521,24 +2498,19 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinks)
 {
     decor_extents_t newExtents = GetParam ();
 
-    mTestWindowDecoration->changeRestoredInput (DecorationExtents (10, 10, 10, 10));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   DecorationExtents (10, 10, 10, 10),
+			   DecorationExtents (10, 10, 10, 10));
 
-    /* Change the border to be large first, and then shrink it later */
-    mTestWindowDecoration->changeRestoredBorder (DecorationExtents (10, 10, 10, 10));
-
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (0, 0));
-
-    mTestWindowDecoration->changeRestoredBorder (newExtents);
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (newExtents.left - 10,
-					newExtents.top - 10));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   newExtents,
+			   DecorationExtents (10, 10, 10, 10));
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
@@ -2555,16 +2527,12 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstM
 {
     decor_extents_t newExtents = GetParam ();
 
-    mTestWindowDecoration->changeRestoredInput (DecorationExtents (10, 10, 10, 10));
-
-    /* Change the border to be large first, and then shrink it later */
-    mTestWindowDecoration->changeRestoredBorder (DecorationExtents (10, 10, 10, 10));
-
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (0, 0));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   DecorationExtents (10, 10, 10, 10),
+			   DecorationExtents (10, 10, 10, 10));
 
     MaximizeWindow (mTestWindow);
 
@@ -2575,11 +2543,14 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstM
 							mTestWindow,
 							WindowDecorationAtom);
 
+    const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
+    const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
+
     RestoreWindow (mTestWindow,
-		   ct::WINDOW_X - 10,
-		   ct::WINDOW_Y - 10,
-		   ct::WINDOW_WIDTH + 20,
-		   ct::WINDOW_HEIGHT + 20);
+		   ct::WINDOW_X - off.x (),
+		   ct::WINDOW_Y - off.y (),
+		   ct::WINDOW_WIDTH + size.width (),
+		   ct::WINDOW_HEIGHT + size.height ());
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
@@ -2596,36 +2567,22 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstU
 {
     decor_extents_t newExtents = GetParam ();
 
-    mTestWindowDecoration->changeRestoredInput (DecorationExtents (10, 10, 10, 10));
-
-    /* Change the border to be large first, and then shrink it later */
-    mTestWindowDecoration->changeRestoredBorder (DecorationExtents (10, 10, 10, 10));
-
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (0, 0));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   DecorationExtents (10, 10, 10, 10),
+			   DecorationExtents (10, 10, 10, 10));
 
     DisallowDecorationsOnWindow (mTestWindow);
 
-    ct::ConfigureNotifyXEventMatcher matcher (None,
-					      0,
-					      ct::WINDOW_X,
-					      ct::WINDOW_Y,
-					      ct::WINDOW_WIDTH,
-					      ct::WINDOW_HEIGHT,
-					      CWX | CWY | CWWidth | CWHeight);
-
-    /* Wait for the frame window to revert to the size of the client */
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     matcher,
-						     1000));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			ct::WINDOW_X,
+			ct::WINDOW_Y,
+			ct::WINDOW_WIDTH,
+			ct::WINDOW_HEIGHT,
+			CWX | CWY | CWWidth | CWHeight);
 
     /* Set the property on the window, then decorate without waiting
      * for a response we will continue to use the maximized window decoration */
@@ -2636,23 +2593,16 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstU
 
     AllowDecorationsOnWindow (mTestWindow);
 
-    ct::ConfigureNotifyXEventMatcher decoratedWindowMatcher (None,
-							     0,
-							     ct::WINDOW_X - 10,
-							     ct::WINDOW_Y - 10,
-							     ct::WINDOW_WIDTH + 20,
-							     ct::WINDOW_HEIGHT + 20,
-							     CWX | CWY | CWWidth | CWHeight);
+    const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
+    const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
 
-    /* Wait for the frame window to revert to the size of the client */
-    Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
-						     mTestWindowParent,
-						     ConfigureNotify,
-						     -1,
-						     -1,
-						     decoratedWindowMatcher,
-						     1000));
+    WaitForConfigureOn (Display (),
+			mTestWindowParent,
+			ct::WINDOW_X - off.x (),
+			ct::WINDOW_Y - off.y (),
+			ct::WINDOW_WIDTH + size.width (),
+			ct::WINDOW_HEIGHT + size.height (),
+			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
@@ -2665,18 +2615,16 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstU
 					   _));
 }
 
-TEST_P (PixmapDecorationAdjustment, DISABLED_AdjustRestoredWindowInputNoMoveClient)
+TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowInputNoMoveClient)
 {
     decor_extents_t newExtents = GetParam ();
 
-    mTestWindowDecoration->changeRestoredInput (newExtents);
-    mTestWindowDecoration->changeRestoredBorder (DecorationExtents (1, 1, 1, 1));
-    windowDecorations[mTestWindow].SetPropertyOnWindow (Display (),
-							mTestWindow,
-							WindowDecorationAtom);
-
-    WaitForDecorationUpdate (CompPoint (-newExtents.left + 1,
-					-newExtents.top + 1));
+    ReconfigureDecoration (Display (),
+			   mTestWindow,
+			   mTestWindowDecoration,
+			   windowDecorations[mTestWindow],
+			   DecorationExtents (1, 1, 1, 1),
+			   newExtents);
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
