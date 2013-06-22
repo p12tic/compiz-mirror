@@ -20,6 +20,8 @@ if (BUILD_XORG_GTEST)
          compiz_xorg_gtest_main
          compiz_xorg_gtest_system_test
          decoration
+         compiz_point
+         compiz_size
          ${GMOCK_LIBRARY}
          ${GMOCK_MAIN_LIBRARY}
          ${GTEST_BOTH_LIBRARIES}
