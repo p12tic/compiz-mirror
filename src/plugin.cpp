@@ -267,8 +267,6 @@ CompManager::initPlugin (CompPlugin *p)
 void
 CompManager::finiPlugin (CompPlugin *p)
 {
-    p->vTable->markNoFurtherInstantiation ();
-
     if (screen)
     {
 	screen->finiPluginForScreen (p);
@@ -276,6 +274,7 @@ CompManager::finiPlugin (CompPlugin *p)
     }
 
     p->vTable->fini ();
+    p->vTable->markNoFurtherInstantiation ();
 }
 
 bool
