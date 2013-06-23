@@ -791,7 +791,12 @@
  		</option>
  		<option name="put_top_key" type="key">
  		    <_short>Put Top Key</_short>
-@@ -73,7 +72,7 @@
+@@ -68,12 +67,11 @@
+ 		<option name="put_maximize_key" type="key">
+ 		    <_short>Maximize Key</_short>
+ 		    <_long>Maximize window.</_long>
+-		    <default>&lt;Control&gt;&lt;Alt&gt;KP_0</default>
+ 		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
  		    <_long>Restore window to it's original size. Note: Use the same shortcut you are using to unmaximize a window to be able to restore grid-maximized windows.</_long>

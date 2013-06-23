@@ -37,6 +37,7 @@ add_executable (xorg_gtest_wrapper
 		${CMAKE_CURRENT_SOURCE_DIR}/src/xorg_gtest_wrapper.cpp)
 
 target_link_libraries (xorg_gtest_all
+                       ${X11_XI_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${XORG_SERVER_GTEST_LIBRARIES})
 
