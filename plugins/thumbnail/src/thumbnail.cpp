@@ -305,7 +305,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 bool
 ThumbScreen::thumbShowThumbnail ()
 {
-    showingThumb   = true;
+    showingThumb = true;
 
     thumbUpdateThumbnail ();
     damageThumbRegion (&thumb);
@@ -430,7 +430,7 @@ ThumbScreen::handleEvent (XEvent *event)
 	    if (displayTimeout.active ())
 		displayTimeout.stop ();
 
-	    pointedWin   = 0;
+	    pointedWin   = NULL;
 	    showingThumb = false;
 	}
 	    break;
@@ -984,10 +984,10 @@ ThumbScreen::donePaint ()
 {
     std::vector <Thumbnail *> damageThumbs;
 
-    if (thumb.opacity > 0.0)
+    if (thumb.opacity)
 	damageThumbs.push_back (&thumb);
 
-    if (oldThumb.opacity > 0.0)
+    if (oldThumb.opacity)
 	damageThumbs.push_back (&oldThumb);
 
     if (!damageThumbs.empty ())
@@ -1060,7 +1060,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
     {
 	painted = true;
 
-	if (oldThumb.opacity > 0.0 && oldThumb.win)
+	if (oldThumb.opacity && oldThumb.win)
 	{
 	    GLMatrix sTransform = transform;
 
@@ -1069,7 +1069,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    thumbPaintThumb (&oldThumb, &sTransform);
 	}
 
-	if (thumb.opacity > 0.0 && thumb.win)
+	if (thumb.opacity && thumb.win)
 	{
 	    GLMatrix sTransform = transform;
 
