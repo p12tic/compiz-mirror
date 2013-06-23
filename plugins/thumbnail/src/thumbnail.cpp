@@ -174,8 +174,8 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     int igMidPoint[2], tMidPoint[2];
 
-    igMidPoint[0] = w->iconGeometry ().x () + w->iconGeometry ().width ()  / 2;
-    igMidPoint[1] = w->iconGeometry ().y () + w->iconGeometry ().height () / 2;
+    igMidPoint[0] = w->iconGeometry ().centerX ();
+    igMidPoint[1] = w->iconGeometry ().centerY ();
 
     int off  = optionGetBorder ();
     int oDev = screen->outputDeviceForPoint (igMidPoint[0],
