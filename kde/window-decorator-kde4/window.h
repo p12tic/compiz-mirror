@@ -71,6 +71,7 @@ class Window: public QObject, public KDecorationBridgeUnstable {
 	virtual bool isCloseable (void) const;
 	virtual bool isMaximizable (void) const;
 	virtual MaximizeMode maximizeMode (void) const;
+	virtual QuickTileMode quickTileMode(void) const;
 	virtual bool isMinimizable (void) const;
 	virtual bool providesContextHelp (void) const;
 	virtual int desktop (void) const;
