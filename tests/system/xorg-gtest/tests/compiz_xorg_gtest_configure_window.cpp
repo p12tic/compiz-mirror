@@ -55,25 +55,6 @@ bool Advance (Display *d, bool r)
     return ct::AdvanceToNextEventOnSuccess (d, r);
 }
 
-Window GetImmediateParent (Display *display,
-			   Window  w,
-			   Window  &rootReturn)
-{
-    Window parentReturn = w;
-    Window *childrenReturn;
-    unsigned int nChildrenReturn;
-
-    XQueryTree (display,
-		w,
-		&rootReturn,
-		&parentReturn,
-		&childrenReturn,
-		&nChildrenReturn);
-    XFree (childrenReturn);
-
-    return parentReturn;
-}
-
 
 Window GetTopParent (Display *display,
 		     Window w)
@@ -86,9 +67,9 @@ Window GetTopParent (Display *display,
     {
 	lastParent = parentReturn;
 
-	parentReturn = GetImmediateParent (display,
-					   lastParent,
-					   rootReturn);
+	parentReturn = ct::GetImmediateParent (display,
+					       lastParent,
+					       rootReturn);
 	
     } while (parentReturn != rootReturn);
 
@@ -616,7 +597,7 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsAdjWrapperWindow)
 
     /* Wrapper geometry is extents.xy, size.wh */
     Window root;
-    Window wrapper = GetImmediateParent (dpy, w.client, root);
+    Window wrapper = ct::GetImmediateParent (dpy, w.client, root);
     ASSERT_TRUE (VerifyWindowSize (wrapper,
 				   left,
 				   top,
@@ -697,7 +678,7 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsCorrectMapBehaviour)
 
     /* Wrapper geometry is extents.xy, size.wh */
     Window root;
-    Window wrapper = GetImmediateParent (dpy, client, root);
+    Window wrapper = ct::GetImmediateParent (dpy, client, root);
     ASSERT_TRUE (VerifyWindowSize (wrapper,
 				   left,
 				   top,
@@ -752,7 +733,7 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 
     /* Wrapper geometry is extents.xy, size.wh */
     Window root;
-    Window wrapper = GetImmediateParent (dpy, client, root);
+    Window wrapper = ct::GetImmediateParent (dpy, client, root);
     ASSERT_TRUE (VerifyWindowSize (wrapper,
 				   left,
 				   top,

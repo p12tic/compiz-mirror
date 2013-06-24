@@ -122,6 +122,9 @@ namespace compiz
 	const unsigned int WINDOW_HEIGHT = 480;
 
 	Window CreateNormalWindow (Display *dpy);
+	Window GetImmediateParent (Display *display,
+				   Window  w,
+				   Window  &rootReturn);
 
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
 	bool AdvanceToNextEventOnSuccess (Display *dpy,
