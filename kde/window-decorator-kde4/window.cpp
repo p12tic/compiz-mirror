@@ -226,6 +226,12 @@ KWD::Window::isMaximizable (void) const
     return wInfo.actionSupported (NET::ActionMax);
 }
 
+KDecoration::QuickTileMode
+KWD::Window::quickTileMode (void) const
+{
+    return QuickTileNone;
+}
+
 KDecoration::MaximizeMode
 KWD::Window::maximizeMode (void) const
 {
