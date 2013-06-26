@@ -473,17 +473,21 @@ namespace
 
 	attrib.override_redirect = true;
 
-	return XCreateWindow (dpy, DefaultRootWindow (dpy),
-			      ct::WINDOW_X,
-			      ct::WINDOW_Y,
-			      ct::WINDOW_WIDTH,
-			      ct::WINDOW_HEIGHT,
-			      0,
-			      DefaultDepth (dpy, 0),
-			      InputOutput,
-			      DefaultVisual (dpy, DefaultScreen (dpy)),
-			      CWOverrideRedirect,
-			      &attrib);
+	Window w =
+	    XCreateWindow (dpy, DefaultRootWindow (dpy),
+			   ct::WINDOW_X,
+			   ct::WINDOW_Y,
+			   ct::WINDOW_WIDTH,
+			   ct::WINDOW_HEIGHT,
+			   0,
+			   DefaultDepth (dpy, 0),
+			   InputOutput,
+			   DefaultVisual (dpy, DefaultScreen (dpy)),
+			   CWOverrideRedirect,
+			   &attrib);
+
+	XSelectInput (dpy, w, StructureNotifyMask);
+	return w;
     }
 
     Window MapAndWaitForParent (Display *dpy, Window w)
@@ -643,18 +647,41 @@ namespace
 	/* Match failed, add stack to MatchResultListener */
 	if (listener->IsInterested ())
 	{
-	    std::string windowStack ("Window Stack (bottom to top): \n");
-	    *listener << windowStack;
+	    std::stringstream windowStack;
+
+	    windowStack << "Window Stack (bottom to top ["
+			<< arrayNum
+			<< "]): \n";
+	    *listener << windowStack.str ();
 	    for (unsigned int i = 0; i < arrayNum; ++i)
 	    {
 		std::stringstream ss;
-		ss << " - "
+		ss << " - 0x"
 		   << std::hex
 		   << array[i]
 		   << std::dec
 		   << std::endl;
 		*listener << ss.str ();
 	    }
+
+	    std::stringstream lhsPosMsg, rhsPosMsg;
+
+	    lhsPosMsg << "Position of 0x"
+		      << std::hex
+		      << window
+		      << std::dec
+		      << " : "
+		      << lhsPos;
+
+	    rhsPosMsg << "Position of 0x"
+		      << std::hex
+		      << cmp
+		      << std::dec
+		      << " : "
+		      << rhsPos;
+
+	    *listener << lhsPosMsg.str () << "\n";
+	    *listener << rhsPosMsg.str () << "\n";
 	}
 
 	return false;
@@ -665,7 +692,7 @@ namespace
     {
 	*os << "Window is ";
 	ExplainCompare (os);
-	*os << " in relation to " << std::hex << cmp << std::dec;
+	*os << " in relation to 0x" << std::hex << cmp << std::dec;
     }
 
     class GreaterThanInStackMatcher :
@@ -729,7 +756,7 @@ namespace
 
     void LessThanInStackMatcher::ExplainCompare (std::ostream *os) const
     {
-	*os << "greater than";
+	*os << "less than";
     }
 
     inline Matcher <Window> GreaterThanInStack (const WindowArray &array,
@@ -801,8 +828,8 @@ TEST_F (StackingSync, DestroyClientJustBeforeReparent)
 							  1000)));
 
     unsigned int n;
-    WindowArray  windows (GetChildren (dpy, override, n));
+    WindowArray  windows (GetChildren (dpy, DefaultRootWindow (dpy), n));
 
-    EXPECT_THAT (p2, LessThanInStack (windows, n, parentOfDestroyed));
-    EXPECT_THAT (p3, GreaterThanInStack (windows, n, parentOfDestroyed));
+    EXPECT_THAT (p2, LessThanInStack (windows, n, override));
+    EXPECT_THAT (p3, GreaterThanInStack (windows, n, override));
 }
