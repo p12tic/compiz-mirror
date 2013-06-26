@@ -25,8 +25,13 @@
 #include <stdexcept>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <boost/shared_array.hpp>
+#include <boost/bind.hpp>
+
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
+#include <compiz_xorg_gtest_communicator.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -36,6 +41,7 @@ using ::testing::MakeMatcher;
 using ::testing::Matcher;
 
 namespace ct = compiz::testing;
+namespace ctm = compiz::testing::messages;
 
 class CompizXorgSystemStackingTest :
     public ct::AutostartCompizXorgSystemTest
@@ -428,4 +434,375 @@ TEST_F(CompizXorgSystemStackingTest, TestWindowsDontStackAboveTransientForWindow
     EXPECT_EQ (w2, (*it++));
     EXPECT_EQ (dock, (*it++));
     EXPECT_EQ (w1, (*it++));
+}
+
+class StackingSync :
+    public ct::AutostartCompizXorgSystemTestWithTestHelper
+{
+    public:
+
+	void SetUp ();
+};
+
+void
+StackingSync::SetUp ()
+{
+    ct::AutostartCompizXorgSystemTestWithTestHelper::SetUp ();
+
+    XSelectInput (Display (), DefaultRootWindow (Display ()), StructureNotifyMask |
+							      SubstructureNotifyMask);
+}
+
+namespace
+{
+    Window CreateAndWaitForCreation (Display *dpy)
+    {
+	Window w = ct::CreateNormalWindow (dpy);
+	Advance (dpy,
+		 ct::WaitForEventOfTypeOnWindow (dpy,
+						 DefaultRootWindow (dpy),
+						 CreateNotify,
+						 -1,
+						 -1));
+	return w;
+    }
+
+    Window CreateOverrideRedirectWindow (Display *dpy)
+    {
+	XSetWindowAttributes attrib;
+
+	attrib.override_redirect = true;
+
+	return XCreateWindow (dpy, DefaultRootWindow (dpy),
+			      ct::WINDOW_X,
+			      ct::WINDOW_Y,
+			      ct::WINDOW_WIDTH,
+			      ct::WINDOW_HEIGHT,
+			      0,
+			      DefaultDepth (dpy, 0),
+			      InputOutput,
+			      DefaultVisual (dpy, DefaultScreen (dpy)),
+			      CWOverrideRedirect,
+			      &attrib);
+    }
+
+    Window MapAndWaitForParent (Display *dpy, Window w)
+    {
+	XMapRaised (dpy, w);
+
+	Advance (dpy,
+		 ct::WaitForEventOfTypeOnWindow (dpy,
+						 w,
+						 ReparentNotify,
+						 -1,
+						 -1));
+
+	return ct::GetTopmostNonRootParent (dpy, w);
+    }
+
+    void DestroyOnReparent (Display          *dpy,
+			    ct::MessageAtoms &atoms,
+			    Window           w)
+    {
+	Window root = DefaultRootWindow (dpy);
+	Atom   atom =
+	    atoms.FetchForString (ctm::TEST_HELPER_DESTROY_ON_REPARENT);
+
+	std::vector <long> data (4);
+
+	ct::SendClientMessage (dpy, atom, root, w, data);
+    }
+
+    Window WaitForNextCreatedWindow (Display *dpy)
+    {
+	XEvent ev;
+	while (true)
+	{
+	    XNextEvent (dpy, &ev);
+	    if (ev.type == CreateNotify)
+		return ev.xcreatewindow.window;
+	}
+
+	return 0;
+    }
+
+    void WaitForManage (Display          *dpy,
+			ct::MessageAtoms &atoms)
+    {
+	Atom   atom =
+	    atoms.FetchForString (ctm::TEST_HELPER_WINDOW_READY);
+	XEvent ev;
+
+	ct::ReceiveMessage (dpy, atom, ev);
+    }
+
+    void RestackAbove (Display *dpy,
+		       Window  w,
+		       Window  above)
+    {
+	XWindowChanges xwc;
+
+	xwc.stack_mode = Above;
+	xwc.sibling = above;
+
+	XConfigureWindow (dpy, w, CWStackMode | CWSibling, &xwc);
+    }
+
+    void RestackAtLeastAbove (Display          *dpy,
+			      ct::MessageAtoms &atoms,
+			      Window           w,
+			      Window           above)
+    {
+	Window root = DefaultRootWindow (dpy);
+	Atom   atom =
+	    atoms.FetchForString (ctm::TEST_HELPER_RESTACK_ATLEAST_ABOVE);
+
+	std::vector <long> data (4);
+
+	data[0] = above;
+	ct::SendClientMessage (dpy, atom, root, w, data);
+    }
+
+    void FreeWindowArray (Window *array)
+    {
+	XFree (array);
+    }
+
+    typedef boost::shared_array <Window> WindowArray;
+
+    WindowArray GetChildren (Display      *dpy,
+			     Window       w,
+			     unsigned int &n)
+    {
+	Window unused;
+	Window *children;
+
+	if (!XQueryTree (dpy, w, &unused, &unused, &children, &n))
+	    throw std::logic_error ("XQueryTree failed");
+
+	return WindowArray (children, boost::bind (FreeWindowArray, _1));
+    }
+
+    class StackPositionMatcher :
+	public MatcherInterface <Window>
+    {
+	public:
+
+	    StackPositionMatcher (const WindowArray &array,
+				  Window            cmp,
+				  unsigned int      n);
+
+	protected:
+
+	    bool MatchAndExplain (Window              window,
+				  MatchResultListener *listener) const;
+	    void DescribeTo (std::ostream *os) const;
+
+	private:
+
+	    virtual bool Compare (int lhsPos,
+				  int rhsPos) const = 0;
+	    virtual void ExplainCompare (std::ostream *os) const = 0;
+
+	    WindowArray  array;
+	    unsigned int arrayNum;
+	    Window       cmp;
+
+    };
+
+    StackPositionMatcher::StackPositionMatcher (const WindowArray &array,
+						Window            cmp,
+						unsigned int      n) :
+	array (array),
+	arrayNum (n),
+	cmp (cmp)
+    {
+    }
+
+    bool
+    StackPositionMatcher::MatchAndExplain (Window window,
+					   MatchResultListener *listener) const
+    {
+	int lhsPos = -1, rhsPos = -1;
+
+	for (unsigned int i = 0; i < arrayNum; ++i)
+	{
+	    if (array[i] == window)
+		lhsPos = i;
+	    if (array[i] == cmp)
+		rhsPos = i;
+	}
+
+	if (lhsPos > -1 &&
+	    rhsPos > -1)
+	{
+	    if (Compare (lhsPos, rhsPos))
+		return true;
+	}
+
+	/* Match failed, add stack to MatchResultListener */
+	if (listener->IsInterested ())
+	{
+	    std::string windowStack ("Window Stack (bottom to top): \n");
+	    *listener << windowStack;
+	    for (unsigned int i = 0; i < arrayNum; ++i)
+	    {
+		std::stringstream ss;
+		ss << " - "
+		   << std::hex
+		   << array[i]
+		   << std::dec
+		   << std::endl;
+		*listener << ss.str ();
+	    }
+	}
+
+	return false;
+    }
+
+    void
+    StackPositionMatcher::DescribeTo (std::ostream *os) const
+    {
+	*os << "Window is ";
+	ExplainCompare (os);
+	*os << " in relation to " << std::hex << cmp << std::dec;
+    }
+
+    class GreaterThanInStackMatcher :
+	public StackPositionMatcher
+    {
+	public:
+
+	    GreaterThanInStackMatcher (const WindowArray &array,
+				       Window            cmp,
+				       unsigned int      n);
+
+	private:
+
+	    bool Compare (int lhsPos, int rhsPos) const;
+	    void ExplainCompare (std::ostream *os) const;
+    };
+
+    GreaterThanInStackMatcher::GreaterThanInStackMatcher (const WindowArray &array,
+							  Window            cmp,
+							  unsigned int      n) :
+	StackPositionMatcher (array, cmp, n)
+    {
+    }
+
+    bool GreaterThanInStackMatcher::Compare (int lhsPos, int rhsPos) const
+    {
+	return lhsPos > rhsPos;
+    }
+
+    void GreaterThanInStackMatcher::ExplainCompare (std::ostream *os) const
+    {
+	*os << "greater than";
+    }
+
+    class LessThanInStackMatcher :
+	public StackPositionMatcher
+    {
+	public:
+
+	    LessThanInStackMatcher (const WindowArray &array,
+				    Window            cmp,
+				    unsigned int      n);
+
+	private:
+
+	    bool Compare (int lhsPos, int rhsPos) const;
+	    void ExplainCompare (std::ostream *os) const;
+    };
+
+    LessThanInStackMatcher::LessThanInStackMatcher (const WindowArray &array,
+						    Window            cmp,
+						    unsigned int      n) :
+	StackPositionMatcher (array, cmp, n)
+    {
+    }
+
+    bool LessThanInStackMatcher::Compare (int lhsPos, int rhsPos) const
+    {
+	return lhsPos < rhsPos;
+    }
+
+    void LessThanInStackMatcher::ExplainCompare (std::ostream *os) const
+    {
+	*os << "greater than";
+    }
+
+    inline Matcher <Window> GreaterThanInStack (const WindowArray &array,
+						unsigned int      n,
+						Window            cmp)
+    {
+	return MakeMatcher (new GreaterThanInStackMatcher (array, cmp, n));
+    }
+
+    inline Matcher <Window> LessThanInStack (const WindowArray &array,
+					     unsigned int      n,
+					     Window            cmp)
+    {
+	return MakeMatcher (new LessThanInStackMatcher (array, cmp, n));
+    }
+}
+
+TEST_F (StackingSync, DestroyClientJustBeforeReparent)
+{
+    ::Display *dpy = Display ();
+
+    ct::MessageAtoms atoms (dpy);
+
+    /* Set up three normal windows */
+    Window w1 = CreateAndWaitForCreation (dpy);
+    Window w2 = CreateAndWaitForCreation (dpy);
+    Window w3 = CreateAndWaitForCreation (dpy);
+
+    Window p1 = MapAndWaitForParent (dpy, w1);
+    Window p2 = MapAndWaitForParent (dpy, w2);
+    Window p3 = MapAndWaitForParent (dpy, w3);
+
+    /* Create another normal window, but immediately mark
+     * it destroyed within compiz as soon as it is reparented,
+     * so that we force the reparented-but-destroyed strategy
+     * to kick in */
+    Window destroyed = CreateAndWaitForCreation (dpy);
+
+    DestroyOnReparent (dpy, atoms, destroyed);
+    XMapRaised (dpy, destroyed);
+
+    /* Wait for the destroyed window's parent to be created
+     * in the toplevel stack as a result of the reparent operation */
+    Window parentOfDestroyed = WaitForNextCreatedWindow (dpy);
+    WaitForManage (dpy, atoms);
+
+    /* Create an override redirect window and wait for it to be
+     * managed */
+    Window override = CreateOverrideRedirectWindow (dpy);
+    WaitForManage (dpy, atoms);
+
+    /* Place the destroyed window's parent above
+     * p1 in the stack directly */
+    RestackAbove (dpy, parentOfDestroyed, p1);
+
+    /* Ask compiz to place the override redirect window
+     * at least above the destroyed window's parent
+     * in the stack. This requires compiz to locate the
+     * destroyed window's parent in the stack */
+    RestackAtLeastAbove (dpy, atoms, override, parentOfDestroyed);
+
+    /* Wait for the override window to be configured */
+    EXPECT_TRUE (Advance (dpy,
+			  ct::WaitForEventOfTypeOnWindow (dpy,
+							  override,
+							  ConfigureNotify,
+							  -1,
+							  -1,
+							  1000)));
+
+    unsigned int n;
+    WindowArray  windows (GetChildren (dpy, override, n));
+
+    EXPECT_THAT (p2, LessThanInStack (windows, n, parentOfDestroyed));
+    EXPECT_THAT (p3, GreaterThanInStack (windows, n, parentOfDestroyed));
 }

@@ -59,21 +59,7 @@ bool Advance (Display *d, bool r)
 Window GetTopParent (Display *display,
 		     Window w)
 {
-    Window rootReturn = 0;
-    Window parentReturn = w;
-    Window lastParent = 0;
-
-    do
-    {
-	lastParent = parentReturn;
-
-	parentReturn = ct::GetImmediateParent (display,
-					       lastParent,
-					       rootReturn);
-	
-    } while (parentReturn != rootReturn);
-
-    return lastParent;
+    return ct::GetTopmostNonRootParent (display, w);
 }
 
 bool QueryGeometry (Display *dpy,

@@ -105,6 +105,27 @@ ct::GetImmediateParent (Display *display,
     return parentReturn;
 }
 
+Window
+ct::GetTopmostNonRootParent (Display *display,
+			     Window  w)
+{
+    Window rootReturn = 0;
+    Window parentReturn = w;
+    Window lastParent = 0;
+
+    do
+    {
+	lastParent = parentReturn;
+
+	parentReturn = GetImmediateParent (display,
+					   lastParent,
+					   rootReturn);
+
+    } while (parentReturn != rootReturn);
+
+    return lastParent;
+}
+
 bool
 ct::AdvanceToNextEventOnSuccess (Display *dpy,
 				 bool waitResult)
