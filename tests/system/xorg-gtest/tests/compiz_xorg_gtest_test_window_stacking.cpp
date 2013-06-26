@@ -819,13 +819,12 @@ TEST_F (StackingSync, DestroyClientJustBeforeReparent)
     RestackAtLeastAbove (dpy, atoms, override, parentOfDestroyed);
 
     /* Wait for the override window to be configured */
-    EXPECT_TRUE (Advance (dpy,
-			  ct::WaitForEventOfTypeOnWindow (dpy,
-							  override,
-							  ConfigureNotify,
-							  -1,
-							  -1,
-							  1000)));
+    Advance (dpy,
+	     ct::WaitForEventOfTypeOnWindow (dpy,
+					     override,
+					     ConfigureNotify,
+					     -1,
+					     -1));
 
     unsigned int n;
     WindowArray  windows (GetChildren (dpy, DefaultRootWindow (dpy), n));
