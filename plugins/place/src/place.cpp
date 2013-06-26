@@ -362,8 +362,7 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
 
     CompWindowExtents edgePositions = cp::getWindowEdgePositions (pos,
 								  geom,
-								  window->border (),
-								  window->sizeHints ().win_gravity);
+								  window->border ());
 
     int      output   = screen->outputDeviceForGeometry (geom);
     CompRect workArea = screen->getWorkareaForOutput (output);
@@ -386,8 +385,7 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
     /* bring left/right/top/bottom to actual window coordinates */
     cp::subtractBordersFromEdgePositions (edgePositions,
 					  window->border (),
-					  geom.border (),
-					  window->sizeHints ().win_gravity);
+					  geom.border ());
 
     /* always validate position if the application changed only its size,
      * as it might become partially offscreen because of that */
@@ -1143,13 +1141,10 @@ void
 PlaceWindow::constrainToWorkarea (const CompRect &workArea,
 				  CompPoint      &pos)
 {
-    bool staticGravity = window->sizeHints ().win_gravity & StaticGravity;
-
     pos = cp::constrainPositionToWorkArea (pos,
                                            window->serverGeometry (),
                                            window->border (),
-                                           workArea,
-                                           staticGravity);
+                                           workArea);
 
 }
 
