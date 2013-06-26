@@ -6610,10 +6610,7 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 	recalcActions ();
 
-	bool sizeUpdated = false;
-
-	sizeUpdated |= priv->updateSize ();
-	sizeUpdated |= priv->updateFrameWindow ();
+	bool sizeUpdated = priv->updateFrameWindow ();
 
 	/* Always send a moveNotify
 	 * whenever the frame extents update

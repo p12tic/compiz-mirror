@@ -385,6 +385,8 @@ class DecorWindow :
 	CompPoint               lastShift;
 	CompSize                lastSizeDelta;
 
+	unsigned int              lastMaximizedStateDecorated;
+
     private:
 
 	bool            bareDecorationOnly ();
