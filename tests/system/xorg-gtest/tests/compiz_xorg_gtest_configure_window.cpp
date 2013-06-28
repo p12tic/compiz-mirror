@@ -208,7 +208,7 @@ class CompizXorgSystemConfigureWindowTest :
     protected:
 
 	ReparentedWindow CreateWindow (::Display *);
-	int GetEventMask ();
+	int GetEventMask () const;
 
     private:
 
@@ -216,7 +216,7 @@ class CompizXorgSystemConfigureWindowTest :
 };
 
 int
-CompizXorgSystemConfigureWindowTest::GetEventMask ()
+CompizXorgSystemConfigureWindowTest::GetEventMask () const
 {
     return ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () |
 	    SubstructureNotifyMask;

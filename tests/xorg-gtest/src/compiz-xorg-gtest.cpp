@@ -905,7 +905,7 @@ ct::AutostartCompizXorgSystemTest::GetStartupFlags ()
 }
 
 int
-ct::AutostartCompizXorgSystemTest::GetEventMask ()
+ct::AutostartCompizXorgSystemTest::GetEventMask () const
 {
     return 0;
 }
@@ -983,7 +983,7 @@ ct::AutostartCompizXorgSystemTestWithTestHelper::AutostartCompizXorgSystemTestWi
 }
 
 int
-ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask ()
+ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () const
 {
     return AutostartCompizXorgSystemTest::GetEventMask () |
 	   StructureNotifyMask;

@@ -272,7 +272,7 @@ namespace compiz
 		AutostartCompizXorgSystemTest ();
 
 		virtual CompizProcess::StartupFlags GetStartupFlags ();
-		virtual int GetEventMask ();
+		virtual int GetEventMask () const;
 		virtual CompizProcess::PluginList GetPluginList ();
 		virtual void SetUp ();
 
@@ -298,7 +298,7 @@ namespace compiz
 		std::vector <long> WaitForWindowCreation (Window w);
 		bool IsOverrideRedirect (std::vector <long> &data);
 
-		virtual int  GetEventMask ();
+		virtual int  GetEventMask () const;
 
 	    private:
 

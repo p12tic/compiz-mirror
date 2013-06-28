@@ -85,7 +85,7 @@ class BaseDecorAcceptance :
 
     private:
 
-	int GetEventMask ();
+	int GetEventMask () const;
 };
 
 BaseDecorAcceptance::BaseDecorAcceptance () :
@@ -101,7 +101,7 @@ BaseDecorAcceptance::BaseDecorAcceptance () :
 }
 
 int
-BaseDecorAcceptance::GetEventMask ()
+BaseDecorAcceptance::GetEventMask () const
 {
     return ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () |
 	       SubstructureNotifyMask;
