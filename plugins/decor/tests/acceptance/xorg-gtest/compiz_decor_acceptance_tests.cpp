@@ -2122,7 +2122,6 @@ void WindowBorderPositionAttributes (Display *dpy,
 }
 }
 
-/* DISABLED - Upon maximization, x offset is 1, width offset is 10 */
 TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeSameXWidth)
 {
     XWindowAttributes rootAttrib, attrib;
@@ -2161,7 +2160,6 @@ TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeSameXWidth)
 			      _));
 }
 
-/* DISABLED - Upon maximization, y offset is 1, height offset is 10 */
 TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeSameYHeight)
 {
     XWindowAttributes rootAttrib, attrib;
@@ -2224,11 +2222,6 @@ TEST_F (PixmapDecoratedWindowAcceptance, UndecoratedWindowExpandToOrigSize)
 			      _));
 }
 
-/* DISABLED - Ensure that a window with StaticGravity expands to its
- * original size when it is undecorated
- *
- * X and Y positions do not revert back to their original state.
- */
 TEST_F (PixmapDecoratedWindowAcceptance, UndecorateStaticGravityWindow)
 {
     XSizeHints hints;
