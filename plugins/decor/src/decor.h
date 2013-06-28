@@ -382,10 +382,7 @@ class DecorWindow :
 
 	X11DecorPixmapRequestor   mRequestor;
 
-	CompPoint               lastShift;
-	CompSize                lastSizeDelta;
-
-	unsigned int              lastMaximizedStateDecorated;
+	unsigned int            lastMaximizedStateDecorated;
 
     private:
 
@@ -393,8 +390,7 @@ class DecorWindow :
 	Decoration::Ptr findRealDecoration ();
 	Decoration::Ptr findBareDecoration ();
 	void            moveDecoratedWindowBy (const CompPoint &movement,
-					       const CompSize &sizeDelta,
-					       bool instant);
+					       const CompSize &sizeDelta);
 };
 
 class DecorPluginVTable :

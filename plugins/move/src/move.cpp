@@ -395,17 +395,22 @@ moveHandleMotionEvent (CompScreen *s,
 			{
 			    int width = w->serverGeometry ().width ();
 
-			    w->saveMask () |= CWX | CWY;
-
 			    if (w->saveMask () & CWWidth)
 				width = w->saveWc ().width;
 
-			    w->saveWc ().x = xRoot - (width >> 1);
-			    w->saveWc ().y = yRoot + (w->border ().top >> 1);
-
 			    ms->x = ms->y = 0;
 
+			    /* Get a lock on configure requests so that we can make
+			     * any movement here atomic */
+			    compiz::window::configure_buffers::ReleasablePtr lock (w->obtainLockOnConfigureRequests ());
+
 			    w->maximize (0);
+
+			    XWindowChanges xwc;
+			    xwc.x = xRoot - (width / 2);
+			    xwc.y = yRoot + w->border ().top / 2;
+
+			    w->configureXWindow (CWX | CWY, &xwc);
 
 			    ms->snapOffY = ms->snapBackY;
 
@@ -440,12 +445,17 @@ moveHandleMotionEvent (CompScreen *s,
 			    if (w->saveMask () & CWWidth)
 				width = w->saveWc ().width;
 
-			    w->saveWc ().x = xRoot - (width >> 1);
-			    w->saveWc ().y = yRoot + (w->border ().top >> 1);
-
-			    ms->x = ms->y = 0;
+			    /* Get a lock on configure requests so that we can make
+			     * any movement here atomic */
+			    compiz::window::configure_buffers::ReleasablePtr lock (w->obtainLockOnConfigureRequests ());
 
 			    w->maximize (0);
+
+			    XWindowChanges xwc;
+			    xwc.x = xRoot - (width / 2);
+			    xwc.y = yRoot + w->border ().top / 2;
+
+			    w->configureXWindow (CWX | CWY, &xwc);
 
 			    ms->snapOffX = ms->snapBackX;
 

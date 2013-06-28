@@ -1147,32 +1147,6 @@ DecorWindow::checkSize (const Decoration::Ptr &decoration)
 }
 
 /*
- * decorOffsetMove
- *
- * Moves the window by the offset specified in the xwc.
- * Also sends a notification that the window
- * was decorated
- *
- */
-static bool
-decorOffsetMove (CompWindow *w, XWindowChanges xwc, unsigned int mask)
-{
-    CompOption::Vector o (1);
-
-    o.at (0).setName ("window", CompOption::TypeInt);
-    o.at (0).value ().set ((int) w->id ());
-
-    xwc.x += w->serverGeometry ().x ();
-    xwc.y += w->serverGeometry ().y ();
-    xwc.width += w->serverGeometry ().width ();
-    xwc.height += w->serverGeometry ().height ();
-
-    w->configureXWindow (mask, &xwc);
-    screen->handleCompizEvent ("decor", "window_decorated", o);
-    return false;
-}
-
-/*
  * DecorWindow::matchType
  *
  * Converts libdecoration window types packed
@@ -1508,98 +1482,6 @@ DecorWindow::findBareDecoration ()
     return decoration;
 }
 
-void
-DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
-				    const CompSize  &sizeDelta,
-				    bool            instant)
-{
-    /* movement and sizeDelta are the shift of the client window
-     * as a result of decoration from a theoretical neutral position,
-     * lastShift and lastSizeDelta are the last recorded shift 
-     * and size-change. The true difference between two decorations
-     * is movement - lastShift, sizeDelta - sizeDelta */
-
-    int dx = movement.x () - lastShift.x ();
-    int dy = movement.y () - lastShift.y ();
-    int dwidth = sizeDelta.width () - lastSizeDelta.width ();
-    int dheight = sizeDelta.height () - lastSizeDelta.height ();
-
-    /* We don't apply these rules to override-redirect windows
-     * and we need to check that both the position and of the window
-     * would change as a result of decoration in order to move it
-     * (this is usually the case because as a window is decorated
-     *  it will necessarily get bigger or smaller in order to fit
-     *  inside its decoration) */
-    if (!window->overrideRedirect () &&
-	((dx || dy) && (dwidth || dheight)))
-    {
-	XWindowChanges xwc;
-	unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
-
-	memset (&xwc, 0, sizeof (XWindowChanges));
-
-	/* Grab the geometry last sent to server at configureXWindow
-	 * time and not here since serverGeometry may be updated by
-	 * the time that we do call configureXWindow */
-	xwc.x = dx;
-	xwc.y = dy;
-	xwc.width = dwidth;
-	xwc.height = dheight;
-
-	/* Except if it's fullscreen, maximized or such */
-	if (window->state () & CompWindowStateFullscreenMask)
-	    mask &= ~(CWX | CWY | CWWidth | CWHeight);
-
-	if (window->state () & CompWindowStateMaximizedHorzMask)
-	    mask &= ~(CWX | CWWidth);
-
-	if (window->state () & CompWindowStateMaximizedVertMask)
-	    mask &= ~(CWY | CWHeight);
-
-	/* We don't want to make changes to the saved co-ordinates
-	 * if we're unmaximizing */
-	if ((window->saveMask () & ~mask) & CWX)
-	    window->saveWc ().x += xwc.x;
-
-	if ((window->saveMask () & ~mask) & CWY)
-	    window->saveWc ().y += xwc.y;
-
-	if ((window->saveMask () & ~mask) & CWWidth)
-	    window->saveWc ().width += xwc.width;
-
-	if ((window->saveMask () & ~mask) & CWHeight)
-	    window->saveWc ().height += xwc.height;
-
-	/* If the window has not been placed, do not move it this time
-	 * but record what we would have moved it by */
-	if (!window->placed ())
-	    mask = 0;
-
-	if (mask)
-	{
-	    /* instant is only true in the case of
-	     * the destructor calling the update function so since it
-	     * is not safe to put the function in a timer (since
-	     * it will get unref'd on the vtable destruction) we
-	     * need to do it immediately
-	     *
-	     * FIXME: CompTimer should really be PIMPL and allow
-	     * refcounting in case we need to keep it alive
-	     */
-	    decorOffsetMove (window, xwc, mask);
-	}
-
-	/* Even if the window has not yet been placed, we still
-	 * need to store what we would have moved it by in order
-	 * to put it in the right position. The place plugin will
-	 * set a position that makes the most sense, but we need
-	 * to know how much to move back by should the window
-	 * become undecorated again */
-	lastShift = movement;
-	lastSizeDelta = sizeDelta;
-    }
-}
-
 namespace
 {
 bool
@@ -1614,7 +1496,23 @@ shouldDecorateWindow (CompWindow *w,
 
     return realDecoration || forceDecoration;
 }
+
+/*
+ * notifyDecoration
+ *
+ * Notify other plugins that the window is now fully decorated
+ */
+void notifyDecoration (CompWindow *window)
+{
+    CompOption::Vector o (1);
+
+    o.at (0).setName ("window", CompOption::TypeInt);
+    o.at (0).value ().set ((int) window->id ());
+
+    screen->handleCompizEvent ("decor", "window_decorated", o);
 }
+}
+
 /*
  * DecorWindow::update
  * This is the master function for managing decorations on windows
@@ -1734,13 +1632,6 @@ DecorWindow::update (bool allowDecoration)
 		return false;
 	    }
 
-	    movement = cwe::shift (window->border (), window->sizeHints ().win_gravity);
-
-	    sizeDelta = CompSize (-(window->border ().left +
-				    window->border ().right),
-				  -(window->border ().top +
-				    window->border ().bottom));
-
 	    window->updateWindowOutputExtents ();
 
 	    updateReg = true;
@@ -1780,9 +1671,7 @@ DecorWindow::update (bool allowDecoration)
 	updateGroupShadows ();
     }
 
-    moveDecoratedWindowBy (movement,
-			   sizeDelta,
-			   !allowDecoration);
+    notifyDecoration (window);
 
     return true;
 }

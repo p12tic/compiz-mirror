@@ -27,7 +27,8 @@ namespace
 {
     const std::string compizLDLibraryPath ("@COMPIZ_LD_LIBRARY_PATH@");
     const std::string compizBinaryPath ("@COMPIZ_BINARY@");
-    const std::string compizOverridePluginPath ("@COMPIZ_OVERRIDE_PLUGIN_PATH@");
+    const std::string compizTestOnlyPluginPath ("@COMPIZ_TEST_ONLY_PLUGIN_PATH@");
+    const std::string compizRealPluginPath ("@COMPIZ_REAL_PLUGIN_PATH@");
 }
 
 #endif

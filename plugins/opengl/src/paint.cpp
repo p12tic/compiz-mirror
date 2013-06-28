@@ -426,7 +426,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
         gw = GLWindow::get (w);
 
         /* Release any queued ConfigureWindow requests now */
-        gw->priv->configureLock->release ();
+	gw->priv->configureLock->release ();
 
 	if (unredirected.find (w) != unredirected.end ())
 	    continue;
