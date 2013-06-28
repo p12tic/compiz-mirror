@@ -1409,17 +1409,10 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     sa.xRotate = sa.xRotate / size * hsize;
 
-    bool   filterChanged = false;
-    GLenum oldFilter;
+    GLenum oldFilter = gScreen->textureFilter ();
 
     if (mGrabIndex && optionGetMipmap ())
-    {
-	/* check the actual filtering */
-	oldFilter = gScreen->textureFilter ();
-
 	gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-	filterChanged = true;
-    }
 
     PaintOrder paintOrder;
 
@@ -1512,9 +1505,7 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
     glCullFace (cullNorm);
 
-    /* we just need to change the global filter state if we manipulated it before */
-    if (filterChanged)
-	gScreen->setTextureFilter (oldFilter);
+    gScreen->setTextureFilter (oldFilter);
 }
 
 bool 
@@ -1642,38 +1633,38 @@ PrivateCubeScreen::setOptionForPlugin (const char        *plugin,
 }
 
 PrivateCubeScreen::PrivateCubeScreen (CompScreen *s) :
-    cScreen             (CompositeScreen::get (s)),
-    gScreen             (GLScreen::get (s)),
-    cubeScreen          (CubeScreen::get (s)),
-    mInvert             (1),
-    mXRotations         (0),
-    mPaintOrder         (BTF),
-    mRotationState      (CubeScreen::RotationNone),
-    mPaintAllViewports  (false),
-    mDistance           (0.0f),
-    mGrabIndex          (0),
-    mSrcOutput          (0),
-    mUnfolded           (false),
-    mUnfold             (0.0f),
-    mUnfoldVelocity     (0.0f),
-    mVertices           (NULL),
-    mNVertices          (0),
-    mSkyListId          (0),
-    mPw                 (0),
-    mPh                 (0),
-    mSkySize            (0, 0),
-    mTexture            (0),
-    mSky                (0),
-    mImgCurFile         (0),
-    mFullscreenOutput   (true),
-    mOutputXScale       (1.0f),
-    mOutputYScale       (1.0f),
-    mOutputXOffset      (0.0f),
-    mOutputYOffset      (0.0f),
-    mDesktopOpacity     (OPAQUE),
-    mToOpacity          (OPAQUE),
-    mLastOpacityIndex   (CubeOptions::InactiveOpacity),
-    mRecalcOutput       (false),
+    cScreen (CompositeScreen::get (s)),
+    gScreen (GLScreen::get (s)),
+    cubeScreen (CubeScreen::get (s)),
+    mInvert (1),
+    mXRotations (0),
+    mPaintOrder (BTF),
+    mRotationState (CubeScreen::RotationNone),
+    mPaintAllViewports (false),
+    mDistance (0.0f),
+    mGrabIndex (0),
+    mSrcOutput (0),
+    mUnfolded (false),
+    mUnfold (0.0f),
+    mUnfoldVelocity (0.0f),
+    mVertices (NULL),
+    mNVertices (0),
+    mSkyListId (0),
+    mPw (0),
+    mPh (0),
+    mSkySize (0, 0),
+    mTexture (0),
+    mSky (0),
+    mImgCurFile (0),
+    mFullscreenOutput (true),
+    mOutputXScale (1.0f),
+    mOutputYScale (1.0f),
+    mOutputXOffset (0.0f),
+    mOutputYOffset (0.0f),
+    mDesktopOpacity (OPAQUE),
+    mToOpacity (OPAQUE),
+    mLastOpacityIndex (CubeOptions::InactiveOpacity),
+    mRecalcOutput (false),
     mReversedWindowList (0)
 {
     for (int i = 0; i < 8; ++i)
@@ -1708,9 +1699,9 @@ template class PluginClassHandler<PrivateCubeWindow, CompWindow, COMPIZ_CUBE_ABI
 
 PrivateCubeWindow::PrivateCubeWindow (CompWindow *w) :
     PluginClassHandler<PrivateCubeWindow, CompWindow, COMPIZ_CUBE_ABI> (w),
-    window     (w),
-    cWindow    (CompositeWindow::get (w)),
-    gWindow    (GLWindow::get (w)),
+    window (w),
+    cWindow (CompositeWindow::get (w)),
+    gWindow (GLWindow::get (w)),
     cubeScreen (CubeScreen::get (screen))
 {
     GLWindowInterface::setHandler (gWindow, true);
