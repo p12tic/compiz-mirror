@@ -891,16 +891,12 @@ ThumbScreen::thumbPaintThumb (Thumbnail      *t,
 	sAttrib.xTranslate = wx - w->x () + w->border ().left * sAttrib.xScale;
 	sAttrib.yTranslate = wy - w->y () + w->border ().top  * sAttrib.yScale;
 
-	GLenum filter        = gScreen->textureFilter ();
-	bool   filterChanged = false;
+	GLenum filter = gScreen->textureFilter ();
 
 	/* we just need to change the texture filter, if
 	 * thumbnail mipmapping is enabled */
 	if (optionGetMipmap ())
-	{
 	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-	    filterChanged = true;
-	}
 
 	wTransform.translate (w->x (), w->y (), 0.0f);
 	wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
@@ -914,10 +910,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail      *t,
 	gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 	gWindow->glDraw (wTransform, sAttrib, infiniteRegion, mask);
 
-	/* only set back the global filter
-	 * if we changed it before */
-	if (filterChanged)
-	    gScreen->setTextureFilter (filter);
+	gScreen->setTextureFilter (filter);
     }
 
     gWindow->glAddGeometrySetCurrentIndex (addWindowGeometryIndex);
