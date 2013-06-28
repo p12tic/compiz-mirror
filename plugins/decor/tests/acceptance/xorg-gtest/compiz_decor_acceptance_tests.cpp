@@ -2407,7 +2407,7 @@ TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstMaximized)
     const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
     const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
 
-    /* As the window is shrunk to accomadate the border size, we must subtract
+    /* As the window is shrunk to accomodate the border size, we must subtract
      * the border from the original window size */
     CompSize shrink ((newExtents.left + newExtents.right),
 		     (newExtents.top + newExtents.bottom));
