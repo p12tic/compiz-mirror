@@ -54,6 +54,9 @@ class CorePluginVTable : public CompPlugin::VTable
 
 	bool init ();
 
+	void markReadyToInstantiate ();
+	void markNoFurtherInstantiation ();
+
 	CompOption::Vector & getOptions ();
 
 	bool setOption (const CompString  &name,
@@ -76,6 +79,16 @@ bool
 CorePluginVTable::init ()
 {
     return true;
+}
+
+void
+CorePluginVTable::markReadyToInstantiate ()
+{
+}
+
+void
+CorePluginVTable::markNoFurtherInstantiation ()
+{
 }
 
 CompOption::Vector &
@@ -228,6 +241,8 @@ CompManager::initPlugin (CompPlugin *p)
 	return false;
     }
 
+    p->vTable->markReadyToInstantiate ();
+
     if (screen && screen->displayInitialised())
     {
 	if (!p->vTable->initScreen (screen))
@@ -252,7 +267,6 @@ CompManager::initPlugin (CompPlugin *p)
 void
 CompManager::finiPlugin (CompPlugin *p)
 {
-
     if (screen)
     {
 	screen->finiPluginForScreen (p);
@@ -260,6 +274,7 @@ CompManager::finiPlugin (CompPlugin *p)
     }
 
     p->vTable->fini ();
+    p->vTable->markNoFurtherInstantiation ();
 }
 
 bool

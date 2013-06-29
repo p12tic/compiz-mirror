@@ -40,20 +40,30 @@ class ExpoScreen :
     public ExpoOptions
 {
     public:
+
 	ExpoScreen (CompScreen *);
 	~ExpoScreen ();
 
 	void handleEvent (XEvent *);
 
 	void preparePaint (int);
-	void paint (CompOutput::ptrList&, unsigned int);
+
+	void paint (CompOutput::ptrList &,
+		    unsigned int          );
+
 	void donePaint ();
 
-	bool glPaintOutput (const GLScreenPaintAttrib&, const GLMatrix&,
-			    const CompRegion&, CompOutput *, unsigned int);
-	void glPaintTransformedOutput (const GLScreenPaintAttrib&,
-				       const GLMatrix&, const CompRegion&,
-				       CompOutput *, unsigned int);
+	bool glPaintOutput (const GLScreenPaintAttrib &,
+			    const GLMatrix            &,
+			    const CompRegion          &,
+			    CompOutput                *,
+			    unsigned int                );
+
+	void glPaintTransformedOutput (const GLScreenPaintAttrib &,
+				       const GLMatrix            &,
+				       const CompRegion          &,
+				       CompOutput                *,
+				       unsigned int                );
 
 	bool dndInit (CompAction *, CompAction::State, CompOption::Vector&);
 	bool dndFini (CompAction *, CompAction::State, CompOption::Vector&);
@@ -63,71 +73,81 @@ class ExpoScreen :
 	bool nextVp (CompAction *, CompAction::State, CompOption::Vector&);
 	bool prevVp (CompAction *, CompAction::State, CompOption::Vector&);
 
-	typedef enum {
+	typedef enum
+	{
 	    DnDNone,
 	    DnDDuring,
 	    DnDStart
 	} DnDState;
 
-	typedef enum {
+	typedef enum
+	{
 	    VPUpdateNone,
 	    VPUpdateMouseOver,
 	    VPUpdatePrevious
 	} VPUpdateMode;
 
-	CompositeScreen *cScreen;
-	GLScreen        *gScreen;
+	CompositeScreen             *cScreen;
+	GLScreen                    *gScreen;
 
-	float expoCam;
-	bool  expoActive;
-	bool  expoMode;
+	float                       expoCam;
+	bool                        expoActive;
+	bool                        expoMode;
 
-	DnDState   dndState;
-	CompWindow *dndWindow;
+	DnDState                    dndState;
+	CompWindow                  *dndWindow;
 
-	CompPoint prevCursor;
-	CompPoint newCursor;
-	CompPoint prevClickPoint;
+	CompPoint                   prevCursor;
+	CompPoint                   newCursor;
+	CompPoint                   prevClickPoint;
 
-	CompPoint origVp;
-	CompPoint selectedVp;
-	CompPoint lastSelectedVp;
-	CompPoint paintingVp;
+	CompPoint                   origVp;
+	CompPoint                   selectedVp;
+	CompPoint                   lastSelectedVp;
+	CompPoint                   paintingVp;
 
-	std::vector<float> vpActivity;
-	float              vpBrightness;
-	float              vpSaturation;
+	std::vector<float>          vpActivity;
+	float                       vpBrightness;
+	float                       vpSaturation;
 
-	VPUpdateMode vpUpdateMode;
+	VPUpdateMode                vpUpdateMode;
 
-	bool         anyClick;
-	unsigned int clickTime;
-	bool         doubleClick;
+	bool                        anyClick;
+	unsigned int                clickTime;
+	bool                        doubleClick;
 
-	CompRegion tmpRegion;
+	CompRegion                  tmpRegion;
 
-	float curveAngle;
-	float curveDistance;
-	float curveRadius;
+	float                       curveAngle;
+	float                       curveDistance;
+	float                       curveRadius;
 
-	std::vector<GLfloat> vpNormals;
+	std::vector<GLfloat>        vpNormals;
 
-	CompScreen::GrabHandle grabIndex;
+	CompScreen::GrabHandle      grabIndex;
 
-	GLTexture::List outline_texture;
-	CompSize        outline_texture_size;
+	GLTexture::List             outline_texture;
+	CompSize                    outline_texture_size;
 
 	const GlowTextureProperties *mGlowTextureProperties;
 
     private:
+
 	void moveFocusViewport (int, int);
 	void finishWindowMovement ();
 	void updateWraps (bool);
 
-	void invertTransformedVertex (const GLScreenPaintAttrib&,
-				      const GLMatrix&, CompOutput *, int[2]);
-	void paintWall (const GLScreenPaintAttrib&, const GLMatrix&,
-			const CompRegion&, CompOutput *, unsigned int, bool);
+	void invertTransformedVertex (const GLScreenPaintAttrib &,
+				      const GLMatrix            &,
+				      CompOutput                *,
+				      int[2]                      );
+
+	void paintWall (const GLScreenPaintAttrib &,
+			const GLMatrix            &,
+			const CompRegion          &,
+			CompOutput                *,
+			unsigned int               ,
+			bool                        );
 
 	KeyCode leftKey;
 	KeyCode rightKey;
@@ -143,25 +163,39 @@ class ExpoWindow :
     public PluginClassHandler<ExpoWindow, CompWindow>
 {
     public:
+
 	ExpoWindow (CompWindow *);
 	~ExpoWindow ();
 
-	bool damageRect (bool, const CompRect&);
+	bool damageRect (bool           ,
+			 const CompRect  &);
 
-	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
-		     const CompRegion&, unsigned int);
-	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
-		      const CompRegion&, unsigned int);
-	void glAddGeometry (const GLTexture::MatrixList&,
-			    const CompRegion&, const CompRegion&,
-			    unsigned int, unsigned int);
-	void glDrawTexture (GLTexture*, const GLMatrix&,
-	                    const GLWindowPaintAttrib&, unsigned int);
+	bool glDraw (const GLMatrix            &,
+		     const GLWindowPaintAttrib &,
+		     const CompRegion          &,
+		     unsigned int                );
+
+	bool glPaint (const GLWindowPaintAttrib &,
+		      const GLMatrix            &,
+		      const CompRegion          &,
+		      unsigned int                );
+
+	void glAddGeometry (const GLTexture::MatrixList &,
+			    const CompRegion            &,
+			    const CompRegion            &,
+			    unsigned int                 ,
+			    unsigned int                  );
+
+	void glDrawTexture (GLTexture                 *,
+			    const GLMatrix            &,
+			    const GLWindowPaintAttrib &,
+			    unsigned int                );
+
 	void
 	paintGlow (const GLMatrix            &transform,
-	           const GLWindowPaintAttrib &attrib,
-		   const CompRegion	     &paintRegion,
-		   unsigned int		     mask);
+		   const GLWindowPaintAttrib &attrib,
+		   const CompRegion          &paintRegion,
+		   unsigned int              mask);
 
 	void
 	computeGlowQuads (GLTexture::Matrix *matrix);
@@ -172,14 +206,15 @@ class ExpoWindow :
 	ExpoScreen      *eScreen;
 
     private:
-	GlowQuad *mGlowQuads;
-	float expoOpacity;
+
+	GlowQuad        *mGlowQuads;
+	float           expoOpacity;
 };
 
 class ExpoPluginVTable :
     public CompPlugin::VTableForScreenAndWindow<ExpoScreen, ExpoWindow>
 {
     public:
+
 	bool init ();
 };
-

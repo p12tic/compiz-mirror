@@ -27,14 +27,8 @@
 #include "expo.h"
 #include "group_glow.h"
 
-#define WIN_REAL_X(w) (w->x () - w->border ().left)
-#define WIN_REAL_Y(w) (w->y () - w->border ().top)
-#define WIN_REAL_WIDTH(w) (w->width () + 2 * w->geometry ().border () + \
-			   w->border ().left + w->border ().right)
-#define WIN_REAL_HEIGHT(w) (w->height () + 2 * w->geometry ().border () + \
-			    w->border ().top + w->border ().bottom)
-
-const GlowTextureProperties glowTextureProperties = {
+const GlowTextureProperties glowTextureProperties =
+{
     /* GlowTextureRectangular */
     glowTexRect, 32, 21
 };
@@ -43,22 +37,21 @@ const GlowTextureProperties glowTextureProperties = {
  * GroupWindow::paintGlow
  *
  * Takes our glow texture, stretches the appropriate positions in the glow texture,
- * adds those geometries (so plugins like wobby and deform this texture correctly)
+ * adds those geometries (so plugins like wobby deform this texture correctly)
  * and then draws the glow texture with this geometry (plugins like wobbly and friends
  * will automatically deform the texture based on our set geometry)
  */
 
 void
 ExpoWindow::paintGlow (const GLMatrix            &transform,
-                       const GLWindowPaintAttrib &attrib,
-                       const CompRegion          &paintRegion,
-                       unsigned int               mask)
+		       const GLWindowPaintAttrib &attrib,
+		       const CompRegion          &paintRegion,
+		       unsigned int              mask)
 {
     CompRegion      reg;
-    int             i;
     GLushort        colorData[4];
     const GLushort *selColorData = ExpoScreen::get (screen)->optionGetSelectedColor ();
-    float           alpha = (float) selColorData[3] / 65535.0f;
+    float           alpha        = static_cast <float> (selColorData[3] / 65535.0f);
 
     /* Premultiply color */
     colorData[0] = selColorData[0] * alpha;
@@ -71,7 +64,7 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
     /* There are 8 glow parts of the glow texture which we wish to paint
      * separately with different transformations
      */
-    for (i = 0; i < NUM_GLOWQUADS; i++)
+    for (int i = 0; i < NUM_GLOWQUADS; ++i)
     {
 	/* Using precalculated quads here */
 	reg = CompRegion (mGlowQuads[i].mBox);
@@ -87,8 +80,9 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
 
 	    matl.push_back (mGlowQuads[i].mMatrix);
 	    /* Add color data for all 6 vertices of the quad */
-	    for (int n = 0; n < 6; n++)
+	    for (int n = 0; n < 6; ++n)
 		gWindow->vertexBuffer ()->addColors (1, colorData);
+
 	    gWindow->glAddGeometry (matl, reg, paintRegion);
 	}
     }
@@ -116,7 +110,7 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
 /*
  * ExpoWindow::computeGlowQuads
  *
- * This function computures the matrix transformation required for each
+ * This function computes the matrix transformation required for each
  * part of the glow texture which we wish to stretch to some rectangular
  * dimensions
  *
@@ -153,12 +147,6 @@ ExpoWindow::paintGlow (const GLMatrix            &transform,
 void
 ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 {
-    CompRect	      *box;
-    int		      x1, x2, y1, y2;
-    GLTexture::Matrix *quadMatrix;
-    int               glowSize, glowOffset;
-    CompWindow	      *w = window;
-
     /* Passing NULL to this function frees the glow quads
      * (so the window is not painted with glow) */
 
@@ -166,6 +154,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     {
 	if (!mGlowQuads)
 	    mGlowQuads = new GlowQuad[NUM_GLOWQUADS];
+
 	if (!mGlowQuads)
 	    return;
     }
@@ -176,23 +165,49 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 	    delete[] mGlowQuads;
 	    mGlowQuads = NULL;
 	}
+
 	return;
     }
 
-    glowSize = 48;
-    glowOffset = (glowSize * ExpoScreen::get (screen)->mGlowTextureProperties->glowOffset /
-		  ExpoScreen::get (screen)->mGlowTextureProperties->textureSize) + 1;
+    /* TODO: Make glowSize configurable via CCSM */
+    int glowSize   = 48;
+    int glowOffset = (glowSize * ExpoScreen::get (screen)->mGlowTextureProperties->glowOffset /
+		      ExpoScreen::get (screen)->mGlowTextureProperties->textureSize) + 1;
 
     /* Top left corner */
-    box = &mGlowQuads[GLOWQUAD_TOPLEFT].mBox;
+    CompRect *box                        = &mGlowQuads[GLOWQUAD_TOPLEFT].mBox;
     mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix;
+    GLTexture::Matrix *quadMatrix        = &mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix;
+
+    /* Precalculate some values we need multiple times */
+
+    CompWindow *w = window;
+
+    int winRealX = w->x () - w->border ().left;
+    int winRealY = w->y () - w->border ().top;
 
     /* Set the desired rect dimensions
      * for the part of the glow we are painting */
 
-    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
+    int   x1                = winRealX - glowSize + glowOffset;
+    int   y1                = winRealY - glowSize + glowOffset;
+
+    int   winRealWidth      = w->geometry ().widthIncBorders ();
+    int   winRealHeight     = w->geometry ().heightIncBorders ();
+
+    int   halfWinRealWidth  = winRealWidth  / 2;
+    int   halfWinRealHeight = winRealHeight / 2;
+
+    int   xPlusHalfWidth    = winRealX + halfWinRealWidth;
+    int   yPlusHalfHeight   = winRealY + halfWinRealHeight;
+
+    int   xPlusGlowOff      = winRealX + glowOffset;
+    int   yPlusGlowOff      = winRealY + glowOffset;
+
+    int   xMinusGlowOff     = winRealX - glowOffset;
+    int   yMinusGlowOff     = winRealY - glowOffset;
+
+    float glowPart          = 1.0f / glowSize;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -205,15 +220,14 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * multiplied by the scale factors
      */
 
-    quadMatrix->xx = 1.0f / glowSize;
-    quadMatrix->yy = 1.0f / (glowSize);
+    quadMatrix->xx = quadMatrix->yy = glowPart;
     quadMatrix->x0 = -(x1 * quadMatrix->xx);
     quadMatrix->y0 = -(y1 * quadMatrix->yy);
 
-    x2 = MIN (WIN_REAL_X (w) + glowOffset,
-	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    y2 = MIN (WIN_REAL_Y (w) + glowOffset,
-	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    int x2 = MIN (xPlusGlowOff,
+		  xPlusHalfWidth);
+    int y2 = MIN (yPlusGlowOff,
+		  yPlusHalfHeight);
 
     *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
@@ -225,9 +239,9 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     /* Set the desired rect dimensions
      * for the part of the glow we are painting */
 
-    x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
-    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
+    x1 = xMinusGlowOff + winRealWidth;
+    y1 = yPlusGlowOff - glowSize;
+    x2 = x1 + glowSize;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -242,15 +256,15 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * need the inverse of that which is 1 - x1 * xx
      */
 
-    quadMatrix->xx = -1.0f / glowSize;
-    quadMatrix->yy = 1.0f / glowSize;
-    quadMatrix->x0 = 1.0 - (x1 * quadMatrix->xx);
+    quadMatrix->xx = -glowPart;
+    quadMatrix->yy =  glowPart;
+    quadMatrix->x0 =  1.0 - (x1 * quadMatrix->xx);
     quadMatrix->y0 = -(y1 * quadMatrix->yy);
 
-    x1 = MAX (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset,
-	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    y2 = MIN (WIN_REAL_Y (w) + glowOffset,
-	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    x1 = MAX (xMinusGlowOff + winRealWidth,
+	      xPlusHalfWidth);
+    y2 = MIN (yPlusGlowOff,
+	      yPlusHalfHeight);
 
     *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
@@ -259,10 +273,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_BOTTOMLEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].mMatrix;
 
-    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    /* x2 = WIN_REAL_X (w) + glowOffset; */
-    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+    x1 = xPlusGlowOff - glowSize;
+    y1 = yMinusGlowOff + winRealHeight;
+    /* x2 = xPlusGlowOff; */
+    y2 = yMinusGlowOff + winRealHeight + glowSize;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -277,15 +291,15 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * need the inverse of that which is 1 - y1 * yy
      */
 
-    quadMatrix->xx = 1.0f / glowSize;
-    quadMatrix->yy = -1.0f / glowSize;
+    quadMatrix->xx =  glowPart;
+    quadMatrix->yy = -glowPart;
     quadMatrix->x0 = -(x1 * quadMatrix->xx);
     quadMatrix->y0 = 1.0f - (y1 * quadMatrix->yy);
 
-    y1 = MAX (WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset,
-	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
-    x2 = MIN (WIN_REAL_X (w) + glowOffset,
-	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+    y1 = MAX (winRealY + winRealHeight - glowOffset,
+	      yPlusHalfHeight);
+    x2 = MIN (xPlusGlowOff,
+	      xPlusHalfWidth);
 
     *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
@@ -294,10 +308,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mMatrix;
 
-    x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
-    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+    x1 = xMinusGlowOff + winRealWidth;
+    y1 = yMinusGlowOff + winRealHeight;
+    x2 = x1 + glowSize;
+    y2 = y1 + glowSize;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -310,15 +324,15 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * multiplied by the scale factors
      */
 
-    quadMatrix->xx = -1.0f / glowSize;
-    quadMatrix->yy = -1.0f / glowSize;
+    quadMatrix->xx = -glowPart;
+    quadMatrix->yy = -glowPart;
     quadMatrix->x0 = 1.0 - (x1 * quadMatrix->xx);
     quadMatrix->y0 = 1.0 - (y1 * quadMatrix->yy);
 
-    x1 = MAX (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset,
-	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    y1 = MAX (WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset,
-	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    x1 = MAX (xMinusGlowOff + winRealWidth,
+	      xPlusHalfWidth);
+    y1 = MAX (yMinusGlowOff + winRealHeight,
+	      yPlusHalfHeight);
 
     *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
@@ -327,10 +341,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_TOP].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOP].mMatrix;
 
-    x1 = WIN_REAL_X (w) + glowOffset;
-    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
-    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    y2 = WIN_REAL_Y (w) + glowOffset;
+    x1 = xPlusGlowOff;
+    y1 = yPlusGlowOff - glowSize;
+    x2 = xMinusGlowOff + winRealWidth;
+    y2 = yPlusGlowOff;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -344,7 +358,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      */
 
     quadMatrix->xx = 0.0f;
-    quadMatrix->yy = 1.0f / glowSize;
+    quadMatrix->yy = glowPart;
     quadMatrix->x0 = 1.0;
     quadMatrix->y0 = -(y1 * quadMatrix->yy);
 
@@ -355,10 +369,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_BOTTOM].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOM].mMatrix;
 
-    x1 = WIN_REAL_X (w) + glowOffset;
-    y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+    x1 = xPlusGlowOff;
+    y1 = yMinusGlowOff + winRealHeight;
+    x2 = xMinusGlowOff + winRealWidth;
+    y2 = y1 + glowSize;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -372,7 +386,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      */
 
     quadMatrix->xx = 0.0f;
-    quadMatrix->yy = -1.0f / glowSize;
+    quadMatrix->yy = -glowPart;
     quadMatrix->x0 = 1.0;
     quadMatrix->y0 = 1.0 - (y1 * quadMatrix->yy);
 
@@ -383,10 +397,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_LEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_LEFT].mMatrix;
 
-    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    y1 = WIN_REAL_Y (w) + glowOffset;
-    x2 = WIN_REAL_X (w) + glowOffset;
-    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x1 = xPlusGlowOff - glowSize;
+    y1 = yPlusGlowOff;
+    x2 = xPlusGlowOff;
+    y2 = yMinusGlowOff + winRealHeight;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -399,7 +413,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * multiplied by the scale factors
      */
 
-    quadMatrix->xx = 1.0f / glowSize;
+    quadMatrix->xx = glowPart;
     quadMatrix->yy = 0.0f;
     quadMatrix->x0 = -(x1 * quadMatrix->xx);
     quadMatrix->y0 = 1.0;
@@ -411,10 +425,10 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_RIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_RIGHT].mMatrix;
 
-    x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    y1 = WIN_REAL_Y (w) + glowOffset;
-    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
-    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x1 = xMinusGlowOff + winRealWidth;
+    y1 = yPlusGlowOff;
+    x2 = xMinusGlowOff + winRealWidth + glowSize;
+    y2 = yMinusGlowOff + winRealHeight;
 
     /* 2x2 Matrix here, adjust both x and y scale factors
      * and the x and y position
@@ -427,7 +441,7 @@ ExpoWindow::computeGlowQuads (GLTexture::Matrix *matrix)
      * multiplied by the scale factors
      */
 
-    quadMatrix->xx = -1.0f / glowSize;
+    quadMatrix->xx = -glowPart;
     quadMatrix->yy = 0.0f;
     quadMatrix->x0 = 1.0 - (x1 * quadMatrix->xx);
     quadMatrix->y0 = 1.0;

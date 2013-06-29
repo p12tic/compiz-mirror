@@ -33,7 +33,7 @@
 #include <privates.h>
 
 class CubePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<CubeScreen, PrivateCubeWindow>
+    public CompPlugin::VTableForScreenAndWindow<CubeScreen, PrivateCubeWindow, COMPIZ_CUBE_ABI>
 {
     public:
 
@@ -1307,7 +1307,7 @@ PrivateCubeScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
     int cullNorm;
     glGetIntegerv (GL_CULL_FACE_MODE, &cullNorm);
 
-    bool cullInv   = (cullNorm == GL_BACK)? GL_FRONT : GL_BACK;
+    int  cullInv   = (cullNorm == GL_BACK)? GL_FRONT : GL_BACK;
     bool wasCulled = glIsEnabled (GL_CULL_FACE);
 
     if (!mFullscreenOutput)

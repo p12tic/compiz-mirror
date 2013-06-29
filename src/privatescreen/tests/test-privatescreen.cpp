@@ -249,23 +249,23 @@ public:
 
 namespace {
 
-class MockVTable: public CompPlugin::VTable {
+class MockVTable:
+    public CompPlugin::VTable
+{
 public:
     MockVTable (CompString const& name) { initVTable (name); }
 
     MOCK_METHOD0(init, bool ());
     MOCK_METHOD0(fini, void ());
 
+    MOCK_METHOD0(markReadyToInstantiate, void ());
+    MOCK_METHOD0(markNoFurtherInstantiation, void ());
+
     MOCK_METHOD1(initScreen, bool (CompScreen *s));
-
     MOCK_METHOD1(finiScreen, void (CompScreen *s));
-
     MOCK_METHOD1(initWindow, bool (CompWindow *w));
-
     MOCK_METHOD1(finiWindow, void (CompWindow *w));
-
     MOCK_METHOD0(getOptions, CompOption::Vector & ());
-
     MOCK_METHOD2(setOption, bool (const CompString  &name, CompOption::Value &value));
 };
 
@@ -285,7 +285,8 @@ protected:
     virtual ~PluginFilesystem() {}
 };
 
-class MockPluginFilesystem : public PluginFilesystem
+class MockPluginFilesystem :
+    public PluginFilesystem
 {
 public:
     MockVTable mockVtableOne;

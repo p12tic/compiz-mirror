@@ -85,6 +85,26 @@ ct::CreateNormalWindow (Display *dpy)
     return w;
 }
 
+Window
+ct::GetImmediateParent (Display *display,
+			Window w,
+			Window &rootReturn)
+{
+    Window parentReturn = w;
+    Window *childrenReturn;
+    unsigned int nChildrenReturn;
+
+    XQueryTree (display,
+		w,
+		&rootReturn,
+		&parentReturn,
+		&childrenReturn,
+		&nChildrenReturn);
+    XFree (childrenReturn);
+
+    return parentReturn;
+}
+
 bool
 ct::AdvanceToNextEventOnSuccess (Display *dpy,
 				 bool waitResult)

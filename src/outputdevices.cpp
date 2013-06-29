@@ -31,7 +31,7 @@ namespace compiz
 namespace core
 {
 
-OutputDevices::OutputDevices() :
+OutputDevices::OutputDevices () :
     outputDevs (),
     overlappingOutputs (false),
     currentOutputDev (0)
@@ -39,40 +39,46 @@ OutputDevices::OutputDevices() :
 }
 
 void
-OutputDevices::setGeometryOnDevice(unsigned int const nOutput,
-    int x, int y,
-    const int width, const int height)
+OutputDevices::setGeometryOnDevice (unsigned int const nOutput,
+				    int                x,
+				    int                y,
+				    const int          width,
+				    const int          height)
 {
     if (outputDevs.size() < nOutput + 1)
-	outputDevs.resize(nOutput + 1);
+	outputDevs.resize (nOutput + 1);
 
-    outputDevs[nOutput].setGeometry(x, y, width, height);
+    outputDevs[nOutput].setGeometry (x, y, width, height);
 }
 
 void
-OutputDevices::adoptDevices(unsigned int nOutput, CompSize* screen)
+OutputDevices::adoptDevices (unsigned int nOutput,
+			     CompSize     *screen)
 {
     /* make sure we have at least one output */
     if (!nOutput)
     {
-	setGeometryOnDevice(nOutput, 0, 0, screen->width(), screen->height());
-	nOutput++;
+	setGeometryOnDevice (nOutput, 0, 0, screen->width (), screen->height ());
+	++nOutput;
     }
-    if (outputDevs.size() > nOutput)
-	outputDevs.resize(nOutput);
+
+    if (outputDevs.size () > nOutput)
+	outputDevs.resize (nOutput);
 
     char str[10];
     /* set name, width, height and update rect pointers in all regions */
-    for (unsigned int i = 0; i < nOutput; i++)
+    for (unsigned int i = 0; i < nOutput; ++i)
     {
 	snprintf(str, 10, "Output %u", i);
-	outputDevs[i].setId(str, i);
+	outputDevs[i].setId (str, i);
     }
+
     overlappingOutputs = false;
     setCurrentOutput (currentOutputDev);
-    for (unsigned int i = 0; i < nOutput - 1; i++)
-	for (unsigned int j = i + 1; j < nOutput; j++)
-	    if (outputDevs[i].intersects(outputDevs[j]))
+
+    for (unsigned int i = 0; i < nOutput - 1; ++i)
+	for (unsigned int j = i + 1; j < nOutput; ++j)
+	    if (outputDevs[i].intersects (outputDevs[j]))
 		overlappingOutputs = true;
 }
 
@@ -86,20 +92,17 @@ OutputDevices::setCurrentOutput (unsigned int outputNum)
 }
 
 int
-OutputDevices::outputDeviceForGeometry (
-	const CompWindow::Geometry& gm,
-	int strategy,
-	CompSize* screen) const
+OutputDevices::outputDeviceForGeometry (const CompWindow::Geometry &gm,
+					int                        strategy,
+					CompSize                   *screen) const
 {
-    int          overlapAreas[outputDevs.size ()];
-    int          highest, seen, highestScore;
-    int          x, y;
-    unsigned int i;
-    CompRect     geomRect;
-
     if (outputDevs.size () == 1)
 	return 0;
 
+    int          overlapAreas[outputDevs.size ()];
+    int          highest, seen, highestScore;
+    unsigned int i;
+    CompRect     geomRect, overlap;
 
     if (strategy == CoreOptions::OverlappingOutputsSmartMode)
     {
@@ -113,10 +116,13 @@ OutputDevices::outputDeviceForGeometry (
     {
 	/* for biggest/smallest modes, only use the window center to determine
 	   the correct output device */
-	x = (gm.x () + (gm.width () / 2) + gm.border ()) % screen->width ();
+	int x = (gm.x () + (gm.width () / 2) + gm.border ()) % screen->width ();
+
 	if (x < 0)
 	    x += screen->width ();
-	y = (gm.y () + (gm.height () / 2) + gm.border ()) % screen->height ();
+
+	int y = (gm.y () + (gm.height () / 2) + gm.border ()) % screen->height ();
+
 	if (y < 0)
 	    y += screen->height ();
 
@@ -124,36 +130,35 @@ OutputDevices::outputDeviceForGeometry (
     }
 
     /* get amount of overlap on all output devices */
-    for (i = 0; i < outputDevs.size (); i++)
+    for (i = 0; i < outputDevs.size (); ++i)
     {
-	CompRect overlap = outputDevs[i] & geomRect;
+	overlap         = outputDevs[i] & geomRect;
 	overlapAreas[i] = overlap.area ();
     }
 
     /* find output with largest overlap */
-    for (i = 0, highest = 0, highestScore = 0;
-	 i < outputDevs.size (); i++)
+    for (i = 0, highest = 0, highestScore = 0; i < outputDevs.size (); ++i)
     {
 	if (overlapAreas[i] > highestScore)
 	{
-	    highest = i;
+	    highest      = i;
 	    highestScore = overlapAreas[i];
 	}
     }
 
     /* look if the highest score is unique */
-    for (i = 0, seen = 0; i < outputDevs.size (); i++)
+    for (i = 0, seen = 0; i < outputDevs.size (); ++i)
 	if (overlapAreas[i] == highestScore)
-	    seen++;
+	    ++seen;
 
     if (seen > 1)
     {
 	/* it's not unique, select one output of the matching ones and use the
 	   user preferred strategy for that */
 	unsigned int currentSize, bestOutputSize;
-	bool         searchLargest;
+	bool         bestFit;
 
-	searchLargest =
+	bool searchLargest =
 	    (strategy != CoreOptions::OverlappingOutputsPreferSmallerOutput);
 
 	if (searchLargest)
@@ -161,11 +166,10 @@ OutputDevices::outputDeviceForGeometry (
 	else
 	    bestOutputSize = UINT_MAX;
 
-	for (i = 0, highest = 0; i < outputDevs.size (); i++)
+	for (i = 0, highest = 0; i < outputDevs.size (); ++i)
+	{
 	    if (overlapAreas[i] == highestScore)
 	    {
-		bool bestFit;
-
 		currentSize = outputDevs[i].area ();
 
 		if (searchLargest)
@@ -175,10 +179,11 @@ OutputDevices::outputDeviceForGeometry (
 
 		if (bestFit)
 		{
-		    highest = i;
+		    highest        = i;
 		    bestOutputSize = currentSize;
 		}
 	    }
+	}
     }
 
     return highest;
@@ -186,4 +191,3 @@ OutputDevices::outputDeviceForGeometry (
 
 } // namespace core
 } // namespace compiz
-
