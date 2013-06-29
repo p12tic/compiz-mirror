@@ -1140,17 +1140,13 @@ void WaitForConfigureOn (Display      *display,
 					      height,
 					      mask);
 
-    /* The use of the timeout is currently because some functionality
-     * is broken which would cause these barrier conditions to never
-     * eventuate. For now just get to the fail condition */
     Advance (display,
 	     ct::WaitForEventOfTypeOnWindowMatching (display,
 						     window,
 						     ConfigureNotify,
 						     -1,
 						     -1,
-						     matcher,
-						     1000));
+						     matcher));
 }
 
 void WaitForFrameExtents (Display *dpy,
