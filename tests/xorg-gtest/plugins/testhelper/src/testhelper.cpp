@@ -141,14 +141,11 @@ TestHelperWindow::configureAndReport (long *data)
 void
 TestHelperWindow::setFrameExtentsAndReport (long *data)
 {
-    CompWindowExtents input;
+    /* Only change the frame input and not the border */
+    CompWindowExtents input (data[0], data[1], data[2], data[3]);
+    CompWindowExtents border (0, 0, 0, 0);
 
-    input.left = data[0];
-    input.right = data[1];
-    input.top = data[2];
-    input.bottom = data[3];
-
-    window->setWindowFrameExtents (&input, &input);
+    window->setWindowFrameExtents (&border, &input);
 
     std::vector <long> response;
 

@@ -31,7 +31,7 @@ if (BUILD_XORG_GTEST)
     target_link_libraries (compiz_test_decor_acceptance
                            ${COMPIZ_DECOR_ACCEPTANCE_TEST_LIBRARIES})
 
-    # Not run by default yet until we're able to load plugins locally
+    # Disabled until the tests can be run without opengl
     #compiz_discover_tests (compiz_test_decor_acceptance WITH_XORG_GTEST)
 
 endif (BUILD_XORG_GTEST)

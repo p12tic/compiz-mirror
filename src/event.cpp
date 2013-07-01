@@ -1343,8 +1343,13 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * that to wait until the map request */
 	    if (wa.root == privateScreen.rootWindow())
 	    {
-		PrivateWindow::createCompWindow (CompWindowToWindow (getTopWindow ()), CompWindowToWindow (getTopServerWindow ()), wa, event->xcreatewindow.window);
-            }
+		Window top = CompWindowToWindow (getTopWindow ());
+		Window topServer = CompWindowToWindow (getTopServerWindow ());
+		PrivateWindow::createCompWindow (top,
+						 topServer,
+						 wa,
+						 event->xcreatewindow.window);
+	    }
 	    else
 		XSelectInput (privateScreen.dpy, event->xcreatewindow.window,
 			      FocusChangeMask);

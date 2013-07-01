@@ -362,8 +362,7 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
 
     CompWindowExtents edgePositions = cp::getWindowEdgePositions (pos,
 								  geom,
-								  window->border (),
-								  window->sizeHints ().win_gravity);
+								  window->border ());
 
     int      output   = screen->outputDeviceForGeometry (geom);
     CompRect workArea = screen->getWorkareaForOutput (output);
@@ -386,8 +385,7 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
     /* bring left/right/top/bottom to actual window coordinates */
     cp::subtractBordersFromEdgePositions (edgePositions,
 					  window->border (),
-					  geom.border (),
-					  window->sizeHints ().win_gravity);
+					  geom.border ());
 
     /* always validate position if the application changed only its size,
      * as it might become partially offscreen because of that */
@@ -436,7 +434,9 @@ PlaceWindow::validateResizeRequest (unsigned int   &mask,
     if (!mask)
 	return;
 
-    if (source == ClientTypePager)
+    /* Clamp all windows initially on placement */
+    if (window->placed () &&
+	source == ClientTypePager)
 	return;
 
     if (window->state () & CompWindowStateFullscreenMask)
@@ -446,14 +446,16 @@ PlaceWindow::validateResizeRequest (unsigned int   &mask,
 			     CompWindowTypeDesktopMask))
 	return;
 
-    /* do nothing if the window was already (at least partially) offscreen */
-    if (window->serverX () < 0                         ||
-	window->serverX () + window->serverWidth () > screen->width () ||
-	window->serverY () < 0                         ||
-	window->serverY () + window->serverHeight () > screen->height ())
-    {
+    /* do nothing if the window was already (at least partially) offscreen
+     * and already placed */
+    bool onscreen =
+	CompRect (0,
+		  0,
+		  screen->width (),
+		  screen->height ()).contains (window->geometry ());
+
+    if (window->placed () && !onscreen)
 	return;
-    }
 
     if (hasUserDefinedPosition (false))
 	/* try to keep the window position intact for USPosition -
@@ -1143,13 +1145,10 @@ void
 PlaceWindow::constrainToWorkarea (const CompRect &workArea,
 				  CompPoint      &pos)
 {
-    bool staticGravity = window->sizeHints ().win_gravity & StaticGravity;
-
     pos = cp::constrainPositionToWorkArea (pos,
                                            window->serverGeometry (),
                                            window->border (),
-                                           workArea,
-                                           staticGravity);
+                                           workArea);
 
 }
 
