@@ -179,7 +179,7 @@ RestackAnim::initiateRestackAnim (int duration)
     }
 
     RestackInfo *restackInfo = mRestackData->restackInfo ();
-    bool        raised       = true;
+    bool raised = true;
 
     if (restackInfo)
     {

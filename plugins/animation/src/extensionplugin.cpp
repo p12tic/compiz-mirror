@@ -727,7 +727,8 @@ ExtensionPluginAnimation::getBottommostInExtendedFocusChain (CompWindow *wStartP
 
     RestackPersistentData *dataBottommost = static_cast<RestackPersistentData *>
 	(AnimWindow::get (wBottommost)->persistentData["restack"]);
-    CompWindow            *wPrev          = dataBottommost->mMoreToBePaintedPrev;
+
+    CompWindow *wPrev = dataBottommost->mMoreToBePaintedPrev;
 
     while (wPrev)
     {

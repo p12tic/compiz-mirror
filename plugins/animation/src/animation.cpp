@@ -94,7 +94,7 @@
 using namespace compiz::core;
 
 class AnimPluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<AnimScreen, AnimWindow, ANIMATION_ABI>
+    public CompPlugin::VTableForScreenAndWindow<AnimScreen, AnimWindow>
 {
 public:
 
@@ -192,7 +192,7 @@ PrivateAnimScreen::updateEventEffects (AnimEvent e,
 
     AnimEffectVector &eventEffectsAllowed = mEventEffectsAllowed[e];
 
-    for (unsigned int r = 0; r < n; r++) // for each row
+    for (unsigned int r = 0; r < n; ++r) // for each row
     {
 	const CompString &animName = (*listVal)[r].s ();
 
@@ -344,10 +344,11 @@ PrivateAnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo,
     if (shouldInitPersistentData)
     {
 	const CompWindowList &pl = pushLockedPaintList ();
+	AnimWindow           *aw;
 	// Initialize persistent window data for the extension plugin
 	foreach (CompWindow *w, pl)
 	{
-	    AnimWindow *aw = AnimWindow::get (w);
+	    aw = AnimWindow::get (w);
 	    extensionPluginInfo->initPersistentData (aw);
 	}
 
@@ -367,9 +368,11 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
     // Stop all ongoing animations
     const CompWindowList &pl = pushLockedPaintList ();
 
+    PrivateAnimWindow *aw;
+
     foreach (CompWindow *w, pl)
     {
-	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
+	aw = AnimWindow::get (w)->priv;
 
 	if (aw->curAnimation ())
 	    aw->postAnimationCleanUp ();
@@ -667,8 +670,8 @@ Animation::getActualAnimDirection (AnimDirection dir,
 			  mWindow->outputRect ());
 
 	// away from icon
-	int   centerX  = outRect.x () + outRect.width ()  / 2 ;
-	int   centerY  = outRect.y () + outRect.height () / 2 ;
+	int   centerX  = outRect.centerX ();
+	int   centerY  = outRect.centerY ();
 	float relDiffX = ((float)centerX - mIcon.x ()) / outRect.width ();
 	float relDiffY = ((float)centerY - mIcon.y ()) / outRect.height ();
 
@@ -1496,15 +1499,19 @@ PrivateAnimScreen::donePaint ()
     CompWindowList       windowsFinishedAnimations;
 
     bool animStillInProgress = false;
+    CompWindow        *w;
+    AnimWindow        *animWin;
+    PrivateAnimWindow *aw;
+    Animation         *curAnim;
 
     /* Paint list includes destroyed windows */
     for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
 	 rit != pl.rend (); ++rit)
     {
-	CompWindow        *w       = (*rit);
-	AnimWindow        *animWin = AnimWindow::get (w);
-	PrivateAnimWindow *aw      = animWin->priv;
-	Animation         *curAnim = aw->curAnimation ();
+	w       = (*rit);
+	animWin = AnimWindow::get (w);
+	aw      = animWin->priv;
+	curAnim = aw->curAnimation ();
 
 	if (curAnim)
 	{

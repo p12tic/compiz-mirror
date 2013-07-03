@@ -277,12 +277,12 @@ MagicLampAnim::step ()
     }
 
     // The other objects are squeezed into a horizontal line behind the icon
-    int                   topmostMovingObjectIdx    = -1;
-    int                   bottommostMovingObjectIdx = -1;
+    int topmostMovingObjectIdx    = -1;
+    int bottommostMovingObjectIdx = -1;
 
-    unsigned int          n                         = mModel->numObjects ();
-    float                 fx                        = 0.0f;
-    GridModel::GridObject *object                   = mModel->objects ();
+    unsigned int n  = mModel->numObjects ();
+    float        fx = 0.0f;
+    GridModel::GridObject *object = mModel->objects ();
 
     for (unsigned int i = 0; i < n; ++i, ++object)
     {
