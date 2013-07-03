@@ -1147,33 +1147,6 @@ DecorWindow::checkSize (const Decoration::Ptr &decoration)
 }
 
 /*
- * decorOffsetMove
- *
- * Function called on a timer (to avoid calling configureXWindow from
- * within a ::moveNotify) which actually moves the window by the offset
- * specified in the xwc. Also sends a notification that the window
- * was decorated
- *
- */
-static bool
-decorOffsetMove (CompWindow *w, XWindowChanges xwc, unsigned int mask)
-{
-    CompOption::Vector o (1);
-
-    o.at (0).setName ("window", CompOption::TypeInt);
-    o.at (0).value ().set ((int) w->id ());
-
-    xwc.x += w->serverGeometry ().x ();
-    xwc.y += w->serverGeometry ().y ();
-    xwc.width += w->serverGeometry ().width ();
-    xwc.height += w->serverGeometry ().height ();
-
-    w->configureXWindow (mask, &xwc);
-    screen->handleCompizEvent ("decor", "window_decorated", o);
-    return false;
-}
-
-/*
  * DecorWindow::matchType
  *
  * Converts libdecoration window types packed
@@ -1509,99 +1482,6 @@ DecorWindow::findBareDecoration ()
     return decoration;
 }
 
-void
-DecorWindow::moveDecoratedWindowBy (const CompPoint &movement,
-				    const CompSize  &sizeDelta,
-				    bool            instant)
-{
-    /* movement and sizeDelta are the shift of the client window
-     * as a result of decoration from a theoretical neutral position,
-     * lastShift and lastSizeDelta are the last recorded shift 
-     * and size-change. The true difference between two decorations
-     * is movement - lastShift, sizeDelta - sizeDelta */
-
-    int dx = movement.x () - lastShift.x ();
-    int dy = movement.y () - lastShift.y ();
-    int dwidth = sizeDelta.width () - lastSizeDelta.height ();
-    int dheight = sizeDelta.height () - lastSizeDelta.height ();
-
-    /* We don't apply these rules to override-redirect windows
-     * and we need to check that both the position and of the window
-     * would change as a result of decoration in order to move it
-     * (this is usually the case because as a window is decorated
-     *  it will necessarily get bigger or smaller in order to fit
-     *  inside its decoration) */
-    if (!window->overrideRedirect () &&
-	((dx || dy) && (dwidth || dheight)))
-    {
-	XWindowChanges xwc;
-	unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
-
-	memset (&xwc, 0, sizeof (XWindowChanges));
-
-	/* Grab the geometry last sent to server at configureXWindow
-	 * time and not here since serverGeometry may be updated by
-	 * the time that we do call configureXWindow */
-	xwc.x = dx;
-	xwc.y = dy;
-	xwc.width = dwidth;
-	xwc.height = dheight;
-
-	/* Except if it's fullscreen, maximized or such */
-	if (window->state () & CompWindowStateFullscreenMask)
-	    mask &= ~(CWX | CWY | CWWidth | CWHeight);
-
-	if (window->state () & CompWindowStateMaximizedHorzMask)
-	    mask &= ~(CWX | CWWidth);
-
-	if (window->state () & CompWindowStateMaximizedVertMask)
-	    mask &= ~(CWY | CWHeight);
-
-	if (window->saveMask () & CWX)
-	    window->saveWc ().x += xwc.x;
-
-	if (window->saveMask () & CWY)
-	    window->saveWc ().y += xwc.y;
-
-	if (window->saveMask () & CWWidth)
-	    window->saveWc ().width += xwc.width;
-
-	if (window->saveMask () & CWHeight)
-	    window->saveWc ().height += xwc.height;
-
-	/* If the window has not been placed, do not move it this time
-	 * but record what we would have moved it by */
-	if (!window->placed ())
-	    mask = 0;
-
-	if (mask)
-	{
-	    /* instant is only true in the case of
-	     * the destructor calling the update function so since it
-	     * is not safe to put the function in a timer (since
-	     * it will get unref'd on the vtable destruction) we
-	     * need to do it immediately
-	     *
-	     * FIXME: CompTimer should really be PIMPL and allow
-	     * refcounting in case we need to keep it alive
-	     */
-	    if (instant)
-		decorOffsetMove (window, xwc, mask);
-	    else
-		moveUpdate.start (boost::bind (decorOffsetMove, window, xwc, mask), 0);
-	}
-
-	/* Even if the window has not yet been placed, we still
-	 * need to store what we would have moved it by in order
-	 * to put it in the right position. The place plugin will
-	 * set a position that makes the most sense, but we need
-	 * to know how much to move back by should the window
-	 * become undecorated again */
-	lastShift = movement;
-	lastSizeDelta = sizeDelta;
-    }
-}
-
 namespace
 {
 bool
@@ -1616,7 +1496,23 @@ shouldDecorateWindow (CompWindow *w,
 
     return realDecoration || forceDecoration;
 }
+
+/*
+ * notifyDecoration
+ *
+ * Notify other plugins that the window is now fully decorated
+ */
+void notifyDecoration (CompWindow *window)
+{
+    CompOption::Vector o (1);
+
+    o.at (0).setName ("window", CompOption::TypeInt);
+    o.at (0).value ().set ((int) window->id ());
+
+    screen->handleCompizEvent ("decor", "window_decorated", o);
 }
+}
+
 /*
  * DecorWindow::update
  * This is the master function for managing decorations on windows
@@ -1667,6 +1563,7 @@ DecorWindow::update (bool allowDecoration)
 
     bool shadowOnly = bareDecorationOnly ();
     bool decorate = shouldDecorateWindow (window, shadowOnly, isSwitcher);
+    unsigned int decorMaximizeState = window->state () & MAXIMIZE_STATE;
 
     if (decorate || frameExtentsRequested)
     {
@@ -1689,7 +1586,8 @@ DecorWindow::update (bool allowDecoration)
     /* Don't bother going any further if
      * this window is going to get the same
      * decoration, just use the old one */
-    if (decoration == old)
+    if (decoration == old &&
+        lastMaximizedStateDecorated == decorMaximizeState)
 	return false;
 
     /* Destroy the old WindowDecoration */
@@ -1710,12 +1608,15 @@ DecorWindow::update (bool allowDecoration)
 	/* Set extents based on maximize/unmaximize state
 	 * FIXME: With the new type system, this should be
 	 * removed */
-	if ((window->state () & MAXIMIZE_STATE))
+	if (decorMaximizeState)
 	    window->setWindowFrameExtents (&decoration->maxBorder,
 					   &decoration->maxInput);
 	else if (!window->hasUnmapReference ())
 	    window->setWindowFrameExtents (&decoration->border,
 					   &decoration->input);
+
+	lastMaximizedStateDecorated = decorMaximizeState;
+
 	/* This window actually needs its decoration contents updated
 	 * as it was actually visible */
 	if (decorate ||
@@ -1730,13 +1631,6 @@ DecorWindow::update (bool allowDecoration)
 		window->setWindowFrameExtents (&emptyExtents, &emptyExtents);
 		return false;
 	    }
-
-	    movement = cwe::shift (window->border (), window->sizeHints ().win_gravity);
-
-	    sizeDelta = CompSize (-(window->border ().left +
-				    window->border ().right),
-				  -(window->border ().top +
-				    window->border ().bottom));
 
 	    window->updateWindowOutputExtents ();
 
@@ -1777,9 +1671,7 @@ DecorWindow::update (bool allowDecoration)
 	updateGroupShadows ();
     }
 
-    moveDecoratedWindowBy (movement,
-			   sizeDelta,
-			   !allowDecoration);
+    notifyDecoration (window);
 
     return true;
 }
@@ -2978,13 +2870,7 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	shading = false;
 	unshading = false;
     }
-    /* FIXME: we should not need a timer for calling decorWindowUpdate,
-       and only call updateWindowDecorationScale if decorWindowUpdate
-       returns false. Unfortunately, decorWindowUpdate may call
-       updateWindowOutputExtents, which may call WindowResizeNotify. As
-       we never should call a wrapped function that's currently
-       processed, we need the timer for the moment. updateWindowOutputExtents
-       should be fixed so that it does not emit a resize notification. */
+
     updateMatrix = true;
     updateReg = true;
 
@@ -3009,19 +2895,7 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 void
 DecorWindow::stateChangeNotify (unsigned int lastState)
 {
-    if (wd && wd->decor)
-    {
-	if ((window->state () & MAXIMIZE_STATE))
-	    window->setWindowFrameExtents (&wd->decor->maxBorder,
-					   &wd->decor->maxInput);
-	else
-	    window->setWindowFrameExtents (&wd->decor->border,
-					   &wd->decor->input);
-
-	/* The shift will occurr in decorOffsetMove */
-
-	updateFrame ();
-    }
+    update (true);
 
     window->stateChangeNotify (lastState);
 }
@@ -3258,7 +3132,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     mClipGroup (NULL),
     mOutputRegion (window->outputRect ()),
     mInputRegion (window->inputRect ()),
-    mRequestor (screen->dpy (), w->id (), &decor)
+    mRequestor (screen->dpy (), w->id (), &decor),
+    lastMaximizedStateDecorated (0)
 {
     WindowInterface::setHandler (window);
 

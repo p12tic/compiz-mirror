@@ -242,101 +242,6 @@
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
---- a/plugins/expo/expo.xml.in
-+++ b/plugins/expo/expo.xml.in
-@@ -17,6 +17,7 @@
- 		<plugin>wobbly</plugin>
- 		<plugin>animation</plugin>
- 		<plugin>wallpaper</plugin>
-+		<plugin>imgpng</plugin>
- 	    </relation>
- 	</deps>
- 	<options>
-@@ -25,7 +26,7 @@
- 		<option name="expo_key" type="key">
- 		    <_short>Expo key</_short>
- 		    <_long>Engage wall expo mode key binding</_long>
--		    <default>&lt;Super&gt;e</default>
-+		    <default>&lt;Super&gt;s</default>
- 		</option>
- 		<option name="expo_button" type="button">
- 		    <_short>Expo button</_short>
-@@ -35,9 +36,6 @@
- 		<option name="expo_edge" type="edge">
- 		    <_short>Expo edge</_short>
- 		    <_long>Engage wall expo mode edge binding</_long>
--		    <default>
--			<edge name="TopLeft"/>
--		    </default>
- 		</option>
- 		<option name="double_click_time" type="int">
- 		    <_short>Double click time</_short>
-@@ -80,7 +78,7 @@
- 		<option name="zoom_time" type="float">
- 		    <_short>Zoom time</_short>
- 		    <_long>Duration of the zoomout animation</_long>
--		    <default>0.5</default>
-+		    <default>0.3</default>
- 		    <min>0.1</min>
- 		    <max>5.0</max>
- 		    <precision>0.1</precision>
-@@ -134,17 +132,17 @@
- 		<option name="x_offset" type="int">
- 		    <_short>X Offset</_short>
- 		    <_long>X offset in pixels</_long>
--		    <default>0</default>
-+		    <default>64</default>
-                 </option>
- 		<option name="y_offset" type="int">
- 		    <_short>Y Offset</_short>
- 		    <_long>Y offset in pixels</_long>
--		    <default>0</default>
-+		    <default>24</default>
-                 </option>
- 		<option name="distance" type="float">
- 		    <_short>Distance</_short>
- 		    <_long>Distance of the expo wall</_long>
--		    <default>0.0</default>
-+		    <default>0.005</default>
- 		    <min>0.0</min>
- 		    <max>1.0</max>
- 		    <precision>0.01</precision>
-@@ -152,7 +150,7 @@
- 		<option name="vp_distance" type="float">
- 		    <_short>Viewport distance</_short>
- 		    <_long>Distance between viewports</_long>
--		    <default>0.10</default>
-+		    <default>0.2</default>
- 		    <min>0.0</min>
- 		    <max>1.0</max>
- 		    <precision>0.01</precision>
-@@ -203,7 +201,7 @@
- 		    <option name="vp_brightness" type="float">
- 			<_short>Brightness</_short>
- 			<_long>Inactive viewport brightness.</_long>
--			<default>75.0</default>
-+			<default>40.0</default>
- 			<min>0.0</min>
- 			<max>100.0</max>
- 			<precision>0.1</precision>
-@@ -223,7 +221,7 @@
- 			    <red>0xfbfb</red>
- 			    <green>0x8b8b</green>
- 			    <blue>0x0</blue>
--			    <alpha>0x0</alpha>
-+			    <alpha>0xffff</alpha>
- 			</default>
- 		    </option>
- 		</subgroup>
-@@ -232,7 +230,7 @@
- 		    <option name="reflection" type="bool">
- 			<_short>Reflection</_short>
- 			<_long>Show a reflection of the viewports on the ground</_long>
--			<default>true</default>
-+			<default>false</default>
- 		    </option>
- 		    <option name="ground_color1" type="color">
- 			<_short>Ground color(near)</_short>
 --- a/plugins/fade/fade.xml.in
 +++ b/plugins/fade/fade.xml.in
 @@ -10,6 +10,7 @@
@@ -611,7 +516,7 @@
  				<option name="initiate_button" type="button">
 --- a/plugins/wall/wall.xml.in
 +++ b/plugins/wall/wall.xml.in
-@@ -31,12 +31,12 @@
+@@ -30,12 +30,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
  					<_long>Show live viewport previews in switcher window</_long>
@@ -626,7 +531,7 @@
  					<min>0.0</min>
  					<max>2.0</max>
  					<precision>0.05</precision>
-@@ -44,7 +44,7 @@
+@@ -43,7 +43,7 @@
  				<option name="preview_scale" type="int">
  					<_short>Preview Scale</_short>
  					<_long>Size of the preview in %</_long>
@@ -635,7 +540,7 @@
  					<min>0</min>
  					<max>400</max>
  				</option>
-@@ -58,7 +58,7 @@
+@@ -57,7 +57,7 @@
  				<option name="border_width" type="int">
  					<_short>Border Width</_short>
  					<_long>Width of the border between the previews</_long>
@@ -644,7 +549,7 @@
  					<min>0</min>
  					<max>30</max>
  				</option>
-@@ -66,10 +66,10 @@
+@@ -65,10 +65,10 @@
  					<_short>Outline Color</_short>
  					<_long>Outline color of the switcher window.</_long>
  					<default>
@@ -659,7 +564,7 @@
  						</default>
  				</option>
  				<subgroup>
-@@ -79,30 +79,30 @@
+@@ -78,30 +78,30 @@
  						<_short>Base Color</_short>
  						<_long>First color for the background gradient of the switcher window.</_long>
  						<default>
@@ -702,7 +607,7 @@
  						</default>
  					</option>
  				</subgroup>
-@@ -113,20 +113,20 @@
+@@ -112,20 +112,20 @@
  						<_short>Base Color</_short>
  						<_long>First color for the thumb gradient of the switcher window.</_long>
  						<default>
@@ -731,7 +636,7 @@
  						</default>
  					</option>
  				</subgroup>
-@@ -140,7 +140,7 @@
+@@ -139,7 +139,7 @@
  							<red>0xffff</red>
  							<green>0xffff</green>
  							<blue>0xffff</blue>
@@ -740,7 +645,7 @@
  						</default>
  					</option>
  					<option name="thumb_highlight_gradient_shadow_color" type="color">
-@@ -150,7 +150,7 @@
+@@ -149,7 +149,7 @@
  							<red>0xdfff</red>
  							<green>0xdfff</green>
  							<blue>0xdfff</blue>
@@ -749,7 +654,7 @@
  						</default>
  					</option>
  				</subgroup>
-@@ -348,7 +348,7 @@
+@@ -351,7 +351,7 @@
  				<option name="edgeflip_move" type="bool">
  					<_short>Edge Flip Move</_short>
  					<_long>Flip viewport when moving a window to a screen edge</_long>
@@ -791,7 +696,12 @@
  		</option>
  		<option name="put_top_key" type="key">
  		    <_short>Put Top Key</_short>
-@@ -73,7 +72,7 @@
+@@ -68,12 +67,11 @@
+ 		<option name="put_maximize_key" type="key">
+ 		    <_short>Maximize Key</_short>
+ 		    <_long>Maximize window.</_long>
+-		    <default>&lt;Control&gt;&lt;Alt&gt;KP_0</default>
+ 		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
  		    <_long>Restore window to it's original size. Note: Use the same shortcut you are using to unmaximize a window to be able to restore grid-maximized windows.</_long>
@@ -838,3 +748,99 @@
  		    </option>
  		</subgroup>
  	    </group>
+--- a/plugins/expo/expo.xml.in
++++ b/plugins/expo/expo.xml.in
+@@ -17,6 +17,7 @@
+ 		<plugin>wobbly</plugin>
+ 		<plugin>animation</plugin>
+ 		<plugin>wallpaper</plugin>
++		<plugin>imgpng</plugin>
+ 	    </relation>
+ 	</deps>
+ 	<options>
+@@ -25,7 +26,7 @@
+ 		<option name="expo_key" type="key">
+ 		    <_short>Expo Key</_short>
+ 		    <_long>Initiate or terminate Expo mode with this keyboard shortcut.</_long>
+-		    <default>&lt;Super&gt;e</default>
++		    <default>&lt;Super&gt;s</default>
+ 		</option>
+ 		<option name="expo_button" type="button">
+ 		    <_short>Expo Button</_short>
+@@ -36,7 +37,6 @@
+ 		    <_short>Expo Corner/Edge</_short>
+ 		    <_long>Initiate or terminate Expo mode by moving the pointer to this corner or edge of your screen(s).</_long>
+ 		    <default>
+-			<edge name="TopLeft"/>
+ 		    </default>
+ 		</option>
+ 		<option name="double_click_time" type="int">
+@@ -80,7 +80,7 @@
+ 		<option name="zoom_time" type="float">
+ 		    <_short>Animation Duration</_short>
+ 		    <_long>Duration of the selected animation (in seconds).</_long>
+-		    <default>0.5</default>
++		    <default>0.3</default>
+ 		    <min>0.1</min>
+ 		    <max>5.0</max>
+ 		    <precision>0.1</precision>
+@@ -142,12 +142,12 @@
+ 		<option name="x_offset" type="int">
+ 		    <_short>X Offset</_short>
+ 		    <_long>Horizontal offset (in pixels).</_long>
+-		    <default>0</default>
++		    <default>64</default>
+ 		</option>
+ 		<option name="y_offset" type="int">
+ 		    <_short>Y Offset</_short>
+ 		    <_long>Vertical offset (in pixels).</_long>
+-		    <default>0</default>
++		    <default>24</default>
+ 		</option>
+ 		<option name="distance" type="float">
+ 		    <_short>Camera Distance</_short>
+@@ -160,7 +160,7 @@
+ 		<option name="vp_distance" type="float">
+ 		    <_short>Viewport Distance</_short>
+ 		    <_long>The distance between viewports in Expo mode.</_long>
+-		    <default>0.10</default>
++		    <default>0.2</default>
+ 		    <min>0.0</min>
+ 		    <max>1.0</max>
+ 		    <precision>0.01</precision>
+@@ -188,7 +188,7 @@
+ 		    <_long>How the Expo wall should be displayed, if multiple output devices are used.</_long>
+ 		    <min>0</min>
+ 		    <max>1</max>
+-		    <default>0</default>
++		    <default>1</default>
+ 		    <desc>
+ 			<value>0</value>
+ 			<_name>One big wall</_name>
+@@ -203,7 +203,7 @@
+ 		    <option name="vp_brightness" type="float">
+ 			<_short>Brightness</_short>
+ 			<_long>The brightness of unfocused viewports (in percent).</_long>
+-			<default>75.0</default>
++			<default>40.0</default>
+ 			<min>0.0</min>
+ 			<max>100.0</max>
+ 			<precision>0.1</precision>
+@@ -223,7 +223,7 @@
+ 			    <red>0xfbfb</red>
+ 			    <green>0x8b8b</green>
+ 			    <blue>0x0</blue>
+-			    <alpha>0x0</alpha>
++			    <alpha>0xffff</alpha>
+ 			</default>
+ 		    </option>
+ 		</subgroup>
+@@ -232,7 +232,7 @@
+ 		    <option name="reflection" type="bool">
+ 			<_short>Reflection</_short>
+ 			<_long>Render a realtime reflection of the viewports on the ground.</_long>
+-			<default>true</default>
++			<default>false</default>
+ 		    </option>
+ 		    <option name="ground_color1" type="color">
+ 			<_short>Ground Color (near)</_short>

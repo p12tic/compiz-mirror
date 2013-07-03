@@ -25,10 +25,14 @@
 #include "outputdevices.h"
 #include "core_options.h"
 
-namespace compiz { namespace core {
+namespace compiz
+{
+namespace core
+{
 
 CompRect
-OutputDevices::computeWorkareaForBox (const CompRect& box, CompWindowList const& windows)
+OutputDevices::computeWorkareaForBox (const CompRect       &box,
+				      CompWindowList const &windows)
 {
     CompRegion region;
     int        x1, y1, x2, y2;
@@ -87,47 +91,53 @@ OutputDevices::computeWorkareaForBox (const CompRect& box, CompWindowList const&
 }
 
 void
-OutputDevices::computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
-	CompRegion& allWorkArea, CompWindowList const& windows)
+OutputDevices::computeWorkAreas (CompRect             &workArea,
+				 bool                 &workAreaChanged,
+				 CompRegion           &allWorkArea,
+				 CompWindowList const &windows)
 {
-    for (unsigned int i = 0; i < outputDevs.size(); i++)
+    for (unsigned int i = 0; i < outputDevs.size(); ++i)
     {
-	CompRect oldWorkArea = outputDevs[i].workArea();
-	workArea = computeWorkareaForBox(outputDevs[i], windows);
+	CompRect oldWorkArea = outputDevs[i].workArea ();
+	workArea             = computeWorkareaForBox (outputDevs[i], windows);
+
 	if (workArea != oldWorkArea)
 	{
 	    workAreaChanged = true;
-	    outputDevs[i].setWorkArea(workArea);
+	    outputDevs[i].setWorkArea (workArea);
 	}
+
 	allWorkArea += workArea;
     }
 }
 
 void
-OutputDevices::updateOutputDevices(CoreOptions& coreOptions, CompSize* screen)
+OutputDevices::updateOutputDevices (CoreOptions &coreOptions,
+				    CompSize    *screen)
 {
-    CompOption::Value::Vector& list = coreOptions.optionGetOutputs();
-    unsigned int nOutput = 0;
-    int x, y, bits;
-    unsigned int uWidth, uHeight;
-    int width, height;
-    int x1, y1, x2, y2;
-    foreach(CompOption::Value & value, list)
-    {
-	x = 0;
-	y = 0;
-	uWidth = (unsigned) screen->width();
-	uHeight = (unsigned) screen->height();
+    CompOption::Value::Vector  &list   = coreOptions.optionGetOutputs ();
+    unsigned int               nOutput = 0;
+    int                        x, y, bits;
+    unsigned int               uWidth, uHeight;
+    int                        width, height;
+    int                        x1, y1, x2, y2;
 
-	bits = XParseGeometry(value.s().c_str(), &x, &y, &uWidth, &uHeight);
-	width = (int) uWidth;
-	height = (int) uHeight;
+    foreach (CompOption::Value &value, list)
+    {
+	x       = 0;
+	y       = 0;
+	uWidth  = static_cast <unsigned int> (screen->width ());
+	uHeight = static_cast <unsigned int> (screen->height ());
+
+	bits    = XParseGeometry(value.s ().c_str (), &x, &y, &uWidth, &uHeight);
+	width   = static_cast <int> (uWidth);
+	height  = static_cast <int> (uHeight);
 
 	if (bits & XNegative)
-	    x = screen->width() + x - width;
+	    x = screen->width ()  + x - width;
 
 	if (bits & YNegative)
-	    y = screen->height() + y - height;
+	    y = screen->height () + y - height;
 
 	x1 = x;
 	y1 = y;
@@ -138,19 +148,20 @@ OutputDevices::updateOutputDevices(CoreOptions& coreOptions, CompSize* screen)
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > screen->width())
-	    x2 = screen->width();
-	if (y2 > screen->height())
-	    y2 = screen->height();
+	if (x2 > screen->width ())
+	    x2 = screen->width ();
+	if (y2 > screen->height ())
+	    y2 = screen->height ();
 
 	if (x1 < x2 && y1 < y2)
 	{
-	    setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
-	    nOutput++;
+	    setGeometryOnDevice (nOutput, x1, y1, x2 - x1, y2 - y1);
+	    ++nOutput;
 	}
     }
-    adoptDevices(nOutput, screen);
+
+    adoptDevices (nOutput, screen);
 }
 
-}} // namespace compiz::core
-
+}
+} // namespace compiz::core

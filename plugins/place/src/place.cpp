@@ -434,7 +434,9 @@ PlaceWindow::validateResizeRequest (unsigned int   &mask,
     if (!mask)
 	return;
 
-    if (source == ClientTypePager)
+    /* Clamp all windows initially on placement */
+    if (window->placed () &&
+	source == ClientTypePager)
 	return;
 
     if (window->state () & CompWindowStateFullscreenMask)
@@ -444,14 +446,16 @@ PlaceWindow::validateResizeRequest (unsigned int   &mask,
 			     CompWindowTypeDesktopMask))
 	return;
 
-    /* do nothing if the window was already (at least partially) offscreen */
-    if (window->serverX () < 0                         ||
-	window->serverX () + window->serverWidth () > screen->width () ||
-	window->serverY () < 0                         ||
-	window->serverY () + window->serverHeight () > screen->height ())
-    {
+    /* do nothing if the window was already (at least partially) offscreen
+     * and already placed */
+    bool onscreen =
+	CompRect (0,
+		  0,
+		  screen->width (),
+		  screen->height ()).contains (window->geometry ());
+
+    if (window->placed () && !onscreen)
 	return;
-    }
 
     if (hasUserDefinedPosition (false))
 	/* try to keep the window position intact for USPosition -

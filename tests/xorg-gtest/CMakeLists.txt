@@ -4,7 +4,8 @@ set (COMPIZ_BINARY ${CMAKE_BINARY_DIR}/src/compiz CACHE STRING "" FORCE)
 set (COMPIZ_XORG_GTEST_COMMUNICATOR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/communicator CACHE PATH "" FORCE)
 set (COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/communicator CACHE PATH "" FORCE)
 set (COMPIZ_XORG_GTEST_COMMUNICATOR_LIBRARY compiz_xorg_gtest_communicator CACHE STRING "" FORCE)
-set (COMPIZ_OVERRIDE_PLUGIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/plugins/testhelper)
+set (COMPIZ_TEST_ONLY_PLUGIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/plugins/)
+set (COMPIZ_REAL_PLUGIN_PATH ${CMAKE_BINARY_DIR}/plugins/)
 
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/compiz-xorg-gtest-config.h.in
 		${CMAKE_CURRENT_BINARY_DIR}/src/compiz-xorg-gtest-config.h
@@ -37,6 +38,7 @@ add_executable (xorg_gtest_wrapper
 		${CMAKE_CURRENT_SOURCE_DIR}/src/xorg_gtest_wrapper.cpp)
 
 target_link_libraries (xorg_gtest_all
+                       ${X11_XI_LIBRARIES}
 		       ${GTEST_BOTH_LIBRARIES}
 		       ${XORG_SERVER_GTEST_LIBRARIES})
 
