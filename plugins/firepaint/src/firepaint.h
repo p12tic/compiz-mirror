@@ -43,29 +43,29 @@ class Particle
     public:
 
 	Particle ();
-    
-	float life;		/* particle life */
-	float fade;		/* fade speed */
-	float width;		/* particle width */
-	float height;		/* particle height */
-	float w_mod;		/* particle size modification during life */
-	float h_mod;		/* particle size modification during life */
-	float r;		/* red value */
-	float g;		/* green value */
-	float b;		/* blue value */
-	float a;		/* alpha value */
-	float x;		/* X position */
-	float y;		/* Y position */
-	float z;		/* Z position */
-	float xi;		/* X direction */
-	float yi;		/* Y direction */
-	float zi;		/* Z direction */
-	float xg;		/* X gravity */
-	float yg;		/* Y gravity */
-	float zg;		/* Z gravity */
-	float xo;		/* orginal X position */
-	float yo;		/* orginal Y position */
-	float zo;		/* orginal Z position */
+
+	float life;	/* particle life */
+	float fade;	/* fade speed */
+	float width;	/* particle width */
+	float height;	/* particle height */
+	float w_mod;	/* particle size modification during life */
+	float h_mod;	/* particle size modification during life */
+	float r;	/* red value */
+	float g;	/* green value */
+	float b;	/* blue value */
+	float a;	/* alpha value */
+	float x;	/* X position */
+	float y;	/* Y position */
+	float z;	/* Z position */
+	float xi;	/* X direction */
+	float yi;	/* Y direction */
+	float zi;	/* Z direction */
+	float xg;	/* X gravity */
+	float yg;	/* Y gravity */
+	float zg;	/* Z gravity */
+	float xo;	/* orginal X position */
+	float yo;	/* orginal Y position */
+	float zo;	/* orginal Z position */
 };
 
 
@@ -78,29 +78,30 @@ class ParticleSystem
 	~ParticleSystem ();
 
 	std::vector <Particle> particles;
-	float    slowdown;
-	GLuint   tex;
-	bool     active;
-	int      x, y;
-	float    darken;
-	GLuint   blendMode;
+	float                  slowdown;
+	GLuint                 tex;
+	bool                   active;
+	int                    x;
+	int                    y;
+	float                  darken;
+	GLuint                 blendMode;
 
 	/* Cache used in drawParticles 
         It's here to avoid multiple mem allocation 
         during drawing */
-	std::vector<GLfloat>  vertices_cache;
-	std::vector<GLfloat>  coords_cache;
-	std::vector<GLushort> colors_cache;
-	std::vector<GLushort> dcolors_cache;
+	std::vector<GLfloat>   vertices_cache;
+	std::vector<GLfloat>   coords_cache;
+	std::vector<GLushort>  colors_cache;
+	std::vector<GLushort>  dcolors_cache;
 
 	void
-	initParticles (int            f_numParticles);
+	initParticles (int f_numParticles);
 
 	void
-	drawParticles (const GLMatrix	&transform);
+	drawParticles (const GLMatrix &transform);
 
 	void
-	updateParticles (float          time);
+	updateParticles (float time);
 
 	void
 	finiParticles ();
@@ -118,15 +119,16 @@ class FireScreen:
 	FireScreen (CompScreen *);
 	~FireScreen ();
 
-	CompositeScreen *cScreen;
-	GLScreen	*gScreen;
+	CompositeScreen        *cScreen;
+	GLScreen               *gScreen;
 
-	ParticleSystem  ps;
+	ParticleSystem         ps;
 
-	bool		init;
+	bool                   init;
 
-	std::vector	<XPoint> points;
-	float		brightness;
+	std::vector <XPoint>   points;
+	float                  brightness;
+	float                  saturation;
 
 	CompScreen::GrabHandle grabIndex;
 
@@ -138,10 +140,10 @@ class FireScreen:
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
-		       const GLMatrix		 &,
-		       const CompRegion		 &,
-		       CompOutput		 *,
-		       unsigned int		  );
+		       const GLMatrix            &,
+		       const CompRegion          &,
+		       CompOutput                *,
+		       unsigned int                );
 
 	void
 	donePaint ();
@@ -170,7 +172,6 @@ class FireScreen:
 	clear (CompAction         *action,
 	       CompAction::State  state,
 	       CompOption::Vector options);
-
 };
 
 #define FIRE_SCREEN(s)							       \

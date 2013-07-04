@@ -24,40 +24,37 @@
 COMPIZ_PLUGIN_20090315 (firepaint, FirePluginVTable);
 
 /* 3 vertices per triangle, 2 triangles per particle */
-const unsigned short CACHESIZE_FACTOR = 3 * 2;
-
+const unsigned short CACHESIZE_FACTOR  = 3 * 2;
 /* 2 coordinates, x and y */
-const unsigned short COORD_COMPONENTS = CACHESIZE_FACTOR * 2;
-
+const unsigned short COORD_COMPONENTS  = CACHESIZE_FACTOR * 2;
 /* each vertex is stored as 3 GLfloats */
 const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
-
 /* 4 colors, RGBA */
-const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
+const unsigned short COLOR_COMPONENTS  = CACHESIZE_FACTOR * 4;
 
 Particle::Particle () :
-    life (0),
-    fade (0),
-    width (0),
+    life   (0),
+    fade   (0),
+    width  (0),
     height (0),
-    w_mod (0),
-    h_mod (0),
-    r (0),
-    g (0),
-    b (0),
-    a (0),
-    x (0),
-    y (0),
-    z (0),
-    xi (0),
-    yi (0),
-    zi (0),
-    xg (0),
-    yg (0),
-    zg (0),
-    xo (0),
-    yo (0),
-    zo (0)
+    w_mod  (0),
+    h_mod  (0),
+    r      (0),
+    g      (0),
+    b      (0),
+    a      (0),
+    x      (0),
+    y      (0),
+    z      (0),
+    xi     (0),
+    yi     (0),
+    zi     (0),
+    xg     (0),
+    yg     (0),
+    zg     (0),
+    xo     (0),
+    yo     (0),
+    zo     (0)
 {
 }
 
@@ -81,14 +78,14 @@ ParticleSystem::~ParticleSystem ()
 }
 
 void
-ParticleSystem::initParticles (int            f_numParticles)
+ParticleSystem::initParticles (int f_numParticles)
 {
     particles.clear ();
 
-    tex = 0;
+    tex      = 0;
     slowdown = 1;
-    active = false;
-    darken = 0;
+    active   = false;
+    darken   = 0;
 
     // Initialize cache
     vertices_cache.clear ();
@@ -96,7 +93,7 @@ ParticleSystem::initParticles (int            f_numParticles)
     colors_cache.clear ();
     dcolors_cache.clear ();
 
-    for (int i = 0; i < f_numParticles; i++)
+    for (int i = 0; i < f_numParticles; ++i)
     {
 	Particle p;
 	p.life = 0.0f;
@@ -105,7 +102,7 @@ ParticleSystem::initParticles (int            f_numParticles)
 }
 
 void
-ParticleSystem::drawParticles(const GLMatrix	     &transform)
+ParticleSystem::drawParticles(const GLMatrix &transform)
 {
     int i, j, k, l;
 
@@ -123,7 +120,10 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
 	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
-    glEnable (GL_BLEND);
+    GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
+
+    if (!glBlendEnabled)
+	glEnable (GL_BLEND);
 
     if (tex)
     {
@@ -133,49 +133,57 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 
     i = j = k = l = 0;
 
+    GLfloat w, h;
+    GLfloat xMinusW, xPlusW, yMinusH, yPlusH;
+    GLushort r, g, b, a, dark_a;
+
     /* for each particle, use two triangles to display it */
     foreach (Particle &part, particles) 
     {
 	if (part.life > 0.0f)
 	{
-	    float w = part.width / 2;
-	    float h = part.height / 2;
-
-	    GLushort r, g, b, a, dark_a;
+	    w = part.width  / 2.0f;
+	    h = part.height / 2.0f;
 
 	    r = part.r * 65535.0f;
 	    g = part.g * 65535.0f;
 	    b = part.b * 65535.0f;
-	    a = part.life * part.a * 65535.0f;
-	    dark_a = part.life * part.a * darken * 65535.0f;
+	    a      = part.life * part.a * 65535.0f;
+	    dark_a = part.life * part.a * 65535.0f * darken;
 
-	    w += (w * part.w_mod) * part.life;
-	    h += (h * part.h_mod) * part.life;
+	    w += w * part.w_mod * part.life;
+	    h += h * part.h_mod * part.life;
+
+	    xMinusW = part.x - w;
+	    xPlusW  = part.x + w;
+
+	    yMinusH = part.y - h;
+	    yPlusH  = part.y + h;
 
 	    //first triangle
-	    vertices_cache[i + 0] = part.x - w;
-	    vertices_cache[i + 1] = part.y - h;
+	    vertices_cache[i + 0] = xMinusW;
+	    vertices_cache[i + 1] = yMinusH;
 	    vertices_cache[i + 2] = part.z;
 
-	    vertices_cache[i + 3] = part.x - w;
-	    vertices_cache[i + 4] = part.y + h;
+	    vertices_cache[i + 3] = xMinusW;
+	    vertices_cache[i + 4] = yPlusH;
 	    vertices_cache[i + 5] = part.z;
 
-	    vertices_cache[i + 6] = part.x + w;
-	    vertices_cache[i + 7] = part.y + h;
+	    vertices_cache[i + 6] = xPlusW;
+	    vertices_cache[i + 7] = yPlusH;
 	    vertices_cache[i + 8] = part.z;
 
 	    //second triangle
-	    vertices_cache[i + 9] = part.x + w;
-	    vertices_cache[i + 10] = part.y + h;
+	    vertices_cache[i + 9] = xPlusW;
+	    vertices_cache[i + 10] = yPlusH;
 	    vertices_cache[i + 11] = part.z;
 
-	    vertices_cache[i + 12] = part.x + w;
-	    vertices_cache[i + 13] = part.y - h;
+	    vertices_cache[i + 12] = xPlusW;
+	    vertices_cache[i + 13] = yMinusH;
 	    vertices_cache[i + 14] = part.z;
 
-	    vertices_cache[i + 15] = part.x - w;
-	    vertices_cache[i + 16] = part.y - h;
+	    vertices_cache[i + 15] = xMinusW;
+	    vertices_cache[i + 16] = yMinusH;
 	    vertices_cache[i + 17] = part.z;
 
 	    i += 18;
@@ -271,7 +279,7 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 	    }
 	}
     }
-    
+
     GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
 
     if (darken > 0)
@@ -303,10 +311,10 @@ ParticleSystem::drawParticles(const GLMatrix	     &transform)
 }
 
 void
-ParticleSystem::updateParticles (float          time)
+ParticleSystem::updateParticles (float time)
 {
-    float speed = (time / 50.0);
-    float f_slowdown = slowdown * (1 - MAX (0.99, time / 1000.0) ) * 1000;
+    float speed      = (time / 50.0);
+    float f_slowdown = slowdown * (1 - MAX (0.99, time / 1000.0)) * 1000;
 
     active = false;
 
@@ -351,11 +359,10 @@ toggleFunctions (bool enabled)
 }
 
 void
-FireScreen::fireAddPoint (int        x,
-		          int        y,
-		          bool       requireGrab)
+FireScreen::fireAddPoint (int  x,
+			  int  y,
+			  bool requireGrab)
 {
-
     if (!requireGrab || grabIndex)
     {
 	XPoint p;
@@ -366,9 +373,7 @@ FireScreen::fireAddPoint (int        x,
 	points.push_back (p);
 
 	toggleFunctions (true);
-
     }
-
 }
 
 bool
@@ -376,10 +381,8 @@ FireScreen::addParticle (CompAction         *action,
 			 CompAction::State  state,
 			 CompOption::Vector options)
 {
-    float x, y;
-
-    x = CompOption::getFloatOptionNamed (options, "x", 0);
-    y = CompOption::getFloatOptionNamed (options, "y", 0);
+    float x = CompOption::getFloatOptionNamed (options, "x", 0);
+    float y = CompOption::getFloatOptionNamed (options, "y", 0);
 
     fireAddPoint (x, y, false);
 
@@ -394,16 +397,16 @@ FireScreen::initiate (CompAction         *action,
 		      CompOption::Vector options)
 {
     if (screen->otherGrabExist (NULL))
-        return false;
+	return false;
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (None, "firepaint");
+	grabIndex = screen->pushGrab (None, "firepaint");
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     fireAddPoint (pointerX, pointerY, true);
 
@@ -415,7 +418,6 @@ FireScreen::terminate (CompAction         *action,
 		       CompAction::State  state,
 		       CompOption::Vector options)
 {
-
     if (grabIndex)
     {
 	screen->removeGrab (grabIndex, NULL);
@@ -423,8 +425,7 @@ FireScreen::terminate (CompAction         *action,
     }
 
     action->setState (action->state () & ~(CompAction::StateTermKey |
-				           CompAction::StateTermButton));
-
+					   CompAction::StateTermButton));
     return false;
 }
 
@@ -438,7 +439,7 @@ FireScreen::clear (CompAction         *action,
 }
 
 void
-FireScreen::preparePaint (int      time)
+FireScreen::preparePaint (int time)
 {
     float bg = (float) optionGetBgBrightness () / 100.0;
 
@@ -460,7 +461,6 @@ FireScreen::preparePaint (int      time)
 	ps.slowdown  = optionGetFireSlowdown ();
 	ps.darken    = 0.5;
 	ps.blendMode = GL_ONE;
-
     }
 
     if (!init)
@@ -468,16 +468,16 @@ FireScreen::preparePaint (int      time)
 
     if (!points.empty ())
     {
+	int   rVal2;
+	float rVal, size = 4;
 	float max_new = MIN ((int) ps.particles.size (),  (int) points.size () * 2) *
 			((float) time / 50.0) *
 			(1.05 -	optionGetFireLife());
-	float rVal, size = 4;
-	int rVal2;
 
-	for (unsigned int i = 0;
-	     i < ps.particles.size () && max_new > 0; i++)
+	for (unsigned int i = 0; i < ps.particles.size () && max_new > 0; ++i)
 	{
 	    Particle &part = ps.particles.at (i);
+
 	    if (part.life <= 0.0f)
 	    {
 		/* give gt new life */
@@ -485,7 +485,7 @@ FireScreen::preparePaint (int      time)
 		part.life = 1.0f;
 		/* Random Fade Value */
 		part.fade = (rVal * (1 - optionGetFireLife ()) +
-			      (0.2f * (1.01 - optionGetFireLife ())));
+			     (0.2f * (1.01 - optionGetFireLife ())));
 
 		/* set size */
 		part.width  = optionGetFireSize ();
@@ -523,15 +523,12 @@ FireScreen::preparePaint (int      time)
 		}
 		else
 		{
-		    part.r = (float) optionGetFireColorRed () / 0xffff -
-			      (rVal / 1.7 *
-			       (float) optionGetFireColorRed () / 0xffff);
-		    part.g = (float) optionGetFireColorGreen () / 0xffff -
-			      (rVal / 1.7 *
-			      (float) optionGetFireColorGreen () / 0xffff);
-		    part.b = (float) optionGetFireColorBlue () / 0xffff -
-			      (rVal / 1.7 *
-			      (float) optionGetFireColorBlue () / 0xffff);
+		    part.r = optionGetFireColorRed () / 0xffff -
+			     (rVal / 1.7 * optionGetFireColorRed () / 0xffff);
+		    part.g = optionGetFireColorGreen () / 0xffff -
+			     (rVal / 1.7 * optionGetFireColorGreen () / 0xffff);
+		    part.b = optionGetFireColorBlue () / 0xffff -
+			     (rVal / 1.7 * optionGetFireColorBlue () / 0xffff);
 		}
 
 		/* set transparency */
@@ -547,9 +544,7 @@ FireScreen::preparePaint (int      time)
 		max_new -= 1;
 	    }
 	    else
-	    {
 		part.xg = (part.x < part.xo) ? 1.0 : -1.0;
-	    }
 	}
     }
 
@@ -558,7 +553,6 @@ FireScreen::preparePaint (int      time)
 	float div = 1.0 - bg;
 	div *= (float) time / 500.0;
 	brightness = MAX (bg, brightness - div);
-
     }
 
     if (points.empty () && brightness != 1.0)
@@ -566,7 +560,6 @@ FireScreen::preparePaint (int      time)
 	float div = 1.0 - bg;
 	div *= (float) time / 500.0;
 	brightness = MIN (1.0, brightness + div);
-
     }
 
     if (!init && points.empty () && !ps.active)
@@ -580,16 +573,14 @@ FireScreen::preparePaint (int      time)
 
 bool
 FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-			   const GLMatrix	     &transform,
-			   const CompRegion	     &region,
-			   CompOutput 		     *output,
-			   unsigned int		     mask)
+			   const GLMatrix            &transform,
+			   const CompRegion          &region,
+			   CompOutput                *output,
+			   unsigned int              mask)
 {
-    bool status;
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
-
-    if ( (!init && ps.active) || brightness < 1.0)
+    if ((!init && ps.active) || brightness < 1.0)
     {
 	GLMatrix sTransform = transform;
 
@@ -600,7 +591,6 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    /* cover the screen with a rectangle and darken it
 	     * (coded as two GL_TRIANGLES for GLES compatibility)
 	     */
-
 	    GLfloat vertices[18];
 	    GLushort colors[24];
 
@@ -628,7 +618,7 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    vertices[16] = (GLfloat)output->region ()->extents.y1;
 	    vertices[17] = 0.0f;
 
-	    for (int i = 0; i <= 5; i++)
+	    for (int i = 0; i <= 5; ++i)
 	    {
 		colors[i*4+0] = 0;
 		colors[i*4+1] = 0;
@@ -636,8 +626,12 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		colors[i*4+3] = (1.0 - brightness) * 65535.0f;
 	    }
 
-	    GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
-	    glEnable (GL_BLEND);
+	    GLVertexBuffer *stream        = GLVertexBuffer::streamingBuffer ();
+	    GLboolean      glBlendEnabled = glIsEnabled (GL_BLEND);
+
+	    if (!glBlendEnabled)
+		glEnable (GL_BLEND);
+
 	    stream->begin (GL_TRIANGLES);
 	    stream->addVertices (6, vertices);
 	    stream->addColors (6, colors);
@@ -650,7 +644,6 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (!init && ps.active)
 	    ps.drawParticles (sTransform);
-
     }
 
     return status;
@@ -660,9 +653,7 @@ void
 FireScreen::donePaint ()
 {
     if ( (!init && ps.active) || !points.empty () || brightness < 1.0)
-    {
 	cScreen->damageScreen ();
-    }
     else
 	toggleFunctions (false);
 
@@ -674,7 +665,6 @@ FireScreen::handleEvent (XEvent *event)
 {
     switch (event->type)
     {
-
     case MotionNotify:
 	fireAddPoint (pointerX, pointerY, true);
 	break;
@@ -682,6 +672,8 @@ FireScreen::handleEvent (XEvent *event)
     case EnterNotify:
     case LeaveNotify:
 	fireAddPoint (pointerX, pointerY, true);
+	break;
+
     default:
 	break;
     }
