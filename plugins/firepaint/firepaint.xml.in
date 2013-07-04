@@ -15,6 +15,8 @@
 	</deps>
 	<category>Effects</category>
 	<options>
+	    <group>
+		<_short>General</_short>
 	    <option type="key" name="initiate_key">
 		<_short>Initiate Key</_short>
 		<_long>Key shortcut to initiate fire drawing.</_long>
@@ -35,13 +37,24 @@
 		<_long>Mouse button shortcut to remove all fire particles.</_long>
 		<default></default>
 	    </option>
+	    <option name="bg_brightness" type="float">
+		<_short>Background Brightness</_short>
+		<_long>The brightness of the background during Firepaint (in percent).</_long>
+		<default>50.0</default>
+		<min>0.0</min>
+		<max>100.0</max>
+		<precision>5.0</precision>
+	    </option>
+	    </group>
+	    <group>
+		<_short>Particle Settings</_short>
 	    <option type="action" name="add_particle">
 		<_short>Add Particle</_short>
 		<_long>Adds a fire particle at position (x, y), where x and y are floats.</_long>
 	    </option>
 	    <option name="num_Particles" type="int">
-		<_short>Number of particles</_short>
-		<_long>Maximum number of active particles</_long>
+		<_short>Fire Particle Number</_short>
+		<_long>Maximum number of active particles.</_long>
 		<default>3000</default>
 		<min>100</min>
 		<max>20000</max>
@@ -85,14 +98,7 @@
 		<_long>Have random colors for the fire effect, also known as Mystical Fire.</_long>
 		<default>false</default>
 	    </option>
-	    <option name="bg_brightness" type="float">
-		<_short>Background Brightness</_short>
-		<_long>The brightness of the background during Firepaint (in percent).</_long>
-		<default>50.0</default>
-		<min>0.0</min>
-		<max>100.0</max>
-		<precision>5.0</precision>
-	    </option>
+	    </group>
 	</options>
     </plugin>
 </compiz>
