@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="firepaint" useBcop="true">
-	<_short>Paint fire on the screen</_short>
-	<_long>Paint fire or other particles on the screen</_long>
+	<_short>Firepaint</_short>
+	<_long>Paint fire particles with a specific or random color onto the screen</_long>
 	<deps>
 	    <requirement>
 		<plugin>opengl</plugin>
@@ -16,28 +16,28 @@
 	<category>Effects</category>
 	<options>
 	    <option type="key" name="initiate_key">
-		<_short>Initiate (key)</_short>
-		<_long>Initiate fire drawing</_long>
+		<_short>Initiate Key</_short>
+		<_long>Key shortcut to initiate fire drawing.</_long>
 		<default></default>
 	    </option>
 	    <option type="button" name="initiate_button">
-		<_short>Initiate (button)</_short>
-		<_long>Initiate fire drawing</_long>
+		<_short>Initiate Button</_short>
+		<_long>Mouse button shortcut to initiate fire drawing.</_long>
 		<default>&lt;Super&gt;&lt;Shift&gt;Button1</default>
 	    </option>
 	    <option type="key" name="clear_key">
-		<_short>Clear (key)</_short>
-		<_long>Clear</_long>
+		<_short>Clear Key</_short>
+		<_long>Key shortcut to remove all fire particles.</_long>
 		<default>&lt;Super&gt;&lt;Shift&gt;c</default>
 	    </option>
 	    <option type="button" name="clear_button">
-		<_short>Clear (button)</_short>
-		<_long>Clear</_long>
+		<_short>Clear Button</_short>
+		<_long>Mouse button shortcut to remove all fire particles.</_long>
 		<default></default>
 	    </option>
 	    <option type="action" name="add_particle">
 		<_short>Add Particle</_short>
-		<_long>Adds a fire particle at position (x,y), where x and y are floats.</_long>
+		<_long>Adds a fire particle at position (x, y), where x and y are floats.</_long>
 	    </option>
 	    <option name="num_Particles" type="int">
 		<_short>Number of particles</_short>
@@ -48,7 +48,7 @@
 	    </option>
 	    <option name="fire_size" type="float">
 		<_short>Fire Particle Size</_short>
-		<_long>Fire particle size.</_long>
+		<_long>The size of the individual particles.</_long>
 		<default>15.0</default>
 		<min>0.1</min>
 		<max>40</max>
@@ -56,7 +56,7 @@
 	    </option>
 	    <option name="fire_slowdown" type="float">
 		<_short>Fire Particle Slowdown</_short>
-		<_long>Fire particle slowdown.</_long>
+		<_long>The slowdown of the fire particles.</_long>
 		<default>0.5</default>
 		<min>0.1</min>
 		<max>10</max>
@@ -64,7 +64,7 @@
 	    </option>
 	    <option name="fire_life" type="float">
 		<_short>Fire Particle Life</_short>
-		<_long>Fire particle life.</_long>
+		<_long>The lifespan of the fire particles.</_long>
 		<default>0.7</default>
 		<min>0.1</min>
 		<max>0.95</max>
@@ -72,7 +72,7 @@
 	    </option>
 	    <option name="fire_color" type="color">
 		<_short>Fire Particle Color</_short>
-		<_long>Fire particle color.</_long>
+		<_long>The color and opacity of the fire particles.</_long>
 		<default>
 		    <red>0xffff</red>
 		    <green>0x3333</green>
@@ -86,7 +86,7 @@
 		<default>false</default>
 	    </option>
 	    <option name="bg_brightness" type="int">
-		<_short>Background brightness</_short>
+		<_short>Background Brightness</_short>
 		<_long>Background brightness during paint</_long>
 		<default>50</default>
 		<min>0</min>
