@@ -33,28 +33,28 @@ const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
 const unsigned short COLOR_COMPONENTS  = CACHESIZE_FACTOR * 4;
 
 Particle::Particle () :
-    life   (0),
-    fade   (0),
-    width  (0),
+    life (0),
+    fade (0),
+    width (0),
     height (0),
-    w_mod  (0),
-    h_mod  (0),
-    r      (0),
-    g      (0),
-    b      (0),
-    a      (0),
-    x      (0),
-    y      (0),
-    z      (0),
-    xi     (0),
-    yi     (0),
-    zi     (0),
-    xg     (0),
-    yg     (0),
-    zg     (0),
-    xo     (0),
-    yo     (0),
-    zo     (0)
+    w_mod (0),
+    h_mod (0),
+    r (0),
+    g (0),
+    b (0),
+    a (0),
+    x (0),
+    y (0),
+    z (0),
+    xi (0),
+    yi (0),
+    zi (0),
+    xg (0),
+    yg (0),
+    zg (0),
+    xo (0),
+    yo (0),
+    zo (0)
 {
 }
 
@@ -120,9 +120,9 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
 	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
-    GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
+    GLboolean glBlendWasEnabled = glIsEnabled (GL_BLEND);
 
-    if (!glBlendEnabled)
+    if (!glBlendWasEnabled)
 	glEnable (GL_BLEND);
 
     if (tex)
@@ -174,7 +174,7 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 	    vertices_cache[i + 8] = part.z;
 
 	    //second triangle
-	    vertices_cache[i + 9] = xPlusW;
+	    vertices_cache[i + 9]  = xPlusW;
 	    vertices_cache[i + 10] = yPlusH;
 	    vertices_cache[i + 11] = part.z;
 
@@ -242,7 +242,7 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 
 	    k += 24;
 
-	    if(darken > 0)
+	    if (darken > 0)
 	    {
 		dcolors_cache[l + 0] = r;
 		dcolors_cache[l + 1] = g;
@@ -307,7 +307,9 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
-    glDisable (GL_BLEND);
+
+    if (!glBlendWasEnabled)
+	glDisable (GL_BLEND);
 }
 
 void
@@ -626,10 +628,10 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		colors[i*4+3] = (1.0 - brightness) * 65535.0f;
 	    }
 
-	    GLVertexBuffer *stream        = GLVertexBuffer::streamingBuffer ();
-	    GLboolean      glBlendEnabled = glIsEnabled (GL_BLEND);
+	    GLVertexBuffer *stream           = GLVertexBuffer::streamingBuffer ();
+	    GLboolean      glBlendWasEnabled = glIsEnabled (GL_BLEND);
 
-	    if (!glBlendEnabled)
+	    if (!glBlendWasEnabled)
 		glEnable (GL_BLEND);
 
 	    stream->begin (GL_TRIANGLES);
@@ -639,7 +641,8 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    if (stream->end ())
 		stream->render (sTransform);
 
-	    glDisable (GL_BLEND);
+	    if (!glBlendWasEnabled)
+		glDisable (GL_BLEND);
 	}
 
 	if (!init && ps.active)
