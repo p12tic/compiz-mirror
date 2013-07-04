@@ -443,7 +443,7 @@ FireScreen::clear (CompAction         *action,
 void
 FireScreen::preparePaint (int time)
 {
-    float bg = (float) optionGetBgBrightness () / 100.0;
+    float bg = optionGetBgBrightness () / 100.0;
 
     if (init && !points.empty ())
     {

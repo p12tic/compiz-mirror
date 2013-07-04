@@ -85,12 +85,13 @@
 		<_long>Have random colors for the fire effect, also known as Mystical Fire.</_long>
 		<default>false</default>
 	    </option>
-	    <option name="bg_brightness" type="int">
+	    <option name="bg_brightness" type="float">
 		<_short>Background Brightness</_short>
-		<_long>Background brightness during paint</_long>
-		<default>50</default>
-		<min>0</min>
-		<max>100</max>
+		<_long>The brightness of the background during Firepaint (in percent).</_long>
+		<default>50.0</default>
+		<min>0.0</min>
+		<max>100.0</max>
+		<precision>5.0</precision>
 	    </option>
 	</options>
     </plugin>
