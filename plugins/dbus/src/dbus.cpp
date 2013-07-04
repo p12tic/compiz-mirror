@@ -82,7 +82,7 @@ IntrospectionResponse::addMethod (const char *name,
 	type = va_arg (var_args, const char *);
 	direction = va_arg (var_args, const char *);
 	addArgument (type, direction);
-	nArgs--;
+	--nArgs;
     }
     va_end (var_args);
 
@@ -105,7 +105,7 @@ IntrospectionResponse::addSignal (const char *name,
     {
 	type = va_arg (var_args, const char *);
 	addArgument (type, "out");
-	nArgs--;
+	--nArgs;
     }
     va_end (var_args);
 
@@ -297,7 +297,6 @@ DbusScreen::handleOptionIntrospectMessage (DBusConnection           *connection,
 #endif
     bool isList = false;
     char type[3];
-
 
     IntrospectionResponse response;
     CompOption::Type      restrictionType;
