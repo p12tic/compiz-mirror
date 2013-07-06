@@ -66,8 +66,13 @@ ParticleSystem::ParticleSystem (int n) :
 }
 
 ParticleSystem::ParticleSystem () :
+    slowdown (1.0f),
+    tex (0),
+    active (false),
     x (0),
-    y (0)
+    y (0),
+    darken (0.0f),
+    blendMode (0)
 {
     initParticles (0);
 }
@@ -81,11 +86,6 @@ void
 ParticleSystem::initParticles (int f_numParticles)
 {
     particles.clear ();
-
-    tex      = 0;
-    slowdown = 1;
-    active   = false;
-    darken   = 0;
 
     // Initialize cache
     vertices_cache.clear ();
@@ -120,9 +120,9 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
 	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
-    GLboolean glBlendWasEnabled = glIsEnabled (GL_BLEND);
+    GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
 
-    if (!glBlendWasEnabled)
+    if (!glBlendEnabled)
 	glEnable (GL_BLEND);
 
     if (tex)
@@ -219,8 +219,8 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 	    colors_cache[k + 6] = b;
 	    colors_cache[k + 7] = a;
 
-	    colors_cache[k + 8] = r;
-	    colors_cache[k + 9] = g;
+	    colors_cache[k + 8]  = r;
+	    colors_cache[k + 9]  = g;
 	    colors_cache[k + 10] = b;
 	    colors_cache[k + 11] = a;
 
@@ -254,8 +254,8 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
 		dcolors_cache[l + 6] = b;
 		dcolors_cache[l + 7] = dark_a;
 
-		dcolors_cache[l + 8] = r;
-		dcolors_cache[l + 9] = g;
+		dcolors_cache[l + 8]  = r;
+		dcolors_cache[l + 9]  = g;
 		dcolors_cache[l + 10] = b;
 		dcolors_cache[l + 11] = dark_a;
 
@@ -308,7 +308,8 @@ ParticleSystem::drawParticles(const GLMatrix &transform)
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
 
-    if (!glBlendWasEnabled)
+    /* only disable blending if it was disabled before */
+    if (!glBlendEnabled)
 	glDisable (GL_BLEND);
 }
 
@@ -443,7 +444,7 @@ FireScreen::clear (CompAction         *action,
 void
 FireScreen::preparePaint (int time)
 {
-    float bg = optionGetBgBrightness () / 100.0;
+    float bg = optionGetBgBrightness () / 100.0f;
 
     if (init && !points.empty ())
     {
@@ -461,7 +462,7 @@ FireScreen::preparePaint (int time)
 	glBindTexture (GL_TEXTURE_2D, 0);
 
 	ps.slowdown  = optionGetFireSlowdown ();
-	ps.darken    = 0.5;
+	ps.darken    = 0.5; /* TODO: Magic number */
 	ps.blendMode = GL_ONE;
     }
 
@@ -608,7 +609,7 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    vertices[7] = (GLfloat)output->region ()->extents.y2;
 	    vertices[8] = 0.0f;
 
-	    vertices[9] = (GLfloat)output->region ()->extents.x2;
+	    vertices[9]  = (GLfloat)output->region ()->extents.x2;
 	    vertices[10] = (GLfloat)output->region ()->extents.y2;
 	    vertices[11] = 0.0f;
 
@@ -628,10 +629,10 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		colors[i*4+3] = (1.0 - brightness) * 65535.0f;
 	    }
 
-	    GLVertexBuffer *stream           = GLVertexBuffer::streamingBuffer ();
-	    GLboolean      glBlendWasEnabled = glIsEnabled (GL_BLEND);
+	    GLVertexBuffer *stream        = GLVertexBuffer::streamingBuffer ();
+	    GLboolean      glBlendEnabled = glIsEnabled (GL_BLEND);
 
-	    if (!glBlendWasEnabled)
+	    if (!glBlendEnabled)
 		glEnable (GL_BLEND);
 
 	    stream->begin (GL_TRIANGLES);
@@ -641,7 +642,8 @@ FireScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    if (stream->end ())
 		stream->render (sTransform);
 
-	    if (!glBlendWasEnabled)
+	    /* only disable blending if it was already disabled */
+	    if (!glBlendEnabled)
 		glDisable (GL_BLEND);
 	}
 
