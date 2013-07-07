@@ -954,8 +954,8 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
 	    sTransform3 = sTransform2;
 
-	    sTransform3.translate ( output->x () / output->width (),
-				   -output->y () / output->height (), 0.0);
+	    sTransform3.translate ( output->x () / static_cast <float> (output->width ()),
+				   -output->y () / static_cast <float> (output->height ()), 0.0);
 
 	    cScreen->setWindowPaintOffset ((screen->vp ().x () - i) *
 					   screen->width (),
