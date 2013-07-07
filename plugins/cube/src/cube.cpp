@@ -238,6 +238,13 @@ bool
 PrivateCubeScreen::updateGeometry (int sides,
 				   int invert)
 {
+    /* This will never happen, but we want to calm down the static code analyzer
+     * Coverity
+     * See: https://bugs.launchpad.net/compiz/+bug/1101541 for details
+     */
+    if (!sides)
+	return false;
+
     sides *= mNOutput;
 
     GLfloat mps        = M_PI / sides;
