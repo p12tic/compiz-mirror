@@ -462,7 +462,7 @@ FireScreen::preparePaint (int time)
 	glBindTexture (GL_TEXTURE_2D, 0);
 
 	ps.slowdown  = optionGetFireSlowdown ();
-	ps.darken    = 0.5; /* TODO: Magic number */
+	ps.darken    = bg; /* TODO: Magic number */
 	ps.blendMode = GL_ONE;
     }
 
@@ -473,9 +473,12 @@ FireScreen::preparePaint (int time)
     {
 	int   rVal2;
 	float rVal, size = 4;
-	float max_new = MIN ((int) ps.particles.size (),  (int) points.size () * 2) *
-			((float) time / 50.0) *
-			(1.05 -	optionGetFireLife());
+	float fireLife   = optionGetFireLife ();
+	float fireWidth  = optionGetFireSize ();
+	float fireHeight = fireWidth * 1.5f;
+	bool  mystFire   = optionGetFireMystical ();
+	float max_new    = MIN ((int) ps.particles.size (),  (int) points.size () * 2) *
+			   ((float) time / 50.0f) * (1.05f - fireLife);
 
 	for (unsigned int i = 0; i < ps.particles.size () && max_new > 0; ++i)
 	{
@@ -487,12 +490,12 @@ FireScreen::preparePaint (int time)
 		rVal = (float) (random () & 0xff) / 255.0;
 		part.life = 1.0f;
 		/* Random Fade Value */
-		part.fade = (rVal * (1 - optionGetFireLife ()) +
-			     (0.2f * (1.01 - optionGetFireLife ())));
+		part.fade = (rVal * (1 - fireLife) +
+			     (0.2f * (1.01 - fireLife)));
 
 		/* set size */
-		part.width  = optionGetFireSize ();
-		part.height = optionGetFireSize () * 1.5;
+		part.width  = fireWidth;
+		part.height = fireHeight;
 		rVal = (float) (random () & 0xff) / 255.0;
 		part.w_mod = size * rVal;
 		part.h_mod = size * rVal;
@@ -501,7 +504,7 @@ FireScreen::preparePaint (int time)
 		rVal2 = random () % points.size ();
 		part.x = points.at (rVal2).x;
 		part.y = points.at (rVal2).y;
-		part.z = 0.0;
+		part.z = 0.0f;
 		part.xo = part.x;
 		part.yo = part.y;
 		part.zo = part.z;
@@ -514,7 +517,7 @@ FireScreen::preparePaint (int time)
 		part.zi = 0.0f;
 		rVal = (float) (random () & 0xff) / 255.0;
 
-		if (optionGetFireMystical () )
+		if (mystFire)
 		{
 		    /* Random colors! (aka Mystical Fire) */
 		    rVal = (float) (random () & 0xff) / 255.0;
