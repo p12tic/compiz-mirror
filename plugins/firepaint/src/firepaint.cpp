@@ -462,7 +462,7 @@ FireScreen::preparePaint (int time)
 	glBindTexture (GL_TEXTURE_2D, 0);
 
 	ps.slowdown  = optionGetFireSlowdown ();
-	ps.darken    = 0.5f /* TODO: Magic number */
+	ps.darken    = 0.5f; /* TODO: Magic number */
 	ps.blendMode = GL_ONE;
     }
 
