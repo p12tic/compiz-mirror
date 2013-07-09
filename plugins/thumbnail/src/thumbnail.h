@@ -53,24 +53,17 @@
 #define THUMB_WINDOW(w)						      \
     ThumbWindow *tw = ThumbWindow::get (w)
 
-#define WIN_X(w) ((w)->x () - (w)->border ().left)
-#define WIN_Y(w) ((w)->y () - (w)->border ().top)
-#define WIN_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
-#define WIN_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
-
-extern const unsigned short TEXT_DISTANCE;
-
 bool textPluginLoaded;
 
 typedef struct _Thumbnail
 {
-    int   x;
-    int   y;
-    int   width;
-    int   height;
-    float scale;
-    float opacity;
-    int   offset;
+    int        x;
+    int        y;
+    int        width;
+    int        height;
+    float      scale;
+    float      opacity;
+    int        offset;
 
     CompWindow *win;
     CompWindow *dock;
@@ -97,30 +90,30 @@ class ThumbScreen:
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
-		       const GLMatrix &,
-		       const CompRegion &,
-		       CompOutput *,
-		       unsigned int);
+		       const GLMatrix            &,
+		       const CompRegion          &,
+		       CompOutput                *,
+		       unsigned int                );
 
 	void
 	donePaint ();
 
 	void
 	glPaintTransformedOutput (const GLScreenPaintAttrib &,
-			          const GLMatrix &,
-			          const CompRegion &,
-			          CompOutput *,
-				  unsigned int);
+				  const GLMatrix            &,
+				  const CompRegion          &,
+				  CompOutput                *,
+				  unsigned int                );
 
 	void
-	freeThumbText (Thumbnail  *t);
+	freeThumbText (Thumbnail *t);
 
 	void
-	renderThumbText (Thumbnail  *t,
-		 	 bool       freeThumb);
+	renderThumbText (Thumbnail *t,
+			 bool      freeThumb);
 
 	void
-	damageThumbRegion (Thumbnail  *t);
+	damageThumbRegion (Thumbnail *t);
 
 	void
 	thumbUpdateThumbnail ();
@@ -136,19 +129,18 @@ class ThumbScreen:
 
 	void
 	paintTexture (const GLMatrix &transform,
-	              GLushort       *color,
-	              int             wx,
-		      int wy,
-		      int width,
-		      int height,
-		      int off);
+		      GLushort       *color,
+		      int            wx,
+		      int            wy,
+		      int            width,
+		      int            height,
+		      int            off);
 
 	void
-	thumbPaintThumb (Thumbnail           *t,
+	thumbPaintThumb (Thumbnail      *t,
 		 	 const GLMatrix *transform);
 
-
-	GLScreen   *gScreen;
+	GLScreen        *gScreen;
 	CompositeScreen *cScreen;
 
 	CompWindow *dock;
@@ -181,15 +173,15 @@ class ThumbWindow :
 	ThumbWindow (CompWindow *window);
 	~ThumbWindow ();
 
-	CompWindow *window;
+	CompWindow      *window;
 	CompositeWindow *cWindow;
-	GLWindow *gWindow;
+	GLWindow        *gWindow;
 
 	bool
 	glPaint (const GLWindowPaintAttrib &attrib,
-		const GLMatrix		&transform,
-		const CompRegion 		&region,
-		unsigned int		mask);
+		 const GLMatrix            &transform,
+		 const CompRegion          &region,
+		 unsigned int              mask);
 
 	void
 	resizeNotify (int dx,
@@ -198,7 +190,7 @@ class ThumbWindow :
 		      int dheight);
 
 	bool
-	damageRect (bool initial,
+	damageRect (bool           initial,
 		    const CompRect &rect);
 };
 
