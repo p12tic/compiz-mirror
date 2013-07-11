@@ -57,6 +57,10 @@ using ::testing::ValuesIn;
 using ::testing::WithParamInterface;
 using ::testing::_;
 
+using ::compiz::testing::HasGeometry;
+using ::compiz::testing::RelativeWindowGeometry;
+using ::compiz::testing::AbsoluteWindowGeometry;
+
 class BaseDecorAcceptance :
     public ct::AutostartCompizXorgSystemTestWithTestHelper
 {
@@ -78,6 +82,10 @@ class BaseDecorAcceptance :
 	Atom   mDecorationTypeWindow;
 	Atom   mDecorationInputFrameAtom;
 	Atom   mDecorationOutputFrameAtom;
+
+    private:
+
+	int GetEventMask () const;
 };
 
 BaseDecorAcceptance::BaseDecorAcceptance () :
@@ -90,6 +98,13 @@ BaseDecorAcceptance::BaseDecorAcceptance () :
     mDecorationInputFrameAtom (0),
     mDecorationOutputFrameAtom (0)
 {
+}
+
+int
+BaseDecorAcceptance::GetEventMask () const
+{
+    return ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () |
+	       SubstructureNotifyMask;
 }
 
 void
@@ -151,9 +166,12 @@ BaseDecorAcceptance::GetPluginList ()
     ct::CompizProcess::PluginList baseList (Base::GetPluginList ());
     ct::CompizProcess::PluginList list;
 
-    list.push_back ("composite");
-    list.push_back ("opengl");
-    list.push_back ("decor");
+    list.push_back (ct::CompizProcess::Plugin ("composite",
+					       ct::CompizProcess::Real));
+    list.push_back (ct::CompizProcess::Plugin ("opengl",
+					       ct::CompizProcess::Real));
+    list.push_back (ct::CompizProcess::Plugin ("decor",
+					       ct::CompizProcess::Real));
 
     for (ct::CompizProcess::PluginList::iterator it = baseList.begin ();
 	 it != baseList.end ();
@@ -1122,17 +1140,13 @@ void WaitForConfigureOn (Display      *display,
 					      height,
 					      mask);
 
-    /* The use of the timeout is currently because some functionality
-     * is broken which would cause these barrier conditions to never
-     * eventuate. For now just get to the fail condition */
     Advance (display,
 	     ct::WaitForEventOfTypeOnWindowMatching (display,
 						     window,
 						     ConfigureNotify,
 						     -1,
 						     -1,
-						     matcher,
-						     1000));
+						     matcher));
 }
 
 void WaitForFrameExtents (Display *dpy,
@@ -1729,9 +1743,6 @@ PixmapDecoratorAcceptance::WaitForDecorationUpdate (::Display          *display,
 						    Window             window,
 						    const FakeDecorPtr &decor)
 {
-    /* Wait for the frame extents to change */
-    WaitForPropertyNotify (display, window, "_NET_FRAME_EXTENTS");
-
     const CompPoint &framePos (decor->restoredFrameWindowOffset ());
 
     /* Wait for the ConfigureNotify on the frame window
@@ -1743,6 +1754,9 @@ PixmapDecoratorAcceptance::WaitForDecorationUpdate (::Display          *display,
 			0,
 			0,
 			CWX | CWY);
+
+    /* Wait for the frame extents to change */
+    WaitForPropertyNotify (display, window, "_NET_FRAME_EXTENTS");
 }
 
 void
@@ -1802,6 +1816,8 @@ class PixmapDecoratedWindowAcceptance :
 {
     public:
 
+	PixmapDecoratedWindowAcceptance ();
+
 	virtual void SetUp ();
 	virtual void TearDown ();
 
@@ -1809,11 +1825,18 @@ class PixmapDecoratedWindowAcceptance :
 
     protected:
 
+	unsigned int RealDecorationActiveBorderExtent;
+
 	Window mTestWindow;
 	Window mTestWindowParent;
 
 	cdt::FakePixmapTypeDecoration::Ptr mTestWindowDecoration;
 };
+
+PixmapDecoratedWindowAcceptance::PixmapDecoratedWindowAcceptance () :
+    RealDecorationActiveBorderExtent (ActiveBorderExtent + 1)
+{
+}
 
 void
 PixmapDecoratedWindowAcceptance::SetUp ()
@@ -1828,7 +1851,9 @@ PixmapDecoratedWindowAcceptance::SetUp ()
     /* Start the decorator */
     SetUpDecorator ();
 
-    unsigned int ResBo = ActiveBorderExtent;
+    /* We need to change the border extent so that the window
+     * will move from its position in the default decoration */
+    unsigned int ResBo = RealDecorationActiveBorderExtent;
     unsigned int ResIn = ActiveInputExtent;
     unsigned int MaxEx = MaximizedBorderExtent;
 
@@ -2077,167 +2102,6 @@ TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeEqOutputXWid
 
 namespace
 {
-void RelativeWindowGeometry (Display      *dpy,
-			     Window       w,
-			     int          &x,
-			     int          &y,
-			     unsigned int &width,
-			     unsigned int &height,
-			     unsigned int &border)
-{
-    Window       root;
-    unsigned int depth;
-
-    if (!XGetGeometry (dpy, w, &root, &x, &y, &width, &height, &border, &depth))
-	throw std::logic_error ("XGetGeometry failed");
-}
-
-void AbsoluteWindowGeometry (::Display    *display,
-			     Window       window,
-			     int          &x,
-			     int          &y,
-			     unsigned int &width,
-			     unsigned int &height,
-			     unsigned int &border)
-{
-    Window       root;
-    Window       child;
-    unsigned int depth;
-
-    if (!XGetGeometry (display, window, &root,
-		       &x, &y, &width, &height,
-		       &border, &depth))
-	throw std::logic_error ("XGetGeometry failed");
-
-    if (!XTranslateCoordinates (display, window, root, x, y,
-				&x, &y, &child))
-	throw std::logic_error ("XTranslateCoordinates failed");
-}
-
-typedef void (*RetrievalFunc) (Display      *dpy,
-			       Window       window,
-			       int          &x,
-			       int          &y,
-			       unsigned int &width,
-			       unsigned int &height,
-			       unsigned int &border);
-
-class WindowGeometryMatcher :
-    public MatcherInterface <Window>
-{
-    public:
-
-	WindowGeometryMatcher (Display             *dpy,
-			       RetrievalFunc       func,
-			       const Matcher <int> &x,
-			       const Matcher <int> &y,
-			       const Matcher <unsigned int> &width,
-			       const Matcher <unsigned int> &height,
-			       const Matcher <unsigned int> &border);
-
-	bool MatchAndExplain (Window x, MatchResultListener *listener) const;
-	void DescribeTo (std::ostream *os) const;
-
-    private:
-
-	Display       *mDpy;
-
-	RetrievalFunc mFunc;
-
-	Matcher <int> mX;
-	Matcher <int> mY;
-	Matcher <unsigned int> mWidth;
-	Matcher <unsigned int> mHeight;
-	Matcher <unsigned int> mBorder;
-};
-
-Matcher <Window>
-HasGeometry (Display             *dpy,
-	     RetrievalFunc       func,
-	     const Matcher <int> &x,
-	     const Matcher <int> &y,
-	     const Matcher <unsigned int> &width,
-	     const Matcher <unsigned int> &height,
-	     const Matcher <unsigned int> &border)
-{
-    return MakeMatcher (new WindowGeometryMatcher (dpy,
-						   func,
-						   x,
-						   y,
-						   width,
-						   height,
-						   border));
-}
-}
-
-WindowGeometryMatcher::WindowGeometryMatcher (Display             *dpy,
-					      RetrievalFunc       func,
-					      const Matcher <int> &x,
-					      const Matcher <int> &y,
-					      const Matcher <unsigned int> &width,
-					      const Matcher <unsigned int> &height,
-					      const Matcher <unsigned int> &border) :
-    mDpy (dpy),
-    mFunc (func),
-    mX (x),
-    mY (y),
-    mWidth (width),
-    mHeight (height),
-    mBorder (border)
-{
-}
-
-bool
-WindowGeometryMatcher::MatchAndExplain (Window w,
-					MatchResultListener *listener) const
-{
-    int          x, y;
-    unsigned int width, height, border;
-
-    mFunc (mDpy, w, x, y, width, height, border);
-
-    bool match = mX.MatchAndExplain (x, listener) &&
-		 mY.MatchAndExplain (y, listener) &&
-		 mWidth.MatchAndExplain (width, listener) &&
-		 mHeight.MatchAndExplain (height, listener) &&
-		 mBorder.MatchAndExplain (border, listener);
-
-    if (!match)
-    {
-	*listener << "Geometry:"
-		  << " x: " << x
-		  << " y: " << y
-		  << " width: " << width
-		  << " height: " << height
-		  << " border: " << border;
-    }
-
-    return match;
-}
-
-void
-WindowGeometryMatcher::DescribeTo (std::ostream *os) const
-{
-    *os << "Window geometry matching :";
-
-    *os << std::endl << " - ";
-    mX.DescribeTo (os);
-
-    *os << std::endl << " - ";
-    mY.DescribeTo (os);
-
-    *os << std::endl << " - ";
-    mWidth.DescribeTo (os);
-
-    *os << std::endl << " - ";
-    mHeight.DescribeTo (os);
-
-    *os << std::endl << " - ";
-    mBorder.DescribeTo (os);
-}
-
-namespace
-{
 void WindowBorderPositionAttributes (Display *dpy,
 				     Window  w,
 				     XWindowAttributes &attrib,
@@ -2246,16 +2110,15 @@ void WindowBorderPositionAttributes (Display *dpy,
 {
     XGetWindowAttributes (dpy, w, &attrib);
 
-    /* Remove border - input offset */
-    attrib.x -= (ActiveBorderExtent - ActiveInputExtent);
-    attrib.y -= (ActiveBorderExtent - ActiveInputExtent);
-    attrib.width -= (ActiveBorderExtent - ActiveInputExtent) * 2;
-    attrib.height -= (ActiveBorderExtent - ActiveInputExtent) * 2;
+    /* Remove input - border offset */
+    attrib.x += (ActiveInputExtent - ActiveBorderExtent);
+    attrib.y += (ActiveInputExtent - ActiveBorderExtent);
+    attrib.width -= (ActiveInputExtent - ActiveBorderExtent) * 2;
+    attrib.height -= (ActiveInputExtent - ActiveBorderExtent) * 2;
 }
 }
 
-/* DISABLED - Upon maximization, x offset is 1, width offset is 10 */
-TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_VertMaximizeFrameWindowSizeSameXWidth)
+TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeSameXWidth)
 {
     XWindowAttributes rootAttrib, attrib;
     XGetWindowAttributes (Display (), DefaultRootWindow (Display ()), &rootAttrib);
@@ -2263,7 +2126,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_VertMaximizeFrameWindowSizeSam
     WindowBorderPositionAttributes (Display (),
 				    mTestWindowParent,
 				    attrib,
-				    ActiveBorderExtent,
+				    RealDecorationActiveBorderExtent,
 				    ActiveInputExtent);
 
     ChangeStateOfWindow (Display (),
@@ -2293,8 +2156,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_VertMaximizeFrameWindowSizeSam
 			      _));
 }
 
-/* DISABLED - Upon maximization, y offset is 1, height offset is 10 */
-TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_HorzMaximizeFrameWindowSizeSameYHeight)
+TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeSameYHeight)
 {
     XWindowAttributes rootAttrib, attrib;
     XGetWindowAttributes (Display (), DefaultRootWindow (Display ()), &rootAttrib);
@@ -2302,7 +2164,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_HorzMaximizeFrameWindowSizeSam
     WindowBorderPositionAttributes (Display (),
 				    mTestWindowParent,
 				    attrib,
-				    ActiveBorderExtent,
+				    RealDecorationActiveBorderExtent,
 				    ActiveInputExtent);
 
     ChangeStateOfWindow (Display (),
@@ -2356,12 +2218,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, UndecoratedWindowExpandToOrigSize)
 			      _));
 }
 
-/* DISABLED - Ensure that a window with StaticGravity expands to its
- * original size when it is undecorated
- *
- * X and Y positions do not revert back to their original state.
- */
-TEST_F (PixmapDecoratedWindowAcceptance, DISABLED_UndecorateStaticGravityWindow)
+TEST_F (PixmapDecoratedWindowAcceptance, UndecorateStaticGravityWindow)
 {
     XSizeHints hints;
 
@@ -2474,7 +2331,7 @@ TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowBorderMovesClient)
 					   _));
 }
 
-TEST_P (PixmapDecorationAdjustment, DISABLED_AdjustRestoredWindowBorderShrinkClient)
+TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowBorderShrinkClient)
 {
     ReconfigureDecoration (Display (),
 			   mTestWindow,
@@ -2494,7 +2351,7 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_AdjustRestoredWindowBorderShrinkCli
 					   _));
 }
 
-TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinks)
+TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinks)
 {
     decor_extents_t newExtents = GetParam ();
 
@@ -2523,7 +2380,7 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinks)
 					   _));
 }
 
-TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstMaximized)
+TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstMaximized)
 {
     decor_extents_t newExtents = GetParam ();
 
@@ -2546,16 +2403,21 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstM
     const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
     const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
 
+    /* As the window is shrunk to accomodate the border size, we must subtract
+     * the border from the original window size */
+    CompSize shrink ((newExtents.left + newExtents.right),
+		     (newExtents.top + newExtents.bottom));
+
     RestoreWindow (mTestWindow,
-		   ct::WINDOW_X - off.x (),
-		   ct::WINDOW_Y - off.y (),
-		   ct::WINDOW_WIDTH + size.width (),
-		   ct::WINDOW_HEIGHT + size.height ());
+		   ct::WINDOW_X + off.x (),
+		   ct::WINDOW_Y + off.y (),
+		   ct::WINDOW_WIDTH - shrink.width () + size.width (),
+		   ct::WINDOW_HEIGHT - shrink.height () + size.height ());
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
 					   ct::WINDOW_X + newExtents.left,
-					   ct::WINDOW_Y + newExtents.right,
+					   ct::WINDOW_Y + newExtents.top,
 					   ct::WINDOW_WIDTH - (newExtents.left +
 							       newExtents.right),
 					   ct::WINDOW_HEIGHT - (newExtents.top +
@@ -2563,7 +2425,7 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstM
 					   _));
 }
 
-TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstUndecorated)
+TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstUndecorated)
 {
     decor_extents_t newExtents = GetParam ();
 
@@ -2574,15 +2436,10 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstU
 			   DecorationExtents (10, 10, 10, 10),
 			   DecorationExtents (10, 10, 10, 10));
 
+    /* When decorations are disabled on this window, the frame window
+     * will retain the exact same size, as border == input in the previous
+     * case. So there's no need to wait */
     DisallowDecorationsOnWindow (mTestWindow);
-
-    WaitForConfigureOn (Display (),
-			mTestWindowParent,
-			ct::WINDOW_X,
-			ct::WINDOW_Y,
-			ct::WINDOW_WIDTH,
-			ct::WINDOW_HEIGHT,
-			CWX | CWY | CWWidth | CWHeight);
 
     /* Set the property on the window, then decorate without waiting
      * for a response we will continue to use the maximized window decoration */
@@ -2596,18 +2453,23 @@ TEST_P (PixmapDecorationAdjustment, DISABLED_ClientExpandsAsBorderShrinksWhilstU
     const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
     const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
 
+    /* As the window is shrunk to accomadate the border size, we must subtract
+     * the border from the original window size */
+    CompSize shrink ((newExtents.left + newExtents.right),
+		     (newExtents.top + newExtents.bottom));
+
     WaitForConfigureOn (Display (),
 			mTestWindowParent,
-			ct::WINDOW_X - off.x (),
-			ct::WINDOW_Y - off.y (),
-			ct::WINDOW_WIDTH + size.width (),
-			ct::WINDOW_HEIGHT + size.height (),
+			ct::WINDOW_X + off.x (),
+			ct::WINDOW_Y + off.y (),
+			ct::WINDOW_WIDTH - shrink.width () + size.width (),
+			ct::WINDOW_HEIGHT - shrink.height () + size.height (),
 			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
 					   ct::WINDOW_X + newExtents.left,
-					   ct::WINDOW_Y + newExtents.right,
+					   ct::WINDOW_Y + newExtents.top,
 					   ct::WINDOW_WIDTH - (newExtents.left +
 							       newExtents.right),
 					   ct::WINDOW_HEIGHT - (newExtents.top +

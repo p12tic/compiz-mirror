@@ -30,6 +30,7 @@
 
 using ::testing::MatcherInterface;
 using ::testing::MatchResultListener;
+using ::testing::Matcher;
 
 namespace compiz
 {
@@ -143,6 +144,62 @@ namespace compiz
 						 const XEventMatcher &matcher,
 						 int                 timeout = 0);
 
+	void RelativeWindowGeometry (Display      *dpy,
+				     Window       w,
+				     int          &x,
+				     int          &y,
+				     unsigned int &width,
+				     unsigned int &height,
+				     unsigned int &border);
+
+	void AbsoluteWindowGeometry (::Display    *display,
+				     Window       window,
+				     int          &x,
+				     int          &y,
+				     unsigned int &width,
+				     unsigned int &height,
+				     unsigned int &border);
+
+	typedef void (*RetrievalFunc) (Display      *dpy,
+				       Window       window,
+				       int          &x,
+				       int          &y,
+				       unsigned int &width,
+				       unsigned int &height,
+				       unsigned int &border);
+
+	class WindowGeometryMatcher :
+	    public MatcherInterface <Window>
+	{
+	    public:
+
+		WindowGeometryMatcher (Display             *dpy,
+				       RetrievalFunc       func,
+				       const Matcher <int> &x,
+				       const Matcher <int> &y,
+				       const Matcher <unsigned int> &width,
+				       const Matcher <unsigned int> &height,
+				       const Matcher <unsigned int> &border);
+
+		bool MatchAndExplain (Window x, MatchResultListener *listener) const;
+		void DescribeTo (std::ostream *os) const;
+
+	    private:
+
+		class Private;
+
+		std::auto_ptr <Private> priv;
+	};
+
+	Matcher <Window>
+	HasGeometry (Display             *dpy,
+		     RetrievalFunc       func,
+		     const Matcher <int> &x,
+		     const Matcher <int> &y,
+		     const Matcher <unsigned int> &width,
+		     const Matcher <unsigned int> &height,
+		     const Matcher <unsigned int> &border);
+
 	class PrivateCompizProcess;
 	class CompizProcess
 	{
@@ -154,7 +211,26 @@ namespace compiz
 		    ExpectStartupFailure = (1 << 2)
 		} StartupFlags;
 
-		typedef std::vector <std::string> PluginList;
+		typedef enum _PluginType
+		{
+		    Real = 0,
+		    TestOnly = 1
+		} PluginType;
+
+		struct Plugin
+		{
+		    Plugin (const char *name,
+			    PluginType type) :
+			name (name),
+			type (type)
+		    {
+		    }
+
+		    std::string name;
+		    PluginType  type;
+		};
+
+		typedef std::vector <Plugin> PluginList;
 
 		CompizProcess (Display *dpy,
 			       StartupFlags,
@@ -196,7 +272,7 @@ namespace compiz
 		AutostartCompizXorgSystemTest ();
 
 		virtual CompizProcess::StartupFlags GetStartupFlags ();
-		virtual int GetEventMask ();
+		virtual int GetEventMask () const;
 		virtual CompizProcess::PluginList GetPluginList ();
 		virtual void SetUp ();
 
@@ -222,7 +298,7 @@ namespace compiz
 		std::vector <long> WaitForWindowCreation (Window w);
 		bool IsOverrideRedirect (std::vector <long> &data);
 
-		virtual int  GetEventMask ();
+		virtual int  GetEventMask () const;
 
 	    private:
 
