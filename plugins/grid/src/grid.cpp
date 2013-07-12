@@ -404,24 +404,6 @@ GridScreen::initiateCommon (CompAction          *action,
 
 			/* Semi-maximize the window vertically */
 			cw->maximize (CompWindowStateMaximizedVertMask);
-
-			/* We need to save the X/W if it was not already saved */
-			if (key)
-			{
-			    if (!(gw->window->saveMask () & CWX))
-			    {
-				gw->window->saveMask () |= CWX;
-				gw->window->saveWc ().x  = gw->window->geometry ().x ();
-			    }
-
-			    if (!(gw->window->saveMask () & CWWidth))
-			    {
-				gw->window->saveMask () |= CWWidth;
-				gw->window->saveWc ().width =
-				    gw->window->geometry ().width ();
-			    }
-			}
-
 		    }
 		    /* GridTop || GridBottom */
 		    else /* (horzMaximizedGridPosition) */
@@ -432,24 +414,6 @@ GridScreen::initiateCommon (CompAction          *action,
 
 			/* Semi-maximize the window horizontally */
 			cw->maximize (CompWindowStateMaximizedHorzMask);
-
-			/* We need to save the Y/H if it was not already saved */
-			if (key)
-			{
-			    if (!(gw->window->saveMask () & CWY))
-			    {
-				gw->window->saveMask () |= CWY;
-				gw->window->saveWc ().y  = gw->window->geometry ().y ();
-			    }
-
-			    if (!(gw->window->saveMask () & CWHeight))
-			    {
-				gw->window->saveMask () |= CWHeight;
-				gw->window->saveWc ().height =
-				    gw->window->geometry ().height ();
-			    }
-			}
-
 		    }
 
 		    /* Be evil */
@@ -1046,6 +1010,22 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	!(window->state () & MAXIMIZE_STATE))
     {
 	lastTarget = GridUnknown;
+
+	if (!window->grabbed ())
+	{
+	    if (isGridHorzMaximized)
+	    {
+ 		window->saveMask ()      |= CWY | CWHeight;
+  		window->saveWc ().y      = originalSize.y ();
+  		window->saveWc ().height = originalSize.height ();
+	    }
+	    else if (isGridVertMaximized)
+	    {
+  		window->saveMask ()     |= CWX | CWWidth;
+  		window->saveWc ().x     = originalSize.x ();
+  		window->saveWc ().width = originalSize.width ();
+	    }
+	}
 
 	if ((isGridHorzMaximized &&
 	     (lastState & MAXIMIZE_STATE) == CompWindowStateMaximizedHorzMask) ||
