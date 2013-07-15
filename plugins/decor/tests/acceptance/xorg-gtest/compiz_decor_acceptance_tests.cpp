@@ -1756,11 +1756,8 @@ TEST_F (DecorPixmapShapeSetAcceptance, FrameWindowShapeIsUpdated)
     XMapRaised (Display (), w);
     WaitForReparent (Display (), w);
     WaitForPropertyNotify (Display (), w, DECOR_INPUT_FRAME_ATOM_NAME);
-    WaitForPropertyNotify (Display (), w, "_NET_FRAME_EXTENTS");
 
     Window parent = FindParent (Display (), w);
-
-    XShapeSelectInput (Display (), parent, ShapeNotifyMask);
 
     int clientX, clientY;
     unsigned int clientWidth, clientHeight, border;
@@ -1786,21 +1783,36 @@ TEST_F (DecorPixmapShapeSetAcceptance, FrameWindowShapeIsUpdated)
 
     Window inputFrame = *(reinterpret_cast <Window *> (inputFramePropertyData.get ()));
 
-    XShapeCombineMask (Display (),
-		       inputFrame,
-		       ShapeInput,
-		       0,
-		       0,
-		       None,
-		       ShapeSet);
+    /* Sync first, and then combine rectangles on the input frame */
+    XSync (Display (), false);
+    XShapeSelectInput (Display (), parent, ShapeNotifyMask);
+    XShapeCombineRectangles (Display (),
+			     inputFrame,
+			     ShapeInput,
+			     0,
+			     0,
+			     NULL,
+			     0,
+			     ShapeSet,
+			     0);
+
+    clientX += ActiveBorderExtent;
+    clientY += ActiveBorderExtent;
 
     /* Wait for a shape event on the frame window */
+    ct::ShapeNotifyXEventMatcher matcher (ShapeInput,
+					  clientX,
+					  clientY,
+					  clientWidth,
+					  clientHeight,
+					  1);
     Advance (Display (),
-	     ct::WaitForEventOfTypeOnWindow (Display (),
-					     parent,
-					     shapeEvent + ShapeNotify,
-					     -1,
-					     -1));
+	     ct::WaitForEventOfTypeOnWindowMatching (Display (),
+						     parent,
+						     shapeEvent + ShapeNotify,
+						     -1,
+						     0,
+						     matcher));
 
     /* Grab the shape rectangles of the parent, they should
      * be equal to the client window size */
