@@ -400,6 +400,7 @@ class PrivateWindow :
 	bool shaded;
 	bool hidden;
 	bool grabbed;
+	bool alreadyDecorated;
 
 	unsigned int desktop;
 

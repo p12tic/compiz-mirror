@@ -38,9 +38,12 @@
 
 #include <core/point.h>
 #include <core/size.h>
+#include <core/rect.h>
 
 #include <xorg/gtest/xorg-gtest.h>
 #include <compiz-xorg-gtest.h>
+
+#include <gtest_shared_tmpenv.h>
 
 namespace xt = xorg::testing;
 namespace ct = compiz::testing;
@@ -83,6 +86,8 @@ class BaseDecorAcceptance :
 	Atom   mDecorationInputFrameAtom;
 	Atom   mDecorationOutputFrameAtom;
 
+	TmpEnv mDisableConfigureBufferLocksEnv;
+
     private:
 
 	int GetEventMask () const;
@@ -96,7 +101,10 @@ BaseDecorAcceptance::BaseDecorAcceptance () :
     mDecorationTypePixmap (0),
     mDecorationTypeWindow (0),
     mDecorationInputFrameAtom (0),
-    mDecorationOutputFrameAtom (0)
+    mDecorationOutputFrameAtom (0),
+    /* Disable configure buffer locks as they cause event delivery indeterminacy
+     * that isn't useful for a testing environment */
+    mDisableConfigureBufferLocksEnv ("COMPIZ_NO_CONFIGURE_BUFFER_LOCKS", "1")
 {
 }
 
@@ -256,7 +264,8 @@ class FakeDecoration
 		    unsigned int actions) const;
 
 	virtual CompPoint restoredFrameWindowOffset () const = 0;
-	virtual CompSize restoredDecorationSize () const = 0;
+	virtual CompSize restoredDecorationBorderSize () const = 0;
+	virtual CompSize restoredDecorationInputSize () const = 0;
 
     protected:
 
@@ -290,7 +299,8 @@ class FakeWindowTypeDecoration :
 	size_t propertyDataSize () const;
 	void addPropertyData (std::vector<long> &) const;
 	CompPoint restoredFrameWindowOffset () const;
-	CompSize restoredDecorationSize () const;
+	CompSize restoredDecorationBorderSize () const;
+	CompSize restoredDecorationInputSize () const;
 
 	static const unsigned int WindowDecorationSize = 8;
 
@@ -323,7 +333,8 @@ class FakePixmapTypeDecoration :
 	void changeRestoredInput (const decor_extents_t &input);
 
 	CompPoint restoredFrameWindowOffset () const;
-	CompSize restoredDecorationSize () const;
+	CompSize restoredDecorationBorderSize () const;
+	CompSize restoredDecorationInputSize () const;
 
     protected:
 
@@ -619,10 +630,16 @@ cdt::FakeWindowTypeDecoration::restoredFrameWindowOffset () const
 }
 
 CompSize
-cdt::FakeWindowTypeDecoration::restoredDecorationSize () const
+cdt::FakeWindowTypeDecoration::restoredDecorationBorderSize () const
 {
     return CompSize (mRestored.left + mRestored.right,
 		     mRestored.top + mRestored.bottom);
+}
+
+CompSize
+cdt::FakeWindowTypeDecoration::restoredDecorationInputSize () const
+{
+    return restoredDecorationBorderSize ();
 }
 
 cdt::FakePixmapTypeDecoration::FakePixmapTypeDecoration (unsigned int type,
@@ -713,7 +730,14 @@ cdt::FakePixmapTypeDecoration::restoredFrameWindowOffset () const
 }
 
 CompSize
-cdt::FakePixmapTypeDecoration::restoredDecorationSize () const
+cdt::FakePixmapTypeDecoration::restoredDecorationBorderSize () const
+{
+    return CompSize (mRestoredBorder.left + mRestoredBorder.right,
+		     mRestoredBorder.top + mRestoredBorder.bottom);
+}
+
+CompSize
+cdt::FakePixmapTypeDecoration::restoredDecorationInputSize () const
 {
     return CompSize (mRestoredInput.left + mRestoredInput.right,
 		     mRestoredInput.top + mRestoredInput.bottom);
@@ -1314,6 +1338,11 @@ class DecorWithPixmapDefaultsAcceptance :
 
     protected:
 
+	cdt::FakeDecoration::Ptr defaultActiveDecoration ();
+
+	cdt::FakeDecoration::Ptr rootActiveDecoration;
+	cdt::FakeDecoration::Ptr rootBareDecoration;
+
 	cdt::FakeDecorationList rootActiveDecorationList;
 	cdt::FakeDecorationList rootBareDecorationList;
 
@@ -1484,7 +1513,7 @@ DecorWithPixmapDefaultsAcceptance::SetUp ()
 
     decor_extents_t emptyExtents (DecorationExtents (0, 0, 0, 0));
 
-    cdt::FakeDecoration::Ptr rootActiveDecoration =
+    rootActiveDecoration =
 	MakeFakePixmapTypeDecoration (DECOR_WINDOW_TYPE_NORMAL,
 				      0,
 				      0,
@@ -1495,7 +1524,7 @@ DecorWithPixmapDefaultsAcceptance::SetUp ()
 				      activeInputMaximized,
 				      Display ());
 
-    cdt::FakeDecoration::Ptr rootBareDecoration =
+    rootBareDecoration =
 	MakeFakePixmapTypeDecoration (0, 0, 0,
 				      1, 1,
 				      emptyExtents,
@@ -1519,10 +1548,15 @@ void
 DecorWithPixmapDefaultsAcceptance::TearDown ()
 {
     /* Remove inserted decorations */
-    rootActiveDecorationList.RemoveDecoration (DECOR_WINDOW_TYPE_NORMAL,
-					       0,
-					       0);
-    rootBareDecorationList.RemoveDecoration (0, 0, 0);
+    rootActiveDecorationList.RemoveAllDecorations ();
+    rootBareDecorationList.RemoveAllDecorations ();
+
+    /* This is a bit of a kludge, but we also need to reset
+     * the two decorations manually before TearDown. We can
+     * probably fix this later by encapsulating it all in one
+     * class, but that's a bit of an effort */
+    rootActiveDecoration.reset ();
+    rootBareDecoration.reset ();
 
     DecorFakeDecoratorAcceptance::TearDown ();
 }
@@ -1644,6 +1678,8 @@ class PixmapDecoratorAcceptance :
 	typedef cdt::FakeDecoration::Ptr FakeDecorPtr;
 	typedef cdt::FakePixmapTypeDecoration::Ptr FakePixDecorPtr;
 
+	virtual void TearDown ();
+
 	Window CreateDecoratableWindow (::Display *display);
 	Window MapAndReparent (::Display *display,
 			       Window window);
@@ -1654,6 +1690,10 @@ class PixmapDecoratorAcceptance :
 	void WaitForDecoration (::Display          *display,
 				Window             window,
 				const FakeDecorPtr &decoration);
+	void WaitForDefaultDecoration (::Display *display,
+				       Window    window,
+				       CompRect  &testFrameDecorationGeometry,
+				       CompRect  &testWindowDecorationGeometry);
 	void WaitForDecorationUpdate (::Display          *display,
 				      Window             window,
 				      const FakeDecorPtr &decor);
@@ -1677,6 +1717,14 @@ class PixmapDecoratorAcceptance :
 	std::map <Window, cdt::FakeDecorationList> windowDecorations;
 	std::map <Window, Window> windowParents;
 };
+
+void
+PixmapDecoratorAcceptance::TearDown ()
+{
+    windowDecorations.clear ();
+
+    DecorWithPixmapDefaultsAcceptance::TearDown ();
+}
 
 Window
 PixmapDecoratorAcceptance::CreateDecoratableWindow (::Display *display)
@@ -1734,8 +1782,47 @@ PixmapDecoratorAcceptance::WaitForDecoration (::Display          *display,
 					      Window             window,
 					      const FakeDecorPtr &decoration)
 {
-    WaitForPropertyNotify (display, window, DECOR_INPUT_FRAME_ATOM_NAME);
     WaitForDecorationUpdate (display, window, decoration);
+    WaitForPropertyNotify (display, window, DECOR_INPUT_FRAME_ATOM_NAME);
+}
+
+void
+PixmapDecoratorAcceptance::WaitForDefaultDecoration (::Display *display,
+						     Window    window,
+						     CompRect  &decoratedWindowGeometry,
+						     CompRect  &decoratedFrameGeometry)
+{
+    WaitForDecoration (display, window, rootActiveDecoration);
+
+    /* Fetch the window's absolute geometry */
+    int x, y;
+    unsigned int width, height, border;
+
+    ct::AbsoluteWindowGeometry (display, window, x, y, width, height, border);
+
+    /* Fetch frame extents */
+    boost::shared_ptr <unsigned char> data;
+
+    FetchAndVerifyProperty (Display (),
+			    window,
+			    NETWMFrameExtentsAtom,
+			    XA_CARDINAL,
+			    32,
+			    4,
+			    0,
+			    data);
+
+    unsigned long *frameExtents =
+	reinterpret_cast <unsigned long *> (data.get ());
+
+    decoratedWindowGeometry.setGeometry (x, y, width, height);
+
+    /* Adjust for decoration size. This is what future decorations
+     * will add and subtract from */
+    decoratedFrameGeometry.setGeometry (x - frameExtents[0],
+					y - frameExtents[2],
+					width + (frameExtents[0] + frameExtents[1]),
+					height + (frameExtents[2] + frameExtents[3]));
 }
 
 void
@@ -1811,6 +1898,123 @@ PixmapDecoratorAcceptance::GetDecorations (Window window)
     return windowDecorations[window];
 }
 
+class PixmapInitialDecorationAcceptance :
+    public PixmapDecoratorAcceptance
+{
+    public:
+
+	virtual void SetUp ();
+	virtual void TearDown ();
+
+	virtual bool StartDecoratorOnSetUp () const;
+
+	Window CreateDecoratedWindow ();
+
+    protected:
+
+	cdt::FakePixmapTypeDecoration::Ptr mTestWindowDecoration;
+	CompRect                           mClientGeometryOnInitialDecoration;
+	CompRect                           mBorderGeometryOnInitialDecoration;
+};
+
+void
+PixmapInitialDecorationAcceptance::SetUp ()
+{
+    PixmapDecoratorAcceptance::SetUp ();
+
+    unsigned int ResBo = ActiveBorderExtent + 1;
+    unsigned int ResIn = ActiveInputExtent;
+    unsigned int MaxEx = MaximizedBorderExtent;
+
+    mTestWindowDecoration =
+	MakeFakePixmapTypeDecoration (DECOR_WINDOW_TYPE_NORMAL,
+				      0,
+				      0,
+				      10,
+				      10,
+				      DecorationExtents (ResBo, ResBo, ResBo, ResBo),
+				      DecorationExtents (ResIn, ResIn, ResIn, ResIn),
+				      DecorationExtents (MaxEx, MaxEx, MaxEx, MaxEx),
+				      DecorationExtents (MaxEx, MaxEx, MaxEx, MaxEx),
+				      Display ());
+}
+
+bool
+PixmapInitialDecorationAcceptance::StartDecoratorOnSetUp () const
+{
+    return false;
+}
+
+void
+PixmapInitialDecorationAcceptance::TearDown ()
+{
+    mTestWindowDecoration.reset ();
+    PixmapDecoratorAcceptance::TearDown ();
+}
+
+Window
+PixmapInitialDecorationAcceptance::CreateDecoratedWindow ()
+{
+    Window testWindow = CreateDecoratableWindow (Display ());
+
+    /* We need to first explicitly recieve PropertyNotify events before
+     * core starts sending them */
+    RecievePropertyNotifyEvents (Display (), testWindow);
+
+    /* Map and reparent the window so that it gets a decoration */
+    MapAndReparent (Display (), testWindow);
+
+    /* Start the decorator */
+    SetUpDecorator ();
+
+    WaitForDefaultDecoration (Display (),
+			      testWindow,
+			      mClientGeometryOnInitialDecoration,
+			      mBorderGeometryOnInitialDecoration);
+    DecorateWindow (Display (), testWindow, mTestWindowDecoration);
+    WaitForDecorationUpdate (Display (), testWindow, mTestWindowDecoration);
+
+    return testWindow;
+}
+
+std::ostream &
+operator<< (std::ostream &os, const CompSize &sz)
+{
+    return os << "Size: (width: "
+	      << sz.width ()
+	      << " height: "
+	      << sz.height ()
+	      << ")";
+}
+
+TEST_F (PixmapInitialDecorationAcceptance, NoSizeChangeInitially)
+{
+    CreateDecoratedWindow ();
+    EXPECT_EQ (CompSize (mClientGeometryOnInitialDecoration.width (),
+			 mClientGeometryOnInitialDecoration.height ()),
+	       CompSize (ct::WINDOW_WIDTH,
+			 ct::WINDOW_HEIGHT));
+}
+
+TEST_F (PixmapInitialDecorationAcceptance, SizeChangesApplySubsequently)
+{
+    Window testWindow = CreateDecoratedWindow ();
+
+    /* Measuring size change from default decoration to real decoration */
+    const CompSize &size (mTestWindowDecoration->restoredDecorationBorderSize ());
+
+    EXPECT_THAT (testWindow,
+		 HasGeometry (Display (),
+			      RelativeWindowGeometry,
+			      _,
+			      _,
+			      mBorderGeometryOnInitialDecoration.width () -
+				  size.width (),
+			      mBorderGeometryOnInitialDecoration.height () -
+				  size.height (),
+			      _));
+}
+
 class PixmapDecoratedWindowAcceptance :
     public PixmapDecoratorAcceptance
 {
@@ -1831,6 +2035,8 @@ class PixmapDecoratedWindowAcceptance :
 	Window mTestWindowParent;
 
 	cdt::FakePixmapTypeDecoration::Ptr mTestWindowDecoration;
+	CompRect mClientGeometryOnInitialDecoration;
+	CompRect mBorderGeometryOnInitialDecoration;
 };
 
 PixmapDecoratedWindowAcceptance::PixmapDecoratedWindowAcceptance () :
@@ -1851,6 +2057,11 @@ PixmapDecoratedWindowAcceptance::SetUp ()
     /* Start the decorator */
     SetUpDecorator ();
 
+    WaitForDefaultDecoration (display,
+			      mTestWindow,
+			      mClientGeometryOnInitialDecoration,
+			      mBorderGeometryOnInitialDecoration);
+
     /* We need to change the border extent so that the window
      * will move from its position in the default decoration */
     unsigned int ResBo = RealDecorationActiveBorderExtent;
@@ -1870,15 +2081,16 @@ PixmapDecoratedWindowAcceptance::SetUp ()
 				      Display ());
 
     DecorateWindow (display, mTestWindow, mTestWindowDecoration);
-    WaitForDecoration (display, mTestWindow, mTestWindowDecoration);
+    WaitForDecorationUpdate (display, mTestWindow, mTestWindowDecoration);
 }
 
 void
 PixmapDecoratedWindowAcceptance::TearDown ()
 {
+    mTestWindowDecoration.reset ();
     DestroyWindow (Display (), mTestWindow);
 
-    DecorWithPixmapDefaultsAcceptance::TearDown ();
+    PixmapDecoratorAcceptance::TearDown ();
 }
 
 bool
@@ -2196,25 +2408,25 @@ TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeSameYHeight)
 
 /* Ensure that a window expands to its original size when it is
  * undecorated */
-TEST_F (PixmapDecoratedWindowAcceptance, UndecoratedWindowExpandToOrigSize)
+TEST_F (PixmapDecoratedWindowAcceptance, UndecoratedWindowExpandToOrigSizePlusInitialBorder)
 {
     DisallowDecorationsOnWindow (mTestWindow);
 
     WaitForConfigureOn (Display (),
 			mTestWindowParent,
-			ct::WINDOW_X,
-			ct::WINDOW_Y,
-			ct::WINDOW_WIDTH,
-			ct::WINDOW_HEIGHT,
+			mBorderGeometryOnInitialDecoration.x (),
+			mBorderGeometryOnInitialDecoration.y (),
+			mBorderGeometryOnInitialDecoration.width (),
+			mBorderGeometryOnInitialDecoration.height (),
 			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow,
 		 HasGeometry (Display (),
 			      AbsoluteWindowGeometry,
-			      ct::WINDOW_X,
-			      ct::WINDOW_Y,
-			      ct::WINDOW_WIDTH,
-			      ct::WINDOW_HEIGHT,
+			      mBorderGeometryOnInitialDecoration.x (),
+			      mBorderGeometryOnInitialDecoration.y (),
+			      mBorderGeometryOnInitialDecoration.width (),
+			      mBorderGeometryOnInitialDecoration.height (),
 			      _));
 }
 
@@ -2230,19 +2442,19 @@ TEST_F (PixmapDecoratedWindowAcceptance, UndecorateStaticGravityWindow)
 
     WaitForConfigureOn (Display (),
 			mTestWindowParent,
-			ct::WINDOW_X,
-			ct::WINDOW_Y,
-			ct::WINDOW_WIDTH,
-			ct::WINDOW_HEIGHT,
+			mBorderGeometryOnInitialDecoration.x (),
+			mBorderGeometryOnInitialDecoration.y (),
+			mBorderGeometryOnInitialDecoration.width (),
+			mBorderGeometryOnInitialDecoration.height (),
 			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow,
 		 HasGeometry (Display (),
 			      AbsoluteWindowGeometry,
-			      ct::WINDOW_X,
-			      ct::WINDOW_Y,
-			      ct::WINDOW_WIDTH,
-			      ct::WINDOW_HEIGHT,
+			      mBorderGeometryOnInitialDecoration.x (),
+			      mBorderGeometryOnInitialDecoration.y (),
+			      mBorderGeometryOnInitialDecoration.width (),
+			      mBorderGeometryOnInitialDecoration.height (),
 			      _));
 }
 
@@ -2324,8 +2536,10 @@ TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowBorderMovesClient)
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
-					   ct::WINDOW_X + GetParam ().left,
-					   ct::WINDOW_Y + GetParam ().top,
+					   mBorderGeometryOnInitialDecoration.x () +
+					       GetParam ().left,
+					   mBorderGeometryOnInitialDecoration.y () +
+					       GetParam ().top,
 					   _,
 					   _,
 					   _));
@@ -2344,10 +2558,12 @@ TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowBorderShrinkClient)
 					   AbsoluteWindowGeometry,
 					   _,
 					   _,
-					   ct::WINDOW_WIDTH - (GetParam ().left +
-							       GetParam ().right),
-					   ct::WINDOW_HEIGHT - (GetParam ().top +
-								GetParam ().bottom),
+					   mBorderGeometryOnInitialDecoration.width () -
+					       (GetParam ().left +
+						GetParam ().right),
+					   mBorderGeometryOnInitialDecoration.height () -
+					       (GetParam ().top +
+						GetParam ().bottom),
 					   _));
 }
 
@@ -2373,10 +2589,12 @@ TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinks)
 					   AbsoluteWindowGeometry,
 					   _,
 					   _,
-					   ct::WINDOW_WIDTH - (newExtents.left +
-							       newExtents.right),
-					   ct::WINDOW_HEIGHT - (newExtents.top +
-								newExtents.bottom),
+					   mBorderGeometryOnInitialDecoration.width () -
+					       (newExtents.left +
+						newExtents.right),
+					   mBorderGeometryOnInitialDecoration.height () -
+					       (newExtents.top +
+						newExtents.bottom),
 					   _));
 }
 
@@ -2401,7 +2619,7 @@ TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstMaximized)
 							WindowDecorationAtom);
 
     const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
-    const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
+    const CompSize &size (mTestWindowDecoration->restoredDecorationInputSize ());
 
     /* As the window is shrunk to accomodate the border size, we must subtract
      * the border from the original window size */
@@ -2409,19 +2627,26 @@ TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstMaximized)
 		     (newExtents.top + newExtents.bottom));
 
     RestoreWindow (mTestWindow,
-		   ct::WINDOW_X + off.x (),
-		   ct::WINDOW_Y + off.y (),
-		   ct::WINDOW_WIDTH - shrink.width () + size.width (),
-		   ct::WINDOW_HEIGHT - shrink.height () + size.height ());
+		   mBorderGeometryOnInitialDecoration.x () + off.x (),
+		   mBorderGeometryOnInitialDecoration.y () + off.y (),
+		   mBorderGeometryOnInitialDecoration.width () -
+		       shrink.width () + size.width (),
+		   mBorderGeometryOnInitialDecoration.height () -
+		       shrink.height () + size.height ());
 
+    /* Subtract the old offset and size and add on the new decoration geometry */
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
-					   ct::WINDOW_X + newExtents.left,
-					   ct::WINDOW_Y + newExtents.top,
-					   ct::WINDOW_WIDTH - (newExtents.left +
-							       newExtents.right),
-					   ct::WINDOW_HEIGHT - (newExtents.top +
-								newExtents.bottom),
+					   mBorderGeometryOnInitialDecoration.x () +
+					       newExtents.left,
+					   mBorderGeometryOnInitialDecoration.y () +
+					       newExtents.top,
+					   mBorderGeometryOnInitialDecoration.width () -
+					       ((newExtents.left +
+						 newExtents.right)),
+					   mBorderGeometryOnInitialDecoration.height () -
+					       ((newExtents.top +
+						 newExtents.bottom)),
 					   _));
 }
 
@@ -2451,7 +2676,7 @@ TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstUndecorate
     AllowDecorationsOnWindow (mTestWindow);
 
     const CompPoint &off (mTestWindowDecoration->restoredFrameWindowOffset ());
-    const CompSize  &size (mTestWindowDecoration->restoredDecorationSize ());
+    const CompSize  &size (mTestWindowDecoration->restoredDecorationInputSize ());
 
     /* As the window is shrunk to accomadate the border size, we must subtract
      * the border from the original window size */
@@ -2460,20 +2685,26 @@ TEST_P (PixmapDecorationAdjustment, ClientExpandsAsBorderShrinksWhilstUndecorate
 
     WaitForConfigureOn (Display (),
 			mTestWindowParent,
-			ct::WINDOW_X + off.x (),
-			ct::WINDOW_Y + off.y (),
-			ct::WINDOW_WIDTH - shrink.width () + size.width (),
-			ct::WINDOW_HEIGHT - shrink.height () + size.height (),
+			mBorderGeometryOnInitialDecoration.x () + off.x (),
+			mBorderGeometryOnInitialDecoration.y () + off.y (),
+			mBorderGeometryOnInitialDecoration.width () -
+			    shrink.width () + size.width (),
+			mBorderGeometryOnInitialDecoration.height () -
+			    shrink.height () + size.height (),
 			CWX | CWY | CWWidth | CWHeight);
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
-					   ct::WINDOW_X + newExtents.left,
-					   ct::WINDOW_Y + newExtents.top,
-					   ct::WINDOW_WIDTH - (newExtents.left +
-							       newExtents.right),
-					   ct::WINDOW_HEIGHT - (newExtents.top +
-								newExtents.bottom),
+					   mBorderGeometryOnInitialDecoration.x () +
+					       newExtents.left,
+					   mBorderGeometryOnInitialDecoration.y () +
+					       newExtents.top,
+					   mBorderGeometryOnInitialDecoration.width () -
+					       (newExtents.left +
+						newExtents.right),
+					   mBorderGeometryOnInitialDecoration.height () -
+					       (newExtents.top +
+						newExtents.bottom),
 					   _));
 }
 
@@ -2490,8 +2721,8 @@ TEST_P (PixmapDecorationAdjustment, AdjustRestoredWindowInputNoMoveClient)
 
     EXPECT_THAT (mTestWindow, HasGeometry (Display (),
 					   AbsoluteWindowGeometry,
-					   ct::WINDOW_X + 1,
-					   ct::WINDOW_Y + 1,
+					   mBorderGeometryOnInitialDecoration.x () + 1,
+					   mBorderGeometryOnInitialDecoration.y () + 1,
 					   _,
 					   _,
 					   _));
