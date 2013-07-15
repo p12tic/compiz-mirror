@@ -8,9 +8,6 @@
 
 #include <iostream>
 
-namespace { // DEBUG stuff
-}
-
 namespace {
 
   int const x1(13);
@@ -28,7 +25,6 @@ namespace {
 
   int const dx(3);
   int const dy(5);
-}
 
 TEST(RegionTest, create_and_destroy)
 {
@@ -566,4 +562,6 @@ TEST(RegionTest, external_refs)
     delete rp;
     ASSERT_EQ(*p, r1);
     delete p;
+}
+
 }

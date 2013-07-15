@@ -1,5 +1,5 @@
-find_library (GMOCK_LIBRARY gmock)
-find_library (GMOCK_MAIN_LIBRARY gmock_main)
+set (GMOCK_LIBRARY gmock)
+set (GMOCK_MAIN_LIBRARY gmock_main)
 
 if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
   message ("Google Mock and Google Test not found - cannot build tests!")
