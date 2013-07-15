@@ -33,7 +33,7 @@
 COMPIZ_PLUGIN_20090315 (thumbnail, ThumbPluginVTable);
 
 void
-ThumbScreen::freeThumbText (Thumbnail  *t)
+ThumbScreen::freeThumbText (Thumbnail *t)
 {
     if (!t->text)
 	return;
@@ -43,19 +43,19 @@ ThumbScreen::freeThumbText (Thumbnail  *t)
 }
 
 void
-ThumbScreen::renderThumbText (Thumbnail  *t,
-		 	      bool       freeThumb)
+ThumbScreen::renderThumbText (Thumbnail *t,
+			      bool      freeThumb)
 {
     if (!textPluginLoaded)
 	return;
-
-    CompText::Attrib tA;
 
     if (freeThumb || !t->text)
     {
 	freeThumbText (t);
 	t->text = new CompText ();
     }
+
+    CompText::Attrib tA;
 
     tA.maxWidth   = t->width;
     tA.maxHeight  = 100;
@@ -74,8 +74,10 @@ ThumbScreen::renderThumbText (Thumbnail  *t,
     tA.color[2]   = optionGetFontColorBlue ();
     tA.color[3]   = optionGetFontColorAlpha ();
     tA.flags      = CompText::WithBackground | CompText::Ellipsized;
+
     if (optionGetFontBold ())
 	tA.flags |= CompText::StyleBold;
+
     tA.family     = "Sans";
 
     t->textValid = t->text->renderWindowTitle (t->win->id (), false, tA);
@@ -84,11 +86,12 @@ ThumbScreen::renderThumbText (Thumbnail  *t,
 void
 ThumbScreen::damageThumbRegion (Thumbnail  *t)
 {
-    int x = t->x - t->offset;
-    int y = t->y - t->offset;
-    int width = t->width + (t->offset * 2);
-    int height = t->height + (t->offset * 2);
-    CompRect   rect (x, y, width, height);
+    int x      = t->x      - t->offset;
+    int y      = t->y      - t->offset;
+    int width  = t->width  + t->offset * 2;
+    int height = t->height + t->offset * 2;
+
+    CompRect rect (x, y, width, height);
 
     if (t->text)
 	rect.setHeight (rect.height () + t->text->getHeight () + optionGetTextDistance ());
@@ -105,26 +108,16 @@ ThumbScreen::damageThumbRegion (Thumbnail  *t)
 void
 ThumbScreen::thumbUpdateThumbnail ()
 {
-    int        igMidPoint[2], tMidPoint[2];
-    int        tPos[2], tmpPos[2];
-    float      distance = 1000000;
-    int        off, oDev, tHeight;
-    CompRect   oGeom;
-    float      maxSize = optionGetThumbSize ();
-    double     scale  = 1.0;
-    ThumbWindow *tw;
-    CompWindow *w;
-
-    if (thumb.win == pointedWin)
-	return;
-
-    if (thumb.opacity > 0.0 && oldThumb.opacity > 0.0)
+    if (thumb.win == pointedWin ||
+	(thumb.opacity && oldThumb.opacity))
 	return;
 
     if (thumb.win)
 	damageThumbRegion (&thumb);
 
     freeThumbText (&oldThumb);
+
+    ThumbWindow *tw;
 
     if (oldThumb.win)
     {
@@ -136,36 +129,42 @@ ThumbScreen::thumbUpdateThumbnail ()
 	tw->window->resizeNotifySetEnabled (tw, false);
     }
 
-    oldThumb       = thumb;
-    thumb.text     = NULL;
-    thumb.win      = pointedWin;
-    thumb.dock     = dock;
+    oldThumb   = thumb;
+    thumb.text = NULL;
+    thumb.win  = pointedWin;
+    thumb.dock = dock;
 
     if (!thumb.win || !dock)
     {
 	thumb.win  = NULL;
-        thumb.dock = NULL;
+	thumb.dock = NULL;
 	return;
     }
 
-    w = thumb.win;
+    CompWindow *w = thumb.win;
     tw = ThumbWindow::get (w);
 
     tw->cWindow->damageRectSetEnabled (tw, true);
     tw->gWindow->glPaintSetEnabled (tw, true);
     tw->window->resizeNotifySetEnabled (tw, true);
 
-    /* do we nee to scale the window down? */
-    if (WIN_W (w) > maxSize || WIN_H (w) > maxSize)
+    float  maxSize = optionGetThumbSize ();
+    double scale   = 1.0;
+
+    int winWidth  = w->width ()  + w->border ().left + w->border ().right;
+    int winHeight = w->height () + w->border ().top  + w->border ().bottom;
+
+    /* do we need to scale the window down? */
+    if (winWidth > maxSize || winHeight > maxSize)
     {
-	if (WIN_W (w) >= WIN_H (w))
-	    scale = maxSize / WIN_W (w);
+	if (winWidth >= winHeight)
+	    scale = maxSize / winWidth;
 	else
-	    scale = maxSize / WIN_H (w);
+	    scale = maxSize / winHeight;
     }
 
-    thumb.width  = WIN_W (w)* scale;
-    thumb.height = WIN_H (w) * scale;
+    thumb.width  = winWidth  * scale;
+    thumb.height = winHeight * scale;
     thumb.scale  = scale;
 
     if (optionGetTitleEnabled ())
@@ -173,33 +172,35 @@ ThumbScreen::thumbUpdateThumbnail ()
     else
 	freeThumbText (&thumb);
 
-    igMidPoint[0] = w->iconGeometry ().x () + (w->iconGeometry ().width () / 2);
-    igMidPoint[1] = w->iconGeometry ().y () + (w->iconGeometry ().height () / 2);
+    int igMidPoint[2], tMidPoint[2];
 
-    off = optionGetBorder ();
-    oDev = screen->outputDeviceForPoint (w->iconGeometry ().x () +
-				 (w->iconGeometry ().width () / 2),
-				 w->iconGeometry ().y () +
-				 (w->iconGeometry ().height () / 2));
+    igMidPoint[0] = w->iconGeometry ().centerX ();
+    igMidPoint[1] = w->iconGeometry ().centerY ();
+
+    int off  = optionGetBorder ();
+    int oDev = screen->outputDeviceForPoint (igMidPoint[0],
+					     igMidPoint[1]);
+
+    CompRect oGeom;
 
     if (screen->outputDevs ().size () == 1 ||
-        (unsigned int) oDev > screen->outputDevs ().size ())
-    {
+	(unsigned int) oDev > screen->outputDevs ().size ())
 	oGeom.setGeometry (0, 0, screen->width (), screen->height ());
-    }
     else
-    {
 	oGeom = screen->outputDevs ()[oDev];
-    }
 
-    tHeight = thumb.height;
+    int tHeight = thumb.height;
+    int tWidth  = thumb.width;
+
     if (thumb.text)
 	tHeight += thumb.text->getHeight () + optionGetTextDistance ();
 
-    /* Could someone please explain how this works */
+    int halfTWidth  = tWidth  / 2;
+    int halfTHeight = tHeight / 2;
+    int tPos[2], tmpPos[2];
 
     // failsave position
-    tPos[0] = igMidPoint[0] - (thumb.width / 2.0);
+    tPos[0] = igMidPoint[0] - halfTWidth;
 
     if (w->iconGeometry ().y () - tHeight >= 0)
 	tPos[1] = w->iconGeometry ().y () - tHeight;
@@ -207,23 +208,30 @@ ThumbScreen::thumbUpdateThumbnail ()
 	tPos[1] = w->iconGeometry ().y () + w->iconGeometry ().height ();
 
     // above
-    tmpPos[0] = igMidPoint[0] - (thumb.width / 2.0);
+    tmpPos[0] = igMidPoint[0] - halfTWidth;
 
     if (tmpPos[0] - off < oGeom.x1 ())
 	tmpPos[0] = oGeom.x1 () + off;
 
-    if (tmpPos[0] + off + thumb.width > oGeom.x2 ())
+    if (tmpPos[0] + off + tWidth > oGeom.x2 ())
     {
-	if (thumb.width + (2 * off) <= oGeom.width ())
-	    tmpPos[0] = oGeom.x2 () - thumb.width - off;
+	if (tWidth + (2 * off) <= oGeom.width ())
+	    tmpPos[0] = oGeom.x2 () - tWidth - off;
 	else
 	    tmpPos[0] = oGeom.x1 () + off;
     }
 
-    tMidPoint[0] = tmpPos[0] + (thumb.width / 2.0);
+    tMidPoint[0] = tmpPos[0] + halfTWidth;
 
-    tmpPos[1] = WIN_Y (dock) - tHeight - off;
-    tMidPoint[1] = tmpPos[1] + (tHeight / 2.0);
+    int dockX      = dock->x () - dock->border ().left;
+    int dockY      = dock->y () - dock->border ().top;
+    int dockWidth  = dock->width ()  + dock->border ().left + dock->border ().right;
+    int dockHeight = dock->height () + dock->border ().top  + dock->border ().bottom;
+
+    tmpPos[1]    = dockY - tHeight - off;
+    tMidPoint[1] = tmpPos[1] + halfTHeight;
+
+    float distance = 1000000;
 
     if (tmpPos[1] > oGeom.y1 ())
     {
@@ -233,9 +241,9 @@ ThumbScreen::thumbUpdateThumbnail ()
     }
 
     // below
-    tmpPos[1] = WIN_Y (dock) + WIN_H (dock) + off;
+    tmpPos[1] = dockY + dockHeight + off;
 
-    tMidPoint[1] = tmpPos[1] + (tHeight / 2.0);
+    tMidPoint[1] = tmpPos[1] + halfTHeight;
 
     if (tmpPos[1] + tHeight + off < oGeom.y2 () &&
 	GET_DISTANCE (igMidPoint, tMidPoint) < distance)
@@ -246,7 +254,7 @@ ThumbScreen::thumbUpdateThumbnail ()
     }
 
     // left
-    tmpPos[1] = igMidPoint[1] - (tHeight / 2.0);
+    tmpPos[1] = igMidPoint[1] - halfTHeight;
 
     if (tmpPos[1] - off < oGeom.y1 ())
 	tmpPos[1] = oGeom.y1 () + off;
@@ -254,15 +262,14 @@ ThumbScreen::thumbUpdateThumbnail ()
     if (tmpPos[1] + off + tHeight > oGeom.y2 ())
     {
 	if (tHeight + (2 * off) <= oGeom.height ())
-	    tmpPos[1] = oGeom.y2 () - thumb.height - off;
+	    tmpPos[1] = oGeom.y2 () - tHeight - off;
 	else
 	    tmpPos[1] = oGeom.y1 () + off;
     }
 
-    tMidPoint[1] = tmpPos[1] + (tHeight / 2.0);
-
-    tmpPos[0] = WIN_X (dock) - thumb.width - off;
-    tMidPoint[0] = tmpPos[0] + (thumb.width / 2.0);
+    tMidPoint[1] = tmpPos[1] + halfTHeight;
+    tmpPos[0]    = dockX - tWidth - off;
+    tMidPoint[0] = tmpPos[0] + halfTWidth;
 
     if (tmpPos[0] > oGeom.x1 () && GET_DISTANCE (igMidPoint, tMidPoint) < distance)
     {
@@ -272,11 +279,11 @@ ThumbScreen::thumbUpdateThumbnail ()
     }
 
     // right
-    tmpPos[0] = WIN_X (dock) + WIN_W (dock) + off;
+    tmpPos[0]    = dockX + dockWidth + off;
 
-    tMidPoint[0] = tmpPos[0] + (thumb.width / 2.0);
+    tMidPoint[0] = tmpPos[0] + halfTWidth;
 
-    if (tmpPos[0] + thumb.width + off < oGeom.x2 () &&
+    if (tmpPos[0] + tWidth + off < oGeom.x2 () &&
 	GET_DISTANCE (igMidPoint, tMidPoint) < distance)
     {
 	tPos[0]  = tmpPos[0];
@@ -298,7 +305,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 bool
 ThumbScreen::thumbShowThumbnail ()
 {
-    showingThumb   = true;
+    showingThumb = true;
 
     thumbUpdateThumbnail ();
     damageThumbRegion (&thumb);
@@ -310,15 +317,11 @@ bool
 ThumbScreen::checkPosition (CompWindow *w)
 {
     if (optionGetCurrentViewport ())
-    {
-	if (w->serverX () >= screen->width ()    ||
-	    w->serverX () + w->serverWidth () <= 0  ||
-	    w->serverY () >= screen->height ()   ||
+	if (w->serverX () >= screen->width ()	    ||
+	    w->serverX () + w->serverWidth ()  <= 0 ||
+	    w->serverY () >= screen->height ()	    ||
 	    w->serverY () + w->serverHeight () <= 0)
-	{
 	    return false;
-	}
-    }
 
     return true;
 }
@@ -332,25 +335,13 @@ ThumbScreen::positionUpdate (const CompPoint &p)
     {
 	THUMB_WINDOW (cw);
 
-	if (cw->destroyed ())
-	    continue;
-
-	if (cw->iconGeometry ().isEmpty ())
-	    continue;
-
-	if (!cw->isMapped ())
-	    continue;
-
-	if (cw->state () & CompWindowStateSkipTaskbarMask)
-	    continue;
-
-	if (cw->state () & CompWindowStateSkipPagerMask)
-	    continue;
-
-	if (!cw->managed ())
-	    continue;
-
-	if (!tw->cWindow->pixmap ())
+	if (cw->destroyed ()				    ||
+	    cw->iconGeometry ().isEmpty ()		    ||
+	    !cw->isMapped ()				    ||
+	    cw->state () & CompWindowStateSkipTaskbarMask   ||
+	    cw->state () & CompWindowStateSkipPagerMask	    ||
+	    !cw->managed ()				    ||
+	    !tw->cWindow->pixmap ())
 	    continue;
 
 	if (cw->iconGeometry ().contains (p) &&
@@ -363,41 +354,35 @@ ThumbScreen::positionUpdate (const CompPoint &p)
 
     if (found)
     {
+	int showDelay = optionGetShowDelay ();
+
 	if (!showingThumb &&
 	    !(thumb.opacity != 0.0 && thumb.win == found))
 	{
 	    if (displayTimeout.active ())
-
 	    {
 		if (pointedWin != found)
 		{
 		    displayTimeout.stop ();
-		    displayTimeout.start (boost::bind
-					   (&ThumbScreen::thumbShowThumbnail,
-					    this),
-					  optionGetShowDelay (),
-					  optionGetShowDelay () + 500);
+		    displayTimeout.start (boost::bind (&ThumbScreen::thumbShowThumbnail,
+						       this), showDelay, showDelay + 500);
 		}
 	    }
 	    else
 	    {
-	    displayTimeout.stop ();
-	    displayTimeout.start (boost::bind (&ThumbScreen::thumbShowThumbnail,
-						this),
-				  optionGetShowDelay (),
-				  optionGetShowDelay () + 500);
+		displayTimeout.stop ();
+		displayTimeout.start (boost::bind (&ThumbScreen::thumbShowThumbnail,
+						   this), showDelay, showDelay + 500);
 	    }
-        }
+	}
 
-        pointedWin = found;
-        thumbUpdateThumbnail ();
+	pointedWin = found;
+	thumbUpdateThumbnail ();
     }
     else
     {
 	if (displayTimeout.active ())
-	{
 	    displayTimeout.stop ();
-	}
 
 	pointedWin   = NULL;
 	showingThumb = false;
@@ -407,12 +392,11 @@ ThumbScreen::positionUpdate (const CompPoint &p)
     }
 }
 
-
 void
-ThumbWindow::resizeNotify (int        dx,
-			   int        dy,
-			   int        dwidth,
-			   int        dheight)
+ThumbWindow::resizeNotify (int dx,
+			   int dy,
+			   int dwidth,
+			   int dheight)
 {
     THUMB_SCREEN (screen);
 
@@ -422,96 +406,82 @@ ThumbWindow::resizeNotify (int        dx,
 }
 
 void
-ThumbScreen::handleEvent (XEvent * event)
+ThumbScreen::handleEvent (XEvent *event)
 {
-
     screen->handleEvent (event);
 
     CompWindow *w;
 
     switch (event->type)
     {
-    case PropertyNotify:
-	if (event->xproperty.atom == Atoms::wmName)
+	case PropertyNotify:
+	    if (event->xproperty.atom == Atoms::wmName)
+	    {
+		w = screen->findWindow (event->xproperty.window);
+
+		if (w && thumb.win == w && optionGetTitleEnabled ())
+		    renderThumbText (&thumb, true);
+	    }
+
+	    break;
+
+	case ButtonPress:
 	{
-	    w = screen->findWindow (event->xproperty.window);
+	    if (displayTimeout.active ())
+		displayTimeout.stop ();
+
+	    pointedWin   = NULL;
+	    showingThumb = false;
+	}
+	    break;
+
+	case EnterNotify:
+	    w = screen->findWindow (event->xcrossing.window);
 
 	    if (w)
 	    {
-		if (thumb.win == w && optionGetTitleEnabled ())
-		    renderThumbText (&thumb, true);
-	    }
-	}
-	break;
-
-    case ButtonPress:
-	{
-
-	    if (displayTimeout.active ())
-	    {
-		displayTimeout.stop ();
-	    }
-
-	    pointedWin   = 0;
-	    showingThumb = false;
-	}
-	break;
-
-    case EnterNotify:
-	w = screen->findWindow (event->xcrossing.window);
-	if (w)
-	{
-	    if (w->wmType () & CompWindowTypeDockMask)
-	    {
-		if (dock != w)
+		if (w->wmType () & CompWindowTypeDockMask)
 		{
-		    dock = w;
+		    if (dock != w)
+		    {
+			dock = w;
+
+			if (displayTimeout.active ())
+			    displayTimeout.stop ();
+
+			pointedWin   = NULL;
+			showingThumb = false;
+		    }
+
+		    if (!poller.active ())
+			poller.start ();
+		}
+		else
+		{
+		    dock = NULL;
 
 		    if (displayTimeout.active ())
-		    {
 			displayTimeout.stop ();
-		    }
 
 		    pointedWin   = NULL;
 		    showingThumb = false;
-		}
 
-		if (!poller.active ())
-		{
-		    poller.start ();
+		    if (poller.active ())
+			poller.stop ();
 		}
 	    }
-	    else
+
+	    break;
+
+	case LeaveNotify:
+	    w = screen->findWindow (event->xcrossing.window);
+
+	    if (w && (w->wmType () & CompWindowTypeDockMask))
 	    {
 		dock = NULL;
 
 		if (displayTimeout.active ())
-		{
 		    displayTimeout.stop ();
-		}
-
-		pointedWin   = NULL;
-		showingThumb = false;
-
-		if (poller.active ())
-		{
-		    poller.stop ();
-		}
-	    }
-	}
-	break;
-    case LeaveNotify:
-	w = screen->findWindow (event->xcrossing.window);
-	if (w)
-	{
-	    if (w->wmType () & CompWindowTypeDockMask)
-	    {
-		dock = NULL;
-
-		if (displayTimeout.active ())
-		{
-		    displayTimeout.stop ();
-		}
 
 		pointedWin   = NULL;
 		showingThumb = false;
@@ -520,32 +490,35 @@ ThumbScreen::handleEvent (XEvent * event)
 		cScreen->donePaintSetEnabled (this, true);
 
 		if (poller.active ())
-		{
 		    poller.stop ();
-		}
-
-
 	    }
-	}
-	break;
 
-    default:
-	break;
+	    break;
+
+	default:
+	    break;
     }
 }
 
-
 void
 ThumbScreen::paintTexture (const GLMatrix &transform,
-                           GLushort       *color,
-                           int             wx,
-			  int wy,
-			  int width,
-			  int height,
-			  int off)
+			   GLushort       *color,
+			   int            wx,
+			   int            wy,
+			   int            width,
+			   int            height,
+			   int            off)
 {
-    GLfloat         textureData[8];
-    GLfloat         vertexData[12];
+    GLfloat textureData[8];
+    GLfloat vertexData[12];
+
+    GLfloat wxPlusWidth    = wx + width;
+    GLfloat wyPlusHeight   = wy + height;
+    GLfloat wxPlusWPlusOff = wxPlusWidth  + off;
+    GLfloat wyPlusHPlusOff = wyPlusHeight + off;
+    GLfloat wxMinusOff     = wx - off;
+    GLfloat wyMinusOff     = wy - off;
+
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
@@ -557,13 +530,13 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     vertexData[1]  = wy;
     vertexData[2]  = 0;
     vertexData[3]  = wx;
-    vertexData[4]  = wy + height;
+    vertexData[4]  = wyPlusHeight;
     vertexData[5]  = 0;
-    vertexData[6]  = wx + width;
+    vertexData[6]  = wxPlusWidth;
     vertexData[7]  = wy;
     vertexData[8]  = 0;
-    vertexData[9]  = wx + width;
-    vertexData[10] = wy + height;
+    vertexData[9]  = wxPlusWidth;
+    vertexData[10] = wyPlusHeight;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 1, textureData);
@@ -573,7 +546,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     streamingBuffer->end ();
     streamingBuffer->render (transform);
 
-
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
     textureData[0] = 0;
@@ -585,16 +557,16 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 1;
 
-    vertexData[0] = wx - off;
-    vertexData[1] = wy - off;
-    vertexData[2] = 0;
-    vertexData[3] = wx - off;
-    vertexData[4] = wy;
-    vertexData[5] = 0;
-    vertexData[6] = wx;
-    vertexData[7] = wy - off;
-    vertexData[8] = 0;
-    vertexData[9] = wx;
+    vertexData[0]  = wxMinusOff;
+    vertexData[1]  = wyMinusOff;
+    vertexData[2]  = 0;
+    vertexData[3]  = wxMinusOff;
+    vertexData[4]  = wy;
+    vertexData[5]  = 0;
+    vertexData[6]  = wx;
+    vertexData[7]  = wyMinusOff;
+    vertexData[8]  = 0;
+    vertexData[9]  = wx;
     vertexData[10] = wy;
     vertexData[11] = 0;
 
@@ -604,7 +576,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -617,16 +588,16 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 0;
     textureData[7] = 1;
 
-    vertexData[0] = wx + width;
-    vertexData[1] = wy - off;
-    vertexData[2] = 0;
-    vertexData[3] = wx + width;
-    vertexData[4] = wy;
-    vertexData[5] = 0;
-    vertexData[6] = wx + width + off;
-    vertexData[7] = wy - off;
-    vertexData[8] = 0;
-    vertexData[9] = wx + width + off;
+    vertexData[0]  = wxPlusWidth;
+    vertexData[1]  = wyMinusOff;
+    vertexData[2]  = 0;
+    vertexData[3]  = wxPlusWidth;
+    vertexData[4]  = wy;
+    vertexData[5]  = 0;
+    vertexData[6]  = wxPlusWPlusOff;
+    vertexData[7]  = wyMinusOff;
+    vertexData[8]  = 0;
+    vertexData[9]  = wxPlusWPlusOff;
     vertexData[10] = wy;
     vertexData[11] = 0;
 
@@ -636,7 +607,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -649,17 +619,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 0;
 
-    vertexData[0] = wx - off;
-    vertexData[1] = wy + height;
-    vertexData[2] = 0;
-    vertexData[3] = wx - off;
-    vertexData[4] = wy + height + off;
-    vertexData[5] = 0;
-    vertexData[6] = wx;
-    vertexData[7] = wy + height;
-    vertexData[8] = 0;
-    vertexData[9] = wx;
-    vertexData[10] = wy + height + off;
+    vertexData[0]  = wxMinusOff;
+    vertexData[1]  = wyPlusHeight;
+    vertexData[2]  = 0;
+    vertexData[3]  = wxMinusOff;
+    vertexData[4]  = wyPlusHPlusOff;
+    vertexData[5]  = 0;
+    vertexData[6]  = wx;
+    vertexData[7]  = wyPlusHeight;
+    vertexData[8]  = 0;
+    vertexData[9]  = wx;
+    vertexData[10] = wyPlusHPlusOff;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -668,7 +638,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -681,17 +650,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 0;
     textureData[7] = 0;
 
-    vertexData[0] = wx + width;
-    vertexData[1] = wy + height;
-    vertexData[2] = 0;
-    vertexData[3] = wx + width;
-    vertexData[4] = wy + height + off;
-    vertexData[5] = 0;
-    vertexData[6] = wx + width + off;
-    vertexData[7] = wy + height;
-    vertexData[8] = 0;
-    vertexData[9] = wx + width + off;
-    vertexData[10] = wy + height + off;
+    vertexData[0]  = wxPlusWidth;
+    vertexData[1]  = wyPlusHeight;
+    vertexData[2]  = 0;
+    vertexData[3]  = wxPlusWidth;
+    vertexData[4]  = wyPlusHPlusOff;
+    vertexData[5]  = 0;
+    vertexData[6]  = wxPlusWPlusOff;
+    vertexData[7]  = wyPlusHeight;
+    vertexData[8]  = 0;
+    vertexData[9]  = wxPlusWPlusOff;
+    vertexData[10] = wyPlusHPlusOff;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -700,7 +669,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -713,16 +681,16 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 1;
 
-    vertexData[0] = wx;
-    vertexData[1] = wy - off;
-    vertexData[2] = 0;
-    vertexData[3] = wx;
-    vertexData[4] = wy;
-    vertexData[5] = 0;
-    vertexData[6] = wx + width;
-    vertexData[7] = wy - off;
-    vertexData[8] = 0;
-    vertexData[9] = wx + width;
+    vertexData[0]  = wx;
+    vertexData[1]  = wyMinusOff;
+    vertexData[2]  = 0;
+    vertexData[3]  = wx;
+    vertexData[4]  = wy;
+    vertexData[5]  = 0;
+    vertexData[6]  = wxPlusWidth;
+    vertexData[7]  = wyMinusOff;
+    vertexData[8]  = 0;
+    vertexData[9]  = wxPlusWidth;
     vertexData[10] = wy;
     vertexData[11] = 0;
 
@@ -732,7 +700,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -745,17 +712,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 0;
 
-    vertexData[0] = wx;
-    vertexData[1] = wy + height;
-    vertexData[2] = 0;
-    vertexData[3] = wx;
-    vertexData[4] = wy + height + off;
-    vertexData[5] = 0;
-    vertexData[6] = wx + width;
-    vertexData[7] = wy + height;
-    vertexData[8] = 0;
-    vertexData[9] = wx + width;
-    vertexData[10] = wy + height + off;
+    vertexData[0]  = wx;
+    vertexData[1]  = wyPlusHeight;
+    vertexData[2]  = 0;
+    vertexData[3]  = wx;
+    vertexData[4]  = wyPlusHPlusOff;
+    vertexData[5]  = 0;
+    vertexData[6]  = wxPlusWidth;
+    vertexData[7]  = wyPlusHeight;
+    vertexData[8]  = 0;
+    vertexData[9]  = wxPlusWidth;
+    vertexData[10] = wyPlusHPlusOff;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -764,7 +731,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -777,17 +743,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 1;
     textureData[7] = 1;
 
-    vertexData[0] = wx - off;
-    vertexData[1] = wy;
-    vertexData[2] = 0;
-    vertexData[3] = wx - off;
-    vertexData[4] = wy + height;
-    vertexData[5] = 0;
-    vertexData[6] = wx;
-    vertexData[7] = wy;
-    vertexData[8] = 0;
-    vertexData[9] = wx;
-    vertexData[10] = wy + height;
+    vertexData[0]  = wxMinusOff;
+    vertexData[1]  = wy;
+    vertexData[2]  = 0;
+    vertexData[3]  = wxMinusOff;
+    vertexData[4]  = wyPlusHeight;
+    vertexData[5]  = 0;
+    vertexData[6]  = wx;
+    vertexData[7]  = wy;
+    vertexData[8]  = 0;
+    vertexData[9]  = wx;
+    vertexData[10] = wyPlusHeight;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -796,7 +762,6 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 
     streamingBuffer->end ();
     streamingBuffer->render (transform);
-
 
     streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
@@ -809,17 +774,17 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
     textureData[6] = 0;
     textureData[7] = 1;
 
-    vertexData[0] = wx + width;
-    vertexData[1] = wy;
-    vertexData[2] = 0;
-    vertexData[3] = wx + width;
-    vertexData[4] = wy + height;
-    vertexData[5] = 0;
-    vertexData[6] = wx + width + off;
-    vertexData[7] = wy;
-    vertexData[8] = 0;
-    vertexData[9] = wx + width + off;
-    vertexData[10] = wy + height;
+    vertexData[0]  = wxPlusWidth;
+    vertexData[1]  = wy;
+    vertexData[2]  = 0;
+    vertexData[3]  = wxPlusWidth;
+    vertexData[4]  = wyPlusHeight;
+    vertexData[5]  = 0;
+    vertexData[6]  = wxPlusWPlusOff;
+    vertexData[7]  = wy;
+    vertexData[8]  = 0;
+    vertexData[9]  = wxPlusWPlusOff;
+    vertexData[10] = wyPlusHeight;
     vertexData[11] = 0;
 
     streamingBuffer->addTexCoords (0, 4, textureData);
@@ -831,39 +796,45 @@ ThumbScreen::paintTexture (const GLMatrix &transform,
 }
 
 void
-ThumbScreen::thumbPaintThumb (Thumbnail           *t,
+ThumbScreen::thumbPaintThumb (Thumbnail      *t,
 		 	      const GLMatrix *transform)
 {
-    GLushort              color[4];
-    int			  addWindowGeometryIndex;
-    CompWindow            *w = t->win;
-    int                   wx = t->x;
-    int                   wy = t->y;
-    float                 width  = t->width;
-    float                 backheight = t->height;	// background/glow height
-    GLWindowPaintAttrib     sAttrib;
-    unsigned int          mask = PAINT_WINDOW_TRANSFORMED_MASK |
-	                         PAINT_WINDOW_TRANSLUCENT_MASK;
-    GLWindow		  *gWindow = GLWindow::get (w);
+    CompWindow *w = t->win;
 
     if (!w)
 	return;
+
+    GLWindow *gWindow = GLWindow::get (w);
+
+    GLushort color[4];
+
+    int wx = t->x;
+    int wy = t->y;
+
+    GLWindowPaintAttrib sAttrib;
+    unsigned int mask = PAINT_WINDOW_TRANSFORMED_MASK |
+			PAINT_WINDOW_TRANSLUCENT_MASK;
 
     sAttrib = gWindow->paintAttrib ();
 
     /* Wrap drawWindowGeometry to make sure the general
        drawWindowGeometry function is used */
-    addWindowGeometryIndex =
-	    gWindow->glAddGeometryGetCurrentIndex ();
+    unsigned int addWindowGeometryIndex = gWindow->glAddGeometryGetCurrentIndex ();
 
     if (!gWindow->textures ().empty ())
     {
-	int            off = t->offset;
-	GLenum         filter = gScreen->textureFilter ();
-	GLMatrix       wTransform (*transform);
+	GLMatrix  wTransform (*transform);
+	GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
 
-	glEnable (GL_BLEND);
+	/* just enable blending if it is currently disabled */
+	if (!glBlendEnabled)
+	    glEnable (GL_BLEND);
+
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	int   off        = t->offset;
+	float backheight = t->height;	// background/glow height
+	float width      = t->width;
 
 	if (optionGetWindowLike ())
 	{
@@ -895,11 +866,14 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	}
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
+
+	/* we disable blending only, if it was disabled before */
+	if (!glBlendEnabled)
+	    glDisable (GL_BLEND);
 
 	if (t->text)
 	{
-	    float ox = 0.0f;
+	    float ox     = 0.0f;
 	    float height = backheight + t->text->getHeight () + optionGetTextDistance ();
 
 	    if (t->text->getWidth () < width)
@@ -911,12 +885,16 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	gScreen->setTexEnvMode (GL_REPLACE);
 
 	sAttrib.opacity *= t->opacity;
-	sAttrib.yScale = t->scale;
-	sAttrib.xScale = t->scale;
+	sAttrib.yScale   = t->scale;
+	sAttrib.xScale   = t->scale;
 
 	sAttrib.xTranslate = wx - w->x () + w->border ().left * sAttrib.xScale;
-	sAttrib.yTranslate = wy - w->y () + w->border ().top * sAttrib.yScale;
+	sAttrib.yTranslate = wy - w->y () + w->border ().top  * sAttrib.yScale;
 
+	GLenum filter = gScreen->textureFilter ();
+
+	/* we just need to change the texture filter, if
+	 * thumbnail mipmapping is enabled */
 	if (optionGetMipmap ())
 	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
@@ -962,13 +940,12 @@ ThumbScreen::preparePaint (int ms)
     }*/
 
     if (showingThumb && thumb.win == pointedWin)
-    {
 	thumb.opacity = MIN (1.0, thumb.opacity + val);
-    }
 
     if (!showingThumb || thumb.win != pointedWin)
     {
 	thumb.opacity = MAX (0.0, thumb.opacity - val);
+
 	if (thumb.opacity == 0.0)
 	    thumb.win = NULL;
     }
@@ -976,6 +953,7 @@ ThumbScreen::preparePaint (int ms)
     if (oldThumb.opacity > 0.0f)
     {
 	oldThumb.opacity = MAX (0.0, oldThumb.opacity - val);
+
 	if (oldThumb.opacity == 0.0)
 	{
 	    damageThumbRegion (&oldThumb);
@@ -999,10 +977,10 @@ ThumbScreen::donePaint ()
 {
     std::vector <Thumbnail *> damageThumbs;
 
-    if (thumb.opacity > 0.0)
+    if (thumb.opacity)
 	damageThumbs.push_back (&thumb);
 
-    if (oldThumb.opacity > 0.0)
+    if (oldThumb.opacity)
 	damageThumbs.push_back (&oldThumb);
 
     if (!damageThumbs.empty ())
@@ -1021,12 +999,11 @@ ThumbScreen::donePaint ()
 
 bool
 ThumbScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-		       	    const GLMatrix &transform,
-		       	    const CompRegion &region,
-		       	    CompOutput *output,
-		       	    unsigned int mask)
+			    const GLMatrix            &transform,
+			    const CompRegion          &region,
+			    CompOutput                *output,
+			    unsigned int              mask)
 {
-    bool         status;
     unsigned int newMask = mask;
 
     painted = false;
@@ -1035,12 +1012,10 @@ ThumbScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     y = screen->vp ().y ();
 
     if ((oldThumb.opacity > 0.0 && oldThumb.win) ||
-       	(thumb.opacity > 0.0 && thumb.win))
-    {
+	(thumb.opacity > 0.0 && thumb.win))
 	newMask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-    }
 
-    status = gScreen->glPaintOutput (attrib, transform, region, output, newMask);
+    bool status = gScreen->glPaintOutput (attrib, transform, region, output, newMask);
 
     if (optionGetAlwaysOnTop () && !painted)
     {
@@ -1066,12 +1041,11 @@ ThumbScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 void
 ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
-			               const GLMatrix &transform,
-			               const CompRegion &region,
-			               CompOutput *output,
-				       unsigned int mask)
+				       const GLMatrix            &transform,
+				       const CompRegion          &region,
+				       CompOutput                *output,
+				       unsigned int              mask)
 {
-
     gScreen->glPaintTransformedOutput (attrib, transform, region, output, mask);
 
     if (optionGetAlwaysOnTop () && x == screen->vp ().x () &&
@@ -1079,7 +1053,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
     {
 	painted = true;
 
-	if (oldThumb.opacity > 0.0 && oldThumb.win)
+	if (oldThumb.opacity && oldThumb.win)
 	{
 	    GLMatrix sTransform = transform;
 
@@ -1088,7 +1062,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    thumbPaintThumb (&oldThumb, &sTransform);
 	}
 
-	if (thumb.opacity > 0.0 && thumb.win)
+	if (thumb.opacity && thumb.win)
 	{
 	    GLMatrix sTransform = transform;
 
@@ -1101,45 +1075,44 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
 bool
 ThumbWindow::glPaint (const GLWindowPaintAttrib &attrib,
-		      const GLMatrix		&transform,
+		      const GLMatrix            &transform,
 		      const CompRegion          &region,
-		      unsigned int		mask)
+		      unsigned int              mask)
 {
-    bool status;
-
     THUMB_SCREEN (screen);
 
-    status = gWindow->glPaint (attrib, transform, region, mask);
+    bool status = gWindow->glPaint (attrib, transform, region, mask);
 
-    if (!ts->optionGetAlwaysOnTop () && ts->x == screen->vp ().x () &&
-				    ts->y == screen->vp ().y ())
+    if (!ts->optionGetAlwaysOnTop ()	&&
+	ts->x == screen->vp ().x ()	&&
+	ts->y == screen->vp ().y ())
     {
 	GLMatrix sTransform = transform;
-	if (ts->oldThumb.opacity > 0.0 && ts->oldThumb.win &&
-	    ts->oldThumb.dock == window)
-	{
-	    ts->thumbPaintThumb (&ts->oldThumb, &sTransform);
-	}
 
-	if (ts->thumb.opacity > 0.0 && ts->thumb.win && ts->thumb.dock == window)
-	{
+	if (ts->oldThumb.opacity    &&
+	    ts->oldThumb.win	    &&
+	    ts->oldThumb.dock == window)
+	    ts->thumbPaintThumb (&ts->oldThumb, &sTransform);
+
+	if (ts->thumb.opacity	&&
+	    ts->thumb.win	&&
+	    ts->thumb.dock == window)
 	    ts->thumbPaintThumb (&ts->thumb, &sTransform);
-	}
     }
 
     return status;
 }
 
 bool
-ThumbWindow::damageRect (bool initial,
-		         const CompRect &rect)
+ThumbWindow::damageRect (bool           initial,
+			 const CompRect &rect)
 {
     THUMB_SCREEN (screen);
 
-    if (ts->thumb.win == window && ts->thumb.opacity > 0.0)
+    if (ts->thumb.win == window && ts->thumb.opacity)
 	ts->damageThumbRegion (&ts->thumb);
 
-    if (ts->oldThumb.win == window && ts->oldThumb.opacity > 0.0)
+    if (ts->oldThumb.win == window && ts->oldThumb.opacity)
 	ts->damageThumbRegion (&ts->oldThumb);
 
     return cWindow->damageRect (initial, rect);
@@ -1164,13 +1137,13 @@ ThumbScreen::ThumbScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
 
-    thumb.win = NULL;
+    thumb.win    = NULL;
     oldThumb.win = NULL;
 
-    thumb.text = NULL;
+    thumb.text    = NULL;
     oldThumb.text = NULL;
 
-    thumb.opacity = 0.0f;
+    thumb.opacity    = 0.0f;
     oldThumb.opacity = 0.0f;
 
     poller.setCallback (boost::bind (&ThumbScreen::positionUpdate, this, _1));
@@ -1196,7 +1169,6 @@ ThumbWindow::ThumbWindow (CompWindow *window) :
     GLWindowInterface::setHandler (gWindow, false);
 }
 
-
 ThumbWindow::~ThumbWindow ()
 {
     THUMB_SCREEN (screen);
@@ -1204,14 +1176,14 @@ ThumbWindow::~ThumbWindow ()
     if (ts->thumb.win == window)
     {
 	ts->damageThumbRegion (&ts->thumb);
-	ts->thumb.win = NULL;
+	ts->thumb.win     = NULL;
 	ts->thumb.opacity = 0;
     }
 
     if (ts->oldThumb.win == window)
     {
 	ts->damageThumbRegion (&ts->oldThumb);
-	ts->oldThumb.win = NULL;
+	ts->oldThumb.win     = NULL;
 	ts->oldThumb.opacity = 0;
     }
 
