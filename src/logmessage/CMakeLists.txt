@@ -1,13 +1,11 @@
 
 INCLUDE_DIRECTORIES(  
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  
   ${compiz_SOURCE_DIR}/include
     
   ${Boost_INCLUDE_DIRS}
 )
 
-SET( PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/core/logmessage.h )
+SET( PUBLIC_HEADERS ${compiz_SOURCE_DIR}/include/core/logmessage.h )
 SET( PRIVATE_HEADERS )
 
 SET( SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/logmessage.cpp )
