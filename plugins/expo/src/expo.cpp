@@ -72,7 +72,12 @@ ExpoScreen::dndFini (CompAction         *action,
 	dndState  = DnDNone;
 	dndWindow = NULL;
 
-	action->setState (action->state () & CompAction::StateInitButton);
+	/* The action could be an action of key, edge or button binding if
+	 * expo was terminated during dnd. Thus we must fetch the action of
+	 * dndButton ourselves or we mess their state up. */
+	CompAction &dndAction = optionGetDndButton ();
+	dndAction.setState (dndAction.state () & CompAction::StateInitButton);
+
 	cScreen->damageScreen ();
 
 	return true;
@@ -126,6 +131,7 @@ ExpoScreen::termExpo (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector &options)
 {
+    /* Warning: *action is NULL if we came here from handleEvent. */
     if (!expoMode)
 	return true;
 
@@ -367,13 +373,10 @@ ExpoScreen::handleEvent (XEvent *event)
 								event->xbutton.x,
 								event->xbutton.y))
 		{
-		    /* TODO: What action to take if expo_key is not defined ? */
-		    CompAction &action = optionGetExpoKey ();
-
 		    clickTime   = 0;
 		    doubleClick = false;
 
-		    termExpo (&action, 0, noOptions ());
+		    termExpo (NULL, 0, noOptions ());
 		    anyClick = true;
 		}
 	    }
@@ -954,8 +957,8 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
 	    sTransform3 = sTransform2;
 
-	    sTransform3.translate ( output->x () / output->width (),
-				   -output->y () / output->height (), 0.0);
+	    sTransform3.translate ( output->x () / static_cast <float> (output->width ()),
+				   -output->y () / static_cast <float> (output->height ()), 0.0);
 
 	    cScreen->setWindowPaintOffset ((screen->vp ().x () - i) *
 					   screen->width (),
