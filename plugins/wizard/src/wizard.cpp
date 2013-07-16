@@ -68,220 +68,166 @@ initParticles (int hardLimit, int softLimit, ParticleSystem * ps)
 void
 WizardScreen::loadGPoints (ParticleSystem *ps)
 {
+    if (!ps) //ps not yet initialized
+	return;
+
     if (ps->g)
 	free (ps->g);
 
     int i;
     GPoint *gi;
-    CompOption::Value::Vector cvv = optionGetGStrength ();
-    ps->ng = cvv.size ();
+
+    CompOption::Value::Vector GStrength = optionGetGStrength ();
+    CompOption::Value::Vector GPosx = optionGetGPosx ();
+    CompOption::Value::Vector GPosy = optionGetGPosy ();
+    CompOption::Value::Vector GSpeed = optionGetGSpeed ();
+    CompOption::Value::Vector GAngle = optionGetGAngle ();
+    CompOption::Value::Vector GMovement = optionGetGMovement ();
+
+    /* ensure that all properties have been updated  */
+    ps->ng = GStrength.size ();
+    if( (unsigned int)ps->ng != GPosx.size ()  ||
+	(unsigned int)ps->ng != GPosy.size ()  ||
+	(unsigned int)ps->ng != GSpeed.size () ||
+	(unsigned int)ps->ng != GAngle.size () ||
+	(unsigned int)ps->ng != GMovement.size ())
+       return;
+
     ps->g = (GPoint*) calloc (ps->ng, sizeof (GPoint));
 
     gi = ps->g;
     for (i = 0; i < ps->ng; i++, gi++)
-	gi->strength = (float)cvv.at (i).i ()/ 1000.;
-
-    cvv = optionGetGPosx ();
-    gi = ps->g;
-    for (i = 0; i < ps->ng; i++, gi++)
-	gi->x = (float)cvv.at (i).i ();
-
-    cvv = optionGetGPosy ();
-    gi = ps->g;
-    for (i = 0; i < ps->ng; i++, gi++)
-	gi->y = (float)cvv.at (i).i ();
-
-    cvv = optionGetGSpeed ();
-    gi = ps->g;
-    for (i = 0; i < ps->ng; i++, gi++)
-	gi->espeed = (float)cvv.at (i).i () / 100.;
-
-    cvv = optionGetGAngle ();
-    gi = ps->g;
-    for (i = 0; i < ps->ng; i++, gi++)
-	gi->eangle = (float)cvv.at (i).i () / 180.*M_PI;
-
-    cvv = optionGetGMovement ();
-    gi = ps->g;
-    for (i = 0; i < ps->ng; i++, gi++)
-	gi->movement = cvv.at (i).i ();
+    {
+	gi->strength = (float)GStrength.at (i).i ()/ 1000.;
+	gi->x = (float)GPosx.at (i).i ();
+	gi->y = (float)GPosy.at (i).i ();
+	gi->espeed = (float)GSpeed.at (i).i () / 100.;
+	gi->eangle = (float)GAngle.at (i).i () / 180.*M_PI;
+	gi->movement = GMovement.at (i).i ();
+    }
 }
 
 void
 WizardScreen::loadEmitters (ParticleSystem *ps)
 {
+    if (!ps) //ps not yet initialized
+	return;
+
     if (ps->e)
 	free (ps->e);
 
     int i;
     Emitter *ei;
-    CompOption::Value::Vector cvv = optionGetEActive ();
-    ps->ne = cvv.size ();
+
+    CompOption::Value::Vector EActive = optionGetEActive ();
+    CompOption::Value::Vector ETrigger = optionGetETrigger ();
+    CompOption::Value::Vector EPosx = optionGetEPosx ();
+    CompOption::Value::Vector EPosy = optionGetEPosy ();
+    CompOption::Value::Vector ESpeed = optionGetESpeed ();
+    CompOption::Value::Vector EAngle = optionGetEAngle ();
+    CompOption::Value::Vector EMovement = optionGetEMovement ();
+    CompOption::Value::Vector ECount = optionGetECount ();
+    CompOption::Value::Vector EH = optionGetEH ();
+    CompOption::Value::Vector EDh = optionGetEDh ();
+    CompOption::Value::Vector EL = optionGetEL ();
+    CompOption::Value::Vector EDl = optionGetEDl ();
+    CompOption::Value::Vector EA = optionGetEA ();
+    CompOption::Value::Vector EDa = optionGetEDa ();
+    CompOption::Value::Vector EDx = optionGetEDx ();
+    CompOption::Value::Vector EDy = optionGetEDy ();
+    CompOption::Value::Vector EDcirc = optionGetEDcirc ();
+    CompOption::Value::Vector EVx = optionGetEVx ();
+    CompOption::Value::Vector EVy = optionGetEVy ();
+    CompOption::Value::Vector EVt = optionGetEVt ();
+    CompOption::Value::Vector EVphi = optionGetEVphi ();
+    CompOption::Value::Vector EDvx = optionGetEDvx ();
+    CompOption::Value::Vector EDvy = optionGetEDvy ();
+    CompOption::Value::Vector EDvcirc = optionGetEDvcirc ();
+    CompOption::Value::Vector EDvt = optionGetEDvt ();
+    CompOption::Value::Vector EDvphi = optionGetEDvphi ();
+    CompOption::Value::Vector ES = optionGetES ();
+    CompOption::Value::Vector EDs = optionGetEDs ();
+    CompOption::Value::Vector ESnew = optionGetESnew ();
+    CompOption::Value::Vector EDsnew = optionGetEDsnew ();
+    CompOption::Value::Vector EG = optionGetEG ();
+    CompOption::Value::Vector EDg = optionGetEDg ();
+    CompOption::Value::Vector EGp = optionGetEGp ();
+
+    /* ensure that all properties have been updated  */
+    ps->ne = EActive.size ();
+    if( (unsigned int)ps->ne != ETrigger.size ()  ||
+	(unsigned int)ps->ne != EPosx.size ()     ||
+	(unsigned int)ps->ne != EPosy.size ()     ||
+	(unsigned int)ps->ne != ESpeed.size ()    ||
+	(unsigned int)ps->ne != EAngle.size ()    ||
+	(unsigned int)ps->ne != EMovement.size () ||
+	(unsigned int)ps->ne != ECount.size ()    ||
+	(unsigned int)ps->ne != EH.size ()        ||
+	(unsigned int)ps->ne != EDh.size ()       ||
+	(unsigned int)ps->ne != EL.size ()        ||
+	(unsigned int)ps->ne != EDl.size ()       ||
+	(unsigned int)ps->ne != EA.size ()        ||
+	(unsigned int)ps->ne != EDa.size ()       ||
+	(unsigned int)ps->ne != EDx.size ()       ||
+	(unsigned int)ps->ne != EDy.size ()       ||
+	(unsigned int)ps->ne != EDcirc.size ()    ||
+	(unsigned int)ps->ne != EVx.size ()       ||
+	(unsigned int)ps->ne != EVy.size ()       ||
+	(unsigned int)ps->ne != EVt.size ()       ||
+	(unsigned int)ps->ne != EVphi.size ()     ||
+	(unsigned int)ps->ne != EDvx.size ()      ||
+	(unsigned int)ps->ne != EDvy.size ()      ||
+	(unsigned int)ps->ne != EDvcirc.size ()   ||
+	(unsigned int)ps->ne != EDvt.size ()      ||
+	(unsigned int)ps->ne != EDvphi.size ()    ||
+	(unsigned int)ps->ne != ES.size ()        ||
+	(unsigned int)ps->ne != EDs.size ()       ||
+	(unsigned int)ps->ne != ESnew.size ()     ||
+	(unsigned int)ps->ne != EDsnew.size ()    ||
+	(unsigned int)ps->ne != EG.size ()        ||
+	(unsigned int)ps->ne != EDg.size ()       ||
+	(unsigned int)ps->ne != EGp.size ())
+       return;
+
     ps->e = (Emitter*) calloc (ps->ne, sizeof (Emitter));
 
     ei = ps->e;
     for (i = 0; i < ps->ne; i++, ei++)
-	ei->set_active = ei->active = cvv.at (i).b ();
-
-    cvv = optionGetETrigger ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->trigger = cvv.at (i).i ();
-
-    cvv = optionGetEPosx ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->x = (float)cvv.at (i).i ();
-
-    cvv = optionGetEPosy ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->y = (float)cvv.at (i).i ();
-
-    cvv = optionGetESpeed ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->espeed = (float)cvv.at (i).i () / 100.;
-
-    cvv = optionGetEAngle ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->eangle = (float)cvv.at (i).i () / 180.*M_PI;
-
-    cvv = optionGetEMovement ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->movement = cvv.at (i).i ();
-
-    cvv = optionGetECount ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->count = (float)cvv.at (i).i ();
-
-    cvv = optionGetEH ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->h = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDh ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dh = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEL ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->l = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDl ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dl = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEA ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->a = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDa ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->da = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDx ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dx = (float)cvv.at (i).i ();
-
-    cvv = optionGetEDy ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dy = (float)cvv.at (i).i ();
-
-    cvv = optionGetEDcirc ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dcirc = (float)cvv.at (i).i ();
-
-    cvv = optionGetEVx ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->vx = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEVy ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->vy = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEVt ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->vt = (float)cvv.at (i).i () / 10000.;
-
-    cvv = optionGetEVphi ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->vphi = (float)cvv.at (i).i () / 10000.;
-
-    cvv = optionGetEDvx ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dvx = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDvy ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dvy = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDvcirc ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dvcirc = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDvt ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dvt = (float)cvv.at (i).i () / 10000.;
-
-    cvv = optionGetEDvphi ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dvphi = (float)cvv.at (i).i () / 10000.;
-
-    cvv = optionGetES ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->s = (float)cvv.at (i).i ();
-
-    cvv = optionGetEDs ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->ds = (float)cvv.at (i).i ();
-
-    cvv = optionGetESnew ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->snew = (float)cvv.at (i).i ();
-
-    cvv = optionGetEDsnew ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dsnew = (float)cvv.at (i).i ();
-
-    cvv = optionGetEG ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->g = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEDg ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->dg = (float)cvv.at (i).i () / 1000.;
-
-    cvv = optionGetEGp ();
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
-	ei->gp = (float)cvv.at (i).i () / 10000.;
+    {
+	ei->set_active = ei->active = EActive.at (i).b ();
+	ei->trigger = ETrigger.at (i).i ();
+	ei->x = (float)EPosx.at (i).i ();
+	ei->y = (float)EPosy.at (i).i ();
+	ei->espeed = (float)ESpeed.at (i).i () / 100.;
+	ei->eangle = (float)EAngle.at (i).i () / 180.*M_PI;
+	ei->movement = EMovement.at (i).i ();
+	ei->count = (float)ECount.at (i).i ();
+	ei->h = (float)EH.at (i).i () / 1000.;
+	ei->dh = (float)EDh.at (i).i () / 1000.;
+	ei->l = (float)EL.at (i).i () / 1000.;
+	ei->dl = (float)EDl.at (i).i () / 1000.;
+	ei->a = (float)EA.at (i).i () / 1000.;
+	ei->da = (float)EDa.at (i).i () / 1000.;
+	ei->dx = (float)EDx.at (i).i ();
+	ei->dy = (float)EDy.at (i).i ();
+	ei->dcirc = (float)EDcirc.at (i).i ();
+	ei->vx = (float)EVx.at (i).i () / 1000.;
+	ei->vy = (float)EVy.at (i).i () / 1000.;
+	ei->vt = (float)EVt.at (i).i () / 10000.;
+	ei->vphi = (float)EVphi.at (i).i () / 10000.;
+	ei->dvx = (float)EDvx.at (i).i () / 1000.;
+	ei->dvy = (float)EDvy.at (i).i () / 1000.;
+	ei->dvcirc = (float)EDvcirc.at (i).i () / 1000.;
+	ei->dvt = (float)EDvt.at (i).i () / 10000.;
+	ei->dvphi = (float)EDvphi.at (i).i () / 10000.;
+	ei->s = (float)ES.at (i).i ();
+	ei->ds = (float)EDs.at (i).i ();
+	ei->snew = (float)ESnew.at (i).i ();
+	ei->dsnew = (float)EDsnew.at (i).i ();
+	ei->g = (float)EG.at (i).i () / 1000.;
+	ei->dg = (float)EDg.at (i).i () / 1000.;
+	ei->gp = (float)EGp.at (i).i () / 10000.;
+    }
 }
 
 void
