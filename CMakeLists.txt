@@ -23,7 +23,6 @@ include (CompizPackage)
 include (CompizGSettings)
 
 # Google Test and Xorg-GTest
-include (GoogleTest)
 include (XorgGTest)
 
 include (cmake/base.cmake)
@@ -157,11 +156,9 @@ set (COMPIZ_INTERNAL_INCLUDES
 
 if (COMPIZ_BUILD_TESTING)
 
-    find_package (GoogleTest)
+    include (FindGoogleTest)
 
     if (GOOGLE_TEST_AND_MOCK_FOUND)
-
-	build_google_test_locally (${CMAKE_BINARY_DIR}/__gtest)
 
 	if (BUILD_XORG_GTEST)
 

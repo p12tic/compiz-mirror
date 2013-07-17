@@ -144,11 +144,11 @@ target_link_libraries (compizconfig_test_ccs_util
                        compizconfig
 )
 
-compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
+#compiz_discover_tests (compizconfig_test_ccs_object COVERAGE compizconfig)
 compiz_discover_tests (compizconfig_test_ccs_context COVERAGE compizconfig_ccs_context_mock)
 compiz_discover_tests (compizconfig_test_ccs_plugin COVERAGE compizconfig_ccs_plugin_mock)
 compiz_discover_tests (compizconfig_test_ccs_setting COVERAGE compizconfig_ccs_setting_mock)
-compiz_discover_tests (compizconfig_test_ccs_mock_backend_conformance COVERAGE compizconfig_ccs_backend_mock)
+#compiz_discover_tests (compizconfig_test_ccs_mock_backend_conformance COVERAGE compizconfig_ccs_backend_mock)
 compiz_discover_tests (compizconfig_test_ccs_text_file COVERAGE ccs_text_file_interface compizconfig_ccs_text_file_mock)
 compiz_discover_tests (compizconfig_test_ccs_upgrade_internal COVERAGE ccs_settings_upgrade_internal)
 compiz_discover_tests (compizconfig_test_ccs_util COVERAGE compizconfig)
