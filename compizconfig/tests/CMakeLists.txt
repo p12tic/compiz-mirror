@@ -69,4 +69,5 @@ target_link_libraries (compizconfig_ccs_backend_conformance_test
                        compizconfig_ccs_test_value_combinations
                        compizconfig_ccs_setting_value_operators
                        compizconfig_ccs_list_equality
-                       compizconfig_ccs_item_in_list_matcher)
+                       compizconfig_ccs_item_in_list_matcher
+                       compizconfig_ccs_setting_stub)
