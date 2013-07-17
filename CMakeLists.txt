@@ -156,7 +156,7 @@ set (COMPIZ_INTERNAL_INCLUDES
 
 if (COMPIZ_BUILD_TESTING)
 
-    include (FindGoogleTest)
+    include (GoogleTest)
 
     if (GOOGLE_TEST_AND_MOCK_FOUND)
 

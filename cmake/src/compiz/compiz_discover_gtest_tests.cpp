@@ -75,7 +75,7 @@ int main (int argc, char **argv)
 		    gTestFilter << " \"--gtest_filter=";
 		    endParen << "\")";
 
-        std::string testName = jt->substr(0, jt->find("#"));
+		    std::string testName = jt->substr(0, jt->find("#"));
 
 		    testfilecmake <<
 			addTest.str () <<

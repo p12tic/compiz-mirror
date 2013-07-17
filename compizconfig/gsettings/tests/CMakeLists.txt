@@ -84,6 +84,6 @@ if (COMPIZCONFIG_TEST_GSETTINGS_FOUND)
 			   ${GMOCK_MAIN_LIBRARY})
 
     compiz_discover_tests (compizconfig_test_gsettings COVERAGE compizconfig_gsettings_backend)
-    #compiz_discover_tests (compizconfig_test_gsettings_conformance COVERAGE compizconfig_gsettings_backend gsettings)
+    compiz_discover_tests (compizconfig_test_gsettings_conformance COVERAGE compizconfig_gsettings_backend gsettings)
 
 endif (COMPIZCONFIG_TEST_GSETTINGS_FOUND)

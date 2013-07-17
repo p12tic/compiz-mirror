@@ -13,6 +13,8 @@ using ::testing::Return;
 using ::testing::StrictMock;
 using ::testing::Invoke;
 
+class GoogleMockDummy;
+
 class CCSObjectTest :
     public ::testing::Test
 {
@@ -23,7 +25,7 @@ struct TestingObjectWrapper
     CCSObject object;
 };
 
-typedef void (*dummyFunc) (void);
+typedef void (*dummyFunc) (GoogleMockDummy *);
 
 struct DummyInterface
 {
@@ -54,11 +56,14 @@ class GoogleMockDummy :
 	MOCK_METHOD1 (freeTestingObjectWrapper, void (TestingObjectWrapper *));
     public:
 
-	static void thunkDummyFunc () { return _mockDummy.dummyFunc (); }
-	static GoogleMockDummy _mockDummy;
+	static void thunkDummyFunc (GoogleMockDummy *mock);
 };
 
-GoogleMockDummy GoogleMockDummy::_mockDummy;
+void
+GoogleMockDummy::thunkDummyFunc (GoogleMockDummy *mock)
+{
+    mock->dummyFunc ();
+}
 
 const struct DummyInterface SomeDummyInterface =
 {
@@ -163,10 +168,11 @@ TEST(CCSObjectTest, InterfaceFetchCall)
     EXPECT_EQ (*((CCSObject *) to)->interface_types, 1);
 
     const DummyInterface *myDummyInterface = (const DummyInterface *) ccsObjectGetInterface (to, 1);
+    GoogleMockDummy mockDummy;
 
-    EXPECT_CALL (GoogleMockDummy::_mockDummy, dummyFunc ());
+    EXPECT_CALL (mockDummy, dummyFunc ());
 
-    (*myDummyInterface->dummy) ();
+    (*myDummyInterface->dummy) (&mockDummy);
 
     ccsObjectRemoveInterface (to, 1);
 
@@ -196,7 +202,9 @@ TEST(CCSObjectTest, SetPrivateGetPrivate)
 
 void ccsFreeTestingObjectWrapper (TestingObjectWrapper *wrapper)
 {
-    GoogleMockDummy::_mockDummy.freeTestingObjectWrapper (wrapper);
+    GoogleMockDummy *dummy =
+        reinterpret_cast <GoogleMockDummy *> (reinterpret_cast <CCSObject *> (ccsObjectGetPrivate (wrapper)));
+    dummy->freeTestingObjectWrapper (wrapper);
 }
 
 #define CCSREF_OBJ(type,dtype) \
@@ -217,10 +225,13 @@ TEST(CCSObjectTest, TestRefUnrefFreesObject)
 {
     TestingObjectWrapper *to = (TestingObjectWrapper *) calloc (1, sizeof (TestingObjectWrapper));
 
+    GoogleMockDummy dummy;
+
     ccsObjectInit (to, &ccsDefaultObjectAllocator);
+    ccsObjectSetPrivate (to, reinterpret_cast <CCSPrivate *> (&dummy));
     ccsTestingObjectWrapperRef (to);
 
-    EXPECT_CALL (GoogleMockDummy::_mockDummy, freeTestingObjectWrapper (to));
+    EXPECT_CALL (dummy, freeTestingObjectWrapper (to));
 
     ccsTestingObjectWrapperUnref (to);
 
