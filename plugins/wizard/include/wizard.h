@@ -32,6 +32,11 @@
 #include "wizard_options.h"
 #include "wizard_tex.h"
 
+extern const unsigned short CACHESIZE_FACTOR;
+extern const unsigned short COORD_COMPONENTS;
+extern const unsigned short VERTEX_COMPONENTS;
+extern const unsigned short COLOR_COMPONENTS;
+
 static float
 rRange (float avg, float range)
 {
@@ -147,14 +152,13 @@ class ParticleSystem
 	int      ne;		// Emitter count
 	int      ng;		// GPoint count
 
-	GLfloat *vertices_cache;
-	int     vertex_cache_count;
-	GLfloat *coords_cache;
-	int     coords_cache_count;
-	GLfloat *colors_cache;
-	int     color_cache_count;
-	GLfloat *dcolors_cache;
-	int     dcolors_cache_count;
+	/* Cache used in drawParticles 
+        It's here to avoid multiple mem allocation 
+        during drawing */
+	std::vector<GLfloat>  vertices_cache;
+	std::vector<GLfloat>  coords_cache;
+	std::vector<GLushort> colors_cache;
+	std::vector<GLushort> dcolors_cache;
 };
 
 class WizardScreen :
@@ -183,7 +187,8 @@ class WizardScreen :
 
 	void loadEmitters (ParticleSystem *ps);
 
-	void drawParticles (ParticleSystem * ps);
+	void drawParticles (ParticleSystem *ps,
+			    const GLMatrix &transform);
 
 	void positionUpdate (const CompPoint &pos);
 

@@ -13,7 +13,7 @@ using namespace std;
 
 int usage ()
 {
-    cout << "Usage: PATH_TO_TEST_BINARY --gtest_list_tests | ./build_test_cases PATH_TO_TEST_BINARY --wrapper PATH_TO_WRAPPER";
+    cout << "Usage: PATH_TO_TEST_BINARY --gtest_list_tests | ./build_test_cases PATH_TO_TEST_BINARY --wrapper PATH_TO_WRAPPER" << endl;
     return 1;
 }
 
@@ -75,12 +75,14 @@ int main (int argc, char **argv)
 		    gTestFilter << " \"--gtest_filter=";
 		    endParen << "\")";
 
+		    std::string testName = jt->substr(0, jt->find("#"));
+
 		    testfilecmake <<
 			addTest.str () <<
-			*jt <<
+			testName <<
 			testExec.str () <<
 			gTestFilter.str () <<
-			*jt <<
+			testName <<
 			endParen.str () <<
 			endl;
 		}

@@ -1,15 +1,3 @@
-find_library (GMOCK_LIBRARY gmock)
-find_library (GMOCK_MAIN_LIBRARY gmock_main)
-
-if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
-  message ("Google Mock and Google Test not found - cannot build tests!")
-  set (COMPIZ_BUILD_TESTING OFF)
-endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
-
-include_directories (${GTEST_INCLUDE_DIRS})
-
-link_directories (${COMPIZ_LIBRARY_DIRS})
-
 add_executable (compiz_test_opengl_glx_tfp_bind
                 ${CMAKE_CURRENT_SOURCE_DIR}/test-opengl-glx-tfp-bind.cpp)
 
