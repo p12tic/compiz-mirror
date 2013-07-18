@@ -126,6 +126,8 @@ namespace compiz
 	Window GetImmediateParent (Display *display,
 				   Window  w,
 				   Window  &rootReturn);
+	Window GetTopmostNonRootParent (Display *display,
+					Window  w);
 
 	std::list <Window> NET_CLIENT_LIST_STACKING (Display *);
 	bool AdvanceToNextEventOnSuccess (Display *dpy,

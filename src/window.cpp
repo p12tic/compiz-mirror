@@ -1189,33 +1189,7 @@ CompWindow::destroy ()
 	CompWindow *oldNext       = next;
 	CompWindow *oldPrev       = prev;
 
-	/* This is where things get tricky ... it is possible
-	 * to receive a ConfigureNotify relative to a frame window
-	 * for a destroyed window in case we process a ConfigureRequest
-	 * for the destroyed window and then a DestroyNotify for it directly
-	 * afterwards. In that case, we will receive the ConfigureNotify
-	 * for the XConfigureWindow request we made relative to that frame
-	 * window. Because of this, we must keep the frame window in the stack
-	 * as a new toplevel window so that the ConfigureNotify will be processed
-	 * properly until it too receives a DestroyNotify */
-
-	if (priv->serverFrame)
-	{
-	    XWindowAttributes attrib;
-
-	    /* It's possible that the frame window was already destroyed because
-	     * the client was unreparented before it was destroyed (eg
-	     * UnmapNotify before DestroyNotify). In that case the frame window
-	     * is going to be an invalid window but since we haven't received
-	     * a DestroyNotify for it yet, it is possible that restacking
-	     * operations could occurr relative to it so we need to hold it
-	     * in the stack for now. Ensure that it is marked override redirect */
-	    XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
-
-	    /* Put the frame window "above" the client window
-	     * in the stack */
-	    PrivateWindow::createCompWindow (priv->id, priv->id, attrib, priv->serverFrame);
-	}
+	priv->manageFrameWindowSeparately ();
 
 	/* Immediately unhook the window once destroyed
 	 * as the stacking order will be invalid if we don't
@@ -6884,6 +6858,44 @@ PrivateWindow::reparent ()
 }
 
 void
+PrivateWindow::manageFrameWindowSeparately ()
+{
+    /* This is where things get tricky ... it is possible
+     * to receive a ConfigureNotify relative to a frame window
+     * for a destroyed window in case we process a ConfigureRequest
+     * for the destroyed window and then a DestroyNotify for it directly
+     * afterwards. In that case, we will receive the ConfigureNotify
+     * for the XConfigureWindow request we made relative to that frame
+     * window. Because of this, we must keep the frame window in the stack
+     * as a new toplevel window so that the ConfigureNotify will be processed
+     * properly until it too receives a DestroyNotify
+     *
+     * We only wish to do this if we have recieved a CreateNotify for the
+     * frame window. If we have not, then there will be no stacking operations
+     * dependent on it and we should wait until CreateNotify in order to manage
+     * it normally */
+
+    if (frame)
+    {
+	XWindowAttributes attrib;
+
+	/* It's possible that the frame window was already destroyed because
+	 * the client was unreparented before it was destroyed (eg
+	 * UnmapNotify before DestroyNotify). In that case the frame window
+	 * is going to be an invalid window but since we haven't received
+	 * a DestroyNotify for it yet, it is possible that restacking
+	 * operations could occurr relative to it so we need to hold it
+	 * in the stack for now. Ensure that it is marked override redirect */
+	window->priv->queryFrameAttributes (attrib);
+
+	/* Put the frame window "above" the client window
+	 * in the stack */
+	PrivateWindow::createCompWindow (id, id, attrib, frame);
+    }
+
+}
+
+void
 PrivateWindow::unreparent ()
 {
     if (!serverFrame)
@@ -6978,33 +6990,7 @@ PrivateWindow::unreparent ()
     if (dbg)
 	dbg->addDestroyedFrame (serverFrame);
 
-    /* This is where things get tricky ... it is possible
-     * to receive a ConfigureNotify relative to a frame window
-     * for a destroyed window in case we process a ConfigureRequest
-     * for the destroyed window and then a DestroyNotify for it directly
-     * afterwards. In that case, we will receive the ConfigureNotify
-     * for the XConfigureWindow request we made relative to that frame
-     * window. Because of this, we must keep the frame window in the stack
-     * as a new toplevel window so that the ConfigureNotify will be processed
-     * properly until it too receives a DestroyNotify */
-
-    if (serverFrame)
-    {
-	XWindowAttributes attrib;
-
-	/* It's possible that the frame window was already destroyed because
-	 * the client was unreparented before it was destroyed (eg
-	 * UnmapNotify before DestroyNotify). In that case the frame window
-	 * is going to be an invalid window but since we haven't received
-	 * a DestroyNotify for it yet, it is possible that restacking
-	 * operations could occurr relative to it so we need to hold it
-	 * in the stack for now. Ensure that it is marked override redirect */
-	window->priv->queryFrameAttributes (attrib);
-
-	/* Put the frame window "above" the client window
-	 * in the stack */
-	PrivateWindow::createCompWindow (id, id, attrib, serverFrame);
-    }
+    manageFrameWindowSeparately ();
 
     /* Issue a DestroyNotify */
     XDestroyWindow (screen->dpy (), serverFrame);
