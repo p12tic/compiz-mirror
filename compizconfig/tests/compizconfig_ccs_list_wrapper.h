@@ -136,11 +136,10 @@ namespace compiz
 		    typedef compiz::config::ListWrapper <CCSSettingValueList, CCSSettingValue *> InternalWrapper;
 		    typedef compiz::config::impl::ListWrapper <CCSSettingValueList, CCSSettingValue *> InternalWrapperImpl;
 
-		    SettingValueListWrapper (CCSSettingValueList                      list,
-					     ListStorageType                          storageType,
-					     CCSSettingType                           type,
-					     const boost::shared_ptr <CCSSettingInfo> &listInfo,
-					     const boost::shared_ptr <CCSSetting>     &settingReference);
+		    SettingValueListWrapper (CCSSettingValueList                  list,
+					     ListStorageType                      storageType,
+					     CCSSettingType                       type,
+					     const boost::shared_ptr <CCSSetting> &settingReference);
 
 		    CCSSettingType type ();
 
