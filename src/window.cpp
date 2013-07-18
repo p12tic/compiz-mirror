@@ -6591,10 +6591,14 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 					    priv->sizeHints.win_gravity) -
 	    compiz::window::extents::shift (priv->border,
 					    priv->sizeHints.win_gravity);
-	CompSize  sizeDelta = CompSize (-((b->left + b->right) -
-					  (priv->border.left + priv->border.right)),
-					-((b->top + b->bottom) -
-					  (priv->border.top + priv->border.bottom)));
+
+	CompSize sizeDelta;
+
+        if (isMapped())
+	    sizeDelta = CompSize (-((b->left + b->right) -
+				     (priv->border.left + priv->border.right)),
+				  -((b->top + b->bottom) -
+				     (priv->border.top + priv->border.bottom)));
 
 	priv->serverInput = *i;
 	priv->border      = *b;
