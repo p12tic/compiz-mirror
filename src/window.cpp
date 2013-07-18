@@ -6299,9 +6299,25 @@ X11SyncServerWindow::queryShapeRectangles (int kind,
 
 namespace
 {
+class NullConfigureBufferLock :
+    public crb::BufferLock
+{
+    public:
+
+	NullConfigureBufferLock (crb::CountedFreeze *cf) {}
+
+	void lock () {}
+	void release () {}
+};
+
 crb::BufferLock::Ptr
 createConfigureBufferLock (crb::CountedFreeze *cf)
 {
+    /* Return an implementation that does nothing if the user explicitly
+     * disabled buffer locks for this running instance */
+    if (getenv ("COMPIZ_NO_CONFIGURE_BUFFER_LOCKS"))
+	return boost::make_shared <NullConfigureBufferLock> (cf);
+
     return boost::make_shared <crb::ConfigureBufferLock> (cf);
 }
 }
@@ -6348,6 +6364,7 @@ PrivateWindow::PrivateWindow () :
     shaded (false),
     hidden (false),
     grabbed (false),
+    alreadyDecorated (false),
 
     desktop (0),
 
@@ -6591,10 +6608,20 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 					    priv->sizeHints.win_gravity) -
 	    compiz::window::extents::shift (priv->border,
 					    priv->sizeHints.win_gravity);
-	CompSize  sizeDelta = CompSize (-((b->left + b->right) -
-					  (priv->border.left + priv->border.right)),
-					-((b->top + b->bottom) -
-					  (priv->border.top + priv->border.bottom)));
+
+	CompSize sizeDelta;
+
+	/* We don't want to change the size of the window the first time we
+	 * decorate it, but we do thereafter */
+	if (priv->alreadyDecorated)
+	{
+	    sizeDelta.setWidth (-((b->left + b->right) -
+				  (priv->border.left + priv->border.right)));
+	    sizeDelta.setHeight (-((b->top + b->bottom) -
+				   (priv->border.top + priv->border.bottom)));
+	}
+	else
+	    priv->alreadyDecorated = true;
 
 	priv->serverInput = *i;
 	priv->border      = *b;
