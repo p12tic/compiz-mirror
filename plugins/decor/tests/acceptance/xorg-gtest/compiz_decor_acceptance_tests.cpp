@@ -2159,6 +2159,8 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnMaximize)
 			 AddState,
 			 "_NET_WM_STATE_MAXIMIZED_VERT",
 			 mTestWindow);
+			 
+    WaitForPropertyNotify (Display (), mTestWindow, "_NET_FRAME_EXTENTS");
 
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2180,7 +2182,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnMaximize)
     EXPECT_THAT (frameExtents, IsExtents (MaxEx, MaxEx, MaxEx, MaxEx));
 }
 
-TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnVertMaximize)
+TEST_F (PixmapDecoratedWindowAcceptance, RestoredBorderExtentsOnVertMaximize)
 {
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2197,12 +2199,12 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnVertMaximize)
     unsigned long *frameExtents =
 	reinterpret_cast <unsigned long *> (data.get ());
 
-    unsigned int MaxEx = MaximizedBorderExtent;
+    unsigned int ActEx = RealDecorationActiveBorderExtent;
 
-    EXPECT_THAT (frameExtents, IsExtents (MaxEx, MaxEx, MaxEx, MaxEx));
+    EXPECT_THAT (frameExtents, IsExtents (ActEx, ActEx, ActEx, ActEx));
 }
 
-TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnHorzMaximize)
+TEST_F (PixmapDecoratedWindowAcceptance, RestoredBorderExtentsOnHorzMaximize)
 {
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2219,9 +2221,9 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnHorzMaximize)
     unsigned long *frameExtents =
 	reinterpret_cast <unsigned long *> (data.get ());
 
-    unsigned int MaxEx = MaximizedBorderExtent;
-
-    EXPECT_THAT (frameExtents, IsExtents (MaxEx, MaxEx, MaxEx, MaxEx));
+    unsigned int ActEx = RealDecorationActiveBorderExtent;
+    
+    EXPECT_THAT (frameExtents, IsExtents (ActEx, ActEx, ActEx, ActEx));
 }
 
 TEST_F (PixmapDecoratedWindowAcceptance, MaximizeFrameWindowSizeEqOutputSize)
