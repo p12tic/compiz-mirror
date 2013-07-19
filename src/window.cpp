@@ -3553,7 +3553,10 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     int       mask = 0;
     CompPoint viewport;
 
-    screen->viewportForGeometry (old, viewport);
+    if (old.intersects (CompRect (0, 0, screen->width (), screen->height ())))
+	viewport = screen->vp ();
+    else
+	screen->viewportForGeometry (old, viewport);
 
     int x = (viewport.x () - screen->vp ().x ()) * screen->width ();
     int y = (viewport.y () - screen->vp ().y ()) * screen->height ();
