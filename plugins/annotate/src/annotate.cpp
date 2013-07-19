@@ -1014,6 +1014,8 @@ AnnoScreen::AnnoScreen (CompScreen *screen) :
 	(boost::bind (&AnnoScreen::initiateEllipse, this, _1, _2, _3));
     optionSetInitiateEllipseButtonTerminate
 	(boost::bind (&AnnoScreen::terminate, this, _1, _2, _3));
+    optionSetClearButtonInitiate
+	(boost::bind (&AnnoScreen::clear, this, _1, _2, _3));
     optionSetClearKeyInitiate
 	(boost::bind (&AnnoScreen::clear, this, _1, _2, _3));
     drawMode = NoMode;
