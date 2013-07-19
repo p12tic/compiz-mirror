@@ -1651,14 +1651,16 @@ DecorWindow::update (bool allowDecoration)
 	CompWindowExtents emptyExtents;
 	wd = NULL;
 
+	/* _NET_FRAME_EXTENTS should be updated before the frame
+	 * atom is */
+	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
+
+	window->setWindowFrameExtents (&emptyExtents, &emptyExtents);
+
 	/* Undecorated windows need to have the
 	 * input and output frame removed and the
 	 * frame window geometry reset */
 	updateFrame ();
-
-	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
-
-	window->setWindowFrameExtents (&emptyExtents, &emptyExtents);
     }
 
     /* We need to damage the current output extents
