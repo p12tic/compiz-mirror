@@ -1608,7 +1608,7 @@ DecorWindow::update (bool allowDecoration)
 	/* Set extents based on maximize/unmaximize state
 	 * FIXME: With the new type system, this should be
 	 * removed */
-	if (decorMaximizeState)
+	if (decorMaximizeState == MAXIMIZE_STATE)
 	    window->setWindowFrameExtents (&decoration->maxBorder,
 					   &decoration->maxInput);
 	else if (!window->hasUnmapReference ())
@@ -1777,7 +1777,7 @@ DecorWindow::updateInputFrame ()
 	parent = window->frame ();
 
     /* Determine frame extents */
-    if ((window->state () & MAXIMIZE_STATE))
+    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
     {
 	border = wd->decor->maxBorder;
 	input = wd->decor->maxInput;
@@ -1933,7 +1933,7 @@ DecorWindow::updateOutputFrame ()
     CompWindowExtents	 input;
 
     /* Determine frame extents */
-    if ((window->state () & MAXIMIZE_STATE))
+    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	input = wd->decor->maxInput;
     else
 	input = wd->decor->input;
