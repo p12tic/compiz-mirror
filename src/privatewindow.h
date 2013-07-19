@@ -252,6 +252,7 @@ class PrivateWindow :
 
 	bool reparent ();
 	void unreparent ();
+	void manageFrameWindowSeparately ();
 
 	void hide ();
 
