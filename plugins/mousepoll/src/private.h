@@ -71,7 +71,7 @@ class MousepollScreen :
 #define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
 
 class MousepollPluginVTable :
-    public CompPlugin::VTableForScreen<MousepollScreen>
+    public CompPlugin::VTableForScreen<MousepollScreen, COMPIZ_MOUSEPOLL_ABI>
 {
     public:
 

@@ -252,6 +252,7 @@ class PrivateWindow :
 
 	bool reparent ();
 	void unreparent ();
+	void manageFrameWindowSeparately ();
 
 	void hide ();
 
@@ -400,6 +401,7 @@ class PrivateWindow :
 	bool shaded;
 	bool hidden;
 	bool grabbed;
+	bool alreadyDecorated;
 
 	unsigned int desktop;
 

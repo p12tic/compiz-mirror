@@ -44,6 +44,11 @@
 using ::testing::MatchResultListener;
 using ::testing::MakeMatcher;
 using ::testing::Matcher;
+using ::testing::_;
+
+using ::compiz::testing::HasGeometry;
+using ::compiz::testing::RelativeWindowGeometry;
+using ::compiz::testing::AbsoluteWindowGeometry;
 
 namespace ct = compiz::testing;
 
@@ -55,44 +60,11 @@ bool Advance (Display *d, bool r)
     return ct::AdvanceToNextEventOnSuccess (d, r);
 }
 
-Window GetImmediateParent (Display *display,
-			   Window  w,
-			   Window  &rootReturn)
-{
-    Window parentReturn = w;
-    Window *childrenReturn;
-    unsigned int nChildrenReturn;
-
-    XQueryTree (display,
-		w,
-		&rootReturn,
-		&parentReturn,
-		&childrenReturn,
-		&nChildrenReturn);
-    XFree (childrenReturn);
-
-    return parentReturn;
-}
-
 
 Window GetTopParent (Display *display,
 		     Window w)
 {
-    Window rootReturn = 0;
-    Window parentReturn = w;
-    Window lastParent = 0;
-
-    do
-    {
-	lastParent = parentReturn;
-
-	parentReturn = GetImmediateParent (display,
-					   lastParent,
-					   rootReturn);
-	
-    } while (parentReturn != rootReturn);
-
-    return lastParent;
+    return ct::GetTopmostNonRootParent (display, w);
 }
 
 bool QueryGeometry (Display *dpy,
@@ -210,7 +182,6 @@ class CompizXorgSystemConfigureWindowTest :
 	void SendConfigureLockRequest (Window w, bool lockRequests);
 	bool VerifyConfigureResponse (Window w, int x, int y, int width, int height);
 	bool VerifySetFrameExtentsResponse (Window w, int left, int right, int top, int bottom);
-	bool VerifyWindowSize (Window w, int x, int y, int width, int height);
 
 	/* Helper functions for the Create*WindowOverrideRedirect* tests */
 	Window GrabAndCreateWindowWithAttrs (::Display *dpy,
@@ -223,7 +194,7 @@ class CompizXorgSystemConfigureWindowTest :
     protected:
 
 	ReparentedWindow CreateWindow (::Display *);
-	int GetEventMask ();
+	int GetEventMask () const;
 
     private:
 
@@ -231,7 +202,7 @@ class CompizXorgSystemConfigureWindowTest :
 };
 
 int
-CompizXorgSystemConfigureWindowTest::GetEventMask ()
+CompizXorgSystemConfigureWindowTest::GetEventMask () const
 {
     return ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () |
 	    SubstructureNotifyMask;
@@ -355,28 +326,6 @@ CompizXorgSystemConfigureWindowTest::VerifySetFrameExtentsResponse (Window w,
     return false;
 }
 
-bool
-CompizXorgSystemConfigureWindowTest::VerifyWindowSize (Window w,
-						       int x,
-						       int y,
-						       int width,
-						       int height)
-{
-    ::Display *dpy = Display ();
-
-    int          xRet, yRet;
-    unsigned int widthRet, heightRet;
-    if (!QueryGeometry (dpy, w, xRet, yRet, widthRet, heightRet))
-	return false;
-
-    EXPECT_EQ (x, xRet);
-    EXPECT_EQ (y, yRet);
-    EXPECT_EQ (width, widthRet);
-    EXPECT_EQ (height, heightRet);
-
-    return true;
-}
-
 ReparentedWindow
 CompizXorgSystemConfigureWindowTest::CreateWindow (::Display *dpy)
 {
@@ -404,7 +353,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, ConfigureAndReponseUnlocked)
     ASSERT_TRUE (VerifyConfigureResponse (w.client, x, y, width, height));
 
     /* Query the window size again */
-    ASSERT_TRUE (VerifyWindowSize (w.frame, x, y, width, height));
+    ASSERT_THAT (w.frame, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       x,
+				       y,
+				       width,
+				       height,
+				       _));
 
 }
 
@@ -429,7 +384,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, FrameExtentsAndReponseUnlocked)
     ASSERT_TRUE (VerifySetFrameExtentsResponse (w.client, left, right, top, bottom));
 
     /* Client geometry is always unchanged */
-    ASSERT_TRUE (VerifyWindowSize (w.client, x, y, width, height));
+    ASSERT_THAT (w.client, HasGeometry (dpy,
+					RelativeWindowGeometry,
+					x,
+					y,
+					width,
+					height,
+				       _));
 
     /* Frame geometry is frame geometry offset by extents */
     x -= left;
@@ -437,7 +398,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, FrameExtentsAndReponseUnlocked)
     width += left + right;
     height += top + bottom;
 
-    ASSERT_TRUE (VerifyWindowSize (w.frame, x, y, width, height));
+    ASSERT_THAT (w.frame, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       x,
+				       y,
+				       width,
+				       height,
+				       _));
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, MoveFrameLocked)
@@ -467,11 +434,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, MoveFrameLocked)
     ASSERT_TRUE (VerifyConfigureResponse (w.client, x, y, width, height));
 
     /* Query the window size again - it should be the same */
-    ASSERT_TRUE (VerifyWindowSize (w.frame,
-				   currentX,
-				   currentY,
-				   currentWidth,
-				   currentHeight));
+    ASSERT_THAT (w.frame, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       currentX,
+				       currentY,
+				       currentWidth,
+				       currentHeight,
+				       _));
 
 
     SendConfigureLockRequest (w.client, false);
@@ -529,11 +498,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, ResizeFrameLocked)
     SendConfigureLockRequest (w.client, false);
 
     /* Query the window size again - it should be the same */
-    ASSERT_TRUE (VerifyWindowSize (w.frame,
-				   currentX,
-				   currentY,
-				   width,
-				   height));
+    ASSERT_THAT (w.frame, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       currentX,
+				       currentY,
+				       width,
+				       height,
+				       _));
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsLocked)
@@ -581,11 +552,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsLocked)
     SendConfigureLockRequest (w.client, false);
 
     /* Query the window size again - it should be the same */
-    ASSERT_TRUE (VerifyWindowSize (w.frame,
-				   currentX - left,
-				   currentY - top,
-				   currentWidth + (left + right),
-				   currentHeight + (top + bottom)));
+    ASSERT_THAT (w.frame, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       currentX - left,
+				       currentY - top,
+				       currentWidth + (left + right),
+				       currentHeight + (top + bottom),
+				       _));
 }
 
 /* Check that changing the frame extents by one on each side
@@ -616,12 +589,14 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsAdjWrapperWindow)
 
     /* Wrapper geometry is extents.xy, size.wh */
     Window root;
-    Window wrapper = GetImmediateParent (dpy, w.client, root);
-    ASSERT_TRUE (VerifyWindowSize (wrapper,
-				   left,
-				   top,
-				   currentWidth,
-				   currentHeight));
+    Window wrapper = ct::GetImmediateParent (dpy, w.client, root);
+    ASSERT_THAT (wrapper, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       left,
+				       top,
+				       currentWidth,
+				       currentHeight,
+				       _));
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsUnmapped)
@@ -651,11 +626,13 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsUnmapped)
     SendSetFrameExtentsRequest (client, left, right, top, bottom);
     ASSERT_TRUE (VerifySetFrameExtentsResponse (client, left, right, top, bottom));
 
-    ASSERT_TRUE (VerifyWindowSize (client,
-				   currentX,
-				   currentY,
-				   currentWidth,
-				   currentHeight));
+    ASSERT_THAT (client, HasGeometry (dpy,
+				      RelativeWindowGeometry,
+				      currentX,
+				      currentY,
+				      currentWidth,
+				      currentHeight,
+				      _));
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsCorrectMapBehaviour)
@@ -689,20 +666,24 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsCorrectMapBehaviour)
 
     /* Check the geometry of the frame */
     Window frame = GetTopParent (dpy, client);
-    ASSERT_TRUE (VerifyWindowSize (frame,
-				   currentX,
-				   currentY,
-				   currentWidth + (left + right),
-				   currentHeight + (top + bottom)));
+    ASSERT_THAT (frame, HasGeometry (dpy,
+				     RelativeWindowGeometry,
+				     currentX - left,
+				     currentY - top,
+				     currentWidth + (left + right),
+				     currentHeight + (top + bottom),
+				     _));
 
     /* Wrapper geometry is extents.xy, size.wh */
     Window root;
-    Window wrapper = GetImmediateParent (dpy, client, root);
-    ASSERT_TRUE (VerifyWindowSize (wrapper,
-				   left,
-				   top,
-				   currentWidth,
-				   currentHeight));
+    Window wrapper = ct::GetImmediateParent (dpy, client, root);
+    ASSERT_THAT (wrapper, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       left,
+				       top,
+				       currentWidth,
+				       currentHeight,
+				       _));
 }
 
 TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourAfterMap)
@@ -744,20 +725,24 @@ TEST_F (CompizXorgSystemConfigureWindowTest, SetFrameExtentsConsistentBehaviourA
 
     /* Check the geometry of the frame */
     Window frame = GetTopParent (dpy, client);
-    ASSERT_TRUE (VerifyWindowSize (frame,
-				   currentX,
-				   currentY,
-				   currentWidth + (left + right),
-				   currentHeight + (top + bottom)));
+    ASSERT_THAT (frame, HasGeometry (dpy,
+				     RelativeWindowGeometry,
+				     currentX - left,
+				     currentY - top,
+				     currentWidth + (left + right),
+				     currentHeight + (top + bottom),
+				     _));
 
     /* Wrapper geometry is extents.xy, size.wh */
     Window root;
-    Window wrapper = GetImmediateParent (dpy, client, root);
-    ASSERT_TRUE (VerifyWindowSize (wrapper,
-				   left,
-				   top,
-				   currentWidth,
-				   currentHeight));
+    Window wrapper = ct::GetImmediateParent (dpy, client, root);
+    ASSERT_THAT (wrapper, HasGeometry (dpy,
+				       RelativeWindowGeometry,
+				       left,
+				       top,
+				       currentWidth,
+				       currentHeight,
+				       _));
 }
 
 

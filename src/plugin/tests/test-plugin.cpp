@@ -182,6 +182,46 @@ TEST_F (PluginTest, load_plugin_from_COMPIZ_PLUGIN_DIR_env_succeeds)
     CompPlugin::unload(cp);
 }
 
+TEST_F (PluginTest, load_plugin_from_multi_COMPIZ_PLUGIN_DIR_env_succeeds)
+{
+    std::string COMPIZ_PLUGIN_DIR_PART1 = "/path/to/plugin/dir";
+    std::string COMPIZ_PLUGIN_DIR_PART2 = "/dir/plugin/to/path";
+    std::string COMPIZ_PLUGIN_DIR_VALUE = COMPIZ_PLUGIN_DIR_PART1 + ":" +
+					  COMPIZ_PLUGIN_DIR_PART2;
+    TmpEnv env ("COMPIZ_PLUGIN_DIR", COMPIZ_PLUGIN_DIR_VALUE.c_str ());
+
+    using namespace testing;
+
+    EXPECT_CALL(mockfs, LoadPlugin(_,
+				   EndsWith(COMPIZ_PLUGIN_DIR_PART1),
+				   StrEq("dummy"))).
+	WillOnce(Return(false));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0),
+				   StrEq(COMPIZ_PLUGIN_DIR_PART2),
+				   StrEq("dummy"))).
+	WillOnce(Return(true));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0),
+				   EndsWith(HOME_PLUGINDIR), StrEq("dummy"))).
+	Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0),
+				   EndsWith(PLUGINDIR), StrEq("dummy"))).
+	Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0),
+				   Eq((void*)0), StrEq("dummy"))).
+	    Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
+
+    CompPlugin* cp = CompPlugin::load("dummy");
+    ASSERT_NE((void*)0, cp);
+
+    CompPlugin::unload(cp);
+}
+
 TEST_F (PluginTest, load_plugin_from_void_succeeds)
 {
     using namespace testing;

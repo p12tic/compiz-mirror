@@ -50,6 +50,8 @@ const char *messages[] =
     "_COMPIZ_TEST_HELPER_FRAME_EXTENTS_CHANGED",
     "_COMPIZ_TEST_HELPER_CONFIGURE_WINDOW",
     "_COMPIZ_TEST_HELPER_WINDOW_CONFIGURE_PROCESSED",
+    "_COMPIZ_TEST_HELPER_DESTROY_ON_REPARENT",
+    "_COMPIZ_TEST_HELPER_RESTACK_ATLEAST_ABOVE",
     "_COMPIZ_TEST_HELPER_WINDOW_READY"
 };
 }
@@ -61,7 +63,9 @@ const char *TEST_HELPER_CHANGE_FRAME_EXTENTS = internal::messages[3];
 const char *TEST_HELPER_FRAME_EXTENTS_CHANGED = internal::messages[4];
 const char *TEST_HELPER_CONFIGURE_WINDOW = internal::messages[5];
 const char *TEST_HELPER_WINDOW_CONFIGURE_PROCESSED = internal::messages[6];
-const char *TEST_HELPER_WINDOW_READY = internal::messages[7];
+const char *TEST_HELPER_DESTROY_ON_REPARENT = internal::messages[7];
+const char *TEST_HELPER_RESTACK_ATLEAST_ABOVE = internal::messages[8];
+const char *TEST_HELPER_WINDOW_READY = internal::messages[9];
 }
 }
 }

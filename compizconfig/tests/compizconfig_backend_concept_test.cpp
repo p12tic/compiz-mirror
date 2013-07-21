@@ -26,6 +26,7 @@
 #include <gtest_unspecified_bool_type_matcher.h>
 
 #include <compizconfig_ccs_setting_mock.h>
+#include <compizconfig_ccs_setting_stub.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -56,19 +57,34 @@ cct::CCSListConstructionExpectationsSetter (const cct::ConstructorFunc &c,
 					    CCSSettingType             type,
 					    cci::ListStorageType       storageType)
 {
+    CCSSettingInfo listInfo;
+
+    listInfo.forList.listType = type;
+    listInfo.forList.listInfo =
+	(CCSSettingInfo *) calloc (1, sizeof (CCSSettingInfo));
+
     boost::function <void (CCSSetting *)> f (boost::bind (ccsSettingUnref, _1));
-    boost::shared_ptr <CCSSetting> mockSetting (ccsNiceMockSettingNew (), f);
-    NiceMock <CCSSettingGMock>     *gmockSetting = reinterpret_cast <NiceMock <CCSSettingGMock> *> (ccsObjectGetPrivate (mockSetting.get ()));
+    boost::shared_ptr <CCSSetting> stubSetting (ccsSettingTypeStubNew (TypeList,
+								       TRUE,
+								       TRUE,
+								       NULL,
+								       NULL,
+								       NULL,
+								       NULL,
+								       NULL,
+								       NULL,
+								       NULL,
+								       NULL,
+								       &listInfo,
+								       &ccsDefaultObjectAllocator),
+						f);
 
-    ON_CALL (*gmockSetting, getType ()).WillByDefault (Return (TypeList));
+    ccsCleanupSettingInfo (&listInfo, TypeList);
 
-    boost::shared_ptr <CCSSettingInfo> listInfo (new CCSSettingInfo);
-
-    listInfo->forList.listType = type;
-
-    ON_CALL (*gmockSetting, getInfo ()).WillByDefault (Return (listInfo.get ()));
-    ON_CALL (*gmockSetting, getDefaultValue ()).WillByDefault (ReturnNull ());
-    return boost::make_shared <cci::SettingValueListWrapper> (c (mockSetting.get ()), storageType, type, listInfo, mockSetting);
+    return boost::make_shared <cci::SettingValueListWrapper> (c (stubSetting.get ()),
+							      storageType,
+							      type,
+							      stubSetting);
 }
 
 CCSSettingGMock *
@@ -287,10 +303,9 @@ cct::SetListWriteExpectation (const std::string                                 
     write ();
 
     EXPECT_THAT (cci::SettingValueListWrapper (env->ReadListAtKey (plugin, key, setting.get ()),
-						  cci::Deep,
-						  info->forList.listType,
-						  boost::shared_ptr <CCSSettingInfo> (),
-						  setting),
+					       cci::Deep,
+					       info->forList.listType,
+					       setting),
 		 ListEqual (&info->forList, list));
 }
 
