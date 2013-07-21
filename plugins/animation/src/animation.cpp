@@ -94,7 +94,7 @@
 using namespace compiz::core;
 
 class AnimPluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<AnimScreen, AnimWindow>
+    public CompPlugin::VTableForScreenAndWindow<AnimScreen, AnimWindow, ANIMATION_ABI>
 {
 public:
 
