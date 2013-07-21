@@ -745,7 +745,7 @@ PrivateCubeScreen::preparePaint (int msSinceLastPaint)
 	}
     }
 
-    memset (mCleared,     0, sizeof (Bool) * screen->outputDevs ().size ());
+    memset (mCleared, 0, sizeof (Bool) * screen->outputDevs ().size ());
     memset (mCapsPainted, 0, sizeof (Bool) * screen->outputDevs ().size ());
 
     /* Transparency handling */
@@ -1018,7 +1018,7 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 	   We paint the viewports around xMove viewport.
 	   Adding or subtracting hsize from xMove has no effect on
 	   what viewport we paint, but can make shorter paths. */
-	if      (xMoveAdd < -halfHsize)
+	if (xMoveAdd < -halfHsize)
 	    xMoveAdd += hsize;
 	else if (xMoveAdd >  halfHsize)
 	    xMoveAdd -= hsize;
@@ -1041,7 +1041,7 @@ PrivateCubeScreen::paintAllViewports (const GLScreenPaintAttrib &sAttrib,
 					   left / right (opposite side
 					   from the one chosen first) */
 
-	if      (xMoveAdd < -halfHsize)
+	if (xMoveAdd < -halfHsize)
 	    xMoveAdd += hsize;
 	else if (xMoveAdd >  halfHsize)
 	    xMoveAdd -= hsize;
