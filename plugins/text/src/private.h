@@ -77,9 +77,9 @@ class TextSurface
 	bool render (const CompText::Attrib &attrib,
 		     const CompString       &text);
 
-	int                  mWidth;
-	int                  mHeight;
-	Pixmap               mPixmap;
+	int    mWidth;
+	int    mHeight;
+	Pixmap mPixmap;
 
     private:
 
