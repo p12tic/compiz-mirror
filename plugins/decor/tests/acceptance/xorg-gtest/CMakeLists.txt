@@ -22,6 +22,7 @@ if (BUILD_XORG_GTEST)
          decoration
          compiz_point
          compiz_size
+         compiz_rect
          ${GMOCK_LIBRARY}
          ${GMOCK_MAIN_LIBRARY}
          ${GTEST_BOTH_LIBRARIES}

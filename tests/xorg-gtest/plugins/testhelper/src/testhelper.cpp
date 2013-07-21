@@ -178,10 +178,66 @@ TestHelperWindow::setConfigureLock (long *data)
     }
 }
 
+void
+TestHelperWindow::setDestroyOnReparent (long *)
+{
+    destroyOnReparent = true;
+}
+
+void
+TestHelperWindow::restackAtLeastAbove (long *data)
+{
+    ServerLock lock (screen->serverGrabInterface ());
+
+    Window            above = data[0];
+    XWindowAttributes attrib;
+
+    if (!XGetWindowAttributes (screen->dpy (), above, &attrib))
+	return;
+
+    CompWindow *w = screen->findTopLevelWindow (above, true);
+    for (; w; w = w->next)
+	if (!w->overrideRedirect ())
+	    break;
+
+    if (!w)
+	return;
+
+    XWindowChanges xwc;
+
+    xwc.stack_mode = Above;
+    xwc.sibling = w->frame () ? w->frame () : w->id ();
+
+    window->restackAndConfigureXWindow (CWStackMode | CWSibling,
+					&xwc,
+					lock);
+}
+
+void
+TestHelperWindow::windowNotify (CompWindowNotify n)
+{
+    switch (n)
+    {
+	case CompWindowNotifyReparent:
+	    if (destroyOnReparent)
+	    {
+		Window id = window->id ();
+		window->destroy ();
+		XDestroyWindow (screen->dpy (), id);
+	    }
+	    break;
+	default:
+	    break;
+    }
+
+    window->windowNotify (n);
+}
+
 TestHelperWindow::TestHelperWindow (CompWindow *w) :
     PluginClassHandler <TestHelperWindow, CompWindow> (w),
     window (w),
-    configureLock ()
+    configureLock (),
+    destroyOnReparent (false)
 {
     WindowInterface::setHandler (w);
 
@@ -211,6 +267,10 @@ TestHelperScreen::TestHelperScreen (CompScreen *s) :
 		     &TestHelperWindow::setFrameExtentsAndReport);
     watchForMessage (fetchAtom (ctm::TEST_HELPER_LOCK_CONFIGURE_REQUESTS),
 		     &TestHelperWindow::setConfigureLock);
+    watchForMessage (fetchAtom (ctm::TEST_HELPER_DESTROY_ON_REPARENT),
+		     &TestHelperWindow::setDestroyOnReparent);
+    watchForMessage (fetchAtom (ctm::TEST_HELPER_RESTACK_ATLEAST_ABOVE),
+		     &TestHelperWindow::restackAtLeastAbove);
 
     ct::SendClientMessage (s->dpy (),
 			   mAtomStore.FetchForString (ctm::TEST_HELPER_READY_MSG),

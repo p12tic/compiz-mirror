@@ -6,6 +6,7 @@ set (_headers
     countedlist.h
     global.h
     icon.h
+    logmessage.h
     match.h
     modifierhandler.h
     option.h

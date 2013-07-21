@@ -766,7 +766,6 @@ class ListValueContainerFromChildValueBase :
 		mWrapper.reset (new cci::SettingValueListWrapper (NULL,
 								  cci::Deep,
 								  type,
-								  info,
 								  setting));
 		mWrapper->append (value);
 	    }
@@ -799,7 +798,6 @@ class ListValueContainerFromList :
 		mWrapper.reset (new cci::SettingValueListWrapper (ccsCopyList (mRawValueList, setting.get ()),
 								  cci::Deep,
 								  type,
-								  info,
 								  setting));
 	    }
 
