@@ -31,21 +31,21 @@ rgbToBGRA (const JSAMPLE *source,
 	   CompSize      &size,
 	   int           alpha)
 {
-    int  h, w;
-    char *dest;
     int  height = size.height ();
-    int  width = size.width ();
+    int  width  = size.width ();
+    char *dest  = (char *) malloc ((unsigned)(height * width * 4));
 
-    dest = (char *) malloc ((unsigned)(height * width * 4));
     if (!dest)
 	return false;
 
     data = dest;
+    int pos;
 
-    for (h = 0; h < height; h++)
-	for (w = 0; w < width; w++)
+    for (int h = 0; h < height; ++h)
+    {
+	for (int w = 0; w < width; ++w)
 	{
-	    int pos = h * width + w;
+	    pos = h * width + w;
 #if __BYTE_ORDER == __BIG_ENDIAN
 	    dest[(pos * 4) + 3] = source[(pos * 3) + 2];    /* blue */
 	    dest[(pos * 4) + 2] = source[(pos * 3) + 1];    /* green */
@@ -58,6 +58,7 @@ rgbToBGRA (const JSAMPLE *source,
 	    dest[(pos * 4) + 3] = alpha;
 #endif
 	}
+    }
 
     return true;
 }
@@ -68,10 +69,8 @@ rgbaToRGB (unsigned char *source,
 	   CompSize      &size,
 	   int           stride)
 {
-    int     h, w;
     int     height = size.height ();
-    int     width = size.width ();
-    int     ps = stride / width;	/* pixel size */
+    int     width  = size.width ();
     JSAMPLE *d;
 
     d = (JSAMPLE *) malloc ((unsigned)height * (unsigned)width * 3 *
@@ -81,10 +80,14 @@ rgbaToRGB (unsigned char *source,
 
     *dest = d;
 
-    for (h = 0; h < height; h++)
-	for (w = 0; w < width; w++)
+    int ps = stride / width;	/* pixel size */
+    int pos;
+
+    for (int h = 0; h < height; ++h)
+    {
+	for (int w = 0; w < width; ++w)
 	{
-	    int pos = h * width + w;
+	    pos = h * width + w;
 #if __BYTE_ORDER == __BIG_ENDIAN
 	    d[(pos * 3) + 0] = source[(pos * ps) + 3];	/* red */
     	    d[(pos * 3) + 1] = source[(pos * ps) + 2];	/* green */
@@ -95,6 +98,7 @@ rgbaToRGB (unsigned char *source,
     	    d[(pos * 3) + 2] = source[(pos * ps) + 2];	/* blue */
 #endif
 	}
+    }
 
     return true;
 }
@@ -119,14 +123,11 @@ JpegScreen::readJPEG (FILE     *file,
 		      CompSize &size,
 		      void     *&data)
 {
-    struct jpeg_decompress_struct cinfo;
-    struct jpegErrorMgr           jerr;
-    JSAMPLE                       *buf;
-    JSAMPROW                      *rows;
-    bool                          result;
-
     if (!file)
 	return false;
+
+    struct jpeg_decompress_struct cinfo;
+    struct jpegErrorMgr           jerr;
 
     cinfo.err = jpeg_std_error (&jerr.pub);
     jerr.pub.error_exit = jpegErrorExit;
@@ -151,9 +152,10 @@ JpegScreen::readJPEG (FILE     *file,
     size.setHeight ((int)cinfo.output_height);
     size.setWidth ((int)cinfo.output_width);
 
-    buf = (JSAMPLE *) calloc (cinfo.output_height * cinfo.output_width *
-			      (unsigned)cinfo.output_components,
-			      sizeof (JSAMPLE));
+    JSAMPLE *buf = (JSAMPLE *) calloc (cinfo.output_height * cinfo.output_width *
+				       (unsigned)cinfo.output_components,
+				       sizeof (JSAMPLE));
+
     if (!buf)
     {
 	jpeg_finish_decompress (&cinfo);
@@ -161,7 +163,8 @@ JpegScreen::readJPEG (FILE     *file,
 	return false;
     }
 
-    rows = (JSAMPROW *) malloc (cinfo.output_height * sizeof (JSAMPROW));
+    JSAMPROW *rows = (JSAMPROW *) malloc (cinfo.output_height * sizeof (JSAMPROW));
+
     if (!rows)
     {
 	free (buf);
@@ -170,9 +173,9 @@ JpegScreen::readJPEG (FILE     *file,
 	return false;
     }
 
-    for (unsigned int i = 0; i < cinfo.output_height; i++)
+    for (unsigned int i = 0; i < cinfo.output_height; ++i)
 	rows[i] = &buf[i * cinfo.output_width *
-		       (unsigned)cinfo.output_components];
+		  (unsigned)cinfo.output_components];
 
     while (cinfo.output_scanline < cinfo.output_height)
 	jpeg_read_scanlines (&cinfo, &rows[cinfo.output_scanline],
@@ -182,10 +185,11 @@ JpegScreen::readJPEG (FILE     *file,
     jpeg_destroy_decompress (&cinfo);
 
     /* convert the rgb data into BGRA format */
-    result = rgbToBGRA (buf, data, size, 255);
+    bool result = rgbToBGRA (buf, data, size, 255);
 
     free (rows);
     free (buf);
+
     return result;
 }
 
@@ -220,9 +224,9 @@ JpegScreen::writeJPEG (unsigned char *buffer,
 
     while (cinfo.next_scanline < cinfo.image_height)
     {
-	row_pointer[0] =
-	    &data[(cinfo.image_height - cinfo.next_scanline - 1) *
-		  (unsigned) size.width () * 3];
+	row_pointer[0] = &data[(cinfo.image_height - cinfo.next_scanline - 1) *
+			 (unsigned) size.width () * 3];
+
 	jpeg_write_scanlines (&cinfo, row_pointer, 1);
     }
 
@@ -250,18 +254,18 @@ bool
 JpegScreen::imageToFile (CompString &path,
 			 CompString &format,
 			 CompSize   &size,
-			 int	   stride,
-			 void	   *data)
+			 int        stride,
+			 void       *data)
 {
-    bool       status = false;
+    bool       status   = false;
     CompString fileName = fileNameWithExtension (path);
 
     if (format == "jpeg" || format == "jpg" ||
     	!(status = screen->imageToFile (path, format, size, stride, data)))
     {
-	FILE *file;
-    	file = fopen (fileName.c_str (), "wb");
-    	if (file)
+	FILE *file = fopen (fileName.c_str (), "wb");
+
+	if (file)
 	{
 	    status = writeJPEG ((unsigned char *) data, file, size, stride);
 	    fclose (file);
@@ -277,11 +281,10 @@ JpegScreen::fileToImage (CompString &name,
 			 int        &stride,
 			 void       *&data)
 {
-    bool       status = false;
-    FILE       *file;
+    bool       status   = false;
     CompString fileName = fileNameWithExtension (name);
+    FILE       *file    = fopen (fileName.c_str (), "rb");
 
-    file = fopen (fileName.c_str (), "rb");
     if (file)
     {
 	status = readJPEG (file, size, data);

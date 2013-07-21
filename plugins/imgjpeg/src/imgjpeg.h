@@ -38,7 +38,6 @@
 #include "imgjpeg_options.h"
 
 
-
 struct jpegErrorMgr
 {
     struct  jpeg_error_mgr pub;	/* "public" fields */
@@ -51,25 +50,38 @@ class JpegScreen :
     public ImgjpegOptions
 {
     public:
+
 	JpegScreen (CompScreen *screen);
 
-	bool fileToImage (CompString &path, CompSize &size,
-			  int &stride, void *&data);
-	bool imageToFile (CompString &path, CompString &format,
-			  CompSize &size, int stride, void *data);
+	bool fileToImage (CompString &path,
+			  CompSize   &size,
+			  int        &stride,
+			  void       *&data);
+
+	bool imageToFile (CompString &path,
+			  CompString &format,
+			  CompSize   &size,
+			  int        stride,
+			  void       *data);
 
     private:
+
 	CompString fileNameWithExtension (CompString &path);
 
-	bool readJPEG (FILE *file, CompSize &size, void *&data);
-	bool writeJPEG (unsigned char *buffer, FILE *file,
-			CompSize &size, int stride);
+	bool readJPEG (FILE     *file,
+		       CompSize &size,
+		       void     *&data);
+
+	bool writeJPEG (unsigned char *buffer,
+			FILE          *file,
+			CompSize      &size,
+			int           stride);
 };
 
 class JpegPluginVTable :
     public CompPlugin::VTableForScreen<JpegScreen>
 {
     public:
+
 	bool init ();
 };
-
