@@ -28,6 +28,7 @@
 #include "expo.h"
 #include "click-threshold.h"
 #include "wall-offset.h"
+#include <core/logmessage.h>
 #include <math.h>
 #ifndef USE_GLES
 #include <GL/glu.h>
@@ -1500,6 +1501,27 @@ ExpoWindow::damageRect (bool            initial,
     return cWindow->damageRect (initial, rect);
 }
 
+void
+ExpoWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
+{
+    window->resizeNotify (dx, dy, dwidth, dheight);
+
+    if (!(window->type () & CompWindowTypeDesktopMask))
+    {
+	compLogMessage ("expo", CompLogLevelWarn, "Received a resizeNotify "\
+						  "for a non-desktop window.");
+	assert (window->type () & CompWindowTypeDesktopMask);
+	return;
+    }
+
+    /* Desktop window was resized. Update our glowQuads. */
+    foreach (GLTexture *tex, eScreen->outline_texture)
+    {
+	GLTexture::Matrix mat = tex->matrix ();
+	computeGlowQuads (&mat);
+    }
+}
+
 #define EXPOINITBIND(opt, func)                                \
     optionSet##opt##Initiate (boost::bind (&ExpoScreen::func,  \
 					   this, _1, _2, _3));
@@ -1572,6 +1594,7 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     mGlowQuads  (NULL),
     expoOpacity (1.0f)
 {
+    WindowInterface::setHandler (window, false);
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
 
@@ -1582,6 +1605,8 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
 	    GLTexture::Matrix mat = tex->matrix ();
 	    computeGlowQuads (&mat);
 	}
+
+	window->resizeNotifySetEnabled (this, true);
     }
 }
 

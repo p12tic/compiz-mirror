@@ -158,6 +158,7 @@ class ExpoScreen :
 };
 
 class ExpoWindow :
+    public WindowInterface,
     public CompositeWindowInterface,
     public GLWindowInterface,
     public PluginClassHandler<ExpoWindow, CompWindow>
@@ -199,6 +200,9 @@ class ExpoWindow :
 
 	void
 	computeGlowQuads (GLTexture::Matrix *matrix);
+
+	void
+	resizeNotify (int, int, int, int);
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;
