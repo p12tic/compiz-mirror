@@ -71,9 +71,6 @@ WizardScreen::loadGPoints (ParticleSystem *ps)
     if (!ps) //ps not yet initialized
 	return;
 
-    if (ps->g)
-	free (ps->g);
-
     int i;
     GPoint *gi;
 
@@ -92,6 +89,9 @@ WizardScreen::loadGPoints (ParticleSystem *ps)
 	(unsigned int)ps->ng != GAngle.size () ||
 	(unsigned int)ps->ng != GMovement.size ())
        return;
+
+    if (ps->g)
+	free (ps->g);
 
     ps->g = (GPoint*) calloc (ps->ng, sizeof (GPoint));
 
@@ -112,9 +112,6 @@ WizardScreen::loadEmitters (ParticleSystem *ps)
 {
     if (!ps) //ps not yet initialized
 	return;
-
-    if (ps->e)
-	free (ps->e);
 
     int i;
     Emitter *ei;
@@ -188,6 +185,9 @@ WizardScreen::loadEmitters (ParticleSystem *ps)
 	(unsigned int)ps->ne != EDg.size ()       ||
 	(unsigned int)ps->ne != EGp.size ())
        return;
+
+    if (ps->e)
+	free (ps->e);
 
     ps->e = (Emitter*) calloc (ps->ne, sizeof (Emitter));
 
