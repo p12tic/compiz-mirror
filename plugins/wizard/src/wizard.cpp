@@ -44,9 +44,8 @@ const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
 static void
 initParticles (int hardLimit, int softLimit, ParticleSystem * ps)
 {
-    if (ps->particles)
-	free (ps->particles);
-    ps->particles    = (Particle*) calloc (hardLimit, sizeof (Particle));
+    ps->particles.clear ();
+
     ps->tex          = 0;
     ps->hardLimit    = hardLimit;
     ps->softLimit    = softLimit;
@@ -59,10 +58,12 @@ initParticles (int hardLimit, int softLimit, ParticleSystem * ps)
     ps->colors_cache.clear ();
     ps->dcolors_cache.clear ();
 
-    Particle *part = ps->particles;
-    int i;
-    for (i = 0; i < hardLimit; i++, part++)
-	part->t = 0.0f;
+    for (int i = 0; i < hardLimit; i++)
+    {
+	Particle part;
+	part.t = 0.0f;
+	ps->particles.push_back (part);
+    }
 }
 
 void
@@ -70,9 +71,6 @@ WizardScreen::loadGPoints (ParticleSystem *ps)
 {
     if (!ps) //ps not yet initialized
 	return;
-
-    int i;
-    GPoint *gi;
 
     CompOption::Value::Vector GStrength = optionGetGStrength ();
     CompOption::Value::Vector GPosx = optionGetGPosx ();
@@ -82,28 +80,26 @@ WizardScreen::loadGPoints (ParticleSystem *ps)
     CompOption::Value::Vector GMovement = optionGetGMovement ();
 
     /* ensure that all properties have been updated  */
-    ps->ng = GStrength.size ();
-    if( (unsigned int)ps->ng != GPosx.size ()  ||
-	(unsigned int)ps->ng != GPosy.size ()  ||
-	(unsigned int)ps->ng != GSpeed.size () ||
-	(unsigned int)ps->ng != GAngle.size () ||
-	(unsigned int)ps->ng != GMovement.size ())
+    unsigned int ng = GStrength.size ();
+    if( ng != GPosx.size ()  ||
+	ng != GPosy.size ()  ||
+	ng != GSpeed.size () ||
+	ng != GAngle.size () ||
+	ng != GMovement.size ())
        return;
 
-    if (ps->g)
-	free (ps->g);
+    ps->g.clear ();
 
-    ps->g = (GPoint*) calloc (ps->ng, sizeof (GPoint));
-
-    gi = ps->g;
-    for (i = 0; i < ps->ng; i++, gi++)
+    for (unsigned int i = 0; i < ng; i++)
     {
-	gi->strength = (float)GStrength.at (i).i ()/ 1000.;
-	gi->x = (float)GPosx.at (i).i ();
-	gi->y = (float)GPosy.at (i).i ();
-	gi->espeed = (float)GSpeed.at (i).i () / 100.;
-	gi->eangle = (float)GAngle.at (i).i () / 180.*M_PI;
-	gi->movement = GMovement.at (i).i ();
+	GPoint gi;
+	gi.strength = (float)GStrength.at (i).i ()/ 1000.;
+	gi.x = (float)GPosx.at (i).i ();
+	gi.y = (float)GPosy.at (i).i ();
+	gi.espeed = (float)GSpeed.at (i).i () / 100.;
+	gi.eangle = (float)GAngle.at (i).i () / 180.*M_PI;
+	gi.movement = GMovement.at (i).i ();
+	ps->g.push_back (gi);
     }
 }
 
@@ -112,9 +108,6 @@ WizardScreen::loadEmitters (ParticleSystem *ps)
 {
     if (!ps) //ps not yet initialized
 	return;
-
-    int i;
-    Emitter *ei;
 
     CompOption::Value::Vector EActive = optionGetEActive ();
     CompOption::Value::Vector ETrigger = optionGetETrigger ();
@@ -151,82 +144,80 @@ WizardScreen::loadEmitters (ParticleSystem *ps)
     CompOption::Value::Vector EGp = optionGetEGp ();
 
     /* ensure that all properties have been updated  */
-    ps->ne = EActive.size ();
-    if( (unsigned int)ps->ne != ETrigger.size ()  ||
-	(unsigned int)ps->ne != EPosx.size ()     ||
-	(unsigned int)ps->ne != EPosy.size ()     ||
-	(unsigned int)ps->ne != ESpeed.size ()    ||
-	(unsigned int)ps->ne != EAngle.size ()    ||
-	(unsigned int)ps->ne != EMovement.size () ||
-	(unsigned int)ps->ne != ECount.size ()    ||
-	(unsigned int)ps->ne != EH.size ()        ||
-	(unsigned int)ps->ne != EDh.size ()       ||
-	(unsigned int)ps->ne != EL.size ()        ||
-	(unsigned int)ps->ne != EDl.size ()       ||
-	(unsigned int)ps->ne != EA.size ()        ||
-	(unsigned int)ps->ne != EDa.size ()       ||
-	(unsigned int)ps->ne != EDx.size ()       ||
-	(unsigned int)ps->ne != EDy.size ()       ||
-	(unsigned int)ps->ne != EDcirc.size ()    ||
-	(unsigned int)ps->ne != EVx.size ()       ||
-	(unsigned int)ps->ne != EVy.size ()       ||
-	(unsigned int)ps->ne != EVt.size ()       ||
-	(unsigned int)ps->ne != EVphi.size ()     ||
-	(unsigned int)ps->ne != EDvx.size ()      ||
-	(unsigned int)ps->ne != EDvy.size ()      ||
-	(unsigned int)ps->ne != EDvcirc.size ()   ||
-	(unsigned int)ps->ne != EDvt.size ()      ||
-	(unsigned int)ps->ne != EDvphi.size ()    ||
-	(unsigned int)ps->ne != ES.size ()        ||
-	(unsigned int)ps->ne != EDs.size ()       ||
-	(unsigned int)ps->ne != ESnew.size ()     ||
-	(unsigned int)ps->ne != EDsnew.size ()    ||
-	(unsigned int)ps->ne != EG.size ()        ||
-	(unsigned int)ps->ne != EDg.size ()       ||
-	(unsigned int)ps->ne != EGp.size ())
+    unsigned int ne = EActive.size ();
+    if( ne != ETrigger.size ()  ||
+	ne != EPosx.size ()     ||
+	ne != EPosy.size ()     ||
+	ne != ESpeed.size ()    ||
+	ne != EAngle.size ()    ||
+	ne != EMovement.size () ||
+	ne != ECount.size ()    ||
+	ne != EH.size ()        ||
+	ne != EDh.size ()       ||
+	ne != EL.size ()        ||
+	ne != EDl.size ()       ||
+	ne != EA.size ()        ||
+	ne != EDa.size ()       ||
+	ne != EDx.size ()       ||
+	ne != EDy.size ()       ||
+	ne != EDcirc.size ()    ||
+	ne != EVx.size ()       ||
+	ne != EVy.size ()       ||
+	ne != EVt.size ()       ||
+	ne != EVphi.size ()     ||
+	ne != EDvx.size ()      ||
+	ne != EDvy.size ()      ||
+	ne != EDvcirc.size ()   ||
+	ne != EDvt.size ()      ||
+	ne != EDvphi.size ()    ||
+	ne != ES.size ()        ||
+	ne != EDs.size ()       ||
+	ne != ESnew.size ()     ||
+	ne != EDsnew.size ()    ||
+	ne != EG.size ()        ||
+	ne != EDg.size ()       ||
+	ne != EGp.size ())
        return;
 
-    if (ps->e)
-	free (ps->e);
+    ps->e.clear ();
 
-    ps->e = (Emitter*) calloc (ps->ne, sizeof (Emitter));
-
-    ei = ps->e;
-    for (i = 0; i < ps->ne; i++, ei++)
+    for (unsigned int i = 0; i < ne; i++)
     {
-	ei->set_active = ei->active = EActive.at (i).b ();
-	ei->trigger = ETrigger.at (i).i ();
-	ei->x = (float)EPosx.at (i).i ();
-	ei->y = (float)EPosy.at (i).i ();
-	ei->espeed = (float)ESpeed.at (i).i () / 100.;
-	ei->eangle = (float)EAngle.at (i).i () / 180.*M_PI;
-	ei->movement = EMovement.at (i).i ();
-	ei->count = (float)ECount.at (i).i ();
-	ei->h = (float)EH.at (i).i () / 1000.;
-	ei->dh = (float)EDh.at (i).i () / 1000.;
-	ei->l = (float)EL.at (i).i () / 1000.;
-	ei->dl = (float)EDl.at (i).i () / 1000.;
-	ei->a = (float)EA.at (i).i () / 1000.;
-	ei->da = (float)EDa.at (i).i () / 1000.;
-	ei->dx = (float)EDx.at (i).i ();
-	ei->dy = (float)EDy.at (i).i ();
-	ei->dcirc = (float)EDcirc.at (i).i ();
-	ei->vx = (float)EVx.at (i).i () / 1000.;
-	ei->vy = (float)EVy.at (i).i () / 1000.;
-	ei->vt = (float)EVt.at (i).i () / 10000.;
-	ei->vphi = (float)EVphi.at (i).i () / 10000.;
-	ei->dvx = (float)EDvx.at (i).i () / 1000.;
-	ei->dvy = (float)EDvy.at (i).i () / 1000.;
-	ei->dvcirc = (float)EDvcirc.at (i).i () / 1000.;
-	ei->dvt = (float)EDvt.at (i).i () / 10000.;
-	ei->dvphi = (float)EDvphi.at (i).i () / 10000.;
-	ei->s = (float)ES.at (i).i ();
-	ei->ds = (float)EDs.at (i).i ();
-	ei->snew = (float)ESnew.at (i).i ();
-	ei->dsnew = (float)EDsnew.at (i).i ();
-	ei->g = (float)EG.at (i).i () / 1000.;
-	ei->dg = (float)EDg.at (i).i () / 1000.;
-	ei->gp = (float)EGp.at (i).i () / 10000.;
+	Emitter ei;
+	ei.set_active = ei.active = EActive.at (i).b ();
+	ei.trigger = ETrigger.at (i).i ();
+	ei.x = (float)EPosx.at (i).i ();
+	ei.y = (float)EPosy.at (i).i ();
+	ei.espeed = (float)ESpeed.at (i).i () / 100.;
+	ei.eangle = (float)EAngle.at (i).i () / 180.*M_PI;
+	ei.movement = EMovement.at (i).i ();
+	ei.count = (float)ECount.at (i).i ();
+	ei.h = (float)EH.at (i).i () / 1000.;
+	ei.dh = (float)EDh.at (i).i () / 1000.;
+	ei.l = (float)EL.at (i).i () / 1000.;
+	ei.dl = (float)EDl.at (i).i () / 1000.;
+	ei.a = (float)EA.at (i).i () / 1000.;
+	ei.da = (float)EDa.at (i).i () / 1000.;
+	ei.dx = (float)EDx.at (i).i ();
+	ei.dy = (float)EDy.at (i).i ();
+	ei.dcirc = (float)EDcirc.at (i).i ();
+	ei.vx = (float)EVx.at (i).i () / 1000.;
+	ei.vy = (float)EVy.at (i).i () / 1000.;
+	ei.vt = (float)EVt.at (i).i () / 10000.;
+	ei.vphi = (float)EVphi.at (i).i () / 10000.;
+	ei.dvx = (float)EDvx.at (i).i () / 1000.;
+	ei.dvy = (float)EDvy.at (i).i () / 1000.;
+	ei.dvcirc = (float)EDvcirc.at (i).i () / 1000.;
+	ei.dvt = (float)EDvt.at (i).i () / 10000.;
+	ei.dvphi = (float)EDvphi.at (i).i () / 10000.;
+	ei.s = (float)ES.at (i).i ();
+	ei.ds = (float)EDs.at (i).i ();
+	ei.snew = (float)ESnew.at (i).i ();
+	ei.dsnew = (float)EDsnew.at (i).i ();
+	ei.g = (float)EG.at (i).i () / 1000.;
+	ei.dg = (float)EDg.at (i).i () / 1000.;
+	ei.gp = (float)EGp.at (i).i () / 10000.;
+	ps->e.push_back (ei);
     }
 }
 
@@ -260,7 +251,7 @@ WizardScreen::drawParticles (ParticleSystem *ps,
 
     i = j = k = l = 0;
 
-    Particle *part = ps->particles;
+    Particle *part = &ps->particles[0];
     int m;
     for (m = 0; m < ps->hardLimit; m++, part++)
     {
@@ -454,7 +445,7 @@ updateParticles (ParticleSystem * ps, float time)
     float gdist, gangle;
     ps->active = false;
 
-    part = ps->particles;
+    part = &ps->particles[0];
     for (i = 0; i < ps->hardLimit; i++, part++)
     {
 	if (part->t > 0.0f)
@@ -478,8 +469,8 @@ updateParticles (ParticleSystem * ps, float time)
 	    part->vy += ps->gy * time;
 
 	    //GPoint gravity
-	    gi = ps->g;
-	    for (j = 0; j < ps->ng; j++, gi++)
+	    gi = &ps->g[0];
+	    for (j = 0; (unsigned int)j < ps->g.size (); j++, gi++)
 	    {
 		if (gi->strength != 0)
 		{
@@ -502,12 +493,12 @@ updateParticles (ParticleSystem * ps, float time)
 
     //Particle gravity
     Particle *gpart;
-    part = ps->particles;
+    part = &ps->particles[0];
     for (i = 0; i < ps->hardLimit; i++, part++)
     {
 	if (part->t > 0.0f && part->g != 0)
 	{
-	    gpart = ps->particles;
+	    gpart = &ps->particles[0];
 	    for (j = 0; j < ps->hardLimit; j++, gpart++)
 	    {
 		if (gpart->t > 0.0f)
@@ -529,8 +520,6 @@ updateParticles (ParticleSystem * ps, float time)
 static void
 finiParticles (ParticleSystem * ps)
 {
-    free (ps->e);
-    free (ps->particles);
     if (ps->tex)
 	glDeleteTextures (1, &ps->tex);
 
@@ -544,7 +533,7 @@ genNewParticles (ParticleSystem *ps, Emitter *e)
     float q, p, t = 0, h, l;
     int count = e->count;
 
-    Particle *part = ps->particles;
+    Particle *part = &ps->particles[0];
     int i, j;
 
     for (i = 0; i < ps->hardLimit && count > 0; i++, part++)
@@ -638,12 +627,12 @@ WizardScreen::positionUpdate (const CompPoint &pos)
     mx = pos.x ();
     my = pos.y ();
 
-    if (ps && active && ps->e)
+    if (ps && active)
     {
-	Emitter *ei = ps->e;
-	GPoint  *gi = ps->g;
-	int i;
-	for (i = 0; i < ps->ng; i++, gi++)
+	Emitter *ei = &ps->e[0];
+	GPoint  *gi = &ps->g[0];
+
+	for (unsigned int i = 0; i < ps->g.size (); i++, gi++)
 	{
 	    if (gi->movement == MOVEMENT_MOUSEPOSITION)
 	    {
@@ -652,7 +641,7 @@ WizardScreen::positionUpdate (const CompPoint &pos)
 	    }
 	}
 
-	for (i = 0; i < ps->ne; i++, ei++)
+	for (unsigned int i = 0; i < ps->e.size (); i++, ei++)
 	{
 	    if (ei->movement == MOVEMENT_MOUSEPOSITION)
 	    {
@@ -701,13 +690,12 @@ WizardScreen::preparePaint (int time)
 	glBindTexture (GL_TEXTURE_2D, 0);
     }
 
-    if (ps && active && ps->e)
+    if (ps && active)
     {
-	Emitter *ei = ps->e;
-	GPoint *gi = ps->g;
-	int i;
+	Emitter *ei = &ps->e[0];
+	GPoint *gi = &ps->g[0];
 
-	for (i = 0; i < ps->ng; i++, gi++)
+	for (unsigned int i = 0; i < ps->g.size (); i++, gi++)
 	{
 	    if (gi->movement==MOVEMENT_BOUNCE || gi->movement==MOVEMENT_WRAP)
 	    {
@@ -763,7 +751,7 @@ WizardScreen::preparePaint (int time)
 	    }
 	}
 
-	for (i = 0; i < ps->ne; i++, ei++)
+	for (unsigned int i = 0; i < ps->e.size (); i++, ei++)
 	{
 	    if (ei->movement==MOVEMENT_BOUNCE || ei->movement==MOVEMENT_WRAP)
 	    {

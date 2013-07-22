@@ -142,15 +142,13 @@ class ParticleSystem
 	float    told;		// Particle is old if t < told
 	float    gx;		// Global gravity x
 	float    gy;		// Global gravity y
-	Particle *particles;	// The actual particles
+	std::vector<Particle> particles;	// The actual particles
 	GLuint   tex;		// Particle Texture
 	bool     active;
 	float    darken;		// Darken background
 	GLuint   blendMode;
-	Emitter  *e;		// All emitters in here
-	GPoint   *g;		// All gravity point sources in here
-	int      ne;		// Emitter count
-	int      ng;		// GPoint count
+	std::vector<Emitter>  e;		// All emitters in here
+	std::vector<GPoint>   g;		// All gravity point sources in here
 
 	/* Cache used in drawParticles 
         It's here to avoid multiple mem allocation 
