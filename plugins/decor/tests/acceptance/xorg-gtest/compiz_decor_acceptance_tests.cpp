@@ -2159,6 +2159,8 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnMaximize)
 			 AddState,
 			 "_NET_WM_STATE_MAXIMIZED_VERT",
 			 mTestWindow);
+			 
+    WaitForPropertyNotify (Display (), mTestWindow, "_NET_FRAME_EXTENTS");
 
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2180,7 +2182,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnMaximize)
     EXPECT_THAT (frameExtents, IsExtents (MaxEx, MaxEx, MaxEx, MaxEx));
 }
 
-TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnVertMaximize)
+TEST_F (PixmapDecoratedWindowAcceptance, RestoredBorderExtentsOnVertMaximize)
 {
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2197,12 +2199,12 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnVertMaximize)
     unsigned long *frameExtents =
 	reinterpret_cast <unsigned long *> (data.get ());
 
-    unsigned int MaxEx = MaximizedBorderExtent;
+    unsigned int ActEx = RealDecorationActiveBorderExtent;
 
-    EXPECT_THAT (frameExtents, IsExtents (MaxEx, MaxEx, MaxEx, MaxEx));
+    EXPECT_THAT (frameExtents, IsExtents (ActEx, ActEx, ActEx, ActEx));
 }
 
-TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnHorzMaximize)
+TEST_F (PixmapDecoratedWindowAcceptance, RestoredBorderExtentsOnHorzMaximize)
 {
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2219,9 +2221,9 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeBorderExtentsOnHorzMaximize)
     unsigned long *frameExtents =
 	reinterpret_cast <unsigned long *> (data.get ());
 
-    unsigned int MaxEx = MaximizedBorderExtent;
-
-    EXPECT_THAT (frameExtents, IsExtents (MaxEx, MaxEx, MaxEx, MaxEx));
+    unsigned int ActEx = RealDecorationActiveBorderExtent;
+    
+    EXPECT_THAT (frameExtents, IsExtents (ActEx, ActEx, ActEx, ActEx));
 }
 
 TEST_F (PixmapDecoratedWindowAcceptance, MaximizeFrameWindowSizeEqOutputSize)
@@ -2258,7 +2260,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, MaximizeFrameWindowSizeEqOutputSize)
 								  matcher)));
 }
 
-TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeEqOutputYHeight)
+TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowYHeight)
 {
     XWindowAttributes attrib;
     XGetWindowAttributes (Display (), DefaultRootWindow (Display ()), &attrib);
@@ -2268,12 +2270,13 @@ TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeEqOutputYHei
 			 "_NET_WM_STATE_MAXIMIZED_VERT",
 			 mTestWindow);
 
+    int offset = RealDecorationActiveBorderExtent - ActiveInputExtent;
     ct::ConfigureNotifyXEventMatcher matcher (None,
 					      0,
 					      0,
+					      offset,
 					      0,
-					      0,
-					      attrib.height,
+					      attrib.height - 2 * offset,
 					      CWY | CWHeight);
 
     EXPECT_TRUE (Advance (Display (),
@@ -2285,7 +2288,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeEqOutputYHei
 								  matcher)));
 }
 
-TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeEqOutputXWidth)
+TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowXWidth)
 {
     XWindowAttributes attrib;
     XGetWindowAttributes (Display (), DefaultRootWindow (Display ()), &attrib);
@@ -2295,11 +2298,12 @@ TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeEqOutputXWid
 			 "_NET_WM_STATE_MAXIMIZED_HORZ",
 			 mTestWindow);
 
+    int offset = RealDecorationActiveBorderExtent - ActiveInputExtent;
     ct::ConfigureNotifyXEventMatcher matcher (None,
 					      0,
+					      offset,
 					      0,
-					      0,
-					      attrib.width,
+					      attrib.width - 2 * offset,
 					      0,
 					      CWX | CWWidth);
 
@@ -2312,34 +2316,11 @@ TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeEqOutputXWid
 								  matcher)));
 }
 
-namespace
-{
-void WindowBorderPositionAttributes (Display *dpy,
-				     Window  w,
-				     XWindowAttributes &attrib,
-				     unsigned int ActiveBorderExtent,
-				     unsigned int ActiveInputExtent)
-{
-    XGetWindowAttributes (dpy, w, &attrib);
-
-    /* Remove input - border offset */
-    attrib.x += (ActiveInputExtent - ActiveBorderExtent);
-    attrib.y += (ActiveInputExtent - ActiveBorderExtent);
-    attrib.width -= (ActiveInputExtent - ActiveBorderExtent) * 2;
-    attrib.height -= (ActiveInputExtent - ActiveBorderExtent) * 2;
-}
-}
-
 TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeSameXWidth)
 {
     XWindowAttributes rootAttrib, attrib;
     XGetWindowAttributes (Display (), DefaultRootWindow (Display ()), &rootAttrib);
-
-    WindowBorderPositionAttributes (Display (),
-				    mTestWindowParent,
-				    attrib,
-				    RealDecorationActiveBorderExtent,
-				    ActiveInputExtent);
+    XGetWindowAttributes (Display (), mTestWindowParent, &attrib);
 
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2347,12 +2328,13 @@ TEST_F (PixmapDecoratedWindowAcceptance, VertMaximizeFrameWindowSizeSameXWidth)
 			 mTestWindow);
 
     /* Wait for the window to be maximized first */
+    int offset = RealDecorationActiveBorderExtent - ActiveInputExtent;
     WaitForConfigureOn (Display (),
 			mTestWindowParent,
 			0,
+			offset,
 			0,
-			0,
-			rootAttrib.height,
+			rootAttrib.height - 2 * offset,
 			CWY | CWHeight);
 
     /* Query the window geometry and ensure that the width and
@@ -2372,12 +2354,7 @@ TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeSameYHeight)
 {
     XWindowAttributes rootAttrib, attrib;
     XGetWindowAttributes (Display (), DefaultRootWindow (Display ()), &rootAttrib);
-
-    WindowBorderPositionAttributes (Display (),
-				    mTestWindowParent,
-				    attrib,
-				    RealDecorationActiveBorderExtent,
-				    ActiveInputExtent);
+    XGetWindowAttributes (Display (), mTestWindowParent, &attrib);
 
     ChangeStateOfWindow (Display (),
 			 AddState,
@@ -2385,11 +2362,12 @@ TEST_F (PixmapDecoratedWindowAcceptance, HorzMaximizeFrameWindowSizeSameYHeight)
 			 mTestWindow);
 
     /* Wait for the window to be maximized first */
+    int offset = RealDecorationActiveBorderExtent - ActiveInputExtent;
     WaitForConfigureOn (Display (),
 			mTestWindowParent,
+			offset,
 			0,
-			0,
-			rootAttrib.width,
+			rootAttrib.width - 2 * offset,
 			0,
 			CWX | CWWidth);
 
