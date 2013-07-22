@@ -77,9 +77,9 @@ class TextSurface
 	bool render (const CompText::Attrib &attrib,
 		     const CompString       &text);
 
-	int                  mWidth;
-	int                  mHeight;
-	Pixmap               mPixmap;
+	int    mWidth;
+	int    mHeight;
+	Pixmap mPixmap;
 
     private:
 
@@ -107,7 +107,7 @@ class TextSurface
     PrivateTextScreen *ts = PrivateTextScreen::get (screen);
 
 class TextPluginVTable :
-    public CompPlugin::VTableForScreen <PrivateTextScreen>
+    public CompPlugin::VTableForScreen <PrivateTextScreen, COMPIZ_TEXT_ABI>
 {
     public:
 

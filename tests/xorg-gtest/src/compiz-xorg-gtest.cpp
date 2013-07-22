@@ -38,8 +38,10 @@
 
 #include "compiz-xorg-gtest-config.h"
 
+using ::testing::MakeMatcher;
 using ::testing::MatchResultListener;
 using ::testing::MatcherInterface;
+using ::testing::Matcher;
 
 namespace ct = compiz::testing;
 namespace
@@ -83,6 +85,47 @@ ct::CreateNormalWindow (Display *dpy)
 
     XSelectInput (dpy, w, StructureNotifyMask);
     return w;
+}
+
+Window
+ct::GetImmediateParent (Display *display,
+			Window w,
+			Window &rootReturn)
+{
+    Window parentReturn = w;
+    Window *childrenReturn;
+    unsigned int nChildrenReturn;
+
+    XQueryTree (display,
+		w,
+		&rootReturn,
+		&parentReturn,
+		&childrenReturn,
+		&nChildrenReturn);
+    XFree (childrenReturn);
+
+    return parentReturn;
+}
+
+Window
+ct::GetTopmostNonRootParent (Display *display,
+			     Window  w)
+{
+    Window rootReturn = 0;
+    Window parentReturn = w;
+    Window lastParent = 0;
+
+    do
+    {
+	lastParent = parentReturn;
+
+	parentReturn = GetImmediateParent (display,
+					   lastParent,
+					   rootReturn);
+
+    } while (parentReturn != rootReturn);
+
+    return lastParent;
 }
 
 bool
@@ -492,6 +535,161 @@ ct::ShapeNotifyXEventMatcher::ShapeNotifyXEventMatcher (int          kind,
 {
 }
 
+void ct::RelativeWindowGeometry (Display      *dpy,
+				 Window       w,
+				 int          &x,
+				 int          &y,
+				 unsigned int &width,
+				 unsigned int &height,
+				 unsigned int &border)
+{
+    Window       root;
+    unsigned int depth;
+
+    if (!XGetGeometry (dpy, w, &root, &x, &y, &width, &height, &border, &depth))
+	throw std::logic_error ("XGetGeometry failed");
+}
+
+void ct::AbsoluteWindowGeometry (Display      *display,
+				 Window       window,
+				 int          &x,
+				 int          &y,
+				 unsigned int &width,
+				 unsigned int &height,
+				 unsigned int &border)
+{
+    Window       root;
+    Window       child;
+    unsigned int depth;
+
+    if (!XGetGeometry (display, window, &root,
+		       &x, &y, &width, &height,
+		       &border, &depth))
+	throw std::logic_error ("XGetGeometry failed");
+
+    if (!XTranslateCoordinates (display, window, root, x, y,
+				&x, &y, &child))
+	throw std::logic_error ("XTranslateCoordinates failed");
+}
+
+class ct::WindowGeometryMatcher::Private
+{
+    public:
+
+	Private (Display                      *dpy,
+		 ct::RetrievalFunc            func,
+		 const Matcher <int>          &x,
+		 const Matcher <int>          &y,
+		 const Matcher <unsigned int> &width,
+		 const Matcher <unsigned int> &height,
+		 const Matcher <unsigned int> &border);
+
+	Display       *mDpy;
+
+	RetrievalFunc mFunc;
+
+	Matcher <int> mX;
+	Matcher <int> mY;
+	Matcher <unsigned int> mWidth;
+	Matcher <unsigned int> mHeight;
+	Matcher <unsigned int> mBorder;
+};
+
+Matcher <Window>
+ct::HasGeometry (Display             *dpy,
+		 RetrievalFunc       func,
+		 const Matcher <int> &x,
+		 const Matcher <int> &y,
+		 const Matcher <unsigned int> &width,
+		 const Matcher <unsigned int> &height,
+		 const Matcher <unsigned int> &border)
+{
+    return MakeMatcher (new WindowGeometryMatcher (dpy,
+						   func,
+						   x,
+						   y,
+						   width,
+						   height,
+						   border));
+}
+
+ct::WindowGeometryMatcher::WindowGeometryMatcher (Display             *dpy,
+						  RetrievalFunc       func,
+						  const Matcher <int> &x,
+						  const Matcher <int> &y,
+						  const Matcher <unsigned int> &width,
+						  const Matcher <unsigned int> &height,
+						  const Matcher <unsigned int> &border) :
+    priv (new Private (dpy, func, x, y, width, height, border))
+{
+}
+
+ct::WindowGeometryMatcher::Private::Private (Display             *dpy,
+					     RetrievalFunc       func,
+					     const Matcher <int> &x,
+					     const Matcher <int> &y,
+					     const Matcher <unsigned int> &width,
+					     const Matcher <unsigned int> &height,
+					     const Matcher <unsigned int> &border):
+    mDpy (dpy),
+    mFunc (func),
+    mX (x),
+    mY (y),
+    mWidth (width),
+    mHeight (height),
+    mBorder (border)
+{
+}
+
+bool
+ct::WindowGeometryMatcher::MatchAndExplain (Window w,
+					    MatchResultListener *listener) const
+{
+    int          x, y;
+    unsigned int width, height, border;
+
+    priv->mFunc (priv->mDpy, w, x, y, width, height, border);
+
+    bool match = priv->mX.MatchAndExplain (x, listener) &&
+		 priv->mY.MatchAndExplain (y, listener) &&
+		 priv->mWidth.MatchAndExplain (width, listener) &&
+		 priv->mHeight.MatchAndExplain (height, listener) &&
+		 priv->mBorder.MatchAndExplain (border, listener);
+
+    if (!match)
+    {
+	*listener << "Geometry:"
+		  << " x: " << x
+		  << " y: " << y
+		  << " width: " << width
+		  << " height: " << height
+		  << " border: " << border;
+    }
+
+    return match;
+}
+
+void
+ct::WindowGeometryMatcher::DescribeTo (std::ostream *os) const
+{
+    *os << "Window geometry matching :";
+
+    *os << std::endl << " - ";
+    priv->mX.DescribeTo (os);
+
+    *os << std::endl << " - ";
+    priv->mY.DescribeTo (os);
+
+    *os << std::endl << " - ";
+    priv->mWidth.DescribeTo (os);
+
+    *os << std::endl << " - ";
+    priv->mHeight.DescribeTo (os);
+
+    *os << std::endl << " - ";
+    priv->mBorder.DescribeTo (os);
+}
+
 class ct::PrivateCompizProcess
 {
     public:
@@ -510,6 +708,9 @@ class ct::PrivateCompizProcess
 	ct::CompizProcess::StartupFlags mFlags;
 	bool                            mIsRunning;
 	xorg::testing::Process          mProcess;
+
+	std::string                     mPluginPaths;
+	std::auto_ptr <TmpEnv>          mPluginPathsEnv;
 };
 
 void
@@ -544,6 +745,26 @@ ct::PrivateCompizProcess::WaitForStartupMessage (Display                        
     XSelectInput (dpy, root, attrib.your_event_mask);
 }
 
+namespace
+{
+std::string PathForPlugin (const std::string             &name,
+			   ct::CompizProcess::PluginType type)
+{
+    switch (type)
+    {
+	case ct::CompizProcess::Real:
+	    return compizRealPluginPath + name;
+	case ct::CompizProcess::TestOnly:
+	    return compizTestOnlyPluginPath + name;
+	default:
+	    throw std::logic_error ("Incorrect value for type");
+    }
+
+    return "";
+}
+
+}
+
 ct::CompizProcess::CompizProcess (::Display                           *dpy,
 				  ct::CompizProcess::StartupFlags     flags,
 				  const ct::CompizProcess::PluginList &plugins,
@@ -559,11 +780,17 @@ ct::CompizProcess::CompizProcess (::Display                           *dpy,
 
     args.push_back ("--send-startup-message");
 
-    /* Copy in plugin list */
+    /* Copy in plugin list and set environment variables */
     for (ct::CompizProcess::PluginList::const_iterator it = plugins.begin ();
 	 it != plugins.end ();
 	 ++it)
-	args.push_back (*it);
+    {
+	priv->mPluginPaths += PathForPlugin (it->name, it->type) + ":";
+	args.push_back (it->name);
+    }
+
+    priv->mPluginPathsEnv.reset (new TmpEnv ("COMPIZ_PLUGIN_DIR",
+					     priv->mPluginPaths.c_str ()));
 
     priv->mProcess.Start (compizBinaryPath, args);
     EXPECT_EQ (priv->mProcess.GetState (), xorg::testing::Process::RUNNING);
@@ -683,14 +910,6 @@ ct::CompizXorgSystemTest::StartCompiz (ct::CompizProcess::StartupFlags     flags
 
 class ct::PrivateAutostartCompizXorgSystemTest
 {
-    public:
-
-	PrivateAutostartCompizXorgSystemTest () :
-	    overridePluginDirEnv ("COMPIZ_PLUGIN_DIR", compizOverridePluginPath.c_str ())
-	{
-	}
-
-	TmpEnv overridePluginDirEnv;
 };
 
 ct::AutostartCompizXorgSystemTest::AutostartCompizXorgSystemTest () :
@@ -707,7 +926,7 @@ ct::AutostartCompizXorgSystemTest::GetStartupFlags ()
 }
 
 int
-ct::AutostartCompizXorgSystemTest::GetEventMask ()
+ct::AutostartCompizXorgSystemTest::GetEventMask () const
 {
     return 0;
 }
@@ -785,7 +1004,7 @@ ct::AutostartCompizXorgSystemTestWithTestHelper::AutostartCompizXorgSystemTestWi
 }
 
 int
-ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask ()
+ct::AutostartCompizXorgSystemTestWithTestHelper::GetEventMask () const
 {
     return AutostartCompizXorgSystemTest::GetEventMask () |
 	   StructureNotifyMask;
@@ -817,6 +1036,7 @@ ct::CompizProcess::PluginList
 ct::AutostartCompizXorgSystemTestWithTestHelper::GetPluginList ()
 {
     ct::CompizProcess::PluginList list;
-    list.push_back ("testhelper");
+    list.push_back (ct::CompizProcess::Plugin ("testhelper",
+					       ct::CompizProcess::TestOnly));
     return list;
 }

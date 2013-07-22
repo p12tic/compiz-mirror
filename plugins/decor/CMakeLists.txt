@@ -20,3 +20,5 @@ if (COMPIZ_BUILD_WITH_RPATH AND NOT COMPIZ_DISABLE_PLUGIN_DECOR)
 endif (COMPIZ_BUILD_WITH_RPATH AND NOT COMPIZ_DISABLE_PLUGIN_DECOR)
 
 install (PROGRAMS "src/compiz-decorator" DESTINATION ${exec_prefix})
+
+add_subdirectory (tests)

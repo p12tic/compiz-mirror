@@ -37,12 +37,10 @@ namespace compiz
 		public:
 
 		    PrivateSettingValueListWrapper (CCSSettingValueList                      list,
-						       cci::ListStorageType                     storageType,
-						       CCSSettingType                           type,
-						       const boost::shared_ptr <CCSSettingInfo> &listInfo,
-						       const boost::shared_ptr <CCSSetting>     &settingReference) :
+						    cci::ListStorageType                     storageType,
+						    CCSSettingType                           type,
+						    const boost::shared_ptr <CCSSetting>     &settingReference) :
 			mType (type),
-			mListInfo (listInfo),
 			mSettingReference (settingReference),
 			mListWrapper (list,
 				      ccsSettingValueListFree,
@@ -52,25 +50,22 @@ namespace compiz
 		    {
 		    }
 
-		    CCSSettingType                                  mType;
-		    boost::shared_ptr <CCSSettingInfo>              mListInfo;
-		    boost::shared_ptr <CCSSetting>                  mSettingReference;
+		    CCSSettingType                               mType;
+		    boost::shared_ptr <CCSSetting>               mSettingReference;
 		    SettingValueListWrapper::InternalWrapperImpl mListWrapper;
 	    };
 	}
     }
 }
 
-cci::SettingValueListWrapper::SettingValueListWrapper (CCSSettingValueList                      list,
-							     cci::ListStorageType                     storageType,
-							     CCSSettingType                           type,
-							     const boost::shared_ptr <CCSSettingInfo> &listInfo,
-							     const boost::shared_ptr <CCSSetting>     &settingReference) :
+cci::SettingValueListWrapper::SettingValueListWrapper (CCSSettingValueList                  list,
+						       cci::ListStorageType                 storageType,
+						       CCSSettingType                       type,
+						       const boost::shared_ptr <CCSSetting> &settingReference) :
     priv (new cci::PrivateSettingValueListWrapper (list,
-						      storageType,
-						      type,
-						      listInfo,
-						      settingReference))
+						   storageType,
+						   type,
+						   settingReference))
 {
 }
 

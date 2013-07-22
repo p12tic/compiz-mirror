@@ -1,3 +1,86 @@
+Release 0.9.10.0 (2013-7-21 Sam Spilsbury <smspillaz@gmail.com>)
+================================================================
+
+Bugs Fixed (https://launchpad.net/compiz/+milestone/0.9.10.0)
+
+     1053895 - Screen sometimes does not redraw upon exiting fullscreen when
+               "Unredirect Fullscreen Windows" is enabled
+     1056409 - compiz crashed with SIGSEGV in DecorWindow::moveNotify()
+               [decor.cpp:2791]
+     1067246 - Duplicate files: include/core/logmessage.h ==
+               src/logmessage/include/core/logmessage.h
+     1090713 - expo's rectangular glow outline has wrong size in multi-monitor
+               setup
+     1101026 - PluginClassHandler::get implicity causes plugins to be loaded
+     1101454 - Coverity RESOURCE_LEAK - CID 12500
+     1101569 - Coverity RESOURCE_LEAK - CID 12499
+     1115344 - Grid + Maximizing (button) + snapping by mouse to Grid position
+               changes cursor position relative to window 
+     1119608 - Closing windows sometimes shows black areas using Nvidia 313.x
+               drivers
+     1124133 - Threads not found on CI
+     1127866 - Compiz hangs in glXBindTexImageEXT in VirtualBox
+     1130160 - Add copytex to default/unity profiles
+     1130679 - [2013/02/20] compiz/unity don't run, just loading cpp
+     1131106 - Expo key stops working once Expo is terminated by clicking on a
+               draggable window (only if unityshell is *not* enabled)
+     1131864 - After Upgrade to Boost 1.53 Build Fails
+     1138517 - Latest compiz update breaks Java Swing decorations
+     1140505 - [regression-r3623] Wallpaper bleeds through on top right when a
+               window is opened maximized
+     1158161 - [regression] Unmaximized windows can't be closed, minimized,
+               moved
+     1159054 - High CPU usage when using any addon which desaturates windows
+     1159234 - xiphos crashed with SIGSEGV in sword::VerseKey::copyFrom()
+     1162598 - Compiz crashes with SIGSEGV if GLVertexBuffer::render is used
+               where a program is set indirectly and not explicitly
+     1163611 - undefined symbol in libgsettings.so and libini.so
+     1165343 - Windows are placed with titlebar obscured by Unity menubar.
+     1165343 - Windows are placed with titlebar obscured by Unity menubar.
+     1167983 - Cleanup TestPlaceScreenSizeChange
+     1168475 - make uninstall doesn't remove all files
+     1169170 - Some xorg-gtest tests can fail randomly due to a 3000ms timeout
+     1169172 - gtk-window-decorator does not load settings from gconf correctly
+     1169620 - Compiz crashes when a plugin fails to load
+     1170013 - Make it easy to run the compiz autopilot acceptance tests
+     1171314 - Window stacking order messed up for dialogs/overlays
+     1171364 - cmake .. -DCMAKE_BUILD_TYPE=Coverage && make && make test &&
+               make coverage fails
+     1172601 - Building test-suite fails with latest Boost version
+     1173799 - ${libcompizconfig_libdir} can sometimes be empty, leading to an
+               FTBFS
+     1174495 - Window Managers instability with r600 radeon and high monitor
+               resolutions
+     1178514 - xorg-gtest tests always fail when two test runs are run on the
+               same machine in parallel
+     1178581 - Put plugin: Move window to previous monitor feature missing
+     1181461 - Grid plugin fails to load in trunk
+     1185719 - (v. 2.10.24) Manual partitioning mode displays no GUI elements
+               making it impossible to proceed
+     1186560 - Vertical maximise widens windows
+     1187468 - GWDMockSettingsTest.TestMock broken on upgrade to saucy
+     1188900 - Provide acceptance tests for the decor and place plugins
+     1188900 - Provide acceptance tests for the decor and place plugins
+     1189368 - DC++ 0.822 crash in short time
+     1189369 - A crash is possible when a window gets its texture for the first
+               time
+     1193596 - [regression r3729] Plugin classes not destructed properly on
+               unload
+     1195522 - Fix disabled acceptance tests for the decor plugin and run them
+               by default
+      438580 - Workspace switcher is incorrectly aligned on second monitor,
+               viewports are partially offscreen
+      749084 - Regression: D-Bus Plugin's introspection stuff needs rewrite for
+               0.9.x as methods don't show up in dbus-tool (list method,
+               plugin-metadata and introspection are broken)
+      763148 - Adding/Removing an external monitor causes open windows to move
+               to another workspace
+      776435 - Window maximizes and semi-maximizes on the wrong workspace
+      892012 - Window management - When a  semi-maximised a window is maximised
+               and then restored, the window position jumps and window size
+               changes so the the window title bar is sometimes hidden
+               underneath the top bar
+
 Release 0.9.9.0 (2013-01-24 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 ============================================================================
 

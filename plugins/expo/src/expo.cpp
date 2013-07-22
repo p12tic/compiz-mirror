@@ -28,6 +28,7 @@
 #include "expo.h"
 #include "click-threshold.h"
 #include "wall-offset.h"
+#include <core/logmessage.h>
 #include <math.h>
 #ifndef USE_GLES
 #include <GL/glu.h>
@@ -72,7 +73,12 @@ ExpoScreen::dndFini (CompAction         *action,
 	dndState  = DnDNone;
 	dndWindow = NULL;
 
-	action->setState (action->state () & CompAction::StateInitButton);
+	/* The action could be an action of key, edge or button binding if
+	 * expo was terminated during dnd. Thus we must fetch the action of
+	 * dndButton ourselves or we mess their state up. */
+	CompAction &dndAction = optionGetDndButton ();
+	dndAction.setState (dndAction.state () & CompAction::StateInitButton);
+
 	cScreen->damageScreen ();
 
 	return true;
@@ -126,6 +132,7 @@ ExpoScreen::termExpo (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector &options)
 {
+    /* Warning: *action is NULL if we came here from handleEvent. */
     if (!expoMode)
 	return true;
 
@@ -367,13 +374,10 @@ ExpoScreen::handleEvent (XEvent *event)
 								event->xbutton.x,
 								event->xbutton.y))
 		{
-		    /* TODO: What action to take if expo_key is not defined ? */
-		    CompAction &action = optionGetExpoKey ();
-
 		    clickTime   = 0;
 		    doubleClick = false;
 
-		    termExpo (&action, 0, noOptions ());
+		    termExpo (NULL, 0, noOptions ());
 		    anyClick = true;
 		}
 	    }
@@ -856,17 +860,10 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	    rotation = 10.0 * expoCam;
     }
 
-    bool   filterChanged = false;
-    GLenum oldFilter;
+    GLenum oldFilter = gScreen->textureFilter ();
 
     if (optionGetMipmaps ())
-    {
-	/* check the actual filtering */
-	oldFilter = gScreen->textureFilter ();
-
 	gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-	filterChanged = true;
-    }
 
     /* ALL TRANSFORMATION ARE EXECUTED FROM BOTTOM TO TOP */
 
@@ -961,8 +958,8 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
 	    sTransform3 = sTransform2;
 
-	    sTransform3.translate ( output->x () / output->width (),
-				   -output->y () / output->height (), 0.0);
+	    sTransform3.translate ( output->x () / static_cast <float> (output->width ()),
+				   -output->y () / static_cast <float> (output->height ()), 0.0);
 
 	    cScreen->setWindowPaintOffset ((screen->vp ().x () - i) *
 					   screen->width (),
@@ -1216,9 +1213,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
     gScreen->glPaintTransformedOutputSetCurrentIndex (glPaintTransformedOutputIndex);
 
-    /* we just need to change the global filter state if we manipulated it before */
-    if (filterChanged)
-	gScreen->setTextureFilter (oldFilter);
+    gScreen->setTextureFilter (oldFilter);
 }
 
 bool
@@ -1506,6 +1501,27 @@ ExpoWindow::damageRect (bool            initial,
     return cWindow->damageRect (initial, rect);
 }
 
+void
+ExpoWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
+{
+    window->resizeNotify (dx, dy, dwidth, dheight);
+
+    if (!(window->type () & CompWindowTypeDesktopMask))
+    {
+	compLogMessage ("expo", CompLogLevelWarn, "Received a resizeNotify "\
+						  "for a non-desktop window.");
+	assert (window->type () & CompWindowTypeDesktopMask);
+	return;
+    }
+
+    /* Desktop window was resized. Update our glowQuads. */
+    foreach (GLTexture *tex, eScreen->outline_texture)
+    {
+	GLTexture::Matrix mat = tex->matrix ();
+	computeGlowQuads (&mat);
+    }
+}
+
 #define EXPOINITBIND(opt, func)                                \
     optionSet##opt##Initiate (boost::bind (&ExpoScreen::func,  \
 					   this, _1, _2, _3));
@@ -1578,6 +1594,7 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
     mGlowQuads  (NULL),
     expoOpacity (1.0f)
 {
+    WindowInterface::setHandler (window, false);
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
 
@@ -1588,6 +1605,8 @@ ExpoWindow::ExpoWindow (CompWindow *w) :
 	    GLTexture::Matrix mat = tex->matrix ();
 	    computeGlowQuads (&mat);
 	}
+
+	window->resizeNotifySetEnabled (this, true);
     }
 }
 

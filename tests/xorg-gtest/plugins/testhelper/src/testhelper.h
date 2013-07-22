@@ -77,11 +77,17 @@ class TestHelperWindow :
 	void configureAndReport (long *);
 	void setFrameExtentsAndReport (long *);
 	void setConfigureLock (long *);
+	void setDestroyOnReparent (long *);
+	void restackAtLeastAbove (long *);
 
     private:
 
+	void windowNotify (CompWindowNotify n);
+
 	CompWindow                                         *window;
 	compiz::window::configure_buffers::Releasable::Ptr configureLock;
+
+	bool destroyOnReparent;
 };
 
 class TestHelperPluginVTable :

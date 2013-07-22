@@ -1189,33 +1189,7 @@ CompWindow::destroy ()
 	CompWindow *oldNext       = next;
 	CompWindow *oldPrev       = prev;
 
-	/* This is where things get tricky ... it is possible
-	 * to receive a ConfigureNotify relative to a frame window
-	 * for a destroyed window in case we process a ConfigureRequest
-	 * for the destroyed window and then a DestroyNotify for it directly
-	 * afterwards. In that case, we will receive the ConfigureNotify
-	 * for the XConfigureWindow request we made relative to that frame
-	 * window. Because of this, we must keep the frame window in the stack
-	 * as a new toplevel window so that the ConfigureNotify will be processed
-	 * properly until it too receives a DestroyNotify */
-
-	if (priv->serverFrame)
-	{
-	    XWindowAttributes attrib;
-
-	    /* It's possible that the frame window was already destroyed because
-	     * the client was unreparented before it was destroyed (eg
-	     * UnmapNotify before DestroyNotify). In that case the frame window
-	     * is going to be an invalid window but since we haven't received
-	     * a DestroyNotify for it yet, it is possible that restacking
-	     * operations could occurr relative to it so we need to hold it
-	     * in the stack for now. Ensure that it is marked override redirect */
-	    XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
-
-	    /* Put the frame window "above" the client window
-	     * in the stack */
-	    PrivateWindow::createCompWindow (priv->id, priv->id, attrib, priv->serverFrame);
-	}
+	priv->manageFrameWindowSeparately ();
 
 	/* Immediately unhook the window once destroyed
 	 * as the stacking order will be invalid if we don't
@@ -2884,17 +2858,21 @@ PrivateWindow::saveGeometry (int mask)
 
     int m = mask & ~saveMask;
 
+    /* The saved window geometry is always saved in terms of the non-decorated
+     * geometry as we may need to restore it with a different decoration size */
     if (m & CWX)
-	saveWc.x = serverGeometry.x ();
+	saveWc.x = serverGeometry.x () - window->border ().left;
 
     if (m & CWY)
-	saveWc.y = serverGeometry.y ();
+	saveWc.y = serverGeometry.y () - window->border ().top;
 
     if (m & CWWidth)
-	saveWc.width = serverGeometry.width ();
+	saveWc.width = serverGeometry.width () + (window->border ().left +
+						  window->border ().right);
 
     if (m & CWHeight)
-	saveWc.height = serverGeometry.height ();
+	saveWc.height = serverGeometry.height () + (window->border ().top +
+						    window->border ().bottom);
 
     if (m & CWBorderWidth)
 	saveWc.border_width = serverGeometry.border ();
@@ -2909,44 +2887,18 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
     int m = mask & saveMask;
 
     if (m & CWX)
-	xwc->x = saveWc.x;
+	xwc->x = saveWc.x + window->border ().left;
 
     if (m & CWY)
-	xwc->y = saveWc.y;
+	xwc->y = saveWc.y + window->border ().top;
 
     if (m & CWWidth)
-    {
-	xwc->width = saveWc.width;
-
-	/* This is not perfect but it works OK for now. If the saved width is
-	   the same as the current width then make it a little be smaller so
-	   the user can see that it changed and it also makes sure that
-	   windowResizeNotify is called and plugins are notified.
-	   TODO: Eliminate these arbitrary magic numbers here */
-	if (xwc->width == (int) serverGeometry.width ())
-	{
-	    xwc->width -= 10;
-
-	    if (m & CWX)
-		xwc->x += 5;
-	}
-    }
+	xwc->width = saveWc.width - (window->border ().left +
+				     window->border ().right);
 
     if (m & CWHeight)
-    {
-	xwc->height = saveWc.height;
-
-	/* As above, if the saved height is the same as the current height
-	   then make it a little be smaller.
-	   TODO: As above, find a better solution without magic numbers here */
-	if (xwc->height == (int) serverGeometry.height ())
-	{
-	    xwc->height -= 10;
-
-	    if (m & CWY)
-		xwc->y += 5;
-	}
-    }
+	xwc->height = saveWc.height - (window->border ().top +
+				       window->border ().bottom);
 
     if (m & CWBorderWidth)
 	xwc->border_width = saveWc.border_width;
@@ -3601,7 +3553,10 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     int       mask = 0;
     CompPoint viewport;
 
-    screen->viewportForGeometry (old, viewport);
+    if (old.intersects (CompRect (0, 0, screen->width (), screen->height ())))
+	viewport = screen->vp ();
+    else
+	screen->viewportForGeometry (old, viewport);
 
     int x = (viewport.x () - screen->vp ().x ()) * screen->width ();
     int y = (viewport.y () - screen->vp ().y ()) * screen->height ();
@@ -5493,8 +5448,8 @@ PrivateWindow::processMap ()
 	unsigned int   xwcm;
 
 	/* adjust for gravity, but only for frame size */
-	xwc.x      = priv->serverGeometry.x ();
-	xwc.y      = priv->serverGeometry.y ();
+	xwc.x      = priv->serverGeometry.x () - priv->border.left;
+	xwc.y      = priv->serverGeometry.y () - priv->border.top;
 	xwc.width  = 0;
 	xwc.height = 0;
 
@@ -5502,6 +5457,9 @@ PrivateWindow::processMap ()
 
 	xwc.width  = priv->serverGeometry.width ();
 	xwc.height = priv->serverGeometry.height ();
+
+	/* Validate size */
+	xwcm |= CWWidth | CWHeight;
 
 	window->validateResizeRequest (xwcm, &xwc, ClientTypeApplication);
 
@@ -6318,9 +6276,25 @@ X11SyncServerWindow::queryShapeRectangles (int kind,
 
 namespace
 {
+class NullConfigureBufferLock :
+    public crb::BufferLock
+{
+    public:
+
+	NullConfigureBufferLock (crb::CountedFreeze *cf) {}
+
+	void lock () {}
+	void release () {}
+};
+
 crb::BufferLock::Ptr
 createConfigureBufferLock (crb::CountedFreeze *cf)
 {
+    /* Return an implementation that does nothing if the user explicitly
+     * disabled buffer locks for this running instance */
+    if (getenv ("COMPIZ_NO_CONFIGURE_BUFFER_LOCKS"))
+	return boost::make_shared <NullConfigureBufferLock> (cf);
+
     return boost::make_shared <crb::ConfigureBufferLock> (cf);
 }
 }
@@ -6367,6 +6341,7 @@ PrivateWindow::PrivateWindow () :
     shaded (false),
     hidden (false),
     grabbed (false),
+    alreadyDecorated (false),
 
     desktop (0),
 
@@ -6605,15 +6580,41 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	priv->border.top    != b->top		||
 	priv->border.bottom != b->bottom)
     {
+	CompPoint movement =
+	    compiz::window::extents::shift (*b,
+					    priv->sizeHints.win_gravity) -
+	    compiz::window::extents::shift (priv->border,
+					    priv->sizeHints.win_gravity);
+
+	CompSize sizeDelta;
+
+	/* We don't want to change the size of the window the first time we
+	 * decorate it, but we do thereafter */
+	if (priv->alreadyDecorated)
+	{
+	    sizeDelta.setWidth (-((b->left + b->right) -
+				  (priv->border.left + priv->border.right)));
+	    sizeDelta.setHeight (-((b->top + b->bottom) -
+				   (priv->border.top + priv->border.bottom)));
+	}
+	else
+	    priv->alreadyDecorated = true;
+
 	priv->serverInput = *i;
 	priv->border      = *b;
 
+	/* Offset client for any new decoration size */
+	XWindowChanges xwc;
+
+	xwc.x = movement.x () + priv->serverGeometry.x ();
+	xwc.y = movement.y () + priv->serverGeometry.y ();
+	xwc.width = sizeDelta.width () + priv->serverGeometry.width ();
+	xwc.height = sizeDelta.height () + priv->serverGeometry.height ();
+
+	configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
+
+	windowNotify (CompWindowNotifyFrameUpdate);
 	recalcActions ();
-
-	bool sizeUpdated = false;
-
-	sizeUpdated |= priv->updateSize ();
-	sizeUpdated |= priv->updateFrameWindow ();
 
 	/* Always send a moveNotify
 	 * whenever the frame extents update
@@ -6621,8 +6622,7 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	moveNotify (0, 0, true);
 
 	/* Once we have updated everything, re-set lastServerInput */
-	if (sizeUpdated)
-	    priv->lastServerInput = priv->serverInput;
+	priv->lastServerInput = priv->serverInput;
     }
 
     /* Use b for _NET_WM_FRAME_EXTENTS here because
@@ -6746,11 +6746,28 @@ PrivateWindow::reparent ()
     /* Gravity here is assumed to be SouthEast, clients can update
      * that if need be */
 
+    serverFrameGeometry.set (serverInput.left - border.left,
+			     serverInput.top - border.top,
+			     wa.width + (serverInput.left +
+					 serverInput.right),
+			     wa.height + (serverInput.top +
+					  serverInput.bottom),
+			     0);
+
     /* Awaiting a new frame to be given to us */
     frame       = None;
-    serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
-				 wa.width, wa.height, 0, wa.depth,
-				 InputOutput, visual, mask, &attr);
+    serverFrame = XCreateWindow (dpy,
+				 screen->root (),
+				 serverFrameGeometry.x (),
+				 serverFrameGeometry.y (),
+				 serverFrameGeometry.width (),
+				 serverFrameGeometry.height (),
+				 serverFrameGeometry.border (),
+				 wa.depth,
+				 InputOutput,
+				 visual,
+				 mask,
+				 &attr);
 
     /* Do not get any events from here on */
     XSelectInput (dpy, screen->root (), NoEventMask);
@@ -6758,11 +6775,16 @@ PrivateWindow::reparent ()
     /* If we have some frame extents, we should apply them here and
      * set lastFrameExtents */
     wrapper = XCreateWindow (dpy, serverFrame,
-			    serverInput.left, serverInput.top,
-			    wa.width - (serverInput.left + serverInput.right),
-			    wa.height - (serverInput.top + serverInput.bottom),
-			    0, wa.depth,
-			    InputOutput, visual, mask, &attr);
+			     serverInput.left,
+			     serverInput.top,
+			     wa.width,
+			     wa.height,
+			     0,
+			     wa.depth,
+			     InputOutput,
+			     visual,
+			     mask,
+			     &attr);
 
     lastServerInput = serverInput;
     xwc.stack_mode  = Above;
@@ -6836,11 +6858,6 @@ PrivateWindow::reparent ()
     attr.event_mask = SubstructureRedirectMask | SubstructureNotifyMask |
 		      EnterWindowMask          | LeaveWindowMask;
 
-    serverFrameGeometry = serverGeometry;
-
-    XMoveResizeWindow (dpy, serverFrame, serverFrameGeometry.x (), serverFrameGeometry.y (),
-		       serverFrameGeometry.width (), serverFrameGeometry.height ());
-
     XChangeWindowAttributes (dpy, serverFrame, CWEventMask, &attr);
     XChangeWindowAttributes (dpy, wrapper, CWEventMask, &attr);
 
@@ -6864,6 +6881,44 @@ PrivateWindow::reparent ()
     window->windowNotify (CompWindowNotifyReparent);
 
     return true;
+}
+
+void
+PrivateWindow::manageFrameWindowSeparately ()
+{
+    /* This is where things get tricky ... it is possible
+     * to receive a ConfigureNotify relative to a frame window
+     * for a destroyed window in case we process a ConfigureRequest
+     * for the destroyed window and then a DestroyNotify for it directly
+     * afterwards. In that case, we will receive the ConfigureNotify
+     * for the XConfigureWindow request we made relative to that frame
+     * window. Because of this, we must keep the frame window in the stack
+     * as a new toplevel window so that the ConfigureNotify will be processed
+     * properly until it too receives a DestroyNotify
+     *
+     * We only wish to do this if we have recieved a CreateNotify for the
+     * frame window. If we have not, then there will be no stacking operations
+     * dependent on it and we should wait until CreateNotify in order to manage
+     * it normally */
+
+    if (frame)
+    {
+	XWindowAttributes attrib;
+
+	/* It's possible that the frame window was already destroyed because
+	 * the client was unreparented before it was destroyed (eg
+	 * UnmapNotify before DestroyNotify). In that case the frame window
+	 * is going to be an invalid window but since we haven't received
+	 * a DestroyNotify for it yet, it is possible that restacking
+	 * operations could occurr relative to it so we need to hold it
+	 * in the stack for now. Ensure that it is marked override redirect */
+	window->priv->queryFrameAttributes (attrib);
+
+	/* Put the frame window "above" the client window
+	 * in the stack */
+	PrivateWindow::createCompWindow (id, id, attrib, frame);
+    }
+
 }
 
 void
@@ -6961,33 +7016,7 @@ PrivateWindow::unreparent ()
     if (dbg)
 	dbg->addDestroyedFrame (serverFrame);
 
-    /* This is where things get tricky ... it is possible
-     * to receive a ConfigureNotify relative to a frame window
-     * for a destroyed window in case we process a ConfigureRequest
-     * for the destroyed window and then a DestroyNotify for it directly
-     * afterwards. In that case, we will receive the ConfigureNotify
-     * for the XConfigureWindow request we made relative to that frame
-     * window. Because of this, we must keep the frame window in the stack
-     * as a new toplevel window so that the ConfigureNotify will be processed
-     * properly until it too receives a DestroyNotify */
-
-    if (serverFrame)
-    {
-	XWindowAttributes attrib;
-
-	/* It's possible that the frame window was already destroyed because
-	 * the client was unreparented before it was destroyed (eg
-	 * UnmapNotify before DestroyNotify). In that case the frame window
-	 * is going to be an invalid window but since we haven't received
-	 * a DestroyNotify for it yet, it is possible that restacking
-	 * operations could occurr relative to it so we need to hold it
-	 * in the stack for now. Ensure that it is marked override redirect */
-	window->priv->queryFrameAttributes (attrib);
-
-	/* Put the frame window "above" the client window
-	 * in the stack */
-	PrivateWindow::createCompWindow (id, id, attrib, serverFrame);
-    }
+    manageFrameWindowSeparately ();
 
     /* Issue a DestroyNotify */
     XDestroyWindow (screen->dpy (), serverFrame);

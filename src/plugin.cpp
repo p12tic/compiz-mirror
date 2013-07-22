@@ -31,6 +31,8 @@
 #include <boost/scoped_array.hpp>
 #include <boost/foreach.hpp>
 
+#include <boost/algorithm/string.hpp>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -267,8 +269,6 @@ CompManager::initPlugin (CompPlugin *p)
 void
 CompManager::finiPlugin (CompPlugin *p)
 {
-    p->vTable->markNoFurtherInstantiation ();
-
     if (screen)
     {
 	screen->finiPluginForScreen (p);
@@ -276,6 +276,7 @@ CompManager::finiPlugin (CompPlugin *p)
     }
 
     p->vTable->fini ();
+    p->vTable->markNoFurtherInstantiation ();
 }
 
 bool
@@ -425,8 +426,19 @@ CompPlugin::load (const char *name)
 
     if (compiz_plugin_dir_override)
     {
-	if (loaderLoadPlugin (p.get (), compiz_plugin_dir_override, name))
-	    return p.release ();
+	std::vector <std::string> paths;
+	boost::split (paths,
+		      compiz_plugin_dir_override,
+		      boost::is_any_of (":"));
+
+	foreach (const std::string &path, paths)
+	{
+	    if (path.empty ())
+		continue;
+
+	    if (loaderLoadPlugin (p.get (), path.c_str (), name))
+		return p.release ();
+	}
     }
 
     if (char* home = getenv ("HOME"))

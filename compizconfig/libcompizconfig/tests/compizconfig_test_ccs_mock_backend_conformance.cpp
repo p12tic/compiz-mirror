@@ -701,11 +701,10 @@ class MockCCSBackendConceptTestEnvironment :
 		case TypeList:
 		    ccsSetList (setting,
 				cci::SettingValueListWrapper (ReadListAtKey (plugin, key, setting),
-								 cci::Deep,
-								 ccsSettingGetInfo (setting)->forList.listType,
-								 boost::shared_ptr <CCSSettingInfo> (),
-								 boost::shared_ptr <CCSSetting> (setting,
-												 boost::bind (doNothingWithCCSSetting, _1))),
+							      cci::Deep,
+							      ccsSettingGetInfo (setting)->forList.listType,
+							      boost::shared_ptr <CCSSetting> (setting,
+											      boost::bind (doNothingWithCCSSetting, _1))),
 				FALSE);
 		    break;
 
@@ -799,11 +798,13 @@ class MockCCSBackendConceptTestEnvironment :
 		    ccsGetList (setting, &vList);
 		    listCopy = ccsCopyList (vList, setting);
 
-		    WriteListAtKey (plugin, key, VariantTypes (boost::make_shared <cci::SettingValueListWrapper> (listCopy,
-														     cci::Deep,
-														     ccsSettingGetInfo (setting)->forList.listType,
-														     boost::shared_ptr <CCSSettingInfo> (),
-														     boost::shared_ptr <CCSSetting> (setting, boost::bind (doNothingWithCCSSetting, _1)))));
+		    WriteListAtKey (plugin,
+				    key,
+				    VariantTypes (boost::make_shared <cci::SettingValueListWrapper> (listCopy,
+												     cci::Deep,
+												     ccsSettingGetInfo (setting)->forList.listType,
+												     boost::shared_ptr <CCSSetting> (setting,
+																     boost::bind (doNothingWithCCSSetting, _1)))));
 		    break;
 		}
 		default:

@@ -109,25 +109,28 @@ PrivateTextScreen::getWindowName (Window id)
  * Draw a rounded rectangle path
  */
 void
-TextSurface::drawBackground (int     x,
-			     int     y,
-			     int     width,
-			     int     height,
-			     int     radius)
+TextSurface::drawBackground (int x,
+			     int y,
+			     int width,
+			     int height,
+			     int radius)
 {
     int x0 = x;
     int y0 = y;
     int x1 = x + width;
     int y1 = y + height;
 
+    const float halfPi    = PI / 2.0f;
+    const float triHalfPi = halfPi * 3;
+
     cairo_new_path (cr);
-    cairo_arc (cr, x0 + radius, y1 - radius, radius, PI / 2, PI);
+    cairo_arc (cr, x0 + radius, y1 - radius, radius, halfPi, PI);
     cairo_line_to (cr, x0, y0 + radius);
-    cairo_arc (cr, x0 + radius, y0 + radius, radius, PI, 3 * PI / 2);
+    cairo_arc (cr, x0 + radius, y0 + radius, radius, PI, triHalfPi);
     cairo_line_to (cr, x1 - radius, y0);
-    cairo_arc (cr, x1 - radius, y0 + radius, radius, 3 * PI / 2, 2 * PI);
+    cairo_arc (cr, x1 - radius, y0 + radius, radius, triHalfPi, 2 * PI);
     cairo_line_to (cr, x1, y1 - radius);
-    cairo_arc (cr, x1 - radius, y1 - radius, radius, 0, PI / 2);
+    cairo_arc (cr, x1 - radius, y1 - radius, radius, 0, halfPi);
     cairo_close_path (cr);
 }
 
@@ -502,10 +505,14 @@ CompText::draw (const GLMatrix &transform,
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    GLushort       colorData[4];
-    GLfloat        textureData[8];
-    GLfloat        vertexData[12];
-    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLushort          colorData[4];
+    GLfloat           textureData[8];
+    GLfloat           vertexData[12];
+    GLVertexBuffer    *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLTexture         *tex;
+    GLTexture::Matrix m;
+    GLfloat           xPlusWidth   = x + width;
+    GLfloat           yMinusHeight = y - height;
 
     colorData[0] = alpha * 65535;
     colorData[1] = alpha * 65535;
@@ -514,23 +521,23 @@ CompText::draw (const GLMatrix &transform,
 
     for (unsigned int i = 0; i < texture.size (); ++i)
     {
-	GLTexture         *tex = texture[i];
-	GLTexture::Matrix m = tex->matrix ();
+	tex = texture[i];
+	m = tex->matrix ();
 
 	tex->enable (GLTexture::Good);
 
 	streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
 	vertexData[0]  = x;
-	vertexData[1]  = y - height;
+	vertexData[1]  = yMinusHeight;
 	vertexData[2]  = 0;
 	vertexData[3]  = x;
 	vertexData[4]  = y;
 	vertexData[5]  = 0;
-	vertexData[6]  = x + width;
-	vertexData[7]  = y - height;
+	vertexData[6]  = xPlusWidth;
+	vertexData[7]  = yMinusHeight;
 	vertexData[8]  = 0;
-	vertexData[9]  = x + width;
+	vertexData[9]  = xPlusWidth;
 	vertexData[10] = y;
 	vertexData[11] = 0;
 
