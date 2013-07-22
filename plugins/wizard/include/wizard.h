@@ -203,6 +203,8 @@ class WizardScreen :
 
 	bool toggle ();
 
+	void toggleFunctions(bool enabled);
+
 	void
 	optionChanged (CompOption	      *opt,
 		       WizardOptions::Options num);

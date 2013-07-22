@@ -840,6 +840,7 @@ WizardScreen::donePaint ()
 	finiParticles (ps);
 	free (ps);
 	ps = NULL;
+	toggleFunctions(false);
     }
 
     cScreen->donePaint ();
@@ -869,12 +870,19 @@ bool
 WizardScreen::toggle ()
 {
     active = !active;
-    cScreen->preparePaintSetEnabled (this, active);
-    cScreen->donePaintSetEnabled (this, active);
-    gScreen->glPaintOutputSetEnabled (this, active);
-    
+    if(active)
+	toggleFunctions(true);
+
     cScreen->damageScreen ();
     return true;
+}
+
+void
+WizardScreen::toggleFunctions(bool enabled)
+{
+    cScreen->preparePaintSetEnabled (this, enabled);
+    cScreen->donePaintSetEnabled (this, enabled);
+    gScreen->glPaintOutputSetEnabled (this, enabled);
 }
 
 void
