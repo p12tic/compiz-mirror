@@ -41,37 +41,40 @@ const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
 /* 4 colors, RGBA */
 const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
 
-static void
-initParticles (int hardLimit, int softLimit, ParticleSystem * ps)
+ParticleSystem::ParticleSystem() :
+    init(false)
 {
-    ps->particles.clear ();
 
-    ps->tex          = 0;
-    ps->hardLimit    = hardLimit;
-    ps->softLimit    = softLimit;
-    ps->active       = false;
-    ps->lastCount    = 0;
+}
+
+void
+ParticleSystem::initParticles (int f_hardLimit, int f_softLimit)
+{
+    particles.clear ();
+
+    tex          = 0;
+    hardLimit    = f_hardLimit;
+    softLimit    = f_softLimit;
+    active       = false;
+    lastCount    = 0;
 
     // Initialize cache
-    ps->vertices_cache.clear ();
-    ps->coords_cache.clear ();
-    ps->colors_cache.clear ();
-    ps->dcolors_cache.clear ();
+    vertices_cache.clear ();
+    coords_cache.clear ();
+    colors_cache.clear ();
+    dcolors_cache.clear ();
 
     for (int i = 0; i < hardLimit; i++)
     {
 	Particle part;
 	part.t = 0.0f;
-	ps->particles.push_back (part);
+	particles.push_back (part);
     }
 }
 
 void
-WizardScreen::loadGPoints (ParticleSystem *ps)
+WizardScreen::loadGPoints ()
 {
-    if (!ps) //ps not yet initialized
-	return;
-
     CompOption::Value::Vector GStrength = optionGetGStrength ();
     CompOption::Value::Vector GPosx = optionGetGPosx ();
     CompOption::Value::Vector GPosy = optionGetGPosy ();
@@ -88,7 +91,7 @@ WizardScreen::loadGPoints (ParticleSystem *ps)
 	ng != GMovement.size ())
        return;
 
-    ps->g.clear ();
+    ps.g.clear ();
 
     for (unsigned int i = 0; i < ng; i++)
     {
@@ -99,16 +102,13 @@ WizardScreen::loadGPoints (ParticleSystem *ps)
 	gi.espeed = (float)GSpeed.at (i).i () / 100.;
 	gi.eangle = (float)GAngle.at (i).i () / 180.*M_PI;
 	gi.movement = GMovement.at (i).i ();
-	ps->g.push_back (gi);
+	ps.g.push_back (gi);
     }
 }
 
 void
-WizardScreen::loadEmitters (ParticleSystem *ps)
+WizardScreen::loadEmitters ()
 {
-    if (!ps) //ps not yet initialized
-	return;
-
     CompOption::Value::Vector EActive = optionGetEActive ();
     CompOption::Value::Vector ETrigger = optionGetETrigger ();
     CompOption::Value::Vector EPosx = optionGetEPosx ();
@@ -179,7 +179,7 @@ WizardScreen::loadEmitters (ParticleSystem *ps)
 	ne != EGp.size ())
        return;
 
-    ps->e.clear ();
+    ps.e.clear ();
 
     for (unsigned int i = 0; i < ne; i++)
     {
@@ -217,188 +217,186 @@ WizardScreen::loadEmitters (ParticleSystem *ps)
 	ei.g = (float)EG.at (i).i () / 1000.;
 	ei.dg = (float)EDg.at (i).i () / 1000.;
 	ei.gp = (float)EGp.at (i).i () / 10000.;
-	ps->e.push_back (ei);
+	ps.e.push_back (ei);
     }
 }
 
 void
-WizardScreen::drawParticles (ParticleSystem *ps,
-			     const GLMatrix &transform)
+ParticleSystem::drawParticles (const GLMatrix &transform)
 {
     int i, j, k, l;
 
     /* Check that the cache is big enough */
-    if (ps->vertices_cache.size () < (unsigned int)ps->hardLimit * VERTEX_COMPONENTS)
-	ps->vertices_cache.resize (ps->hardLimit * VERTEX_COMPONENTS);
+    if (vertices_cache.size () < particles.size () * VERTEX_COMPONENTS)
+	vertices_cache.resize (particles.size () * VERTEX_COMPONENTS);
 
-    if (ps->coords_cache.size () < (unsigned int)ps->hardLimit * COORD_COMPONENTS)
-	ps->coords_cache.resize (ps->hardLimit * COORD_COMPONENTS);
+    if (coords_cache.size () < particles.size () * COORD_COMPONENTS)
+	coords_cache.resize (particles.size () * COORD_COMPONENTS);
 
-    if (ps->colors_cache.size () < (unsigned int)ps->hardLimit * COLOR_COMPONENTS)
-	ps->colors_cache.resize (ps->hardLimit * COLOR_COMPONENTS);
+    if (colors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	colors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
-    if (ps->darken > 0)
-	if (ps->dcolors_cache.size () < (unsigned int)ps->hardLimit * COLOR_COMPONENTS)
-	    ps->dcolors_cache.resize (ps->hardLimit * COLOR_COMPONENTS);
+    if (darken > 0)
+	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
+	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
     glEnable (GL_BLEND);
 
-    if (ps->tex)
+    if (tex)
     {
-	glBindTexture (GL_TEXTURE_2D, ps->tex);
+	glBindTexture (GL_TEXTURE_2D, tex);
 	glEnable (GL_TEXTURE_2D);
     }
 
     i = j = k = l = 0;
 
-    Particle *part = &ps->particles[0];
-    int m;
-    for (m = 0; m < ps->hardLimit; m++, part++)
+    /* use 2 triangles per particle */
+    foreach (Particle &part, particles)
     {
-	if (part->t > 0.0f)
+	if (part.t > 0.0f)
 	{
-	    float cOff = part->s / 2.;		//Corner offset from center
+	    float cOff = part.s / 2.;		//Corner offset from center
 
-	    if (part->t > ps->tnew)		//New particles start larger
-		cOff += (part->snew - part->s) * (part->t - ps->tnew)
-			/ (1. - ps->tnew) / 2.;
-	    else if (part->t < ps->told)	//Old particles shrink
-		cOff -= part->s * (ps->told - part->t) / ps->told / 2.;
+	    if (part.t > tnew)		//New particles start larger
+		cOff += (part.snew - part.s) * (part.t - tnew)
+			/ (1. - tnew) / 2.;
+	    else if (part.t < told)	//Old particles shrink
+		cOff -= part.s * (told - part.t) / told / 2.;
 
 	    //Offsets after rotation of Texture
-	    float offA = cOff * (cos (part->phi) - sin (part->phi));
-	    float offB = cOff * (cos (part->phi) + sin (part->phi));
+	    float offA = cOff * (cos (part.phi) - sin (part.phi));
+	    float offB = cOff * (cos (part.phi) + sin (part.phi));
 
 	    GLushort r, g, b, a, dark_a;
 
-	    r = part->c[0] * 65535.0f;
-	    g = part->c[1] * 65535.0f;
-	    b = part->c[2] * 65535.0f;
+	    r = part.c[0] * 65535.0f;
+	    g = part.c[1] * 65535.0f;
+	    b = part.c[2] * 65535.0f;
 
-	    if (part->t > ps->tnew)		//New particles start at a == 1
-		a = part->a + (1. - part->a) * (part->t - ps->tnew)
-			    / (1. - ps->tnew) * 65535.0f;
-	    else if (part->t < ps->told)	//Old particles fade to a = 0
-		a = part->a * part->t / ps->told * 65535.0f;
+	    if (part.t > tnew)		//New particles start at a == 1
+		a = part.a + (1. - part.a) * (part.t - tnew)
+			    / (1. - tnew) * 65535.0f;
+	    else if (part.t < told)	//Old particles fade to a = 0
+		a = part.a * part.t / told * 65535.0f;
 	    else				//The others have their own a
-		a = part->a * 65535.0f;
+		a = part.a * 65535.0f;
 
-	    dark_a = a * ps->darken;
+	    dark_a = a * darken;
 
 	    //first triangle
-	    ps->vertices_cache[i + 0] = part->x - offB;
-	    ps->vertices_cache[i + 1] = part->y - offA;
-	    ps->vertices_cache[i + 2] = 0;
+	    vertices_cache[i + 0] = part.x - offB;
+	    vertices_cache[i + 1] = part.y - offA;
+	    vertices_cache[i + 2] = 0;
 
-	    ps->vertices_cache[i + 3] = part->x - offA;
-	    ps->vertices_cache[i + 4] = part->y + offB;
-	    ps->vertices_cache[i + 5] = 0;
+	    vertices_cache[i + 3] = part.x - offA;
+	    vertices_cache[i + 4] = part.y + offB;
+	    vertices_cache[i + 5] = 0;
 
-	    ps->vertices_cache[i + 6] = part->x + offB;
-	    ps->vertices_cache[i + 7] = part->y + offA;
-	    ps->vertices_cache[i + 8] = 0;
+	    vertices_cache[i + 6] = part.x + offB;
+	    vertices_cache[i + 7] = part.y + offA;
+	    vertices_cache[i + 8] = 0;
 
 	    //second triangle
-	    ps->vertices_cache[i + 9] = part->x + offB;
-	    ps->vertices_cache[i + 10] = part->y + offA;
-	    ps->vertices_cache[i + 11] = 0;
+	    vertices_cache[i + 9] = part.x + offB;
+	    vertices_cache[i + 10] = part.y + offA;
+	    vertices_cache[i + 11] = 0;
 
-	    ps->vertices_cache[i + 12] = part->x + offA;
-	    ps->vertices_cache[i + 13] = part->y - offB;
-	    ps->vertices_cache[i + 14] = 0;
+	    vertices_cache[i + 12] = part.x + offA;
+	    vertices_cache[i + 13] = part.y - offB;
+	    vertices_cache[i + 14] = 0;
 
-	    ps->vertices_cache[i + 15] = part->x - offB;
-	    ps->vertices_cache[i + 16] = part->y - offA;
-	    ps->vertices_cache[i + 17] = 0;
+	    vertices_cache[i + 15] = part.x - offB;
+	    vertices_cache[i + 16] = part.y - offA;
+	    vertices_cache[i + 17] = 0;
 
 	    i += 18;
 
-	    ps->coords_cache[j + 0] = 0.0;
-	    ps->coords_cache[j + 1] = 0.0;
+	    coords_cache[j + 0] = 0.0;
+	    coords_cache[j + 1] = 0.0;
 
-	    ps->coords_cache[j + 2] = 0.0;
-	    ps->coords_cache[j + 3] = 1.0;
+	    coords_cache[j + 2] = 0.0;
+	    coords_cache[j + 3] = 1.0;
 
-	    ps->coords_cache[j + 4] = 1.0;
-	    ps->coords_cache[j + 5] = 1.0;
+	    coords_cache[j + 4] = 1.0;
+	    coords_cache[j + 5] = 1.0;
 
 	    //second
-	    ps->coords_cache[j + 6] = 1.0;
-	    ps->coords_cache[j + 7] = 1.0;
+	    coords_cache[j + 6] = 1.0;
+	    coords_cache[j + 7] = 1.0;
 
-	    ps->coords_cache[j + 8] = 1.0;
-	    ps->coords_cache[j + 9] = 0.0;
+	    coords_cache[j + 8] = 1.0;
+	    coords_cache[j + 9] = 0.0;
 
-	    ps->coords_cache[j + 10] = 0.0;
-	    ps->coords_cache[j + 11] = 0.0;
+	    coords_cache[j + 10] = 0.0;
+	    coords_cache[j + 11] = 0.0;
 
 	    j += 12;
 
-	    ps->colors_cache[k + 0] = r;
-	    ps->colors_cache[k + 1] = g;
-	    ps->colors_cache[k + 2] = b;
-	    ps->colors_cache[k + 3] = a;
+	    colors_cache[k + 0] = r;
+	    colors_cache[k + 1] = g;
+	    colors_cache[k + 2] = b;
+	    colors_cache[k + 3] = a;
 
-	    ps->colors_cache[k + 4] = r;
-	    ps->colors_cache[k + 5] = g;
-	    ps->colors_cache[k + 6] = b;
-	    ps->colors_cache[k + 7] = a;
+	    colors_cache[k + 4] = r;
+	    colors_cache[k + 5] = g;
+	    colors_cache[k + 6] = b;
+	    colors_cache[k + 7] = a;
 
-	    ps->colors_cache[k + 8] = r;
-	    ps->colors_cache[k + 9] = g;
-	    ps->colors_cache[k + 10] = b;
-	    ps->colors_cache[k + 11] = a;
+	    colors_cache[k + 8] = r;
+	    colors_cache[k + 9] = g;
+	    colors_cache[k + 10] = b;
+	    colors_cache[k + 11] = a;
 
 	    //second
-	    ps->colors_cache[k + 12] = r;
-	    ps->colors_cache[k + 13] = g;
-	    ps->colors_cache[k + 14] = b;
-	    ps->colors_cache[k + 15] = a;
+	    colors_cache[k + 12] = r;
+	    colors_cache[k + 13] = g;
+	    colors_cache[k + 14] = b;
+	    colors_cache[k + 15] = a;
 
-	    ps->colors_cache[k + 16] = r;
-	    ps->colors_cache[k + 17] = g;
-	    ps->colors_cache[k + 18] = b;
-	    ps->colors_cache[k + 19] = a;
+	    colors_cache[k + 16] = r;
+	    colors_cache[k + 17] = g;
+	    colors_cache[k + 18] = b;
+	    colors_cache[k + 19] = a;
 
-	    ps->colors_cache[k + 20] = r;
-	    ps->colors_cache[k + 21] = g;
-	    ps->colors_cache[k + 22] = b;
-	    ps->colors_cache[k + 23] = a;
+	    colors_cache[k + 20] = r;
+	    colors_cache[k + 21] = g;
+	    colors_cache[k + 22] = b;
+	    colors_cache[k + 23] = a;
 
 	    k += 24;
 
-	    if (ps->darken > 0)
+	    if (darken > 0)
 	    {
-		ps->dcolors_cache[l + 0] = r;
-		ps->dcolors_cache[l + 1] = g;
-		ps->dcolors_cache[l + 2] = b;
-		ps->dcolors_cache[l + 3] = dark_a;
+		dcolors_cache[l + 0] = r;
+		dcolors_cache[l + 1] = g;
+		dcolors_cache[l + 2] = b;
+		dcolors_cache[l + 3] = dark_a;
 
-		ps->dcolors_cache[l + 4] = r;
-		ps->dcolors_cache[l + 5] = g;
-		ps->dcolors_cache[l + 6] = b;
-		ps->dcolors_cache[l + 7] = dark_a;
+		dcolors_cache[l + 4] = r;
+		dcolors_cache[l + 5] = g;
+		dcolors_cache[l + 6] = b;
+		dcolors_cache[l + 7] = dark_a;
 
-		ps->dcolors_cache[l + 8] = r;
-		ps->dcolors_cache[l + 9] = g;
-		ps->dcolors_cache[l + 10] = b;
-		ps->dcolors_cache[l + 11] = dark_a;
+		dcolors_cache[l + 8] = r;
+		dcolors_cache[l + 9] = g;
+		dcolors_cache[l + 10] = b;
+		dcolors_cache[l + 11] = dark_a;
 
 		//second
-		ps->dcolors_cache[l + 12] = r;
-		ps->dcolors_cache[l + 13] = g;
-		ps->dcolors_cache[l + 14] = b;
-		ps->dcolors_cache[l + 15] = dark_a;
+		dcolors_cache[l + 12] = r;
+		dcolors_cache[l + 13] = g;
+		dcolors_cache[l + 14] = b;
+		dcolors_cache[l + 15] = dark_a;
 
-		ps->dcolors_cache[l + 16] = r;
-		ps->dcolors_cache[l + 17] = g;
-		ps->dcolors_cache[l + 18] = b;
-		ps->dcolors_cache[l + 19] = dark_a;
+		dcolors_cache[l + 16] = r;
+		dcolors_cache[l + 17] = g;
+		dcolors_cache[l + 18] = b;
+		dcolors_cache[l + 19] = dark_a;
 
-		ps->dcolors_cache[l + 20] = r;
-		ps->dcolors_cache[l + 21] = g;
-		ps->dcolors_cache[l + 22] = b;
-		ps->dcolors_cache[l + 23] = dark_a;
+		dcolors_cache[l + 20] = r;
+		dcolors_cache[l + 21] = g;
+		dcolors_cache[l + 22] = b;
+		dcolors_cache[l + 23] = dark_a;
 
 		l += 24;
 	    }
@@ -407,25 +405,25 @@ WizardScreen::drawParticles (ParticleSystem *ps,
 
     GLVertexBuffer *stream = GLVertexBuffer::streamingBuffer ();
 
-    if (ps->darken > 0)
+    if (darken > 0)
     {
 	glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
 	stream->begin (GL_TRIANGLES);
-	stream->addVertices (i / 3, &ps->vertices_cache[0]);
-	stream->addTexCoords (0, j / 2, &ps->coords_cache[0]);
-	stream->addColors (l / 4, &ps->dcolors_cache[0]);
+	stream->addVertices (i / 3, &vertices_cache[0]);
+	stream->addTexCoords (0, j / 2, &coords_cache[0]);
+	stream->addColors (l / 4, &dcolors_cache[0]);
 
 	if (stream->end ())
 	    stream->render (transform);
     }
 
     /* draw particles */
-    glBlendFunc (GL_SRC_ALPHA, ps->blendMode);
+    glBlendFunc (GL_SRC_ALPHA, blendMode);
     stream->begin (GL_TRIANGLES);
 
-    stream->addVertices (i / 3, &ps->vertices_cache[0]);
-    stream->addTexCoords (0, j / 2, &ps->coords_cache[0]);
-    stream->addColors (k / 4, &ps->colors_cache[0]);
+    stream->addVertices (i / 3, &vertices_cache[0]);
+    stream->addTexCoords (0, j / 2, &coords_cache[0]);
+    stream->addColors (k / 4, &colors_cache[0]);
 
     if (stream->end ())
 	stream->render (transform);
@@ -435,18 +433,18 @@ WizardScreen::drawParticles (ParticleSystem *ps,
     glDisable (GL_BLEND);
 }
 
-static void
-updateParticles (ParticleSystem * ps, float time)
+void
+ParticleSystem::updateParticles (float time)
 {
     int i, j;
     int newCount = 0;
     Particle *part;
     GPoint *gi;
     float gdist, gangle;
-    ps->active = false;
+    active = false;
 
-    part = &ps->particles[0];
-    for (i = 0; i < ps->hardLimit; i++, part++)
+    part = &particles[0];
+    for (i = 0; i < hardLimit; i++, part++)
     {
 	if (part->t > 0.0f)
 	{
@@ -460,17 +458,17 @@ updateParticles (ParticleSystem * ps, float time)
 	    //Aging of particles
 	    part->t += part->vt * time;
 	    //Additional aging of particles increases if softLimit is exceeded
-	    if (ps->lastCount > ps->softLimit)
-		part->t += part->vt * time * (ps->lastCount - ps->softLimit)
-			   / (ps->hardLimit - ps->softLimit);
+	    if (lastCount > softLimit)
+		part->t += part->vt * time * (lastCount - softLimit)
+			   / (hardLimit - softLimit);
 
 	    //Global gravity
-	    part->vx += ps->gx * time;
-	    part->vy += ps->gy * time;
+	    part->vx += gx * time;
+	    part->vy += gy * time;
 
 	    //GPoint gravity
-	    gi = &ps->g[0];
-	    for (j = 0; (unsigned int)j < ps->g.size (); j++, gi++)
+	    gi = &g[0];
+	    for (j = 0; (unsigned int)j < g.size (); j++, gi++)
 	    {
 		if (gi->strength != 0)
 		{
@@ -484,22 +482,21 @@ updateParticles (ParticleSystem * ps, float time)
 		    }
 		}
 	    }
-
-	    ps->active  = true;
+	    active = true;
 	    newCount++;
 	}
     }
-    ps->lastCount = newCount;
+    lastCount = newCount;
 
     //Particle gravity
     Particle *gpart;
-    part = &ps->particles[0];
-    for (i = 0; i < ps->hardLimit; i++, part++)
+    part = &particles[0];
+    for (i = 0; i < hardLimit; i++, part++)
     {
 	if (part->t > 0.0f && part->g != 0)
 	{
-	    gpart = &ps->particles[0];
-	    for (j = 0; j < ps->hardLimit; j++, gpart++)
+	    gpart = &particles[0];
+	    for (j = 0; j < hardLimit; j++, gpart++)
 	    {
 		if (gpart->t > 0.0f)
 		{
@@ -517,26 +514,26 @@ updateParticles (ParticleSystem * ps, float time)
     }
 }
 
-static void
-finiParticles (ParticleSystem * ps)
+void
+ParticleSystem::finiParticles ()
 {
-    if (ps->tex)
-	glDeleteTextures (1, &ps->tex);
+    particles.clear ();
 
+    if (tex)
+	glDeleteTextures (1, &tex);
 }
 
 
-static void
-genNewParticles (ParticleSystem *ps, Emitter *e)
+void
+ParticleSystem::genNewParticles (Emitter *e)
 {
-
     float q, p, t = 0, h, l;
     int count = e->count;
 
-    Particle *part = &ps->particles[0];
+    Particle *part = &particles[0];
     int i, j;
 
-    for (i = 0; i < ps->hardLimit && count > 0; i++, part++)
+    for (i = 0; i < hardLimit && count > 0; i++, part++)
     {
 	if (part->t <= 0.0f)
 	{
@@ -615,7 +612,7 @@ genNewParticles (ParticleSystem *ps, Emitter *e)
 	    // give new life
 	    part->t = 1.;
 
-	    ps->active = true;
+	    active = true;
 	    count -= 1;
 	}
     }
@@ -627,12 +624,12 @@ WizardScreen::positionUpdate (const CompPoint &pos)
     mx = pos.x ();
     my = pos.y ();
 
-    if (ps && active)
+    if (ps.init && active)
     {
-	Emitter *ei = &ps->e[0];
-	GPoint  *gi = &ps->g[0];
+	Emitter *ei = &(ps.e[0]);
+	GPoint  *gi = &(ps.g[0]);
 
-	for (unsigned int i = 0; i < ps->g.size (); i++, gi++)
+	for (unsigned int i = 0; i < ps.g.size (); i++, gi++)
 	{
 	    if (gi->movement == MOVEMENT_MOUSEPOSITION)
 	    {
@@ -641,7 +638,7 @@ WizardScreen::positionUpdate (const CompPoint &pos)
 	    }
 	}
 
-	for (unsigned int i = 0; i < ps->e.size (); i++, ei++)
+	for (unsigned int i = 0; i < ps.e.size (); i++, ei++)
 	{
 	    if (ei->movement == MOVEMENT_MOUSEPOSITION)
 	    {
@@ -649,7 +646,7 @@ WizardScreen::positionUpdate (const CompPoint &pos)
 		ei->y = pos.y ();
 	    }
 	    if (ei->active && ei->trigger == TRIGGER_MOUSEMOVEMENT)
-		genNewParticles (ps, ei);
+		ps.genNewParticles (ei);
 	}
     }
 }
@@ -660,27 +657,23 @@ WizardScreen::preparePaint (int time)
     if (active && !pollHandle.active ())
 	pollHandle.start ();
 
-    if (active && !ps)
+    if (active && !ps.init)
     {
-	ps = (ParticleSystem*) calloc(1, sizeof (ParticleSystem));
-	if (!ps)
-	{
-	    cScreen->preparePaint (time);
-	    return;
-	}
-	loadGPoints (ps);
-	loadEmitters (ps);
-	initParticles (optionGetHardLimit (), optionGetSoftLimit (), ps);
-	ps->darken = optionGetDarken ();
-	ps->blendMode = (optionGetBlend ()) ? GL_ONE :
+	ps.init = true;
+	loadGPoints ();
+	loadEmitters ();
+	ps.initParticles (optionGetHardLimit (), optionGetSoftLimit ());
+	ps.darken = optionGetDarken ();
+	ps.blendMode = (optionGetBlend ()) ? GL_ONE :
 					      GL_ONE_MINUS_SRC_ALPHA;
-	ps->tnew = optionGetTnew ();
-	ps->told = optionGetTold ();
-	ps->gx = optionGetGx ();
-	ps->gy = optionGetGy ();
+	ps.tnew = optionGetTnew ();
+	ps.told = optionGetTold ();
+	ps.gx = optionGetGx ();
+	ps.gy = optionGetGy ();
 
-	glGenTextures (1, &ps->tex);
-	glBindTexture (GL_TEXTURE_2D, ps->tex);
+	ps.active = true;
+	glGenTextures (1, &ps.tex);
+	glBindTexture (GL_TEXTURE_2D, ps.tex);
 
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -690,12 +683,12 @@ WizardScreen::preparePaint (int time)
 	glBindTexture (GL_TEXTURE_2D, 0);
     }
 
-    if (ps && active)
+    if (ps.init && active)
     {
-	Emitter *ei = &ps->e[0];
-	GPoint *gi = &ps->g[0];
+	Emitter *ei = &(ps.e[0]);
+	GPoint *gi = &(ps.g[0]);
 
-	for (unsigned int i = 0; i < ps->g.size (); i++, gi++)
+	for (unsigned int i = 0; i < ps.g.size (); i++, gi++)
 	{
 	    if (gi->movement==MOVEMENT_BOUNCE || gi->movement==MOVEMENT_WRAP)
 	    {
@@ -751,7 +744,7 @@ WizardScreen::preparePaint (int time)
 	    }
 	}
 
-	for (unsigned int i = 0; i < ps->e.size (); i++, ei++)
+	for (unsigned int i = 0; i < ps.e.size (); i++, ei++)
 	{
 	    if (ei->movement==MOVEMENT_BOUNCE || ei->movement==MOVEMENT_WRAP)
 	    {
@@ -813,13 +806,13 @@ WizardScreen::preparePaint (int time)
 		    (ei->trigger == TRIGGER_RANDOMSHOT && !((int)random()&0xff)) ||
 		    (ei->trigger == TRIGGER_RANDOMPERIOD)
 		    ))
-		genNewParticles (ps, ei);
+		ps.genNewParticles (ei);
 	}
     }
 
-    if (ps && ps->active)
+    if (ps.active)
     {
-	updateParticles (ps, time);
+	ps.updateParticles (time);
 	cScreen->damageScreen ();
     }
 
@@ -829,17 +822,15 @@ WizardScreen::preparePaint (int time)
 void
 WizardScreen::donePaint ()
 {
-    if (active || (ps && ps->active))
+    if (active || (ps.active))
 	cScreen->damageScreen ();
 
     if (!active && pollHandle.active ())
 	pollHandle.stop ();
 
-    if (!active && ps && !ps->active)
+    if (!active && !ps.active)
     {
-	finiParticles (ps);
-	free (ps);
-	ps = NULL;
+	ps.finiParticles ();
 	toggleFunctions (false);
     }
 
@@ -856,12 +847,12 @@ WizardScreen::glPaintOutput (const GLScreenPaintAttrib	&sa,
     bool status = gScreen->glPaintOutput (sa, transform, region, output, mask);
     GLMatrix sTransform = transform;
 
-    if (!ps || !ps->active)
+    if (!ps.active)
 	return status;
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-    drawParticles (ps, sTransform);
+    ps.drawParticles (sTransform);
 
     return status;
 }
@@ -889,16 +880,15 @@ void
 WizardScreen::optionChanged (CompOption	      *opt,
 			     WizardOptions::Options num)
 {
-    loadGPoints (ps);
-    loadEmitters (ps);
+    loadGPoints ();
+    loadEmitters ();
 }
 
 WizardScreen::WizardScreen (CompScreen *screen) :
     PluginClassHandler <WizardScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
-    active (false),
-    ps (NULL)
+    active (false)
 {
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
@@ -961,7 +951,7 @@ WizardScreen::~WizardScreen ()
     if (pollHandle.active ())
 	pollHandle.stop ();
 
-    if (ps && ps->active)
+    if (ps.active)
 	cScreen->damageScreen ();
 }
 
