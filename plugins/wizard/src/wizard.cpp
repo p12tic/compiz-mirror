@@ -840,7 +840,7 @@ WizardScreen::donePaint ()
 	finiParticles (ps);
 	free (ps);
 	ps = NULL;
-	toggleFunctions(false);
+	toggleFunctions (false);
     }
 
     cScreen->donePaint ();
@@ -870,8 +870,8 @@ bool
 WizardScreen::toggle ()
 {
     active = !active;
-    if(active)
-	toggleFunctions(true);
+    if (active)
+	toggleFunctions (true);
 
     cScreen->damageScreen ();
     return true;
