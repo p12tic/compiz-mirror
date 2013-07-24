@@ -521,6 +521,8 @@ ParticleSystem::finiParticles ()
 
     if (tex)
 	glDeleteTextures (1, &tex);
+
+    init = false;
 }
 
 
