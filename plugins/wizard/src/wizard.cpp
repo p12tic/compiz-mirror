@@ -42,7 +42,8 @@ const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
 const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
 
 ParticleSystem::ParticleSystem() :
-    init(false)
+    tex (0),
+    init (false)
 {
 
 }
@@ -52,7 +53,6 @@ ParticleSystem::initParticles (int f_hardLimit, int f_softLimit)
 {
     particles.clear ();
 
-    tex          = 0;
     hardLimit    = f_hardLimit;
     softLimit    = f_softLimit;
     active       = false;
@@ -880,8 +880,32 @@ void
 WizardScreen::optionChanged (CompOption	      *opt,
 			     WizardOptions::Options num)
 {
-    loadGPoints ();
-    loadEmitters ();
+    /* checked seperately to allow testing
+     * the results of individual settings
+     * without disturbing the particles
+     * already on the screen
+     */
+    if (opt->name () == "hard_limit")
+	ps.initParticles (optionGetHardLimit (), optionGetSoftLimit ());
+    else if (opt->name () == "soft_limit")
+	ps.softLimit = optionGetSoftLimit ();
+    else if (opt->name () == "darken")
+	ps.darken = optionGetDarken ();
+    else if (opt->name () == "blend")
+	ps.blendMode = (optionGetBlend ()) ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA;
+    else if (opt->name () == "tnew")
+	ps.tnew = optionGetTnew ();
+    else if (opt->name () == "told")
+	ps.told = optionGetTold ();
+    else if (opt->name () == "gx")
+	ps.gx = optionGetGx ();
+    else if (opt->name () == "gy")
+	ps.gy = optionGetGy ();
+    else
+    {
+	loadGPoints ();
+	loadEmitters ();
+    }
 }
 
 WizardScreen::WizardScreen (CompScreen *screen) :
@@ -897,6 +921,15 @@ WizardScreen::WizardScreen (CompScreen *screen) :
 #define optionNotify(name)						       \
     optionSet##name##Notify (boost::bind (&WizardScreen::optionChanged,	       \
     this, _1, _2))
+
+    optionNotify (HardLimit);
+    optionNotify (SoftLimit);
+    optionNotify (Darken);
+    optionNotify (Blend);
+    optionNotify (Tnew);
+    optionNotify (Told);
+    optionNotify (Gx);
+    optionNotify (Gy);
 
     optionNotify (GStrength);
     optionNotify (GPosx);
