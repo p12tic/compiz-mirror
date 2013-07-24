@@ -190,6 +190,8 @@ GridAnim::GridAnim (CompWindow       *w,
 		    const CompRect   &icon) :
     Animation::Animation (w, curWindowEvent, duration, info, icon),
     mModel (NULL),
+    mGridWidth (0),
+    mGridHeight (0),
     mUseQTexCoord (false)
 {
 }
