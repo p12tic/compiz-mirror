@@ -135,7 +135,7 @@ class ParticleSystem
 {
     public:
 
-	ParticleSystem();
+	ParticleSystem ();
 
 	int      hardLimit;		// Not to be exceeded
 	int      softLimit;		// If exceeded, old particles age faster

@@ -41,7 +41,7 @@ const unsigned short VERTEX_COMPONENTS = CACHESIZE_FACTOR * 3;
 /* 4 colors, RGBA */
 const unsigned short COLOR_COMPONENTS = CACHESIZE_FACTOR * 4;
 
-ParticleSystem::ParticleSystem() :
+ParticleSystem::ParticleSystem () :
     tex (0),
     init (false)
 {
@@ -49,7 +49,8 @@ ParticleSystem::ParticleSystem() :
 }
 
 void
-ParticleSystem::initParticles (int f_hardLimit, int f_softLimit)
+ParticleSystem::initParticles (int	f_hardLimit,
+			       int	f_softLimit)
 {
     particles.clear ();
 
@@ -64,7 +65,7 @@ ParticleSystem::initParticles (int f_hardLimit, int f_softLimit)
     colors_cache.clear ();
     dcolors_cache.clear ();
 
-    for (int i = 0; i < hardLimit; i++)
+    for (int i = 0; i < hardLimit; ++i)
     {
 	Particle part;
 	part.t = 0.0f;
@@ -84,7 +85,7 @@ WizardScreen::loadGPoints ()
 
     /* ensure that all properties have been updated  */
     unsigned int ng = GStrength.size ();
-    if( ng != GPosx.size ()  ||
+    if (ng != GPosx.size ()  ||
 	ng != GPosy.size ()  ||
 	ng != GSpeed.size () ||
 	ng != GAngle.size () ||
@@ -93,14 +94,14 @@ WizardScreen::loadGPoints ()
 
     ps.g.clear ();
 
-    for (unsigned int i = 0; i < ng; i++)
+    for (unsigned int i = 0; i < ng; ++i)
     {
 	GPoint gi;
-	gi.strength = (float)GStrength.at (i).i ()/ 1000.;
+	gi.strength = (float)GStrength.at (i).i () / 1000.0f;
 	gi.x = (float)GPosx.at (i).i ();
 	gi.y = (float)GPosy.at (i).i ();
-	gi.espeed = (float)GSpeed.at (i).i () / 100.;
-	gi.eangle = (float)GAngle.at (i).i () / 180.*M_PI;
+	gi.espeed = (float)GSpeed.at (i).i () / 100.0f;
+	gi.eangle = (float)GAngle.at (i).i () / 180.0f * M_PI;
 	gi.movement = GMovement.at (i).i ();
 	ps.g.push_back (gi);
     }
@@ -145,7 +146,7 @@ WizardScreen::loadEmitters ()
 
     /* ensure that all properties have been updated  */
     unsigned int ne = EActive.size ();
-    if( ne != ETrigger.size ()  ||
+    if (ne != ETrigger.size ()  ||
 	ne != EPosx.size ()     ||
 	ne != EPosy.size ()     ||
 	ne != ESpeed.size ()    ||
@@ -181,42 +182,42 @@ WizardScreen::loadEmitters ()
 
     ps.e.clear ();
 
-    for (unsigned int i = 0; i < ne; i++)
+    for (unsigned int i = 0; i < ne; ++i)
     {
 	Emitter ei;
 	ei.set_active = ei.active = EActive.at (i).b ();
 	ei.trigger = ETrigger.at (i).i ();
 	ei.x = (float)EPosx.at (i).i ();
 	ei.y = (float)EPosy.at (i).i ();
-	ei.espeed = (float)ESpeed.at (i).i () / 100.;
-	ei.eangle = (float)EAngle.at (i).i () / 180.*M_PI;
+	ei.espeed = (float)ESpeed.at (i).i () / 100.0f;
+	ei.eangle = (float)EAngle.at (i).i () / 180.0f * M_PI;
 	ei.movement = EMovement.at (i).i ();
 	ei.count = (float)ECount.at (i).i ();
-	ei.h = (float)EH.at (i).i () / 1000.;
-	ei.dh = (float)EDh.at (i).i () / 1000.;
-	ei.l = (float)EL.at (i).i () / 1000.;
-	ei.dl = (float)EDl.at (i).i () / 1000.;
-	ei.a = (float)EA.at (i).i () / 1000.;
-	ei.da = (float)EDa.at (i).i () / 1000.;
+	ei.h = (float)EH.at (i).i () / 1000.0f;
+	ei.dh = (float)EDh.at (i).i () / 1000.0f;
+	ei.l = (float)EL.at (i).i () / 1000.0f;
+	ei.dl = (float)EDl.at (i).i () / 1000.0f;
+	ei.a = (float)EA.at (i).i () / 1000.0f;
+	ei.da = (float)EDa.at (i).i () / 1000.0f;
 	ei.dx = (float)EDx.at (i).i ();
 	ei.dy = (float)EDy.at (i).i ();
 	ei.dcirc = (float)EDcirc.at (i).i ();
-	ei.vx = (float)EVx.at (i).i () / 1000.;
-	ei.vy = (float)EVy.at (i).i () / 1000.;
-	ei.vt = (float)EVt.at (i).i () / 10000.;
-	ei.vphi = (float)EVphi.at (i).i () / 10000.;
-	ei.dvx = (float)EDvx.at (i).i () / 1000.;
-	ei.dvy = (float)EDvy.at (i).i () / 1000.;
-	ei.dvcirc = (float)EDvcirc.at (i).i () / 1000.;
-	ei.dvt = (float)EDvt.at (i).i () / 10000.;
-	ei.dvphi = (float)EDvphi.at (i).i () / 10000.;
+	ei.vx = (float)EVx.at (i).i () / 1000.0f;
+	ei.vy = (float)EVy.at (i).i () / 1000.0f;
+	ei.vt = (float)EVt.at (i).i () / 10000.0f;
+	ei.vphi = (float)EVphi.at (i).i () / 10000.0f;
+	ei.dvx = (float)EDvx.at (i).i () / 1000.0f;
+	ei.dvy = (float)EDvy.at (i).i () / 1000.0f;
+	ei.dvcirc = (float)EDvcirc.at (i).i () / 1000.0f;
+	ei.dvt = (float)EDvt.at (i).i () / 10000.0f;
+	ei.dvphi = (float)EDvphi.at (i).i () / 10000.0f;
 	ei.s = (float)ES.at (i).i ();
 	ei.ds = (float)EDs.at (i).i ();
 	ei.snew = (float)ESnew.at (i).i ();
 	ei.dsnew = (float)EDsnew.at (i).i ();
-	ei.g = (float)EG.at (i).i () / 1000.;
-	ei.dg = (float)EDg.at (i).i () / 1000.;
-	ei.gp = (float)EGp.at (i).i () / 10000.;
+	ei.g = (float)EG.at (i).i () / 1000.0f;
+	ei.dg = (float)EDg.at (i).i () / 1000.0f;
+	ei.gp = (float)EGp.at (i).i () / 10000.0f;
 	ps.e.push_back (ei);
     }
 }
@@ -240,7 +241,10 @@ ParticleSystem::drawParticles (const GLMatrix &transform)
 	if (dcolors_cache.size () < particles.size () * COLOR_COMPONENTS)
 	    dcolors_cache.resize (particles.size () * COLOR_COMPONENTS);
 
-    glEnable (GL_BLEND);
+    GLboolean glBlendEnabled = glIsEnabled (GL_BLEND);
+
+    if (!glBlendEnabled)
+	glEnable (GL_BLEND);
 
     if (tex)
     {
@@ -250,32 +254,35 @@ ParticleSystem::drawParticles (const GLMatrix &transform)
 
     i = j = k = l = 0;
 
-    /* use 2 triangles per particle */
+    float offA, offB, cOff;
+    GLfloat xMinusoffA, xMinusoffB, xPlusoffA, xPlusoffB;
+    GLfloat yMinusoffA, yMinusoffB, yPlusoffA, yPlusoffB;
+    GLushort r, g, b, a, dark_a;
+
+    /* for each particle, use two triangles to display it */
     foreach (Particle &part, particles)
     {
 	if (part.t > 0.0f)
 	{
-	    float cOff = part.s / 2.;		//Corner offset from center
+	    cOff = part.s / 2.0f;		//Corner offset from center
 
 	    if (part.t > tnew)		//New particles start larger
 		cOff += (part.snew - part.s) * (part.t - tnew)
-			/ (1. - tnew) / 2.;
+			/ (1.0f - tnew) / 2.0f;
 	    else if (part.t < told)	//Old particles shrink
 		cOff -= part.s * (told - part.t) / told / 2.;
 
 	    //Offsets after rotation of Texture
-	    float offA = cOff * (cos (part.phi) - sin (part.phi));
-	    float offB = cOff * (cos (part.phi) + sin (part.phi));
-
-	    GLushort r, g, b, a, dark_a;
+	    offA = cOff * (cos (part.phi) - sin (part.phi));
+	    offB = cOff * (cos (part.phi) + sin (part.phi));
 
 	    r = part.c[0] * 65535.0f;
 	    g = part.c[1] * 65535.0f;
 	    b = part.c[2] * 65535.0f;
 
 	    if (part.t > tnew)		//New particles start at a == 1
-		a = part.a + (1. - part.a) * (part.t - tnew)
-			    / (1. - tnew) * 65535.0f;
+		a = part.a + (1.0f - part.a) * (part.t - tnew)
+			    / (1.0f - tnew) * 65535.0f;
 	    else if (part.t < told)	//Old particles fade to a = 0
 		a = part.a * part.t / told * 65535.0f;
 	    else				//The others have their own a
@@ -283,30 +290,40 @@ ParticleSystem::drawParticles (const GLMatrix &transform)
 
 	    dark_a = a * darken;
 
+	    xMinusoffA = part.x - offA;
+	    xMinusoffB = part.x - offB;
+	    xPlusoffA  = part.x + offA;
+	    xPlusoffB  = part.x + offB;
+
+	    yMinusoffA = part.y - offA;
+	    yMinusoffB = part.y - offB;
+	    yPlusoffA  = part.y + offA;
+	    yPlusoffB  = part.y + offB;
+
 	    //first triangle
-	    vertices_cache[i + 0] = part.x - offB;
-	    vertices_cache[i + 1] = part.y - offA;
+	    vertices_cache[i + 0] = xMinusoffB;
+	    vertices_cache[i + 1] = yMinusoffA;
 	    vertices_cache[i + 2] = 0;
 
-	    vertices_cache[i + 3] = part.x - offA;
-	    vertices_cache[i + 4] = part.y + offB;
+	    vertices_cache[i + 3] = xMinusoffA;
+	    vertices_cache[i + 4] = yPlusoffB;
 	    vertices_cache[i + 5] = 0;
 
-	    vertices_cache[i + 6] = part.x + offB;
-	    vertices_cache[i + 7] = part.y + offA;
+	    vertices_cache[i + 6] = xPlusoffB;
+	    vertices_cache[i + 7] = yPlusoffA;
 	    vertices_cache[i + 8] = 0;
 
 	    //second triangle
-	    vertices_cache[i + 9] = part.x + offB;
-	    vertices_cache[i + 10] = part.y + offA;
+	    vertices_cache[i + 9] = xPlusoffB;
+	    vertices_cache[i + 10] = yPlusoffA;
 	    vertices_cache[i + 11] = 0;
 
-	    vertices_cache[i + 12] = part.x + offA;
-	    vertices_cache[i + 13] = part.y - offB;
+	    vertices_cache[i + 12] = xPlusoffA;
+	    vertices_cache[i + 13] = yMinusoffB;
 	    vertices_cache[i + 14] = 0;
 
-	    vertices_cache[i + 15] = part.x - offB;
-	    vertices_cache[i + 16] = part.y - offA;
+	    vertices_cache[i + 15] = xMinusoffB;
+	    vertices_cache[i + 16] = yMinusoffA;
 	    vertices_cache[i + 17] = 0;
 
 	    i += 18;
@@ -430,7 +447,10 @@ ParticleSystem::drawParticles (const GLMatrix &transform)
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
-    glDisable (GL_BLEND);
+
+    /* only disable blending if it was disabled before */
+    if (!glBlendEnabled)
+	glDisable (GL_BLEND);
 }
 
 void
@@ -468,7 +488,7 @@ ParticleSystem::updateParticles (float time)
 
 	    //GPoint gravity
 	    gi = &g[0];
-	    for (j = 0; (unsigned int)j < g.size (); j++, gi++)
+	    for (j = 0; (unsigned int)j < g.size (); ++j, ++gi)
 	    {
 		if (gi->strength != 0)
 		{
@@ -491,12 +511,12 @@ ParticleSystem::updateParticles (float time)
     //Particle gravity
     Particle *gpart;
     part = &particles[0];
-    for (i = 0; i < hardLimit; i++, part++)
+    for (i = 0; i < hardLimit; ++i, ++part)
     {
 	if (part->t > 0.0f && part->g != 0)
 	{
 	    gpart = &particles[0];
-	    for (j = 0; j < hardLimit; j++, gpart++)
+	    for (j = 0; j < hardLimit; ++j, ++gpart)
 	    {
 		if (gpart->t > 0.0f)
 		{
@@ -535,7 +555,7 @@ ParticleSystem::genNewParticles (Emitter *e)
     Particle *part = &particles[0];
     int i, j;
 
-    for (i = 0; i < hardLimit && count > 0; i++, part++)
+    for (i = 0; i < hardLimit && count > 0; ++i, ++part)
     {
 	if (part->t <= 0.0f)
 	{
@@ -552,58 +572,58 @@ ParticleSystem::genNewParticles (Emitter *e)
 	    //Speed
 	    part->vx = rRange (e->vx, e->dvx);		// X Speed
 	    part->vy = rRange (e->vy, e->dvy);		// Y Speed
-	    if ((q = rRange (e->dvcirc/2.,e->dvcirc/2.)) > 0)
+	    if ((q = rRange (e->dvcirc / 2.0f, e->dvcirc / 2.0f)) > 0)
 	    {
 		p = rRange (0, M_PI);
 		part->vx += q * cos (p);
 		part->vy += q * sin (p);
 	    }
 	    part->vt = rRange (e->vt, e->dvt);		// Aging speed
-	    if (part->vt > -0.0001)
-		part->vt = -0.0001;
+	    if (part->vt > -0.0001f)
+		part->vt = -0.0001f;
 
 	    //Size, Gravity and Rotation
 	    part->s = rRange (e->s, e->ds);		// Particle size
 	    part->snew = rRange (e->snew, e->dsnew);	// Particle start size
-	    if (e->gp > (float)(random () & 0xffff) / 65535.)
+	    if (e->gp > (float)(random () & 0xffff) / 65535.0f)
 		part->g = rRange (e->g, e->dg);		// Particle gravity
 	    else
-		part->g = 0.;
+		part->g = 0.0f;
 	    part->phi = rRange (0, M_PI);		// Random orientation
 	    part->vphi = rRange (e->vphi, e->dvphi);	// Rotation speed
 
 	    //Alpha
 	    part->a = rRange (e->a, e->da);		// Alpha
 	    if (part->a > 1)
-		part->a = 1.;
+		part->a = 1.0f;
 	    else if (part->a < 0)
-		part->a = 0.;
+		part->a = 0.0f;
 
 	    //HSL to RGB conversion from Wikipedia simplified by S = 1
 	    h = rRange (e->h, e->dh); //Random hue within range
 	    if (h < 0)
-		h += 1.;
+		h += 1.0f;
 	    else if (t > 1)
-		h -= 1.;
+		h -= 1.0f;
 	    l = rRange (e->l, e->dl); //Random lightness ...
 	    if (l > 1)
-		l = 1.;
+		l = 1.0f;
 	    else if (l < 0)
-		l = 0.;
+		l = 0.0f;
 	    q = e->l * 2;
 	    if (q > 1)
-		q = 1.;
+		q = 1.0f;
 	    p = 2 * e->l - q;
 	    for (j = 0; j < 3; j++)
 	    {
-		t = h + (1-j)/3.;
+		t = h + (1-j)/3.0f;
 		if (t < 0)
-		    t += 1.;
+		    t += 1.0f;
 		else if (t > 1)
-		    t -= 1.;
+		    t -= 1.0f;
 		if (t < 1/6.)
 		    part->c[j] = p + ((q-p)*6*t);
-		else if (t < .5)
+		else if (t < 0.5f)
 		    part->c[j] = q;
 		else if (t < 2/3.)
 		    part->c[j] = p + ((q-p)*6*(2/3.-t));
@@ -612,7 +632,7 @@ ParticleSystem::genNewParticles (Emitter *e)
 	    }
 
 	    // give new life
-	    part->t = 1.;
+	    part->t = 1.0f;
 
 	    active = true;
 	    count -= 1;
@@ -631,7 +651,7 @@ WizardScreen::positionUpdate (const CompPoint &pos)
 	Emitter *ei = &(ps.e[0]);
 	GPoint  *gi = &(ps.g[0]);
 
-	for (unsigned int i = 0; i < ps.g.size (); i++, gi++)
+	for (unsigned int i = 0; i < ps.g.size (); ++i, ++gi)
 	{
 	    if (gi->movement == MOVEMENT_MOUSEPOSITION)
 	    {
@@ -640,7 +660,7 @@ WizardScreen::positionUpdate (const CompPoint &pos)
 	    }
 	}
 
-	for (unsigned int i = 0; i < ps.e.size (); i++, ei++)
+	for (unsigned int i = 0; i < ps.e.size (); ++i, ++ei)
 	{
 	    if (ei->movement == MOVEMENT_MOUSEPOSITION)
 	    {
@@ -688,56 +708,56 @@ WizardScreen::preparePaint (int time)
     if (ps.init && active)
     {
 	Emitter *ei = &(ps.e[0]);
-	GPoint *gi = &(ps.g[0]);
+	GPoint  *gi = &(ps.g[0]);
 
-	for (unsigned int i = 0; i < ps.g.size (); i++, gi++)
+	for (unsigned int i = 0; i < ps.g.size (); ++i, ++gi)
 	{
-	    if (gi->movement==MOVEMENT_BOUNCE || gi->movement==MOVEMENT_WRAP)
+	    if (gi->movement == MOVEMENT_BOUNCE || gi->movement == MOVEMENT_WRAP)
 	    {
 		gi->x += gi->espeed * cos (gi->eangle) * time;
 		gi->y += gi->espeed * sin (gi->eangle) * time;
 		if (gi->x >= screen->width ())
 		{
-		    if (gi->movement==MOVEMENT_BOUNCE)
+		    if (gi->movement == MOVEMENT_BOUNCE)
 		    {
 			gi->x = 2*screen->width () - gi->x - 1;
 			gi->eangle = M_PI - gi->eangle;
 		    }
-		    else if (gi->movement==MOVEMENT_WRAP)
+		    else if (gi->movement == MOVEMENT_WRAP)
 			gi->x -= screen->width ();
 		}
 		else if (gi->x < 0)
 		{
-		    if (gi->movement==MOVEMENT_BOUNCE)
+		    if (gi->movement == MOVEMENT_BOUNCE)
 		    {
 			gi->x *= -1;
 			gi->eangle = M_PI - gi->eangle;
 		    }
-		    else if (gi->movement==MOVEMENT_WRAP)
+		    else if (gi->movement == MOVEMENT_WRAP)
 			gi->x += screen->width ();
 		}
 		if (gi->y >= screen->height ())
 		{
-		    if (gi->movement==MOVEMENT_BOUNCE)
+		    if (gi->movement == MOVEMENT_BOUNCE)
 		    {
 			gi->y = 2*screen->height () - gi->y - 1;
 			gi->eangle *= -1;
 		    }
-		    else if (gi->movement==MOVEMENT_WRAP)
+		    else if (gi->movement == MOVEMENT_WRAP)
 			gi->y -= screen->height ();
 		}
 		else if (gi->y < 0)
 		{
-		    if (gi->movement==MOVEMENT_BOUNCE)
+		    if (gi->movement == MOVEMENT_BOUNCE)
 		    {
 			gi->y *= -1;
 			gi->eangle *= -1;
 		    }
-		    else if (gi->movement==MOVEMENT_WRAP)
+		    else if (gi->movement == MOVEMENT_WRAP)
 			gi->y += screen->height ();
 		}
 	    }
-	    if (gi->movement==MOVEMENT_FOLLOWMOUSE
+	    if (gi->movement == MOVEMENT_FOLLOWMOUSE
 		&& (my!=gi->y||mx!=gi->x))
 	    {
 		gi->eangle = atan2(my-gi->y, mx-gi->x);
@@ -746,54 +766,54 @@ WizardScreen::preparePaint (int time)
 	    }
 	}
 
-	for (unsigned int i = 0; i < ps.e.size (); i++, ei++)
+	for (unsigned int i = 0; i < ps.e.size (); ++i, ++ei)
 	{
-	    if (ei->movement==MOVEMENT_BOUNCE || ei->movement==MOVEMENT_WRAP)
+	    if (ei->movement == MOVEMENT_BOUNCE || ei->movement == MOVEMENT_WRAP)
 	    {
 		ei->x += ei->espeed * cos (ei->eangle) * time;
 		ei->y += ei->espeed * sin (ei->eangle) * time;
 		if (ei->x >= screen->width ())
 		{
-		    if (ei->movement==MOVEMENT_BOUNCE)
+		    if (ei->movement == MOVEMENT_BOUNCE)
 		    {
 			ei->x = 2*screen->width () - ei->x - 1;
 			ei->eangle = M_PI - ei->eangle;
 		    }
-		    else if (ei->movement==MOVEMENT_WRAP)
+		    else if (ei->movement == MOVEMENT_WRAP)
 			ei->x -= screen->width ();
 		}
 		else if (ei->x < 0)
 		{
-		    if (ei->movement==MOVEMENT_BOUNCE)
+		    if (ei->movement == MOVEMENT_BOUNCE)
 		    {
 			ei->x *= -1;
 			ei->eangle = M_PI - ei->eangle;
 		    }
-		    else if (ei->movement==MOVEMENT_WRAP)
+		    else if (ei->movement == MOVEMENT_WRAP)
 			ei->x += screen->width ();
 		}
 		if (ei->y >= screen->height ())
 		{
-		    if (ei->movement==MOVEMENT_BOUNCE)
+		    if (ei->movement == MOVEMENT_BOUNCE)
 		    {
 			ei->y = 2*screen->height () - ei->y - 1;
 			ei->eangle *= -1;
 		    }
-		    else if (ei->movement==MOVEMENT_WRAP)
+		    else if (ei->movement == MOVEMENT_WRAP)
 			ei->y -= screen->height ();
 		}
 		else if (ei->y < 0)
 		{
-		    if (ei->movement==MOVEMENT_BOUNCE)
+		    if (ei->movement == MOVEMENT_BOUNCE)
 		    {
 			ei->y *= -1;
 			ei->eangle *= -1;
 		    }
-		    else if (ei->movement==MOVEMENT_WRAP)
+		    else if (ei->movement == MOVEMENT_WRAP)
 			ei->y += screen->height ();
 		}
 	    }
-	    if (ei->movement==MOVEMENT_FOLLOWMOUSE
+	    if (ei->movement == MOVEMENT_FOLLOWMOUSE
 		&& (my!=ei->y||mx!=ei->x))
 	    {
 		ei->eangle = atan2 (my-ei->y, mx-ei->x);
@@ -824,7 +844,7 @@ WizardScreen::preparePaint (int time)
 void
 WizardScreen::donePaint ()
 {
-    if (active || (ps.active))
+    if (active || ps.active)
 	cScreen->damageScreen ();
 
     if (!active && pollHandle.active ())
