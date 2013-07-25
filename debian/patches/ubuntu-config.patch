@@ -38,16 +38,15 @@
  			</option>
  			<option name="maximize_window_horizontally_key" type="key">
  			<_short>Maximize Window Horizontally</_short>
-@@ -215,7 +215,7 @@
+@@ -215,7 +215,6 @@
  			<option name="show_desktop_key" type="key">
  			<_short>Show Desktop</_short>
  			<_long>Hide all windows and focus desktop</_long>
 -			<default>&lt;Control&gt;&lt;Alt&gt;d</default>
-+			<default>&lt;Control&gt;&lt;Super&gt;d</default>
  			</option>
  			<option name="show_desktop_edge" type="edge">
  			<_short>Show Desktop</_short>
-@@ -225,6 +225,7 @@
+@@ -225,6 +224,7 @@
  			<option name="toggle_window_maximized_key" type="key">
  			<_short>Toggle Window Maximized</_short>
  			<_long>Toggle active window maximized</_long>
@@ -55,7 +54,7 @@
  			</option>
  			<option name="toggle_window_maximized_button" type="button">
  			<_short>Toggle Window Maximized</_short>
-@@ -249,7 +250,7 @@
+@@ -249,7 +249,7 @@
  			<option name="hsize" type="int">
  			<_short>Horizontal Virtual Size</_short>
  			<_long>Screen size multiplier for horizontal virtual size</_long>
