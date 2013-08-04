@@ -93,7 +93,7 @@ ShowrepaintScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     if (stream->end ())
 	stream->render (sTransform);
 
-    stream->color4f (defaultColor[0] / 65535.0f, defaultColor[1] / 65535.0f, defaultColor[2] / 65535.0f, defaultColor[3] / 65535.0f);
+    stream->colorDefault ();
 
     /* only disable blending if it was disabled before */
     if (!glBlendEnabled)
