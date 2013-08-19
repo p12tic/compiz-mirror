@@ -1,4 +1,5 @@
 debian/tmp/usr/*/compiz/*animation.*
+debian/tmp/usr/*/compiz/*commands.*
 debian/tmp/usr/*/compiz/*compiztoolbox.*
 debian/tmp/usr/*/compiz/*composite.*
 debian/tmp/usr/*/compiz/*copytex.*
