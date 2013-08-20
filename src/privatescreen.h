@@ -314,14 +314,11 @@ class EventManager :
 
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
-	/* We cannot use RefPtrs. See
-	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
-	 */
-	CompEventSource * source;
-	CompTimeoutSource * timeout;
-	CompSignalSource * sighupSource;
-	CompSignalSource * sigtermSource;
-	CompSignalSource * sigintSource;
+	Glib::RefPtr <CompEventSource> source;
+	Glib::RefPtr <CompTimeoutSource> timeout;
+	CompSignalSource *sighupSource;
+	CompSignalSource *sigtermSource;
+	CompSignalSource *sigintSource;
 	Glib::RefPtr <Glib::MainContext> ctx;
 
 	CompFileWatchList   fileWatch;
@@ -329,7 +326,7 @@ class EventManager :
 
 	// TODO - almost certainly the wrong data structure
 	// Why not a std::map<CompWatchFdHandle, CompWatchFd>?
-	std::list< CompWatchFd * > watchFds;
+	std::list<Glib::RefPtr<CompWatchFd> > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
         bool	grabbed;   /* true once we receive a GrabNotify

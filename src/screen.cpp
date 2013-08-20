@@ -272,12 +272,12 @@ CompWatchFd::~CompWatchFd ()
 {
 }
 
-CompWatchFd *
+Glib::RefPtr<CompWatchFd>
 CompWatchFd::create (int               fd,
 		     Glib::IOCondition events,
 		     FdWatchCallBack   callback)
 {
-    return new CompWatchFd (fd, events, callback);
+    return Glib::RefPtr<CompWatchFd> (new CompWatchFd (fd, events, callback));
 }
 
 CompWatchFdHandle
@@ -308,7 +308,7 @@ cps::EventManager::addWatchFd (int             fd,
     if (events & POLLHUP)
 	gEvents |= Glib::IO_HUP;
 
-    CompWatchFd *watchFd = CompWatchFd::create (fd, gEvents, callBack);
+    Glib::RefPtr<CompWatchFd> watchFd = CompWatchFd::create (fd, gEvents, callBack);
 
     watchFd->attach (ctx);
 
@@ -333,8 +333,8 @@ CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
 void
 cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
 {
-    std::list<CompWatchFd * >::iterator it;
-    CompWatchFd *			w;
+    std::list<Glib::RefPtr<CompWatchFd> >::iterator it;
+    Glib::RefPtr<CompWatchFd> w;
 
     for (it = watchFds.begin();
 	 it != watchFds.end (); ++it)
@@ -354,7 +354,6 @@ cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
 	return;
     }
 
-    delete w;
     watchFds.erase (it);
 }
 
@@ -5271,10 +5270,10 @@ cps::EventManager::~EventManager ()
     /* Not guaranteed to be created by EventManager's constructor */
     if (timeout)
     {
-	/* This will implicitly call ~CompTimeoutSource
-	 * See LP: #1085590 */
+
 	g_source_destroy (timeout->gobj ());
     }
+
     delete sigintSource;
     delete sigtermSource;
     delete sighupSource;
@@ -5282,12 +5281,11 @@ cps::EventManager::~EventManager ()
     /* Not guaranteed to be created by EventManager's constructor */
     if (source)
     {
-	/* This will implicitly call ~CompEventSource */
 	g_source_destroy (source->gobj ());
     }
 
     /* This will implicitly call ~CompWatchFd */
-    foreach (CompWatchFd *fd, watchFds)
+    foreach (Glib::RefPtr<CompWatchFd> fd, watchFds)
 	g_source_destroy (fd->gobj ());
 
     watchFds.clear ();
