@@ -549,63 +549,6 @@ WallWindow::windowNotify (CompWindowNotify n)
 }
 
 void
-WallWindow::activate ()
-{
-    WALL_SCREEN (screen);
-
-    if (window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
-    {
-	int       dx, dy;
-	CompPoint viewport;
-
-	screen->viewportForGeometry (window->geometry (), viewport);
-	dx       = viewport.x ();
-	dy       = viewport.y ();
-
-	/* Handle negative value */
-	dx = (unsigned int) dx % screen->vpSize ().width ();
-	dy = (unsigned int) dy % screen->vpSize ().height ();
-
-	dx -= screen->vp ().x ();
-	dy -= screen->vp ().y ();
-
-	if (dx || dy)
-	{
-	    XWindowChanges xwc;
-	    unsigned int   mask = 0;
-
-	    /* If changing viewports fails we should not
-	     * move the client window */
-	    if (!ws->moveViewport (-dx, -dy, false))
-	    {
-		window->activate ();
-		return;
-	    }
-
-	    ws->focusDefault = false;
-
-	    CompRegion screenRegion;
-
-	    foreach (const CompOutput &o, screen->outputDevs ())
-		screenRegion += o.workArea ();
-
-	    CompPoint d = compiz::wall::movementWindowOnScreen (window->serverBorderRect (),
-								screenRegion);
-
-	    mask |= d.x () !=0 ? CWX : 0;
-	    mask |= d.y () !=0 ? CWY : 0;
-
-	    xwc.x = window->serverGeometry ().x () + d.x ();
-	    xwc.y = window->serverGeometry ().y () + d.y ();
-
-	    window->configureXWindow (mask, &xwc);
-	}
-    }
-
-    window->activate ();
-}
-
-void
 WallWindow::grabNotify (int          x,
 			int          y,
 			unsigned int state,
