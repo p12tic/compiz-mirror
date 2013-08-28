@@ -178,6 +178,7 @@ class WallWindow :
     public:
 	WallWindow (CompWindow *);
 
+	virtual void activate ();
 	void grabNotify (int, int, unsigned int, unsigned int);
 	void ungrabNotify ();
 	void windowNotify (CompWindowNotify);
