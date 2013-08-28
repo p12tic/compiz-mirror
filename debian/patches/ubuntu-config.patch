@@ -653,7 +653,16 @@
  						</default>
  					</option>
  				</subgroup>
-@@ -351,7 +351,7 @@
+@@ -201,7 +201,7 @@
+ 				<option name="auto_switch_vp_and_window" type="bool">
+ 					<_short>Auto Switch Vp And Window</_short>
+ 					<_long>Auto switch the viewport and move window when Alt-Tab to window that is more than half contained in another viewport</_long>
+-					<default>true</default>
++					<default>false</default>
+ 				</option>
+ 			</group>
+ 			<group>
+@@ -356,7 +356,7 @@
  				<option name="edgeflip_move" type="bool">
  					<_short>Edge Flip Move</_short>
  					<_long>Flip viewport when moving a window to a screen edge</_long>

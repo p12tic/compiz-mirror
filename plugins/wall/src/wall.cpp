@@ -553,7 +553,7 @@ WallWindow::activate ()
 {
     WALL_SCREEN (screen);
 
-    if (window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
+    if (ws->optionGetAutoSwitchVpAndWindow () && window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
     {
 	int       dx, dy;
 	CompPoint viewport;
