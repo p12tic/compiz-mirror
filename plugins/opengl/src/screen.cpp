@@ -1238,6 +1238,7 @@ GLScreen::~GLScreen ()
     eglReleaseThread ();
     #else
 
+    glXMakeCurrent (screen->dpy (), None, NULL);
     if (priv->ctx)
 	glXDestroyContext (screen->dpy (), priv->ctx);
     #endif
