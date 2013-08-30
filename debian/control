@@ -144,7 +144,8 @@ Depends: ${shlibs:Depends},
          compiz-plugins-default (= ${binary:Version}),
          gsettings-desktop-schemas,
          gnome-settings-daemon (>= 3.4.2-0ubuntu9),
-Recommends: python-gconf
+Recommends: python-gconf,
+            gnome-system-monitor,
 Replaces: compiz-plugins-main (<= 1:0.9.8),
           compiz-plugins-main-default (<= 1:0.9.8),
           compizconfig-backend-gconf (<= 1:0.9.8),
@@ -167,7 +168,9 @@ Depends: compiz-core (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends},
 Replaces: compiz-plugins-main-default (<< 1:0.9.8),
+          compiz-plugins (<< 1:0.9.10),
 Breaks: compiz-plugins-main-default (<< 1:0.9.8),
+        compiz-plugins (<< 1:0.9.10),
 Description: OpenGL window and compositing manager - default plugins
  Compiz brings to life a variety of visual effects that make the Linux desktop
  easier to use, more powerful and intuitive, and more accessible for users
