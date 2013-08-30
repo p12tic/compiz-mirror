@@ -846,41 +846,41 @@
 --- a/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
 +++ b/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
 @@ -10,6 +10,9 @@
-        <key type="s" name="command-screenshot">
-            <default>"gnome-screenshot"</default>
-        </key>
-+        <key type="as" name="run-command-21">
-+            <default>["&lt;Control&gt;&lt;Alt&gt;Delete"]</default>
-+        </key>
-        <key type="as" name="run-command-12">
-            <default>["Disabled"]</default>
-        </key>
+ 	<key type="s" name="command-screenshot">
+ 	    <default>"gnome-screenshot"</default>
+ 	</key>
++	<key type="as" name="run-command-21">
++	    <default>["&lt;Control&gt;&lt;Alt&gt;Delete"]</default>
++	</key>
+ 	<key type="as" name="run-command-12">
+ 	    <default>["Disabled"]</default>
+ 	</key>
 @@ -46,6 +49,9 @@
-        <key type="as" name="run-command-1">
-            <default>["Disabled"]</default>
-        </key>
-+       <key type="s" name="command-21">
-+           <default>"/usr/bin/gnome-system-monitor -p"</default>
-+       </key>
-        <key type="s" name="command-12">
-            <default>""</default>
-        </key>
+ 	<key type="as" name="run-command-1">
+ 	    <default>["Disabled"]</default>
+ 	</key>
++	<key type="s" name="command-21">
++	    <default>"/usr/bin/gnome-system-monitor -p"</default>
++	</key>
+ 	<key type="s" name="command-12">
+ 	    <default>""</default>
+ 	</key>
 --- a/plugins/commands/commands.xml.in
 +++ b/plugins/commands/commands.xml.in
 @@ -117,7 +117,7 @@
-                <option name="command20" type="string">
-                    <_short>Command line 20</_short>
-                    <_long>Command line to be executed in shell when run_command20 is invoked</_long>
--                   <default></default>
-+                   <default>/usr/bin/gnome-system-monitor -p</default>
-                </option>
-            </group>
-            <group>
+ 		<option name="command20" type="string">
+ 		    <_short>Command line 20</_short>
+ 		    <_long>Command line to be executed in shell when run_command20 is invoked</_long>
+-		    <default></default>
++		    <default>/usr/bin/gnome-system-monitor -p</default>
+ 		</option>
+ 	    </group>
+ 	    <group>
 @@ -205,6 +205,7 @@
-                <option name="run_command20_key" type="key">
-                    <_short>Run command 20</_short>
-                    <_long>A keybinding that when invoked, will run the shell command identified by command20</_long>
-+                    <default>&lt;Control&gt;&lt;Alt&gt;Delete</default>
-                </option>
-            </group>
-            <group>
+ 		<option name="run_command20_key" type="key">
+ 		    <_short>Run command 20</_short>
+ 		    <_long>A keybinding that when invoked, will run the shell command identified by command20</_long>
++		    <default>&lt;Control&gt;&lt;Alt&gt;Delete</default>
+ 		</option>
+ 	    </group>
+ 	    <group>
