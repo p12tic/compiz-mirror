@@ -1,6 +1,8 @@
 === modified file 'metadata/core.xml.in'
---- a/metadata/core.xml.in
-+++ b/metadata/core.xml.in
+Index: compiz-0.11/metadata/core.xml.in
+===================================================================
+--- compiz-0.11.orig/metadata/core.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/metadata/core.xml.in	2013-09-16 18:08:22.011923769 +0200
 @@ -139,7 +139,7 @@
  			<option name="focus_prevention_match" type="match">
  			<_short>Focus Prevention Windows</_short>
@@ -63,8 +65,10 @@
  			<min>1</min>
  			<max>32</max>
  			</option>
---- a/plugins/animation/animation.xml.in
-+++ b/plugins/animation/animation.xml.in
+Index: compiz-0.11/plugins/animation/animation.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/animation/animation.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/animation/animation.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -36,7 +36,7 @@
  	    <extensible/>
  	    <sort start="2"/>
@@ -203,8 +207,10 @@
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
---- a/plugins/decor/decor.xml.in
-+++ b/plugins/decor/decor.xml.in
+Index: compiz-0.11/plugins/decor/decor.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/decor/decor.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/decor/decor.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -31,7 +31,7 @@
  		<option name="active_shadow_opacity" type="float">
  		    <_short>Shadow Opacity</_short>
@@ -241,8 +247,10 @@
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
---- a/plugins/fade/fade.xml.in
-+++ b/plugins/fade/fade.xml.in
+Index: compiz-0.11/plugins/fade/fade.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/fade/fade.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/fade/fade.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -10,6 +10,7 @@
  	    </requirement>
  	    <relation type="after">
@@ -260,8 +268,10 @@
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
---- a/plugins/gnomecompat/gnomecompat.xml.in
-+++ b/plugins/gnomecompat/gnomecompat.xml.in
+Index: compiz-0.11/plugins/gnomecompat/gnomecompat.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/gnomecompat/gnomecompat.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/gnomecompat/gnomecompat.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -53,6 +53,7 @@
  		<option name="run_command_terminal_key" type="key">
  		    <_short>Open a terminal</_short>
@@ -270,8 +280,10 @@
  		</option>
  	    </group>
  	</options>
---- a/plugins/place/place.xml.in
-+++ b/plugins/place/place.xml.in
+Index: compiz-0.11/plugins/place/place.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/place/place.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/place/place.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -20,8 +20,8 @@
  	    <option name="mode" type="int">
  		<_short>Placement Mode</_short>
@@ -283,8 +295,10 @@
  		<max>5</max>
  		<desc>
  		    <value>0</value>
---- a/plugins/resize/resize.xml.in
-+++ b/plugins/resize/resize.xml.in
+Index: compiz-0.11/plugins/resize/resize.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/resize/resize.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/resize/resize.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -28,7 +28,7 @@
  	    <option name="mode" type="int">
  		<_short>Default Resize Mode</_short>
@@ -329,8 +343,10 @@
  		</default>
  	    </option>
  	    <subgroup>
---- a/plugins/scale/scale.xml.in
-+++ b/plugins/scale/scale.xml.in
+Index: compiz-0.11/plugins/scale/scale.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/scale/scale.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/scale/scale.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -19,14 +19,14 @@
  			<option name="spacing" type="int">
  				<_short>Spacing</_short>
@@ -419,8 +435,10 @@
  			</option>
  	    </group>
  	</options>
---- a/plugins/staticswitcher/staticswitcher.xml.in
-+++ b/plugins/staticswitcher/staticswitcher.xml.in
+Index: compiz-0.11/plugins/staticswitcher/staticswitcher.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/staticswitcher/staticswitcher.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/staticswitcher/staticswitcher.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -11,7 +11,6 @@
  	    <relation type="after">
  		<plugin>composite</plugin>
@@ -497,8 +515,10 @@
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
---- a/plugins/vpswitch/vpswitch.xml.in
-+++ b/plugins/vpswitch/vpswitch.xml.in
+Index: compiz-0.11/plugins/vpswitch/vpswitch.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/vpswitch/vpswitch.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/vpswitch/vpswitch.xml.in	2013-09-16 18:08:22.015923755 +0200
 @@ -95,13 +95,11 @@
  				<option name="next_button" type="button">
  					<_short>Move Next</_short>
@@ -513,8 +533,10 @@
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
---- a/plugins/wall/wall.xml.in
-+++ b/plugins/wall/wall.xml.in
+Index: compiz-0.11/plugins/wall/wall.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/wall/wall.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/wall/wall.xml.in	2013-09-16 18:08:22.019923741 +0200
 @@ -30,12 +30,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
@@ -671,8 +693,10 @@
  				</option>
  				<option name="edgeflip_dnd" type="bool">
  					<_short>Edge Flip DnD</_short>
---- a/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
-+++ b/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
+Index: compiz-0.11/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
+===================================================================
+--- compiz-0.11.orig/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2013-09-16 18:08:22.019923741 +0200
 @@ -46,7 +46,7 @@
  
  namespace
@@ -682,34 +706,11 @@
  unsigned int DEFAULT_VIEWPORT_HEIGHT = 1;
  
  bool Advance (Display *d, bool r)
---- a/plugins/grid/grid.xml.in
-+++ b/plugins/grid/grid.xml.in
-@@ -23,17 +23,16 @@
- 		<option name="put_center_key" type="key">
- 		    <_short>Put Center Key</_short>
- 		    <_long>Move window to the center.</_long>
--		    <default>&lt;Control&gt;&lt;Alt&gt;KP_5</default>
- 		</option>
- 		<option name="put_left_key" type="key">
- 		    <_short>Put Left Key</_short>
- 		    <_long>Move window to the left edge.</_long>
--		    <default>&lt;Control&gt;&lt;Alt&gt;KP_4</default>
-+		    <default>&lt;Control&gt;&lt;Super&gt;Left</default>
- 		</option>
- 		<option name="put_right_key" type="key">
- 		    <_short>Put Right Key</_short>
- 		    <_long>Move window to the right edge.</_long>
--		    <default>&lt;Control&gt;&lt;Alt&gt;KP_6</default>
-+		    <default>&lt;Control&gt;&lt;Super&gt;Right</default>
- 		</option>
- 		<option name="put_top_key" type="key">
- 		    <_short>Put Top Key</_short>
-@@ -68,12 +67,11 @@
- 		<option name="put_maximize_key" type="key">
- 		    <_short>Maximize Key</_short>
- 		    <_long>Maximize window.</_long>
--		    <default>&lt;Control&gt;&lt;Alt&gt;KP_0</default>
- 		</option>
+Index: compiz-0.11/plugins/grid/grid.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/grid/grid.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/grid/grid.xml.in	2013-09-16 18:08:32.799886537 +0200
+@@ -73,7 +73,7 @@
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
  		    <_long>Restore window to it's original size. Note: Use the same shortcut you are using to unmaximize a window to be able to restore grid-maximized windows.</_long>
@@ -718,8 +719,10 @@
  		</option>
  	    </group>
  	    <group>
---- a/plugins/ezoom/ezoom.xml.in
-+++ b/plugins/ezoom/ezoom.xml.in
+Index: compiz-0.11/plugins/ezoom/ezoom.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/ezoom/ezoom.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/ezoom/ezoom.xml.in	2013-09-16 18:08:22.019923741 +0200
 @@ -30,7 +30,7 @@
  		<option type="button" name="zoom_in_button">
  		    <_short>Zoom In Button</_short>
@@ -756,8 +759,10 @@
  		    </option>
  		</subgroup>
  	    </group>
---- a/plugins/expo/expo.xml.in
-+++ b/plugins/expo/expo.xml.in
+Index: compiz-0.11/plugins/expo/expo.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/expo/expo.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/expo/expo.xml.in	2013-09-16 18:08:22.019923741 +0200
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -852,8 +857,10 @@
  		    </option>
  		    <option name="ground_color1" type="color">
  			<_short>Ground Color (near)</_short>
---- a/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
-+++ b/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
+Index: compiz-0.11/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
+===================================================================
+--- compiz-0.11.orig/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2013-09-16 18:08:22.019923741 +0200
 @@ -10,6 +10,9 @@
  	<key type="s" name="command-screenshot">
  	    <default>"gnome-screenshot"</default>
@@ -874,8 +881,10 @@
  	<key type="s" name="command-12">
  	    <default>""</default>
  	</key>
---- a/plugins/commands/commands.xml.in
-+++ b/plugins/commands/commands.xml.in
+Index: compiz-0.11/plugins/commands/commands.xml.in
+===================================================================
+--- compiz-0.11.orig/plugins/commands/commands.xml.in	2013-09-16 18:08:22.027923714 +0200
++++ compiz-0.11/plugins/commands/commands.xml.in	2013-09-16 18:08:22.019923741 +0200
 @@ -117,7 +117,7 @@
  		<option name="command20" type="string">
  		    <_short>Command line 20</_short>
