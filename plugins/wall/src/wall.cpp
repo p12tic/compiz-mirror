@@ -553,7 +553,7 @@ WallWindow::activate ()
 {
     WALL_SCREEN (screen);
 
-    if (ws->optionGetAutoSwitchVpAndWindow () && window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
+    if (window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
     {
 	int       dx, dy;
 	CompPoint viewport;
@@ -582,23 +582,26 @@ WallWindow::activate ()
 		return;
 	    }
 
-	    ws->focusDefault = false;
+	    if (ws->optionGetAutoSwitchVpAndWindow ())
+	    {
+		ws->focusDefault = false;
 
-	    CompRegion screenRegion;
+		CompRegion screenRegion;
 
-	    foreach (const CompOutput &o, screen->outputDevs ())
-		screenRegion += o.workArea ();
+		foreach (const CompOutput &o, screen->outputDevs ())
+		    screenRegion += o.workArea ();
 
-	    CompPoint d = compiz::wall::movementWindowOnScreen (window->serverBorderRect (),
-								screenRegion);
+		CompPoint d = compiz::wall::movementWindowOnScreen (window->serverBorderRect (),
+								    screenRegion);
 
-	    mask |= d.x () !=0 ? CWX : 0;
-	    mask |= d.y () !=0 ? CWY : 0;
+		mask |= d.x () !=0 ? CWX : 0;
+		mask |= d.y () !=0 ? CWY : 0;
 
-	    xwc.x = window->serverGeometry ().x () + d.x ();
-	    xwc.y = window->serverGeometry ().y () + d.y ();
+		xwc.x = window->serverGeometry ().x () + d.x ();
+		xwc.y = window->serverGeometry ().y () + d.y ();
 
-	    window->configureXWindow (mask, &xwc);
+		window->configureXWindow (mask, &xwc);
+	    }
 	}
     }
 
