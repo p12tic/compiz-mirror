@@ -30,6 +30,8 @@ action_menu_unmap (GObject *object)
 static void
 action_menu_destroyed (GObject *object)
 {
+    g_signal_handlers_disconnect_by_func (action_menu, action_menu_destroyed, NULL);
+    g_signal_handlers_disconnect_by_func (action_menu, action_menu_unmap, NULL);
     g_object_unref (action_menu);
     action_menu = NULL;
     action_menu_mapped = FALSE;
@@ -116,12 +118,10 @@ action_menu_map (WnckWindow *win,
 
     gtk_menu_set_screen (GTK_MENU (action_menu), screen);
 
-    g_signal_connect_object (G_OBJECT (action_menu), "destroy",
-			     G_CALLBACK (action_menu_destroyed),
-			     0, 0);
-    g_signal_connect_object (G_OBJECT (action_menu), "unmap",
-			     G_CALLBACK (action_menu_unmap),
-			     0, 0);
+    g_signal_connect (G_OBJECT (action_menu), "destroy",
+		      G_CALLBACK (action_menu_destroyed), NULL);
+    g_signal_connect (G_OBJECT (action_menu), "unmap",
+		      G_CALLBACK (action_menu_unmap), NULL);
 
     gtk_widget_show (action_menu);
 
