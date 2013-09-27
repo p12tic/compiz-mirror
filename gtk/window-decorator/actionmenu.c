@@ -28,6 +28,14 @@ action_menu_unmap (GObject *object)
 }
 
 static void
+action_menu_destroyed (GObject *object)
+{
+    g_object_unref (action_menu);
+    action_menu = NULL;
+    action_menu_mapped = FALSE;
+}
+
+static void
 position_action_menu (GtkMenu  *menu,
 		      gint     *x,
 		      gint     *y,
@@ -77,8 +85,6 @@ action_menu_map (WnckWindow *win,
 	if (action_menu_mapped)
 	{
 	    gtk_widget_destroy (action_menu);
-	    action_menu_mapped = FALSE;
-	    action_menu = NULL;
 	    return;
 	}
 	else
@@ -105,10 +111,14 @@ action_menu_map (WnckWindow *win,
 	break;
     }
 
-    action_menu = wnck_create_window_action_menu (win);
+    action_menu = wnck_action_menu_new (win);
+    g_object_ref_sink (action_menu);
 
     gtk_menu_set_screen (GTK_MENU (action_menu), screen);
 
+    g_signal_connect_object (G_OBJECT (action_menu), "destroy",
+			     G_CALLBACK (action_menu_destroyed),
+			     0, 0);
     g_signal_connect_object (G_OBJECT (action_menu), "unmap",
 			     G_CALLBACK (action_menu_unmap),
 			     0, 0);

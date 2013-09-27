@@ -255,8 +255,6 @@ restack_window (WnckWindow *win,
     if (action_menu_mapped)
     {
 	gtk_object_destroy (GTK_OBJECT (action_menu));
-	action_menu_mapped = FALSE;
-	action_menu = NULL;
 	return;
     }
 
