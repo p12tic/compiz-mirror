@@ -1108,7 +1108,7 @@ meta_get_button_position (decor_t	 *d,
 	*x += d->frame->win_extents.left + 4;
 	*y += d->frame->win_extents.top + 2;
     }
-    
+
     if (flags & META_FRAME_ALLOWS_HORIZONTAL_RESIZE)
     {
 	*x += mutter_draggable_border_width;
@@ -1389,7 +1389,8 @@ meta_get_event_window_position (decor_t *d,
 	    if (!d->frame_window)
 	    {
 		*x += mutter_draggable_border_width;
-		*y += mutter_draggable_border_width;
+		if (flags & META_FRAME_ALLOWS_VERTICAL_RESIZE)
+		    *y += mutter_draggable_border_width;
 	    }
 
 	    break;
