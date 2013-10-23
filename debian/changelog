@@ -18,7 +18,7 @@ compiz (1:0.9.10+13.10.20131011-0ubuntu1) saucy; urgency=low
     #1236899)
 
   [ Ubuntu daily release ]
-  * Automatic snapshot from revision 3797
+  * Automatic snapshot from revision 3795
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 11 Oct 2013 06:16:27 +0000
 
