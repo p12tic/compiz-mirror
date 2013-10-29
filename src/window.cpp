@@ -4290,7 +4290,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
     XWindowChanges xwc  = XWINDOWCHANGES_INIT;
     int            mask = 0;
 
-    if (priv->state & CompWindowStateShadedMask && !priv->shaded)
+    if ((priv->state & CompWindowStateShadedMask) && !priv->shaded)
     {
 	windowNotify (CompWindowNotifyShade);
 	priv->hide ();
@@ -4307,7 +4307,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 
 	bool aboveFs = (stackingMode == CompStackingUpdateModeAboveFullscreen);
 
-	if (priv->type & CompWindowTypeFullscreenMask &&
+	if ((priv->type & CompWindowTypeFullscreenMask) &&
 	    /* put active or soon-to-be-active fullscreen windows over
 	       all others in their layer */
 	    (priv->id == screen->activeWindow () ||
