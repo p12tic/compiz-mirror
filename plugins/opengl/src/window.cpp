@@ -85,7 +85,7 @@ PrivateGLWindow::PrivateGLWindow (CompWindow *w,
     clip (),
     bindFailed (false),
     vertexBuffer (new GLVertexBuffer ()),
-    autoProgram(new GLWindowAutoProgram(this)),
+    autoProgram(new GLWindowAutoProgram (this)),
     icons (),
     configureLock (w->obtainLockOnConfigureRequests ())
 {
