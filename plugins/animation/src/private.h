@@ -138,7 +138,7 @@ public:
 			      AnimEffect         *effects,
 			      CompOption::Vector *effectOptions,
 			      unsigned int       firstEffectOptionIndex);
-    ~ExtensionPluginAnimation ();
+    virtual ~ExtensionPluginAnimation ();
 
     // Overriden methods from ExtensionPluginInfo
     void postPreparePaintGeneral ();

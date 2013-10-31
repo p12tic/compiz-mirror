@@ -400,6 +400,7 @@ class History : public virtual ::compiz::History,
 {
     public:
 	History();
+	virtual ~History () {}
 
 	void setCurrentActiveWindowHistory (int x, int y);
 
@@ -455,6 +456,7 @@ class StartupSequence : boost::noncopyable
 {
     public:
 	StartupSequence();
+	virtual ~StartupSequence() {}
 	void addSequence (SnStartupSequence *sequence, CompPoint const& vp);
 	void removeSequence (SnStartupSequence *sequence);
 	void removeAllSequences ();
@@ -516,6 +518,7 @@ public virtual ::compiz::Ping
 {
 public:
     Ping() : lastPing_(1) {}
+    virtual ~Ping() {}
     bool handlePingTimeout (WindowManager::iterator begin, WindowManager::iterator end, Display* dpy);
     unsigned int lastPing () const { return lastPing_; }
 
@@ -528,6 +531,7 @@ class DesktopWindowCount :
 {
 public:
     DesktopWindowCount();
+    virtual ~DesktopWindowCount() {}
     virtual void incrementDesktopWindowCount();
     virtual void decrementDesktopWindowCount();
     virtual int desktopWindowCount();
@@ -540,6 +544,7 @@ class MapNum :
 {
 public:
     MapNum();
+    virtual ~MapNum() {}
     virtual unsigned int nextMapNum();
 
 private:
@@ -552,6 +557,7 @@ class XWindowInfo :
 public:
     XWindowInfo(Display* const& dpy) :
 	dpy(dpy) {}
+    virtual ~XWindowInfo() {}
 
     virtual int getWmState (Window id);
     virtual void setWmState (int state, Window id) const;
