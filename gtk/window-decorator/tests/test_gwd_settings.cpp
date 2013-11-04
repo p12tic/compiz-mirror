@@ -155,6 +155,7 @@ class GObjectPropertyMatcher :
 	    mGetFunc (func)
 	{
 	}
+	virtual ~GObjectPropertyMatcher () {}
 
 	virtual bool MatchAndExplain (GValue *value, MatchResultListener *listener) const
 	{
