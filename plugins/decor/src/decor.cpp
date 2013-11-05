@@ -2442,10 +2442,6 @@ void
 DecorScreen::handleEvent (XEvent *event)
 {
     Window  activeWindow = screen->activeWindow ();
-    if(!activeWindow) {
-    	return;
-    }
-
     CompWindow *w;
 
     switch (event->type) {
