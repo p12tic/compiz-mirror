@@ -1011,20 +1011,17 @@ GridWindow::stateChangeNotify (unsigned int lastState)
     {
 	lastTarget = GridUnknown;
 
-	if (!window->grabbed ())
+	if (isGridHorzMaximized)
 	{
-	    if (isGridHorzMaximized)
-	    {
- 		window->saveMask ()      |= CWY | CWHeight;
-  		window->saveWc ().y      = originalSize.y ();
-  		window->saveWc ().height = originalSize.height ();
-	    }
-	    else if (isGridVertMaximized)
-	    {
-  		window->saveMask ()     |= CWX | CWWidth;
-  		window->saveWc ().x     = originalSize.x ();
-  		window->saveWc ().width = originalSize.width ();
-	    }
+ 	    window->saveMask ()      |= CWY | CWHeight;
+  	    window->saveWc ().y      = originalSize.y ();
+  	    window->saveWc ().height = originalSize.height ();
+	}
+	else if (isGridVertMaximized)
+	{
+  	    window->saveMask ()     |= CWX | CWWidth;
+  	    window->saveWc ().x     = originalSize.x ();
+  	    window->saveWc ().width = originalSize.width ();
 	}
 
 	if ((isGridHorzMaximized &&
