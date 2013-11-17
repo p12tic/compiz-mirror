@@ -402,12 +402,12 @@ macro (compiz_add_release)
 	if (AUTO_NEWS_UPDATE)
 
 		add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-				   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+				   COMMAND echo "Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')" > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
 				   COMMENT "Generating NEWS Header"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 	else (AUTO_NEWS_UPDATE)
 		add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-				   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+				   COMMAND echo "Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')" > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
 				   COMMENT "Generating NEWS Header"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 	endif (AUTO_NEWS_UPDATE)
