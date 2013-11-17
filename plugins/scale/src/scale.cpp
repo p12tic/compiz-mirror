@@ -1609,7 +1609,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		    scaleTerminate (&optionGetInitiateEdge (), 0, o);
 		    scaleTerminate (&optionGetInitiateKey (), 0, o);
 		}
-		else if (optionGetShowDesktop () &&
+		else if (optionGetClickOnDesktop () == 1 &&
 			 event->xbutton.button == Button1)
 		{
 		    CompPoint pointer (button->x_root, button->y_root);
@@ -1622,7 +1622,19 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 			screen->enterShowDesktopMode ();
 		    }
 		}
-	    }
+                else if (optionGetClickOnDesktop () == 2 &&
+                         event->xbutton.button == Button1)
+                {
+                    CompPoint pointer (button->x_root, button->y_root);
+                    CompRect  workArea (screen->workArea ());
+
+                    if (workArea.contains (pointer))
+                    {
+                        scaleTerminate (&optionGetInitiateEdge (), 0, o);
+                        scaleTerminate (&optionGetInitiateKey (), 0, o);
+                    }
+                }
+            }
 	    break;
 	case MotionNotify:
 	    if (screen->root () == event->xmotion.root &&

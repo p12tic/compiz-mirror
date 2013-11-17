@@ -426,15 +426,6 @@ Index: compiz/plugins/scale/scale.xml.in
  			</option>
  			<option name="initiate_button" type="button">
  				<_short>Initiate Window Picker</_short>
-@@ -179,7 +176,7 @@
- 			<option name="show_desktop" type="bool">
- 				<_short>Click Desktop to Show Desktop</_short>
- 				<_long>Enter Show Desktop mode when Desktop is clicked during Scale</_long>
--				<default>true</default>
-+				<default>false</default>
- 			</option>
- 	    </group>
- 	</options>
 Index: compiz/plugins/staticswitcher/staticswitcher.xml.in
 ===================================================================
 --- compiz.orig/plugins/staticswitcher/staticswitcher.xml.in	2013-10-08 17:00:56.932757923 +0200

@@ -176,10 +176,24 @@
 				<_short>Initiate Window Picker For Windows on Current Output</_short>
 				<_long>Layout and start transforming windows on current output</_long>
 			</option>
-			<option name="show_desktop" type="bool">
-				<_short>Click Desktop to Show Desktop</_short>
-				<_long>Enter Show Desktop mode when Desktop is clicked during Scale</_long>
-				<default>true</default>
+			<option name="click_on_desktop" type="int">
+				<_short>Click on empty area</_short>
+				<_long>Action to perform on click on empty area</_long>
+				<min>0</min>
+				<max>2</max>
+				<default>2</default>
+				<desc>
+					<value>0</value>
+					<_name>None</_name>
+				</desc>
+				<desc>
+					<value>1</value>
+					<_name>Show desktop</_name>
+				</desc>
+				<desc>
+					<value>2</value>
+					<_name>Terminate scale</_name>
+				</desc>			
 			</option>
 	    </group>
 	</options>
