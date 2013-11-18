@@ -556,9 +556,11 @@ WallWindow::activate ()
     if (window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
     {
 	int       dx, dy;
-	CompPoint viewport;
+	CompPoint viewport = screen->vp ();
 
-	screen->viewportForGeometry (window->geometry (), viewport);
+	if (ws->optionGetAutoSwitchVpAndWindow () || window->defaultViewport () != viewport)
+	    screen->viewportForGeometry (window->geometry (), viewport);
+
 	dx       = viewport.x ();
 	dy       = viewport.y ();
 
