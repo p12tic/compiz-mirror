@@ -82,7 +82,10 @@ modifiersToString (unsigned int modMask)
     for (unsigned int i = 0; i < N_MODIFIERS; ++i)
     {
 	if (modMask & modifiers[i].modifier)
+	{
 	    binding += modifiers[i].name;
+	    modMask &= ~modifiers[i].modifier;
+	}
     }
 
     return binding;
