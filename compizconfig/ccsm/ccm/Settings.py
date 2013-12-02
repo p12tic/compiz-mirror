@@ -965,7 +965,7 @@ class KeySetting (EditableActionSetting):
 
     def ReorderKeyString (self, accel):
         key, mods = gtk.accelerator_parse (accel)
-        return gtk.accelerator_name (key, mods)
+        return GetAcceleratorName (key, mods)
 
     def GetDialogText (self):
         return self.current
@@ -997,7 +997,7 @@ class KeySetting (EditableActionSetting):
                 dialog.resize (1, 1)
 
         def HandleGrabberChanged (grabber, key, mods, label, selector):
-            new = gtk.accelerator_name (key, mods)
+            new = GetAcceleratorName (key, mods)
             mods = ""
             for mod in KeyModifier:
                 if "%s_L" % mod in new:
