@@ -53,7 +53,7 @@ setFunctions (bool enabled)
 void
 OpacifyWindow::setOpacity (int fOpacity)
 {
-    if (opacified || (gWindow->paintAttrib ().opacity != opacity))
+    if (!opacified || (gWindow->paintAttrib ().opacity != opacity))
 	cWindow->addDamage ();
 
     opacified = true;
