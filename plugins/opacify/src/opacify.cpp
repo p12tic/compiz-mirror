@@ -396,6 +396,7 @@ OpacifyWindow::OpacifyWindow (CompWindow *window) :
     opacity   (100)
 {
     GLWindowInterface::setHandler (gWindow, false);
+    gWindow->glPaintSetEnabled (this, true);
 }
 
 /** Constructor for OpacifyScreen. This is called whenever a new screen
