@@ -236,16 +236,16 @@ PrivateShaderCache::createFragmentShader (const GLShaderParameters &params)
     }
 
     if (params.brightness) {
-	ss << "color.rgb = color.rgb * paintAttrib.y" <<
-	      (params.opacity ? " * paintAttrib.x;\n" : ";\n") <<
-	      (params.opacity ? "color.a = color.a * paintAttrib.x;\n" : "");
-    }
-    else if (params.opacity) {
-	ss << "color = color * paintAttrib.x;\n";
+	ss << "color.rgb = color.rgb * paintAttrib.y;\n";
     }
 
     ss << "gl_FragColor = color;\n";
-    ss << "@FRAGMENT_FUNCTION_CALLS@\n}";
+    ss << "@FRAGMENT_FUNCTION_CALLS@\n";
+
+    if (params.opacity) {
+	ss << "gl_FragColor = gl_FragColor * paintAttrib.x;\n";
+    }
+    ss << "}\n";
 
     return ss.str();
 }
