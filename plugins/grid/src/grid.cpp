@@ -1020,8 +1020,8 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	else if (isGridVertMaximized)
 	{
   	    window->saveMask ()     |= CWX | CWWidth;
-  	    window->saveWc ().x     = originalSize.x ();
-  	    window->saveWc ().width = originalSize.width ();
+  	    window->saveWc ().x     = originalSize.x () - window->border ().left;
+  	    window->saveWc ().width = originalSize.width () + window->border ().left + window->border ().right;
 	}
 
 	if ((isGridHorzMaximized &&
@@ -1313,6 +1313,9 @@ GridScreen::GridScreen (CompScreen *screen) :
     GRIDSET (PutBottomleftKey, GridWindowType::GridBottomLeft, true, true);
     GRIDSET (PutBottomrightKey, GridWindowType::GridBottomRight, true, true);
     GRIDSET (PutMaximizeKey, GridWindowType::GridMaximize, true, true);
+
+    GRIDSET (RightMaximize, GridWindowType::GridRight, true, true);
+    GRIDSET (LeftMaximize, GridWindowType::GridLeft, true, true);
 
 #undef GRIDSET
 

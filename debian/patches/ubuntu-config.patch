@@ -699,13 +699,14 @@ Index: compiz/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
  bool Advance (Display *d, bool r)
 Index: compiz/plugins/grid/grid.xml.in
 ===================================================================
---- compiz.orig/plugins/grid/grid.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/grid/grid.xml.in	2013-10-08 17:01:05.104735978 +0200
-@@ -68,12 +68,11 @@
+--- compiz.orig/plugins/grid/grid.xml.in	2013-12-04 12:23:44.021963832 -0500
++++ compiz/plugins/grid/grid.xml.in	2013-12-04 12:24:43.885963254 -0500
+@@ -68,12 +68,12 @@
  		<option name="put_maximize_key" type="key">
  		    <_short>Maximize Key</_short>
  		    <_long>Maximize window.</_long>
 -		    <default>&lt;Control&gt;&lt;Alt&gt;KP_0</default>
++		    <default>&lt;Control&gt;&lt;Super&gt;Up</default>
  		</option>
  		<option name="put_restore_key" type="key">
  		    <_short>Restore</_short>
@@ -713,8 +714,8 @@ Index: compiz/plugins/grid/grid.xml.in
 -		    <default>&lt;Alt&gt;F5</default>
 +		    <default>&lt;Control&gt;&lt;Super&gt;Down</default>
  		</option>
- 	    </group>
- 	    <group>
+ 		<option name="left_maximize" type="key">
+ 		    <_short>Left Maximize</_short>
 Index: compiz/plugins/ezoom/ezoom.xml.in
 ===================================================================
 --- compiz.orig/plugins/ezoom/ezoom.xml.in	2013-10-08 17:00:56.932757923 +0200
