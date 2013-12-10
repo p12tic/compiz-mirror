@@ -625,14 +625,17 @@ class PrivateScreen :
 					   CompOption::Vector &arguments);
 
 	bool triggerKeyPressBindings (CompOption::Vector &options,
+				      CompAction::Vector &actions,
 				      XKeyEvent          *event,
 				      CompOption::Vector &arguments);
 
 	bool triggerKeyReleaseBindings (CompOption::Vector &options,
+					CompAction::Vector &actions,
 					XKeyEvent          *event,
 					CompOption::Vector &arguments);
 
 	bool triggerStateNotifyBindings (CompOption::Vector  &options,
+					 CompAction::Vector  &actions,
 					 XkbStateNotifyEvent *event,
 					 CompOption::Vector  &arguments);
 
