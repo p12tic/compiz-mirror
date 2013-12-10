@@ -133,6 +133,7 @@ class CompAction {
 
 	typedef unsigned int State;
 	typedef unsigned int BindingType;
+	typedef std::vector<CompAction> Vector;
 	typedef boost::function <bool (CompAction *, State, CompOption::Vector &)> CallBack;
 
     public:
@@ -190,5 +191,7 @@ class CompAction {
     private:
 	PrivateAction *priv;
 };
+
+CompAction::Vector & noActions ();
 
 #endif

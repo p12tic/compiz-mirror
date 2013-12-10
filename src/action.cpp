@@ -650,3 +650,10 @@ PrivateAction::PrivateAction (const PrivateAction &a) :
 {
     memcpy (&priv, &a.priv, sizeof (CompPrivate));
 }
+
+CompAction::Vector &
+noActions ()
+{
+    static CompAction::Vector v;
+    return v;
+}

@@ -27,6 +27,7 @@
 #define _COMPIZ_PLUGIN_H
 
 #include <core/string.h>
+#include <core/action.h>
 #include <core/option.h>
 #include <core/privateunion.h>
 #include <core/pluginclasshandler.h>
@@ -146,6 +147,8 @@ class CompPlugin {
 
 		virtual bool setOption (const CompString  &name,
 					CompOption::Value &value);
+
+		virtual CompAction::Vector & getActions ();
 	    private:
 		CompString   mName;
 		VTable       **mSelf;
