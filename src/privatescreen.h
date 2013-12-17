@@ -624,6 +624,18 @@ class PrivateScreen :
 					   XButtonEvent       *event,
 					   CompOption::Vector &arguments);
 
+	bool shouldTriggerKeyPressAction (CompAction *action,
+					  XKeyEvent  *event);
+
+	bool shouldTriggerKeyReleaseAction (CompAction *action,
+					    XKeyEvent  *event);
+
+	bool shouldTriggerModifierPressAction (CompAction          *action,
+					       XkbStateNotifyEvent *event);
+
+	bool shouldTriggerModifierReleaseAction (CompAction          *action,
+						 XkbStateNotifyEvent *event);
+
 	bool triggerKeyPressBindings (CompOption::Vector &options,
 				      CompAction::Vector &actions,
 				      XKeyEvent          *event,
