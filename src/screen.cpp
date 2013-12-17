@@ -3211,6 +3211,7 @@ cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 {
     int             mod, k;
     unsigned int    ignore;
+    unsigned int    modifierForKeycode;
 
     CompScreen::checkForError (screen->dpy());
 
@@ -3219,7 +3220,12 @@ cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 	if (ignore & ~modHandler->ignoredModMask ())
 	    continue;
 
-	if (keycode != 0)
+	if (keycode == 0)
+	    modifierForKeycode = 0;
+	else
+	    modifierForKeycode = modHandler->keycodeToModifiers (keycode);
+
+	if (keycode != 0 && modifierForKeycode == 0)
 	{
 	    grabUngrabOneKey (modifiers | ignore, keycode, grab);
 	}
@@ -3235,17 +3241,26 @@ cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 		    {
 			if (modHandler->modMap ()->modifiermap[k])
 			{
-			    grabUngrabOneKey ((modifiers & ~(1 << mod)) |
-					      ignore,
+			    grabUngrabOneKey ((modifiers & ~(1 << mod)) | modifierForKeycode | ignore,
 					      modHandler->modMap ()->modifiermap[k],
 					      grab);
 			}
 		    }
 		}
+		else if (modifierForKeycode == (unsigned int) (1 << mod))
+		{
+		    grabUngrabOneKey (modifiers | ignore,
+				      keycode,
+				      grab);
+		    grabUngrabOneKey (modifiers | modifierForKeycode | ignore,
+				      keycode,
+				      grab);
+		}
 	    }
 
 	    /*
-	     * keycode == 0, so this is a modifier-only keybinding.
+	     * keycode == 0 or modifierForKeycode != 0, so this is a
+	     * modifier-only keybinding.
 	     * Until now I have been trying to:
 	     *     grabUngrabOneKey (modifiers | ignore, AnyKey, grab);
 	     * which does not seem to work at all.
@@ -3258,7 +3273,7 @@ cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
  		int minCode, maxCode;
  		XDisplayKeycodes (screen->dpy(), &minCode, &maxCode);
  		for (k = minCode; k <= maxCode; k++)
- 		    grabUngrabOneKey (modifiers | ignore, k, grab);
+ 		    grabUngrabOneKey (modifiers | modifierForKeycode | ignore, k, grab);
             }
 	}
 
@@ -3334,7 +3349,7 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
      * for modifier+all_other_keys. See XDisplayKeycodes above to find out why.
      * So we need to refresh all grabs...
      */
-    if (!(mask & CompNoMask) && key.keycode () == 0)
+    if (!(mask & CompNoMask) && (key.keycode () == 0 || modHandler->keycodeToModifiers (key.keycode ()) != 0))
 	updatePassiveKeyGrabs ();
 }
 
