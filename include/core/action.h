@@ -109,6 +109,9 @@ class CompAction {
 		bool fromString (const CompString &str);
 		CompString toString () const;
 
+		bool operator== (const KeyBinding &k) const;
+		bool operator!= (const KeyBinding &k) const;
+
 	    private:
 		unsigned int mModifiers;
 		int          mKeycode;
@@ -125,6 +128,9 @@ class CompAction {
 
 		bool fromString (const CompString &str);
 		CompString toString () const;
+
+		bool operator== (const ButtonBinding &b) const;
+		bool operator!= (const ButtonBinding &b) const;
 
 	    private:
 		unsigned int mModifiers;

@@ -242,6 +242,18 @@ CompAction::KeyBinding::toString () const
     return binding;
 }
 
+bool
+CompAction::KeyBinding::operator== (const KeyBinding &k) const
+{
+    return mKeycode == k.mKeycode && mModifiers == k.mModifiers;
+}
+
+bool
+CompAction::KeyBinding::operator!= (const KeyBinding &k) const
+{
+    return !(*this == k);
+}
+
 CompAction::ButtonBinding::ButtonBinding () :
     mModifiers (0),
     mButton (0)
@@ -312,6 +324,18 @@ CompAction::ButtonBinding::toString () const
     binding           += compPrintf ("Button%d", mButton);
 
     return binding;
+}
+
+bool
+CompAction::ButtonBinding::operator== (const ButtonBinding &b) const
+{
+    return mButton == b.mButton && mModifiers == b.mModifiers;
+}
+
+bool
+CompAction::ButtonBinding::operator!= (const ButtonBinding &b) const
+{
+    return !(*this == b);
 }
 
 CompAction::CompAction () :
