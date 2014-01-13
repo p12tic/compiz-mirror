@@ -6341,7 +6341,6 @@ PrivateWindow::PrivateWindow () :
     shaded (false),
     hidden (false),
     grabbed (false),
-    alreadyDecorated (false),
 
     desktop (0),
 
@@ -6586,20 +6585,6 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	    compiz::window::extents::shift (priv->border,
 					    priv->sizeHints.win_gravity);
 
-	CompSize sizeDelta;
-
-	/* We don't want to change the size of the window the first time we
-	 * decorate it, but we do thereafter */
-	if (priv->alreadyDecorated)
-	{
-	    sizeDelta.setWidth (-((b->left + b->right) -
-				  (priv->border.left + priv->border.right)));
-	    sizeDelta.setHeight (-((b->top + b->bottom) -
-				   (priv->border.top + priv->border.bottom)));
-	}
-	else
-	    priv->alreadyDecorated = true;
-
 	priv->serverInput = *i;
 	priv->border      = *b;
 
@@ -6608,8 +6593,8 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 	xwc.x = movement.x () + priv->serverGeometry.x ();
 	xwc.y = movement.y () + priv->serverGeometry.y ();
-	xwc.width = sizeDelta.width () + priv->serverGeometry.width ();
-	xwc.height = sizeDelta.height () + priv->serverGeometry.height ();
+	xwc.width = priv->serverGeometry.width ();
+	xwc.height = priv->serverGeometry.height ();
 
 	configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
 
