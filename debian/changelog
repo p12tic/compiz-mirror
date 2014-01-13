@@ -1,6 +1,12 @@
 compiz (1:0.9.11-0ubuntu1) UNRELEASED; urgency=low
 
+  [ Timo Jyrinki ]
   * Bump version to 0.9.11
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/00_remove_decor_in_unity_session.py: add migration script
+    to avoid to load the decor plugin on compiz startup when using unity.
+  * debian/compiz-gnome.gconf-defaults: disable decor plugin on unity session
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Wed, 23 Oct 2013 08:17:03 +0300
 
