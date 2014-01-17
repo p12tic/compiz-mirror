@@ -6585,6 +6585,19 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	    compiz::window::extents::shift (priv->border,
 					    priv->sizeHints.win_gravity);
 
+	CompSize sizeDelta;
+
+	/* We don't want to change the size of the window in general, but this is
+	 * needed in case that the window is maximized, so that it will extend
+	 * to use the whole available space. */
+	if ((state() & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+	{
+	    sizeDelta.setWidth (-((b->left + b->right) -
+				  (priv->border.left + priv->border.right)));
+	    sizeDelta.setHeight (-((b->top + b->bottom) -
+				   (priv->border.top + priv->border.bottom)));
+	}
+
 	priv->serverInput = *i;
 	priv->border      = *b;
 
@@ -6593,8 +6606,8 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 	xwc.x = movement.x () + priv->serverGeometry.x ();
 	xwc.y = movement.y () + priv->serverGeometry.y ();
-	xwc.width = priv->serverGeometry.width ();
-	xwc.height = priv->serverGeometry.height ();
+	xwc.width = sizeDelta.width () + priv->serverGeometry.width ();
+	xwc.height = sizeDelta.height () + priv->serverGeometry.height ();
 
 	configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
 
