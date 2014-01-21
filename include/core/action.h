@@ -140,9 +140,9 @@ class CompAction {
 	typedef std::vector<CompAction> Vector;
 	typedef boost::function <bool (CompAction *, State, CompOption::Vector &)> CallBack;
 
-	class Class {
+	class Container {
 	    public:
-		virtual ~Class() {}
+		virtual ~Container() {}
 		virtual Vector & getActions () = 0;
 	};
 

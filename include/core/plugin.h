@@ -372,7 +372,7 @@ CompPlugin::VTableForScreenAndWindow<T, T2, ABI>::setOption (const CompString  &
 template <typename T, typename T2, int ABI>
 CompAction::Vector & CompPlugin::VTableForScreenAndWindow<T, T2, ABI>::getActions ()
 {
-    CompAction::Class *ac = dynamic_cast<CompAction::Class *> (T::get (screen));
+    CompAction::Container *ac = dynamic_cast<CompAction::Container *> (T::get (screen));
     if (!ac)
 	return noActions ();
     return ac->getActions ();
@@ -453,7 +453,7 @@ template <typename T, int ABI>
 CompAction::Vector &
 CompPlugin::VTableForScreen<T, ABI>::getActions ()
 {
-    CompAction::Class *ac = dynamic_cast<CompAction::Class *> (T::get (screen));
+    CompAction::Container *ac = dynamic_cast<CompAction::Container *> (T::get (screen));
     if (!ac)
 	return noActions ();
     return ac->getActions ();
