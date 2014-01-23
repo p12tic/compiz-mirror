@@ -242,6 +242,18 @@ CompAction::KeyBinding::toString () const
     return binding;
 }
 
+bool
+CompAction::KeyBinding::operator== (const KeyBinding &k) const
+{
+    return mKeycode == k.mKeycode && mModifiers == k.mModifiers;
+}
+
+bool
+CompAction::KeyBinding::operator!= (const KeyBinding &k) const
+{
+    return !(*this == k);
+}
+
 CompAction::ButtonBinding::ButtonBinding () :
     mModifiers (0),
     mButton (0)
@@ -314,6 +326,18 @@ CompAction::ButtonBinding::toString () const
     return binding;
 }
 
+bool
+CompAction::ButtonBinding::operator== (const ButtonBinding &b) const
+{
+    return mButton == b.mButton && mModifiers == b.mModifiers;
+}
+
+bool
+CompAction::ButtonBinding::operator!= (const ButtonBinding &b) const
+{
+    return !(*this == b);
+}
+
 CompAction::CompAction () :
     priv (new PrivateAction ())
 {
@@ -330,13 +354,13 @@ CompAction::~CompAction ()
 }
 
 CompAction::CallBack
-CompAction::initiate ()
+CompAction::initiate () const
 {
     return priv->initiate;
 }
 
 CompAction::CallBack
-CompAction::terminate ()
+CompAction::terminate () const
 {
     return priv->terminate;
 }
@@ -354,19 +378,25 @@ CompAction::setTerminate (const CompAction::CallBack &terminate)
 }
 
 CompAction::State
-CompAction::state ()
+CompAction::state () const
 {
     return priv->state;
 }
 
 CompAction::BindingType
-CompAction::type ()
+CompAction::type () const
 {
     return priv->type;
 }
 
 CompAction::KeyBinding &
 CompAction::key ()
+{
+    return priv->key;
+}
+
+const CompAction::KeyBinding &
+CompAction::key () const
 {
     return priv->key;
 }
@@ -388,6 +418,12 @@ CompAction::button ()
     return priv->button;
 }
 
+const CompAction::ButtonBinding &
+CompAction::button () const
+{
+    return priv->button;
+}
+
 void
 CompAction::setButton (const CompAction::ButtonBinding &button)
 {
@@ -405,7 +441,7 @@ CompAction::setButton (const CompAction::ButtonBinding &button)
 }
 
 unsigned int
-CompAction::edgeMask ()
+CompAction::edgeMask () const
 {
     return priv->edgeMask;
 }
@@ -426,7 +462,7 @@ CompAction::setEdgeMask (unsigned int edge)
 }
 
 bool
-CompAction::bell ()
+CompAction::bell () const
 {
     return priv->bell;
 }
@@ -558,7 +594,7 @@ CompAction::edgeMaskFromString (const CompString &str)
 }
 
 CompString
-CompAction::keyToString ()
+CompAction::keyToString () const
 {
     CompString binding = priv->key.toString ();
 
@@ -569,7 +605,7 @@ CompAction::keyToString ()
 }
 
 CompString
-CompAction::buttonToString ()
+CompAction::buttonToString () const
 {
     CompString edge;
 
@@ -584,7 +620,7 @@ CompAction::buttonToString ()
 }
 
 CompString
-CompAction::edgeMaskToString ()
+CompAction::edgeMaskToString () const
 {
     CompString edge;
 
@@ -609,7 +645,7 @@ CompAction::edgeToString (unsigned int edge)
 }
 
 bool
-CompAction::active ()
+CompAction::active () const
 {
     return priv->active;
 }
@@ -653,4 +689,11 @@ PrivateAction::PrivateAction (const PrivateAction &a) :
     active    (a.active)
 {
     memcpy (&priv, &a.priv, sizeof (CompPrivate));
+}
+
+CompAction::Vector &
+noActions ()
+{
+    static CompAction::Vector v;
+    return v;
 }
