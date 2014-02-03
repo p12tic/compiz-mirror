@@ -8,6 +8,9 @@ compiz (1:0.9.11-0ubuntu1) UNRELEASED; urgency=low
     to avoid to load the decor plugin on compiz startup when using unity.
   * debian/compiz-gnome.gconf-defaults: disable decor plugin on unity session
 
+  [ Sebastien Bacher ]
+  * debian/compiz-gnome.links: lists keybinding in unity-control-center
+
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Wed, 23 Oct 2013 08:17:03 +0300
 
 compiz (1:0.9.10+13.10.20131011-0ubuntu1) saucy; urgency=low
