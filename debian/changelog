@@ -45,7 +45,7 @@ compiz (1:0.9.10+13.10.20131011-0ubuntu1) saucy; urgency=low
     #1236899)
 
   [ Ubuntu daily release ]
-  * Automatic snapshot from revision 3795
+  * Automatic snapshot from revision 3797
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 11 Oct 2013 06:16:27 +0000
 
@@ -1277,6 +1277,193 @@ compiz (1:0.9.10+13.10.20130822-0ubuntu1) saucy; urgency=low
   * Automatic snapshot from revision 3781
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 22 Aug 2013 06:58:07 +0000
+compiz (1:0.9.9~daily13.04.18.1~13.04-0ubuntu4) saucy; urgency=low
+
+  * Remove debian/patches/unity_support_test.patch
+    - Running the support test from compiz has bad side effects, so we no
+      longer require this patch (also LP: #1066764)
+
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Mon, 12 Aug 2013 13:11:18 +0200
+
+compiz (1:0.9.9~daily13.04.18.1~13.04-0ubuntu3) saucy; urgency=low
+
+  * No change rebuild to drop the buggy libhybris depends 
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 08 Aug 2013 10:50:09 +0200
+
+compiz (1:0.9.9~daily13.04.18.1~13.04-0ubuntu2) saucy; urgency=low
+
+  * Fixing FTBFS in saucy:
+    - Cherry pick boost1.53 fixes from upstream branch.
+    - Do not enable -Wno-unused-private-field.
+
+ -- Dmitrijs Ledkovs <dmitrij.ledkov@ubuntu.com>  Mon, 01 Jul 2013 20:56:50 +0100
+
+compiz (1:0.9.9~daily13.04.18.1~13.04-0ubuntu1) raring; urgency=low
+
+  [ Ken VanDine ]
+  * Revert 3636 from lp:compiz/0.9.9 to fix Qt apps getting window decorations
+    placed behind the panel.  (LP: #1165343) 
+    - This reintroduces bug 1159324, Guake window appears placed by offset 
+      non-existent decoration
+  * [regression-r3635] Guake window appears placed by offset non-
+    existent decoration (LP: #1159324)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3650
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 18 Apr 2013 05:46:57 +0000
+
+compiz (1:0.9.9~daily13.04.15-0ubuntu1) raring; urgency=low
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * [regression-r3606] Compiz broken with QT menus/floating controls in
+    13.04 (LP: #1141079)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3648
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 15 Apr 2013 04:17:27 +0000
+
+compiz (1:0.9.9~daily13.04.10-0ubuntu1) raring; urgency=low
+
+  [ Steve Langasek ]
+  * Adding/Removing an external monitor causes open windows to move to
+    another workspace (LP: #763148)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3646
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 10 Apr 2013 04:03:14 +0000
+
+compiz (1:0.9.9~daily13.04.05-0ubuntu1) raring; urgency=low
+
+  [ Daniel van Vugt ]
+  [Daniel van Vugt]
+  * Merge lp:compiz/raring back in to lp:compiz/0.9.9 so we can maintain
+    raring from lp:compiz/0.9.9. The last common revision was 3629, so...
+  * Automatic snapshot from revision 3629
+
+  [ MC Return <mc.return@gmx.net>, Sam Spilsbury <smspillaz@gmail.com>, Sam Spilsbury ]
+  * Workspacenames plugin: Damage handling is broken and the plugin
+    damages the full screen instead of just the painted part of it (LP:
+    #1162246)
+  * [regression-r3320] Workspacenames Plug-in: Flickering background on
+    appearance, fade-out seems smooth (LP: #1075578)
+
+  [ Brandon Schaefer ]
+  * [regression] Shortcut overlay does not hide when modifier key is
+    pressed (LP: #1075207)
+  * Unity blocks other programs from binding globally to Super+* (* =
+    any key) (LP: #950160)
+
+  [ Sam Spilsbury <Sam@ACER-SUSE.SUSE>, Sam <Sam@XPS-SUSE.XPS>, Sam Spillaz <smspillaz@gmail.com>, Sam Spilsbury <smspillaz@gmail.com>, Sam Spilsbury <sam.spilsbury@canonical.com>, MC Return <mc.return@gmx.net>, Sam Spilsbury <Sam@XPS-SUSE.site>, users <warlock@banana.(none)>, Scott Moreau <oreaus@gmail.com>, Danny Baumann <dannybaumann@web.de>, warlock <warlock.cc@gmail.com>, Sam Spilsbury <smspillaz@XPS-U.(none)>, warlock <warlock@opencompositing.org>, Roland Bär ]
+  * [needs-packaging] Wishlist: Missing plug-In: Freewins (Freely
+    Transformable Windows) (LP: #1012194)
+
+  [ MC Return <mc.return@gmx.net>, Sam Spilsbury <sam.spilsbury@canonical.com>, Sam Spilsbury ]
+  * Showdesktop plugin: Wishlist/Feature-Request: Implement "Random"
+    movement direction option (LP: #1161343)
+
+  [ MC Return ]
+  * Wall plugin: Redundant if (screen->otherGrabExist ("wall", 0)) check
+    in WallScreen::initiateFlip (LP: #1160878)
+  * CompWindow::syncPosition () function is empty and calls to it
+    redundant (LP: #1160624)
+  * Showdesktop plugin: Wishlist/Feature-Request: Implement "Random"
+    movement direction option (LP: #1161343)
+  * Multimonitor: Grid plugin: Wrong calculation of top left mouse-grid-
+    resize corner coordinates (LP: #1139835)
+
+  [ Sam Spilsbury ]
+  * After Upgrade to Boost 1.53 Build Fails (LP: #1131864)
+  * Showdesktop plugin: Wishlist/Feature-Request: Implement "Random"
+    movement direction option (LP: #1161343)
+  * [regression] Unmaximized windows can't be closed, minimized, moved
+    (LP: #1158161)
+  * Latest compiz update breaks Java Swing decorations (LP: #1138517)
+  * [regression-r3635] Guake window appears placed by offset non-
+    existent decoration (LP: #1159324)
+  * [regression-r3623] Wallpaper bleeds through on top right when a
+    window is opened maximized (LP: #1140505)
+  * xiphos crashed with SIGSEGV in sword::VerseKey::copyFrom() (LP:
+    #1159234)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3644
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 05 Apr 2013 04:03:10 +0000
+
+compiz (1:0.9.9~daily13.03.29-0ubuntu1) raring; urgency=low
+
+  [ Michael Terry ]
+  * [regression-r3635] Guake window appears placed by offset non-
+    existent decoration (LP: #1159324)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3641
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 29 Mar 2013 07:23:54 +0000
+
+compiz (1:0.9.9~daily13.03.25-0ubuntu1) raring; urgency=low
+
+  [ Michael Terry ]
+  * [regression] Unmaximized windows can't be closed, minimized, moved
+    (LP: #1158161)
+
+  [ MC Return ]
+  * Multimonitor: Grid plugin: Wrong calculation of top left mouse-grid-
+    resize corner coordinates (LP: #1139835)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3639
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 25 Mar 2013 04:02:57 +0000
+
+compiz (1:0.9.9~daily13.03.20-0ubuntu1) raring; urgency=low
+
+  [ Sam Spilsbury ]
+  * Latest compiz update breaks Java Swing decorations (LP: #1138517)
+  * [regression-r3623] Wallpaper bleeds through on top right when a
+    window is opened maximized (LP: #1140505)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 3636
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 20 Mar 2013 04:02:51 +0000
+
+compiz (1:0.9.9~daily13.03.08-0ubuntu1) raring; urgency=low
+
+  [ Brandon Schaefer ]
+  * [regression] Shortcut overlay does not hide when modifier key is
+    pressed (LP: #1075207)
+  * Unity blocks other programs from binding globally to Super+* (* =
+    any key) (LP: #950160)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3633
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 08 Mar 2013 10:34:21 +0000
+
+compiz (1:0.9.9~daily13.03.06-0ubuntu1) raring; urgency=low
+
+  [ Łukasz 'sil2100' Zemczak ]
+  * Latest compiz update breaks Java Swing decorations (LP: #1138517)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3631
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Wed, 06 Mar 2013 13:26:19 +0000
+
+compiz (1:0.9.9~daily13.03.01-0ubuntu1) raring; urgency=low
+
+  [ MC Return ]
+  * Multiple minor code and style issues (LP: #1134251)
+
+  [ Automatic PS uploader ]
+  * Automatic snapshot from revision 3629
+
+ -- Automatic PS uploader <ps-jenkins@lists.canonical.com>  Fri, 01 Mar 2013 04:02:19 +0000
 
 compiz (1:0.9.9~daily13.02.28-0ubuntu1) raring; urgency=low
 
