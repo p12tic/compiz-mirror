@@ -1,4 +1,4 @@
-compiz (1:0.9.11-0ubuntu1) UNRELEASED; urgency=low
+compiz (1:0.9.11+14.04.20140214-0ubuntu1) trusty; urgency=low
 
   [ Timo Jyrinki ]
   * Bump version to 0.9.11
@@ -10,8 +10,737 @@ compiz (1:0.9.11-0ubuntu1) UNRELEASED; urgency=low
 
   [ Sebastien Bacher ]
   * debian/compiz-gnome.links: lists keybinding in unity-control-center
+  * typo fix in the previous commit. (LP: #1271710)
 
- -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Wed, 23 Oct 2013 08:17:03 +0300
+  [ Iven Hsu ]
+  * Opacify: Only dim the windows above the active window.(LP:
+    #1189374). (LP: #1189374)
+  * KWD: Fix compile errors with KDE 4.11. The KWin developers made
+    kdecorationbridge.h private. See:
+    http://lists.freedesktop.org/archives/compiz/2013-March/003479.html
+    (LP: #1193792). (LP: #1193792)
+
+  [ Nikolay Martynov ]
+  * When static switcher is enabled and has an option to show
+    application icon turned on the icons are expected to be ~1/3 of a
+    thumbnail (48px). Instead they are displayed in 512px size and
+    completely cover everything. This change addresses this issue. See
+    LP #1173914. (LP: #1173914, #1186426)
+
+  [ BryanFRitt ]
+  * Fixed the non-working Annotate 'Clear' Button. Moved this option's
+    CCSM position upwards to keep the button shortcuts together. (LP:
+    #1202907). (LP: #1202907)
+
+  [ CI bot ]
+  * Flush trunk to Ubuntu
+
+  [ William Hua ]
+  * Replace <Primary> with <Control> in CCSM. Fixes
+    https://bugs.launchpad.net/compiz/+bug/1069121. (LP: #1069121)
+  * Tweak support of key bindings of the form
+    '<Modifier>Modifier_KeySym'. We tweak a bit the behaviour of key
+    bindings such as '<Control>Shift_L' and '<Alt>Alt_R'. 1. We ignore
+    the order of key pressing and releasing, so tapping
+    '<Shift>Control_L' is the same as '<Control>Shift_L'. 2. We properly
+    handle the double modifiers case, for example '<Control>Control_R'.
+    3. We also parse key bindings with '<Primary>' being equivalent to
+    '<Control>'.
+  * Fix GSettings tests with extra slash.
+  * Add an interface for plugins to provide non-option key actions that
+    can be triggered.
+
+  [ Eleni Maria Stea ]
+  * It fixes the bug #1245886. In DecorScreen::handleEvent compiz
+    shouldn't try to handle any events if there's no active window yet.
+    (LP: #1245886)
+  * Compiz static analysis shows that some compiz classes have virtual
+    methods but not virtual destructors. Added the virtual destructors
+    to get rid of warnings and potential memory leaks.
+  * fixed cmake syntax errors.
+  * CMake considered compiz a C++ project and couldn't find some
+    dependencies like pthreads. Defined compiz as a C, CXX project to
+    fix the issue.
+
+  [ Povilas Kanapickas ]
+  * Opacify: Properly initialize window drawing for new windows in
+    Opacify plugin. (LP: #787814, part 2). (LP: #787814)
+  * Opacify: Fix damage generation in the Opacify plugin. When setting
+    opacity to some value, non-opacified windows need to be damaged
+    regardless of opacity, whereas opacified windows need to be damaged
+    only if opacity changes. Remove uses of OPACIFY_WINDOW and
+    OPACIFY_SCREEN. These macros cause significant loss of readability
+    while providing no observable benefits.
+  * OpenGL, fragment shader: Run the opacity filter after all other
+    filters have been run. (LP: #1257223). (LP: #1257223)
+
+  [ Daniel van Vugt ]
+  * This branch is 0.9.11
+
+  [ Hu Kang ]
+  * Remove redundant src/logmessage/include/core/logmessage.h (LP:
+    #1067246). (LP: #1067246)
+
+  [ Brandon Schaefer ]
+  * Unrevert 3728, fix failing tests. Change the behaviour of
+    undecorating windows. Previously when a window was undecorated, we
+    would shift it back to an appropriate position according to its
+    gravity member. That behaviour was problematic because in the
+    StaticGravity case the window has to just stay in the same place.
+    But then if you had a window with StaticGravity which then did get a
+    decoration and later removed it, it would be placed as though it was
+    decorated and appear to be in the wrong place. The correct behaviour
+    is to place all windows as though they have decorations, and then
+    when decorations are removed, to move the window back to the corner
+    as indicated in its gravity and then expand its size to cover the
+    obscured regions no longer hidden because the decorations went away.
+    (LP: #1165343).   1. Completely remove decorOffsetMove and other
+    related code from      decor.cpp. Put the logic to handle the
+    window->input () - window->border ()      placement offset inside of
+    setWindowFrameExtents instead. Now the window      will always be
+    offset from its original non-decorated position to the new
+         decorated position, rather than having to guess between
+    decoration sizes.   2. Make saveGeometry and restoreGeometry work
+    relative to window->border ()      as opposed to including it in the
+    saved geometry. It is possible that the      border size might
+    change during maximization, as such, we don't want to      save the
+    position with the border before maximizing. Instead save the
+    position      as if it were never decorated so that when the window
+    is restored it can be      restored to its original position and
+    then adjusted for its new border size.   3. Fix a few typoes in the
+    tests.   4. Moved some commonly used matchers into compiz::testing
+      5. Make COMPIZ_PLUGIN_DIR accept multiple directories and look in
+    each one      of them for the plugin   6. Set COMPIZ_PLUGIN_DIR
+    appropriately for each plugin that we wish to load      on startup
+    so that we load locally built plugins as opposed to installed
+         ones.   7. Uncomment compiz_discover_tests for the acceptance
+    tests. Now they are      run by default. (LP: #1195522). (LP:
+    #1195522, #1165343)
+  * If we receive a stateNotifyChange, we check if we are in a max
+    state. If so, overwrite the xwc with either X | W, or Y | H
+    depending on the semi max state with the orig position before we
+    went into a semi max state. This way when we leave any sort of max
+    state the orig position is restored. If the window is being grabbed
+    we do not overwrite the position, which it gets its own value at
+    that point (instead of the orig pos). (LP: #892012)
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches/ubuntu-config.patch: remove grid custom keybindings
+    for window management We handle these directly in unity
+    (lp:~3v1n0/unity/super-arrows-shortcuts). (LP: #992697)
+  * ActionMenu: weak ref the action menu on creation, and unref it on
+    destroy Also, now the widget destruction automatically unset the
+    menu. This makes the object to be correctly finalized (not only
+    disposed) making sure the internal idle into WnckActionMenu gets
+    stopped. (LP: #1191853)
+  * debian/patches/ubuntu-config.patch: Don't use Ctrl+Alt+KP_0 for grid
+    maximize Otherwise this clashes with default minimize key. (LP:
+    #1236899)
+  * Window: disable the size adjustments when decorating/undecorating
+    windows. (LP: #1238111)
+  * Window: resize a maximized window if the decorations changed, so
+    that it will fill all the available space.
+  * compiz-gnome: remove decor plugin from unity profile.
+
+  [ Michail Bitzes ]
+  * Plugin wizard ported to OpenGL|ES. Use GLVertexBuffer. Enable
+    building for GLES. Enable architectures armel and armhf. (LP:
+    #1196003). (LP: #1196003)
+  * Wizard plugin: No more segfaults/crashes when changing options in
+    CCSM. (LP: #1195996) Gradual fade out of particles when terminating.
+    (LP: #1196010) Typo fixed in wizard.xml.in. optionNotify added for
+    some options that were missing it. Code cleanup: Declare variables
+    outside of loops. Functions moved from class WizardScreen to class
+    ParticleSystem. (similar to firepaint/showmouse) We just enable
+    GL_BLEND if it is disabled and we just disable GL_BLEND if it was
+    disabled before. Many other style and indentation fixes. (LP:
+    #1196010, #1195996)
+  * Plugin showrepaint ported to OpenGL|ES. Use GLVertexBuffer. Enable
+    building for GLES. Enable architectures armel and armhf. .
+
+  [ Chris Townsend ]
+  * Removed logic in the calculateWallOffset() function in the Expo
+    plugin that only accounted for offsetting the expo animation on the
+    left-most and top-most monitor. Also removed the
+    TestNoOffsetIfOutputIsNotOrigin test since this test is now invalid.
+    (LP: #1031710)
+  * Ctrl-Alt-Del should open the gnome-system-monitor at the processes
+    tab. This fix uses the commands plugin to override the default
+    action. This includes: - Install the commands plugin by default. -
+    Breaks/Replaces the compiz-plugins package for versions earlier than
+    0.9.10. - Patch commands.xml and integrated.xml to map gnome-system-
+    monitor to Ctrl-Alt-Del by default. - Start the command plugin upon
+    Compiz starting. (LP: #890747)
+  * Alt-Tabbing or Launcher selecting a window that is over 50% in a
+    different viewport should not switch the viewport nor change the
+    placement of the window. The fix is to add an option to turn this
+    behavior on or off. By default, the option is on, but Ubuntu is
+    patched to turn it off to fix this bug. (LP: #1092323)
+  * Fix regression when selecting apps on a different viewport than the
+    current one will no longer automatically switch the viewport. (LP:
+    #1228352)
+  * Fix issue where non-resizable windows and semi-maximized window
+    would have an area near the top of the title bar that could not be
+    grabbed. (LP: #1228507)
+  * Remove seemingly useless code in the SnapWindow::resizeNotify()
+    method where a snapped window that is being resized on the opposite
+    side of the snap would cause orders of magnitude more calls to
+    window->resize() and kill performance. (LP: #1019139)
+  * Need to revert rev. 3798 because it has a bad side effect of
+    "hanging" all of the windows when restarting Compiz and rendering
+    the desktop unusable.
+  * Bump ABI version due to some recent changes.
+  * When saving window geometry when going into maximized/semi-
+    maximized, also save for grabbed windows as well. This fixes a
+    desktop hang condition. (LP: #1244754)
+  * Second part of the fix to keep the workspace from automatically
+    switching when more than half of the window is contained in another
+    workspace. (LP: #1092323)
+  * Add new Grid shortcuts for Ctrl-Super-Left/Right to left/right semi-
+    maximize windows (removed from Unity). Patch Grid to use Ctrl-Super-
+    Up to maximize a gridded window instead of using core. This helps in
+    restoring a window back to it's original place before being gridded.
+    Account for left and right borders when restoring a gridded window
+    since the window would shrink and shift by this amount. (LP:
+    #1251777)
+
+  [ James Jones ]
+  * OpenGL contexts are reference counted and only destroyed once they
+    are no longer current to any thread. To ensure the context really is
+    destroyed, lose current from it before destroying it. (LP: #1213809)
+
+  [ Sami Jaktholm ]
+  * Expo plugin: 1) Always fetch the dndButton action in dndFini. The
+    action given to dndFini might be a key or edge binding action if
+    expo was terminated during window DnD. We shouldn't set their state
+    to CompAction::StateInitButton or the bindings break. 2) Pass NULL
+    action to termExpo if invoked from handleEvent Previously we passed
+    the action of expoKey to termExpo which in turn passed it to
+    dndFini. DndFini changed the action state to
+    CompAction::StateInitButton that broke the keybinding. Now that
+    dndFini fetches the dndButton action itself, there's no need to
+    fetch it in handleEvent too as dndFini is the only one using the
+    action. (LP: #1131106)
+  * Expo: Cast denominators of integer divisions to floats before
+    performing a matrix translation to viewports with the results.
+    Otherwise rounding errors in cases the results are not an integers
+    cause the viewports to be painted offscreen. (LP: #438580)
+  * Port dbus introspection to compiz 0.9. move xml creation to a
+    separate class (IntrospectionResponse) for easier. memory management
+    (allocate buffer and writer in ctor, free in dtor). move duplicated
+    response sending code to a separate method that takes.
+    IntrospectionResponse and sends the resulting xml. Refactor
+    handle*IntrospectMessage to work with compiz 0.9 interfaces. This
+    also fixes the broken list method which was a result of logic error.
+    The code to invoke list handler was never reached. This fixes most
+    of the issues noted in bug 749084. (LP: #749084)
+  * Bias the current viewport in addWindowSizeChanges. If window is
+    visible in the current viewport, use that viewport when calculating
+    geometries in addWindowSizeChanges. Otherwise the current method is
+    used. This way visible windows are maximized in the current
+    viewport. However, offscreen windows won't jump back to the active
+    viewport if window maximizes by itself or addWindowSizeChanges is
+    called for some other reason. (LP: #776435)
+  * Expo: Recompute glow quads if a desktop window is resized. (LP:
+    #1090713). (LP: #1090713)
+  * Decor: Use maximized border extents only if window is fully
+    maximized. The decorator draws a normal border around semi-maximized
+    windows. When maximized border extents were used for semi-maximized
+    windows, compiz didn't reserve any space for the border in its
+    geometry calculations. At least following problems are a result of
+    this behavior: Semi-maximized windows have 1px borders drawn on
+    adjacent workspaces. (LP: #986051). Grid placed window overlaps the
+    adjacent viewport (LP: #898870). (LP: #986051, #898870)
+
+  [ MC Return ]
+  * Fade plugin, minor code cleanup: Declaration and assignment of local
+    variables in one line. Merged if condition checks. Use pre- instead
+    of postfix de- and increments. Removed redundant brackets. Added and
+    removed newlines. Fixed indentation.
+  * Opacify code cleanup: Declaration of local variables outside of
+    loops. Calculate activeOpacity and targetOpacity just once, not for
+    each window. Use prefix instead of postfix increments. Merged if
+    condition checks. Declaration and assignment of local variables in
+    one line. Added and removed newlines. Removed redundant brackets.
+    Fixed indentation. Opacify, functionality fix: Improved the toggling
+    logic by setting isToggle in the constructor according to the
+    startup setting, then calling setFunctions (isToggle);,which then
+    calls screen->handleEventSetEnabled (os, os->isToggle); to fix
+    Opacify ignoring the "Toggle Opacify on by default" setting. (LP:
+    #787814). (LP: #787814)
+  * Widget, minor code cleanup: Declaration and assignment of local
+    variables in one line. Merged if condition checks. Added and removed
+    newlines. Added default case to switch (just a style issue). Removed
+    redundant brackets. Fixed indentation.
+  * window.cpp code cleanup: Declare variables outside of loops. Reduced
+    the scope of variables. Do not assign values to variables if those
+    values are not used. Always bail out of functions ASAP, do not
+    calculate stuff you might not need. Use pre- instead of postfix de-
+    and increments. Declaration and assignment of variables in one line.
+    Merged if condition checks. Added and removed brackets. Added and
+    removed newlines. Fixed indentation. Added TODOs (removal of magic
+    numbers).
+  * Fix for cube.cpp, regression r3720 - Inner sides of cube invisible
+    now. Wrong variable type was accidentially used, cullInv is of type
+    int, not bool. (LP: #1183852). (LP: #1184852, #1183852)
+  * src/output*.cpp cleanup: Return ASAP, do not calculate stuff you do
+    not need. Declaration and assignment of variables in one line.
+    Declare local variables outside of loops. Use prefix instead of
+    postfix increment. Added and removed newlines. Fixed indentation.
+  * Expo, code cleanup: Declaration of local variables outside of loops.
+    Use prefix instead of postfix increments. Declaration and assignment
+    of local variables in one line, if possible. Reduced the scope of
+    some variables. Removed redundant brackets. Used static_cast <>
+    (type) instead of (type) cast. Added and removed newlines if
+    appropriate. Fixed indentation. Added TODOs. Expo, speed
+    improvements: Do not calculate screen->vpSize ().width () and
+    screen->vpSize ().height () multiple times, instead save them in the
+    unsigned ints vpCountHorz and vpCountVert and use those variables
+    instead. Speed up the curve calculations by using additional
+    variables to save results to not have to re-calculate those all the
+    time. The new variables introduced are degToRad, screenWidth,
+    screenWidthSquared, curveDistSquaredPlusQuarter,
+    pOne2MinusCurveDist, v0Squared and v2Squared. Also introduced const
+    float halfGapX = gapX / 2.0 and used this variable in the
+    calculations of curveDistance and curveRadius. Simplified
+    calculations of this type: (M_PI / 180.0f) * curveAngle / 2.0, which
+    is equal to: (M_PI / 360.0f) * curveAngle Do not call
+    optionGetGroundSize (); twice, instead save the value in the float
+    groundSize and use that variable in the following calculations.
+    Removed the creation of the redundant bool hide, which is just used
+    once in an if-condition check. It does not help to have this bool.
+    Try to avoid redundant GL_BLEND state changes, they are expensive -
+    only enable GL_BLEND if it is disabled and just disable it, if it
+    was disabled before, otherwise do nothing. Try to avoid redundant GL
+    filter changes - just query the filter state if the mipmap option in
+    CCSM is enabled. Also just set back the filter to the previous state
+    if we actually changed it, otherwise do nothing. -5.5f * 2 = -11.0f.
+    No need to calculate M_PI / 180.0f 720 times: Calculate this value
+    once instead and save it in the const float mpi, use mpi in the
+    following looped calculations. Use const int scw in the same loop
+    instead of calling screen->width () 360 times. glow.cpp: Massively
+    increased calculation speed of the glow texture: No need for any
+    macros here -> removed them and replaced them with local variables.
+    Precalculate values, store them in local variables and use those in
+    the following calculations (new variables are the ints winRealX,
+    winRealY, winRealWidth, winRealHeight, halfWinRealWidth,
+    halfWinRealHeight, xPlusHalfWidth, yPlusHalfHeight, xPlusGlowOff,
+    yPlusGlowOff, xMinusGlowOff, yMinusGlowOff and the float glowPart).
+    Used w->geometry ().widthIncBorders () and w->geometry
+    ().heightIncBorders () to determine winRealWidth and winRealHeight.
+    Expo, fixes: Do not force "One wall per output" on the user, if his
+    displays use different resolutions. "One big wall" makes a lot of
+    sense for many multi-screen configs, where not all of the screens
+    have exactly the same resolution, so if the user explicitely chooses
+    this mode, Compiz should respect the user's choice. (LP: #1009592).
+    (LP: #1009592)
+  * Compiz, redundant and outdated files cleanup: Removed outdated NEWS
+    files. Removed outdated AUTHORS and ChangeLog files. Removed
+    plugins/freewins/COPYING - we do not need another copy of the GPL v2
+    here. Removed another copy of the GPL v2 from plugins/workarounds.
+    This will reduce package sizes, download time and bring some order
+    to chaos.
+  * Expo, .xml.in fixes: Better description of the plugin. Improved and
+    fixed tooltips. Moved the "Curve Strength" option closer to
+    "Deformation". Refreshed the quilt patch for Ubuntu: There is no
+    need to set the default distance to 0.005 as this setting has no
+    effect without deformation. Set default multi-screen mode to "One
+    wall per output" for Ubuntu, because "One big wall" works now for
+    all display configurations and could potentially change the
+    appearance for Ubuntu users. (LP: #1074487). (LP: #1074487)
+  * Added contribute directory. Added QtCreatorConfig.xml, a
+    configuration file for Qt Creator, which adjusts Qt Creator's C++
+    indentation style to be the same that is used in the Compiz project
+    (X11, mixed spaces and tabs).
+  * Mousepoll: Fixed mousepoll version mismatch. (COMPIZ_MOUSEPOLL_ABI
+    was missing) (LP: #1195659). (LP: #1195659)
+  * Expo: Simplified the GL filter handling.
+  * Fixed broken text in all plugins (missing COMPIZ_TEXT_ABI). (LP:
+    #1196493). (LP: #1196493)
+  * CCSM: Fixed vertical alignment of the text on the stylized keys.
+    (Shift, Super, Ctrl, Alt) (LP: #1196345). (LP: #1196345)
+  * Thumbnail, cleanup: Merged if condition checks. Declaration of
+    variables when they are needed (C++ style). Removed redundant
+    brackets. Removed useless "/* Could someone please explain how this
+    works */" comment. Removed extern const unsigned short
+    TEXT_DISTANCE, because this variable does not exist anymore (value
+    is configurable already). Changed if (something > 0.0) to if
+    (something), 10 times. Changed pointedWin = 0; to pointedWin =
+    NULL;. Used centerX () and centerY () abstractions from
+    compiz::window::Geometry to determine the icon center coordinates.
+    Added and removed newlines, if appropriate. Fixed indentation.
+    Thumbnail, code speedup: Return ASAP, do not calculate stuff you
+    might not need. No need for WIN_W (w) and WIN_H (w) macros, removed
+    those and replaced them with the local variables int winWidth, int
+    winHeight, int dockWidth and int dockHeight. No need for WIN_X (w)
+    and WIN_Y (w) macros, replaced those with int dockX and int dockY.
+    Introduced int tHeight = thumb.height;, int tWidth = thumb.width;,
+    int halfTWidth = tWidth / 2; and int halfTHeight = tHeight / 2; and
+    used those variables in the following calculations. Use
+    igMidPoint[0] and igMidPoint[1] as arguments in the screen-
+    >outputDeviceForPoint (arg1, arg2) function, instead of re-
+    calculating the arguments again. Thumbnail, GL speedup: Introduced
+    GLfloat wxPlusWidth = wx + width;, GLfloat wyPlusHeight = wy +
+    height;, GLfloat wxPlusWPlusOff = wxPlusWidth + off;, GLfloat
+    wyPlusHPlusOff = wyPlusHeight + off;, GLfloat wxMinusOff = wx - off;
+    and GLfloat wyMinusOff = wy - off; and used those coordinates in the
+    vertexData arrays. No need to re- calculate those values multiple
+    times. Just query optionGetShowDelay () once and use int showDelay
+    later. We just enable blending if it is currently disabled and
+    disable blending only, if it was disabled before.
+  * src/session.cpp cleanup: Declaration and assignment of local
+    variables in one line. (this *should* fix bug #1101405) Use pre-
+    instead of postfix increments. Added and removed newlines. Added
+    missing break (just a style issue). Fixed indentation. (LP:
+    #1101405). (LP: #1101405)
+  * Firepaint, code cleanup: Declare variables outside of loops.
+    Declaration and assignment of local variables in one line. Use pre-
+    instead of postfix increment. Removed redundant newlines. Removed
+    redundant casts. (from (float) optionGetFireColor) Removed redundant
+    brackets. Added missing break (style issue only). Added comment and
+    TODO. Fixed indentation. Firepaint, speedup: We just enable GL_BLEND
+    if it is disabled and we just disable GL_BLEND if it was disabled
+    before. Introduced the GLfloats xMinusW, xPlusW, yMinusH and yPlusH
+    to store calculated coordinates instead of recalculating them
+    multiple times. Introduced float fireLife = optionGetFireLife ();,
+    float fireWidth = optionGetFireSize ();, float fireHeight =
+    fireWidth * 1.5f; and bool mystFire = optionGetFireMystical (); and
+    used those variables inside the loop. Firepaint, .xml.in cleanup:
+    Firepaint now has 2 tabs, 'General' and 'Particle Settings'. The
+    name of this plugin is Firepaint, <short> should not contain the
+    description. Better description of the plugin. Uppercase option
+    titles. Punctuation for tooltips. Improved tooltips. Firepaint,
+    fixes: Initialize all class member variables in the ParticleSystem::
+    ParticleSystem () ctor (LP: #1101512, LP: #1101580). (LP: #1101512,
+    #1101580)
+  * img* plugins code cleanup: Always bail out of function ASAP, do not
+    calculate stuff you might not need. Declare variables outside of
+    loops so they won't be re-declared in each loop. Use prefix instead
+    of postfix increments. Declaration and assignment of variables in
+    one line. Merged if condition checks. Added and removed brackets.
+    Added and removed newlines, if appropriate. Minor code structure
+    improvements, declare variables when you need them, not much
+    earlier. Fixed indentation.
+  * Text, speed improvements: Introduced const float halfPi = PI / 2.0f;
+    and const float triHalfPi = halfPi * 3; and used those to draw the
+    rounded background. Introduced GLfloat xPlusWidth = x + width; and
+    GLfloat yMinusHeight = y - height; and used those coordinates for
+    the vertexData array. Text, cleanup: Declaration of local variables
+    outside of loops. Fixed indentation.
+  * cube.cpp, code cleanup: #include "privates.h", not <privates.h>.
+    Merged if condition checks. Declaration of variables, where you need
+    them to improve the code structure and readability. Use C++ standard
+    bool for topDir, bottomDir, allCaps and mCapsPainted[output] (bool
+    true/false instead Bool TRUE/FALSE). Initialize all of the class
+    member variables in the constructor. Replaced if (priv->mSky.size ()
+    > 0) with if (!priv->mSky.empty ()). Removed redundant brackets.
+    Fixed indentation. Added TODO. cube.cpp, code speedup: Do not call
+    optionGetInactiveOpacity () twice, instead save the value as float
+    inactiveOpacity and use this variable in the following calculation.
+    Introduced the variables float halfHsize = hsize / 2.0; and float
+    tsSize = 360.0f / size; and used those in following calculations to
+    not have to recalculate those values multiple times. Do not
+    calculate M_PI / sides and 2 * M_PI / sides multiple times in loops,
+    instead save those values in the GLfloats mps and tmps and use those
+    values inside the loops. Use GLdouble mDist2 = 0.5 / mDistance; in
+    the GLdouble clipPlane* arrays, instead of recalculating this value
+    multiple times. Use GLfloat oneMinusFStepX = 1.0f - fStepX; and
+    GLfloat oneMinusFStepY = 1.0f - fStepY; instead of calculating those
+    values multiple times. Use float outputWidth = outputPtr->width ();
+    and float outputHeight = outputPtr->height (); instead of calling
+    the functions multiple times. Introduced the GLfloat normInvert =
+    0.5f * invert; and used this variable instead of recalculating this
+    value multiple times. Introduced the GLfloats mSkyWidth and
+    mSkyHeight and used those in the following loops instead of calling
+    mSkySize.width () and mSkySize.height () multiple times. Try to
+    avoid redundant GL_BLEND state changes, because OpenGL will blindly
+    change the global state, no matter what it currently is set to and
+    that state change is expensive. So we query and save the actual
+    blending state in the variable GLboolean glBlendEnabled =
+    glIsEnabled (GL_BLEND); and just enable it if it isn't already and
+    just disable it, if it was disabled before. (LP: #1101422, LP:
+    #1195977) cube.cpp, other fixes: Return false in function
+    PrivateCubeScreen::updateGeometry (int, int) if sides should ever be
+    0, which should never happen, but should make Coverity happy. (LP:
+    #1101541) Initialize all class member variables in the
+    PrivateCubeScreen:: PrivateCubeScreen (CompScreen *) constructor.
+    (mTc, mNOutput, mOutput, mOutputMask, mCleared, mCapsPainted) (LP:
+    #1101575). (LP: #1195977, #1101541, #1101422, #1101575)
+  * plugins/ezoom/src/ezoom.cpp: Also initialize xtrans and ytrans in
+    the ctors. Just just enable blending if it is disabled and just
+    disable it if it was disabled before. Introduced the variables
+    oWidth, oHeight, halfOWidth and halfOHeight to speed up following
+    calculations. Return ASAP, do not calculate possibly redundant
+    stuff. Declaration and assignment of local variables in one line.
+    Improved readability. Added and removed newlines. Minor indentation
+    fixes. plugins/ezoom/ezoom.xml.in: Removed redundant whitespaces
+    from a tooltip. (LP: #1101572). (LP: #1101572)
+  * gears.cpp, gears.h: Do not render the gears if we are viewing the
+    cube from the inside - the gears are otherwise obstructing the
+    users' view on his workspaces. Print a warning to the console once
+    in this case. (LP: #1185819). (LP: #1185819)
+  * Animation code cleanup: Return ASAP, do not calculate stuff you
+    might not need. Declare CompWindow *w, AnimWindow *animWin,
+    PrivateAnimWindow *aw and Animation *curAnim outside the for loop.
+    grid.cpp: Declare float x, y, topiyFloat outside the for loop.
+    options.cpp: Declare unsigned int nOptions outside the foreach loop.
+    Use pre- instead of postfix de- and increments. Declaration and
+    assignment of variables in one line. Merged if condition checks.
+    Added and removed brackets. Added and removed newlines. Fixed
+    indentation. Also initialize the non-static class members
+    "mGridWidth" and "mGridHeight" in the GridAnim::GridAnim ctor. (LP:
+    #1101618). (LP: #1101618)
+
+  [ Andrea Azzarone ]
+  * Satisfy matchers on getProperty as soon as they are set. The order
+    of evaluation for matchers in Google Mock appears to be undefined -
+    this means that we can't rely on the first argument being matched
+    first and the second argument being matched afterwards. In turn,
+    this means that any GValue may be passed to a GValueMatch which, by
+    a design flaw, is unable to handle any values of a type it does not
+    expect (at least not without an API change). It will silently pass
+    the incorrect type to g_type_get_* which causes internal assertion
+    failures. At the moment we're just interleaving the calls to
+    getProperty and get_property - that way the expectations are
+    satisfied and go away as soon as they're set. This in turn means
+    that Google Mock only has to traverse one matcher rather than
+    multiple matchers. (LP: #1187468). (LP: #1187468)
+  * Extends invisible borders to the title bar too. (LP: #717444). (LP:
+    #717444)
+  * Disable grid/put_maximize_key on ubuntu.
+  * Port to new gmock. Disable some faling tests because of weird leaks.
+    (LP: #1185265)
+  * Update window geo only on new decoration size only if mapped. (LP:
+    #1198000). (LP: #1198000)
+  * Disable show_desktop_key by default on ubuntu. Will provide the same
+    option under the unityshell panel. (LP: #1204664)
+  * Use Glib::RefPtr<Glib::Source> in glib_integration_test. After the
+    fix of bug https://bugzilla.gnome.org/show_bug.cgi?id=561885
+    Glib::Source::~Source is called when both Source::unreference() and
+    SourceCallbackData::destroy_notify_callback() are called. (LP:
+    #1214459)
+  * Terminate scale on mouse click on an empty area. (LP: #1234624)
+
+  [ Sam Spilsbury ]
+  * Change the behaviour of undecorating windows. Previously when a
+    window was undecorated, we would shift it back to an appropriate
+    position according to its gravity member. That behaviour was
+    problematic because in the StaticGravity case the window has to just
+    stay in the same place. But then if you had a window with
+    StaticGravity which then did get a decoration and later removed it,
+    it would be placed as though it was decorated and appear to be in
+    the wrong place. The correct behaviour is to place all windows as
+    though they have decorations, and then when decorations are removed,
+    to move the window back to the corner as indicated in its gravity
+    and then expand its size to cover the obscured regions no longer
+    hidden because the decorations went away. (LP: #1165343). (LP:
+    #1165343)
+  * Added some new hooks to PluginClassHandler to allow a VTable to
+    specify if loaded. PluginClassHandler::get () was designed to simply
+    instantiate an instance of that class for the core structure, but it
+    did this without checking if the plugin was loaded. Added some new
+    methods to PluginClassHandler exposed by LoadedPluginClassBridge and
+    only accessible by those who implement PluginKey to specify globally
+    whether or not a plugin is actually loaded, so that
+    PluginClassHandler can return accordingly. Integration and unit
+    tests added as appropriate (LP: #1169620) (LP: #1101026). (LP:
+    #1101026, #1169620)
+  * Satisfy matchers on getProperty as soon as they are set. The order
+    of evaluation for matchers in Google Mock appears to be undefined -
+    this means that we can't rely on the first argument being matched
+    first and the second argument being matched afterwards. In turn,
+    this means that any GValue may be passed to a GValueMatch which, by
+    a design flaw, is unable to handle any values of a type it does not
+    expect (at least not without an API change). It will silently pass
+    the incorrect type to g_type_get_* which causes internal assertion
+    failures. At the moment we're just interleaving the calls to
+    getProperty and get_property - that way the expectations are
+    satisfied and go away as soon as they're set. This in turn means
+    that Google Mock only has to traverse one matcher rather than
+    multiple matchers. (LP: #1187468). (LP: #1187468)
+  * Revert revision 3278.
+  * Immediately update the window matrices and regions if the number of
+    textures changed. (LP: #1189369). (LP: #1189369)
+  * Provide a basic decor plugin acceptance test suite. This change
+    provides a simple acceptance test suite for the decor plugin. It
+    creates a fake window decorator (cdt::FakeDecorator) and allows
+    users to create fake decorations (eg cdt::FakePixmapDecoration)
+    which can be serialized as decoration properties and set on windows
+    under xorg-gtest. It also launches compiz with the opengl, composite
+    and decor plugins loaded and runs some basic tests. Among them:
+    BaseDecorAcceptance. Startup: Basic canary "can we start compiz with
+    these plugins" test
+    FakeDecoratorSessionOwnerNameSetOnSelectionOwner: Create a fake
+    decorator, ensure that libdecoration sets our session name "fake" on
+    the selection owner FakeDecoratorReceiveClientMessage: Create fake
+    decorator, ensure that libdecoration posts a client message to the
+    root window announcing that the new decorator exists.
+    DecorationSupportsWindowType: Create a fake decorator, announce
+    support for the WINDOW type decorations and ensure that the correct
+    atom is set on the session owner window.
+    DecorationSupportsPixmapType: Create a fake decorator, announce
+    support for the PIXMAP type decorations and ensure that the correct
+    atom is set on the session owner window.
+    DecorFakeDecoratorAcceptance. WindowDefaultFallbackNoExtents: By
+    default, newly created windows should recieve a fallback decoration
+    but they should not have any frame extents.
+    DecorWithPixmapDefaultsAcceptance. These tests create a default
+    pixmap decoration to use in the hypothetical situation that the
+    window decorator hasn't yet generated a decoration for this window.
+    FallbackRecieveInputFrameNotify: Verify that we get a
+    _COMPIZ_WINDOW_DECOR_INPUT_FRAME property set on the client when it
+    is created and mapped (eg, an input frame window was annonuced to be
+    created) FallbackHasInputFrameInParent: Verify that a second window
+    exists in the frame window after this message was recieved.
+    FallbackNormalWindowExtentOnDecoration: Verify that
+    _NET_FRAME_EXTENTS is set to the default window extents for the
+    default decoration when the window was mapped.
+    FallbackNormalWindowInputOnFrame: Verify that the input window
+    matches the extents set. PixmapDecoratedWindowAcceptance. These
+    tests create a new window and an associated unique decoration for
+    that window. MaximizeBorderExtentsOnMaximize: Maximize the window
+    and ensure that the correct border extents are used.
+    MaximizeBorderExtentsOnVertMaximize: Vertically maximize the window
+    and ensure that the correct border extents are used.
+    MaximizeBorderExtentsOnHorzMaximize: Horizontally maximize the
+    window and ensure that the correct border extents are used.
+    MaximizeFrameWindowSizeEqOutputSize: Maximie the window and ensure
+    that the frame window exactly equals the output size.
+    VertMaximizeFrameWindowSizeEqOutputYHeight: Maximize the window and
+    ensure that the frame window's Y and Height values are consistent
+    with the output size. HorzMaximizeFrameWindowSizeEqOutputXWidth:
+    Ditto horizontal maximization.
+    DISABLED_VertMaximizeFrameWindowSizeSameXWidth: Maximize the window
+    vertically and ensure that the frame window's border-relative X
+    position and width does not change. This test is disabled, as the
+    behavior in compiz is currently broken, (but it means that we can
+    fix it later and enable the test).
+    DISABLED_HorzMaximizeFrameWindowSizeSameYHeight Maximize the window
+    horizontally and ensure that the frame window's border-relative Y
+    position and height does not change. This test is disabled, as the
+    behavior in compiz is currently broken, (but it means that we can
+    fix it later and enable the test). (LP: #1188900). (LP: #1188900)
+  * Only mark for no further instantiations once we've finished
+    destructing the plugin (LP: #1193596). (LP: #1193596)
+  * Add more acceptance tests for the decor plugin.
+    PixmapDecoratedWindowAcceptance. UndecoratedWindowExpandToOrigSize
+    Test that upon undecoration, the window has exactly the same
+    geometry as it did before decoration.
+    DISABLED_UndecorateStaticGravityWindow Tests that for windows with a
+    static gravity, the window has exactly the same geometry as it did
+    before decoration. Disabled, as core is currently not moving the
+    window with the static gravity back to where it started.
+    AdjustmentExtents/PixmapDecorationAdjustment.
+    AdjustRestoredWindowBorderMovesClient/P Test that changing the
+    border extents causes the client window's absolute geometry to
+    change. DISABLED_AdjustRestoredWindowBorderShrinkClient/P Tests that
+    changing the border extents causes the client window's absolute
+    geometry to shrink by the amount of border. Disabled, as the current
+    behavior is to expand the frame window as opposed to shrinking the
+    client (but this will be changed).
+    DISABLED_ClientExpandsAsBorderShrinks/P Tests that as the border
+    shrinks away, the client expands back to its original size.
+    Disabled, as the current behavior is to expand the frame window as
+    opposed to shrinking the client (but this will be changed).
+    DISABLED_ClientExpandsAsBorderShrinksWhilstMaximized/P Tests that
+    even if the client is maximized, if the restored border shrinks away
+    it demaximizes back to the same position while also accounting for
+    any change in the restored window border size. Disabled, as the
+    current behavior is to expand the frame window as opposed to
+    shrinking the client (but this will be changed).
+    DISABLED_ClientExpandsAsBorderShrinksWhilstUndecorated/P Tests that
+    even when the client is not permitted to be decorated because the
+    decoration hint was removed, when it is redecorated it will be moved
+    to the correct position taking into account any changes in its
+    border size. Disabled, as the current behavior is to expand the
+    frame window as opposed to shrinking the client (but this will be
+    changed). DISABLED_AdjustRestoredWindowInputNoMoveClient/P Tests
+    that adjusting the input extents (as independent from the border
+    extents) of the client does not cause the client to move. Disabled,
+    as this behavior appears to be broken in core. Move the
+    "GetImmediateParent" function into the compiz::testing namespace so
+    that it can be used by other tests. (LP: #1188900)
+  * Unrevert 3728, fix failing tests. Change the behaviour of
+    undecorating windows. Previously when a window was undecorated, we
+    would shift it back to an appropriate position according to its
+    gravity member. That behaviour was problematic because in the
+    StaticGravity case the window has to just stay in the same place.
+    But then if you had a window with StaticGravity which then did get a
+    decoration and later removed it, it would be placed as though it was
+    decorated and appear to be in the wrong place. The correct behaviour
+    is to place all windows as though they have decorations, and then
+    when decorations are removed, to move the window back to the corner
+    as indicated in its gravity and then expand its size to cover the
+    obscured regions no longer hidden because the decorations went away.
+    (LP: #1165343).   1. Completely remove decorOffsetMove and other
+    related code from      decor.cpp. Put the logic to handle the
+    window->input () - window->border ()      placement offset inside of
+    setWindowFrameExtents instead. Now the window      will always be
+    offset from its original non-decorated position to the new
+         decorated position, rather than having to guess between
+    decoration sizes.   2. Make saveGeometry and restoreGeometry work
+    relative to window->border ()      as opposed to including it in the
+    saved geometry. It is possible that the      border size might
+    change during maximization, as such, we don't want to      save the
+    position with the border before maximizing. Instead save the
+    position      as if it were never decorated so that when the window
+    is restored it can be      restored to its original position and
+    then adjusted for its new border size.   3. Fix a few typoes in the
+    tests.   4. Moved some commonly used matchers into compiz::testing
+      5. Make COMPIZ_PLUGIN_DIR accept multiple directories and look in
+    each one      of them for the plugin   6. Set COMPIZ_PLUGIN_DIR
+    appropriately for each plugin that we wish to load      on startup
+    so that we load locally built plugins as opposed to installed
+         ones.   7. Uncomment compiz_discover_tests for the acceptance
+    tests. Now they are      run by default. (LP: #1195522). (LP:
+    #1195522, #1165343)
+  * Add a simple script for making releases.
+  * Port to new gmock. Disable some faling tests because of weird leaks.
+    (LP: #1185265)
+  * Don't add the frame to the toplevel stack if it hasn't been created
+    yet. In the event that a window is unreparented or destroyed, we
+    usually need to add its frame window to the toplevel window stack
+    until the time at which we recieve a DestroyNotify for it, as there
+    may be incoming ConfigureNotify events puporting to stack other
+    windows relative to that frame. However, this does not apply in the
+    case where we have not yet received a CreateNotify for the frame
+    window. In that case, it is not possible for any stacking requests
+    to be made relative to this window, so it does not need to be added
+    immediately. Instead, we can add it at the time that we recieve a
+    CreateNotify for it as a regular override redirect window until the
+    time that it is later destroyed. (LP: #1171314). (LP: #1171314)
+  * Remove redundant src/logmessage/include/core/logmessage.h (LP:
+    #1067246). (LP: #1067246)
+  * Adjust acceptance tests for the fix to LP: #1198000 1. Always set
+    frame extents before updating the frame 2. Added
+    COMPIZ_NO_CONFIGURE_BUFFER_LOCKS so that we don't have to deal with
+    the delayed configure requests logic in the tests where it does not
+    help 3. Split restoredDecorationSize in to
+    restoredDecorationBorderSize and restoredDecorationInputSize so that
+    we can measure the size of the decoration both in terms of its
+    visible and invisible border 4. Wait for the default decoration
+    properly 5. Capture the initial geometry of the window with and
+    without decorations when the window gets its first decoration. Use
+    these values to calculate the size changes in the window from then
+    on instead of its creation values 6. Just flag when the window was
+    first decorated in setWindowFrameExtents rather than checking if it
+    is mapped. We only want to not resize the window once. (LP:
+    #1198000)
+  * Release version 0.9.10.0
+  * Bump VERSION to 0.9.10.2
+  * Ensure that the frame region is always set as soon as the window is
+    decorated. Further ensure that the window decoration isn't
+    needlessly reset if the window already had one. Refactored XShape
+    usage into a common function. Added tests to verify the behaviour of
+    shape set on initially creating a decorated window and also upon
+    changing the input frame window shape (LP: #1158267). (LP: #1158267)
+  * Add support for the GLX_EXT_buffer_age extension on hardware that
+    supports it, which should result in a nice speed-boost due to the
+    fact that we no longer have to abuse fillrate by retaining old frame
+    contents, and instead asking the driver how defined the current
+    frame is. (LP: #1024304)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 14 Feb 2014 22:54:33 +0000
 
 compiz (1:0.9.10+13.10.20131011-0ubuntu4) trusty; urgency=medium
 
