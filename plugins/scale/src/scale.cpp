@@ -1614,6 +1614,8 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		{
 		    CompPoint pointer (button->x_root, button->y_root);
 		    CompRect  workArea (screen->workArea ());
+		    workArea.setX (workArea.x() + optionGetXOffset ());
+		    workArea.setY (workArea.y() + optionGetYOffset ());
 
 		    if (workArea.contains (pointer))
 		    {
@@ -1627,6 +1629,8 @@ PrivateScaleScreen::handleEvent (XEvent *event)
                 {
                     CompPoint pointer (button->x_root, button->y_root);
                     CompRect  workArea (screen->workArea ());
+		    workArea.setX (workArea.x() + optionGetXOffset ());
+		    workArea.setY (workArea.y() + optionGetYOffset ());
 
                     if (workArea.contains (pointer))
                     {
