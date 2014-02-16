@@ -13,7 +13,7 @@ compiz (1:0.9.11-0ubuntu1) UNRELEASED; urgency=low
 
   [ Robert Ancell ]
   * debian/control: Depend on gnome-settings-daemon-schemas so can work with
-    unity-control-center (LP: #1277487)
+    unity-settings-daemon (LP: #1277487)
 
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Wed, 23 Oct 2013 08:17:03 +0300
 
