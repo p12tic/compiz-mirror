@@ -11,6 +11,10 @@ compiz (1:0.9.11-0ubuntu1) UNRELEASED; urgency=low
   [ Sebastien Bacher ]
   * debian/compiz-gnome.links: lists keybinding in unity-control-center
 
+  [ Robert Ancell ]
+  * debian/control: Depend on gnome-settings-daemon-schemas so can work with
+    unity-control-center (LP: #1277487)
+
  -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Wed, 23 Oct 2013 08:17:03 +0300
 
 compiz (1:0.9.10+13.10.20131011-0ubuntu4) trusty; urgency=medium
