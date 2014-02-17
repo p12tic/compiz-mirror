@@ -361,7 +361,7 @@ Index: scale-xy-offsets/plugins/scale/scale.xml.in
  				<_short>Speed</_short>
  				<_long>Scale speed</_long>
 -				<default>1.5</default>
-+				<default>5.5</default>
++				<default>5.0</default>
  				<min>0.1</min>
  				<max>50</max>
  				<precision>0.1</precision>
