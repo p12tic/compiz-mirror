@@ -361,6 +361,12 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 		    break;
 	    }
 	}
+
+	if (priv->window->id() == spScreen->selectedWindow)
+	    spScreen->selectedWindow = 0;
+
+	if (priv->window->id() == spScreen->hoveredWindow)
+	    spScreen->hoveredWindow = 0;
     }
 
     return drawScaled;
