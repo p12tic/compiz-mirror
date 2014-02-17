@@ -1,3 +1,11 @@
+compiz (1:0.9.11+14.04.20140217-0ubuntu1) trusty; urgency=low
+
+  [ Robert Ancell ]
+  * Depend on gnome-settings-daemon-schemas so can work with unity-
+    settings-daemon (LP: #1277487)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 17 Feb 2014 21:46:32 +0000
+
 compiz (1:0.9.11+14.04.20140214-0ubuntu1) trusty; urgency=low
 
   [ Timo Jyrinki ]
