@@ -322,7 +322,7 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 	attrib.opacity *= factor;
     }
 
-    if (priv->adjust || priv->slot)
+    if ((priv->adjust || priv->slot) && priv->isScaleWin())
     {
 	if (priv->window->id () != spScreen->selectedWindow &&
 	    spScreen->opacity != OPAQUE                     &&
