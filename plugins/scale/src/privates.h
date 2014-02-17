@@ -169,8 +169,6 @@ class PrivateScaleWindow :
 	CompositeWindow    *cWindow;
 	GLWindow           *gWindow;
 	ScaleWindow        *sWindow;
-	ScaleScreen        *sScreen;
-	PrivateScaleScreen *spScreen;
 
 	ScaleSlot *slot;
 
