@@ -26,11 +26,13 @@
 				<option name="x_offset" type="int">
 				<_short>X Offset</_short>
 				<_long>Horizontal offset (in pixels).</_long>
+				<min>0</min>
 				<default>0</default>
 			</option>
 			<option name="y_offset" type="int">
 				<_short>Y Offset</_short>
 				<_long>Vertical offset (in pixels).</_long>
+				<min>0</min>
 				<default>0</default>
 			</option>
 			<option name="speed" type="float">

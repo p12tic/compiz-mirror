@@ -1,8 +1,8 @@
 === modified file 'metadata/core.xml.in'
-Index: compiz/metadata/core.xml.in
+Index: scale-xy-offsets/metadata/core.xml.in
 ===================================================================
---- compiz.orig/metadata/core.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/metadata/core.xml.in	2013-10-08 17:00:56.916757966 +0200
+--- scale-xy-offsets.orig/metadata/core.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/metadata/core.xml.in	2014-02-17 21:25:57.408121419 +0100
 @@ -139,7 +139,7 @@
  			<option name="focus_prevention_match" type="match">
  			<_short>Focus Prevention Windows</_short>
@@ -65,10 +65,10 @@ Index: compiz/metadata/core.xml.in
  			<min>1</min>
  			<max>32</max>
  			</option>
-Index: compiz/plugins/animation/animation.xml.in
+Index: scale-xy-offsets/plugins/animation/animation.xml.in
 ===================================================================
---- compiz.orig/plugins/animation/animation.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/animation/animation.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/animation/animation.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/animation/animation.xml.in	2014-02-17 21:25:57.408121419 +0100
 @@ -36,7 +36,7 @@
  	    <extensible/>
  	    <sort start="2"/>
@@ -207,10 +207,10 @@ Index: compiz/plugins/animation/animation.xml.in
  	    <min>0</min>
  	    <max>1</max>
  	    <precision>0.01</precision>
-Index: compiz/plugins/decor/decor.xml.in
+Index: scale-xy-offsets/plugins/decor/decor.xml.in
 ===================================================================
---- compiz.orig/plugins/decor/decor.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/decor/decor.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/decor/decor.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/decor/decor.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -31,7 +31,7 @@
  		<option name="active_shadow_opacity" type="float">
  		    <_short>Shadow Opacity</_short>
@@ -247,10 +247,10 @@ Index: compiz/plugins/decor/decor.xml.in
  	    </option>
  	    <option name="mipmap" type="bool">
  		<_short>Mipmap</_short>
-Index: compiz/plugins/fade/fade.xml.in
+Index: scale-xy-offsets/plugins/fade/fade.xml.in
 ===================================================================
---- compiz.orig/plugins/fade/fade.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/fade/fade.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/fade/fade.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/fade/fade.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -10,6 +10,7 @@
  	    </requirement>
  	    <relation type="after">
@@ -268,10 +268,10 @@ Index: compiz/plugins/fade/fade.xml.in
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
-Index: compiz/plugins/gnomecompat/gnomecompat.xml.in
+Index: scale-xy-offsets/plugins/gnomecompat/gnomecompat.xml.in
 ===================================================================
---- compiz.orig/plugins/gnomecompat/gnomecompat.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/gnomecompat/gnomecompat.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/gnomecompat/gnomecompat.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/gnomecompat/gnomecompat.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -53,6 +53,7 @@
  		<option name="run_command_terminal_key" type="key">
  		    <_short>Open a terminal</_short>
@@ -280,10 +280,10 @@ Index: compiz/plugins/gnomecompat/gnomecompat.xml.in
  		</option>
  	    </group>
  	</options>
-Index: compiz/plugins/place/place.xml.in
+Index: scale-xy-offsets/plugins/place/place.xml.in
 ===================================================================
---- compiz.orig/plugins/place/place.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/place/place.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/place/place.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/place/place.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -20,8 +20,8 @@
  	    <option name="mode" type="int">
  		<_short>Placement Mode</_short>
@@ -295,10 +295,10 @@ Index: compiz/plugins/place/place.xml.in
  		<max>5</max>
  		<desc>
  		    <value>0</value>
-Index: compiz/plugins/resize/resize.xml.in
+Index: scale-xy-offsets/plugins/resize/resize.xml.in
 ===================================================================
---- compiz.orig/plugins/resize/resize.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/resize/resize.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/resize/resize.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/resize/resize.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -28,7 +28,7 @@
  	    <option name="mode" type="int">
  		<_short>Default Resize Mode</_short>
@@ -343,11 +343,11 @@ Index: compiz/plugins/resize/resize.xml.in
  		</default>
  	    </option>
  	    <subgroup>
-Index: compiz/plugins/scale/scale.xml.in
+Index: scale-xy-offsets/plugins/scale/scale.xml.in
 ===================================================================
---- compiz.orig/plugins/scale/scale.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/scale/scale.xml.in	2013-10-08 17:00:56.920757955 +0200
-@@ -19,14 +19,14 @@
+--- scale-xy-offsets.orig/plugins/scale/scale.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/scale/scale.xml.in	2014-02-17 21:31:47.058611881 +0100
+@@ -19,7 +19,7 @@
  			<option name="spacing" type="int">
  				<_short>Spacing</_short>
  				<_long>Space between windows</_long>
@@ -356,6 +356,7 @@ Index: compiz/plugins/scale/scale.xml.in
  				<min>0</min>
  				<max>250</max>
  			</option>
+@@ -36,7 +36,7 @@
  			<option name="speed" type="float">
  				<_short>Speed</_short>
  				<_long>Scale speed</_long>
@@ -364,7 +365,7 @@ Index: compiz/plugins/scale/scale.xml.in
  				<min>0.1</min>
  				<max>50</max>
  				<precision>0.1</precision>
-@@ -34,7 +34,7 @@
+@@ -44,7 +44,7 @@
  			<option name="timestep" type="float">
  				<_short>Timestep</_short>
  				<_long>Scale timestep</_long>
@@ -373,7 +374,7 @@ Index: compiz/plugins/scale/scale.xml.in
  				<min>0.1</min>
  				<max>50</max>
  				<precision>0.1</precision>
-@@ -47,7 +47,7 @@
+@@ -57,7 +57,7 @@
  			<option name="opacity" type="int">
  				<_short>Opacity</_short>
  				<_long>Amount of opacity in percent</_long>
@@ -382,7 +383,7 @@ Index: compiz/plugins/scale/scale.xml.in
  				<min>0</min>
  				<max>100</max>
  			</option>
-@@ -56,7 +56,7 @@
+@@ -66,7 +66,7 @@
  				<_long>Overlay an icon on windows once they are scaled</_long>
  				<min>0</min>
  				<max>2</max>
@@ -391,7 +392,7 @@ Index: compiz/plugins/scale/scale.xml.in
  				<desc>
  					<value>0</value>
  					<_name>None</_name>
-@@ -97,7 +97,7 @@
+@@ -107,7 +107,7 @@
  				<_long>Selects where windows are scaled if multiple output devices are used.</_long>
  				<min>0</min>
  				<max>1</max>
@@ -400,7 +401,7 @@ Index: compiz/plugins/scale/scale.xml.in
  				<desc>
  					<value>0</value>
  					<_name>On current output device</_name>
-@@ -113,7 +113,7 @@
+@@ -123,7 +123,7 @@
  			<option name="key_bindings_toggle" type="bool">
  			    <_short>Key Bindings Toggle Scale Mode</_short>
  			    <_long>Key bindings toggle scale mode instead of enabling it when pressed and disabling it when released.</_long>
@@ -409,7 +410,7 @@ Index: compiz/plugins/scale/scale.xml.in
  			</option>
  			<option name="button_bindings_toggle" type="bool">
  			    <_short>Button Bindings Toggle Scale Mode</_short>
-@@ -123,15 +123,12 @@
+@@ -133,15 +133,12 @@
  			<option name="initiate_edge" type="edge">
  				<_short>Initiate Window Picker</_short>
  				<_long>Layout and start transforming windows</_long>
@@ -426,10 +427,10 @@ Index: compiz/plugins/scale/scale.xml.in
  			</option>
  			<option name="initiate_button" type="button">
  				<_short>Initiate Window Picker</_short>
-Index: compiz/plugins/staticswitcher/staticswitcher.xml.in
+Index: scale-xy-offsets/plugins/staticswitcher/staticswitcher.xml.in
 ===================================================================
---- compiz.orig/plugins/staticswitcher/staticswitcher.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/staticswitcher/staticswitcher.xml.in	2013-10-08 17:00:56.920757955 +0200
+--- scale-xy-offsets.orig/plugins/staticswitcher/staticswitcher.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/staticswitcher/staticswitcher.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -11,7 +11,6 @@
  	    <relation type="after">
  		<plugin>composite</plugin>
@@ -506,10 +507,10 @@ Index: compiz/plugins/staticswitcher/staticswitcher.xml.in
  			<desc>
  			    <value>0</value>
  			    <_name>None</_name>
-Index: compiz/plugins/vpswitch/vpswitch.xml.in
+Index: scale-xy-offsets/plugins/vpswitch/vpswitch.xml.in
 ===================================================================
---- compiz.orig/plugins/vpswitch/vpswitch.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/vpswitch/vpswitch.xml.in	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/plugins/vpswitch/vpswitch.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/vpswitch/vpswitch.xml.in	2014-02-17 21:25:57.412121402 +0100
 @@ -95,13 +95,11 @@
  				<option name="next_button" type="button">
  					<_short>Move Next</_short>
@@ -524,10 +525,10 @@ Index: compiz/plugins/vpswitch/vpswitch.xml.in
  					<internal/>
  				</option>
  				<option name="initiate_button" type="button">
-Index: compiz/plugins/wall/wall.xml.in
+Index: scale-xy-offsets/plugins/wall/wall.xml.in
 ===================================================================
---- compiz.orig/plugins/wall/wall.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/wall/wall.xml.in	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/plugins/wall/wall.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/wall/wall.xml.in	2014-02-17 21:25:57.416121383 +0100
 @@ -30,12 +30,12 @@
  				<option name="miniscreen" type="bool">
  					<_short>Show Live Viewport Previews</_short>
@@ -684,10 +685,10 @@ Index: compiz/plugins/wall/wall.xml.in
  				</option>
  				<option name="edgeflip_dnd" type="bool">
  					<_short>Edge Flip DnD</_short>
-Index: compiz/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
+Index: scale-xy-offsets/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
 ===================================================================
---- compiz.orig/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp	2014-02-17 21:25:57.416121383 +0100
 @@ -46,7 +46,7 @@
  
  namespace
@@ -697,10 +698,10 @@ Index: compiz/tests/system/xorg-gtest/tests/compiz_xorg_gtest_ewmh.cpp
  unsigned int DEFAULT_VIEWPORT_HEIGHT = 1;
  
  bool Advance (Display *d, bool r)
-Index: compiz/plugins/grid/grid.xml.in
+Index: scale-xy-offsets/plugins/grid/grid.xml.in
 ===================================================================
---- compiz.orig/plugins/grid/grid.xml.in	2013-12-04 12:23:44.021963832 -0500
-+++ compiz/plugins/grid/grid.xml.in	2013-12-04 12:24:43.885963254 -0500
+--- scale-xy-offsets.orig/plugins/grid/grid.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/grid/grid.xml.in	2014-02-17 21:25:57.416121383 +0100
 @@ -68,12 +68,12 @@
  		<option name="put_maximize_key" type="key">
  		    <_short>Maximize Key</_short>
@@ -716,10 +717,10 @@ Index: compiz/plugins/grid/grid.xml.in
  		</option>
  		<option name="left_maximize" type="key">
  		    <_short>Left Maximize</_short>
-Index: compiz/plugins/ezoom/ezoom.xml.in
+Index: scale-xy-offsets/plugins/ezoom/ezoom.xml.in
 ===================================================================
---- compiz.orig/plugins/ezoom/ezoom.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/ezoom/ezoom.xml.in	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/plugins/ezoom/ezoom.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/ezoom/ezoom.xml.in	2014-02-17 21:25:57.416121383 +0100
 @@ -30,7 +30,7 @@
  		<option type="button" name="zoom_in_button">
  		    <_short>Zoom In Button</_short>
@@ -756,10 +757,10 @@ Index: compiz/plugins/ezoom/ezoom.xml.in
  		    </option>
  		</subgroup>
  	    </group>
-Index: compiz/plugins/expo/expo.xml.in
+Index: scale-xy-offsets/plugins/expo/expo.xml.in
 ===================================================================
---- compiz.orig/plugins/expo/expo.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/expo/expo.xml.in	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/plugins/expo/expo.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/expo/expo.xml.in	2014-02-17 21:25:57.416121383 +0100
 @@ -17,6 +17,7 @@
  		<plugin>wobbly</plugin>
  		<plugin>animation</plugin>
@@ -854,10 +855,10 @@ Index: compiz/plugins/expo/expo.xml.in
  		    </option>
  		    <option name="ground_color1" type="color">
  			<_short>Ground Color (near)</_short>
-Index: compiz/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
+Index: scale-xy-offsets/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml
 ===================================================================
---- compiz.orig/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2014-02-17 21:25:57.416121383 +0100
 @@ -10,6 +10,9 @@
  	<key type="s" name="command-screenshot">
  	    <default>"gnome-screenshot"</default>
@@ -878,10 +879,10 @@ Index: compiz/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gsc
  	<key type="s" name="command-12">
  	    <default>""</default>
  	</key>
-Index: compiz/plugins/commands/commands.xml.in
+Index: scale-xy-offsets/plugins/commands/commands.xml.in
 ===================================================================
---- compiz.orig/plugins/commands/commands.xml.in	2013-10-08 17:00:56.932757923 +0200
-+++ compiz/plugins/commands/commands.xml.in	2013-10-08 17:00:56.924757944 +0200
+--- scale-xy-offsets.orig/plugins/commands/commands.xml.in	2014-02-17 21:25:57.420121366 +0100
++++ scale-xy-offsets/plugins/commands/commands.xml.in	2014-02-17 21:25:57.416121383 +0100
 @@ -117,7 +117,7 @@
  		<option name="command20" type="string">
  		    <_short>Command line 20</_short>
