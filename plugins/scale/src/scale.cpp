@@ -435,15 +435,15 @@ PrivateScaleScreen::layoutSlotsForArea (const CompRect& workArea,
     int spacing = optionGetSpacing ();
     int nSlots  = 0;
 
-    y      = workArea.y () + spacing;
-    height = (workArea.height () - (lines + 1) * spacing) / lines;
+    y      = optionGetYOffset() + workArea.y () + spacing;
+    height = (workArea.height () - optionGetYOffset() - (lines + 1) * spacing) / lines;
 
     for (int i = 0; i < lines; i++)
     {
 	n = MIN (nWindows - nSlots, ceilf ((float) nWindows / lines));
 
-	x     = workArea.x () + spacing;
-	width = (workArea.width () - (n + 1) * spacing) / n;
+	x     = optionGetXOffset() + workArea.x () + spacing;
+	width = (workArea.width () - optionGetXOffset() - (n + 1) * spacing) / n;
 
 	for (int j = 0; j < n; j++)
 	{
@@ -1614,6 +1614,8 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		{
 		    CompPoint pointer (button->x_root, button->y_root);
 		    CompRect  workArea (screen->workArea ());
+		    workArea.setX (workArea.x() + optionGetXOffset ());
+		    workArea.setY (workArea.y() + optionGetYOffset ());
 
 		    if (workArea.contains (pointer))
 		    {
@@ -1622,19 +1624,21 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 			screen->enterShowDesktopMode ();
 		    }
 		}
-                else if (optionGetClickOnDesktop () == 2 &&
-                         event->xbutton.button == Button1)
-                {
-                    CompPoint pointer (button->x_root, button->y_root);
-                    CompRect  workArea (screen->workArea ());
+		else if (optionGetClickOnDesktop () == 2 &&
+			 event->xbutton.button == Button1)
+		{
+		    CompPoint pointer (button->x_root, button->y_root);
+		    CompRect  workArea (screen->workArea ());
+		    workArea.setX (workArea.x() + optionGetXOffset ());
+		    workArea.setY (workArea.y() + optionGetYOffset ());
 
-                    if (workArea.contains (pointer))
-                    {
-                        scaleTerminate (&optionGetInitiateEdge (), 0, o);
-                        scaleTerminate (&optionGetInitiateKey (), 0, o);
-                    }
-                }
-            }
+		    if (workArea.contains (pointer))
+		    {
+			scaleTerminate (&optionGetInitiateEdge (), 0, o);
+			scaleTerminate (&optionGetInitiateKey (), 0, o);
+		    }
+		}
+	    }
 	    break;
 	case MotionNotify:
 	    if (screen->root () == event->xmotion.root &&
