@@ -1,3 +1,16 @@
+compiz (1:0.9.11+14.04.20140218-0ubuntu1) trusty; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * Scale: add {x,y_offset} options so we can move the scale despite the
+    workarea (LP: #1280616)
+  * Scale: never draw a window that is not matched, reset the state of
+    hovered and selected windows Also, increase the scale speed and
+    distances, to match spread designs more.
+  * UbuntuConfig: go back to use Normal Resize mode by default (LP:
+    #1281370)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 18 Feb 2014 12:59:56 +0000
+
 compiz (1:0.9.11+14.04.20140217-0ubuntu1) trusty; urgency=low
 
   [ Robert Ancell ]
