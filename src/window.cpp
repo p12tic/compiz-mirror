@@ -6341,6 +6341,7 @@ PrivateWindow::PrivateWindow () :
     shaded (false),
     hidden (false),
     grabbed (false),
+    alreadyDecorated (false),
 
     desktop (0),
 
@@ -6588,14 +6589,20 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	CompSize sizeDelta;
 
 	/* We don't want to change the size of the window in general, but this is
-	 * needed in case that the window is maximized, so that it will extend
+	 * needed in case that a normal windows has just been decorated or if
+	 * the window was maximized or fullscreen, so that it will extend
 	 * to use the whole available space. */
-	if ((state() & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+
+	if (((priv->type & CompWindowTypeNormalMask) && !priv->alreadyDecorated) ||
+	    (priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE ||
+	    (priv->state & CompWindowStateFullscreenMask) ||
+	    (priv->type & CompWindowTypeFullscreenMask))
 	{
 	    sizeDelta.setWidth (-((b->left + b->right) -
 				  (priv->border.left + priv->border.right)));
 	    sizeDelta.setHeight (-((b->top + b->bottom) -
 				   (priv->border.top + priv->border.bottom)));
+	    priv->alreadyDecorated = true;
 	}
 
 	priv->serverInput = *i;
