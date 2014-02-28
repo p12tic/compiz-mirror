@@ -43,6 +43,7 @@ struct _Modifier
 {
     { "<Shift>",      ShiftMask          },
     { "<Control>",    ControlMask        },
+    { "<Ctrl>",       ControlMask        },
     { "<Primary>",    ControlMask        },
     { "<Mod1>",       Mod1Mask           },
     { "<Mod2>",       Mod2Mask           },
