@@ -456,58 +456,6 @@ namespace
 
 namespace
 {
-    std::string RUN_COMMAND_SCREENSHOT_KEY ("run_command_screenshot_key");
-    std::string SCREENSHOT ("screenshot");
-    std::string SCREENSHOT_BINDING ("<Alt>Print");
-    std::string RUN_COMMAND_WINDOW_SCREENSHOT_KEY ("run_command_window_screenshot_key");
-    std::string WINDOW_SCREENSHOT ("window_screenshot");
-    std::string WINDOW_SCREENSHOT_BINDING ("<Control><Alt>Print");
-    std::string RUN_COMMAND_TERMINAL_KEY ("run_command_terminal_key");
-    std::string TERMINAL ("terminal");
-    std::string TERMINAL_BINDING ("<Control><Alt>t");
-}
-
-class CCSGNOMEIntegrationTestReadIntegratedMediaKeys :
-    public CCSGNOMEIntegrationTestReadIntegrated,
-    public WithParamInterface <IntegratedMediaKeysParam>
-{
-};
-
-TEST_P (CCSGNOMEIntegrationTestReadIntegratedMediaKeys, TestReadIntegratedMediaKey)
-{
-    const std::string settingName (GetParam ().settingName);
-    CCSSettingValue   *v = MakeSettingValue ();
-    v->value.asString = strdup (GetParam ().keyValueString.c_str ());
-
-    mIntegratedSetting = createIntegratedSettingCompositionFromMock (MOCK_PLUGIN,
-								     settingName,
-								     TypeString,
-								     OptionSpecial,
-								     MOCK_GNOME_NAME,
-								     &ccsDefaultObjectAllocator);
-    SetNames (mSettingMock, mPluginMock, settingName, MOCK_PLUGIN);
-    EXPECT_CALL (Mock (*mIntegratedSetting), readValue (TypeString)).WillOnce (Return (v));
-    EXPECT_CALL (mSettingMock, setKey (Eq (GetParam ().keyValue), IsTrue ()));
-
-    EXPECT_THAT (ccsIntegrationReadOptionIntoSetting (Real (mIntegration),
-						      NULL,
-						      mSetting.get (),
-						      Real (*mIntegratedSetting)), IsTrue ());
-}
-
-INSTANTIATE_TEST_CASE_P (CCSGNOMEMediaKeys, CCSGNOMEIntegrationTestReadIntegratedMediaKeys,
-			 Values (IntegratedMediaKeysParam (RUN_COMMAND_SCREENSHOT_KEY,
-							   SCREENSHOT,
-							   SCREENSHOT_BINDING),
-				 IntegratedMediaKeysParam (RUN_COMMAND_WINDOW_SCREENSHOT_KEY,
-							   WINDOW_SCREENSHOT,
-							   WINDOW_SCREENSHOT_BINDING),
-				 IntegratedMediaKeysParam (RUN_COMMAND_TERMINAL_KEY,
-							   TERMINAL,
-							   TERMINAL_BINDING)));
-
-namespace
-{
     const std::string DEFAULT_MOUSE_BUTTON_MODIFIERS_STRING ("<Alt>");
     const std::string GNOME_MOUSE_BUTTON_MODIFIERS_STRING ("<Super>");
     const unsigned int DEFAULT_MOUSE_BUTTON_MODIFIERS =
@@ -842,53 +790,6 @@ TEST_F (CCSGNOMEIntegrationTestWriteIntegrated, TestWriteClickToFocus)
 					  mSetting.get (),
 					  Real (*mIntegratedSetting));
 }
-
-class CCSGNOMEIntegrationTestWriteIntegratedMediaKeys :
-    public CCSGNOMEIntegrationTestWriteIntegrated,
-    public WithParamInterface <IntegratedMediaKeysParam>
-{
-};
-
-TEST_P (CCSGNOMEIntegrationTestWriteIntegratedMediaKeys, TestWriteIntegratedMediaKey)
-{
-    const std::string                   settingName (GetParam ().settingName);
-    boost::shared_ptr <CCSSettingValue> compizValue (MakeAutoDestroySettingValue (TypeKey));
-    boost::shared_ptr <CCSSettingValue> gnomeValue (MakeAutoDestroySettingValue (TypeString));
-    CCSSettingInfo                      info;
-
-    compizValue->value.asKey = GetParam ().keyValue;
-    gnomeValue->value.asString = strdup (GetParam ().keyValueString.c_str ());
-
-    mIntegratedSetting = createIntegratedSettingCompositionFromMock (MOCK_PLUGIN,
-								     settingName,
-								     TypeString,
-								     OptionSpecial,
-								     MOCK_GNOME_NAME,
-								     &ccsDefaultObjectAllocator);
-    SetNames (mSettingMock, mPluginMock, settingName, MOCK_PLUGIN);
-    SetTypeInfo (mSettingMock, TypeKey, &info);
-
-    EXPECT_CALL (mSettingMock, getValue ()).WillOnce (Return (compizValue.get ()));
-    EXPECT_CALL (Mock (*mIntegratedSetting), writeValue (Pointee (SettingValueMatch (*gnomeValue,
-										     TypeString,
-										     &info)),
-							 TypeString));
-    ccsIntegrationWriteSettingIntoOption (Real (mIntegration),
-					  NULL,
-					  mSetting.get (),
-					  Real (*mIntegratedSetting));
-}
-
-INSTANTIATE_TEST_CASE_P (CCSGNOMEMediaKeys, CCSGNOMEIntegrationTestWriteIntegratedMediaKeys,
-			 Values (IntegratedMediaKeysParam (RUN_COMMAND_SCREENSHOT_KEY,
-							   SCREENSHOT,
-							   SCREENSHOT_BINDING),
-				 IntegratedMediaKeysParam (RUN_COMMAND_WINDOW_SCREENSHOT_KEY,
-							   WINDOW_SCREENSHOT,
-							   WINDOW_SCREENSHOT_BINDING),
-				 IntegratedMediaKeysParam (RUN_COMMAND_TERMINAL_KEY,
-							   TERMINAL,
-							   TERMINAL_BINDING)));
 
 /*
  * TODO: Break up the function that this test covers. Its way too complicated

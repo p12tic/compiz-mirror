@@ -115,10 +115,6 @@ GnomeCompatScreen::GnomeCompatScreen (CompScreen *s) :
 
     optionSetMainMenuKeyInitiate (showMainMenu);
     optionSetRunKeyInitiate (showRunDialog);
-    optionSetRunCommandScreenshotKeyInitiate (COMMAND_BIND (GnomecompatOptions::CommandScreenshot));
-    optionSetRunCommandWindowScreenshotKeyInitiate (COMMAND_BIND (GnomecompatOptions::CommandWindowScreenshot));
-    optionSetRunCommandTerminalKeyInitiate (COMMAND_BIND (GnomecompatOptions::CommandTerminal));
-
 }
 
 bool

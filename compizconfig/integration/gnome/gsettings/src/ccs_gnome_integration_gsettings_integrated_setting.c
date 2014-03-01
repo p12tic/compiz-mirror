@@ -24,30 +24,6 @@ struct _CCSGSettingsIntegratedSettingPrivate
     CCSGSettingsWrapper	      *wrapper;
 };
 
-char *
-ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings (const char *key)
-{
-    char *newKey = translateKeyForGSettings (key);
-
-    if (g_strcmp0 (newKey, "run-command-screenshot") == 0)
-    {
-	free (newKey);
-	newKey = strdup ("screenshot");
-    }
-    else if (g_strcmp0 (newKey, "run-command-window-screenshot") == 0)
-    {
-	free (newKey);
-	newKey = strdup ("window-screenshot");
-    }
-    else if (g_strcmp0 (newKey, "run-command-terminal") == 0)
-    {
-	free (newKey);
-	newKey = strdup ("terminal");
-    }
-
-    return newKey;
-}
-
 SpecialOptionType
 ccsGSettingsIntegratedSettingGetSpecialOptionType (CCSGNOMEIntegratedSettingInfo *setting)
 {
@@ -70,7 +46,7 @@ ccsGSettingsIntegratedSettingReadValue (CCSIntegratedSetting *setting, CCSSettin
     CCSGSettingsIntegratedSettingPrivate *priv = (CCSGSettingsIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
     CCSSettingValue		     *v = calloc (1, sizeof (CCSSettingValue));
     const char			     *gnomeKeyName = ccsGNOMEIntegratedSettingInfoGetGNOMEName ((CCSGNOMEIntegratedSettingInfo *) setting);
-    char			     *gsettingsTranslatedName = ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings (gnomeKeyName);
+    char			     *gsettingsTranslatedName = translateKeyForGSettings (gnomeKeyName);
 
     v->isListChild = FALSE;
     v->parent = NULL;
@@ -161,7 +137,7 @@ ccsGSettingsIntegratedSettingWriteValue (CCSIntegratedSetting *setting, CCSSetti
 {
     CCSGSettingsIntegratedSettingPrivate *priv = (CCSGSettingsIntegratedSettingPrivate *) ccsObjectGetPrivate (setting);
     const char			     *gnomeKeyName = ccsGNOMEIntegratedSettingInfoGetGNOMEName ((CCSGNOMEIntegratedSettingInfo *) setting);
-    char			     *gsettingsTranslatedName = ccsGSettingsIntegratedSettingsTranslateOldGNOMEKeyForGSettings (gnomeKeyName);
+    char			     *gsettingsTranslatedName = translateKeyForGSettings (gnomeKeyName);
 
     GVariant           *variant = ccsGSettingsWrapperGetValue (priv->wrapper, gsettingsTranslatedName);
     const GVariantType *variantType = g_variant_get_type (variant);

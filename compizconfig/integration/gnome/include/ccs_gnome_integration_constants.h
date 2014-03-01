@@ -27,9 +27,6 @@ struct _CCSGNOMEIntegratedSettingNames
     CCSSettingIntegratedSettingPair CORE_AUTORAISE_DELAY;
     CCSSettingIntegratedSettingPair CORE_AUTORAISE;
     CCSSettingIntegratedSettingPair THUMBNAIL_CURRENT_VIEWPORT;
-    CCSSettingIntegratedSettingPair GNOMECOMPAT_COMMAND_TERMINAL;
-    CCSSettingIntegratedSettingPair GNOMECOMPAT_COMMAND_WINDOW_SCREENSHOT;
-    CCSSettingIntegratedSettingPair GNOMECOMPAT_COMMAND_SCREENSHOT;
     CCSSettingIntegratedSettingPair ROTATE_ROTATE_RIGHT_WINDOW_KEY;
     CCSSettingIntegratedSettingPair ROTATE_ROTATE_LEFT_WINDOW_KEY;
     CCSSettingIntegratedSettingPair ROTATE_ROTATE_TO_12_WINDOW_KEY;
@@ -135,9 +132,6 @@ struct _CCSGNOMEIntegratedSettingNames
     CCSSettingIntegratedSettingPair CORE_MAXIMIZE_WINDOW_KEY;
     CCSSettingIntegratedSettingPair CORE_MINIMIZE_WINDOW_KEY;
     CCSSettingIntegratedSettingPair CORE_TOGGLE_WINDOW_MAXIMIZED_KEY;
-    CCSSettingIntegratedSettingPair GNOMECOMPAT_RUN_COMMAND_TERMINAL_KEY;
-    CCSSettingIntegratedSettingPair GNOMECOMPAT_RUN_COMMAND_WINDOW_SCREENSHOT_KEY;
-    CCSSettingIntegratedSettingPair GNOMECOMPAT_RUN_COMMAND_SCREENSHOT_KEY;
     CCSSettingIntegratedSettingPair GNOMECOMPAT_MAIN_MENU_KEY;
     CCSSettingIntegratedSettingPair GNOMECOMPAT_RUN_KEY;
     CCSSettingIntegratedSettingPair UNITYSHELL_SHOW_HUD;
@@ -204,7 +198,7 @@ GHashTable * ccsGNOMEGSettingsIntegrationPopulateSettingNameToIntegratedSchemasQ
  * C doesn't have a concept of "constants" setting
  * the array size ...
  */
-#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 120
+#define CCS_GNOME_INTEGRATED_SETTINGS_LIST_SIZE 114
 
 typedef struct _CCSGNOMEIntegratedSettingsList
 {

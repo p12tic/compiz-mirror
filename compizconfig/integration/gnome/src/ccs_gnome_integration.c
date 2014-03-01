@@ -323,20 +323,6 @@ ccsGNOMEIntegrationBackendReadOptionIntoSetting (CCSIntegration *integration,
 		    ret = TRUE;
 		}
 	    }
-	    else if ((strcmp (settingName, "run_command_screenshot_key") == 0 ||
-		      strcmp (settingName, "run_command_window_screenshot_key") == 0 ||
-		      strcmp (settingName, "run_command_terminal_key") == 0))
-	    {
-		/* These are always stored as strings, no matter what the backend is
-		 * so the source type should be string */
-		type = TypeKey;
-		if (ccsGNOMEIntegrationBackendReadISAndSetSettingForType (integratedSetting,
-									  setting,
-									  &v,
-									  TypeString,
-									  type))
-		    ret = TRUE;
-	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
 		       (strcmp (pluginName, "resize") == 0))) ||
@@ -562,18 +548,6 @@ ccsGNOMEIntegrationBackendWriteOptionFromSetting (CCSIntegration *integration,
 		type = TypeString;
 
 		ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
-	    }
-	    else if ((strcmp (settingName, "run_command_screenshot_key") == 0 ||
-		      strcmp (settingName, "run_command_window_screenshot_key") == 0 ||
-		      strcmp (settingName, "run_command_terminal_key") == 0))
-	    {
-		if (ccsGNOMEIntegrationBackendKeyValueToStringValue (v, newValue))
-		{
-		    /* These are actually stored as strings in the schemas */
-		    type = TypeString;
-		    ccsIntegratedSettingWriteValue (integratedSetting, newValue, type);
-		}
-
 	    }
 	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
