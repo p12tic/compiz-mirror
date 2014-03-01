@@ -27,23 +27,6 @@
 
 COMPIZ_PLUGIN_20090315 (gnomecompat, GnomeCompatPluginVTable);
 
-static bool
-runCommand (CompAction          *action,
-	    CompAction::State   state,
-	    CompOption::Vector& options,
-	    CompOption          *commandOption)
-{
-    Window xid;
-
-    xid = CompOption::getIntOptionNamed (options, "root", 0);
-    if (xid != screen->root ())
-	return false;
-
-    screen->runCommand (commandOption->value ().s ());
-
-    return true;
-}
-
 void
 GnomeCompatScreen::panelAction (CompOption::Vector& options,
 				Atom                actionAtom)
@@ -109,9 +92,6 @@ GnomeCompatScreen::GnomeCompatScreen (CompScreen *s) :
 	XInternAtom (screen->dpy (), "_GNOME_PANEL_ACTION_MAIN_MENU", false);
     panelRunDialogAtom =
 	XInternAtom (screen->dpy (), "_GNOME_PANEL_ACTION_RUN_DIALOG", false);
-
-#define COMMAND_BIND(opt) \
-    boost::bind (runCommand, _1, _2, _3, &mOptions[opt])
 
     optionSetMainMenuKeyInitiate (showMainMenu);
     optionSetRunKeyInitiate (showRunDialog);
