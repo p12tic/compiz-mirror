@@ -268,18 +268,6 @@ Index: scale-xy-offsets/plugins/fade/fade.xml.in
  	    </option>
  	    <option name="visual_bell" type="bell">
  		<_short>Visual Bell</_short>
-Index: scale-xy-offsets/plugins/gnomecompat/gnomecompat.xml.in
-===================================================================
---- scale-xy-offsets.orig/plugins/gnomecompat/gnomecompat.xml.in	2014-02-17 21:25:57.420121366 +0100
-+++ scale-xy-offsets/plugins/gnomecompat/gnomecompat.xml.in	2014-02-17 21:25:57.412121402 +0100
-@@ -53,6 +53,7 @@
- 		<option name="run_command_terminal_key" type="key">
- 		    <_short>Open a terminal</_short>
- 		    <_long>Open a terminal</_long>
-+		    <default>&lt;Control&gt;&lt;Alt&gt;T</default>
- 		</option>
- 	    </group>
- 	</options>
 Index: scale-xy-offsets/plugins/place/place.xml.in
 ===================================================================
 --- scale-xy-offsets.orig/plugins/place/place.xml.in	2014-02-17 21:25:57.420121366 +0100
@@ -850,9 +838,9 @@ Index: scale-xy-offsets/compizconfig/integration/gnome/gsettings/org.compiz.inte
 ===================================================================
 --- scale-xy-offsets.orig/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2014-02-17 21:25:57.420121366 +0100
 +++ scale-xy-offsets/compizconfig/integration/gnome/gsettings/org.compiz.integrated.gschema.xml	2014-02-17 21:25:57.416121383 +0100
-@@ -10,6 +10,9 @@
- 	<key type="s" name="command-screenshot">
- 	    <default>"gnome-screenshot"</default>
+@@ -4,6 +4,9 @@
+ 	<key type="b" name="display-all-workspaces">
+ 	    <default>true</default>
  	</key>
 +	<key type="as" name="run-command-21">
 +	    <default>["&lt;Control&gt;&lt;Alt&gt;Delete"]</default>
