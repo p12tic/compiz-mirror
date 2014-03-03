@@ -1,3 +1,20 @@
+compiz (1:0.9.11+14.04.20140303-0ubuntu1) trusty; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * Window: define proper cases when we need to resize a window when
+    decorating/undecorating Yeah, again here... So, now when setting the
+    window extents, we resize a window only in these cases: 1) We have a
+    normal window that has never been decorated (lp:1282304) 2) We're
+    (re)decorating a maximized or fullscreen window (lp:1282305) This
+    seems to work well in all the cases I tested, with no regressions
+    with nedit (that highlighted an issue with old code path) (LP:
+    #1282304, #1282305)
+  * Opengl, Texture: don't try to create a texture of invalid (empty or
+    negative) size This seem to cause also a crash when using software
+    rendering. (LP: #1055166)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 03 Mar 2014 20:09:55 +0000
+
 compiz (1:0.9.11+14.04.20140218-0ubuntu1) trusty; urgency=low
 
   [ Marco Trevisan (Treviño) ]
