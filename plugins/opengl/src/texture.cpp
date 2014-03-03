@@ -433,6 +433,12 @@ GLTexture::bindPixmapToTexture (Pixmap                       pixmap,
 				int                          depth,
 				compiz::opengl::PixmapSource source)
 {
+    if (!GL::textureFromPixmap || width <= 0 || height <= 0 ||
+        width > GL::maxTextureSize || height > GL::maxTextureSize)
+    {
+	return GLTexture::List ();
+    }
+
     GLTexture::List rv;
 
     foreach (BindPixmapProc &proc, GLScreen::get (screen)->priv->bindPixmap)
@@ -473,10 +479,6 @@ EglTexture::bindPixmapToTexture (Pixmap                       pixmap,
 				 int                          depth,
 				 compiz::opengl::PixmapSource source)
 {
-    if ((int) width > GL::maxTextureSize || (int) height > GL::maxTextureSize ||
-        !GL::textureFromPixmap)
-	return GLTexture::List ();
-
     GLTexture::List   rv (1);
     EglTexture        *tex = NULL;
     EGLImageKHR       eglImage = NULL;
@@ -644,10 +646,6 @@ TfpTexture::bindPixmapToTexture (Pixmap            pixmap,
 				 int               depth,
 				 cgl::PixmapSource source)
 {
-    if ((int) width > GL::maxTextureSize || (int) height > GL::maxTextureSize ||
-        !GL::textureFromPixmap)
-	return GLTexture::List ();
-
     GLTexture::List   rv (1);
     TfpTexture        *tex = NULL;
     unsigned int      target = 0;
