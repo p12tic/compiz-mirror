@@ -670,7 +670,7 @@ TfpTexture::bindPixmapToTexture (Pixmap            pixmap,
     GLTexture::Matrix matrix = _identity_matrix;
     bool              mipmap = false;
     GLFBConfig        *config =
-    GLScreen::get (screen)->glxPixmapFBConfig (depth);
+	GLScreen::get (screen)->glxPixmapFBConfig (depth);
     int               attribs[7], i = 0;
 
     if (!config->fbConfig)
