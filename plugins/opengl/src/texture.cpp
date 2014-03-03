@@ -433,9 +433,25 @@ GLTexture::bindPixmapToTexture (Pixmap                       pixmap,
 				int                          depth,
 				compiz::opengl::PixmapSource source)
 {
-    if (!GL::textureFromPixmap || width <= 0 || height <= 0 ||
-        width > GL::maxTextureSize || height > GL::maxTextureSize)
+    if (!GL::textureFromPixmap)
     {
+	compLogMessage("opengl", CompLogLevelError,
+		       "GL::textureFromPixmap is not supported.");
+    }
+
+    if (width <= 0 || height <= 0)
+    {
+	compLogMessage("opengl", CompLogLevelError,
+		       "Couldn't bind 0-sized pixmap to texture: "
+		       "the width and height arguments must be nonzero.");
+	return GLTexture::List ();
+    }
+
+    if (width > GL::maxTextureSize || height > GL::maxTextureSize)
+    {
+	compLogMessage("opengl", CompLogLevelError,
+		       "Impossible to bind a pixmap bigger than %dx%d to texture.",
+		       GL::maxTextureSize, GL::maxTextureSize);
 	return GLTexture::List ();
     }
 
@@ -654,7 +670,7 @@ TfpTexture::bindPixmapToTexture (Pixmap            pixmap,
     GLTexture::Matrix matrix = _identity_matrix;
     bool              mipmap = false;
     GLFBConfig        *config =
-	GLScreen::get (screen)->glxPixmapFBConfig (depth);
+    GLScreen::get (screen)->glxPixmapFBConfig (depth);
     int               attribs[7], i = 0;
 
     if (!config->fbConfig)
