@@ -20,6 +20,30 @@
 #include "ccs_gnome_integration_gsettings_integrated_setting.h"
 #include "ccs_gnome_integration_gsettings_integrated_setting_factory.h"
 
+char *
+ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (const char *key)
+{
+    char *newKey = translateKeyForCCS (key);
+
+    if (g_strcmp0 (newKey, "screenshot") == 0)
+    {
+	free (newKey);
+	newKey = strdup ("run_command_screenshot");
+    }
+    else if (g_strcmp0 (newKey, "window_screenshot") == 0)
+    {
+	free (newKey);
+	newKey = strdup ("run_command_window_screenshot");
+    }
+    else if (g_strcmp0 (newKey, "terminal") == 0)
+    {
+	free (newKey);
+	newKey = strdup ("run_command_terminal");
+    }
+
+    return newKey;
+}
+
 typedef struct _CCSGSettingsIntegratedSettingFactoryPrivate CCSGSettingsIntegratedSettingFactoryPrivate;
 
 struct _CCSGSettingsIntegratedSettingFactoryPrivate
@@ -38,7 +62,7 @@ gnomeGSettingsValueChanged (GSettings *settings,
 			    gpointer  user_data)
 {
     CCSGNOMEValueChangeData *data = (CCSGNOMEValueChangeData *) user_data;
-    char *baseName = translateKeyForCCS (key);
+    char *baseName = ccsGSettingsIntegratedSettingsTranslateNewGNOMEKeyForCCS (key);
 
     /* We don't care if integration is not enabled */
     if (!ccsGetIntegrationEnabled (data->context))

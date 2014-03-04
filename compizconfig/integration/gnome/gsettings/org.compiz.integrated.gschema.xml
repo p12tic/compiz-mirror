@@ -4,6 +4,12 @@
 	<key type="b" name="display-all-workspaces">
 	    <default>true</default>
 	</key>
+	<key type="s" name="command-window-screenshot">
+	    <default>"gnome-screenshot -w"</default>
+	</key>
+	<key type="s" name="command-screenshot">
+	    <default>"gnome-screenshot"</default>
+	</key>
 	<key type="as" name="run-command-12">
 	    <default>["Disabled"]</default>
 	</key>
