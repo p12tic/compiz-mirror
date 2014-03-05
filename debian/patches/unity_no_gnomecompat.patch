@@ -1,0 +1,16 @@
+Index: trunk/src/screen.cpp
+===================================================================
+--- trunk.orig/src/screen.cpp	2014-03-05 10:26:35.440476900 -0500
++++ trunk/src/screen.cpp	2014-03-05 10:38:25.152511248 -0500
+@@ -5261,6 +5261,11 @@
+     plugin (),
+     dirtyPluginList (true)
+ {
++    /* unity implements gnomecompat, so don't load it under unity */
++    const char *session = getenv ("DESKTOP_SESSION");
++
++    if (session && strcmp (session, "ubuntu") == 0)
++	blacklist.insert ("gnomecompat");
+ }
+ 
+ cps::EventManager::EventManager () :

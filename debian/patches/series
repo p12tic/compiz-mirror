@@ -7,3 +7,4 @@ ccsm_disable_unity_checkbox.patch
 99_valid_ccsm_desktop_file.patch
 unity_support_test.patch
 100_workaround_virtualbox_hang.patch
+unity_no_gnomecompat.patch
