@@ -1,3 +1,13 @@
+compiz (1:0.9.11+14.04.20140305-0ubuntu1) trusty; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * Scale: don't try to re-focus an already focused window This might
+    make moveInputFocusTo to get stuck on X calls (LP: #1019923)
+  * debian/patches/ubuntu-config.patch: use Super+Shift+W for initiating
+    scale for all workspaces
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 05 Mar 2014 14:24:37 +0000
+
 compiz (1:0.9.11+14.04.20140303-0ubuntu1) trusty; urgency=low
 
   [ Marco Trevisan (Treviño) ]
