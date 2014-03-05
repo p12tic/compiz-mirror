@@ -1487,7 +1487,8 @@ PrivateScaleScreen::moveFocusWindow (int dx,
 	lastActiveNum    = focus->activeNum ();
 	lastActiveWindow = focus->id ();
 
-	focus->moveInputFocusTo ();
+	if (!focus->focused ())
+	    focus->moveInputFocusTo ();
     }
 }
 
