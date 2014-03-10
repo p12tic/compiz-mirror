@@ -6185,6 +6185,8 @@ CompWindow::~CompWindow ()
 
     if (!priv->destroyed)
     {
+    	CompWindowExtents empty;
+    	setWindowFrameExtents (&empty, &empty);
 	StackDebugger *dbg = StackDebugger::Default ();
 
 	screen->unhookWindow (this);
