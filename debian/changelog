@@ -1,3 +1,11 @@
+compiz (1:0.9.11+14.04.20140310-0ubuntu1) trusty; urgency=low
+
+  [ Marco Trevisan (Treviño) ]
+  * CompWindow: make sure we don't move a window outside its workarea
+    when setting the extents (LP: #1204307)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 10 Mar 2014 20:30:48 +0000
+
 compiz (1:0.9.11+14.04.20140305-0ubuntu1) trusty; urgency=low
 
   [ Marco Trevisan (Treviño) ]
