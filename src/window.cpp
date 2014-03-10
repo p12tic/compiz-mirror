@@ -6185,6 +6185,8 @@ CompWindow::~CompWindow ()
 
     if (!priv->destroyed)
     {
+    	CompWindowExtents empty;
+    	setWindowFrameExtents (&empty, &empty);
 	StackDebugger *dbg = StackDebugger::Default ();
 
 	screen->unhookWindow (this);
@@ -6589,12 +6591,9 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	CompSize sizeDelta;
 
 	/* We don't want to change the size of the window in general, but this is
-	 * needed in case that a normal windows has just been decorated or if
-	 * the window was maximized or fullscreen, so that it will extend
-	 * to use the whole available space. */
-
-	if (((priv->type & CompWindowTypeNormalMask) && !priv->alreadyDecorated) ||
-	    (priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE ||
+	 * needed in case the window was maximized or fullscreen, so that it
+	 * will be extended to use the whole available space. */
+	if ((priv->state & MAXIMIZE_STATE) == MAXIMIZE_STATE ||
 	    (priv->state & CompWindowStateFullscreenMask) ||
 	    (priv->type & CompWindowTypeFullscreenMask))
 	{
@@ -6602,11 +6601,7 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 				  (priv->border.left + priv->border.right)));
 	    sizeDelta.setHeight (-((b->top + b->bottom) -
 				   (priv->border.top + priv->border.bottom)));
-	    priv->alreadyDecorated = true;
 	}
-
-	priv->serverInput = *i;
-	priv->border      = *b;
 
 	/* Offset client for any new decoration size */
 	XWindowChanges xwc;
@@ -6615,6 +6610,44 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 	xwc.y = movement.y () + priv->serverGeometry.y ();
 	xwc.width = sizeDelta.width () + priv->serverGeometry.width ();
 	xwc.height = sizeDelta.height () + priv->serverGeometry.height ();
+
+	if (!priv->alreadyDecorated)
+	{
+	    /* Make sure we don't move the window outside the workarea */
+	    CompRect const& workarea = screen->getWorkareaForOutput (outputDevice ());
+	    CompPoint boffset((b->left + b->right) - (priv->border.left + priv->border.right),
+			      (b->top + b->bottom) - (priv->border.top + priv->border.bottom));
+
+	    if (xwc.x + xwc.width > workarea.x2 ())
+	    {
+		xwc.x -= boffset.x ();
+
+		if (xwc.x < workarea.x ())
+		    xwc.x = workarea.x () + movement.x ();
+	    }
+
+	    if (xwc.y + xwc.height > workarea.y2 ())
+	    {
+		xwc.y -= boffset.y ();
+
+		if (xwc.y < workarea.y ())
+		    xwc.y = workarea.y () + movement.y ();
+	    }
+
+	    if (priv->actions & CompWindowActionResizeMask)
+	    {
+		if (xwc.width + boffset.x () > workarea.width ())
+		    xwc.width = workarea.width () - boffset.x ();
+
+		if (xwc.height + boffset.y () > workarea.height ())
+		    xwc.height = workarea.height () - boffset.y ();
+	    }
+
+	    priv->alreadyDecorated = true;
+	}
+
+	priv->serverInput = *i;
+	priv->border      = *b;
 
 	configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
 
