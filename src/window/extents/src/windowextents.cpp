@@ -75,15 +75,19 @@ compiz::window::extents::shift (const CompWindowExtents &extents,
     return rv;
 }
 
-compiz::window::extents::Extents::Extents () {}
+compiz::window::extents::Extents::Extents () :
+  left (0),
+  right (0),
+  top (0),
+  bottom (0)
+{}
 
 compiz::window::extents::Extents::Extents (int left, int right, int top, int bottom) :
     left (left),
     right (right),
     top (top),
     bottom (bottom)
-{
-}
+{}
 
 /* Just here to keep ABI compatability */
 bool
