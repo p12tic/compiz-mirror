@@ -3,3 +3,4 @@ postinst/migration-scripts/03_migrate_profile_independent.py
 debian/00_remove_unityshell_in_gnome_session.py
 debian/00_remove_decor_in_unity_session.py
 debian/00_remove_scalefilter_in_unity_session.py
+debian/00_remove_gnomecompat_in_unity_session.py

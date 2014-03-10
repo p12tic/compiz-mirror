@@ -4,6 +4,7 @@
 #
 # Authors:
 #  Marco Trevisan <marco.trevisan@canonical.com>
+#  William Hua <william.hua@canonical.com>
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -31,12 +32,12 @@ if COMPIZ_SCHEMA not in Gio.Settings.list_schemas():
 core_settings = Gio.Settings(schema=COMPIZ_SCHEMA+".core", path=COMPIZ_CORE_PATH)
 active_plugins = core_settings.get_strv("active-plugins")
 
-if not "scalefilter" in active_plugins:
-    print("No decor scalefilter active, no migration needed")
+if not "gnomecompat" in active_plugins:
+    print("No gnomecompat plugin active, no migration needed")
     sys.exit(0)
 
 try:
-    active_plugins.remove("scalefilter")
+    active_plugins.remove("gnomecompat")
 except ValueError:
     pass
 
