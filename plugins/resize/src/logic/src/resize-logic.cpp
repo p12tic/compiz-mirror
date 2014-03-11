@@ -1442,12 +1442,20 @@ ResizeLogic::terminateResize (CompAction        *action,
 	    {
 		w->maximize (CompWindowStateMaximizedVertMask);
 
-		xwc.x      = geometryWithoutVertMax.x;
-		xwc.y      = geometryWithoutVertMax.y;
-		xwc.width  = geometryWithoutVertMax.width;
-		xwc.height = geometryWithoutVertMax.height;
+		xwc.x      = geometry.x;
+		xwc.y      = geometry.y;
+		xwc.width  = geometry.width;
+		xwc.height = geometry.height;
 
 		mask = CWX | CWY | CWWidth | CWHeight;
+
+		/* Once vertically maximized, save the original window y & height
+		 * geometry, so restoring the window will result in the correct size */
+		w->saveWc ().y = savedGeometry.y;
+		w->saveWc ().height = savedGeometry.height + (w->border ().top +
+							      w->border ().bottom);
+
+		w->saveMask () = CWY | CWHeight;
 	    }
 	}
 	else
