@@ -1,3 +1,19 @@
+compiz (1:0.9.11+14.04.20140320.1-0ubuntu1) trusty; urgency=low
+
+  [ William Hua ]
+  * Disable the gnomecompat plugin under Unity by default. (LP:
+    #1284532)
+
+  [ Chris Townsend ]
+  * Fix issues where vertically maximizing windows by dragging the grab
+    area using Normal mode would result in: Incorrect restored window
+    size. Wrong window size when vertically maximized, especially when
+    resizing from the bottom of the window. (LP: #1280377)
+  * Fix missing msg_dict when trying to enable the Unity plugin in CCSM.
+    (LP: #1292220)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 20 Mar 2014 23:58:37 +0000
+
 compiz (1:0.9.11+14.04.20140310-0ubuntu1) trusty; urgency=low
 
   [ Marco Trevisan (Treviño) ]
