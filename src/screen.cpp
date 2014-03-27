@@ -988,10 +988,23 @@ cps::WindowManager::setNumberOfDesktops(unsigned int desktops) const
 void
 cps::WindowManager::updateWindowSizes() const
 {
+    CompWindow::Geometry before, after;
+
     for (iterator i = windows.begin(); i != windows.end(); ++i)
     {
 	CompWindow* const w(*i);
+
+	before = w->priv->serverGeometry;
 	w->priv->updateSize ();
+	after = w->priv->serverGeometry;
+
+	/* A maximized window was adjusted for the new workarea size */
+	if (before != after &&
+	    (w->state () & CompWindowStateMaximizedVertMask ||
+	     w->state () & CompWindowStateMaximizedHorzMask))
+	{
+	    w->priv->moved = true;
+	}
     }
 }
 

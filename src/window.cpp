@@ -3637,9 +3637,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	if (window->moved () &&
 	    !(state & CompWindowStateMaximizedVertMask || state & CompWindowStateMaximizedHorzMask))
 	{
-	    screen->viewportForGeometry(CompWindow::Geometry(xwc->x, xwc->y, xwc->width, xwc->height, xwc->border_width), viewport);
-
-	    if (screen->vp () != viewport)
+	    if (xwc->x > screen->width () ||
+		xwc->y > screen->height ())
 	    {
 		/* The removed monitor may have had a much different resolution than the
 		 * the current monitor, so let's just orient the window in the top left
