@@ -3631,6 +3631,32 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	else
 	    mask |= restoreGeometry (xwc, CWX | CWWidth);
 
+	/* Check to see if a monitor has disappeared that had a maximized window and if so,
+	 * adjust the window to restore in the current viewport instead of the 
+	 * coordinates of a different viewport. */
+	if (window->moved () &&
+	    !(state & CompWindowStateMaximizedVertMask || state & CompWindowStateMaximizedHorzMask))
+	{
+	    screen->viewportForGeometry(CompWindow::Geometry(xwc->x, xwc->y, xwc->width, xwc->height, xwc->border_width), viewport);
+
+	    if (screen->vp () != viewport)
+	    {
+		/* The removed monitor may have had a much different resolution than the
+		 * the current monitor, so let's just orient the window in the top left
+		 * of the workarea. */
+		xwc->x = workArea.x () + window->border ().left;
+		xwc->y = workArea.y () + window->border ().top;
+
+		if (xwc->width > workArea.width ())
+		    xwc->width = workArea.width () - (window->border ().left + window->border ().right);
+
+		if (xwc->height > workArea.height ())
+		    xwc->height = workArea.height () - (window->border ().top + window->border ().bottom);
+	    }
+
+	    window->priv->moved = false;
+	}
+
 	/* constrain window width if smaller than minimum width */
 	if (!(mask & CWWidth) && (int) old.width () < sizeHints.min_width)
 	{
@@ -6361,6 +6387,8 @@ PrivateWindow::PrivateWindow () :
     lastPong (0),
     alive (true),
 
+    moved (false),
+
     struts (0),
 
     icons (0),
@@ -6503,6 +6531,12 @@ bool
 CompWindow::alive () const
 {
     return priv->alive;
+}
+
+bool
+CompWindow::moved () const
+{
+    return priv->moved;
 }
 
 unsigned int
