@@ -1,3 +1,14 @@
+compiz (1:0.9.11+14.04.20140328-0ubuntu1) trusty; urgency=low
+
+  [ Chris Townsend ]
+  * Fix issue where having a maximized window on a second monitor, then
+    that monitor gets removed which moves the maximized window to the
+    main monitor, then restoring the maximized window would place it on
+    a different viewport. It should stay on the same viewport. (LP:
+    #1171878)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 28 Mar 2014 10:44:36 +0000
+
 compiz (1:0.9.11+14.04.20140320.1-0ubuntu1) trusty; urgency=low
 
   [ William Hua ]
