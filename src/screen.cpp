@@ -3417,7 +3417,7 @@ void cps::GrabManager::updatePassiveButtonGrabs(Window serverFrame)
 
     foreach (CompWindow *w, screen->windows ())
     {
-        if (w->frame () == serverFrame)
+	if (w->frame () == serverFrame)
 	{
 	    window = w;
 	    break;
