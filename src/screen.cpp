@@ -3413,6 +3413,17 @@ cps::GrabManager::addPassiveButtonGrab (CompAction::ButtonBinding &button)
 
 void cps::GrabManager::updatePassiveButtonGrabs(Window serverFrame)
 {
+    CompWindow *window = NULL;
+
+    foreach (CompWindow *w, screen->windows ())
+    {
+	if (w->frame () == serverFrame)
+	{
+	    window = w;
+	    break;
+	}
+    }
+
     /* Grab only we have bindings on */
     foreach (ButtonGrab &bind, buttonGrabs)
     {
@@ -3425,6 +3436,12 @@ void cps::GrabManager::updatePassiveButtonGrabs(Window serverFrame)
 		 ignore <= modHandler->ignoredModMask (); ignore++)
 	{
 	    if (ignore & ~modHandler->ignoredModMask ())
+		continue;
+
+	    if (window &&
+		!(window->type () & CompWindowTypeDesktopMask) &&
+		bind.button > 3 &&
+		!mods)
 		continue;
 
 	    XGrabButton (screen->dpy(),

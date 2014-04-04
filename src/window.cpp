@@ -5620,20 +5620,21 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	}
     }
 
-    if (onlyActions)
+    if (onlyActions || priv->type & CompWindowTypeDesktopMask)
 	screen->updatePassiveButtonGrabs(serverFrame);
     else
     {
-	/* Grab everything */
-	XGrabButton (screen->dpy (),
-		     AnyButton,
-		     AnyModifier,
-		     serverFrame, false,
-		     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-		     GrabModeSync,
-		     GrabModeAsync,
-		     None,
-		     None);
+	/* Only grab buttons 1-3 */
+	for (int i = 1; i <= 3; i++)
+	    XGrabButton (screen->dpy (),
+			 i,
+			 AnyModifier,
+			 serverFrame, false,
+			 ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
+			 GrabModeSync,
+			 GrabModeAsync,
+			 None,
+			 None);
     }
 }
 
