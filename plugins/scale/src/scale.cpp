@@ -260,7 +260,8 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
     /* Windows that wouldn't be visible before and after entering
      * scale mode (because some plugin modified CompWindow::focus)
      * should be faded in and out */
-    if (window->state () & CompWindowStateHiddenMask)
+    if (window->state () & CompWindowStateHiddenMask &&
+	!window->inShowDesktopMode ())
     {
 	GLfloat factor = 0;
 	GLfloat targetX, targetY, targetScale;
