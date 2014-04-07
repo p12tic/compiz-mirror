@@ -5628,14 +5628,14 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	{
 	    /* Grab all buttons for the desktop window */
 	    XGrabButton (screen->dpy (),
-                         AnyButton,
-                         AnyModifier,
-                         serverFrame, false,
-                         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-                         GrabModeSync,
-                         GrabModeAsync,
-                         None,
-                         None);
+			 AnyButton,
+			 AnyModifier,
+			 serverFrame, false,
+			 ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
+			 GrabModeSync,
+			 GrabModeAsync,
+			 None,
+			 None);
 	}
 	else
 	{
