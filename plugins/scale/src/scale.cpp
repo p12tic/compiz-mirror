@@ -1117,8 +1117,14 @@ PrivateScaleScreen::ensureDndRedirectWindow ()
 			 (unsigned char *) &xdndVersion, 1);
     }
 
-    XMoveResizeWindow (screen->dpy (), dndTarget,
-		       0, 0, screen->width (), screen->height ());
+    CompRect workArea = screen->workArea ();
+    workArea.setX (workArea.x() + optionGetXOffset ());
+    workArea.setY (workArea.y() + optionGetYOffset ());
+    workArea.setWidth (workArea.width() - optionGetXOffset ());
+    workArea.setHeight (workArea.height() - optionGetYOffset ());
+
+    XMoveResizeWindow (screen->dpy (), dndTarget, workArea.x (), workArea.y (),
+		       workArea.width (), workArea.height ());
     XMapRaised (screen->dpy (), dndTarget);
 
     return true;
