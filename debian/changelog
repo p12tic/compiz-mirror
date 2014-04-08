@@ -1,3 +1,13 @@
+compiz (1:0.9.11+14.04.20140408-0ubuntu1) trusty; urgency=low
+
+  [ Chris Townsend ]
+  * Fix issue where Grid animation can sometimes show a preview of a
+    different window than the one being gridded. (LP: #1176898)
+  * Fix recent regression where the desktop window would not get focus
+    when clicking the desktop. (LP: #1303068)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Tue, 08 Apr 2014 13:48:38 +0000
+
 compiz (1:0.9.11+14.04.20140404-0ubuntu1) trusty; urgency=low
 
   [ Chris Townsend ]
