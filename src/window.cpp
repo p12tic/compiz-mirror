@@ -5624,32 +5624,22 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	screen->updatePassiveButtonGrabs(serverFrame);
     else
     {
-	if (priv->type & CompWindowTypeDesktopMask)
+	/* Grab all buttons */
+	XGrabButton (screen->dpy (),
+		     AnyButton,
+		     AnyModifier,
+		     serverFrame, false,
+		     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
+		     GrabModeSync,
+		     GrabModeAsync,
+		     None,
+		     None);
+
+	if (!(priv->type & CompWindowTypeDesktopMask))
 	{
-	    /* Grab all buttons for the desktop window */
-	    XGrabButton (screen->dpy (),
-			 AnyButton,
-			 AnyModifier,
-			 serverFrame, false,
-			 ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-			 GrabModeSync,
-			 GrabModeAsync,
-			 None,
-			 None);
-	}
-	else
-	{
-	    /* Only grab buttons 1-3 */
-	    for (int i = 1; i <= 3; i++)
-		XGrabButton (screen->dpy (),
-			     i,
-			     AnyModifier,
-			     serverFrame, false,
-			     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-			     GrabModeSync,
-			     GrabModeAsync,
-			     None,
-			     None);
+	    /* Ungrab Buttons 4-7 for scrolling if the window is not the desktop window */
+	    for (int i = 4; i <= 7; i++)
+		XUngrabButton (screen->dpy (), i, AnyModifier, frame);
 	}
     }
 }
