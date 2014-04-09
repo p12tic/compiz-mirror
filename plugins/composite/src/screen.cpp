@@ -800,6 +800,15 @@ PrivateCompositeScreen::detectRefreshRate ()
     }
     else
     {
+	if (forceRefreshRate && (optionGetRefreshRate () < FALLBACK_REFRESH_RATE))
+	{
+	    CompOption::Value value;
+
+	    value.set ((int) FALLBACK_REFRESH_RATE);
+
+	    screen->setOptionForPlugin ("composite", "refresh_rate", value);
+	}
+
 	redrawTime = 1000 / optionGetRefreshRate ();
 	optimalRedrawTime = redrawTime;
     }
