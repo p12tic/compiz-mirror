@@ -1,3 +1,14 @@
+compiz (1:0.9.11+14.04.20140409-0ubuntu1) trusty; urgency=low
+
+  [ Chris Townsend ]
+  * Add support to build kde4-window-decorator for KDE 4.10 and older.
+    (LP: #1288953)
+  * (LP: #1027868)
+  * Allow binding of other buttons greater than button 7 for windows
+    other than the desktop. (LP: #1304877)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 09 Apr 2014 22:14:18 +0000
+
 compiz (1:0.9.11+14.04.20140408-0ubuntu1) trusty; urgency=low
 
   [ Chris Townsend ]
