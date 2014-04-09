@@ -5625,7 +5625,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
     else
     {
 	/* Grab all buttons */
-        XGrabButton (screen->dpy (),
+	XGrabButton (screen->dpy (),
 		     AnyButton,
 		     AnyModifier,
 		     serverFrame, false,
