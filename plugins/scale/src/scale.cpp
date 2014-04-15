@@ -31,6 +31,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/cursorfont.h>
+#include <X11/extensions/shape.h>
 
 #include <core/atoms.h>
 #include <scale/scale.h>
@@ -1104,7 +1105,7 @@ PrivateScaleScreen::ensureDndRedirectWindow ()
 	XSetWindowAttributes attr;
 	long		     xdndVersion = 3;
 
-	attr.override_redirect = true;
+	attr.override_redirect = True;
 
 	dndTarget = XCreateWindow (screen->dpy (), screen->root (),
 				   0, 0, 1, 1, 0, CopyFromParent,
@@ -1117,15 +1118,20 @@ PrivateScaleScreen::ensureDndRedirectWindow ()
 			 (unsigned char *) &xdndVersion, 1);
     }
 
-    CompRect workArea = screen->workArea ();
-    workArea.setX (workArea.x() + optionGetXOffset ());
-    workArea.setY (workArea.y() + optionGetYOffset ());
-    workArea.setWidth (workArea.width() - optionGetXOffset ());
-    workArea.setHeight (workArea.height() - optionGetYOffset ());
+    if (screen->XShape ())
+    {
+	CompRegion workAreaRegion;
 
-    XMoveResizeWindow (screen->dpy (), dndTarget, workArea.x (), workArea.y (),
-		       workArea.width (), workArea.height ());
+	foreach (const CompOutput& output, screen->outputDevs ())
+	    workAreaRegion |= output.workArea ();
+
+	XShapeCombineRegion (screen->dpy (), dndTarget, ShapeBounding, 0, 0, workAreaRegion.handle (), ShapeSet);
+    }
+
+    XMoveResizeWindow (screen->dpy (), dndTarget,
+		       0, 0, screen->width (), screen->height ());
     XMapRaised (screen->dpy (), dndTarget);
+    XSync (screen->dpy (), False);
 
     return true;
 }
