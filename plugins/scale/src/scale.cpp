@@ -1628,7 +1628,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
 		    if (workArea.contains (pointer))
 		    {
-			terminateScale (true);
+			terminateScale (false);
 			screen->enterShowDesktopMode ();
 		    }
 		}
@@ -1642,7 +1642,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
 		    if (workArea.contains (pointer))
 		    {
-			terminateScale (true);
+			terminateScale (false);
 		    }
 		}
 	    }
@@ -1715,7 +1715,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		{
 		    if (grab && state != ScaleScreen::In)
 		    {
-			terminateScale (true);
+			terminateScale (event->xclient.message_type == Atoms::xdndDrop);
 		    }
 		}
 	    }
