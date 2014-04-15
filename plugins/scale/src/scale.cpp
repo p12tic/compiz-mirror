@@ -924,6 +924,7 @@ PrivateScaleScreen::donePaint ()
 		activateEvent (false);
 		state = ScaleScreen::Idle;
 
+		screen->handleEventSetEnabled (this, false);
 		cScreen->preparePaintSetEnabled (this, false);
 		cScreen->donePaintSetEnabled (this, false);
 		gScreen->glPaintOutputSetEnabled (this, false);
@@ -1098,7 +1099,6 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
 	action->setState (action->state () | CompAction::StateTermKey);
 
     ss->priv->lastActiveNum = 0;
-    screen->handleEventSetEnabled (spScreen, false);
 
     if (selectX != -1 &&
 	selectY != -1)
