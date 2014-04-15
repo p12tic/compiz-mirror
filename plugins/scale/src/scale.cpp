@@ -1613,13 +1613,14 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
 		/* Button1 terminates scale mode, other buttons can select
 		 * windows */
-		if (selectWindowAt (button->x_root, button->y_root, true) &&
-		    event->xbutton.button == Button1)
+		if (event->xbutton.button != Button1)
+		    break;
+
+		if (selectWindowAt (button->x_root, button->y_root, true))
 		{
 		    terminateScale (true);
 		}
-		else if (optionGetClickOnDesktop () == 1 &&
-			 event->xbutton.button == Button1)
+		else if (optionGetClickOnDesktop () != ScaleOptions::ClickOnDesktopNone)
 		{
 		    CompPoint pointer (button->x_root, button->y_root);
 		    CompRect  workArea (screen->workArea ());
@@ -1629,20 +1630,9 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		    if (workArea.contains (pointer))
 		    {
 			terminateScale (false);
-			screen->enterShowDesktopMode ();
-		    }
-		}
-		else if (optionGetClickOnDesktop () == 2 &&
-			 event->xbutton.button == Button1)
-		{
-		    CompPoint pointer (button->x_root, button->y_root);
-		    CompRect  workArea (screen->workArea ());
-		    workArea.setX (workArea.x() + optionGetXOffset ());
-		    workArea.setY (workArea.y() + optionGetYOffset ());
 
-		    if (workArea.contains (pointer))
-		    {
-			terminateScale (false);
+			if (optionGetClickOnDesktop () == ScaleOptions::ClickOnDesktopShowDesktop)
+			    screen->enterShowDesktopMode ();
 		    }
 		}
 	    }
