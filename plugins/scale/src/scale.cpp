@@ -1089,6 +1089,7 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
 	action->setState (action->state () | CompAction::StateTermKey);
 
     ss->priv->lastActiveNum = 0;
+    screen->handleEventSetEnabled (spScreen, false);
 
     if (selectX != -1 &&
 	selectY != -1)
@@ -1260,6 +1261,7 @@ PrivateScaleScreen::scaleInitiateCommon (CompAction         *action,
 
 	cScreen->damageScreen ();
 
+	screen->handleEventSetEnabled (this, true);
 	cScreen->preparePaintSetEnabled (this, true);
 	cScreen->donePaintSetEnabled (this, true);
 	gScreen->glPaintOutputSetEnabled (this, true);
@@ -1656,7 +1658,6 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 	    w = screen->findWindow (event->xdestroywindow.window);
 	    break;
 	case UnmapNotify:
-
 	     w = screen->findWindow (event->xunmap.window);
 	     break;
 	case ClientMessage:
@@ -1861,6 +1862,11 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     ScreenInterface::setHandler (s);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
+
+    screen->handleEventSetEnabled (this, false);
+    cScreen->preparePaintSetEnabled (this, false);
+    cScreen->donePaintSetEnabled (this, false);
+    gScreen->glPaintOutputSetEnabled (this, false);
 }
 
 PrivateScaleScreen::~PrivateScaleScreen ()
