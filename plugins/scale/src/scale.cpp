@@ -1542,24 +1542,24 @@ PrivateScaleScreen::windowRemove (CompWindow *w)
 	    }
 	    else
 	    {
-		CompOption::Vector o (0);
-		CompAction         *action;
-
 		/* terminate scale mode if the recently closed
 		 * window was the last scaled window */
-
-		o.push_back (CompOption ("root", CompOption::TypeInt));
-		o[0].value ().set ((int) screen->root ());
-
-		action = &optionGetInitiateEdge ();
-		scaleTerminate (action, CompAction::StateCancel, o);
-
-		action = &optionGetInitiateKey ();
-		scaleTerminate (action, CompAction::StateCancel, o);
+		terminateScale (false);
 		break;
 	    }
 	}
     }
+}
+
+void PrivateScaleScreen::terminateScale (bool accept)
+{
+    CompOption::Vector o (0);
+
+    o.push_back (CompOption ("root", CompOption::TypeInt));
+    o[0].value ().set ((int) screen->root ());
+
+    scaleTerminate (&optionGetInitiateEdge (), accept ? 0 : CompAction::StateCancel, o);
+    scaleTerminate (&optionGetInitiateKey (), accept ? 0 : CompAction::StateCancel, o);
 }
 
 bool
@@ -1567,10 +1567,7 @@ PrivateScaleScreen::hoverTimeout ()
 {
     if (grab && state != ScaleScreen::In)
     {
-	CompWindow         *w;
-	CompOption::Vector o (0);
-
-	w = screen->findWindow (selectedWindow);
+	CompWindow *w = screen->findWindow (selectedWindow);
 	if (w)
 	{
 	    lastActiveNum    = w->activeNum ();
@@ -1579,11 +1576,7 @@ PrivateScaleScreen::hoverTimeout ()
 	    w->moveInputFocusTo ();
 	}
 
-	o.push_back (CompOption ("root", CompOption::TypeInt));
-	o[0].value ().set ((int) screen->root ());
-
-	scaleTerminate (&optionGetInitiateEdge (), 0, o);
-	scaleTerminate (&optionGetInitiateKey (), 0, o);
+	terminateScale (true);
     }
 
     return false;
@@ -1617,18 +1610,13 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		state != ScaleScreen::In)
 	    {
 		XButtonEvent       *button = &event->xbutton;
-		CompOption::Vector o (0);
-
-		o.push_back (CompOption ("root", CompOption::TypeInt));
-		o[0].value ().set ((int) screen->root ());
 
 		/* Button1 terminates scale mode, other buttons can select
 		 * windows */
 		if (selectWindowAt (button->x_root, button->y_root, true) &&
 		    event->xbutton.button == Button1)
 		{
-		    scaleTerminate (&optionGetInitiateEdge (), 0, o);
-		    scaleTerminate (&optionGetInitiateKey (), 0, o);
+		    terminateScale (true);
 		}
 		else if (optionGetClickOnDesktop () == 1 &&
 			 event->xbutton.button == Button1)
@@ -1640,8 +1628,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
 		    if (workArea.contains (pointer))
 		    {
-			scaleTerminate (&optionGetInitiateEdge (), 0, o);
-			scaleTerminate (&optionGetInitiateKey (), 0, o);
+			terminateScale (true);
 			screen->enterShowDesktopMode ();
 		    }
 		}
@@ -1655,8 +1642,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
 		    if (workArea.contains (pointer))
 		    {
-			scaleTerminate (&optionGetInitiateEdge (), 0, o);
-			scaleTerminate (&optionGetInitiateKey (), 0, o);
+			terminateScale (true);
 		    }
 		}
 	    }
@@ -1729,12 +1715,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		{
 		    if (grab && state != ScaleScreen::In)
 		    {
-			CompOption::Vector o (0);
-			o.push_back (CompOption ("root", CompOption::TypeInt));
-			o[0].value ().set ((int) screen->root ());
-
-			scaleTerminate (&optionGetInitiateEdge (), 0, o);
-			scaleTerminate (&optionGetInitiateKey (), 0, o);
+			terminateScale (true);
 		    }
 		}
 	    }

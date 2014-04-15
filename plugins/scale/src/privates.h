@@ -57,6 +57,7 @@ class PrivateScaleScreen :
 			    CompOutput *, unsigned int);
 
 	void activateEvent (bool activating);
+	void terminateScale (bool accept);
 
 	void layoutSlotsForArea (const CompRect&, int);
 	void layoutSlots ();
