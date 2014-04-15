@@ -1584,6 +1584,36 @@ PrivateScaleScreen::hoverTimeout ()
     return false;
 }
 
+bool
+PrivateScaleScreen::dndCheckTimeout ()
+{
+    if (!dndTarget)
+	return false;
+
+    CompWindow *w = screen->findWindow (dndTarget);
+
+    if (!w || !w->isMapped ())
+	return false;
+
+    Window drag_owner = XGetSelectionOwner (screen->dpy (), xdndSelection);
+
+    if (drag_owner)
+    {
+	// evil hack because some apps (Qt) don't release the selection owner on drag finished
+	Window root_r, child_r;
+	int root_x_r, root_y_r, win_x_r, win_y_r;
+	unsigned int mask;
+	XQueryPointer (screen->dpy (), screen->root (), &root_r, &child_r,
+		       &root_x_r, &root_y_r, &win_x_r, &win_y_r, &mask);
+
+	if (mask & (Button1Mask | Button2Mask | Button3Mask))
+	    return true;
+    }
+
+    terminateScale (false);
+    return false;
+}
+
 void
 PrivateScaleScreen::handleEvent (XEvent *event)
 {
@@ -1669,6 +1699,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
 		    if (grab && state != ScaleScreen::In)
 		    {
+			dndCheck.stop ();
 			ScaleWindow *sw = checkForWindowAt (pointerX, pointerY);
 			if (sw && sw->priv->isScaleWin ())
 			{
@@ -1699,14 +1730,29 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
-	    else if (event->xclient.message_type == Atoms::xdndDrop ||
-		     event->xclient.message_type == Atoms::xdndLeave)
+	    else if (event->xclient.message_type == Atoms::xdndEnter)
+	    {
+		if (event->xclient.window == dndTarget &&
+		    grab && state != ScaleScreen::In)
+		{
+		    dndCheck.stop ();
+		}
+	    }
+	    else if (event->xclient.message_type == Atoms::xdndLeave)
+	    {
+		if (event->xclient.window == dndTarget &&
+		    grab && state != ScaleScreen::In)
+		{
+		    dndCheck.start ();
+		}
+	    }
+	    else if (event->xclient.message_type == Atoms::xdndDrop)
 	    {
 		if (event->xclient.window == dndTarget)
 		{
 		    if (grab && state != ScaleScreen::In)
 		    {
-			terminateScale (event->xclient.message_type == Atoms::xdndDrop);
+			terminateScale (true);
 		    }
 		}
 	    }
@@ -1722,6 +1768,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 
     switch (event->type) {
 	case UnmapNotify:
+	    dndCheck.start ();
 	    if (w)
 		windowRemove (w);
 	    break;
@@ -1808,6 +1855,7 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     grab (false),
     grabIndex (0),
     dndTarget (None),
+    xdndSelection (XInternAtom (screen->dpy (), "XdndSelection", False)),
     state (ScaleScreen::Idle),
     moreAdjust (false),
     cursor (0),
@@ -1823,6 +1871,8 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     opacity = (OPAQUE * optionGetOpacity ()) / 100;
 
     hover.setCallback (boost::bind (&PrivateScaleScreen::hoverTimeout, this));
+    dndCheck.setCallback (boost::bind (&PrivateScaleScreen::dndCheckTimeout, this));
+    dndCheck.setTimes (200);
 
     optionSetOpacityNotify (boost::bind (&PrivateScaleScreen::updateOpacity, this));
 

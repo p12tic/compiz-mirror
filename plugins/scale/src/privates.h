@@ -99,6 +99,7 @@ class PrivateScaleScreen :
 	void windowRemove (CompWindow *);
 
 	bool hoverTimeout ();
+	bool dndCheckTimeout ();
 
 	void updateOpacity ();
 
@@ -122,8 +123,10 @@ class PrivateScaleScreen :
 	CompScreen::GrabHandle grabIndex;
 
 	Window dndTarget;
+	Atom xdndSelection;
 
 	CompTimer hover;
+	CompTimer dndCheck;
 
 	ScaleScreen::State state;
 	int                moreAdjust;
