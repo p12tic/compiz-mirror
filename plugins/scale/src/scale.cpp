@@ -1686,15 +1686,11 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 	case ClientMessage:
 	    if (event->xclient.message_type == Atoms::xdndPosition)
 	    {
-		w = screen->findWindow (event->xclient.window);
-		if (w)
+		if (event->xclient.window == dndTarget)
 		{
-		    if (w->id () == dndTarget)
-			sendDndStatusMessage (event->xclient.data.l[0]);
+		    sendDndStatusMessage (event->xclient.data.l[0]);
 
-		    if (grab			 &&
-			state != ScaleScreen::In &&
-			w->id () == dndTarget)
+		    if (grab && state != ScaleScreen::In)
 		    {
 			ScaleWindow *sw = checkForWindowAt (pointerX, pointerY);
 			if (sw && sw->priv->isScaleWin ())
@@ -1706,7 +1702,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 			    if (hover.active ())
 			    {
 				int lastMotion = sqrt (pow (pointerX - lastPointerX, 2) + pow (pointerY - lastPointerY, 2));
-				
+
 				if (sw->window->id () != selectedWindow || lastMotion > optionGetDndDistance ())
 				    hover.stop ();
 			    }
@@ -1729,12 +1725,9 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 	    else if (event->xclient.message_type == Atoms::xdndDrop ||
 		     event->xclient.message_type == Atoms::xdndLeave)
 	    {
-		w = screen->findWindow (event->xclient.window);
-		if (w)
+		if (event->xclient.window == dndTarget)
 		{
-		    if (grab			 &&
-			state != ScaleScreen::In &&
-			w->id () == dndTarget)
+		    if (grab && state != ScaleScreen::In)
 		    {
 			CompOption::Vector o (0);
 			o.push_back (CompOption ("root", CompOption::TypeInt));
