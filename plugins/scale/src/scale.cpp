@@ -982,7 +982,7 @@ PrivateScaleScreen::checkForWindowAt (int x, int y)
 }
 
 void
-PrivateScaleScreen::sendDndStatusMessage (Window source)
+PrivateScaleScreen::sendDndStatusMessage (Window source, bool asks)
 {
     XEvent xev;
 
@@ -994,10 +994,16 @@ PrivateScaleScreen::sendDndStatusMessage (Window source)
     xev.xclient.window	     = source;
 
     xev.xclient.data.l[0] = dndTarget;
-    xev.xclient.data.l[1] = 2;
+    xev.xclient.data.l[1] = 0;
     xev.xclient.data.l[2] = 0;
     xev.xclient.data.l[3] = 0;
     xev.xclient.data.l[4] = None;
+
+    if (asks)
+    {
+	xev.xclient.data.l[1] = 1 << 0 | 1 << 1;
+	xev.xclient.data.l[4] = xdndActionAsk;
+    }
 
     XSendEvent (screen->dpy (), source, false, 0, &xev);
 }
@@ -1037,7 +1043,10 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
     }
 
     if (ss->priv->dndTarget)
+    {
+	ss->priv->dndCheck.stop ();
 	XUnmapWindow (::screen->dpy (), ss->priv->dndTarget);
+    }
 
     ss->priv->grab = false;
 
@@ -1695,17 +1704,19 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 	    {
 		if (event->xclient.window == dndTarget)
 		{
-		    sendDndStatusMessage (event->xclient.data.l[0]);
+		    bool acceptsDnd = false;
 
 		    if (grab && state != ScaleScreen::In)
 		    {
 			dndCheck.stop ();
+
 			ScaleWindow *sw = checkForWindowAt (pointerX, pointerY);
 			if (sw && sw->priv->isScaleWin ())
 			{
 			    int time;
 
 			    time = optionGetHoverTime ();
+			    acceptsDnd = true;
 
 			    if (hover.active ())
 			    {
@@ -1728,6 +1739,8 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 				hover.stop ();
 			}
 		    }
+
+		    sendDndStatusMessage (event->xclient.data.l[0], acceptsDnd);
 		}
 	    }
 	    else if (event->xclient.message_type == Atoms::xdndEnter)
@@ -1856,6 +1869,7 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     grabIndex (0),
     dndTarget (None),
     xdndSelection (XInternAtom (screen->dpy (), "XdndSelection", False)),
+    xdndActionAsk (XInternAtom (screen->dpy (), "XdndActionAsk", False)),
     state (ScaleScreen::Idle),
     moreAdjust (false),
     cursor (0),

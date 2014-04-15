@@ -71,7 +71,7 @@ class PrivateScaleScreen :
 
 	ScaleWindow * checkForWindowAt (int x, int y);
 
-	void sendDndStatusMessage (Window);
+	void sendDndStatusMessage (Window, bool asks);
 
 	bool
 	actionShouldToggle (CompAction        *action,
@@ -124,6 +124,7 @@ class PrivateScaleScreen :
 
 	Window dndTarget;
 	Atom xdndSelection;
+	Atom xdndActionAsk;
 
 	CompTimer hover;
 	CompTimer dndCheck;
