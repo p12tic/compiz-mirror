@@ -739,9 +739,6 @@ PrivateScreen::setOption (const CompString  &name,
 
 	    setVirtualScreenSize (optionGetHsize (), optionGetVsize ());
 	    break;
-	case CoreOptions::NumberOfDesktops:
-	    setNumberOfDesktops (optionGetNumberOfDesktops ());
-	    break;
 	case CoreOptions::DefaultIcon:
 	    return screen->updateDefaultIcon ();
 	    break;
@@ -968,20 +965,6 @@ cps::WindowManager::setWindowActiveness(cps::History& history) const
 	CompWindow* const w(*i);
 	if (w->isViewable ())
 	    w->priv->activeNum = history.nextActiveNum ();
-    }
-}
-
-void
-cps::WindowManager::setNumberOfDesktops(unsigned int desktops) const
-{
-    for (iterator i = windows.begin(); i != windows.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	if (w->desktop () == 0xffffffff)
-	    continue;
-
-	if (w->desktop () >= desktops)
-	    w->setDesktop (desktops - 1);
     }
 }
 
@@ -4009,22 +3992,6 @@ CompRect
 CompScreenImpl::getCurrentOutputExtents ()
 {
     return privateScreen.outputDevices.getCurrentOutputDev ();
-}
-
-void
-PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
-{
-    if (nDesktop < 1 || nDesktop >= 0xffffffff || nDesktop == this->nDesktop)
-	return;
-
-    if (currentDesktop >= nDesktop)
-	currentDesktop = nDesktop - 1;
-
-    windowManager.setNumberOfDesktops(nDesktop);
-
-    this->nDesktop = nDesktop;
-
-    setDesktopHints ();
 }
 
 void
