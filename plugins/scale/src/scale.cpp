@@ -1653,6 +1653,8 @@ void PrivateScaleScreen::terminateScale (bool accept)
 
     scaleTerminate (&optionGetInitiateEdge (), accept ? 0 : CompAction::StateCancel, o);
     scaleTerminate (&optionGetInitiateKey (), accept ? 0 : CompAction::StateCancel, o);
+
+    activateEvent (false);
 }
 
 bool
