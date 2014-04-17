@@ -282,6 +282,8 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 		scale = MIN (scaledWinWidth, scaledWinHeight) / (float) spinnerMaxSize;
 	    }
 
+	    priv->cWindow->addDamageRect (CompRect (x, y, size / scale, size / scale));
+
 	    mask |= PAINT_WINDOW_BLEND_MASK;
 
 	    CompRegion            iconReg (0, 0, size, size);
