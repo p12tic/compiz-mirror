@@ -1072,6 +1072,25 @@ PrivateScaleScreen::sendDndStatusMessage (Window source, bool asks)
     XSendEvent (screen->dpy (), source, false, 0, &xev);
 }
 
+void
+PrivateScaleScreen::sendDndFinishedMessage (Window source)
+{
+    XEvent xev;
+
+    xev.xclient.type    = ClientMessage;
+    xev.xclient.display = screen->dpy ();
+    xev.xclient.format  = 32;
+
+    xev.xclient.message_type = xdndFinished;
+    xev.xclient.window	     = source;
+
+    xev.xclient.data.l[0] = dndTarget;
+    xev.xclient.data.l[1] = 0; // Not accepted
+    xev.xclient.data.l[2] = None;
+
+    XSendEvent (screen->dpy (), source, false, 0, &xev);
+}
+
 bool
 PrivateScaleScreen::scaleTerminate (CompAction         *action,
 				    CompAction::State  state,
@@ -1176,7 +1195,7 @@ PrivateScaleScreen::ensureDndRedirectWindow ()
     if (!dndTarget)
     {
 	XSetWindowAttributes attr;
-	long		     xdndVersion = 3;
+	long		     xdndVersion = 5;
 
 	attr.override_redirect = True;
 
@@ -1826,6 +1845,8 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 	    {
 		if (event->xclient.window == dndTarget)
 		{
+		    sendDndFinishedMessage (event->xclient.data.l[0]);
+
 		    if (grab && state != ScaleScreen::In)
 		    {
 			terminateScale (true);
@@ -1932,6 +1953,7 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     grabIndex (0),
     dndTarget (None),
     xdndSelection (XInternAtom (screen->dpy (), "XdndSelection", False)),
+    xdndFinished (XInternAtom (screen->dpy (), "XdndFinished", False)),
     xdndActionAsk (XInternAtom (screen->dpy (), "XdndActionAsk", False)),
     state (ScaleScreen::Idle),
     moreAdjust (false),

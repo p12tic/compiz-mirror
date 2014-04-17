@@ -71,6 +71,7 @@ class PrivateScaleScreen :
 	ScaleWindow * checkForWindowAt (int x, int y);
 
 	void sendDndStatusMessage (Window, bool asks);
+	void sendDndFinishedMessage (Window);
 
 	bool
 	actionShouldToggle (CompAction        *action,
@@ -123,6 +124,7 @@ class PrivateScaleScreen :
 
 	Window dndTarget;
 	Atom xdndSelection;
+	Atom xdndFinished;
 	Atom xdndActionAsk;
 
 	std::vector<GLTexture::List> dndSpinners;
