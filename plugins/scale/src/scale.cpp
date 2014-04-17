@@ -245,6 +245,68 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 	    }
 	}
     }
+
+    if (spScreen->optionGetDndTimeoutSpinner () &&
+	priv->window->id() == spScreen->selectedWindow &&
+	priv->slot &&
+	spScreen->hover.active ())
+    {
+	GLTexture* spinner = NULL;
+
+	if (!spScreen->dndSpinners.empty ())
+	{
+	    int speed = spScreen->optionGetDndTimeoutSpinnerSpeed ();
+	    unsigned dndSpinnerIdx = (spScreen->hover.minTime() - spScreen->hover.minLeft()) / speed;
+	    const GLTexture::List& tex_list = spScreen->dndSpinners[dndSpinnerIdx % spScreen->dndSpinners.size()];
+	    spinner = tex_list.empty() ? NULL : tex_list.front();
+	}
+
+	if (spinner)
+	{
+	    float  scale;
+	    int    x, y;
+	    int    size;
+	    int    scaledWinWidth, scaledWinHeight;
+	    int    spinnerMaxSize = spinner->width();
+
+	    scaledWinWidth  = priv->window->width () * priv->scale;
+	    scaledWinHeight = priv->window->height () * priv->scale;
+
+	    size = MIN (spinnerMaxSize, MIN (scaledWinWidth, scaledWinHeight));
+	    x = priv->tx + priv->window->x () + (scaledWinWidth - size) / 2;
+	    y = priv->ty + priv->window->y () + (scaledWinHeight - size) / 2;
+	    scale = 1.0;
+
+	    if (size != spinnerMaxSize)
+	    {
+		size = spinnerMaxSize;
+		scale = MIN (scaledWinWidth, scaledWinHeight) / (float) spinnerMaxSize;
+	    }
+
+	    mask |= PAINT_WINDOW_BLEND_MASK;
+
+	    CompRegion            iconReg (0, 0, size, size);
+	    GLTexture::MatrixList ml (1);
+
+	    ml[0] = spinner->matrix ();
+	    priv->gWindow->vertexBuffer ()->begin ();
+
+	    if (size)
+		priv->gWindow->glAddGeometry (ml, iconReg, iconReg);
+
+	    if (priv->gWindow->vertexBuffer ()->end ())
+	    {
+		GLMatrix            wTransform (transform);
+		GLWindowPaintAttrib sAttrib (attrib);
+
+		wTransform.scale (scale, scale, 1.0f);
+		wTransform.translate (x / scale, y / scale, 0.0f);
+		sAttrib.brightness *= 0.65f;
+
+		priv->gWindow->glDrawTexture (spinner, wTransform, sAttrib, mask);
+	    }
+	}
+    }
 }
 
 bool
@@ -1922,6 +1984,27 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     optionSetInitiateOutputKeyTerminate (PrivateScaleScreen::scaleTerminate);
 
 #undef SCALEBIND
+
+    CompString pluginName("scale");
+    CompSize size;
+    CompString file;
+
+    file = "dnd-spinner-000.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-125.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-250.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-375.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-500.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-625.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-750.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
+    file = "dnd-spinner-875.png";
+    dndSpinners.push_back(GLTexture::readImageToTexture(file, pluginName, size));
 
     ScreenInterface::setHandler (s);
     CompositeScreenInterface::setHandler (cScreen, false);

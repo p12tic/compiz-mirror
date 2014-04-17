@@ -126,6 +126,8 @@ class PrivateScaleScreen :
 	Atom xdndSelection;
 	Atom xdndActionAsk;
 
+	std::vector<GLTexture::List> dndSpinners;
+
 	CompTimer hover;
 	CompTimer dndCheck;
 

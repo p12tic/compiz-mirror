@@ -7,10 +7,12 @@
 	<deps>
 	    <requirement>
 		<plugin>opengl</plugin>
+		<plugin>imgpng</plugin>
 	    </requirement>
 	    <relation type="after">
 		<plugin>fade</plugin>
 		<plugin>decor</plugin>
+		<plugin>imgpng</plugin>
 	    </relation>
 	</deps>
 	<options>
@@ -102,6 +104,18 @@
 				<_long>The minimum distance (in px) beyond which the timeout is reset.</_long>
 				<default>6</default>
 				<min>0</min>
+				<max>250</max>
+			</option>
+			<option name="dnd_timeout_spinner" type="bool">
+				<_short>Show a spinner during th Drag and Drop timeout</_short>
+				<_long>Whether to show a spinner over the windows during dnd Timeout.</_long>
+				<default>True</default>
+			</option>
+			<option name="dnd_timeout_spinner_speed" type="int">
+				<_short>The speed of the DnD timeout spinner</_short>
+				<_long>The animation speed (in ms) of the Drag and Drop spinner.</_long>
+				<default>100</default>
+				<min>50</min>
 				<max>250</max>
 			</option>
 			<option name="multioutput_mode" type="int">
