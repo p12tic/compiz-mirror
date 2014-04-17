@@ -45,7 +45,6 @@ class PrivateScaleScreen :
 {
     public:
 	PrivateScaleScreen (CompScreen *);
-	~PrivateScaleScreen ();
 
 	void handleEvent (XEvent *event);
 
@@ -133,8 +132,6 @@ class PrivateScaleScreen :
 
 	ScaleScreen::State state;
 	int                moreAdjust;
-
-	Cursor cursor;
 
 	std::vector<ScaleSlot> slots;
 	int                  nSlots;

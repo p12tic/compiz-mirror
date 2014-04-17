@@ -30,7 +30,6 @@
 #include <sys/time.h>
 
 #include <X11/Xatom.h>
-#include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
 
 #include <core/atoms.h>
@@ -1295,7 +1294,7 @@ PrivateScaleScreen::scaleInitiateCommon (CompAction         *action,
 	}
 	else if (!grabIndex)
 	{
-	    grabIndex = screen->pushGrab (cursor, "scale");
+	    grabIndex = screen->pushGrab (screen->normalCursor (), "scale");
 	    if (grabIndex)
 		grab = true;
 	}
@@ -1934,15 +1933,12 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     xdndActionAsk (XInternAtom (screen->dpy (), "XdndActionAsk", False)),
     state (ScaleScreen::Idle),
     moreAdjust (false),
-    cursor (0),
     nSlots (0)
 {
     leftKeyCode  = XKeysymToKeycode (screen->dpy (), XStringToKeysym ("Left"));
     rightKeyCode = XKeysymToKeycode (screen->dpy (), XStringToKeysym ("Right"));
     upKeyCode    = XKeysymToKeycode (screen->dpy (), XStringToKeysym ("Up"));
     downKeyCode  = XKeysymToKeycode (screen->dpy (), XStringToKeysym ("Down"));
-
-    cursor = XCreateFontCursor (screen->dpy (), XC_left_ptr);
 
     opacity = (OPAQUE * optionGetOpacity ()) / 100;
 
@@ -2014,12 +2010,6 @@ PrivateScaleScreen::PrivateScaleScreen (CompScreen *s) :
     cScreen->preparePaintSetEnabled (this, false);
     cScreen->donePaintSetEnabled (this, false);
     gScreen->glPaintOutputSetEnabled (this, false);
-}
-
-PrivateScaleScreen::~PrivateScaleScreen ()
-{
-    if (cursor)
-	XFreeCursor (screen->dpy (), cursor);
 }
 
 void
