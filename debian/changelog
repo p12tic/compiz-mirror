@@ -1,3 +1,22 @@
+compiz (1:0.9.11+14.04.20140423-0ubuntu1) trusty; urgency=low
+
+  [ Ryan Tandy ]
+  * Fix gnome-flashback session starting Unity plugins. Change the
+    profile back after processing settings upgrades. When changing
+    profile, discard existing GSettings wrappers pointing to the old
+    profile. (LP: #1232299)
+
+  [ Chris Townsend ]
+  * Remove the Number of Desktops option in CCSM as this option confuses
+    Compiz and is really no longer needed since the Horizontal/Vertical
+    Virtual Desktop Size is what is used for determining the size. (LP:
+    #1289820)
+  * Due to some change in Gtk SpinButton, setting the initial value in
+    Adjustment does not work for integers, so now just explicitly set
+    the value after the SpinButton is created. (LP: #1294341)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 23 Apr 2014 14:56:06 +0000
+
 compiz (1:0.9.11+14.04.20140409-0ubuntu1) trusty; urgency=low
 
   [ Chris Townsend ]
