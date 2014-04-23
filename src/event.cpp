@@ -2004,17 +2004,6 @@ static const unsigned short _NET_WM_STATE_TOGGLE = 2;
 		    leaveShowDesktopMode (NULL);
 	    }
 	}
-	else if (event->xclient.message_type == Atoms::numberOfDesktops)
-	{
-	    if (event->xclient.window == privateScreen.rootWindow())
-	    {
-		CompOption::Value value;
-
-		value.set ((int) event->xclient.data.l[0]);
-
-		setOptionForPlugin ("core", "number_of_desktops", value);
-	    }
-	}
 	else if (event->xclient.message_type == Atoms::currentDesktop)
 	{
 	    if (event->xclient.window == privateScreen.rootWindow())
