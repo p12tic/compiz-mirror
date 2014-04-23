@@ -1,11 +1,10 @@
 === modified file 'ccm/Settings.py'
-diff -Nur -x '*.orig' -x '*~' a/compizconfig/ccsm/ccm/Settings.py b/compizconfig/Settings.py
---- a/compizconfig/ccsm/ccm/Settings.py	2011-08-22 13:38:46.000000000 +0200
-+++ b/compizconfig/ccsm/ccm/Settings.py	2012-02-01 12:44:46.254767412 +0100
-@@ -441,16 +441,10 @@
-         self.NoneValue = info[0]
-         self.Adj = gtk.Adjustment(self.Get(), info[0], info[1], inc, inc*10)
+--- a/compizconfig/ccsm/ccm/Settings.py	2014-04-11 11:28:28.731117694 -0400
++++ b/compizconfig/ccsm/ccm/Settings.py	2014-04-11 11:29:59.443116911 -0400
+@@ -442,16 +442,10 @@
+         self.Adj = gtk.Adjustment(0, info[0], info[1], inc, inc*10)
          self.Spin = gtk.SpinButton(self.Adj)
+         self.Spin.set_value(self.Get())
 -
 -        self.Scale = gtk.HScale(self.Adj)
 -
@@ -21,7 +20,7 @@ diff -Nur -x '*.orig' -x '*~' a/compizconfig/ccsm/ccm/Settings.py b/compizconfig
  
      def _Read(self):
          self.Adj.set_value(self.Get())
-@@ -464,7 +458,6 @@
+@@ -465,7 +459,6 @@
          self.Inc = 1
          NumberSetting._Init(self)
          self.Spin.set_digits(0)
@@ -29,7 +28,7 @@ diff -Nur -x '*.orig' -x '*~' a/compizconfig/ccsm/ccm/Settings.py b/compizconfig
  
  class FloatSetting(NumberSetting):
  
-@@ -474,7 +467,6 @@
+@@ -475,7 +468,6 @@
          self.Inc = None
          NumberSetting._Init(self)
          self.Spin.set_digits(4)
