@@ -2179,6 +2179,8 @@ static const unsigned short _NET_WM_STATE_TOGGLE = 2;
 		privateScreen.eventManager.grabNotified ();
 	    else if (event->xfocus.mode == NotifyUngrab)
 		privateScreen.eventManager.ungrabNotified ();
+	    else if (event->xfocus.mode == NotifyWhileGrabbed)
+	    	privateScreen.eventManager.grabNotified ();
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -2344,6 +2346,8 @@ static const unsigned short _NET_WM_STATE_TOGGLE = 2;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
 	    privateScreen.eventManager.ungrabNotified ();
+	else if (event->xfocus.mode == NotifyWhileGrabbed)
+	    privateScreen.eventManager.grabNotified ();
 	break;
     case EnterNotify:
 	if (event->xcrossing.root == privateScreen.rootWindow())
