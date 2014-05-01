@@ -3438,12 +3438,11 @@ void cps::GrabManager::updatePassiveButtonGrabs(Window serverFrame)
 	    if (ignore & ~modHandler->ignoredModMask ())
 		continue;
 
-	    /* Do not allow binding of the scroll wheel for windows other than the desktop
+	    /* Do not allow binding of vertical scrolling for windows other than the desktop
 	     * unless there is a modifier defined */
 	    if (window &&
 		!(window->type () & CompWindowTypeDesktopMask) &&
-		bind.button > 3 &&
-		bind.button < 8 &&
+		(bind.button == Button4 || bind.button == Button5) &&
 		!mods)
 		continue;
 
