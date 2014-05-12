@@ -43,6 +43,7 @@ compiz::window::extents::shift (const CompWindowExtents &extents,
 	case NorthGravity:
 	case NorthWestGravity:
 	case NorthEastGravity:
+	case CenterGravity:
 	    rv.setY (extents.top);
 	    break;
 	case SouthGravity:
