@@ -1461,6 +1461,9 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		     const CompRegion          &region,
 		     unsigned int              mask)
 {
+    GLMatrix            wTransform (transform);
+    GLWindowPaintAttrib wAttrib (attrib);
+
     if (eScreen->expoActive)
     {
 	if (eScreen->expoCam > 0.0)
@@ -1471,6 +1474,8 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			 ExpoScreen::ExpoAnimationZoom;
 	bool  hide     = eScreen->optionGetHideDocks () &&
 			 (window->wmType () & CompWindowTypeDockMask);
+	CompPoint vp;
+	screen->viewportForGeometry (window->geometry (), vp);
 
 	if (!zoomAnim)
 	    opacity = attrib.opacity * eScreen->expoCam;
@@ -1486,9 +1491,31 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (opacity <= 0)
 	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
+	/* Stretch maximized windows a little so that you don't
+	 * have an awkward gap */
+	if (window->state () & MAXIMIZE_STATE &&
+	    !window->border ().top)
+	{
+	    CompOutput *o = &screen->outputDevs ()[screen->outputDeviceForGeometry(window->geometry())];
+	    float yS = 1.0 + ((o->height () / (float) window->height ()) - 1.0f) * sigmoidProgress (eScreen->expoCam);
+	    float xS = 1.0 + ((o->width () / (float) window->width ()) - 1.0f) * sigmoidProgress (eScreen->expoCam);
+	    wTransform.translate (window->x () + window->width (),
+				  window->y () + window->height (),
+				  0.0f);
+	    wTransform.scale (xS, yS, 1.0f);
+	    wTransform.translate (-(window->x () + window->width ()),
+				  -(window->y () + window->height ()),
+				  0.0f);
+
+	    if (eScreen->paintingVp != vp)
+		mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
+	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	}
     }
 
-    return gWindow->glPaint (attrib, transform, region, mask);
+    return gWindow->glPaint (wAttrib, wTransform, region, mask);
 }
 
 bool
