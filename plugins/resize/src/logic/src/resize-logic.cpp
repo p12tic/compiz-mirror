@@ -65,7 +65,9 @@ ResizeLogic::ResizeLogic() :
     offWorkAreaConstrained (true),
     options (NULL),
     cScreen (NULL),
-    gScreen (NULL)
+    gScreen (NULL),
+    lastMaskX (0),
+    lastMaskY (0)
 {
     rKeys[0].name	= "Left";
     rKeys[0].dx		= -1;
@@ -411,6 +413,19 @@ ResizeLogic::handleKeyEvent (KeyCode keycode)
 
 		mask = rKeys[i].resizeMask;
 
+		if ((mask & ResizeLeftMask || mask & ResizeRightMask) && (mask != lastMaskX))
+		{
+		    pointerDx *= -1;
+
+		    lastMaskX = mask;
+		}
+		if ((mask & ResizeUpMask || mask & ResizeDownMask) && (mask != lastMaskY))
+		{
+		    pointerDy *= -1;
+
+		    lastMaskY = mask;
+		}
+
 		mScreen->updateGrab (grabIndex, cursor[i]);
 	    }
 	    break;
@@ -439,14 +454,14 @@ ResizeLogic::handleMotionEvent (int xRoot, int yRoot)
 	    accumulatePointerMotion (xRoot, yRoot);
 	}
 
-	if (mask & ResizeLeftMask)
+	if (mask & ResizeLeftMask || lastMaskX & ResizeLeftMask)
 	    wi -= pointerDx;
-	else if (mask & ResizeRightMask)
+	else if (mask & ResizeRightMask || lastMaskX & ResizeRightMask)
 	    wi += pointerDx;
 
-	if (mask & ResizeUpMask)
+	if (mask & ResizeUpMask || lastMaskY & ResizeUpMask)
 	    he -= pointerDy;
-	else if (mask & ResizeDownMask)
+	else if (mask & ResizeDownMask || lastMaskY & ResizeDownMask)
 	    he += pointerDy;
 
 	if (w->state () & CompWindowStateMaximizedVertMask)
