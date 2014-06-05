@@ -1494,8 +1494,7 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	/* Stretch maximized windows a little so that you don't
 	 * have an awkward gap */
-	if (window->state () & MAXIMIZE_STATE &&
-	    !window->border ().top)
+	if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	{
 	    CompOutput *o = &screen->outputDevs ()[screen->outputDeviceForGeometry(window->geometry())];
 	    float yS = 1.0 + ((o->height () / (float) window->height ()) - 1.0f) * sigmoidProgress (eScreen->expoCam);
