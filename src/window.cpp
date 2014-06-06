@@ -3553,10 +3553,19 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     int       mask = 0;
     CompPoint viewport;
 
-    if (old.intersects (CompRect (0, 0, screen->width (), screen->height ())))
+    if (old.intersects (CompRect (0, 0, screen->width (), screen->height ())) && 
+	!(state & CompWindowStateMaximizedHorzMask || state & CompWindowStateMaximizedVertMask))
 	viewport = screen->vp ();
+    else if ((state & CompWindowStateMaximizedHorzMask || state & CompWindowStateMaximizedVertMask) &&
+	     window->moved ())
+	viewport = initialViewport;
     else
 	screen->viewportForGeometry (old, viewport);
+
+    if (viewport.x () > screen->vpSize ().width () - 1)
+	viewport.setX (screen->vpSize ().width () - 1);
+    if (viewport.y () > screen->vpSize ().height () - 1)
+	viewport.setY (screen->vpSize ().height () - 1);
 
     int x = (viewport.x () - screen->vp ().x ()) * screen->width ();
     int y = (viewport.y () - screen->vp ().y ()) * screen->height ();
@@ -4021,6 +4030,8 @@ CompWindow::moveResize (XWindowChanges *xwc,
 
     if (placed)
 	priv->placed = true;
+
+    priv->initialViewport = defaultViewport ();
 }
 
 bool
@@ -4673,6 +4684,8 @@ CompWindow::maximize (unsigned int state)
 {
     if (overrideRedirect ())
 	return;
+
+    priv->initialViewport = screen->vp ();
 
     state = constrainWindowState (state, priv->actions);
 
@@ -5832,6 +5845,10 @@ CompWindow::moveToViewportPosition (int  x,
 	xwc.y = serverGeometry ().y () + wy;
 
 	configureXWindow (valueMask, &xwc);
+
+	if ((state () & CompWindowStateMaximizedHorzMask || state () & CompWindowStateMaximizedVertMask) &&
+            (defaultViewport () == screen->vp ()))
+            priv->initialViewport = screen->vp ();
     }
 }
 
