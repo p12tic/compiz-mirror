@@ -1,3 +1,40 @@
+compiz (1:0.9.11+14.10.20140606-0ubuntu1) utopic; urgency=low
+
+  [ Chris Townsend ]
+  * Only ungrab the Mod2Mask modifier on buttons 4-7 to allow scrolling
+    in unfocused Gtk windows while still allowing keybinding modifiers
+    to other scroll wheel actions. (LP: #1311788)
+  * Fix issue where window decorations would be placed under the Panel
+    when opening a new window from an already open window. This is due
+    to the already open window being taller or just as tall without be
+    maximized than the workspace. (LP: #1303462)
+  * Only constrain the non-modifier scrolling to the vertical scrolling
+    buttons - buttons 4 & 5. (LP: #1311303)
+  * Fix issue where maximized windows would get moved to different
+    workspaces when disconnecting/connecting an external monitor.
+    Windows should stay in the same workspace they are in when the
+    monitor event occurs. (LP: #1304531)
+  * Fix issue where custom keyboard shortcuts would get reset to
+    defaults when rebooting or restarting Compiz. (LP: #1063617)
+  * Fixes issue in the Expo plugin where a gap is shown in the place
+    where the Launcher and Panel should be when windows are maximized.
+    This was originally removed in rev. 3481. (LP: #1087090)
+  * Fix issue where horizontal and vertical keyboard resizing could not
+    happen at the same time. (LP: #347390)
+
+  [ Marco Trevisan (Treviño) ]
+  * Scale: use XShape extension to exclude dnd input in the screen-parts
+    outside workArea This will work property also in multi-monitor,
+    without requiring multiple X windows for each output device. Also
+    don't terminate the scale unless a drag-n-drop action is not really
+    over. Add a spinner that shows up over a window, during the DnD
+    timeout. Plus, make sure we terminate the scale without focusing the
+    selected icon when cancelling it and some code cleanup (LP: #607796)
+  * Event: set the screen grabbed also when we get a NotifyWhileGrabbed
+    Focus{In,Out} event (LP: #1305586)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 06 Jun 2014 09:43:06 +0000
+
 compiz (1:0.9.11+14.04.20140423-0ubuntu1) trusty; urgency=low
 
   [ Ryan Tandy ]
