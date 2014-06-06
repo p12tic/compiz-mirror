@@ -6664,6 +6664,9 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 		if (xwc.x < workarea.x ())
 		    xwc.x = workarea.x () + movement.x ();
+
+		if (xwc.x - boffset.x () < workarea.x ())
+		    xwc.x += boffset.x ();
 	    }
 
 	    if (xwc.y + xwc.height > workarea.y2 ())
@@ -6672,6 +6675,9 @@ CompWindow::setWindowFrameExtents (const CompWindowExtents *b,
 
 		if (xwc.y < workarea.y ())
 		    xwc.y = workarea.y () + movement.y ();
+
+		if (xwc.y - boffset.y () < workarea.y ())
+		    xwc.y += boffset.y ();
 	    }
 
 	    if (priv->actions & CompWindowActionResizeMask)
